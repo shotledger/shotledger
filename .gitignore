@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Expo / builds
+.expo/
+dist/
+build/
+*.apk
+*.aab
+*.ipa
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# Environment / secrets (real secrets live outside the tree, under ~/agents/)
+.env
+.env.*
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
