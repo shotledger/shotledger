@@ -114,7 +114,7 @@ optional backup/sync add-on (a Firebase replacement, inverted):
 | Concern | Choice |
 |---------|--------|
 | App | React Native + Expo, TypeScript |
-| Local DB | SQLite (op-sqlite) + Drizzle ORM |
+| Local DB | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM |
 | Migrations | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
 | Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI) |
 | Sync API | Cloudflare Workers (Hono), TypeScript shared types with the app |
@@ -193,6 +193,15 @@ for Android Gradle) or `eas build --local`. iOS can never build locally
 | Domains (shotledger.app, optionally .se) | ~125–225 kr/yr |
 
 Donation target to break even: roughly 30–40 coffees/year.
+
+## Implementation
+
+The detailed execution spec — milestones M0–M7 with exact schema, screen
+inventory, library decisions, formulas, per-task acceptance criteria, and
+rules for implementing agents — lives in
+[docs/implementation-plan.md](docs/implementation-plan.md). It is written
+so non-frontier models can implement v1 task by task; anything requiring
+judgment is marked `VERIFY:` and must be resolved with the maintainer.
 
 ## Roadmap / next steps
 
