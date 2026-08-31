@@ -128,8 +128,9 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
 series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
                 stage TEXT NULL,               -- program stage id (§6.3), e.g.
                                                -- 'precision'|'duel' for 25m pistol
-                is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: shown,
-                                               -- excluded from totals/stats
+                is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
+                                               -- from score/stats, included
+                                               -- in volume counts (§6.3)
                 photo_uri TEXT NULL            -- local file URI
 
 shots           series_id FK NOT NULL, position INTEGER NOT NULL,
@@ -235,8 +236,8 @@ and excluded from totals.
 
 ### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
 - [ ] Firearms CRUD screens; classes per firearm; per-class default;
-      round counter auto-incremented by session save (shots × 1, only
-      firearm-linked sessions); manual adjust with reason
+      round counter auto-incremented by session save (all shots including
+      sighters; only firearm-linked sessions); manual adjust with reason
 - [ ] Maintenance: log event, interval setting, "rounds since" indicator
       (green/amber/red at 80%/100%), local notification at 100%
 - [ ] License expiry: date per firearm, local notifications at 90/30/7
@@ -247,7 +248,9 @@ and excluded from totals.
   the scheduling function (not the OS delivery).
 
 ### M5 — statistics (branch `feat/m5-stats`) — live views, never a form
-All math in `shared/scoring/stats.ts` (vitest): series mean, session mean
+All math in `shared/scoring/stats.ts` (vitest): sighter series are
+excluded from every score metric but included in volume metrics (total
+shots, rounds fired). Series mean, session mean
 per shot, standard deviation (sample), best/worst series, X counts,
 rolling trend (per-session mean over time), comparison of last N series
 vs previous N (default N=100), guldserie count per period, per-firearm
@@ -327,18 +330,28 @@ A *program* is a predefined competition/match format within a discipline:
 ```
 { id, disciplineId, federation, name: {sv,en},
   stages: [ { id, name: {sv,en}, seriesCount, shotsPerSeries,
-              scoring: 'integer'|'decimal' } ],
-  sighters: 'none'|'series'|'shots',    -- whether provskott are logged
-  maxScore  -- derived check: sum(seriesCount*shotsPerSeries*10) }
+              scoring: 'integer'|'decimal',
+              sighterSeries: boolean,   -- stage starts with one provskott
+                                        -- series (logged, not scored)
+              optional: boolean } ],    -- e.g. a final the shooter may
+                                        -- not reach; UI asks when the
+                                        -- preceding stage completes
+  maxScore  -- derived check over non-optional stages, scored series only }
 ```
+
+**Sighter (provskott) semantics — maintainer-confirmed:** a sighter
+series is logged like any other (`series.is_sighter=1`, one per stage
+where `sighterSeries` is true) but is **excluded from the competition/
+session score and all score statistics**, while still **counting toward
+volume**: shots-logged totals, firearm round counter, ammo-lot usage.
 
 v1 predefined programs (structures marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
 | id | Federation | Name (sv) | Structure |
 |---|---|---|---|
-| `spsf-precision-6` | SPSF | Precision, 6 serier | 1 stage: 6×5, max 300 |
-| `spsf-precision-7` | SPSF | Precision, 7 serier | 1 stage: 7×5, max 350 (KM-style per user's own logs) |
+| `spsf-precision-6` | SPSF | Precision, 6 serier | main: sighter + 6×5 (max 300); optional final: sighter + 3×5 (confirmed by maintainer) |
+| `spsf-precision-7` | SPSF | Precision, 7 serier | main: sighter + 7×5 (max 350); optional final: sighter + 3×5 (confirmed by maintainer) |
 | `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: stage structure |
 | `issf-ap-60` | ISSF | 10m luftpistol 60 | 6×10, max 600 (decimal in finals only — finals out of scope v1) |
 | `issf-ap-40` | ISSF | 10m luftpistol 40 | 4×10, max 400 |
