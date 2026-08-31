@@ -154,6 +154,10 @@ verify the app without a human in the loop:
   licenses) so every screen renders meaningful content for review.
 - **CLAUDE.md** in the repo documents how an agent launches, seeds,
   screenshots, and tests the app — any session is self-sufficient.
+- **Impeccable plugin, project-scoped**: `.claude/settings.json` registers
+  the marketplace (github.com/pbakaus/impeccable) and enables the plugin
+  for everyone. One-time per contributor after cloning (security trust
+  step): `claude plugin install impeccable@pbakaus-impeccable`.
 
 **Local builds (Linux):** daily dev via Expo dev server + hot reload onto
 emulator or device; full local Android builds via `npx expo run:android`
