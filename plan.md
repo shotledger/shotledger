@@ -115,6 +115,7 @@ optional backup/sync add-on (a Firebase replacement, inverted):
 |---------|--------|
 | App | React Native + Expo, TypeScript |
 | Local DB | SQLite (op-sqlite) + Drizzle ORM |
+| Migrations | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
 | Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI) |
 | Sync API | Cloudflare Workers (Hono), TypeScript shared types with the app |
 | Cloud DB | Cloudflare D1 |
@@ -134,6 +135,31 @@ only edit their own data). No CRDT engine needed.
 - No Android-only UI assumptions (back button, FAB conventions are fine;
   hard-coded intents are not)
 - CI keeps an iOS build target compiling even before iOS ships
+
+## Agentic-first SDLC
+
+The whole lifecycle is designed so an agent can develop, run, *see*, and
+verify the app without a human in the loop:
+
+- **Expo web target** (react-native-web): the app renders in a browser,
+  where an agent can view, interact, screenshot, and iterate on UI/UX
+  autonomously. This is the primary design loop; UI design/critique work
+  uses the Impeccable skill against this target.
+- **Android emulator + adb** (KVM confirmed on the dev machine): headless
+  emulator, install APK, drive via adb/Maestro, pull screenshots — the
+  fidelity check for real-device rendering and native behavior.
+- **Maestro E2E flows**: YAML-defined, screenshot at each step, runnable by
+  agents locally and in CI; every PR produces visual evidence.
+- **Deterministic seed data**: a demo fixture (sessions, series, firearms,
+  licenses) so every screen renders meaningful content for review.
+- **CLAUDE.md** in the repo documents how an agent launches, seeds,
+  screenshots, and tests the app — any session is self-sufficient.
+
+**Local builds (Linux):** daily dev via Expo dev server + hot reload onto
+emulator or device; full local Android builds via `npx expo run:android`
+(needs Android SDK + JDK 17/21 — pin per-project, system Java 25 is too new
+for Android Gradle) or `eas build --local`. iOS can never build locally
+(macOS required) — EAS cloud only.
 
 ## Build & distribution
 
@@ -176,5 +202,9 @@ Donation target to break even: roughly 30–40 coffees/year.
       can add disciplines via PR once public
 - [ ] Screen map for v1 (benchmark: Shotlytic's tabs — Enter Score /
       History / Trends / Profile; ShotLog's X/(X) keypad)
+- [ ] Install Android SDK + pinned JDK 17/21 on the dev machine; create
+      KVM-accelerated emulator image
+- [ ] CLAUDE.md: agent instructions for run/seed/screenshot/test loops
+- [ ] Maestro setup + first smoke flow with screenshots
 - [ ] GitHub Actions: lint + typecheck + test on PR; Android build
 - [ ] Google Play account + closed testing track
