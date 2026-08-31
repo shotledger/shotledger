@@ -108,10 +108,17 @@ ammo_lots       brand TEXT NOT NULL, product TEXT, caliber TEXT,
                 lot_number TEXT, grain REAL, purchased_on TEXT,
                 quantity INTEGER, notes TEXT
 
-sessions        name TEXT NOT NULL,            -- default: discipline + date
+sessions        name TEXT NOT NULL,            -- default: program/discipline + date
                 type TEXT NOT NULL CHECK(type IN ('training','competition')),
                 discipline_id TEXT NOT NULL,   -- key into discipline defs (§6.2)
-                weapon_class TEXT,             -- 'A'|'B'|'C'|'R'|'airgun', nullable
+                program_id TEXT NULL,          -- predefined match format (§6.3);
+                                               -- NULL = free-form training
+                competition_level TEXT NULL,   -- only when type='competition':
+                                               -- 'km'|'krets'|'dm'|'landsdel'|'sm'
+                                               -- |'national'|'other'
+                competition_name TEXT NULL,    -- e.g. "Skånemästerskapet"
+                weapon_class TEXT,             -- full code, e.g. 'C2','A3','VY C'
+                                               -- (general class derived, §6.4a)
                 firearm_id TEXT NULL FK,
                 ammo_lot_id TEXT NULL FK,
                 started_at TEXT NOT NULL,
@@ -119,6 +126,10 @@ sessions        name TEXT NOT NULL,            -- default: discipline + date
                 decimal_scoring INTEGER NOT NULL DEFAULT 0
 
 series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
+                stage TEXT NULL,               -- program stage id (§6.3), e.g.
+                                               -- 'precision'|'duel' for 25m pistol
+                is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: shown,
+                                               -- excluded from totals/stats
                 photo_uri TEXT NULL            -- local file URI
 
 shots           series_id FK NOT NULL, position INTEGER NOT NULL,
@@ -189,10 +200,16 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
   screenshots each; web target renders all tabs.
 
 ### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
-New-session form: type (training/competition — both free), discipline
-picker (from §6.2 definitions), weapon class, firearm (defaults to the
-class default), ammo lot, decimal toggle (only if discipline allows),
-name (default `<discipline> — <local date>`).
+New-session form: type (training/competition — both free); discipline
+picker (§6.2); **program picker** (§6.3 — filtered by discipline;
+"Free training" option = no program); for competitions: competition level
+(KM/Krets/DM/Landsdel/SM/National/Other) + optional competition name;
+weapon class (full code, §6.4a); firearm (defaults to the class default);
+ammo lot; decimal toggle (only if discipline allows and no program forces
+it). Name defaults to `<level> <program> <general class>` for
+competitions, `<discipline> — <local date>` for training. Choosing a
+program pre-creates its stage/series skeleton; sighter series are marked
+and excluded from totals.
 
 **ScoreKeypad spec** (get this exactly right):
 - Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
@@ -295,12 +312,53 @@ config and cover with tests.
 
 ### 6.2 Discipline definitions (data, not code)
 `shared/disciplines/definitions/*.json`, validated by zod schema
-`disciplineSchema`: `{id, name: {sv,en}, targetFace, seriesLength,
-seriesCount?, scoring: 'rings'|'hit-figure', allowsDecimal, weaponClasses,
-federation: 'SPSF'|'ISSF'|'generic'}`. v1 ships: SPSF precision (C30
-target, 5-shot series), SPSF fält (hit/figure — logging only in v1), ISSF
-10m air pistol, ISSF 25m pistol, ISSF 50m pistol, generic ring-scoring.
-Community adds disciplines via PR once public.
+`disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
+name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
+allowsDecimal, weaponClasses}`. v1 ships disciplines: SPSF precision
+(C30 target), ISSF 10m air pistol, ISSF 25m pistol, ISSF 25m standard
+pistol, ISSF 50m pistol, generic ring-scoring. **Fältskytte is
+deliberately excluded from v1** (hit/figure scoring is a different model;
+revisit in v2+). Community adds disciplines via PR once public.
+
+### 6.3 Program definitions — predefined match formats (data, not code)
+A *program* is a predefined competition/match format within a discipline:
+`shared/disciplines/programs/*.json`, zod schema `programSchema`:
+
+```
+{ id, disciplineId, federation, name: {sv,en},
+  stages: [ { id, name: {sv,en}, seriesCount, shotsPerSeries,
+              scoring: 'integer'|'decimal' } ],
+  sighters: 'none'|'series'|'shots',    -- whether provskott are logged
+  maxScore  -- derived check: sum(seriesCount*shotsPerSeries*10) }
+```
+
+v1 predefined programs (structures marked VERIFY must be confirmed by the
+maintainer against Skjuthandboken/ISSF rules before the JSON ships):
+
+| id | Federation | Name (sv) | Structure |
+|---|---|---|---|
+| `spsf-precision-6` | SPSF | Precision, 6 serier | 1 stage: 6×5, max 300 |
+| `spsf-precision-7` | SPSF | Precision, 7 serier | 1 stage: 7×5, max 350 (KM-style per user's own logs) |
+| `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: stage structure |
+| `issf-ap-60` | ISSF | 10m luftpistol 60 | 6×10, max 600 (decimal in finals only — finals out of scope v1) |
+| `issf-ap-40` | ISSF | 10m luftpistol 40 | 4×10, max 400 |
+| `issf-25m-pistol` | ISSF | 25m pistol (sport) | 2 stages: precision 6×5 + duell 6×5, max 600. VERIFY |
+| `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY: 150s/20s/10s stages |
+| `issf-50m-pistol` | ISSF | 50m pistol | 6×10, max 600. VERIFY |
+
+Session creation: choosing a program pre-creates the stage/series
+structure and locks series length; free-form training (`program_id NULL`)
+keeps the add-series-as-you-go behavior. Session names default to
+`<competition_level> <program> <general class>` for competitions (e.g.
+"KM Precision C").
+
+### 6.4a Weapon classes
+Store the full SPSF class code on the session (`C2`, `A3`, `B`, vet/dam
+variants) as free text validated against a list in
+`shared/disciplines/classes.ts`; derive the *general* class (A/B/C/R/
+airgun) from the code (mirrors WebShooter's classname vs
+classname_general). Guldserie thresholds and FAP 551-3 rules key off the
+general class. VERIFY: complete SPSF class-code list with maintainer.
 
 ### 6.5 Guldserie thresholds
 Config in `shared/scoring/guldserie.ts`. From research: class C = 46,
