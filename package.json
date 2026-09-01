@@ -14,7 +14,8 @@
     "coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "mutation:schema": "node scripts/mutate-schema.mjs",
-    "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema"
+    "mutation:webshooter-schema": "node scripts/mutate-webshooter-schema.mjs",
+    "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
