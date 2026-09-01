@@ -1,6 +1,8 @@
+import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -9,20 +11,52 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
 import type { ProfileSelection } from '@shotledger/shared';
 
+import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
+import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
   const { selection: complianceSelection, profile, setSelection: setComplianceSelection } =
     useComplianceProfile();
   const colors = useTheme();
+  const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
+
+  async function onImportCsv() {
+    const dryRun = await planImport();
+    if (!dryRun) return;
+    if (dryRun.errors.length > 0) {
+      Alert.alert(
+        t('csv.importErrorsTitle'),
+        t('csv.importErrors', { count: dryRun.errors.length }),
+      );
+      return;
+    }
+    const created = dryRun.plan.sessions.filter((s) => s.action === 'create').length;
+    const updated = dryRun.plan.sessions.filter((s) => s.action === 'update').length;
+    Alert.alert(
+      t('csv.importConfirmTitle'),
+      t('csv.importSummary', {
+        created,
+        updated,
+        firearms: dryRun.plan.firearms.filter((f) => f.action === 'create').length,
+        ammoLots: dryRun.plan.ammoLots.filter((a) => a.action === 'create').length,
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('csv.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
+      ],
+    );
+  }
+
   const [birthYear, setBirthYear] = useState(() => {
     const stored = db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null;
     return stored === null ? '' : String(stored);
@@ -100,9 +134,37 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
+        <ThemedText type="smallBold">{t('csv.sectionTitle')}</ThemedText>
+        <ListRow
+          title={t('csv.exportTitle')}
+          subtitle={t('csv.exportSubtitle')}
+          onPress={exportCsv}
+          testID="settings-export-csv"
+        />
+        <ListRow
+          title={t('csv.importTitle')}
+          subtitle={t('csv.importSubtitle')}
+          onPress={onImportCsv}
+          testID="settings-import-csv"
+        />
+        {statusText ? (
+          <ThemedText type="small" themeColor="textSecondary" testID="csv-status">
+            {statusText}
+          </ThemedText>
+        ) : null}
+      </Card>
+
+      <Card>
         <ListRow
           title={t('settings.supportDevelopment')}
-          subtitle={t('settings.supportComingSoon')}
+          subtitle={t('settings.supportSubtitle')}
+          onPress={() => Linking.openURL(SUPPORT_URL)}
+          testID="settings-support-development"
+        />
+        <ListRow
+          title={t('settings.about')}
+          onPress={() => router.push('/about')}
+          testID="settings-about"
         />
       </Card>
 
