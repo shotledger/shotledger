@@ -1,0 +1,505 @@
+# ShotLedger — Implementation Plan (v1)
+
+> Execution spec for implementing agents. [`plan.md`](../plan.md) says
+> *what and why*; this document says *exactly how*. It is written so that
+> an implementing agent can complete each task without product-level
+> judgment. If a task is ambiguous or contradicts reality, STOP and ask —
+> do not improvise product decisions.
+
+## 0. Rules for implementing agents
+
+1. **One milestone task = one branch = one merge.** Branch names:
+   `feat/m1-schema`, `fix/…`, `docs/…`. Conventional Commits; every commit
+   DCO-signed (`git commit -s`). Never commit to `main`; merges happen only
+   after the maintainer's OK.
+2. **Definition of done** for every task: code + tests written, `pnpm
+   check` (typecheck + lint + unit tests) green, the relevant checkbox in
+   this file ticked in the same branch, and — for UI tasks — a screenshot
+   produced via the agentic loop (§8) attached to the task summary.
+3. **Never**: add dependencies not listed here without asking; change the
+   DB schema without a Drizzle migration; commit secrets (they live under
+   `~/agents/shotledger/`, outside the tree); remove or weaken a test to
+   make it pass; implement features from later milestones early.
+4. **Anything marked `VERIFY:`** is a fact that must be confirmed with the
+   maintainer or an authoritative source before shipping the code that
+   depends on it. Do not guess regulatory or scoring values.
+5. All UI text goes through i18n from the first screen (§6.7). Swedish and
+   English. No hard-coded strings in components.
+6. All code iOS-compatible: no Android-only native modules; platform
+   quirks behind wrappers in `app/src/platform/`.
+
+## 1. Toolchain and repository layout
+
+- Node ≥ 22, **pnpm** workspaces. JDK **21** (pinned via `.sdkmanrc` or
+  `mise`; system Java 25 is incompatible with Android Gradle).
+- Expo SDK: latest stable at scaffold time. Dev builds (not Expo Go).
+
+```
+/                     pnpm-workspace.yaml, tsconfig.base.json, .editorconfig
+├── app/              Expo app (expo-router)
+│   ├── app/          file-based routes (see §5)
+│   ├── src/
+│   │   ├── components/   design-system components (§5.1)
+│   │   ├── db/           drizzle schema, migrations, queries, seed
+│   │   ├── features/     one folder per feature (score-entry, firearms, …)
+│   │   ├── i18n/         en.json, sv.json, index.ts
+│   │   ├── platform/     platform-specific wrappers
+│   │   └── theme/        tokens.ts (colors, spacing, type scale)
+│   ├── e2e/          Maestro flows (*.yaml)
+│   └── assets/
+├── backend/          Cloudflare Workers (Hono) — v2, scaffold only in v1
+│   └── src/
+├── shared/           pure TS, no RN imports
+│   └── src/
+│       ├── scoring/      series math, guldserie, statistics (§6.4)
+│       ├── disciplines/  discipline definitions + JSON schema (§6.2)
+│       ├── compliance/   FAP 551-3 barometer logic (§6.6)
+│       └── csv/          export/import (§6.8)
+├── docs/             this file, ADRs (docs/adr/NNN-title.md)
+└── .github/workflows/ci.yml
+```
+
+- `shared/` is dependency-light and 100% unit-testable with **vitest**.
+  The app tests use **jest-expo** only where RN APIs are involved; prefer
+  putting logic in `shared/` so it's vitest-covered.
+- Root scripts: `pnpm check` = `tsc -b && eslint . && vitest run &&
+  (cd app && jest --passWithNoTests)`.
+
+## 2. Key library decisions (fixed — do not substitute)
+
+| Purpose | Library | Note |
+|---|---|---|
+| Navigation | expo-router | file-based; predictable for agents |
+| Local DB | **expo-sqlite** + Drizzle ORM | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.) |
+| Migrations | drizzle-kit | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator |
+| IDs | UUIDv7 (`uuidv7` pkg) | sortable, sync-friendly |
+| State | zustand (UI state only) + Drizzle live queries (data) | no Redux |
+| Charts | victory-native | Skia-based |
+| Dates | date-fns + date-fns-tz | store UTC ISO-8601 in DB; display local |
+| Forms | react-hook-form + zod | zod schemas live next to features |
+| i18n | i18next + react-i18next + expo-localization | |
+| Notifications | expo-notifications (local only in v1) | license/maintenance reminders |
+| PDF | expo-print (HTML → PDF) | FAP 551-3 export |
+| E2E | Maestro | flows in `app/e2e/` |
+
+## 3. Database schema (v1 — write exactly this, as Drizzle tables)
+
+Conventions: table names snake_case plural; every table has
+`id TEXT PRIMARY KEY` (UUIDv7), `created_at TEXT NOT NULL`,
+`updated_at TEXT NOT NULL` (both UTC ISO-8601), `deleted_at TEXT NULL`
+(tombstone — **soft-delete everywhere**; queries always filter
+`deleted_at IS NULL`). These three columns are the sync foundation; never
+hard-delete rows.
+
+```
+firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
+                serial_number TEXT,            -- optional, sensitive
+                license_expires_on TEXT,       -- date, nullable
+                notes TEXT,
+                round_count INTEGER NOT NULL DEFAULT 0,
+                maintenance_interval_rounds INTEGER,   -- nullable
+                rounds_since_maintenance INTEGER NOT NULL DEFAULT 0
+
+firearm_groups  firearm_id FK, weapon_group TEXT,  -- vapengrupp the firearm
+                                                   -- qualifies for (§6.4a)
+                is_default_for_group INTEGER NOT NULL DEFAULT 0
+
+ammo_lots       brand TEXT NOT NULL, product TEXT, caliber TEXT,
+                lot_number TEXT, grain REAL, purchased_on TEXT,
+                quantity INTEGER, notes TEXT
+
+sessions        name TEXT NOT NULL,            -- default: program/discipline + date
+                type TEXT NOT NULL CHECK(type IN ('training','competition')),
+                discipline_id TEXT NOT NULL,   -- key into discipline defs (§6.2)
+                program_id TEXT NULL,          -- predefined match format (§6.3);
+                                               -- NULL = free-form training
+                competition_level TEXT NULL,   -- only when type='competition';
+                                               -- SHB 2026 C.3.1 (p. 52) levels:
+                                               -- 'forening'|'krets'|'landsdel'
+                                               -- |'national'|'riks'
+                is_championship INTEGER NOT NULL DEFAULT 0,
+                                               -- mästerskap is a flag ON a
+                                               -- level (SHB C.3.1), not a
+                                               -- level: KM=forening+1, SM=riks+1
+                competition_name TEXT NULL,    -- e.g. "Skånemästerskapet"
+                weapon_group TEXT,             -- the GUN (vapengrupp, §6.4a):
+                                               -- A|A-opt|AM|AP|AG|B|C|R|M1..M9
+                                               -- |airgun; valid set depends on
+                                               -- discipline (no R in precision)
+                shooter_class TEXT,            -- the SHOOTER (klass, §6.4a):
+                                               -- 1|1u|1b|1s|2|3|Jun|Dam1|Dam2
+                                               -- |Dam3|VetY|VetÄ
+                firearm_id TEXT NULL FK,
+                ammo_lot_id TEXT NULL FK,
+                started_at TEXT NOT NULL,
+                location TEXT, notes TEXT,
+                decimal_scoring INTEGER NOT NULL DEFAULT 0
+
+series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
+                is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
+                                               -- from score/stats, included
+                                               -- in volume counts (§6.3);
+                                               -- max ONE per section
+                                               -- (main / final), UI-enforced
+                is_final INTEGER NOT NULL DEFAULT 0,   -- series belongs to the
+                                               -- final; a final may have its
+                                               -- own sighters (both flags set)
+                photo_uri TEXT NULL            -- local file URI
+
+shots           series_id FK NOT NULL, position INTEGER NOT NULL,
+                value REAL NOT NULL,           -- 0–10.9
+                is_inner_ten INTEGER NOT NULL DEFAULT 0,  -- X
+                is_inner_ten_decimal INTEGER NOT NULL DEFAULT 0 -- (X)
+
+maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
+                   kind TEXT NOT NULL,         -- free text v1
+                   round_count_at INTEGER, notes TEXT
+
+tags            name TEXT NOT NULL UNIQUE
+session_tags    session_id FK, tag_id FK, PRIMARY KEY(session_id, tag_id)
+
+settings        key TEXT PRIMARY KEY, value TEXT NOT NULL  -- JSON values
+```
+
+Derived values (series totals, session totals, X counts, statistics) are
+**computed, never stored** — implement in `shared/scoring/`.
+
+Seed fixture (`app/src/db/seed.ts`, dev-only, invoked via a hidden dev
+menu and by Maestro): 2 firearms (one AW93-like C-class .22lr with license
+expiry ~18 months out, one airgun), 2 ammo lots, ~30 sessions spread over
+6 months mixing training/competition and disciplines, realistic scores
+(precision series 40–48), a few tags ("KM", "Tävling", "Träning").
+
+## 4. Milestones and tasks
+
+### M0 — scaffold (branch `feat/m0-scaffold`)
+- [ ] pnpm workspace + `create-expo-app` (TypeScript template) in `app/`,
+      expo-router installed, dev build config (`expo prebuild` clean)
+- [ ] `shared/` package with vitest wired; `backend/` = `wrangler init`
+      Hono hello-world only (not deployed)
+- [ ] tsconfig.base (strict true, noUncheckedIndexedAccess true), eslint
+      (typescript-eslint + react-hooks + react-native), prettier
+- [ ] `.github/workflows/ci.yml`: on PR → pnpm check (see §1)
+- [ ] CLAUDE.md (repo root) per §8
+- [ ] Theme tokens file + light/dark via `useColorScheme`
+- **Done when:** app boots on Android emulator AND `expo start --web`
+  renders in a browser; CI file lints.
+
+### M1 — data layer (branch `feat/m1-schema`)
+- [ ] Drizzle schema exactly per §3; initial migration generated
+- [ ] Migrator runs at app start (blocking splash until done)
+- [ ] Seed fixture + dev menu toggle ("Load demo data" / "Wipe data")
+- [ ] Repository functions in `app/src/db/queries/` (typed, tested):
+      createSession, addSeries, addShot, listSessions(filter), CRUD for
+      firearms/ammo/tags; all writes set `updated_at`, deletes set
+      `deleted_at`
+- **Done when:** vitest/jest cover every query function; seed renders in a
+  debug list screen.
+
+### M2 — navigation shell + design system (branch `feat/m2-shell`)
+Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
+`/firearms`, **Settings** `/settings`. Session flow is modal-stacked:
+`/session/new`, `/session/[id]`, `/session/[id]/series/[pos]`.
+- [ ] Design-system components in `app/src/components/`: Screen, Card,
+      StatTile, Chip, SegmentedControl, ListRow, EmptyState, FAB,
+      PrimaryButton, ScoreKeypad (M3). Each gets a story-like demo route
+      under `/dev/components` (dev builds only) so agents can screenshot
+      components in isolation.
+- [ ] Home: "Shots logged" total card, latest 10 sessions list (name,
+      date, total, type chip), FAB "New session". Empty state with a
+      friendly CTA when no data.
+- [ ] Settings: language (system/sv/en), theme (system/light/dark),
+      "Load demo data" (dev), placeholder "Support development" row.
+- **Done when:** Maestro flow `smoke.yaml` walks all tabs on seeded data,
+  screenshots each; web target renders all tabs.
+
+### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
+New-session form: type (training/competition — both free); discipline
+picker (§6.2); **program picker** (§6.3 — filtered by discipline;
+"Free training" option = no program); for competitions: competition level
+(level + mästerskap flag, §3) + optional competition name;
+weapon group + shooter class (§6.4a; groups filtered by discipline);
+firearm (defaults to the group default);
+ammo lot; decimal toggle (only if discipline allows and no program forces
+it). Name defaults to `<level> <program> <general class>` for
+competitions, `<discipline> — <local date>` for training.
+
+**Series flow (never a fixed count):** series are added one at a time.
+The add-series screen has a **Sighter toggle**; when the session's
+program `supportsFinal`, a **"Start final" action** appears after at
+least one scored series — series added after it get `is_final=1` and the
+session detail shows a Final section divider plus three results: Before
+final · Final · Total (§6.3). Each section allows at most one sighter;
+the toggle disables once used.
+
+**ScoreKeypad spec** (get this exactly right):
+- Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
+  (X ⇒ value 10, is_inner_ten=1; (X) hidden). Decimal mode: two taps per
+  shot — "10" then "9" ⇒ 10.9; `X` ⇒ 10.9 + is_inner_ten; `(X)` ⇒
+  is_inner_ten_decimal (VERIFY exact SPSF/ISSF meaning of "(X)" with
+  maintainer before M3 review).
+- Shot chips fill left→right for the series length defined by the
+  discipline (5/6/10 or custom); running series total always visible;
+  editing a chip re-selects it, keypad overwrites.
+- Series saved ⇒ append next empty series automatically; session total
+  updates live. Guldserie: when discipline+class has a threshold (§6.5)
+  show "Guld vid N poäng" and a badge when reached.
+- [ ] Keypad component + logic in `shared/scoring/entry.ts` (pure,
+      vitest-tested: all key sequences, both modes, edit flows)
+- [ ] Session detail screen: Series list (chips per shot, per-series
+      totals) / Stats toggle (M5 fills stats)
+- [ ] Attach photo to series (expo-image-picker; camera or library) —
+      free, stored as local URI
+- **Done when:** Maestro flow enters a full 5-series C-precision session
+  by tapping and asserts the computed total; unit tests cover scoring
+  edge cases (0, miss, X in both modes).
+
+### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
+- [ ] Firearms CRUD screens; weapon groups per firearm; per-group default;
+      round counter auto-incremented by session save (all shots including
+      sighters; only firearm-linked sessions); manual adjust with reason
+- [ ] Maintenance: log event, interval setting, "rounds since" indicator
+      (green/amber/red at 80%/100%), local notification at 100%
+- [ ] License expiry: date per firearm, local notifications at 90/30/7
+      days before (VERIFY preferred lead times with maintainer)
+- [ ] Ammo lots CRUD; session links lot; per-lot usage count
+- **Done when:** Maestro covers create-firearm → session → round count
+  incremented → maintenance amber; notifications verified by unit-testing
+  the scheduling function (not the OS delivery).
+
+### M5 — statistics (branch `feat/m5-stats`) — live views, never a form
+All math in `shared/scoring/stats.ts` (vitest): sighter series are
+excluded from every score metric but included in volume metrics (total
+shots, rounds fired). Series mean, session mean
+per shot, standard deviation (sample), best/worst series, X counts,
+rolling trend (per-session mean over time), comparison of last N series
+vs previous N (default N=100), guldserie count per period, per-firearm
+and per-ammo-lot aggregates.
+- [ ] Stats tab: period filter (30d/6m/12m/all — segmented, default 6m),
+      discipline + class + firearm filter chips; StatTile grid (total
+      shots, sessions, mean, SD, X%, guldserie count); trend line chart;
+      shot-value distribution bar chart
+- [ ] Session detail Stats toggle: totals, mean, SD, X count,
+      distribution mini-chart, comparison vs the user's last 100 series
+      of the same discipline/class
+- **Done when:** stats screens render from seed deterministically
+  (Maestro screenshot compares stable numbers), formulas unit-tested
+  against hand-computed fixtures.
+
+### M6 — FAP 551-3 barometer + PDF (branch `feat/m6-compliance`)
+Logic in `shared/compliance/` driven by a config object, not hard-coded:
+`{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
+Two authoritative sources, kept separate in the config: (a) **FAP 551-3**
+numeric activity requirements — `VERIFY:` with the maintainer, who
+reviews föreningsintyg professionally; the Skjuthandbok contains no
+numeric counts. (b) **SHB Bilaga 8** (p. 484, verified) club-intyg rules
+worth surfacing as indicators: ≥6 months active membership before first
+intyg (first weapon .22), grovkaliber earliest after 12 months,
+pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
+the last two years — fulfilled (the app can compute märke fulfillment
+from §6.5 automatically).
+- [ ] Barometer UI on Home + per firearm: activities in rolling window vs
+      required, green/amber/red
+- [ ] PDF export (expo-print): shooting log for a chosen period/firearm —
+      layout: club-log style table (date, discipline, type, series count,
+      score, location) + summary header. `VERIFY:` layout against a real
+      föreningsintyg-attachment example from the maintainer.
+- **Done when:** barometer states unit-tested (boundary dates, tombstoned
+  sessions excluded); PDF snapshot test of generated HTML.
+
+### M7 — CSV, i18n completeness, release prep (branch `feat/m7-release`)
+- [ ] CSV export (share sheet) + import (validate with zod, dry-run
+      report, then upsert). Columns documented in §6.8; round-trip test:
+      export → wipe → import → identical stats.
+- [ ] i18n audit: `pnpm i18n:check` script fails CI on missing keys;
+      Swedish reviewed by maintainer
+- [ ] App icon + splash (placeholder OK), version/about screen with
+      licenses, "Support development" opens Buy Me a Coffee URL in
+      external browser (URL from config, not hard-coded)
+- [ ] Play closed-testing build via EAS; store listing draft in
+      `docs/store-listing.md`
+- **Done when:** closed-testing `.aab` uploaded; CHECKLIST in
+  `docs/release.md` written for repeatable releases.
+
+## 5. Screen inventory (v1)
+
+| Route | Purpose | Key states |
+|---|---|---|
+| `/` Home | totals card, latest sessions, barometer summary, FAB | empty / seeded |
+| `/session/new` | new-session form | validation errors |
+| `/session/[id]` | series list + stats toggle, add series | zero series |
+| `/session/[id]/series/[pos]` | keypad entry | integer vs decimal |
+| `/stats` | filters + tiles + charts | no data for filter |
+| `/firearms` | list + barometer chips | empty |
+| `/firearms/[id]` | detail: classes, license, maintenance, ammo usage | expired license |
+| `/firearms/new`, `/firearms/[id]/edit` | forms | |
+| `/settings` | language, theme, data, support, about | |
+| `/dev/components` | component gallery (dev only) | |
+
+## 6. Reference data and formulas
+
+### 6.2 Discipline definitions (data, not code)
+`shared/disciplines/definitions/*.json`, validated by zod schema
+`disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
+name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
+allowsDecimal, weaponGroups}`. **v1 is SPSF-only** (maintainer decision
+2026-09-01): SPSF precision (target: Pistoltavla 25 m precision — §6.5c),
+SPSF militär snabbmatch, plus generic ring-scoring for free training.
+**Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
+25m standard, 50m pistol — defaults need VERIFY then) and fältskytte
+(hit/figure scoring is a different model). Community adds disciplines
+via PR once public.
+
+### 6.3 Program definitions — competition-type presets (data, not code)
+**Series counts are never fixed** (maintainer decision): a session grows
+series as the shooter adds them, in every program. A *program* is a
+lightweight preset naming the competition type and its defaults:
+`shared/disciplines/programs/*.json`, zod schema `programSchema`:
+
+```
+{ id, disciplineId, federation, name: {sv,en},
+  shotsPerSeries,                  -- default series length (e.g. 5)
+  scoring: 'integer'|'decimal',
+  supportsFinal: boolean,          -- final section available in UI
+  structure?: {                    -- ONLY for fixed-format programs
+    sighterSeries: number,         -- leading sighters (e.g. 1)
+    groups: [ { seriesCount, timeLimitSeconds? } ] } }
+```
+
+A program **with** `structure` pre-creates its series skeleton on session
+start (time limits shown per series, derived from position — no schema
+change); a program **without** it is fully freeform (§ above). Precision
+is freeform; milsnabb is fixed.
+
+Per-series flags carry the structure instead of the program:
+`is_sighter` (provskott) and `is_final` (series belongs to the final).
+**Maintainer rule: at most ONE sighter per section** — one in the main
+round, one in the final (both flags set on a final's sighter). The UI
+disables the sighter toggle once the current section has one.
+
+**Result model — maintainer-confirmed:** when a session contains final
+series, three results are tracked and displayed, all derived:
+
+- `beforeFinal` = sum of scored series with `is_final=0`
+- `finalScore`  = sum of scored series with `is_final=1`
+- `total`       = beforeFinal + finalScore
+
+Sessions without final series just show the one total.
+
+**Sighter (provskott) semantics — maintainer-confirmed:** excluded from
+all scores above and from every score statistic, but **counting toward
+volume**: shots-logged totals, firearm round counter, ammo-lot usage.
+
+v1 predefined programs (defaults marked VERIFY must be confirmed by the
+maintainer against Skjuthandboken/ISSF rules before the JSON ships):
+
+| id | Federation | Name (sv) | Defaults |
+|---|---|---|---|
+| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
+| `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R |
+
+ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
+pistol) are **v2** — their defaults carry VERIFY items to resolve then.
+
+Session names default to `<championship-or-level label> <program>
+<weapon_group>` for competitions (e.g. "KM Precision C" — KM being
+förening level + championship flag).
+
+**Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
+decided, **no provskott**) is out of v1 scope — log such series as
+ordinary extra scored series with a note.
+
+### 6.4a Weapon groups and shooter classes (SHB 2026, verified)
+Two **orthogonal** axes (SHB F.2 p. 163 ff, F.4 p. 169 ff), stored
+separately and displayed combined ("C 2" = vapengrupp C, klass 2):
+
+**Vapengrupp (the gun)** — valid set depends on discipline:
+- Precision (F.4): `A` (+ optional sub-groups `AM`, `AP`, `AG` — F.4.1),
+  `A-opt` (A with optics, F.4.5), `B`, `C`. **No R in precision**
+  (F.4.4 "Ej tillämplig").
+- Fält & militär snabbmatch add `R` (D.4.4 p. 86, J.4).
+- Magnum (G.4.1 pp. 196–197): `M1`–`M9` (SM runs M1–M7 only, C.3.6.2.3).
+- App extra: `airgun` (ISSF 10m).
+
+**Klass (the shooter)** — F.2.1 p. 163: `1` (variants `1u` nybörjare,
+`1b` bronsskytt, `1s` silverskytt — F.2.5), `2`, `3` (riksmästarklass),
+`Jun` (≤ year turning 20), `Dam1`/`Dam2`/`Dam3`, `VetY` (year turning
+60+), `VetÄ` (year turning 70+; stödhand allowed in precision, F.6.3.2).
+Jun/Dam/Vet shoot vapengrupp C in precision/fält (F.2.1).
+
+Enumerations live in `shared/disciplines/groups.ts` and `classes.ts`
+with per-discipline validity. Märke thresholds key off vapengrupp (§6.5).
+
+### 6.5 "Guldserie" = pistolskyttemärke series requirement (SHB, verified)
+The colloquial "guldserie" is a series meeting the **pistolskyttemärke
+guld** per-series requirement (the term "guldserie" itself does not occur
+in SHB). Config in `shared/scoring/marke.ts` — SHB Bilaga 1 mom 5.1.1.1
+(p. 452), per 5-shot precision series, by vapengrupp:
+
+| Valör | A | B | C |
+|---|---|---|---|
+| Brons | 32 | 33 | 34 |
+| Silver | 38 | 39 | 40 |
+| Guld | 43 | 45 | 46 |
+
+Age reduction (same section): −1 point/series from the year *after*
+turning 55; −2 points/series from the year after turning 65. Needs the
+shooter's birth year in settings (like Shotlytic's DOB field).
+
+### 6.5b Standardmedalj point thresholds (SHB, verified)
+Data in `shared/scoring/standardmedalj.ts` — fixed thresholds by
+vapengrupp (no age adjustment; C.5.1.2.3 p. 71), precision:
+
+| Series | A/A-opt silver | A brons | B silver | B brons | C silver | C brons |
+|---|---|---|---|---|---|---|
+| 6 | 277 | 267 | 282 | 273 | 283 | 276 |
+| 7 | 323 | 312 | 329 | 319 | 330 | 322 |
+| 10 | 461 | 445 | 470 | 455 | 471 | 460 |
+
+&gt;10 series: take the 10-series value ÷10 × series count (C.5.1.2.3).
+Militär snabbmatch (12 series, C.5.1.2.5): silver A 540 · R 552 · B 561 ·
+C 564; brons A 516 · R 528 · B 537 · C 540. Standardmedalj i guld is not
+a score — it is 50 accumulated medal points (brons=1, silver=2; C.5.2.1
+p. 73). M5 shows a subtle standardmedalj marker when a session total
+meets a threshold; accumulated-points tracking is v2+.
+
+### 6.5c Target dimensions (for v2 photo scoring; SHB, verified)
+**Pistoltavla 25 m precision** (F.7.1 p. 182 — note: this, not "C30",
+is the precision target; C30/C25 are fältskjutning hit/miss circle
+figures, 30×27 / 25×22.5 cm, no rings): X-ring 25 mm, 10 = 50 mm, then
++50 mm per ring to 1 = 500 mm (tolerances ±0.2–2.0 mm); black covers
+rings 7–10 (200 mm); ring line 0.2–0.5 mm; distance 25 m. Scoring rule
+(F.6.10.1): a hit counts to the higher value as soon as the ring's
+**outer edge is touched**. Milsnabb target (J.7.1 p. 297): rings 5–10
+only, X = 50 mm, 10 = 100 mm, then +80 mm per ring to 5 = 500 mm.
+
+### 6.8 CSV format
+UTF-8, comma-separated, header row, one row per **shot**, RFC 4180
+quoting: `session_id, session_name, session_type, discipline_id,
+weapon_class, firearm, ammo_lot, started_at, series_position,
+shot_position, value, is_inner_ten, is_inner_ten_decimal, location, tags`
+(tags `|`-joined). Import matches firearms/lots by name, creates missing.
+
+## 7. Testing standards
+- `shared/`: vitest, 100% of exported functions, table-driven tests.
+- App logic hooks: jest-expo where RN APIs unavoidable.
+- E2E: Maestro flows per milestone (named `mN-*.yaml`), each ending in a
+  screenshot; run on CI-less local loop for now (CI runs unit only until
+  an emulator job is added).
+- No snapshot tests of whole screens (brittle); snapshot only generated
+  HTML (PDF) and CSV strings.
+
+## 8. Agentic loop (what CLAUDE.md must document)
+Exact commands for: install (`pnpm i`), start web (`cd app && pnpm expo
+start --web`) and how to screenshot it (Chrome tools), start emulator
+(`emulator -avd shotledger -no-window -gpu swiftshader_indirect` +
+`adb exec-out screencap`), install dev build, run Maestro
+(`maestro test e2e/smoke.yaml`), seed/wipe data (dev menu deep link
+`shotledger://dev/seed`), run checks (`pnpm check`). CLAUDE.md also
+restates §0 rules 1–6 verbatim.
+
+## 9. Deferred to v2 (do not build in v1)
+Photo target scoring; cloud sync + accounts (backend/ stays hello-world);
+WebShooter import; document vault; share cards; timers; iOS release.
+Design notes for these live in plan.md and need maintainer + Fable-level
+sessions before implementation.

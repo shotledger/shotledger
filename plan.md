@@ -57,6 +57,9 @@ barometer; no scoring), Skytteappen (club ecosystem).
       vs. protective: AGPL)
 - [ ] v2 scoring accuracy bar (TargetScan benchmark: validated 0.2–0.5 mm
       gauge accuracy; manual correction must be effortless regardless)
+- [ ] Adopt reqstool for requirement↔test traceability at M1 (SHB/FAP
+      rules as annotated requirements)? OpenSpec evaluated and deferred —
+      plan.md + implementation-plan + ADRs cover its role for now
 
 ## Feature plan
 
@@ -64,9 +67,10 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 - [ ] Fast score entry: per-shot keypad with dedicated X/(X) keys, integer +
       decimal (10.9) scoring, 5/6/10-shot and custom series, running totals
-- [ ] Disciplines: ISSF core (10m/25m/50m pistol & rifle) + SPSF precision,
-      fält, military rapid; weapon classes A/B/C/Airgun; guldserie
-      thresholds (age-adjusted)
+- [ ] Disciplines — SPSF only in v1: precision + militär snabbmatch
+      (+ generic ring-scoring for free training); vapengrupp + klass per
+      SHB; märke/"guldserie" thresholds (age-adjusted). ISSF and
+      fältskytte deferred to v2+
 - [ ] Sessions: training vs competition, tags, notes, target-photo
       attachment (photo only, no scoring yet)
 - [ ] Firearms & ammo: inventory, per-class defaults, automatic round
@@ -85,7 +89,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 - [ ] Photo target scoring: detect target face, deskew angled photos,
       auto-detect holes, drag-to-correct always available
-- [ ] Swedish targets first (SPSF C30 precision, fält) alongside ISSF faces
+- [ ] Swedish targets first (Pistoltavla 25 m precision) alongside ISSF faces
 - [ ] Group analytics: MPI (windage/elevation), mean radius, extreme spread,
       points-lost-to-group-size, session heatmaps
 - [ ] WebShooter competition import (API behind webshooter-cli): placements,
@@ -114,7 +118,7 @@ optional backup/sync add-on (a Firebase replacement, inverted):
 | Concern | Choice |
 |---------|--------|
 | App | React Native + Expo, TypeScript |
-| Local DB | SQLite (op-sqlite) + Drizzle ORM |
+| Local DB | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM |
 | Migrations | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
 | Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI) |
 | Sync API | Cloudflare Workers (Hono), TypeScript shared types with the app |
@@ -154,6 +158,12 @@ verify the app without a human in the loop:
   licenses) so every screen renders meaningful content for review.
 - **CLAUDE.md** in the repo documents how an agent launches, seeds,
   screenshots, and tests the app — any session is self-sufficient.
+- **Knowledge as project skills/references** so ANY developer's agent
+  inherits the standards: `.claude/skills/spsf-domain/` (domain hard
+  rules, auto-triggers on scoring/compliance work) →
+  `docs/reference/spsf-shb-2026.md` (verified SHB facts, page-cited);
+  `docs/adr/` (architecture decision records — never silently
+  contradicted); CLAUDE.md (workflow + hard rules, auto-loaded).
 - **Impeccable plugin, project-scoped**: `.claude/settings.json` registers
   the marketplace (github.com/pbakaus/impeccable) and enables the plugin
   for everyone. One-time per contributor after cloning (security trust
@@ -193,6 +203,15 @@ for Android Gradle) or `eas build --local`. iOS can never build locally
 | Domains (shotledger.app, optionally .se) | ~125–225 kr/yr |
 
 Donation target to break even: roughly 30–40 coffees/year.
+
+## Implementation
+
+The detailed execution spec — milestones M0–M7 with exact schema, screen
+inventory, library decisions, formulas, per-task acceptance criteria, and
+rules for implementing agents — lives in
+[docs/implementation-plan.md](docs/implementation-plan.md). It is written
+so non-frontier models can implement v1 task by task; anything requiring
+judgment is marked `VERIFY:` and must be resolved with the maintainer.
 
 ## Roadmap / next steps
 
