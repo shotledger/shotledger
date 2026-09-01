@@ -56,6 +56,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-09-01 | M6 PDF export layout (club-log table + summary header, `shared/src/export/pdf-log.ts`) has **not** been checked against a real föreningsintyg attachment — VERIFY, per implementation-plan.md §4 M6 |
 | 2026-09-01 | Stats "Custom" period picker uses `@react-native-community/datetimepicker` (ships with Expo SDK 57) — flagged for review since it wasn't in M2's original design-system component inventory |
 | 2026-09-01 | M7 release prep: `android.package` set to `app.shotledger` (maintainer-vetoable, separate commit); app icon/splash are hand-rolled placeholder concentric-ring PNGs in the Purple Rain palette (no image tool available, zero new deps); store title *"ShotLedger — Target Shooting Log & Scoring"* may overclaim vs. v1 (no photo scoring yet) — flagged with a v1-scoped alternative title in `docs/store-listing.md`, maintainer to pick |
+| 2026-09-01 | v3 shot timer (maintainer-approved scope expansion, `feat/shot-timer`, `docs/specs/shot-timer-spec.md`): PAR/interval timer engine (`shared/src/timer/`) plus a milsnabb drill preset generated from `spsf-milsnabb`'s program `structure`. `expo-audio` (not the deprecated `expo-av`) and `expo-keep-awake` added to `app/`; audio cues are 4 locally-generated placeholder WAV tones — real sound design and on-device audio/vibration/keep-awake verification are a maintainer smoke-test item (emulator audio can't be meaningfully checked). Milsnabb's ready delay defaults to a practical 5 s, not SHB J.6.2's 60 s LADDA→FÄRDIGA cadence (documented simplification, authentic value exposed as a constant) |
 
 **Open:**
 
@@ -113,7 +114,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v3+ — by user demand
 
-- [ ] PAR/interval shot timer
+- [x] PAR/interval shot timer
 - [ ] Ammo performance comparison across lots
 - [ ] Cross-session heatmaps, coaching hints
 - [ ] GPS range auto-matching; Swedish range database

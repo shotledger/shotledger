@@ -14,6 +14,7 @@ export default defineConfig({
         'shared/src/scoring/**/*.ts',
         'shared/src/disciplines/**/*.ts',
         'shared/src/compliance/**/*.ts',
+        'shared/src/timer/**/*.ts',
       ],
       exclude: ['**/*.test.ts'],
       reporter: ['text-summary', 'json-summary'],

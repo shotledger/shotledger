@@ -300,5 +300,38 @@
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch"
+  },
+  "timer": {
+    "homeEntry": "Tidtagning",
+    "title": "Tidtagning",
+    "presetsTitle": "Välj en övning",
+    "presets": {
+      "parSingle": "Enkel skjuttid",
+      "parRandomStart": "Slumpad start",
+      "parInterval": "Intervallövning",
+      "milsnabb": "Militär snabbmatch",
+      "custom": "Anpassad"
+    },
+    "presetSummaryPar": "{{ready}} s laddningstid · {{par}} s skjuttid",
+    "presetSummaryInterval": "{{reps}} repetitioner · {{par}} s skjuttid · {{rest}} s vila",
+    "presetSummaryMilsnabb": "Provserie + 3 omgångar × 4 serier, 10/8/6 s",
+    "presetSummaryCustom": "Ställ in egen skjuttid, laddningstid och repetitioner",
+    "custom": {
+      "parSeconds": "Skjuttid (s)",
+      "readyDelaySeconds": "Laddningstid (s)",
+      "reps": "Repetitioner",
+      "restSeconds": "Vila mellan repetitioner (s)"
+    },
+    "start": "Starta",
+    "stop": "Stoppa",
+    "reset": "Nollställ",
+    "state": {
+      "readyDelay": "Gör dig redo",
+      "series": "SKJUT",
+      "rest": "Vila",
+      "done": "Klart"
+    },
+    "seriesProgress": "Serie {{current}} / {{total}}",
+    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, sedan 4×10 s, 4×8 s, 4×6 s. Laddningstiden är ett standardvärde för egen träning, inte matchens 60 s LADDA→FÄRDIGA."
   }
 }
