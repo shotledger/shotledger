@@ -118,10 +118,11 @@ vitest run && (cd app && pnpm exec jest --passWithNoTests)`), run from the
   actually referenced in `app/src`. `pnpm exec prettier --check .` is
   available separately (`pnpm format`) but not part of `check` per the
   implementation plan.
-  Note `pnpm typecheck` (`tsc -b`) covers `shared/` and `backend/` only —
-  the `app/` project is not in the build graph; check it by hand with
-  `cd app && pnpm exec tsc --noEmit -p tsconfig.json` (three pre-existing
-  M0/M1 errors there as of M3).
+  `pnpm typecheck` (`tsc -b`) covers `shared/` and `backend/` only — the
+  `app/` project isn't composite so it can't join that build graph, but
+  `check` also runs `pnpm typecheck:app` (`cd app && pnpm exec tsc
+--noEmit -p tsconfig.json`) as a separate step (wired up in
+  `feat/polish-1`, after fixing the two remaining M0/M1-vintage errors).
 - Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
   `pnpm coverage` (vitest + v8, 100% threshold on
   `shared/src/{scoring,disciplines}`, exits nonzero when missed),
