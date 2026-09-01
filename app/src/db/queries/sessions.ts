@@ -60,7 +60,12 @@ export function getSession(db: Database, id: string) {
 }
 
 export type UpdateSessionInput = Partial<
-  Omit<CreateSessionInput, 'type' | 'disciplineId'> & { name: string }
+  Omit<CreateSessionInput, 'type' | 'disciplineId'> & {
+    name: string;
+    /** Unscored extra rounds (A1 §A1.3). Write it via `setSessionExtraRounds`
+     * so the firearm round counter moves with it — never directly. */
+    extraRounds: number | null;
+  }
 >;
 
 export function updateSession(db: Database, id: string, patch: UpdateSessionInput) {

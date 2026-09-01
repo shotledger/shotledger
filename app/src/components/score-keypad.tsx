@@ -24,6 +24,13 @@ function keyLabel(key: KeypadKey): string {
   return key === 'backspace' ? '⌫' : key;
 }
 
+/** Spoken label: 'X' alone reads as a letter, not as "inner ten". */
+function accessibilityLabel(key: KeypadKey, t: (k: string) => string): string {
+  if (key === 'backspace') return t('session.backspace');
+  if (key === 'X') return t('session.innerTenCount');
+  return key;
+}
+
 /**
  * The score keypad. All behaviour lives in `shared/scoring/entry.ts`
  * (docs/specs/m3-scoring-spec.md §3); this component only renders the state
@@ -58,7 +65,7 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
           <Pressable
             key={key}
             accessibilityRole="button"
-            accessibilityLabel={key === 'backspace' ? t('session.backspace') : key}
+            accessibilityLabel={accessibilityLabel(key, t)}
             testID={`key-${key}`}
             onPress={() => onChange(pressKey(state, key))}
             style={({ pressed }) => [

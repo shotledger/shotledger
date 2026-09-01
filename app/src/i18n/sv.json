@@ -11,7 +11,7 @@
   "tabs": {
     "home": "Hem",
     "stats": "Statistik",
-    "firearms": "Vapen",
+    "firearms": "Vapen & ammo",
     "settings": "Inställningar"
   },
   "sessionType": {
@@ -25,7 +25,8 @@
     "newSession": "Nytt pass",
     "emptyTitle": "Inga pass än",
     "emptyBody": "Logga ditt första tränings- eller tävlingspass för att se det här.",
-    "emptyCta": "Logga ditt första pass"
+    "emptyCta": "Logga ditt första pass",
+    "sessionSummary": "{{average}}/serie · {{xCount}}X"
   },
   "stats": {
     "title": "Statistik",
@@ -53,7 +54,7 @@
     "statsTotals": "Totalt",
     "statsMean": "Medel",
     "statsSd": "Standardavvikelse",
-    "statsXCount": "Antal X",
+    "statsXCount": "Centrumtior",
     "comparisonTitle": "Mot senaste 100 serierna",
     "comparisonRecent": "Senaste 100",
     "comparisonPrevious": "Föregående 100",
@@ -62,7 +63,7 @@
     "standardmedaljBrons": "Standardmedalj brons uppnådd"
   },
   "firearms": {
-    "title": "Vapen",
+    "title": "Vapen & ammo",
     "tabFirearms": "Vapen",
     "tabAmmo": "Ammunition",
     "emptyTitle": "Inga vapen än",
@@ -221,11 +222,16 @@
     "save": "Spara serie",
     "clear": "Rensa",
     "innerTen": "X",
-    "innerTenDecimal": "(X)",
     "backspace": "Radera",
-    "keypadHint": "Tryck en siffra per skott",
+    "keypadHint": "Ett tryck per skott — 10 är en vanlig tia, X en centrumtia",
     "keypadHintDecimal": "Två tryck per skott: ring, sedan tiondel",
-    "shotChip": "Skott {{position}}"
+    "shotChip": "Skott {{position}}",
+    "ordinaryTen": "10",
+    "seriesAverage": "Snitt/serie",
+    "innerTenCount": "X (centrumtior)",
+    "extraRounds": "Extra skott (räknas ej i statistik)",
+    "extraRoundsHint": "Avlossade men opoängsatta skott — räknas bara mot skotträknare och ammunitionsåtgång",
+    "extraRoundsSummary": "{{count}} extra skott"
   },
   "dev": {
     "title": "Dev",

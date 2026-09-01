@@ -1,10 +1,18 @@
 {
   "id": "spsf-milsnabb",
   "federation": "SPSF",
-  "name": { "sv": "Militär snabbmatch", "en": "Military rapid fire" },
+  "name": {
+    "sv": "Militär snabbmatch",
+    "en": "Military Rapid Fire"
+  },
   "targetFace": "spsf-snabbskjutning-25m",
   "defaultSeriesLength": 5,
   "scoring": "rings",
   "allowsDecimal": false,
-  "weaponGroups": ["spsf:A", "spsf:B", "spsf:C", "spsf:R"]
+  "weaponGroups": [
+    "spsf:A",
+    "spsf:B",
+    "spsf:C",
+    "spsf:R"
+  ]
 }

@@ -8,6 +8,8 @@ import {
   getDiscipline,
   getProgram,
   guldserieThreshold,
+  seriesAverageTenths,
+  sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
   type EntryShot,
@@ -40,6 +42,10 @@ export interface SessionDetail {
   program: Program | null;
   seriesRows: SeriesRow[];
   results: SessionResults;
+  /** Mean of the scored series' totals, in tenths — the header's "snitt/serie". */
+  seriesAverageTenths: number | null;
+  /** Centrumtior in the scored series (spec A-S7). */
+  innerTenCount: number;
   /** Series length used for new series: the program's, else the discipline's. */
   seriesLength: number;
   scoringMode: 'integer' | 'decimal';
@@ -56,6 +62,8 @@ const EMPTY: SessionDetail = {
   program: null,
   seriesRows: [],
   results: { beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false },
+  seriesAverageTenths: null,
+  innerTenCount: 0,
   seriesLength: 5,
   scoringMode: 'integer',
   mainHasSighter: false,
@@ -104,15 +112,20 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     };
   });
 
-  const results = sessionResults(
-    seriesRows.map((row) => ({ isSighter: row.isSighter, isFinal: row.isFinal, shots: row.shots })),
-  );
+  const forResults = seriesRows.map((row) => ({
+    isSighter: row.isSighter,
+    isFinal: row.isFinal,
+    shots: row.shots,
+  }));
+  const results = sessionResults(forResults);
 
   return {
     session,
     program,
     seriesRows,
     results,
+    seriesAverageTenths: seriesAverageTenths(forResults),
+    innerTenCount: sessionInnerTenCount(forResults),
     seriesLength,
     scoringMode: session.decimalScoring === 1 ? 'decimal' : 'integer',
     mainHasSighter: seriesRows.some((row) => row.isSighter && !row.isFinal),

@@ -30,6 +30,7 @@ import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
 import { listFirearms } from '@/db/queries/firearms';
 import { addSeries } from '@/db/queries/series';
+import { setSessionExtraRounds } from '@/db/queries/round-count';
 import { createSession, type SessionType } from '@/db/queries/sessions';
 import {
   COMPETITION_LEVELS,
@@ -61,6 +62,7 @@ export default function NewSessionScreen() {
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
   const [nameOverride, setNameOverride] = useState<string | null>(null);
+  const [extraRounds, setExtraRounds] = useState('');
 
   const discipline = requireDiscipline(disciplineId);
   const programs = programsForDiscipline(disciplineId);
@@ -121,6 +123,13 @@ export default function NewSessionScreen() {
       startedAt,
       decimalScoring: showDecimalToggle && decimalScoring,
     });
+
+    // Unscored extra rounds go through the round-count path so the firearm
+    // counter moves with them (spec A1 §A1.3 A-X1); never through createSession.
+    const parsedExtraRounds = extraRounds.trim() === '' ? null : Number(extraRounds.trim());
+    if (parsedExtraRounds !== null && Number.isInteger(parsedExtraRounds) && parsedExtraRounds >= 0) {
+      setSessionExtraRounds(db, session.id, parsedExtraRounds);
+    }
 
     // A fixed-format program pre-creates its series skeleton (§6.3).
     if (program) {
@@ -272,6 +281,23 @@ export default function NewSessionScreen() {
           </View>
         </Card>
       )}
+
+      <Card>
+        <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
+        <TextInput
+          value={extraRounds}
+          onChangeText={setExtraRounds}
+          keyboardType="number-pad"
+          inputMode="numeric"
+          placeholder="0"
+          placeholderTextColor={theme.textSecondary}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+          testID="extra-rounds"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.extraRoundsHint')}
+        </ThemedText>
+      </Card>
 
       <Card>
         <ThemedText type="smallBold">{t('session.name')}</ThemedText>

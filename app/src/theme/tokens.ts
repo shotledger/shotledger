@@ -23,19 +23,17 @@ export const Colors = {
   // "Purple Rain" dark theme. Deep near-black purple ground with
   // purple-tinted (never gray) text and borders. Two accent options were
   // designed and checked for WCAG AA contrast (see app/src/theme/tokens.test.ts
-  // and the evidence report on this branch); gold is the committed default
-  // — it beats lavender on every pairing (10.10:1/9.06:1/9.83:1 vs
-  // 7.32:1/6.57:1/7.13:1 for background/backgroundElement/onPrimary-on-primary)
-  // while still reading as "Prince's gold". To switch to the lavender
-  // alternative, replace `primary`/`onPrimary` below with
-  // `PURPLE_RAIN_LAVENDER_ACCENT.primary`/`.onPrimary` — a one-line change.
+  // and the evidence report on this branch). Gold won on contrast but the
+  // maintainer rejected it for buttons (2026-09-01, "do not use yellow for
+  // buttons"), so `primary` is the lavender accent; the gold values are kept
+  // below as PURPLE_RAIN_GOLD_ACCENT_REJECTED, non-interactive use only.
   dark: {
     text: '#F6EEE4',
     background: '#16101F',
     backgroundElement: '#221934',
     backgroundSelected: '#2E2246',
     textSecondary: '#C9B9DC',
-    primary: '#E8B84B',
+    primary: '#B98CFF', // === PURPLE_RAIN_LAVENDER_ACCENT.primary (asserted in tokens.test.ts)
     onPrimary: '#1A1226',
     border: '#7360B0',
     danger: '#FF7A85',
@@ -44,15 +42,23 @@ export const Colors = {
 } as const;
 
 /**
- * Alternative dark-theme accent (bright lavender/purple) for the "Purple
- * Rain" theme, kept here so swapping the default gold accent is a one-line
- * change: set `Colors.dark.primary`/`.onPrimary` to these values. Both
- * accents pass WCAG AA against `background` and `backgroundElement`
- * (3:1 UI-component minimum) and against `onPrimary` (4.5:1 text minimum) —
- * see the evidence report for the full contrast table.
+ * The dark theme's accent: bright lavender. Passes WCAG AA against
+ * `background` and `backgroundElement` (3:1 UI-component minimum) and against
+ * `onPrimary` (4.5:1 text minimum) — contrast table in the evidence report.
  */
 export const PURPLE_RAIN_LAVENDER_ACCENT = {
   primary: '#B98CFF',
+  onPrimary: '#1A1226',
+} as const;
+
+/**
+ * REJECTED FOR BUTTONS (maintainer, 2026-09-01: "do not use yellow for
+ * buttons"). Kept only so the contrast work is not lost; do not assign it to
+ * `primary` or any other interactive token. Semantic colours
+ * (success/warning/danger) are unaffected by that ruling.
+ */
+export const PURPLE_RAIN_GOLD_ACCENT_REJECTED = {
+  primary: '#E8B84B',
   onPrimary: '#1A1226',
 } as const;
 

@@ -47,7 +47,20 @@ export default function HomeScreen() {
                 key={session.id}
                 testID={`home-session-${index}`}
                 title={session.name}
-                subtitle={`${formatDate(session.startedAt, i18n.language)} · ${session.total}`}
+                subtitle={[
+                  formatDate(session.startedAt, i18n.language),
+                  String(session.total),
+                  // Average and X count are omitted, never printed as 0/NaN,
+                  // when the session has nothing scored yet (spec B-L2).
+                  session.seriesAverage === null
+                    ? null
+                    : t('home.sessionSummary', {
+                        average: session.seriesAverage.toFixed(1),
+                        xCount: session.innerTenCount,
+                      }),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
                 trailing={<Chip label={t(`sessionType.${session.type}`)} />}
                 onPress={() => router.push(`/session/${session.id}`)}
               />

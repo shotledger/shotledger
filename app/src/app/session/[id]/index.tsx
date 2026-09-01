@@ -5,7 +5,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -19,15 +19,18 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { setSessionExtraRounds } from '@/db/queries/round-count';
 import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionStats } from '@/features/session/use-session-stats';
+import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 type DetailView = 'series' | 'stats';
 
 export default function SessionDetailScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail, refresh } = useSessionDetail(id);
@@ -37,6 +40,9 @@ export default function SessionDetailScreen() {
   const [view, setView] = useState<DetailView>('series');
 
   const { session, seriesRows, results, mainHasSighter, finalHasSighter } = detail;
+  const [extraRounds, setExtraRounds] = useState<string>(
+    session?.extraRounds == null ? '' : String(session.extraRounds),
+  );
 
   if (!session) {
     return (
@@ -64,6 +70,22 @@ export default function SessionDetailScreen() {
     setNextIsSighter(false);
     refresh();
     openSeries(position);
+  }
+
+  /**
+   * Unscored extra rounds (spec A1 §A1.3). Saved on blur so the firearm round
+   * counter moves once per edit, by the delta, rather than on every keystroke.
+   */
+  function onCommitExtraRounds() {
+    if (!db) return;
+    const trimmed = extraRounds.trim();
+    const parsed = trimmed === '' ? null : Number(trimmed);
+    if (parsed !== null && (!Number.isInteger(parsed) || parsed < 0)) {
+      setExtraRounds(session?.extraRounds == null ? '' : String(session.extraRounds));
+      return;
+    }
+    setSessionExtraRounds(db, id, parsed);
+    refresh();
   }
 
   function onStartFinal() {
@@ -149,11 +171,46 @@ export default function SessionDetailScreen() {
             testID="session-total"
           />
         )}
+        <View style={styles.resultsRow}>
+          <ResultCellText
+            label={t('session.seriesAverage')}
+            value={
+              detail.seriesAverageTenths === null
+                ? '–'
+                : tenthsToScore(detail.seriesAverageTenths).toFixed(1)
+            }
+            testID="session-series-average"
+          />
+          <ResultCellText
+            label={t('session.innerTenCount')}
+            value={String(detail.innerTenCount)}
+            testID="session-inner-ten-count"
+          />
+        </View>
         {seriesRows[0]?.guldThreshold != null && (
           <ThemedText type="small" themeColor="textSecondary">
             {t('session.guldAt', { points: seriesRows[0].guldThreshold })}
           </ThemedText>
         )}
+      </Card>
+
+      <Card>
+        <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
+        <TextInput
+          value={extraRounds}
+          onChangeText={setExtraRounds}
+          onBlur={onCommitExtraRounds}
+          onSubmitEditing={onCommitExtraRounds}
+          keyboardType="number-pad"
+          inputMode="numeric"
+          placeholder="0"
+          placeholderTextColor={theme.textSecondary}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+          testID="extra-rounds"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.extraRoundsHint')}
+        </ThemedText>
       </Card>
 
       {seriesRows.length > 0 && (
@@ -277,6 +334,20 @@ export default function SessionDetailScreen() {
   );
 }
 
+/** A header cell whose value is already formatted (average, counts). */
+function ResultCellText({ label, value, testID }: { label: string; value: string; testID: string }) {
+  return (
+    <View style={styles.resultCell}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      <ThemedText type="subtitle" testID={testID}>
+        {value}
+      </ThemedText>
+    </View>
+  );
+}
+
 function ResultCell({ label, tenths, testID }: { label: string; tenths: number; testID: string }) {
   return (
     <View style={styles.resultCell}>
@@ -325,5 +396,12 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.6,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: 16,
   },
 });

@@ -3,7 +3,7 @@
 import { addFirearmGroup } from './queries/firearm-groups';
 import { addLicense } from './queries/licenses';
 import { logMaintenanceEvent } from './queries/maintenance-events';
-import { applyRoundCountDelta } from './queries/round-count';
+import { applyRoundCountDelta, setSessionExtraRounds } from './queries/round-count';
 import { addSeries } from './queries/series';
 import { createSession } from './queries/sessions';
 import { addShot } from './queries/shots';
@@ -46,7 +46,11 @@ function isoDaysFromNow(days: number): string {
   return new Date(Date.now() + days * DAY_MS).toISOString();
 }
 
-/** Adds one 5-shot precision-style series (values 6-10, occasional X). */
+/**
+ * Adds one 5-shot precision-style series (values 6-10). About a third of the
+ * tens are marked `is_inner_ten` — a centrumtia, i.e. what the `X` key writes
+ * since spec Amendment A2; the rest are ordinary tens entered with `10`.
+ */
 function addPrecisionSeries(
   db: Database,
   sessionId: string,
@@ -57,6 +61,7 @@ function addPrecisionSeries(
   const s = addSeries(db, { sessionId, position, ...opts });
   for (let i = 0; i < 5; i++) {
     const value = 6 + Math.floor(rng() * 5); // 6..10
+    // Only a ten can be a centrumtia.
     const isInnerTen = value === 10 && rng() < 0.3;
     addShot(db, {
       seriesId: s.id,
@@ -180,6 +185,9 @@ export function seedDemoData(db: Database) {
       for (let p = 2; p <= 13; p++) addPrecisionSeries(db, session.id, p, rng);
       // round counter (§4 M4): every shot including sighters, firearm-linked only
       applyRoundCountDelta(db, pistol.id, 13 * 5);
+      // A few sessions carry unscored extra rounds (fouling/function checks):
+      // volume only, never score (§A1.3).
+      if (i % 3 === 0) setSessionExtraRounds(db, session.id, 5 + Math.floor(rng() * 10));
       continue;
     }
 
@@ -191,6 +199,7 @@ export function seedDemoData(db: Database) {
       addPrecisionSeries(db, session.id, 9, rng, { isSighter: true, isFinal: true });
       for (let p = 10; p <= 12; p++) addPrecisionSeries(db, session.id, p, rng, { isFinal: true });
       applyRoundCountDelta(db, pistol.id, 12 * 5);
+      setSessionExtraRounds(db, session.id, 10);
       continue;
     }
 
@@ -199,6 +208,7 @@ export function seedDemoData(db: Database) {
     const scoredCount = 4 + Math.floor(rng() * 3);
     for (let p = 2; p <= scoredCount + 1; p++) addPrecisionSeries(db, session.id, p, rng);
     applyRoundCountDelta(db, pistol.id, (scoredCount + 1) * 5);
+    if (i % 3 === 0) setSessionExtraRounds(db, session.id, 5 + Math.floor(rng() * 10));
   }
 }
 
