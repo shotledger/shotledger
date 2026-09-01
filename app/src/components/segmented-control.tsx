@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View, type ViewProps } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export interface SegmentedControlOption<T extends string> {
@@ -24,6 +25,8 @@ export function SegmentedControl<T extends string>({
   style,
   ...rest
 }: SegmentedControlProps<T>) {
+  const theme = useTheme();
+
   return (
     <ThemedView type="backgroundElement" style={[styles.track, style]} {...rest}>
       {options.map((option) => {
@@ -36,7 +39,9 @@ export function SegmentedControl<T extends string>({
             onPress={() => onChange(option.value)}
             style={styles.segmentPressable}
           >
-            <View style={[styles.segment, selected && styles.segmentSelected]}>
+            <View
+              style={[styles.segment, selected && { backgroundColor: theme.backgroundSelected }]}
+            >
               <ThemedText
                 type="small"
                 themeColor={selected ? 'text' : 'textSecondary'}
@@ -66,9 +71,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Radius.small,
     alignItems: 'center',
-  },
-  segmentSelected: {
-    backgroundColor: 'rgba(127,127,127,0.16)',
   },
   label: {
     textAlign: 'center',
