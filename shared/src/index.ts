@@ -3,3 +3,6 @@ export function ping(): string {
 }
 
 export * from './scoring/totals';
+export * from './scoring/entry';
+export * from './scoring/marke';
+export * from './disciplines';
