@@ -57,6 +57,9 @@ barometer; no scoring), Skytteappen (club ecosystem).
       vs. protective: AGPL)
 - [ ] v2 scoring accuracy bar (TargetScan benchmark: validated 0.2–0.5 mm
       gauge accuracy; manual correction must be effortless regardless)
+- [ ] Adopt reqstool for requirement↔test traceability at M1 (SHB/FAP
+      rules as annotated requirements)? OpenSpec evaluated and deferred —
+      plan.md + implementation-plan + ADRs cover its role for now
 
 ## Feature plan
 
@@ -154,6 +157,12 @@ verify the app without a human in the loop:
   licenses) so every screen renders meaningful content for review.
 - **CLAUDE.md** in the repo documents how an agent launches, seeds,
   screenshots, and tests the app — any session is self-sufficient.
+- **Knowledge as project skills/references** so ANY developer's agent
+  inherits the standards: `.claude/skills/spsf-domain/` (domain hard
+  rules, auto-triggers on scoring/compliance work) →
+  `docs/reference/spsf-shb-2026.md` (verified SHB facts, page-cited);
+  `docs/adr/` (architecture decision records — never silently
+  contradicted); CLAUDE.md (workflow + hard rules, auto-loaded).
 - **Impeccable plugin, project-scoped**: `.claude/settings.json` registers
   the marketplace (github.com/pbakaus/impeccable) and enables the plugin
   for everyone. One-time per contributor after cloning (security trust
