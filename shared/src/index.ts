@@ -7,6 +7,7 @@ export * from './scoring/entry';
 export * from './scoring/marke';
 export * from './scoring/standardmedalj';
 export * from './scoring/stats';
+export * from './scoring/group';
 export * from './disciplines';
 export * from './firearms';
 export * from './compliance';
