@@ -45,12 +45,31 @@ Code + tests written; `pnpm check` green; the relevant checkbox ticked
 in `docs/implementation-plan.md` on the same branch; UI tasks include a
 screenshot from the agentic loop.
 
-## Agentic loop (fills in at M0 scaffold — keep this section updated)
+## Agentic loop (verified at M0 scaffold — keep this section updated)
 
-- Install: `pnpm i`
-- Web preview (primary UI iteration surface): `cd app && pnpm expo start
-  --web`, then view/interact/screenshot via browser tooling
+- Install: `pnpm i` (repo root; pnpm workspace covers `app/`, `shared/`,
+  `backend/`). First install on a new machine also needs
+  `pnpm approve-builds esbuild workerd` (native build scripts pnpm
+  blocks by default — esbuild for bundling, workerd for
+  `backend`'s Cloudflare Workers vitest pool).
+- Web preview (primary UI iteration surface): `cd app && pnpm exec expo
+  start --web --port <port>` (backgrounded), poll
+  `curl -s -o /dev/null -w '%{http_code}' http://localhost:<port>/`
+  until it returns `200`, then view/interact/screenshot via browser
+  tooling. Kill the server (`pkill -f 'expo start --web'`) when done —
+  never leave it running.
 - Android: KVM emulator + `adb exec-out screencap`; Maestro flows in
-  `app/e2e/` (`maestro test e2e/<flow>.yaml`)
+  `app/e2e/` (`maestro test e2e/<flow>.yaml`). **Not yet available on
+  this machine** — no Android SDK/emulator image installed as of M0; a
+  separate task installs it. Until then, Android-boot verification is
+  deferred and the web target is the only agentic-loop check.
 - Seed/wipe demo data: dev menu (planned deep link `shotledger://dev/seed`)
-- Checks: `pnpm check` (typecheck + lint + unit tests)
+  — lands at M1 with the data layer.
+- Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
+  (cd app && pnpm exec jest --passWithNoTests)`), run from the repo
+  root. `pnpm exec prettier --check .` is available separately
+  (`pnpm format`) but not part of `check` per the implementation plan.
+- Backend (`backend/`, hello-world only, never deployed by an agent):
+  `cd backend && pnpm test` runs its own Cloudflare Workers vitest
+  suite; not wired into the root `pnpm check` (out of scope until it
+  ships real endpoints).
