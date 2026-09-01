@@ -22,11 +22,24 @@ export interface FlaggedShot extends ScoredShot {
   isInnerTen: boolean;
 }
 
+/**
+ * WebShooter series-level-total granularity (spec Amendment WS1,
+ * docs/specs/webshooter-app-spec.md): a series with no per-shot detail,
+ * only a stored total and the shot count backing it. `shots` on the
+ * carrying series is always `[]` when this is set.
+ */
+export interface SeriesTotalOverride {
+  tenths: number;
+  shotCount: number;
+}
+
 /** One series as the result model sees it (§6.3). */
 export interface SeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
   shots: readonly ScoredShot[];
+  /** Set only for an imported WebShooter series with no shot rows (WS1). */
+  totalOverride?: SeriesTotalOverride | null;
 }
 
 export interface SessionResults {
@@ -59,7 +72,9 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
   for (const series of seriesList) {
     if (series.isFinal) hasFinal = true;
     if (series.isSighter) continue;
-    const total = sumValueTenths(series.shots);
+    // WS1: an override series carries its total directly — never sum
+    // `shots`, which is always empty for such a series.
+    const total = series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots);
     if (series.isFinal) finalTenths += total;
     else beforeFinalTenths += total;
   }
@@ -72,9 +87,17 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
   };
 }
 
-/** Volume metric: every shot counts, sighters included (§6.3). */
+/**
+ * Volume metric: every shot counts, sighters included (§6.3). An override
+ * series (WS1) has no `shots` rows, so it contributes its stored
+ * `totalOverride.shotCount` instead — the round count must reflect shots
+ * actually fired even though no per-shot detail was imported.
+ */
 export function shotVolume(seriesList: readonly SeriesForResults[]): number {
-  return seriesList.reduce((count, series) => count + series.shots.length, 0);
+  return seriesList.reduce(
+    (count, series) => count + (series.totalOverride?.shotCount ?? series.shots.length),
+    0,
+  );
 }
 
 // --- Amendment A1 §A1.2: session-header stats ---
@@ -92,12 +115,17 @@ export interface FlaggedSeriesForResults {
  * final series are included, so a finished championship averages over its
  * grundomgång and its final together. A scored series with no shots entered
  * yet is excluded rather than counted as 0, so adding an empty series never
- * drops the running average. `null` when nothing qualifies.
+ * drops the running average. `null` when nothing qualifies. An override
+ * series (WS1) counts as scored using its stored total — it is a
+ * series-level metric, not a per-shot one, so WebShooter imports without
+ * per-shot detail still contribute (spec Amendment WS1).
  */
 export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): number | null {
   const totals = seriesList
-    .filter((series) => !series.isSighter && series.shots.length > 0)
-    .map((series) => sumValueTenths(series.shots));
+    .filter(
+      (series) => !series.isSighter && (series.totalOverride != null || series.shots.length > 0),
+    )
+    .map((series) => (series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots)));
   if (totals.length === 0) return null;
   return totals.reduce((sum, total) => sum + total, 0) / totals.length;
 }

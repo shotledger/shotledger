@@ -28,6 +28,15 @@ export interface StatsSeries {
   isSighter: boolean;
   isFinal: boolean;
   shots: readonly StatsShot[];
+  /**
+   * WebShooter series-level-total granularity (spec Amendment WS1,
+   * docs/specs/webshooter-app-spec.md): set only for an imported series
+   * with no shot rows. `shots` is always `[]` when this is set. Included
+   * in series-level metrics (bestWorstSeries, volume); every per-shot
+   * metric (mean/SD/X%/trend/guldserie) naturally excludes it since there
+   * is no shot data to pool.
+   */
+  totalOverride?: { tenths: number; shotCount: number } | null;
 }
 
 // --- Low-level shot math -------------------------------------------------
@@ -74,9 +83,16 @@ export function scoredShots(seriesList: readonly StatsSeries[]): StatsShot[] {
   return scoredSeries(seriesList).flatMap((series) => series.shots);
 }
 
-/** Volume metric: every shot including sighter series (spsf-domain rule 2). */
+/**
+ * Volume metric: every shot including sighter series (spsf-domain rule 2).
+ * An override series (WS1) contributes its stored shot count instead of
+ * `shots.length` (always 0 for such a series).
+ */
 export function volumeShotCount(seriesList: readonly StatsSeries[]): number {
-  return seriesList.reduce((count, series) => count + series.shots.length, 0);
+  return seriesList.reduce(
+    (count, series) => count + (series.totalOverride?.shotCount ?? series.shots.length),
+    0,
+  );
 }
 
 // --- Best / worst series ----------------------------------------------------
@@ -93,14 +109,18 @@ export interface BestWorstSeries {
 
 /**
  * Highest/lowest-scoring non-sighter series by total. Ties keep the first
- * occurrence in input order (documented, not undefined behavior).
+ * occurrence in input order (documented, not undefined behavior). An
+ * override series (WS1) is included using its stored total — this is a
+ * series-level metric, so it works without per-shot detail.
  */
 export function bestWorstSeries(seriesList: readonly StatsSeries[]): BestWorstSeries {
   const totals = scoredSeries(seriesList)
-    .filter((series) => series.shots.length > 0)
+    .filter((series) => series.totalOverride != null || series.shots.length > 0)
     .map((series) => ({
       id: series.id,
-      totalTenths: series.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
+      totalTenths: series.totalOverride
+        ? series.totalOverride.tenths
+        : series.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
     }));
 
   if (totals.length === 0) return { best: null, worst: null };

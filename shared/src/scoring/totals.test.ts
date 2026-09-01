@@ -129,6 +129,38 @@ describe('sessionResults (spec T3-T8)', () => {
       hasFinal: true,
     });
   });
+
+  it('WS1: an override series contributes its stored total, not shots (which are empty)', () => {
+    const overrideMain: SeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      shots: [],
+      totalOverride: { tenths: 470, shotCount: 5 },
+    };
+    const results = sessionResults([overrideMain, main(90, 90)]);
+    expect(results).toEqual({
+      beforeFinalTenths: 650,
+      finalTenths: 0,
+      totalTenths: 650,
+      hasFinal: false,
+    });
+  });
+
+  it('WS1: an override final series contributes to finalTenths', () => {
+    const overrideFinal: SeriesForResults = {
+      isSighter: false,
+      isFinal: true,
+      shots: [],
+      totalOverride: { tenths: 480, shotCount: 5 },
+    };
+    const results = sessionResults([main(90), overrideFinal]);
+    expect(results).toEqual({
+      beforeFinalTenths: 90,
+      finalTenths: 480,
+      totalTenths: 570,
+      hasFinal: true,
+    });
+  });
 });
 
 describe('shotVolume (spec T9)', () => {
@@ -139,6 +171,16 @@ describe('shotVolume (spec T9)', () => {
   it('is zero for a session with no shots', () => {
     expect(shotVolume([])).toBe(0);
     expect(shotVolume([main()])).toBe(0);
+  });
+
+  it('WS1: an override series contributes its stored shot count, not shots.length', () => {
+    const overrideMain: SeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      shots: [],
+      totalOverride: { tenths: 470, shotCount: 5 },
+    };
+    expect(shotVolume([overrideMain, main(90, 90)])).toBe(7);
   });
 });
 
@@ -231,6 +273,27 @@ describe('seriesAverageTenths (spec A-S1..A-S6)', () => {
   it('A-S6: only sighters or only empty series means no average', () => {
     expect(seriesAverageTenths([series([100], { isSighter: true })])).toBeNull();
     expect(seriesAverageTenths([series([])])).toBeNull();
+  });
+
+  it('WS1: an override series is averaged in using its stored total', () => {
+    const overrideMain: SeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      shots: [],
+      totalOverride: { tenths: 450, shotCount: 5 },
+    };
+    // 430 and 450 -> 440
+    expect(seriesAverageTenths([series([90, 90, 90, 80, 80]), overrideMain])).toBe(440);
+  });
+
+  it('WS1: an override series alone produces its own total as the average', () => {
+    const overrideMain: SeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      shots: [],
+      totalOverride: { tenths: 450, shotCount: 5 },
+    };
+    expect(seriesAverageTenths([overrideMain])).toBe(450);
   });
 });
 
