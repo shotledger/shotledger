@@ -17,6 +17,10 @@ build/
 .env
 .env.*
 
+# Python (spike/cv prototype)
+__pycache__/
+*.pyc
+
 # Editor / OS
 .idea/
 .vscode/
