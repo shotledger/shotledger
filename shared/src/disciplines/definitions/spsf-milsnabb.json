@@ -9,10 +9,5 @@
   "defaultSeriesLength": 5,
   "scoring": "rings",
   "allowsDecimal": false,
-  "weaponGroups": [
-    "spsf:A",
-    "spsf:B",
-    "spsf:C",
-    "spsf:R"
-  ]
+  "weaponGroups": ["spsf:A", "spsf:B", "spsf:C", "spsf:R"]
 }

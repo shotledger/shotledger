@@ -9,13 +9,5 @@
   "defaultSeriesLength": 5,
   "scoring": "rings",
   "allowsDecimal": false,
-  "weaponGroups": [
-    "spsf:A",
-    "spsf:AM",
-    "spsf:AP",
-    "spsf:AG",
-    "spsf:A-opt",
-    "spsf:B",
-    "spsf:C"
-  ]
+  "weaponGroups": ["spsf:A", "spsf:AM", "spsf:AP", "spsf:AG", "spsf:A-opt", "spsf:B", "spsf:C"]
 }

@@ -14,6 +14,9 @@ export default tseslint.config(
       '**/.wrangler/**',
       '**/android/**',
       '**/.stryker-tmp/**',
+      // Agent worktrees are checkouts of this same repo; linting them lints
+      // other branches' source through the root config.
+      '.claude/worktrees/**',
       'coverage/**',
       'reports/**',
       '**/ios/**',

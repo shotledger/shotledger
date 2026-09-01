@@ -1,8 +1,4 @@
-import {
-  Colors,
-  PURPLE_RAIN_GOLD_ACCENT_REJECTED,
-  PURPLE_RAIN_LAVENDER_ACCENT,
-} from './tokens';
+import { Colors, PURPLE_RAIN_GOLD_ACCENT_REJECTED, PURPLE_RAIN_LAVENDER_ACCENT } from './tokens';
 
 describe('theme tokens', () => {
   it('defines both light and dark palettes with the same keys', () => {

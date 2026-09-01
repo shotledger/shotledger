@@ -211,7 +211,10 @@ describe('seriesAverageTenths (spec A-S1..A-S6)', () => {
   });
 
   it('A-S3: sighter series are excluded from the average', () => {
-    const list = [series([100, 100, 100, 100, 100], { isSighter: true }), series([90, 90, 90, 80, 80])];
+    const list = [
+      series([100, 100, 100, 100, 100], { isSighter: true }),
+      series([90, 90, 90, 80, 80]),
+    ];
     expect(seriesAverageTenths(list)).toBe(430);
   });
 

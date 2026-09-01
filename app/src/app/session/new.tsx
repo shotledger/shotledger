@@ -127,7 +127,11 @@ export default function NewSessionScreen() {
     // Unscored extra rounds go through the round-count path so the firearm
     // counter moves with them (spec A1 §A1.3 A-X1); never through createSession.
     const parsedExtraRounds = extraRounds.trim() === '' ? null : Number(extraRounds.trim());
-    if (parsedExtraRounds !== null && Number.isInteger(parsedExtraRounds) && parsedExtraRounds >= 0) {
+    if (
+      parsedExtraRounds !== null &&
+      Number.isInteger(parsedExtraRounds) &&
+      parsedExtraRounds >= 0
+    ) {
       setSessionExtraRounds(db, session.id, parsedExtraRounds);
     }
 

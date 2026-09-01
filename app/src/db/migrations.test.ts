@@ -46,7 +46,15 @@ describe('A-X9: 0001 applies to an existing populated 0000 database', () => {
         `INSERT INTO sessions (id, created_at, updated_at, name, type, discipline_id, started_at, is_championship, decimal_scoring)
          VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)`,
       )
-      .run('legacy-1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'Old session', 'training', 'spsf-precision', '2026-01-01T00:00:00.000Z');
+      .run(
+        'legacy-1',
+        '2026-01-01T00:00:00.000Z',
+        '2026-01-01T00:00:00.000Z',
+        'Old session',
+        'training',
+        'spsf-precision',
+        '2026-01-01T00:00:00.000Z',
+      );
 
     expect(() => rest.forEach((tag) => applyMigration(sqlite, tag))).not.toThrow();
 

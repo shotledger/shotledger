@@ -9,7 +9,5 @@
   "defaultSeriesLength": 10,
   "scoring": "rings",
   "allowsDecimal": true,
-  "weaponGroups": [
-    "generic:airgun"
-  ]
+  "weaponGroups": ["generic:airgun"]
 }

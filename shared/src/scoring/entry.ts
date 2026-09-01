@@ -44,10 +44,12 @@ export interface CreateKeypadStateOptions {
   shots?: readonly (EntryShot | null)[];
 }
 
-/** The single-digit ring keys. `'10'` is a ten key, not a digit — it must not
- * be read as the character '1' followed by '0'. */
+const DIGIT_KEY_SET: ReadonlySet<string> = new Set(DIGIT_KEYS);
+
+/** The single-digit ring keys. `'10'` is a ten key, not a digit — a range
+ * check on the string would read it as '1' followed by '0'. */
 function isDigitKey(key: KeypadKey): key is (typeof DIGIT_KEYS)[number] {
-  return key.length === 1 && key >= '0' && key <= '9';
+  return DIGIT_KEY_SET.has(key);
 }
 
 function firstEmptyIndex(shots: readonly (EntryShot | null)[]): number {

@@ -131,7 +131,12 @@ describe('A-X4: extra rounds are excluded from every score statistic', () => {
   it('leaves mean, X count, scored-shot set and series structure untouched', () => {
     const s = session();
     scoredSeries(s.id, [100, 90, 90, 80, 80]);
-    addShot(db, { seriesId: addSeries(db, { sessionId: s.id, position: 2 }).id, position: 1, valueTenths: 100, isInnerTen: true });
+    addShot(db, {
+      seriesId: addSeries(db, { sessionId: s.id, position: 2 }).id,
+      position: 1,
+      valueTenths: 100,
+      isInnerTen: true,
+    });
 
     const before = listAllStatsSeries(db);
     const beforeMean = meanTenths(scoredShots(before));

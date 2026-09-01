@@ -93,7 +93,13 @@ describe('seedDemoData — X and extra rounds (spec A1 §A1.3 / A2)', () => {
 
   it('never writes the deprecated is_inner_ten_decimal flag (invariant A-N10)', () => {
     seedDemoData(db);
-    expect(db.select().from(shots).all().every((row) => row.isInnerTenDecimal === 0)).toBe(true);
+    expect(
+      db
+        .select()
+        .from(shots)
+        .all()
+        .every((row) => row.isInnerTenDecimal === 0),
+    ).toBe(true);
   });
 
   it('gives some sessions unscored extra rounds', () => {

@@ -318,7 +318,11 @@ export default function SessionDetailScreen() {
                   testID="sighter-toggle"
                 />
               </View>
-              <PrimaryButton label={t('session.addSeries')} onPress={onAddSeries} testID="add-series" />
+              <PrimaryButton
+                label={t('session.addSeries')}
+                onPress={onAddSeries}
+                testID="add-series"
+              />
               {detail.canStartFinal && !nextIsFinal && (
                 <PrimaryButton
                   label={t('session.startFinal')}
@@ -335,7 +339,15 @@ export default function SessionDetailScreen() {
 }
 
 /** A header cell whose value is already formatted (average, counts). */
-function ResultCellText({ label, value, testID }: { label: string; value: string; testID: string }) {
+function ResultCellText({
+  label,
+  value,
+  testID,
+}: {
+  label: string;
+  value: string;
+  testID: string;
+}) {
   return (
     <View style={styles.resultCell}>
       <ThemedText type="small" themeColor="textSecondary">
