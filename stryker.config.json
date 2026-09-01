@@ -8,7 +8,12 @@
   },
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",
-  "mutate": ["shared/src/scoring/*.ts", "shared/src/disciplines/*.ts", "!**/*.test.ts"],
+  "mutate": [
+    "shared/src/scoring/*.ts",
+    "shared/src/disciplines/*.ts",
+    "shared/src/target-scoring/*.ts",
+    "!**/*.test.ts"
+  ],
   "thresholds": {
     "high": 100,
     "low": 95,
