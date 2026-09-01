@@ -340,8 +340,16 @@ lightweight preset naming the competition type and its defaults:
 { id, disciplineId, federation, name: {sv,en},
   shotsPerSeries,                  -- default series length (e.g. 5)
   scoring: 'integer'|'decimal',
-  supportsFinal: boolean }         -- final section available in UI
+  supportsFinal: boolean,          -- final section available in UI
+  structure?: {                    -- ONLY for fixed-format programs
+    sighterSeries: number,         -- leading sighters (e.g. 1)
+    groups: [ { seriesCount, timeLimitSeconds? } ] } }
 ```
+
+A program **with** `structure` pre-creates its series skeleton on session
+start (time limits shown per series, derived from position — no schema
+change); a program **without** it is fully freeform (§ above). Precision
+is freeform; milsnabb is fixed.
 
 Per-series flags carry the structure instead of the program:
 `is_sighter` (provskott — any number, anywhere) and `is_final` (series
@@ -366,8 +374,8 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
 | id | Federation | Name (sv) | Defaults |
 |---|---|---|---|
-| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal (typical matches: 6/7/10 series + final of 3) |
-| `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: shots/series, timing notes |
+| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform (typical matches 6/7/10 series + final of 3 — never enforced) |
+| `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (maintainer-confirmed): 1 sighter + 4 series à 10 s + 4 à 8 s + 4 à 6 s. VERIFY only: shots per series (assumed 5) |
 | `issf-ap` | ISSF | 10m luftpistol | 10 shots-per-series display grouping? VERIFY; integer (decimal finals out of scope v1) |
 | `issf-25m-pistol` | ISSF | 25m pistol (sport) | 5 shots/series. VERIFY: precision/duel distinction needed in v1? |
 | `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY |
