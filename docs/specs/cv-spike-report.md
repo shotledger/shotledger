@@ -15,6 +15,10 @@ with 16 false positives**, and classical CV kept confusing a printed ring
 digit with a bullet hole. A small learned hole detector is the missing
 piece; the classical stage should be kept for everything around it.
 
+> **Sections 1–5 are the 5-photo run.** [§6](#6-corpus-v2--38-photos) re-runs
+> the same pipeline over 38 photos and supersedes every number below. The
+> conclusion is unchanged; the evidence for it is much stronger.
+
 ---
 
 ## 1. Photo corpus
@@ -430,3 +434,259 @@ Do **not** build v2 photo scoring on this pipeline as it stands.
 
 Nothing here changes any accepted ADR or the M0–M5 plan; photo scoring is
 v2 (§ "Deferred" in `docs/implementation-plan.md`) and stays there.
+
+---
+
+## 6. Corpus v2 — 38 photos
+
+**Date:** 2026-09-01 · same pipeline, 7.6× the photos.
+
+Sections 1–5 were written from 5 photos, 2 of which were the target this
+feature is actually for. The maintainer then hand-picked 38 more. Everything
+below re-runs the *unchanged* pipeline over the full corpus, adds one
+improvement round, and asks whether §5 still holds.
+
+**It does, and more firmly.** Geometry got *better* on the bigger sample —
+sub-millimetre on every photo it locks, and it locks on two thirds of
+precision-face photos. Hole detection did not: 36 % recall / 43 % precision
+overall, and one focused round of classical improvement moved recall by
+exactly zero.
+
+### 6.1 Corpus
+
+All 38 candidates were reviewed one by one. All 38 are genuine target
+photos; nothing was discarded as a non-target. Five of the 38 are the
+phase-1 photos re-supplied, so the corpus is 33 new + 5 known.
+
+| Class | Count |
+|---|---|
+| 25 m precision face (F.7.1) | 28 |
+| Milsnabb face (J.7.1) | 10 |
+| Not a target | 0 |
+
+Camera angle matters enough to be its own axis, so photos are classified by
+how far off frontal the card is (judged visually, cross-checked against the
+fitted black-zone ellipse's axis ratio):
+
+| Angle class | Count | Geometry locked | Partial | Failed |
+|---|---|---|---|---|
+| Straight-on (≲15°) | 22 | 15 | 3 | 4 |
+| Moderate (~20–45°) | 14 | 3 | 2 | 9 |
+| **Excluded: extreme perspective** | **2** | — | — | 2 |
+
+The two excluded photos are `20250906_135537` (card receding almost
+edge-on, plus a hand and marking rod across the centre) and
+`20250918_181552` (near-grazing angle, face occupying a small part of the
+frame, mounted on a stand). They are excluded from the hole metrics only —
+they stay in this table so the report says what the app will and will not
+handle rather than quietly improving its own numbers. Moderate angle is
+*not* excluded: it is the realistic case and the geometry stage exists to
+handle it.
+
+Photos remain outside the repo. Annotated outputs are
+`~/tmp/shotledger-cv-spike/out/<name>_panel_base.jpg` — rectified canvas
+beside the annotated one, which is what the visual hole counts were taken
+from — plus `corpus_2048_base.csv` / `corpus_2048_v2.csv`. Reproduce with
+`spike/cv/eval_corpus.py`.
+
+### 6.2 Target-type detection
+
+| | Photos | Typed correctly |
+|---|---|---|
+| Precision | 28 | 26 (93 %) |
+| Milsnabb | 10 | 2 (20 %) |
+| **All** | **38** | **28 (74 %)** |
+
+The milsnabb number is the headline failure. `guess_kind` compares the
+middle of the face against an annulus, and on a heavily pasted club
+milsnabb target the middle is dark with black repair patches — so it reads
+as a solid disc and is typed `precision`. That makes the ring scale 2.5×
+wrong, which invalidates geometry *and* every score on those photos before
+hole detection is even reached. This is now the single largest source of
+whole-photo failure, and it is a two-class decision on a 200 mm-vs-500 mm
+black zone: it should be a *classifier*, not a hand-written intensity test.
+
+### 6.3 Geometry
+
+Geometry is the good news again, on a much better sample.
+
+| | Count | Share |
+|---|---|---|
+| Full lock (rings visually on the printed lines) | 18 | 47 % |
+| Partial (locked but visibly offset ≥1 mm) | 5 | 13 % |
+| Failed | 15 | 39 % |
+
+Restricted to the face this feature is for, excluding extreme perspective
+(27 photos): **18 full locks (67 %), 5 partial (85 % cumulative), 4
+failures**. On the milsnabb face: **0 of 10**, eight of them downstream of
+the type misdetection above.
+
+Ring residuals, measured on the X / 10 / 9 rings of the 18 locked photos
+(`ring_residuals()`, peak of the angular-mean radial edge profile against
+each nominal radius):
+
+- **median 0.51 mm**
+- **17 of 18 within 0.92 mm**; worst 1.88 mm
+- §3's ±0.6 mm on two photos is confirmed, not contradicted, at 9× the
+  sample. The geometry stage is the part of this spike that is *done*.
+
+One caveat that the bigger corpus makes unmissable: **the residual is not a
+validity check.** On `20250906_104730` the pipeline locked onto the sky and
+gravel behind the target and still reports a 2.3 mm residual, because the
+profile search finds *some* edge near each nominal radius. Residual is only
+meaningful once geometry is known to be on the target. A shipped pipeline
+needs a separate "is this actually a target face" confidence signal.
+
+The four geometry failures on the precision face each have a nameable
+cause, and none of them is perspective:
+
+| Photo | Cause |
+|---|---|
+| `20250831_125338` | Centre off-frame; one short arc of the black zone |
+| `20260609_181957` | Black zone fills the whole frame — Otsu has no paper/black boundary to find |
+| `20250906_104730` | Dark treeline + gravel outweigh the target; largest dark blob is the background |
+| `20250906_150442` | Same, gravel bank |
+
+The last two are new and cheap to fix: "largest dark blob" is the wrong
+prior outdoors. A concentricity or circularity prior would pick the target
+over a treeline in one pass.
+
+### 6.4 Holes — the numbers
+
+165 fresh (unpasted) holes counted by eye across the 36 non-excluded
+photos, against the phase-1 detector unchanged, at the planned 2048 px
+input:
+
+| Subset | Photos | Holes | Detections | TP | FP | Recall | Precision |
+|---|---|---|---|---|---|---|---|
+| Whole corpus | 36 | 165 | 140 | 60 | 80 | **36 %** | **43 %** |
+| Precision face, geometry locked | 18 | 90 | 87 | 53 | 34 | **59 %** | **61 %** |
+| Milsnabb face | 9 | 47 | 33 | 2 | 31 | **4 %** | **6 %** |
+
+Against §3's 5-photo run (24 % / 24 %) this is better, and the improvement
+is almost entirely composition: the bigger corpus contains many more
+straight-on, well-lit precision photos, which is the easy case. The
+milsnabb row is the same disaster at 2× the size.
+
+**No photo in the corpus produced a correct series score.** The best cases
+(`20250921_130706`, `20260613_104716`) found 5 of 5 holes, and
+`20260613_104716` returned 6 false positives alongside them.
+
+Failure-mode tally (counted by eye; a photo can appear in several rows):
+
+| Mode | Photos | Note |
+|---|---|---|
+| Repair patches on the face | ~17 | Still indistinguishable from holes by any classical feature |
+| Nested faces — a card stapled over a larger printed target | ~10 | **New.** The outer face's rings compete with the inner card's in the refine stage |
+| Moderate camera angle | 14 | Geometry, not holes, is what it breaks — see 6.3 |
+| Dark holes on black (no bright backing) | ~5 | **New**, and structurally undetectable by the phase-1 detector — see 6.5 |
+| Overlapping / touching holes | ~8 | Unchanged: merged into one blob |
+| Occlusion (hand, marking rod, pencil) | 3 | Two are false positives on the rod's own tip |
+| Large dark background winning Otsu | 3 | Outdoor photos only |
+| Centre off-frame / black zone filling the frame | 3 | Geometry fails outright |
+| Printed ring digits | all precision photos | The colour cue from §3 held up; it remains contingent on the backing |
+| Target types beyond precision/milsnabb | 0 | The corpus is entirely F.7.1 and J.7.1 |
+
+Two things the bigger corpus settles that §3 could only guess at:
+
+- **Holes in the light zone are still untested.** Every fresh hole in all 38
+  photos is in or on the edge of the black. The black-hat-on-paper path has
+  now gone 38 photos without a single true positive.
+- **The backing is not reliably bright.** §3's colour discriminator assumed
+  a hole shows neutral-white board behind the card. On this corpus the
+  backing is white on some photos, orange on one, and *nothing* on several —
+  the hole is a dark tear. A rule contingent on the backing is now measured
+  as fragile, not merely suspected to be.
+
+### 6.5 Improvement round — one iteration, honest result
+
+The bigger sample pointed at one obvious gap, so that is what the round
+attacked: **holes that read dark on the black zone.** Phase 1 only ran a
+top-hat (bright tears) inside the black and a black-hat on the paper, so a
+dark pit in the black could not be found at all — not "was missed", but had
+no code path. Three coupled changes (`variant="v2"` in `find_holes`):
+
+1. A **dark-on-black channel** — black-hat inside the black zone, with the
+   low-threshold structure gate made relative to that zone's own robust
+   spread. The fixed ±35 grey offset lands below every pixel in a zone whose
+   level is ~65 with a floor near 50, which is why the channel returns
+   nothing without this.
+2. A **local-contrast gate**, without which the new channel returns paper
+   texture.
+3. An explicit **scoring-area cut** — a candidate outside the outermost ring
+   cannot be a shot.
+
+Before/after, same 36 photos, same 165 holes:
+
+| | Detections | TP | FP | Recall | Precision |
+|---|---|---|---|---|---|
+| v1 (phase-1 detector) | 140 | 60 | 80 | 36.4 % | 42.9 % |
+| v2 (this round) | 145 | 60 | 85 | **36.4 %** | **41.4 %** |
+
+**No improvement.** The new channel found one hole that v1 missed
+(`20250831_125338`), lost one that v1 had (`20260426_105819`), and added six
+false positives. The scoring-area cut removed nothing, because no false
+positive was ever outside ring 1. v2 is kept in the code and is *not* the
+default; `variant="v1"` is.
+
+An earlier composition of the same round applied the relative threshold to
+all three channels and scored 53 TP / 73 FP — worse still, because a
+zone-relative threshold costs true positives in the paper zone. That is
+recorded because it is the kind of change that looks obviously right and
+measures wrong.
+
+Why it failed is more useful than that it failed. Measured on the photos
+this was aimed at: a dark .22 hole in the black zone sits about **16 grey
+levels** below a zone whose own median absolute deviation is **4–8** levels.
+The signal is real and it is roughly 2–3 MAD — nowhere near enough margin
+for a threshold. A spot check at 4000 px input recovered one hole on
+`20260809_104014` (0 → 1 detection) and none on the other two, so
+re-cropping from full resolution helps at the margin and does not change the
+conclusion.
+
+That is the same shape of finding as §3's: every classical discriminator
+tried is either too weak, inverted, or contingent on something outside the
+target. Two independent rounds, on 5 and then 38 photos, have now produced
+that answer.
+
+### 6.6 Does the recommendation change?
+
+**No. Phase 1 (auto-geometry + tap-to-mark) / phase 2 (learned heatmap
+detector trained on opt-in corrections) stands, with three amendments.**
+
+What got stronger:
+
+- **Geometry is more clearly shippable than §3 could claim.** 0.51 mm median
+  residual over 18 photos, 67 % full lock on the precision face, and every
+  failure attributable to a named, fixable cause. Tap-to-mark on an
+  auto-rectified canvas with correct SHB edge-rule scoring is a real feature
+  today.
+- **The case for a learned stage 5 is now evidence, not inference.** A second
+  detector round on 7.6× the data moved recall by 0.0 points. 36 % recall
+  with 80 false positives across 36 photos is still worse than useless behind
+  a correction UI.
+
+What changes:
+
+1. **Target-type identification must be learned too, or at least be a
+   trained two-class decision.** At 20 % on the milsnabb face it is now the
+   largest single cause of whole-photo failure, and it poisons geometry
+   rather than merely degrading holes. §4.6's architecture put "identify"
+   inside the classical block; move it out, or make it a confidence-scored
+   decision the user can override with one tap.
+2. **Geometry needs a validity signal, not just a residual.** Two photos
+   locked confidently onto background scenery. The app must be able to say
+   "I did not find a target" instead of drawing rings on gravel — and that
+   is also a prerequisite for tap-to-mark being trustworthy.
+3. **The training corpus target in §5 is now met on quantity and short on
+   variety.** 38 photos with 165 counted holes exist. What is missing for
+   training is per-hole *labels* and the conditions this corpus lacks:
+   holes in the light zone (0 examples), unpasted faces (most club targets
+   here carry hundreds of patches), and a clean precision face shot at
+   moderate angle. The opt-in corrections corpus from normal app use is
+   still the right way to get them.
+
+Unchanged: all on-device, `react-native-fast-opencv` for stages 1–4,
+scoring as pure TypeScript in `shared/`, drag-to-correct over every hole,
+2048 px for geometry with full-resolution re-crops for holes. Nothing here
+touches an accepted ADR or the M0–M5 plan.

@@ -249,9 +249,48 @@ def _radial_profile(g, cx, cy, rmax, nang=540):
     return np.abs(prof - lp)
 
 
+def ring_residuals(rect, geom: Geometry, kind: str, win_mm=3.0):
+    """Per-ring distance from the drawn ring to the printed line it should sit
+    on: peak of the angular-mean radial edge profile within +-win_mm of the
+    nominal radius. This is the geometry accuracy number the report quotes."""
+    g = cv2.cvtColor(rect, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    cx, cy = geom.center
+    rmax = int(TARGETS[kind]["rings"][-1][1] / 2 * geom.px_per_mm * 1.1)
+    prof = _radial_profile(g, cx, cy, rmax)
+    out = []
+    for label, dia in TARGETS[kind]["rings"]:
+        r = dia / 2 * geom.px_per_mm
+        w = win_mm * geom.px_per_mm
+        lo, hi = int(max(0, r - w)), int(min(len(prof), r + w + 1))
+        if hi - lo < 3:
+            out.append((label, None))
+            continue
+        peak = lo + int(np.argmax(prof[lo:hi]))
+        out.append((label, (peak - r) / geom.px_per_mm))
+    return out
+
+
 # ---------------------------------------------------------------- stage 4
 
-def find_holes(rect, geom: Geometry, kind: str) -> list[Hole]:
+def find_holes(rect, geom: Geometry, kind: str, variant: str = "v1") -> list[Hole]:
+    """`v1` is the phase-1 detector. `v2` is the corpus-v2 improvement round,
+    which **measured no better** (identical recall, slightly worse precision --
+    see the Corpus v2 section of the report) and is therefore not the default;
+    it is kept so the before/after is reproducible rather than asserted. Its
+    three changes were:
+
+      * a **dark-on-black** channel, with a threshold relative to the black
+        zone's own spread. Phase 1 only looked for bright tears in the black
+        zone, because every fresh hole in its 5 photos showed white backing
+        board. On the 38-photo corpus a large minority of photos have holes
+        that read as *dark* pits -- no backing light at all -- and those were
+        structurally undetectable, not merely missed. It found one new hole,
+        lost another, and added six false positives.
+      * a **local-contrast** gate, needed to keep that channel from returning
+        paper texture.
+      * an explicit **scoring-area** cut: a candidate outside the outermost
+        ring cannot be a shot.
+    """
     spec = TARGETS[kind]
     g = cv2.cvtColor(rect, cv2.COLOR_BGR2GRAY)
     d_px = BULLET_MM * geom.px_per_mm
@@ -284,11 +323,19 @@ def find_holes(rect, geom: Geometry, kind: str) -> list[Hole]:
                                   (max(3, int(d_px * 3.5)) | 1,) * 2)
     lines = _ring_line_mask(g.shape, geom, kind, d_px)
     paper = _paper_colour(rect, paperzone)
+    tophat = cv2.morphologyEx(g, cv2.MORPH_TOPHAT, k)
+    blackhat = cv2.morphologyEx(g, cv2.MORPH_BLACKHAT, k)
     holes: list[Hole] = []
-    holes += _blobs(cv2.morphologyEx(g, cv2.MORPH_TOPHAT, k), g, blackzone,
-                    d_px, "bright", lines, rect, paper)
-    holes += _blobs(cv2.morphologyEx(g, cv2.MORPH_BLACKHAT, k), g, paperzone,
-                    d_px, "dark", lines, rect, paper)
+    holes += _blobs(tophat, g, blackzone, d_px, "bright", lines, rect, paper,
+                    variant)
+    holes += _blobs(blackhat, g, paperzone, d_px, "dark", lines, rect, paper,
+                    variant)
+    if variant != "v1":
+        # dark tears inside the black zone: invisible to the phase-1 detector
+        holes += _blobs(blackhat, g, blackzone, d_px, "dark_black", lines,
+                        rect, None, variant)
+        holes = [h for h in holes
+                 if math.hypot(h.x - cx, h.y - cy) <= max_r]
     return _dedupe(holes, d_px)
 
 
@@ -339,7 +386,8 @@ def _colour_dist(rect, pix_mask, paper_bgr):
                  abs((c[1] - c[0]) - (paper_bgr[1] - paper_bgr[0])))
 
 
-def _blobs(resp, gray, zone, d_px, polarity, lines, rect_bgr=None, paper_bgr=None):
+def _blobs(resp, gray, zone, d_px, polarity, lines, rect_bgr=None,
+           paper_bgr=None, variant="v2"):
     resp = cv2.bitwise_and(resp, resp, mask=zone)
     if resp.max() < 12:
         return []
@@ -356,10 +404,21 @@ def _blobs(resp, gray, zone, d_px, polarity, lines, rect_bgr=None, paper_bgr=Non
     # saturates on printed glyphs, so thresholding *it* cannot separate a
     # glyph fragment from a hole -- this can.
     bg = float(np.median(gray[zone > 0])) if (zone > 0).any() else 128.0
-    if polarity == "bright":
-        bw_lo = ((gray.astype(np.int16) > bg + 35) & (zone > 0)).astype(np.uint8) * 255
+    if polarity == "dark_black":
+        # A fixed -35 offset is meaningless in a black zone whose own level is
+        # ~65 with a floor at ~50: it lands below every pixel, which is why
+        # this channel returns nothing unless the threshold is relative to the
+        # zone's own spread. Measured: applying the same relative rule to the
+        # other two channels *costs* true positives, so it stays local here.
+        z = gray[zone > 0].astype(np.float32)
+        mad = float(np.median(np.abs(z - bg))) if z.size else 12.0
+        delta = float(np.clip(2.5 * mad, 8.0, 35.0))
     else:
-        bw_lo = ((gray.astype(np.int16) < bg - 35) & (zone > 0)).astype(np.uint8) * 255
+        delta = 35.0
+    if polarity == "bright":
+        bw_lo = ((gray.astype(np.int16) > bg + delta) & (zone > 0)).astype(np.uint8) * 255
+    else:
+        bw_lo = ((gray.astype(np.int16) < bg - delta) & (zone > 0)).astype(np.uint8) * 255
     bw_lo = cv2.bitwise_and(bw_lo, cv2.bitwise_not(lines))
     bw_lo = cv2.morphologyEx(bw_lo, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
     nlo, lablo, statlo, _ = cv2.connectedComponentsWithStats(bw_lo, 8)
@@ -412,6 +471,9 @@ def _blobs(resp, gray, zone, d_px, polarity, lines, rect_bgr=None, paper_bgr=Non
                 continue
         if not _has_dark_core(gray, cx, cy, d_px, polarity):
             continue
+        if variant != "v1" and not _local_contrast(gray, sel, cx, cy, d_px,
+                                                   polarity):
+            continue
         out.append(Hole(cx, cy, math.sqrt(a / math.pi), polarity))
     return out
 
@@ -421,6 +483,20 @@ def _context_frac(bw, cx, cy, r0, r1):
     cv2.circle(m, (int(cx), int(cy)), int(r1), 255, -1)
     cv2.circle(m, (int(cx), int(cy)), int(r0), 0, -1)
     return cv2.mean(bw, m)[0] / 255.0
+
+
+def _local_contrast(gray, sel, cx, cy, d_px, polarity, need=5.0):
+    """A hole differs from the paper immediately around it. Sensor noise and
+    paper texture do not, and that is most of what the new dark-on-black
+    channel would otherwise return."""
+    ring = np.zeros(gray.shape, np.uint8)
+    cv2.circle(ring, (int(cx), int(cy)), int(2.2 * d_px), 255, -1)
+    cv2.circle(ring, (int(cx), int(cy)), int(1.2 * d_px), 0, -1)
+    around = gray[(ring > 0) & ~sel]
+    if around.size < 50:
+        return True
+    d = float(np.median(gray[sel])) - float(np.median(around))
+    return d >= need if polarity == "bright" else -d >= need
 
 
 def _has_dark_core(gray, cx, cy, d_px, polarity):
