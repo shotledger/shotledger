@@ -58,11 +58,16 @@ screenshot from the agentic loop.
   until it returns `200`, then view/interact/screenshot via browser
   tooling. Kill the server (`pkill -f 'expo start --web'`) when done —
   never leave it running.
-- Android: KVM emulator + `adb exec-out screencap`; Maestro flows in
-  `app/e2e/` (`maestro test e2e/<flow>.yaml`). **Not yet available on
-  this machine** — no Android SDK/emulator image installed as of M0; a
-  separate task installs it. Until then, Android-boot verification is
-  deferred and the web target is the only agentic-loop check.
+- Android: toolchain installed under `~/Android/Sdk` (platform 36,
+  emulator, JDK 21 at `~/.sdkman/candidates/java/21.0.12-tem` — system
+  Java 25 does NOT work with Android Gradle). Env comes from `.envrc`
+  (direnv) or source the equivalent exports manually. Emulator:
+  `emulator -avd shotledger -no-window -no-audio -gpu
+  swiftshader_indirect`, wait for `adb wait-for-device shell getprop
+  sys.boot_completed` → 1 (~2 min), screenshot via `adb exec-out
+  screencap -p > shot.png`, kill with `adb emu kill`. Maestro 2.10+ at
+  `~/.maestro/bin/maestro`; flows in `app/e2e/`
+  (`maestro test e2e/<flow>.yaml`).
 - Seed/wipe demo data: dev menu (planned deep link `shotledger://dev/seed`)
   — lands at M1 with the data layer.
 - Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
