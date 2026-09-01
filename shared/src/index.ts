@@ -10,3 +10,4 @@ export * from './scoring/stats';
 export * from './disciplines';
 export * from './firearms';
 export * from './compliance';
+export * from './export/pdf-log';

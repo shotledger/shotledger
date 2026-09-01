@@ -26,6 +26,7 @@ import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-gr
 import { updateFirearm } from '@/db/queries/firearms';
 import { addLicense } from '@/db/queries/licenses';
 import { adjustFirearmRoundCount, logMaintenanceEvent } from '@/db/queries/maintenance-events';
+import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -35,6 +36,12 @@ import {
 import { Spacing } from '@/theme/tokens';
 
 const ALL_GROUPS: readonly WeaponGroup[] = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS];
+
+const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+  green: 'neutral',
+  amber: 'primary',
+  red: 'primary',
+};
 
 const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
@@ -47,7 +54,8 @@ export default function FirearmDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { detail, refresh } = useFirearmDetail(id);
+  const { profile } = useComplianceProfile();
+  const { detail, refresh } = useFirearmDetail(id, profile);
 
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
@@ -210,6 +218,31 @@ export default function FirearmDetailScreen() {
           />
         )}
       </Card>
+
+      {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'. */}
+      {profile && detail.barometers.length > 0 && (
+        <Card>
+          <ThemedText type="smallBold">{t('compliance.barometerTitle')}</ThemedText>
+          <View style={styles.chipsRow}>
+            {detail.barometers.map((b) => (
+              <Chip
+                key={b.weaponGroups.join(',')}
+                testID={`firearm-barometer-${b.weaponGroups[0]}`}
+                label={t(`compliance.barometer${capitalize(b.status)}`, {
+                  count: b.activityCount,
+                  required: b.requiredActivities,
+                })}
+                tone={BAROMETER_TONE[b.status]}
+              />
+            ))}
+          </View>
+          {!profile.verified && (
+            <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">
+              {t('compliance.unverifiedHint')}
+            </ThemedText>
+          )}
+        </Card>
+      )}
 
       {/* Weapon groups */}
       <Card>

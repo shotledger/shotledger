@@ -3,14 +3,18 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
+  computeFirearmBarometer,
   licenseStatus,
   maintenanceProgress,
   maintenanceStatus,
+  type JurisdictionProfile,
   type LicenseStatus,
   type MaintenanceStatus,
+  type WeaponGroupBarometer,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
+import { listComplianceSessions } from '@/db/queries/compliance';
 import { listFirearmGroups } from '@/db/queries/firearm-groups';
 import { getFirearm } from '@/db/queries/firearms';
 import { listLicenses } from '@/db/queries/licenses';
@@ -24,6 +28,8 @@ export interface FirearmDetail {
   licenseStatus: LicenseStatus;
   maintenanceStatus: MaintenanceStatus;
   maintenanceProgress: number | null;
+  /** M6: one entry per applicable compliance rule; empty when profile is 'none'. */
+  barometers: WeaponGroupBarometer[];
 }
 
 const EMPTY: FirearmDetail = {
@@ -34,17 +40,29 @@ const EMPTY: FirearmDetail = {
   licenseStatus: 'none',
   maintenanceStatus: 'unknown',
   maintenanceProgress: null,
+  barometers: [],
 };
 
-export function loadFirearmDetail(firearmId: string): FirearmDetail {
+export function loadFirearmDetail(
+  firearmId: string,
+  profile: JurisdictionProfile | null = null,
+): FirearmDetail {
   if (!db) return EMPTY;
   const firearm = getFirearm(db, firearmId);
   if (!firearm) return EMPTY;
 
   const licenses = listLicenses(db, firearmId);
+  const groups = listFirearmGroups(db, firearmId);
+  const barometers = profile
+    ? computeFirearmBarometer(
+        listComplianceSessions(db),
+        profile,
+        groups.map((g) => g.groupId),
+      )
+    : [];
   return {
     firearm,
-    groups: listFirearmGroups(db, firearmId),
+    groups,
     licenses,
     maintenanceEvents: listMaintenanceEvents(db, firearmId),
     licenseStatus: licenseStatus(licenses[0]?.validUntil),
@@ -56,12 +74,19 @@ export function loadFirearmDetail(firearmId: string): FirearmDetail {
       firearm.roundsSinceMaintenance,
       firearm.maintenanceIntervalRounds,
     ),
+    barometers,
   };
 }
 
-export function useFirearmDetail(firearmId: string): { detail: FirearmDetail; refresh: () => void } {
-  const [detail, setDetail] = useState<FirearmDetail>(() => loadFirearmDetail(firearmId));
-  const refresh = useCallback(() => setDetail(loadFirearmDetail(firearmId)), [firearmId]);
+export function useFirearmDetail(
+  firearmId: string,
+  profile: JurisdictionProfile | null = null,
+): { detail: FirearmDetail; refresh: () => void } {
+  const [detail, setDetail] = useState<FirearmDetail>(() => loadFirearmDetail(firearmId, profile));
+  const refresh = useCallback(
+    () => setDetail(loadFirearmDetail(firearmId, profile)),
+    [firearmId, profile],
+  );
 
   useFocusEffect(
     useCallback(() => {

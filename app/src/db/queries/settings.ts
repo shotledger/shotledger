@@ -10,6 +10,10 @@ export const SETTINGS_KEYS = {
   theme: 'theme', // 'system' | 'light' | 'dark'
   // Shooter's birth year — drives the märke age reduction (§6.5). null = unknown.
   birthYear: 'birthYear',
+  // Jurisdiction profile id ('none' | 'se', §6.6). Unset = no explicit
+  // choice yet — the Settings screen applies the locale-based default
+  // (se when device locale is sv, else none) rather than writing a row.
+  complianceProfile: 'complianceProfile',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

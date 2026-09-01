@@ -6,6 +6,8 @@ import { useFocusEffect } from 'expo-router';
 import {
   licenseStatus,
   maintenanceStatus,
+  type BarometerStatus,
+  type JurisdictionProfile,
   type LicenseStatus,
   type MaintenanceStatus,
 } from '@shotledger/shared';
@@ -13,6 +15,8 @@ import {
 import { db } from '@/db/client';
 import { latestLicense } from '@/db/queries/licenses';
 import { listFirearms } from '@/db/queries/firearms';
+import { loadFirearmBarometerStatus } from '@/features/compliance/use-barometer';
+import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 
 export interface FirearmListRow {
   id: string;
@@ -21,9 +25,11 @@ export interface FirearmListRow {
   weaponType: string | null;
   licenseStatus: LicenseStatus;
   maintenanceStatus: MaintenanceStatus;
+  /** M6: null when compliance profile is 'none' or the firearm has no weapon groups. */
+  barometerStatus: BarometerStatus | null;
 }
 
-export function loadFirearmsList(): FirearmListRow[] {
+export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
   if (!db) return [];
   return listFirearms(db).map((firearm) => {
     const license = latestLicense(db!, firearm.id);
@@ -37,13 +43,15 @@ export function loadFirearmsList(): FirearmListRow[] {
         firearm.roundsSinceMaintenance,
         firearm.maintenanceIntervalRounds,
       ),
+      barometerStatus: loadFirearmBarometerStatus(profile, firearm.id),
     };
   });
 }
 
 export function useFirearmsList(): { rows: FirearmListRow[]; refresh: () => void } {
-  const [rows, setRows] = useState<FirearmListRow[]>(() => loadFirearmsList());
-  const refresh = useCallback(() => setRows(loadFirearmsList()), []);
+  const { profile } = useComplianceProfile();
+  const [rows, setRows] = useState<FirearmListRow[]>(() => loadFirearmsList(profile));
+  const refresh = useCallback(() => setRows(loadFirearmsList(profile)), [profile]);
 
   useFocusEffect(
     useCallback(() => {
