@@ -126,11 +126,13 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
                 decimal_scoring INTEGER NOT NULL DEFAULT 0
 
 series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
-                stage TEXT NULL,               -- program stage id (§6.3), e.g.
-                                               -- 'precision'|'duel' for 25m pistol
                 is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
                                                -- from score/stats, included
-                                               -- in volume counts (§6.3)
+                                               -- in volume counts (§6.3);
+                                               -- any number, anywhere
+                is_final INTEGER NOT NULL DEFAULT 0,   -- series belongs to the
+                                               -- final; a final may have its
+                                               -- own sighters (both flags set)
                 photo_uri TEXT NULL            -- local file URI
 
 shots           series_id FK NOT NULL, position INTEGER NOT NULL,
@@ -208,9 +210,14 @@ picker (§6.2); **program picker** (§6.3 — filtered by discipline;
 weapon class (full code, §6.4a); firearm (defaults to the class default);
 ammo lot; decimal toggle (only if discipline allows and no program forces
 it). Name defaults to `<level> <program> <general class>` for
-competitions, `<discipline> — <local date>` for training. Choosing a
-program pre-creates its stage/series skeleton; sighter series are marked
-and excluded from totals.
+competitions, `<discipline> — <local date>` for training.
+
+**Series flow (never a fixed count):** series are added one at a time.
+The add-series screen has a **Sighter toggle**; when the session's
+program `supportsFinal`, a **"Start final" action** appears after at
+least one scored series — series added after it get `is_final=1` and the
+session detail shows a Final section divider plus three results: Before
+final · Final · Total (§6.3). Sighters can be added in both sections.
 
 **ScoreKeypad spec** (get this exactly right):
 - Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
@@ -323,48 +330,51 @@ pistol, ISSF 50m pistol, generic ring-scoring. **Fältskytte is
 deliberately excluded from v1** (hit/figure scoring is a different model;
 revisit in v2+). Community adds disciplines via PR once public.
 
-### 6.3 Program definitions — predefined match formats (data, not code)
-A *program* is a predefined competition/match format within a discipline:
+### 6.3 Program definitions — competition-type presets (data, not code)
+**Series counts are never fixed** (maintainer decision): a session grows
+series as the shooter adds them, in every program. A *program* is a
+lightweight preset naming the competition type and its defaults:
 `shared/disciplines/programs/*.json`, zod schema `programSchema`:
 
 ```
 { id, disciplineId, federation, name: {sv,en},
-  stages: [ { id, name: {sv,en}, seriesCount, shotsPerSeries,
-              scoring: 'integer'|'decimal',
-              sighterSeries: boolean,   -- stage starts with one provskott
-                                        -- series (logged, not scored)
-              optional: boolean } ],    -- e.g. a final the shooter may
-                                        -- not reach; UI asks when the
-                                        -- preceding stage completes
-  maxScore  -- derived check over non-optional stages, scored series only }
+  shotsPerSeries,                  -- default series length (e.g. 5)
+  scoring: 'integer'|'decimal',
+  supportsFinal: boolean }         -- final section available in UI
 ```
 
-**Sighter (provskott) semantics — maintainer-confirmed:** a sighter
-series is logged like any other (`series.is_sighter=1`, one per stage
-where `sighterSeries` is true) but is **excluded from the competition/
-session score and all score statistics**, while still **counting toward
+Per-series flags carry the structure instead of the program:
+`is_sighter` (provskott — any number, anywhere) and `is_final` (series
+belongs to the final). A final may have **several sighter series** (both
+flags set).
+
+**Result model — maintainer-confirmed:** when a session contains final
+series, three results are tracked and displayed, all derived:
+
+- `beforeFinal` = sum of scored series with `is_final=0`
+- `finalScore`  = sum of scored series with `is_final=1`
+- `total`       = beforeFinal + finalScore
+
+Sessions without final series just show the one total.
+
+**Sighter (provskott) semantics — maintainer-confirmed:** excluded from
+all scores above and from every score statistic, but **counting toward
 volume**: shots-logged totals, firearm round counter, ammo-lot usage.
 
-v1 predefined programs (structures marked VERIFY must be confirmed by the
+v1 predefined programs (defaults marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
-| id | Federation | Name (sv) | Structure |
+| id | Federation | Name (sv) | Defaults |
 |---|---|---|---|
-| `spsf-precision-6` | SPSF | Precision, 6 serier | main: sighter + 6×5 (max 300); optional final: sighter + 3×5 (confirmed by maintainer) |
-| `spsf-precision-7` | SPSF | Precision, 7 serier | main: sighter + 7×5 (max 350); optional final: sighter + 3×5 (confirmed by maintainer) |
-| `spsf-precision-10` | SPSF | Precision, 10 serier | main: sighter + 10×5 (max 500); optional final: sighter + 3×5 — unconfirmed whether used for this format, but the stage is `optional` so including it costs nothing (maintainer: don't rule it out) |
-| `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: stage structure |
-| `issf-ap-60` | ISSF | 10m luftpistol 60 | 6×10, max 600 (decimal in finals only — finals out of scope v1) |
-| `issf-ap-40` | ISSF | 10m luftpistol 40 | 4×10, max 400 |
-| `issf-25m-pistol` | ISSF | 25m pistol (sport) | 2 stages: precision 6×5 + duell 6×5, max 600. VERIFY |
-| `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY: 150s/20s/10s stages |
-| `issf-50m-pistol` | ISSF | 50m pistol | 6×10, max 600. VERIFY |
+| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal (typical matches: 6/7/10 series + final of 3) |
+| `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: shots/series, timing notes |
+| `issf-ap` | ISSF | 10m luftpistol | 10 shots-per-series display grouping? VERIFY; integer (decimal finals out of scope v1) |
+| `issf-25m-pistol` | ISSF | 25m pistol (sport) | 5 shots/series. VERIFY: precision/duel distinction needed in v1? |
+| `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY |
+| `issf-50m-pistol` | ISSF | 50m pistol | VERIFY |
 
-Session creation: choosing a program pre-creates the stage/series
-structure and locks series length; free-form training (`program_id NULL`)
-keeps the add-series-as-you-go behavior. Session names default to
-`<competition_level> <program> <general class>` for competitions (e.g.
-"KM Precision C").
+Session names default to `<competition_level> <program> <general class>`
+for competitions (e.g. "KM Precision C").
 
 ### 6.4a Weapon classes
 Store the full SPSF class code on the session (`C2`, `A3`, `B`, vet/dam
