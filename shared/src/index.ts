@@ -11,3 +11,4 @@ export * from './disciplines';
 export * from './firearms';
 export * from './compliance';
 export * from './export/pdf-log';
+export * from './vault';

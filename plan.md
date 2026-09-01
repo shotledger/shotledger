@@ -55,6 +55,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-09-01 | M6 compliance profile (§6.6): `shared/compliance` ships an `se` profile with **VERIFY placeholder** activity numbers (`windowMonths=6`, `requiredActivities=4`, `constants-se.ts`, `SE_VERIFIED=false`) — no FAP 551-3 numeric source text exists in this repo; barometer UI shows an explicit "unverified defaults" hint until the maintainer confirms. Settings' Compliance profile picker defaults to `se` when the device locale is `sv`, else `none` — **flagged for maintainer review**, a UX default not a confirmed product call |
 | 2026-09-01 | M6 PDF export layout (club-log table + summary header, `shared/src/export/pdf-log.ts`) has **not** been checked against a real föreningsintyg attachment — VERIFY, per implementation-plan.md §4 M6 |
 | 2026-09-01 | Stats "Custom" period picker uses `@react-native-community/datetimepicker` (ships with Expo SDK 57) — flagged for review since it wasn't in M2's original design-system component inventory |
+| 2026-09-01 | v2 document vault built ahead of its originally-planned order (implementation-plan.md §9 listed it "deferred to v2... needs maintainer + Fable-level sessions before implementation") — done autonomously per an explicit task brief, not a self-directed schedule change; flagged for maintainer review. Crypto: `expo-crypto`'s built-in AES-256-GCM (`AESEncryptionKey`/`aesEncryptAsync`/`aesDecryptAsync`, added upstream in SDK 55, present in the installed `expo-crypto@57.0.2`) — no `react-native-quick-crypto`, no Web Crypto polyfill, no hand-rolled cipher. **Three new flagged dependencies**, all Expo-maintained and SDK-pinned: `expo-crypto`, `expo-secure-store` (vault key, hardware-backed keystore/keychain), `expo-local-authentication` (biometric/passcode gate); `expo-file-system` also newly promoted from a transitive to a direct dependency. Android auto-backup excludes the vault directory (`app/plugins/withVaultBackupExclusion.js`, a local config plugin — no new dependency, `expo/config-plugins` ships with `expo`); the iOS equivalent (`NSURLIsExcludedFromBackupKey`) is **not implemented** — no Mac available to this agent and no Expo module exposes the flag without a small custom native module, tracked as a follow-up. See docs/specs/document-vault-spec.md and -evidence.md |
 
 **Open:**
 
@@ -106,8 +107,12 @@ barometer; no scoring), Skytteappen (club ecosystem).
       per-station scores, weapon classes, standard medals → logbook +
       FAP 551-3 barometer
 - [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
-- [ ] Encrypted on-device document vault (license, membership card) — never
-      synced
+- [x] Encrypted on-device document vault (license, membership card, door
+      codes) — never synced. `/vault`, reachable from Settings (not a tab);
+      AES-256-GCM per file via `expo-crypto`, key in `expo-secure-store`
+      (hardware-backed keystore/keychain); biometric/passcode gate via
+      `expo-local-authentication`; Android auto-backup exclusion for the
+      vault directory. See docs/specs/document-vault-spec.md/-evidence.md
 - [ ] iOS release (camera feature as the launch hook)
 
 ### v3+ — by user demand

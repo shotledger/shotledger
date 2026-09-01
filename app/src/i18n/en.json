@@ -294,5 +294,38 @@
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire"
+  },
+  "vault": {
+    "title": "Document vault",
+    "settingsRowTitle": "Document vault",
+    "settingsRowSubtitle": "Licenses, membership cards, door codes — encrypted, never synced",
+    "webUnavailable": "The document vault needs a native build — secure storage isn't available in this web preview.",
+    "gateTitle": "Unlock vault",
+    "gateBody": "Verify it's you to view your encrypted documents.",
+    "gateUnlockCta": "Unlock",
+    "gateDenied": "Authentication failed.",
+    "gateDeviceUnsecuredWarning": "This device has no screen lock set — anyone holding it can open the vault. Set a PIN, pattern, or biometric lock in system settings for real protection.",
+    "emptyTitle": "Nothing stored yet",
+    "emptyBody": "Photos and codes you add here stay on this device, encrypted, and are never synced or exported.",
+    "addCta": "Add document",
+    "kindLicense": "Weapon license",
+    "kindMembershipCard": "Membership card",
+    "kindDoorCode": "Door code",
+    "kindOther": "Other",
+    "addTitle": "Add to vault",
+    "addTypePhoto": "Photo",
+    "addTypeText": "Text",
+    "addFromCamera": "Take photo",
+    "addFromLibrary": "Choose from library",
+    "addLabelPlaceholder": "Label",
+    "addTextPlaceholder": "e.g. door code",
+    "addSave": "Save",
+    "addPermissionDenied": "Permission denied — allow camera/photo access in system settings to add a document",
+    "detailAddedOn": "Added {{date}}",
+    "detailDelete": "Delete",
+    "detailDeleteConfirmTitle": "Delete this document?",
+    "detailDeleteConfirmBody": "This cannot be undone.",
+    "detailDeleteConfirmCancel": "Cancel",
+    "detailDeleteConfirmConfirm": "Delete"
   }
 }
