@@ -3,7 +3,8 @@
 // Only sessions that actually HAVE marks get the view, which is why this
 // returns null rather than an empty analysis: every session that predates
 // photo scoring would otherwise grow an empty tab.
-import { useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import type { GroupAnalysis, TargetFaceDefinition } from '@shotledger/shared';
 import { analyzeGroup, getDiscipline, getTargetFace } from '@shotledger/shared';
 
@@ -37,6 +38,22 @@ export function loadSessionGroup(sessionId: string): SessionGroup | null {
   return { marks, analysis, target };
 }
 
+/**
+ * Refetches on focus, exactly as `useSessionDetail` does: returning from the
+ * scan screen is the moment a session FIRST gets marks, so a hook that only
+ * read once on mount would hide the Group view until the screen was
+ * recreated.
+ */
 export function useSessionGroup(sessionId: string): SessionGroup | null {
-  return useMemo(() => loadSessionGroup(sessionId), [sessionId]);
+  const [group, setGroup] = useState<SessionGroup | null>(() => loadSessionGroup(sessionId));
+
+  const refresh = useCallback(() => setGroup(loadSessionGroup(sessionId)), [sessionId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+
+  return group;
 }
