@@ -192,6 +192,32 @@ for Android Gradle) or `eas build --local`. iOS can never build locally
   the external browser; unlocks nothing; no purchase language. Also linked
   from store listing + README.
 
+## Repo configuration (github.com/jimisola/shotledger, private)
+
+Modeled on the skillsgateway org. Applied via API (2026-09-01):
+squash-merge only with `PR_TITLE` title + `COMMIT_MESSAGES` body (keeps
+DCO trailers on main through squashes), delete-branch-on-merge,
+allow-update-branch, web commit signoff required, wiki/projects off,
+vulnerability alerts on, Dependabot security PRs off (Renovate owns
+dependency updates). Renovate config: `renovate.json5` extends the
+shared `github>skillsgateway/.github` preset; its labels
+(bot-renovate*, renovate-version-*, security, dependencies) are created.
+The old-coder evidence-first skill (vendored from AmazingAng/old-coder,
+MIT — newer than skillsgateway's copy) governs scoring/compliance/CSV/
+sync code; see CLAUDE.md.
+
+**Manual steps for the maintainer:**
+
+- [ ] Install the Renovate GitHub App on the repo:
+      https://github.com/apps/renovate → Configure → select
+      `jimisola/shotledger` (config is already in the repo)
+- [ ] Nothing else is possible on a free-plan private repo: branch
+      protection/rulesets and auto-merge are unavailable — merge
+      discipline stays workflow-based until the repo is public/paid
+- [ ] When the repo goes public: add a `protect-main` ruleset with
+      required checks, enable auto-merge, revisit safe-settings, and
+      audit history before flipping (per the secrets rule)
+
 ## Costs
 
 | Item | Cost |
