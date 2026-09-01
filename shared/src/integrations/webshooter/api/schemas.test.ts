@@ -102,6 +102,40 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.shooting_card_number).toBe('12345');
   });
 
+  it('parses an authenticate/user fixture with fullname omitted (optional)', () => {
+    const parsed = authUserSchema.parse({ shooting_card_number: '12345' });
+    expect(parsed.fullname).toBeUndefined();
+  });
+
+  it('parses a null shooting_card_number (nullable, not just optional)', () => {
+    const parsed = patrolsResponseSchema.parse(
+      fixturePatrolsResponse([
+        {
+          ...fixturePatrolsResponse().patrols[0]!,
+          signups: [
+            {
+              ...fixturePatrolsResponse().patrols[0]!.signups[0]!,
+              user: {
+                fullname: 'Anonym Testsson',
+                shooting_card_number: null,
+                clubs_id: 501,
+                clubs: [{ id: 501, name: 'Exempel Pistolklubb' }],
+              },
+            },
+          ],
+        },
+      ]),
+    );
+    expect(parsed.patrols[0]?.signups[0]?.user?.shooting_card_number).toBeNull();
+  });
+
+  it('parses a results_type of pointfield (all four enum members are modeled)', () => {
+    const parsed = competitionDetailResponseSchema.parse(
+      fixtureCompetitionDetailResponse({ results_type: 'pointfield' }),
+    );
+    expect(parsed.competitions.results_type).toBe('pointfield');
+  });
+
   it('accepts extra unknown top-level fields (real API sends far more than we model)', () => {
     const parsed = competitionDetailResponseSchema.parse({
       competitions: { ...fixtureCompetitionDetailResponse().competitions, extra_field: 'ignored' },
@@ -140,6 +174,15 @@ describe('wire schema negative controls (proves the schemas actually reject bad 
         fixtureResultsResponse([
           { ...fixtureResultsResponse().results[0]!, std_medal: 'G' as never },
         ]),
+      ),
+    ).toThrow();
+  });
+
+  it('rejects a station result with an unmodeled finals value (only 0 or 1 are valid)', () => {
+    const row = fixtureResultsResponse().results[0]!;
+    expect(() =>
+      resultsResponseSchema.parse(
+        fixtureResultsResponse([{ ...row, results: [{ ...row.results[0]!, finals: 2 as never }] }]),
       ),
     ).toThrow();
   });
