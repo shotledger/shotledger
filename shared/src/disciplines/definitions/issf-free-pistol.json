@@ -1,0 +1,13 @@
+{
+  "id": "issf-free-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Fripistol",
+    "en": "50m Pistol"
+  },
+  "targetFace": "issf-25m-precision",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}

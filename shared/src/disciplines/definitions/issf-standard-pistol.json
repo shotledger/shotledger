@@ -1,0 +1,13 @@
+{
+  "id": "issf-standard-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Standardpistol",
+    "en": "25m Standard Pistol"
+  },
+  "targetFace": "issf-25m-precision",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}
