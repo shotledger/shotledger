@@ -203,15 +203,15 @@ export default function SessionDetailScreen() {
               </ThemedText>
             ) : (
               <View style={styles.resultsRow}>
-                <ResultCell
-                  label={t('stats.comparisonRecent')}
-                  tenths={stats.comparison.recentMeanTenths ?? 0}
+                <StatTile
                   testID="comparison-recent"
+                  label={t('stats.comparisonRecent')}
+                  value={tenthsToScore(stats.comparison.recentMeanTenths ?? 0).toFixed(2)}
                 />
-                <ResultCell
-                  label={t('stats.comparisonPrevious')}
-                  tenths={stats.comparison.previousMeanTenths}
+                <StatTile
                   testID="comparison-previous"
+                  label={t('stats.comparisonPrevious')}
+                  value={tenthsToScore(stats.comparison.previousMeanTenths).toFixed(2)}
                 />
               </View>
             )}
