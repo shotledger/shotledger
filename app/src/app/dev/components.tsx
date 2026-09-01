@@ -9,9 +9,11 @@ import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
+import { ScoreKeypad } from '@/components/score-keypad';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
+import { createKeypadState, type KeypadState } from '@shotledger/shared';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/theme/tokens';
 
@@ -26,6 +28,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ComponentsGalleryScreen() {
   const [segment, setSegment] = useState<'a' | 'b' | 'c'>('a');
+  const [keypad, setKeypad] = useState<KeypadState>(() =>
+    createKeypadState({ mode: 'integer', seriesLength: 5 }),
+  );
 
   return (
     <Screen>
@@ -89,6 +94,12 @@ export default function ComponentsGalleryScreen() {
             ctaLabel="Log your first session"
             onPressCta={() => {}}
           />
+        </Card>
+      </Section>
+
+      <Section title="ScoreKeypad">
+        <Card>
+          <ScoreKeypad state={keypad} onChange={setKeypad} />
         </Card>
       </Section>
 

@@ -74,6 +74,22 @@ export function softDeleteShot(db: Database, id: string) {
 }
 
 /**
+ * Replaces a series' shots with the ones just entered on the keypad.
+ * Old rows are tombstoned rather than deleted (§3: soft-delete everywhere),
+ * so a re-entered series still syncs correctly.
+ */
+export function replaceSeriesShots(
+  db: Database,
+  seriesId: string,
+  entered: readonly Omit<AddShotInput, 'seriesId' | 'position'>[],
+) {
+  for (const existing of listShotsForSeries(db, seriesId)) {
+    softDeleteShot(db, existing.id);
+  }
+  return entered.map((shot, index) => addShot(db, { ...shot, seriesId, position: index + 1 }));
+}
+
+/**
  * Scored (non-sighter) shots for a session — the input to session-total math
  * (§3/§6.3: sighters count toward volume but never toward score). Feed the
  * result to `sumValueTenths` from `@shotledger/shared`.

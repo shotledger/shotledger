@@ -9,6 +9,7 @@ import {
   countAllShots,
   getShot,
   listScoredShotsForSession,
+  replaceSeriesShots,
   listShotsForSeries,
   softDeleteShot,
   updateShot,
@@ -112,5 +113,31 @@ describe('countAllShots', () => {
     addShot(db, { seriesId, position: 2, valueTenths: 80 });
     softDeleteShot(db, a.id);
     expect(countAllShots(db)).toBe(1);
+  });
+});
+
+describe('replaceSeriesShots', () => {
+  it('writes the entered shots in order', () => {
+    const rows = replaceSeriesShots(db, seriesId, [
+      { valueTenths: 90 },
+      { valueTenths: 100, isInnerTen: true },
+      { valueTenths: 0 },
+    ]);
+    expect(rows.map((r) => r.position)).toEqual([1, 2, 3]);
+    expect(listShotsForSeries(db, seriesId).map((s) => s.valueTenths)).toEqual([90, 100, 0]);
+    expect(listShotsForSeries(db, seriesId)[1]?.isInnerTen).toBe(1);
+  });
+
+  it('tombstones the previous shots instead of deleting them', () => {
+    const first = replaceSeriesShots(db, seriesId, [{ valueTenths: 90 }, { valueTenths: 80 }]);
+    replaceSeriesShots(db, seriesId, [{ valueTenths: 70 }]);
+    expect(listShotsForSeries(db, seriesId).map((s) => s.valueTenths)).toEqual([70]);
+    expect(getShot(db, first[0]!.id)).toBeUndefined();
+  });
+
+  it('clears a series when given no shots', () => {
+    replaceSeriesShots(db, seriesId, [{ valueTenths: 90 }]);
+    expect(replaceSeriesShots(db, seriesId, [])).toEqual([]);
+    expect(listShotsForSeries(db, seriesId)).toEqual([]);
   });
 });

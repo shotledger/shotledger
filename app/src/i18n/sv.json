@@ -51,18 +51,96 @@
     "loadDemoData": "Ladda demodata",
     "wipeData": "Radera data",
     "supportDevelopment": "Stöd utvecklingen",
-    "supportComingSoon": "Donationslänk kommer snart"
+    "supportComingSoon": "Donationslänk kommer snart",
+    "birthYear": "Födelseår",
+    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav."
   },
   "session": {
     "newTitle": "Nytt pass",
     "detailTitle": "Pass",
     "seriesTitle": "Serie {{position}}",
-    "placeholder": "Den här skärmen är en platshållare — resultatinmatning kommer i en senare milstolpe."
+    "type": "Typ",
+    "discipline": "Gren",
+    "program": "Program",
+    "freeTraining": "Fri träning",
+    "competitionLevel": "Tävlingsnivå",
+    "championship": "Mästerskap",
+    "competitionName": "Tävlingens namn",
+    "competitionNamePlaceholder": "T.ex. Skånemästerskapet",
+    "weaponGroup": "Vapengrupp",
+    "shooterClass": "Klass",
+    "firearm": "Vapen",
+    "ammoLot": "Ammunitionsparti",
+    "none": "Ingen",
+    "decimalScoring": "Decimalräkning",
+    "name": "Namn",
+    "location": "Plats",
+    "notes": "Anteckningar",
+    "create": "Skapa pass",
+    "noSeries": "Inga serier än",
+    "noSeriesBody": "Lägg till din första serie och mata in skotten.",
+    "addSeries": "Lägg till serie",
+    "sighter": "Provserie",
+    "sighterUsed": "Provserie redan skjuten i denna omgång",
+    "startFinal": "Starta final",
+    "finalSection": "Final",
+    "mainSection": "Grundomgång",
+    "beforeFinal": "Före final",
+    "final": "Final",
+    "total": "Totalt",
+    "seriesTotal": "Serietotal",
+    "shotsCount": "{{count}} skott",
+    "timeLimit": "{{seconds}} s",
+    "guldserie": "Guldserie",
+    "guldAt": "Guld vid {{points}} p",
+    "addPhoto": "Lägg till foto",
+    "photoAdded": "Foto bifogat",
+    "photoPermissionDenied": "Appen fick inte tillgång till bilder.",
+    "takePhoto": "Ta foto",
+    "pickPhoto": "Välj från galleriet",
+    "save": "Spara serie",
+    "clear": "Rensa",
+    "innerTen": "X",
+    "innerTenDecimal": "(X)",
+    "backspace": "Radera",
+    "keypadHint": "Tryck en siffra per skott",
+    "keypadHintDecimal": "Två tryck per skott: ring, sedan tiondel",
+    "shotChip": "Skott {{position}}"
   },
   "dev": {
     "title": "Dev",
     "componentsTitle": "Komponenter",
     "webUnavailable": "expo-sqlites webbdrivrutin är inte kopplad i denna Expo SDK (M1-avvikelse) — använd en nativ build för att ladda och bläddra i demodata.",
     "sessionsCount": "{{count}} pass"
+  },
+  "competitionLevel": {
+    "forening": "Föreningstävling",
+    "krets": "Kretstävling",
+    "landsdel": "Landsdelstävling",
+    "national": "Nationell tävling",
+    "riks": "Rikstävling"
+  },
+  "competitionLevelShort": {
+    "forening": "Förening",
+    "krets": "Krets",
+    "landsdel": "Landsdel",
+    "national": "Nationell",
+    "riks": "Riks"
+  },
+  "championshipShort": {
+    "forening": "KM",
+    "krets": "KretsM",
+    "landsdel": "LandsdelsM",
+    "national": "NM",
+    "riks": "SM"
+  },
+  "discipline": {
+    "spsf-precision": "Precision",
+    "spsf-milsnabb": "Militär snabbmatch",
+    "generic-rings": "Fri träning (ringtavla)"
+  },
+  "program": {
+    "spsf-precision": "Precision",
+    "spsf-milsnabb": "Militär snabbmatch"
   }
 }
