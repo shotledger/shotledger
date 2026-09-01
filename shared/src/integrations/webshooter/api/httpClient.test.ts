@@ -25,6 +25,7 @@ describe('createHttpClient', () => {
 
     expect(result).toEqual({ ok: true });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(fetchImpl).toHaveBeenCalledWith('https://x.test/thing', expect.anything());
   });
 
   it('sends the Authorization header when a token is present', async () => {
@@ -99,6 +100,8 @@ describe('createHttpClient', () => {
     await expect(client.requestJson('/thing', schema)).rejects.toMatchObject({
       status: 503,
       path: '/thing',
+      name: 'WebShooterHttpError',
+      message: 'WebShooter request to /thing failed with status 503',
     });
   });
 
@@ -113,6 +116,38 @@ describe('createHttpClient', () => {
     });
 
     await expect(client.requestJson('/thing', schema)).rejects.toMatchObject({ status: 404 });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('retries on 599 (the top of the 5xx range, inclusive)', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(599, {}))
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => null,
+      sleep,
+    });
+
+    await expect(client.requestJson('/thing', schema)).resolves.toEqual({ ok: true });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry on 600 (just past the 5xx range)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(600, {}));
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => null,
+      sleep,
+    });
+
+    await expect(client.requestJson('/thing', schema)).rejects.toMatchObject({ status: 600 });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(sleep).not.toHaveBeenCalled();
   });
@@ -138,6 +173,12 @@ describe('createHttpClient', () => {
       });
 
       const resultPromise = client.requestJson('/thing', schema);
+      // Flush pending microtasks (the first fetch + its response parsing)
+      // without advancing real/fake time, proving the retry is genuinely
+      // blocked on the timer, not just eventually consistent.
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+
       await vi.advanceTimersByTimeAsync(500);
 
       await expect(resultPromise).resolves.toEqual({ ok: true });

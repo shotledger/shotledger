@@ -78,11 +78,11 @@ export function dualPathMedal(
   const fixedValor = toMedalValor(fixedResult);
   const relativeValor = toMedalValor(relativeResult);
 
-  if (fixedValor === 'none' && relativeValor === 'none') return { valor: null, source: 'tie' };
+  // MEDAL_RANK is a bijection valor<->rank, so equal rank means equal valor
+  // (including the both-none case, where fixedResult/relativeResult are both
+  // null and `??` naturally yields null — no separate both-none branch needed).
   if (MEDAL_RANK[fixedValor] === MEDAL_RANK[relativeValor]) {
-    // A tie at this point can't be the both-none case (handled above), so
-    // fixedResult is guaranteed non-null here.
-    return { valor: fixedResult as 'brons' | 'silver', source: 'tie' };
+    return { valor: fixedResult ?? relativeResult, source: 'tie' };
   }
   // Ranks differ here (the equal-rank case, including both-none, already
   // returned above), so the winner is always non-none.

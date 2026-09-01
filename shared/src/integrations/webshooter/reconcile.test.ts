@@ -60,6 +60,16 @@ describe('nameSimilarity', () => {
   it('handles an empty-string pair without dividing by zero', () => {
     expect(nameSimilarity('', '')).toBe(1);
   });
+
+  it('matches the classic Levenshtein "kitten"/"sitting" distance (3 edits, similarity 4/7)', () => {
+    expect(nameSimilarity('kitten', 'sitting')).toBeCloseTo(4 / 7, 10);
+  });
+
+  it('collapses internal whitespace to a single space, never strips it entirely', () => {
+    // "A B" and "AB" differ by one character once whitespace is collapsed
+    // (not removed) to a single space: edit distance 1 over max length 3.
+    expect(nameSimilarity('A B', 'AB')).toBeCloseTo(1 - 1 / 3, 10);
+  });
 });
 
 describe('findHeuristicCandidates', () => {
@@ -132,6 +142,13 @@ describe('findHeuristicCandidates', () => {
     );
     expect(strict).toHaveLength(0);
   });
+
+  it('includes a candidate exactly at the minNameSimilarity threshold (>=, not >)', () => {
+    const atThreshold = findHeuristicCandidates(existing, candidate, {
+      minNameSimilarity: nameSimilarity(candidate.eventName, existing[0]!.eventName),
+    });
+    expect(atThreshold.map((s) => s.id)).toContain('a');
+  });
 });
 
 describe('classifyMergeField', () => {
@@ -180,6 +197,14 @@ describe('mergeSessionFields', () => {
       { firearmId: 'webshooter-would-be-firearm' },
     );
     expect(merged.firearmId).toBe('user-firearm');
+  });
+
+  it('fills an undefined (not just null/empty-string) enrichment field', () => {
+    const { merged } = mergeSessionFields<{ firearmId: string | undefined }>(
+      { firearmId: undefined },
+      { firearmId: 'from webshooter' },
+    );
+    expect(merged.firearmId).toBe('from webshooter');
   });
 
   it('a full re-import: score changes, enrichment (firearm/notes/photo) stays', () => {

@@ -51,6 +51,16 @@ describe('fixedThresholdMedal', () => {
     });
     expect(fixedThresholdMedal(withFinal)).toBe('silver');
   });
+
+  it('evaluates the total (not beforeFinal) when series counts are equal — hasFinal is false', () => {
+    const noFinal = result({
+      beforeFinalTenths: 1000, // would be null on its own
+      beforeFinalSeriesCount: 7,
+      totalTenths: 3300, // silver
+      totalSeriesCount: 7,
+    });
+    expect(fixedThresholdMedal(noFinal)).toBe('silver');
+  });
 });
 
 describe('relativePlacementMedal', () => {
@@ -73,6 +83,14 @@ describe('relativePlacementMedal', () => {
     expect(relativePlacementMedal({ placement: 4, fieldSize: 27, tiedAtCutoffCount: 1 })).toBe(
       'silver',
     );
+  });
+
+  it('extends the brons cutoff specifically by tiedAtCutoffCount', () => {
+    // fieldSize 27 -> floor(27/3) = 9, +1 tie = 10
+    expect(relativePlacementMedal({ placement: 10, fieldSize: 27, tiedAtCutoffCount: 1 })).toBe(
+      'brons',
+    );
+    expect(relativePlacementMedal({ placement: 10, fieldSize: 27 })).toBeNull();
   });
 
   it('handles a tiny field (fieldSize < 9): floor(3/9)=0 silver cutoff, floor(3/3)=1 brons cutoff', () => {

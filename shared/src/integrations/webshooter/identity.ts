@@ -28,7 +28,9 @@ export function cardNumbersMatch(
 ): boolean {
   const normalizedA = normalizeCardNumber(a);
   const normalizedB = normalizeCardNumber(b);
-  if (normalizedA === null || normalizedB === null) return false;
+  // Only the both-null case needs an explicit guard: null !== any non-null
+  // string already falls out of the equality check below on its own.
+  if (normalizedA === null && normalizedB === null) return false;
   return normalizedA === normalizedB;
 }
 

@@ -11,6 +11,14 @@ describe('createUnverifiedSpaLoginClient', () => {
     );
   });
 
+  it('the error names itself and explains what is unverified and the credential-handling constraint', () => {
+    const error = new WebShooterSpaLoginNotVerifiedError();
+    expect(error.name).toBe('WebShooterSpaLoginNotVerifiedError');
+    expect(error.message).toContain('VERIFY: inspect the SPA login network');
+    expect(error.message).toContain('request — path, request body field names, response shape');
+    expect(error.message).toContain('Credentials/token must never transit a ShotLedger backend');
+  });
+
   it('never calls fetchImpl', async () => {
     const fetchImpl = vi.fn();
     const client = createUnverifiedSpaLoginClient(fetchImpl, 'https://webshooter.se');

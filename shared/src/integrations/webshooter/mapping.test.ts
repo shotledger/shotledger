@@ -29,6 +29,11 @@ describe('mapClassname', () => {
       const result = mapClassname(classname);
       expect(result.ok).toBe(false);
       expect(result).toMatchObject({ classname });
+      if (!result.ok) {
+        expect(result.reason).toBe(
+          `Unrecognized WebShooter classname "${classname}" — needs a manual mapping`,
+        );
+      }
     },
   );
 });
@@ -158,7 +163,17 @@ describe('localToUtcIso', () => {
     expect(localToUtcIso('2026-10-26 12:00:00')).toBe('2026-10-26T11:00:00.000Z');
   });
 
-  it('throws on a malformed local timestamp', () => {
-    expect(() => localToUtcIso('not-a-timestamp')).toThrow(RangeError);
+  it('throws on a malformed local timestamp, with the offending value in the message', () => {
+    expect(() => localToUtcIso('not-a-timestamp')).toThrow(
+      'Expected "YYYY-MM-DD HH:mm:ss", got "not-a-timestamp"',
+    );
+  });
+
+  it('throws when the string has a valid timestamp with a garbage prefix (anchored match, not "found anywhere")', () => {
+    expect(() => localToUtcIso('xx2026-06-13 09:00:00')).toThrow(RangeError);
+  });
+
+  it('throws when the string has a valid timestamp with a garbage suffix (anchored match, not "found anywhere")', () => {
+    expect(() => localToUtcIso('2026-06-13 09:00:00xx')).toThrow(RangeError);
   });
 });

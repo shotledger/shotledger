@@ -28,19 +28,40 @@ describe('buildCalendarEvent', () => {
     expect(event.location).toBe('Exempelstad');
   });
 
-  it('description includes name, date, weapon group, patrol, lane, and the information link', () => {
+  it('description is the exact expected multi-line block (no venue supplied)', () => {
     const event = buildCalendarEvent(fixtureInput());
-    expect(event.description).toContain('Exempeltävlingen Precision C');
-    expect(event.description).toContain('2026-06-13');
-    expect(event.description).toContain('Vapengrupp: spsf:C');
-    expect(event.description).toContain('Skjutlag: 2');
-    expect(event.description).toContain('Bana: 3');
-    expect(event.description).toContain('https://webshooter.se/app/competitions/9001/information');
+    expect(event.description).toBe(
+      [
+        'Exempeltävlingen Precision C',
+        '2026-06-13',
+        'Vapengrupp: spsf:C',
+        'Skjutlag: 2',
+        'Bana: 3',
+        'https://webshooter.se/app/competitions/9001/information',
+      ].join('\n'),
+    );
   });
 
-  it('folds an optional venue line into the description when supplied', () => {
+  it('the date line is the date only — not the full "YYYY-MM-DD HH:mm:ss" timestamp', () => {
+    const event = buildCalendarEvent(fixtureInput());
+    const lines = event.description.split('\n');
+    expect(lines[1]).toBe('2026-06-13');
+    expect(lines[1]).not.toContain('09:00:00');
+  });
+
+  it('folds an optional venue line into the exact description when supplied', () => {
     const event = buildCalendarEvent(fixtureInput({ venue: '25m-banan, Exempel skyttecentrum' }));
-    expect(event.description).toContain('25m-banan, Exempel skyttecentrum');
+    expect(event.description).toBe(
+      [
+        'Exempeltävlingen Precision C',
+        '2026-06-13',
+        '25m-banan, Exempel skyttecentrum',
+        'Vapengrupp: spsf:C',
+        'Skjutlag: 2',
+        'Bana: 3',
+        'https://webshooter.se/app/competitions/9001/information',
+      ].join('\n'),
+    );
   });
 
   it('omits a venue line when not supplied', () => {

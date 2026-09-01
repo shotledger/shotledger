@@ -50,6 +50,18 @@ describe('createWebShooterClient', () => {
     expect(http.requestJson).toHaveBeenCalledTimes(2);
   });
 
+  it('listCompetitions: treats the entry as expired at the exact expiresAt instant (boundary is exclusive)', async () => {
+    let now = 0;
+    const http = fakeHttpClient({ '/competitions': fixtureCompetitionsResponse() });
+    const client = createWebShooterClient(http, { ttlMs: 1000, now: () => now });
+
+    await client.listCompetitions();
+    now = 1000; // exactly expiresAt (now() + ttlMs at fetch time)
+    await client.listCompetitions();
+
+    expect(http.requestJson).toHaveBeenCalledTimes(2);
+  });
+
   it('getCompetition: caches per id independently', async () => {
     const http = fakeHttpClient({
       '/competitions/1': fixtureCompetitionDetailResponse({ id: 1 }),
@@ -107,12 +119,14 @@ describe('createWebShooterClient', () => {
     expect(http.requestJson).toHaveBeenCalledTimes(2);
   });
 
-  it('authenticateUser is never cached: two calls, two fetches', async () => {
+  it('authenticateUser is never cached: two calls, two fetches, hits the authenticate/user path', async () => {
     const http = fakeHttpClient({ 'authenticate/user': { shooting_card_number: '123' } });
     const client = createWebShooterClient(http);
 
+    const result = await client.authenticateUser();
     await client.authenticateUser();
-    await client.authenticateUser();
+
+    expect(result).toEqual({ shooting_card_number: '123' });
 
     expect(http.requestJson).toHaveBeenCalledTimes(2);
   });

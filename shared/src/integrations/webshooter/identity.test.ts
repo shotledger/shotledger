@@ -75,4 +75,12 @@ describe('resolveIdentity', () => {
       resolveIdentity({ override: 'None', stored: '', fetchAuthenticatedUser }),
     ).rejects.toBeInstanceOf(WebShooterIdentityUnresolvedError);
   });
+
+  it('the error names itself and explains why', () => {
+    const error = new WebShooterIdentityUnresolvedError();
+    expect(error.name).toBe('WebShooterIdentityUnresolvedError');
+    expect(error.message).toBe(
+      'WebShooter identity could not be resolved: no override, stored value, or API result',
+    );
+  });
 });

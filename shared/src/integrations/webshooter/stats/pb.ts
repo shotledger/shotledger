@@ -58,6 +58,12 @@ export interface PersonalBestGroup {
   byYear: Map<number, CompetitionResultForStats>;
 }
 
+/**
+ * `a` (the incoming candidate) beats `b` (the current best) strictly — a
+ * complete tie on score/figureHits/innerTens keeps `b`, the first-seen
+ * result, same tie-stability convention as `bestWorstSeries` in
+ * shared/src/scoring/stats.ts.
+ */
 function isBetterOfficialPb(a: CompetitionResultForStats, b: CompetitionResultForStats): boolean {
   const scoreA = officialPbScore(a);
   const scoreB = officialPbScore(b);

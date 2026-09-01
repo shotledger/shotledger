@@ -41,11 +41,13 @@ describe('yearOverYearGroupKey', () => {
 });
 
 describe('yearStats', () => {
-  it('computes count/mean/median/min/max/meanInnerTens for one year', () => {
+  it('computes count/mean/median/min/max/meanInnerTens for one year, fed out of chronological/score order', () => {
+    // Feeding results out of ascending-score order proves min/median/max
+    // come from an actual sort, not accidental input order.
     const stats = yearStats([
+      result({ date: '2026-09-01', totalTenths: 340, innerTens: 5 }),
       result({ date: '2026-01-01', totalTenths: 300, innerTens: 1 }),
       result({ date: '2026-06-01', totalTenths: 320, innerTens: 3 }),
-      result({ date: '2026-09-01', totalTenths: 340, innerTens: 5 }),
     ]);
     const year2026 = stats.get('spsf-precision:spsf:C')?.get(2026);
     expect(year2026).toEqual({
@@ -63,6 +65,17 @@ describe('yearStats', () => {
   it('sampleStdevTenths is null for a single-result year', () => {
     const stats = yearStats([result({ date: '2026-01-01', totalTenths: 300 })]);
     expect(stats.get('spsf-precision:spsf:C')?.get(2026)?.sampleStdevTenths).toBeNull();
+  });
+
+  it('sampleStdevTenths is non-null for exactly two results (the n<2 boundary)', () => {
+    const stats = yearStats([
+      result({ date: '2026-01-01', totalTenths: 300 }),
+      result({ date: '2026-02-01', totalTenths: 320 }),
+    ]);
+    const year2026 = stats.get('spsf-precision:spsf:C')?.get(2026);
+    expect(year2026?.count).toBe(2);
+    expect(year2026?.sampleStdevTenths).not.toBeNull();
+    expect(year2026?.sampleStdevTenths).toBeCloseTo(Math.sqrt(200), 10);
   });
 
   it('median averages the two middle values for an even count', () => {
