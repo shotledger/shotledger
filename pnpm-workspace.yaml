@@ -48,3 +48,4 @@ minimumReleaseAgeExclude:
   - jest-worker@30.5.1
   - jest@30.5.1
   - pretty-format@30.5.1
+  - expo-sharing@57.0.17
