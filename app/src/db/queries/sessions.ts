@@ -22,6 +22,14 @@ export interface CreateSessionInput {
   location?: string | null;
   notes?: string | null;
   decimalScoring?: boolean;
+  // WebShooter import (integration spec §1/§A) — unset for a locally
+  // created session (external_source stays NULL).
+  externalSource?: 'webshooter' | null;
+  externalRef?: string | null;
+  externalSyncedAt?: string | null;
+  webshooterCompetitionId?: string | null;
+  officialPlacement?: number | null;
+  officialStandardmedalj?: 'none' | 'brons' | 'silver' | 'guld' | null;
 }
 
 export function createSession(db: Database, input: CreateSessionInput) {
@@ -46,6 +54,12 @@ export function createSession(db: Database, input: CreateSessionInput) {
     location: input.location ?? null,
     notes: input.notes ?? null,
     decimalScoring: input.decimalScoring ? 1 : 0,
+    externalSource: input.externalSource ?? null,
+    externalRef: input.externalRef ?? null,
+    externalSyncedAt: input.externalSyncedAt ?? null,
+    webshooterCompetitionId: input.webshooterCompetitionId ?? null,
+    officialPlacement: input.officialPlacement ?? null,
+    officialStandardmedalj: input.officialStandardmedalj ?? null,
   };
   db.insert(sessions).values(row).run();
   return row;
@@ -95,6 +109,44 @@ export function sumExtraRounds(db: Database, sessionIds?: readonly string[]): nu
     .where(and(...conditions))
     .get();
   return row?.total ?? 0;
+}
+
+/** All non-deleted sessions' external_ref (§A.2 exact-match input). */
+export function listExternalRefs(db: Database): { id: string; externalRef: string | null }[] {
+  return db
+    .select({ id: sessions.id, externalRef: sessions.externalRef })
+    .from(sessions)
+    .where(isNull(sessions.deletedAt))
+    .all();
+}
+
+/**
+ * Candidate input for heuristic matching (§A.2): only sessions with no
+ * external_ref (pre-feature manual sessions) are eligible, per the
+ * reconcile module's own filter — narrowed here too so the caller never
+ * has to trust the module to re-filter what this query already promises.
+ */
+export function listHeuristicMatchCandidates(
+  db: Database,
+): { id: string; externalRef: string | null; date: string; eventName: string; weaponGroup: string }[] {
+  return db
+    .select({
+      id: sessions.id,
+      externalRef: sessions.externalRef,
+      date: sessions.startedAt,
+      eventName: sessions.competitionName,
+      weaponGroup: sessions.weaponGroup,
+    })
+    .from(sessions)
+    .where(and(isNull(sessions.deletedAt), isNull(sessions.externalRef)))
+    .all()
+    .map((row) => ({
+      id: row.id,
+      externalRef: row.externalRef,
+      date: row.date.slice(0, 10),
+      eventName: row.eventName ?? '',
+      weaponGroup: row.weaponGroup ?? '',
+    }));
 }
 
 export function softDeleteSession(db: Database, id: string) {
