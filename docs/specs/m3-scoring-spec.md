@@ -488,3 +488,99 @@ en "Extra rounds (not scored)", sv "Extra skott (räknas ej i statistik)".
 - **A-N14** no new dependency, runtime or dev.
 - **A-N15** every new UI string goes through i18n with real sv + en.
 - **A-N16** `shared/` stays free of React Native imports.
+
+---
+
+# Amendment A2 — final keypad layout: `1–9`, `0`, `10`, `X`
+
+> **Append-only amendment**, and it **SUPERSEDES Amendment A1 §A1.1** (same
+> day, 2026-09-01). A1 §A1.2 (session-header stats) and §A1.3 (extra rounds)
+> are unaffected and still stand. Where A2 and A1 §A1.1 disagree, **A2 wins**.
+>
+> **Approval status: maintainer-directed-by-message** (the layout and the key
+> meanings are the maintainer's). The amendment document itself was not
+> reviewed before the code was written — autonomous run, as for A1.
+
+## A2.1 The ruling
+
+There is **no `(X)` key**. The keypad is `1–9`, `0`, `10`, `X`, backspace:
+
+| Key    | Meaning                       | `value_tenths` (integer mode) | `is_inner_ten` |
+| ------ | ----------------------------- | ----------------------------- | -------------- |
+| `1`–`9`| rings 1–9                     | digit × 10                    | 0              |
+| `0`    | a miss                        | 0                             | 0              |
+| `10`   | an **ordinary ten**           | 100                           | 0              |
+| `X`    | an **inner ten** (centrumtia) | 100                           | 1              |
+
+So relative to A1 §A1.1 the two ten-keys keep their *meanings* and swap their
+*labels*: A1's `X` (ordinary ten) is now spelled `10`, and A1's `(X)` (inner
+ten) is now spelled `X`. **The stored data model is unchanged** — `is_inner_ten`
+still means centrumtia, so nothing about A1's data ruling is undone, and no
+data written under A1 is reinterpreted.
+
+**Assumption flagged for the maintainer's veto:** the maintainer's wording was
+"1-10 and X". A miss still has to be enterable, and `0` is the only key that can
+express one, so **`0` is kept**. If the maintainer wants misses entered some
+other way, that is a further amendment.
+
+**Decimal mode:** two taps as before. `10` starts ring 10 with no flag; `X`
+starts ring 10 with the inner-ten flag; the second tap is the tenth digit.
+`0`–`9` are rings 0–9, so `0` then `0` is still a decimal miss. This finally
+retires VERIFY item V2 with the plan's own literal spelling: the plan wrote
+`"10" then "9" ⇒ 10.9`, and there is now an actual `10` key that does exactly
+that.
+
+## A2.2 Revised scenario tables (replace A1 §A1.1.3)
+
+**Integer mode.** `visibleKeys` is `1..9, 0, 10, X, backspace` in **both** modes.
+
+| #    | Given                | When          | Then                                                    |
+| ---- | -------------------- | ------------- | ------------------------------------------------------- |
+| B-I1 | empty 5-shot series  | press `9`     | {90, isInnerTen false}; cursor 1; total 90              |
+| B-I2 | empty series         | press `0`     | {0, false} — a miss; cursor 1; total 0                  |
+| B-I3 | empty series         | press `10`    | {100, **false**} — an ordinary ten; total 100           |
+| B-I4 | empty series         | press `X`     | {100, **true**} — a centrumtia; total 100               |
+| B-I5 | keys `9,10,8,7,X`    | —             | total 440 tenths; **1** inner ten; complete             |
+| B-I6 | full series          | press `7`/`X` | state unchanged                                         |
+| B-I7 | any state            | `visibleKeys` | `1..9,0,10,X,backspace` — no `(X)` anywhere             |
+
+**Decimal mode.**
+
+| #     | Given                | When            | Then                                     |
+| ----- | -------------------- | --------------- | ---------------------------------------- |
+| B-D1  | empty 10-shot series | `1` then `0`    | 10 (1.0)                                 |
+| B-D2  | empty series         | `9` then `7`    | 97 (9.7)                                 |
+| B-D3  | empty series         | `0` then `0`    | 0 (a miss)                               |
+| B-D4  | empty series         | `10` then `9`   | 109, isInnerTen **false**                |
+| B-D5  | empty series         | `10` then `3`   | 103, isInnerTen false (not clamped)      |
+| B-D6  | empty series         | `X` then `9`    | 109, isInnerTen **true**                 |
+| B-D7  | empty series         | `X` then `3`    | 103, isInnerTen true (not clamped)       |
+| B-D8  | pending ring set     | press `10`/`X`  | ignored — the second tap must be a digit |
+| B-D9  | pending ring set     | `backspace`     | pending cleared; no shot written         |
+| B-D10 | mid-entry            | total           | counts only completed shots              |
+| B-D11 | any state            | `visibleKeys`   | same list as integer mode                |
+
+Property **A-P6** carries over with `X` in place of `(X)`: a shot has
+`isInnerTen` true only where the `X` key produced it, and any such shot is
+worth at least 100 tenths.
+
+## A2.3 Display and labels (replaces A1 §A1.1.5)
+
+- Chip, integer mode: an ordinary ten renders **`10`**, an inner ten renders
+  **`X`**.
+- Chip, decimal mode: the numeric value, with an inner ten parenthesised —
+  `10.9` vs `(10.9)`.
+- Every "X" label in statistics and headers is plain **`X`** again (sv
+  "X (centrumtior)"), never "(X)". The metric still counts centrumtior.
+
+## A2.4 Session lists (Home latest sessions, and any other session list)
+
+Each session row shows, besides the name and date, a secondary line with the
+**total score**, the **per-series average** and the **number of X** — e.g.
+`225 · 45.0/serie · 3X` — built from the existing `ListRow`/`Chip` components.
+
+| #    | Given                                     | Then                                                          |
+| ---- | ----------------------------------------- | -------------------------------------------------------------- |
+| B-L1 | a session with scored series              | the row shows total, `seriesAverageTenths`, `sessionInnerTenCount` |
+| B-L2 | a session with only sighters / no shots   | average and X count are omitted, not printed as 0 or NaN       |
+| B-L3 | sighter series                            | excluded from both the average and the X count (A-S3/A-S7)     |
