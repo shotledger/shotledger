@@ -1,0 +1,152 @@
+// Wire schemas for WebShooter API v4.1.9 (webshooter.se). Executable spec:
+// docs/specs/webshooter-core-spec.md §2.1. Field sets and envelope nesting
+// were confirmed by reading ~/.cache/webshooter/ (wscli's response cache) —
+// SHAPES only, never copied values (see spec §0's real-data rule). Every
+// object schema is `z.object` (never `z.strictObject`): the real API returns
+// far more fields than we read, and a strict schema would fail on the next
+// unrelated field WebShooter adds upstream.
+import { z } from 'zod';
+
+export const weaponClassSchema = z.object({
+  id: z.number(),
+  weapongroups_id: z.number(),
+  classname: z.string(),
+  championship: z.number(),
+  classname_general: z.string(),
+});
+export type WeaponClass = z.infer<typeof weaponClassSchema>;
+
+export const stationResultSchema = z.object({
+  id: z.number(),
+  signups_id: z.number(),
+  finals: z.union([z.literal(0), z.literal(1)]),
+  distinguish: z.union([z.literal(0), z.literal(1)]),
+  stations_id: z.number(),
+  figure_hits: z.number(),
+  hits: z.number(),
+  points: z.number(),
+  station_figure_hits: z.array(z.number()),
+  deleted_at: z.string().nullable(),
+});
+export type StationResult = z.infer<typeof stationResultSchema>;
+
+export const clubSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+export type Club = z.infer<typeof clubSchema>;
+
+// Identity + same-club fields only (§A.10's personal-data boundary) — never
+// the full WebShooter user profile, even though the real payload has more.
+export const userSchema = z.object({
+  fullname: z.string(),
+  shooting_card_number: z.string().nullable(),
+  clubs_id: z.number(),
+  clubs: z.array(clubSchema),
+});
+export type WebShooterUser = z.infer<typeof userSchema>;
+
+export const signupSchema = z.object({
+  id: z.number(),
+  competitions_id: z.number(),
+  patrols_id: z.number(),
+  lane: z.number(),
+  weaponclasses_id: z.number(),
+  start_time: z.string(),
+  end_time: z.string(),
+  weaponclass: weaponClassSchema.optional(),
+  user: userSchema.optional(),
+  club: clubSchema.optional(),
+});
+export type Signup = z.infer<typeof signupSchema>;
+
+export const resultRowSchema = z.object({
+  id: z.number(),
+  competitions_id: z.number(),
+  signups_id: z.number(),
+  placement: z.number(),
+  figure_hits: z.number(),
+  hits: z.number(),
+  points: z.number(),
+  weaponclasses_id: z.number(),
+  std_medal: z.enum(['B', 'S']).nullable(),
+  signup: signupSchema,
+  weaponclass: weaponClassSchema,
+  results: z.array(stationResultSchema),
+  results_finals: z.array(stationResultSchema),
+  results_distinguish: z.array(stationResultSchema),
+});
+export type ResultRow = z.infer<typeof resultRowSchema>;
+
+export const resultsResponseSchema = z.object({
+  results: z.array(resultRowSchema),
+});
+export type ResultsResponse = z.infer<typeof resultsResponseSchema>;
+
+export const competitionResultsTypeSchema = z
+  .enum(['precision', 'field', 'military', 'pointfield'])
+  .nullable();
+export type CompetitionResultsType = z.infer<typeof competitionResultsTypeSchema>;
+
+export const competitionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  date: z.string(),
+  results_type: competitionResultsTypeSchema,
+  contact_city: z.string(),
+  contact_venue: z.string(),
+  status: z.string(),
+});
+export type Competition = z.infer<typeof competitionSchema>;
+
+// GET /competitions/{id}: singular wrap, confirmed against competition_<id>.json.
+export const competitionDetailResponseSchema = z.object({
+  competitions: competitionSchema,
+});
+export type CompetitionDetailResponse = z.infer<typeof competitionDetailResponseSchema>;
+
+// GET /competitions: paginated wrap under the SAME key name, confirmed
+// against competitions.json — two different envelope shapes, both modeled
+// explicitly rather than assumed identical (spec §2.1).
+export const competitionsResponseSchema = z.object({
+  competitions: z.object({
+    data: z.array(competitionSchema),
+    current_page: z.number(),
+    last_page: z.number(),
+    total: z.number(),
+  }),
+});
+export type CompetitionsResponse = z.infer<typeof competitionsResponseSchema>;
+
+export const patrolSchema = z.object({
+  id: z.number(),
+  competitions_id: z.number(),
+  start_time: z.string(),
+  end_time: z.string(),
+  patrol_size: z.number(),
+  signups: z.array(signupSchema),
+});
+export type Patrol = z.infer<typeof patrolSchema>;
+
+export const patrolsResponseSchema = z.object({
+  patrols: z.array(patrolSchema),
+});
+export type PatrolsResponse = z.infer<typeof patrolsResponseSchema>;
+
+export const signupsResponseSchema = z.object({
+  signups: z.object({
+    data: z.array(signupSchema),
+    current_page: z.number(),
+    last_page: z.number(),
+  }),
+});
+export type SignupsResponse = z.infer<typeof signupsResponseSchema>;
+
+// GET authenticate/user — VERIFY (spec §2.1): not in the cache (a per-session
+// call, never persisted by wscli). Assumes the same user-object field names
+// embedded elsewhere in the API.
+export const authUserSchema = z.object({
+  shooting_card_number: z.string().nullable(),
+  fullname: z.string().optional(),
+});
+export type AuthUser = z.infer<typeof authUserSchema>;

@@ -82,45 +82,46 @@ API returns dozens of fields we don't model and a strict schema would break
 on the next unrelated field WebShooter adds).
 
 - `weaponClassSchema`: `{ id, weapongroups_id, classname, championship,
-  classname_general }`.
+classname_general }`.
 - `stationResultSchema`: `{ id, signups_id, finals: 0|1, distinguish: 0|1,
-  stations_id, figure_hits, hits, points, station_figure_hits: number[],
-  deleted_at: string|null }`.
+stations_id, figure_hits, hits, points, station_figure_hits: number[],
+deleted_at: string|null }`.
 - `clubSchema` (minimal): `{ id, name }`.
 - `userSchema` (minimal — identity + same-club, never a full profile):
   `{ fullname, shooting_card_number: string|null, clubs_id, clubs:
-  { id, name }[] }`.
+{ id, name }[] }`.
 - `signupSchema`: `{ id, competitions_id, patrols_id, lane, weaponclasses_id,
-  start_time, end_time, weaponclass: weaponClassSchema.optional(), user:
-  userSchema.optional(), club: clubSchema.optional() }`.
+start_time, end_time, weaponclass: weaponClassSchema.optional(), user:
+userSchema.optional(), club: clubSchema.optional() }`.
 - `resultRowSchema`: `{ id, competitions_id, signups_id, placement,
-  figure_hits, hits, points, weaponclasses_id, std_medal:
-  z.enum(['B','S']).nullable(), signup: signupSchema, weaponclass:
-  weaponClassSchema, results: stationResultSchema[], results_finals:
-  stationResultSchema[], results_distinguish: stationResultSchema[] }`.
+figure_hits, hits, points, weaponclasses_id, std_medal:
+z.enum(['B','S']).nullable(), signup: signupSchema, weaponclass:
+weaponClassSchema, results: stationResultSchema[], results_finals:
+stationResultSchema[], results_distinguish: stationResultSchema[] }`.
 - `resultsResponseSchema`: `{ results: resultRowSchema[] }` (matches the
   cache's `{"results": [...]}` envelope, confirmed against
   `competition_*_results.json` shapes).
 - `competitionSchema`: `{ id, name, date, results_type:
-  z.enum(['precision','field','military','pointfield']).nullable(),
-  contact_city, contact_venue, status }` — confirmed field set/nesting
+z.enum(['precision','field','military','pointfield']).nullable(),
+contact_city, contact_venue, status }` — confirmed field set/nesting
   against `competition_<id>.json` (singular `{"competitions": {...}}` wrap
   for the detail endpoint) and `competitions.json` (paginated
   `{"competitions": {"data": [...], "current_page", "last_page", "total",
-  ...}}` for the list endpoint) — **two different envelope shapes for the
+...}}` for the list endpoint) — **two different envelope shapes for the
   same key name**, both modeled explicitly, not assumed identical.
 - `patrolSchema`: `{ id, competitions_id, start_time, end_time, patrol_size,
-  signups: signupSchema[] }`.
+signups: signupSchema[] }`.
 - `patrolsResponseSchema`: `{ patrols: patrolSchema[] }`.
 - `signupsResponseSchema`: `{ signups: { data: signupSchema[], current_page,
-  last_page } }` (paginated, confirmed against `competition_*_signups.json`).
+last_page } }` (paginated, confirmed against `competition_*_signups.json`).
 - `authUserSchema`: `{ shooting_card_number: string|null, fullname:
-  string.optional() }` — **VERIFY**: `GET authenticate/user`'s exact response
+string.optional() }` — **VERIFY**: `GET authenticate/user`'s exact response
   shape is not in the cache (it's a per-session call, never persisted); this
   schema assumes the same `user`-object field names embedded elsewhere in
   the API. Confirm against a live call before shipping.
 
 Behaviors:
+
 - Parsing a synthetic fixture built from each observed shape succeeds and
   strips nothing needed.
 - Parsing a payload missing a required field throws a `ZodError`.
@@ -153,6 +154,7 @@ fetch, baseUrl, getToken: () => string | null, now?: () => number, sleep?:
   `api/client.ts` (§2.3), not here.
 
 Behaviors:
+
 - 200 response: schema-parses and returns, one fetch call.
 - 500 then 200: two fetch calls, one sleep call at ~500ms, resolves with the
   200 body.
@@ -168,6 +170,7 @@ Behaviors:
 ### 2.3 Typed endpoint client (`api/client.ts`)
 
 `createWebShooterClient(httpClient, cacheConfig?): WebShooterClient` with:
+
 - `listCompetitions(options?: { forceRefresh?: boolean }): Promise<Competition[]>`
   — `GET /competitions` (§A.11: no changed-since param, always full list).
   Cached with a TTL (default **15 minutes**, `VERIFY:` per spec §A.11 open
@@ -176,14 +179,14 @@ Behaviors:
   fetched — **`VERIFY:`** whether more than one page of competitions is ever
   realistic for one club's relevant window before shipping; not handled here.
 - `getCompetition(id, options?): Promise<Competition>` — `GET
-  /competitions/{id}`, same TTL/cache/refresh contract, keyed by id.
+/competitions/{id}`, same TTL/cache/refresh contract, keyed by id.
 - `getPatrols(competitionId, options?): Promise<Patrol[]>` — `GET
-  /competitions/{id}/patrols`, cached keyed by competition id, invalidated
+/competitions/{id}/patrols`, cached keyed by competition id, invalidated
   only on `forceRefresh` (§C.3: fetch only on explicit refresh).
 - `getResults(competitionId, options?): Promise<ResultRow[]>` — `GET
-  /competitions/{id}/results`, same cache contract.
+/competitions/{id}/results`, same cache contract.
 - `getSignups(competitionId, options?): Promise<Signup[]>` — `GET
-  /competitions/{id}/signups`, same cache contract, page 1 only (same
+/competitions/{id}/signups`, same cache contract, page 1 only (same
   VERIFY as listCompetitions).
 - `authenticateUser(): Promise<AuthUser>` — `GET authenticate/user`, never
   cached (identity resolution is explicitly a fresh call per §A.10 order).
@@ -193,6 +196,7 @@ Cache: in-memory `Map<key, {data, expiresAt}>` owned by the client instance
 long it keeps the client alive; this module never touches storage).
 
 Behaviors:
+
 - Two calls to `listCompetitions()` within the TTL: one underlying
   `httpClient.requestJson` call (injected mock counts).
 - `forceRefresh: true`: bypasses a warm cache entry, refetches.
@@ -210,8 +214,13 @@ inspected; it is **not implemented against a live endpoint** (no network
 calls exist anywhere in this branch, per the task's hard constraint).
 
 ```ts
-export interface WebShooterSpaLoginRequest { username: string; password: string; }
-export interface WebShooterSpaLoginResult { token: string; }
+export interface WebShooterSpaLoginRequest {
+  username: string;
+  password: string;
+}
+export interface WebShooterSpaLoginResult {
+  token: string;
+}
 export interface WebShooterSpaLoginClient {
   login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult>;
 }
@@ -241,8 +250,8 @@ never invoked (mock call count 0).
   either side (including both) is never a match, even
   `cardNumbersMatch(null, null) === false`.
 - `resolveIdentity(input: { override?: string | null; stored?: string | null;
-  fetchAuthenticatedUser: () => Promise<{ shooting_card_number: string |
-  null }> }): Promise<string>` — resolution order (§A.10): (1) `override`
+fetchAuthenticatedUser: () => Promise<{ shooting_card_number: string |
+null }> }): Promise<string>` — resolution order (§A.10): (1) `override`
   if normalizes non-null, (2) `stored` if normalizes non-null, (3) calls
   `fetchAuthenticatedUser()` and normalizes its result. Throws
   `WebShooterIdentityUnresolvedError` if all three normalize to null.
@@ -251,30 +260,34 @@ never invoked (mock call count 0).
   the network call when a stored/override value exists.
 
 Behaviors (table, exact per §A.8/§A.10):
-| a | b | match |
-|---|---|---|
-| `"12 456"` | `"12456"` | true |
-| `"12456"` | `"12456"` | true |
-| `"A1234"` | `"A1234"` | true |
-| `"A1234"` | `"a1234"` | false (case-sensitive — WebShooter card numbers are not documented case-insensitive; not guessed) |
-| `null` | `"12456"` | false |
-| `null` | `null` | false |
-| `"None"` | `"12456"` | false |
-| `"12\t456"` | `"12456"` | true (tab) |
-| `"12 456"` | `"12456"` | true (nbsp) |
+
+| a           | b         | match                                                                                             |
+| ----------- | --------- | ------------------------------------------------------------------------------------------------- |
+| `"12 456"`  | `"12456"` | true                                                                                              |
+| `"12456"`   | `"12456"` | true                                                                                              |
+| `"A1234"`   | `"A1234"` | true                                                                                              |
+| `"A1234"`   | `"a1234"` | false (case-sensitive — WebShooter card numbers are not documented case-insensitive; not guessed) |
+| `null`      | `"12456"` | false                                                                                             |
+| `null`      | `null`    | false                                                                                             |
+| `"None"`    | `"12456"` | false                                                                                             |
+| `"12\t456"` | `"12456"` | true (tab)                                                                                        |
+| `"12 456"`  | `"12456"` | true (nbsp)                                                                                       |
 
 ## 4. `mapping.ts`
 
 ### 4.1 Classname → weapon_group/shooter_class
 
 `mapClassname(classname: string): ClassnameMappingResult` where
+
 ```ts
 type ClassnameMappingResult =
   | { ok: true; weaponGroup: string; shooterClass: string }
   | { ok: false; classname: string; reason: string };
 ```
+
 Pattern table, checked in order, first match wins (data-driven regex list,
 not a giant switch — new patterns are one array entry):
+
 1. `^(A|B|C|R)(\d)$` → `weaponGroup: spsf:<letter>`, `shooterClass: <digit>`
    (the spec's own worked example: `'C2'` → `spsf:C`/`'2'`).
 2. `^CD(\d)$` → `spsf:C` / `Dam<digit>` (matches `disciplines/classes.ts`'s
@@ -315,9 +328,10 @@ just reports "not importable").
 
 Plain-data output types (DB writing is a later task, per the v2 spec's own
 scoping):
+
 ```ts
 export interface MappedSeriesOverride {
-  position: number;            // stations_id
+  position: number; // stations_id
   isFinal: boolean;
   note: 'särskjutning' | null; // distinguish rows only (§A.6)
   isTotalOverride: true;
@@ -325,6 +339,7 @@ export interface MappedSeriesOverride {
   totalOverrideShotCount: number;
 }
 ```
+
 `mapStationResultsToSeries(row: ResultRow, shotsPerSeries: number):
 MappedSeriesOverride[]` — flattens `results` (main round, `isFinal: false`,
 `note: null`), `results_finals` (`isFinal: true`, `note: null`, per §A.6 "same
@@ -416,13 +431,21 @@ justified for one small pure function).
 
 ```ts
 export const SCORE_BEARING_FIELDS = [
-  'seriesOverrides', 'officialPlacement', 'officialStandardmedalj',
-  'competitionName', 'competitionDate',
+  'seriesOverrides',
+  'officialPlacement',
+  'officialStandardmedalj',
+  'competitionName',
+  'competitionDate',
 ] as const;
 export const ENRICHMENT_FIELDS = [
-  'firearmId', 'ammoLotId', 'notes', 'seriesPhotoUri', 'tags',
+  'firearmId',
+  'ammoLotId',
+  'notes',
+  'seriesPhotoUri',
+  'tags',
 ] as const;
 ```
+
 `classifyMergeField(field: string): 'score' | 'enrichment' | 'unknown'` —
 table lookup against the two arrays above (§A.3's own field lists).
 
@@ -454,17 +477,19 @@ where explicitly reusing `standardmedalj.ts` for the fixed-threshold medal
 path (§B.3 — "no new threshold table").
 
 ### 6.1 Common input shape (`stats/types.ts` — folded into `stats/pb.ts` as
+
 the primary export to avoid a file with no behavior of its own)
+
 ```ts
 export interface CompetitionResultForStats {
   sessionId: string;
-  competitionType: string;   // disciplineId, e.g. 'spsf-precision'
-  weaponGroup: string;       // e.g. 'spsf:C'
-  shooterClass: string;      // e.g. '2' — full weaponClass = group+class
-  date: string;              // ISO date (competition date)
+  competitionType: string; // disciplineId, e.g. 'spsf-precision'
+  weaponGroup: string; // e.g. 'spsf:C'
+  shooterClass: string; // e.g. '2' — full weaponClass = group+class
+  date: string; // ISO date (competition date)
   beforeFinalTenths: number;
   beforeFinalSeriesCount: number;
-  totalTenths: number;       // == beforeFinalTenths when milsnabb (no final)
+  totalTenths: number; // == beforeFinalTenths when milsnabb (no final)
   totalSeriesCount: number;
   figureHits: number;
   innerTens: number;
@@ -510,6 +535,7 @@ export interface FreeformSessionForPb {
   seriesTenths: readonly number[]; // non-sighter, non-final, chronological
 }
 ```
+
 `bestNSeries(sessions, n): Map<string, { sessionId: string; totalTenths:
 number } | null>` grouped by `` `${disciplineId}:${weaponGroup}${shooterClass}` ``
 — for each session with `seriesTenths.length >= n`, sums the `n` highest
@@ -536,13 +562,20 @@ caller can never accidentally reuse one for the other).
 
 `yearStats(results: readonly CompetitionResultForStats[]): Map<string,
 Map<number, YearStat>>` where
+
 ```ts
 export interface YearStat {
-  year: number; count: number; meanTenths: number; medianTenths: number;
+  year: number;
+  count: number;
+  meanTenths: number;
+  medianTenths: number;
   sampleStdevTenths: number | null; // null when count < 2, same convention as shared/src/scoring/stats.ts
-  minTenths: number; maxTenths: number; meanInnerTens: number;
+  minTenths: number;
+  maxTenths: number;
+  meanInnerTens: number;
 }
 ```
+
 computed over `totalTenths` per result (a competition-result total, not a
 per-shot value — there is no shot-level data for imported results, §B.4),
 grouped by `yearOverYearGroupKey` then by `new Date(date).getUTCFullYear()`.
@@ -580,9 +613,12 @@ literally described, not "corrected" to a least-squares fit).
 
 ```ts
 export interface RelativePlacementInput {
-  placement: number; fieldSize: number; tiedAtCutoffCount?: number;
+  placement: number;
+  fieldSize: number;
+  tiedAtCutoffCount?: number;
 }
 ```
+
 `relativePlacementMedal(input): 'silver' | 'brons' | null` — silver cutoff
 `Math.floor(fieldSize / 9)`, brons cutoff `Math.floor(fieldSize / 3)` (§B.3,
 SHB C.5.1.2 — best 1/9 / best 1/3, rounded down). `tiedAtCutoffCount`
@@ -605,18 +641,29 @@ which path produced the result").
 
 `buildCalendarEvent(input: CalendarEventInput): CalendarEvent` per §C.2,
 pure data only (no `expo-calendar` call — that's app-layer wiring, later):
+
 ```ts
 export interface CalendarEventInput {
-  competitionId: number | string; signupId: number | string;
-  competitionName: string; city: string; weaponGroup: string;
-  patrolNumber: number; lane: number;
-  startLocal: string; endLocal: string; // 'YYYY-MM-DD HH:mm:ss', Stockholm-naive (same as the API)
+  competitionId: number | string;
+  signupId: number | string;
+  competitionName: string;
+  city: string;
+  weaponGroup: string;
+  patrolNumber: number;
+  lane: number;
+  startLocal: string;
+  endLocal: string; // 'YYYY-MM-DD HH:mm:ss', Stockholm-naive (same as the API)
 }
 export interface CalendarEvent {
-  uid: string; summary: string; location: string; description: string;
-  startUtc: string; endUtc: string; // ISO, per §4.4 localToUtcIso
+  uid: string;
+  summary: string;
+  location: string;
+  description: string;
+  startUtc: string;
+  endUtc: string; // ISO, per §4.4 localToUtcIso
 }
 ```
+
 `uid`: `` `webshooter_${competitionId}-${signupId}` `` (§C.2: reused verbatim
 from wscli's own scheme). `summary`: `competitionName`. `location`: `city`.
 `description`: a fixed multi-line block — competition name, date (derived
@@ -666,6 +713,7 @@ summer and (separately, per §4.4) a winter fixture.
 - Supply chain: no new dependency (§1) — nothing to audit.
 
 ## 9. VERIFY items carried into code (all also listed in the caller-facing
+
 report, not just here)
 
 1. `api/schemas.ts` `authUserSchema` — exact `authenticate/user` response

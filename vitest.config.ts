@@ -10,7 +10,11 @@ export default defineConfig({
       // modules are the code the maintainer does not read line by line, so
       // they carry a hard threshold. `vitest run --coverage` exits nonzero
       // when it is missed — a gauntlet layer, not a report.
-      include: ['shared/src/scoring/**/*.ts', 'shared/src/disciplines/**/*.ts'],
+      include: [
+        'shared/src/scoring/**/*.ts',
+        'shared/src/disciplines/**/*.ts',
+        'shared/src/integrations/webshooter/**/*.ts',
+      ],
       exclude: ['**/*.test.ts'],
       reporter: ['text-summary', 'json-summary'],
       reportsDirectory: 'coverage',
