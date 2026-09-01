@@ -129,7 +129,8 @@ series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
                 is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
                                                -- from score/stats, included
                                                -- in volume counts (§6.3);
-                                               -- any number, anywhere
+                                               -- max ONE per section
+                                               -- (main / final), UI-enforced
                 is_final INTEGER NOT NULL DEFAULT 0,   -- series belongs to the
                                                -- final; a final may have its
                                                -- own sighters (both flags set)
@@ -217,7 +218,8 @@ The add-series screen has a **Sighter toggle**; when the session's
 program `supportsFinal`, a **"Start final" action** appears after at
 least one scored series — series added after it get `is_final=1` and the
 session detail shows a Final section divider plus three results: Before
-final · Final · Total (§6.3). Sighters can be added in both sections.
+final · Final · Total (§6.3). Each section allows at most one sighter;
+the toggle disables once used.
 
 **ScoreKeypad spec** (get this exactly right):
 - Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
@@ -352,9 +354,10 @@ change); a program **without** it is fully freeform (§ above). Precision
 is freeform; milsnabb is fixed.
 
 Per-series flags carry the structure instead of the program:
-`is_sighter` (provskott — any number, anywhere) and `is_final` (series
-belongs to the final). A final may have **several sighter series** (both
-flags set).
+`is_sighter` (provskott) and `is_final` (series belongs to the final).
+**Maintainer rule: at most ONE sighter per section** — one in the main
+round, one in the final (both flags set on a final's sighter). The UI
+disables the sighter toggle once the current section has one.
 
 **Result model — maintainer-confirmed:** when a session contains final
 series, three results are tracked and displayed, all derived:
