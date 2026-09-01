@@ -396,3 +396,70 @@ describe('properties (spec §3.8)', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Gaps found by mutation testing (Stryker survivors). Each test below exists
+// because a plausible bug in entry.ts went unnoticed by the tests above.
+// ---------------------------------------------------------------------------
+
+describe('mutation-hardening', () => {
+  it('rejects bad construction with a message that says what is wrong', () => {
+    expect(() => createKeypadState({ mode: 'integer', seriesLength: 0 })).toThrow(
+      /seriesLength must be a positive integer, got 0/,
+    );
+    expect(() =>
+      createKeypadState({ mode: 'integer', seriesLength: 1, shots: [shot(90), shot(80)] }),
+    ).toThrow(/got 2 shots for a series of 1/);
+    expect(() =>
+      createKeypadState({ mode: 'integer', seriesLength: 1, shots: [shot(110)] }),
+    ).toThrow(/valueTenths must be an integer 0\.\.109/);
+    expect(() =>
+      createKeypadState({ mode: 'integer', seriesLength: 1, shots: [shot(-1)] }),
+    ).toThrow(/valueTenths must be an integer 0\.\.109/);
+    expect(() => selectShot(integerState(3), 7)).toThrow(/shot index 7 is outside 0\.\.2/);
+  });
+
+  it('accepts the boundary values 0 and 109 when seeding', () => {
+    const state = createKeypadState({
+      mode: 'decimal',
+      seriesLength: 2,
+      shots: [shot(0), shot(109, true)],
+    });
+    expect(seriesTotalTenths(state)).toBe(109);
+  });
+
+  it('defaults the (X) flag to off when the option is omitted', () => {
+    const state = createKeypadState({ mode: 'decimal', seriesLength: 5 });
+    expect(state.innerTenDecimalEnabled).toBe(false);
+    expect(visibleKeys(state)).not.toContain('(X)');
+  });
+
+  it('never shows (X) in integer mode even when the flag is on', () => {
+    const state = createKeypadState({
+      mode: 'integer',
+      seriesLength: 5,
+      innerTenDecimalEnabled: true,
+    });
+    expect(visibleKeys(state)).not.toContain('(X)');
+    expect(pressKey(state, '(X)')).toEqual(state);
+  });
+
+  it('backspace on a full series clears the last chip', () => {
+    const full = press(integerState(), '9', '8', '7', '6', '5');
+    const back = pressKey(full, 'backspace');
+    expect(back.shots.map((s) => s?.valueTenths ?? null)).toEqual([90, 80, 70, 60, null]);
+    expect(back.cursor).toBe(4);
+  });
+
+  it('a full series ignores a decimal ring tap too', () => {
+    const full = press(decimalState(2), '9', '7', '8', '6');
+    expect(isSeriesComplete(full)).toBe(true);
+    expect(pressKey(full, '9')).toEqual(full);
+    expect(full.pending).toBeNull();
+  });
+
+  it('a partially filled series is not complete', () => {
+    expect(isSeriesComplete(press(integerState(), '9', '8'))).toBe(false);
+    expect(isSeriesComplete(integerState())).toBe(false);
+  });
+});

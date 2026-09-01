@@ -11,6 +11,7 @@ import {
   DISCIPLINES,
   disciplineSchema,
   findWeaponGroup,
+  GENERIC_WEAPON_GROUPS,
   formatGroupAndClass,
   formatShooterClass,
   getDiscipline,
@@ -19,8 +20,10 @@ import {
   programSchema,
   programsForDiscipline,
   requireDiscipline,
+  resolveWeaponGroupIds,
   scoringModeFor,
   shooterClassesForDiscipline,
+  SPSF_WEAPON_GROUPS,
   weaponGroupCode,
   weaponGroupsForDiscipline,
 } from './index';
@@ -132,6 +135,28 @@ describe('programs (spec G5-G9)', () => {
     expect(skeleton.slice(1).reduce((n, s) => n + s.shots, 0)).toBe(60);
   });
 
+  it('a fixed-format program without time limits yields null limits', () => {
+    const untimed = programSchema.parse({
+      ...milsnabbProgramJson,
+      structure: { sighterSeries: 1, groups: [{ seriesCount: 2 }] },
+    });
+    expect(buildProgramSkeleton(untimed)).toEqual([
+      { position: 1, isSighter: true, isFinal: false, shots: 5, timeLimitSeconds: null },
+      { position: 2, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: null },
+      { position: 3, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: null },
+    ]);
+  });
+
+  it('a fixed-format program without a sighter starts at the first scored series', () => {
+    const noSighter = programSchema.parse({
+      ...milsnabbProgramJson,
+      structure: { sighterSeries: 0, groups: [{ seriesCount: 1, timeLimitSeconds: 20 }] },
+    });
+    expect(buildProgramSkeleton(noSighter)).toEqual([
+      { position: 1, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: 20 },
+    ]);
+  });
+
   it('G9: a freeform program pre-creates nothing', () => {
     const program = getProgram('spsf-precision');
     if (!program) throw new Error('precision program missing');
@@ -169,6 +194,15 @@ describe('weapon groups and classes (spec G10-G14)', () => {
 
   it('an unknown discipline has no groups to offer', () => {
     expect(() => weaponGroupsForDiscipline('nope')).toThrow(/unknown discipline/i);
+  });
+
+  it('a data file naming a group that does not exist is a hard error', () => {
+    expect(resolveWeaponGroupIds(['spsf:C'], 'test')).toEqual([
+      { id: 'spsf:C', code: 'C', federation: 'SPSF' },
+    ]);
+    expect(() => resolveWeaponGroupIds(['spsf:C', 'spsf:ZZ'], 'test')).toThrow(
+      /unknown weapon group spsf:ZZ/,
+    );
   });
 
   it('G12: SPSF shooter classes per SHB F.2.1', () => {
@@ -285,5 +319,126 @@ describe('scoring mode (spec G18)', () => {
     expect(scoringModeFor(generic(), null, false)).toBe('integer');
     expect(scoringModeFor(precision(), null, true)).toBe('integer');
     expect(scoringModeFor(precision(), getProgram('spsf-precision') ?? null, true)).toBe('integer');
+  });
+});
+
+// Gaps found by mutation testing (Stryker survivors).
+describe('mutation-hardening', () => {
+  it('ships every SPSF vapengrupp id, magnum groups included', () => {
+    expect(SPSF_WEAPON_GROUPS.map((g) => g.id)).toEqual([
+      'spsf:A',
+      'spsf:AM',
+      'spsf:AP',
+      'spsf:AG',
+      'spsf:A-opt',
+      'spsf:B',
+      'spsf:C',
+      'spsf:R',
+      'spsf:M1',
+      'spsf:M2',
+      'spsf:M3',
+      'spsf:M4',
+      'spsf:M5',
+      'spsf:M6',
+      'spsf:M7',
+      'spsf:M8',
+      'spsf:M9',
+    ]);
+    expect(SPSF_WEAPON_GROUPS.every((g) => g.federation === 'SPSF')).toBe(true);
+    expect(GENERIC_WEAPON_GROUPS).toEqual([
+      { id: 'generic:airgun', code: 'airgun', federation: 'generic' },
+    ]);
+  });
+
+  it('only formats Dam/Vet prefixes, and only with a suffix', () => {
+    expect(formatShooterClass('Dam')).toBe('Dam');
+    expect(formatShooterClass('Vet')).toBe('Vet');
+    expect(formatShooterClass('XDam1')).toBe('XDam1');
+    expect(formatShooterClass('Dam1x')).toBe('Dam 1x');
+    expect(formatShooterClass('Jun')).toBe('Jun');
+  });
+
+  it('trims the parts of a session name', () => {
+    expect(
+      defaultSessionName({
+        kind: 'training',
+        disciplineLabel: '  Precision  ',
+        dateLabel: ' 2026-08-30 ',
+      }),
+    ).toBe('Precision — 2026-08-30');
+    expect(
+      defaultSessionName({
+        kind: 'competition',
+        levelLabel: ' KM ',
+        programLabel: ' Precision ',
+        weaponGroupCode: ' C ',
+      }),
+    ).toBe('KM Precision C');
+  });
+
+  it('a program that scores decimal forces decimal', () => {
+    const decimalProgram = programSchema.parse({
+      ...milsnabbProgramJson,
+      id: 'test-decimal',
+      scoring: 'decimal',
+    });
+    expect(scoringModeFor(requireDiscipline('generic-rings'), decimalProgram, false)).toBe(
+      'decimal',
+    );
+    expect(scoringModeFor(requireDiscipline('spsf-precision'), decimalProgram, false)).toBe(
+      'decimal',
+    );
+  });
+
+  it('names the unknown id in lookup failures', () => {
+    expect(() => requireDiscipline('nope')).toThrow(/Unknown discipline: nope/);
+  });
+
+  it('G3b: the schemas reject every shape of malformed data', () => {
+    const badDisciplines = [
+      { id: '' },
+      { targetFace: '' },
+      { name: { sv: '', en: 'Precision' } },
+      { name: { sv: 'Precision', en: 'Precision', de: 'Präzision' } },
+      { defaultSeriesLength: -1 },
+      { defaultSeriesLength: 2.5 },
+      { scoring: 'points' },
+      { allowsDecimal: 'yes' },
+      { weaponGroups: [''] },
+      { weaponGroups: 'spsf:C' },
+      { federation: '' },
+    ];
+    for (const patch of badDisciplines) {
+      expect(() => disciplineSchema.parse({ ...precisionDisciplineJson, ...patch })).toThrow();
+    }
+
+    const badPrograms = [
+      { id: '' },
+      { disciplineId: '' },
+      { shotsPerSeries: 0 },
+      { supportsFinal: 1 },
+      { structure: { sighterSeries: -1, groups: [{ seriesCount: 1 }] } },
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 0 }] } },
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, timeLimitSeconds: 0 }] } },
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, timeLimitSeconds: 1.5 }] } },
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, extra: true }] } },
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1 }], extra: true } },
+      { structure: { groups: [{ seriesCount: 1 }] } },
+      { structure: { sighterSeries: 1 } },
+      { surprise: true },
+    ];
+    for (const patch of badPrograms) {
+      expect(() => programSchema.parse({ ...milsnabbProgramJson, ...patch })).toThrow();
+    }
+
+    // every federation the schema does accept
+    for (const federation of ['SPSF', 'ISSF', 'generic']) {
+      expect(() =>
+        disciplineSchema.parse({ ...precisionDisciplineJson, federation }),
+      ).not.toThrow();
+    }
+    // an optional structure may legitimately be absent
+    const { structure: _omitted, ...withoutStructure } = milsnabbProgramJson;
+    expect(() => programSchema.parse(withoutStructure)).not.toThrow();
   });
 });

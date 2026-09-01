@@ -160,3 +160,21 @@ describe('isGuldserie (spec M8)', () => {
     expect(isGuldserie(44, precision())).toBe(false);
   });
 });
+
+// Gaps found by mutation testing (Stryker survivors).
+describe('mutation-hardening', () => {
+  it('accepts the boundary birth years', () => {
+    expect(ageReduction(1900, 2026)).toBe(2);
+    expect(ageReduction(2026, 2026)).toBe(0);
+  });
+
+  it('names the accepted range in the rejection message', () => {
+    expect(() => ageReduction(1899, 2026)).toThrow(
+      /birthYear must be an integer between 1900 and 2026/,
+    );
+  });
+
+  it('an undefined birth year is treated as unknown, not as an error', () => {
+    expect(ageReduction(undefined, 2026)).toBe(0);
+  });
+});

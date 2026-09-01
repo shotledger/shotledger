@@ -66,13 +66,26 @@ export function programsForDiscipline(disciplineId: string): readonly Program[] 
   return PROGRAMS.filter((program) => program.disciplineId === disciplineId);
 }
 
-/** Vapengrupper valid for a discipline, in the data file's order. */
-export function weaponGroupsForDiscipline(disciplineId: string): readonly WeaponGroup[] {
-  return requireDiscipline(disciplineId).weaponGroups.map((id) => {
+/**
+ * Resolves federation-scoped group ids to definitions. A data file naming a
+ * group that does not exist is a packaging bug, not a runtime condition —
+ * it throws rather than silently offering a shorter picker.
+ */
+export function resolveWeaponGroupIds(
+  ids: readonly string[],
+  context: string,
+): readonly WeaponGroup[] {
+  return ids.map((id) => {
     const group = findWeaponGroup(id);
-    if (!group) throw new Error(`Discipline ${disciplineId} references unknown weapon group ${id}`);
+    if (!group) throw new Error(`${context} references unknown weapon group ${id}`);
     return group;
   });
+}
+
+/** Vapengrupper valid for a discipline, in the data file's order. */
+export function weaponGroupsForDiscipline(disciplineId: string): readonly WeaponGroup[] {
+  const discipline = requireDiscipline(disciplineId);
+  return resolveWeaponGroupIds(discipline.weaponGroups, `Discipline ${disciplineId}`);
 }
 
 export function shooterClassesForDiscipline(disciplineId: string): readonly ShooterClass[] {
