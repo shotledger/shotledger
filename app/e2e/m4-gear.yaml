@@ -4,7 +4,7 @@
 # amber (a low maintenance interval makes the crossing reachable within one
 # short 5-shot series). Text assertions use English labels — see m2/m3
 # flows, which assume the emulator's default (English) system locale.
-appId: com.anonymous.app
+appId: app.shotledger
 ---
 - launchApp:
     clearState: true
