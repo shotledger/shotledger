@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 
 import { sessions } from '../schema';
 import type { Database } from '../types';
@@ -73,6 +73,23 @@ export function updateSession(db: Database, id: string, patch: UpdateSessionInpu
     .where(and(eq(sessions.id, id), isNull(sessions.deletedAt)))
     .run();
   return getSession(db, id);
+}
+
+/**
+ * Total unscored extra rounds (spec A1 §A1.3) across non-deleted sessions,
+ * optionally restricted to a set of session ids (the Stats tab's filter).
+ * A volume metric only — never an input to a score statistic.
+ */
+export function sumExtraRounds(db: Database, sessionIds?: readonly string[]): number {
+  if (sessionIds !== undefined && sessionIds.length === 0) return 0;
+  const conditions = [isNull(sessions.deletedAt)];
+  if (sessionIds !== undefined) conditions.push(inArray(sessions.id, [...sessionIds]));
+  const row = db
+    .select({ total: sql<number | null>`sum(coalesce(${sessions.extraRounds}, 0))` })
+    .from(sessions)
+    .where(and(...conditions))
+    .get();
+  return row?.total ?? 0;
 }
 
 export function softDeleteSession(db: Database, id: string) {

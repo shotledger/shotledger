@@ -9,9 +9,10 @@ export interface AmmoLotUsage {
 }
 
 /**
- * Usage of an ammo lot (§4 M4): distinct firearm-session count and total
- * shots fired with it (all shots, including sighters — a volume metric like
- * the round counter, §6.3).
+ * Usage of an ammo lot (§4 M4): distinct session count and total rounds fired
+ * with it — all shots including sighters, plus each session's unscored
+ * `extra_rounds` (a volume metric like the round counter; §6.3, A1 §A1.3
+ * A-X2).
  */
 export function getAmmoLotUsage(db: Database, ammoLotId: string): AmmoLotUsage {
   const sessionRow = db
@@ -35,8 +36,14 @@ export function getAmmoLotUsage(db: Database, ammoLotId: string): AmmoLotUsage {
     )
     .get();
 
+  const extraRow = db
+    .select({ total: sql<number | null>`sum(coalesce(${sessions.extraRounds}, 0))` })
+    .from(sessions)
+    .where(and(eq(sessions.ammoLotId, ammoLotId), isNull(sessions.deletedAt)))
+    .get();
+
   return {
     sessionCount: sessionRow?.count ?? 0,
-    shotCount: shotRow?.count ?? 0,
+    shotCount: (shotRow?.count ?? 0) + (extraRow?.total ?? 0),
   };
 }

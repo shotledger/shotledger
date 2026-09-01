@@ -47,16 +47,16 @@ describe('addShot', () => {
     expect(() => addShot(db, { seriesId, position: 1, valueTenths: 110 })).toThrow(RangeError);
   });
 
-  it('sets is_inner_ten and is_inner_ten_decimal flags', () => {
-    const shot = addShot(db, {
-      seriesId,
-      position: 1,
-      valueTenths: 100,
-      isInnerTen: true,
-      isInnerTenDecimal: true,
-    });
-    expect(shot.isInnerTen).toBe(1);
-    expect(shot.isInnerTenDecimal).toBe(1);
+  it('sets is_inner_ten for a centrumtia and always leaves the deprecated flag 0', () => {
+    // A1 §A1.1.4: is_inner_ten_decimal is deprecated — the column stays, but
+    // nothing writes a non-zero value to it any more (invariant A-N10).
+    const inner = addShot(db, { seriesId, position: 1, valueTenths: 100, isInnerTen: true });
+    expect(inner.isInnerTen).toBe(1);
+    expect(inner.isInnerTenDecimal).toBe(0);
+
+    const ordinaryTen = addShot(db, { seriesId, position: 2, valueTenths: 100 });
+    expect(ordinaryTen.isInnerTen).toBe(0);
+    expect(ordinaryTen.isInnerTenDecimal).toBe(0);
   });
 });
 

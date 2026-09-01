@@ -104,6 +104,12 @@ export const sessions = sqliteTable('sessions', {
   location: text('location'),
   notes: text('notes'),
   decimalScoring: integer('decimal_scoring').notNull().default(0),
+  // Rounds fired in this session that were never scored (fouling shots,
+  // function checks, plinking). Counted toward the firearm round counter,
+  // ammo-lot usage and volume metrics; excluded from every score statistic
+  // and from the series/shots structures (spec Amendment A1 §A1.3).
+  // NULL and 0 both mean "none"; nullable so "never entered" stays visible.
+  extraRounds: integer('extra_rounds'),
 });
 
 export const series = sqliteTable('series', {
@@ -131,8 +137,14 @@ export const shots = sqliteTable('shots', {
   // (9 → 90), decimal stores tenths (10.3 → 103). Integer sums — no float
   // drift.
   valueTenths: integer('value_tenths').notNull(),
-  isInnerTen: integer('is_inner_ten').notNull().default(0), // X
-  isInnerTenDecimal: integer('is_inner_ten_decimal').notNull().default(0), // (X), VERIFY
+  // Centrumtia — set by the (X) key. A plain X is an ordinary ten and leaves
+  // this 0 (spec Amendment A1 §A1.1, maintainer ruling 2026-09-01).
+  isInnerTen: integer('is_inner_ten').notNull().default(0),
+  // DEPRECATED (2026-09-01, Amendment A1 §A1.1.4): the old "(X) in decimal
+  // mode" flag. Nothing writes it any more and every row has 0. Kept rather
+  // than dropped because a destructive column-drop migration on an existing
+  // local-first database is riskier than an unused column.
+  isInnerTenDecimal: integer('is_inner_ten_decimal').notNull().default(0),
 });
 
 export const maintenanceEvents = sqliteTable('maintenance_events', {

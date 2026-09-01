@@ -58,7 +58,6 @@ export default function SeriesEntryScreen() {
         enteredShots(state).map((shot) => ({
           valueTenths: shot.valueTenths,
           isInnerTen: shot.isInnerTen,
-          isInnerTenDecimal: shot.isInnerTenDecimal,
         })),
       );
     }

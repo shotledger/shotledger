@@ -3,14 +3,15 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { series, shots } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
+import { sumExtraRounds } from './sessions';
 
 export interface AddShotInput {
   seriesId: string;
   position: number;
   /** 0–109: integer mode stores value×10, decimal mode stores tenths (§3). */
   valueTenths: number;
+  /** Centrumtia — the `(X)` key. A plain `X` is an ordinary ten (A1 §A1.1). */
   isInnerTen?: boolean;
-  isInnerTenDecimal?: boolean;
 }
 
 export function addShot(db: Database, input: AddShotInput) {
@@ -27,7 +28,8 @@ export function addShot(db: Database, input: AddShotInput) {
     position: input.position,
     valueTenths: input.valueTenths,
     isInnerTen: input.isInnerTen ? 1 : 0,
-    isInnerTenDecimal: input.isInnerTenDecimal ? 1 : 0,
+    // is_inner_ten_decimal is DEPRECATED (A1 §A1.1.4): always written as 0.
+    isInnerTenDecimal: 0,
   };
   db.insert(shots).values(row).run();
   return row;
@@ -53,14 +55,12 @@ export function getShot(db: Database, id: string) {
 export function updateShot(
   db: Database,
   id: string,
-  patch: Partial<Pick<AddShotInput, 'valueTenths' | 'isInnerTen' | 'isInnerTenDecimal'>>,
+  patch: Partial<Pick<AddShotInput, 'valueTenths' | 'isInnerTen'>>,
 ) {
   const now = nowIso();
   const values: Record<string, unknown> = { updatedAt: now };
   if (patch.valueTenths !== undefined) values.valueTenths = patch.valueTenths;
   if (patch.isInnerTen !== undefined) values.isInnerTen = patch.isInnerTen ? 1 : 0;
-  if (patch.isInnerTenDecimal !== undefined)
-    values.isInnerTenDecimal = patch.isInnerTenDecimal ? 1 : 0;
   db.update(shots)
     .set(values)
     .where(and(eq(shots.id, id), isNull(shots.deletedAt)))
@@ -118,4 +118,13 @@ export function countAllShots(db: Database): number {
     .where(isNull(shots.deletedAt))
     .get();
   return row?.count ?? 0;
+}
+
+/**
+ * Total rounds fired: every logged shot (sighters included) plus every
+ * session's unscored `extra_rounds` (spec A1 §A1.3, A-X3). This — not
+ * `countAllShots` — is the number to show as "shots logged".
+ */
+export function countVolumeRounds(db: Database): number {
+  return countAllShots(db) + sumExtraRounds(db);
 }

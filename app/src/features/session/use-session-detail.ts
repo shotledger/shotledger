@@ -80,7 +80,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     const shots: EntryShot[] = listShotsForSeries(db, row.id).map((shot) => ({
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen === 1,
-      isInnerTenDecimal: shot.isInnerTenDecimal === 1,
     }));
     const totalTenths = shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
     const threshold = guldserieThreshold({
