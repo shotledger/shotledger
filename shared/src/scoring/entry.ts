@@ -1,7 +1,8 @@
 // Keypad state machine for score entry — pure, UI-agnostic.
 // Executable spec: docs/specs/m3-scoring-spec.md §3, as revised by
-// Amendment A1 §A1.1 (maintainer ruling, 2026-09-01): `X` is an ORDINARY ten,
-// `(X)` is the INNER ten (centrumtia). Both keys exist in both scoring modes.
+// Amendment A2 (maintainer ruling, 2026-09-01, superseding A1 §A1.1): the keys
+// are `1`-`9`, `0`, `10` (ORDINARY ten) and `X` (INNER ten / centrumtia), the
+// same list in both scoring modes.
 //
 // One storage for both scoring modes (implementation plan §3): `valueTenths`
 // is 0–109, integer mode storing value x 10 and decimal mode storing tenths,
@@ -10,7 +11,7 @@
 export type ScoringMode = 'integer' | 'decimal';
 
 export type KeypadKey =
-  '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'X' | '(X)' | 'backspace';
+  '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'X' | 'backspace';
 
 const DIGIT_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'] as const;
 
@@ -43,8 +44,10 @@ export interface CreateKeypadStateOptions {
   shots?: readonly (EntryShot | null)[];
 }
 
+/** The single-digit ring keys. `'10'` is a ten key, not a digit — it must not
+ * be read as the character '1' followed by '0'. */
 function isDigitKey(key: KeypadKey): key is (typeof DIGIT_KEYS)[number] {
-  return key >= '0' && key <= '9';
+  return key.length === 1 && key >= '0' && key <= '9';
 }
 
 function firstEmptyIndex(shots: readonly (EntryShot | null)[]): number {
@@ -87,12 +90,12 @@ export function createKeypadState(options: CreateKeypadStateOptions): KeypadStat
 }
 
 /**
- * Keys the UI should render (spec A-I7/A-D11). The list is identical in both
- * modes: `X` (ordinary ten) and `(X)` (centrumtia) are both always offered.
+ * Keys the UI should render (spec B-I7/B-D11). The list is identical in both
+ * modes: `10` (ordinary ten) and `X` (centrumtia) are both always offered.
  * `state` is accepted for API stability and future mode-specific key sets.
  */
 export function visibleKeys(_state: KeypadState): readonly KeypadKey[] {
-  return [...DIGIT_KEYS, 'X', '(X)', 'backspace'];
+  return [...DIGIT_KEYS, '10', 'X', 'backspace'];
 }
 
 function withShot(state: KeypadState, index: number, shot: EntryShot | null): KeypadState {
@@ -109,8 +112,8 @@ function pressInteger(state: KeypadState, key: KeypadKey): KeypadState {
   if (isDigitKey(key)) {
     return commitShot(state, { valueTenths: Number(key) * 10, isInnerTen: false });
   }
-  // Both ten keys are worth 10 points; only '(X)' marks the centrumtia.
-  return commitShot(state, { valueTenths: 100, isInnerTen: key === '(X)' });
+  // Both ten keys are worth 10 points; only 'X' marks the centrumtia.
+  return commitShot(state, { valueTenths: 100, isInnerTen: key === 'X' });
 }
 
 function pressDecimal(state: KeypadState, key: KeypadKey): KeypadState {
@@ -120,11 +123,11 @@ function pressDecimal(state: KeypadState, key: KeypadKey): KeypadState {
     if (isDigitKey(key)) {
       return { ...state, pending: { ring: Number(key), isInnerTen: false } };
     }
-    // Ring 10 either way; '(X)' additionally marks the centrumtia.
-    return { ...state, pending: { ring: 10, isInnerTen: key === '(X)' } };
+    // Ring 10 either way; 'X' additionally marks the centrumtia.
+    return { ...state, pending: { ring: 10, isInnerTen: key === 'X' } };
   }
 
-  // Second tap: only a digit completes the shot (spec A-D8).
+  // Second tap: only a digit completes the shot (spec B-D8).
   if (!isDigitKey(key)) return state;
   return commitShot(state, {
     valueTenths: pending.ring * 10 + Number(key),

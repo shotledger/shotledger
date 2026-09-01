@@ -1,7 +1,8 @@
 // Executable spec for docs/specs/m3-scoring-spec.md §3 (keypad state machine)
-// as revised by Amendment A1 §A1.1: `X` is an ordinary ten, `(X)` is the inner
-// ten (centrumtia), both usable in both modes.
-// Scenario ids (A-I1, A-D4, E5, C2, P1 …) map 1:1 to the spec tables.
+// as revised by Amendment A2 (which supersedes A1 §A1.1): the keys are
+// `1`–`9`, `0`, `10` (ordinary ten) and `X` (inner ten / centrumtia), the same
+// list in both scoring modes.
+// Scenario ids (B-I1, B-D4, E5, C2, P1 …) map 1:1 to the spec tables.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
@@ -36,57 +37,58 @@ const shot = (valueTenths: number, isInnerTen = false): EntryShot => ({
   isInnerTen,
 });
 
-describe('integer mode (spec §A1.1.3, replaces §3.3)', () => {
-  it('A-I1: a digit key enters one shot worth digit x 10', () => {
+describe('integer mode (spec §A2.2, replaces §A1.1.3)', () => {
+  it('B-I1: a digit key enters one shot worth digit x 10', () => {
     const state = press(integerState(), '9');
     expect(state.shots[0]).toEqual(shot(90));
     expect(state.cursor).toBe(1);
     expect(seriesTotalTenths(state)).toBe(90);
   });
 
-  it('A-I2: 0 enters a miss', () => {
+  it('B-I2: 0 enters a miss', () => {
     const state = press(integerState(), '0');
     expect(state.shots[0]).toEqual(shot(0));
     expect(state.cursor).toBe(1);
     expect(seriesTotalTenths(state)).toBe(0);
   });
 
-  it('A-I3: X enters an ORDINARY ten — no inner-ten flag', () => {
-    const state = press(integerState(), 'X');
+  it('B-I3: 10 enters an ORDINARY ten — no inner-ten flag', () => {
+    const state = press(integerState(), '10');
     expect(state.shots[0]).toEqual(shot(100, false));
     expect(state.cursor).toBe(1);
     expect(seriesTotalTenths(state)).toBe(100);
   });
 
-  it('A-I4: (X) enters an INNER ten (centrumtia) worth the same 10 points', () => {
-    const state = press(integerState(), '(X)');
+  it('B-I4: X enters an INNER ten (centrumtia) worth the same 10 points', () => {
+    const state = press(integerState(), 'X');
     expect(state.shots[0]).toEqual(shot(100, true));
     expect(state.cursor).toBe(1);
     expect(seriesTotalTenths(state)).toBe(100);
   });
 
-  it('A-I5: a full 5-shot series sums and counts only (X) as an inner ten', () => {
-    const state = press(integerState(), '9', 'X', '8', '7', '(X)');
+  it('B-I5: a full 5-shot series sums and counts only X as an inner ten', () => {
+    const state = press(integerState(), '9', '10', '8', '7', 'X');
     expect(state.shots.map((s) => s?.valueTenths)).toEqual([90, 100, 80, 70, 100]);
     expect(seriesTotalTenths(state)).toBe(440);
     expect(enteredShots(state).filter((s) => s.isInnerTen)).toHaveLength(1);
     expect(isSeriesComplete(state)).toBe(true);
   });
 
-  it('A-I5b: a series of five plain X keys scores 50 with zero inner tens', () => {
-    const state = press(integerState(), 'X', 'X', 'X', 'X', 'X');
+  it('B-I5b: a series of five plain 10 keys scores 50 with zero inner tens', () => {
+    const state = press(integerState(), '10', '10', '10', '10', '10');
     expect(seriesTotalTenths(state)).toBe(500);
     expect(enteredShots(state).filter((s) => s.isInnerTen)).toHaveLength(0);
   });
 
-  it('A-I6: keys are ignored once the series is full', () => {
+  it('B-I6: keys are ignored once the series is full', () => {
     const full = press(integerState(), '9', '9', '9', '9', '9');
     expect(pressKey(full, '7')).toEqual(full);
-    expect(pressKey(full, '(X)')).toEqual(full);
+    expect(pressKey(full, 'X')).toEqual(full);
+    expect(pressKey(full, '10')).toEqual(full);
     expect(full.cursor).toBe(5);
   });
 
-  it('A-I7: visibleKeys includes (X) in integer mode', () => {
+  it('B-I7: visibleKeys is 1-9, 0, 10, X, backspace', () => {
     expect(visibleKeys(integerState())).toEqual([
       '1',
       '2',
@@ -98,51 +100,51 @@ describe('integer mode (spec §A1.1.3, replaces §3.3)', () => {
       '8',
       '9',
       '0',
+      '10',
       'X',
-      '(X)',
       'backspace',
     ]);
   });
 });
 
-describe('decimal mode (spec §A1.1.3, replaces §3.4)', () => {
-  it('A-D1: ring 1 then tenth 0 is 1.0', () => {
+describe('decimal mode (spec §A2.2, replaces §A1.1.3)', () => {
+  it('B-D1: ring 1 then tenth 0 is 1.0', () => {
     const state = press(decimalState(), '1', '0');
     expect(state.shots[0]).toEqual(shot(10));
     expect(state.cursor).toBe(1);
   });
 
-  it('A-D2: ring 9 then tenth 7 is 9.7', () => {
+  it('B-D2: ring 9 then tenth 7 is 9.7', () => {
     expect(press(decimalState(), '9', '7').shots[0]).toEqual(shot(97));
   });
 
-  it('A-D3: ring 0 then tenth 0 is a miss', () => {
+  it('B-D3: ring 0 then tenth 0 is a miss', () => {
     expect(press(decimalState(), '0', '0').shots[0]).toEqual(shot(0));
   });
 
-  it('A-D4: X then 9 is 10.9 with NO inner-ten flag', () => {
-    expect(press(decimalState(), 'X', '9').shots[0]).toEqual(shot(109, false));
+  it('B-D4: 10 then 9 is 10.9 with NO inner-ten flag', () => {
+    expect(press(decimalState(), '10', '9').shots[0]).toEqual(shot(109, false));
   });
 
-  it('A-D5: X then 3 is 10.3, no inner-ten flag (not clamped)', () => {
-    expect(press(decimalState(), 'X', '3').shots[0]).toEqual(shot(103, false));
+  it('B-D5: 10 then 3 is 10.3, no inner-ten flag (not clamped)', () => {
+    expect(press(decimalState(), '10', '3').shots[0]).toEqual(shot(103, false));
   });
 
-  it('A-D6: (X) then 9 is 10.9 WITH the inner-ten flag', () => {
-    expect(press(decimalState(), '(X)', '9').shots[0]).toEqual(shot(109, true));
+  it('B-D6: X then 9 is 10.9 WITH the inner-ten flag', () => {
+    expect(press(decimalState(), 'X', '9').shots[0]).toEqual(shot(109, true));
   });
 
-  it('A-D7: (X) then 3 is 10.3 with the inner-ten flag (not clamped)', () => {
-    expect(press(decimalState(), '(X)', '3').shots[0]).toEqual(shot(103, true));
+  it('B-D7: X then 3 is 10.3 with the inner-ten flag (not clamped)', () => {
+    expect(press(decimalState(), 'X', '3').shots[0]).toEqual(shot(103, true));
   });
 
-  it('A-D8: X and (X) are ignored while a ring is pending', () => {
+  it('B-D8: 10 and X are ignored while a ring is pending', () => {
     const pending = press(decimalState(), '9');
+    expect(pressKey(pending, '10')).toEqual(pending);
     expect(pressKey(pending, 'X')).toEqual(pending);
-    expect(pressKey(pending, '(X)')).toEqual(pending);
   });
 
-  it('A-D9: backspace clears a pending ring without writing a shot', () => {
+  it('B-D9: backspace clears a pending ring without writing a shot', () => {
     const pending = press(decimalState(), '9');
     expect(pending.pending).not.toBeNull();
     const cleared = pressKey(pending, 'backspace');
@@ -151,21 +153,21 @@ describe('decimal mode (spec §A1.1.3, replaces §3.4)', () => {
     expect(cleared.cursor).toBe(0);
   });
 
-  it('A-D9b: backspace clears a pending (X) ring too, losing the inner-ten mark', () => {
-    const pending = press(decimalState(), '(X)');
+  it('B-D9b: backspace clears a pending X ring too, losing the inner-ten mark', () => {
+    const pending = press(decimalState(), 'X');
     expect(pending.pending).toEqual({ ring: 10, isInnerTen: true });
     expect(pressKey(pending, 'backspace').pending).toBeNull();
   });
 
-  it('A-D10: a half-entered shot contributes nothing to the running total', () => {
+  it('B-D10: a half-entered shot contributes nothing to the running total', () => {
     const state = press(decimalState(), '9', '7', '8');
     expect(seriesTotalTenths(state)).toBe(97);
     expect(enteredShots(state)).toHaveLength(1);
   });
 
-  it('A-D11: visibleKeys is the same list in decimal mode as in integer mode', () => {
+  it('B-D11: visibleKeys is the same list in decimal mode as in integer mode', () => {
     expect(visibleKeys(decimalState())).toEqual(visibleKeys(integerState()));
-    expect(visibleKeys(decimalState())).toContain('(X)');
+    expect(visibleKeys(decimalState())).not.toContain('(X)');
   });
 });
 
@@ -299,8 +301,8 @@ const anyKey = fc.constantFrom<KeypadKey>(
   '7',
   '8',
   '9',
+  '10',
   'X',
-  '(X)',
   'backspace',
 );
 
@@ -371,7 +373,7 @@ describe('properties (spec §3.8)', () => {
     );
   });
 
-  it('A-P6: isInnerTen is set only by (X), and always on a ten', () => {
+  it('A-P6: isInnerTen is set only by X, and always on a ten', () => {
     fc.assert(
       fc.property(anyMode, fc.integer({ min: 1, max: 8 }), fc.array(anyKey), (mode, len, keys) => {
         const state = press(createKeypadState({ mode, seriesLength: len }), ...keys);
@@ -379,8 +381,8 @@ describe('properties (spec §3.8)', () => {
         for (const s of enteredShots(state)) {
           if (s.isInnerTen) expect(s.valueTenths).toBeGreaterThanOrEqual(100);
         }
-        // Never more inner tens than (X) presses that could have produced them.
-        expect(innerTenCount).toBeLessThanOrEqual(keys.filter((k) => k === '(X)').length);
+        // Never more inner tens than X presses that could have produced them.
+        expect(innerTenCount).toBeLessThanOrEqual(keys.filter((k) => k === 'X').length);
       }),
     );
   });
@@ -428,17 +430,17 @@ describe('mutation-hardening', () => {
     expect(seriesTotalTenths(state)).toBe(109);
   });
 
-  it('X and (X) differ only by the inner-ten flag, never by value', () => {
-    const plain = press(integerState(), 'X').shots[0]!;
-    const inner = press(integerState(), '(X)').shots[0]!;
+  it('10 and X differ only by the inner-ten flag, never by value', () => {
+    const plain = press(integerState(), '10').shots[0]!;
+    const inner = press(integerState(), 'X').shots[0]!;
     expect(plain.valueTenths).toBe(inner.valueTenths);
     expect(plain.isInnerTen).toBe(false);
     expect(inner.isInnerTen).toBe(true);
   });
 
-  it('the decimal pending ring carries the inner-ten mark from (X) only', () => {
-    expect(press(decimalState(), 'X').pending).toEqual({ ring: 10, isInnerTen: false });
-    expect(press(decimalState(), '(X)').pending).toEqual({ ring: 10, isInnerTen: true });
+  it('the decimal pending ring carries the inner-ten mark from X only', () => {
+    expect(press(decimalState(), '10').pending).toEqual({ ring: 10, isInnerTen: false });
+    expect(press(decimalState(), 'X').pending).toEqual({ ring: 10, isInnerTen: true });
   });
 
   it('backspace on a full series clears the last chip', () => {
