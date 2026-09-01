@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": [
+    {
+      "url": "https://github.com/pbakaus/impeccable"
+    }
+  ],
+  "enabledPlugins": {
+    "impeccable": true
+  }
+}
