@@ -52,7 +52,7 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
       />
 
       <View style={styles.totalRow}>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
           {state.mode === 'decimal' ? t('session.keypadHintDecimal') : t('session.keypadHint')}
         </ThemedText>
         <ThemedText type="smallBold" testID="series-running-total">
@@ -91,9 +91,14 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  // Without this the hint is clipped by the running total on a narrow screen.
+  hint: {
+    flexShrink: 1,
   },
   keys: {
     flexDirection: 'row',

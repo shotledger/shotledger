@@ -374,8 +374,10 @@ the toggle disables once used.
 - **Done when:** Maestro flow enters a full 5-series C-precision session
   by tapping and asserts the computed total; unit tests cover scoring
   edge cases (0, miss, X in both modes).
-  — `app/e2e/m3-entry.yaml` does exactly that (five series of 5x9, asserts
-  the computed total 225) on the `shotledger` AVD dev build. Unit tests:
+  — `app/e2e/m3-entry.yaml` does exactly that on the `shotledger` AVD dev
+  build; since the 2026-09-01 amendments each series is `9,9,9,10,X`, so the
+  flow exercises both ten keys and asserts the total (235), the per-series
+  average (47.0) and the X count (5). Unit tests:
   187 vitest tests total, 100% line/branch/function coverage on the shared
   scoring + discipline modules, Stryker 98.26% (7 survivors, all classified
   equivalent in the evidence report) plus a persisted on-disk mutation
