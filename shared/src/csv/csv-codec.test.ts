@@ -22,7 +22,12 @@ describe('toCsvField', () => {
 
 describe('stringifyRows', () => {
   it('joins fields with commas and rows with CRLF', () => {
-    expect(stringifyRows([['a', 'b'], ['c', 'd']])).toBe('a,b\r\nc,d');
+    expect(
+      stringifyRows([
+        ['a', 'b'],
+        ['c', 'd'],
+      ]),
+    ).toBe('a,b\r\nc,d');
   });
 });
 

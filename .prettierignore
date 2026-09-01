@@ -5,3 +5,5 @@ dist
 android
 ios
 pnpm-lock.yaml
+# Vendored (MIT, AmazingAng/old-coder) — keep byte-for-byte with upstream.
+.claude/skills/old-coder

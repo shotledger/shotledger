@@ -44,11 +44,11 @@ Two further constraints come straight from the spike:
 
 ### New runtime dependencies
 
-| Package | Why | Notes |
-| --- | --- | --- |
-| `react-native-fast-opencv` | Stages 1–3 of the geometry pipeline. Named in `docs/implementation-plan.md` §2 for this feature. | MIT, new-architecture only, prebuilt OpenCV binaries both platforms, **no Expo config plugin** — works under prebuild/dev-client/EAS, not Expo Go. iOS ships OpenCV 4.9.0, Android 4.12.0 (different versions per platform — the CLAUDE.md iOS rule means both need testing). |
-| `expo-image-manipulator` | The 2048 px resize, and the full-resolution re-crop for the mark loupe. Load-bearing for memory, not just speed: fast-opencv has no `imread`, pixels arrive as base64, and a 4000 px JPEG is a ~5.5 MB JS string (spike §4.6). | Expo-managed, config plugin not required. |
-| `react-native-vision-camera` | The camera capture path, per implementation-plan §2. | **Companion deps flagged**: needs `react-native-worklets-core` for frame processors (NOT needed here — we only take stills, so it is omitted) and a config plugin entry with camera permission strings. Already-present `react-native-reanimated` 4.5.1 + `react-native-worklets` 0.10.1 cover the worklet side. |
+| Package                      | Why                                                                                                                                                                                                                            | Notes                                                                                                                                                                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `react-native-fast-opencv`   | Stages 1–3 of the geometry pipeline. Named in `docs/implementation-plan.md` §2 for this feature.                                                                                                                               | MIT, new-architecture only, prebuilt OpenCV binaries both platforms, **no Expo config plugin** — works under prebuild/dev-client/EAS, not Expo Go. iOS ships OpenCV 4.9.0, Android 4.12.0 (different versions per platform — the CLAUDE.md iOS rule means both need testing).                                    |
+| `expo-image-manipulator`     | The 2048 px resize, and the full-resolution re-crop for the mark loupe. Load-bearing for memory, not just speed: fast-opencv has no `imread`, pixels arrive as base64, and a 4000 px JPEG is a ~5.5 MB JS string (spike §4.6). | Expo-managed, config plugin not required.                                                                                                                                                                                                                                                                        |
+| `react-native-vision-camera` | The camera capture path, per implementation-plan §2.                                                                                                                                                                           | **Companion deps flagged**: needs `react-native-worklets-core` for frame processors (NOT needed here — we only take stills, so it is omitted) and a config plugin entry with camera permission strings. Already-present `react-native-reanimated` 4.5.1 + `react-native-worklets` 0.10.1 cover the worklet side. |
 
 No new dev dependency. `fast-check`, `vitest` and `@stryker-mutator/*` are
 already in the root `devDependencies`.
@@ -92,7 +92,7 @@ pushed, **no PR opened**, `main` never touched. Photos are personal and are
 ### 2.1 Why a gate, and what it is not
 
 Stage 3's refinement objective maximises a radial edge profile against the
-known ring radii. It finds *some* edge near each nominal radius on almost any
+known ring radii. It finds _some_ edge near each nominal radius on almost any
 textured surface, so a high objective value is not evidence that the rings
 were found — this is exactly how `20250906_104730` came to draw a target on a
 treeline. The gate is therefore **four independent checks, all of which must
@@ -104,13 +104,13 @@ Computed by `app/src/features/photo-scoring/validity.ts`, a pure function
 over numbers the native layer supplies (so it is unit-testable with no
 OpenCV):
 
-| Metric | Definition | Rejects |
-| --- | --- | --- |
-| `axisRatio` | fitted black-zone ellipse `majorAxis / minorAxis` | a "black zone" that is a treeline or a frame-edge sliver, and perspective beyond what weak-perspective rectification can undo |
-| `zoneFraction` | ellipse `majorAxis / max(imageWidth, imageHeight)` | a blob far too small to be the subject, and a black zone filling the frame (Otsu then had no paper/black boundary — spike §6.3 failure 2) |
-| `centerInFrame` | ellipse centre inside the image bounds | extreme crops where the fit put the centre outside the target |
+| Metric             | Definition                                                                            | Rejects                                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `axisRatio`        | fitted black-zone ellipse `majorAxis / minorAxis`                                     | a "black zone" that is a treeline or a frame-edge sliver, and perspective beyond what weak-perspective rectification can undo                                   |
+| `zoneFraction`     | ellipse `majorAxis / max(imageWidth, imageHeight)`                                    | a blob far too small to be the subject, and a black zone filling the frame (Otsu then had no paper/black boundary — spike §6.3 failure 2)                       |
+| `centerInFrame`    | ellipse centre inside the image bounds                                                | extreme crops where the fit put the centre outside the target                                                                                                   |
 | `zoneContrastGrey` | mean grey of the **annulus at 1.15–1.40 r** minus mean grey of the **disc at 0.70 r** | the decisive one. A precision face is a solid black disc on light card, so this is a large positive step. Gravel, sky and a milsnabb annulus have no such step. |
-| `profileScore` | stage-3 objective **normalised by the profile's own median absolute deviation** | a flat, structureless radial profile. Normalisation matters: the raw objective tracks photo contrast and is useless as an absolute threshold. |
+| `profileScore`     | stage-3 objective **normalised by the profile's own median absolute deviation**       | a flat, structureless radial profile. Normalisation matters: the raw objective tracks photo contrast and is useless as an absolute threshold.                   |
 
 ### 2.3 Thresholds, and where they come from
 
@@ -130,17 +130,17 @@ and 50 sits inside it.
 
 ### 2.4 Acceptance criteria
 
-| # | Given | Then |
-| --- | --- | --- |
-| V1 | all five metrics inside their thresholds | `{ valid: true, reasons: [] }` |
-| V2 | `axisRatio` 2.01 | invalid, reasons include `'axisRatio'` |
-| V3 | `zoneFraction` 0.09, and separately 0.96 | invalid, reasons include `'zoneFraction'` (both ends of the band are enforced) |
-| V4 | `centerInFrame` false | invalid, reasons include `'centerInFrame'` |
-| V5 | `zoneContrastGrey` 49.9 | invalid, reasons include `'zoneContrast'` |
-| V6 | `profileScore` 19.9 | invalid, reasons include `'profileScore'` |
-| V7 | several metrics out of range at once | `reasons` lists **every** failing metric, in a stable declared order — the UI explains what went wrong, so a gate that stops at the first failure would hide the rest |
-| V8 | exactly-on-threshold values (2.0, 0.10, 0.95, 50, 20) | valid — thresholds are inclusive bounds |
-| V9 | a NaN in any metric | invalid, reason for that metric (a NaN must never compare its way to `valid`) |
+| #   | Given                                                 | Then                                                                                                                                                                  |
+| --- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | all five metrics inside their thresholds              | `{ valid: true, reasons: [] }`                                                                                                                                        |
+| V2  | `axisRatio` 2.01                                      | invalid, reasons include `'axisRatio'`                                                                                                                                |
+| V3  | `zoneFraction` 0.09, and separately 0.96              | invalid, reasons include `'zoneFraction'` (both ends of the band are enforced)                                                                                        |
+| V4  | `centerInFrame` false                                 | invalid, reasons include `'centerInFrame'`                                                                                                                            |
+| V5  | `zoneContrastGrey` 49.9                               | invalid, reasons include `'zoneContrast'`                                                                                                                             |
+| V6  | `profileScore` 19.9                                   | invalid, reasons include `'profileScore'`                                                                                                                             |
+| V7  | several metrics out of range at once                  | `reasons` lists **every** failing metric, in a stable declared order — the UI explains what went wrong, so a gate that stops at the first failure would hide the rest |
+| V8  | exactly-on-threshold values (2.0, 0.10, 0.95, 50, 20) | valid — thresholds are inclusive bounds                                                                                                                               |
+| V9  | a NaN in any metric                                   | invalid, reason for that metric (a NaN must never compare its way to `valid`)                                                                                         |
 
 ### 2.5 What happens on failure
 
@@ -158,22 +158,25 @@ No silent degradation and no rings drawn on gravel. The scan screen shows
 ## 3. `shared/src/scoring/group.ts` — group analytics (old-coder, Tier 2)
 
 New shared logic, so it runs the evidence-first loop. Tier 2: it is
-*analytics*, not scoring — a wrong mean radius misinforms, it does not corrupt
+_analytics_, not scoring — a wrong mean radius misinforms, it does not corrupt
 märke/standardmedalj/compliance data the way a wrong ring value would. Full
 loop plus property tests; no failure-model section.
 
 ### 3.1 API
 
 ```ts
-interface GroupPoint { readonly xMm: number; readonly yMm: number }
+interface GroupPoint {
+  readonly xMm: number;
+  readonly yMm: number;
+}
 
 interface GroupAnalysis {
   readonly shotCount: number;
-  readonly mpiMm: GroupPoint;      // mean point of impact, input convention
-  readonly windageMm: number;      // mpi.x; positive = right of centre
-  readonly elevationMm: number;    // -mpi.y; positive = above centre
-  readonly meanRadiusMm: number;   // mean distance from the MPI
-  readonly extremeSpreadMm: number;// largest distance between any two shots
+  readonly mpiMm: GroupPoint; // mean point of impact, input convention
+  readonly windageMm: number; // mpi.x; positive = right of centre
+  readonly elevationMm: number; // -mpi.y; positive = above centre
+  readonly meanRadiusMm: number; // mean distance from the MPI
+  readonly extremeSpreadMm: number; // largest distance between any two shots
 }
 
 function analyzeGroup(points: readonly GroupPoint[]): GroupAnalysis | null;
@@ -188,27 +191,27 @@ module and is asserted directly (GR6).
 
 ### 3.2 Acceptance criteria
 
-| # | Given | Then |
-| --- | --- | --- |
-| GR1 | `[]` | returns `null` (no group exists; the caller hides the view) |
-| GR2 | one shot at `(3, -4)` | `mpi = (3,-4)`, `windage = 3`, `elevation = 4`, `meanRadius = 0`, `extremeSpread = 0`, `shotCount = 1` |
-| GR3 | four shots symmetric about the origin | `mpi = (0,0)`, `windage = 0`, `elevation = 0` |
-| GR4 | four shots at distance 10 on the axes from the origin | `meanRadius = 10`, `extremeSpread = 20` |
-| GR5 | three collinear shots at x = 0, 10, 30 | `extremeSpread = 30` (max **pairwise**, not max-from-MPI); `mpi.x = 40/3`; `meanRadius = (40/3 + 10/3 + 50/3)/3 = 100/9` |
-| GR6 | one shot at `(0, -5)` (above centre in y-down) | `elevationMm = +5` — the sign flip, asserted alone |
-| GR7 | one shot at `(7, 0)` | `windageMm = +7` |
-| GR8 | five identical shots | `meanRadius = 0`, `extremeSpread = 0`, `shotCount = 5` (degenerate group is legal, not an error) |
-| GR9 | any input | `shotCount === points.length` |
-| GR10 | a non-finite coordinate | throws `RangeError` — a NaN silently poisoning every statistic is the failure mode worth a guard |
+| #    | Given                                                 | Then                                                                                                                     |
+| ---- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| GR1  | `[]`                                                  | returns `null` (no group exists; the caller hides the view)                                                              |
+| GR2  | one shot at `(3, -4)`                                 | `mpi = (3,-4)`, `windage = 3`, `elevation = 4`, `meanRadius = 0`, `extremeSpread = 0`, `shotCount = 1`                   |
+| GR3  | four shots symmetric about the origin                 | `mpi = (0,0)`, `windage = 0`, `elevation = 0`                                                                            |
+| GR4  | four shots at distance 10 on the axes from the origin | `meanRadius = 10`, `extremeSpread = 20`                                                                                  |
+| GR5  | three collinear shots at x = 0, 10, 30                | `extremeSpread = 30` (max **pairwise**, not max-from-MPI); `mpi.x = 40/3`; `meanRadius = (40/3 + 10/3 + 50/3)/3 = 100/9` |
+| GR6  | one shot at `(0, -5)` (above centre in y-down)        | `elevationMm = +5` — the sign flip, asserted alone                                                                       |
+| GR7  | one shot at `(7, 0)`                                  | `windageMm = +7`                                                                                                         |
+| GR8  | five identical shots                                  | `meanRadius = 0`, `extremeSpread = 0`, `shotCount = 5` (degenerate group is legal, not an error)                         |
+| GR9  | any input                                             | `shotCount === points.length`                                                                                            |
+| GR10 | a non-finite coordinate                               | throws `RangeError` — a NaN silently poisoning every statistic is the failure mode worth a guard                         |
 
 ### 3.3 Properties (fast-check)
 
-| # | Property |
-| --- | --- |
-| GP1 | **Translation**: translating every shot by `(dx, dy)` shifts `mpi` by `(dx, dy)` and leaves `meanRadius` and `extremeSpread` unchanged |
-| GP2 | **Rotation**: rotating every shot about the origin leaves `meanRadius` and `extremeSpread` unchanged |
-| GP3 | **Scale**: scaling every shot by `k > 0` scales `meanRadius` and `extremeSpread` by `k` |
-| GP4 | **Ordering**: the result is invariant under permutation of the input |
+| #   | Property                                                                                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GP1 | **Translation**: translating every shot by `(dx, dy)` shifts `mpi` by `(dx, dy)` and leaves `meanRadius` and `extremeSpread` unchanged                              |
+| GP2 | **Rotation**: rotating every shot about the origin leaves `meanRadius` and `extremeSpread` unchanged                                                                |
+| GP3 | **Scale**: scaling every shot by `k > 0` scales `meanRadius` and `extremeSpread` by `k`                                                                             |
+| GP4 | **Ordering**: the result is invariant under permutation of the input                                                                                                |
 | GP5 | **Bound**: `meanRadiusMm <= extremeSpreadMm` for any non-empty input (the MPI lies in the convex hull, so no shot is further from it than the group's own diameter) |
 
 ### 3.4 Negative constraints
@@ -223,7 +226,7 @@ module and is asserted directly (GR6).
 
 ## 4. Persistence — `shot_marks`
 
-A mark is *where the user tapped*, in target-mm. The score derived from it
+A mark is _where the user tapped_, in target-mm. The score derived from it
 already has a home (`shots.value_tenths`), so the table stores the geometry,
 not the score — re-scoring an existing photo must never need the photo again.
 
@@ -245,7 +248,7 @@ shot_marks   shot_id TEXT NOT NULL,      -- FK shots.id, one mark per shot
   round counters stay correct. Photo scoring produces integer-mode shots only
   (`valueTenths = value * 10`), via `seriesToEntryShots`.
 - **`is_inner_ten` is NOT inferred from the tap.** A tap cannot know
-  centrumtia: X is a *called* distinction the shooter makes, and the X ring on
+  centrumtia: X is a _called_ distinction the shooter makes, and the X ring on
   the precision face is 25 mm — the same order as the gate's own error budget.
   X stays a per-shot toggle in the mark UI, defaulting off, exactly as
   `ScoreKeypad` treats it.
@@ -270,13 +273,13 @@ Camera (`react-native-vision-camera`) or library (the existing
 
 ### 5.2 Stages (ported from `spike/cv/target_cv.py`)
 
-| Stage | Ops | Where |
-| --- | --- | --- |
-| 1 Find the face | `cvtColor` → `GaussianBlur(7)` → `GaussianBlur(31)` → `threshold(OTSU\|BINARY_INV)` → `morphologyEx` OPEN+CLOSE (9×9) → `findContours` → largest by `contourArea` → `fitEllipse` | native |
-| 1b Ray re-fit | 360 rays from the fitted centre over the filled mask, dropping any ray that leaves the frame; re-`fitEllipse` on the surviving boundary points | mask pulled once via `toBuffer()`, ray walk in JS, `fitEllipse` native |
-| 2 Rectify | `buildRectification(ellipse, 200)` from `shared/target-scoring`, composed with the 4 px/mm canvas offset into a 3×3 `H`; `warpPerspective` to a ~1040 px canvas | shared math + native warp |
-| 3 Refine | `coarseToFineRefine` drives the search; each `(dx, dy)` gets one `warpPolar` on the **small rectified canvas**, reduced to a 1-D profile and high-passed in JS; `scoreRadialProfile(profile, 4 * scale, ringRadii)` is the objective | shared math driving native sampling |
-| 4 Gate | §2 | pure TS |
+| Stage           | Ops                                                                                                                                                                                                                                  | Where                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 1 Find the face | `cvtColor` → `GaussianBlur(7)` → `GaussianBlur(31)` → `threshold(OTSU\|BINARY_INV)` → `morphologyEx` OPEN+CLOSE (9×9) → `findContours` → largest by `contourArea` → `fitEllipse`                                                     | native                                                                 |
+| 1b Ray re-fit   | 360 rays from the fitted centre over the filled mask, dropping any ray that leaves the frame; re-`fitEllipse` on the surviving boundary points                                                                                       | mask pulled once via `toBuffer()`, ray walk in JS, `fitEllipse` native |
+| 2 Rectify       | `buildRectification(ellipse, 200)` from `shared/target-scoring`, composed with the 4 px/mm canvas offset into a 3×3 `H`; `warpPerspective` to a ~1040 px canvas                                                                      | shared math + native warp                                              |
+| 3 Refine        | `coarseToFineRefine` drives the search; each `(dx, dy)` gets one `warpPolar` on the **small rectified canvas**, reduced to a 1-D profile and high-passed in JS; `scoreRadialProfile(profile, 4 * scale, ringRadii)` is the objective | shared math driving native sampling                                    |
+| 4 Gate          | §2                                                                                                                                                                                                                                   | pure TS                                                                |
 
 `fitEllipseDirect` is **missing upstream** in `react-native-fast-opencv` and
 is not patched in for phase 1 (that would mean carrying a fork). Plain
@@ -313,9 +316,9 @@ TargetScan Preview parity, minus auto-detect.
   within 1 mm of the deciding ring. Such a marker renders distinctly (a ring
   around it) and exposes a tappable **"your call"** toggle between the two
   candidate values. The scoring layer never silently resolves a tangent case —
-  spike §4.5: *surface the judgement call to the user rather than deciding it*.
+  spike §4.5: _surface the judgement call to the user rather than deciding it_.
 - **Series length cap** from the program (`shotsPerSeries ?? defaultSeriesLength
-  ?? 5`); further taps are refused with a message rather than silently ignored.
+?? 5`); further taps are refused with a message rather than silently ignored.
 - **Retake** / **Scan next** (next series in the same session).
 
 `marks.ts` holds this as a pure reducer over `{ marks, selectedId,
@@ -341,11 +344,11 @@ TargetScan screen 2 parity, on a **clean vector target** — not the photo.
 ## 8. Out of scope, explicitly
 
 - The Score-Analysis heatmap (benchmark screenshot 3) — phase 2.
-- Any hole *detection*. Every mark in phase 1 is a user tap.
+- Any hole _detection_. Every mark in phase 1 is a user tap.
 - The milsnabb face and every non-precision face: friendly
   "not yet supported yet" message, never a guess.
 - The opt-in corrections corpus / photo upload (spike §4.6 privacy note) —
   that is a separate, explicit, off-by-default feature and is not built here.
-- iOS verification. Both platforms are *supported* (no Android-only module),
+- iOS verification. Both platforms are _supported_ (no Android-only module),
   but this branch is verified on the Android emulator only; the per-platform
   OpenCV version difference (4.9.0 vs 4.12.0) is recorded as an untested risk.

@@ -100,24 +100,25 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
   indefinitely in this sandbox rather than returning). Killing a stuck
   `maestro` process with `pkill -9` leaves a stale adb/gRPC connection
   (`UNAVAILABLE`/"Command failed... closed" on the next run) — run `adb
-  kill-server && adb start-server` before retrying. This sandbox's
+kill-server && adb start-server` before retrying. This sandbox's
   software-rendered emulator (`-gpu swiftshader_indirect`) is also
   markedly slower and less consistent step-to-step than a real device;
   expect individual `tapOn`/`inputText` steps to occasionally take 30s+.
   On a longer flow (~25+ steps deep) this sandbox has reproducibly hit
   `maestro.android.DeviceServerDiedException: ... DEADLINE_EXCEEDED after
-  120s` on `inputText` (the on-device maestro-driver gRPC server itself
+120s` on `inputText` (the on-device maestro-driver gRPC server itself
   stops responding, not a step in the flow) — a real limitation of this
   sandboxed emulator instance, not the app or the flow; `adb kill-server
-  && adb start-server` plus a retry is the only known recovery, and it
+&& adb start-server` plus a retry is the only known recovery, and it
   does not always succeed on the first retry either.
-- Checks: `pnpm check` (= `pnpm typecheck && pnpm i18n:check && pnpm lint &&
-vitest run && (cd app && pnpm exec jest --passWithNoTests)`), run from the
-  repo root. `pnpm i18n:check` (`scripts/i18n-check.mjs`) gates on
-  `app/src/i18n/{en,sv}.json` having identical key sets and every key
-  actually referenced in `app/src`. `pnpm exec prettier --check .` is
-  available separately (`pnpm format`) but not part of `check` per the
-  implementation plan.
+- Checks: `pnpm check` (= `pnpm typecheck && pnpm typecheck:app && pnpm
+i18n:check && pnpm lint && pnpm format && vitest run && (cd app && pnpm
+exec jest --passWithNoTests)`), run from the repo root. `pnpm i18n:check`
+  (`scripts/i18n-check.mjs`) gates on `app/src/i18n/{en,sv}.json` having
+  identical key sets and every key actually referenced in `app/src`.
+  `pnpm format` (`prettier --check .`) joined `check` in `feat/polish-1`
+  once the pre-M3 formatting debt was cleared; `.claude/skills/old-coder/`
+  is prettier-ignored (vendored, kept byte-for-byte with upstream).
   `pnpm typecheck` (`tsc -b`) covers `shared/` and `backend/` only — the
   `app/` project isn't composite so it can't join that build graph, but
   `check` also runs `pnpm typecheck:app` (`cd app && pnpm exec tsc
@@ -136,7 +137,7 @@ vitest run && (cd app && pnpm exec jest --passWithNoTests)`), run from the
   since `extendedWaitUntil` — unlike `assertVisible` — does not fail the
   flow when its condition is never met) before the first `openLink`, plus a
   one-shot retry via `runFlow: {when: {notVisible: '<target>'}, commands:
-  [openLink: ...]}`, made `app://dev` reliable across repeated runs. See
+[openLink: ...]}`, made `app://dev` reliable across repeated runs. See
   `app/e2e/m5-stats.yaml`.
 - **Never edit files in the working tree while a Maestro flow is running**
   against a Metro dev build: Metro hot-reloads, the dev client returns to

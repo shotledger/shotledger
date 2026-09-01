@@ -21,23 +21,23 @@ three pure app modules where a silent error would be invisible
 
 ## 2. `shared/src/scoring/group.ts` — spec §3 mapping
 
-| Spec criterion | Test | Result |
-| --- | --- | --- |
-| GR1 empty → null | `group.test.ts` "returns null for an empty group" | pass |
-| GR2 single shot | "a single shot is its own MPI with zero spread" | pass |
-| GR3 symmetric MPI = 0 | "a group symmetric about the origin has a zero MPI" | pass |
-| GR4 mean radius | "mean radius is the mean distance from the MPI" | pass |
-| GR5 spread is pairwise | "extreme spread is the max PAIRWISE distance, not the max from the MPI" | pass |
-| GR6 elevation sign | "elevation is positive above the centre (input y increases downward)" | pass |
-| GR7 windage sign | "windage is positive to the right of the centre" | pass |
-| GR8 degenerate group | "a degenerate group of identical shots is legal, not an error" | pass |
-| GR9 shotCount | "shotCount is the input length" | pass |
-| GR10 non-finite throws | "a non-finite coordinate throws rather than poisoning every statistic" | pass |
-| GP1 translation | `group.property.test.ts` GP1 | pass (fast-check, 100 runs) |
-| GP2 rotation | GP2 | pass |
-| GP3 scale | GP3 | pass |
-| GP4 ordering | GP4 | pass |
-| GP5 meanRadius ≤ spread | GP5 | pass |
+| Spec criterion          | Test                                                                    | Result                      |
+| ----------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| GR1 empty → null        | `group.test.ts` "returns null for an empty group"                       | pass                        |
+| GR2 single shot         | "a single shot is its own MPI with zero spread"                         | pass                        |
+| GR3 symmetric MPI = 0   | "a group symmetric about the origin has a zero MPI"                     | pass                        |
+| GR4 mean radius         | "mean radius is the mean distance from the MPI"                         | pass                        |
+| GR5 spread is pairwise  | "extreme spread is the max PAIRWISE distance, not the max from the MPI" | pass                        |
+| GR6 elevation sign      | "elevation is positive above the centre (input y increases downward)"   | pass                        |
+| GR7 windage sign        | "windage is positive to the right of the centre"                        | pass                        |
+| GR8 degenerate group    | "a degenerate group of identical shots is legal, not an error"          | pass                        |
+| GR9 shotCount           | "shotCount is the input length"                                         | pass                        |
+| GR10 non-finite throws  | "a non-finite coordinate throws rather than poisoning every statistic"  | pass                        |
+| GP1 translation         | `group.property.test.ts` GP1                                            | pass (fast-check, 100 runs) |
+| GP2 rotation            | GP2                                                                     | pass                        |
+| GP3 scale               | GP3                                                                     | pass                        |
+| GP4 ordering            | GP4                                                                     | pass                        |
+| GP5 meanRadius ≤ spread | GP5                                                                     | pass                        |
 
 **Negative constraints (spec §3.4):** no new dependency (verified — the
 `pnpm add` in this branch added only the two runtime deps in §5 below); no
@@ -63,19 +63,19 @@ group, which would render as `-0.0 mm`. Fixed in the **implementation**
 
 All numbers from one fresh run after the last code edit.
 
-| Layer | Command | Result |
-| --- | --- | --- |
-| Full suite (vitest) | `pnpm check` | **511 passed / 45 files**, 0 failures |
-| Full suite (jest-expo) | `pnpm check` | **75 passed / 6 suites**, 0 failures |
-| Static types (shared+backend) | `pnpm typecheck` (`tsc -b`) | clean |
-| Static types (app, by hand) | `cd app && pnpm exec tsc --noEmit` | **2 errors, both pre-existing** in `src/db/migration-gate.tsx` and `src/db/queries/sessions.ts`; **0 new** |
-| i18n | `pnpm i18n:check` | `en.json: 307 keys, sv.json: 307 keys, 0 issues` |
-| Lint | `pnpm lint` | clean, 0 problems |
-| Coverage | `pnpm coverage` | **100 %** statements / branches / functions / lines (1085/1085, 380/380, 93/93) |
-| Mutation (`group.ts`) | `npx stryker run --mutate 'shared/src/scoring/group.ts'` | **95.45 %**, 42 killed / 2 survived, above the 95 break threshold |
-| Property tests | included in the vitest run | 5 properties, fast-check |
-| Supply chain | see §5 | 2 new runtime deps, both named in the spec |
-| Real execution | see §6 | dev build on the Android emulator, real corpus photos |
+| Layer                         | Command                                                  | Result                                                                                                     |
+| ----------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Full suite (vitest)           | `pnpm check`                                             | **511 passed / 45 files**, 0 failures                                                                      |
+| Full suite (jest-expo)        | `pnpm check`                                             | **75 passed / 6 suites**, 0 failures                                                                       |
+| Static types (shared+backend) | `pnpm typecheck` (`tsc -b`)                              | clean                                                                                                      |
+| Static types (app, by hand)   | `cd app && pnpm exec tsc --noEmit`                       | **2 errors, both pre-existing** in `src/db/migration-gate.tsx` and `src/db/queries/sessions.ts`; **0 new** |
+| i18n                          | `pnpm i18n:check`                                        | `en.json: 307 keys, sv.json: 307 keys, 0 issues`                                                           |
+| Lint                          | `pnpm lint`                                              | clean, 0 problems                                                                                          |
+| Coverage                      | `pnpm coverage`                                          | **100 %** statements / branches / functions / lines (1085/1085, 380/380, 93/93)                            |
+| Mutation (`group.ts`)         | `npx stryker run --mutate 'shared/src/scoring/group.ts'` | **95.45 %**, 42 killed / 2 survived, above the 95 break threshold                                          |
+| Property tests                | included in the vitest run                               | 5 properties, fast-check                                                                                   |
+| Supply chain                  | see §5                                                   | 2 new runtime deps, both named in the spec                                                                 |
+| Real execution                | see §6                                                   | dev build on the Android emulator, real corpus photos                                                      |
 
 ### Baseline
 
@@ -125,15 +125,15 @@ partial) / 15 failed** on the same 38 photos.
 
 ### 4.2 What the gate rejects — the photos it exists for
 
-| Photo | Why it matters | axisRatio | zoneFraction | contrast | profile | Verdict |
-| --- | --- | --- | --- | --- | --- | --- |
-| `20250906_104730` | **Locked onto a treeline and gravel** with a plausible 2.3 mm residual (spike §6.3) | 2.349 | 0.005 | **−111.5** | 7.05 | rejected on **all four** measured axes |
-| `20250906_150442` | **Locked onto a gravel bank** | 6.389 | 0.049 | **−5.6** | 9.21 | rejected on **all four** |
-| `20260609_181957` | Black zone fills the frame — Otsu had no boundary | 38.411 | 0.019 | −87.0 | 7.54 | rejected on all four |
-| `20260726_153751` | Milsnabb face, **profile score 122** | 1.477 | 0.897 | −57.7 | **121.99** | rejected on contrast alone |
-| `20260401_171339` | **Profile score 320** on a non-target lock | 1.964 | 1.015 | −21.0 | **320.45** | rejected on zoneFraction + contrast |
-| `20260726_145316`, `20260726_150229` | The other two milsnabb photos | — | — | −50.6, −19.4 | 15.3, 15.8 | rejected |
-| `20250906_135537`, `20250918_181552` | The two extreme-perspective photos the spike excluded | 1.848, 1.926 | — | 17.7, 14.4 | 12.9, 13.1 | rejected |
+| Photo                                | Why it matters                                                                      | axisRatio    | zoneFraction | contrast     | profile    | Verdict                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------- | ------------ | ------------ | ------------ | ---------- | -------------------------------------- |
+| `20250906_104730`                    | **Locked onto a treeline and gravel** with a plausible 2.3 mm residual (spike §6.3) | 2.349        | 0.005        | **−111.5**   | 7.05       | rejected on **all four** measured axes |
+| `20250906_150442`                    | **Locked onto a gravel bank**                                                       | 6.389        | 0.049        | **−5.6**     | 9.21       | rejected on **all four**               |
+| `20260609_181957`                    | Black zone fills the frame — Otsu had no boundary                                   | 38.411       | 0.019        | −87.0        | 7.54       | rejected on all four                   |
+| `20260726_153751`                    | Milsnabb face, **profile score 122**                                                | 1.477        | 0.897        | −57.7        | **121.99** | rejected on contrast alone             |
+| `20260401_171339`                    | **Profile score 320** on a non-target lock                                          | 1.964        | 1.015        | −21.0        | **320.45** | rejected on zoneFraction + contrast    |
+| `20260726_145316`, `20260726_150229` | The other two milsnabb photos                                                       | —            | —            | −50.6, −19.4 | 15.3, 15.8 | rejected                               |
+| `20250906_135537`, `20250918_181552` | The two extreme-perspective photos the spike excluded                               | 1.848, 1.926 | —            | 17.7, 14.4   | 12.9, 13.1 | rejected                               |
 
 The last two rows of that table are the point of the whole gate. **A
 residual-only or profile-only check would have passed `20260726_153751`
@@ -154,7 +154,7 @@ axisRatio 1.284) — still well clear of both thresholds.
   off-frame; one short arc of the black zone". The measured metrics do not
   distinguish it. The backstop is that the user **sees the ring overlay drawn
   on their own photo** before marking anything, and can fall back to manual
-  corners; the gate's job is to stop *confident nonsense*, and on that it is
+  corners; the gate's job is to stop _confident nonsense_, and on that it is
   clean.
 - **Known false rejects.** `20260816_114337` (contrast −20.4) is rejected even
   though spike §3 records stage 4 rescuing it to a 0.55 mm residual — its card
@@ -180,10 +180,10 @@ fails rather than comparing its way to `valid`.
 
 Two new runtime dependencies, both named in the spec:
 
-| Package | Version | License | Why |
-| --- | --- | --- | --- |
-| `react-native-fast-opencv` | ^1.0.1 | MIT | Named in `docs/implementation-plan.md` §2 for this feature. New-architecture only; **no Expo config plugin** — works under prebuild/dev-client/EAS, not Expo Go. |
-| `expo-image-manipulator` | ^57.0.14 | MIT | The 2048 px resize and the full-resolution loupe crop. |
+| Package                    | Version  | License | Why                                                                                                                                                              |
+| -------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `react-native-fast-opencv` | ^1.0.1   | MIT     | Named in `docs/implementation-plan.md` §2 for this feature. New-architecture only; **no Expo config plugin** — works under prebuild/dev-client/EAS, not Expo Go. |
+| `expo-image-manipulator`   | ^57.0.14 | MIT     | The 2048 px resize and the full-resolution loupe crop.                                                                                                           |
 
 **`react-native-vision-camera` was installed and then removed.** v5.2.3
 declares `react-native-nitro-modules` and `react-native-nitro-image` as peers —
@@ -211,12 +211,12 @@ be the failure this whole scheme exists to prevent.
 - **`opencv.ts` has no automated test at all.** It needs a device with the
   native OpenCV binaries; there is no headless harness for it in this repo.
   Its correctness rests on (a) being a close port of Python that was measured
-  on 38 photos, (b) delegating every arithmetic decision to modules that *are*
+  on 38 photos, (b) delegating every arithmetic decision to modules that _are_
   tested, and (c) the emulator run in §9. A logic error in the ray-cast walk
   or the `warpPolar` reduction would not be caught by any layer here.
 - **The React components have no tests.** `@testing-library/react-native` is
   not a dependency and one was not added. The mark reducer, the scoring, the
-  transforms and the gate are all tested *underneath* the components, so what
+  transforms and the gate are all tested _underneath_ the components, so what
   is untested is the wiring and the rendering, which is what §9 exercises by
   hand.
 - **iOS is entirely unverified.** No Android-only module is used, so it should
@@ -226,7 +226,7 @@ be the failure this whole scheme exists to prevent.
 - **The gate's thresholds are fitted, not validated.** §4.4.
 - **Accuracy of a marked score is unmeasured.** Phase 1 makes no accuracy
   claim: the rings come from geometry the spike measured at 0.51 mm median
-  residual, but where the *user* taps is the user's business, and no
+  residual, but where the _user_ taps is the user's business, and no
   ground-truth comparison of a tapped series against a hand-scored one was
   performed.
 - **Mutation testing did not run on the app-side modules.** Stryker's config
@@ -238,14 +238,14 @@ be the failure this whole scheme exists to prevent.
 
 Both of these were real gaps in the tests, found by mutants that **survived**:
 
-| Module | Mutant | Outcome |
-| --- | --- | --- |
-| `shot-marks.ts` | `clearSeriesMarks` made a no-op | **SURVIVED.** The reads join through `shots`, so an orphaned mark is invisible to them — but it is a live row pointing at a soft-deleted shot, exactly what the sync foundation must not see. Fixed by asserting on the raw table; mutant now killed. |
-| `shot-marks.ts` | sighter filter dropped | killed (1 test) |
-| `shot-marks.ts` | finite/caliber guard dropped | killed (2 tests) |
-| `corners.ts` | sign flip in the DLT perspective terms | killed (1 test) |
-| `corners.ts` | degenerate pivot guard removed | **SURVIVED.** Exactly-collinear input produces NaNs that the finiteness check catches anyway; only a *near*-degenerate quad (collinear to 1e-14) produces huge-but-finite garbage that needs the pivot guard. Test added; mutant now killed. |
-| `corners.ts` | reference-point order rotated | killed (4 tests) |
+| Module          | Mutant                                 | Outcome                                                                                                                                                                                                                                               |
+| --------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shot-marks.ts` | `clearSeriesMarks` made a no-op        | **SURVIVED.** The reads join through `shots`, so an orphaned mark is invisible to them — but it is a live row pointing at a soft-deleted shot, exactly what the sync foundation must not see. Fixed by asserting on the raw table; mutant now killed. |
+| `shot-marks.ts` | sighter filter dropped                 | killed (1 test)                                                                                                                                                                                                                                       |
+| `shot-marks.ts` | finite/caliber guard dropped           | killed (2 tests)                                                                                                                                                                                                                                      |
+| `corners.ts`    | sign flip in the DLT perspective terms | killed (1 test)                                                                                                                                                                                                                                       |
+| `corners.ts`    | degenerate pivot guard removed         | **SURVIVED.** Exactly-collinear input produces NaNs that the finiteness check catches anyway; only a _near_-degenerate quad (collinear to 1e-14) produces huge-but-finite garbage that needs the pivot guard. Test added; mutant now killed.          |
+| `corners.ts`    | reference-point order rotated          | killed (4 tests)                                                                                                                                                                                                                                      |
 
 ## 8. Deviations from the maintainer-set scope
 
@@ -264,7 +264,7 @@ Both of these were real gaps in the tests, found by mutants that **survived**:
    plain `fitEllipse` + the TS refinement. No fork is carried.
 3. **The milsnabb annulus inner diameter is approximated** in
    `target-face.tsx` as the X-ring radius, because `TargetFaceDefinition`
-   carries only the black zone's *outer* diameter. This affects rendering of
+   carries only the black zone's _outer_ diameter. This affects rendering of
    the milsnabb face only, which phase 1 does not support. If the real inner
    diameter matters it belongs in `targets.ts` as a field.
 4. **"Points lost" analysis not built.** The maintainer marked it "MAY land if
@@ -297,16 +297,16 @@ Chosen deliberately: two the gate accepts (`20250921_130706`,
 
 ### 9.1 What the run showed
 
-| # | Screenshot | Result |
-| --- | --- | --- |
-| 1 | `24-relocked.png` | **Geometry lock on a real photo.** The cyan ring overlay sits on the printed ring lines across the whole card, X ring through ring 1. This is the whole feature working: OpenCV on-device, `buildRectification` + `coarseToFineRefine` from `shared/`, overlay drawn through `targetMmToImage`. |
-| 2 | `10-marked.png` | Tap-to-mark: caliber-sized discs, selected one blue, others red. Taps near an existing mark selected it instead of stacking a new one. |
-| 3 | `11-score-line.png` | Score line `29-0x` with per-shot values `10 10 9` sorted descending; Move / Delete / X (centre ten); caliber picker with `.22` preselected from the session's firearm. |
-| 4 | `12-loupe.png` | **The loupe, and the reason it exists.** A full-resolution crop showing an actual .22 hole with torn fibres, the printed ring line and the "9" digit under the crosshair. At the 2048 px geometry resolution this detail is not there. |
-| 5 | `21-rejected.png` | **The validity gate rejecting the gravel-bank photo**, with Retake and "Place corners myself". |
-| 6 | `22-corners.png`, `23-corner-drag.png` | Manual 4-point fallback: four numbered handles over the photo (sky and gravel plainly visible), guide quad, drag working. |
-| 7 | `17-group.png`, `18-group-stats.png` | Group view: clean vector target, shots, MPI cross, red mean-radius circle; Windage 1.2 mm / Elevation 15.5 mm / Mean radius 23.1 mm / Max spread 46.8 mm; "3 marked shots"; the reused M5 per-ring histogram. |
-| 8 | `15-toggle.png` (after fix) | Series 7 reads `10 9 10` = **29** with a "Photo attached" chip — a photo-scored series written through `saveSeriesShots`, indistinguishable from a keypad-entered one. |
+| #   | Screenshot                             | Result                                                                                                                                                                                                                                                                                          |
+| --- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `24-relocked.png`                      | **Geometry lock on a real photo.** The cyan ring overlay sits on the printed ring lines across the whole card, X ring through ring 1. This is the whole feature working: OpenCV on-device, `buildRectification` + `coarseToFineRefine` from `shared/`, overlay drawn through `targetMmToImage`. |
+| 2   | `10-marked.png`                        | Tap-to-mark: caliber-sized discs, selected one blue, others red. Taps near an existing mark selected it instead of stacking a new one.                                                                                                                                                          |
+| 3   | `11-score-line.png`                    | Score line `29-0x` with per-shot values `10 10 9` sorted descending; Move / Delete / X (centre ten); caliber picker with `.22` preselected from the session's firearm.                                                                                                                          |
+| 4   | `12-loupe.png`                         | **The loupe, and the reason it exists.** A full-resolution crop showing an actual .22 hole with torn fibres, the printed ring line and the "9" digit under the crosshair. At the 2048 px geometry resolution this detail is not there.                                                          |
+| 5   | `21-rejected.png`                      | **The validity gate rejecting the gravel-bank photo**, with Retake and "Place corners myself".                                                                                                                                                                                                  |
+| 6   | `22-corners.png`, `23-corner-drag.png` | Manual 4-point fallback: four numbered handles over the photo (sky and gravel plainly visible), guide quad, drag working.                                                                                                                                                                       |
+| 7   | `17-group.png`, `18-group-stats.png`   | Group view: clean vector target, shots, MPI cross, red mean-radius circle; Windage 1.2 mm / Elevation 15.5 mm / Mean radius 23.1 mm / Max spread 46.8 mm; "3 marked shots"; the reused M5 per-ring histogram.                                                                                   |
+| 8   | `15-toggle.png` (after fix)            | Series 7 reads `10 9 10` = **29** with a "Photo attached" chip — a photo-scored series written through `saveSeriesShots`, indistinguishable from a keypad-entered one.                                                                                                                          |
 
 ### 9.2 The gate result that matters most
 

@@ -144,7 +144,12 @@ describe('groupRowsIntoSessions', () => {
             { position: 1, valueTenths: 90, isInnerTen: false },
           ],
         },
-        { position: 1, isSighter: false, isFinal: false, shots: [{ position: 1, valueTenths: 100, isInnerTen: true }] },
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          shots: [{ position: 1, valueTenths: 100, isInnerTen: true }],
+        },
       ],
     });
     const { entries } = parseImportCsv(exportSessionsToCsv([session]));
@@ -182,9 +187,7 @@ describe('groupRowsIntoSessions', () => {
     ]);
     const { entries } = parseImportCsv(text);
     const { errors } = groupRowsIntoSessions(entries);
-    expect(errors.some((e) => e.message.includes('session-only row with series rows'))).toBe(
-      true,
-    );
+    expect(errors.some((e) => e.message.includes('session-only row with series rows'))).toBe(true);
   });
 
   it('rejects more than one session-only row for the same session', () => {
@@ -205,9 +208,9 @@ describe('groupRowsIntoSessions', () => {
     ]);
     const { entries } = parseImportCsv(text);
     const { errors } = groupRowsIntoSessions(entries);
-    expect(
-      errors.some((e) => e.message.includes('mixes an empty-series row with shot rows')),
-    ).toBe(true);
+    expect(errors.some((e) => e.message.includes('mixes an empty-series row with shot rows'))).toBe(
+      true,
+    );
   });
 
   it('rejects more than one empty-series row for the same series', () => {
