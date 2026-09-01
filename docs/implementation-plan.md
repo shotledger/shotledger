@@ -352,6 +352,7 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 |---|---|---|---|
 | `spsf-precision-6` | SPSF | Precision, 6 serier | main: sighter + 6×5 (max 300); optional final: sighter + 3×5 (confirmed by maintainer) |
 | `spsf-precision-7` | SPSF | Precision, 7 serier | main: sighter + 7×5 (max 350); optional final: sighter + 3×5 (confirmed by maintainer) |
+| `spsf-precision-10` | SPSF | Precision, 10 serier | main: sighter + 10×5 (max 500); VERIFY: whether a final applies to the 10-series format |
 | `spsf-milsnabb` | SPSF | Militär snabbmatch | VERIFY: stage structure |
 | `issf-ap-60` | ISSF | 10m luftpistol 60 | 6×10, max 600 (decimal in finals only — finals out of scope v1) |
 | `issf-ap-40` | ISSF | 10m luftpistol 40 | 4×10, max 400 |
