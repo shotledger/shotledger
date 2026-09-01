@@ -16,6 +16,12 @@ sync. Android first — **all code must stay iOS-compatible**.
   summarizes the hard rules — it triggers on scoring/compliance work.
 - `docs/adr/` — architecture decision records. Add one when changing an
   architectural decision; never silently contradict an accepted ADR.
+- `.claude/skills/old-coder/` — evidence-first development loop (vendored
+  from AmazingAng/old-coder, MIT). **Mandatory for changes to
+  `shared/scoring/`, `shared/compliance/`, `shared/csv/`, and the sync
+  engine** — the maintainer does not read that code line by line; the
+  approved spec and evidence report are the review. Routine UI work uses
+  normal tests instead.
 
 ## Hard rules
 
