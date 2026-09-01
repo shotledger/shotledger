@@ -575,7 +575,12 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
       draft in `docs/store-listing.md` — not yet uploaded, no Play
       Console account exists (see `docs/release.md` §a)
 - **Done when:** closed-testing `.aab` uploaded; CHECKLIST in
-  `docs/release.md` written for repeatable releases.
+  `docs/release.md` written for repeatable releases. **Deferred by
+  design**: no Google Play account exists yet (`docs/release.md` §a is
+  maintainer-only setup) — this pass prepares the release (eas.json,
+  checklist, store listing) without publishing, per the M7 task brief.
+  The `.aab` upload itself is the first item in `docs/release.md` §a for
+  the maintainer to run.
 
 ## 5. Screen inventory (v1)
 
