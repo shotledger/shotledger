@@ -55,6 +55,11 @@ mutation-tested, matching the precedent set by `sync-protocol-spec.md` §"Tier
   - `backend/migrations/0001_auth_init.sql`, `backend/migrations/0002_photos_init.sql`
   - `backend/src/config.ts` (quota/size-cap/rate-limit constants)
   - `backend/src/lib/quota.ts`, `backend/src/lib/rate-limit.ts`, `backend/src/lib/authz.ts`
+  - `backend/src/lib/rate-limiter-d1.ts` (D1/binding `RateLimiter`
+    implementations — split out of `rate-limit.ts` per §6b so the mutation
+    gauntlet, which runs on the root Node vitest pool, never mutates code
+    only the Workers pool can execute)
+  - `backend/src/db/photo-queries.ts`
   - `backend/src/lib/quota.test.ts`, `backend/src/lib/rate-limit.test.ts`, `backend/src/lib/authz.test.ts`
   - `backend/src/routes/photos.ts`, `backend/src/routes/account.ts`
   - `backend/src/auth.ts` (edit: add `betterAuthAuthenticator`)
@@ -125,17 +130,23 @@ createAuth(c.env).handler(c.req.raw))` — better-auth's own handler serves
     `userId`.
   - `dryRun: true` — returns the counts, **deletes nothing**. Testable
     without destructive side effects (task instruction: "dry-run/testable").
-  - `dryRun: false` — deletes, in order: R2 objects for every `photos` row
-    (best-effort; a missing R2 object does not abort the D1 deletes — an
-    already-partially-deleted account must still finish), then `DELETE FROM
-photos/sync_rows/sync_sequence/sync_idempotency/quota WHERE user_id = ?`,
-    then the better-auth `session`/`account` rows for the user (via
-    `auth.api.deleteUser` is the "correct" library call, but it does not
-    know about `sync_rows`/`photos`/`quota` at all — a **hand-written**
-    cascade is required regardless; `auth.api.deleteUser` is used for the
-    `user` row itself so better-auth's own referential rules
-    (session/account `onDelete: cascade`) apply), returns the same counts as
-    `dryRun`.
+  - `dryRun: false` — deletes, in one D1 `batch`: R2 objects for every
+    `photos` row first (best-effort, outside the batch — a missing R2
+    object does not abort the rest; an already-partially-deleted account
+    must still finish), then `photos`/`sync_rows`/`sync_sequence`/
+    `sync_idempotency`/`quota` rows, then the better-auth `session`/
+    `account`/`user` rows, all `WHERE user_id = ?` (`user` by `id`).
+    **Revised from the original draft** (see `## Revisions`): rather than
+    calling `auth.api.deleteUser` for the `user` row, `session`/`account`/
+    `user` are deleted directly via drizzle in the same batch as the
+    sync/photo/quota rows — `auth.api.deleteUser` gates on an email
+    verification flow this backend has no email provider to complete, so
+    using it would make self-service account deletion unreachable in this
+    milestone. A hand-written cascade was always required for
+    `sync_rows`/`photos`/`quota` regardless (better-auth has no knowledge
+    of those tables); this just extends the same cascade over
+    `session`/`account`/`user` too, one mechanism instead of two.
+    Returns the same counts as `dryRun`.
   - This is the GDPR path (task instruction #1). No soft-delete: the ADR's
     "nothing is deleted server-side without user action" is satisfied because
     this endpoint IS the user action.
@@ -389,4 +400,33 @@ secret`, never committed, provisioned by the maintainer.
 
 ## Revisions
 
-- None yet — initial version.
+- **§6b split**: `RateLimiter`'s pure math (`windowStart`, `isWithinLimit`,
+  the interface) stayed in `backend/src/lib/rate-limit.ts`; the D1-backed
+  and Workers-binding implementations moved to a new
+  `backend/src/lib/rate-limiter-d1.ts`. Reason: the original draft
+  described `D1RateLimiter` as living in `rate-limit.ts` itself, but that
+  file is a Stryker mutation target on the root Node vitest pool, which
+  cannot execute D1-dependent code (needs the Workers pool). Keeping them
+  together would have left every mutant in the D1 class either unkillable
+  (no coverage) or silently excluded — splitting the file is what makes
+  "old-coder-scoped = actually mutation-tested" true rather than aspirational.
+- **§3 revised**: account deletion no longer calls `auth.api.deleteUser`
+  for the `user` row; `session`/`account`/`user` are deleted directly via
+  drizzle, in the same D1 batch as the sync/photo/quota rows. Reason:
+  `auth.api.deleteUser` gates on an email-verification flow this backend
+  has no email provider to complete, which would make the endpoint
+  unreachable in this milestone. Discovered while implementing §3, after
+  the schema/CLI generation step in §1 was already committed to; the
+  hand-written cascade for `sync_rows`/`photos`/`quota` was unavoidable
+  either way, so this just extends it uniformly rather than mixing two
+  deletion mechanisms.
+- **§1 schema patch**: `npx @better-auth/cli generate` (published CLI:
+  1.4.21) omitted an `account.issuer` column that the pinned
+  `better-auth@1.7.2` core validates against at runtime, rejecting every
+  request with `BetterAuthError: The field "issuer" does not exist ...`
+  until the column was added by hand (`text('issuer').notNull()`,
+  unique-indexed with `accountId`) to `auth-schema.ts`,
+  `auth-migrations.ts`, and `migrations/0001_auth_init.sql`. This is a
+  version-skew gap between the CLI package and the core library, not a
+  design decision — documented inline in `auth-schema.ts`'s file header
+  and in `docs/specs/backend-auth-photos-evidence.md`'s Honest Notes.

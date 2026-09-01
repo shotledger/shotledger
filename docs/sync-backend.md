@@ -1,10 +1,13 @@
 # Sync backend overview
 
 Cloudflare Worker (Hono) implementing the server side of ADR 0003's DIY
-changelog sync protocol. Full design rationale and the evidence-first
-gauntlet results live in `docs/specs/sync-protocol-spec.md` and
-`docs/specs/sync-protocol-evidence.md` — this file is a short map of what
-lives where.
+changelog sync protocol, plus the account (better-auth) and photo (R2)
+layers on top of it. Full design rationale and the evidence-first gauntlet
+results live in `docs/specs/sync-protocol-spec.md` +
+`docs/specs/sync-protocol-evidence.md` (sync) and
+`docs/specs/backend-auth-photos-spec.md` +
+`docs/specs/backend-auth-photos-evidence.md` (auth/photos) — this file is a
+short map of what lives where.
 
 ## Layout
 
@@ -27,6 +30,32 @@ backend/src/
 backend/migrations/0000_sync_init.sql   canonical DDL for `wrangler d1
                                          migrations apply` at deploy time
                                          (never run by this task)
+
+backend/src/
+  auth/better-auth.ts   createAuth(env) — betterAuth() + drizzleAdapter +
+                         bearer() plugin (email+password; social sign-in
+                         is TODO, needs maintainer-provisioned OAuth apps)
+  db/auth-schema.ts      drizzle schema for better-auth's user/session/
+                          account/verification tables (CLI-generated, one
+                          hand-patched field — see file header)
+  db/photo-schema.ts      drizzle schema for photos/quota/rate_limit_windows
+  db/photo-queries.ts      upload/delete quota-transactional D1 batch queries
+  config.ts               MAX_PHOTO_BYTES / DEFAULT_QUOTA_BYTES /
+                           RATE_LIMIT_MAX_UPLOADS / RATE_LIMIT_WINDOW_MS
+                           (VERIFY: ADR 0003 "Photo policy" initial values)
+  lib/quota.ts             pure quota math (old-coder scope)
+  lib/rate-limit.ts        pure rate-limit math + RateLimiter interface
+                            (old-coder scope)
+  lib/rate-limiter-d1.ts   D1RateLimiter (tested) + WorkersBindingRateLimiter
+                            (production switch, untestable in the vitest pool)
+  lib/authz.ts             authorizeOwner — unified 404-not-403 ownership
+                            check (old-coder scope)
+  routes/photos.ts          POST /photos/upload/:photoId, GET/DELETE
+                             /photos/:photoId, GET /photos/usage
+  routes/account.ts         POST /account/delete (dryRun-capable GDPR cascade)
+
+backend/migrations/0001_auth_init.sql    better-auth tables DDL
+backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
 ```
 
 ## Key decisions
@@ -40,12 +69,31 @@ backend/migrations/0000_sync_init.sql   canonical DDL for `wrangler d1
   (tombstone-wins + LWW) and for pull cursor pagination. See spec §2a for
   why this reads as a deviation from one ADR 0003 bullet and why it is the
   position taken.
-- **Auth is stubbed.** `backend/src/auth.ts`'s `devBearerAuthenticator`
-  trusts the bearer token verbatim as the user id — `// TODO(better-auth)`
-  marks where real token verification plugs in later.
+- **`/sync` still uses the dev auth stub.** `backend/src/auth.ts`'s
+  `devBearerAuthenticator` (bearer token = user id verbatim) remains
+  `createSyncRoutes()`'s default so the existing sync test suite is
+  untouched. `/photos`, `/account`, and `/api/auth/*` all use real
+  better-auth (`betterAuthAuthenticator`) from day one — cutting `/sync`
+  over is a separate, flagged maintainer decision (see
+  `docs/specs/backend-auth-photos-spec.md` §2).
 - **`settings` and `session_tags`** are excluded from the syncable table
   set — they don't carry the `id`/`updated_at`/`deleted_at` convention the
   rest of the schema does. Flagged as `VERIFY` in spec §1.
+- **Auth: better-auth on Workers + D1** via `@better-auth/drizzle-adapter`,
+  email+password only. The `bearer()` plugin lets a mobile client send
+  `Authorization: Bearer <sessionToken>` (from the `set-auth-token`
+  response header on sign-up/sign-in) instead of relying on cookies.
+  Account deletion (`POST /account/delete`) is a hand-written cascade over
+  `sync_rows`/`photos`/`quota`/`session`/`account`/`user`, not
+  `auth.api.deleteUser` (which gates on an email-verification flow this
+  backend has no provider for) — see spec §3 and its Revisions entry.
+- **Photos on R2**, keyed `${userId}/${photoId}`. Size cap, quota, and rate
+  limit are all checked before the body is read, using the declared
+  `Content-Length`; actual body size is re-checked after reading as
+  defense in depth. Quota and the D1 fixed-window rate limiter are updated
+  transactionally (D1 `batch`) alongside the photo row. Cross-user access
+  to any photo id (GET/DELETE) returns `404`, never `403` — see spec §5's
+  documented reasoning.
 
 ## Running it
 
@@ -55,6 +103,9 @@ backend/migrations/0000_sync_init.sql   canonical DDL for `wrangler d1
   against a local D1 binding (`@cloudflare/vitest-plugin`). **Not** wired
   into root `pnpm check`, per the M0 decision to keep backend tests
   separate.
-- `pnpm mutation` — Stryker, now including `shared/src/sync/*.ts`.
+- `pnpm mutation` — Stryker, now including `shared/src/sync/*.ts` and
+  `backend/src/lib/{quota,rate-limit,authz}.ts`.
 - Never deploy from this task: `backend/wrangler.jsonc`'s `d1_databases`
-  entry uses a placeholder `database_id` and is local/test-only.
+  and `r2_buckets` entries use placeholder ids and are local/test-only;
+  `vars.BETTER_AUTH_SECRET` is a labeled dev placeholder — production value
+  is a `wrangler secret`, provisioned by the maintainer, never committed.
