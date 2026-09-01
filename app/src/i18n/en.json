@@ -1,12 +1,7 @@
 {
   "common": {
-    "appName": "ShotLedger",
-    "cancel": "Cancel",
     "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "close": "Close",
-    "comingSoon": "Coming soon"
+    "edit": "Edit"
   },
   "tabs": {
     "home": "Home",
@@ -55,7 +50,6 @@
     "distributionEmpty": "No scored shots in this filter yet.",
     "toggleStats": "Stats",
     "toggleSeries": "Series",
-    "statsTotals": "Totals",
     "statsMean": "Mean",
     "statsSd": "SD",
     "statsXCount": "X count",
@@ -100,7 +94,6 @@
     "default": "Default",
     "setDefault": "Set as default",
     "licenseTitle": "License",
-    "licenseHistory": "License history",
     "noLicenses": "No license registered yet.",
     "addLicense": "Add renewal",
     "licenseNumber": "License number",
@@ -115,13 +108,10 @@
     "licenseStatusExpired": "Expired",
     "licenseStatusNone": "No license",
     "maintenanceTitle": "Maintenance",
-    "maintenanceHistory": "Maintenance history",
     "noMaintenanceEvents": "No maintenance logged yet.",
     "logEvent": "Log maintenance",
     "kind": "Kind",
     "kindPlaceholder": "E.g. cleaning, service",
-    "performedAt": "Performed on",
-    "roundCountAt": "Round count at the time",
     "maintenanceStatusGreen": "OK",
     "maintenanceStatusAmber": "Due soon",
     "maintenanceStatusRed": "Maintenance due",
@@ -133,7 +123,6 @@
     "adjustSave": "Apply adjustment"
   },
   "ammo": {
-    "title": "Ammunition",
     "newLot": "New ammo lot",
     "editLot": "Edit ammo lot",
     "emptyTitle": "No ammo lots yet",
@@ -176,9 +165,18 @@
     "loadDemoData": "Load demo data",
     "wipeData": "Wipe data",
     "supportDevelopment": "Support development",
-    "supportComingSoon": "Donation link coming soon",
+    "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
+    "about": "About",
     "birthYear": "Birth year",
     "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement."
+  },
+  "about": {
+    "title": "About",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Open-source licenses",
+    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
+    "repoLink": "Source code"
   },
   "compliance": {
     "settingsTitle": "Compliance",
@@ -221,8 +219,6 @@
     "none": "None",
     "decimalScoring": "Decimal scoring",
     "name": "Name",
-    "location": "Location",
-    "notes": "Notes",
     "create": "Create session",
     "noSeries": "No series yet",
     "noSeriesBody": "Add your first series and enter the shots.",
@@ -236,28 +232,20 @@
     "final": "Final",
     "total": "Total",
     "seriesTotal": "Series total",
-    "shotsCount": "{{count}} shots",
     "timeLimit": "{{seconds}} s",
     "guldserie": "Gold series",
     "guldAt": "Gold at {{points}} pts",
     "addPhoto": "Add photo",
     "photoAdded": "Photo attached",
     "photoPermissionDenied": "The app was not granted access to photos.",
-    "takePhoto": "Take photo",
-    "pickPhoto": "Pick from library",
     "save": "Save series",
-    "clear": "Clear",
-    "innerTen": "X",
     "backspace": "Delete",
     "keypadHint": "One tap per shot — 10 is an ordinary ten, X an inner ten",
     "keypadHintDecimal": "Two taps per shot: ring, then tenth",
-    "shotChip": "Shot {{position}}",
-    "ordinaryTen": "10",
     "seriesAverage": "Avg/series",
     "innerTenCount": "X (inner tens)",
     "extraRounds": "Extra rounds (not scored)",
-    "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only",
-    "extraRoundsSummary": "{{count}} extra rounds"
+    "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only"
   },
   "dev": {
     "title": "Dev",

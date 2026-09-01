@@ -107,10 +107,13 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
   sandboxed emulator instance, not the app or the flow; `adb kill-server
   && adb start-server` plus a retry is the only known recovery, and it
   does not always succeed on the first retry either.
-- Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
-(cd app && pnpm exec jest --passWithNoTests)`), run from the repo
-  root. `pnpm exec prettier --check .` is available separately
-  (`pnpm format`) but not part of `check` per the implementation plan.
+- Checks: `pnpm check` (= `pnpm typecheck && pnpm i18n:check && pnpm lint &&
+vitest run && (cd app && pnpm exec jest --passWithNoTests)`), run from the
+  repo root. `pnpm i18n:check` (`scripts/i18n-check.mjs`) gates on
+  `app/src/i18n/{en,sv}.json` having identical key sets and every key
+  actually referenced in `app/src`. `pnpm exec prettier --check .` is
+  available separately (`pnpm format`) but not part of `check` per the
+  implementation plan.
   Note `pnpm typecheck` (`tsc -b`) covers `shared/` and `backend/` only —
   the `app/` project is not in the build graph; check it by hand with
   `cd app && pnpm exec tsc --noEmit -p tsconfig.json` (three pre-existing

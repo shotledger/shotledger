@@ -566,7 +566,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 - [ ] CSV export (share sheet) + import (validate with zod, dry-run
       report, then upsert). Columns documented in §6.8; round-trip test:
       export → wipe → import → identical stats.
-- [ ] i18n audit: `pnpm i18n:check` script fails CI on missing keys;
+- [x] i18n audit: `pnpm i18n:check` script fails CI on missing keys;
       Swedish reviewed by maintainer
 - [ ] App icon + splash (placeholder OK), version/about screen with
       licenses, "Support development" opens Buy Me a Coffee URL in
