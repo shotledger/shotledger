@@ -1,0 +1,82 @@
+# M3 flow (§4 M3 "Done when"): create a C-precision session and enter a full
+# five-series session by tapping the keypad, then assert the computed total.
+# Every series is 5 x 9 = 45 points, so five series must total 225.
+appId: com.anonymous.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+- takeScreenshot: m3-01-home
+- tapOn:
+    id: 'new-session-fab'
+
+# New-session form: precision is the default discipline; pick vapengrupp C
+# and klass 2 (displayed together as "C 2", SHB F.2.6).
+- extendedWaitUntil:
+    visible: 'Discipline'
+    timeout: 15000
+- tapOn:
+    id: 'discipline-spsf-precision'
+- tapOn:
+    id: 'group-spsf:C'
+- tapOn:
+    id: 'class-2'
+- takeScreenshot: m3-02-new-session
+- scrollUntilVisible:
+    element:
+      id: 'create-session'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'create-session'
+
+- extendedWaitUntil:
+    visible: 'Add series'
+    timeout: 15000
+- takeScreenshot: m3-03-session-empty
+
+# Five scored series of five 9s each.
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'add-series'
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: 'add-series'
+      - extendedWaitUntil:
+          visible: 'Save series'
+          timeout: 15000
+      - repeat:
+          times: 5
+          commands:
+            - tapOn:
+                id: 'key-9'
+      - scrollUntilVisible:
+          element:
+            id: 'save-series'
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: 'save-series'
+      # Back on the detail screen. Wait for the results card rather than the
+      # "Add series" button: once the session has a few series the button sits
+      # below the fold, and extendedWaitUntil does not scroll.
+      - extendedWaitUntil:
+          visible:
+            id: 'session-total'
+          timeout: 15000
+
+- scrollUntilVisible:
+    element:
+      id: 'session-total'
+    direction: UP
+    timeout: 20000
+- takeScreenshot: m3-04-session-five-series
+- assertVisible:
+    id: 'session-total'
+    text: '225'
