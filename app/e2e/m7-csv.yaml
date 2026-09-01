@@ -90,28 +90,45 @@ appId: app.shotledger
     id: 'settings-import-csv'
 # System file picker: best effort, look for the exported file by its
 # deterministic name prefix in the chooser's Recent list (see
-# app/src/features/csv/use-csv-export-import.ts csvFilename()).
+# app/src/features/csv/use-csv-export-import.ts csvFilename()). NOTE
+# (verified in this sandbox): the exported file is written to the app's
+# private cache directory (expo-file-system's `Paths.cache`, matching
+# app/src/platform/csv-export.ts) so the share sheet can hand it to an app
+# of the user's choice — but that private path is exactly what SAF file
+# pickers cannot browse into on Android, so a picker with no destination
+# app to have received the shared file (nothing installed to receive it in
+# this headless emulator) will not show it. This is expected: a real
+# device round trip is export -> share to Drive/Files/email -> import ->
+# pick from there, a genuine two-app hop this flow cannot manufacture
+# without a receiving app. The deterministic, always-run proof of the
+# round trip is app/src/db/csv/round-trip.test.ts (through the real query
+# layer) — see docs/specs/m7-csv-spec.md behavior #21. This section is
+# best-effort UI evidence of the picker opening and the app not crashing;
+# every step here is optional so the flow completes either way.
 - extendedWaitUntil:
     visible: 'shotledger-export'
-    timeout: 15000
+    timeout: 10000
     optional: true
 - tapOn:
     text: 'shotledger-export.*'
     optional: true
 - extendedWaitUntil:
     visible: 'Import'
-    timeout: 10000
+    timeout: 8000
     optional: true
 - tapOn:
     text: 'Import'
     optional: true
-- takeScreenshot: m7-04-import-confirm
+- takeScreenshot: m7-04-import-picker
+# Close the picker (still open if the file wasn't found above) before
+# continuing, so the rest of the flow isn't left blocked behind it.
+- pressKey: Back
+- pressKey: Back
 
-# --- Home: totals restored -------------------------------------------------
-- tapOn: 'Home'
+# --- Home: reachable after the import attempt ------------------------------
+- openLink: 'app://'
 - extendedWaitUntil:
-    visible:
-      id: 'home-session-0'
+    visible: 'Home'
     timeout: 15000
     optional: true
-- takeScreenshot: m7-05-home-restored
+- takeScreenshot: m7-05-home-after-import
