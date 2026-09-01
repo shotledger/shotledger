@@ -11,6 +11,7 @@ import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
+import { GroupPlot } from '@/components/group-plot';
 import { EmptyState } from '@/components/empty-state';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -22,11 +23,12 @@ import { db } from '@/db/client';
 import { setSessionExtraRounds } from '@/db/queries/round-count';
 import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
+import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
-type DetailView = 'series' | 'stats';
+type DetailView = 'series' | 'stats' | 'group';
 
 export default function SessionDetailScreen() {
   const { t } = useTranslation();
@@ -35,6 +37,7 @@ export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail, refresh } = useSessionDetail(id);
   const stats = useSessionStats(id);
+  const group = useSessionGroup(id);
   const [nextIsSighter, setNextIsSighter] = useState(false);
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
@@ -219,10 +222,65 @@ export default function SessionDetailScreen() {
           options={[
             { value: 'series', label: t('stats.toggleSeries') },
             { value: 'stats', label: t('stats.toggleStats') },
+            // The Group view exists only where marks do — no empty chrome for
+            // the sessions that predate photo scoring.
+            ...(group ? [{ value: 'group' as const, label: t('photoScoring.groupTitle') }] : []),
           ]}
           value={view}
           onChange={setView}
         />
+      )}
+
+      {view === 'group' && group && (
+        <Card testID="session-group-view">
+          <View style={styles.groupPlot}>
+            <GroupPlot
+              target={group.target}
+              shots={group.marks.map((m) => ({
+                xMm: m.xMm,
+                yMm: m.yMm,
+                caliberMm: m.caliberMm,
+              }))}
+              size={300}
+            />
+          </View>
+          <View style={styles.resultsRow}>
+            <StatTile
+              testID="group-stat-windage"
+              label={t('photoScoring.windage')}
+              value={t('photoScoring.millimetres', {
+                value: group.analysis.windageMm.toFixed(1),
+              })}
+            />
+            <StatTile
+              testID="group-stat-elevation"
+              label={t('photoScoring.elevation')}
+              value={t('photoScoring.millimetres', {
+                value: group.analysis.elevationMm.toFixed(1),
+              })}
+            />
+          </View>
+          <View style={styles.resultsRow}>
+            <StatTile
+              testID="group-stat-mean-radius"
+              label={t('photoScoring.meanRadius')}
+              value={t('photoScoring.millimetres', {
+                value: group.analysis.meanRadiusMm.toFixed(1),
+              })}
+            />
+            <StatTile
+              testID="group-stat-max-spread"
+              label={t('photoScoring.maxSpread')}
+              value={t('photoScoring.millimetres', {
+                value: group.analysis.extremeSpreadMm.toFixed(1),
+              })}
+            />
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('photoScoring.shotsMarked', { count: group.analysis.shotCount })}
+          </ThemedText>
+          {stats.distribution.length > 0 && <DistributionBarChart buckets={stats.distribution} />}
+        </Card>
       )}
 
       {view === 'stats' && seriesRows.length > 0 ? (
@@ -323,6 +381,17 @@ export default function SessionDetailScreen() {
                 onPress={onAddSeries}
                 testID="add-series"
               />
+              {seriesRows.length > 0 && (
+                <PrimaryButton
+                  label={t('photoScoring.scanTarget')}
+                  onPress={() =>
+                    router.push(
+                      `/session/${id}/scan?pos=${seriesRows[seriesRows.length - 1]?.position ?? 1}`,
+                    )
+                  }
+                  testID="scan-target"
+                />
+              )}
               {detail.canStartFinal && !nextIsFinal && (
                 <PrimaryButton
                   label={t('session.startFinal')}
@@ -374,6 +443,9 @@ function ResultCell({ label, tenths, testID }: { label: string; tenths: number; 
 }
 
 const styles = StyleSheet.create({
+  groupPlot: {
+    alignItems: 'center',
+  },
   title: {
     fontSize: 24,
     lineHeight: 30,

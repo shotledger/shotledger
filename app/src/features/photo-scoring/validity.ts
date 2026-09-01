@@ -26,11 +26,7 @@ export interface GeometryMetrics {
 }
 
 export type ValidityReason =
-  | 'axisRatio'
-  | 'zoneFraction'
-  | 'centerInFrame'
-  | 'zoneContrast'
-  | 'profileScore';
+  'axisRatio' | 'zoneFraction' | 'centerInFrame' | 'zoneContrast' | 'profileScore';
 
 export interface ValidityResult {
   readonly valid: boolean;
