@@ -85,7 +85,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 - [ ] Photo target scoring: detect target face, deskew angled photos,
       auto-detect holes, drag-to-correct always available
-- [ ] Swedish targets first (SPSF C30 precision, fält) alongside ISSF faces
+- [ ] Swedish targets first (Pistoltavla 25 m precision) alongside ISSF faces
 - [ ] Group analytics: MPI (windage/elevation), mean radius, extreme spread,
       points-lost-to-group-size, session heatmaps
 - [ ] WebShooter competition import (API behind webshooter-cli): placements,

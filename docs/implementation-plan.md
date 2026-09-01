@@ -100,9 +100,9 @@ firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
                 maintenance_interval_rounds INTEGER,   -- nullable
                 rounds_since_maintenance INTEGER NOT NULL DEFAULT 0
 
-firearm_classes weapon per SPSF class: firearm_id FK, class TEXT
-                CHECK(class IN ('A','B','C','R','airgun')),
-                is_default_for_class INTEGER NOT NULL DEFAULT 0
+firearm_groups  firearm_id FK, weapon_group TEXT,  -- vapengrupp the firearm
+                                                   -- qualifies for (§6.4a)
+                is_default_for_group INTEGER NOT NULL DEFAULT 0
 
 ammo_lots       brand TEXT NOT NULL, product TEXT, caliber TEXT,
                 lot_number TEXT, grain REAL, purchased_on TEXT,
@@ -113,12 +113,22 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
                 discipline_id TEXT NOT NULL,   -- key into discipline defs (§6.2)
                 program_id TEXT NULL,          -- predefined match format (§6.3);
                                                -- NULL = free-form training
-                competition_level TEXT NULL,   -- only when type='competition':
-                                               -- 'km'|'krets'|'dm'|'landsdel'|'sm'
-                                               -- |'national'|'other'
+                competition_level TEXT NULL,   -- only when type='competition';
+                                               -- SHB 2026 C.3.1 (p. 52) levels:
+                                               -- 'forening'|'krets'|'landsdel'
+                                               -- |'national'|'riks'
+                is_championship INTEGER NOT NULL DEFAULT 0,
+                                               -- mästerskap is a flag ON a
+                                               -- level (SHB C.3.1), not a
+                                               -- level: KM=forening+1, SM=riks+1
                 competition_name TEXT NULL,    -- e.g. "Skånemästerskapet"
-                weapon_class TEXT,             -- full code, e.g. 'C2','A3','VY C'
-                                               -- (general class derived, §6.4a)
+                weapon_group TEXT,             -- the GUN (vapengrupp, §6.4a):
+                                               -- A|A-opt|AM|AP|AG|B|C|R|M1..M9
+                                               -- |airgun; valid set depends on
+                                               -- discipline (no R in precision)
+                shooter_class TEXT,            -- the SHOOTER (klass, §6.4a):
+                                               -- 1|1u|1b|1s|2|3|Jun|Dam1|Dam2
+                                               -- |Dam3|VetY|VetÄ
                 firearm_id TEXT NULL FK,
                 ammo_lot_id TEXT NULL FK,
                 started_at TEXT NOT NULL,
@@ -207,8 +217,9 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
 New-session form: type (training/competition — both free); discipline
 picker (§6.2); **program picker** (§6.3 — filtered by discipline;
 "Free training" option = no program); for competitions: competition level
-(KM/Krets/DM/Landsdel/SM/National/Other) + optional competition name;
-weapon class (full code, §6.4a); firearm (defaults to the class default);
+(level + mästerskap flag, §3) + optional competition name;
+weapon group + shooter class (§6.4a; groups filtered by discipline);
+firearm (defaults to the group default);
 ammo lot; decimal toggle (only if discipline allows and no program forces
 it). Name defaults to `<level> <program> <general class>` for
 competitions, `<discipline> — <local date>` for training.
@@ -244,7 +255,7 @@ the toggle disables once used.
   edge cases (0, miss, X in both modes).
 
 ### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
-- [ ] Firearms CRUD screens; classes per firearm; per-class default;
+- [ ] Firearms CRUD screens; weapon groups per firearm; per-group default;
       round counter auto-incremented by session save (all shots including
       sighters; only firearm-linked sessions); manual adjust with reason
 - [ ] Maintenance: log event, interval setting, "rounds since" indicator
@@ -277,11 +288,16 @@ and per-ammo-lot aggregates.
 
 ### M6 — FAP 551-3 barometer + PDF (branch `feat/m6-compliance`)
 Logic in `shared/compliance/` driven by a config object, not hard-coded:
-`{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon class.
-`VERIFY:` exact FAP 551-3 5 kap activity requirements (count, window,
-what counts as an activity, per weapon class) with the maintainer — they
-review föreningsintyg professionally; encode their answer as the default
-config and cover with tests.
+`{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
+Two authoritative sources, kept separate in the config: (a) **FAP 551-3**
+numeric activity requirements — `VERIFY:` with the maintainer, who
+reviews föreningsintyg professionally; the Skjuthandbok contains no
+numeric counts. (b) **SHB Bilaga 8** (p. 484, verified) club-intyg rules
+worth surfacing as indicators: ≥6 months active membership before first
+intyg (first weapon .22), grovkaliber earliest after 12 months,
+pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
+the last two years — fulfilled (the app can compute märke fulfillment
+from §6.5 automatically).
 - [ ] Barometer UI on Home + per firearm: activities in rolling window vs
       required, green/amber/red
 - [ ] PDF export (expo-print): shooting log for a chosen period/firearm —
@@ -326,8 +342,8 @@ config and cover with tests.
 `shared/disciplines/definitions/*.json`, validated by zod schema
 `disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
 name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
-allowsDecimal, weaponClasses}`. v1 ships disciplines: SPSF precision
-(C30 target), ISSF 10m air pistol, ISSF 25m pistol, ISSF 25m standard
+allowsDecimal, weaponGroups}`. v1 ships disciplines: SPSF precision
+(target: Pistoltavla 25 m precision — §6.5c), ISSF 10m air pistol, ISSF 25m pistol, ISSF 25m standard
 pistol, ISSF 50m pistol, generic ring-scoring. **Fältskytte is
 deliberately excluded from v1** (hit/figure scoring is a different model;
 revisit in v2+). Community adds disciplines via PR once public.
@@ -377,29 +393,84 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
 | id | Federation | Name (sv) | Defaults |
 |---|---|---|---|
-| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform (typical matches 6/7/10 series + final of 3 — never enforced) |
-| `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (maintainer-confirmed): 1 sighter + 4 series à 10 s + 4 à 8 s + 4 à 6 s. VERIFY only: shots per series (assumed 5) |
+| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
+| `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R |
 | `issf-ap` | ISSF | 10m luftpistol | 10 shots-per-series display grouping? VERIFY; integer (decimal finals out of scope v1) |
 | `issf-25m-pistol` | ISSF | 25m pistol (sport) | 5 shots/series. VERIFY: precision/duel distinction needed in v1? |
 | `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY |
 | `issf-50m-pistol` | ISSF | 50m pistol | VERIFY |
 
-Session names default to `<competition_level> <program> <general class>`
-for competitions (e.g. "KM Precision C").
+Session names default to `<championship-or-level label> <program>
+<weapon_group>` for competitions (e.g. "KM Precision C" — KM being
+förening level + championship flag).
 
-### 6.4a Weapon classes
-Store the full SPSF class code on the session (`C2`, `A3`, `B`, vet/dam
-variants) as free text validated against a list in
-`shared/disciplines/classes.ts`; derive the *general* class (A/B/C/R/
-airgun) from the code (mirrors WebShooter's classname vs
-classname_general). Guldserie thresholds and FAP 551-3 rules key off the
-general class. VERIFY: complete SPSF class-code list with maintainer.
+**Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
+decided, **no provskott**) is out of v1 scope — log such series as
+ordinary extra scored series with a note.
 
-### 6.5 Guldserie thresholds
-Config in `shared/scoring/guldserie.ts`. From research: class C = 46,
-class A = 48 (precision, 5-shot standing). `VERIFY:` full official SPSF
-table (all classes, age adjustments) with the maintainer before M3 ships;
-mark unknown entries `null` = feature hidden for that class.
+### 6.4a Weapon groups and shooter classes (SHB 2026, verified)
+Two **orthogonal** axes (SHB F.2 p. 163 ff, F.4 p. 169 ff), stored
+separately and displayed combined ("C 2" = vapengrupp C, klass 2):
+
+**Vapengrupp (the gun)** — valid set depends on discipline:
+- Precision (F.4): `A` (+ optional sub-groups `AM`, `AP`, `AG` — F.4.1),
+  `A-opt` (A with optics, F.4.5), `B`, `C`. **No R in precision**
+  (F.4.4 "Ej tillämplig").
+- Fält & militär snabbmatch add `R` (D.4.4 p. 86, J.4).
+- Magnum (G.4.1 pp. 196–197): `M1`–`M9` (SM runs M1–M7 only, C.3.6.2.3).
+- App extra: `airgun` (ISSF 10m).
+
+**Klass (the shooter)** — F.2.1 p. 163: `1` (variants `1u` nybörjare,
+`1b` bronsskytt, `1s` silverskytt — F.2.5), `2`, `3` (riksmästarklass),
+`Jun` (≤ year turning 20), `Dam1`/`Dam2`/`Dam3`, `VetY` (year turning
+60+), `VetÄ` (year turning 70+; stödhand allowed in precision, F.6.3.2).
+Jun/Dam/Vet shoot vapengrupp C in precision/fält (F.2.1).
+
+Enumerations live in `shared/disciplines/groups.ts` and `classes.ts`
+with per-discipline validity. Märke thresholds key off vapengrupp (§6.5).
+
+### 6.5 "Guldserie" = pistolskyttemärke series requirement (SHB, verified)
+The colloquial "guldserie" is a series meeting the **pistolskyttemärke
+guld** per-series requirement (the term "guldserie" itself does not occur
+in SHB). Config in `shared/scoring/marke.ts` — SHB Bilaga 1 mom 5.1.1.1
+(p. 452), per 5-shot precision series, by vapengrupp:
+
+| Valör | A | B | C |
+|---|---|---|---|
+| Brons | 32 | 33 | 34 |
+| Silver | 38 | 39 | 40 |
+| Guld | 43 | 45 | 46 |
+
+Age reduction (same section): −1 point/series from the year *after*
+turning 55; −2 points/series from the year after turning 65. Needs the
+shooter's birth year in settings (like Shotlytic's DOB field).
+
+### 6.5b Standardmedalj point thresholds (SHB, verified)
+Data in `shared/scoring/standardmedalj.ts` — fixed thresholds by
+vapengrupp (no age adjustment; C.5.1.2.3 p. 71), precision:
+
+| Series | A/A-opt silver | A brons | B silver | B brons | C silver | C brons |
+|---|---|---|---|---|---|---|
+| 6 | 277 | 267 | 282 | 273 | 283 | 276 |
+| 7 | 323 | 312 | 329 | 319 | 330 | 322 |
+| 10 | 461 | 445 | 470 | 455 | 471 | 460 |
+
+&gt;10 series: take the 10-series value ÷10 × series count (C.5.1.2.3).
+Militär snabbmatch (12 series, C.5.1.2.5): silver A 540 · R 552 · B 561 ·
+C 564; brons A 516 · R 528 · B 537 · C 540. Standardmedalj i guld is not
+a score — it is 50 accumulated medal points (brons=1, silver=2; C.5.2.1
+p. 73). M5 shows a subtle standardmedalj marker when a session total
+meets a threshold; accumulated-points tracking is v2+.
+
+### 6.5c Target dimensions (for v2 photo scoring; SHB, verified)
+**Pistoltavla 25 m precision** (F.7.1 p. 182 — note: this, not "C30",
+is the precision target; C30/C25 are fältskjutning hit/miss circle
+figures, 30×27 / 25×22.5 cm, no rings): X-ring 25 mm, 10 = 50 mm, then
++50 mm per ring to 1 = 500 mm (tolerances ±0.2–2.0 mm); black covers
+rings 7–10 (200 mm); ring line 0.2–0.5 mm; distance 25 m. Scoring rule
+(F.6.10.1): a hit counts to the higher value as soon as the ring's
+**outer edge is touched**. Milsnabb target (J.7.1 p. 297): rings 5–10
+only, X = 50 mm, 10 = 100 mm, then +80 mm per ring to 5 = 500 mm.
 
 ### 6.8 CSV format
 UTF-8, comma-separated, header row, one row per **shot**, RFC 4180
