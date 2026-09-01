@@ -2,10 +2,11 @@ import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
+import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
@@ -17,6 +18,7 @@ import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
+import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
@@ -29,6 +31,18 @@ export default function SettingsScreen() {
     useComplianceProfile();
   const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
+  const webshooter = useWebShooterConnection();
+  const [wsUsername, setWsUsername] = useState('');
+  const [wsPassword, setWsPassword] = useState('');
+  const [wsToken, setWsToken] = useState('');
+  const [devMockEnabled, setDevMockEnabled] = useState(
+    () => (db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false),
+  );
+
+  function onToggleDevMock(next: boolean) {
+    setDevMockEnabled(next);
+    if (db) setSetting<boolean>(db, 'webshooterDevMock', next);
+  }
 
   async function onImportCsv() {
     const dryRun = await planImport();
@@ -155,6 +169,90 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
+        <ThemedText type="smallBold">{t('webshooter.sectionTitle')}</ThemedText>
+        {webshooter.connected ? (
+          <>
+            <ThemedText type="default" testID="webshooter-identity">
+              {t('webshooter.connectedAs', { cardNumber: webshooter.cardNumber ?? '—' })}
+            </ThemedText>
+            <PrimaryButton
+              label={t('webshooter.disconnect')}
+              onPress={() => void webshooter.disconnect()}
+              testID="webshooter-disconnect"
+            />
+          </>
+        ) : (
+          <>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('webshooter.connectHelp')}
+            </ThemedText>
+            <TextInput
+              value={wsUsername}
+              onChangeText={setWsUsername}
+              placeholder={t('webshooter.usernamePlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+              testID="webshooter-username"
+            />
+            <TextInput
+              value={wsPassword}
+              onChangeText={setWsPassword}
+              placeholder={t('webshooter.passwordPlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+              testID="webshooter-password"
+            />
+            <PrimaryButton
+              label={t('webshooter.connectWithPassword')}
+              onPress={() => void webshooter.connectWithPassword(wsUsername, wsPassword)}
+              testID="webshooter-connect-password"
+            />
+            {webshooter.error === 'spaLoginNotVerified' && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('webshooter.spaLoginNotVerified')}
+              </ThemedText>
+            )}
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('webshooter.tokenFallbackHelp')}
+            </ThemedText>
+            <TextInput
+              value={wsToken}
+              onChangeText={setWsToken}
+              placeholder={t('webshooter.tokenPlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+              testID="webshooter-token"
+            />
+            <PrimaryButton
+              label={t('webshooter.connectWithToken')}
+              onPress={() => void webshooter.connectWithToken(wsToken)}
+              testID="webshooter-connect-token"
+            />
+            {webshooter.error === 'connectFailed' && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('webshooter.connectFailed')}
+              </ThemedText>
+            )}
+          </>
+        )}
+        <ListRow
+          title={t('webshooter.importTitle')}
+          subtitle={t('webshooter.importSubtitle')}
+          onPress={() => router.push('/webshooter/import')}
+          testID="webshooter-open-import"
+        />
+        <ListRow
+          title={t('webshooter.startsTitle')}
+          subtitle={t('webshooter.startsSubtitle')}
+          onPress={() => router.push('/webshooter/starts')}
+          testID="webshooter-open-starts"
+        />
+      </Card>
+
+      <Card>
         <ListRow
           title={t('settings.supportDevelopment')}
           subtitle={t('settings.supportSubtitle')}
@@ -183,6 +281,17 @@ export default function SettingsScreen() {
               title={t('settings.wipeData')}
               onPress={() => db && wipeDemoData(db)}
               testID="settings-wipe-data"
+            />
+            <ListRow
+              title={t('webshooter.devMockTitle')}
+              subtitle={t('webshooter.devMockSubtitle')}
+              trailing={
+                <Switch
+                  value={devMockEnabled}
+                  onValueChange={onToggleDevMock}
+                  testID="webshooter-dev-mock-toggle"
+                />
+              }
             />
           </Card>
         </View>
