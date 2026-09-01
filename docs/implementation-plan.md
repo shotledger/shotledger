@@ -93,20 +93,47 @@ hard-delete rows.
 
 ```
 firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
+                weapon_type TEXT,              -- vapentyp: 'pistol'|'revolver'
+                                               -- |'rifle'|'airgun'
                 serial_number TEXT,            -- optional, sensitive
-                license_expires_on TEXT,       -- date, nullable
+                vapen_id TEXT,                 -- national register id ("SE…"
+                                               -- on the license card back)
+                load_system TEXT,              -- laddsystem, e.g. halvautomat
                 notes TEXT,
                 round_count INTEGER NOT NULL DEFAULT 0,
                 maintenance_interval_rounds INTEGER,   -- nullable
                 rounds_since_maintenance INTEGER NOT NULL DEFAULT 0
 
-firearm_groups  firearm_id FK, weapon_group TEXT,  -- vapengrupp the firearm
-                                                   -- qualifies for (§6.4a)
+licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
+                                               -- a renewal appends a new row,
+                                               -- history is kept
+                license_number TEXT,           -- e.g. 'A123.456/2024-01'
+                purpose TEXT,                  -- ändamål, e.g. 'Målskjutning'
+                decided_on TEXT,               -- datum för beslut
+                valid_until TEXT,              -- giltighetstid t.o.m.;
+                                               -- NULL = tills vidare
+                conditions TEXT,               -- villkor (often empty)
+                authority TEXT                 -- e.g. 'Polismyndigheten'
+                -- expiry reminders (M4) key off the latest row per firearm
+
+firearm_groups  firearm_id FK, group_id TEXT,  -- federation-scoped id, e.g.
+                                               -- 'spsf:C' (§6.4a)
                 is_default_for_group INTEGER NOT NULL DEFAULT 0
 
-ammo_lots       brand TEXT NOT NULL, product TEXT, caliber TEXT,
-                lot_number TEXT, grain REAL, purchased_on TEXT,
-                quantity INTEGER, notes TEXT
+ammo_lots       label TEXT NOT NULL,           -- display name
+                caliber TEXT, quantity INTEGER, purchased_on TEXT,
+                is_handload INTEGER NOT NULL DEFAULT 0,
+                -- factory ammo:
+                brand TEXT, product TEXT, lot_number TEXT,
+                -- projectile (factory and handload):
+                bullet_make TEXT, bullet_model TEXT, bullet_weight_gr REAL,
+                -- handload recipe:
+                powder TEXT,                   -- e.g. 'Vihtavuori N320'
+                powder_charge_gr REAL,         -- grains
+                primer TEXT, brass TEXT,
+                col_mm REAL,                   -- cartridge overall length
+                crimp_mm REAL,
+                notes TEXT
 
 sessions        name TEXT NOT NULL,            -- default: program/discipline + date
                 type TEXT NOT NULL CHECK(type IN ('training','competition')),
@@ -122,10 +149,10 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
                                                -- level (SHB C.3.1), not a
                                                -- level: KM=forening+1, SM=riks+1
                 competition_name TEXT NULL,    -- e.g. "Skånemästerskapet"
-                weapon_group TEXT,             -- the GUN (vapengrupp, §6.4a):
-                                               -- A|A-opt|AM|AP|AG|B|C|R|M1..M9
-                                               -- |airgun; valid set depends on
-                                               -- discipline (no R in precision)
+                weapon_group TEXT,             -- the GUN: federation-scoped
+                                               -- group id, e.g. 'spsf:C'
+                                               -- (§6.4a); valid set depends on
+                                               -- the discipline's federation
                 shooter_class TEXT,            -- the SHOOTER (klass, §6.4a):
                                                -- 1|1u|1b|1s|2|3|Jun|Dam1|Dam2
                                                -- |Dam3|VetY|VetÄ
@@ -147,9 +174,13 @@ series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
                 photo_uri TEXT NULL            -- local file URI
 
 shots           series_id FK NOT NULL, position INTEGER NOT NULL,
-                value REAL NOT NULL,           -- 0–10.9
+                value_tenths INTEGER NOT NULL, -- 0–109. ONE storage for both
+                                               -- modes: integer scoring stores
+                                               -- value×10 (9 → 90), decimal
+                                               -- stores tenths (10.3 → 103).
+                                               -- Integer sums — no float drift
                 is_inner_ten INTEGER NOT NULL DEFAULT 0,  -- X
-                is_inner_ten_decimal INTEGER NOT NULL DEFAULT 0 -- (X)
+                is_inner_ten_decimal INTEGER NOT NULL DEFAULT 0 -- (X), VERIFY
 
 maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
                    kind TEXT NOT NULL,         -- free text v1
@@ -260,9 +291,13 @@ the toggle disables once used.
       sighters; only firearm-linked sessions); manual adjust with reason
 - [ ] Maintenance: log event, interval setting, "rounds since" indicator
       (green/amber/red at 80%/100%), local notification at 100%
-- [ ] License expiry: date per firearm, local notifications at 90/30/7
-      days before (VERIFY preferred lead times with maintainer)
-- [ ] Ammo lots CRUD; session links lot; per-lot usage count
+- [ ] License register per firearm (licenses table §3 — number, purpose,
+      decision date, validity, conditions; renewals append, history
+      kept); local notifications at 90/30/7 days before valid_until
+      (VERIFY preferred lead times with maintainer)
+- [ ] Ammo lots CRUD incl. handload recipe fields (powder, charge,
+      bullet, primer, brass, COL); session links lot; per-lot usage
+      count; lot-vs-lot comparison stays v3
 - **Done when:** Maestro covers create-firearm → session → round count
   incremented → maintenance amber; notifications verified by unit-testing
   the scheduling function (not the OS delivery).
@@ -409,9 +444,28 @@ förening level + championship flag).
 decided, **no provskott**) is out of v1 scope — log such series as
 ordinary extra scored series with a note.
 
-### 6.4a Weapon groups and shooter classes (SHB 2026, verified)
-Two **orthogonal** axes (SHB F.2 p. 163 ff, F.4 p. 169 ff), stored
-separately and displayed combined ("C 2" = vapengrupp C, klass 2):
+**Decimal scoring — who actually uses it:** per ISSF rules, 10m air
+rifle scores decimal in qualification *and* finals; 10m air pistol and
+50m rifle score integer in qualification with **decimal finals only**;
+25m pistol events are integer throughout. Everything SPSF in v1 is
+integer. The per-session decimal toggle therefore exists mainly for
+ISSF-style finals training; storage is uniform regardless (§3
+`value_tenths`), so switching modes never migrates data.
+
+### 6.4a Weapon groups and shooter classes
+**Group ids are federation-scoped** — `<federation>:<code>` — because
+vapengrupper A/B/C/R/M are an SPSF concept that other federations don't
+share. Definitions live as data in `shared/disciplines/groups/<fed>.ts`;
+a discipline's federation determines the valid set. v1 ships `spsf:*`
+(below) plus `generic:airgun`; v2+ adds other federations as data files
+(ISSF has events rather than weapon groups — sessions there may leave
+`weapon_group` NULL; IPSC divisions like open/production, SvSF, DSB
+etc. follow the same pattern). Shooter-class lists are federation-scoped
+the same way.
+
+**SPSF** (SHB F.2 p. 163 ff, F.4 p. 169 ff — verified). Two
+**orthogonal** axes, stored separately and displayed combined
+("C 2" = vapengrupp C, klass 2):
 
 **Vapengrupp (the gun)** — valid set depends on discipline:
 - Precision (F.4): `A` (+ optional sub-groups `AM`, `AP`, `AG` — F.4.1),
