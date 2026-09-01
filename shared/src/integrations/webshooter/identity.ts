@@ -28,9 +28,12 @@ export function cardNumbersMatch(
 ): boolean {
   const normalizedA = normalizeCardNumber(a);
   const normalizedB = normalizeCardNumber(b);
-  // Only the both-null case needs an explicit guard: null !== any non-null
-  // string already falls out of the equality check below on its own.
-  if (normalizedA === null && normalizedB === null) return false;
+  // A single-sided null check is sufficient: it directly covers both-null
+  // (the one case the equality below would get wrong, since null === null
+  // is true) and A-null/B-non-null; a non-null A always falls through to
+  // the equality check, which already rejects B-null/A-non-null on its own
+  // (non-null !== null) and correctly compares two non-null values.
+  if (normalizedA === null) return false;
   return normalizedA === normalizedB;
 }
 

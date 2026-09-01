@@ -65,6 +65,12 @@ describe('nameSimilarity', () => {
     expect(nameSimilarity('kitten', 'sitting')).toBeCloseTo(4 / 7, 10);
   });
 
+  it('a much-longer first argument correctly costs the full length difference (edit-distance DP, first-row/column init)', () => {
+    // distance('abcdefgh', 'a') = 7 (delete 7 trailing chars); a naive/buggy
+    // DP that skips initializing the first column would under-count this.
+    expect(nameSimilarity('abcdefgh', 'a')).toBeCloseTo(1 - 7 / 8, 10);
+  });
+
   it('collapses internal whitespace to a single space, never strips it entirely', () => {
     // "A B" and "AB" differ by one character once whitespace is collapsed
     // (not removed) to a single space: edit distance 1 over max length 3.
