@@ -252,18 +252,41 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
 `/firearms`, **Settings** `/settings`. Session flow is modal-stacked:
 `/session/new`, `/session/[id]`, `/session/[id]/series/[pos]`.
 
-- [ ] Design-system components in `app/src/components/`: Screen, Card,
+- [x] Design-system components in `app/src/components/`: Screen, Card,
       StatTile, Chip, SegmentedControl, ListRow, EmptyState, FAB,
       PrimaryButton, ScoreKeypad (M3). Each gets a story-like demo route
       under `/dev/components` (dev builds only) so agents can screenshot
       components in isolation.
-- [ ] Home: "Shots logged" total card, latest 10 sessions list (name,
+      — ScoreKeypad deferred to M3 as noted; the rest are implemented and
+      demonstrated on `/dev/components`, which (like `/dev`) is reachable
+      only in dev builds (`dev/_layout.tsx` redirects to `/` otherwise).
+- [x] Home: "Shots logged" total card, latest 10 sessions list (name,
       date, total, type chip), FAB "New session". Empty state with a
       friendly CTA when no data.
-- [ ] Settings: language (system/sv/en), theme (system/light/dark),
+      — total shots is a live-enough Drizzle query re-run on screen focus
+      (`useFocusEffect`, not a true reactive live-query — `client.ts` has
+      `enableChangeListener: false`; wiring true live queries is left for
+      when a screen actually needs push updates, e.g. M3 score entry).
+      Session total = `sumValueTenths` (shared/scoring/totals.ts) over
+      `listScoredShotsForSession` (excludes sighter-series shots per
+      §6.3), ÷10.
+- [x] Settings: language (system/sv/en), theme (system/light/dark),
       "Load demo data" (dev), placeholder "Support development" row.
-- **Done when:** Maestro flow `smoke.yaml` walks all tabs on seeded data,
-  screenshots each; web target renders all tabs.
+      — both settings persist to the `settings` table (new
+      `app/src/db/queries/settings.ts`, JSON-encoded values, upsert via
+      `onConflictDoUpdate`) and are also applied to i18next / the theme
+      hook live via `state/app-settings.tsx`.
+- **Done when:** Maestro flow `app/e2e/m2-smoke.yaml` walks all tabs on
+  seeded data, screenshots each; web target renders all tabs.
+  — both verified. Web: browser screenshots of all 4 tabs, `/dev`,
+  `/dev/components`, `/session/new`, sv language switch, light theme.
+  Emulator: `expo run:android` dev build on the `shotledger` AVD (first
+  build 8m12s — downloaded the NDK + Build-Tools 36, none of which were
+  cached on this machine), then `maestro test app/e2e/m2-smoke.yaml`
+  passed against seeded demo data (screenshots under M2 report). One
+  flow gotcha worth keeping: right after `launchApp`, `openLink` can
+  race the JS bundle's linking listener and silently no-op, so the flow
+  waits for `Home` to be visible before opening `app://dev`.
 
 ### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
 

@@ -1,9 +1,13 @@
-// Dev-only debug route (not linked from tabs). Lets an agent or developer
-// load/wipe the seed fixture and see it render without a full UI.
+// Dev-only debug route (not linked from tabs; redirected away outside dev
+// builds by dev/_layout.tsx). Lets an agent or developer load/wipe the seed
+// fixture and see it render without a full UI.
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrimaryButton } from '@/components/primary-button';
+import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { db } from '@/db/client';
@@ -14,6 +18,8 @@ import { Spacing } from '@/theme/tokens';
 type SessionRow = ReturnType<typeof listSessions>[number];
 
 export default function DevScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
   const [sessions, setSessions] = useState<SessionRow[]>(() => (db ? listSessions(db) : []));
 
   const refresh = useCallback(() => {
@@ -33,67 +39,50 @@ export default function DevScreen() {
   }, [refresh]);
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.title}>
-          Dev
-        </ThemedText>
+    <Screen scroll={false}>
+      <ThemedText type="title" style={styles.title}>
+        {t('dev.title')}
+      </ThemedText>
 
-        {!db && (
-          <ThemedText type="small">
-            expo-sqlite&apos;s web driver isn&apos;t wired up in this Expo SDK (M1 deviation) — use
-            a native build to load and browse demo data.
-          </ThemedText>
-        )}
+      {!db && <ThemedText type="small">{t('dev.webUnavailable')}</ThemedText>}
 
-        <ThemedView style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onLoadDemoData}
-            style={styles.button}
-            testID="load-demo-data"
-          >
-            <ThemedText themeColor="background">Load demo data</ThemedText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onWipeData}
-            style={styles.button}
-            testID="wipe-data"
-          >
-            <ThemedText themeColor="background">Wipe data</ThemedText>
-          </Pressable>
-        </ThemedView>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push('/dev/components')}
+        testID="dev-components-link"
+      >
+        <ThemedText type="linkPrimary">{t('dev.componentsTitle')}</ThemedText>
+      </Pressable>
 
-        <ThemedText type="smallBold">{sessions.length} sessions</ThemedText>
-
-        <FlatList
-          data={sessions}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <ThemedView type="backgroundElement" style={styles.row}>
-              <ThemedText type="small">{item.name}</ThemedText>
-              <ThemedText type="small">
-                {item.type} · {item.disciplineId} · {item.startedAt.slice(0, 10)}
-              </ThemedText>
-            </ThemedView>
-          )}
+      <ThemedView style={styles.actions}>
+        <PrimaryButton
+          label={t('settings.loadDemoData')}
+          onPress={onLoadDemoData}
+          testID="load-demo-data"
         />
-      </SafeAreaView>
-    </ThemedView>
+        <PrimaryButton label={t('settings.wipeData')} onPress={onWipeData} testID="wipe-data" />
+      </ThemedView>
+
+      <ThemedText type="smallBold">{t('dev.sessionsCount', { count: sessions.length })}</ThemedText>
+
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <ThemedView type="backgroundElement" style={styles.row}>
+            <ThemedText type="small">{item.name}</ThemedText>
+            <ThemedText type="small">
+              {item.type} · {item.disciplineId} · {item.startedAt.slice(0, 10)}
+            </ThemedText>
+          </ThemedView>
+        )}
+      />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-  },
   title: {
     fontSize: 24,
     lineHeight: 28,
@@ -101,12 +90,6 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: Spacing.three,
-  },
-  button: {
-    backgroundColor: '#3c87f7',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
   },
   list: {
     gap: Spacing.two,

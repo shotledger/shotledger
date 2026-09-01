@@ -5,10 +5,13 @@
 
 import { Colors } from '@/theme/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppSettings } from '@/state/app-settings';
 
 export function useTheme() {
   const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
+  const { theme: themeSetting } = useAppSettings();
+  const deviceTheme = scheme === 'unspecified' || !scheme ? 'light' : scheme;
+  const theme = themeSetting === 'system' ? deviceTheme : themeSetting;
 
   return Colors[theme];
 }

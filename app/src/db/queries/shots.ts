@@ -1,6 +1,6 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 
-import { shots } from '../schema';
+import { series, shots } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 
@@ -71,4 +71,35 @@ export function updateShot(
 export function softDeleteShot(db: Database, id: string) {
   const now = nowIso();
   db.update(shots).set({ deletedAt: now, updatedAt: now }).where(eq(shots.id, id)).run();
+}
+
+/**
+ * Scored (non-sighter) shots for a session — the input to session-total math
+ * (§3/§6.3: sighters count toward volume but never toward score). Feed the
+ * result to `sumValueTenths` from `@shotledger/shared`.
+ */
+export function listScoredShotsForSession(db: Database, sessionId: string) {
+  return db
+    .select({ valueTenths: shots.valueTenths })
+    .from(shots)
+    .innerJoin(series, eq(shots.seriesId, series.id))
+    .where(
+      and(
+        eq(series.sessionId, sessionId),
+        eq(series.isSighter, 0),
+        isNull(shots.deletedAt),
+        isNull(series.deletedAt),
+      ),
+    )
+    .all();
+}
+
+/** Total shots logged across all sessions (volume metric — sighters included). */
+export function countAllShots(db: Database): number {
+  const row = db
+    .select({ count: sql<number>`count(*)` })
+    .from(shots)
+    .where(isNull(shots.deletedAt))
+    .get();
+  return row?.count ?? 0;
 }

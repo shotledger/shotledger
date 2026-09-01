@@ -1,0 +1,68 @@
+{
+  "common": {
+    "appName": "ShotLedger",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "comingSoon": "Coming soon"
+  },
+  "tabs": {
+    "home": "Home",
+    "stats": "Statistics",
+    "firearms": "Firearms",
+    "settings": "Settings"
+  },
+  "sessionType": {
+    "training": "Training",
+    "competition": "Competition"
+  },
+  "home": {
+    "title": "Home",
+    "shotsLoggedTotal": "Shots logged",
+    "latestSessions": "Latest sessions",
+    "newSession": "New session",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Log your first training or competition session to see it here.",
+    "emptyCta": "Log your first session"
+  },
+  "stats": {
+    "title": "Statistics",
+    "emptyTitle": "No statistics yet",
+    "emptyBody": "Statistics appear once you have logged sessions."
+  },
+  "firearms": {
+    "title": "Firearms",
+    "emptyTitle": "No firearms yet",
+    "emptyBody": "Add a firearm to track rounds fired, maintenance, and license status."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageSystem": "System",
+    "languageSv": "Swedish",
+    "languageEn": "English",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "devSection": "Developer",
+    "loadDemoData": "Load demo data",
+    "wipeData": "Wipe data",
+    "supportDevelopment": "Support development",
+    "supportComingSoon": "Donation link coming soon"
+  },
+  "session": {
+    "newTitle": "New session",
+    "detailTitle": "Session",
+    "seriesTitle": "Series {{position}}",
+    "placeholder": "This screen is a placeholder — score entry ships in a later milestone."
+  },
+  "dev": {
+    "title": "Dev",
+    "componentsTitle": "Components",
+    "webUnavailable": "expo-sqlite's web driver isn't wired up in this Expo SDK (M1 deviation) — use a native build to load and browse demo data.",
+    "sessionsCount": "{{count}} sessions"
+  }
+}

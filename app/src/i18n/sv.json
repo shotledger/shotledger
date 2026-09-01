@@ -1,0 +1,68 @@
+{
+  "common": {
+    "appName": "ShotLedger",
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "comingSoon": "Kommer snart"
+  },
+  "tabs": {
+    "home": "Hem",
+    "stats": "Statistik",
+    "firearms": "Vapen",
+    "settings": "Inställningar"
+  },
+  "sessionType": {
+    "training": "Träning",
+    "competition": "Tävling"
+  },
+  "home": {
+    "title": "Hem",
+    "shotsLoggedTotal": "Loggade skott",
+    "latestSessions": "Senaste passen",
+    "newSession": "Nytt pass",
+    "emptyTitle": "Inga pass än",
+    "emptyBody": "Logga ditt första tränings- eller tävlingspass för att se det här.",
+    "emptyCta": "Logga ditt första pass"
+  },
+  "stats": {
+    "title": "Statistik",
+    "emptyTitle": "Ingen statistik än",
+    "emptyBody": "Statistik visas när du har loggat pass."
+  },
+  "firearms": {
+    "title": "Vapen",
+    "emptyTitle": "Inga vapen än",
+    "emptyBody": "Lägg till ett vapen för att följa antal skott, underhåll och vapenlicens."
+  },
+  "settings": {
+    "title": "Inställningar",
+    "language": "Språk",
+    "languageSystem": "System",
+    "languageSv": "Svenska",
+    "languageEn": "Engelska",
+    "theme": "Tema",
+    "themeSystem": "System",
+    "themeLight": "Ljust",
+    "themeDark": "Mörkt",
+    "devSection": "Utvecklare",
+    "loadDemoData": "Ladda demodata",
+    "wipeData": "Radera data",
+    "supportDevelopment": "Stöd utvecklingen",
+    "supportComingSoon": "Donationslänk kommer snart"
+  },
+  "session": {
+    "newTitle": "Nytt pass",
+    "detailTitle": "Pass",
+    "seriesTitle": "Serie {{position}}",
+    "placeholder": "Den här skärmen är en platshållare — resultatinmatning kommer i en senare milstolpe."
+  },
+  "dev": {
+    "title": "Dev",
+    "componentsTitle": "Komponenter",
+    "webUnavailable": "expo-sqlites webbdrivrutin är inte kopplad i denna Expo SDK (M1-avvikelse) — använd en nativ build för att ladda och bläddra i demodata.",
+    "sessionsCount": "{{count}} pass"
+  }
+}

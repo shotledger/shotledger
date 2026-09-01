@@ -65,14 +65,30 @@ start --web --port <port>` (backgrounded), poll
   `emulator -avd shotledger -no-window -no-audio -gpu
 swiftshader_indirect`, wait for `adb wait-for-device shell getprop
 sys.boot_completed` → 1 (~2 min), screenshot via `adb exec-out
-screencap -p > shot.png`, kill with `adb emu kill`. Maestro 2.10+ at
+screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
+&& pnpm exec expo run:android` with the emulator already running and
+  visible to `adb devices` (omit `--device` — it wants an AVD/UDID
+  picker name, not the `adb` serial `emulator-5554`, and errors
+  `CommandError: Could not find device with name: emulator-5554` if
+  given one). First run does an implicit `expo prebuild`: generates the
+  gitignored `app/android/` (and updates `app/app.json` with
+  `android.package`, currently the prebuild default
+  `com.anonymous.app`), downloads the NDK if missing, and can take
+  10+ minutes end to end — subsequent builds are much faster
+  (Gradle daemon + cache reuse). Maestro 2.10+ at
   `~/.maestro/bin/maestro`; flows in `app/e2e/`
-  (`maestro test e2e/<flow>.yaml`).
+  (`maestro test e2e/<flow>.yaml`), e.g. `app/e2e/m2-smoke.yaml`.
 - Seed/wipe demo data: `/dev` route (`app/src/app/dev/index.tsx`), "Load
-  demo data" / "Wipe data" buttons. Native only for now — expo-sqlite's web
+  demo data" / "Wipe data" buttons — reachable from a dev build via the
+  deep link `app://dev` (scheme is `app`, per `app/app.json`; there is
+  no `shotledger://` scheme). Native only for now — expo-sqlite's web
   build doesn't bundle under this Expo SDK's static web export (`db` is
-  `null` on web, see `app/src/db/client.web.ts`); the deep link
-  `shotledger://dev/seed` is still planned, not wired up.
+  `null` on web, see `app/src/db/client.web.ts`). `/dev` and
+  `/dev/components` (component gallery) redirect to `/` outside dev
+  builds (`app/src/app/dev/_layout.tsx`, `__DEV__` check). In a Maestro
+  flow, `openLink` right after `launchApp` can race the JS bundle's
+  linking listener and silently no-op — wait for a screen to be visible
+  first (see `app/e2e/m2-smoke.yaml`).
 - Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
 (cd app && pnpm exec jest --passWithNoTests)`), run from the repo
   root. `pnpm exec prettier --check .` is available separately

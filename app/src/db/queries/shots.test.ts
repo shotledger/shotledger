@@ -4,14 +4,23 @@ import { addSeries } from './series';
 import { createSession } from './sessions';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
-import { addShot, getShot, listShotsForSeries, softDeleteShot, updateShot } from './shots';
+import {
+  addShot,
+  countAllShots,
+  getShot,
+  listScoredShotsForSession,
+  listShotsForSeries,
+  softDeleteShot,
+  updateShot,
+} from './shots';
 
 let db: Database;
 let seriesId: string;
+let sessionId: string;
 
 beforeEach(() => {
   db = createTestDb();
-  const sessionId = createSession(db, {
+  sessionId = createSession(db, {
     name: 'S',
     type: 'training',
     disciplineId: 'spsf-precision',
@@ -74,5 +83,34 @@ describe('listShotsForSeries', () => {
     const c = addShot(db, { seriesId, position: 3, valueTenths: 90 });
     softDeleteShot(db, c.id);
     expect(listShotsForSeries(db, seriesId).map((s) => s.id)).toEqual([b.id, a.id]);
+  });
+});
+
+describe('listScoredShotsForSession', () => {
+  it('excludes shots from sighter series', () => {
+    const sighterSeriesId = addSeries(db, { sessionId, position: 2, isSighter: true }).id;
+    addShot(db, { seriesId, position: 1, valueTenths: 90 });
+    addShot(db, { seriesId, position: 2, valueTenths: 80 });
+    addShot(db, { seriesId: sighterSeriesId, position: 1, valueTenths: 100 });
+    expect(listScoredShotsForSession(db, sessionId)).toEqual([
+      { valueTenths: 90 },
+      { valueTenths: 80 },
+    ]);
+  });
+
+  it('excludes soft-deleted shots and series', () => {
+    const a = addShot(db, { seriesId, position: 1, valueTenths: 90 });
+    addShot(db, { seriesId, position: 2, valueTenths: 80 });
+    softDeleteShot(db, a.id);
+    expect(listScoredShotsForSession(db, sessionId)).toEqual([{ valueTenths: 80 }]);
+  });
+});
+
+describe('countAllShots', () => {
+  it('counts shots across sessions, excluding tombstones', () => {
+    const a = addShot(db, { seriesId, position: 1, valueTenths: 90 });
+    addShot(db, { seriesId, position: 2, valueTenths: 80 });
+    softDeleteShot(db, a.id);
+    expect(countAllShots(db)).toBe(1);
   });
 });
