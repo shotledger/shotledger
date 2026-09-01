@@ -67,9 +67,10 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 - [ ] Fast score entry: per-shot keypad with dedicated X/(X) keys, integer +
       decimal (10.9) scoring, 5/6/10-shot and custom series, running totals
-- [ ] Disciplines: ISSF core (10m/25m/50m pistol & rifle) + SPSF precision,
-      fält, military rapid; weapon classes A/B/C/Airgun; guldserie
-      thresholds (age-adjusted)
+- [ ] Disciplines — SPSF only in v1: precision + militär snabbmatch
+      (+ generic ring-scoring for free training); vapengrupp + klass per
+      SHB; märke/"guldserie" thresholds (age-adjusted). ISSF and
+      fältskytte deferred to v2+
 - [ ] Sessions: training vs competition, tags, notes, target-photo
       attachment (photo only, no scoring yet)
 - [ ] Firearms & ammo: inventory, per-class defaults, automatic round

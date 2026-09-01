@@ -342,11 +342,13 @@ from §6.5 automatically).
 `shared/disciplines/definitions/*.json`, validated by zod schema
 `disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
 name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
-allowsDecimal, weaponGroups}`. v1 ships disciplines: SPSF precision
-(target: Pistoltavla 25 m precision — §6.5c), ISSF 10m air pistol, ISSF 25m pistol, ISSF 25m standard
-pistol, ISSF 50m pistol, generic ring-scoring. **Fältskytte is
-deliberately excluded from v1** (hit/figure scoring is a different model;
-revisit in v2+). Community adds disciplines via PR once public.
+allowsDecimal, weaponGroups}`. **v1 is SPSF-only** (maintainer decision
+2026-09-01): SPSF precision (target: Pistoltavla 25 m precision — §6.5c),
+SPSF militär snabbmatch, plus generic ring-scoring for free training.
+**Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
+25m standard, 50m pistol — defaults need VERIFY then) and fältskytte
+(hit/figure scoring is a different model). Community adds disciplines
+via PR once public.
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 **Series counts are never fixed** (maintainer decision): a session grows
@@ -395,10 +397,9 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 |---|---|---|---|
 | `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
 | `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R |
-| `issf-ap` | ISSF | 10m luftpistol | 10 shots-per-series display grouping? VERIFY; integer (decimal finals out of scope v1) |
-| `issf-25m-pistol` | ISSF | 25m pistol (sport) | 5 shots/series. VERIFY: precision/duel distinction needed in v1? |
-| `issf-25m-standard` | ISSF | 25m standardpistol | VERIFY |
-| `issf-50m-pistol` | ISSF | 50m pistol | VERIFY |
+
+ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
+pistol) are **v2** — their defaults carry VERIFY items to resolve then.
 
 Session names default to `<championship-or-level label> <program>
 <weapon_group>` for competitions (e.g. "KM Precision C" — KM being
