@@ -1,7 +1,7 @@
 # ShotLedger — Implementation Plan (v1)
 
 > Execution spec for implementing agents. [`plan.md`](../plan.md) says
-> *what and why*; this document says *exactly how*. It is written so that
+> _what and why_; this document says _exactly how_. It is written so that
 > an implementing agent can complete each task without product-level
 > judgment. If a task is ambiguous or contradicts reality, STOP and ask —
 > do not improvise product decisions.
@@ -13,7 +13,7 @@
    DCO-signed (`git commit -s`). Never commit to `main`; merges happen only
    after the maintainer's OK.
 2. **Definition of done** for every task: code + tests written, `pnpm
-   check` (typecheck + lint + unit tests) green, the relevant checkbox in
+check` (typecheck + lint + unit tests) green, the relevant checkbox in
    this file ticked in the same branch, and — for UI tasks — a screenshot
    produced via the agentic loop (§8) attached to the task summary.
 3. **Never**: add dependencies not listed here without asking; change the
@@ -63,24 +63,24 @@
   The app tests use **jest-expo** only where RN APIs are involved; prefer
   putting logic in `shared/` so it's vitest-covered.
 - Root scripts: `pnpm check` = `tsc -b && eslint . && vitest run &&
-  (cd app && jest --passWithNoTests)`.
+(cd app && jest --passWithNoTests)`.
 
 ## 2. Key library decisions (fixed — do not substitute)
 
-| Purpose | Library | Note |
-|---|---|---|
-| Navigation | expo-router | file-based; predictable for agents |
-| Local DB | **expo-sqlite** + Drizzle ORM | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.) |
-| Migrations | drizzle-kit | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator |
-| IDs | UUIDv7 (`uuidv7` pkg) | sortable, sync-friendly |
-| State | zustand (UI state only) + Drizzle live queries (data) | no Redux |
-| Charts | victory-native | Skia-based |
-| Dates | date-fns + date-fns-tz | store UTC ISO-8601 in DB; display local |
-| Forms | react-hook-form + zod | zod schemas live next to features |
-| i18n | i18next + react-i18next + expo-localization | |
-| Notifications | expo-notifications (local only in v1) | license/maintenance reminders |
-| PDF | expo-print (HTML → PDF) | FAP 551-3 export |
-| E2E | Maestro | flows in `app/e2e/` |
+| Purpose       | Library                                               | Note                                                                                               |
+| ------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Navigation    | expo-router                                           | file-based; predictable for agents                                                                 |
+| Local DB      | **expo-sqlite** + Drizzle ORM                         | expo-sqlite has web/WASM support — required by the agentic web loop. (op-sqlite rejected: no web.) |
+| Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator            |
+| IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                            |
+| State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                           |
+| Charts        | victory-native                                        | Skia-based                                                                                         |
+| Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                            |
+| Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                  |
+| i18n          | i18next + react-i18next + expo-localization           |                                                                                                    |
+| Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
+| PDF           | expo-print (HTML → PDF)                               | FAP 551-3 export                                                                                   |
+| E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 
@@ -204,10 +204,11 @@ expiry ~18 months out, one airgun), 2 ammo lots, ~30 sessions spread over
 ## 4. Milestones and tasks
 
 ### M0 — scaffold (branch `feat/m0-scaffold`)
+
 - [x] pnpm workspace + `create-expo-app` (TypeScript template) in `app/`,
       expo-router installed, dev build config (`expo prebuild` clean) —
       config present (expo-router + splash-screen plugins, `main:
-      expo-router/entry`); running `expo prebuild` itself is deferred
+    expo-router/entry`); running `expo prebuild` itself is deferred
       with Android verification below (no Android SDK on this machine
       yet)
 - [x] `shared/` package with vitest wired; `backend/` = `wrangler init`
@@ -225,20 +226,32 @@ expiry ~18 months out, one airgun), 2 ammo lots, ~30 sessions spread over
   (curl 200 + HTML body checked, server killed after).
 
 ### M1 — data layer (branch `feat/m1-schema`)
-- [ ] Drizzle schema exactly per §3; initial migration generated
-- [ ] Migrator runs at app start (blocking splash until done)
-- [ ] Seed fixture + dev menu toggle ("Load demo data" / "Wipe data")
-- [ ] Repository functions in `app/src/db/queries/` (typed, tested):
+
+- [x] Drizzle schema exactly per §3; initial migration generated
+- [x] Migrator runs at app start (blocking splash until done)
+- [x] Seed fixture + dev menu toggle ("Load demo data" / "Wipe data")
+- [x] Repository functions in `app/src/db/queries/` (typed, tested):
       createSession, addSeries, addShot, listSessions(filter), CRUD for
       firearms/ammo/tags; all writes set `updated_at`, deletes set
       `deleted_at`
 - **Done when:** vitest/jest cover every query function; seed renders in a
-  debug list screen.
+  debug list screen. Native path verified end-to-end (migrator + queries +
+  seed, 52 vitest tests against a real generated migration). Web: expo-sqlite's
+  WASM/worker build fails to bundle under this Expo SDK's static web export
+  (`Worker chunk not found for: .../expo-sqlite/web/worker.ts`); shipped
+  native-first with a `client.web.ts`/`migration-gate.web.tsx` fallback (`db`
+  is `null` on web) so `expo start --web` keeps booting — see M1 report for
+  detail. The `/dev` route itself isn't reachable in the web preview yet: the
+  M0 root layout renders only `NativeTabs` (index/explore triggers), which
+  has no host for non-tab routes — pre-existing scaffold gap, not new to M1;
+  tracked for M2 (navigation shell).
 
 ### M2 — navigation shell + design system (branch `feat/m2-shell`)
+
 Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
 `/firearms`, **Settings** `/settings`. Session flow is modal-stacked:
 `/session/new`, `/session/[id]`, `/session/[id]/series/[pos]`.
+
 - [ ] Design-system components in `app/src/components/`: Screen, Card,
       StatTile, Chip, SegmentedControl, ListRow, EmptyState, FAB,
       PrimaryButton, ScoreKeypad (M3). Each gets a story-like demo route
@@ -253,6 +266,7 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
   screenshots each; web target renders all tabs.
 
 ### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
+
 New-session form: type (training/competition — both free); discipline
 picker (§6.2); **program picker** (§6.3 — filtered by discipline;
 "Free training" option = no program); for competitions: competition level
@@ -272,6 +286,7 @@ final · Final · Total (§6.3). Each section allows at most one sighter;
 the toggle disables once used.
 
 **ScoreKeypad spec** (get this exactly right):
+
 - Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
   (X ⇒ value 10, is_inner_ten=1; (X) hidden). Decimal mode: two taps per
   shot — "10" then "9" ⇒ 10.9; `X` ⇒ 10.9 + is_inner_ten; `(X)` ⇒
@@ -294,6 +309,7 @@ the toggle disables once used.
   edge cases (0, miss, X in both modes).
 
 ### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
+
 - [ ] Firearms CRUD screens; weapon groups per firearm; per-group default;
       round counter auto-incremented by session save (all shots including
       sighters; only firearm-linked sessions); manual adjust with reason
@@ -311,6 +327,7 @@ the toggle disables once used.
   the scheduling function (not the OS delivery).
 
 ### M5 — statistics (branch `feat/m5-stats`) — live views, never a form
+
 All math in `shared/scoring/stats.ts` (vitest): sighter series are
 excluded from every score metric but included in volume metrics (total
 shots, rounds fired). Series mean, session mean
@@ -318,6 +335,7 @@ per shot, standard deviation (sample), best/worst series, X counts,
 rolling trend (per-session mean over time), comparison of last N series
 vs previous N (default N=100), guldserie count per period, per-firearm
 and per-ammo-lot aggregates.
+
 - [ ] Stats tab: period filter (30d/6m/12m/all — segmented, default 6m),
       discipline + class + firearm filter chips; StatTile grid (total
       shots, sessions, mean, SD, X%, guldserie count); trend line chart;
@@ -330,6 +348,7 @@ and per-ammo-lot aggregates.
   against hand-computed fixtures.
 
 ### M6 — FAP 551-3 barometer + PDF (branch `feat/m6-compliance`)
+
 Logic in `shared/compliance/` driven by a config object, not hard-coded:
 `{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
 Two authoritative sources, kept separate in the config: (a) **FAP 551-3**
@@ -341,6 +360,7 @@ intyg (first weapon .22), grovkaliber earliest after 12 months,
 pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
 the last two years — fulfilled (the app can compute märke fulfillment
 from §6.5 automatically).
+
 - [ ] Barometer UI on Home + per firearm: activities in rolling window vs
       required, green/amber/red
 - [ ] PDF export (expo-print): shooting log for a chosen period/firearm —
@@ -351,6 +371,7 @@ from §6.5 automatically).
   sessions excluded); PDF snapshot test of generated HTML.
 
 ### M7 — CSV, i18n completeness, release prep (branch `feat/m7-release`)
+
 - [ ] CSV export (share sheet) + import (validate with zod, dry-run
       report, then upsert). Columns documented in §6.8; round-trip test:
       export → wipe → import → identical stats.
@@ -366,22 +387,23 @@ from §6.5 automatically).
 
 ## 5. Screen inventory (v1)
 
-| Route | Purpose | Key states |
-|---|---|---|
-| `/` Home | totals card, latest sessions, barometer summary, FAB | empty / seeded |
-| `/session/new` | new-session form | validation errors |
-| `/session/[id]` | series list + stats toggle, add series | zero series |
-| `/session/[id]/series/[pos]` | keypad entry | integer vs decimal |
-| `/stats` | filters + tiles + charts | no data for filter |
-| `/firearms` | list + barometer chips | empty |
-| `/firearms/[id]` | detail: classes, license, maintenance, ammo usage | expired license |
-| `/firearms/new`, `/firearms/[id]/edit` | forms | |
-| `/settings` | language, theme, data, support, about | |
-| `/dev/components` | component gallery (dev only) | |
+| Route                                  | Purpose                                              | Key states         |
+| -------------------------------------- | ---------------------------------------------------- | ------------------ |
+| `/` Home                               | totals card, latest sessions, barometer summary, FAB | empty / seeded     |
+| `/session/new`                         | new-session form                                     | validation errors  |
+| `/session/[id]`                        | series list + stats toggle, add series               | zero series        |
+| `/session/[id]/series/[pos]`           | keypad entry                                         | integer vs decimal |
+| `/stats`                               | filters + tiles + charts                             | no data for filter |
+| `/firearms`                            | list + barometer chips                               | empty              |
+| `/firearms/[id]`                       | detail: classes, license, maintenance, ammo usage    | expired license    |
+| `/firearms/new`, `/firearms/[id]/edit` | forms                                                |                    |
+| `/settings`                            | language, theme, data, support, about                |                    |
+| `/dev/components`                      | component gallery (dev only)                         |                    |
 
 ## 6. Reference data and formulas
 
 ### 6.2 Discipline definitions (data, not code)
+
 `shared/disciplines/definitions/*.json`, validated by zod schema
 `disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
 name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
@@ -394,8 +416,9 @@ SPSF militär snabbmatch, plus generic ring-scoring for free training.
 via PR once public.
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
+
 **Series counts are never fixed** (maintainer decision): a session grows
-series as the shooter adds them, in every program. A *program* is a
+series as the shooter adds them, in every program. A _program_ is a
 lightweight preset naming the competition type and its defaults:
 `shared/disciplines/programs/*.json`, zod schema `programSchema`:
 
@@ -424,8 +447,8 @@ disables the sighter toggle once the current section has one.
 series, three results are tracked and displayed, all derived:
 
 - `beforeFinal` = sum of scored series with `is_final=0`
-- `finalScore`  = sum of scored series with `is_final=1`
-- `total`       = beforeFinal + finalScore
+- `finalScore` = sum of scored series with `is_final=1`
+- `total` = beforeFinal + finalScore
 
 Sessions without final series just show the one total.
 
@@ -436,10 +459,10 @@ volume**: shots-logged totals, firearm round counter, ammo-lot usage.
 v1 predefined programs (defaults marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
-| id | Federation | Name (sv) | Defaults |
-|---|---|---|---|
-| `spsf-precision` | SPSF | Precision | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
-| `spsf-milsnabb` | SPSF | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R |
+| id               | Federation | Name (sv)          | Defaults                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | ---------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `spsf-precision` | SPSF       | Precision          | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
+| `spsf-milsnabb`  | SPSF       | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R                                                                                                                                                                                      |
 
 ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
 pistol) are **v2** — their defaults carry VERIFY items to resolve then.
@@ -453,7 +476,7 @@ decided, **no provskott**) is out of v1 scope — log such series as
 ordinary extra scored series with a note.
 
 **Decimal scoring — who actually uses it:** per ISSF rules, 10m air
-rifle scores decimal in qualification *and* finals; 10m air pistol and
+rifle scores decimal in qualification _and_ finals; 10m air pistol and
 50m rifle score integer in qualification with **decimal finals only**;
 25m pistol events are integer throughout. Everything SPSF in v1 is
 integer. The per-session decimal toggle therefore exists mainly for
@@ -461,6 +484,7 @@ ISSF-style finals training; storage is uniform regardless (§3
 `value_tenths`), so switching modes never migrates data.
 
 ### 6.4a Weapon groups and shooter classes
+
 **Group ids are federation-scoped** — `<federation>:<code>` — because
 vapengrupper A/B/C/R/M are an SPSF concept that other federations don't
 share. Definitions live as data in `shared/disciplines/groups/<fed>.ts`;
@@ -476,6 +500,7 @@ the same way.
 ("C 2" = vapengrupp C, klass 2):
 
 **Vapengrupp (the gun)** — valid set depends on discipline:
+
 - Precision (F.4): `A` (+ optional sub-groups `AM`, `AP`, `AG` — F.4.1),
   `A-opt` (A with optics, F.4.5), `B`, `C`. **No R in precision**
   (F.4.4 "Ej tillämplig").
@@ -493,30 +518,32 @@ Enumerations live in `shared/disciplines/groups.ts` and `classes.ts`
 with per-discipline validity. Märke thresholds key off vapengrupp (§6.5).
 
 ### 6.5 "Guldserie" = pistolskyttemärke series requirement (SHB, verified)
+
 The colloquial "guldserie" is a series meeting the **pistolskyttemärke
 guld** per-series requirement (the term "guldserie" itself does not occur
 in SHB). Config in `shared/scoring/marke.ts` — SHB Bilaga 1 mom 5.1.1.1
 (p. 452), per 5-shot precision series, by vapengrupp:
 
-| Valör | A | B | C |
-|---|---|---|---|
-| Brons | 32 | 33 | 34 |
-| Silver | 38 | 39 | 40 |
-| Guld | 43 | 45 | 46 |
+| Valör  | A   | B   | C   |
+| ------ | --- | --- | --- |
+| Brons  | 32  | 33  | 34  |
+| Silver | 38  | 39  | 40  |
+| Guld   | 43  | 45  | 46  |
 
-Age reduction (same section): −1 point/series from the year *after*
+Age reduction (same section): −1 point/series from the year _after_
 turning 55; −2 points/series from the year after turning 65. Needs the
 shooter's birth year in settings (like Shotlytic's DOB field).
 
 ### 6.5b Standardmedalj point thresholds (SHB, verified)
+
 Data in `shared/scoring/standardmedalj.ts` — fixed thresholds by
 vapengrupp (no age adjustment; C.5.1.2.3 p. 71), precision:
 
 | Series | A/A-opt silver | A brons | B silver | B brons | C silver | C brons |
-|---|---|---|---|---|---|---|
-| 6 | 277 | 267 | 282 | 273 | 283 | 276 |
-| 7 | 323 | 312 | 329 | 319 | 330 | 322 |
-| 10 | 461 | 445 | 470 | 455 | 471 | 460 |
+| ------ | -------------- | ------- | -------- | ------- | -------- | ------- |
+| 6      | 277            | 267     | 282      | 273     | 283      | 276     |
+| 7      | 323            | 312     | 329      | 319     | 330      | 322     |
+| 10     | 461            | 445     | 470      | 455     | 471      | 460     |
 
 &gt;10 series: take the 10-series value ÷10 × series count (C.5.1.2.3).
 Militär snabbmatch (12 series, C.5.1.2.5): silver A 540 · R 552 · B 561 ·
@@ -526,6 +553,7 @@ p. 73). M5 shows a subtle standardmedalj marker when a session total
 meets a threshold; accumulated-points tracking is v2+.
 
 ### 6.5c Target dimensions (for v2 photo scoring; SHB, verified)
+
 **Pistoltavla 25 m precision** (F.7.1 p. 182 — note: this, not "C30",
 is the precision target; C30/C25 are fältskjutning hit/miss circle
 figures, 30×27 / 25×22.5 cm, no rings): X-ring 25 mm, 10 = 50 mm, then
@@ -536,6 +564,7 @@ rings 7–10 (200 mm); ring line 0.2–0.5 mm; distance 25 m. Scoring rule
 only, X = 50 mm, 10 = 100 mm, then +80 mm per ring to 5 = 500 mm.
 
 ### 6.8 CSV format
+
 UTF-8, comma-separated, header row, one row per **shot**, RFC 4180
 quoting: `session_id, session_name, session_type, discipline_id,
 weapon_class, firearm, ammo_lot, started_at, series_position,
@@ -543,6 +572,7 @@ shot_position, value, is_inner_ten, is_inner_ten_decimal, location, tags`
 (tags `|`-joined). Import matches firearms/lots by name, creates missing.
 
 ## 7. Testing standards
+
 - `shared/`: vitest, 100% of exported functions, table-driven tests.
 - App logic hooks: jest-expo where RN APIs unavoidable.
 - E2E: Maestro flows per milestone (named `mN-*.yaml`), each ending in a
@@ -552,6 +582,7 @@ shot_position, value, is_inner_ten, is_inner_ten_decimal, location, tags`
   HTML (PDF) and CSV strings.
 
 ## 8. Agentic loop (what CLAUDE.md must document)
+
 Exact commands for: install (`pnpm i`), start web (`cd app && pnpm expo
 start --web`) and how to screenshot it (Chrome tools), start emulator
 (`emulator -avd shotledger -no-window -gpu swiftshader_indirect` +
@@ -561,6 +592,7 @@ start --web`) and how to screenshot it (Chrome tools), start emulator
 restates §0 rules 1–6 verbatim.
 
 ## 9. Deferred to v2 (do not build in v1)
+
 Photo target scoring; cloud sync + accounts (backend/ stays hello-world);
 WebShooter import; document vault; share cards; timers; iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level

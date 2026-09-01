@@ -53,7 +53,7 @@ screenshot from the agentic loop.
   blocks by default — esbuild for bundling, workerd for
   `backend`'s Cloudflare Workers vitest pool).
 - Web preview (primary UI iteration surface): `cd app && pnpm exec expo
-  start --web --port <port>` (backgrounded), poll
+start --web --port <port>` (backgrounded), poll
   `curl -s -o /dev/null -w '%{http_code}' http://localhost:<port>/`
   until it returns `200`, then view/interact/screenshot via browser
   tooling. Kill the server (`pkill -f 'expo start --web'`) when done —
@@ -63,15 +63,18 @@ screenshot from the agentic loop.
   Java 25 does NOT work with Android Gradle). Env comes from `.envrc`
   (direnv) or source the equivalent exports manually. Emulator:
   `emulator -avd shotledger -no-window -no-audio -gpu
-  swiftshader_indirect`, wait for `adb wait-for-device shell getprop
-  sys.boot_completed` → 1 (~2 min), screenshot via `adb exec-out
-  screencap -p > shot.png`, kill with `adb emu kill`. Maestro 2.10+ at
+swiftshader_indirect`, wait for `adb wait-for-device shell getprop
+sys.boot_completed` → 1 (~2 min), screenshot via `adb exec-out
+screencap -p > shot.png`, kill with `adb emu kill`. Maestro 2.10+ at
   `~/.maestro/bin/maestro`; flows in `app/e2e/`
   (`maestro test e2e/<flow>.yaml`).
-- Seed/wipe demo data: dev menu (planned deep link `shotledger://dev/seed`)
-  — lands at M1 with the data layer.
+- Seed/wipe demo data: `/dev` route (`app/src/app/dev/index.tsx`), "Load
+  demo data" / "Wipe data" buttons. Native only for now — expo-sqlite's web
+  build doesn't bundle under this Expo SDK's static web export (`db` is
+  `null` on web, see `app/src/db/client.web.ts`); the deep link
+  `shotledger://dev/seed` is still planned, not wired up.
 - Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
-  (cd app && pnpm exec jest --passWithNoTests)`), run from the repo
+(cd app && pnpm exec jest --passWithNoTests)`), run from the repo
   root. `pnpm exec prettier --check .` is available separately
   (`pnpm format`) but not part of `check` per the implementation plan.
 - Backend (`backend/`, hello-world only, never deployed by an agent):
