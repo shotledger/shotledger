@@ -2,6 +2,8 @@
 // Maestro flows later — never imported from production screens.
 import { addFirearmGroup } from './queries/firearm-groups';
 import { addLicense } from './queries/licenses';
+import { logMaintenanceEvent } from './queries/maintenance-events';
+import { applyRoundCountDelta } from './queries/round-count';
 import { addSeries } from './queries/series';
 import { createSession } from './queries/sessions';
 import { addShot } from './queries/shots';
@@ -79,8 +81,15 @@ export function seedDemoData(db: Database) {
     vapenId: 'SE1234567',
     loadSystem: 'Enkelskott',
     notes: 'C-klass precisionspistol',
+    maintenanceIntervalRounds: 1000,
   });
   addFirearmGroup(db, { firearmId: pistol.id, groupId: 'spsf:C', isDefaultForGroup: true });
+  logMaintenanceEvent(db, {
+    firearmId: pistol.id,
+    performedAt: isoDaysAgo(120),
+    kind: 'Rengöring',
+    notes: 'Grundlig rengöring efter tävlingssäsong',
+  });
   addLicense(db, {
     firearmId: pistol.id,
     licenseNumber: 'A123.456/2024-01',
@@ -169,6 +178,8 @@ export function seedDemoData(db: Database) {
       // fixed structure: 1 provserie + 12 scored series, 5 shots each
       addPrecisionSeries(db, session.id, 1, rng, { isSighter: true });
       for (let p = 2; p <= 13; p++) addPrecisionSeries(db, session.id, p, rng);
+      // round counter (§4 M4): every shot including sighters, firearm-linked only
+      applyRoundCountDelta(db, pistol.id, 13 * 5);
       continue;
     }
 
@@ -179,6 +190,7 @@ export function seedDemoData(db: Database) {
       for (let p = 2; p <= 8; p++) addPrecisionSeries(db, session.id, p, rng);
       addPrecisionSeries(db, session.id, 9, rng, { isSighter: true, isFinal: true });
       for (let p = 10; p <= 12; p++) addPrecisionSeries(db, session.id, p, rng, { isFinal: true });
+      applyRoundCountDelta(db, pistol.id, 12 * 5);
       continue;
     }
 
@@ -186,6 +198,7 @@ export function seedDemoData(db: Database) {
     addPrecisionSeries(db, session.id, 1, rng, { isSighter: true });
     const scoredCount = 4 + Math.floor(rng() * 3);
     for (let p = 2; p <= scoredCount + 1; p++) addPrecisionSeries(db, session.id, p, rng);
+    applyRoundCountDelta(db, pistol.id, (scoredCount + 1) * 5);
   }
 }
 

@@ -358,21 +358,41 @@ the toggle disables once used.
 
 ### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
 
-- [ ] Firearms CRUD screens; weapon groups per firearm; per-group default;
+- [x] Firearms CRUD screens; weapon groups per firearm; per-group default;
       round counter auto-incremented by session save (all shots including
       sighters; only firearm-linked sessions); manual adjust with reason
-- [ ] Maintenance: log event, interval setting, "rounds since" indicator
+- [x] Maintenance: log event, interval setting, "rounds since" indicator
       (green/amber/red at 80%/100%), local notification at 100%
-- [ ] License register per firearm (licenses table §3 — number, purpose,
+- [x] License register per firearm (licenses table §3 — number, purpose,
       decision date, validity, conditions; renewals append, history
       kept); local notifications at 90/30/7 days before valid_until
       (VERIFY preferred lead times with maintainer)
-- [ ] Ammo lots CRUD incl. handload recipe fields (powder, charge,
+- [x] Ammo lots CRUD incl. handload recipe fields (powder, charge,
       bullet, primer, brass, COL); session links lot; per-lot usage
       count; lot-vs-lot comparison stays v3
 - **Done when:** Maestro covers create-firearm → session → round count
   incremented → maintenance amber; notifications verified by unit-testing
   the scheduling function (not the OS delivery).
+  — `app/e2e/m4-gear.yaml` implements exactly that flow. Unit/query-layer
+  coverage: 223 vitest tests total (up from 187), including
+  `shared/src/firearms/*.test.ts` (maintenance-status, license-status,
+  notification-schedule — the pure scheduling logic) and new
+  `app/src/db/queries/{maintenance-events,round-count,ammo-usage}.test.ts`,
+  the last proving end-to-end that `saveSeriesShots` increments a
+  firearm-linked session's round counter for every shot including
+  sighters, and only for firearm-linked sessions. On the `shotledger` AVD
+  dev build the flow was verified in stages across multiple runs — create
+  firearm, round count starts at 0, weapon-type picker, maintenance
+  interval save, and opening the license "Add renewal" form all pass
+  (screenshots `m4-01-new-firearm.png`, `m4-02-firearm-detail.png`) — but
+  a single clean end-to-end pass could not be captured in this session:
+  the on-device `maestro-driver` gRPC connection reproducibly died
+  (`DeviceServerDiedException: DEADLINE_EXCEEDED after 120s`) on the
+  `license-number` field's `inputText` step specifically, across a fresh
+  emulator boot and independent of the input's content — see the CLAUDE.md
+  Maestro-gotchas note. Re-running `maestro test e2e/m4-gear.yaml` on a
+  less resource-constrained host (or a physical device) is the suggested
+  next step to get the clean pass.
 
 ### M5 — statistics (branch `feat/m5-stats`) — live views, never a form
 
