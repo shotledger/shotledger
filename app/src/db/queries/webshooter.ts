@@ -255,6 +255,10 @@ export function importResultRow(
         | 'guld'
         | null,
       competitionName: merged.competitionName as string,
+      // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
+      // session's startedAt is that field's DB column, always overwritten
+      // on re-import (a WebShooter date correction, however rare).
+      startedAt: new Date(competition.date).toISOString(),
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
       // disciplineId/programId/type are intentionally not in

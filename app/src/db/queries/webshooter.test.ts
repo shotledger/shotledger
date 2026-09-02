@@ -284,6 +284,18 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
     expect(seriesRows).toHaveLength(7);
   });
 
+  it('overwrites the competition date on re-import (score-bearing per §A.3)', () => {
+    const first = importResultRow(db, resultRow(), COMPETITION, {
+      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+    });
+    const corrected = { ...COMPETITION, date: '2026-05-11' };
+    importResultRow(db, resultRow(), corrected, {
+      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      linkToSessionId: first.sessionId,
+    });
+    expect(getSession(db, first.sessionId)?.startedAt.slice(0, 10)).toBe('2026-05-11');
+  });
+
   it('never clobbers enrichment fields that were empty and then locally filled between two re-imports', () => {
     const first = importResultRow(db, resultRow(), COMPETITION, {
       program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
