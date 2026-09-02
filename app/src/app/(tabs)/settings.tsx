@@ -7,9 +7,12 @@ import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
+import type { ProfileSelection } from '@shotledger/shared';
+
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
+import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
@@ -17,6 +20,8 @@ import { Spacing } from '@/theme/tokens';
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
+  const { selection: complianceSelection, profile, setSelection: setComplianceSelection } =
+    useComplianceProfile();
   const colors = useTheme();
   const [birthYear, setBirthYear] = useState(() => {
     const stored = db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null;
@@ -74,6 +79,24 @@ export default function SettingsScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.birthYearHelp')}
         </ThemedText>
+      </Card>
+
+      <Card>
+        <ThemedText type="smallBold">{t('compliance.settingsTitle')}</ThemedText>
+        <SegmentedControl
+          options={[
+            { value: 'none' as ProfileSelection, label: t('compliance.profileNone') },
+            { value: 'se' as ProfileSelection, label: t('compliance.profileSe') },
+          ]}
+          value={complianceSelection}
+          onChange={setComplianceSelection}
+          testID="compliance-profile-picker"
+        />
+        {profile && !profile.verified && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('compliance.unverifiedHint')}
+          </ThemedText>
+        )}
       </Card>
 
       <Card>

@@ -1,0 +1,227 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  computeBarometerForWeaponGroup,
+  computeFirearmBarometer,
+  computeOverallBarometer,
+  computeRuleBarometer,
+  worstStatus,
+} from './barometer';
+import type { ComplianceSession, JurisdictionProfile, WeaponGroupComplianceRule } from './types';
+
+const NOW = new Date('2026-09-01T00:00:00Z');
+
+function rule(overrides: Partial<WeaponGroupComplianceRule> = {}): WeaponGroupComplianceRule {
+  return {
+    weaponGroups: ['spsf:C'],
+    windowMonths: 6,
+    requiredActivities: 4,
+    countsAs: { training: 1, competition: 1 },
+    ...overrides,
+  };
+}
+
+function session(overrides: Partial<ComplianceSession>): ComplianceSession {
+  return {
+    id: 'session-1',
+    startedAt: '2026-08-01T00:00:00Z',
+    type: 'training',
+    weaponGroup: 'spsf:C',
+    ...overrides,
+  };
+}
+
+function profile(rules: WeaponGroupComplianceRule[]): JurisdictionProfile {
+  return { id: 'se', name: { sv: 'x', en: 'x' }, rules, source: 'test', verified: false };
+}
+
+describe('computeRuleBarometer', () => {
+  it('B1: no sessions -> red', () => {
+    const result = computeRuleBarometer([], rule(), NOW);
+    expect(result.activityCount).toBe(0);
+    expect(result.status).toBe('red');
+  });
+
+  it('B2: requiredActivities <= 0 -> always green', () => {
+    const result = computeRuleBarometer([], rule({ requiredActivities: 0 }), NOW);
+    expect(result.status).toBe('green');
+  });
+
+  it('B3: sessions in window with weight 1 each count', () => {
+    const sessions = [session({ id: 'a' }), session({ id: 'b' })];
+    const result = computeRuleBarometer(sessions, rule(), NOW);
+    expect(result.activityCount).toBe(2);
+  });
+
+  it('B4: session before window excluded', () => {
+    const result = computeRuleBarometer(
+      [session({ startedAt: '2026-01-01T00:00:00Z' })],
+      rule(),
+      NOW,
+    );
+    expect(result.activityCount).toBe(0);
+  });
+
+  it('B5: session exactly at now included', () => {
+    const result = computeRuleBarometer([session({ startedAt: NOW.toISOString() })], rule(), NOW);
+    expect(result.activityCount).toBe(1);
+  });
+
+  it('B6: session exactly at windowStart included', () => {
+    const result = computeRuleBarometer(
+      [session({ startedAt: '2026-03-01T00:00:00Z' })],
+      rule(),
+      NOW,
+    );
+    expect(result.windowStartIso).toBe('2026-03-01T00:00:00.000Z');
+    expect(result.activityCount).toBe(1);
+  });
+
+  it('B7: session one instant before windowStart excluded', () => {
+    const result = computeRuleBarometer(
+      [session({ startedAt: '2026-02-28T23:59:59.999Z' })],
+      rule(),
+      NOW,
+    );
+    expect(result.activityCount).toBe(0);
+  });
+
+  it('distinguishes training weight from competition weight by session.type', () => {
+    const trainingSession = session({ type: 'training' });
+    const result = computeRuleBarometer(
+      [trainingSession],
+      rule({ countsAs: { training: 1, competition: 0 } }),
+      NOW,
+    );
+    expect(result.activityCount).toBe(1);
+  });
+
+  it('B8: weight 0 excludes that session type', () => {
+    const sessions = [session({ type: 'competition' })];
+    const result = computeRuleBarometer(
+      sessions,
+      rule({ countsAs: { training: 1, competition: 0 } }),
+      NOW,
+    );
+    expect(result.activityCount).toBe(0);
+  });
+
+  it('a session after `now` (future) is excluded', () => {
+    const result = computeRuleBarometer(
+      [session({ startedAt: '2026-09-15T00:00:00Z' })],
+      rule(),
+      NOW,
+    );
+    expect(result.activityCount).toBe(0);
+  });
+
+  it('B9: two sessions same day both count', () => {
+    const sessions = [
+      session({ id: 'a', startedAt: '2026-08-01T08:00:00Z' }),
+      session({ id: 'b', startedAt: '2026-08-01T18:00:00Z' }),
+    ];
+    const result = computeRuleBarometer(sessions, rule(), NOW);
+    expect(result.activityCount).toBe(2);
+  });
+
+  it.each([
+    [4, 'green'],
+    [2, 'amber'],
+    [1, 'red'],
+  ] as const)('B10-B12: count=%i -> %s (required=4)', (count, expected) => {
+    const sessions = Array.from({ length: count }, (_, i) => session({ id: `s${i}` }));
+    const result = computeRuleBarometer(sessions, rule(), NOW);
+    expect(result.status).toBe(expected);
+  });
+});
+
+describe('computeBarometerForWeaponGroup', () => {
+  it('B13: session with a weapon group outside the rule excluded', () => {
+    const result = computeBarometerForWeaponGroup(
+      [session({ weaponGroup: 'spsf:B' })],
+      profile([rule()]),
+      'spsf:C',
+      NOW,
+    );
+    expect(result?.activityCount).toBe(0);
+  });
+
+  it('B14: no matching rule returns null', () => {
+    const result = computeBarometerForWeaponGroup([], profile([rule()]), 'spsf:Z', NOW);
+    expect(result).toBeNull();
+  });
+});
+
+describe('computeFirearmBarometer', () => {
+  it('B15: matched by weaponGroup membership, not firearm_id', () => {
+    const sessions = [session({ weaponGroup: 'spsf:C' })];
+    const result = computeFirearmBarometer(sessions, profile([rule()]), ['spsf:C'], NOW);
+    expect(result).toHaveLength(1);
+    expect(result[0]?.activityCount).toBe(1);
+  });
+
+  it('B16: two groups covered by two rules yields two statuses', () => {
+    const p = profile([
+      rule({ weaponGroups: ['spsf:C'] }),
+      rule({ weaponGroups: ['spsf:B'], requiredActivities: 2 }),
+    ]);
+    const result = computeFirearmBarometer([], p, ['spsf:C', 'spsf:B'], NOW);
+    expect(result).toHaveLength(2);
+  });
+
+  it('does not double-count a group covered twice by the same rule', () => {
+    const p = profile([rule({ weaponGroups: ['spsf:C', 'spsf:B'] })]);
+    const result = computeFirearmBarometer([], p, ['spsf:C', 'spsf:B'], NOW);
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe('computeOverallBarometer', () => {
+  it('B17: overall is worst of the matched rules', () => {
+    const p = profile([
+      rule({ weaponGroups: ['spsf:C'], requiredActivities: 1 }),
+      rule({ weaponGroups: ['spsf:B'], requiredActivities: 10 }),
+    ]);
+    const sessions = [session({ weaponGroup: 'spsf:C' })];
+    const result = computeOverallBarometer(sessions, p, ['spsf:C', 'spsf:B'], NOW);
+    expect(result.overall).toBe('red'); // spsf:B has 0/10 -> red
+  });
+
+  it('B18: no weapon groups requested returns empty, no fabricated status', () => {
+    const result = computeOverallBarometer([], profile([rule()]), [], NOW);
+    expect(result).toEqual({ statuses: [], overall: null });
+  });
+
+  it('does not double-count a weapon group requested twice', () => {
+    const result = computeOverallBarometer([], profile([rule()]), ['spsf:C', 'spsf:C'], NOW);
+    expect(result.statuses).toHaveLength(1);
+  });
+});
+
+describe('computeRuleBarometer weaponGroup fallback', () => {
+  it('a session with no weaponGroup never matches a rule requiring a real group', () => {
+    const result = computeRuleBarometer([session({ weaponGroup: undefined })], rule(), NOW);
+    expect(result.activityCount).toBe(0);
+  });
+
+  it("falls back to '' for a missing weaponGroup, matching a rule that lists ''", () => {
+    const result = computeRuleBarometer(
+      [session({ weaponGroup: undefined })],
+      rule({ weaponGroups: [''] }),
+      NOW,
+    );
+    expect(result.activityCount).toBe(1);
+  });
+});
+
+describe('worstStatus', () => {
+  it('returns null for empty input', () => {
+    expect(worstStatus([])).toBeNull();
+  });
+
+  it('orders red < amber < green', () => {
+    expect(worstStatus(['green', 'amber'])).toBe('amber');
+    expect(worstStatus(['green', 'red', 'amber'])).toBe('red');
+    expect(worstStatus(['green', 'green'])).toBe('green');
+  });
+});

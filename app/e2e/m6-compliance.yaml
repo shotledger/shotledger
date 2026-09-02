@@ -1,0 +1,106 @@
+# M6 flow (§4 M6 "Done when"): seeds demo data, sets the compliance profile
+# to Sweden (the emulator's default system locale is English, so the
+# locale-based default is 'none' — the flow selects 'se' explicitly in
+# Settings to exercise the barometer), then asserts the Home barometer chip,
+# the per-firearm barometer on the firearm detail screen, and the Stats
+# Custom period range being applied. No inputText (CLAUDE.md Maestro
+# gotchas note) — navigation, taps on fixed labels/testIDs, and the native
+# Android date-picker's own OK button (tapped by visible text) only.
+appId: com.anonymous.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: 'settle-before-open-link'
+    timeout: 4000
+    optional: true
+- openLink: 'app://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      notVisible: 'Dev'
+    commands:
+      - openLink: 'app://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 15000
+- tapOn:
+    id: 'load-demo-data'
+- openLink: 'app://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+
+# --- Settings: select the Sweden compliance profile ---------------------
+- tapOn: 'Settings'
+- extendedWaitUntil:
+    visible:
+      id: 'compliance-profile-picker'
+    timeout: 15000
+- tapOn: 'Sweden (FAP 551-3)'
+- assertVisible: 'Activity requirements are unverified placeholders, pending confirmation against FAP 551-3 or a real föreningsintyg.'
+- takeScreenshot: m6-01-settings-compliance
+
+# --- Home: overall barometer chip visible --------------------------------
+- tapOn: 'Home'
+- extendedWaitUntil:
+    visible:
+      id: 'home-barometer'
+    timeout: 15000
+- takeScreenshot: m6-02-home-barometer
+
+# --- Firearms tab / firearm detail: per-firearm barometer ---------------
+- tapOn: 'Firearms & Ammo'
+- extendedWaitUntil:
+    visible: 'Pardini K22'
+    timeout: 15000
+- tapOn: 'Pardini K22'
+- extendedWaitUntil:
+    visible: 'Activity barometer (vapenlicens)'
+    timeout: 15000
+- takeScreenshot: m6-03-firearm-detail-barometer
+- pressKey: Back
+- extendedWaitUntil:
+    visible: 'Firearms & Ammo'
+    timeout: 15000
+
+# --- Stats: Custom period ------------------------------------------------
+- tapOn: 'Statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'stat-total-shots'
+    timeout: 15000
+- tapOn: 'Custom'
+- extendedWaitUntil:
+    visible:
+      id: 'stats-custom-from'
+    timeout: 15000
+- takeScreenshot: m6-04-stats-custom-empty
+- tapOn:
+    id: 'stats-custom-from'
+- extendedWaitUntil:
+    visible: 'OK'
+    timeout: 10000
+- tapOn: 'OK'
+- extendedWaitUntil:
+    visible:
+      id: 'stats-custom-to'
+    timeout: 10000
+- tapOn:
+    id: 'stats-custom-to'
+- extendedWaitUntil:
+    visible: 'OK'
+    timeout: 10000
+- tapOn: 'OK'
+- extendedWaitUntil:
+    visible:
+      id: 'stats-custom-range-label'
+    timeout: 15000
+- takeScreenshot: m6-05-stats-custom-applied

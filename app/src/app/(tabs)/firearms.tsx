@@ -28,6 +28,12 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
   red: 'primary',
 };
 
+const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+  green: 'neutral',
+  amber: 'primary',
+  red: 'primary',
+};
+
 export default function FirearmsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -68,6 +74,13 @@ export default function FirearmsScreen() {
                       <Chip
                         label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
                         tone={MAINTENANCE_TONE[row.maintenanceStatus]}
+                      />
+                    )}
+                    {row.barometerStatus && (
+                      <Chip
+                        testID={`firearm-barometer-${row.id}`}
+                        label={t(`compliance.barometer${capitalize(row.barometerStatus)}`)}
+                        tone={BAROMETER_TONE[row.barometerStatus]}
                       />
                     )}
                   </View>

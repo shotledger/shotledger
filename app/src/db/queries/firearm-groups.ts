@@ -37,6 +37,16 @@ export function listFirearmGroups(db: Database, firearmId: string) {
     .all();
 }
 
+/** Distinct weapon-group ids the shooter holds across every firearm (M6 barometer overview). */
+export function listAllFirearmGroupIds(db: Database): string[] {
+  const rows = db
+    .select({ groupId: firearmGroups.groupId })
+    .from(firearmGroups)
+    .where(isNull(firearmGroups.deletedAt))
+    .all();
+  return [...new Set(rows.map((row) => row.groupId))];
+}
+
 /** The firearm currently marked default for a federation-scoped group id. */
 export function getDefaultFirearmForGroup(db: Database, groupId: string) {
   return db

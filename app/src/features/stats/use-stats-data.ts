@@ -25,7 +25,7 @@ import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { sumExtraRounds } from '@/db/queries/sessions';
 import { listAllStatsSeries } from '@/db/queries/stats';
 
-export const STATS_PERIODS = ['30d', '6m', '12m', 'all'] as const;
+export const STATS_PERIODS = ['30d', '6m', '12m', 'all', 'custom'] as const;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
 
 export interface StatsFilters {
@@ -33,6 +33,9 @@ export interface StatsFilters {
   disciplineId: string | null;
   shooterClass: string | null;
   firearmId: string | null;
+  /** 'YYYY-MM-DD', only meaningful when period === 'custom'. */
+  customFrom: string | null;
+  customTo: string | null;
 }
 
 export const DEFAULT_STATS_FILTERS: StatsFilters = {
@@ -40,6 +43,8 @@ export const DEFAULT_STATS_FILTERS: StatsFilters = {
   disciplineId: null,
   shooterClass: null,
   firearmId: null,
+  customFrom: null,
+  customTo: null,
 };
 
 export interface DistributionBucket {
@@ -73,20 +78,38 @@ export interface StatsData {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const PERIOD_DAYS: Record<Exclude<StatsPeriod, 'all'>, number> = {
+const PERIOD_DAYS: Record<Exclude<StatsPeriod, 'all' | 'custom'>, number> = {
   '30d': 30,
   '6m': 182,
   '12m': 365,
 };
 
-function periodCutoffIso(period: StatsPeriod): string | null {
-  if (period === 'all') return null;
-  return new Date(Date.now() - PERIOD_DAYS[period] * DAY_MS).toISOString();
+export interface PeriodRange {
+  fromIso: string | null;
+  toIso: string | null;
 }
 
-function inPeriod(seriesList: readonly StatsSeries[], cutoffIso: string | null): StatsSeries[] {
-  if (cutoffIso === null) return [...seriesList];
-  return seriesList.filter((series) => series.startedAt >= cutoffIso);
+/** The [from, to] ISO range a period filter resolves to; both null = all time. */
+export function periodRange(filters: StatsFilters): PeriodRange {
+  if (filters.period === 'all') return { fromIso: null, toIso: null };
+  if (filters.period === 'custom') {
+    return {
+      fromIso: filters.customFrom ? `${filters.customFrom}T00:00:00.000Z` : null,
+      toIso: filters.customTo ? `${filters.customTo}T23:59:59.999Z` : null,
+    };
+  }
+  return {
+    fromIso: new Date(Date.now() - PERIOD_DAYS[filters.period] * DAY_MS).toISOString(),
+    toIso: null,
+  };
+}
+
+function inPeriod(seriesList: readonly StatsSeries[], range: PeriodRange): StatsSeries[] {
+  return seriesList.filter(
+    (series) =>
+      (range.fromIso === null || series.startedAt >= range.fromIso) &&
+      (range.toIso === null || series.startedAt <= range.toIso),
+  );
 }
 
 function uniqueSorted(values: readonly (string | null | undefined)[]): string[] {
@@ -129,7 +152,7 @@ function loadStatsData(filters: StatsFilters): StatsData {
   }
 
   const all = listAllStatsSeries(db);
-  const periodSeries = inPeriod(all, periodCutoffIso(filters.period));
+  const periodSeries = inPeriod(all, periodRange(filters));
 
   const filtered = periodSeries.filter(
     (series) =>
@@ -192,7 +215,14 @@ export function useStatsData(filters: StatsFilters): { data: StatsData; refresh:
     useCallback(() => {
       refresh();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters.period, filters.disciplineId, filters.shooterClass, filters.firearmId]),
+    }, [
+      filters.period,
+      filters.disciplineId,
+      filters.shooterClass,
+      filters.firearmId,
+      filters.customFrom,
+      filters.customTo,
+    ]),
   );
 
   return { data, refresh };

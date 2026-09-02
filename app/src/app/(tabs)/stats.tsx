@@ -1,26 +1,32 @@
 // Live stats tab (§4 M5) — no generate button, every value recomputed on
-// focus/filter change from @shotledger/shared's stats.ts.
+// focus/filter change from @shotledger/shared's stats.ts. M6 adds a Custom
+// period (from/to date pickers) and a PDF export of the filtered log.
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { formatShooterClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { EmptyState } from '@/components/empty-state';
 import { OptionPicker } from '@/components/option-picker';
+import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { TrendLineChart, TrendLineChartEmpty } from '@/components/trend-line-chart';
+import { buildShootingLogHtmlForFilters } from '@/features/export/use-pdf-export';
 import { disciplineLabel } from '@/features/session/labels';
 import {
   DEFAULT_STATS_FILTERS,
+  periodRange,
   STATS_PERIODS,
   useStatsData,
   type StatsFilters,
 } from '@/features/stats/use-stats-data';
+import { exportHtmlAsPdf } from '@/platform/pdf-export';
 import { Spacing } from '@/theme/tokens';
 
 const ALL = 'all-values';
@@ -37,19 +43,46 @@ function formatPercent(pct: number | null): string {
   return pct === null ? '–' : `${pct.toFixed(0)}%`;
 }
 
+function toDateOnly(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function periodLabelCase(period: string): string {
+  return period === 'all' || period === 'custom'
+    ? period.charAt(0).toUpperCase() + period.slice(1)
+    : period;
+}
+
 export default function StatsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [filters, setFilters] = useState<StatsFilters>(DEFAULT_STATS_FILTERS);
+  const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
   const { data } = useStatsData(filters);
 
   const periodOptions = useMemo(
     () =>
       STATS_PERIODS.map((period) => ({
         value: period,
-        label: t(`stats.period${period === 'all' ? 'All' : period}`),
+        label: t(`stats.period${periodLabelCase(period)}`),
       })),
     [t],
   );
+
+  // Compact range label for the Custom period, e.g. "2026-03-01 – 2026-09-01".
+  const customRangeLabel =
+    filters.customFrom && filters.customTo
+      ? `${new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(filters.customFrom))} – ${new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(filters.customTo))}`
+      : t('stats.customRangeIncomplete');
+
+  async function onExportPdf() {
+    const range = periodRange(filters);
+    const html = buildShootingLogHtmlForFilters(t, i18n.language, {
+      startedFromIso: range.fromIso,
+      startedToIso: range.toIso,
+      firearmId: filters.firearmId,
+    });
+    if (html) await exportHtmlAsPdf(html);
+  }
 
   if (!data.hasAnyData) {
     return (
@@ -69,6 +102,45 @@ export default function StatsScreen() {
         value={filters.period}
         onChange={(period) => setFilters((f) => ({ ...f, period }))}
       />
+
+      {filters.period === 'custom' && (
+        <Card>
+          <View style={styles.customRow}>
+            <PrimaryButton
+              testID="stats-custom-from"
+              label={`${t('stats.customFrom')}: ${filters.customFrom ?? '—'}`}
+              onPress={() => setPickerOpen('from')}
+            />
+            <PrimaryButton
+              testID="stats-custom-to"
+              label={`${t('stats.customTo')}: ${filters.customTo ?? '—'}`}
+              onPress={() => setPickerOpen('to')}
+            />
+          </View>
+          <ThemedText type="small" themeColor="textSecondary" testID="stats-custom-range-label">
+            {customRangeLabel}
+          </ThemedText>
+          {pickerOpen && (
+            <DateTimePicker
+              testID="stats-custom-date-picker"
+              value={
+                new Date(
+                  (pickerOpen === 'from' ? filters.customFrom : filters.customTo) ??
+                    toDateOnly(new Date()),
+                )
+              }
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_event, selected) => {
+                setPickerOpen(null);
+                if (!selected) return;
+                const value = toDateOnly(selected);
+                setFilters((f) => (pickerOpen === 'from' ? { ...f, customFrom: value } : { ...f, customTo: value }));
+              }}
+            />
+          )}
+        </Card>
+      )}
 
       <OptionPicker
         label={t('session.discipline')}
@@ -142,6 +214,8 @@ export default function StatsScreen() {
               <DistributionBarChart buckets={data.distribution} />
             )}
           </Card>
+
+          <PrimaryButton testID="stats-export-pdf" label={t('compliance.exportPdf')} onPress={onExportPdf} />
         </>
       )}
     </Screen>
@@ -153,6 +227,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   gridRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  customRow: {
     flexDirection: 'row',
     gap: Spacing.two,
   },

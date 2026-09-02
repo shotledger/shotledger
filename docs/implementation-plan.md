@@ -491,14 +491,75 @@ pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
 the last two years — fulfilled (the app can compute märke fulfillment
 from §6.5 automatically).
 
-- [ ] Barometer UI on Home + per firearm: activities in rolling window vs
+- [x] Barometer UI on Home + per firearm: activities in rolling window vs
       required, green/amber/red
-- [ ] PDF export (expo-print): shooting log for a chosen period/firearm —
+      — Home shows one overall chip (`compliance.barometer{Green,Amber,Red}`,
+      worst-of across every weapon group the shooter's firearms hold);
+      Firearms tab and firearm detail show per-firearm chip(s), worst-of
+      across the firearm's own weapon groups. All hidden when the resolved
+      profile is `null` (`'none'`), per §6.6. Settings gained a Compliance
+      section: profile picker `none`/`se`, defaulting to `se` when the
+      device locale is `sv` else `none` (`resolveDefaultProfileSelection`,
+      **flagged for maintainer review** — a UX default, not a confirmed
+      product decision) — a stored `settings.complianceProfile` row always
+      overrides the default once set.
+- [x] PDF export (expo-print): shooting log for a chosen period/firearm —
       layout: club-log style table (date, discipline, type, series count,
       score, location) + summary header. `VERIFY:` layout against a real
       föreningsintyg-attachment example from the maintainer.
+      — `shared/src/export/pdf-log.ts` (pure HTML builder, snapshot-tested)
+      + `app/src/features/export/use-pdf-export.ts` (assembles it from the
+      Stats screen's current period/firearm filters) +
+      `app/src/platform/pdf-export.ts` (expo-print → expo-sharing share
+      sheet). Wired to a new "Export PDF" button on `/stats`; verified on
+      the `shotledger` AVD dev build — Android's native share sheet opened
+      with a generated `.pdf` file. The layout has **not** been checked
+      against a real föreningsintyg attachment — the module doc-comment and
+      this checklist both carry the VERIFY.
 - **Done when:** barometer states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
+  — both done. `shared/src/compliance/` was built under the old-coder loop
+  (CLAUDE.md mandates it): executable spec in
+  `docs/specs/m6-compliance-spec.md` (spec approval: not obtained,
+  autonomous run), evidence in `docs/specs/m6-compliance-evidence.md`. 100%
+  line/branch/function/statement coverage on `shared/src/compliance/**`,
+  Stryker 95.49% on that directory (6 survivors, all classified equivalent
+  in the evidence report — the early-return branches they mutate are
+  provably redundant given the functions' final clamps/comparisons). Total
+  suite: 357 vitest tests (up from 343), including
+  `shared/src/export/pdf-log.test.ts` (HTML string snapshots, escaping,
+  empty-period case). **VERIFY placeholders shipped, clearly marked:** the
+  `se` profile's `windowMonths`/`requiredActivities` numbers
+  (`shared/src/compliance/constants-se.ts`, `SE_VERIFIED = false` — no
+  FAP 551-3 numeric source text exists anywhere in this repo, see the file's
+  doc-comment); the barometer UI renders an explicit "unverified defaults"
+  hint (`compliance.unverifiedHint`) wherever `profile.verified === false`.
+  The Bilaga 8 indicator helpers (`monthsOfLoggedActivity`,
+  `pistolskyttemarkeGuldFulfillment`) are implemented and unit-tested in
+  `shared/src/compliance/indicators.ts` but have **no UI surface yet** — out
+  of scope for this pass; the märke-guld fulfillment rule itself is a
+  further VERIFY (≥1 guldserie in 24 months is a placeholder proxy, not a
+  confirmed märke-earning rule). Maestro: `app/e2e/m6-compliance.yaml` on
+  the `shotledger` AVD dev build — seeds demo data, selects the `se`
+  compliance profile in Settings, asserts the Home barometer chip, the
+  firearm-detail barometer card, then exercises the Stats Custom period
+  (native Android date picker, tapped via its own visible "OK" button) and
+  asserts the applied-range label. See the M6 task report for the run
+  outcome and screenshot paths.
+
+**M5 addition (maintainer request, folded into this branch): Stats custom
+period.** The `/stats` period `SegmentedControl` gained a `custom` option
+(`STATS_PERIODS`) opening two date pickers
+(`@react-native-community/datetimepicker` — ships with Expo SDK 57, not a
+new native module choice; **flagged for review** since M2's design-system
+inventory didn't anticipate a date-picker component) for from/to; a new
+`periodRange()` helper in `app/src/features/stats/use-stats-data.ts`
+resolves every period (including `custom`) to a `{fromIso, toIso}` range
+consumed by the same live query path — no separate code path for custom vs.
+preset periods. A compact label
+(`Intl.DateTimeFormat(..., {dateStyle:'medium'})`, joined with an en dash)
+shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
+`stats.customFrom`, `stats.customTo`, `stats.customRangeIncomplete` (sv/en).
 
 ### M7 — CSV, i18n completeness, release prep (branch `feat/m7-release`)
 

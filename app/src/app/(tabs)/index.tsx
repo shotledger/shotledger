@@ -9,8 +9,20 @@ import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
+import { useOverallBarometer } from '@/features/compliance/use-barometer';
+import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useHomeData } from '@/features/home/use-home-data';
 import { Spacing } from '@/theme/tokens';
+
+const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+  green: 'neutral',
+  amber: 'primary',
+  red: 'primary',
+};
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 function formatDate(iso: string, locale: string) {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
@@ -20,6 +32,8 @@ export default function HomeScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { shotsLoggedTotal, latestSessions } = useHomeData();
+  const { profile } = useComplianceProfile();
+  const { overall } = useOverallBarometer(profile);
 
   const onNewSession = () => router.push('/session/new');
 
@@ -31,6 +45,14 @@ export default function HomeScreen() {
         </ThemedText>
 
         <StatTile label={t('home.shotsLoggedTotal')} value={String(shotsLoggedTotal)} />
+
+        {profile && overall && (
+          <Chip
+            testID="home-barometer"
+            label={t(`compliance.barometer${capitalize(overall)}`)}
+            tone={BAROMETER_TONE[overall]}
+          />
+        )}
 
         {latestSessions.length === 0 ? (
           <EmptyState
