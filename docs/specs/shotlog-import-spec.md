@@ -72,8 +72,10 @@ the code follows them.
   total-override series has none. Adding a session- or series-level counter
   is a schema change and therefore a Drizzle migration plus a stats-layer
   contract, which is out of this change's scope. Both numbers are recorded
-  in the session note, verbatim and correctly labelled, until that column
-  exists.
+  in the session note, verbatim and correctly labelled.
+  **Decided 2026-09-02 (maintainer): keep the data model as is** — no
+  per-series counter columns; ten/inner-ten statistics stay shot-based and
+  imported totals-only sessions simply do not contribute to them.
 - **`Warmup` means the row's total INCLUDES a sighter series.** The total
   is kept exactly as exported and **never** reduced; no sighter series is
   invented, and the single total-override series is **not** flagged
