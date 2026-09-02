@@ -23,9 +23,10 @@ export interface CreateSessionInput {
   location?: string | null;
   notes?: string | null;
   decimalScoring?: boolean;
-  // WebShooter import (integration spec §1/§A) — unset for a locally
+  // WebShooter (integration spec §1/§A) and ShotLog CSV
+  // (docs/specs/shotlog-import-spec.md §7) imports — unset for a locally
   // created session (external_source stays NULL).
-  externalSource?: 'webshooter' | null;
+  externalSource?: 'webshooter' | 'shotlog' | null;
   externalRef?: string | null;
   externalSyncedAt?: string | null;
   webshooterCompetitionId?: string | null;
