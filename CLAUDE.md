@@ -42,6 +42,14 @@ sync. Android first — **all code must stay iOS-compatible**.
 5. All UI strings via i18n (sv + en) from the first screen.
 6. No Android-only native modules; platform quirks go behind wrappers in
    `app/src/platform/`.
+7. **Never commit PII.** No license cards or license numbers, no personal
+   photos (target photos included), no names, shooter/card ids, WebShooter
+   or ShotLog exports, or any other real person's data — the maintainer's
+   or anyone else's — in code, fixtures, tests, docs, screenshots, or
+   commit messages. Real samples the maintainer supplies stay outside the
+   working tree (e.g. `~/tmp/`, `~/agents/shotledger/`); read them to
+   learn the shape, then write **synthetic** fixtures. A screenshot taken
+   with real data is not committable — use the `/dev` demo data.
 
 ## Definition of done
 
