@@ -8,8 +8,16 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { MIN_SUPPORTED_PROTOCOL_VERSION, PROTOCOL_VERSION_UNSUPPORTED } from '@shotledger/shared';
 
-import app from '../src/index';
+import { Hono } from 'hono';
+
 import { SYNC_MIGRATIONS } from '../src/db/migrations';
+import { createSyncRoutes } from '../src/routes/sync';
+
+// Mounted with createSyncRoutes' own dev-stub default (bearer token = user
+// id), which is what every fixture below assumes. The deployed Worker mounts
+// the same routes behind better-auth — see src/index.ts.
+const app = new Hono<{ Bindings: Env }>();
+app.route('/sync', createSyncRoutes());
 
 const USER_A_TOKEN = 'user-a-token';
 const USER_B_TOKEN = 'user-b-token';

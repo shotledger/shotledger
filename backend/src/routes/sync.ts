@@ -17,11 +17,19 @@ export interface SyncEnv {
   Variables: { userId: string };
 }
 
-export function createSyncRoutes(authenticator: Authenticator = devBearerAuthenticator) {
+/**
+ * Default stays the dev stub so `backend/test/sync.spec.ts` keeps its bare
+ * token fixtures; `src/index.ts` mounts this with the real better-auth
+ * authenticator (docs/specs/sync-app-spec.md §8) — the shipped Worker must
+ * never accept a bearer string as a user id verbatim.
+ */
+export function createSyncRoutes(
+  authenticatorFor: (env: Env) => Authenticator = () => devBearerAuthenticator,
+) {
   const app = new Hono<SyncEnv>();
 
   app.use('*', async (c, next) => {
-    const userId = await authenticator.authenticate(c.req.raw);
+    const userId = await authenticatorFor(c.env).authenticate(c.req.raw);
     if (!userId) return c.json({ error: 'unauthenticated' }, 401);
     c.set('userId', userId);
     await next();
