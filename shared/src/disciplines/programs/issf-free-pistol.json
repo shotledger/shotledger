@@ -1,0 +1,20 @@
+{
+  "id": "issf-free-pistol",
+  "disciplineId": "issf-free-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Fripistol",
+    "en": "50m Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 0,
+    "groups": [
+      {
+        "seriesCount": 12
+      }
+    ]
+  }
+}

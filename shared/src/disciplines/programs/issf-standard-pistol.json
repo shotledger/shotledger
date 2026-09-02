@@ -1,0 +1,29 @@
+{
+  "id": "issf-standard-pistol",
+  "disciplineId": "issf-standard-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Standardpistol",
+    "en": "25m Standard Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      {
+        "seriesCount": 4,
+        "timeLimitSeconds": 150
+      },
+      {
+        "seriesCount": 4,
+        "timeLimitSeconds": 20
+      },
+      {
+        "seriesCount": 4,
+        "timeLimitSeconds": 10
+      }
+    ]
+  }
+}
