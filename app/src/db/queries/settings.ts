@@ -14,6 +14,10 @@ export const SETTINGS_KEYS = {
   // choice yet — the Settings screen applies the locale-based default
   // (se when device locale is sv, else none) rather than writing a row.
   complianceProfile: 'complianceProfile',
+  // Timers: spoken prompts on/off, and the fälttimer's own settings blob
+  // (mode, prep/shooting time, parti boundaries, whistle) — plan.md "Timers".
+  spokenPrompts: 'spokenPrompts',
+  faltTimer: 'faltTimer',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

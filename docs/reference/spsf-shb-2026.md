@@ -42,6 +42,29 @@ A, B, C, R. Ready position arm 45° lowered (J.6.3.1); max 2 malfunctions
 - Scoring rule identical to precision (J.6.10.1 p. 293): "Kulhål räknas
   till det högre värdet så snart ringens ytterkant är tangerad."
 
+## Fältskjutning — kommandoord
+
+D.6.2 p. 88 ("Kommandoord"), the range officer's command sequence.
+Commands and their anvisning:
+
+| Kommandoord                  | Anvisning                                           |
+| ---------------------------- | --------------------------------------------------- |
+| **LADDA!**                   | Ca 30 s före ALLA KLARA                             |
+| **ALLA KLARA?**              | —                                                   |
+| **10 SEKUNDER KVAR!**        | 10 sekunder före ELD                                |
+| **FÄRDIGA!**                 | 3 sekunder före seriens början                      |
+| **ELD!**                     | Skjuttiden börjar                                   |
+| **ELD UPPHÖR!**              | Utdrages under 3 sek; kan ersättas med visselsignal |
+| **PATRON UR! PROPPA VAPEN!** | Efter skjuttidens slut                              |
+| **VISITATION!**              | —                                                   |
+| **MARKERA!**                 | —                                                   |
+
+Two consequences the fälttimer implements literally: "utdrages under 3
+sek" means the ELD UPPHÖR call **begins** 3 s before the shooting time
+runs out and ends exactly at its end — it is not a signal given after the
+time; and LADDA's "ca 30 s" is the preparation countdown's default, not a
+fixed value (the timer allows 10–90 s).
+
 ## Pistolskyttemärke per-series thresholds ("guldserie")
 
 Bilaga 1 mom 5.1.1.1 p. 452 — per 5-shot precision series, by

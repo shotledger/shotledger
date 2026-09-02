@@ -24,6 +24,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
+import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
 import { useTimer } from '@/features/timer/use-timer';
 import { useTheme } from '@/hooks/use-theme';
@@ -86,7 +87,7 @@ function formatSeconds(ms: number): string {
   return (ms / 1_000).toFixed(1);
 }
 
-type TimerMode = 'regular' | 'ipsc';
+type TimerMode = 'regular' | 'ipsc' | 'falt';
 
 export default function ShotTimerScreen() {
   const { t } = useTranslation();
@@ -97,6 +98,7 @@ export default function ShotTimerScreen() {
       options={[
         { value: 'regular', label: t('timer.modes.regular') },
         { value: 'ipsc', label: t('timer.modes.ipsc') },
+        { value: 'falt', label: t('timer.modes.falt') },
       ]}
       value={mode}
       onChange={setMode}
@@ -104,11 +106,9 @@ export default function ShotTimerScreen() {
     />
   );
 
-  return mode === 'ipsc' ? (
-    <IpscTimer modeSelector={modeSelector} />
-  ) : (
-    <RegularTimer modeSelector={modeSelector} />
-  );
+  if (mode === 'ipsc') return <IpscTimer modeSelector={modeSelector} />;
+  if (mode === 'falt') return <FaltTimer modeSelector={modeSelector} />;
+  return <RegularTimer modeSelector={modeSelector} />;
 }
 
 function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {

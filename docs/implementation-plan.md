@@ -870,16 +870,28 @@ restates §0 rules 1–6 verbatim.
 > in `sync-protocol-spec.md` §1 about whether `settings` and `session_tags`
 > should sync.
 
-> **Two of the three timers have since shipped.** The regular PAR/interval
-> timer (`feat/shot-timer`, `shared/src/timer/engine.ts`) and the
-> IPSC-style microphone shot timer (`feat/ipsc-shot-timer`,
+> **All three timers have since shipped.** The regular PAR/interval timer
+> (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style
+> microphone shot timer (`feat/ipsc-shot-timer`,
 > `shared/src/timer/shot-detector.ts` +
-> `app/src/platform/shot-listener.ts`) sit behind one Timer entry, picked
-> with a segmented control. Neither added a dependency. The fälttimer is
-> still open and still needs the maintainer to settle the command wording
-> and timings from SHB. See plan.md's Timers block for the IPSC timer's
-> documented limits (text-plus-tone prompts rather than TTS; 80 ms
-> debounce; thresholds not yet calibrated on a real firing line).
+> `app/src/platform/shot-listener.ts`) and the **fälttimer**
+> (`feat/falttimer`, `shared/src/timer/falt.ts` +
+> `app/src/features/timer/falt-timer.tsx`) sit behind one Timer entry,
+> picked with a segmented control ("PAR-timer" / "Skottimer (mik)" /
+> "Fält"). The fälttimer plays the SHB 2026 D.6.2 p. 88 command sequence
+> (LADDA → ALLA KLARA → 10 SEKUNDER KVAR → FÄRDIGA → ELD → the prolonged
+> ELD UPPHÖR → PATRON UR → VISITATION → MARKERA on tap), with user-set
+> preparation and shooting times and parti boundaries on the timeline; its
+> commands are spoken in sv-SE regardless of the UI language. Only that
+> branch added dependencies — `expo-speech` and `expo-haptics`, both
+> maintainer-approved 2026-09-02, behind `app/src/platform/speech.ts` and
+> `app/src/platform/haptics.ts`; speech also gave the IPSC prompts a voice,
+> with the tone as the fallback, and haptics now backs the parti/ELD pulses
+> on all three timers via `platform/timer-cues.ts`. Device screenshots (idle
+> / during ELD / finished) are attached to the `feat/falttimer` PR.
+> See plan.md's Timers block for each timer's documented limits (fälttimer:
+> no silent-mode gate, no whistle sample, no scrubbing; IPSC: 80 ms
+> debounce, thresholds not calibrated on a real firing line).
 
 > **Share cards have since shipped** on `feat/share-cards`: a session card
 > and a per-series card, drawn with `react-native-svg` (already a direct
@@ -896,7 +908,7 @@ restates §0 rules 1–6 verbatim.
 > `-evidence.md` for the parser rules, the privacy boundary and the
 > synthetic-card device verification (screenshot `ocr-01-scan-prefill.png`).
 
-Photo target scoring; WebShooter import; document vault; the fälttimer;
-iOS release.
+Photo target scoring; WebShooter import; document vault; iOS release.
+
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.
