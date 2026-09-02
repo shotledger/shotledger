@@ -220,7 +220,18 @@
     "restoreInvalid": "That file isn't a ShotLedger backup",
     "restoreNewerSchema": "This backup was made by a newer version of the app — update the app before restoring it",
     "restoreSuccess": "Restore complete — close and reopen the app",
-    "restoreFailed": "Restore failed"
+    "restoreFailed": "Restore failed",
+    "saveDbToFolderTitle": "Save database to folder",
+    "savePhotosToFolderTitle": "Save database + photos to folder",
+    "saveToFolderSubtitle": "Write a copy directly into a folder you choose, without the share sheet",
+    "folderChosenSubtitle": "Saves to your chosen folder with one tap",
+    "folderSaveIosFallbackSubtitle": "Not available on iOS — opens Share instead",
+    "changeFolderTitle": "Change folder",
+    "forgetFolderTitle": "Forget folder",
+    "folderSaveSuccess": "Saved to folder",
+    "folderSaveIosFallback": "Not available on iOS — opened Share instead",
+    "folderSaveCancelled": "Folder selection cancelled",
+    "folderSaveFailed": "Couldn't save to that folder — try choosing it again"
   },
   "compliance": {
     "settingsTitle": "Compliance",

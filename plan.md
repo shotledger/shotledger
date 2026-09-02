@@ -177,14 +177,15 @@ barometer; no scoring), Skytteappen (club ecosystem).
         leaves the device.
 - [ ] **Export destinations** (feature list, to be prioritised): the OS share
       sheet (any app — already used by CSV/PDF; covers Google Drive, iCloud
-      Drive, Nextcloud, mail, Signal… via their share targets, zero code);
-      save to a user-chosen folder (Android SAF / iOS Files —
-      `expo-file-system` + document picker); scheduled automatic backup to a
-      chosen folder (daily/weekly, keep last N); direct Google Drive
-      (Drive API + Google sign-in — only worth it for the scheduled case,
-      since the share sheet already reaches Drive manually); our own cloud
-      sync as the "just works" option once accounts exist. Order proposed:
-      share sheet → chosen folder → scheduled → Drive API.
+      Drive, Nextcloud, mail, Signal… via their share targets, zero code) —
+      **done**; save to a user-chosen folder (Android SAF / iOS Files —
+      `expo-file-system` + document picker) — **done**, `feat/save-to-folder`,
+      Android only (SAF), iOS falls back to the share sheet; scheduled
+      automatic backup to a chosen folder (daily/weekly, keep last N); direct
+      Google Drive (Drive API + Google sign-in — only worth it for the
+      scheduled case, since the share sheet already reaches Drive manually);
+      our own cloud sync as the "just works" option once accounts exist.
+      Order proposed: share sheet → chosen folder → scheduled → Drive API.
 - [x] Optional cloud sync (Cloudflare); photos to R2 — backend on
       `feat/sync-backend` + `feat/backend-auth-photos`, client on
       `feat/sync-app`. Opt-in email+password account (better-auth bearer

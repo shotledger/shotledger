@@ -220,7 +220,18 @@
     "restoreInvalid": "Den filen är inte en ShotLedger-säkerhetskopia",
     "restoreNewerSchema": "Den här säkerhetskopian gjordes med en nyare version av appen — uppdatera appen innan du återställer den",
     "restoreSuccess": "Återställning klar — stäng och öppna appen igen",
-    "restoreFailed": "Återställningen misslyckades"
+    "restoreFailed": "Återställningen misslyckades",
+    "saveDbToFolderTitle": "Spara databas till mapp",
+    "savePhotosToFolderTitle": "Spara databas + foton till mapp",
+    "saveToFolderSubtitle": "Skriv en kopia direkt till en mapp du väljer, utan delningsmenyn",
+    "folderChosenSubtitle": "Sparar till din valda mapp med ett tryck",
+    "folderSaveIosFallbackSubtitle": "Inte tillgängligt på iOS — öppnar Dela istället",
+    "changeFolderTitle": "Byt mapp",
+    "forgetFolderTitle": "Glöm mapp",
+    "folderSaveSuccess": "Sparad till mapp",
+    "folderSaveIosFallback": "Inte tillgängligt på iOS — öppnade Dela istället",
+    "folderSaveCancelled": "Mappval avbrutet",
+    "folderSaveFailed": "Kunde inte spara till den mappen — försök välja den igen"
   },
   "compliance": {
     "settingsTitle": "Efterlevnad",

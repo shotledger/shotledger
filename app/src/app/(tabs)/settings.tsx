@@ -37,10 +37,15 @@ export default function SettingsScreen() {
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
   const {
     exportBundle,
+    saveBundleToFolder,
+    changeFolder,
+    forgetFolder,
     planRestore,
     confirmRestore,
     statusText: backupStatusText,
     lastBackupAt,
+    folderUri,
+    isFolderSaveSupported,
   } = useBackupExportImport();
   const webshooter = useWebShooterConnection();
   const [wsUsername, setWsUsername] = useState('');
@@ -252,6 +257,44 @@ export default function SettingsScreen() {
           onPress={() => void onRestoreBundle()}
           testID="settings-restore-backup"
         />
+        <ListRow
+          title={t('backup.saveDbToFolderTitle')}
+          subtitle={
+            isFolderSaveSupported
+              ? folderUri
+                ? t('backup.folderChosenSubtitle')
+                : t('backup.saveToFolderSubtitle')
+              : t('backup.folderSaveIosFallbackSubtitle')
+          }
+          onPress={() => void saveBundleToFolder('database')}
+          testID="settings-save-backup-db-folder"
+        />
+        <ListRow
+          title={t('backup.savePhotosToFolderTitle')}
+          subtitle={
+            isFolderSaveSupported
+              ? folderUri
+                ? t('backup.folderChosenSubtitle')
+                : t('backup.saveToFolderSubtitle')
+              : t('backup.folderSaveIosFallbackSubtitle')
+          }
+          onPress={() => void saveBundleToFolder('database+photos')}
+          testID="settings-save-backup-photos-folder"
+        />
+        {isFolderSaveSupported && folderUri ? (
+          <>
+            <ListRow
+              title={t('backup.changeFolderTitle')}
+              onPress={() => void changeFolder()}
+              testID="settings-change-backup-folder"
+            />
+            <ListRow
+              title={t('backup.forgetFolderTitle')}
+              onPress={forgetFolder}
+              testID="settings-forget-backup-folder"
+            />
+          </>
+        ) : null}
         <ThemedText type="small" themeColor="textSecondary" testID="backup-last-backup">
           {lastBackupAt
             ? t('backup.lastBackup', { date: new Date(lastBackupAt).toLocaleString() })

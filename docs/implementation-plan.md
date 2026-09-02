@@ -846,6 +846,19 @@ restates §0 rules 1–6 verbatim.
 > for the restore-requires-app-restart caveat (no `expo-updates` dependency
 > to reload the JS bundle in place).
 
+> **Save to a user-chosen folder has since shipped** on `feat/save-to-folder`
+> (plan.md "Export destinations", second of share sheet → chosen folder →
+> scheduled → Drive API): Settings → Backup gained "Save database/database +
+> photos to folder" next to the existing share-based export, using
+> `expo-file-system`'s legacy `StorageAccessFramework` on Android
+> (`app/src/platform/save-to-folder.ts`) — no new dependency. iOS has no
+> folder-pick-and-write API short of the document picker's export mode (not
+> implemented, no Mac to verify), so `save-to-folder.ios.ts` falls back to
+> the existing share sheet and the UI says so. The chosen SAF folder URI is
+> remembered via the same settings table as `lastBackupAt`, so repeated
+> backups go to the same folder with one tap; "Change folder"/"Forget
+> folder" rows appear once a folder is remembered.
+
 > **Cloud sync + accounts has since shipped** across three branches:
 > `feat/sync-backend` (protocol + D1 changelog),
 > `feat/backend-auth-photos` (better-auth, R2 photos, quota/rate limit,
