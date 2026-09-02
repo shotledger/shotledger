@@ -10,23 +10,31 @@ import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { EmptyState } from '@/components/empty-state';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
+import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
+import { useSessionStats } from '@/features/session/use-session-stats';
 import { Spacing } from '@/theme/tokens';
+
+type DetailView = 'series' | 'stats';
 
 export default function SessionDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail, refresh } = useSessionDetail(id);
+  const stats = useSessionStats(id);
   const [nextIsSighter, setNextIsSighter] = useState(false);
   const [nextIsFinal, setNextIsFinal] = useState(false);
+  const [view, setView] = useState<DetailView>('series');
 
   const { session, seriesRows, results, mainHasSighter, finalHasSighter } = detail;
 
@@ -148,47 +156,122 @@ export default function SessionDetailScreen() {
         )}
       </Card>
 
-      {seriesRows.length === 0 ? (
-        <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
-      ) : (
-        <Card>
-          {mainRows.length > 0 && finalRows.length > 0 && (
-            <ThemedText type="smallBold" themeColor="textSecondary">
-              {t('session.mainSection')}
-            </ThemedText>
-          )}
-          {mainRows.map(renderSeries)}
-          {finalRows.length > 0 && (
-            <ThemedText type="smallBold" themeColor="textSecondary">
-              {t('session.finalSection')}
-            </ThemedText>
-          )}
-          {finalRows.map(renderSeries)}
-        </Card>
+      {seriesRows.length > 0 && (
+        <SegmentedControl
+          testID="detail-view-toggle"
+          options={[
+            { value: 'series', label: t('stats.toggleSeries') },
+            { value: 'stats', label: t('stats.toggleStats') },
+          ]}
+          value={view}
+          onChange={setView}
+        />
       )}
 
-      {!detail.isFixedFormat && (
-        <Card>
-          <View style={styles.switchRow}>
-            <ThemedText type="small" themeColor={sighterDisabled ? 'textSecondary' : 'text'}>
-              {sighterDisabled ? t('session.sighterUsed') : t('session.sighter')}
-            </ThemedText>
-            <Switch
-              value={nextIsSighter && !sighterDisabled}
-              disabled={sighterDisabled}
-              onValueChange={setNextIsSighter}
-              testID="sighter-toggle"
+      {view === 'stats' && seriesRows.length > 0 ? (
+        <Card testID="session-stats-view">
+          <View style={styles.resultsRow}>
+            <StatTile
+              testID="session-stat-mean"
+              label={t('stats.statsMean')}
+              value={stats.meanTenths === null ? '–' : tenthsToScore(stats.meanTenths).toFixed(1)}
+            />
+            <StatTile
+              testID="session-stat-sd"
+              label={t('stats.statsSd')}
+              value={stats.sdTenths === null ? '–' : tenthsToScore(stats.sdTenths).toFixed(2)}
+            />
+            <StatTile
+              testID="session-stat-x-count"
+              label={t('stats.statsXCount')}
+              value={String(stats.xCount)}
             />
           </View>
-          <PrimaryButton label={t('session.addSeries')} onPress={onAddSeries} testID="add-series" />
-          {detail.canStartFinal && !nextIsFinal && (
-            <PrimaryButton
-              label={t('session.startFinal')}
-              onPress={onStartFinal}
-              testID="start-final"
-            />
+
+          {stats.distribution.length > 0 && (
+            <View>
+              <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
+              <DistributionBarChart buckets={stats.distribution} height={100} />
+            </View>
+          )}
+
+          <View>
+            <ThemedText type="smallBold">{t('stats.comparisonTitle')}</ThemedText>
+            {stats.comparison?.previousMeanTenths == null ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('stats.comparisonNotEnough')}
+              </ThemedText>
+            ) : (
+              <View style={styles.resultsRow}>
+                <StatTile
+                  testID="comparison-recent"
+                  label={t('stats.comparisonRecent')}
+                  value={tenthsToScore(stats.comparison.recentMeanTenths ?? 0).toFixed(2)}
+                />
+                <StatTile
+                  testID="comparison-previous"
+                  label={t('stats.comparisonPrevious')}
+                  value={tenthsToScore(stats.comparison.previousMeanTenths).toFixed(2)}
+                />
+              </View>
+            )}
+          </View>
+
+          {stats.standardmedalj && (
+            <ThemedText type="small" themeColor="textSecondary" testID="standardmedalj-line">
+              {t(
+                stats.standardmedalj.valor === 'silver'
+                  ? 'stats.standardmedaljSilver'
+                  : 'stats.standardmedaljBrons',
+              )}
+            </ThemedText>
           )}
         </Card>
+      ) : (
+        <>
+          {seriesRows.length === 0 ? (
+            <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+          ) : (
+            <Card>
+              {mainRows.length > 0 && finalRows.length > 0 && (
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  {t('session.mainSection')}
+                </ThemedText>
+              )}
+              {mainRows.map(renderSeries)}
+              {finalRows.length > 0 && (
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  {t('session.finalSection')}
+                </ThemedText>
+              )}
+              {finalRows.map(renderSeries)}
+            </Card>
+          )}
+
+          {!detail.isFixedFormat && (
+            <Card>
+              <View style={styles.switchRow}>
+                <ThemedText type="small" themeColor={sighterDisabled ? 'textSecondary' : 'text'}>
+                  {sighterDisabled ? t('session.sighterUsed') : t('session.sighter')}
+                </ThemedText>
+                <Switch
+                  value={nextIsSighter && !sighterDisabled}
+                  disabled={sighterDisabled}
+                  onValueChange={setNextIsSighter}
+                  testID="sighter-toggle"
+                />
+              </View>
+              <PrimaryButton label={t('session.addSeries')} onPress={onAddSeries} testID="add-series" />
+              {detail.canStartFinal && !nextIsFinal && (
+                <PrimaryButton
+                  label={t('session.startFinal')}
+                  onPress={onStartFinal}
+                  testID="start-final"
+                />
+              )}
+            </Card>
+          )}
+        </>
       )}
     </Screen>
   );

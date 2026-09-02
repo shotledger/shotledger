@@ -1,0 +1,101 @@
+# M5 flow (§4 M5 "Done when"): walks the live /stats tab and the
+# session-detail Stats toggle on seeded data, asserting visible numbers
+# rather than typing (CLAUDE.md Maestro gotchas note — long inputText runs
+# have reproducibly killed the driver on this sandboxed emulator; this flow
+# is navigation + assertions only, no text entry).
+appId: com.anonymous.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 30000
+# openLink right after launchApp can race the JS bundle's linking listener
+# and silently no-op (CLAUDE.md Maestro gotchas note) — this bounded,
+# non-failing wait (a nonexistent id) gives it time to attach before we try.
+- extendedWaitUntil:
+    visible:
+      id: 'settle-before-open-link'
+    timeout: 4000
+    optional: true
+- openLink: 'app://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 8000
+    optional: true
+# openLink can still silently no-op after the settle wait — retry once.
+- runFlow:
+    when:
+      notVisible: 'Dev'
+    commands:
+      - openLink: 'app://dev'
+- extendedWaitUntil:
+    visible: 'Dev'
+    timeout: 15000
+- tapOn:
+    id: 'load-demo-data'
+- openLink: 'app://'
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 15000
+
+# --- Stats tab: default filters (6 months) -----------------------------
+- tapOn: 'Statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'stat-total-shots'
+    timeout: 15000
+- takeScreenshot: m5-01-stats-default
+- assertVisible:
+    id: 'stat-total-shots'
+- assertVisible:
+    id: 'stat-sessions'
+- assertVisible:
+    id: 'stat-mean'
+- assertVisible:
+    id: 'stat-sd'
+- assertVisible:
+    id: 'stat-x-percent'
+- assertVisible:
+    id: 'stat-guldserie-count'
+- assertVisible:
+    id: 'trend-chart'
+
+# --- Period filter: switch to All time, still live, no generate button ---
+- tapOn: 'All time'
+- extendedWaitUntil:
+    visible:
+      id: 'stat-total-shots'
+    timeout: 15000
+- takeScreenshot: m5-02-stats-all-time
+
+- scrollUntilVisible:
+    element:
+      id: 'distribution-chart'
+    direction: DOWN
+    timeout: 15000
+
+# --- Session detail Stats toggle ----------------------------------------
+- tapOn: 'Home'
+- extendedWaitUntil:
+    visible:
+      id: 'home-session-0'
+    timeout: 15000
+- tapOn:
+    id: 'home-session-0'
+- extendedWaitUntil:
+    visible:
+      id: 'session-total'
+    timeout: 15000
+- tapOn: 'Stats'
+- extendedWaitUntil:
+    visible:
+      id: 'session-stats-view'
+    timeout: 15000
+- assertVisible:
+    id: 'session-stat-mean'
+- assertVisible:
+    id: 'session-stat-sd'
+- assertVisible:
+    id: 'session-stat-x-count'
+- takeScreenshot: m5-03-session-stats

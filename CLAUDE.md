@@ -122,6 +122,14 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
   because the vitest runner cannot activate mutants in module-load code),
   `pnpm mutation:schema` (on-disk mutation of the zod schemas, which is
   what `ignoreStatic` skips). `pnpm gauntlet` runs every layer.
+- M5 found the M2-documented `launchApp`→`openLink` race reproducible enough
+  to need mitigation, not just a known flake: a bounded, non-failing
+  `extendedWaitUntil` on a nonexistent id (`timeout` acts as a plain delay
+  since `extendedWaitUntil` — unlike `assertVisible` — does not fail the
+  flow when its condition is never met) before the first `openLink`, plus a
+  one-shot retry via `runFlow: {when: {notVisible: '<target>'}, commands:
+  [openLink: ...]}`, made `app://dev` reliable across repeated runs. See
+  `app/e2e/m5-stats.yaml`.
 - **Never edit files in the working tree while a Maestro flow is running**
   against a Metro dev build: Metro hot-reloads, the dev client returns to
   the initial route, and the flow fails on a screen that vanished under

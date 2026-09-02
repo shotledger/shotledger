@@ -404,16 +404,50 @@ rolling trend (per-session mean over time), comparison of last N series
 vs previous N (default N=100), guldserie count per period, per-firearm
 and per-ammo-lot aggregates.
 
-- [ ] Stats tab: period filter (30d/6m/12m/all — segmented, default 6m),
+- [x] Stats tab: period filter (30d/6m/12m/all — segmented, default 6m),
       discipline + class + firearm filter chips; StatTile grid (total
       shots, sessions, mean, SD, X%, guldserie count); trend line chart;
       shot-value distribution bar chart
-- [ ] Session detail Stats toggle: totals, mean, SD, X count,
+      — `app/src/app/(tabs)/stats.tsx`, live view fed by
+      `app/src/features/stats/use-stats-data.ts`, no generate button;
+      empty state both for no data at all and for no data in the current
+      filter.
+- [x] Session detail Stats toggle: totals, mean, SD, X count,
       distribution mini-chart, comparison vs the user's last 100 series
       of the same discipline/class
+      — segmented Series/Stats toggle in `app/src/app/session/[id]/index.tsx`;
+      `app/src/features/session/use-session-stats.ts` adds the
+      standardmedalj line (§6.5b, evaluates beforeFinal) on top of the
+      shared M5 stats engine.
 - **Done when:** stats screens render from seed deterministically
   (Maestro screenshot compares stable numbers), formulas unit-tested
   against hand-computed fixtures.
+  — both verified. Math: `shared/src/scoring/stats.ts` (series/session
+  mean, sample SD, best/worst series, X counts/rate, rolling per-session
+  trend, last-N-vs-previous-N series comparison, guldserie count,
+  per-firearm/per-ammo-lot aggregates) and the new
+  `shared/src/scoring/standardmedalj.ts` (§6.5b thresholds, >10-series
+  scaling, evaluates beforeFinal) were built under the old-coder loop
+  (CLAUDE.md mandates it for `shared/scoring/`): executable spec in
+  `docs/specs/m5-stats-spec.md` (spec approval: not obtained, autonomous
+  run), evidence in `docs/specs/m5-stats-evidence.md`. 273 vitest tests
+  total (up from 223), 100% line/branch/function/statement coverage on
+  `shared/src/scoring/**`, Stryker 98.15% (4 new survivors, all classified
+  equivalent mutants in the evidence report). Chart library: the plan's
+  victory-native pulls in `@shopify/react-native-skia` (a native module
+  needing a full prebuild/rebuild) purely for two simple charts — shipped
+  `react-native-svg` instead, a single lightweight dependency with solid
+  `react-native-web` support and no native-rebuild peer chain (documented
+  deviation). Maestro: `app/e2e/m5-stats.yaml` on the `shotledger` AVD dev
+  build passed end-to-end (screenshots `m5-01-stats-default`,
+  `m5-02-stats-all-time`, `m5-03-session-stats`) — deterministic seed
+  numbers (1040 shots / 30 sessions / mean 8.0 / SD 1.43 / X% 7 / 7 gold
+  series on the default 6-month filter). The flow avoids `inputText`
+  entirely (navigation + assertions on visible numbers only, per the
+  CLAUDE.md Maestro gotchas note) and adds a bounded non-failing settle
+  wait plus a one-shot `openLink` retry for the known launchApp/openLink
+  race noted in the M2 report, which otherwise made the flow's `app://dev`
+  step flaky on this sandboxed emulator.
 
 ### M6 — FAP 551-3 barometer + PDF (branch `feat/m6-compliance`)
 

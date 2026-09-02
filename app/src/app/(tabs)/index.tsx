@@ -42,9 +42,10 @@ export default function HomeScreen() {
         ) : (
           <View style={styles.list}>
             <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
-            {latestSessions.map((session) => (
+            {latestSessions.map((session, index) => (
               <ListRow
                 key={session.id}
+                testID={`home-session-${index}`}
                 title={session.name}
                 subtitle={`${formatDate(session.startedAt, i18n.language)} · ${session.total}`}
                 trailing={<Chip label={t(`sessionType.${session.type}`)} />}
