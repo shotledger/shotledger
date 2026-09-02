@@ -3,7 +3,7 @@
 Verified extraction with rule/table citations. Sources (PDFs kept outside
 the repo, fetched 2026-09-01):
 
-- **Pistol** — *ISSF Rule Book, Pistol Rules (Section 8)*, EDITION 2025
+- **Pistol** — _ISSF Rule Book, Pistol Rules (Section 8)_, EDITION 2025
   (First Print 12/2025), effective 1 January 2026 ("the Pistol Rules").
   Mirror used: tiroalcorcon.com/wp-content/uploads/2026/01/PISTOL_ISSF2026.pdf
 - **General Technical Rules (Section 6)** and its **Annex — Rules for
@@ -64,7 +64,7 @@ per-series one), so the program's groups carry no `timeLimitSeconds`.
 diameter); minimum visible card 170×170 mm.
 
 **Scoring**: GTR Rule 6.3.3.2 — Pistol Qualification is scored in full
-ring values (integer); only specific *rifle* events are decimal in
+ring values (integer); only specific _rifle_ events are decimal in
 qualification. Rule 6.3.3.3 — Finals are decimal, but v1 does not model
 finals (`supportsFinal: false`; see task framing). `allowsDecimal: false`.
 
@@ -108,10 +108,10 @@ Pistol Rules Rule 8.7.6.5: **60 shots, 3 stages of 20 shots**, each stage
 4 series of 5 shots:
 
 | Stage | Series × shots | Time limit |
-| ----- | --------------- | ---------- |
-| 1     | 4 × 5           | 150 s      |
-| 2     | 4 × 5           | 20 s       |
-| 3     | 4 × 5           | 10 s       |
+| ----- | -------------- | ---------- |
+| 1     | 4 × 5          | 150 s      |
+| 2     | 4 × 5          | 20 s       |
+| 3     | 4 × 5          | 10 s       |
 
 One 5-shot sighting series is allowed before MATCH firing, at 150 s
 (8.7.6.5.a) — matches the fixed structure's first group's time limit, no
@@ -143,7 +143,7 @@ limit. 3 minutes preparation time (8.7.6.1.e).
 (hit/figure scoring)?** It fits. Qualification scoring is full ring
 values (0–10, X inner ten) against a printed ring target (GTR 6.3.4.4) —
 the same `scoring: 'rings'` model as every other program here. Only
-*finals* (not modeled, `supportsFinal: false`) use ISSF's newer hit-zone
+_finals_ (not modeled, `supportsFinal: false`) use ISSF's newer hit-zone
 scoring (GTR 6.3.3.3); qualification, which is all v1 logs, is ordinary
 ring scoring. Unlike fältskjutning — genuinely hit/miss with no ring
 value at any phase — there is no scoring-model mismatch here.

@@ -1,8 +1,8 @@
 # WebShooter Integration Spec (v2)
 
 > Execution spec for implementing agents, in the style of
-> [`docs/implementation-plan.md`](../implementation-plan.md): says *exactly
-> how*, not just what and why. If a task here is ambiguous or contradicts
+> [`docs/implementation-plan.md`](../implementation-plan.md): says _exactly
+> how_, not just what and why. If a task here is ambiguous or contradicts
 > `docs/reference/spsf-shb-2026.md`, `docs/implementation-plan.md`, or an
 > accepted ADR, **STOP and ask** — do not improvise product decisions. Rules
 > 0.1–0.6 of `docs/implementation-plan.md` (branch-per-task, DCO-signed
@@ -33,6 +33,7 @@ official results into ShotLedger** and **see their upcoming starts**. It
 is not a sync engine and not a general WebShooter client.
 
 In scope:
+
 - **Precision** and **militär snabbmatch** only — the two SPSF programs
   ShotLedger v1 supports (`docs/implementation-plan.md` §6.3). These map
   to the existing `spsf-precision` and `spsf-milsnabb` program ids.
@@ -47,6 +48,7 @@ deviation analytics, wscli's sync/watermark machinery, the `mcp` command.
 
 New code locations, following the conventions in
 `docs/implementation-plan.md` §1:
+
 - `shared/integrations/webshooter/` — pure TS, vitest-tested: API client,
   response types, reconciliation/matching logic, class-code mapping,
   merge logic. No RN imports, matching the `shared/` rule.
@@ -108,6 +110,7 @@ candidate, the token store is not.
 ## A. Selective import with reconciliation
 
 ### A.1 Browse/pick UI
+
 - [ ] Import screen lists the user's WebShooter competitions (fetched via
       `GET /competitions`, client-filtered — see §A.11) with date, name,
       venue, and an already-imported / not-yet-imported badge.
@@ -119,6 +122,7 @@ candidate, the token store is not.
   confirms import; no write occurs before the confirm step.
 
 ### A.2 Duplicate matching
+
 Two tiers, never silent:
 
 1. **Exact match** via `sessions.external_ref`, format:
@@ -133,6 +137,7 @@ Two tiers, never silent:
    user confirmation** in the review UI ("This looks like your existing
    session '<name>' from <date> — link them?") — never auto-merged and
    never silently imported as a second session.
+
 - [ ] Confirmed link on a heuristic match backfills `external_ref` and
       `external_source` on the existing local session, then runs the
       field-level merge in §A.3 rather than creating a new row.
@@ -143,26 +148,25 @@ Two tiers, never silent:
   paths, with no path producing two sessions for one exact-ref match.
 
 ### A.3 Editable imports + field-level merge on re-import
+
 - [ ] Imported sessions are **fully editable** like any local session —
       firearm, ammo lot, notes, photos (fields WebShooter has no concept
       of) are set locally after import.
 - [ ] Re-importing a session already linked via `external_ref` (upstream
       correction, e.g. a results amendment) performs a **field-level
-      merge**:
-      - Score-bearing fields (series totals/overrides, shot data where
-        present, `official_placement`, `official_standardmedalj`,
-        competition metadata) are **overwritten from WebShooter**.
-      - Enrichment fields (`firearm_id`, `ammo_lot_id`, `notes`,
-        series `photo_uri`, tags) are **never clobbered** — re-import
-        only ever adds/updates score fields, and only touches enrichment
-        fields when they are currently NULL/empty (never overwrites a
-        user-entered value).
-      - `external_synced_at` is updated on every successful merge.
+      merge**: - Score-bearing fields (series totals/overrides, shot data where
+      present, `official_placement`, `official_standardmedalj`,
+      competition metadata) are **overwritten from WebShooter**. - Enrichment fields (`firearm_id`, `ammo_lot_id`, `notes`,
+      series `photo_uri`, tags) are **never clobbered** — re-import
+      only ever adds/updates score fields, and only touches enrichment
+      fields when they are currently NULL/empty (never overwrites a
+      user-entered value). - `external_synced_at` is updated on every successful merge.
 - **Done when:** a vitest fixture re-imports a session with locally-added
   firearm/notes/photo and an upstream score correction; assert score
   changed, enrichment fields unchanged.
 
 ### A.4 Granularity mismatch — series-level totals
+
 WebShooter's `/results` exposes **per-series (station) totals only**, no
 per-shot data. Imported series are created with `is_total_override=1`,
 `total_override_tenths` = the WebShooter series total, and
@@ -173,6 +177,7 @@ series. See §1 for the read-path implications (per-shot stats exclude,
 per-series stats include).
 
 ### A.5 Official results as authoritative data
+
 - [ ] `sessions.official_placement` and `sessions.official_standardmedalj`
       are populated verbatim from WebShooter's results payload and
       displayed alongside — never merged into or replacing — the app's
@@ -185,6 +190,7 @@ per-series stats include).
       doesn't model).
 
 ### A.6 Finals and särskjutning mapping
+
 - [ ] WebShooter's `results_finals` block maps to series with
       `is_final=1`, same section semantics as
       `docs/implementation-plan.md` §6.3 (Before final / Final / Total,
@@ -197,10 +203,12 @@ per-series stats include).
       extra scored series with a note").
 
 ### A.7 Missing sighters
+
 WebShooter's results feed does not report sighter (provskott) series at
 all — only scored totals. Since sighters count toward volume metrics
 (round counter, ammo-lot usage; §6.3) but never toward score, a silent
 omission would under-count rounds fired on the linked firearm.
+
 - [ ] The importer proposes, per round of the imported competition (one
       per round for championship two-round format, §6.3), an
       `extra_rounds` adjustment: **+5 rounds** (one 5-shot sighter series
@@ -216,6 +224,7 @@ omission would under-count rounds fired on the linked firearm.
   import and increases by exactly 5 × rounds-count when confirmed.
 
 ### A.8 Class mapping
+
 - [ ] WebShooter `classname` strings map to the existing orthogonal
       `weapon_group` / `shooter_class` pair (`docs/implementation-plan.md`
       §6.4a): e.g. `'C2'` → `weapon_group: 'spsf:C'`,
@@ -242,6 +251,7 @@ omission would under-count rounds fired on the linked firearm.
       (tabs, non-breaking space).
 
 ### A.9 Scope enforcement
+
 - [ ] Only `spsf-precision` and `spsf-milsnabb` results are importable.
       Fält results returned by `/results` are **listed in the review UI,
       marked "Fält — stöds ej"**, and excluded from import — not hidden,
@@ -249,15 +259,13 @@ omission would under-count rounds fired on the linked firearm.
       match what got imported.
 
 ### A.10 Identity and auth
+
 - [ ] Identity key is `shooting_card_number` (SPSF pistolskyttekort
       number), not a WebShooter internal user id. Resolution order,
-      first match wins:
-      1. Explicit override in `settings` (user manually set a card
-         number to import as).
-      2. Previously stored card number (from a prior successful
-         `authenticate/user` call).
-      3. `GET authenticate/user` with the stored token, which returns the
-         authenticated user's card number.
+      first match wins: 1. Explicit override in `settings` (user manually set a card
+      number to import as). 2. Previously stored card number (from a prior successful
+      `authenticate/user` call). 3. `GET authenticate/user` with the stored token, which returns the
+      authenticated user's card number.
 - [ ] The token is entered by the user (WebShooter issues personal API
       tokens; there is no OAuth flow in v4.1.9) and stored exclusively in
       `expo-secure-store` — see §1. It is **never** written to the
@@ -271,14 +279,15 @@ omission would under-count rounds fired on the linked firearm.
       mates" in §C.1 is a name + patrol slot, not a full result row).
 
 ### A.11 API surface (v4.1.9, `webshooter.se`)
-| Endpoint | Use | Notes |
-|---|---|---|
-| `GET /competitions` | list, browse (§A.1) | **No changed-since parameter** — always returns the full list; filter client-side by date/discipline/relevance. |
-| `GET /competitions/{id}` | competition detail | |
-| `GET /competitions/{id}/patrols` | patrol/start-list, "My starts" (§C) | |
-| `GET /competitions/{id}/results` | results incl. `results_finals`, `results_distinguish` | per-series totals only, §A.4 |
-| `GET /competitions/{id}/signups` | signup list, exact-match discriminator (§A.2) | |
-| `GET authenticate/user` | resolve identity from token (§A.10) | |
+
+| Endpoint                         | Use                                                   | Notes                                                                                                           |
+| -------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `GET /competitions`              | list, browse (§A.1)                                   | **No changed-since parameter** — always returns the full list; filter client-side by date/discipline/relevance. |
+| `GET /competitions/{id}`         | competition detail                                    |                                                                                                                 |
+| `GET /competitions/{id}/patrols` | patrol/start-list, "My starts" (§C)                   |                                                                                                                 |
+| `GET /competitions/{id}/results` | results incl. `results_finals`, `results_distinguish` | per-series totals only, §A.4                                                                                    |
+| `GET /competitions/{id}/signups` | signup list, exact-match discriminator (§A.2)         |                                                                                                                 |
+| `GET authenticate/user`          | resolve identity from token (§A.10)                   |                                                                                                                 |
 
 - [ ] All requests use `Authorization: Bearer <token>`.
 - [ ] Any `5xx` response retries with exponential backoff (base delay and
@@ -302,6 +311,7 @@ calculations against the live WebShooter API; ShotLedger never proxies —
 §B.4.
 
 ### B.1 Personal-best grouping and validity
+
 - [ ] PBs are grouped by `(competition_type, weapon_class)` where
       `weapon_class` is the **full** class string, e.g. `"C3"`
       (`weapon_group` + `shooter_class` concatenated, not either alone —
@@ -332,6 +342,7 @@ calculations against the live WebShooter API; ShotLedger never proxies —
       `(competition_type, weapon_class)` group.
 
 ### B.2 Year-to-year statistics
+
 - [ ] Grouped by `(competition_type, weapon_group)` — note **weapon
       group**, i.e. the first character/code only (e.g. `C`, not `C2`),
       coarser than the PB grouping in §B.1.
@@ -343,14 +354,16 @@ calculations against the live WebShooter API; ShotLedger never proxies —
       the immediately preceding year with data (skip years with zero
       sessions, don't treat them as a 0-value data point).
 - [ ] Overall trend: **two-point slope** — `(last year's mean − first
-      year's mean) / (last year − first year)` — not a regression over
+    year's mean) / (last year − first year)` — not a regression over
       all years. `VERIFY:` this against wscli source; a two-point slope
       is unusual and worth double-checking it isn't actually a
       least-squares trend being described loosely.
 
 ### B.3 Medal counting — dual path, better wins
+
 Per session (or per PB, per the maintainer's later UI decision — flag
 this ambiguity, don't resolve it here):
+
 - [ ] **Fixed-threshold path**: reuse `shared/scoring/standardmedalj.ts`
       (already implemented per `docs/implementation-plan.md` §6.5b) —
       no new threshold table.
@@ -368,6 +381,7 @@ this ambiguity, don't resolve it here):
       silver (poänggräns)" vs. "…(placering)").
 
 ### B.4 Local computation, not a wscli proxy
+
 - [ ] Once any import exists, PB and year-to-year computations run
       **entirely locally** over `sessions`/`series` (imported +
       manually-logged) — never a live proxy call to a wscli-equivalent
@@ -380,11 +394,13 @@ this ambiguity, don't resolve it here):
       otherwise, never attempt to read `shots` for an override series.
 
 ### B.5 Deviation from wscli: local freeform PBs are a separate metric
+
 wscli's 7-series-only precision PB rule (§B.1) is correct for **official
 competition PBs** but would hide every freeform local session (v1 M3:
 "series are added one at a time... never a fixed count") from personal
 best tracking entirely — most of a typical user's training data. This
 spec deliberately diverges:
+
 - [ ] Maintain a **separate, additional** PB metric family for freeform
       sessions of any series count: "best N-series" (per commonly-shot
       lengths, e.g. best-5-series, best-10-series) and "best session"
@@ -401,6 +417,7 @@ spec deliberately diverges:
 ## C. Start times → calendar ("My starts")
 
 ### C.1 My starts screen
+
 - [ ] Lists upcoming competitions where the resolved `shooting_card_number`
       (§A.10) has a signup (`GET /competitions/{id}/signups` filtered
       client-side, iterated per §C.3), each showing: patrol start time,
@@ -412,19 +429,15 @@ spec deliberately diverges:
       confirmed against a live response).
 
 ### C.2 Add-to-calendar via `expo-calendar`
-- [ ] Per-start "Add to calendar" action creates a device calendar event:
-      - **UID**: `webshooter_{competition_id}-{signup_id}` — stable and
-        dedupable, reused verbatim from wscli's own scheme so a user who
-        also uses wscli never gets a duplicate event.
-      - **Summary**: competition name.
-      - **Location**: city.
-      - **Description**: competition name, date, venue, vapengrupp
-        (weapon group), patrol number, lane, and a link to
-        `https://webshooter.se/app/competitions/{competition_id}/information`.
-      - **Times**: patrol start/end, localized to `Europe/Stockholm`
-        (matches the v1 convention of storing UTC and displaying local,
-        `docs/implementation-plan.md` §2 Dates row) regardless of device
-        timezone.
+
+- [ ] Per-start "Add to calendar" action creates a device calendar event: - **UID**: `webshooter_{competition_id}-{signup_id}` — stable and
+      dedupable, reused verbatim from wscli's own scheme so a user who
+      also uses wscli never gets a duplicate event. - **Summary**: competition name. - **Location**: city. - **Description**: competition name, date, venue, vapengrupp
+      (weapon group), patrol number, lane, and a link to
+      `https://webshooter.se/app/competitions/{competition_id}/information`. - **Times**: patrol start/end, localized to `Europe/Stockholm`
+      (matches the v1 convention of storing UTC and displaying local,
+      `docs/implementation-plan.md` §2 Dates row) regardless of device
+      timezone.
 - [ ] Re-tapping "Add to calendar" for an already-added start updates the
       existing event (matched by UID) rather than creating a duplicate.
 - **Done when:** unit test constructs the event object (no OS calendar
@@ -432,7 +445,9 @@ spec deliberately diverges:
   description, and Stockholm-localized start/end.
 
 ### C.3 No aggregate upstream endpoint
+
 WebShooter has no "my upcoming starts across all competitions" endpoint.
+
 - [ ] The client iterates future competitions (from the cached
       `/competitions` listing, §A.11) and fetches `/patrols` per
       competition, checking for the user's signup client-side.
