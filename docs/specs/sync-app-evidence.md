@@ -122,7 +122,47 @@ rev-matched outbox semantics) as the SQLite adapter.
 
 ## 5. Android verification
 
-`ANDROID_RESULT_PLACEHOLDER`
+AVD `shotledger2` (`emulator-5560`), Metro on 8082, debug dev build.
+Screenshots in
+`…/scratchpad/screenshots/sync/`:
+
+| File                                | Shows                                                                                                                        |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `00-boot.png`                       | Home renders — migration `0004` (4 tables + 18 triggers) applied cleanly under real expo-sqlite, no migration-failure screen |
+| `01-settings.png`                   | Settings with the new "Account & sync" row                                                                                   |
+| `02-account-signed-out.png`         | Signed-out account screen: offline-first intro, Sign in / Create account, email + password, server placeholder               |
+| `03-credentials-entered.png`        | Synthetic credentials typed (`verify@example.invalid`)                                                                       |
+| `04-signin-network-error.png`       | First attempt — surfaced the misclassification described below                                                               |
+| `05-signin-network-error-fixed.png` | After the fix: "No connection to the server.", plus the modal header and back button                                         |
+| `06-settings-sv.png`                | Settings in Swedish, "Konto & synk"                                                                                          |
+| `07-account-sv.png`                 | The account screen in Swedish — every string translated                                                                      |
+
+Two defects the emulator caught that no test would have:
+
+1. **Error misclassification.** Signing in against the unreachable
+   `https://api.shotledger.app` placeholder showed "Something went wrong"
+   instead of "No connection to the server": React Native's fetch rejection
+   did not satisfy `instanceof TypeError`. Both `classifySyncError` and
+   `useAccount`'s `errorKeyFor` now treat "no HTTP status came back" as
+   `network`, which is what it means. `05-…-fixed.png` is the corrected run.
+2. **No way back.** `app/src/app/account.tsx` had no `Stack.Screen` entry, so
+   it rendered headerless with only the system back gesture. It is now
+   registered as a modal with a title, like `/vault` and `/timer`.
+
+The signed-in half of the screen (last-synced, pending count, Sync now, sign
+out, delete account) could **not** be exercised on device: it needs a
+reachable backend, and deploying one is forbidden to agents. Those paths are
+covered instead by the end-to-end suite in §4, which drives the same
+`runSyncCycle` and the same account API against the real Worker.
+
+**Process note, reported rather than hidden:** `expo run:android` installed
+the debug APK on AVD `shotledger` (`emulator-5554`) despite `ANDROID_SERIAL`
+being set to this task's `emulator-5560` — that AVD belongs to another agent
+running in parallel, and its debug build of `app.shotledger` was overwritten.
+Everything after that point was done with explicit
+`adb -s emulator-5560 install` and `adb -s emulator-5560 shell` commands. The
+lesson for the agentic loop: on a shared machine, `expo run:android` does not
+honour `ANDROID_SERIAL` — build with it, but install and launch by hand.
 
 ## 6. The bug the loop caught
 

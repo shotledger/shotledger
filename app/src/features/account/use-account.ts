@@ -39,8 +39,10 @@ function errorKeyFor(error: unknown, intent: 'signIn' | 'signUp'): AccountErrorK
     if (error.status >= 500) return 'network';
     return 'unknown';
   }
-  if (error instanceof TypeError) return 'network';
-  return 'unknown';
+  // No AuthError means no HTTP status came back at all — the request never
+  // reached the server. See classifySyncError for why `instanceof TypeError`
+  // is not a reliable test for that on React Native.
+  return 'network';
 }
 
 export function useAccount(): AccountState {

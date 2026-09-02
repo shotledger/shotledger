@@ -73,6 +73,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('timer.title') }}
       />
       <Stack.Screen
+        name="account"
+        options={{ presentation: 'modal', headerShown: true, title: t('account.title') }}
+      />
+      <Stack.Screen
         name="vault/index"
         options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />

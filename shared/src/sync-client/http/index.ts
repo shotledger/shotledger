@@ -260,10 +260,17 @@ export function createPhotoApi(config: HttpClientConfig) {
 
 export type PhotoApi = ReturnType<typeof createPhotoApi>;
 
-/** Maps any thrown value to the status key the Account & sync screen shows. */
+/**
+ * Maps any thrown value to the status key the Account & sync screen shows.
+ *
+ * Anything that is not one of our own HTTP errors never got a status back, so
+ * the request did not reach the server — that is a connectivity problem, not
+ * an unknown one. (`instanceof TypeError` is not enough: React Native's fetch
+ * rejection did not match it on device, and the screen said "something went
+ * wrong" for a plain DNS failure.)
+ */
 export function classifySyncError(error: unknown): SyncErrorKey {
   if (error instanceof SyncHttpError) return error.errorKey;
   if (error instanceof AuthError) return error.status === 401 ? 'unauthenticated' : 'unknown';
-  if (error instanceof TypeError) return 'network';
-  return 'unknown';
+  return 'network';
 }

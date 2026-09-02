@@ -168,6 +168,16 @@ exec jest --passWithNoTests)`), run from the repo root. `pnpm i18n:check`
   with `cd backend && npx vitest run test/sync-client.spec.ts
 --testTimeout=60000`. This is the cheapest way to exercise a sync change
   end to end; prefer it over the emulator.
+- **`expo run:android` ignores `ANDROID_SERIAL`.** With several emulators up
+  it picks one of its own choosing and can install over another agent's
+  build (observed in `feat/sync-app`: it targeted `shotledger` while
+  `ANDROID_SERIAL=emulator-5560`). Let it build, then install and launch by
+  hand on the intended device: `adb -s <serial> install -r -d
+app/android/app/build/outputs/apk/debug/app-debug.apk`, `adb -s <serial>
+reverse tcp:<metro-port> tcp:<metro-port>`, then `adb -s <serial> shell am
+start -a android.intent.action.VIEW -d
+"app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A<metro-port>"`.
+  Map a serial to its AVD with `adb -s <serial> emu avd name`.
 - Sync backend URL for a device build: `EXPO_PUBLIC_API_BASE_URL`, else
   `app.json`'s `expo.extra.apiBaseUrl` (placeholder
   `https://api.shotledger.app`). Never a secret — the session token lives in

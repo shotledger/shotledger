@@ -46,10 +46,9 @@ Sync is opt-in and the app is fully functional without it, so these steps
 are only needed before a build that should offer accounts. `wrangler
 deploy` is forbidden to agents; every command below is the maintainer's.
 
-- [ ] Create the real D1 database and R2 bucket and replace the
-      placeholders in `backend/wrangler.jsonc`
-      (`database_id: "local-dev-placeholder"`, `bucket_name:
-    "shotledger-photos-dev"`). The committed values are deliberately
+- [ ] Create the real D1 database and R2 bucket, then replace the
+      placeholder `database_id` and `bucket_name` in
+      `backend/wrangler.jsonc`. The committed values are deliberately
       unusable.
 - [ ] `cd backend && wrangler d1 migrations apply <db> --remote` to apply
       `backend/migrations/` (sync, auth, photo schemas).
