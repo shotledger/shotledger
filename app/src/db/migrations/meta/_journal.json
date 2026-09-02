@@ -36,6 +36,13 @@
       "when": 1788335230304,
       "tag": "0004_motionless_the_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788387279869,
+      "tag": "0005_parallel_northstar",
+      "breakpoints": true
     }
   ]
 }
