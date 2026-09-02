@@ -1,106 +1,110 @@
-// Tag and session-name interpretation (docs/specs/shotlog-import-spec.md §3).
-// ShotLog has no discipline, weapon-group or firearm field: all three live in
-// free-text tags or in the tail of the session name. Everything here produces
-// a *suggestion* the user edits — nothing is applied silently.
-import type { ShotlogFirearm, ShotlogWarning } from './types';
+// Turning one row's tags and name into a suggestion
+// (docs/specs/shotlog-import-spec.md §3).
+//
+// The tag vocabulary itself is NOT decided here — `tags.ts` proposes a role
+// per tag and the user confirms it on the import screen. This module only
+// applies whatever mapping it is handed, plus the two fallbacks that read the
+// session NAME when the tags said nothing.
+import type { ShotlogFirearm, ShotlogTagMapping, ShotlogTagRole, ShotlogWarning } from './types';
+import { normalizeTag } from './tags';
 
 export interface TagClassification {
   sessionType: 'training' | 'competition';
   disciplineId: string | null;
-  includesWarmup: boolean;
+  includesSighter: boolean;
   hasFinal: boolean;
   dnf: boolean;
-  /** From the `A Opt` tag (VERIFY, spec §1.1). */
-  weaponGroupHint: string | null;
+  weaponGroup: string | null;
+  shooterClass: string | null;
   firearmMatch: ShotlogFirearm | null;
-  /** Tags kept verbatim as ShotLedger tags. */
+  /** Firearm named by a tag that matches no existing firearm. */
+  firearmLabel: string | null;
+  /** Tags the mapping left as `ignore` — kept verbatim as ShotLedger tags. */
   passthroughTags: string[];
   warnings: ShotlogWarning[];
 }
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/gu, ' ');
+function matchFirearm(
+  label: string,
+  knownFirearms: readonly ShotlogFirearm[],
+): ShotlogFirearm | null {
+  const key = normalizeTag(label);
+  const matches = knownFirearms.filter((candidate) => normalizeTag(candidate.label) === key);
+  return matches.length === 1 ? matches[0]! : null;
 }
 
-const COMPETITION_TAG = 'tävling';
-const WARMUP_TAG = 'warmup';
-const FINAL_TAG = 'final';
-const DNF_TAG = 'dnf';
-const A_OPT_TAG = 'a opt';
-
-const DISCIPLINE_TAGS: Record<string, string> = {
-  precision: 'spsf-precision',
-  milsnabb: 'spsf-milsnabb',
-};
-
 /**
- * Splits ShotLog's `|`-separated tag list into the structured fields it
- * encodes plus the leftovers. A vocabulary tag is consumed — it never also
- * becomes a passthrough tag.
+ * Applies a confirmed tag mapping to one row's tags. A tag with no entry in
+ * the mapping is passed through as an ordinary ShotLedger tag rather than
+ * guessed at — the mapping is the contract, and building it is the screen's
+ * job.
  */
 export function classifyTags(
   tags: readonly string[],
+  mapping: ShotlogTagMapping = {},
   knownFirearms: readonly ShotlogFirearm[] = [],
 ): TagClassification {
   const warnings: ShotlogWarning[] = [];
   const passthroughTags: string[] = [];
   const disciplineIds: string[] = [];
-  const firearmMatches: ShotlogFirearm[] = [];
+  const groups: { weaponGroup: string; shooterClass: string | null }[] = [];
+  const firearmLabels: string[] = [];
 
   let sessionType: 'training' | 'competition' = 'training';
-  let includesWarmup = false;
+  let includesSighter = false;
   let hasFinal = false;
   let dnf = false;
-  let weaponGroupHint: string | null = null;
 
   for (const tag of tags) {
-    const key = normalize(tag);
-    if (key === COMPETITION_TAG) {
-      sessionType = 'competition';
+    const role: ShotlogTagRole | undefined = mapping[normalizeTag(tag)];
+    if (role === undefined || role.kind === 'ignore') {
+      passthroughTags.push(tag.trim());
       continue;
     }
-    const discipline = DISCIPLINE_TAGS[key];
-    if (discipline !== undefined) {
-      if (!disciplineIds.includes(discipline)) disciplineIds.push(discipline);
-      continue;
+    switch (role.kind) {
+      case 'discipline':
+        if (!disciplineIds.includes(role.disciplineId)) disciplineIds.push(role.disciplineId);
+        break;
+      case 'competition':
+        sessionType = 'competition';
+        break;
+      case 'sighter':
+        includesSighter = true;
+        break;
+      case 'final':
+        hasFinal = true;
+        break;
+      case 'dnf':
+        dnf = true;
+        break;
+      case 'weapon-group':
+        if (!groups.some((group) => group.weaponGroup === role.weaponGroup)) {
+          groups.push({ weaponGroup: role.weaponGroup, shooterClass: role.shooterClass });
+        }
+        break;
+      default:
+        if (!firearmLabels.includes(role.label)) firearmLabels.push(role.label);
+        break;
     }
-    if (key === WARMUP_TAG) {
-      includesWarmup = true;
-      continue;
-    }
-    if (key === FINAL_TAG) {
-      hasFinal = true;
-      continue;
-    }
-    if (key === DNF_TAG) {
-      dnf = true;
-      continue;
-    }
-    if (key === A_OPT_TAG) {
-      weaponGroupHint = 'spsf:A-opt';
-      continue;
-    }
-    const matched = knownFirearms.filter((candidate) => normalize(candidate.label) === key);
-    if (matched.length > 0) {
-      for (const firearm of matched) {
-        if (!firearmMatches.some((match) => match.id === firearm.id)) firearmMatches.push(firearm);
-      }
-      continue;
-    }
-    passthroughTags.push(tag.trim());
   }
 
   if (disciplineIds.length > 1) warnings.push('conflicting-discipline-tags');
-  if (firearmMatches.length > 1) warnings.push('ambiguous-firearm-tag');
+  if (groups.length > 1) warnings.push('conflicting-weapon-group-tags');
+  if (firearmLabels.length > 1) warnings.push('ambiguous-firearm-tag');
+
+  const group = groups.length === 1 ? groups[0]! : null;
+  const firearmLabel = firearmLabels.length === 1 ? firearmLabels[0]! : null;
 
   return {
     sessionType,
     disciplineId: disciplineIds.length === 1 ? disciplineIds[0]! : null,
-    includesWarmup,
+    includesSighter,
     hasFinal,
     dnf,
-    weaponGroupHint,
-    firearmMatch: firearmMatches.length === 1 ? firearmMatches[0]! : null,
+    weaponGroup: group?.weaponGroup ?? null,
+    shooterClass: group?.shooterClass ?? null,
+    firearmMatch: firearmLabel === null ? null : matchFirearm(firearmLabel, knownFirearms),
+    firearmLabel,
     passthroughTags,
     warnings,
   };
@@ -118,9 +122,9 @@ const NAME_DISCIPLINE_PATTERNS: readonly { pattern: RegExp; disciplineId: string
   { pattern: /\bprec\b/u, disciplineId: 'spsf-precision' },
 ];
 
-/** Keyword fallback used only when no discipline tag is present (§3). */
+/** Keyword fallback used only when no tag resolved the discipline (§3). */
 export function suggestDisciplineFromName(name: string): string | null {
-  const key = normalize(name);
+  const key = normalizeTag(name);
   for (const { pattern, disciplineId } of NAME_DISCIPLINE_PATTERNS) {
     if (pattern.test(key)) return disciplineId;
   }

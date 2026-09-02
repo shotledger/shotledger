@@ -1,92 +1,169 @@
 import { describe, expect, it } from 'vitest';
 
 import { classifyTags, suggestDisciplineFromName, suggestWeaponGroupFromName } from './classify';
+import { buildDefaultTagMapping, defaultTagRole } from './tags';
+import type { ShotlogTagMapping } from './types';
 
 const FIREARMS = [
   { id: 'f1', label: 'Pistol One' },
   { id: 'f2', label: 'Revolver Two' },
 ];
 
+/** The mapping the screen would start from, for the given tags. */
+function mappingFor(...tags: string[]): ShotlogTagMapping {
+  return buildDefaultTagMapping([
+    {
+      line: 2,
+      datetime: '2026-05-04T09:00:00Z',
+      name: '',
+      sourceType: 'Practice',
+      totalScore: 0,
+      tenCount: 0,
+      innerTenCount: 0,
+      tags,
+      note: '',
+      warnings: [],
+    },
+  ]);
+}
+
 describe('classifyTags', () => {
   it('defaults to a training session with nothing resolved', () => {
     expect(classifyTags([])).toEqual({
       sessionType: 'training',
       disciplineId: null,
-      includesWarmup: false,
+      includesSighter: false,
       hasFinal: false,
       dnf: false,
-      weaponGroupHint: null,
+      weaponGroup: null,
+      shooterClass: null,
       firearmMatch: null,
+      firearmLabel: null,
       passthroughTags: [],
       warnings: [],
     });
   });
 
-  it('maps the whole known vocabulary', () => {
-    const result = classifyTags(['Tävling', 'Precision', 'Warmup', 'Final', 'DNF']);
+  it('applies the whole role vocabulary from a mapping', () => {
+    const tags = ['Tävling', 'Precision', 'Warmup', 'Final', 'DNF'];
+    const result = classifyTags(tags, mappingFor(...tags));
     expect(result).toMatchObject({
       sessionType: 'competition',
       disciplineId: 'spsf-precision',
-      includesWarmup: true,
+      includesSighter: true,
       hasFinal: true,
       dnf: true,
     });
     expect(result.passthroughTags).toEqual([]);
   });
 
-  it('maps Milsnabb to its discipline', () => {
-    expect(classifyTags(['Milsnabb']).disciplineId).toBe('spsf-milsnabb');
+  it('passes a tag with no mapping entry through untouched', () => {
+    expect(classifyTags(['Precision']).passthroughTags).toEqual(['Precision']);
   });
 
-  it('is case- and whitespace-insensitive on vocabulary tags', () => {
-    expect(classifyTags([' tÄvling ', 'PRECISION']).sessionType).toBe('competition');
-    expect(classifyTags([' tÄvling ', 'PRECISION']).disciplineId).toBe('spsf-precision');
+  it('passes a tag mapped to ignore through untouched', () => {
+    expect(classifyTags(['Precision'], { precision: { kind: 'ignore' } }).passthroughTags).toEqual([
+      'Precision',
+    ]);
   });
 
-  it('suggests the optics weapon group from the A Opt tag', () => {
-    expect(classifyTags(['A Opt']).weaponGroupHint).toBe('spsf:A-opt');
+  it('honours a mapping the user changed away from the default', () => {
+    const result = classifyTags(['Precision'], { precision: { kind: 'competition' } });
+    expect(result.sessionType).toBe('competition');
+    expect(result.disciplineId).toBeNull();
   });
 
-  it('refuses a discipline when both discipline tags are present', () => {
-    const result = classifyTags(['Precision', 'Milsnabb']);
+  it('is case- and whitespace-insensitive when looking a tag up', () => {
+    const result = classifyTags([' tÄvling ', 'PRECISION'], mappingFor('Tävling', 'Precision'));
+    expect(result.sessionType).toBe('competition');
+    expect(result.disciplineId).toBe('spsf-precision');
+  });
+
+  it('takes a weapon group and its class from one tag', () => {
+    const result = classifyTags(['C1'], mappingFor('C1'));
+    expect(result.weaponGroup).toBe('spsf:C');
+    expect(result.shooterClass).toBe('1');
+  });
+
+  it('reads A Opt as the optics weapon group, not a firearm', () => {
+    expect(classifyTags(['A Opt'], mappingFor('A Opt')).weaponGroup).toBe('spsf:A-opt');
+  });
+
+  it('refuses a discipline when two different discipline tags are mapped', () => {
+    const tags = ['Precision', 'Milsnabb'];
+    const result = classifyTags(tags, mappingFor(...tags));
     expect(result.disciplineId).toBeNull();
     expect(result.warnings).toEqual(['conflicting-discipline-tags']);
   });
 
-  it('tolerates the same discipline tag twice', () => {
-    const result = classifyTags(['Precision', 'precision']);
+  it('tolerates the same discipline resolved twice', () => {
+    const result = classifyTags(['Precision', 'precision'], mappingFor('Precision'));
     expect(result.disciplineId).toBe('spsf-precision');
     expect(result.warnings).toEqual([]);
   });
 
-  it('matches a firearm tag by name, case-insensitively', () => {
-    expect(classifyTags(['pistol  one'], FIREARMS).firearmMatch).toEqual(FIREARMS[0]);
+  it('refuses a weapon group when two different group tags are mapped', () => {
+    const tags = ['C', 'B'];
+    const result = classifyTags(tags, mappingFor(...tags));
+    expect(result.weaponGroup).toBeNull();
+    expect(result.shooterClass).toBeNull();
+    expect(result.warnings).toEqual(['conflicting-weapon-group-tags']);
   });
 
-  it('consumes a matched firearm tag rather than passing it through', () => {
-    expect(classifyTags(['Pistol One', 'Club night'], FIREARMS).passthroughTags).toEqual([
-      'Club night',
-    ]);
+  it('tolerates the same weapon group twice', () => {
+    const result = classifyTags(['C', 'c'], mappingFor('C'));
+    expect(result.weaponGroup).toBe('spsf:C');
+    expect(result.warnings).toEqual([]);
   });
 
-  it('tolerates the same firearm tag twice', () => {
-    const result = classifyTags(['Pistol One', 'pistol one'], FIREARMS);
+  it('matches a firearm-role tag to an existing firearm, case-insensitively', () => {
+    const result = classifyTags(['pistol  one'], mappingFor('pistol  one'), FIREARMS);
+    expect(result.firearmMatch).toEqual(FIREARMS[0]);
+    expect(result.firearmLabel).toBe('pistol  one');
+  });
+
+  it('reports the label when no existing firearm matches', () => {
+    const result = classifyTags(['Pistol Three'], mappingFor('Pistol Three'), FIREARMS);
+    expect(result.firearmMatch).toBeNull();
+    expect(result.firearmLabel).toBe('Pistol Three');
+  });
+
+  it('consumes a firearm-role tag rather than passing it through', () => {
+    const tags = ['Pistol One', 'Club night'];
+    const result = classifyTags(tags, { 'pistol one': { kind: 'firearm', label: 'Pistol One' } });
+    expect(result.passthroughTags).toEqual(['Club night']);
+  });
+
+  it('tolerates the same firearm label twice', () => {
+    const result = classifyTags(['Pistol One', 'pistol one'], mappingFor('Pistol One'), FIREARMS);
     expect(result.firearmMatch).toEqual(FIREARMS[0]);
     expect(result.warnings).toEqual([]);
   });
 
-  it('refuses a firearm when two different firearms match', () => {
+  it('refuses a firearm when two different firearm labels are mapped', () => {
+    const tags = ['Pistol One', 'Revolver Two'];
+    const result = classifyTags(tags, mappingFor(...tags), FIREARMS);
+    expect(result.firearmMatch).toBeNull();
+    expect(result.firearmLabel).toBeNull();
+    expect(result.warnings).toEqual(['ambiguous-firearm-tag']);
+  });
+
+  it('refuses a firearm when one label matches two stored firearms', () => {
     const ambiguous = [
       { id: 'f1', label: 'Pistol One' },
       { id: 'f2', label: 'pistol one' },
     ];
-    const result = classifyTags(['Pistol One'], ambiguous);
+    const result = classifyTags(['Pistol One'], mappingFor('Pistol One'), ambiguous);
     expect(result.firearmMatch).toBeNull();
-    expect(result.warnings).toEqual(['ambiguous-firearm-tag']);
+    expect(result.firearmLabel).toBe('Pistol One');
   });
 
-  it('keeps unknown tags verbatim, trimmed', () => {
+  it('keeps an unmapped tag verbatim, trimmed', () => {
     expect(classifyTags([' Club night ']).passthroughTags).toEqual(['Club night']);
+  });
+
+  it('gives an unrecognised tag the firearm role by default', () => {
+    expect(defaultTagRole('Club night')).toEqual({ kind: 'firearm', label: 'Club night' });
   });
 });
 

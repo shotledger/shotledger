@@ -7,7 +7,7 @@ import {
   DATE_UNKNOWN_TAG,
   DNF_TAG,
   FINAL_TAG,
-  WARMUP_TAG,
+  SIGHTER_TAG,
 } from './plan';
 import { buildShotlogRef } from './ref';
 import type { ShotlogExistingSession } from './types';
@@ -65,12 +65,16 @@ describe('buildShotlogImportPlan — suggestions', () => {
       weaponGroupSource: 'name',
       shooterClass: null,
       firearmId: 'f1',
+      firearmLabel: null,
       competitionName: 'Club Cup C',
       tags: [],
-      note: 'ShotLog: X=8, (X)=3',
+      note: 'ShotLog: 8 tens, 3 inner tens',
       totalTenths: 3120,
       innerTenCount: 3,
       tenCount: 8,
+      includesSighter: false,
+      isFinal: false,
+      dnf: false,
     });
   });
 
@@ -118,15 +122,51 @@ describe('buildShotlogImportPlan — suggestions', () => {
     });
   });
 
-  it('records Warmup / Final / DNF as tags and never alters the total', () => {
-    const result = plan([{ ...row, tags: 'Precision|Warmup|Final|DNF|Club night' }]);
-    expect(result.rows[0]!.suggestion.tags).toEqual(['Club night', WARMUP_TAG, FINAL_TAG, DNF_TAG]);
+  it('records sighter / final / DNF as tags and never alters the total', () => {
+    // 'Club night' is mapped to `ignore` so it stays an ordinary tag; the
+    // default role for an unrecognised tag is `firearm`, which is consumed.
+    const result = plan([{ ...row, tags: 'Precision|Warmup|Final|DNF|Club night' }], {
+      tagMapping: {
+        precision: { kind: 'discipline', disciplineId: 'spsf-precision' },
+        warmup: { kind: 'sighter' },
+        final: { kind: 'final' },
+        dnf: { kind: 'dnf' },
+        'club night': { kind: 'ignore' },
+      },
+    });
+    expect(result.rows[0]!.suggestion.tags).toEqual([
+      'Club night',
+      SIGHTER_TAG,
+      FINAL_TAG,
+      DNF_TAG,
+    ]);
     expect(result.rows[0]!.suggestion.totalTenths).toBe(3120);
+    expect(result.rows[0]!.suggestion).toMatchObject({
+      includesSighter: true,
+      isFinal: true,
+      dnf: true,
+    });
+  });
+
+  it('names a firearm the mapping found but the logbook does not have', () => {
+    const result = plan([{ ...row, tags: 'Precision|Pistol Nine' }]);
+    expect(result.rows[0]!.suggestion).toMatchObject({
+      firearmId: null,
+      firearmLabel: 'Pistol Nine',
+    });
   });
 
   it('keeps the CSV note above the generated lines', () => {
     const result = plan([{ ...row, note: 'windy' }]);
-    expect(result.rows[0]!.suggestion.note).toBe('windy\nShotLog: X=8, (X)=3');
+    expect(result.rows[0]!.suggestion.note).toBe('windy\nShotLog: 8 tens, 3 inner tens');
+  });
+
+  it('notes the sighter inclusion and the DNF without touching the total', () => {
+    const result = plan([{ ...row, tags: 'Precision|Warmup|DNF' }]);
+    expect(result.rows[0]!.suggestion.note).toBe(
+      'ShotLog: 8 tens, 3 inner tens\nShotLog: total includes a sighter series\nShotLog: did not finish',
+    );
+    expect(result.rows[0]!.suggestion.totalTenths).toBe(3120);
   });
 
   it('propagates parse warnings onto the plan row', () => {

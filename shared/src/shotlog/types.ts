@@ -6,6 +6,7 @@ export type ShotlogWarning =
   | 'auto-generated-name'
   | 'firearm-column-unsupported'
   | 'conflicting-discipline-tags'
+  | 'conflicting-weapon-group-tags'
   | 'ambiguous-firearm-tag';
 
 export interface ShotlogRow {
@@ -41,6 +42,33 @@ export interface ShotlogFirearm {
   label: string;
 }
 
+/**
+ * What one ShotLog tag means. The import screen shows every distinct tag in
+ * the file with a default role and lets the user change it, so no personal
+ * tagging convention is baked into the code (spec §3).
+ */
+export type ShotlogTagRole =
+  | { kind: 'ignore' }
+  | { kind: 'discipline'; disciplineId: string }
+  | { kind: 'competition' }
+  /** The row's total INCLUDES a sighter series (maintainer 2026-09-02). */
+  | { kind: 'sighter' }
+  | { kind: 'final' }
+  | { kind: 'dnf' }
+  | { kind: 'weapon-group'; weaponGroup: string; shooterClass: string | null }
+  | { kind: 'firearm'; label: string };
+
+/** Roles keyed by `normalizeTag(tag)`. */
+export type ShotlogTagMapping = Record<string, ShotlogTagRole>;
+
+export interface ShotlogTagUsage {
+  /** `normalizeTag` key — what `ShotlogTagMapping` is indexed by. */
+  key: string;
+  /** The tag as first written in the file, for display. */
+  label: string;
+  count: number;
+}
+
 /** Existing session, narrowed to what duplicate detection needs (spec §6). */
 export interface ShotlogExistingSession {
   id: string;
@@ -63,12 +91,20 @@ export interface ShotlogSuggestion {
   weaponGroupSource: ShotlogSuggestionSource;
   shooterClass: string | null;
   firearmId: string | null;
+  /** Firearm named by a tag that no existing firearm matches (§7). */
+  firearmLabel: string | null;
   competitionName: string | null;
   tags: string[];
   note: string;
   totalTenths: number;
+  /** ShotLog's `(X)` — inner tens (maintainer 2026-09-02). */
   innerTenCount: number;
+  /** ShotLog's `Number of X` — tens (maintainer 2026-09-02). */
   tenCount: number;
+  /** The total includes a sighter series; never subtracted (§3). */
+  includesSighter: boolean;
+  isFinal: boolean;
+  dnf: boolean;
 }
 
 export type ShotlogRowStatus =

@@ -2,6 +2,7 @@
 export * from './types';
 export * from './parse';
 export * from './classify';
+export * from './tags';
 export * from './ref';
 export * from './dedup';
 export * from './plan';

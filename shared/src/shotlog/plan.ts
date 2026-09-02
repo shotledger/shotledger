@@ -2,6 +2,7 @@
 // classifies, dedups and proposes — never writes. The app layer shows the
 // result, lets the user edit the suggestions, and only then writes.
 import { classifyTags, suggestDisciplineFromName, suggestWeaponGroupFromName } from './classify';
+import { buildDefaultTagMapping } from './tags';
 import {
   findExactRefMatch,
   findLostDateTimestamps,
@@ -19,16 +20,23 @@ import type {
   ShotlogRow,
   ShotlogRowStatus,
   ShotlogSuggestion,
+  ShotlogTagMapping,
   ShotlogWarning,
 } from './types';
 
 export const SHOTLOG_TAG_PREFIX = 'shotlog:';
 export const DATE_UNKNOWN_TAG = `${SHOTLOG_TAG_PREFIX}date-unknown`;
-export const WARMUP_TAG = `${SHOTLOG_TAG_PREFIX}warmup`;
+export const SIGHTER_TAG = `${SHOTLOG_TAG_PREFIX}includes-sighter`;
 export const FINAL_TAG = `${SHOTLOG_TAG_PREFIX}final`;
 export const DNF_TAG = `${SHOTLOG_TAG_PREFIX}dnf`;
 
 export interface ShotlogPlanOptions {
+  /**
+   * Role per tag, keyed by `normalizeTag`. Omit and the plan falls back to
+   * `buildDefaultTagMapping` — the screen's starting point, which the user
+   * then edits and passes back in (§3).
+   */
+  tagMapping?: ShotlogTagMapping;
   knownFirearms?: readonly ShotlogFirearm[];
   existingSessions?: readonly ShotlogExistingSession[];
   /** Select zero-score rows by default. Off per §6 status 3. */
@@ -43,10 +51,24 @@ const EMPTY_SUMMARY_STATUSES: ShotlogRowStatus[] = [
   'probable-duplicate',
 ];
 
-function buildNote(row: ShotlogRow, dateUncertain: boolean): string {
+/**
+ * The generated note. The ten and inner-ten counts go here because the
+ * schema has nowhere else to put them: a total-override series carries no
+ * `shots` rows, and every ten/inner-ten statistic in `shared/src/scoring`
+ * counts shot flags. Recording the confirmed semantics (maintainer
+ * 2026-09-02) in prose is the most this can do without a migration.
+ */
+function buildNote(
+  row: ShotlogRow,
+  dateUncertain: boolean,
+  includesSighter: boolean,
+  dnf: boolean,
+): string {
   const lines: string[] = [];
   if (row.note !== '') lines.push(row.note);
-  lines.push(`ShotLog: X=${row.tenCount}, (X)=${row.innerTenCount}`);
+  lines.push(`ShotLog: ${row.tenCount} tens, ${row.innerTenCount} inner tens`);
+  if (includesSighter) lines.push('ShotLog: total includes a sighter series');
+  if (dnf) lines.push('ShotLog: did not finish');
   if (dateUncertain) lines.push('ShotLog: date unknown (bulk import)');
   return lines.join('\n');
 }
@@ -54,9 +76,10 @@ function buildNote(row: ShotlogRow, dateUncertain: boolean): string {
 function buildSuggestion(
   row: ShotlogRow,
   dateUncertain: boolean,
+  tagMapping: ShotlogTagMapping,
   knownFirearms: readonly ShotlogFirearm[],
 ): { suggestion: ShotlogSuggestion; warnings: ShotlogWarning[] } {
-  const classification = classifyTags(row.tags, knownFirearms);
+  const classification = classifyTags(row.tags, tagMapping, knownFirearms);
 
   const disciplineFromName = suggestDisciplineFromName(row.name);
   const disciplineId = classification.disciplineId ?? disciplineFromName;
@@ -64,16 +87,18 @@ function buildSuggestion(
     classification.disciplineId !== null ? 'tag' : disciplineFromName !== null ? 'name' : null;
 
   const groupFromName = suggestWeaponGroupFromName(row.name);
-  const weaponGroup = classification.weaponGroupHint ?? groupFromName?.weaponGroup ?? null;
+  const weaponGroup = classification.weaponGroup ?? groupFromName?.weaponGroup ?? null;
   const weaponGroupSource =
-    classification.weaponGroupHint !== null ? 'tag' : groupFromName !== null ? 'name' : null;
-  // The `A Opt` hint carries no class, so a class only ever comes from the
-  // name token — and only when the name is also what set the group.
+    classification.weaponGroup !== null ? 'tag' : groupFromName !== null ? 'name' : null;
+  // A class only ever comes from whichever source also set the group, so a
+  // tag-derived group is never combined with a class read off the name.
   const shooterClass =
-    classification.weaponGroupHint !== null ? null : (groupFromName?.shooterClass ?? null);
+    classification.weaponGroup !== null
+      ? classification.shooterClass
+      : (groupFromName?.shooterClass ?? null);
 
   const tags = [...classification.passthroughTags];
-  if (classification.includesWarmup) tags.push(WARMUP_TAG);
+  if (classification.includesSighter) tags.push(SIGHTER_TAG);
   if (classification.hasFinal) tags.push(FINAL_TAG);
   if (classification.dnf) tags.push(DNF_TAG);
   if (dateUncertain) tags.push(DATE_UNKNOWN_TAG);
@@ -88,12 +113,16 @@ function buildSuggestion(
       weaponGroupSource,
       shooterClass,
       firearmId: classification.firearmMatch?.id ?? null,
+      firearmLabel: classification.firearmMatch === null ? classification.firearmLabel : null,
       competitionName: classification.sessionType === 'competition' ? row.name : null,
       tags,
-      note: buildNote(row, dateUncertain),
+      note: buildNote(row, dateUncertain, classification.includesSighter, classification.dnf),
       totalTenths: row.totalScore * 10,
       innerTenCount: row.innerTenCount,
       tenCount: row.tenCount,
+      includesSighter: classification.includesSighter,
+      isFinal: classification.hasFinal,
+      dnf: classification.dnf,
     },
   };
 }
@@ -179,13 +208,14 @@ export function buildShotlogImportPlan(
   const knownFirearms = options.knownFirearms ?? [];
   const existingSessions = options.existingSessions ?? [];
   const includeEmpty = options.includeEmpty ?? false;
+  const tagMapping = options.tagMapping ?? buildDefaultTagMapping(parsed.rows);
 
   const lostDates = findLostDateTimestamps(parsed.rows);
   const duplicates = markInFileDuplicates(parsed.rows);
 
   const rows = parsed.rows.map((row): ShotlogPlanRow => {
     const dateUncertain = lostDates.has(row.datetime);
-    const { suggestion, warnings } = buildSuggestion(row, dateUncertain, knownFirearms);
+    const { suggestion, warnings } = buildSuggestion(row, dateUncertain, tagMapping, knownFirearms);
     const ref = buildShotlogRef(row);
 
     const duplicateOfLine = duplicates.get(row.line) ?? null;
