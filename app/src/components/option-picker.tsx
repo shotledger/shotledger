@@ -11,7 +11,8 @@ export interface PickerOption<T extends string> {
 }
 
 export interface OptionPickerProps<T extends string> {
-  label: string;
+  /** Omit inside a card that already names the field, to avoid a repeated heading. */
+  label?: string;
   options: readonly PickerOption<T>[];
   value: T | null;
   onChange: (value: T) => void;
@@ -34,7 +35,7 @@ export function OptionPicker<T extends string>({
 
   return (
     <View style={styles.container}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      {label ? <ThemedText type="smallBold">{label}</ThemedText> : null}
       {options.length === 0 && emptyLabel ? (
         <ThemedText type="small" themeColor="textSecondary">
           {emptyLabel}

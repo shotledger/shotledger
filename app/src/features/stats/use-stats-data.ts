@@ -218,6 +218,8 @@ export interface AnalyticsReportData {
   distribution: DistributionBucket[];
   /** Ids of the sessions the filter matched — the export's working set. */
   sessionIds: string[];
+  /** Names of the filter's tags, so the report can echo them instead of a count. */
+  tagNames: string[];
 }
 
 const EMPTY_TOTALS: AnalyticsTotals = {
@@ -245,6 +247,7 @@ const EMPTY_REPORT: AnalyticsReportData = {
   points: [],
   distribution: [],
   sessionIds: [],
+  tagNames: [],
 };
 
 function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
@@ -285,6 +288,9 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
     points,
     distribution: buildDistribution(shots),
     sessionIds,
+    tagNames: listTags(db)
+      .filter((tag) => state.tagIds.includes(tag.id))
+      .map((tag) => tag.name),
   };
 }
 

@@ -106,7 +106,8 @@
       "pdf": "En utskrivbar skjutjournal över de matchade passen.",
       "json": "De matchade passen och den beräknade sammanfattningen som strukturerad data.",
       "csv": "Varje matchat pass, serie och skott som kalkylblad."
-    }
+    },
+    "exportVaultNote": "Endast dina egna data — valvet ingår aldrig i en export."
   },
   "firearms": {
     "title": "Vapen & ammo",

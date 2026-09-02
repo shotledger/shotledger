@@ -188,7 +188,6 @@ export default function StatsScreen() {
         />
         {openSection === 'discipline' && (
           <OptionPicker
-            label={t('session.discipline')}
             options={[
               { value: ALL, label: t('stats.all') },
               ...options.disciplineIds.map((id) => ({ value: id, label: disciplineLabel(t, id) })),
@@ -203,7 +202,6 @@ export default function StatsScreen() {
 
       <FilterCard title={t('stats.sectionShotsPerSeries')} hint={t('stats.sectionShotsHint')}>
         <OptionPicker
-          label={t('stats.sectionShotsPerSeries')}
           options={[
             { value: ALL, label: t('stats.all') },
             ...options.shotsPerSeriesValues.map((count) => ({

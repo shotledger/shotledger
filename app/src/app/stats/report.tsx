@@ -103,7 +103,7 @@ export default function StatsReportScreen() {
           {filter.disciplineId ? disciplineLabel(t, filter.disciplineId) : t('stats.all')}
           {'\n'}
           {t('stats.sectionTags')}:{' '}
-          {filter.tagIds.length === 0 ? t('stats.tagsNone') : filter.tagIds.length}
+          {data.tagNames.length === 0 ? t('stats.tagsNone') : data.tagNames.join(', ')}
         </ThemedText>
         <ThemedText type="default" testID="report-match-count">
           {t('stats.matchCount', { count: data.totals.sessionCount })}
@@ -256,6 +256,9 @@ export default function StatsReportScreen() {
           {pickingFormat ? (
             <Card testID="stats-export-formats">
               <ThemedText type="smallBold">{t('stats.exportFormatTitle')}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('stats.exportVaultNote')}
+              </ThemedText>
               {EXPORT_FORMATS.map((format) => (
                 <DrillDownRow
                   key={format}
