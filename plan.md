@@ -69,6 +69,19 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-09-03 | **"Document vault" renamed to "Vault"** (maintainer): the name overstated the scope — it holds licences, membership cards and door codes, i.e. items of several kinds, not documents. It is simply the Vault; the item-type taxonomy inside it stays (weapon licence and membership card confirmed as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | **Open:**  |
 
+- [ ] **WebShooter integration is non-functional** (maintainer-reported
+      2026-09-03: "Webshooter stuff does not work at all. Username password
+      login does not work."). Deferred, not abandoned — needs a session with
+      the real service. Known state: the in-app password login was never
+      verified against webshooter.se, which is why the UI already ships the
+      `webshooter.spaLoginNotVerified` string ("Password login isn't
+      available yet — use a manual token below") and a manual-token fallback.
+      So "password login does not work" is the documented-but-unfinished
+      path, and the token path needs its own end-to-end check. Investigate
+      whether the SPA login can be driven at all without an upstream OAuth
+      flow (there is none), or whether manual token paste is the only viable
+      route; the token lives in SecureStore and is never synced. See
+      `docs/specs/webshooter-integration-spec.md` and `-app-spec.md`
 - [ ] Personal vs organization Google Play account (org needs a legal entity + D-U-N-S number; skips the 12-testers-for-14-days gate; same $25 fee)
 - [ ] Register `shotledger.app` (125 kr/yr at HostUp); optionally
       `shotledger.se` (99 kr/yr)
