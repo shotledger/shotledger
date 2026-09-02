@@ -1,0 +1,24 @@
+{
+  "id": "issf-sport-pistol",
+  "disciplineId": "issf-sport-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Sportpistol",
+    "en": "25m Sport Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      {
+        "seriesCount": 6,
+        "timeLimitSeconds": 240
+      },
+      {
+        "seriesCount": 6
+      }
+    ]
+  }
+}

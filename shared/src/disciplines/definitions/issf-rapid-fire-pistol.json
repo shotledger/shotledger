@@ -1,0 +1,13 @@
+{
+  "id": "issf-rapid-fire-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Snabbpistol",
+    "en": "25m Rapid Fire Pistol"
+  },
+  "targetFace": "issf-25m-rapid-fire",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}

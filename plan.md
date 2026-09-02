@@ -38,30 +38,29 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ## Decisions log
 
-| Date | Decision |
-|------|----------|
-| 2026-08-31 | Name: **ShotLedger** (~40 candidates collision-checked; runners-up in reserve: MarksmanLedger, MeanRadius, Groupline) |
-| 2026-08-31 | Open source — but **private repo initially** |
-| 2026-08-31 | Android first; iOS later — all code stays iOS-ready (cross-platform modules only, platform quirks behind small wrappers) |
-| 2026-08-31 | Stack: React Native + Expo + TypeScript; local SQLite as source of truth; Cloudflare (Workers + D1 + R2 + better-auth) for optional sync |
-| 2026-08-31 | Free app; donations via Buy Me a Coffee (browser link, unlocks nothing) |
-| 2026-08-31 | Scope: target shooting only |
-| 2026-09-01 | Dark theme reworked to "Purple Rain" (deep near-black purple ground, purple-tinted text/borders); gold accent proposed as default over lavender on WCAG AA margins, pending maintainer sign-off |
-| 2026-09-01 | **Accent resolved: lavender** (maintainer: "do not use yellow for buttons"). `Colors.dark.primary` is `#B98CFF`; the gold values stay in `app/src/theme/tokens.ts` as `PURPLE_RAIN_GOLD_ACCENT_REJECTED`, never assigned to an interactive token. Semantic colours (success/warning/danger) unchanged |
-| 2026-09-01 | **Scoring keys resolved** (maintainer): keypad is `1–9`, `0`, `10`, `X` — `10` is an ordinary ten, `X` is the centrumtia (`is_inner_ten=1`), same keys in integer and decimal modes. No `(X)` key; `is_inner_ten_decimal` deprecated (column kept, never written). Closes M3 spec VERIFY items V1 and V2; recorded as append-only amendments A1/A2 in `docs/specs/m3-scoring-spec.md` (A2 supersedes A1's labels) |
-| 2026-09-01 | Sessions get `extra_rounds` (nullable, migration 0001): rounds fired but never scored. Counts toward the firearm round counter, ammo-lot usage and volume totals; excluded from every score statistic and from the series/shots structures |
-| 2026-09-01 | Session detail header shows the per-series average and the X count; session lists show total · average/series · X count. The per-shot mean stays in the Stats toggle |
-| 2026-09-01 | English discipline/program names use Title Case ("Military Rapid Fire"); Swedish keeps sentence case ("Militär snabbmatch"). Firearms tab is "Firearms & Ammo" / "Vapen & ammo" |
+| Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-31 | Name: **ShotLedger** (~40 candidates collision-checked; runners-up in reserve: MarksmanLedger, MeanRadius, Groupline)                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-08-31 | Open source — but **private repo initially**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-08-31 | Android first; iOS later — all code stays iOS-ready (cross-platform modules only, platform quirks behind small wrappers)                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 2026-08-31 | Stack: React Native + Expo + TypeScript; local SQLite as source of truth; Cloudflare (Workers + D1 + R2 + better-auth) for optional sync                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 2026-08-31 | Free app; donations via Buy Me a Coffee (browser link, unlocks nothing)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-08-31 | Scope: target shooting only                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2026-09-01 | Dark theme reworked to "Purple Rain" (deep near-black purple ground, purple-tinted text/borders); gold accent proposed as default over lavender on WCAG AA margins, pending maintainer sign-off                                                                                                                                                                                                                                                                                                                                          |
+| 2026-09-01 | **Accent resolved: lavender** (maintainer: "do not use yellow for buttons"). `Colors.dark.primary` is `#B98CFF`; the gold values stay in `app/src/theme/tokens.ts` as `PURPLE_RAIN_GOLD_ACCENT_REJECTED`, never assigned to an interactive token. Semantic colours (success/warning/danger) unchanged                                                                                                                                                                                                                                    |
+| 2026-09-01 | **Scoring keys resolved** (maintainer): keypad is `1–9`, `0`, `10`, `X` — `10` is an ordinary ten, `X` is the centrumtia (`is_inner_ten=1`), same keys in integer and decimal modes. No `(X)` key; `is_inner_ten_decimal` deprecated (column kept, never written). Closes M3 spec VERIFY items V1 and V2; recorded as append-only amendments A1/A2 in `docs/specs/m3-scoring-spec.md` (A2 supersedes A1's labels)                                                                                                                        |
+| 2026-09-01 | Sessions get `extra_rounds` (nullable, migration 0001): rounds fired but never scored. Counts toward the firearm round counter, ammo-lot usage and volume totals; excluded from every score statistic and from the series/shots structures                                                                                                                                                                                                                                                                                               |
+| 2026-09-01 | Session detail header shows the per-series average and the X count; session lists show total · average/series · X count. The per-shot mean stays in the Stats toggle                                                                                                                                                                                                                                                                                                                                                                     |
+| 2026-09-01 | English discipline/program names use Title Case ("Military Rapid Fire"); Swedish keeps sentence case ("Militär snabbmatch"). Firearms tab is "Firearms & Ammo" / "Vapen & ammo"                                                                                                                                                                                                                                                                                                                                                          |
 | 2026-09-01 | M6 compliance profile (§6.6): `shared/compliance` ships an `se` profile with **VERIFY placeholder** activity numbers (`windowMonths=6`, `requiredActivities=4`, `constants-se.ts`, `SE_VERIFIED=false`) — no FAP 551-3 numeric source text exists in this repo; barometer UI shows an explicit "unverified defaults" hint until the maintainer confirms. Settings' Compliance profile picker defaults to `se` when the device locale is `sv`, else `none` — **flagged for maintainer review**, a UX default not a confirmed product call |
-| 2026-09-01 | M6 PDF export layout (club-log table + summary header, `shared/src/export/pdf-log.ts`) has **not** been checked against a real föreningsintyg attachment — VERIFY, per implementation-plan.md §4 M6 |
-| 2026-09-01 | Stats "Custom" period picker uses `@react-native-community/datetimepicker` (ships with Expo SDK 57) — flagged for review since it wasn't in M2's original design-system component inventory |
-| 2026-09-01 | M7 release prep: `android.package` set to `app.shotledger` (maintainer-vetoable, separate commit); app icon/splash are hand-rolled placeholder concentric-ring PNGs in the Purple Rain palette (no image tool available, zero new deps); store title *"ShotLedger — Target Shooting Log & Scoring"* may overclaim vs. v1 (no photo scoring yet) — flagged with a v1-scoped alternative title in `docs/store-listing.md`, maintainer to pick |
+| 2026-09-01 | M6 PDF export layout (club-log table + summary header, `shared/src/export/pdf-log.ts`) has **not** been checked against a real föreningsintyg attachment — VERIFY, per implementation-plan.md §4 M6                                                                                                                                                                                                                                                                                                                                      |
+| 2026-09-01 | Stats "Custom" period picker uses `@react-native-community/datetimepicker` (ships with Expo SDK 57) — flagged for review since it wasn't in M2's original design-system component inventory                                                                                                                                                                                                                                                                                                                                              |
+| 2026-09-01 | M7 release prep: `android.package` set to `app.shotledger` (maintainer-vetoable, separate commit); app icon/splash are hand-rolled placeholder concentric-ring PNGs in the Purple Rain palette (no image tool available, zero new deps); store title _"ShotLedger — Target Shooting Log & Scoring"_ may overclaim vs. v1 (no photo scoring yet) — flagged with a v1-scoped alternative title in `docs/store-listing.md`, maintainer to pick                                                                                              |
 | 2026-09-01 | v3 shot timer (maintainer-approved scope expansion, `feat/shot-timer`, `docs/specs/shot-timer-spec.md`): PAR/interval timer engine (`shared/src/timer/`) plus a milsnabb drill preset generated from `spsf-milsnabb`'s program `structure`. `expo-audio` (not the deprecated `expo-av`) and `expo-keep-awake` added to `app/`; audio cues are 4 locally-generated placeholder WAV tones — real sound design and on-device audio/vibration/keep-awake verification are a maintainer smoke-test item (emulator audio can't be meaningfully checked). Milsnabb's ready delay defaults to a practical 5 s, not SHB J.6.2's 60 s LADDA→FÄRDIGA cadence (documented simplification, authentic value exposed as a constant) |
 
 **Open:**
 
-- [ ] Personal vs organization Google Play account (org needs a legal entity
-      + D-U-N-S number; skips the 12-testers-for-14-days gate; same $25 fee)
+- [ ] Personal vs organization Google Play account (org needs a legal entity + D-U-N-S number; skips the 12-testers-for-14-days gate; same $25 fee)
 - [ ] Register `shotledger.app` (125 kr/yr at HostUp); optionally
       `shotledger.se` (99 kr/yr)
 - [ ] License for the code when the repo goes public (lean: MIT/Apache-2.0
@@ -114,7 +113,32 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v3+ — by user demand
 
-- [x] PAR/interval shot timer
+- [ ] Timers — three kinds behind one "Timer" entry (decided 2026-09-02):
+  - [x] **Regular** — PAR/interval timer with ready delay, series, rest, and
+        the milsnabb drill generated from the program definition
+        (`feat/shot-timer`, `shared/src/timer/`).
+  - [ ] **Fälttimer** — range-officer command sequence for fältskjutning.
+        Benchmark: [Fältskyttetimer](https://carlemil.github.io/FieldShootingTimer/)
+        (open source, github.com/carlemil/FieldShootingTimer): spoken
+        Swedish commands ("Tio sekunder kvar", "Färdiga", "Eld", "Eld
+        upphör", "Patron ur, proppa vapen", "Visitation"), competition
+        mode prefixing "Ladda!" / "Alla klara?" with the 60 s preparation
+        countdown, pinch-adjustable fire time 5 s–5 min on a dial, partial
+        splits (partider) as draggable flags on the dial ring with haptics at
+        each, scrub a paused timer to any second or tap a command to jump
+        to it, respects silent mode, keeps the screen awake, works
+        offline. Command wording and timings come from SHB (kommandon
+        section) — maintainer to clarify the exact feature set before
+        implementation; the fältskjutning discipline itself stays out of
+        the logbook (not a v1/v2 discipline), only the timer is in scope.
+        Voice cues need per-language recordings or TTS (sv first, en).
+  - [ ] **IPSC-style shot timer** — voice "Are you ready?" / "Standby",
+        random-delay start beep, then split (lap) times detected from the
+        sound of the shots via the microphone; shows first-shot time, splits,
+        total, shot count; sensitivity setting; PAR-time optional. Needs
+        expo-audio recording + on-device peak detection in
+        `app/src/platform/` (new dependency — ask before adding); no
+        recording is ever stored.
 - [ ] Ammo performance comparison across lots
 - [ ] Cross-session heatmaps, coaching hints
 - [ ] GPS range auto-matching; Swedish range database
@@ -127,17 +151,17 @@ barometer; no scoring), Skytteappen (club ecosystem).
 app is fully functional with no account and no network. The cloud is an
 optional backup/sync add-on (a Firebase replacement, inverted):
 
-| Concern | Choice |
-|---------|--------|
-| App | React Native + Expo, TypeScript |
-| Local DB | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM |
-| Migrations | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
-| Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI) |
-| Sync API | Cloudflare Workers (Hono), TypeScript shared types with the app |
-| Cloud DB | Cloudflare D1 |
-| Photos | Cloudflare R2 ($0 egress) |
-| Auth (sync only) | better-auth on Workers/D1; Sign in with Apple + Google |
-| Crash reporting | Sentry (or none) — privacy-sensitive audience |
+| Concern          | Choice                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| App              | React Native + Expo, TypeScript                                                                                                              |
+| Local DB         | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM                                                  |
+| Migrations       | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
+| Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI)                                                                                  |
+| Sync API         | Cloudflare Workers (Hono), TypeScript shared types with the app                                                                              |
+| Cloud DB         | Cloudflare D1                                                                                                                                |
+| Photos           | Cloudflare R2 ($0 egress)                                                                                                                    |
+| Auth (sync only) | better-auth on Workers/D1; Sign in with Apple + Google                                                                                       |
+| Crash reporting  | Sentry (or none) — privacy-sensitive audience                                                                                                |
 
 **Sync protocol** (opt-in): per-user changelog. Every row carries
 `last_modified`; deletions are tombstones. Client pushes local changes,
@@ -154,7 +178,7 @@ only edit their own data). No CRDT engine needed.
 
 ## Agentic-first SDLC
 
-The whole lifecycle is designed so an agent can develop, run, *see*, and
+The whole lifecycle is designed so an agent can develop, run, _see_, and
 verify the app without a human in the loop:
 
 - **Expo web target** (react-native-web): the app renders in a browser,
@@ -232,13 +256,13 @@ sync code; see CLAUDE.md.
 
 ## Costs
 
-| Item | Cost |
-|------|------|
-| Google Play account | $25 once |
-| Apple Developer Program (when iOS ships) | $99/yr |
-| Cloudflare (to ~1–2k active users) | $0/mo |
-| Cloudflare Workers Paid (comfortable to ~5k users) | $5/mo |
-| Domains (shotledger.app, optionally .se) | ~125–225 kr/yr |
+| Item                                               | Cost           |
+| -------------------------------------------------- | -------------- |
+| Google Play account                                | $25 once       |
+| Apple Developer Program (when iOS ships)           | $99/yr         |
+| Cloudflare (to ~1–2k active users)                 | $0/mo          |
+| Cloudflare Workers Paid (comfortable to ~5k users) | $5/mo          |
+| Domains (shotledger.app, optionally .se)           | ~125–225 kr/yr |
 
 Donation target to break even: roughly 30–40 coffees/year.
 

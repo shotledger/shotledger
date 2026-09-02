@@ -64,9 +64,14 @@ describe('data validation (spec G1-G4)', () => {
     ).toThrow();
   });
 
-  it('G4: v1 ships exactly the SPSF-only discipline set of §6.2', () => {
+  it('G4: v1 ships the SPSF + ISSF pistol discipline set (§6.2)', () => {
     expect(DISCIPLINES.map((d) => d.id).sort()).toEqual([
       'generic-rings',
+      'issf-air-pistol',
+      'issf-free-pistol',
+      'issf-rapid-fire-pistol',
+      'issf-sport-pistol',
+      'issf-standard-pistol',
       'spsf-milsnabb',
       'spsf-precision',
     ]);
@@ -74,7 +79,8 @@ describe('data validation (spec G1-G4)', () => {
 
   it('lookups find and reject by id', () => {
     expect(getDiscipline('spsf-precision')?.name.sv).toBe('Precision');
-    expect(getDiscipline('issf-air-pistol')).toBeUndefined();
+    expect(getDiscipline('issf-air-pistol')?.name.sv).toBe('Luftpistol');
+    expect(getDiscipline('issf-nope')).toBeUndefined();
     expect(requireDiscipline('spsf-precision').id).toBe('spsf-precision');
     expect(() => requireDiscipline('nope')).toThrow(/unknown discipline/i);
     expect(getProgram('spsf-milsnabb')?.supportsFinal).toBe(false);
@@ -161,6 +167,88 @@ describe('programs (spec G5-G9)', () => {
     const program = getProgram('spsf-precision');
     if (!program) throw new Error('precision program missing');
     expect(buildProgramSkeleton(program)).toEqual([]);
+  });
+});
+
+describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
+  // Table-driven: id, total scored shots (= max score at 1 point/shot,
+  // since 'rings' scoring never exceeds 10/shot and every series here is
+  // full-value), total series (sighters excluded), sighter series count.
+  const issfPrograms = [
+    { id: 'issf-air-pistol', shots: 60, series: 6, sighterSeries: 0 },
+    { id: 'issf-free-pistol', shots: 60, series: 12, sighterSeries: 0 },
+    { id: 'issf-standard-pistol', shots: 60, series: 12, sighterSeries: 1 },
+    { id: 'issf-rapid-fire-pistol', shots: 60, series: 12, sighterSeries: 1 },
+    { id: 'issf-sport-pistol', shots: 60, series: 12, sighterSeries: 1 },
+  ];
+
+  it.each(issfPrograms)(
+    '$id: $shots scored shots across $series series, max score = shots x 10',
+    ({ id, shots, series, sighterSeries }) => {
+      const program = getProgram(id);
+      if (!program) throw new Error(`${id} program missing`);
+      expect(program.federation).toBe('ISSF');
+      expect(program.scoring).toBe('integer');
+      expect(program.supportsFinal).toBe(false);
+      if (!program.structure) throw new Error(`${id} has no structure`);
+      expect(program.structure.sighterSeries).toBe(sighterSeries);
+
+      const scoredSeriesCount = program.structure.groups.reduce((n, g) => n + g.seriesCount, 0);
+      expect(scoredSeriesCount).toBe(series);
+      const scoredShots = scoredSeriesCount * program.shotsPerSeries;
+      expect(scoredShots).toBe(shots);
+      const maxScore = scoredShots * 10;
+      expect(maxScore).toBe(shots * 10);
+
+      const skeleton = buildProgramSkeleton(program);
+      expect(skeleton.filter((s) => s.isSighter)).toHaveLength(sighterSeries);
+      expect(skeleton.filter((s) => !s.isSighter)).toHaveLength(series);
+      expect(skeleton).toHaveLength(sighterSeries + series);
+    },
+  );
+
+  it('issf-air-pistol and issf-free-pistol have unlimited (unmodeled) sighters, not a fixed count', () => {
+    // Documented in issf-rules.md: ISSF allows unlimited sighting shots
+    // during prep time for these two events, which our fixed sighterSeries
+    // count cannot express, so both ship sighterSeries: 0.
+    expect(getProgram('issf-air-pistol')?.structure?.sighterSeries).toBe(0);
+    expect(getProgram('issf-free-pistol')?.structure?.sighterSeries).toBe(0);
+  });
+
+  it('issf-standard-pistol: 150/20/10 second stages (8.7.6.5)', () => {
+    const program = getProgram('issf-standard-pistol');
+    expect(program?.structure?.groups).toEqual([
+      { seriesCount: 4, timeLimitSeconds: 150 },
+      { seriesCount: 4, timeLimitSeconds: 20 },
+      { seriesCount: 4, timeLimitSeconds: 10 },
+    ]);
+  });
+
+  it('issf-rapid-fire-pistol: 8/6/4 second series, repeated across two stages (8.7.6.3.a)', () => {
+    const program = getProgram('issf-rapid-fire-pistol');
+    expect(program?.structure?.groups).toEqual([
+      { seriesCount: 2, timeLimitSeconds: 8 },
+      { seriesCount: 2, timeLimitSeconds: 6 },
+      { seriesCount: 2, timeLimitSeconds: 4 },
+      { seriesCount: 2, timeLimitSeconds: 8 },
+      { seriesCount: 2, timeLimitSeconds: 6 },
+      { seriesCount: 2, timeLimitSeconds: 4 },
+    ]);
+  });
+
+  it('issf-sport-pistol: 240s precision stage, untimed rapid stage (8.7.6.4)', () => {
+    const program = getProgram('issf-sport-pistol');
+    expect(program?.structure?.groups).toEqual([
+      { seriesCount: 6, timeLimitSeconds: 240 },
+      { seriesCount: 6 },
+    ]);
+  });
+
+  it('ISSF disciplines ship no vapengrupper (§6.4a) and no klasser', () => {
+    for (const id of issfPrograms.map((p) => p.id)) {
+      expect(weaponGroupsForDiscipline(id)).toEqual([]);
+      expect(shooterClassesForDiscipline(id)).toEqual([]);
+    }
   });
 });
 
