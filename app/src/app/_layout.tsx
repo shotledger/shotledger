@@ -67,6 +67,18 @@ function RootStack() {
         name="ammo/[id]/index"
         options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
       />
+      <Stack.Screen
+        name="vault/index"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
+      />
+      <Stack.Screen
+        name="vault/add"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.addTitle') }}
+      />
+      <Stack.Screen
+        name="vault/[id]"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
+      />
       <Stack.Screen name="dev" />
     </Stack>
   );

@@ -1,8 +1,8 @@
 {
   "common": {
+    "cancel": "Cancel",
     "save": "Save",
-    "edit": "Edit",
-    "cancel": "Cancel"
+    "edit": "Edit"
   },
   "tabs": {
     "home": "Home",
@@ -166,35 +166,10 @@
     "loadDemoData": "Load demo data",
     "wipeData": "Wipe data",
     "supportDevelopment": "Support development",
-    "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
-    "about": "About",
     "birthYear": "Birth year",
-    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement."
-  },
-  "about": {
-    "title": "About",
-    "appName": "ShotLedger",
-    "version": "Version {{version}}",
-    "licensesTitle": "Open-source licenses",
-    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
-    "repoLink": "Source code"
-  },
-  "csv": {
-    "sectionTitle": "Data (CSV)",
-    "exportTitle": "Export CSV",
-    "exportSubtitle": "Share every session, series and shot as a CSV file",
-    "importTitle": "Import CSV",
-    "importSubtitle": "Pick a CSV file to add or update sessions",
-    "exportSuccess": "CSV exported",
-    "exportFailed": "CSV export failed",
-    "importCancelled": "Import cancelled",
-    "importFailed": "CSV import failed",
-    "importErrorsTitle": "Import has errors",
-    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
-    "importConfirmTitle": "Import this file?",
-    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
-    "importConfirmAction": "Import",
-    "importSuccess": "Imported {{count}} session(s)"
+    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement.",
+    "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
+    "about": "About"
   },
   "compliance": {
     "settingsTitle": "Compliance",
@@ -300,6 +275,64 @@
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire"
+  },
+  "vault": {
+    "title": "Document vault",
+    "settingsRowTitle": "Document vault",
+    "settingsRowSubtitle": "Licenses, membership cards, door codes — encrypted, never synced",
+    "webUnavailable": "The document vault needs a native build — secure storage isn't available in this web preview.",
+    "gateTitle": "Unlock vault",
+    "gateBody": "Verify it's you to view your encrypted documents.",
+    "gateUnlockCta": "Unlock",
+    "gateDenied": "Authentication failed.",
+    "gateDeviceUnsecuredWarning": "This device has no screen lock set — anyone holding it can open the vault. Set a PIN, pattern, or biometric lock in system settings for real protection.",
+    "emptyTitle": "Nothing stored yet",
+    "emptyBody": "Photos and codes you add here stay on this device, encrypted, and are never synced or exported.",
+    "addCta": "Add document",
+    "kindLicense": "Weapon license",
+    "kindMembershipCard": "Membership card",
+    "kindDoorCode": "Door code",
+    "kindOther": "Other",
+    "addTitle": "Add to vault",
+    "addTypePhoto": "Photo",
+    "addTypeText": "Text",
+    "addFromCamera": "Take photo",
+    "addFromLibrary": "Choose from library",
+    "addLabelPlaceholder": "Label",
+    "addTextPlaceholder": "e.g. door code",
+    "addSave": "Save",
+    "addPermissionDenied": "Permission denied — allow camera/photo access in system settings to add a document",
+    "detailAddedOn": "Added {{date}}",
+    "detailDelete": "Delete",
+    "detailDeleteConfirmTitle": "Delete this document?",
+    "detailDeleteConfirmBody": "This cannot be undone.",
+    "detailDeleteConfirmCancel": "Cancel",
+    "detailDeleteConfirmConfirm": "Delete"
+  },
+  "about": {
+    "title": "About",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Open-source licenses",
+    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
+    "repoLink": "Source code"
+  },
+  "csv": {
+    "sectionTitle": "Data (CSV)",
+    "exportTitle": "Export CSV",
+    "exportSubtitle": "Share every session, series and shot as a CSV file",
+    "importTitle": "Import CSV",
+    "importSubtitle": "Pick a CSV file to add or update sessions",
+    "exportSuccess": "CSV exported",
+    "exportFailed": "CSV export failed",
+    "importCancelled": "Import cancelled",
+    "importFailed": "CSV import failed",
+    "importErrorsTitle": "Import has errors",
+    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
+    "importConfirmTitle": "Import this file?",
+    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
+    "importConfirmAction": "Import",
+    "importSuccess": "Imported {{count}} session(s)"
   },
   "photoScoring": {
     "title": "Scan target",

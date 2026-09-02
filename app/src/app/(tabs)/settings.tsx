@@ -137,6 +137,15 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
+        <ListRow
+          title={t('vault.settingsRowTitle')}
+          subtitle={t('vault.settingsRowSubtitle')}
+          onPress={() => router.push('/vault')}
+          testID="settings-open-vault"
+        />
+      </Card>
+
+      <Card>
         <ThemedText type="smallBold">{t('csv.sectionTitle')}</ThemedText>
         <ListRow
           title={t('csv.exportTitle')}

@@ -53,6 +53,7 @@ export default tseslint.config(
     files: [
       'scripts/**/*.mjs',
       'app/scripts/**/*.js',
+      'app/plugins/**/*.js',
       'app/**/__mocks__/**/*.js',
       'app/babel.config.js',
       'app/metro.config.js',

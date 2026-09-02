@@ -1,8 +1,8 @@
 {
   "common": {
+    "cancel": "Avbryt",
     "save": "Spara",
-    "edit": "Redigera",
-    "cancel": "Avbryt"
+    "edit": "Redigera"
   },
   "tabs": {
     "home": "Hem",
@@ -166,35 +166,10 @@
     "loadDemoData": "Ladda demodata",
     "wipeData": "Radera data",
     "supportDevelopment": "Stöd utvecklingen",
-    "supportSubtitle": "Öppnar Buy Me a Coffee i webbläsaren. Gratis app; donationer låser inte upp något.",
-    "about": "Om appen",
     "birthYear": "Födelseår",
-    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav."
-  },
-  "about": {
-    "title": "Om appen",
-    "appName": "ShotLedger",
-    "version": "Version {{version}}",
-    "licensesTitle": "Licenser för öppen källkod",
-    "licensesBody": "ShotLedger byggs med paket med öppen källkod. En fullständig licenslista publiceras tillsammans med källkoden.",
-    "repoLink": "Källkod"
-  },
-  "csv": {
-    "sectionTitle": "Data (CSV)",
-    "exportTitle": "Exportera CSV",
-    "exportSubtitle": "Dela alla pass, serier och skott som en CSV-fil",
-    "importTitle": "Importera CSV",
-    "importSubtitle": "Välj en CSV-fil för att lägga till eller uppdatera pass",
-    "exportSuccess": "CSV exporterad",
-    "exportFailed": "CSV-export misslyckades",
-    "importCancelled": "Import avbruten",
-    "importFailed": "CSV-import misslyckades",
-    "importErrorsTitle": "Importen har fel",
-    "importErrors": "{{count}} rad(er) kunde inte läsas — åtgärda filen och försök igen",
-    "importConfirmTitle": "Importera den här filen?",
-    "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{ammoLots}} nya ammunitionspartier",
-    "importConfirmAction": "Importera",
-    "importSuccess": "Importerade {{count}} pass"
+    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
+    "supportSubtitle": "Öppnar Buy Me a Coffee i webbläsaren. Gratis app; donationer låser inte upp något.",
+    "about": "Om appen"
   },
   "compliance": {
     "settingsTitle": "Efterlevnad",
@@ -300,6 +275,64 @@
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch"
+  },
+  "vault": {
+    "title": "Dokumentvalv",
+    "settingsRowTitle": "Dokumentvalv",
+    "settingsRowSubtitle": "Vapenlicens, medlemskort, portkoder — krypterat, synkas aldrig",
+    "webUnavailable": "Dokumentvalvet kräver en nativ build — säker lagring är inte tillgänglig i den här webbförhandsvisningen.",
+    "gateTitle": "Lås upp valvet",
+    "gateBody": "Verifiera att det är du för att visa dina krypterade dokument.",
+    "gateUnlockCta": "Lås upp",
+    "gateDenied": "Autentiseringen misslyckades.",
+    "gateDeviceUnsecuredWarning": "Den här enheten saknar skärmlås — vem som helst som håller i den kan öppna valvet. Ställ in kod, mönster eller biometriskt lås i systeminställningarna för verkligt skydd.",
+    "emptyTitle": "Inget sparat än",
+    "emptyBody": "Foton och koder du lägger till här stannar på den här enheten, krypterade, och synkas eller exporteras aldrig.",
+    "addCta": "Lägg till dokument",
+    "kindLicense": "Vapenlicens",
+    "kindMembershipCard": "Medlemskort",
+    "kindDoorCode": "Portkod",
+    "kindOther": "Övrigt",
+    "addTitle": "Lägg till i valvet",
+    "addTypePhoto": "Foto",
+    "addTypeText": "Text",
+    "addFromCamera": "Ta foto",
+    "addFromLibrary": "Välj från bildbibliotek",
+    "addLabelPlaceholder": "Namn",
+    "addTextPlaceholder": "t.ex. portkod",
+    "addSave": "Spara",
+    "addPermissionDenied": "Åtkomst nekad — tillåt kamera/bilder i systeminställningarna för att lägga till ett dokument",
+    "detailAddedOn": "Tillagt {{date}}",
+    "detailDelete": "Ta bort",
+    "detailDeleteConfirmTitle": "Ta bort det här dokumentet?",
+    "detailDeleteConfirmBody": "Det går inte att ångra.",
+    "detailDeleteConfirmCancel": "Avbryt",
+    "detailDeleteConfirmConfirm": "Ta bort"
+  },
+  "about": {
+    "title": "Om appen",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Licenser för öppen källkod",
+    "licensesBody": "ShotLedger byggs med paket med öppen källkod. En fullständig licenslista publiceras tillsammans med källkoden.",
+    "repoLink": "Källkod"
+  },
+  "csv": {
+    "sectionTitle": "Data (CSV)",
+    "exportTitle": "Exportera CSV",
+    "exportSubtitle": "Dela alla pass, serier och skott som en CSV-fil",
+    "importTitle": "Importera CSV",
+    "importSubtitle": "Välj en CSV-fil för att lägga till eller uppdatera pass",
+    "exportSuccess": "CSV exporterad",
+    "exportFailed": "CSV-export misslyckades",
+    "importCancelled": "Import avbruten",
+    "importFailed": "CSV-import misslyckades",
+    "importErrorsTitle": "Importen har fel",
+    "importErrors": "{{count}} rad(er) kunde inte läsas — åtgärda filen och försök igen",
+    "importConfirmTitle": "Importera den här filen?",
+    "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{ammoLots}} nya ammunitionspartier",
+    "importConfirmAction": "Importera",
+    "importSuccess": "Importerade {{count}} pass"
   },
   "photoScoring": {
     "title": "Skanna tavla",
