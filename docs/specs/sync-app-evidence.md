@@ -62,7 +62,40 @@ monotonic-and-capped, `buildClientChange` always parses as a `ClientChange`,
 
 ### 3a. Mutation
 
-`RESULT_PLACEHOLDER`
+`pnpm mutation` (Stryker, `shared/src/sync-client/*.ts` added to the `mutate`
+globs), 7 min 55 s:
+
+| Directory                            | Score  | Killed | Timeout | Survived |
+| ------------------------------------ | ------ | ------ | ------- | -------- |
+| `sync-client`                        | 97.80  | 220    | 2       | 5        |
+| ↳ `order.ts`                         | 100.00 | 11     | 0       | 0        |
+| ↳ `outbox.ts`                        | 100.00 | 8      | 0       | 0        |
+| ↳ `shadow.ts`                        | 100.00 | 8      | 0       | 0        |
+| ↳ `photo-uri.ts`                     | 100.00 | 30     | 0       | 0        |
+| ↳ `status.ts`                        | 100.00 | 17     | 0       | 0        |
+| ↳ `engine.ts`                        | 97.65  | 81     | 2       | 2        |
+| ↳ `photo-queue.ts`                   | 96.30  | 52     | 0       | 2        |
+| ↳ `backoff.ts`                       | 92.86  | 13     | 0       | 1        |
+| `sync` (protocol + merge, unchanged) | 100.00 | 50     | 0       | 0        |
+
+Whole-run score **98.09**, above the configured break threshold of 95, and
+in line with the rest of the codebase (`scoring` 98.33, `timer` 98.16,
+`target-scoring` 99.51).
+
+**Honest limitation:** the five surviving `sync-client` mutants were not
+individually enumerated. The first run's clear-text detail was lost to
+output truncation, and the scoped re-run to recover it was killed after
+several minutes because the machine was saturated (load average 82 — three
+other agents plus the Android build) and the emulator verification in §5 was
+the deliverable that could not be substituted. The aggregate is recorded
+above; identifying and killing those five is the obvious follow-up, and
+`npx stryker run --mutate 'shared/src/sync-client/*.ts' --reporters clear-text`
+takes about a minute on an idle machine.
+
+The two timeouts are in `engine.ts` and are expected: mutating a loop bound
+(`MAX_PULL_ITERATIONS` / `MAX_PUSH_ITERATIONS`) makes the very tests that
+exist to prove those caps terminate run for longer than Stryker's budget.
+Stryker counts a timeout as killed, and both caps have explicit tests.
 
 ## 4. What the end-to-end suite actually proves
 
