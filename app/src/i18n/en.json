@@ -528,10 +528,9 @@
     }
   },
   "shotlog": {
-    "sectionRowTitle": "Import from ShotLog",
-    "sectionRowSubtitle": "Read a ShotLog CSV export into your logbook",
+    "sectionRowTitle": "Import from ShotLog (dev)",
     "title": "ShotLog import",
-    "intro": "ShotLog exports one row per session — a total, no individual shots. Each row becomes a session with a total-only series. Review every row before importing.",
+    "intro": "Dev tool. ShotLog exports one row per session — a total, no individual shots. Each row becomes a session with a total-only series. Map the tags, then review every row before importing.",
     "pickFile": "Choose CSV file",
     "pickFileSubtitle": "Pick the file ShotLog exported",
     "cancelled": "No file chosen.",
@@ -539,6 +538,19 @@
     "imported": "Imported {{created}} sessions ({{skipped}} skipped).",
     "noRowsTitle": "Nothing to import",
     "noRowsBody": "The file had no readable session rows.",
+    "tagMappingTitle": "What do these tags mean?",
+    "tagMappingIntro": "ShotLog has no discipline, class or firearm field — it is all in the tags. Change any guess before importing.",
+    "tagLabel": "{{tag}} ({{count}} rows)",
+    "role": {
+      "ignore": "Keep as a plain tag",
+      "firearm": "Firearm: {{tag}}",
+      "competition": "Competition (not training)",
+      "sighter": "Total includes a sighter series",
+      "final": "Final",
+      "dnf": "Did not finish",
+      "discipline": "Discipline: {{name}}",
+      "weaponGroup": "Weapon group {{code}}"
+    },
     "summaryTitle": "Preview",
     "summaryCounts": "{{total}} rows · {{new}} new · {{duplicates}} duplicates · {{empty}} empty · {{errors}} errors",
     "summaryDateUnknown": "{{count}} rows share one timestamp — their real dates were lost in ShotLog and are marked date unknown.",
@@ -559,10 +571,11 @@
       "probable-duplicate": "Probably already in the logbook"
     },
     "warning": {
-      "inner-ten-exceeds-ten-count": "(X) > X",
+      "inner-ten-exceeds-ten-count": "Inner tens > tens",
       "auto-generated-name": "Auto-named",
       "firearm-column-unsupported": "Firearm column ignored",
       "conflicting-discipline-tags": "Conflicting discipline tags",
+      "conflicting-weapon-group-tags": "Conflicting weapon-group tags",
       "ambiguous-firearm-tag": "Ambiguous firearm tag"
     }
   }

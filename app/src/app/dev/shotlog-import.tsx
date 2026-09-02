@@ -5,7 +5,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
-import { DISCIPLINES, SPSF_WEAPON_GROUPS, type ShotlogPlanRow } from '@shotledger/shared';
+import {
+  DISCIPLINES,
+  SPSF_WEAPON_GROUPS,
+  type ShotlogPlanRow,
+  type ShotlogTagRole,
+} from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -25,11 +30,41 @@ import { Spacing } from '@/theme/tokens';
 const PAGE_SIZE = 20;
 const UNSET = '—';
 
+// The role picker's values are strings, so each role is encoded as one.
+// `|` separates the parts because weapon-group ids contain a colon
+// (`spsf:C`). `firearm` carries the tag's own text, hence the label argument.
+function encodeRole(role: ShotlogTagRole): string {
+  switch (role.kind) {
+    case 'discipline':
+      return `discipline|${role.disciplineId}`;
+    case 'weapon-group':
+      return `group|${role.weaponGroup}|${role.shooterClass ?? ''}`;
+    default:
+      return role.kind;
+  }
+}
+
+function decodeRole(value: string, label: string): ShotlogTagRole {
+  const [kind, first, second] = value.split('|');
+  if (kind === 'discipline') return { kind: 'discipline', disciplineId: first! };
+  if (kind === 'group') {
+    return { kind: 'weapon-group', weaponGroup: first!, shooterClass: second || null };
+  }
+  if (kind === 'firearm') return { kind: 'firearm', label };
+  if (kind === 'competition' || kind === 'sighter' || kind === 'final' || kind === 'dnf') {
+    return { kind };
+  }
+  return { kind: 'ignore' };
+}
+
 export default function ShotlogImportScreen() {
   const { t } = useTranslation();
   const {
     plan,
     status,
+    tags,
+    tagMapping,
+    setTagRole,
     planImport,
     toggleRow,
     setAllSelected,
@@ -39,12 +74,39 @@ export default function ShotlogImportScreen() {
   } = useShotlogImport();
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
   const firearms = db ? listFirearms(db) : [];
   const selectedCount = plan?.rows.filter((row) => row.selected).length ?? 0;
 
   function statusLabel(row: ShotlogPlanRow): string {
     return t(`shotlog.status.${row.status}`);
+  }
+
+  /** The chosen role, as the one line shown under the tag's name. */
+  function roleLabel(role: ShotlogTagRole, tagLabel: string): string {
+    const match = roleOptions(tagLabel).find((option) => option.value === encodeRole(role));
+    return match?.label ?? t('shotlog.role.ignore');
+  }
+
+  /** Every role a tag may be given, in the order the picker shows them. */
+  function roleOptions(tagLabel: string) {
+    return [
+      { value: 'ignore', label: t('shotlog.role.ignore') },
+      { value: 'firearm', label: t('shotlog.role.firearm', { tag: tagLabel }) },
+      { value: 'competition', label: t('shotlog.role.competition') },
+      { value: 'sighter', label: t('shotlog.role.sighter') },
+      { value: 'final', label: t('shotlog.role.final') },
+      { value: 'dnf', label: t('shotlog.role.dnf') },
+      ...DISCIPLINES.map((discipline) => ({
+        value: `discipline|${discipline.id}`,
+        label: t('shotlog.role.discipline', { name: disciplineLabel(t, discipline.id) }),
+      })),
+      ...SPSF_WEAPON_GROUPS.map((group) => ({
+        value: `group|${group.id}|`,
+        label: t('shotlog.role.weaponGroup', { code: group.code }),
+      })),
+    ];
   }
 
   return (
@@ -77,6 +139,43 @@ export default function ShotlogImportScreen() {
           </ThemedText>
         )}
       </Card>
+
+      {tags.length > 0 && (
+        <Card testID="shotlog-tag-mapping">
+          <ThemedText type="smallBold">{t('shotlog.tagMappingTitle')}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('shotlog.tagMappingIntro')}
+          </ThemedText>
+          {/* One row per tag, its picker rendered only while open: every role
+              is a chip, and laying out all of them for every tag at once was
+              heavy enough to stall the UI thread on a real device. */}
+          {tags.map((tag) => {
+            const role = tagMapping[tag.key] ?? { kind: 'ignore' };
+            const open = expandedTag === tag.key;
+            return (
+              <View key={tag.key}>
+                <ListRow
+                  title={t('shotlog.tagLabel', { tag: tag.label, count: tag.count })}
+                  subtitle={roleLabel(role, tag.label)}
+                  onPress={() => setExpandedTag(open ? null : tag.key)}
+                  testID={`shotlog-tag-${tag.key}`}
+                />
+                {open && (
+                  <OptionPicker
+                    label={t('shotlog.tagMappingTitle')}
+                    options={roleOptions(tag.label)}
+                    value={encodeRole(role)}
+                    onChange={(value) => {
+                      setTagRole(tag.key, decodeRole(value ?? 'ignore', tag.label));
+                      setExpandedTag(null);
+                    }}
+                  />
+                )}
+              </View>
+            );
+          })}
+        </Card>
+      )}
 
       {plan && plan.rows.length === 0 && (
         <EmptyState title={t('shotlog.noRowsTitle')} body={t('shotlog.noRowsBody')} />

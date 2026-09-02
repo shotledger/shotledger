@@ -182,12 +182,6 @@ export default function SettingsScreen() {
           onPress={onImportCsv}
           testID="settings-import-csv"
         />
-        <ListRow
-          title={t('shotlog.sectionRowTitle')}
-          subtitle={t('shotlog.sectionRowSubtitle')}
-          onPress={() => router.push('/shotlog/import')}
-          testID="settings-import-shotlog"
-        />
         {statusText ? (
           <ThemedText type="small" themeColor="textSecondary" testID="csv-status">
             {statusText}
