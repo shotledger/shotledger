@@ -228,7 +228,6 @@ export class IpscTimerEngine {
 
       if (this.kind === 'running') {
         this.runElapsedMs += remaining;
-        remaining = 0;
         const silenceLimit = this.config.autoStopSilenceMs ?? 0;
         if (silenceLimit > 0 && this.detector.silenceMsAt(this.runElapsedMs) >= silenceLimit) {
           cues.push(...this.stop());
@@ -238,7 +237,6 @@ export class IpscTimerEngine {
 
       if (remaining < this.remainingMs) {
         this.remainingMs -= remaining;
-        remaining = 0;
         break;
       }
 
