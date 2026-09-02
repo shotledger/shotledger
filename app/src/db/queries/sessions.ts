@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
+import type { LocationUsage } from '@shotledger/shared';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql } from 'drizzle-orm';
 
 import type { CompetitionLevel } from '../../features/session/labels';
 import { sessions } from '../schema';
@@ -7,9 +8,19 @@ import { newId, nowIso } from '../util';
 
 export type SessionType = 'training' | 'competition';
 
+/**
+ * What the session records — chosen at creation, never mixed (maintainer
+ * ruling 2026-09-03). `'series'` logs scored series; `'rounds'` logs a fixed
+ * number of fired shots in `extra_rounds` and has no series at all.
+ * Orthogonal to `SessionType`: both kinds can be training or competition.
+ */
+export type SessionKind = 'series' | 'rounds';
+
 export interface CreateSessionInput {
   name: string;
   type: SessionType;
+  /** Defaults to `'series'`, matching the column default and every pre-0005 row. */
+  kind?: SessionKind;
   disciplineId: string;
   programId?: string | null;
   competitionLevel?: CompetitionLevel | null;
@@ -43,6 +54,7 @@ export function createSession(db: Database, input: CreateSessionInput) {
     deletedAt: null,
     name: input.name,
     type: input.type,
+    kind: input.kind ?? 'series',
     disciplineId: input.disciplineId,
     programId: input.programId ?? null,
     competitionLevel: input.competitionLevel ?? null,
@@ -75,8 +87,11 @@ export function getSession(db: Database, id: string) {
     .get();
 }
 
+// `kind` joins `type`/`disciplineId` as immutable after creation: flipping it
+// would strand a session's series or its extra_rounds behind a UI that no
+// longer shows them (maintainer ruling: "choose at creation").
 export type UpdateSessionInput = Partial<
-  Omit<CreateSessionInput, 'type' | 'disciplineId'> & {
+  Omit<CreateSessionInput, 'type' | 'kind' | 'disciplineId'> & {
     name: string;
     /** Unscored extra rounds (A1 §A1.3). Write it via `setSessionExtraRounds`
      * so the firearm round counter moves with it — never directly. */
@@ -160,8 +175,30 @@ export function softDeleteSession(db: Database, id: string) {
   db.update(sessions).set({ deletedAt: now, updatedAt: now }).where(eq(sessions.id, id)).run();
 }
 
+/**
+ * Distinct locations this shooter has used, with usage count and last use —
+ * the offline source for the new-session Location autocomplete. Ranking is
+ * `rankRecentLocations` in `@shotledger/shared` (pure, tested there); this
+ * query only gathers the raw usage.
+ */
+export function listLocationUsage(db: Database): LocationUsage[] {
+  return db
+    .select({
+      location: sql<string>`trim(${sessions.location})`,
+      count: sql<number>`count(*)`,
+      lastUsedAt: sql<string>`max(${sessions.startedAt})`,
+    })
+    .from(sessions)
+    .where(and(isNull(sessions.deletedAt), isNotNull(sessions.location), ne(sessions.location, '')))
+    .groupBy(sql`lower(trim(${sessions.location}))`)
+    .all()
+    .filter((row) => row.location !== '');
+}
+
 export interface ListSessionsFilter {
   type?: SessionType;
+  /** Series-logged vs fixed-shot-count sessions (§3 `sessions.kind`). */
+  kind?: SessionKind;
   disciplineId?: string;
   /** ISO date/time, inclusive lower bound on started_at. */
   startedFrom?: string;
@@ -172,6 +209,7 @@ export interface ListSessionsFilter {
 export function listSessions(db: Database, filter: ListSessionsFilter = {}) {
   const conditions = [isNull(sessions.deletedAt)];
   if (filter.type) conditions.push(eq(sessions.type, filter.type));
+  if (filter.kind) conditions.push(eq(sessions.kind, filter.kind));
   if (filter.disciplineId) conditions.push(eq(sessions.disciplineId, filter.disciplineId));
   if (filter.startedFrom) conditions.push(gte(sessions.startedAt, filter.startedFrom));
   if (filter.startedTo) conditions.push(lte(sessions.startedAt, filter.startedTo));
