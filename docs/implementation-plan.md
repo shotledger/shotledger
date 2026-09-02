@@ -857,7 +857,18 @@ restates §0 rules 1–6 verbatim.
 > `VERIFY:` question in `sync-protocol-spec.md` §1 about whether `settings`
 > and `session_tags` should sync.
 
+> **Two of the three timers have since shipped.** The regular PAR/interval
+> timer (`feat/shot-timer`, `shared/src/timer/engine.ts`) and the
+> IPSC-style microphone shot timer (`feat/ipsc-shot-timer`,
+> `shared/src/timer/shot-detector.ts` +
+> `app/src/platform/shot-listener.ts`) sit behind one Timer entry, picked
+> with a segmented control. Neither added a dependency. The fälttimer is
+> still open and still needs the maintainer to settle the command wording
+> and timings from SHB. See plan.md's Timers block for the IPSC timer's
+> documented limits (text-plus-tone prompts rather than TTS; 80 ms
+> debounce; thresholds not yet calibrated on a real firing line).
+
 Photo target scoring; WebShooter import; document vault; share cards;
-timers; iOS release.
+the fälttimer; iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.
