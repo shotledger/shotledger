@@ -13,7 +13,7 @@ import {
   type TimerCueKind,
 } from '@shotledger/shared';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { vibrate } from '@/platform/haptics';
 import { speak, stopSpeaking } from '@/platform/speech';
@@ -22,6 +22,15 @@ import { playTimerCueSound, releaseTimerCuePlayers } from '@/platform/timer-cues
 const TICK_MS = 100;
 const KEEP_AWAKE_TAG = 'falt-timer';
 const COMMAND_LANGUAGE = 'sv-SE';
+
+const IDLE_PHASE: FaltPhase = {
+  kind: 'idle',
+  elapsedMs: 0,
+  remainingMs: 0,
+  shootingElapsedMs: 0,
+  shootingRemainingMs: 0,
+  eventsPassed: 0,
+};
 
 /**
  * Tone per cue — played alongside the spoken command, and on its own when
@@ -59,9 +68,19 @@ export function useFaltTimer(
   settings: FaltTimerSettings,
   spokenPrompts: boolean,
 ): UseFaltTimerResult {
-  const engine = useMemo(() => new FaltTimerEngine(settings), [settings]);
-  const [phase, setPhase] = useState<FaltPhase>(() => engine.getPhase());
+  const [phase, setPhase] = useState<FaltPhase>(IDLE_PHASE);
   const [currentCue, setCurrentCue] = useState<FaltCueKind | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Built fresh in `start()`, from whatever `settings` are current then —
+  // mirrors use-ipsc-timer.ts's `engineRef`. A ref (not `useMemo`) because
+  // this is a mutable, stateful instance with imperative lifecycle methods:
+  // `useMemo` never guarantees it won't recompute the value on some later
+  // render (React may discard a memoized value at any time, and Strict Mode
+  // deliberately does so to surface exactly this kind of bug), which would
+  // silently orphan a running engine while the render output moved on to a
+  // fresh, never-started one.
+  const engineRef = useRef<FaltTimerEngine | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTickRef = useRef(0);
 
@@ -108,6 +127,8 @@ export function useFaltTimer(
   }, [teardown]);
 
   const tick = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
     const now = Date.now();
     const delta = now - lastTickRef.current;
     lastTickRef.current = now;
@@ -120,7 +141,7 @@ export function useFaltTimer(
       stopInterval();
       deactivateKeepAwake(KEEP_AWAKE_TAG);
     }
-  }, [engine, playCues, stopInterval]);
+  }, [playCues, stopInterval]);
 
   const runInterval = useCallback(() => {
     stopInterval();
@@ -129,44 +150,57 @@ export function useFaltTimer(
   }, [stopInterval, tick]);
 
   const start = useCallback(() => {
+    const engine = new FaltTimerEngine(settings);
+    engineRef.current = engine;
     playCues(engine.start());
     setPhase(engine.getPhase());
+    setIsRunning(engine.isRunning());
     void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
     runInterval();
-  }, [engine, playCues, runInterval]);
+  }, [settings, playCues, runInterval]);
 
   const pause = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
     engine.pause();
     stopInterval();
     stopSpeaking();
     setPhase(engine.getPhase());
-  }, [engine, stopInterval]);
+    setIsRunning(engine.isRunning());
+  }, [stopInterval]);
 
   const resume = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
     engine.resume();
     setPhase(engine.getPhase());
+    setIsRunning(engine.isRunning());
     runInterval();
-  }, [engine, runInterval]);
+  }, [runInterval]);
 
   const reset = useCallback(() => {
     teardown();
-    engine.reset();
-    setPhase(engine.getPhase());
+    engineRef.current = null;
+    setPhase(IDLE_PHASE);
     setCurrentCue(null);
-  }, [engine, teardown]);
+    setIsRunning(false);
+  }, [teardown]);
 
   const markera = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
     teardown();
     if (spokenPrompts) speak(FALT_MARKERA_TEXT, { language: COMMAND_LANGUAGE });
     engine.markera();
     setPhase(engine.getPhase());
     setCurrentCue(null);
-  }, [engine, spokenPrompts, teardown]);
+    setIsRunning(engine.isRunning());
+  }, [spokenPrompts, teardown]);
 
   return {
     phase,
     currentCue,
-    isRunning: engine.isRunning(),
+    isRunning,
     start,
     pause,
     resume,

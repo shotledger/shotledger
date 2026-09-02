@@ -279,7 +279,16 @@ barometer; no scoring), Skytteappen (club ecosystem).
         the timer cannot be scrubbed while paused and a command cannot be
         tapped to jump to it (both benchmark features, not implemented);
         and the fältskjutning discipline itself stays out of the logbook
-        (not a v1/v2 discipline) — only the timer is in scope.
+        (not a v1/v2 discipline) — only the timer is in scope. Device
+        verification on the emulator (`shotledger3`) caught the Pause/Resume
+        button showing the wrong label right after Start: the engine lived in
+        a `useMemo`, which React does not guarantee is stable across renders
+        (Strict Mode deliberately discards and recomputes it to catch exactly
+        this), silently orphaning the running instance behind a fresh,
+        never-started one. Fixed by building the engine in `start()` and
+        holding it in a ref instead, mirroring `use-ipsc-timer.ts`'s
+        `engineRef` pattern, with `isRunning` as real state updated alongside
+        each transition rather than read live off the ref during render.
   - [x] **IPSC-style shot timer** — "Are you ready?" / "Standby",
         random-delay start beep, then split (lap) times detected from the
         sound of the shots via the microphone; shows first-shot time, splits,
