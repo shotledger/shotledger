@@ -15,7 +15,8 @@ import { newId } from '@/db/util';
 
 import { db } from '@/db/client';
 import { createSyncStore } from '@/db/queries/sync-store';
-import { getSessionTokenCache, getSyncTransport } from './client';
+import { clearSessionToken } from '@/platform/secure-store';
+import { getSessionTokenCache, getSyncTransport, setSessionTokenCache } from './client';
 import { runPhotoQueue } from './photo-queue-runner';
 
 type Listener = (status: SyncStatus) => void;
@@ -82,6 +83,14 @@ async function runOnce(): Promise<void> {
   } catch (error) {
     const errorKey = classifySyncError(error);
     emit({ type: 'failed', errorKey });
+    if (errorKey === 'unauthenticated') {
+      // The session is gone (signed out elsewhere, or the account deleted).
+      // Dropping the token stops canSync() and with it every trigger — the
+      // alternative is a 401 on every foreground until the app is reinstalled.
+      // Queued changes and cursors are kept: signing back in resumes them.
+      setSessionTokenCache(null);
+      void clearSessionToken();
+    }
     if (shouldRetry(errorKey)) {
       cancelRetry();
       retryTimer = setTimeout(
