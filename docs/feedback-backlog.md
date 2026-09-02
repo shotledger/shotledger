@@ -155,6 +155,33 @@ where the work lives.
       transient discriminator (attack/rise time, or a spectral check) rather than
       a louder threshold, plus AGC disabled if the platform allows it. Re-tuning
       the default number will not solve this.
+
+      **Sequenced before the timer unification** (maintainer, 2026-09-03), so
+          unification does not ship detection as a known-unreliable option.
+          Research, 2026-09-03, gives four concrete leads:
+
+          1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
+             `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
+             `UNPROCESSED` gives raw audio and is the recommended fallback where
+             supported. `AutomaticGainControl` (AudioFx) can also be attached to an
+             `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
+             does not obviously expose the audio source, so this may need a config
+             plugin, a patch, or another capture path — establish that first.
+          2. **Commercial detectors gate on event duration, not amplitude alone.** A
+             muzzle blast is a very short impulse: an event is accepted as a gunshot
+             only when it is under ~400 ms, with sensitivity expressed as an event
+             length of 25-80 ms (shorter = more sensitive). We have no such
+             discriminator today.
+          3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
+             periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
+             frames. Rise-time or spectral analysis needs sample access, so it
+             likely requires a new capture dependency or a native module — a
+             maintainer decision under hard rule 2, not an assumption.
+          4. Modern smartphone gunshot detection is ML-classified precisely because
+             impulsive non-gunshot sounds resist rule-based rejection. A calibration
+             step ("fire one shot") that sets the threshold from the measured peak
+             and noise floor is a cheaper middle ground than a fixed dBFS value.
+
 - [ ] **Collapse the shot-detection options** — "I dont want to see the Shot
       detection options all the time. It should be able to expand/collapse or
       similar. Hopefully it does not need to change often."
@@ -165,10 +192,9 @@ Maintainer, 2026-09-03: "I dont see a need for PAR timer and Shot timer they
 can be combined." Plus: a user-authored custom program, non-repetitive
 patterns, a start interval as two sliders, and clearer naming.
 
-- [?] **"PAR" must be renamed.** It is not an acronym — "par time" borrows
-  golf's "par", a set standard to meet — so it means nothing to our users.
-  Proposed: **"Time limit" / "Tidsgrans"** (or "Fixed time"). Maintainer to
-  confirm the wording.
+- [ ] **"PAR" renamed to "Time Limit"** (maintainer, 2026-09-03: "Use Time
+      Limit for now"). PAR is not an acronym — "par time" borrows golf's "par",
+      a set standard to meet — so it meant nothing to our users.
 - [ ] **Combine the PAR/interval timer and the IPSC shot timer into one timer.**
       They are the same machine: a sequence of timed phases with cues. Shot
       detection becomes an _option_ layered on any program (record splits from
@@ -184,6 +210,14 @@ patterns, a start interval as two sliders, and clearer naming.
       timer reaches zero. Mirror that: explicit steps in storage, with a
       "repeat x N" helper in the **editor** that expands into steps. That yields
       arbitrary non-repetitive sequences for free, and keeps the executor trivial.
+      **Programs are NOT interchangeable with rotation_target** (maintainer:
+      "totally different use cases") — take the shape, drop the target-specific
+      payload (`command: show/hide`, `target_system`).
+- [ ] **Per-event feedback is user-selectable** — "I do want the user to be able
+      to select sound and/or haptic feedback for every event". Each step carries
+      its own cue: a sound (or none), a haptic (or none), or both. This replaces
+      rotation_target's `audio_ids` plus target command. `expo-speech` and
+      `expo-haptics` are already dependencies.
 - [ ] **Start delay as two sliders** (min and max). Equal values mean a fixed
       delay; different values mean a random delay in that range — one control
       that covers both, as the maintainer described.
