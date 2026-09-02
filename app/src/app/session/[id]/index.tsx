@@ -151,6 +151,12 @@ export default function SessionDetailScreen() {
 
       <WebShooterSessionBadge session={session} />
 
+      <PrimaryButton
+        label={t('share.share')}
+        onPress={() => router.push(`/session/${id}/share`)}
+        testID="share-session"
+      />
+
       <Card>
         {results.hasFinal ? (
           <View style={styles.resultsRow}>
