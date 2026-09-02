@@ -14,12 +14,17 @@ import {
   View,
   type ViewProps,
 } from 'react-native';
-import Svg, { Circle, Polygon, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import type { Point } from '@shotledger/shared';
+
+import type { CapturedPhoto } from '@/features/photo-scoring/capture';
+import { cropLoupe } from '@/features/photo-scoring/capture';
 
 const HANDLE_RADIUS = 16;
 const HANDLE_COLOR = '#38bdf8';
 const GUIDE_COLOR = 'rgba(56, 189, 248, 0.5)';
+const LOUPE_SIZE = 140;
+const CROSSHAIR_COLOR = '#38bdf8';
 
 export interface CornerAdjusterProps extends Omit<ViewProps, 'onLayout'> {
   photoUri: string;
@@ -30,6 +35,67 @@ export interface CornerAdjusterProps extends Omit<ViewProps, 'onLayout'> {
   onChange: (corners: readonly Point[]) => void;
   /** Short labels for the four handles, already translated. */
   labels: readonly string[];
+  /**
+   * Full-resolution photo, and the geometry-px -> original-px scale — when
+   * given, a magnified loupe tracks the corner being dragged, cropped from
+   * full resolution (the geometry copy alone is too coarse to place a
+   * corner against fine detail, same rationale as `MarkLoupe`).
+   */
+  photo?: CapturedPhoto;
+  scaleToOriginal?: number;
+}
+
+/** A small, gesture-less magnifier cropped from the full-resolution photo. */
+function CornerLoupe({
+  photo,
+  center,
+  scaleToOriginal,
+}: {
+  photo: CapturedPhoto;
+  center: Point;
+  scaleToOriginal: number;
+}) {
+  const [cropUri, setCropUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    cropLoupe(photo, center.x, center.y, scaleToOriginal, 220)
+      .then((crop) => {
+        if (!cancelled) setCropUri(crop.uri);
+      })
+      .catch(() => {
+        if (!cancelled) setCropUri(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [photo, center.x, center.y, scaleToOriginal]);
+
+  return (
+    <View style={styles.loupe} testID="corner-loupe">
+      {cropUri && (
+        <Image source={{ uri: cropUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      )}
+      <Svg style={StyleSheet.absoluteFill} width={LOUPE_SIZE} height={LOUPE_SIZE}>
+        <Line
+          x1={LOUPE_SIZE / 2}
+          y1={0}
+          x2={LOUPE_SIZE / 2}
+          y2={LOUPE_SIZE}
+          stroke={CROSSHAIR_COLOR}
+          strokeWidth={1}
+        />
+        <Line
+          x1={0}
+          y1={LOUPE_SIZE / 2}
+          x2={LOUPE_SIZE}
+          y2={LOUPE_SIZE / 2}
+          stroke={CROSSHAIR_COLOR}
+          strokeWidth={1}
+        />
+      </Svg>
+    </View>
+  );
 }
 
 export function CornerAdjuster({
@@ -39,10 +105,13 @@ export function CornerAdjuster({
   corners,
   onChange,
   labels,
+  photo,
+  scaleToOriginal,
   style,
   ...rest
 }: CornerAdjusterProps) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const [activeIndex, setActiveIndex] = useState(-1);
   // The pan handlers are created once, so they read the live corners, scale
   // and onChange through refs rather than closing over stale state. Every ref
   // is written in an effect, never during render.
@@ -83,7 +152,9 @@ export function CornerAdjuster({
           });
           // Only grab a handle the touch is actually near, so a stray tap does
           // not yank the closest corner across the photo.
-          draggingRef.current = bestDistance <= HANDLE_RADIUS * 2.5 ? best : -1;
+          const grabbed = bestDistance <= HANDLE_RADIUS * 2.5 ? best : -1;
+          draggingRef.current = grabbed;
+          setActiveIndex(grabbed);
         },
         onPanResponderMove: (event) => {
           const index = draggingRef.current;
@@ -102,6 +173,7 @@ export function CornerAdjuster({
         },
         onPanResponderRelease: () => {
           draggingRef.current = -1;
+          setActiveIndex(-1);
         },
       }),
     );
@@ -109,6 +181,7 @@ export function CornerAdjuster({
 
   const scale = layout.width > 0 ? layout.width / imageWidth : 0;
   const polygon = corners.map((c) => `${c.x * scale},${c.y * scale}`).join(' ');
+  const activeCorner = activeIndex >= 0 ? corners[activeIndex] : undefined;
 
   return (
     <View style={[styles.container, style]} onLayout={onLayout} {...rest}>
@@ -153,6 +226,11 @@ export function CornerAdjuster({
             ))}
           </Svg>
         )}
+        {activeCorner && photo && scaleToOriginal && (
+          <View style={styles.loupeAnchor} pointerEvents="none">
+            <CornerLoupe photo={photo} center={activeCorner} scaleToOriginal={scaleToOriginal} />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -179,5 +257,19 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#000',
     overflow: 'hidden',
+  },
+  loupeAnchor: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  loupe: {
+    width: LOUPE_SIZE,
+    height: LOUPE_SIZE,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
 });

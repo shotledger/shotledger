@@ -57,8 +57,17 @@ import { Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
 
-/** Phase 1 is precision-face only — see the spec §0 and CV spike §6.2. */
-const SUPPORTED_FACE_ID = 'spsf-pistol-25m-precision';
+/**
+ * Phase 1 shipped auto-geometry for the precision face only (spec §0, CV
+ * spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment)
+ * is added here as MANUAL-ONLY: `guess_kind` mistypes it on 8/10 photos and
+ * a misdetection makes the ring scale 2.5x wrong, so the auto pipeline is
+ * never attempted for it — capture goes straight to the four-corner screen.
+ * Any other face still gets the "not supported" message.
+ */
+const AUTO_FACE_ID = 'spsf-pistol-25m-precision';
+const MANUAL_ONLY_FACE_ID = 'spsf-snabbskjutning-25m';
+const SUPPORTED_FACE_IDS: ReadonlySet<string> = new Set([AUTO_FACE_ID, MANUAL_ONLY_FACE_ID]);
 
 const REASON_KEYS: Record<ValidityReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
@@ -77,7 +86,8 @@ export default function ScanScreen() {
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
   const faceId = getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '';
-  const supported = faceId === SUPPORTED_FACE_ID;
+  const supported = SUPPORTED_FACE_IDS.has(faceId);
+  const manualOnly = faceId === MANUAL_ONLY_FACE_ID;
   const target = supported ? requireTargetFace(faceId) : undefined;
 
   // Caliber comes from the session's firearm; the picker is the fallback when
@@ -113,6 +123,14 @@ export default function ScanScreen() {
     try {
       const image = await prepareGeometryImage(captured);
       setGeometryImage(image);
+      if (manualOnly) {
+        // The auto pipeline is validated for the precision face's solid
+        // black disc only (spec §0); the milsnabb annulus goes straight to
+        // manual corners rather than risk a confident, wrong lock.
+        setCorners(defaultCorners(image.width, image.height));
+        setPhase('corners');
+        return;
+      }
       const result = runGeometry({
         base64: image.base64,
         width: image.width,
@@ -259,7 +277,9 @@ export default function ScanScreen() {
         {phase === 'corners' && photo && geometryImage && (
           <>
             <ThemedText type="small" themeColor="textSecondary">
-              {t('photoScoring.adjustCornersHint')}
+              {t(
+                manualOnly ? 'photoScoring.milsnabbCornersHint' : 'photoScoring.adjustCornersHint',
+              )}
             </ThemedText>
             <CornerAdjuster
               photoUri={geometryImage.uri}
@@ -267,6 +287,8 @@ export default function ScanScreen() {
               imageHeight={geometryImage.height}
               corners={corners}
               onChange={setCorners}
+              photo={photo}
+              scaleToOriginal={geometryImage.scaleToOriginal}
               labels={['1', '2', '3', '4']}
             />
             {notice && <ThemedText themeColor="danger">{notice}</ThemedText>}

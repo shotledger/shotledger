@@ -454,6 +454,7 @@
     "retake": "Retake",
     "adjustCorners": "Place corners myself",
     "adjustCornersHint": "Drag each handle onto the outermost ring: top, right, bottom, then left.",
+    "milsnabbCornersHint": "Automatic target detection isn't supported for this target yet. Drag each handle onto the outermost ring's edge: top, right, bottom, then left.",
     "cornersInvalid": "Move the corners apart — they are too close to a straight line.",
     "useCorners": "Use these corners",
     "manualGeometry": "Corners placed by hand",

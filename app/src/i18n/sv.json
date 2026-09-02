@@ -454,6 +454,7 @@
     "retake": "Ta om",
     "adjustCorners": "Placera hörnen själv",
     "adjustCornersHint": "Dra varje handtag till yttersta ringen: upp, höger, ner, sedan vänster.",
+    "milsnabbCornersHint": "Automatisk tavelavläsning stöds inte än för den här tavlan. Dra varje handtag till kanten av yttersta ringen: upp, höger, ner, sedan vänster.",
     "cornersInvalid": "Dra isär hörnen — de ligger för nära en rak linje.",
     "useCorners": "Använd de här hörnen",
     "manualGeometry": "Hörn placerade för hand",
