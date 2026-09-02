@@ -22,7 +22,7 @@ export type ShareCardSvgRef = ComponentRef<typeof Svg>;
 
 export const SessionShareCardSvg = forwardRef<ShareCardSvgRef, { model: SessionShareCardModel }>(
   function SessionShareCardSvg({ model }, ref) {
-    const y = 150;
+    const y = 230;
     const seriesRows = model.series.map((row, index) => {
       const rowY = y + index * 56;
       return (
