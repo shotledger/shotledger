@@ -5,10 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  qs: ^6.16.0
-  decode-uri-component: ^0.5.0
-  uuid: ^14.0.2
-  esbuild: ^0.28.2
+  qs: 6.16.0
+  decode-uri-component: 0.5.0
+  uuid: 14.0.2
+  esbuild: 0.28.2
 
 patchedDependencies:
   eslint-plugin-react-native@5.0.0: ad79d21c03b4134525d728dbd207749aee52dcfccadbf883a5f4427482abc566
