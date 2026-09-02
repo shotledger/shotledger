@@ -152,6 +152,15 @@ export default function SettingsScreen() {
 
       <Card>
         <ListRow
+          title={t('account.settingsRowTitle')}
+          subtitle={t('account.settingsRowSubtitle')}
+          onPress={() => router.push('/account')}
+          testID="settings-open-account"
+        />
+      </Card>
+
+      <Card>
+        <ListRow
           title={t('vault.settingsRowTitle')}
           subtitle={t('vault.settingsRowSubtitle')}
           onPress={() => router.push('/vault')}

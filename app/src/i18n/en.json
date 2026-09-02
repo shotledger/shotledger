@@ -482,5 +482,48 @@
     "pointsLostPosition": "To position",
     "pointsLostSize": "To group size",
     "potentialScore": "Potential score"
+  },
+  "account": {
+    "title": "Account & sync",
+    "settingsRowTitle": "Account & sync",
+    "settingsRowSubtitle": "Optional cloud backup across your devices",
+    "intro": "ShotLedger works fully offline without an account. Sign in only if you want your logbook on more than one device.",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "syncTitle": "Sync",
+    "syncNow": "Sync now",
+    "neverSynced": "never",
+    "lastSynced": "Last synced: {{when}}",
+    "pendingChanges": "{{count}} change(s) waiting to upload",
+    "syncUnavailableWeb": "Sync is not available in the web preview.",
+    "server": "Server: {{url}}",
+    "deleteTitle": "Delete account",
+    "deleteSubtitle": "Removes your account and everything synced to the server",
+    "deleteBody": "This deletes your account and all synced data on the server, including photos. The logbook on this device is kept. This cannot be undone.",
+    "deleteConfirm": "Delete",
+    "deletedTitle": "Account deleted",
+    "deletedBody": "Your server data is gone. The logbook on this device is untouched.",
+    "syncState": {
+      "idle": "Up to date",
+      "syncing": "Syncing…",
+      "error": "Sync failed"
+    },
+    "syncError": {
+      "network": "No connection to the server. Will retry automatically.",
+      "unauthenticated": "Your session expired. Sign in again.",
+      "versionUnsupported": "This app version is too old to sync. Please update.",
+      "unknown": "Something went wrong. Will retry automatically."
+    },
+    "error": {
+      "invalidCredentials": "Wrong email or password.",
+      "emailInUse": "That email is already registered, or the password is too weak.",
+      "weakPassword": "Choose a longer password.",
+      "network": "No connection to the server.",
+      "unknown": "Something went wrong. Try again."
+    }
   }
 }

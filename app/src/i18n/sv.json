@@ -482,5 +482,48 @@
     "pointsLostPosition": "Till läge",
     "pointsLostSize": "Till spridning",
     "potentialScore": "Potentiell poäng"
+  },
+  "account": {
+    "title": "Konto & synk",
+    "settingsRowTitle": "Konto & synk",
+    "settingsRowSubtitle": "Valfri molnbackup mellan dina enheter",
+    "intro": "ShotLedger fungerar helt utan konto och utan internet. Logga in bara om du vill ha din skjutdagbok på fler än en enhet.",
+    "signIn": "Logga in",
+    "signUp": "Skapa konto",
+    "signOut": "Logga ut",
+    "signedInAs": "Inloggad som",
+    "emailPlaceholder": "E-post",
+    "passwordPlaceholder": "Lösenord",
+    "syncTitle": "Synk",
+    "syncNow": "Synka nu",
+    "neverSynced": "aldrig",
+    "lastSynced": "Senast synkad: {{when}}",
+    "pendingChanges": "{{count}} ändring(ar) väntar på uppladdning",
+    "syncUnavailableWeb": "Synk är inte tillgängligt i webbförhandsvisningen.",
+    "server": "Server: {{url}}",
+    "deleteTitle": "Radera konto",
+    "deleteSubtitle": "Tar bort ditt konto och allt som synkats till servern",
+    "deleteBody": "Detta raderar ditt konto och all synkad data på servern, inklusive foton. Skjutdagboken på den här enheten behålls. Går inte att ångra.",
+    "deleteConfirm": "Radera",
+    "deletedTitle": "Kontot raderat",
+    "deletedBody": "Din data på servern är borta. Skjutdagboken på den här enheten är orörd.",
+    "syncState": {
+      "idle": "Uppdaterad",
+      "syncing": "Synkar…",
+      "error": "Synk misslyckades"
+    },
+    "syncError": {
+      "network": "Ingen kontakt med servern. Försöker igen automatiskt.",
+      "unauthenticated": "Din session har gått ut. Logga in igen.",
+      "versionUnsupported": "Den här appversionen är för gammal för att synka. Uppdatera appen.",
+      "unknown": "Något gick fel. Försöker igen automatiskt."
+    },
+    "error": {
+      "invalidCredentials": "Fel e-post eller lösenord.",
+      "emailInUse": "E-postadressen är redan registrerad, eller så är lösenordet för svagt.",
+      "weakPassword": "Välj ett längre lösenord.",
+      "network": "Ingen kontakt med servern.",
+      "unknown": "Något gick fel. Försök igen."
+    }
   }
 }
