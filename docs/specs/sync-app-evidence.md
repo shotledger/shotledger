@@ -30,16 +30,16 @@ Recorded on `origin/feat/webshooter-app` before any change:
 
 ## 3. Gauntlet results
 
-| Layer         | Command                                 | Result                                                                                                                                      |
-| ------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Types         | `pnpm typecheck` + `pnpm typecheck:app` | clean                                                                                                                                       |
-| i18n          | `pnpm i18n:check`                       | 467 keys each in `en.json`/`sv.json`, 0 issues                                                                                              |
-| Lint / format | `pnpm lint`, `pnpm format`              | clean                                                                                                                                       |
-| Unit          | root `vitest run`                       | **78 files, 995 tests** (+4 files, +60 tests over baseline)                                                                                 |
-| App jest      | `cd app && jest`                        | 13 suites, 108 tests                                                                                                                        |
-| Coverage      | `pnpm coverage`                         | **100% statements / branches / functions / lines** (2690 statements, 847 branches) with `shared/src/sync-client/*.ts` in the `include` glob |
-| Mutation      | `pnpm mutation`                         | see §3a                                                                                                                                     |
-| Backend       | `cd backend && pnpm test`               | 11 files, 87 tests (the 9 new client scenarios; `sync.spec.ts`'s 12 unchanged)                                                              |
+| Layer         | Command                                            | Result                                                                                                                                      |
+| ------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Types         | `pnpm typecheck` + `pnpm typecheck:app`            | clean                                                                                                                                       |
+| i18n          | `pnpm i18n:check`                                  | 467 keys each in `en.json`/`sv.json`, 0 issues                                                                                              |
+| Lint / format | `pnpm lint`, `pnpm format`                         | clean                                                                                                                                       |
+| Unit          | root `vitest run`                                  | **78 files, 995 tests** (+4 files, +60 tests over baseline)                                                                                 |
+| App jest      | `cd app && jest`                                   | 13 suites, 108 tests                                                                                                                        |
+| Coverage      | `pnpm coverage`                                    | **100% statements / branches / functions / lines** (2690 statements, 847 branches) with `shared/src/sync-client/*.ts` in the `include` glob |
+| Mutation      | `pnpm mutation`                                    | see §3a                                                                                                                                     |
+| Backend       | `cd backend && npx vitest run --testTimeout=60000` | 11 files, **88 tests** (the 9 new client scenarios; `sync.spec.ts`'s 12 unchanged)                                                          |
 
 New tests by file:
 
