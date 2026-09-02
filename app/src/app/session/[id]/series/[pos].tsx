@@ -96,6 +96,13 @@ export default function SeriesEntryScreen() {
 
       <PrimaryButton label={t('session.addPhoto')} onPress={onAttachPhoto} testID="attach-photo" />
       <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />
+      {row && row.shots.length > 0 && (
+        <PrimaryButton
+          label={t('share.shareSeries')}
+          onPress={() => router.push(`/session/${id}/share?series=${position}`)}
+          testID="share-series"
+        />
+      )}
     </Screen>
   );
 }

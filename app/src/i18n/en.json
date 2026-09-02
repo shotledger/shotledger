@@ -291,6 +291,17 @@
     "extraRounds": "Extra rounds (not scored)",
     "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only"
   },
+  "share": {
+    "title": "Share session",
+    "seriesTitle": "Share series",
+    "share": "Share",
+    "shareSeries": "Share series",
+    "sharing": "Sharing…",
+    "shareFailed": "Couldn't create the share image on this device.",
+    "noteLabel": "Add a note (optional)",
+    "notePlaceholder": "e.g. \"New PB!\"",
+    "notePrivacyHint": "Never includes your name or location — only what you type here."
+  },
   "dev": {
     "title": "Dev",
     "componentsTitle": "Components",

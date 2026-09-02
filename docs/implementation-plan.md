@@ -853,9 +853,9 @@ restates §0 rules 1–6 verbatim.
 > sync screen and the photo queue). `backend/` is no longer hello-world.
 > Specs and evidence: `docs/specs/sync-protocol-*`,
 > `docs/specs/backend-auth-photos-*`, `docs/specs/sync-app-*`. No new
-> dependency was added on the app side. Still open: share cards, and the
-> `VERIFY:` question in `sync-protocol-spec.md` §1 about whether `settings`
-> and `session_tags` should sync.
+> dependency was added on the app side. Still open: the `VERIFY:` question
+> in `sync-protocol-spec.md` §1 about whether `settings` and `session_tags`
+> should sync.
 
 > **Two of the three timers have since shipped.** The regular PAR/interval
 > timer (`feat/shot-timer`, `shared/src/timer/engine.ts`) and the
@@ -868,7 +868,13 @@ restates §0 rules 1–6 verbatim.
 > documented limits (text-plus-tone prompts rather than TTS; 80 ms
 > debounce; thresholds not yet calibrated on a real firing line).
 
-Photo target scoring; WebShooter import; document vault; share cards;
-the fälttimer; iOS release.
+> **Share cards have since shipped** on `feat/share-cards`: a session card
+> and a per-series card, drawn with `react-native-svg` (already a direct
+> dependency) and rasterized to PNG via its `Svg.toDataURL()`, shared through
+> `expo-sharing`. No new dependency — see the 2026-09-02 plan.md
+> decisions-log entry.
+
+Photo target scoring; WebShooter import; document vault; the fälttimer;
+iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.
