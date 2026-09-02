@@ -35,6 +35,9 @@ export interface SeriesRow {
   guldThreshold: number | null;
   isGuldserie: boolean;
   timeLimitSeconds: number | null;
+  /** WebShooter series-level-total granularity (spec Amendment WS1) — no shots exist for this row. */
+  isTotalOverride: boolean;
+  totalOverrideShotCount: number | null;
 }
 
 export interface SessionDetail {
@@ -89,7 +92,13 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen === 1,
     }));
-    const totalTenths = shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
+    // WS1 (docs/specs/webshooter-app-spec.md): an imported WebShooter series
+    // has no shots rows, only a stored total — use it directly rather than
+    // summing an array that's always empty for such a row.
+    const isTotalOverride = row.isTotalOverride === 1 && row.totalOverrideTenths !== null;
+    const totalTenths = isTotalOverride
+      ? row.totalOverrideTenths!
+      : shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
     const threshold = guldserieThreshold({
       weaponGroup: session.weaponGroup,
       disciplineId: session.disciplineId,
@@ -107,8 +116,14 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       shots,
       totalTenths,
       guldThreshold: threshold,
-      isGuldserie: threshold !== null && !isSighter && tenthsToScore(totalTenths) >= threshold,
+      // Never awarded locally for an override series — no per-shot data to
+      // stand behind it; the official standardmedalj badge (§A.5) is the
+      // authoritative medal for such a session, shown separately.
+      isGuldserie:
+        !isTotalOverride && threshold !== null && !isSighter && tenthsToScore(totalTenths) >= threshold,
       timeLimitSeconds: skeleton[row.position - 1] ?? null,
+      isTotalOverride,
+      totalOverrideShotCount: isTotalOverride ? row.totalOverrideShotCount : null,
     };
   });
 
@@ -116,6 +131,9 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     isSighter: row.isSighter,
     isFinal: row.isFinal,
     shots: row.shots,
+    totalOverride: row.isTotalOverride
+      ? { tenths: row.totalTenths, shotCount: row.totalOverrideShotCount ?? 5 }
+      : null,
   }));
   const results = sessionResults(forResults);
 
