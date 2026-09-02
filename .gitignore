@@ -8,6 +8,7 @@ build/
 *.apk
 *.aab
 *.ipa
+*.tsbuildinfo
 
 # Cloudflare
 .wrangler/

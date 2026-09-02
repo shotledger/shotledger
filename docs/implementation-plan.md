@@ -204,17 +204,25 @@ expiry ~18 months out, one airgun), 2 ammo lots, ~30 sessions spread over
 ## 4. Milestones and tasks
 
 ### M0 — scaffold (branch `feat/m0-scaffold`)
-- [ ] pnpm workspace + `create-expo-app` (TypeScript template) in `app/`,
-      expo-router installed, dev build config (`expo prebuild` clean)
-- [ ] `shared/` package with vitest wired; `backend/` = `wrangler init`
+- [x] pnpm workspace + `create-expo-app` (TypeScript template) in `app/`,
+      expo-router installed, dev build config (`expo prebuild` clean) —
+      config present (expo-router + splash-screen plugins, `main:
+      expo-router/entry`); running `expo prebuild` itself is deferred
+      with Android verification below (no Android SDK on this machine
+      yet)
+- [x] `shared/` package with vitest wired; `backend/` = `wrangler init`
       Hono hello-world only (not deployed)
-- [ ] tsconfig.base (strict true, noUncheckedIndexedAccess true), eslint
+- [x] tsconfig.base (strict true, noUncheckedIndexedAccess true), eslint
       (typescript-eslint + react-hooks + react-native), prettier
-- [ ] `.github/workflows/ci.yml`: on PR → pnpm check (see §1)
-- [ ] CLAUDE.md (repo root) per §8
-- [ ] Theme tokens file + light/dark via `useColorScheme`
+- [x] `.github/workflows/ci.yml`: on PR → pnpm check (see §1)
+- [x] CLAUDE.md (repo root) per §8
+- [x] Theme tokens file + light/dark via `useColorScheme`
 - **Done when:** app boots on Android emulator AND `expo start --web`
-  renders in a browser; CI file lints.
+  renders in a browser; CI file lints. **Android emulator boot is
+  explicitly deferred** — no Android SDK/emulator installed on this
+  machine yet (separate task); verified instead with `pnpm check` green
+  and `expo start --web` serving a real react-native-web-rendered page
+  (curl 200 + HTML body checked, server killed after).
 
 ### M1 — data layer (branch `feat/m1-schema`)
 - [ ] Drizzle schema exactly per §3; initial migration generated
