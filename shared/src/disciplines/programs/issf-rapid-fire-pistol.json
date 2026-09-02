@@ -1,0 +1,41 @@
+{
+  "id": "issf-rapid-fire-pistol",
+  "disciplineId": "issf-rapid-fire-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Snabbpistol",
+    "en": "25m Rapid Fire Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 8
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 6
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 4
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 8
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 6
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 4
+      }
+    ]
+  }
+}

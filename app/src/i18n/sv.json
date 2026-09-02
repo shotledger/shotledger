@@ -178,7 +178,9 @@
     "supportDevelopment": "Stöd utvecklingen",
     "supportComingSoon": "Donationslänk kommer snart",
     "birthYear": "Födelseår",
-    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav."
+    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
+    "supportSubtitle": "Öppnar Buy Me a Coffee i webbläsaren. Gratis app; donationer låser inte upp något.",
+    "about": "Om appen"
   },
   "compliance": {
     "settingsTitle": "Efterlevnad",
@@ -327,5 +329,30 @@
     "detailDeleteConfirmBody": "Det går inte att ångra.",
     "detailDeleteConfirmCancel": "Avbryt",
     "detailDeleteConfirmConfirm": "Ta bort"
+  },
+  "about": {
+    "title": "Om appen",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Licenser för öppen källkod",
+    "licensesBody": "ShotLedger byggs med paket med öppen källkod. En fullständig licenslista publiceras tillsammans med källkoden.",
+    "repoLink": "Källkod"
+  },
+  "csv": {
+    "sectionTitle": "Data (CSV)",
+    "exportTitle": "Exportera CSV",
+    "exportSubtitle": "Dela alla pass, serier och skott som en CSV-fil",
+    "importTitle": "Importera CSV",
+    "importSubtitle": "Välj en CSV-fil för att lägga till eller uppdatera pass",
+    "exportSuccess": "CSV exporterad",
+    "exportFailed": "CSV-export misslyckades",
+    "importCancelled": "Import avbruten",
+    "importFailed": "CSV-import misslyckades",
+    "importErrorsTitle": "Importen har fel",
+    "importErrors": "{{count}} rad(er) kunde inte läsas — åtgärda filen och försök igen",
+    "importConfirmTitle": "Importera den här filen?",
+    "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{ammoLots}} nya ammunitionspartier",
+    "importConfirmAction": "Importera",
+    "importSuccess": "Importerade {{count}} pass"
   }
 }

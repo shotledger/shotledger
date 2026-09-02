@@ -6,7 +6,7 @@
 # Custom period range being applied. No inputText (CLAUDE.md Maestro
 # gotchas note) — navigation, taps on fixed labels/testIDs, and the native
 # Android date-picker's own OK button (tapped by visible text) only.
-appId: com.anonymous.app
+appId: app.shotledger
 ---
 - launchApp:
     clearState: true

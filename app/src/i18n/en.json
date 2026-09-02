@@ -178,7 +178,9 @@
     "supportDevelopment": "Support development",
     "supportComingSoon": "Donation link coming soon",
     "birthYear": "Birth year",
-    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement."
+    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement.",
+    "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
+    "about": "About"
   },
   "compliance": {
     "settingsTitle": "Compliance",
@@ -327,5 +329,30 @@
     "detailDeleteConfirmBody": "This cannot be undone.",
     "detailDeleteConfirmCancel": "Cancel",
     "detailDeleteConfirmConfirm": "Delete"
+  },
+  "about": {
+    "title": "About",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Open-source licenses",
+    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
+    "repoLink": "Source code"
+  },
+  "csv": {
+    "sectionTitle": "Data (CSV)",
+    "exportTitle": "Export CSV",
+    "exportSubtitle": "Share every session, series and shot as a CSV file",
+    "importTitle": "Import CSV",
+    "importSubtitle": "Pick a CSV file to add or update sessions",
+    "exportSuccess": "CSV exported",
+    "exportFailed": "CSV export failed",
+    "importCancelled": "Import cancelled",
+    "importFailed": "CSV import failed",
+    "importErrorsTitle": "Import has errors",
+    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
+    "importConfirmTitle": "Import this file?",
+    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
+    "importConfirmAction": "Import",
+    "importSuccess": "Imported {{count}} session(s)"
   }
 }

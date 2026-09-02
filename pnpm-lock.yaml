@@ -181,7 +181,7 @@ importers:
         specifier: ~30.0.0
         version: 30.0.0
       '@types/react':
-        specifier: ~19.2.2
+        specifier: 19.2.18
         version: 19.2.18
       babel-plugin-inline-import:
         specifier: ^3.0.0

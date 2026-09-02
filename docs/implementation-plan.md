@@ -563,18 +563,24 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 ### M7 — CSV, i18n completeness, release prep (branch `feat/m7-release`)
 
-- [ ] CSV export (share sheet) + import (validate with zod, dry-run
+- [x] CSV export (share sheet) + import (validate with zod, dry-run
       report, then upsert). Columns documented in §6.8; round-trip test:
       export → wipe → import → identical stats.
-- [ ] i18n audit: `pnpm i18n:check` script fails CI on missing keys;
+- [x] i18n audit: `pnpm i18n:check` script fails CI on missing keys;
       Swedish reviewed by maintainer
-- [ ] App icon + splash (placeholder OK), version/about screen with
+- [x] App icon + splash (placeholder OK), version/about screen with
       licenses, "Support development" opens Buy Me a Coffee URL in
       external browser (URL from config, not hard-coded)
-- [ ] Play closed-testing build via EAS; store listing draft in
-      `docs/store-listing.md`
+- [x] Play closed-testing build via EAS (`app/eas.json`); store listing
+      draft in `docs/store-listing.md` — not yet uploaded, no Play
+      Console account exists (see `docs/release.md` §a)
 - **Done when:** closed-testing `.aab` uploaded; CHECKLIST in
-  `docs/release.md` written for repeatable releases.
+  `docs/release.md` written for repeatable releases. **Deferred by
+  design**: no Google Play account exists yet (`docs/release.md` §a is
+  maintainer-only setup) — this pass prepares the release (eas.json,
+  checklist, store listing) without publishing, per the M7 task brief.
+  The `.aab` upload itself is the first item in `docs/release.md` §a for
+  the maintainer to run.
 
 ## 5. Screen inventory (v1)
 
@@ -756,11 +762,44 @@ only, X = 50 mm, 10 = 100 mm, then +80 mm per ring to 5 = 500 mm.
 
 ### 6.8 CSV format
 
-UTF-8, comma-separated, header row, one row per **shot**, RFC 4180
-quoting: `session_id, session_name, session_type, discipline_id,
-weapon_class, firearm, ammo_lot, started_at, series_position,
-shot_position, value, is_inner_ten, is_inner_ten_decimal, location, tags`
-(tags `|`-joined). Import matches firearms/lots by name, creates missing.
+> Updated at M7 (`docs/specs/m7-csv-spec.md`) — the schema gained
+> `program_id`/`competition_level`/`is_championship`/`competition_name`/
+> `weapon_group`/`shooter_class`/`extra_rounds` on `sessions`,
+> `is_sighter`/`is_final` on `series`, and `value_tenths`/`is_inner_ten` on
+> `shots` since this section was first written; the column set below
+> supersedes the original list.
+
+UTF-8, comma-separated, header row, RFC 4180 quoting, one row per **shot**
+plus a defined representation for shot-less structures (§ below). 24
+columns, in order:
+
+```
+session_id, session_name, session_type, discipline_id, program_id,
+competition_level, is_championship, competition_name, weapon_group,
+shooter_class, firearm, ammo_lot, started_at, location, notes,
+decimal_scoring, extra_rounds, tags, series_position, is_sighter,
+is_final, shot_position, value_tenths, is_inner_ten
+```
+
+`is_inner_ten_decimal` is **excluded** — it's DEPRECATED in the schema and
+nothing writes it. `firearm` is `"{make} {model}"`; `ammo_lot` is the
+lot's `label`; both are matched by exact name on import, creating a bare
+firearm/lot when no match exists. `tags` is `|`-joined. Booleans are
+`1`/`0` on export, and also accept `true`/`false` (case-insensitive) on
+import.
+
+**Shot-less structures**: a session with an empty series emits one row
+with `series_position`/`is_sighter`/`is_final` set and
+`shot_position`/`value_tenths`/`is_inner_ten` blank; a session with zero
+series (e.g. an `extra_rounds`-only session) emits one row with every
+column from `series_position` onward blank. Every session appears at
+least once, even with zero shots.
+
+Import: zod-validated per row (row-level errors, never a thrown
+exception), grouped by `session_id`, reconciled into a dry-run plan
+(create/update per session by id, create/reuse per firearm/ammo-lot/tag
+by name) the UI shows before upsert. Full behavior list and the
+round-trip losslessness property: `docs/specs/m7-csv-spec.md`.
 
 ## 7. Testing standards
 
