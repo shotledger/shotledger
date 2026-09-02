@@ -94,6 +94,39 @@ describe('parseLicenseCard', () => {
     expect(parsed.authority).toBe('Polismyndigheten');
   });
 
+  it('reads a label and value separated only by column whitespace', () => {
+    // What the card's two columns look like once the recogniser's lines are
+    // put back into visual reading order (platform/text-recognition.ts).
+    const parsed = parseLicenseCard(`
+      Tillståndsnummer   A000.000/2026-01
+      Vapen              Testmake Testmodel
+      Kaliber            .22 LR
+      Vapen-ID           SE1234567
+      Ändamål            Målskjutning
+      Beslutsdatum       2026-01-15
+      Giltigt t.o.m.     Tills vidare
+      Villkor            Förvaras i säkerhetsskåp
+      Myndighet          Polismyndigheten
+    `);
+    expect(parsed).toEqual({
+      licenseNumber: 'A000.000/2026-01',
+      purpose: 'Målskjutning',
+      decidedOn: '2026-01-15',
+      validUntil: null,
+      validUntilIndefinite: true,
+      conditions: 'Förvaras i säkerhetsskåp',
+      authority: 'Polismyndigheten',
+      make: 'Testmake',
+      model: 'Testmodel',
+      caliber: '.22 LR',
+      vapenId: 'SE1234567',
+    });
+  });
+
+  it('does not read a caliber out of the licence number', () => {
+    expect(parseLicenseCard('Tillståndsnummer: A000.000/2026-01').caliber).toBeNull();
+  });
+
   it('survives lost diacritics and case noise in labels', () => {
     const parsed = parseLicenseCard(`
       ANDAMAL: Malskjutning

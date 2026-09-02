@@ -239,18 +239,29 @@ interface Entry {
   value: string;
 }
 
-/** Splits a line into label and value at the first separator, if the part
- *  before it is a known label. A line with no separator can still be a label
- *  whose value sits on the next line. */
+/**
+ * Splits a line into label and value.
+ *
+ * A colon is the easy case. Without one, the leading words are tried as a
+ * label, longest prefix first — a card's label and value columns arrive as
+ * "Beslutsdatum  2026-01-15" with nothing but whitespace between them, and
+ * "Giltigt t.o.m." is two words. The remainder is the value, which is empty
+ * when the line is a bare label whose value sits on the next line.
+ */
+const MAX_LABEL_WORDS = 3;
+
 function readEntry(line: string): { field: LabelledField; value: string } | null {
   const separator = line.search(/[:：]/);
   if (separator >= 0) {
     const field = matchLabel(line.slice(0, separator));
     if (field) return { field, value: line.slice(separator + 1).trim() };
-    return null;
   }
-  const field = matchLabel(line);
-  return field ? { field, value: '' } : null;
+  const words = line.split(/\s+/).filter(Boolean);
+  for (let n = Math.min(MAX_LABEL_WORDS, words.length); n >= 1; n -= 1) {
+    const field = matchLabel(words.slice(0, n).join(' '));
+    if (field) return { field, value: words.slice(n).join(' ') };
+  }
+  return null;
 }
 
 function collectEntries(lines: readonly string[]): Entry[] {
@@ -291,9 +302,10 @@ function splitWeapon(value: string): { make: string; model: string | null } {
 }
 
 /** `.22 LR`, `9x19`, `6,5x55`, `.357 Magnum` — used only as a fallback when
- *  the card has no `Kaliber:` label the reader could find. */
+ *  the card has no `Kaliber:` label the reader could find. The guards around
+ *  the dotted form keep it off the licence number's `.000/2026` run. */
 const CALIBER_RE =
-  /(\.\s?\d{2,3}\s*(?:LR|WMR|S&W|SW|ACP|Magnum|Mag|Special|Spl|Win|Rem)?|\b\d{1,2}[.,]?\d?\s*[xX×]\s*\d{2,3}(?:\s*R)?\b)/;
+  /((?<![\w.])\.\s?\d{2,3}(?![\d./])\s*(?:LR|WMR|S&W|SW|ACP|Magnum|Mag|Special|Spl|Win|Rem)?|\b\d{1,2}[.,]?\d?\s*[xX×]\s*\d{2,3}(?:\s*R)?\b)/;
 
 function findCaliber(text: string): string | null {
   const match = CALIBER_RE.exec(text);
