@@ -41,6 +41,12 @@ export interface LocalStore {
    */
   applyChanges(changes: ChangeRow[]): Promise<void>;
   readOutbox(limit: number): Promise<OutboxEntry[]>;
+  /**
+   * `${tableName}:${rowId}` for every queued change — the set a pulled page
+   * is filtered against so the server's older state cannot overwrite an
+   * unsent local edit (see shadow.ts).
+   */
+  pendingRowKeys(): Promise<ReadonlySet<string>>;
   readRow(tableName: SyncTableName, rowId: string): Promise<LocalRowSnapshot | undefined>;
   assignClientChangeId(entry: OutboxEntry, clientChangeId: string): Promise<void>;
   /** Deletes only when the entry's `rev` still matches (spec §2). */

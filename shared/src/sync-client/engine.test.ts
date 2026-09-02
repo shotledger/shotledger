@@ -55,6 +55,7 @@ function createFakeStore(options: FakeStoreOptions = {}) {
       );
       if (index >= 0) outbox.splice(index, 1);
     },
+    pendingRowKeys: async () => new Set(outbox.map((e) => `${e.tableName}:${e.rowId}`)),
     pendingCount: async () => outbox.length,
   };
 
@@ -139,7 +140,14 @@ describe('runSyncCycle — pull', () => {
     // Sorted into dependency order before it reaches the store.
     expect(fake.applied[0]?.map((c) => c.tableName)).toEqual(['firearms', 'shots']);
     expect(fake.cursors.firearms).toBe(2);
-    expect(result).toEqual({ status: 'ok', pulled: 2, pushed: 0, rejected: 0, duplicates: 0 });
+    expect(result).toEqual({
+      status: 'ok',
+      pulled: 2,
+      shadowed: 0,
+      pushed: 0,
+      rejected: 0,
+      duplicates: 0,
+    });
   });
 
   it('re-requests only the tables that still have more pages', async () => {
@@ -284,6 +292,42 @@ describe('runSyncCycle — push', () => {
     expect(result.duplicates).toBe(1);
   });
 
+  it('does not let a pulled page overwrite a row with an unsent local edit', async () => {
+    const fake = createFakeStore({
+      outbox: [{ tableName: 'sessions', rowId: 'row-1', rev: 1, clientChangeId: null }],
+      rows: new Map([['sessions:row-1', row({ id: 'row-1', name: 'local edit' })]]),
+    });
+    const transport = createTransport({
+      pull: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        changes: [
+          {
+            tableName: 'sessions',
+            rowId: 'row-1',
+            seq: 5,
+            payload: { id: 'row-1', name: 'stale server copy' },
+            deletedAt: null,
+            updatedAt: 'u',
+          },
+        ],
+        nextCursors: request.tables.map((t) => ({
+          tableName: t.tableName,
+          cursor: 5,
+          hasMore: false,
+        })),
+      }),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(result.shadowed).toBe(1);
+    expect(result.pulled).toBe(0);
+    expect(fake.applied[0]).toEqual([]);
+    // The cursor still advances: the local edit is what the server ends up
+    // holding, so nothing is lost by not re-pulling the stale row.
+    expect(fake.cursors.sessions).toBe(5);
+  });
+
   it('counts and clears a rejected (tombstoned) ack', async () => {
     const fake = createFakeStore({
       outbox: [{ tableName: 'series', rowId: 'x', rev: 1, clientChangeId: null }],
@@ -303,6 +347,41 @@ describe('runSyncCycle — push', () => {
     const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
     expect(result.rejected).toBe(1);
+    expect(fake.outbox).toHaveLength(0);
+    // The tombstone the pull shadowed is written locally here, because the
+    // cursor has already moved past it.
+    expect(fake.applied.at(-1)).toEqual([
+      {
+        tableName: 'series',
+        rowId: 'x',
+        seq: 1,
+        payload: null,
+        deletedAt: '2026-09-02T09:00:00.000Z',
+        updatedAt: '2026-09-02T09:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('does not synthesise a tombstone for a rejection it does not understand', async () => {
+    const fake = createFakeStore({
+      outbox: [{ tableName: 'series', rowId: 'y', rev: 1, clientChangeId: null }],
+      rows: new Map([['series:y', row({ id: 'y' })]]),
+    });
+    const transport = createTransport({
+      push: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        acks: request.changes.map((c) => ({
+          clientChangeId: c.clientChangeId,
+          status: 'rejected' as const,
+          reason: 'something-new',
+        })),
+      }),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(result.rejected).toBe(1);
+    expect(fake.applied).toEqual([[]]);
     expect(fake.outbox).toHaveLength(0);
   });
 

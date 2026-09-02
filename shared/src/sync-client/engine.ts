@@ -5,9 +5,11 @@ import {
   type PullRequest,
   type SyncTableName,
 } from '../sync/protocol';
+import { REJECTED_TOMBSTONED } from '../sync/merge';
 import { APPLY_ORDER, sortChangesForApply } from './order';
 import { buildClientChange } from './outbox';
-import type { LocalStore, SyncTransport } from './ports';
+import { filterShadowedChanges, tombstoneFromRejection } from './shadow';
+import type { LocalStore, OutboxEntry, SyncTransport } from './ports';
 
 /**
  * One strict pull -> apply -> push -> ack cycle (docs/specs/sync-app-spec.md
@@ -33,15 +35,20 @@ export interface SyncCycleDeps {
 export interface SyncCycleResult {
   status: 'ok' | 'partial';
   pulled: number;
+  /** Pulled rows dropped because a local edit was still queued (shadow.ts). */
+  shadowed: number;
   pushed: number;
   rejected: number;
   duplicates: number;
 }
 
-async function runPull(deps: SyncCycleDeps): Promise<{ pulled: number; drained: boolean }> {
+async function runPull(
+  deps: SyncCycleDeps,
+): Promise<{ pulled: number; shadowed: number; drained: boolean }> {
   const cursors = await deps.store.readCursors();
   let pending: SyncTableName[] = [...APPLY_ORDER];
   let pulled = 0;
+  let shadowed = 0;
 
   for (let iteration = 0; iteration < MAX_PULL_ITERATIONS; iteration += 1) {
     const request: PullRequest = {
@@ -52,11 +59,17 @@ async function runPull(deps: SyncCycleDeps): Promise<{ pulled: number; drained: 
     };
     const response = await deps.transport.pull(request);
 
+    // A row with an unsent local edit keeps that edit; the push later in
+    // this cycle sends it and the server's LWW settles it (shadow.ts).
+    const pendingKeys = await deps.store.pendingRowKeys();
+    const applicable = filterShadowedChanges(response.changes, pendingKeys);
+    shadowed += response.changes.length - applicable.length;
+
     // Apply BEFORE advancing any cursor: a throw here leaves the cursor
     // where it was, so the next cycle re-pulls the page. Applying is an
     // upsert, so at-least-once delivery is safe; at-most-once would not be.
-    await deps.store.applyChanges(sortChangesForApply(response.changes));
-    pulled += response.changes.length;
+    await deps.store.applyChanges(sortChangesForApply(applicable));
+    pulled += applicable.length;
 
     const stillPending: SyncTableName[] = [];
     for (const next of response.nextCursors) {
@@ -66,10 +79,10 @@ async function runPull(deps: SyncCycleDeps): Promise<{ pulled: number; drained: 
     }
 
     pending = stillPending;
-    if (pending.length === 0) return { pulled, drained: true };
+    if (pending.length === 0) return { pulled, shadowed, drained: true };
   }
 
-  return { pulled, drained: false };
+  return { pulled, shadowed, drained: false };
 }
 
 async function runPush(
@@ -85,7 +98,7 @@ async function runPush(
     if (entries.length === 0) return { pushed, rejected, duplicates, drained: true };
 
     const changes: ClientChange[] = [];
-    const byChangeId = new Map<string, (typeof entries)[number]>();
+    const sent = new Map<string, { entry: OutboxEntry; change: ClientChange }>();
 
     for (const entry of entries) {
       const row = await deps.store.readRow(entry.tableName, entry.rowId);
@@ -101,7 +114,7 @@ async function runPush(
         await deps.store.assignClientChangeId(entry, clientChangeId);
       }
       changes.push(change);
-      byChangeId.set(clientChangeId, { ...entry, clientChangeId });
+      sent.set(clientChangeId, { entry: { ...entry, clientChangeId }, change });
     }
 
     if (changes.length === 0) continue;
@@ -112,14 +125,21 @@ async function runPush(
     });
 
     for (const ack of response.acks) {
-      const entry = byChangeId.get(ack.clientChangeId);
-      if (entry === undefined) continue;
-      if (ack.status === 'rejected') rejected += 1;
-      else if (ack.status === 'duplicate') duplicates += 1;
+      const record = sent.get(ack.clientChangeId);
+      if (record === undefined) continue;
+      const { entry, change } = record;
+      if (ack.status === 'rejected') {
+        rejected += 1;
+        // The server holds a tombstone for this row, and the pull that
+        // shadowed it has already moved the cursor past it — so the local
+        // tombstone has to be written here or it never arrives (shadow.ts).
+        if (ack.reason === REJECTED_TOMBSTONED) {
+          await deps.store.applyChanges([tombstoneFromRejection(entry, change.updatedAt)]);
+        }
+      } else if (ack.status === 'duplicate') duplicates += 1;
       else pushed += 1;
-      // Every ack the protocol defines clears the entry. `rejected` means the
-      // server holds a tombstone for that row and no re-push could ever be
-      // accepted; the tombstone reaches this device on the next pull.
+      // Every ack the protocol defines clears the entry: applied and
+      // duplicate are on the server, and a rejection can never be accepted.
       await deps.store.clearOutboxEntry(entry);
     }
   }
@@ -134,6 +154,7 @@ export async function runSyncCycle(deps: SyncCycleDeps): Promise<SyncCycleResult
   return {
     status: pull.drained && push.drained ? 'ok' : 'partial',
     pulled: pull.pulled,
+    shadowed: pull.shadowed,
     pushed: push.pushed,
     rejected: push.rejected,
     duplicates: push.duplicates,

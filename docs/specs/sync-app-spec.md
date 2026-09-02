@@ -71,11 +71,11 @@ integration suite, not by mutation testing — the precedent set by
 Read from `backend/src/` on `feat/webshooter-app`, not from the plan:
 
 - `POST|GET /api/auth/*` — better-auth's own handler. `emailAndPassword:
-  { enabled: true }` and the `bearer()` plugin. **No social providers are
+{ enabled: true }` and the `bearer()` plugin. **No social providers are
   configured** (`backend/src/auth/better-auth.ts` carries a TODO where
   `socialProviders` would go, because that needs OAuth registrations only
   the maintainer can create). The client therefore implements **email +
-  password only**. Sign-in with Apple/Google is *not* built — inventing a
+  password only**. Sign-in with Apple/Google is _not_ built — inventing a
   provider the backend does not have would produce a button that cannot
   work.
 - The endpoints the client uses: `/api/auth/sign-up/email`,
@@ -94,7 +94,7 @@ The task brief asks which of the two the protocol's basis is. **Neither
 alone works**, and the reasoning is the load-bearing design decision here:
 
 - A pure `updated_at` cursor scan cannot distinguish a row the user just
-  edited from a row this device *applied from the server a second ago*.
+  edited from a row this device _applied from the server a second ago_.
   Re-pushing applied rows is not merely wasteful: device A pushes, B pulls
   and re-pushes, A pulls and re-pushes — a permanent ping-pong that never
   reaches quiescence. Any fix requires marking applied rows, i.e. extra
@@ -146,17 +146,17 @@ END;
 Consequences that are deliberate, not oversights:
 
 - **Coalescing is free.** Five edits to one row leave one outbox entry; the
-  push sends the row's *current* state, which is exactly what LWW wants.
+  push sends the row's _current_ state, which is exactly what LWW wants.
 - **`rev` is the concurrency guard.** The push reads `(table, row, rev)`,
   and on ack deletes `WHERE table_name = ? AND row_id = ? AND rev = ?`. A
-  local edit that lands *while* the push is in flight bumps `rev`, so the
+  local edit that lands _while_ the push is in flight bumps `rev`, so the
   delete matches nothing and the row stays queued for the next cycle. `rev`
   comes from a never-reset counter (`sync_control.last_rev`), so a re-queued
   entry can never accidentally carry a stale `rev` value.
 - **`client_change_id` is reset to NULL on re-queue** and assigned once per
   push attempt of a given `rev`, then persisted. A retry after a dropped
   response replays the same id, which the server acks `duplicate` (protocol
-  §4) instead of applying twice. A *new* local edit gets a *new* id, which is
+  §4) instead of applying twice. A _new_ local edit gets a _new_ id, which is
   correct — it is a genuinely new change.
 - **Soft deletes need no DELETE trigger**: the schema tombstones via
   `UPDATE ... SET deleted_at`, which the UPDATE trigger already catches.
@@ -173,19 +173,27 @@ The engine is pure orchestration over two injected ports. Nothing else in
 `shared/` learns that SQLite or `fetch` exist (negative constraint N1).
 
 ```ts
-export interface OutboxEntry { tableName: SyncTableName; rowId: string;
-                               rev: number; clientChangeId: string | null }
-export interface LocalRowSnapshot { payload: unknown; updatedAt: string;
-                                    deletedAt: string | null }
+export interface OutboxEntry {
+  tableName: SyncTableName;
+  rowId: string;
+  rev: number;
+  clientChangeId: string | null;
+}
+export interface LocalRowSnapshot {
+  payload: unknown;
+  updatedAt: string;
+  deletedAt: string | null;
+}
 
 export interface LocalStore {
   readCursors(): Promise<Record<SyncTableName, number>>;
   setCursor(tableName: SyncTableName, cursor: number): Promise<void>;
-  applyChanges(changes: ChangeRow[]): Promise<void>;   // one transaction, guard flag set
+  applyChanges(changes: ChangeRow[]): Promise<void>; // one transaction, guard flag set
   readOutbox(limit: number): Promise<OutboxEntry[]>;
+  pendingRowKeys(): Promise<ReadonlySet<string>>; // shadowing, §5a
   readRow(tableName: SyncTableName, rowId: string): Promise<LocalRowSnapshot | undefined>;
   assignClientChangeId(e: OutboxEntry, id: string): Promise<void>;
-  clearOutboxEntry(e: OutboxEntry): Promise<void>;      // rev-matched delete
+  clearOutboxEntry(e: OutboxEntry): Promise<void>; // rev-matched delete
   pendingCount(): Promise<number>;
 }
 
@@ -244,6 +252,31 @@ throws, the cursor is not written, so the next cycle re-pulls the same page.
 Re-applying a page is idempotent (every apply is an upsert keyed by row id),
 so at-least-once delivery is safe; at-most-once would not be.
 
+### 5a. Local-edit shadowing (added during implementation)
+
+The cycle pulls before it pushes, so a page can carry the server's _older_
+state for a row this device has edited but not yet sent. Writing it over the
+local row destroys the user's edit — and the push that follows then sends the
+overwritten value back up, so the edit is gone from **both** devices with no
+error anywhere. The end-to-end suite reproduced this on the first run (I3's
+delete never reaching device B).
+
+So: `runPull` reads `store.pendingRowKeys()` before each apply and drops any
+pulled change for a row with a queued outbox entry
+(`shared/src/sync-client/shadow.ts`). The local version survives, is pushed
+later in the same cycle, and the server's own LWW makes it the winner for
+everyone. The cursor still advances past the shadowed change — re-pulling it
+would only re-deliver the value the local push has already superseded.
+
+**One consequence, handled explicitly.** If the shadowed change was a
+_tombstone_ and the push is then rejected (`tombstoned`), nothing would ever
+re-deliver it: the cursor has moved past it. So a `rejected` ack whose reason
+is `REJECTED_TOMBSTONED` makes the engine apply a locally-synthesised
+tombstone for that row (`tombstoneFromRejection`). Its `deletedAt` is the
+device's own edit timestamp rather than the server's — a local marker only,
+written inside the apply guard so it never re-enters the outbox and never
+travels. Both devices agree on the fact that matters: the row is deleted.
+
 **A push page is never partially cleared on transport failure**: acks are
 processed only after `push` resolves. A change whose response was lost stays
 in the outbox with its `client_change_id` intact and is retried, landing on
@@ -267,7 +300,7 @@ the server's idempotency table.
 `rejected`. A `rejected` ack means the server holds a tombstone for that row
 (the only rejection the protocol defines); keeping it queued would retry a
 change that can never be accepted. The tombstone itself reaches this device
-through the *next* pull — its `seq` is newer than this device's cursor by
+through the _next_ pull — its `seq` is newer than this device's cursor by
 construction, because the cursor was written before the push that lost.
 
 ## 7. Scheduling, status and offline (`sync-controller.ts`, app side)
@@ -275,7 +308,7 @@ construction, because the cursor was written before the push that lost.
 A single module-level controller, so "no concurrent independent loops" is
 enforced by having exactly one loop:
 
-- `requestSync(reason)` — if a cycle is running, it sets a *rerun* flag and
+- `requestSync(reason)` — if a cycle is running, it sets a _rerun_ flag and
   returns; the running cycle re-runs once on completion. Otherwise it starts
   one. This is the debounce and the mutex in one mechanism.
 - **Triggers:** app foreground (`AppState` `change` → `active`), a
@@ -304,7 +337,7 @@ enforced by having exactly one loop:
 
 ## 8. Backend change (one line, deliberately minimal)
 
-`/sync` still *defaults* to `devBearerAuthenticator` inside
+`/sync` still _defaults_ to `devBearerAuthenticator` inside
 `createSyncRoutes()` so `backend/test/sync.spec.ts`'s 14 fixtures stay
 untouched (that suite's N3 constraint), but **`backend/src/index.ts` now
 mounts it with `betterAuthAuthenticator`**:
@@ -339,7 +372,13 @@ spec's declared limit.
 - E8 tombstone entry sends `payload: null`.
 - E9 `MAX_PULL_ITERATIONS` / `MAX_PUSH_ITERATIONS` terminate with
   `status: 'partial'`.
+- E10 a pulled change for a row with a queued local edit is dropped
+  (`shadowed`), the cursor still advances, and a `tombstoned` rejection
+  writes the local tombstone (§5a). A rejection with an unrecognised reason
+  writes nothing.
 - **Property (fast-check):** for any generated set of changes,
+  `filterShadowedChanges` returns an order-preserving subset containing no
+  shadowed key. **Property:** for any generated set of changes,
   `sortChangesForApply` (a) is a permutation of its input, (b) never places
   a child table's change before a parent table's, (c) preserves `seq` order
   within a table.
@@ -410,7 +449,7 @@ D1, real better-auth, in-process) — the end-to-end requirement:
   the dev screen.
 - **`settings`, `session_tags`, `shot_marks` and the vault do not sync** —
   the protocol's table enum excludes them (protocol spec §1, still marked
-  VERIFY for the maintainer). Photo *scoring marks* therefore do not travel
+  VERIFY for the maintainer). Photo _scoring marks_ therefore do not travel
   with a synced session; the score does.
 - **One local write can be pushed twice as two changes** if it is edited
   again mid-push. Both are accepted; the later `seq` wins. Correct, slightly

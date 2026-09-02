@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 import type { SyncCycleResult } from './engine';
 import { initialSyncStatus, reduceSyncStatus } from './status';
 
-const ok: SyncCycleResult = { status: 'ok', pulled: 2, pushed: 1, rejected: 0, duplicates: 0 };
+const ok: SyncCycleResult = {
+  status: 'ok',
+  pulled: 2,
+  shadowed: 0,
+  pushed: 1,
+  rejected: 0,
+  duplicates: 0,
+};
 
 describe('reduceSyncStatus', () => {
   it('marks a cycle as running without clearing the previous error', () => {
@@ -50,7 +57,10 @@ describe('reduceSyncStatus', () => {
   });
 
   it('updates the pending count on its own', () => {
-    const updated = reduceSyncStatus(initialSyncStatus, { type: 'pendingChanged', pendingCount: 4 });
+    const updated = reduceSyncStatus(initialSyncStatus, {
+      type: 'pendingChanged',
+      pendingCount: 4,
+    });
     expect(updated.pendingCount).toBe(4);
     expect(updated.state).toBe('idle');
   });

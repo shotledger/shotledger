@@ -16,7 +16,7 @@ export default defineConfig({
         'shared/src/compliance/**/*.ts',
         'shared/src/integrations/webshooter/**/*.ts',
         'shared/src/sync/**/*.ts',
-        'shared/src/sync-client/**/*.ts',
+        'shared/src/sync-client/*.ts',
         'backend/src/lib/quota.ts',
         'backend/src/lib/rate-limit.ts',
         'backend/src/lib/authz.ts',

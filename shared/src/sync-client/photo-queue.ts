@@ -50,8 +50,7 @@ export function isRetryablePhotoStatus(status: number): boolean {
 }
 
 export type PhotoTaskOutcome =
-  | { type: 'succeeded' }
-  | { type: 'failed'; retryable: boolean; error: string };
+  { type: 'succeeded' } | { type: 'failed'; retryable: boolean; error: string };
 
 export type PhotoQueueAction =
   | { type: 'remove'; id: string }
