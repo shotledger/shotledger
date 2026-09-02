@@ -1,8 +1,9 @@
-// Subscribes a screen to the single sync controller and wires the
-// app-foreground trigger (docs/specs/sync-app-spec.md §7).
+// Subscribes a screen to the single sync controller
+// (docs/specs/sync-app-spec.md §7). The foreground and post-write triggers
+// live in SyncTriggers, mounted once at the root — a screen only reads
+// status and offers the manual button.
 import type { SyncStatus } from '@shotledger/shared';
 import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
 
 import {
   getSyncStatus,
@@ -16,25 +17,16 @@ export interface UseSyncResult {
   syncNow: () => void;
 }
 
-export function useSync(enabled: boolean): UseSyncResult {
+export function useSync(signedIn: boolean): UseSyncResult {
   const [status, setStatus] = useState<SyncStatus>(getSyncStatus);
 
   useEffect(() => subscribeToSync(setStatus), []);
 
   useEffect(() => {
+    // Signing in makes the queue meaningful; recount so the screen does not
+    // show a stale "0 changes waiting".
     void refreshPendingCount();
-  }, [enabled]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    // Foreground is the trigger that matters most: the other device's edits
-    // land while this one is asleep.
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'active') void requestSync();
-    });
-    void requestSync();
-    return () => subscription.remove();
-  }, [enabled]);
+  }, [signedIn]);
 
   return { status, syncNow: () => void requestSync() };
 }

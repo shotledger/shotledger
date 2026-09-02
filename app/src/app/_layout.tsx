@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { MigrationGate } from '@/db/migration-gate';
+import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
 import { AppSettingsProvider } from '@/state/app-settings';
@@ -116,6 +117,7 @@ function ThemedApp() {
   return (
     <ThemeProvider value={navigationTheme}>
       <AnimatedSplashOverlay />
+      <SyncTriggers />
       <RootStack />
     </ThemeProvider>
   );
