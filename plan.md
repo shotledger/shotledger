@@ -103,9 +103,12 @@ barometer; no scoring), Skytteappen (club ecosystem).
 - [ ] Swedish targets first (Pistoltavla 25 m precision) alongside ISSF faces
 - [ ] Group analytics: MPI (windage/elevation), mean radius, extreme spread,
       points-lost-to-group-size, session heatmaps
-- [ ] WebShooter competition import (API behind webshooter-cli): placements,
-      per-station scores, weapon classes, standard medals → logbook +
-      FAP 551-3 barometer
+- [x] WebShooter competition import: placements, per-station scores
+      (series-total granularity, no per-shot detail), weapon classes,
+      standard medals → logbook. `docs/specs/webshooter-integration-spec.md`,
+      `docs/specs/webshooter-core-spec.md`, `docs/specs/webshooter-app-spec.md`.
+      Auth: in-app password login direct to webshooter.se (PR #19), manual
+      token fallback; live login endpoint shape still VERIFY-stubbed.
 - [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
 - [ ] Encrypted on-device document vault (license, membership card) — never
       synced

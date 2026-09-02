@@ -193,6 +193,36 @@ describe('importResultRow — fresh import', () => {
     expect(getSession(db, sessionId)?.extraRounds).toBe(5);
   });
 
+  it('assigns the chosen firearm and moves its round counter (§A.7 — a fresh import has no firearmId yet)', () => {
+    const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
+    const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
+      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      applySighterRoundsForFirearmId: firearm.id,
+    });
+    expect(getSession(db, sessionId)?.firearmId).toBe(firearm.id);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(5);
+  });
+
+  it('never overwrites an already-assigned firearm when applying sighter rounds', () => {
+    const original = createFirearm(db, { make: 'Original', model: 'Gun' });
+    const other = createFirearm(db, { make: 'Other', model: 'Gun' });
+    const first = importResultRow(db, resultRow(), COMPETITION, {
+      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+    });
+    // Local enrichment before any sighter-rounds confirmation.
+    updateSession(db, first.sessionId, { firearmId: original.id });
+
+    importResultRow(db, resultRow(), COMPETITION, {
+      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      linkToSessionId: first.sessionId,
+      applySighterRoundsForFirearmId: other.id,
+    });
+    expect(getSession(db, first.sessionId)?.firearmId).toBe(original.id);
+    // The round-count delta still applies, to the ALREADY-linked firearm (never `other`).
+    expect(getFirearm(db, original.id)?.roundCount).toBe(5);
+    expect(getFirearm(db, other.id)?.roundCount).toBe(0);
+  });
+
   it('applies +10 sighter rounds for a two-round championship (finals present, §A.7)', () => {
     const row = resultRow({ results_finals: [station({ stations_id: 1, finals: 1, points: 50 })] });
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });

@@ -286,8 +286,17 @@ export function importResultRow(
   replaceOverrideSeries(db, sessionId, row);
 
   if (options.applySighterRoundsForFirearmId) {
-    const roundsCount = countDistinctRounds(row);
     const session = getSession(db, sessionId);
+    // setSessionExtraRounds only moves a firearm's round counters when the
+    // session already carries a firearmId (round-count.ts's own contract) —
+    // a WebShooter import never sets one (WebShooter has no concept of
+    // firearm), so the chosen firearm is assigned here, as an enrichment
+    // field: never overwriting one the user already picked (§A.3's
+    // "never clobber a user-entered value" rule extends to this write too).
+    if (session && !session.firearmId) {
+      updateSession(db, sessionId, { firearmId: options.applySighterRoundsForFirearmId });
+    }
+    const roundsCount = countDistinctRounds(row);
     const currentExtra = session?.extraRounds ?? 0;
     setSessionExtraRounds(
       db,
