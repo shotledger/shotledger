@@ -354,7 +354,7 @@ calculations against the live WebShooter API; ShotLedger never proxies —
       the immediately preceding year with data (skip years with zero
       sessions, don't treat them as a 0-value data point).
 - [ ] Overall trend: **two-point slope** — `(last year's mean − first
-    year's mean) / (last year − first year)` — not a regression over
+year's mean) / (last year − first year)` — not a regression over
       all years. `VERIFY:` this against wscli source; a two-point slope
       is unusual and worth double-checking it isn't actually a
       least-squares trend being described loosely.
