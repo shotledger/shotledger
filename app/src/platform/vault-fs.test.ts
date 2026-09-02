@@ -15,14 +15,14 @@ describe('vault-fs paths', () => {
 
   it('indexFile is index.enc inside the vault directory', () => {
     indexFile();
-    const dirArg = (File as jest.Mock).mock.calls[0]?.[0];
+    const dirArg = (File as unknown as jest.Mock).mock.calls[0]?.[0];
     expect(dirArg).toBeInstanceOf(Directory);
-    expect((File as jest.Mock).mock.calls[0]?.[1]).toBe('index.enc');
+    expect((File as unknown as jest.Mock).mock.calls[0]?.[1]).toBe('index.enc');
   });
 
   it('documentFile names the blob by document id', () => {
     documentFile('abc-123');
-    const call = (File as jest.Mock).mock.calls.find((c) => c[1] === 'abc-123.enc');
+    const call = (File as unknown as jest.Mock).mock.calls.find((c) => c[1] === 'abc-123.enc');
     expect(call).toBeDefined();
   });
 });

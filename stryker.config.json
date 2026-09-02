@@ -14,6 +14,7 @@
     "shared/src/compliance/**/*.ts",
     "shared/src/vault/envelope.ts",
     "shared/src/vault/types.ts",
+    "shared/src/target-scoring/*.ts",
     "!**/*.test.ts"
   ],
   "thresholds": {

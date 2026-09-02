@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 
+import type { CompetitionLevel } from '../../features/session/labels';
 import { sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
@@ -11,7 +12,7 @@ export interface CreateSessionInput {
   type: SessionType;
   disciplineId: string;
   programId?: string | null;
-  competitionLevel?: string | null;
+  competitionLevel?: CompetitionLevel | null;
   isChampionship?: boolean;
   competitionName?: string | null;
   weaponGroup?: string | null;

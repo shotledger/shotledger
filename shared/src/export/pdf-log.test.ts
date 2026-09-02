@@ -56,7 +56,9 @@ describe('buildShootingLogHtml', () => {
   });
 
   it('matches the snapshot with no entries', () => {
-    expect(buildShootingLogHtml(summary({ totalSessions: 0, totalShots: 0 }), [])).toMatchSnapshot();
+    expect(
+      buildShootingLogHtml(summary({ totalSessions: 0, totalShots: 0 }), []),
+    ).toMatchSnapshot();
   });
 
   it('escapes HTML-significant characters in free text fields', () => {

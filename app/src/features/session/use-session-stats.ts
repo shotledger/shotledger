@@ -48,8 +48,12 @@ function loadSessionStats(sessionId: string): SessionStats {
   const shots = scoredShots(sessionSeries);
   const hasFinal = sessionSeries.some((series) => series.isFinal);
 
-  const beforeFinalTenths = scoredNonFinal.flatMap((s) => s.shots).reduce((sum, s) => sum + s.valueTenths, 0);
-  const finalTenths = scoredFinal.flatMap((s) => s.shots).reduce((sum, s) => sum + s.valueTenths, 0);
+  const beforeFinalTenths = scoredNonFinal
+    .flatMap((s) => s.shots)
+    .reduce((sum, s) => sum + s.valueTenths, 0);
+  const finalTenths = scoredFinal
+    .flatMap((s) => s.shots)
+    .reduce((sum, s) => sum + s.valueTenths, 0);
 
   const first = sessionSeries[0]!;
   const standardmedalj = standardmedaljForSession({

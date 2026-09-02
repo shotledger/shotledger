@@ -91,41 +91,41 @@ item):** given `count` = weighted activity count in the window and
 
 ## Behaviors — `barometer.ts`
 
-| # | Scenario | Expected |
-|---|---|---|
-| B1 | No sessions, any profile rule | `activityCount: 0`, `status: 'red'` (unless `requiredActivities <= 0`) |
-| B2 | `requiredActivities <= 0` | `status: 'green'` always, regardless of count |
-| B3 | Sessions inside window, type in `countsAs` with weight 1 | each counts 1 toward `activityCount` |
-| B4 | Session outside window (before `windowStart`) | excluded |
-| B5 | Session exactly at `now` | included (inclusive upper bound) |
-| B6 | Session exactly at `windowStart` boundary | included (inclusive lower bound) |
-| B7 | Session one instant before `windowStart` | excluded |
-| B8 | Session type with weight 0 in `countsAs` (e.g. `{training: 1, competition: 0}`) | competition sessions don't count |
-| B9 | Two sessions same day, same weapon group | both count (activity = session, not day) |
-| B10 | `count === required` | `status: 'green'` |
-| B11 | `count === ceil(required/2)`, `< required` | `status: 'amber'` |
-| B12 | `count === ceil(required/2) - 1` | `status: 'red'` |
-| B13 | `computeBarometerForWeaponGroup` — session's `weaponGroup` not in the rule's `weaponGroups` list | excluded from that rule's count |
-| B14 | `computeBarometerForWeaponGroup` — no rule matches the requested weapon group | returns `null` (not a fabricated zero-required green) |
-| B15 | `computeFirearmBarometer` — sessions matched by `session.weaponGroup` membership in the firearm's assigned weapon-group list (not by `session.firearm_id`), per §6.6 "per firearm via its weapon groups" | a session naming a weapon group the firearm holds counts, even if `firearm_id` differs or is null |
-| B16 | `computeFirearmBarometer` with a firearm holding two weapon groups covered by two different rules | returns one status per rule; caller (UI) picks worst for a single chip, per §"Overall aggregation" below |
-| B17 | `computeOverallBarometer` — multiple weapon groups present, mixed statuses | overall = worst of (`red` &lt; `amber` &lt; `green`) across all rules that have ≥1 matching session or ≥1 requested weapon group |
-| B18 | `computeOverallBarometer` — no weapon groups requested/present at all | returns `{ statuses: [], overall: null }` — never fabricates a status from nothing |
-| B19 | 31-day vs 28-day month subtraction at a `windowMonths` boundary (Jan 31 − 1 month) | uses calendar month subtraction (clamped to the shorter month, JS `Date` default behavior), documented not "exactly 30 days" |
+| #   | Scenario                                                                                                                                                                                                 | Expected                                                                                                                         |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | No sessions, any profile rule                                                                                                                                                                            | `activityCount: 0`, `status: 'red'` (unless `requiredActivities <= 0`)                                                           |
+| B2  | `requiredActivities <= 0`                                                                                                                                                                                | `status: 'green'` always, regardless of count                                                                                    |
+| B3  | Sessions inside window, type in `countsAs` with weight 1                                                                                                                                                 | each counts 1 toward `activityCount`                                                                                             |
+| B4  | Session outside window (before `windowStart`)                                                                                                                                                            | excluded                                                                                                                         |
+| B5  | Session exactly at `now`                                                                                                                                                                                 | included (inclusive upper bound)                                                                                                 |
+| B6  | Session exactly at `windowStart` boundary                                                                                                                                                                | included (inclusive lower bound)                                                                                                 |
+| B7  | Session one instant before `windowStart`                                                                                                                                                                 | excluded                                                                                                                         |
+| B8  | Session type with weight 0 in `countsAs` (e.g. `{training: 1, competition: 0}`)                                                                                                                          | competition sessions don't count                                                                                                 |
+| B9  | Two sessions same day, same weapon group                                                                                                                                                                 | both count (activity = session, not day)                                                                                         |
+| B10 | `count === required`                                                                                                                                                                                     | `status: 'green'`                                                                                                                |
+| B11 | `count === ceil(required/2)`, `< required`                                                                                                                                                               | `status: 'amber'`                                                                                                                |
+| B12 | `count === ceil(required/2) - 1`                                                                                                                                                                         | `status: 'red'`                                                                                                                  |
+| B13 | `computeBarometerForWeaponGroup` — session's `weaponGroup` not in the rule's `weaponGroups` list                                                                                                         | excluded from that rule's count                                                                                                  |
+| B14 | `computeBarometerForWeaponGroup` — no rule matches the requested weapon group                                                                                                                            | returns `null` (not a fabricated zero-required green)                                                                            |
+| B15 | `computeFirearmBarometer` — sessions matched by `session.weaponGroup` membership in the firearm's assigned weapon-group list (not by `session.firearm_id`), per §6.6 "per firearm via its weapon groups" | a session naming a weapon group the firearm holds counts, even if `firearm_id` differs or is null                                |
+| B16 | `computeFirearmBarometer` with a firearm holding two weapon groups covered by two different rules                                                                                                        | returns one status per rule; caller (UI) picks worst for a single chip, per §"Overall aggregation" below                         |
+| B17 | `computeOverallBarometer` — multiple weapon groups present, mixed statuses                                                                                                                               | overall = worst of (`red` &lt; `amber` &lt; `green`) across all rules that have ≥1 matching session or ≥1 requested weapon group |
+| B18 | `computeOverallBarometer` — no weapon groups requested/present at all                                                                                                                                    | returns `{ statuses: [], overall: null }` — never fabricates a status from nothing                                               |
+| B19 | 31-day vs 28-day month subtraction at a `windowMonths` boundary (Jan 31 − 1 month)                                                                                                                       | uses calendar month subtraction (clamped to the shorter month, JS `Date` default behavior), documented not "exactly 30 days"     |
 
 ## Behaviors — `indicators.ts` (Bilaga 8)
 
-| # | Scenario | Expected |
-|---|---|---|
-| I1 | `monthsOfLoggedActivity` — no sessions | `{ months: 0, firstSessionIso: null }` |
-| I2 | `monthsOfLoggedActivity` — one session 6 months + 3 days ago | `months: 6` (whole months, floor) |
-| I3 | `monthsOfLoggedActivity` — one session 5 months 29 days ago | `months: 5` |
-| I4 | `monthsOfLoggedActivity` — earliest of several sessions is used, later ones ignored | matches the earliest `startedAt` |
-| I5 | `pistolskyttemarkeGuldFulfillment` — one guldserie 10 months ago, vapengrupp C | `fulfilled: true`, `guldserieCountLast24Months: 1` |
-| I6 | `pistolskyttemarkeGuldFulfillment` — one guldserie 25 months ago (outside the 24-month window) | `fulfilled: false`, count `0` |
-| I7 | `pistolskyttemarkeGuldFulfillment` — no series at all | `fulfilled: false`, count `0` |
-| I8 | `pistolskyttemarkeGuldFulfillment` — series below guld threshold | not counted |
-| I9 | `pistolskyttemarkeGuldFulfillment` — respects `birthYear` age reduction (delegates to `marke.ts`, never re-implements the threshold) | a series that only clears the age-reduced threshold still counts |
+| #   | Scenario                                                                                                                             | Expected                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| I1  | `monthsOfLoggedActivity` — no sessions                                                                                               | `{ months: 0, firstSessionIso: null }`                           |
+| I2  | `monthsOfLoggedActivity` — one session 6 months + 3 days ago                                                                         | `months: 6` (whole months, floor)                                |
+| I3  | `monthsOfLoggedActivity` — one session 5 months 29 days ago                                                                          | `months: 5`                                                      |
+| I4  | `monthsOfLoggedActivity` — earliest of several sessions is used, later ones ignored                                                  | matches the earliest `startedAt`                                 |
+| I5  | `pistolskyttemarkeGuldFulfillment` — one guldserie 10 months ago, vapengrupp C                                                       | `fulfilled: true`, `guldserieCountLast24Months: 1`               |
+| I6  | `pistolskyttemarkeGuldFulfillment` — one guldserie 25 months ago (outside the 24-month window)                                       | `fulfilled: false`, count `0`                                    |
+| I7  | `pistolskyttemarkeGuldFulfillment` — no series at all                                                                                | `fulfilled: false`, count `0`                                    |
+| I8  | `pistolskyttemarkeGuldFulfillment` — series below guld threshold                                                                     | not counted                                                      |
+| I9  | `pistolskyttemarkeGuldFulfillment` — respects `birthYear` age reduction (delegates to `marke.ts`, never re-implements the threshold) | a series that only clears the age-reduced threshold still counts |
 
 **VERIFY on I5–I9's fulfillment rule:** "fulfilled" here means **≥1
 guldserie in the trailing 24 months**. SHB Bilaga 1 does not state in the
@@ -137,12 +137,12 @@ result, not a confirmed pass/fail.
 
 ## Behaviors — `profiles/se.ts` and `getProfile`
 
-| # | Scenario | Expected |
-|---|---|---|
-| P1 | `getProfile('se')` | returns the SE profile, `verified: false` |
-| P2 | `getProfile('none')` | returns `null` |
-| P3 | SE profile's rules cover every SPSF weapon group used in v1 disciplines (`A`, `AM`, `AP`, `AG`, `A-opt`, `B`, `C`, `R`) plus `generic:airgun` | every listed group id resolves to exactly one rule via `ruleForWeaponGroup` |
-| P4 | SE profile numbers trace to `constants-se.ts`, not inlined | changing the constants file changes the profile (no duplicated literals) |
+| #   | Scenario                                                                                                                                      | Expected                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| P1  | `getProfile('se')`                                                                                                                            | returns the SE profile, `verified: false`                                   |
+| P2  | `getProfile('none')`                                                                                                                          | returns `null`                                                              |
+| P3  | SE profile's rules cover every SPSF weapon group used in v1 disciplines (`A`, `AM`, `AP`, `AG`, `A-opt`, `B`, `C`, `R`) plus `generic:airgun` | every listed group id resolves to exactly one rule via `ruleForWeaponGroup` |
+| P4  | SE profile numbers trace to `constants-se.ts`, not inlined                                                                                    | changing the constants file changes the profile (no duplicated literals)    |
 
 ## Negative constraints (must NOT happen)
 

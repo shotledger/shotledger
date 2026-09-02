@@ -39,13 +39,15 @@ export function logMaintenanceEvent(db: Database, input: LogMaintenanceEventInpu
 }
 
 export function listMaintenanceEvents(db: Database, firearmId: string) {
-  return db
-    .select()
-    .from(maintenanceEvents)
-    .where(and(eq(maintenanceEvents.firearmId, firearmId), isNull(maintenanceEvents.deletedAt)))
-    // UUIDv7 ids are time-ordered — see licenses.ts for the same convention.
-    .orderBy(desc(maintenanceEvents.id))
-    .all();
+  return (
+    db
+      .select()
+      .from(maintenanceEvents)
+      .where(and(eq(maintenanceEvents.firearmId, firearmId), isNull(maintenanceEvents.deletedAt)))
+      // UUIDv7 ids are time-ordered — see licenses.ts for the same convention.
+      .orderBy(desc(maintenanceEvents.id))
+      .all()
+  );
 }
 
 export function softDeleteMaintenanceEvent(db: Database, id: string) {

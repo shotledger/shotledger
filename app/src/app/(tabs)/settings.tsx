@@ -25,8 +25,11 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
-  const { selection: complianceSelection, profile, setSelection: setComplianceSelection } =
-    useComplianceProfile();
+  const {
+    selection: complianceSelection,
+    profile,
+    setSelection: setComplianceSelection,
+  } = useComplianceProfile();
   const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
 

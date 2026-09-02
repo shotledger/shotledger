@@ -39,7 +39,15 @@ export function buildCsvRows(sessionsExport: readonly SessionExport[]): string[]
 
     for (const s of session.series) {
       if (s.shots.length === 0) {
-        rows.push([...sessionCols, String(s.position), bool(s.isSighter), bool(s.isFinal), '', '', '']);
+        rows.push([
+          ...sessionCols,
+          String(s.position),
+          bool(s.isSighter),
+          bool(s.isFinal),
+          '',
+          '',
+          '',
+        ]);
         continue;
       }
       for (const shot of s.shots) {

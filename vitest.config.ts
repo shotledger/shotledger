@@ -16,6 +16,7 @@ export default defineConfig({
         'shared/src/compliance/**/*.ts',
         'shared/src/vault/envelope.ts',
         'shared/src/vault/types.ts',
+        'shared/src/target-scoring/**/*.ts',
       ],
       exclude: ['**/*.test.ts'],
       reporter: ['text-summary', 'json-summary'],
