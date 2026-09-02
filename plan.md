@@ -134,6 +134,20 @@ barometer; no scoring), Skytteappen (club ecosystem).
 - [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
 - [ ] Encrypted on-device document vault (license, membership card) — never
       synced
+- [ ] **Scan a physical license card** (decided 2026-09-02): when adding a
+      license, offer "Scan card" next to manual entry — photograph the
+      vapenlicens card, run on-device OCR, and pre-fill the license form
+      (license number, firearm make/model/caliber, purpose, decided-on date,
+      valid-until / "tills vidare", conditions, authority) for the user to
+      confirm field by field; never save without confirmation. Field layout
+      per the Polisen card (see the licenses table in
+      `docs/implementation-plan.md` §3); other jurisdictions' cards are a
+      per-profile template later. OCR must stay **on-device** (license data
+      never leaves the phone) and cross-platform — candidate: ML Kit text
+      recognition via a React Native wrapper (Android + iOS), new dependency
+      → ask before adding. The scanned photo can optionally go straight into
+      the vault. Reuse the perspective-correction step from photo scoring for
+      angled shots of the card.
 - [ ] iOS release (camera feature as the launch hook)
 
 ### v3+ — by user demand
