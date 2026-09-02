@@ -46,6 +46,7 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-08-31 | Stack: React Native + Expo + TypeScript; local SQLite as source of truth; Cloudflare (Workers + D1 + R2 + better-auth) for optional sync |
 | 2026-08-31 | Free app; donations via Buy Me a Coffee (browser link, unlocks nothing) |
 | 2026-08-31 | Scope: target shooting only |
+| 2026-09-01 | Dark theme reworked to "Purple Rain" (deep near-black purple ground, purple-tinted text/borders); gold accent committed as default over lavender (better WCAG AA margins on every pairing), but **accent choice pending maintainer sign-off** — lavender alternative kept as a one-line-swap constant in `app/src/theme/tokens.ts` |
 
 **Open:**
 
