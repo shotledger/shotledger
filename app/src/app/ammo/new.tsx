@@ -83,9 +83,19 @@ export default function NewAmmoLotScreen() {
         <ThemedText type="smallBold">{t('ammo.caliber')}</ThemedText>
         <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
-        <TextInput value={quantity} onChangeText={setQuantity} keyboardType="number-pad" style={inputStyle} />
+        <TextInput
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
+          style={inputStyle}
+        />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
-        <TextInput value={purchasedOn} onChangeText={setPurchasedOn} placeholder="YYYY-MM-DD" style={inputStyle} />
+        <TextInput
+          value={purchasedOn}
+          onChangeText={setPurchasedOn}
+          placeholder="YYYY-MM-DD"
+          style={inputStyle}
+        />
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
           <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
@@ -121,7 +131,12 @@ export default function NewAmmoLotScreen() {
         <Card testID="handload-recipe">
           <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
           <ThemedText type="small">{t('ammo.powder')}</ThemedText>
-          <TextInput value={powder} onChangeText={setPowder} style={inputStyle} testID="ammo-powder" />
+          <TextInput
+            value={powder}
+            onChangeText={setPowder}
+            style={inputStyle}
+            testID="ammo-powder"
+          />
           <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
           <TextInput
             value={powderChargeGr}
@@ -134,9 +149,19 @@ export default function NewAmmoLotScreen() {
           <ThemedText type="small">{t('ammo.brass')}</ThemedText>
           <TextInput value={brass} onChangeText={setBrass} style={inputStyle} />
           <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
-          <TextInput value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" style={inputStyle} />
+          <TextInput
+            value={colMm}
+            onChangeText={setColMm}
+            keyboardType="decimal-pad"
+            style={inputStyle}
+          />
           <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
-          <TextInput value={crimpMm} onChangeText={setCrimpMm} keyboardType="decimal-pad" style={inputStyle} />
+          <TextInput
+            value={crimpMm}
+            onChangeText={setCrimpMm}
+            keyboardType="decimal-pad"
+            style={inputStyle}
+          />
         </Card>
       )}
 
@@ -145,7 +170,12 @@ export default function NewAmmoLotScreen() {
         <TextInput value={notes} onChangeText={setNotes} style={inputStyle} multiline />
       </Card>
 
-      <PrimaryButton label={t('ammo.create')} onPress={onCreate} disabled={!canCreate} testID="create-ammo" />
+      <PrimaryButton
+        label={t('ammo.create')}
+        onPress={onCreate}
+        disabled={!canCreate}
+        testID="create-ammo"
+      />
     </Screen>
   );
 }

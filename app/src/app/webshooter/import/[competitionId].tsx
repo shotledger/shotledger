@@ -16,7 +16,10 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listFirearms } from '@/db/queries/firearms';
-import { useWebShooterReview, type ReviewCandidate } from '@/features/webshooter/use-webshooter-import';
+import {
+  useWebShooterReview,
+  type ReviewCandidate,
+} from '@/features/webshooter/use-webshooter-import';
 import { Spacing } from '@/theme/tokens';
 
 function verdictLabelKey(candidate: ReviewCandidate['candidate']): string {
@@ -92,7 +95,9 @@ export default function WebShooterImportReviewScreen() {
             <Card key={item.row.id}>
               <ThemedText type="smallBold">{item.candidate.competitionName}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {[item.candidate.weaponGroup, item.candidate.shooterClass].filter(Boolean).join(' ')}
+                {[item.candidate.weaponGroup, item.candidate.shooterClass]
+                  .filter(Boolean)
+                  .join(' ')}
                 {' · '}
                 {t(verdictLabelKey(item.candidate))}
               </ThemedText>

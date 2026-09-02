@@ -10,12 +10,17 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "hono": "^4.13.5"
+    "@better-auth/drizzle-adapter": "1.7.2",
+    "@shotledger/shared": "workspace:*",
+    "better-auth": "1.7.2",
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.5"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "^1.1.2",
-    "typescript": "^5.5.2",
-    "vitest": "~4.1.0",
-    "wrangler": "^4.127.1"
+    "@cloudflare/vitest-plugin": "1.1.2",
+    "@cloudflare/workers-types": "5.20260831.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.127.1"
   }
 }

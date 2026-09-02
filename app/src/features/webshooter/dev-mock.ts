@@ -59,8 +59,19 @@ const MOCK_SIGNUP: Signup = {
   weaponclasses_id: 7,
   start_time: '2026-05-10 09:00:00',
   end_time: '2026-05-10 10:00:00',
-  weaponclass: { id: 7, weapongroups_id: 3, classname: 'C2', championship: 1, classname_general: 'C' },
-  user: { fullname: 'Mock Shooter', shooting_card_number: MOCK_CARD_NUMBER, clubs_id: 1, clubs: [{ id: 1, name: 'Mockklubben' }] },
+  weaponclass: {
+    id: 7,
+    weapongroups_id: 3,
+    classname: 'C2',
+    championship: 1,
+    classname_general: 'C',
+  },
+  user: {
+    fullname: 'Mock Shooter',
+    shooting_card_number: MOCK_CARD_NUMBER,
+    clubs_id: 1,
+    clubs: [{ id: 1, name: 'Mockklubben' }],
+  },
   club: { id: 1, name: 'Mockklubben' },
 };
 
@@ -139,7 +150,12 @@ export function createDevMockHttpClient(): HttpClient {
     async requestJson(path) {
       if (path === '/competitions') {
         return competitionsResponseSchema.parse({
-          competitions: { data: MOCK_COMPETITIONS, current_page: 1, last_page: 1, total: MOCK_COMPETITIONS.length },
+          competitions: {
+            data: MOCK_COMPETITIONS,
+            current_page: 1,
+            last_page: 1,
+            total: MOCK_COMPETITIONS.length,
+          },
         }) as never;
       }
       const detailMatch = /^\/competitions\/(\d+)$/.exec(path);
@@ -161,7 +177,10 @@ export function createDevMockHttpClient(): HttpClient {
         }) as never;
       }
       if (path === 'authenticate/user') {
-        return authUserSchema.parse({ shooting_card_number: MOCK_CARD_NUMBER, fullname: 'Mock Shooter' }) as never;
+        return authUserSchema.parse({
+          shooting_card_number: MOCK_CARD_NUMBER,
+          fullname: 'Mock Shooter',
+        }) as never;
       }
       throw new Error(`Dev mock WebShooter client: unhandled path '${path}'`);
     },

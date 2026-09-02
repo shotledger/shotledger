@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 
+import type { CompetitionLevel } from '../../features/session/labels';
 import { sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
@@ -11,7 +12,7 @@ export interface CreateSessionInput {
   type: SessionType;
   disciplineId: string;
   programId?: string | null;
-  competitionLevel?: string | null;
+  competitionLevel?: CompetitionLevel | null;
   isChampionship?: boolean;
   competitionName?: string | null;
   weaponGroup?: string | null;
@@ -126,9 +127,13 @@ export function listExternalRefs(db: Database): { id: string; externalRef: strin
  * reconcile module's own filter — narrowed here too so the caller never
  * has to trust the module to re-filter what this query already promises.
  */
-export function listHeuristicMatchCandidates(
-  db: Database,
-): { id: string; externalRef: string | null; date: string; eventName: string; weaponGroup: string }[] {
+export function listHeuristicMatchCandidates(db: Database): {
+  id: string;
+  externalRef: string | null;
+  date: string;
+  eventName: string;
+  weaponGroup: string;
+}[] {
   return db
     .select({
       id: sessions.id,

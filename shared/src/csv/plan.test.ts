@@ -41,7 +41,9 @@ describe('buildDryRunPlan', () => {
       [group({ firearm: 'Pardini SP', ammoLot: 'SK Standard', tags: ['KM'] })],
       emptyIndex,
     );
-    expect(plan.sessions).toEqual([{ sessionId: 's1', name: 'Kvällsträning', action: 'create', shotCount: 0 }]);
+    expect(plan.sessions).toEqual([
+      { sessionId: 's1', name: 'Kvällsträning', action: 'create', shotCount: 0 },
+    ]);
     expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'create' }]);
     expect(plan.ammoLots).toEqual([{ name: 'SK Standard', action: 'create' }]);
     expect(plan.tags).toEqual([{ name: 'KM', action: 'create' }]);
@@ -61,7 +63,13 @@ describe('buildDryRunPlan', () => {
       tagNames: new Set(['KM']),
     };
     const plan = buildDryRunPlan(
-      [group({ firearm: 'Pardini SP', ammoLot: 'SK Standard', tags: ['KM', 'pardini sp' /* different case */] })],
+      [
+        group({
+          firearm: 'Pardini SP',
+          ammoLot: 'SK Standard',
+          tags: ['KM', 'pardini sp' /* different case */],
+        }),
+      ],
       index,
     );
     expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'reuse' }]);

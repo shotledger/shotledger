@@ -125,7 +125,9 @@ export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): nu
     .filter(
       (series) => !series.isSighter && (series.totalOverride != null || series.shots.length > 0),
     )
-    .map((series) => (series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots)));
+    .map((series) =>
+      series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots),
+    );
   if (totals.length === 0) return null;
   return totals.reduce((sum, total) => sum + total, 0) / totals.length;
 }

@@ -45,11 +45,11 @@ Bilaga 1 mom 5.1.1.1 p. 452 — per 5-shot precision series, by
 vapengrupp. (The word "guldserie" does not occur in SHB; colloquially it
 means a series meeting the guld requirement.)
 
-| Valör  | A  | B  | C  |
-|--------|----|----|----|
-| Brons  | 32 | 33 | 34 |
-| Silver | 38 | 39 | 40 |
-| Guld   | 43 | 45 | 46 |
+| Valör  | A   | B   | C   |
+| ------ | --- | --- | --- |
+| Brons  | 32  | 33  | 34  |
+| Silver | 38  | 39  | 40  |
+| Guld   | 43  | 45  | 46  |
 
 Age reduction: **−1 p/series** from the year after turning 55;
 **−2 p/series** from the year after turning 65.
@@ -61,7 +61,7 @@ Two paths (C.5.1.2 pp. 70–71), mixable: (a) placement — silver to best
 precision (C.5.1.2.3 p. 71):
 
 | Serier | A/A-opt silver | A brons | B silver | B brons | C silver | C brons |
-|--------|----------------|---------|----------|---------|----------|---------|
+| ------ | -------------- | ------- | -------- | ------- | -------- | ------- |
 | 6      | 277            | 267     | 282      | 273     | 283      | 276     |
 | 7      | 323            | 312     | 329      | 319     | 330      | 322     |
 | 10     | 461            | 445     | 470      | 455     | 471      | 460     |
@@ -111,14 +111,14 @@ SM = riks + mästerskap.
 precision target; "C30"/"C25" are fältskjutning hit/miss circle figures
 (30×27 / 25×22.5 cm, no rings, pp. 102–103):
 
-| Ring | Ø mm | | Ring | Ø mm |
-|------|------|-|------|------|
-| X    | 25   | | 5    | 300  |
-| 10   | 50   | | 4    | 350  |
-| 9    | 100  | | 3    | 400  |
-| 8    | 150  | | 2    | 450  |
-| 7    | 200  | | 1    | 500  |
-| 6    | 250  | |      |      |
+| Ring | Ø mm |     | Ring | Ø mm |
+| ---- | ---- | --- | ---- | ---- |
+| X    | 25   |     | 5    | 300  |
+| 10   | 50   |     | 4    | 350  |
+| 9    | 100  |     | 3    | 400  |
+| 8    | 150  |     | 2    | 450  |
+| 7    | 200  |     | 1    | 500  |
+| 6    | 250  |     |      |      |
 
 Black covers rings 7–10 (200 mm); ring line 0.2–0.5 mm; min visible
 target 550×550 mm; ring 10 not numbered; distance 25 m (F.7.2).

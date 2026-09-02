@@ -30,7 +30,10 @@ export function WebShooterSessionBadge({ session }: WebShooterSessionBadgeProps)
   if (session.externalSource !== 'webshooter') return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundElement }]} testID="webshooter-session-badge">
+    <View
+      style={[styles.container, { backgroundColor: theme.backgroundElement }]}
+      testID="webshooter-session-badge"
+    >
       <ThemedText type="small" themeColor="primary">
         {t('webshooter.badge')}
       </ThemedText>
@@ -41,7 +44,9 @@ export function WebShooterSessionBadge({ session }: WebShooterSessionBadgeProps)
       )}
       {session.officialStandardmedalj && session.officialStandardmedalj !== 'none' && (
         <ThemedText type="small" themeColor="textSecondary">
-          {t('webshooter.officialMedal', { medal: t(`webshooter.medal.${session.officialStandardmedalj}`) })}
+          {t('webshooter.officialMedal', {
+            medal: t(`webshooter.medal.${session.officialStandardmedalj}`),
+          })}
         </ThemedText>
       )}
     </View>

@@ -46,6 +46,12 @@ export default function HomeScreen() {
 
         <StatTile label={t('home.shotsLoggedTotal')} value={String(shotsLoggedTotal)} />
 
+        <ListRow
+          testID="home-timer-entry"
+          title={t('timer.homeEntry')}
+          onPress={() => router.push('/timer')}
+        />
+
         {profile && overall && (
           <Chip
             testID="home-barometer"

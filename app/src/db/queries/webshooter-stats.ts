@@ -5,7 +5,12 @@
 // manually-logged alike.
 import { and, eq, isNull } from 'drizzle-orm';
 import type { CompetitionResultForStats } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
-import { sessionInnerTenCount, sessionResults, sumValueTenths, type SeriesForResults } from '@shotledger/shared';
+import {
+  sessionInnerTenCount,
+  sessionResults,
+  sumValueTenths,
+  type SeriesForResults,
+} from '@shotledger/shared';
 
 import { series, sessions, shots } from '../schema';
 import type { Database } from '../types';
@@ -42,7 +47,9 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
 
     const forResults: SeriesForResults[] = seriesRows.map((row) => {
       const isOverride =
-        row.isTotalOverride === 1 && row.totalOverrideTenths !== null && row.totalOverrideShotCount !== null;
+        row.isTotalOverride === 1 &&
+        row.totalOverrideTenths !== null &&
+        row.totalOverrideShotCount !== null;
       const seriesShots = isOverride
         ? []
         : db
@@ -65,7 +72,11 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
     const beforeFinalSeriesCount = seriesRows.filter((r) => !r.isFinal && r.isSighter === 0).length;
     const totalSeriesCount = seriesRows.filter((r) => r.isSighter === 0).length;
     const innerTens = sessionInnerTenCount(
-      seriesRows.map((row) => ({ isSighter: row.isSighter === 1, isFinal: row.isFinal === 1, shots: [] })),
+      seriesRows.map((row) => ({
+        isSighter: row.isSighter === 1,
+        isFinal: row.isFinal === 1,
+        shots: [],
+      })),
     );
 
     results.push({
@@ -121,7 +132,8 @@ export function listFreeformSessionsForPb(db: Database): FreeformSessionRow[] {
     if (seriesRows.length === 0) continue;
 
     const seriesTenths = seriesRows.map((row) => {
-      if (row.isTotalOverride === 1 && row.totalOverrideTenths !== null) return row.totalOverrideTenths;
+      if (row.isTotalOverride === 1 && row.totalOverrideTenths !== null)
+        return row.totalOverrideTenths;
       const seriesShots = db
         .select()
         .from(shots)

@@ -67,35 +67,41 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     setConnected(true);
   }, []);
 
-  const connectWithPassword = useCallback(async (username: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const loginClient = createUnverifiedSpaLoginClient(fetch, WEBSHOOTER_BASE_URL);
-      const result = await loginClient.login({ username, password });
-      await finishConnect(result.token);
-    } catch (err) {
-      if (err instanceof WebShooterSpaLoginNotVerifiedError) {
-        setError('spaLoginNotVerified');
-      } else {
-        setError('connectFailed');
+  const connectWithPassword = useCallback(
+    async (username: string, password: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const loginClient = createUnverifiedSpaLoginClient(fetch, WEBSHOOTER_BASE_URL);
+        const result = await loginClient.login({ username, password });
+        await finishConnect(result.token);
+      } catch (err) {
+        if (err instanceof WebShooterSpaLoginNotVerifiedError) {
+          setError('spaLoginNotVerified');
+        } else {
+          setError('connectFailed');
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [finishConnect]);
+    },
+    [finishConnect],
+  );
 
-  const connectWithToken = useCallback(async (token: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await finishConnect(token.trim());
-    } catch {
-      setError('connectFailed');
-    } finally {
-      setLoading(false);
-    }
-  }, [finishConnect]);
+  const connectWithToken = useCallback(
+    async (token: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await finishConnect(token.trim());
+      } catch {
+        setError('connectFailed');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [finishConnect],
+  );
 
   const disconnect = useCallback(async () => {
     await clearWebShooterToken();
@@ -105,5 +111,13 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     setConnected(false);
   }, []);
 
-  return { connected, cardNumber, loading, error, connectWithPassword, connectWithToken, disconnect };
+  return {
+    connected,
+    cardNumber,
+    loading,
+    error,
+    connectWithPassword,
+    connectWithToken,
+    disconnect,
+  };
 }

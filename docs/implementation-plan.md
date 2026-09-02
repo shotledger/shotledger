@@ -227,7 +227,7 @@ expiry ~18 months out, one airgun), 2 ammo lots, ~30 sessions spread over
 - [x] pnpm workspace + `create-expo-app` (TypeScript template) in `app/`,
       expo-router installed, dev build config (`expo prebuild` clean) —
       config present (expo-router + splash-screen plugins, `main:
-    expo-router/entry`); running `expo prebuild` itself is deferred
+expo-router/entry`); running `expo prebuild` itself is deferred
       with Android verification below (no Android SDK on this machine
       yet)
 - [x] `shared/` package with vitest wired; `backend/` = `wrangler init`
@@ -507,8 +507,7 @@ from §6.5 automatically).
       layout: club-log style table (date, discipline, type, series count,
       score, location) + summary header. `VERIFY:` layout against a real
       föreningsintyg-attachment example from the maintainer.
-      — `shared/src/export/pdf-log.ts` (pure HTML builder, snapshot-tested)
-      + `app/src/features/export/use-pdf-export.ts` (assembles it from the
+      — `shared/src/export/pdf-log.ts` (pure HTML builder, snapshot-tested) + `app/src/features/export/use-pdf-export.ts` (assembles it from the
       Stats screen's current period/firearm filters) +
       `app/src/platform/pdf-export.ts` (expo-print → expo-sharing share
       sheet). Wired to a new "Export PDF" button on `/stats`; verified on
@@ -822,6 +821,15 @@ start --web`) and how to screenshot it (Chrome tools), start emulator
 restates §0 rules 1–6 verbatim.
 
 ## 9. Deferred to v2 (do not build in v1)
+
+> **Photo target scoring, phase 1, has since shipped** on
+> `feat/photo-scoring-phase1` (auto-geometry + tap-to-mark, precision face
+> only, behind a calibrated validity gate). Spec and evidence:
+> `docs/specs/photo-scoring-phase1-{spec,evidence}.md`; the feasibility work
+> it rests on is `docs/specs/cv-spike-report.md`. It added the `shot_marks`
+> table (migration `0002_young_hardball`) and two runtime dependencies,
+> `react-native-fast-opencv` and `expo-image-manipulator` (§2). Phase 2 — the
+> learned hole detector and the score-analysis heatmap — remains deferred.
 
 Photo target scoring; cloud sync + accounts (backend/ stays hello-world);
 WebShooter import; document vault; share cards; timers; iOS release.

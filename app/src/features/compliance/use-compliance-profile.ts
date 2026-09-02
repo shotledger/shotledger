@@ -28,7 +28,9 @@ function loadSelection(locale: string): ProfileSelection {
  */
 export function useComplianceProfile(): ComplianceProfileState {
   const { i18n } = useTranslation();
-  const [selection, setSelectionState] = useState<ProfileSelection>(() => loadSelection(i18n.language));
+  const [selection, setSelectionState] = useState<ProfileSelection>(() =>
+    loadSelection(i18n.language),
+  );
 
   useFocusEffect(
     useCallback(() => {

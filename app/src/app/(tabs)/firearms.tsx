@@ -65,7 +65,9 @@ export default function FirearmsScreen() {
                 key={row.id}
                 testID={`firearm-${row.id}`}
                 title={`${row.make} ${row.model}`}
-                subtitle={row.weaponType ? t(`firearms.weaponType${capitalize(row.weaponType)}`) : undefined}
+                subtitle={
+                  row.weaponType ? t(`firearms.weaponType${capitalize(row.weaponType)}`) : undefined
+                }
                 onPress={() => router.push(`/firearms/${row.id}`)}
                 trailing={
                   <View style={{ flexDirection: 'row', gap: Spacing.two }}>
@@ -98,7 +100,10 @@ export default function FirearmsScreen() {
               key={lot.id}
               testID={`ammo-${lot.id}`}
               title={lot.label}
-              subtitle={t('ammo.usageCount', { sessions: usage.sessionCount, shots: usage.shotCount })}
+              subtitle={t('ammo.usageCount', {
+                sessions: usage.sessionCount,
+                shots: usage.shotCount,
+              })}
               onPress={() => router.push(`/ammo/${lot.id}`)}
               trailing={lot.isHandload ? <Chip label={t('ammo.isHandload')} /> : undefined}
             />

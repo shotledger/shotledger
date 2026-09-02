@@ -119,13 +119,29 @@ function snapshot(db: Database) {
       .from(sessions)
       .where(eq(sessions.deletedAt, sessions.deletedAt)) // no-op, keeps import tidy
       .all()
-      .map((s) => ({ name: s.name, tags: listTagsForSession(db, s.id).map((t) => t.name).sort() }))
+      .map((s) => ({
+        name: s.name,
+        tags: listTagsForSession(db, s.id)
+          .map((t) => t.name)
+          .sort(),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 
 function wipeEverything(db: Database) {
-  for (const table of [shots, series, sessionTags, sessions, licenses, firearmGroups, maintenanceEvents, ammoLots, firearms, tags]) {
+  for (const table of [
+    shots,
+    series,
+    sessionTags,
+    sessions,
+    licenses,
+    firearmGroups,
+    maintenanceEvents,
+    ammoLots,
+    firearms,
+    tags,
+  ]) {
     db.delete(table).run();
   }
 }
