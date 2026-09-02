@@ -24,6 +24,13 @@ function keyLabel(key: KeypadKey): string {
   return key === 'backspace' ? '⌫' : key;
 }
 
+/** Spoken label: 'X' alone reads as a letter, not as "inner ten". */
+function accessibilityLabel(key: KeypadKey, t: (k: string) => string): string {
+  if (key === 'backspace') return t('session.backspace');
+  if (key === 'X') return t('session.innerTenCount');
+  return key;
+}
+
 /**
  * The score keypad. All behaviour lives in `shared/scoring/entry.ts`
  * (docs/specs/m3-scoring-spec.md §3); this component only renders the state
@@ -45,7 +52,7 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
       />
 
       <View style={styles.totalRow}>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
           {state.mode === 'decimal' ? t('session.keypadHintDecimal') : t('session.keypadHint')}
         </ThemedText>
         <ThemedText type="smallBold" testID="series-running-total">
@@ -58,7 +65,7 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
           <Pressable
             key={key}
             accessibilityRole="button"
-            accessibilityLabel={key === 'backspace' ? t('session.backspace') : key}
+            accessibilityLabel={accessibilityLabel(key, t)}
             testID={`key-${key}`}
             onPress={() => onChange(pressKey(state, key))}
             style={({ pressed }) => [
@@ -84,9 +91,14 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  // Without this the hint is clipped by the running total on a narrow screen.
+  hint: {
+    flexShrink: 1,
   },
   keys: {
     flexDirection: 'row',

@@ -287,3 +287,300 @@ to integer precision scoring only, so tenths ÷ 10 is exact.
 
 Statistics (M5), standardmedalj markers (M5), särskjutning, photo target
 scoring (v2), round-counter increments (M4), CSV (M7).
+
+---
+
+# Amendment A1 — X/(X) semantics, session-header stats, unscored extra rounds
+
+> **Append-only amendment** to the M3 spec (old-coder: the spec is never
+> rewritten in place). Everything above this line records what M3 shipped and
+> stays as the historical contract; where A1 contradicts it, **A1 wins** and the
+> contradiction is named explicitly below.
+>
+> Date: **2026-09-01**.
+> Branch: `feat/score-x-semantics`, based on `feat/theme-purple-rain`.
+> Evidence: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/m3-scoring-evidence.md` §A1.
+>
+> **Approval status: maintainer-directed-by-message.** The three changes below
+> — including the resolution of V1 and V2 — were dictated by the maintainer in
+> the task message, so the *semantics* are the maintainer's, not the agent's.
+> The maintainer did **not** review this amendment document before the code was
+> written (autonomous run), so the correlation-breaking spec review still did
+> not happen for the scenario tables, the invariants, or the mapping. Confidence
+> is claimed accordingly in the evidence report.
+
+Tier: **3**, unchanged — this changes the meaning of already-recorded scoring
+data (`is_inner_ten`) and adds a column that feeds the firearm round counter.
+
+## A1.0 Setup plan (what this amendment authorizes)
+
+- **Isolation:** branch `feat/score-x-semantics` (not a worktree — the gauntlet
+  needs the repo's installed `node_modules`; same reason as §0).
+- **Git:** Conventional Commits, every commit `-s` (DCO), explicit paths staged,
+  branch pushed, no PR, `main` untouched.
+- **No new dependencies** — runtime or dev. Explicitly stated by the maintainer.
+- **Schema:** one new nullable column, `sessions.extra_rounds INTEGER NULL`,
+  added by a **new Drizzle migration** (`0001_*`). Migration `0000` is never
+  edited. No column is dropped — see A1.1.4.
+- **Files the gauntlet adds, by path:** `app/src/db/migrations/0001_*.sql` +
+  its `meta/` snapshot (drizzle-kit generated), and the screenshots under the
+  session scratchpad `x-semantics/`.
+
+## A1.1 Change 1 — X and (X) semantics (resolves V1 and V2)
+
+### A1.1.1 Maintainer ruling
+
+**V1 — `(X)` semantics: RESOLVED (maintainer, 2026-09-01).**
+**V2 — the "10" key in decimal mode: RESOLVED (maintainer, 2026-09-01).**
+
+| Key   | Meaning                                    | `value_tenths` (integer mode) | `is_inner_ten` |
+| ----- | ------------------------------------------ | ----------------------------- | -------------- |
+| `X`   | an **ordinary ten**                        | 100                           | 0              |
+| `(X)` | an **inner ten** (centrumtia)              | 100                           | 1              |
+
+Both keys are visible and usable in **both** scoring modes. In decimal mode both
+are ring-10 keys resolving V2 (there is still no free `10` key, because `0` is
+ring 0 — a decimal miss):
+
+| Key   | Decimal meaning                                                   |
+| ----- | ----------------------------------------------------------------- |
+| `X`   | ring 10, **no** inner-ten flag; the following digit is the tenth  |
+| `(X)` | ring 10 **plus** the inner-ten flag; the following digit is the tenth |
+
+So `X` then `9` ⇒ `value_tenths` 109, `is_inner_ten` 0; `(X)` then `9` ⇒ 109,
+`is_inner_ten` 1.
+
+### A1.1.2 What this contradicts above (named explicitly)
+
+- §3.1: `EntryShot.isInnerTenDecimal` and `KeypadState.innerTenDecimalEnabled`
+  are **removed** from the types. `PendingRing.isInnerTenDecimal` likewise.
+- §3.3 I3: `X` in integer mode now yields `{100, isInnerTen: **false**}`.
+- §3.3 I4 / I7: `(X)` is now a first-class integer-mode key and appears in
+  `visibleKeys`.
+- §3.4 D4 / D5: `X` in decimal mode no longer sets `isInnerTen`.
+- §3.4 D6 / D7 / D11: the `innerTenDecimalEnabled` gate is gone; `(X)` is
+  always visible and always sets `isInnerTen`.
+- §5 T2: `countInnerTens` still counts `isInnerTen` only — but that flag now
+  means "the shooter pressed `(X)`", i.e. a centrumtia, not "the shooter
+  pressed `X`".
+
+### A1.1.3 Revised scenario tables
+
+**Integer mode (replaces §3.3).** `visibleKeys` is
+`1..9, 0, X, (X), backspace` in **both** modes.
+
+| #    | Given                            | When          | Then                                                          |
+| ---- | -------------------------------- | ------------- | ------------------------------------------------------------- |
+| A-I1 | empty 5-shot series              | press `9`     | shots[0] = {90, isInnerTen false}; cursor 1; total 90         |
+| A-I2 | empty series                     | press `0`     | shots[0] = {0, false} (miss); cursor 1; total 0               |
+| A-I3 | empty series                     | press `X`     | shots[0] = {100, **false**} — an ordinary ten; total 100      |
+| A-I4 | empty series                     | press `(X)`   | shots[0] = {100, **true**} — a centrumtia; total 100          |
+| A-I5 | keys `9,X,8,7,(X)`               | —             | total 440 tenths; **1** inner ten (the `(X)`); complete       |
+| A-I6 | full 5-shot series               | press `7`     | state unchanged                                               |
+| A-I7 | any state                        | `visibleKeys` | `1..9,0,X,(X),backspace`                                      |
+
+**Decimal mode (replaces §3.4).**
+
+| #     | Given                | When            | Then                                                    |
+| ----- | -------------------- | --------------- | ------------------------------------------------------- |
+| A-D1  | empty 10-shot series | `1` then `0`    | 10 (1.0); cursor 1                                      |
+| A-D2  | empty series         | `9` then `7`    | 97 (9.7)                                                |
+| A-D3  | empty series         | `0` then `0`    | 0 (a miss)                                              |
+| A-D4  | empty series         | `X` then `9`    | 109, isInnerTen **false**                               |
+| A-D5  | empty series         | `X` then `3`    | 103, isInnerTen false (not clamped)                     |
+| A-D6  | empty series         | `(X)` then `9`  | 109, isInnerTen **true**                                |
+| A-D7  | empty series         | `(X)` then `3`  | 103, isInnerTen true (not clamped)                      |
+| A-D8  | pending ring set     | press `X`/`(X)` | ignored — the second tap must be a digit                |
+| A-D9  | pending ring set     | `backspace`     | pending cleared; no shot written; cursor unchanged      |
+| A-D10 | mid-entry            | total           | counts only completed shots                             |
+| A-D11 | any state            | `visibleKeys`   | `1..9,0,X,(X),backspace` — same list as integer mode    |
+
+§3.6 (editing), §3.7 (construction) and §3.8 (properties) carry over unchanged
+except that `innerTenDecimalEnabled` disappears from every construction option
+and every property's arbitrary.
+
+New property:
+
+- **A-P6** For any key sequence in either mode, a shot has `isInnerTen === true`
+  **iff** the `(X)` key produced it — equivalently, `isInnerTen` implies
+  `valueTenths >= 100`.
+
+### A1.1.4 Schema: `is_inner_ten_decimal` is DEPRECATED, not dropped
+
+The column `shots.is_inner_ten_decimal` **stays in the schema and in migration
+`0000`**. Rationale (maintainer's, recorded here so the next reader does not
+"clean it up"): a destructive column-drop migration on an existing local-first
+database is riskier than an always-zero unused column. The change is:
+
+- No code writes a non-zero value to it any more; `AddShotInput` no longer
+  accepts it and the app never passes it.
+- §3 of the implementation plan and `app/src/db/schema.ts` mark it
+  `DEPRECATED (2026-09-01)` in comments, with the reason.
+- **Invariant A-N10:** after this change, every row written by the app has
+  `is_inner_ten_decimal = 0`. Historical rows: none exist, because M3 shipped
+  the flag defaulted off and no UI path ever enabled it (see V1 above) — so
+  there is no data migration to perform.
+
+### A1.1.5 Display (app layer, ordinary tests + Maestro)
+
+- A chip for an inner ten renders **`(X)`** in integer mode (ShotLog's
+  convention), and the parenthesised value **`(10.9)`** in decimal mode — the
+  parentheses are the inner-ten marker in both modes.
+- An ordinary ten renders `10` in integer mode and `10.9` in decimal.
+- Statistics labels that used to say "X" now say **`(X)`** / "inner tens" /
+  sv **"centrumtior"**, consistently, because the metric now counts centrumtior.
+
+## A1.2 Change 2 — session header stats
+
+The session-detail header card (the one with Total and "Guld vid N") gains two
+values. The per-shot average stays where it is, in the Stats toggle.
+
+New pure functions in `shared/src/scoring/totals.ts`:
+
+| #    | Given                                                      | Then                                                                            |
+| ---- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| A-S1 | `seriesAverageTenths([])`                                  | `null` (undefined, never 0)                                                     |
+| A-S2 | 3 scored main series 430/440/450 tenths                    | 440 — the mean of the **series** totals, in tenths                              |
+| A-S3 | a sighter series among them                                | excluded from the mean (N1)                                                     |
+| A-S4 | a **final** series present                                 | included — the mean is over all scored series, main and final                   |
+| A-S5 | a scored series with **no shots yet** (an empty new chip row) | excluded — an unentered series must not drag the average toward 0             |
+| A-S6 | only sighters / only empty series                          | `null`                                                                          |
+| A-S7 | `sessionInnerTenCount(series)`                             | count of `isInnerTen` shots in scored (non-sighter) series — sighter X's excluded |
+
+i18n: sv `snitt/serie` + `centrumtior`, en `avg/series` + `inner tens (X)`.
+
+## A1.3 Change 3 — unscored extra rounds
+
+`sessions.extra_rounds INTEGER NULL` — rounds fired in a session that were never
+scored (FAP/ammo-volume bookkeeping: fouling shots, function checks, plinking
+after the match).
+
+**Semantics (maintainer-directed):**
+
+| #    | Concern                          | Rule                                                                                   |
+| ---- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| A-X1 | firearm round counter            | **included** — the M4 delta path adds `extra_rounds` for firearm-linked sessions        |
+| A-X2 | ammo-lot usage                   | **included** in the lot's `shotCount`                                                   |
+| A-X3 | volume metrics (shots logged)    | **included** — Home's shots-logged total and the Stats tab's total shots                |
+| A-X4 | every score statistic            | **excluded** — mean, SD, X count/rate, best/worst series, trend, guldserie, comparison, standardmedalj, session total |
+| A-X5 | series / shot structures         | **excluded entirely** — no `series` row, no `shots` row is ever created for them        |
+| A-X6 | edit from N to M                 | round counter and lot usage move by the **delta** `M − N`, never by `M` (same rule the M4 shot path already uses) |
+| A-X7 | `NULL` vs `0`                    | both mean "no extra rounds"; the field is nullable so "never entered" stays distinguishable in the data |
+| A-X8 | negative / non-integer input     | rejected (`RangeError`) — never silently mis-counts a round counter                     |
+
+**Migration:** generated with `drizzle-kit generate`, applied by the existing
+expo migrator on app start. **A-X9:** the migration applies cleanly on a database
+already at `0000` with rows in it, and existing sessions read back
+`extra_rounds = NULL`.
+
+**UI:** a numeric field on the new-session form and on session detail —
+en "Extra rounds (not scored)", sv "Extra skott (räknas ej i statistik)".
+
+## A1.4 Negative constraints for this amendment
+
+- **A-N10** every newly written shot row has `is_inner_ten_decimal = 0` (A1.1.4).
+- **A-N11** `value_tenths` stays 0–109 and integer; all sums stay integer.
+- **A-N12** the 273 pre-existing vitest tests and 1 jest test keep passing,
+  except where a test's **expectation** encodes the old X/(X) semantics — those
+  are updated to the maintainer's ruling and **each one is listed individually
+  in the evidence report**. No test is deleted, skipped, or broadened.
+- **A-N13** coverage thresholds and Stryker thresholds are never lowered.
+- **A-N14** no new dependency, runtime or dev.
+- **A-N15** every new UI string goes through i18n with real sv + en.
+- **A-N16** `shared/` stays free of React Native imports.
+
+---
+
+# Amendment A2 — final keypad layout: `1–9`, `0`, `10`, `X`
+
+> **Append-only amendment**, and it **SUPERSEDES Amendment A1 §A1.1** (same
+> day, 2026-09-01). A1 §A1.2 (session-header stats) and §A1.3 (extra rounds)
+> are unaffected and still stand. Where A2 and A1 §A1.1 disagree, **A2 wins**.
+>
+> **Approval status: maintainer-directed-by-message** (the layout and the key
+> meanings are the maintainer's). The amendment document itself was not
+> reviewed before the code was written — autonomous run, as for A1.
+
+## A2.1 The ruling
+
+There is **no `(X)` key**. The keypad is `1–9`, `0`, `10`, `X`, backspace:
+
+| Key    | Meaning                       | `value_tenths` (integer mode) | `is_inner_ten` |
+| ------ | ----------------------------- | ----------------------------- | -------------- |
+| `1`–`9`| rings 1–9                     | digit × 10                    | 0              |
+| `0`    | a miss                        | 0                             | 0              |
+| `10`   | an **ordinary ten**           | 100                           | 0              |
+| `X`    | an **inner ten** (centrumtia) | 100                           | 1              |
+
+So relative to A1 §A1.1 the two ten-keys keep their *meanings* and swap their
+*labels*: A1's `X` (ordinary ten) is now spelled `10`, and A1's `(X)` (inner
+ten) is now spelled `X`. **The stored data model is unchanged** — `is_inner_ten`
+still means centrumtia, so nothing about A1's data ruling is undone, and no
+data written under A1 is reinterpreted.
+
+**Assumption flagged for the maintainer's veto:** the maintainer's wording was
+"1-10 and X". A miss still has to be enterable, and `0` is the only key that can
+express one, so **`0` is kept**. If the maintainer wants misses entered some
+other way, that is a further amendment.
+
+**Decimal mode:** two taps as before. `10` starts ring 10 with no flag; `X`
+starts ring 10 with the inner-ten flag; the second tap is the tenth digit.
+`0`–`9` are rings 0–9, so `0` then `0` is still a decimal miss. This finally
+retires VERIFY item V2 with the plan's own literal spelling: the plan wrote
+`"10" then "9" ⇒ 10.9`, and there is now an actual `10` key that does exactly
+that.
+
+## A2.2 Revised scenario tables (replace A1 §A1.1.3)
+
+**Integer mode.** `visibleKeys` is `1..9, 0, 10, X, backspace` in **both** modes.
+
+| #    | Given                | When          | Then                                                    |
+| ---- | -------------------- | ------------- | ------------------------------------------------------- |
+| B-I1 | empty 5-shot series  | press `9`     | {90, isInnerTen false}; cursor 1; total 90              |
+| B-I2 | empty series         | press `0`     | {0, false} — a miss; cursor 1; total 0                  |
+| B-I3 | empty series         | press `10`    | {100, **false**} — an ordinary ten; total 100           |
+| B-I4 | empty series         | press `X`     | {100, **true**} — a centrumtia; total 100               |
+| B-I5 | keys `9,10,8,7,X`    | —             | total 440 tenths; **1** inner ten; complete             |
+| B-I6 | full series          | press `7`/`X` | state unchanged                                         |
+| B-I7 | any state            | `visibleKeys` | `1..9,0,10,X,backspace` — no `(X)` anywhere             |
+
+**Decimal mode.**
+
+| #     | Given                | When            | Then                                     |
+| ----- | -------------------- | --------------- | ---------------------------------------- |
+| B-D1  | empty 10-shot series | `1` then `0`    | 10 (1.0)                                 |
+| B-D2  | empty series         | `9` then `7`    | 97 (9.7)                                 |
+| B-D3  | empty series         | `0` then `0`    | 0 (a miss)                               |
+| B-D4  | empty series         | `10` then `9`   | 109, isInnerTen **false**                |
+| B-D5  | empty series         | `10` then `3`   | 103, isInnerTen false (not clamped)      |
+| B-D6  | empty series         | `X` then `9`    | 109, isInnerTen **true**                 |
+| B-D7  | empty series         | `X` then `3`    | 103, isInnerTen true (not clamped)       |
+| B-D8  | pending ring set     | press `10`/`X`  | ignored — the second tap must be a digit |
+| B-D9  | pending ring set     | `backspace`     | pending cleared; no shot written         |
+| B-D10 | mid-entry            | total           | counts only completed shots              |
+| B-D11 | any state            | `visibleKeys`   | same list as integer mode                |
+
+Property **A-P6** carries over with `X` in place of `(X)`: a shot has
+`isInnerTen` true only where the `X` key produced it, and any such shot is
+worth at least 100 tenths.
+
+## A2.3 Display and labels (replaces A1 §A1.1.5)
+
+- Chip, integer mode: an ordinary ten renders **`10`**, an inner ten renders
+  **`X`**.
+- Chip, decimal mode: the numeric value, with an inner ten parenthesised —
+  `10.9` vs `(10.9)`.
+- Every "X" label in statistics and headers is plain **`X`** again (sv
+  "X (centrumtior)"), never "(X)". The metric still counts centrumtior.
+
+## A2.4 Session lists (Home latest sessions, and any other session list)
+
+Each session row shows, besides the name and date, a secondary line with the
+**total score**, the **per-series average** and the **number of X** — e.g.
+`225 · 45.0/serie · 3X` — built from the existing `ListRow`/`Chip` components.
+
+| #    | Given                                     | Then                                                          |
+| ---- | ----------------------------------------- | -------------------------------------------------------------- |
+| B-L1 | a session with scored series              | the row shows total, `seriesAverageTenths`, `sessionInnerTenCount` |
+| B-L2 | a session with only sighters / no shots   | average and X count are omitted, not printed as 0 or NaN       |
+| B-L3 | sighter series                            | excluded from both the average and the X count (A-S3/A-S7)     |

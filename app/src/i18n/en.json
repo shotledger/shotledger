@@ -11,7 +11,7 @@
   "tabs": {
     "home": "Home",
     "stats": "Statistics",
-    "firearms": "Firearms",
+    "firearms": "Firearms & Ammo",
     "settings": "Settings"
   },
   "sessionType": {
@@ -25,7 +25,8 @@
     "newSession": "New session",
     "emptyTitle": "No sessions yet",
     "emptyBody": "Log your first training or competition session to see it here.",
-    "emptyCta": "Log your first session"
+    "emptyCta": "Log your first session",
+    "sessionSummary": "{{average}}/series · {{xCount}}X"
   },
   "stats": {
     "title": "Statistics",
@@ -62,7 +63,7 @@
     "standardmedaljBrons": "Standardmedalj brons reached"
   },
   "firearms": {
-    "title": "Firearms",
+    "title": "Firearms & Ammo",
     "tabFirearms": "Firearms",
     "tabAmmo": "Ammunition",
     "emptyTitle": "No firearms yet",
@@ -221,11 +222,16 @@
     "save": "Save series",
     "clear": "Clear",
     "innerTen": "X",
-    "innerTenDecimal": "(X)",
     "backspace": "Delete",
-    "keypadHint": "One tap per shot",
+    "keypadHint": "One tap per shot — 10 is an ordinary ten, X an inner ten",
     "keypadHintDecimal": "Two taps per shot: ring, then tenth",
-    "shotChip": "Shot {{position}}"
+    "shotChip": "Shot {{position}}",
+    "ordinaryTen": "10",
+    "seriesAverage": "Avg/series",
+    "innerTenCount": "X (inner tens)",
+    "extraRounds": "Extra rounds (not scored)",
+    "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only",
+    "extraRoundsSummary": "{{count}} extra rounds"
   },
   "dev": {
     "title": "Dev",
@@ -256,11 +262,11 @@
   },
   "discipline": {
     "spsf-precision": "Precision",
-    "spsf-milsnabb": "Military rapid fire",
-    "generic-rings": "Free training (ring target)"
+    "spsf-milsnabb": "Military Rapid Fire",
+    "generic-rings": "Free Training (Ring Target)"
   },
   "program": {
     "spsf-precision": "Precision",
-    "spsf-milsnabb": "Military rapid fire"
+    "spsf-milsnabb": "Military Rapid Fire"
   }
 }

@@ -38,7 +38,10 @@ export interface SessionResults {
   hasFinal: boolean;
 }
 
-/** X count. The decimal (X) is a separate flag and never counted here. */
+/**
+ * Centrumtia count. Since Amendment A1 (§A1.1) `isInnerTen` is set by the
+ * `(X)` key only — a plain `X` is an ordinary ten and is not counted here.
+ */
 export function countInnerTens(shotsList: readonly FlaggedShot[]): number {
   return shotsList.filter((shot) => shot.isInnerTen).length;
 }
@@ -72,4 +75,36 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
 /** Volume metric: every shot counts, sighters included (§6.3). */
 export function shotVolume(seriesList: readonly SeriesForResults[]): number {
   return seriesList.reduce((count, series) => count + series.shots.length, 0);
+}
+
+// --- Amendment A1 §A1.2: session-header stats ---
+
+/** A series carrying the inner-ten flag per shot (header inner-ten count). */
+export interface FlaggedSeriesForResults {
+  isSighter: boolean;
+  isFinal: boolean;
+  shots: readonly FlaggedShot[];
+}
+
+/**
+ * Mean of the SCORED series' totals, in tenths — the "snitt/serie" shown in
+ * the session header (spec A-S1..A-S6). Sighter series are excluded (N1);
+ * final series are included, so a finished championship averages over its
+ * grundomgång and its final together. A scored series with no shots entered
+ * yet is excluded rather than counted as 0, so adding an empty series never
+ * drops the running average. `null` when nothing qualifies.
+ */
+export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): number | null {
+  const totals = seriesList
+    .filter((series) => !series.isSighter && series.shots.length > 0)
+    .map((series) => sumValueTenths(series.shots));
+  if (totals.length === 0) return null;
+  return totals.reduce((sum, total) => sum + total, 0) / totals.length;
+}
+
+/** Centrumtior in a session's scored series — sighter (X)s excluded (A-S7). */
+export function sessionInnerTenCount(seriesList: readonly FlaggedSeriesForResults[]): number {
+  return seriesList
+    .filter((series) => !series.isSighter)
+    .reduce((count, series) => count + countInnerTens(series.shots), 0);
 }

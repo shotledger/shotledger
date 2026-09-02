@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   countInnerTens,
+  seriesAverageTenths,
+  sessionInnerTenCount,
   sessionResults,
   shotVolume,
   sumValueTenths,
@@ -179,5 +181,84 @@ describe('result-model properties (spec T8)', () => {
         },
       ),
     );
+  });
+});
+
+// --- Amendment A1 §A1.2: session-header stats ---
+
+describe('seriesAverageTenths (spec A-S1..A-S6)', () => {
+  const series = (
+    values: number[],
+    opts: { isSighter?: boolean; isFinal?: boolean } = {},
+  ): SeriesForResults => ({
+    isSighter: opts.isSighter ?? false,
+    isFinal: opts.isFinal ?? false,
+    shots: shots(...values),
+  });
+
+  it('A-S1: an empty session has no average', () => {
+    expect(seriesAverageTenths([])).toBeNull();
+  });
+
+  it('A-S2: averages the SERIES totals, not the shots', () => {
+    // series totals 430, 440, 450 tenths
+    const list = [
+      series([90, 90, 90, 80, 80]),
+      series([90, 90, 90, 90, 80]),
+      series([90, 90, 90, 90, 90]),
+    ];
+    expect(seriesAverageTenths(list)).toBe(440);
+  });
+
+  it('A-S3: sighter series are excluded from the average', () => {
+    const list = [
+      series([100, 100, 100, 100, 100], { isSighter: true }),
+      series([90, 90, 90, 80, 80]),
+    ];
+    expect(seriesAverageTenths(list)).toBe(430);
+  });
+
+  it('A-S4: final series are included in the average', () => {
+    const list = [series([90, 90, 90, 80, 80]), series([90, 90, 90, 90, 90], { isFinal: true })];
+    expect(seriesAverageTenths(list)).toBe(440);
+  });
+
+  it('A-S5: a scored series with no shots yet does not drag the average down', () => {
+    const list = [series([90, 90, 90, 80, 80]), series([])];
+    expect(seriesAverageTenths(list)).toBe(430);
+  });
+
+  it('A-S6: only sighters or only empty series means no average', () => {
+    expect(seriesAverageTenths([series([100], { isSighter: true })])).toBeNull();
+    expect(seriesAverageTenths([series([])])).toBeNull();
+  });
+});
+
+describe('sessionInnerTenCount (spec A-S7)', () => {
+  const flagged = (values: [number, boolean][], isSighter = false) => ({
+    isSighter,
+    isFinal: false,
+    shots: values.map(([valueTenths, isInnerTen]) => ({ valueTenths, isInnerTen })),
+  });
+
+  it('A-S7: counts (X) shots in scored series only', () => {
+    const list = [
+      flagged([
+        [100, true],
+        [100, false],
+        [90, false],
+      ]),
+      flagged([[100, true]], true),
+      flagged([
+        [109, true],
+        [98, false],
+      ]),
+    ];
+    expect(sessionInnerTenCount(list)).toBe(2);
+  });
+
+  it('A-S7b: no inner tens at all counts 0', () => {
+    expect(sessionInnerTenCount([flagged([[100, false]])])).toBe(0);
+    expect(sessionInnerTenCount([])).toBe(0);
   });
 });

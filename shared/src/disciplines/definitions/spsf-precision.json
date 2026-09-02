@@ -1,7 +1,10 @@
 {
   "id": "spsf-precision",
   "federation": "SPSF",
-  "name": { "sv": "Precision", "en": "Precision" },
+  "name": {
+    "sv": "Precision",
+    "en": "Precision"
+  },
   "targetFace": "spsf-pistol-25m-precision",
   "defaultSeriesLength": 5,
   "scoring": "rings",

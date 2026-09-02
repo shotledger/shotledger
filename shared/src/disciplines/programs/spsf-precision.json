@@ -2,7 +2,10 @@
   "id": "spsf-precision",
   "disciplineId": "spsf-precision",
   "federation": "SPSF",
-  "name": { "sv": "Precision", "en": "Precision" },
+  "name": {
+    "sv": "Precision",
+    "en": "Precision"
+  },
   "shotsPerSeries": 5,
   "scoring": "integer",
   "supportsFinal": true

@@ -26,3 +26,6 @@ build/
 .stryker-tmp/
 coverage/
 reports/
+
+# Agent worktrees (checkouts of this repo, never content of it)
+.claude/worktrees/

@@ -160,7 +160,15 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
                 ammo_lot_id TEXT NULL FK,
                 started_at TEXT NOT NULL,
                 location TEXT, notes TEXT,
-                decimal_scoring INTEGER NOT NULL DEFAULT 0
+                decimal_scoring INTEGER NOT NULL DEFAULT 0,
+                extra_rounds INTEGER NULL      -- rounds fired but never
+                                               -- scored. Counts toward the
+                                               -- firearm round counter,
+                                               -- ammo-lot usage and volume
+                                               -- totals; excluded from every
+                                               -- score statistic and from the
+                                               -- series/shots structures
+                                               -- (migration 0001, 2026-09-01)
 
 series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
                 is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
@@ -179,8 +187,19 @@ shots           series_id FK NOT NULL, position INTEGER NOT NULL,
                                                -- value×10 (9 → 90), decimal
                                                -- stores tenths (10.3 → 103).
                                                -- Integer sums — no float drift
-                is_inner_ten INTEGER NOT NULL DEFAULT 0,  -- X
-                is_inner_ten_decimal INTEGER NOT NULL DEFAULT 0 -- (X), VERIFY
+                is_inner_ten INTEGER NOT NULL DEFAULT 0,  -- centrumtia: the
+                                               -- X key. A plain ten (the "10"
+                                               -- key) leaves this 0.
+                                               -- RESOLVED 2026-09-01 (spec
+                                               -- amendments A1/A2)
+                is_inner_ten_decimal INTEGER NOT NULL DEFAULT 0
+                                               -- DEPRECATED 2026-09-01: the
+                                               -- old "(X) in decimal mode"
+                                               -- flag. Nothing writes it; kept
+                                               -- rather than dropped because a
+                                               -- destructive column-drop on an
+                                               -- existing local-first DB is
+                                               -- riskier than an unused column
 
 maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
                    kind TEXT NOT NULL,         -- free text v1
@@ -310,11 +329,17 @@ the toggle disables once used.
 
 **ScoreKeypad spec** (get this exactly right):
 
-- Keys: `1–9`, `0`, `X`, `(X)`, backspace. Integer mode: tap = one shot
-  (X ⇒ value 10, is_inner_ten=1; (X) hidden). Decimal mode: two taps per
-  shot — "10" then "9" ⇒ 10.9; `X` ⇒ 10.9 + is_inner_ten; `(X)` ⇒
-  is_inner_ten_decimal (VERIFY exact SPSF/ISSF meaning of "(X)" with
-  maintainer before M3 review).
+- Keys: `1–9`, `0`, `10`, `X`, backspace — **the same list in both modes**
+  (resolved by the maintainer 2026-09-01; spec amendments A1 and A2, the
+  latter superseding the former). Integer mode: tap = one shot; `10` ⇒ value
+  10 with `is_inner_ten=0`, `X` ⇒ value 10 with `is_inner_ten=1` (centrumtia),
+  `0` ⇒ a miss. Decimal mode: two taps per shot — `"10"` then `"9"` ⇒ 10.9
+  with no flag; `X` then `"9"` ⇒ 10.9 + `is_inner_ten`; `0` then `0` ⇒ a
+  decimal miss. There is no `(X)` key, and `is_inner_ten_decimal` is
+  deprecated (§3). Statistics that count "X" count centrumtior.
+- Extra rounds: the session form and session detail carry an
+  `extra_rounds` field for rounds fired but not scored — volume only
+  (round counter, ammo-lot usage, shots-logged totals), never score.
 - Shot chips fill left→right for the series length defined by the
   discipline (5/6/10 or custom); running series total always visible;
   editing a chip re-selects it, keypad overwrites.
@@ -327,11 +352,11 @@ the toggle disables once used.
       `shared/scoring/`): executable spec in `docs/specs/m3-scoring-spec.md`,
       evidence in `docs/specs/m3-scoring-evidence.md`. The spec was **not
       approved by the maintainer before implementation** (autonomous run) —
-      it is the artifact to review after the fact. Two open VERIFY items are
-      recorded there: the `(X)` semantics (implemented behind the
-      `innerTenDecimalEnabled` flag, default off, so no data is written with
-      it) and which key types "10" in decimal mode (this build uses `X` for
-      ring 10, because `0` is needed for a decimal miss).
+      it is the artifact to review after the fact. Its two VERIFY items — the
+      `(X)` semantics (V1) and which key types "10" in decimal mode (V2) —
+      were **RESOLVED by the maintainer on 2026-09-01** and are recorded in
+      the spec's append-only amendments A1 and A2 (A2 supersedes A1's key
+      labels; the data model is `is_inner_ten` = centrumtia in both).
 - [x] Session detail screen: Series list (chips per shot, per-series
       totals) / Stats toggle (M5 fills stats)
       — series list, Before final / Final / Total results (§6.3), guldserie
@@ -349,8 +374,10 @@ the toggle disables once used.
 - **Done when:** Maestro flow enters a full 5-series C-precision session
   by tapping and asserts the computed total; unit tests cover scoring
   edge cases (0, miss, X in both modes).
-  — `app/e2e/m3-entry.yaml` does exactly that (five series of 5x9, asserts
-  the computed total 225) on the `shotledger` AVD dev build. Unit tests:
+  — `app/e2e/m3-entry.yaml` does exactly that on the `shotledger` AVD dev
+  build; since the 2026-09-01 amendments each series is `9,9,9,10,X`, so the
+  flow exercises both ten keys and asserts the total (235), the per-series
+  average (47.0) and the X count (5). Unit tests:
   187 vitest tests total, 100% line/branch/function coverage on the shared
   scoring + discipline modules, Stryker 98.26% (7 survivors, all classified
   equivalent in the evidence report) plus a persisted on-disk mutation
@@ -399,7 +426,8 @@ the toggle disables once used.
 All math in `shared/scoring/stats.ts` (vitest): sighter series are
 excluded from every score metric but included in volume metrics (total
 shots, rounds fired). Series mean, session mean
-per shot, standard deviation (sample), best/worst series, X counts,
+per shot, standard deviation (sample), best/worst series, X counts
+(= centrumtior, `is_inner_ten`; labelled "X" / sv "centrumtior"),
 rolling trend (per-session mean over time), comparison of last N series
 vs previous N (default N=100), guldserie count per period, per-firearm
 and per-ammo-lot aggregates.
@@ -412,7 +440,7 @@ and per-ammo-lot aggregates.
       `app/src/features/stats/use-stats-data.ts`, no generate button;
       empty state both for no data at all and for no data in the current
       filter.
-- [x] Session detail Stats toggle: totals, mean, SD, X count,
+- [x] Session detail Stats toggle: totals, mean, SD, X count (centrumtior),
       distribution mini-chart, comparison vs the user's last 100 series
       of the same discipline/class
       — segmented Series/Stats toggle in `app/src/app/session/[id]/index.tsx`;

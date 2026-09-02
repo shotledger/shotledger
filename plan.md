@@ -46,7 +46,12 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-08-31 | Stack: React Native + Expo + TypeScript; local SQLite as source of truth; Cloudflare (Workers + D1 + R2 + better-auth) for optional sync |
 | 2026-08-31 | Free app; donations via Buy Me a Coffee (browser link, unlocks nothing) |
 | 2026-08-31 | Scope: target shooting only |
-| 2026-09-01 | Dark theme reworked to "Purple Rain" (deep near-black purple ground, purple-tinted text/borders); gold accent committed as default over lavender (better WCAG AA margins on every pairing), but **accent choice pending maintainer sign-off** — lavender alternative kept as a one-line-swap constant in `app/src/theme/tokens.ts` |
+| 2026-09-01 | Dark theme reworked to "Purple Rain" (deep near-black purple ground, purple-tinted text/borders); gold accent proposed as default over lavender on WCAG AA margins, pending maintainer sign-off |
+| 2026-09-01 | **Accent resolved: lavender** (maintainer: "do not use yellow for buttons"). `Colors.dark.primary` is `#B98CFF`; the gold values stay in `app/src/theme/tokens.ts` as `PURPLE_RAIN_GOLD_ACCENT_REJECTED`, never assigned to an interactive token. Semantic colours (success/warning/danger) unchanged |
+| 2026-09-01 | **Scoring keys resolved** (maintainer): keypad is `1–9`, `0`, `10`, `X` — `10` is an ordinary ten, `X` is the centrumtia (`is_inner_ten=1`), same keys in integer and decimal modes. No `(X)` key; `is_inner_ten_decimal` deprecated (column kept, never written). Closes M3 spec VERIFY items V1 and V2; recorded as append-only amendments A1/A2 in `docs/specs/m3-scoring-spec.md` (A2 supersedes A1's labels) |
+| 2026-09-01 | Sessions get `extra_rounds` (nullable, migration 0001): rounds fired but never scored. Counts toward the firearm round counter, ammo-lot usage and volume totals; excluded from every score statistic and from the series/shots structures |
+| 2026-09-01 | Session detail header shows the per-series average and the X count; session lists show total · average/series · X count. The per-shot mean stays in the Stats toggle |
+| 2026-09-01 | English discipline/program names use Title Case ("Military Rapid Fire"); Swedish keeps sentence case ("Militär snabbmatch"). Firearms tab is "Firearms & Ammo" / "Vapen & ammo" |
 
 **Open:**
 
@@ -66,8 +71,9 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v1 — the logbook (Android)
 
-- [ ] Fast score entry: per-shot keypad with dedicated X/(X) keys, integer +
-      decimal (10.9) scoring, 5/6/10-shot and custom series, running totals
+- [ ] Fast score entry: per-shot keypad with dedicated `10` and `X`
+      (centrumtia) keys, integer + decimal (10.9) scoring, 5/6/10-shot and
+      custom series, running totals
 - [ ] Disciplines — SPSF only in v1: precision + militär snabbmatch
       (+ generic ring-scoring for free training); vapengrupp + klass per
       SHB; märke/"guldserie" thresholds (age-adjusted). ISSF and

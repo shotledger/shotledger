@@ -292,3 +292,212 @@ Source state: branch `feat/m3-score-entry`, based on `feat/m2-shell`
 (`0fa2009`). The exact commit this report describes is the branch tip at the
 time of writing; `git log --oneline feat/m2-shell..feat/m3-score-entry` lists
 the four commits.
+
+---
+
+# Evidence — Amendments A1 and A2 (branch `feat/score-x-semantics`)
+
+> Covers spec `docs/specs/m3-scoring-spec.md` **Amendment A1** (X/(X)
+> semantics, session-header stats, unscored extra rounds) and **Amendment A2**
+> (final keypad layout `1–9`, `0`, `10`, `X`, which supersedes A1 §A1.1).
+> Absolute path of this report:
+> `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/m3-scoring-evidence.md`
+
+## A.0 What this buys you, and what it does not
+
+- **Spec approval: maintainer-directed-by-message for the semantics; the
+  amendment documents themselves were NOT reviewed before the code
+  (autonomous run).** The rulings — X/(X), then `10`/`X`; the extra-rounds
+  semantics; the header stats; the accent; the tab and name wording — came
+  from the maintainer in the task message, so the *decisions* are theirs. The
+  scenario tables, invariants and spec-to-test mapping below were written by
+  the same agent that wrote the code, so the correlation-breaking review still
+  did not happen for those. Claim confidence accordingly.
+- **The ruling changed mid-task, twice.** A1 was implemented, committed and
+  green before A2 arrived. A1 is kept in the spec (append-only) and A2 names
+  exactly what it supersedes. No file still implements A1's key labels.
+- **Tier 3**, unchanged: this changes the meaning of recorded scoring data.
+- **Independent verification: not performed.** Declared downgrade, as for M3.
+
+## A.1 Source state and environment
+
+| Item          | Value                                                                       |
+| ------------- | --------------------------------------------------------------------------- |
+| Branch        | `feat/score-x-semantics`, based on `feat/theme-purple-rain` (`ea70ae0`)      |
+| Isolation     | branch, not a worktree (the gauntlet needs the repo's `node_modules`)        |
+| New deps      | **none** — runtime or dev (invariant A-N14)                                  |
+| Migration     | `app/src/db/migrations/0001_fixed_multiple_man.sql` (drizzle-kit generated)  |
+| Tooling       | unchanged from the M3 report: vitest 3.2.7, Stryker 10.0.0, fast-check 4.9.0 |
+
+Files added: `app/src/db/queries/extra-rounds.test.ts`,
+`app/src/db/migrations.test.ts`, the `0001` migration + its `meta/` snapshot.
+
+## A.2 Baseline
+
+`pnpm check` on `feat/theme-purple-rain` before any change: **273 vitest tests
+/ 24 files passed, 1 jest test passed, 0 failures.** No pre-existing failures.
+
+The three pre-existing `tsc --noEmit -p app/tsconfig.json` errors recorded in
+§2 are still there and still in the same three files
+(`db/migration-gate.tsx`, `db/queries/sessions.ts`, `theme/tokens.test.ts`);
+this branch adds **no new file** to that list. The `tokens.test.ts` entry grew
+from 1 to 7 lines because the file gained a test — same pre-existing cause
+(the app tsconfig has no jest types), not a new defect.
+
+## A.3 Tests whose EXPECTATION changed with the semantics
+
+The maintainer changed what correct means, so some existing tests had to be
+re-pointed. Per anti-gaming rule 1, **no test was deleted, skipped, or
+broadened** — each below asserts something at least as strong as before.
+Every one is listed individually.
+
+| Test (file)                                                          | Old expectation                                       | New expectation                                                              | Why legitimate                                            |
+| -------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `entry.test.ts` I3 → A-I3 → B-I3                                     | `X` ⇒ `{100, isInnerTen: true}`                        | `10` ⇒ `{100, isInnerTen: false}`                                             | the maintainer's ruling: a plain ten carries no flag       |
+| `entry.test.ts` I4 → A-I4 → B-I4                                     | `(X)` in integer mode is ignored (state unchanged)     | `X` ⇒ `{100, isInnerTen: true}`                                               | the inner ten is now enterable in integer mode             |
+| `entry.test.ts` I5/I5b → A-I5 → B-I5                                 | `9,10,8,7,X` totals 440 with 1 inner ten from `X`      | `9,10,8,7,X` totals 440 with 1 inner ten from `X` (`10` contributes no flag)   | same total, stricter flag attribution                      |
+| `entry.test.ts` I7 → A-I7 → B-I7                                     | `visibleKeys` = `1..9,0,X,backspace`                   | `1..9,0,10,X,backspace`                                                       | the key list itself is the ruling                          |
+| `entry.test.ts` D4 → A-D4 → B-D4                                     | `X` then `9` ⇒ 109 **with** the flag                   | `10` then `9` ⇒ 109 **without** the flag                                      | ring 10 is now typed with `10`                             |
+| `entry.test.ts` D5 → A-D5 → B-D5                                     | `X` then `3` ⇒ 103 with the flag                       | `10` then `3` ⇒ 103 without the flag                                          | same                                                        |
+| `entry.test.ts` D6 → A-D6 → B-D6                                     | `(X)` then `9` ⇒ 109 with `isInnerTenDecimal`, flag-gated | `X` then `9` ⇒ 109 with `isInnerTen`                                       | the second flag is gone; the first now means centrumtia    |
+| `entry.test.ts` D7 → A-D7 → B-D7                                     | `(X)` ignored and hidden when the gate is off          | `X` then `3` ⇒ 103 with the flag (not clamped)                                | the gate no longer exists; replaced by a real assertion    |
+| `entry.test.ts` D8 → B-D8                                            | pending ring ignores `X`/`(X)`                         | pending ring ignores `10`/`X`                                                 | key rename only                                            |
+| `entry.test.ts` D11 → B-D11                                          | decimal `visibleKeys` includes `(X)` when gated on     | decimal `visibleKeys` equals integer's, and excludes `(X)`                    | one key list in both modes                                 |
+| `entry.test.ts` "defaults the (X) flag to off"                       | `innerTenDecimalEnabled === false` by default          | replaced by "10 and X differ only by the inner-ten flag, never by value"      | the option it asserted no longer exists; the replacement asserts the new invariant, not nothing |
+| `entry.test.ts` "never shows (X) in integer mode even when flag on"   | `(X)` hidden in integer mode                           | replaced by "the decimal pending ring carries the inner-ten mark from X only" | same reason                                                 |
+| `entry.test.ts` properties P1–P5                                     | built states with `innerTenDecimalEnabled: true`       | same properties, option removed; `anyKey` now includes `10`, not `(X)`        | arbitrary widened to the real key set; assertions unchanged |
+| `shots.test.ts` "sets is_inner_ten and is_inner_ten_decimal flags"    | `addShot({isInnerTenDecimal: true})` stores 1          | the deprecated column is **always** 0, and an ordinary ten stores `is_inner_ten` 0 | strictly stronger: it now pins the deprecation invariant A-N10 |
+
+Everything else in the 273-test baseline is untouched and still passing.
+
+## A.4 New behaviours, mapped to their tests
+
+| Spec                     | Test                                                                  |
+| ------------------------ | --------------------------------------------------------------------- |
+| A2 B-I1..B-I7, B-D1..B-D11 | `shared/src/scoring/entry.test.ts` (ids verbatim in test names)      |
+| A-P6                     | `entry.test.ts` `describe('properties')` — fast-check, both modes      |
+| A1 A-S1..A-S6 (`seriesAverageTenths`) | `shared/src/scoring/totals.test.ts`                       |
+| A1 A-S7 (`sessionInnerTenCount`)      | `totals.test.ts`                                          |
+| A1 A-X1 (round counter)  | `app/src/db/queries/extra-rounds.test.ts` (3 tests)                    |
+| A-X2 (ammo-lot usage)    | `extra-rounds.test.ts`                                                |
+| A-X3 (volume)            | `extra-rounds.test.ts` (2 tests, incl. the session-filtered sum)       |
+| A-X4 (score exclusion)   | `extra-rounds.test.ts` (2 tests over `listAllStatsSeries` + stats fns) |
+| A-X5 (no series/shots)   | `extra-rounds.test.ts`                                                |
+| A-X6 (delta on edit)     | `extra-rounds.test.ts` (2 tests, incl. clearing back to null)          |
+| A-X7/A-X8 (null/0, guards) | `extra-rounds.test.ts` (3 tests)                                     |
+| A-X9 (migration on an existing populated DB) | `app/src/db/migrations.test.ts`                    |
+| A-N10 (deprecated column always 0) | `shots.test.ts`, `seed.test.ts`, `migrations.test.ts`       |
+| Seed uses X sensibly     | `app/src/db/seed.test.ts` (3 new tests)                               |
+| Lavender accent          | `app/src/theme/tokens.test.ts` (jest)                                 |
+| B-L1..B-L3 (session list) | **not unit-tested** — screen-level rendering; covered by the Maestro flow and the screenshots. Declared limit. |
+
+## A.5 RED evidence
+
+| Step                    | Observed                                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| A1 keypad semantics     | 21 failed / 26 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                     |
+| A1 header stats         | 8 failed / 16 passed in `totals.test.ts` before implementing; 24/24 after                            |
+| A1 extra rounds         | 14 failed in `extra-rounds.test.ts` (`setSessionExtraRounds is not a function`, plus the RangeError guard) before implementing; all green after |
+| A2 keypad relabel       | 10 failed / 37 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                     |
+| Seed inner-ten tests    | passed immediately (pre-existing behaviour). Proved non-vacuous with a throwaway mutant — `isInnerTen = rng() < 0.3` (dropping the `value === 10` condition) made the test fail; reverted, green again. Kept as regression armor. |
+
+Test edits and implementation edits were always separate steps (anti-gaming
+rule 2): the test file was edited and run to red, then the implementation.
+
+## A.6 Gauntlet — one fresh run after the last code edit
+
+| Layer              | Command                             | Result                                                                                     |
+| ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| Full test suite    | `pnpm check`                        | PASS — 26 files, **302 vitest tests passed, 0 failed**; jest 2 tests passed. Baseline 273 + 1. |
+| Static types       | `pnpm typecheck` (`tsc -b`)         | PASS — exit 0. App project checked by hand: same 3 pre-existing files, no new one.           |
+| Lint               | `pnpm lint`                         | PASS — exit 0                                                                                |
+| Coverage (gate)    | `pnpm coverage`                     | PASS — statements **100% (620/620)**, branches **100% (258/258)**, functions **100% (61/61)**, lines **100% (620/620)**. Threshold unchanged at 100%. |
+| Mutation (tool)    | `pnpm mutation` (Stryker)           | PASS — **98.28%**: 568 killed, 2 timeout, 10 survived, 0 no-coverage, 0 errors. Break threshold unchanged at 95. M3 scored 98.26%, so the score did not regress. `totals.ts` (the new header-stat functions) is **100%**. |
+| Mutation (schemas) | `pnpm mutation:schema`              | PASS — **17/17 killed**, exit 0                                                              |
+| Property-based     | inside the vitest run               | 8 fast-check properties (P1–P5 + A-P6 on the keypad, 2 on the result model)                  |
+| Real execution     | `expo run:android` + `maestro test e2e/m3-entry.yaml` | **PASS** — see §A.8                                                        |
+| Supply chain       | dependency set unchanged            | no new dependency, so no new advisory surface; no new network/subprocess/fs capability       |
+| Suite health       | `pnpm exec vitest run --sequence.shuffle` | **PASS** — 302/302 in randomized order; no order dependence                            |
+
+### Surviving mutants
+
+Ten survivors, all pre-existing classifications from the M3 report except
+`entry.ts`, which improved from 3 survivors to 1:
+
+- `entry.ts:148` `if (state.cursor === 0) return state` → `if (false)`:
+  **equivalent** — it falls through to `withShot(state, -1, null)`, which
+  matches no index and produces a structurally identical state.
+- The two survivors introduced by A2's first implementation of `isDigitKey`
+  (`key >= '0'`, redundant once `key.length === 1` filters `'10'` and
+  `'backspace'`) were removed by a **refactor under green**, not by a test:
+  `isDigitKey` now tests set membership. Suite green before and after, mutation
+  re-run afterwards (98.28%).
+- The remaining seven are `classes.ts`, `groups.ts`, `index.ts` (×2 + 2
+  timeouts), `marke.ts`, `standardmedalj.ts` (×3), `stats.ts` — unchanged from
+  the M3 report's classification; this branch did not touch those modules'
+  logic.
+
+## A.7 Honest notes
+
+- **Prettier churn was committed and then reverted.** A `prettier --write` over
+  `app/src` reformatted a dozen M4/M5 files and the generated drizzle migration
+  metadata that this change has nothing to do with. Those files were restored
+  to their previous content and the commit amended, so the branch diff contains
+  only files this change actually touches.
+- **`.claude/worktrees/` broke `pnpm lint`** mid-task: other agents' worktrees
+  are checkouts of this repo, so `eslint .` from the root linted their
+  branches' sources. Added to the eslint ignores and to `.gitignore`. Not a
+  scoring change, but it is in the diff and is called out here rather than
+  buried.
+- **The `0` key is an assumption, not a ruling.** The maintainer wrote "1-10
+  and X". A miss has to be enterable, so `0` was kept; flagged in the spec
+  (A2.1) for veto.
+- **Session-list rendering (B-L1..B-L3) has no unit test.** It is screen code;
+  the underlying math (`seriesAverageTenths`, `sessionInnerTenCount`) is fully
+  tested and mutation-covered at 100%, but the row's string assembly is not.
+- **The date-format amendment was issued and then withdrawn.** Nothing was
+  built for it; Home already renders `dateStyle: 'medium'`, which is what the
+  withdrawn-to state asks for. No shared `format-date.ts` helper exists, and
+  per-screen date formatting is unchanged.
+
+## A.8 Real execution — emulator
+
+Dev build (`expo run:android`, BUILD SUCCESSFUL) on the `shotledger` AVD,
+Metro attached. `app/e2e/m3-entry.yaml` was updated for the new keys and the
+new header assertions: each of the five series is entered as `9, 9, 9, 10, X`,
+so the flow exercises **both** ten keys.
+
+**First run: FAILED**, honestly reported rather than papered over. The
+post-save step `extendedWaitUntil visible: id session-total` timed out from the
+third series on — the new "Extra rounds" card lengthened the header, pushing
+the results card above the fold, and `extendedWaitUntil` does not scroll (the
+CLAUDE.md M5 note). The **flow** was wrong, not the app: the screenshots taken
+during that run show the correct values throughout. Fixed by replacing that
+wait with `scrollUntilVisible … direction: UP`.
+
+**Second run: PASSED**, every step COMPLETED, including:
+
+```
+Assert that "235", id: session-total is visible... COMPLETED
+Assert that "47.0", id: session-series-average is visible... COMPLETED
+Assert that "5", id: session-inner-ten-count is visible... COMPLETED
+```
+
+235 = 5 × 47; 47.0 = the per-series average; 5 = one centrumtia per series,
+from the `X` key only — the four `10` presses per series contribute none.
+
+Screenshots (session scratchpad `x-semantics/`):
+
+| File                              | Shows                                                                          |
+| --------------------------------- | -------------------------------------------------------------------------------- |
+| `m3-01-home.png`                  | Home, empty state                                                                |
+| `m3-02-new-session.png`           | new-session form, vapengrupp C + klass 2                                         |
+| `m3-02b-extra-rounds-field.png`   | the "Extra rounds (not scored)" field on the form                               |
+| `m3-03-session-empty.png`         | session detail before any series                                                |
+| `m3-04-session-five-series.png`   | Total 235, Avg/series 47.0, X (inner tens) 5; chips read `9 9 9 10 X`           |
+| `dark-01-dev.png`                 | dark theme, **lavender** buttons (the rejected gold appears nowhere)             |
+| `dark-02-home.png`                | dark theme Home: lavender FAB, "Firearms & Ammo" tab untruncated, session rows reading `Sep 1, 2026 · 251 · 41.8/series · 1X` |
+
+One UI defect was found by looking at a screenshot rather than by a test: the
+keypad hint collided with the running total on a narrow screen. Fixed by
+letting that row wrap (`flexWrap` + `flexShrink` on the hint).

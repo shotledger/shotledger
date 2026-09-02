@@ -22,6 +22,7 @@ import {
 import { db } from '@/db/client';
 import { listFirearms } from '@/db/queries/firearms';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
+import { sumExtraRounds } from '@/db/queries/sessions';
 import { listAllStatsSeries } from '@/db/queries/stats';
 
 export const STATS_PERIODS = ['30d', '6m', '12m', 'all'] as const;
@@ -148,7 +149,12 @@ function loadStatsData(filters: StatsFilters): StatsData {
   return {
     hasAnyData: all.length > 0,
     hasFilteredData: filtered.length > 0,
-    totalShots: volumeShotCount(filtered),
+    // Volume, so unscored extra rounds count too (spec A1 §A1.3 A-X3); every
+    // score statistic below is computed from `shots`/`filtered` and so cannot
+    // see them (A-X4).
+    totalShots:
+      volumeShotCount(filtered) +
+      sumExtraRounds(db, [...new Set(filtered.map((series) => series.sessionId))]),
     sessionCount: new Set(filtered.map((series) => series.sessionId)).size,
     meanTenths: meanTenths(shots),
     sdTenths: sampleStandardDeviationTenths(shots),

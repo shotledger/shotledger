@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { listAmmoLots } from './queries/ammo-lots';
 import { listFirearms } from './queries/firearms';
 import { latestLicense } from './queries/licenses';
-import { listSessions } from './queries/sessions';
+import { listSessions, sumExtraRounds } from './queries/sessions';
 import { listTags } from './queries/tags';
+import { shots } from './schema';
 import { seedDemoData, wipeDemoData } from './seed';
 import { createTestDb } from './test-db';
 import type { Database } from './types';
@@ -76,5 +77,36 @@ describe('wipeDemoData', () => {
     expect(listFirearms(db)).toHaveLength(0);
     expect(listAmmoLots(db)).toHaveLength(0);
     expect(listTags(db)).toHaveLength(0);
+  });
+});
+
+describe('seedDemoData — X and extra rounds (spec A1 §A1.3 / A2)', () => {
+  it('marks some tens as centrumtior and never flags a non-ten', () => {
+    seedDemoData(db);
+    const shotRows = db.select().from(shots).all();
+    const inner = shotRows.filter((row) => row.isInnerTen === 1);
+    expect(inner.length).toBeGreaterThan(0);
+    expect(inner.every((row) => row.valueTenths === 100)).toBe(true);
+    // Ordinary tens exist too — X is not simply "every ten".
+    expect(shotRows.some((row) => row.valueTenths === 100 && row.isInnerTen === 0)).toBe(true);
+  });
+
+  it('never writes the deprecated is_inner_ten_decimal flag (invariant A-N10)', () => {
+    seedDemoData(db);
+    expect(
+      db
+        .select()
+        .from(shots)
+        .all()
+        .every((row) => row.isInnerTenDecimal === 0),
+    ).toBe(true);
+  });
+
+  it('gives some sessions unscored extra rounds', () => {
+    seedDemoData(db);
+    expect(sumExtraRounds(db)).toBeGreaterThan(0);
+    const withExtra = listSessions(db).filter((s) => (s.extraRounds ?? 0) > 0);
+    expect(withExtra.length).toBeGreaterThan(0);
+    expect(withExtra.length).toBeLessThan(30);
   });
 });
