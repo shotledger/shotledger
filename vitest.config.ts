@@ -14,6 +14,7 @@ export default defineConfig({
         'shared/src/scoring/**/*.ts',
         'shared/src/disciplines/**/*.ts',
         'shared/src/compliance/**/*.ts',
+        'shared/src/sync/**/*.ts',
         'shared/src/timer/**/*.ts',
         'shared/src/vault/envelope.ts',
         'shared/src/vault/types.ts',
