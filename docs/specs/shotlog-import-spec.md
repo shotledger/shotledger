@@ -35,7 +35,8 @@ repository.** Every fixture in the tests is invented ("Club Cup A",
 vocabulary reproduced in §3 is ShotLog's own controlled vocabulary
 (`Tävling`, `Precision`, `Milsnabb`, `Warmup`, `Final`, `DNF`, `A Opt`) —
 format, not personal data; the four firearm tags observed are **not**
-reproduced.
+reproduced. Since §3 leaves every tag's meaning to the user, no tagging
+convention — the maintainer's least of all — is encoded anywhere.
 
 No new dependencies. No schema change, therefore **no Drizzle migration**:
 `sessions.external_source` / `external_ref` are plain `TEXT` columns and
@@ -55,28 +56,35 @@ instead), `Note` empty on every row. Session names may be quoted and
 contain commas, and some are ShotLog's auto-generated locale timestamps
 (`"6/29/2025, 10:32 AM"`) rather than a name the user chose.
 
-### 1.1 VERIFY items (maintainer must confirm; nothing is guessed silently)
+### 1.1 Semantics — confirmed by the maintainer 2026-09-02
 
-- **`VERIFY:` `Number of X` vs `(X)`.** The working assumption is
-  `Number of X` = tens, `(X)` = inner tens (centrumtior), i.e. `(X)` ⊆
-  `Number of X`. **The real file contradicts a strict subset reading: 41
-  of 277 rows have `(X)` > `Number of X`.** The importer therefore maps
-  **`(X)` → the inner-ten count** and treats `Number of X` as
-  informational only (it is recorded in the session note, never in a
-  scored field), and emits a per-row warning
-  `inner-ten-exceeds-ten-count` on those rows. Until the maintainer
-  confirms the semantics, neither number reaches any scored column.
-- **`VERIFY:` `Warmup` tag.** Read as "the session total INCLUDES a
-  sighter/warm-up series". Recorded as the ShotLedger tag
-  `shotlog:warmup` and mentioned in the note; **the total is never
-  altered** and no sighter series is invented.
-- **`VERIFY:` `A Opt` tag.** Read as weapon group A with optics. Suggested
-  (never applied silently) as `spsf:A-opt`, the id already used by
-  `shared/src/integrations/webshooter/mapping.ts`.
-- **`VERIFY:` lost dates.** 119 of 277 rows carry one and the same
-  timestamp — a bulk import into ShotLog that lost the real dates. The
-  value itself is a date from the maintainer's file and so is not
-  reproduced here or in any fixture (§0). Treated per §5.
+All four items below were open `VERIFY:`s during implementation. The
+maintainer answered them on 2026-09-02; the answers are recorded here and
+the code follows them.
+
+- **`Number of X` = the number of tens; `(X)` = the number of inner tens
+  (centrumtior).** Note that 41 of 277 real rows have `(X)` >
+  `Number of X`, which the confirmed semantics forbid, so those rows still
+  raise the per-row warning `inner-ten-exceeds-ten-count`.
+  **Open follow-up (not a guess — a missing column).** The schema has
+  nowhere to write either count for an imported session: ten and inner-ten
+  statistics in `shared/src/scoring` count flags on `shots` rows, and a
+  total-override series has none. Adding a session- or series-level counter
+  is a schema change and therefore a Drizzle migration plus a stats-layer
+  contract, which is out of this change's scope. Both numbers are recorded
+  in the session note, verbatim and correctly labelled, until that column
+  exists.
+- **`Warmup` means the row's total INCLUDES a sighter series.** The total
+  is kept exactly as exported and **never** reduced; no sighter series is
+  invented, and the single total-override series is **not** flagged
+  `is_sighter` — that would drop the session out of every score statistic.
+  The inclusion is recorded as the tag `shotlog:includes-sighter` and a
+  note line, so the number is never silently wrong about what it contains.
+- **`A Opt` is a real SPSF class** (SHB 2026), so it is a class/weapon-group
+  token, never a firearm name. It maps to `spsf:A-opt`, the id
+  `shared/src/disciplines/groups.ts` already mints.
+- **Lost dates.** 119 of 277 rows share one bulk-import timestamp. They are
+  imported at that timestamp — nothing better exists — and flagged, per §5.
 
 ## 2. Row parsing — `shared/src/shotlog/parse.ts`
 
@@ -113,42 +121,74 @@ Row warnings (never errors): `inner-ten-exceeds-ten-count`,
 `^\d{1,2}/\d{1,2}/\d{4},\s.*(AM|PM)$` with any Unicode space),
 `firearm-column-unsupported`.
 
-## 3. Tag and name interpretation — `shared/src/shotlog/classify.ts`
+## 3. Tag interpretation — a mapping the user confirms
 
-`classifyTags(tags, knownFirearmNames)`:
+`shared/src/shotlog/tags.ts` + `shared/src/shotlog/classify.ts`
 
-- `Tävling` → `sessionType: 'competition'` (absent → `'training'`).
-- `Precision` → `disciplineId: 'spsf-precision'`; `Milsnabb` →
-  `'spsf-milsnabb'`. Both present → `null` + warning
-  `conflicting-discipline-tags`.
-- `Warmup` → `includesWarmup: true`; `Final` → `hasFinal: true`;
-  `DNF` → `dnf: true`; `A Opt` → `weaponGroupHint: 'spsf:A-opt'`.
-- A tag matching (case-insensitive, whitespace-collapsed) a known firearm
-  label → `firearmMatch: {id,label}`. More than one match →
-  `firearmMatch: null` + warning `ambiguous-firearm-tag`.
-- Everything else → `passthroughTags` (kept as ShotLedger tags verbatim).
+ShotLog has no discipline, weapon-group, class or firearm field. Every
+user encodes all of it in one `|`-separated free-text tag list, in their
+own personal convention. **No convention may be hard-coded** (repo rule 7
+— no maintainer-specific data in code or fixtures), so the importer does
+not interpret tags: it _proposes_ an interpretation and the user confirms
+it before anything is written.
 
-Matching is case-insensitive on the vocabulary tags; the matched tag is
-consumed and does not also become a passthrough tag.
+`ShotlogTagRole` is what one tag may mean:
 
-`suggestDisciplineFromName(name)` — used only when no discipline tag:
+| Role                                           | Effect on a row carrying the tag             |
+| ---------------------------------------------- | -------------------------------------------- |
+| `ignore`                                       | kept verbatim as an ordinary ShotLedger tag  |
+| `discipline` (`disciplineId`)                  | sets the discipline                          |
+| `competition`                                  | `sessionType: 'competition'` (else training) |
+| `sighter`                                      | total includes a sighter; §1.1               |
+| `final`                                        | the imported series is flagged `is_final`    |
+| `dnf`                                          | tag + note line                              |
+| `weapon-group` (`weaponGroup`, `shooterClass`) | sets group and, optionally, class            |
+| `firearm` (`label`)                            | links that firearm, creating it if missing   |
+
+`collectShotlogTags(rows)` lists every distinct tag with a count, most
+frequent first. `buildDefaultTagMapping(rows)` gives each a **default**
+role via `defaultTagRole`, which uses generic SPSF vocabulary only:
+
+- a discipline whose registry name (`sv` or `en`) matches the tag, plus the
+  three abbreviations `milsnabb` / `mil` / `prec`;
+- `tävling` / `tavling` / `competition` / `comp` → competition;
+- `warmup` / `warm up` / `uppvärmning` / `provskott` / `sighter` → sighter;
+- `final` / `finals`; `dnf` / `ej fullföljt`;
+- a `SPSF_WEAPON_GROUPS` code, spacing and hyphens ignored (`A`, `C`,
+  `A Opt`, `a-opt`), optionally followed by a shooter class `1`–`3`
+  (`C1`, `B 2`);
+- **everything else → `firearm: <tag>`**, the only field ShotLog has no
+  column for at all. The user demotes it to `ignore` when it is not one.
+
+Two tags resolving to different disciplines, different weapon groups or
+different firearms leave that field unset and raise
+`conflicting-discipline-tags`, `conflicting-weapon-group-tags` or
+`ambiguous-firearm-tag`. A tag with no mapping entry is passed through, not
+guessed at.
+
+Changing one role rebuilds the whole plan, so the row list always reflects
+the mapping on screen.
+
+### 3.1 Session-name fallbacks
+
+Used **only** when the tags resolved nothing.
+
+`suggestDisciplineFromName(name)`:
 
 - `/\bMS\d*\b/i`, `/milsnabb/i` → `'spsf-milsnabb'`
 - `/\bP\d\b/i`, `/\bKP\d?\b/i`, `/precision/i`, `/\bprec\b/i` →
-  `'spsf-precision'`
-- otherwise `null` ("unknown — choose").
+  `'spsf-precision'`; otherwise `null` ("unknown — choose").
 
 Milsnabb is tested **before** precision so a name carrying both keywords
 resolves to the more specific one.
 
 `suggestWeaponGroupFromName(name)` — the last whitespace-separated token:
+`^([ABCR])$` → group; `^([ABCR])([123])$` → group + class; anything else
+(including the ambiguous `B/R` form) → `null`. A class only ever comes
+from whichever source also set the group.
 
-- `^([ABCR])$` → `{ weaponGroup: 'spsf:X', shooterClass: null }`
-- `^([ABCR])([123])$` → group + `shooterClass` (`C1` → `spsf:C`, class `1`)
-- anything else (including the ambiguous `B/R` form) → `null`.
-
-A suggestion is only ever pre-filled in the UI as an editable value; it is
-never applied without the row being selected for import.
+A suggestion is only ever pre-filled as an editable value; it is never
+applied without the row being selected for import.
 
 ## 4. Stable reference — `shared/src/shotlog/ref.ts`
 
@@ -243,19 +283,31 @@ source row's**, returning a new array (pure; the UI holds the result).
   `isTotalOverride: true`, `totalOverrideTenths`,
   `totalOverrideShotCount: null` (unknown — ShotLog exports no shot
   count), then `getOrCreateTag` + `addSessionTag` for each tag.
-  `importShotlogRows` loops and returns `{ created, skipped }`.
+  A `firearm`-role tag links the matching firearm, **creating** one whose
+  `make` is the tag text when the logbook has none like it (§3). A `final`
+  role sets the series' `is_final`; a `sighter` role never sets
+  `is_sighter` (§1.1). `importShotlogRows` loops and returns
+  `{ created, skipped }`.
   `listShotlogDedupCandidates(db)` feeds §6's `existingSessions`.
   `CreateSessionInput.externalSource` widens from `'webshooter' | null`
   to `'webshooter' | 'shotlog' | null` — the only edit to an existing
   query module.
-- `app/src/features/shotlog/use-shotlog-import.ts` — pick file → plan →
-  hold selection and per-row edits → import → summary. `planImport`
-  never writes.
-- `app/src/app/shotlog/import.tsx` — preview list (status chip, warning
-  chips, editable discipline / weapon group / firearm pickers, "apply to
-  all similar"), a selection toggle per row, an import button, a summary
-  card. Settings gains one `ListRow` into it.
+- `app/src/features/shotlog/use-shotlog-import.ts` — pick file → tag
+  mapping → plan → hold selection and per-row edits → import → summary.
+  `planImport` never writes. Changing one tag's role rebuilds the plan
+  from the same text, so the mapping and the row list cannot disagree.
+- `app/src/app/dev/shotlog-import.tsx` — the tag-mapping card (every
+  distinct tag, most frequent first, with a role picker) above the preview
+  list (status chip, warning chips, editable discipline / weapon group /
+  firearm pickers, "apply to all similar"), a selection toggle per row, an
+  import button, a summary card.
 - i18n: `shotlog.*` keys in `app/src/i18n/{en,sv}.json`.
+
+**Entry point: `/dev`, not Settings.** This is a maintainer/dev tool —
+"export from ShotLog and import into the app on the same phone" while
+developing — not a feature shipped to users. It sits next to "Load demo
+data" and "Wipe data" on `/dev`, so `app/src/app/dev/_layout.tsx`'s
+`__DEV__` redirect keeps it out of release builds by construction.
 
 ### Invariants that must survive
 
@@ -263,6 +315,11 @@ source row's**, returning a new array (pure; the UI holds the result).
 - No new dependency; no schema change; no migration.
 - `shared/src/scoring/**` untouched.
 - Nothing writes to the DB before the user confirms on the preview screen.
+- No tagging convention is hard-coded: every default role is generic SPSF
+  vocabulary or a registry lookup, and the user can override each one.
+- A row the write path would refuse is never pre-selected, so the import
+  button's count and the result never disagree by more than the user's own
+  choices.
 - A row with status `error`, `exact-duplicate` or `duplicate-in-file` can
   never be imported, even if the UI state says selected (enforced in
   `importShotlogRows`, not only in the UI).
@@ -276,4 +333,5 @@ source row's**, returning a new array (pure; the UI holds the result).
   surviving mutants (with an equivalence argument each) go in
   `docs/specs/shotlog-import-evidence.md`.
 - Android verification: a **synthetic** CSV pushed to the emulator,
-  imported through the real UI, screenshots of preview and result.
+  imported through the real UI from `/dev`, screenshots of the tag mapping,
+  the preview, the result and the re-import dedup.

@@ -135,12 +135,31 @@ barometer; no scoring), Skytteappen (club ecosystem).
       `docs/specs/webshooter-core-spec.md`, `docs/specs/webshooter-app-spec.md`.
       Auth: in-app password login direct to webshooter.se (PR #19), manual
       token fallback; live login endpoint shape still VERIFY-stubbed.
-- [ ] **ShotLog import** (decided 2026-09-02) — the maintainer uses ShotLog
-      and will supply a real export in its native format; map it onto
-      sessions/series/shots/firearms with the same selective, dedup-first
-      flow as the WebShooter import (preview → choose → import, never
-      blind). Spec + old-coder loop like `shared/csv/` since it writes
-      logbook data. Blocked on the sample file.
+- [x] **ShotLog import — maintainer/dev tool** (decided 2026-09-02,
+      shipped 2026-09-02) — the maintainer's ShotLog export is
+      **session-level only**: one row per session with a total, no series
+      and no shots. Each row becomes a session with a single total-override
+      series (`external_source='shotlog'`, `external_ref` = a content
+      hash), the same granularity the WebShooter import already uses — so
+      nothing in `shared/src/scoring/` changed. Selective, dedup-first flow
+      like WebShooter's (preview → per-row verdict → choose → import).
+      **Scope is deliberately a dev tool, not a shipped feature**: it lives
+      on `/dev` next to "Load demo data", because ShotLog users encode
+      discipline, class and firearm in personal free-text tag conventions
+      that no importer can read for them. Instead the screen lists every
+      distinct tag in the file with a guessed role — discipline,
+      competition, sighter, final, DNF, weapon group, firearm, or "keep as
+      a plain tag" — from generic SPSF vocabulary only, and the user
+      corrects any of them before importing; a firearm-role tag creates the
+      firearm if the logbook has none like it. `docs/specs/shotlog-import-spec.md` + old-coder evidence in `docs/specs/shotlog-import-evidence.md` (100%
+      coverage, 100% mutation score). The four `VERIFY:` items are
+      **answered** (2026-09-02): `Number of X` = tens, `(X)` = inner tens;
+      `Warmup` means the total includes a sighter (never subtracted);
+      `A Opt` is a real SPSF class; the shared timestamp is a lost date.
+      **One follow-up is open** — the schema has no session-level ten /
+      inner-ten counter to write those two numbers into (a total-override
+      series has no `shots` rows), so they live in the session note until a
+      migration adds one. Evidence report §7.
 - [ ] **Backup export/import** (decided 2026-09-02), two bundle kinds:
   - [ ] _Database only_ — the SQLite file (`VACUUM INTO` a consistent copy,
         never the live file), plus a manifest (app + schema version) so a
