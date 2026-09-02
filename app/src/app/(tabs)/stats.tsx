@@ -1,93 +1,98 @@
-// Live stats tab (§4 M5) — no generate button, every value recomputed on
-// focus/filter change from @shotledger/shared's stats.ts. M6 adds a Custom
-// period (from/to date pickers) and a PDF export of the filtered log.
+// Statistics tab — the filter form. The report it generates lives on
+// /stats/report; nothing on this screen computes statistics, it only
+// describes which sessions the report should cover.
+//
+// The rebuild replaced M5's always-live view (maintainer: "would like the
+// UI/UX to be more streamlined ... statistics can be generic but also
+// generated on the fly"). Every filter dimension is a plain stored column,
+// so the report is federation-agnostic.
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
-import { formatShooterClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
-import { DistributionBarChart } from '@/components/distribution-bar-chart';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
-import { ListRow } from '@/components/list-row';
+import { MultiOptionPicker } from '@/components/multi-option-picker';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
-import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
-import { TrendLineChart, TrendLineChartEmpty } from '@/components/trend-line-chart';
-import { buildShootingLogHtmlForFilters } from '@/features/export/use-pdf-export';
 import { disciplineLabel } from '@/features/session/labels';
 import {
-  DEFAULT_STATS_FILTERS,
-  periodRange,
-  STATS_PERIODS,
-  useStatsData,
-  type StatsFilters,
+  DEFAULT_ANALYTICS_FILTER,
+  encodeAnalyticsFilter,
+  useAnalyticsFilterOptions,
+  type AnalyticsFilterState,
+  type StatsPeriod,
 } from '@/features/stats/use-stats-data';
-import { exportHtmlAsPdf } from '@/platform/pdf-export';
 import { Spacing } from '@/theme/tokens';
 
 const ALL = 'all-values';
-
-function formatMean(tenths: number | null): string {
-  return tenths === null ? '–' : tenthsToScore(tenths).toFixed(1);
-}
-
-function formatSd(tenths: number | null): string {
-  return tenths === null ? '–' : tenthsToScore(tenths).toFixed(2);
-}
-
-function formatPercent(pct: number | null): string {
-  return pct === null ? '–' : `${pct.toFixed(0)}%`;
-}
+type TypeChoice = typeof ALL | 'training' | 'competition';
 
 function toDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function periodLabelCase(period: string): string {
-  return period === 'all' || period === 'custom'
-    ? period.charAt(0).toUpperCase() + period.slice(1)
-    : period;
+/** One labelled filter section: title, one-line explanation, control. */
+function FilterCard({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <ThemedText type="smallBold">{title}</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {hint}
+      </ThemedText>
+      {children}
+    </Card>
+  );
 }
 
 export default function StatsScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const [filters, setFilters] = useState<StatsFilters>(DEFAULT_STATS_FILTERS);
+  const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
   const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
-  const { data } = useStatsData(filters);
+  const [openSection, setOpenSection] = useState<'discipline' | 'tags' | null>(null);
+  const options = useAnalyticsFilterOptions();
 
   const periodOptions = useMemo(
-    () =>
-      STATS_PERIODS.map((period) => ({
-        value: period,
-        label: t(`stats.period${periodLabelCase(period)}`),
-      })),
+    () => [
+      { value: '30d' as const, label: t('stats.period30d') },
+      { value: '6m' as const, label: t('stats.period6m') },
+      { value: '12m' as const, label: t('stats.period12m') },
+      { value: 'all' as const, label: t('stats.periodAll') },
+      { value: 'custom' as const, label: t('stats.periodCustom') },
+    ],
     [t],
   );
 
-  // Compact range label for the Custom period, e.g. "2026-03-01 – 2026-09-01".
-  const customRangeLabel =
-    filters.customFrom && filters.customTo
-      ? `${new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(filters.customFrom))} – ${new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(filters.customTo))}`
-      : t('stats.customRangeIncomplete');
+  const formatDay = (day: string) =>
+    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(day));
 
-  async function onExportPdf() {
-    const range = periodRange(filters);
-    const html = buildShootingLogHtmlForFilters(t, i18n.language, {
-      startedFromIso: range.fromIso,
-      startedToIso: range.toIso,
-      firearmId: filters.firearmId,
-    });
-    if (html) await exportHtmlAsPdf(html);
-  }
+  const disciplineValue = filter.disciplineId
+    ? disciplineLabel(t, filter.disciplineId)
+    : t('stats.all');
+  const tagValue =
+    filter.tagIds.length === 0
+      ? t('stats.tagsNone')
+      : options.tags
+          .filter((tag) => filter.tagIds.includes(tag.id))
+          .map((tag) => tag.name)
+          .join(', ');
 
-  if (!data.hasAnyData) {
+  if (!options.hasAnyData) {
     return (
       <Screen>
         <ThemedText type="title">{t('stats.title')}</ThemedText>
@@ -100,178 +105,164 @@ export default function StatsScreen() {
     <Screen>
       <ThemedText type="title">{t('stats.title')}</ThemedText>
 
-      <ListRow
-        title={t('webshooter.recordsTitle')}
-        subtitle={t('webshooter.recordsSubtitle')}
-        onPress={() => router.push('/stats/records')}
-        testID="stats-open-records"
-      />
+      <Card>
+        <DrillDownRow
+          title={t('webshooter.recordsTitle')}
+          subtitle={t('webshooter.recordsSubtitle')}
+          onPress={() => router.push('/stats/records')}
+          testID="stats-open-records"
+        />
+      </Card>
 
-      <SegmentedControl
-        options={periodOptions}
-        value={filters.period}
-        onChange={(period) => setFilters((f) => ({ ...f, period }))}
-      />
-
-      {filters.period === 'custom' && (
-        <Card>
-          <View style={styles.customRow}>
-            <PrimaryButton
-              testID="stats-custom-from"
-              label={`${t('stats.customFrom')}: ${filters.customFrom ?? '—'}`}
+      <FilterCard title={t('stats.sectionPeriod')} hint={t('stats.sectionPeriodHint')}>
+        <SegmentedControl
+          options={periodOptions}
+          value={filter.period}
+          onChange={(period: StatsPeriod) => setFilter((f) => ({ ...f, period }))}
+        />
+        {filter.period === 'custom' && (
+          <View style={styles.dateRows}>
+            <DrillDownRow
+              title={t('stats.customFrom')}
+              value={filter.customFrom ? formatDay(filter.customFrom) : '—'}
               onPress={() => setPickerOpen('from')}
+              testID="stats-custom-from"
             />
-            <PrimaryButton
-              testID="stats-custom-to"
-              label={`${t('stats.customTo')}: ${filters.customTo ?? '—'}`}
+            <DrillDownRow
+              title={t('stats.customTo')}
+              value={filter.customTo ? formatDay(filter.customTo) : '—'}
               onPress={() => setPickerOpen('to')}
+              testID="stats-custom-to"
             />
-          </View>
-          <ThemedText type="small" themeColor="textSecondary" testID="stats-custom-range-label">
-            {customRangeLabel}
-          </ThemedText>
-          {pickerOpen && (
-            <DateTimePicker
-              testID="stats-custom-date-picker"
-              value={
-                new Date(
-                  (pickerOpen === 'from' ? filters.customFrom : filters.customTo) ??
-                    toDateOnly(new Date()),
-                )
-              }
-              mode="date"
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={(_event, selected) => {
-                setPickerOpen(null);
-                if (!selected) return;
-                const value = toDateOnly(selected);
-                setFilters((f) =>
-                  pickerOpen === 'from' ? { ...f, customFrom: value } : { ...f, customTo: value },
-                );
-              }}
-            />
-          )}
-        </Card>
-      )}
-
-      <OptionPicker
-        label={t('session.discipline')}
-        options={[
-          { value: ALL, label: t('stats.all') },
-          ...data.disciplineIds.map((id) => ({ value: id, label: disciplineLabel(t, id) })),
-        ]}
-        value={filters.disciplineId ?? ALL}
-        onChange={(value) =>
-          setFilters((f) => ({ ...f, disciplineId: value === ALL ? null : value }))
-        }
-      />
-
-      <OptionPicker
-        label={t('session.shooterClass')}
-        options={[
-          { value: ALL, label: t('stats.all') },
-          ...data.shooterClasses.map((code) => ({ value: code, label: formatShooterClass(code) })),
-        ]}
-        value={filters.shooterClass ?? ALL}
-        onChange={(value) =>
-          setFilters((f) => ({ ...f, shooterClass: value === ALL ? null : value }))
-        }
-      />
-
-      <OptionPicker
-        label={t('session.firearm')}
-        options={[
-          { value: ALL, label: t('stats.all') },
-          ...data.firearmOptions.map((option) => ({ value: option.id, label: option.label })),
-        ]}
-        value={filters.firearmId ?? ALL}
-        onChange={(value) => setFilters((f) => ({ ...f, firearmId: value === ALL ? null : value }))}
-      />
-
-      {!data.hasFilteredData ? (
-        <EmptyState title={t('stats.emptyFilteredTitle')} body={t('stats.emptyFilteredBody')} />
-      ) : (
-        <>
-          <View style={styles.grid}>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-total-shots"
-                label={t('stats.totalShots')}
-                value={String(data.totalShots)}
-              />
-              <StatTile
-                testID="stat-sessions"
-                label={t('stats.sessions')}
-                value={String(data.sessionCount)}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-mean"
-                label={t('stats.mean')}
-                value={formatMean(data.meanTenths)}
-              />
-              <StatTile
-                testID="stat-sd"
-                label={t('stats.standardDeviation')}
-                value={formatSd(data.sdTenths)}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-x-percent"
-                label={t('stats.xPercent')}
-                value={formatPercent(data.xRatePercent)}
-              />
-              <StatTile
-                testID="stat-guldserie-count"
-                label={t('stats.guldserieCount')}
-                value={String(data.guldserieCountInPeriod)}
-              />
-            </View>
-          </View>
-
-          <Card>
-            <ThemedText type="smallBold">{t('stats.trendTitle')}</ThemedText>
-            {data.trend.length === 0 ? (
-              <TrendLineChartEmpty label={t('stats.trendEmpty')} />
-            ) : (
-              <TrendLineChart points={data.trend} />
-            )}
-          </Card>
-
-          <Card>
-            <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
-            {data.distribution.length === 0 ? (
+            {(!filter.customFrom || !filter.customTo) && (
               <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.distributionEmpty')}
+                {t('stats.customRangeIncomplete')}
               </ThemedText>
-            ) : (
-              <DistributionBarChart buckets={data.distribution} />
             )}
-          </Card>
-
-          <PrimaryButton
-            testID="stats-export-pdf"
-            label={t('compliance.exportPdf')}
-            onPress={onExportPdf}
+          </View>
+        )}
+        {pickerOpen && (
+          <DateTimePicker
+            testID="stats-custom-date-picker"
+            value={
+              new Date(
+                (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
+                  toDateOnly(new Date()),
+              )
+            }
+            mode="date"
+            display={Platform.OS === 'ios' ? 'inline' : 'default'}
+            onChange={(_event, selected) => {
+              setPickerOpen(null);
+              if (!selected) return;
+              const value = toDateOnly(selected);
+              setFilter((f) =>
+                pickerOpen === 'from' ? { ...f, customFrom: value } : { ...f, customTo: value },
+              );
+            }}
           />
-        </>
-      )}
+        )}
+      </FilterCard>
+
+      <FilterCard title={t('stats.sectionType')} hint={t('stats.sectionTypeHint')}>
+        <SegmentedControl
+          options={[
+            { value: ALL as TypeChoice, label: t('stats.all') },
+            { value: 'training' as TypeChoice, label: t('sessionType.training') },
+            { value: 'competition' as TypeChoice, label: t('sessionType.competition') },
+          ]}
+          value={(filter.sessionType ?? ALL) as TypeChoice}
+          onChange={(value) =>
+            setFilter((f) => ({ ...f, sessionType: value === ALL ? null : value }))
+          }
+        />
+      </FilterCard>
+
+      <FilterCard title={t('session.discipline')} hint={t('stats.sectionDisciplineHint')}>
+        <DrillDownRow
+          title={t('stats.sectionDisciplineChoice')}
+          value={disciplineValue}
+          expanded={openSection === 'discipline'}
+          onPress={() => setOpenSection((open) => (open === 'discipline' ? null : 'discipline'))}
+          testID="stats-discipline-row"
+        />
+        {openSection === 'discipline' && (
+          <OptionPicker
+            label={t('session.discipline')}
+            options={[
+              { value: ALL, label: t('stats.all') },
+              ...options.disciplineIds.map((id) => ({ value: id, label: disciplineLabel(t, id) })),
+            ]}
+            value={filter.disciplineId ?? ALL}
+            onChange={(value) =>
+              setFilter((f) => ({ ...f, disciplineId: value === ALL ? null : value }))
+            }
+          />
+        )}
+      </FilterCard>
+
+      <FilterCard title={t('stats.sectionShotsPerSeries')} hint={t('stats.sectionShotsHint')}>
+        <OptionPicker
+          label={t('stats.sectionShotsPerSeries')}
+          options={[
+            { value: ALL, label: t('stats.all') },
+            ...options.shotsPerSeriesValues.map((count) => ({
+              value: String(count),
+              label: String(count),
+            })),
+          ]}
+          value={filter.shotsPerSeries === null ? ALL : String(filter.shotsPerSeries)}
+          onChange={(value) =>
+            setFilter((f) => ({
+              ...f,
+              shotsPerSeries: value === ALL ? null : Number.parseInt(value, 10),
+            }))
+          }
+        />
+      </FilterCard>
+
+      <FilterCard title={t('stats.sectionTags')} hint={t('stats.sectionTagsHint')}>
+        <DrillDownRow
+          title={t('stats.sectionTagsChoice')}
+          value={tagValue}
+          expanded={openSection === 'tags'}
+          onPress={() => setOpenSection((open) => (open === 'tags' ? null : 'tags'))}
+          testID="stats-tags-row"
+        />
+        {openSection === 'tags' && (
+          <MultiOptionPicker
+            testID="stats-tag-picker"
+            options={options.tags.map((tag) => ({ value: tag.id, label: tag.name }))}
+            values={filter.tagIds}
+            emptyLabel={t('stats.tagsEmpty')}
+            onToggle={(id) =>
+              setFilter((f) => ({
+                ...f,
+                tagIds: f.tagIds.includes(id)
+                  ? f.tagIds.filter((existing) => existing !== id)
+                  : [...f.tagIds, id],
+              }))
+            }
+          />
+        )}
+      </FilterCard>
+
+      <PrimaryButton
+        testID="stats-generate"
+        label={t('stats.generate')}
+        onPress={() =>
+          router.push({
+            pathname: '/stats/report',
+            params: { filter: encodeAnalyticsFilter(filter) },
+          })
+        }
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    gap: Spacing.two,
-  },
-  gridRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  customRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
+  dateRows: {
+    gap: Spacing.one,
   },
 });
