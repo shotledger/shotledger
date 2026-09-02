@@ -3,25 +3,20 @@
 // (bot-renovate*, renovate-version-*, security) exist on this repo — see
 // plan.md "Repo configuration".
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
 
-  extends: ["github>skillsgateway/.github//.github/renovate.json5"],
+  extends: ['github>skillsgateway/.github//.github/renovate.json5'],
 
-  addLabels: ["dependencies"],
+  addLabels: ['dependencies'],
 
   packageRules: [
     {
       // Expo SDK, React Native, and React versions are tightly coupled;
       // Renovate must not bump them independently. Upgrades happen
       // deliberately via `npx expo install --fix` on a dedicated branch.
-      description: "Expo/RN core moves together, manually",
-      groupName: "expo core (manual)",
-      matchPackageNames: [
-        "expo{/,}**",
-        "react-native{/,}**",
-        "react",
-        "react-dom",
-      ],
+      description: 'Expo/RN core moves together, manually',
+      groupName: 'expo core (manual)',
+      matchPackageNames: ['expo{/,}**', 'react-native{/,}**', 'react', 'react-dom'],
       enabled: false,
     },
   ],

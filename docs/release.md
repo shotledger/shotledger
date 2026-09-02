@@ -8,14 +8,13 @@ below is one-time setup the maintainer has to do before the first upload.
 
 - [ ] **Google Play developer account.** VERIFY which account type
       (plan.md "Open" section, not yet decided):
-      - *Personal account*: $25 one-time fee. Play Console requires
-        **12 testers opted into closed testing for 14 continuous days**
-        before an app can go to production — this gate has to be planned
-        into the timeline, not just the build.
-      - *Organization account*: same $25 fee, but needs a legal entity
-        and a D-U-N-S number (apply free at dnb.com, can take days to
-        weeks to issue). In exchange it **skips** the 12-testers/14-days
-        gate.
+  - _Personal account_: $25 one-time fee. Play Console requires
+    **12 testers opted into closed testing for 14 continuous days**
+    before an app can go to production — this gate has to be planned
+    into the timeline, not just the build.
+  - _Organization account_: same $25 fee, but needs a legal entity and
+    a D-U-N-S number (apply free at dnb.com, can take days to weeks to
+    issue). In exchange it **skips** the 12-testers/14-days gate.
 - [ ] Register the application id in Play Console: `app.shotledger`
       (set in `app/app.json` — see the commit that set it; this id is
       effectively permanent once a release is published under it).
@@ -24,7 +23,7 @@ below is one-time setup the maintainer has to do before the first upload.
 - [ ] `cd app && eas build:configure` if EAS asks for a project id not
       already in `app/app.json` (`extra.eas.projectId`).
 - [ ] First build: `cd app && eas build --platform android --profile
-      production`. Produces a signed `.aab`; EAS manages the upload
+production`. Produces a signed `.aab`; EAS manages the upload
       keystore unless you supply your own.
 - [ ] First upload: in Play Console, create the app entry, open the
       **Testing → Closed testing** track, create a track (e.g.

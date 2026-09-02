@@ -61,7 +61,12 @@ export default function NewFirearmScreen() {
         <ThemedText type="smallBold">{t('firearms.make')}</ThemedText>
         <TextInput value={make} onChangeText={setMake} style={inputStyle} testID="firearm-make" />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
-        <TextInput value={model} onChangeText={setModel} style={inputStyle} testID="firearm-model" />
+        <TextInput
+          value={model}
+          onChangeText={setModel}
+          style={inputStyle}
+          testID="firearm-model"
+        />
         <ThemedText type="smallBold">{t('firearms.caliber')}</ThemedText>
         <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
       </Card>

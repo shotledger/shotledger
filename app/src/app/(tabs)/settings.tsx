@@ -25,8 +25,11 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
-  const { selection: complianceSelection, profile, setSelection: setComplianceSelection } =
-    useComplianceProfile();
+  const {
+    selection: complianceSelection,
+    profile,
+    setSelection: setComplianceSelection,
+  } = useComplianceProfile();
   const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
 
@@ -131,6 +134,15 @@ export default function SettingsScreen() {
             {t('compliance.unverifiedHint')}
           </ThemedText>
         )}
+      </Card>
+
+      <Card>
+        <ListRow
+          title={t('vault.settingsRowTitle')}
+          subtitle={t('vault.settingsRowSubtitle')}
+          onPress={() => router.push('/vault')}
+          testID="settings-open-vault"
+        />
       </Card>
 
       <Card>

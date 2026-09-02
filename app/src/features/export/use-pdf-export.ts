@@ -3,7 +3,12 @@
 // shared/src/export/pdf-log.ts; this file's job is turning DB rows +
 // i18n labels into that function's plain-data input.
 import type { TFunction } from 'i18next';
-import { buildShootingLogHtml, sumValueTenths, tenthsToScore, type PdfLogEntry } from '@shotledger/shared';
+import {
+  buildShootingLogHtml,
+  sumValueTenths,
+  tenthsToScore,
+  type PdfLogEntry,
+} from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
@@ -59,12 +64,16 @@ export function buildShootingLogHtmlForFilters(
       title: t('compliance.pdfTitle'),
       periodLabel: t('compliance.pdfPeriodLabel', {
         from: filters.startedFromIso ? formatDate(filters.startedFromIso, locale) : t('stats.all'),
-        to: filters.startedToIso ? formatDate(filters.startedToIso, locale) : t('compliance.pdfNow'),
+        to: filters.startedToIso
+          ? formatDate(filters.startedToIso, locale)
+          : t('compliance.pdfNow'),
       }),
       firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
       totalSessions: entries.length,
       totalShots,
-      generatedAtLabel: t('compliance.pdfGeneratedAt', { date: formatDate(new Date().toISOString(), locale) }),
+      generatedAtLabel: t('compliance.pdfGeneratedAt', {
+        date: formatDate(new Date().toISOString(), locale),
+      }),
       columns: {
         date: t('compliance.pdfColDate'),
         discipline: t('compliance.pdfColDiscipline'),

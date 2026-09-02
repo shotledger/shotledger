@@ -78,12 +78,7 @@ const booleanField = z
 const optionalBooleanField = z
   .string()
   .transform((s) => s.trim())
-  .pipe(
-    z.union([
-      z.literal('').transform(() => false),
-      booleanField,
-    ]),
-  );
+  .pipe(z.union([z.literal('').transform(() => false), booleanField]));
 
 const blankableInt = (min: number, max: number) =>
   z
@@ -100,9 +95,7 @@ const blankableInt = (min: number, max: number) =>
       ]),
     );
 
-const blankableString = z
-  .string()
-  .transform((s) => (s.trim().length === 0 ? null : s));
+const blankableString = z.string().transform((s) => (s.trim().length === 0 ? null : s));
 
 /** Zod schema for one raw parsed row (all fields are strings pre-coercion). */
 export const csvRowSchema = z.object({
