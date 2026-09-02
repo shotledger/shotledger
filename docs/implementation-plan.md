@@ -883,10 +883,12 @@ restates §0 rules 1–6 verbatim.
 > ELD UPPHÖR → PATRON UR → VISITATION → MARKERA on tap), with user-set
 > preparation and shooting times and parti boundaries on the timeline; its
 > commands are spoken in sv-SE regardless of the UI language. Only that
-> branch added a dependency — `expo-speech`, maintainer-approved, behind
-> `app/src/platform/speech.ts`; it also gave the IPSC prompts speech, with
-> the tone as the fallback. Device screenshots (idle / during ELD /
-> finished) are attached to the `feat/falttimer` PR.
+> branch added dependencies — `expo-speech` and `expo-haptics`, both
+> maintainer-approved 2026-09-02, behind `app/src/platform/speech.ts` and
+> `app/src/platform/haptics.ts`; speech also gave the IPSC prompts a voice,
+> with the tone as the fallback, and haptics now backs the parti/ELD pulses
+> on all three timers via `platform/timer-cues.ts`. Device screenshots (idle
+> / during ELD / finished) are attached to the `feat/falttimer` PR.
 > See plan.md's Timers block for each timer's documented limits (fälttimer:
 > no silent-mode gate, no whistle sample, no scrubbing; IPSC: 80 ms
 > debounce, thresholds not calibrated on a real firing line).
