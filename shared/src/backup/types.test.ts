@@ -59,4 +59,69 @@ describe('BackupManifestSchema', () => {
     expect(BackupManifestSchema.safeParse('not a manifest').success).toBe(false);
     expect(BackupManifestSchema.safeParse(null).success).toBe(false);
   });
+
+  // M1–M6: the vault section and the added counts were introduced after the
+  // first bundles shipped, so both directions of compatibility are load-bearing.
+  it('M1: still accepts a bundle written before the vault section existed', () => {
+    const old = validManifest();
+    expect('vault' in old).toBe(false);
+    const parsed = BackupManifestSchema.safeParse(old);
+    expect(parsed.success).toBe(true);
+    expect(parsed.success && parsed.data.vault).toBeUndefined();
+  });
+
+  it('M2: accepts a manifest carrying a vault section', () => {
+    const manifest = {
+      ...validManifest(),
+      vault: {
+        kdf: 'pbkdf2-hmac-sha256',
+        saltHex: '00112233445566778899aabbccddeeff',
+        iterations: 150000,
+        documents: 4,
+      },
+    };
+    const parsed = BackupManifestSchema.safeParse(manifest);
+    expect(parsed.success).toBe(true);
+    expect(parsed.success && parsed.data.vault?.iterations).toBe(150000);
+  });
+
+  it('M3: rejects a vault section with an unknown KDF, rather than guessing', () => {
+    const manifest = {
+      ...validManifest(),
+      vault: { kdf: 'scrypt', saltHex: 'aabb', iterations: 1, documents: 0 },
+    };
+    expect(BackupManifestSchema.safeParse(manifest).success).toBe(false);
+  });
+
+  it('M4: rejects a non-hex salt or a non-positive iteration count', () => {
+    const base = validManifest();
+    for (const vault of [
+      { kdf: 'pbkdf2-hmac-sha256', saltHex: 'zz', iterations: 10, documents: 0 },
+      { kdf: 'pbkdf2-hmac-sha256', saltHex: 'AABB', iterations: 10, documents: 0 },
+      { kdf: 'pbkdf2-hmac-sha256', saltHex: 'aabb', iterations: 0, documents: 0 },
+      { kdf: 'pbkdf2-hmac-sha256', saltHex: 'aabb', iterations: 10, documents: -1 },
+    ]) {
+      expect(
+        BackupManifestSchema.safeParse({ ...base, vault }).success,
+        JSON.stringify(vault),
+      ).toBe(false);
+    }
+  });
+
+  it('M5: accepts the counts added alongside the vault, and their absence', () => {
+    const base = validManifest();
+    expect(BackupManifestSchema.safeParse(base).success).toBe(true);
+    const withNewCounts = {
+      ...base,
+      counts: { ...base.counts, syncPhotos: 2, photosUnreadable: 1, vaultDocuments: 3 },
+    };
+    expect(BackupManifestSchema.safeParse(withNewCounts).success).toBe(true);
+  });
+
+  it('M6: ignores fields a newer build added, so a newer bundle still parses', () => {
+    const fromTheFuture = { ...validManifest(), somethingNewer: { anything: true } };
+    const parsed = BackupManifestSchema.safeParse(fromTheFuture);
+    expect(parsed.success).toBe(true);
+    expect(parsed.success && 'somethingNewer' in parsed.data).toBe(false);
+  });
 });

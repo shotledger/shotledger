@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   extensionFromUri,
   isPhotoEntryName,
+  isSyncPhotoEntryName,
   photoEntryFilename,
   photoEntryName,
+  syncPhotoEntryId,
+  syncPhotoEntryName,
 } from './photo-path';
 
 describe('photoEntryName', () => {
@@ -41,5 +44,23 @@ describe('isPhotoEntryName / photoEntryFilename', () => {
 
   it('strips the photos/ prefix to get the bare filename', () => {
     expect(photoEntryFilename('photos/abc-123.jpg')).toBe('abc-123.jpg');
+  });
+});
+
+describe('sync photo entries', () => {
+  it('names a synced photo by its sync photo id', () => {
+    expect(syncPhotoEntryName('01930000-abc')).toBe('sync-photos/01930000-abc.jpg');
+  });
+
+  it('round-trips the id', () => {
+    expect(syncPhotoEntryId(syncPhotoEntryName('photo-id'))).toBe('photo-id');
+  });
+
+  it('keeps the two photo namespaces disjoint, so restore never rewrites a sync marker', () => {
+    expect(isSyncPhotoEntryName(syncPhotoEntryName('a'))).toBe(true);
+    expect(isPhotoEntryName(syncPhotoEntryName('a'))).toBe(false);
+    expect(isSyncPhotoEntryName(photoEntryName('a', '.jpg'))).toBe(false);
+    expect(isSyncPhotoEntryName('database.sqlite3')).toBe(false);
+    expect(isSyncPhotoEntryName('sync-photos/a.png')).toBe(false);
   });
 });
