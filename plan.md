@@ -118,14 +118,79 @@ barometer; no scoring), Skytteappen (club ecosystem).
 - [ ] WebShooter competition import (API behind webshooter-cli): placements,
       per-station scores, weapon classes, standard medals → logbook +
       FAP 551-3 barometer
+- [ ] **ShotLog import** (decided 2026-09-02) — the maintainer uses ShotLog
+      and will supply a real export in its native format; map it onto
+      sessions/series/shots/firearms with the same selective, dedup-first
+      flow as the WebShooter import (preview → choose → import, never
+      blind). Spec + old-coder loop like `shared/csv/` since it writes
+      logbook data. Blocked on the sample file.
+- [ ] **Backup export/import** (decided 2026-09-02), two bundle kinds:
+  - [ ] _Database only_ — the SQLite file (`VACUUM INTO` a consistent copy,
+        never the live file), plus a manifest (app + schema version) so a
+        restore can refuse a newer schema and migrate an older one.
+  - [ ] _Database + all pictures_ — a single `.shotledger` zip: the same
+        SQLite copy + every target/series photo, paths rewritten so restore
+        is location-independent.
+  - [ ] Restore = full replace with confirmation (and an automatic pre-restore
+        backup), never merge; the vault (`feat/document-vault`) is excluded
+        by design — it never leaves the device.
+- [ ] **Export destinations** (feature list, to be prioritised): the OS share
+      sheet (any app — already used by CSV/PDF; covers Google Drive, iCloud
+      Drive, Nextcloud, mail, Signal… via their share targets, zero code);
+      save to a user-chosen folder (Android SAF / iOS Files —
+      `expo-file-system` + document picker); scheduled automatic backup to a
+      chosen folder (daily/weekly, keep last N); direct Google Drive
+      (Drive API + Google sign-in — only worth it for the scheduled case,
+      since the share sheet already reaches Drive manually); our own cloud
+      sync as the "just works" option once accounts exist. Order proposed:
+      share sheet → chosen folder → scheduled → Drive API.
 - [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
 - [ ] Encrypted on-device document vault (license, membership card) — never
       synced
+- [ ] **Scan a physical license card** (decided 2026-09-02): when adding a
+      license, offer "Scan card" next to manual entry — photograph the
+      vapenlicens card, run on-device OCR, and pre-fill the license form
+      (license number, firearm make/model/caliber, purpose, decided-on date,
+      valid-until / "tills vidare", conditions, authority) for the user to
+      confirm field by field; never save without confirmation. Field layout
+      per the Polisen card (see the licenses table in
+      `docs/implementation-plan.md` §3); other jurisdictions' cards are a
+      per-profile template later. OCR must stay **on-device** (license data
+      never leaves the phone) and cross-platform — candidate: ML Kit text
+      recognition via a React Native wrapper (Android + iOS), new dependency
+      → ask before adding. The scanned photo can optionally go straight into
+      the vault. Reuse the perspective-correction step from photo scoring for
+      angled shots of the card.
 - [ ] iOS release (camera feature as the launch hook)
 
 ### v3+ — by user demand
 
-- [ ] PAR/interval shot timer
+- [ ] Timers — three kinds behind one "Timer" entry (decided 2026-09-02):
+  - [ ] **Regular** — PAR/interval timer with ready delay, series, rest, and
+        the milsnabb drill generated from the program definition
+        (`feat/shot-timer`, `shared/src/timer/`, awaiting integration).
+  - [ ] **Fälttimer** — range-officer command sequence for fältskjutning.
+        Benchmark: [Fältskyttetimer](https://carlemil.github.io/FieldShootingTimer/)
+        (open source, github.com/carlemil/FieldShootingTimer): spoken
+        Swedish commands ("Tio sekunder kvar", "Färdiga", "Eld", "Eld
+        upphör", "Patron ur, proppa vapen", "Visitation"), competition
+        mode prefixing "Ladda!" / "Alla klara?" with the 60 s preparation
+        countdown, pinch-adjustable fire time 5 s–5 min on a dial, partial
+        splits (partider) as draggable flags on the dial ring with haptics at
+        each, scrub a paused timer to any second or tap a command to jump
+        to it, respects silent mode, keeps the screen awake, works
+        offline. Command wording and timings come from SHB (kommandon
+        section) — maintainer to clarify the exact feature set before
+        implementation; the fältskjutning discipline itself stays out of
+        the logbook (not a v1/v2 discipline), only the timer is in scope.
+        Voice cues need per-language recordings or TTS (sv first, en).
+  - [ ] **IPSC-style shot timer** — voice "Are you ready?" / "Standby",
+        random-delay start beep, then split (lap) times detected from the
+        sound of the shots via the microphone; shows first-shot time, splits,
+        total, shot count; sensitivity setting; PAR-time optional. Needs
+        expo-audio recording + on-device peak detection in
+        `app/src/platform/` (new dependency — ask before adding); no
+        recording is ever stored.
 - [ ] Ammo performance comparison across lots
 - [ ] Cross-session heatmaps, coaching hints
 - [ ] GPS range auto-matching; Swedish range database

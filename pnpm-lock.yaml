@@ -9,52 +9,52 @@ importers:
   .:
     devDependencies:
       '@eslint/js':
-        specifier: ^9.39.5
+        specifier: 9.39.5
         version: 9.39.5
       '@stryker-mutator/core':
-        specifier: ^10.0.0
+        specifier: 10.0.0
         version: 10.0.0(@types/node@26.4.0)
       '@stryker-mutator/vitest-runner':
-        specifier: ^10.0.0
+        specifier: 10.0.0
         version: 10.0.0(@stryker-mutator/core@10.0.0(@types/node@26.4.0))(vitest@3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       '@vitest/coverage-v8':
-        specifier: ^3.2.7
+        specifier: 3.2.7
         version: 3.2.7(supports-color@10.2.2)(vitest@3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       eslint:
-        specifier: ^9.39.5
+        specifier: 9.39.5
         version: 9.39.5(supports-color@10.2.2)
       eslint-config-prettier:
-        specifier: ^10.1.8
+        specifier: 10.1.8
         version: 10.1.8(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-react-hooks:
-        specifier: ^7.1.1
+        specifier: 7.1.1
         version: 7.1.1(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-react-native:
-        specifier: ^5.0.0
+        specifier: 5.0.0
         version: 5.0.0(eslint@9.39.5(supports-color@10.2.2))
       fast-check:
-        specifier: ^4.9.0
+        specifier: 4.9.0
         version: 4.9.0
       globals:
-        specifier: ^17.12.0
+        specifier: 17.12.0
         version: 17.12.0
       prettier:
-        specifier: ^3.6.2
+        specifier: 3.9.6
         version: 3.9.6
       typescript:
-        specifier: ~6.0.3
+        specifier: 6.0.3
         version: 6.0.3
       typescript-eslint:
-        specifier: ^8.46.4
+        specifier: 8.68.0
         version: 8.68.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       vitest:
-        specifier: ^3.2.4
+        specifier: 3.2.7
         version: 3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)
 
   app:
     dependencies:
       '@expo/ui':
-        specifier: ~57.0.14
+        specifier: 57.0.14
         version: 57.0.14(7c721135c4e6c4c85c69925e87446f69)
       '@react-native-community/datetimepicker':
         specifier: 9.1.0
@@ -63,7 +63,7 @@ importers:
         specifier: workspace:*
         version: link:../shared
       drizzle-orm:
-        specifier: ^0.45.2
+        specifier: 0.45.2
         version: 0.45.2(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(expo-sqlite@57.0.2(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3))
       expo:
         specifier: ~57.0.18
@@ -129,7 +129,7 @@ importers:
         specifier: ~57.0.2
         version: 57.0.2(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))
       i18next:
-        specifier: ^26.4.0
+        specifier: 26.4.0
         version: 26.4.0(typescript@6.0.3)
       react:
         specifier: 19.2.3
@@ -138,7 +138,7 @@ importers:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
       react-i18next:
-        specifier: ^17.0.12
+        specifier: 17.0.12
         version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(typescript@6.0.3)
       react-native:
         specifier: 0.86.3
@@ -168,64 +168,64 @@ importers:
         specifier: 0.10.1
         version: 0.10.1(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)
       uuidv7:
-        specifier: ^1.2.1
+        specifier: 1.2.1
         version: 1.2.1
     devDependencies:
       '@types/better-sqlite3':
-        specifier: ^9.6.0
+        specifier: 9.6.0
         version: 9.6.0
       '@types/jest':
-        specifier: ~30.0.0
+        specifier: 30.0.0
         version: 30.0.0
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
       babel-plugin-inline-import:
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0
       better-sqlite3:
-        specifier: ^13.0.3
+        specifier: 13.0.3
         version: 13.0.3
       drizzle-kit:
-        specifier: ^0.31.10
+        specifier: 0.31.10
         version: 0.31.10
       jest:
-        specifier: ~30.5.1
+        specifier: 30.5.1
         version: 30.5.1(@types/node@26.4.0)(supports-color@10.2.2)
       jest-expo:
-        specifier: ~57.0.5
+        specifier: 57.0.5
         version: 57.0.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(expo@57.0.18)(jest@30.5.1(@types/node@26.4.0)(supports-color@10.2.2))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: 6.0.3
         version: 6.0.3
 
   backend:
     dependencies:
       hono:
-        specifier: ^4.13.5
+        specifier: 4.13.5
         version: 4.13.5
     devDependencies:
       '@cloudflare/vitest-plugin':
-        specifier: ^1.1.2
+        specifier: 1.1.2
         version: 1.1.2(@vitest/runner@4.1.11)(@vitest/snapshot@4.1.11)(vitest@4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@3.2.7(supports-color@10.2.2)(vitest@3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(jsdom@20.0.3(supports-color@10.2.2))(vite@7.3.6(@types/node@26.4.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
       typescript:
-        specifier: ^5.5.2
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
-        specifier: ~4.1.0
+        specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@3.2.7(supports-color@10.2.2)(vitest@3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))(jsdom@20.0.3(supports-color@10.2.2))(vite@7.3.6(@types/node@26.4.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       wrangler:
-        specifier: ^4.127.1
+        specifier: 4.127.1
         version: 4.127.1
 
   shared:
     dependencies:
       zod:
-        specifier: ^4.5.4
+        specifier: 4.5.4
         version: 4.5.4
     devDependencies:
       vitest:
-        specifier: ^3.2.4
+        specifier: 3.2.7
         version: 3.2.7(@types/node@26.4.0)(jsdom@20.0.3(supports-color@10.2.2))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)
 
 packages:
@@ -2156,10 +2156,6 @@ packages:
     resolution: {integrity: sha512-GlsNBWiFQFCVi9QVSx7f5AgMeLxe9YCCs5PuP2O2LdjDAA8Jh9eX7lA1Jq/xdXw3Wb3hyvlFNfZIfcRetSzYcA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@jest/expect-utils@30.5.0':
-    resolution: {integrity: sha512-5j0ztPxSy3McUJihjkDdCyCfjvT2hxykFTWsgEBZKB8qsw9ALdCiGTpTRH5gnf/d+qI4SflYUJ0dWNbzjQCWbA==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
   '@jest/expect-utils@30.5.1':
     resolution: {integrity: sha512-WcRWhHQdTMRDpyWKZ/6MINBmovI7zeD+bL8wFjCncRV3NQOwKy1X45IfyblfHR4k/XciIlNEdFL9QjFO+HNKOg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -2244,10 +2240,6 @@ packages:
   '@jest/types@29.6.3':
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  '@jest/types@30.5.0':
-    resolution: {integrity: sha512-s1N+79S4Yp9ZgklCauZXi+YPJdCdtStNYQT32stuD6EeQaIBGHoUfyj2P0YWy8RmuQfaJboO+ulxEvEheR/POQ==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   '@jest/types@30.5.1':
     resolution: {integrity: sha512-LvVYn83nnXPl+Rg98nvcFgjx6nRMTArhSn6RAX/w3ELn54S8A42TYZvsCMdGUqTM8S0wyXbtlQdU6Hi6dykj9g==}
@@ -4192,10 +4184,6 @@ packages:
     resolution: {integrity: sha512-2Zks0hf1VLFYI1kbh0I5jP3KHHyCHpkfyHBzsSXRFgl/Bg9mWYfMW8oD+PdMPlEwy5HNsR9JutYy6pMeOh61nw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  expect@30.5.0:
-    resolution: {integrity: sha512-8fiMWcEjPU7B9nErC4FtFcCzf2tC6I75Qf7m8wzBAWC2taZmcno3yAFEjIQL34SwoGZNgPf63UDiJLyh4SMPaw==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
   expect@30.5.1:
     resolution: {integrity: sha512-m8YrYgvKe9+9gEnWEuKz+qCGfHqkrff7PPfyDnOFkjsfYRKqiYyOxDFMFieCGAuhtk/VNm63tvNgKZVzVy+Hvg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -4890,10 +4878,6 @@ packages:
     resolution: {integrity: sha512-LMIgiIrhigmPrs03JHpxUh2yISK3vLFPkAodPeo0+BuF7wA2FoQbkEg1u8gBYBThncu7e1oEDUfIXVuTqLRUjw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jest-diff@30.5.0:
-    resolution: {integrity: sha512-QjCfDMwdPFvLxTQmS4/Dswx3PUCiqmSXVLGljMC3SU7YG1qHVoR6b86IH/O2G9k9OMyKXz2vS2Q60VnAozNDwA==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
   jest-diff@30.5.1:
     resolution: {integrity: sha512-e3cNNMpv8Kh20MjjphTXs+3Vz7DQyLM1nft7KJhnh46atFhjVJRa+0Hq0beywuwsACtMQUBihQkFl8zxb7gt1Q==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -4957,10 +4941,6 @@ packages:
     resolution: {integrity: sha512-sBkD+Xi9DtcChsI3L3u0+N0opgPYnCRPtGcQYrgXmR+hmt/fYfWAL0xRXYU8eWOdfuLgBe0YCW3AFtnRLagq/g==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jest-matcher-utils@30.5.0:
-    resolution: {integrity: sha512-EfaYMC9f9ds7fahB/LYFTgd1Z2RS9Vpm2e46gazij0onkpoQG7Daq+MLm8/gQVqWwRVjL/RNDggbFx9MsrJEmQ==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
   jest-matcher-utils@30.5.1:
     resolution: {integrity: sha512-aroZVqwOz/wC2y6pC+obgFWKV9viaQWQTTSB6W5H55+egtUczIfXR/rxExTv92xD/ADYwpqaYfVWx1aqwKg7FA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -4969,10 +4949,6 @@ packages:
     resolution: {integrity: sha512-GBEV4GRADeP+qtB2+6u61stea8mGcOT4mCtrYISZwfu9/ISHFJ/5zOMXYbpBE9RsS5+Gb63DW4FgmnKJ79Kf6w==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jest-message-util@30.5.0:
-    resolution: {integrity: sha512-dBYMhplGfspKaCnVk9TUy1cZnknWubpuPNEputjz0YJk1G/92R45rn45BvbPMPMtC5LVcIdxJGPOaOSQTiuzJw==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
-
   jest-message-util@30.5.1:
     resolution: {integrity: sha512-UdQlLdd9wL/Ys7xRErckqwD6wPlSZYueosSWuHc1r2ztGLwlgPvtSJq2+BPEgaEY13WLvfFbmhTj8pba0Sd1jg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -4980,10 +4956,6 @@ packages:
   jest-mock@29.7.0:
     resolution: {integrity: sha512-ITOMZn+UkYS4ZFh83xYAOzWStloNzJFO2s8DWrE4lhtGD+AorgnbkiKERe4wQVBydIGPx059g6riW5Btp6Llnw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  jest-mock@30.5.0:
-    resolution: {integrity: sha512-bP5MHZpkYrV7xpV+yvhl36DPcXoEmTR57Un5EACcdVpMY7mpkDefCBq+V4mhcjE/3rwUajT6OTrcJTN7EwN1BA==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   jest-mock@30.5.1:
     resolution: {integrity: sha512-9fVjc3leUpGID2/by/LU4Dvdcp7PFh9LlxS3QRWK3ABm+KtvEVsG/AEGeLY3gKOZsjkBxyfwGltoAVlW7dygHg==}
@@ -5024,10 +4996,6 @@ packages:
   jest-util@29.7.0:
     resolution: {integrity: sha512-z6EbKajIpqGKU56y5KBUgy1dt1ihhQJgWzUlZHArA/+X2ad7Cb5iF+AK1EWVL/Bo7Rz9uurpqw6SiBCefUbCGA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  jest-util@30.5.0:
-    resolution: {integrity: sha512-lzU4aGUWaS+2X/B0CmgheDasfnsVlRfZh/rNQxB9b9s8cSYUq5BcqdQA95ld+KqJXBUVVt1sqnMQ2T3OxIalmg==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   jest-util@30.5.1:
     resolution: {integrity: sha512-yKuxmNy2rSbTXw+3SIPanJo+nV4/BS1p26v44IYBFMsswSQySfMMcPHErnOncda7i9HEz0q605rIhSTBVgrZTg==}
@@ -5722,10 +5690,6 @@ packages:
   pretty-format@29.7.0:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  pretty-format@30.5.0:
-    resolution: {integrity: sha512-mzNzBErpHwM0zpmWS7ExOv62yhQhvd546nUuFqVR0dmnJB59tfrw9sjDF0DJknwsr59OXP0buwJ7PaKguczHSg==}
-    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   pretty-format@30.5.1:
     resolution: {integrity: sha512-byhRAPguVKMQIj4kjJwJ5lAskVhfuiSdiYl/aLTWpgkGEmic2jYhJh1yE9ih8Ox44Xg9ccCT11/S6QrzSJuNrg==}
@@ -8817,10 +8781,6 @@ snapshots:
     dependencies:
       jest-get-type: 29.6.3
 
-  '@jest/expect-utils@30.5.0':
-    dependencies:
-      '@jest/get-type': 30.5.0
-
   '@jest/expect-utils@30.5.1':
     dependencies:
       '@jest/get-type': 30.5.0
@@ -8995,16 +8955,6 @@ snapshots:
   '@jest/types@29.6.3':
     dependencies:
       '@jest/schemas': 29.6.3
-      '@types/istanbul-lib-coverage': 2.0.6
-      '@types/istanbul-reports': 3.0.4
-      '@types/node': 26.4.0
-      '@types/yargs': 17.0.35
-      chalk: 4.1.2
-
-  '@jest/types@30.5.0':
-    dependencies:
-      '@jest/pattern': 30.5.0
-      '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
       '@types/node': 26.4.0
@@ -9714,8 +9664,8 @@ snapshots:
 
   '@types/jest@30.0.0':
     dependencies:
-      expect: 30.5.0
-      pretty-format: 30.5.0
+      expect: 30.5.1
+      pretty-format: 30.5.1
 
   '@types/jsdom@20.0.1':
     dependencies:
@@ -11030,15 +10980,6 @@ snapshots:
       jest-message-util: 29.7.0
       jest-util: 29.7.0
 
-  expect@30.5.0:
-    dependencies:
-      '@jest/expect-utils': 30.5.0
-      '@jest/get-type': 30.5.0
-      jest-matcher-utils: 30.5.0
-      jest-message-util: 30.5.0
-      jest-mock: 30.5.0
-      jest-util: 30.5.0
-
   expect@30.5.1:
     dependencies:
       '@jest/expect-utils': 30.5.1
@@ -11840,13 +11781,6 @@ snapshots:
       jest-get-type: 29.6.3
       pretty-format: 29.7.0
 
-  jest-diff@30.5.0:
-    dependencies:
-      '@jest/diff-sequences': 30.5.0
-      '@jest/get-type': 30.5.0
-      chalk: 4.1.2
-      pretty-format: 30.5.0
-
   jest-diff@30.5.1:
     dependencies:
       '@jest/diff-sequences': 30.5.0
@@ -11971,13 +11905,6 @@ snapshots:
       jest-get-type: 29.6.3
       pretty-format: 29.7.0
 
-  jest-matcher-utils@30.5.0:
-    dependencies:
-      '@jest/get-type': 30.5.0
-      chalk: 4.1.2
-      jest-diff: 30.5.0
-      pretty-format: 30.5.0
-
   jest-matcher-utils@30.5.1:
     dependencies:
       '@jest/get-type': 30.5.0
@@ -11994,19 +11921,6 @@ snapshots:
       graceful-fs: 4.2.11
       micromatch: 4.0.8
       pretty-format: 29.7.0
-      slash: 3.0.0
-      stack-utils: 2.0.6
-
-  jest-message-util@30.5.0:
-    dependencies:
-      '@babel/code-frame': 7.29.7
-      '@jest/types': 30.5.0
-      '@types/stack-utils': 2.0.3
-      chalk: 4.1.2
-      graceful-fs: 4.2.11
-      jest-util: 30.5.0
-      picomatch: 4.0.7
-      pretty-format: 30.5.0
       slash: 3.0.0
       stack-utils: 2.0.6
 
@@ -12028,13 +11942,6 @@ snapshots:
       '@jest/types': 29.6.3
       '@types/node': 26.4.0
       jest-util: 29.7.0
-
-  jest-mock@30.5.0:
-    dependencies:
-      '@jest/expect-utils': 30.5.0
-      '@jest/types': 30.5.0
-      '@types/node': 26.4.0
-      jest-util: 30.5.0
 
   jest-mock@30.5.1:
     dependencies:
@@ -12178,15 +12085,6 @@ snapshots:
       ci-info: 3.9.0
       graceful-fs: 4.2.11
       picomatch: 2.3.2
-
-  jest-util@30.5.0:
-    dependencies:
-      '@jest/types': 30.5.0
-      '@types/node': 26.4.0
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      graceful-fs: 4.2.11
-      picomatch: 4.0.7
 
   jest-util@30.5.1:
     dependencies:
@@ -12956,13 +12854,6 @@ snapshots:
       '@jest/schemas': 29.6.3
       ansi-styles: 5.2.0
       react-is: 18.3.1
-
-  pretty-format@30.5.0:
-    dependencies:
-      '@jest/react-is-18': react-is@18.3.1
-      '@jest/react-is-19': react-is@19.2.8
-      '@jest/schemas': 30.5.0
-      ansi-styles: 5.2.0
 
   pretty-format@30.5.1:
     dependencies:
