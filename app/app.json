@@ -47,6 +47,10 @@
       "expo-secure-store",
       "./plugins/withVaultBackupExclusion"
     ],
+    "extra": {
+      "//": "Optional cloud sync backend. Public placeholder — override per build with EXPO_PUBLIC_API_BASE_URL, or point it at a local `wrangler dev`. Never a secret; the session token lives in SecureStore.",
+      "apiBaseUrl": "https://api.shotledger.app"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

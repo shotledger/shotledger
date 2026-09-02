@@ -16,6 +16,7 @@
     "shared/src/integrations/webshooter/api/*.ts",
     "shared/src/integrations/webshooter/stats/*.ts",
     "shared/src/sync/*.ts",
+    "shared/src/sync-client/*.ts",
     "backend/src/lib/quota.ts",
     "backend/src/lib/rate-limit.ts",
     "backend/src/lib/authz.ts",

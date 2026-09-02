@@ -40,6 +40,34 @@ production`. Produces a signed `.aab`; EAS manages the upload
       set, e.g. whether sync/photos are enabled by the time of the first
       real submission).
 
+### Cloud sync backend (maintainer only — an agent must never deploy)
+
+Sync is opt-in and the app is fully functional without it, so these steps
+are only needed before a build that should offer accounts. `wrangler
+deploy` is forbidden to agents; every command below is the maintainer's.
+
+- [ ] Create the real D1 database and R2 bucket, then replace the
+      placeholder `database_id` and `bucket_name` in
+      `backend/wrangler.jsonc`. The committed values are deliberately
+      unusable.
+- [ ] `cd backend && wrangler d1 migrations apply <db> --remote` to apply
+      `backend/migrations/` (sync, auth, photo schemas).
+- [ ] `wrangler secret put BETTER_AUTH_SECRET` — **never** the
+      `dev-placeholder-secret-never-use-in-production` value in
+      `wrangler.jsonc`'s `vars`, which exists only so the local test suite
+      can run. The real value lives under `~/agents/shotledger/`.
+- [ ] `wrangler deploy`, then point the app at it: set
+      `expo.extra.apiBaseUrl` in `app/app.json` (or
+      `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to the deployed
+      hostname. The default is the `https://api.shotledger.app`
+      placeholder, which does not resolve.
+- [ ] Play Console **Data safety** form now has real answers to give: with
+      sync enabled the app collects an email address and the logbook rows
+      and photos the user chooses to sync, all deletable in-app via
+      Settings → Account & sync → Delete account (`POST /account/delete`).
+      Social sign-in is not offered — better-auth is configured for
+      email + password only.
+
 ## (b) Repeatable steps, every release
 
 1. **Version bump.** Update `app/app.json`'s `expo.version` (semver).

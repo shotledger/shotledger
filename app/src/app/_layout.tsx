@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { MigrationGate } from '@/db/migration-gate';
+import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
 import { AppSettingsProvider } from '@/state/app-settings';
@@ -72,6 +73,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('timer.title') }}
       />
       <Stack.Screen
+        name="account"
+        options={{ presentation: 'modal', headerShown: true, title: t('account.title') }}
+      />
+      <Stack.Screen
         name="vault/index"
         options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />
@@ -116,6 +121,7 @@ function ThemedApp() {
   return (
     <ThemeProvider value={navigationTheme}>
       <AnimatedSplashOverlay />
+      <SyncTriggers />
       <RootStack />
     </ThemeProvider>
   );

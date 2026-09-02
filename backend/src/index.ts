@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 
+import { betterAuthAuthenticator } from './auth';
 import { createAuth } from './auth/better-auth';
 import { createAccountRoutes } from './routes/account';
 import { createPhotoRoutes } from './routes/photos';
@@ -13,9 +14,14 @@ app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 // endpoints (docs/specs/backend-auth-photos-spec.md §2).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => createAuth(c.env).handler(c.req.raw));
 
-// Sync keeps its dev-stub default authenticator — see the TODO(better-auth)
-// note in ./auth.ts for why cutover is a separate, flagged decision.
-app.route('/sync', createSyncRoutes());
+// Real auth on /sync (docs/specs/sync-app-spec.md §8). createSyncRoutes'
+// own default is still the dev stub, which is what backend/test/sync.spec.ts
+// mounts for its bare-token fixtures — nothing reachable from this Worker
+// trusts a bearer string as a user id.
+app.route(
+  '/sync',
+  createSyncRoutes((env) => betterAuthAuthenticator(createAuth(env))),
+);
 
 app.route('/photos', createPhotoRoutes());
 app.route('/account', createAccountRoutes());

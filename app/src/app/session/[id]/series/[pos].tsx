@@ -18,6 +18,7 @@ import { saveSeriesShots } from '@/db/queries/round-count';
 import { updateSeries } from '@/db/queries/series';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Spacing } from '@/theme/tokens';
 
 export default function SeriesEntryScreen() {
@@ -36,7 +37,11 @@ export default function SeriesEntryScreen() {
       shots: row?.shots ?? [],
     }),
   );
-  const [photoUri, setPhotoUri] = useState<string | null>(row?.photoUri ?? null);
+  // A synced series carries a `shotledger-photo:` marker, not a path — it
+  // reads as "no photo yet" until the download queue has fetched the file.
+  const [photoUri, setPhotoUri] = useState<string | null>(() =>
+    resolveSeriesPhotoUri(row?.photoUri ?? null),
+  );
 
   async function onAttachPhoto() {
     const uri = await pickSeriesPhoto();

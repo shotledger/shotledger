@@ -831,7 +831,18 @@ restates §0 rules 1–6 verbatim.
 > `react-native-fast-opencv` and `expo-image-manipulator` (§2). Phase 2 — the
 > learned hole detector and the score-analysis heatmap — remains deferred.
 
-Photo target scoring; cloud sync + accounts (backend/ stays hello-world);
-WebShooter import; document vault; share cards; timers; iOS release.
+> **Cloud sync + accounts has since shipped** across three branches:
+> `feat/sync-backend` (protocol + D1 changelog),
+> `feat/backend-auth-photos` (better-auth, R2 photos, quota/rate limit,
+> account deletion) and `feat/sync-app` (the client engine, the Account &
+> sync screen and the photo queue). `backend/` is no longer hello-world.
+> Specs and evidence: `docs/specs/sync-protocol-*`,
+> `docs/specs/backend-auth-photos-*`, `docs/specs/sync-app-*`. No new
+> dependency was added on the app side. Still open: share cards, and the
+> `VERIFY:` question in `sync-protocol-spec.md` §1 about whether `settings`
+> and `session_tags` should sync.
+
+Photo target scoring; WebShooter import; document vault; share cards;
+timers; iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.

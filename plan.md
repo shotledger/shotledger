@@ -149,7 +149,14 @@ barometer; no scoring), Skytteappen (club ecosystem).
       since the share sheet already reaches Drive manually); our own cloud
       sync as the "just works" option once accounts exist. Order proposed:
       share sheet → chosen folder → scheduled → Drive API.
-- [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
+- [x] Optional cloud sync (Cloudflare); photos to R2 — backend on
+      `feat/sync-backend` + `feat/backend-auth-photos`, client on
+      `feat/sync-app`. Opt-in email+password account (better-auth bearer
+      plugin; no social provider is configured, so none is offered),
+      trigger-backed SQLite outbox, strict pull→push cycle, LWW with
+      tombstone precedence per ADR 0003. See
+      docs/specs/sync-app-spec.md/-evidence.md
+- [ ] Share cards
 - [x] Encrypted on-device document vault (license, membership card, door
       codes) — never synced. `/vault`, reachable from Settings (not a tab);
       AES-256-GCM per file via `expo-crypto`, key in `expo-secure-store`
