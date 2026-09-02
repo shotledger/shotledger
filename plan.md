@@ -62,8 +62,8 @@ barometer; no scoring), Skytteappen (club ecosystem).
 | 2026-09-02 | Share cards (`feat/share-cards`): the task brief for this work assumed `@shopify/react-native-skia` was already a dependency (via victory-native) — it is not, in this repo state (checked `pnpm-lock.yaml`, `app/package.json`; no `node_modules` either). Rather than add a new native dependency under a deadline without asking first (hard rule 2), the card is drawn with `react-native-svg` primitives — already a direct dependency, used by `GroupPlot`/`TargetFace` — and rasterized on-device via that library's own `Svg.toDataURL()` PNG snapshot method, so no new dependency was added at all                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 2026-09-02 | Backup export/import device verification (`feat/backup-bundles`, `shotledger` AVD): both bundle kinds export via the share sheet with correct filenames and manifests (30 sessions/216 series/1080 shots/2 firearms; demo data has no photos, so the database+photos bundle's photo count is 0 — not separately exercised on-device); both parse cleanly with the `shared/src/backup/container.ts` format (magic, entry count, valid `SQLite format 3` header) via a standalone Node re-implementation of `unpackContainer`. Restore via the system file picker (`File.pickFileAsync`) worked on the first attempt this run — the picker's "Recent" list surfaced the just-exported file directly, no drawer/Downloads navigation needed. Restore preview, confirmation, automatic pre-restore backup (written to `files/pre-restore-backups/`), and the "close and reopen the app" prompt all matched spec; after a full app restart, all 30 sessions were back. No app-code bugs found. One environment gotcha worth recording: this sandbox's shared `shotledger` AVD had a dev-client APK built by a different worktree/agent, and `expo run:android --port 8081` alone did not fix it — Gradle treated the native project as up to date and skipped repackaging (`react_native_dev_server_port` in the generated `gradleResValues.xml` updated to 8081, but the installed APK still opened its dev-menu socket against the old build's `10.0.2.2:8082`, i.e. a different worktree's Metro, which is why the whole Settings → Backup card was invisible until this was found — it does not exist in that stale bundle). Fix: `cd android && ./gradlew assembleDebug --rerun-tasks -PreactNativeDevServerPort=<port>`, then `adb install -r app/build/outputs/apk/debug/app-debug.apk` explicitly, rather than relying on the Expo CLI's own install step |
 | 2026-09-02 | Licence-card OCR dependency: **`@react-native-ml-kit/text-recognition@2.0.0`** (MIT), the maintainer-approved single new dependency for plan.md v2 "Scan a physical license card". Google ML Kit text recognition v2 on both platforms — the Latin model is bundled in the app binary and inference runs **on-device, with no network call**, which is the requirement that ruled out any cloud OCR API. Chosen over `react-native-mlkit-ocr` (last published 2023, unmaintained). No config plugin and no extra Gradle/Pod settings are needed: Android autolinks the library and RN's Gradle plugin supplies the `namespace` its pre-AGP-8 `build.gradle` omits; iOS pulls `GoogleMLKit/TextRecognition` 8.0.0 via the package's own podspec, so `expo prebuild` reproduces the setup unchanged. It is a legacy-architecture native module and works through RN 0.86's interop layer — the risk to watch if the interop layer is dropped. Wrapped behind `app/src/platform/text-recognition.ts` (+ `.web.ts` stub) per hard rule 6. See `docs/specs/license-card-ocr-spec.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-
-**Open:**
+| 2026-09-02 | **`expo-speech` and `expo-haptics` added** (SDK 57, `~57.0.2` each; both maintainer-approved 2026-09-02) — the first new dependencies since the timers began. Speech exists for the fälttimer, whose whole point is the range officer's spoken command sequence; the IPSC timer's "Är du redo?"/"Färdiga" prompts ride along on it. Haptics gives the parti beeps and the ELD cue a real impact pulse. Both sit behind platform wrappers per §0 rule 6: `app/src/platform/speech.ts` (+ `.web.ts` on the Web Speech API) and `app/src/platform/haptics.ts` (+ a no-op `.web.ts`); `platform/timer-cues.ts`'s existing `vibrateForTimerCue` now delegates to the haptics wrapper, so the two older timers pick it up too. Every speech call falls back to the existing tone when TTS is unavailable or the utterance errors. (Haptics was first built on React Native's core `Vibration`; the wrapper meant the later approval changed one file and no call site)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Open:**  |
 
 - [ ] Personal vs organization Google Play account (org needs a legal entity + D-U-N-S number; skips the 12-testers-for-14-days gate; same $25 fee)
 - [ ] Register `shotledger.app` (125 kr/yr at HostUp); optionally
@@ -236,25 +236,50 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v3+ — by user demand
 
-- [ ] Timers — three kinds behind one "Timer" entry (decided 2026-09-02):
+- [x] Timers — three kinds behind one "Timer" entry (decided 2026-09-02):
   - [x] **Regular** — PAR/interval timer with ready delay, series, rest, and
         the milsnabb drill generated from the program definition
         (`feat/shot-timer`, `shared/src/timer/`).
-  - [ ] **Fälttimer** — range-officer command sequence for fältskjutning.
-        Benchmark: [Fältskyttetimer](https://carlemil.github.io/FieldShootingTimer/)
-        (open source, github.com/carlemil/FieldShootingTimer): spoken
-        Swedish commands ("Tio sekunder kvar", "Färdiga", "Eld", "Eld
-        upphör", "Patron ur, proppa vapen", "Visitation"), competition
-        mode prefixing "Ladda!" / "Alla klara?" with the 60 s preparation
-        countdown, pinch-adjustable fire time 5 s–5 min on a dial, partial
-        splits (partider) as draggable flags on the dial ring with haptics at
-        each, scrub a paused timer to any second or tap a command to jump
-        to it, respects silent mode, keeps the screen awake, works
-        offline. Command wording and timings come from SHB (kommandon
-        section) — maintainer to clarify the exact feature set before
-        implementation; the fältskjutning discipline itself stays out of
-        the logbook (not a v1/v2 discipline), only the timer is in scope.
-        Voice cues need per-language recordings or TTS (sv first, en).
+  - [x] **Fälttimer** — range-officer command sequence for fältskjutning
+        (`feat/falttimer`), the third mode behind the Timer entry. The whole
+        sequence is a **plan**: a pure builder turns the settings into a list
+        of cues at absolute times, and `FaltTimerEngine`
+        (`shared/src/timer/falt.ts`, unit-tested, 100% line/branch coverage)
+        is a cursor over it advanced by an injected clock — the app layer
+        only maps a cue to speech, a tone and a vibration.
+        Sequence and timings are **SHB 2026 D.6.2 p. 88 "Kommandoord"**
+        (quoted in `docs/reference/spsf-shb-2026.md`): LADDA! + a preparation
+        countdown (default 30 s per SHB's "ca 30 s före ALLA KLARA",
+        adjustable 10–90 s, competition mode only — training starts at ALLA
+        KLARA), ALLA KLARA? immediately followed by TIO SEKUNDER KVAR! at
+        T−10, FÄRDIGA! at T−3, ELD! at T=0, the **prolonged** ELD UPPHÖR!
+        beginning at T_end−3 and ending exactly at T_end (SHB: "utdrages
+        under 3 sek" — implemented as speech at a lowered `rate`, plus a
+        tone at T_end; a setting swaps the words for a signal tone, SHB's
+        "kan ersättas med visselsignal"), PATRON UR! PROPPA VAPEN! 3 s after
+        the shooting time, VISITATION! 4 s later, and MARKERA! on a tap
+        (untimed). Shooting time 3 s–5 min in 1 s steps (default 8 s) with
+        preset chips. **Partier** (delmoment) are whole seconds inside the
+        shooting window, added/removed with +/− and nudged a second at a
+        time; each fires a short beep and a vibration, and the timeline
+        badges the interval between consecutive boundaries. Mode, prep time,
+        shooting time, partier and the whistle toggle persist in the
+        existing key/value `settings` table. Layout is a horizontal
+        timeline (grey prep → grey countdown → green shooting → amber last
+        3 s → red after) with a large clock and the command list
+        highlighting the current command — **not** the benchmark app's dial
+        ([Fältskyttetimer](https://carlemil.github.io/FieldShootingTimer/),
+        which remains the reference for behaviour); the maintainer settled
+        that a bar is enough. Keeps the screen awake (expo-keep-awake).
+        Limits, deliberately: **silent mode is not respected** — expo-speech
+        offers no such gate and the app does not set an iOS audio session
+        category for it, so a phone on silent may still speak (Android
+        media-volume behaviour is the platform's); there is **no whistle
+        sample**, so the whistle variant borrows the existing stop tone;
+        the timer cannot be scrubbed while paused and a command cannot be
+        tapped to jump to it (both benchmark features, not implemented);
+        and the fältskjutning discipline itself stays out of the logbook
+        (not a v1/v2 discipline) — only the timer is in scope.
   - [x] **IPSC-style shot timer** — "Are you ready?" / "Standby",
         random-delay start beep, then split (lap) times detected from the
         sound of the shots via the microphone; shows first-shot time, splits,
@@ -268,9 +293,16 @@ barometer; no scoring), Skytteappen (club ecosystem).
         record mode, so a file must exist for `metering` to be populated —
         it is written to the OS cache directory, never read back, shared or
         synced, and deleted on stop.
-        Limits, deliberately: the prompts are **text plus a tone, not
-        spoken** (no TTS dependency in the lockfile — expo-speech is not
-        installed; adding it needs the maintainer's OK); detection is a
+        **Spoken prompts** (`feat/falttimer`): "Är du redo?" / "Färdiga"
+        are now spoken in the app's current language through
+        `app/src/platform/speech.ts` (expo-speech, maintainer-approved
+        2026-09-02), with a "Talade kommandon" toggle — on by default,
+        shared with the fälttimer and persisted in the `settings` table —
+        and the existing tone as the fallback whenever speech is
+        unavailable or the utterance errors. The start beep and the stop
+        tone stay tones: a spoken word would arrive late and blur the
+        moment the clock starts.
+        Limits, deliberately: detection is a
         threshold on the recorder's ~60 ms peak metering plus an 80 ms
         debounce, so it cannot separate a genuine sub-80 ms double-tap, and
         the dB thresholds behind low/medium/high are sensible starting
