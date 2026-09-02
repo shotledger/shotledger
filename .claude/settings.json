@@ -1,9 +1,12 @@
 {
-  "extraKnownMarketplaces": [
-    {
-      "url": "https://github.com/pbakaus/impeccable"
+  "extraKnownMarketplaces": {
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      }
     }
-  ],
+  },
   "enabledPlugins": {
     "impeccable": true
   }
