@@ -224,3 +224,48 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(), // JSON values
 });
+
+// ---------------------------------------------------------------------------
+// Client-only sync bookkeeping (docs/specs/sync-app-spec.md §2). These four
+// tables never leave the device and are absent from SYNC_TABLE_NAMES.
+// ---------------------------------------------------------------------------
+
+// Written by AFTER INSERT/UPDATE triggers on the nine synced tables, so the
+// enqueue happens inside the caller's transaction (ADR 0003 guardrail) with
+// no query module having to remember it. Triggers live in migration 0004.
+export const syncOutbox = sqliteTable(
+  'sync_outbox',
+  {
+    tableName: text('table_name').notNull(),
+    rowId: text('row_id').notNull(),
+    // Monotonic local revision; the ack delete matches on it so a write
+    // landing mid-push keeps the entry queued.
+    rev: integer('rev').notNull(),
+    clientChangeId: text('client_change_id'),
+  },
+  (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
+);
+
+export const syncState = sqliteTable('sync_state', {
+  tableName: text('table_name').primaryKey(),
+  cursor: integer('cursor').notNull().default(0),
+});
+
+// Singleton row (id = 0). `applying` suppresses the outbox triggers while
+// pulled rows are written, which is what stops two devices ping-ponging the
+// same row forever.
+export const syncControl = sqliteTable('sync_control', {
+  id: integer('id').primaryKey(),
+  applying: integer('applying').notNull().default(0),
+  lastRev: integer('last_rev').notNull().default(0),
+});
+
+export const photoQueue = sqliteTable('photo_queue', {
+  id: text('id').primaryKey(),
+  kind: text('kind', { enum: ['upload', 'download'] }).notNull(),
+  photoId: text('photo_id').notNull(),
+  localUri: text('local_uri'),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+  createdAt: text('created_at').notNull(),
+});
