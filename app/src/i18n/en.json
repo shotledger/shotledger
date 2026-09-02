@@ -107,7 +107,11 @@
       "json": "The matched sessions and the computed summary, as structured data.",
       "csv": "Every matched session, series and shot as a spreadsheet."
     },
-    "exportVaultNote": "Your own data only — the vault is never part of an export."
+    "exportVaultNote": "Your own data only — the vault is never part of an export.",
+    "statsPerShotTitle": "Per Shot",
+    "statsSumTitle": "Whole Session",
+    "statsTotalPoints": "Total Points",
+    "statsTotalShots": "Total Shots"
   },
   "firearms": {
     "title": "Firearms & Ammo",
@@ -362,7 +366,20 @@
     "seriesAverage": "Avg/series",
     "innerTenCount": "X (inner tens)",
     "extraRounds": "Extra rounds (not scored)",
-    "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only"
+    "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only",
+    "editTitle": "Edit Session",
+    "date": "Date",
+    "location": "Location",
+    "notes": "Notes",
+    "tags": "Tags",
+    "addTag": "Add",
+    "tagPlaceholder": "New tag",
+    "removeTag": "Remove {{name}}",
+    "saveChanges": "Save Changes",
+    "sighterOnThisSeries": "Mark as Sighter",
+    "deleteSeries": "Delete Series",
+    "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
+    "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone."
   },
   "share": {
     "title": "Share session",
