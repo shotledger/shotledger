@@ -113,6 +113,47 @@ export function updateSeries(
   return getSeries(db, id);
 }
 
+/**
+ * Sets or clears a series' sighter flag after creation (the sighter choice
+ * moved from the add-series step onto the series entry screen — plan.md
+ * decisions log, 2026-09-03). Re-enforces the same one-sighter-per-section
+ * rule as `addSeries`; a series that already is the section's sighter can
+ * always turn itself off. Returns `undefined` for an unknown/tombstoned id.
+ */
+export function setSeriesSighter(db: Database, id: string, isSighter: boolean) {
+  const current = getSeries(db, id);
+  if (!current) return undefined;
+
+  if (isSighter && current.isTotalOverride === 1) {
+    throw new RangeError('An override series cannot also be a sighter series.');
+  }
+
+  if (isSighter && current.isSighter !== 1) {
+    const existing = db
+      .select()
+      .from(series)
+      .where(
+        and(
+          eq(series.sessionId, current.sessionId),
+          eq(series.isSighter, 1),
+          eq(series.isFinal, current.isFinal),
+          isNull(series.deletedAt),
+        ),
+      )
+      .get();
+    if (existing && existing.id !== id) {
+      throw new SighterLimitExceededError(current.isFinal === 1 ? 'final' : 'main');
+    }
+  }
+
+  const now = nowIso();
+  db.update(series)
+    .set({ isSighter: isSighter ? 1 : 0, updatedAt: now })
+    .where(and(eq(series.id, id), isNull(series.deletedAt)))
+    .run();
+  return getSeries(db, id);
+}
+
 export function softDeleteSeries(db: Database, id: string) {
   const now = nowIso();
   db.update(series).set({ deletedAt: now, updatedAt: now }).where(eq(series.id, id)).run();
