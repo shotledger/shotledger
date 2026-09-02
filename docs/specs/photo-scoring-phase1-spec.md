@@ -346,7 +346,9 @@ TargetScan screen 2 parity, on a **clean vector target** — not the photo.
 - The Score-Analysis heatmap (benchmark screenshot 3) — phase 2.
 - Any hole _detection_. Every mark in phase 1 is a user tap.
 - The milsnabb face and every non-precision face: friendly
-  "not yet supported yet" message, never a guess.
+  "not yet supported yet" message, never a guess. **Superseded for the
+  milsnabb face by §10** (`feat/milsnabb-photo-corners`) — every other face
+  still gets this message.
 - The opt-in corrections corpus / photo upload (spike §4.6 privacy note) —
   that is a separate, explicit, off-by-default feature and is not built here.
 - iOS verification. Both platforms are _supported_ (no Android-only module),
@@ -460,3 +462,131 @@ max-spread tiles whenever `analyzePointsLost` returns non-null (i.e.
 whenever the Group view itself is shown, since both derive from the same
 marks + target). Three values: points lost to position, points lost to
 size, and the potential (recentered) score — all reusing `StatTile`.
+
+## 10. Amendment — milsnabb via manual corners (`feat/milsnabb-photo-corners`)
+
+> **Append-only amendment** (old-coder: the spec is never rewritten in
+> place — see §2.8 of `target-scoring-math-spec.md` for the convention this
+> follows). §8 said the milsnabb face gets a "not yet supported" message;
+> this section replaces that for the milsnabb face specifically, by adding
+> the manual-corner path §2.5 already specified for the precision face's
+> gate-rejection fallback as milsnabb's ONLY path — auto-geometry is never
+> attempted for it. Nothing in §1-§9 changes for the precision face.
+
+### 10.1 Why manual-only, not "try auto, fall back"
+
+§0 already ruled out auto-detection for milsnabb on two independent
+grounds: `guess_kind` mistypes the face on 8/10 photos (CV spike §6.2), and
+a misdetection makes the ring scale **2.5x wrong** — not a marginal miss,
+a different target. Attempting the auto pipeline and relying on the
+validity gate (§2) to catch the failure was considered and rejected: the
+gate's `zoneContrastGrey` metric assumes a solid black disc against light
+card (precision's `referenceIsSolidBlack: true`); milsnabb's black zone is
+an annulus around a lighter middle (`referenceIsSolidBlack: false`,
+`targets.ts`), which the gate was never calibrated against (§2.3's
+thresholds come from the 38-photo corpus's precision-face runs only, per
+`spike/cv/validity_gate.py`). Running the gate on ungated ground would mean
+a threshold decision with no calibration evidence behind it — exactly what
+§2.3 says not to do ("measured, not chosen by taste"). So: **no auto
+attempt, ever, for milsnabb** — capture goes straight to the four-corner
+screen, with a milsnabb-specific hint replacing the generic
+`adjustCornersHint` text (`photoScoring.milsnabbCornersHint`, en+sv).
+
+### 10.2 What was already in place, unchanged
+
+Three pieces of §1-§7 already generalize to milsnabb with zero code
+changes, verified by reading the shipped source before writing any new
+code:
+
+- **`shared/src/target-scoring/targets.ts`**: `SPSF_SNABBSKJUTNING_25M`
+  (rings X/10/9/8/7/6/5 at 50/100/180/260/340/420/500 mm) was already
+  present and cited to SHB J.7.1 p.297 — cross-checked directly against
+  `docs/reference/spsf-shb-2026.md`'s own "Targets" section (line
+  126-128), which independently states the identical seven diameters.
+  Ring table complete; nothing to add.
+- **`shared/src/target-scoring/score.ts`**: `scoreHole` takes a
+  `TargetFaceDefinition` and is not precision-specific; `score.test.ts`'s
+  SC11 already exercises the milsnabb face's X/10 and 5/miss boundaries
+  with the identical edge-touch rule. See §10.4 for the one open question
+  this raises.
+- **`app/src/features/photo-scoring/corners.ts`**
+  (`outerRingReferencePoints`, `homographyFromQuad`, `applyHomography`,
+  `transformFromCorners`) takes any `TargetFaceDefinition` and was already
+  fully general — it reads `target.rings[target.rings.length - 1]` for the
+  outermost ring, which for milsnabb is the 500 mm "5" ring, not
+  precision's "1" ring. No change needed; `corners.test.ts` already covers
+  the function generically, not per-face.
+
+### 10.3 What changed
+
+- **`app/src/app/session/[id]/scan.tsx`**: `SUPPORTED_FACE_ID` (a single
+  string) became `SUPPORTED_FACE_IDS` (a set of two:
+  `spsf-pistol-25m-precision` and `spsf-snabbskjutning-25m`), plus a
+  `manualOnly` flag. `analyze()` now branches on `manualOnly` right after
+  `prepareGeometryImage` — for milsnabb it sets `defaultCorners` and jumps
+  straight to the `'corners'` phase, never calling `runGeometry`. Every
+  other face not in `SUPPORTED_FACE_IDS` still renders the unchanged
+  `unsupportedTitle`/`unsupportedBody` screen.
+- **`app/src/components/corner-adjuster.tsx`**: gained an optional
+  `photo`/`scaleToOriginal` pair. When both are given, a `CornerLoupe` (a
+  gesture-less sibling of `MarkLoupe`, same `cropLoupe` full-resolution
+  re-crop, same crosshair) tracks whichever handle is currently being
+  dragged and renders pinned to the corner of the frame while the drag is
+  in progress. This satisfies the maintainer's "draggable handles and a
+  zoom loupe" requirement for BOTH corner-adjustment entry points (the
+  milsnabb-direct path and the precision gate-rejection fallback), since
+  both go through the same component.
+- **The "rectified preview" requirement is met by the existing ring
+  overlay, not a new warp.** `MarkOverlay` (§6) already draws every ring as
+  a transform-sampled polygon over the ORIGINAL (unwarped) photo, generic
+  over `transform.source` ('auto' | 'manual') — this is what §6's own
+  header comment calls "what lets the user SEE whether the lock is good
+  before trusting it". Once `onUseCorners` computes the homography and the
+  screen reaches the `'marking'` phase, that overlay renders immediately,
+  before any tap — which is the verification moment the maintainer's scope
+  asked for. A separate pixel-warped rectified canvas was considered and
+  rejected as duplicate machinery: it would need `warpPerspective` (native,
+  §5.2's stage 2, currently only invoked from the auto path), and the ring
+  overlay already gives the same yes/no signal more cheaply.
+- **i18n**: `photoScoring.milsnabbCornersHint` added to both `en.json` and
+  `sv.json`, appended after the existing `adjustCornersHint` key (matching
+  §1's "appended at end… to minimise collision" convention, applied at key
+  granularity here since the block already exists).
+
+### 10.4 Open item — flagged, not resolved
+
+The edge-touch rule (`score.ts`, SHB F.6.10.1 p.176 — "Kulhål räknas till
+det högre värdet så snart ringens ytterkant är tangerad") is cited to the
+precision section (F) of the handbook. `docs/reference/spsf-shb-2026.md`
+has no equivalent J-section (milsnabb) citation for the same rule — SC11
+already asserts milsnabb scores by the identical rule, and that behavior
+predates this branch. Nothing here changes it. **This is a VERIFY, not a
+new decision**: flagging per CLAUDE.md rule 4 rather than guessing. If the
+milsnabb section of the handbook states a different edge convention, `SC11`
+and `score.ts`'s single shared implementation would both need to change —
+maintainer confirmation needed before that happens either way.
+
+### 10.5 Real-photo geometry verification
+
+§9 verified the AUTO path against the 38-photo corpus, on Android, for the
+precision face only — no equivalent existed for a milsnabb MANUAL path.
+`docs/specs/photo-scoring-phase1-evidence.md` §10 adds it: `corners.ts`'s
+own `homographyFromQuad`/`applyHomography` (the exact functions the app
+calls, imported unmodified — not reimplemented) run against hand-picked
+pixel coordinates on 3 of the corpus's milsnabb photos.
+
+One finding worth recording here because it affects the UI contract, not
+just the numbers: **the true outermost ring (5, 500 mm) is not always
+inside the frame.** All 3 available milsnabb photos are landscape crops
+where the physical top and bottom of ring 5 fall outside the image
+(`docs/specs/photo-scoring-phase1-evidence.md` §10.1 has the measurements).
+`outerRingReferencePoints` (§10.2) still always targets the outermost ring,
+so on a crop like these the user would be asked to place a corner point
+that is not on the photo. The verification script therefore built its
+homography from ring 9 instead (the largest ring reliably inside all 3
+frames) to test the underlying math on real geometry; this is **not** what
+the shipped UI does today — it does not offer a choice of reference ring.
+Flagged as a follow-up, not fixed here: letting the user pick which ring
+they placed corners on (or auto-detecting how many rings are visible)
+would need its own spec/UI work and was out of the scope set for this
+branch.

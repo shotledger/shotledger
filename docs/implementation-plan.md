@@ -830,6 +830,12 @@ restates §0 rules 1–6 verbatim.
 > table (migration `0002_young_hardball`) and two runtime dependencies,
 > `react-native-fast-opencv` and `expo-image-manipulator` (§2). Phase 2 — the
 > learned hole detector and the score-analysis heatmap — remains deferred.
+>
+> **The milsnabb face now scores too**, via manual corners only (auto-geometry
+> is still never attempted for it), on `feat/milsnabb-photo-corners` — amends
+> §10 of the phase 1 spec/evidence. No new dependency, no schema change; the
+> shared ring table/scoring and the corner-homography math were already
+> face-generic.
 
 > **Cloud sync + accounts has since shipped** across three branches:
 > `feat/sync-backend` (protocol + D1 changelog),
