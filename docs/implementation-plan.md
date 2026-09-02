@@ -837,6 +837,15 @@ restates §0 rules 1–6 verbatim.
 > shared ring table/scoring and the corner-homography math were already
 > face-generic.
 
+> **Backup export/import has since shipped** on `feat/backup-bundles`:
+> `.shotledger` bundles (database-only or database+photos), Settings →
+> Backup. No new runtime dependency — `.shotledger` is a small hand-rolled
+> uncompressed container (`shared/src/backup/`) rather than a zip, since no
+> zip library exists in the lockfile and adding one needs the maintainer's
+> OK first (not yet asked). See the 2026-09-02 plan.md decisions-log entry
+> for the restore-requires-app-restart caveat (no `expo-updates` dependency
+> to reload the JS bundle in place).
+
 > **Cloud sync + accounts has since shipped** across three branches:
 > `feat/sync-backend` (protocol + D1 changelog),
 > `feat/backend-auth-photos` (better-auth, R2 photos, quota/rate limit,
