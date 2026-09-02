@@ -887,6 +887,15 @@ restates §0 rules 1–6 verbatim.
 > `expo-sharing`. No new dependency — see the 2026-09-02 plan.md
 > decisions-log entry.
 
+> **Scan a physical license card has since shipped** on
+> `feat/license-card-ocr`: the firearm detail screen's licence form gained
+> "Scan card" actions that photograph (or pick) a Polisen vapenlicens card
+> and pre-fill it via on-device ML Kit text recognition, the one new
+> dependency (`@react-native-ml-kit/text-recognition`, see the 2026-09-02
+> plan.md decisions-log entry). See `docs/specs/license-card-ocr-spec.md`/
+> `-evidence.md` for the parser rules, the privacy boundary and the
+> synthetic-card device verification (screenshot `ocr-01-scan-prefill.png`).
+
 Photo target scoring; WebShooter import; document vault; the fälttimer;
 iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level
