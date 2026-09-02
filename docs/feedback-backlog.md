@@ -159,7 +159,40 @@ where the work lives.
       detection options all the time. It should be able to expand/collapse or
       similar. Hopefully it does not need to change often."
 
-## 9. Known broken
+## 9. Timers — unify into one programmable timer
+
+Maintainer, 2026-09-03: "I dont see a need for PAR timer and Shot timer they
+can be combined." Plus: a user-authored custom program, non-repetitive
+patterns, a start interval as two sliders, and clearer naming.
+
+- [?] **"PAR" must be renamed.** It is not an acronym — "par time" borrows
+  golf's "par", a set standard to meet — so it means nothing to our users.
+  Proposed: **"Time limit" / "Tidsgrans"** (or "Fixed time"). Maintainer to
+  confirm the wording.
+- [ ] **Combine the PAR/interval timer and the IPSC shot timer into one timer.**
+      They are the same machine: a sequence of timed phases with cues. Shot
+      detection becomes an _option_ layered on any program (record splits from
+      the mic) rather than a separate timer. The falttimer stays distinct — it is
+      a fixed SPSF command sequence, not a user-authored program.
+- [ ] **User-authored programs ("custom").** Model on the club's
+      `rotation_target` program schema
+      (`contracts/program.schema.json`), which is a good fit and already familiar
+      to these users: a program is a list of series; each series is a **flat,
+      explicit list of events** `{duration_ms, command?, audio_ids[]}`; there is
+      **no repeat construct in the data** — non-repeating patterns are simply
+      spelled out — and `timer_start_index` marks where preamble ends and the run
+      timer reaches zero. Mirror that: explicit steps in storage, with a
+      "repeat x N" helper in the **editor** that expands into steps. That yields
+      arbitrary non-repetitive sequences for free, and keeps the executor trivial.
+- [ ] **Start delay as two sliders** (min and max). Equal values mean a fixed
+      delay; different values mean a random delay in that range — one control
+      that covers both, as the maintainer described.
+- [ ] **Steps of "time limit + rest", repeating or not** — a repeat count of 1 is
+      the non-repeating case, so this falls out of the step model above.
+- [ ] **Collapse the shot-detection options** behind an expander — "I dont want
+      to see the Shot detection options all the time".
+
+## 10. Known broken
 
 - [ ] **WebShooter does not work at all** — "Username password login does not
       work". Deferred by the maintainer to a later session against the real
