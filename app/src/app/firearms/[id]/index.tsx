@@ -33,9 +33,9 @@ import {
   countRecognizedFields,
   licenseFormValues,
   scanLicenseCard,
+  settleScannedLicenseImage,
   type ScanSource,
 } from '@/features/licenses/scan-license-card';
-import { addPhotoDocument } from '@/features/vault/vault-store';
 import { useTheme } from '@/hooks/use-theme';
 import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
@@ -91,8 +91,11 @@ export default function FirearmDetailScreen() {
   const [scan, setScan] = useState<ScanState>({ status: 'idle' });
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [applyFirearmDetails, setApplyFirearmDetails] = useState(false);
-  const [storeScanInVault, setStoreScanInVault] = useState(false);
+  // Kept by default — a gun shop needs to see the actual card. This is the
+  // opt-OUT switch (plan.md: the original image is now kept by default).
+  const [storeScanInVault, setStoreScanInVault] = useState(true);
   const [vaultDenied, setVaultDenied] = useState(false);
+  const [cardViewDenied, setCardViewDenied] = useState(false);
 
   const [showLogEvent, setShowLogEvent] = useState(false);
   const [eventKind, setEventKind] = useState('');
@@ -182,31 +185,27 @@ export default function FirearmDetailScreen() {
     setScan({ status: 'idle' });
     setScannedImageUri(null);
     setApplyFirearmDetails(false);
-    setStoreScanInVault(false);
+    setStoreScanInVault(true);
   }
 
-  /** The scanned image is the most sensitive thing the app has seen, so it
-   *  leaves the picker's cache the moment the user's decision about it is
-   *  known — encrypted into the vault, or deleted. */
-  async function settleScannedImage() {
-    const uri = scannedImageUri;
-    if (!uri) return;
-    if (storeScanInVault) {
-      // A refused gate loses the copy rather than leaving the card's photo
-      // sitting in the picker's cache: the user can scan again.
-      const access = await requestVaultAccess(t('vault.gateTitle'));
-      if (access.granted) {
-        await addPhotoDocument(uri, 'license', licenseNumber.trim() || t('firearms.licenseTitle'));
-      } else {
-        setVaultDenied(true);
-      }
-    }
-    await deleteScannedImage(uri);
-    setScannedImageUri(null);
-  }
-
-  function onAddLicense() {
+  async function onAddLicense() {
     if (!db) return;
+    // Settle the scanned original's fate before the license row is created,
+    // so a kept image can be linked to it in a single insert (plan.md: kept
+    // by default, encrypted in the vault — a shop must be able to see it).
+    const uri = scannedImageUri;
+    let vaultDocumentId: string | null = null;
+    if (uri) {
+      const result = await settleScannedLicenseImage(uri, {
+        store: storeScanInVault,
+        label: licenseNumber.trim() || t('firearms.licenseTitle'),
+        promptMessage: t('vault.gateTitle'),
+      });
+      if (result.status === 'stored') vaultDocumentId = result.documentId;
+      if (result.status === 'vaultDenied') setVaultDenied(true);
+      setScannedImageUri(null);
+    }
+
     const license = addLicense(db, {
       firearmId: firearm!.id,
       licenseNumber: licenseNumber.trim() || null,
@@ -215,6 +214,7 @@ export default function FirearmDetailScreen() {
       validUntil: validUntil.trim() || null,
       conditions: conditions.trim() || null,
       authority: authority.trim() || null,
+      vaultDocumentId,
     });
     const notifications = licenseExpiryNotifications(license.validUntil);
     void scheduleLicenseExpiryNotifications(
@@ -234,7 +234,6 @@ export default function FirearmDetailScreen() {
         ...(vapenId ? { vapenId } : {}),
       });
     }
-    void settleScannedImage();
 
     setLicenseNumber('');
     setPurpose('');
@@ -245,6 +244,16 @@ export default function FirearmDetailScreen() {
     setShowAddLicense(false);
     resetScan();
     refresh();
+  }
+
+  /** Re-authenticates against the vault gate, then opens the licence's
+   *  stored original full-screen. A licence with no stored image has no
+   *  `vaultDocumentId` and never gets this action offered. */
+  async function onShowLicenseCard(vaultDocumentId: string) {
+    setCardViewDenied(false);
+    const access = await requestVaultAccess(t('vault.gateTitle'));
+    if (!access.granted) return setCardViewDenied(true);
+    router.push(`/vault/${vaultDocumentId}`);
   }
 
   function onLogEvent() {
@@ -434,9 +443,25 @@ export default function FirearmDetailScreen() {
               key={license.id}
               title={license.licenseNumber ?? t('firearms.licenseTitle')}
               subtitle={license.validUntil ?? t('firearms.tillsVidare')}
+              trailing={
+                license.vaultDocumentId ? (
+                  <ThemedText type="small">{t('firearms.showLicenseCard')}</ThemedText>
+                ) : undefined
+              }
+              onPress={
+                license.vaultDocumentId
+                  ? () => void onShowLicenseCard(license.vaultDocumentId!)
+                  : undefined
+              }
+              testID={`license-${license.id}`}
             />
           ))
         )}
+        {cardViewDenied ? (
+          <ThemedText type="small" themeColor="danger" testID="show-license-card-denied">
+            {t('firearms.showLicenseCardDenied')}
+          </ThemedText>
+        ) : null}
         {showAddLicense ? (
           <>
             {SCAN_SUPPORTED ? (
@@ -497,6 +522,9 @@ export default function FirearmDetailScreen() {
                         testID="scan-store-in-vault"
                       />
                     </View>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('firearms.scanStoreInVaultHint')}
+                    </ThemedText>
                   </>
                 ) : null}
                 {vaultDenied ? (
@@ -534,7 +562,11 @@ export default function FirearmDetailScreen() {
             <TextInput value={conditions} onChangeText={setConditions} style={inputStyle} />
             <ThemedText type="small">{t('firearms.authority')}</ThemedText>
             <TextInput value={authority} onChangeText={setAuthority} style={inputStyle} />
-            <PrimaryButton label={t('common.save')} onPress={onAddLicense} testID="save-license" />
+            <PrimaryButton
+              label={t('common.save')}
+              onPress={() => void onAddLicense()}
+              testID="save-license"
+            />
           </>
         ) : (
           <PrimaryButton
