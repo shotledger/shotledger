@@ -1,8 +1,8 @@
 {
   "common": {
-    "cancel": "Cancel",
     "save": "Save",
-    "edit": "Edit"
+    "edit": "Edit",
+    "cancel": "Cancel"
   },
   "tabs": {
     "home": "Home",
@@ -166,10 +166,35 @@
     "loadDemoData": "Load demo data",
     "wipeData": "Wipe data",
     "supportDevelopment": "Support development",
-    "birthYear": "Birth year",
-    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement.",
     "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
-    "about": "About"
+    "about": "About",
+    "birthYear": "Birth year",
+    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement."
+  },
+  "about": {
+    "title": "About",
+    "appName": "ShotLedger",
+    "version": "Version {{version}}",
+    "licensesTitle": "Open-source licenses",
+    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
+    "repoLink": "Source code"
+  },
+  "csv": {
+    "sectionTitle": "Data (CSV)",
+    "exportTitle": "Export CSV",
+    "exportSubtitle": "Share every session, series and shot as a CSV file",
+    "importTitle": "Import CSV",
+    "importSubtitle": "Pick a CSV file to add or update sessions",
+    "exportSuccess": "CSV exported",
+    "exportFailed": "CSV export failed",
+    "importCancelled": "Import cancelled",
+    "importFailed": "CSV import failed",
+    "importErrorsTitle": "Import has errors",
+    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
+    "importConfirmTitle": "Import this file?",
+    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
+    "importConfirmAction": "Import",
+    "importSuccess": "Imported {{count}} session(s)"
   },
   "compliance": {
     "settingsTitle": "Compliance",
@@ -276,6 +301,39 @@
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire"
   },
+  "timer": {
+    "homeEntry": "Shot timer",
+    "title": "Shot timer",
+    "presetsTitle": "Choose a drill",
+    "presets": {
+      "parSingle": "Single PAR",
+      "parRandomStart": "Random start",
+      "parInterval": "Interval drill",
+      "milsnabb": "Milsnabb drill",
+      "custom": "Custom"
+    },
+    "presetSummaryPar": "{{ready}} s ready · {{par}} s par time",
+    "presetSummaryInterval": "{{reps}} reps · {{par}} s par time · {{rest}} s rest",
+    "presetSummaryMilsnabb": "Provserie + 3 omgångar × 4 series, 10/8/6 s",
+    "presetSummaryCustom": "Set your own par time, ready delay and reps",
+    "custom": {
+      "parSeconds": "Par time (s)",
+      "readyDelaySeconds": "Ready delay (s)",
+      "reps": "Repetitions",
+      "restSeconds": "Rest between reps (s)"
+    },
+    "start": "Start",
+    "stop": "Stop",
+    "reset": "Reset",
+    "state": {
+      "readyDelay": "Get ready",
+      "series": "GO",
+      "rest": "Rest",
+      "done": "Done"
+    },
+    "seriesProgress": "Series {{current}} / {{total}}",
+    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, then 4×10 s, 4×8 s, 4×6 s. Ready delay is a practice default, not the match's 60 s LADDA→FÄRDIGA cadence."
+  },
   "vault": {
     "title": "Document vault",
     "settingsRowTitle": "Document vault",
@@ -308,31 +366,6 @@
     "detailDeleteConfirmBody": "This cannot be undone.",
     "detailDeleteConfirmCancel": "Cancel",
     "detailDeleteConfirmConfirm": "Delete"
-  },
-  "about": {
-    "title": "About",
-    "appName": "ShotLedger",
-    "version": "Version {{version}}",
-    "licensesTitle": "Open-source licenses",
-    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
-    "repoLink": "Source code"
-  },
-  "csv": {
-    "sectionTitle": "Data (CSV)",
-    "exportTitle": "Export CSV",
-    "exportSubtitle": "Share every session, series and shot as a CSV file",
-    "importTitle": "Import CSV",
-    "importSubtitle": "Pick a CSV file to add or update sessions",
-    "exportSuccess": "CSV exported",
-    "exportFailed": "CSV export failed",
-    "importCancelled": "Import cancelled",
-    "importFailed": "CSV import failed",
-    "importErrorsTitle": "Import has errors",
-    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
-    "importConfirmTitle": "Import this file?",
-    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
-    "importConfirmAction": "Import",
-    "importSuccess": "Imported {{count}} session(s)"
   },
   "photoScoring": {
     "title": "Scan target",
