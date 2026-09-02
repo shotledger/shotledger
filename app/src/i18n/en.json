@@ -8,6 +8,7 @@
     "home": "Home",
     "stats": "Statistics",
     "firearms": "Firearms",
+    "tools": "Tools",
     "settings": "Settings"
   },
   "sessionType": {
@@ -633,7 +634,7 @@
   },
   "vault": {
     "title": "Document vault",
-    "settingsRowTitle": "Document vault",
+    "settingsRowTitle": "Vault",
     "settingsRowSubtitle": "Licenses, membership cards, door codes — encrypted, never synced",
     "webUnavailable": "The document vault needs a native build — secure storage isn't available in this web preview.",
     "gateTitle": "Unlock vault",
@@ -822,5 +823,10 @@
       "conflicting-weapon-group-tags": "Conflicting weapon-group tags",
       "ambiguous-firearm-tag": "Ambiguous firearm tag"
     }
+  },
+  "tools": {
+    "title": "Tools",
+    "timersSectionTitle": "Timers",
+    "timerSubtitle": "PAR, IPSC and field timers"
   }
 }

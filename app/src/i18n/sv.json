@@ -8,6 +8,7 @@
     "home": "Hem",
     "stats": "Statistik",
     "firearms": "Vapen & ammo",
+    "tools": "Verktyg",
     "settings": "Inställningar"
   },
   "sessionType": {
@@ -633,7 +634,7 @@
   },
   "vault": {
     "title": "Dokumentvalv",
-    "settingsRowTitle": "Dokumentvalv",
+    "settingsRowTitle": "Valv",
     "settingsRowSubtitle": "Vapenlicens, medlemskort, portkoder — krypterat, synkas aldrig",
     "webUnavailable": "Dokumentvalvet kräver en nativ build — säker lagring är inte tillgänglig i den här webbförhandsvisningen.",
     "gateTitle": "Lås upp valvet",
@@ -822,5 +823,10 @@
       "conflicting-weapon-group-tags": "Motstridiga vapengruppstaggar",
       "ambiguous-firearm-tag": "Tvetydig vapentagg"
     }
+  },
+  "tools": {
+    "title": "Verktyg",
+    "timersSectionTitle": "Tidtagning",
+    "timerSubtitle": "PAR-, IPSC- och fälttimer"
   }
 }

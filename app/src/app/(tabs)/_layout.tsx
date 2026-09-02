@@ -6,6 +6,7 @@ import {
   HomeTabIcon,
   SettingsTabIcon,
   StatsTabIcon,
+  ToolsTabIcon,
 } from '@/components/tab-icons';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -43,6 +44,13 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.firearms'),
           tabBarIcon: ({ color, size }) => <FirearmsTabIcon color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="tools"
+        options={{
+          title: t('tabs.tools'),
+          tabBarIcon: ({ color, size }) => <ToolsTabIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
