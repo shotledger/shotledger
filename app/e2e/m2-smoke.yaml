@@ -2,7 +2,7 @@
 # screenshotting each. Loads demo data via the dev-only /dev route first
 # (native only — see docs/implementation-plan.md M1 report on web's
 # expo-sqlite gap).
-appId: com.anonymous.app
+appId: app.shotledger
 ---
 - launchApp
 - extendedWaitUntil:

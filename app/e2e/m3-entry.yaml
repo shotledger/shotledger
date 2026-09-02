@@ -5,7 +5,7 @@
 # Each series is 9, 9, 9, 10, X = 47 points — so it exercises both new ten
 # keys: `10` (ordinary ten, no flag) and `X` (inner ten, is_inner_ten=1).
 # Five series therefore total 235, average 47.0 per series, and 5 X.
-appId: com.anonymous.app
+appId: app.shotledger
 ---
 - launchApp:
     clearState: true

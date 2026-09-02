@@ -3,7 +3,7 @@
 # rather than typing (CLAUDE.md Maestro gotchas note — long inputText runs
 # have reproducibly killed the driver on this sandboxed emulator; this flow
 # is navigation + assertions only, no text entry).
-appId: com.anonymous.app
+appId: app.shotledger
 ---
 - launchApp:
     clearState: true
