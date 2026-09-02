@@ -352,3 +352,111 @@ TargetScan screen 2 parity, on a **clean vector target** — not the photo.
 - iOS verification. Both platforms are _supported_ (no Android-only module),
   but this branch is verified on the Android emulator only; the per-platform
   OpenCV version difference (4.9.0 vs 4.12.0) is recorded as an untested risk.
+
+## 9. "Points lost" card (`feat/polish-1` mini-spec, old-coder Tier 2)
+
+Left out of phase 1 (§8 didn't call it out by name, but §7 only shipped
+windage/elevation/mean-radius/max-spread). TargetScan's "points lost"
+breaks a group's total shortfall from a perfect score into the part a
+shooter can fix by correcting their aim (**position**) and the part that is
+just how tight the group is (**size**). Same tier as `analyzeGroup` — it is
+diagnostic, not the shot-of-record score in `shots.value_tenths` — so no
+failure-model section, but full unit + property coverage since it is new
+shared logic.
+
+### 9.1 Definitions
+
+For a scored group of _n_ marks against target face `T`:
+
+- **actual** = Σ `scoreHole(mark, T).value` over the marks, at their real
+  positions.
+- **recentered** = Σ `scoreHole(mark shifted by −MPI, T).value` — the same
+  group shape, translated so its own mean point of impact sits on the
+  target center. This is the group's _potential_ score: the best this
+  particular pattern of holes can score, simply by centering it (not a
+  search over every possible translation — see 9.4).
+- **max** = _n_ × (target's highest ring value) — the score if every shot
+  had landed dead center.
+- **points lost to position** = `recentered − actual` (recoverable, in
+  principle, by aiming at a corrected point of aim). **Can be negative** —
+  recentering shifts every mark by the same vector, so a called flier far
+  from an otherwise-tight cluster drags the MPI toward itself and can pull
+  the _other_ marks off their rings more than it gains back on itself (a
+  worked counterexample lives in the test suite: two marks dead center and
+  one 300mm out scores 20 actual but only 17 recentered on the precision
+  face). This is a real property of "recenter on the MPI", not a bug — see
+  9.4 — so the UI clamps the displayed figure at 0 rather than showing a
+  negative "points lost".
+- **points lost to size** = `max − recentered` (inherent to the group's own
+  spread; always ≥ 0, since no individual mark's score exceeds the target's
+  highest ring value regardless of where the group is centered).
+
+### 9.2 API
+
+```ts
+interface PointsLostMark {
+  readonly xMm: number;
+  readonly yMm: number;
+  readonly caliberMm: number;
+}
+
+interface PointsLostAnalysis {
+  readonly actualScore: number;
+  readonly recenteredScore: number;
+  readonly maxScore: number;
+  readonly pointsLostToPosition: number;
+  readonly pointsLostToSize: number;
+}
+
+function analyzePointsLost(
+  marks: readonly PointsLostMark[],
+  target: TargetFaceDefinition,
+): PointsLostAnalysis | null;
+```
+
+Lives in `shared/src/scoring/group.ts` next to `analyzeGroup` (reuses its
+MPI math) and calls `scoreHole` from `shared/src/target-scoring/score.ts` —
+no new dependency, no schema/persistence change; it is derived purely from
+`shot_marks` rows already on disk.
+
+### 9.3 Acceptance criteria
+
+| #   | Given                                                                 | Then                                                                                                                                                                        |
+| --- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PL1 | `[]`                                                                  | returns `null` (mirrors `analyzeGroup`'s empty-group handling)                                                                                                              |
+| PL2 | one mark dead center (X ring)                                         | `actual = recentered = max = 10`, both points-lost = 0                                                                                                                      |
+| PL3 | one mark anywhere (single-shot group)                                 | recentering a 1-point group always puts it exactly on center, so `recentered = max`; points-lost-to-size = 0, all shortfall is points-lost-to-position                      |
+| PL4 | a group whose MPI is already at target center                         | `recentered = actual`; points-lost-to-position = 0                                                                                                                          |
+| PL5 | a tight group (small spread) placed off-center                        | most of the loss is points-lost-to-position, little to size                                                                                                                 |
+| PL6 | a loose group (large spread) placed exactly on center                 | points-lost-to-position = 0, all loss is points-lost-to-size                                                                                                                |
+| PL7 | any group                                                             | `pointsLostToSize >= 0` (9.1); `pointsLostToPosition` is signed — see PL9                                                                                                   |
+| PL8 | any group                                                             | `actualScore + pointsLostToPosition + pointsLostToSize === maxScore` (holds by construction: it's `actual + (recentered - actual) + (max - recentered)`)                    |
+| PL9 | two marks dead center, one 300 mm out (precision face, `.22` caliber) | `actualScore = 20`, `recenteredScore = 17`, `pointsLostToPosition = -3` — the called-flier counterexample from 9.1, confirming the function reports it rather than clamping |
+
+### 9.4 Simplification called out explicitly
+
+"Centered optimally" in the product framing (potential score) is
+implemented here as "centered on this group's own MPI", **not** as a
+search over every possible translation for the true score-maximizing
+center. The MPI minimizes the sum of _squared_ distances to the group
+(the standard mean-minimizes-variance result), but ring scoring is a
+decreasing step function of plain distance, not squared distance, and
+PL9 (9.3) is a concrete case where MPI-recentering is not even better
+than doing nothing: a called flier pulls the MPI toward itself and away
+from a tight cluster, dragging the cluster's marks down more than the
+flier itself gains. So `recenteredScore` is a reasonable, cheap
+approximation of "potential", not a proven maximum, and
+`pointsLostToPosition` can legitimately be negative — 9.1 documents the
+UI's response (clamp the display at 0). A true optimum would need a
+search over candidate centers (e.g. the MPI of the group with its worst
+outlier dropped, or a local search) — out of scope here; flag as a
+follow-up if a maintainer wants the tighter definition.
+
+### 9.5 UI
+
+`app/src/app/session/[id]/index.tsx`'s Group view (§7) gains a "points
+lost" card, shown alongside the existing windage/elevation/mean-radius/
+max-spread tiles whenever `analyzePointsLost` returns non-null (i.e.
+whenever the Group view itself is shown, since both derive from the same
+marks + target). Three values: points lost to position, points lost to
+size, and the potential (recentered) score — all reusing `StatTile`.

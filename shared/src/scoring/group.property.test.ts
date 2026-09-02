@@ -1,12 +1,20 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
+import { CALIBER_MM } from '../target-scoring/score';
+import { SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
 import type { GroupPoint } from './group';
-import { analyzeGroup } from './group';
+import { analyzeGroup, analyzePointsLost } from './group';
 
 /** Coordinates a real target can hold, kept well inside float precision. */
 const coord = fc.double({ min: -600, max: 600, noNaN: true, noDefaultInfinity: true });
 const points = fc.array(fc.record({ xMm: coord, yMm: coord }), { minLength: 1, maxLength: 40 });
+
+const CALIBER_22 = CALIBER_MM['.22'] as number;
+const FACE = SPSF_PISTOL_25M_PRECISION;
+const marks = fc
+  .array(fc.record({ xMm: coord, yMm: coord }), { minLength: 1, maxLength: 40 })
+  .map((ps) => ps.map((p) => ({ ...p, caliberMm: CALIBER_22 })));
 
 function require_(points: readonly GroupPoint[]) {
   const result = analyzeGroup(points);
@@ -72,6 +80,40 @@ describe('analyzeGroup properties', () => {
       fc.property(points, (ps) => {
         const result = require_(ps);
         expect(result.meanRadiusMm).toBeLessThanOrEqual(result.extremeSpreadMm + 1e-9);
+      }),
+    );
+  });
+});
+
+describe('analyzePointsLost properties', () => {
+  it('PP1: points lost to size is never negative (spec §9.1)', () => {
+    fc.assert(
+      fc.property(marks, (ms) => {
+        const result = analyzePointsLost(ms, FACE);
+        if (!result) throw new Error('expected a non-null analysis for a non-empty group');
+        expect(result.pointsLostToSize).toBeGreaterThanOrEqual(0);
+      }),
+    );
+  });
+
+  it('PP2: actual + pointsLostToPosition + pointsLostToSize === maxScore (spec §9.3 PL8)', () => {
+    fc.assert(
+      fc.property(marks, (ms) => {
+        const result = analyzePointsLost(ms, FACE);
+        if (!result) throw new Error('expected a non-null analysis for a non-empty group');
+        expect(
+          result.actualScore + result.pointsLostToPosition + result.pointsLostToSize,
+        ).toBeCloseTo(result.maxScore, 9);
+      }),
+    );
+  });
+
+  it('PP3: recenteredScore never exceeds maxScore', () => {
+    fc.assert(
+      fc.property(marks, (ms) => {
+        const result = analyzePointsLost(ms, FACE);
+        if (!result) throw new Error('expected a non-null analysis for a non-empty group');
+        expect(result.recenteredScore).toBeLessThanOrEqual(result.maxScore);
       }),
     );
   });

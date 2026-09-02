@@ -276,6 +276,27 @@ export default function SessionDetailScreen() {
               })}
             />
           </View>
+          <ThemedText type="smallBold">{t('photoScoring.pointsLostTitle')}</ThemedText>
+          <View style={styles.resultsRow}>
+            <StatTile
+              testID="group-stat-potential-score"
+              label={t('photoScoring.potentialScore')}
+              value={String(group.pointsLost.recenteredScore)}
+            />
+            <StatTile
+              testID="group-stat-points-lost-position"
+              label={t('photoScoring.pointsLostPosition')}
+              // Can be negative (a called flier drags the MPI away from an
+              // otherwise-tight cluster — spec §9.1) — clamp the display at
+              // 0 rather than showing a shooter a negative "points lost".
+              value={String(Math.max(0, group.pointsLost.pointsLostToPosition))}
+            />
+            <StatTile
+              testID="group-stat-points-lost-size"
+              label={t('photoScoring.pointsLostSize')}
+              value={String(group.pointsLost.pointsLostToSize)}
+            />
+          </View>
           <ThemedText type="small" themeColor="textSecondary">
             {t('photoScoring.shotsMarked', { count: group.analysis.shotCount })}
           </ThemedText>
