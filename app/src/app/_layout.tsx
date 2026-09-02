@@ -32,6 +32,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
       />
       <Stack.Screen
+        name="session/[id]/scan"
+        options={{ presentation: 'modal', headerShown: true, title: t('photoScoring.title') }}
+      />
+      <Stack.Screen
         name="firearms/new"
         options={{ presentation: 'modal', headerShown: true, title: t('firearms.newFirearm') }}
       />

@@ -823,6 +823,15 @@ restates §0 rules 1–6 verbatim.
 
 ## 9. Deferred to v2 (do not build in v1)
 
+> **Photo target scoring, phase 1, has since shipped** on
+> `feat/photo-scoring-phase1` (auto-geometry + tap-to-mark, precision face
+> only, behind a calibrated validity gate). Spec and evidence:
+> `docs/specs/photo-scoring-phase1-{spec,evidence}.md`; the feasibility work
+> it rests on is `docs/specs/cv-spike-report.md`. It added the `shot_marks`
+> table (migration `0002_young_hardball`) and two runtime dependencies,
+> `react-native-fast-opencv` and `expo-image-manipulator` (§2). Phase 2 — the
+> learned hole detector and the score-analysis heatmap — remains deferred.
+
 Photo target scoring; cloud sync + accounts (backend/ stays hello-world);
 WebShooter import; document vault; share cards; timers; iOS release.
 Design notes for these live in plan.md and need maintainer + Fable-level

@@ -97,11 +97,24 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v2 — the camera + sync
 
-- [ ] Photo target scoring: detect target face, deskew angled photos,
-      auto-detect holes, drag-to-correct always available
+- Photo target scoring, split into two phases by the CV spike
+  (`docs/specs/cv-spike-report.md`): geometry works (67% lock on the
+  precision face, 0.51 mm median ring residual), classical hole detection
+  is a proven dead end (two rounds, 36% recall, 0.0 points of improvement).
+  - [x] **Phase 1 — auto-geometry + tap-to-mark** (`feat/photo-scoring-phase1`;
+        spec + evidence in `docs/specs/photo-scoring-phase1-{spec,evidence}.md`).
+        Precision face only; milsnabb shows "not supported yet" rather than a
+        2.5×-wrong ring scale. Includes the **validity gate** the spike's §6.3
+        demands — two corpus photos locked onto sky and gravel with plausible
+        residuals, so a residual is not a validity check.
+  - [ ] Phase 2 — learned hole detector (centre heatmap on the 4 px/mm
+        rectified canvas), trained on opt-in corrections; score-analysis
+        heatmap screen
 - [ ] Swedish targets first (Pistoltavla 25 m precision) alongside ISSF faces
-- [ ] Group analytics: MPI (windage/elevation), mean radius, extreme spread,
-      points-lost-to-group-size, session heatmaps
+      — precision face shipped in phase 1; ISSF faces still to do
+- [x] Group analytics: MPI (windage/elevation), mean radius, extreme spread
+      (`shared/src/scoring/group.ts`, old-coder loop)
+- [ ] Group analytics, remainder: points-lost-to-group-size, session heatmaps
 - [ ] WebShooter competition import (API behind webshooter-cli): placements,
       per-station scores, weapon classes, standard medals → logbook +
       FAP 551-3 barometer
@@ -190,17 +203,17 @@ barometer; no scoring), Skytteappen (club ecosystem).
 app is fully functional with no account and no network. The cloud is an
 optional backup/sync add-on (a Firebase replacement, inverted):
 
-| Concern          | Choice                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| App              | React Native + Expo, TypeScript                                                                                                              |
-| Local DB         | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM                                                  |
-| Migrations       | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain |
-| Camera / CV (v2) | react-native-vision-camera + react-native-fast-opencv (JSI)                                                                                  |
-| Sync API         | Cloudflare Workers (Hono), TypeScript shared types with the app                                                                              |
-| Cloud DB         | Cloudflare D1                                                                                                                                |
-| Photos           | Cloudflare R2 ($0 egress)                                                                                                                    |
-| Auth (sync only) | better-auth on Workers/D1; Sign in with Apple + Google                                                                                       |
-| Crash reporting  | Sentry (or none) — privacy-sensitive audience                                                                                                |
+| Concern          | Choice                                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App              | React Native + Expo, TypeScript                                                                                                                                                                                                                                                                                                              |
+| Local DB         | SQLite (expo-sqlite — has web/WASM support, required by the agentic web loop) + Drizzle ORM                                                                                                                                                                                                                                                  |
+| Migrations       | Drizzle Kit — schema in TS, versioned SQL migrations (Flyway-style journal), applied on-device at app start and to D1 via the same toolchain                                                                                                                                                                                                 |
+| Camera / CV (v2) | react-native-fast-opencv (JSI) + expo-image-manipulator; capture via expo-image-picker. **VisionCamera not adopted**: v5 needs react-native-nitro-modules + react-native-nitro-image and dropped its Expo config plugin — three native modules for a still photo expo-image-picker already takes. Revisit for a live frame-processor preview |
+| Sync API         | Cloudflare Workers (Hono), TypeScript shared types with the app                                                                                                                                                                                                                                                                              |
+| Cloud DB         | Cloudflare D1                                                                                                                                                                                                                                                                                                                                |
+| Photos           | Cloudflare R2 ($0 egress)                                                                                                                                                                                                                                                                                                                    |
+| Auth (sync only) | better-auth on Workers/D1; Sign in with Apple + Google                                                                                                                                                                                                                                                                                       |
+| Crash reporting  | Sentry (or none) — privacy-sensitive audience                                                                                                                                                                                                                                                                                                |
 
 **Sync protocol** (opt-in): per-user changelog. Every row carries
 `last_modified`; deletions are tombstones. Client pushes local changes,
