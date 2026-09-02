@@ -139,7 +139,27 @@ where the work lives.
 - [?] **Vault item types** — "Not sure if we need all this. License and
   membership card yes." Should Door code and Other remain distinct types?
 
-## 8. Known broken
+## 8. IPSC shot timer
+
+- [ ] **Shot detection is too sensitive to be usable indoors, and the cause is
+      structural.** Maintainer, testing with the trigger level at 0 dBFS: "Scale
+      peaks when I snap my fingers. I see movement when I type my keyboard."
+      0 dBFS is the _least_ sensitive setting the detector allows (it fires on
+      `db >= threshold`, so it demands a full-scale sample) — yet a finger snap
+      already pins the meter. That means there is no headroom above a snap, so a
+      bare amplitude threshold cannot separate a shot from a snap, a door or a
+      neighbouring shooter. Contributing causes: Android applies **automatic gain
+      control** to the mic, lifting quiet sounds (the keyboard) and squashing loud
+      transients toward full scale; and the meter's -60..0 dBFS scale is
+      compressed enough that room noise fills a third of the bar. A fix needs a
+      transient discriminator (attack/rise time, or a spectral check) rather than
+      a louder threshold, plus AGC disabled if the platform allows it. Re-tuning
+      the default number will not solve this.
+- [ ] **Collapse the shot-detection options** — "I dont want to see the Shot
+      detection options all the time. It should be able to expand/collapse or
+      similar. Hopefully it does not need to change often."
+
+## 9. Known broken
 
 - [ ] **WebShooter does not work at all** — "Username password login does not
       work". Deferred by the maintainer to a later session against the real
