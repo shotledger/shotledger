@@ -466,8 +466,10 @@
     "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, then 4×10 s, 4×8 s, 4×6 s. Ready delay is a practice default, not the match's 60 s LADDA→FÄRDIGA cadence.",
     "modes": {
       "regular": "PAR timer",
-      "ipsc": "Shot timer (mic)"
-    }
+      "ipsc": "Shot timer (mic)",
+      "falt": "Field"
+    },
+    "spokenPrompts": "Spoken prompts"
   },
   "ipscTimer": {
     "settingsTitle": "Shot detection",
@@ -514,6 +516,52 @@
     "total": "Total (s)",
     "shotCount": "Shots",
     "parOverrun": "PAR time exceeded by {{time}} s"
+  },
+  "faltTimer": {
+    "modes": {
+      "competition": "Competition",
+      "training": "Training"
+    },
+    "prepTime": "Preparation time before ALLA KLARA (s)",
+    "decreasePrep": "Decrease the preparation time",
+    "increasePrep": "Increase the preparation time",
+    "shootingTime": "Shooting time (s)",
+    "decreaseShooting": "Decrease the shooting time",
+    "increaseShooting": "Increase the shooting time",
+    "seconds": "{{value}} s",
+    "events": "Partier (stages within the series)",
+    "eventsHint": "Add whole seconds inside the shooting time — each boundary gives a short beep and a vibration. The numbers above the timeline are the seconds between boundaries.",
+    "eventNumber": "Parti {{number}}",
+    "decreaseEvent": "Move the boundary earlier",
+    "increaseEvent": "Move the boundary later",
+    "addEvent": "Add a boundary",
+    "removeEvent": "Remove the last boundary",
+    "whistle": "Whistle signal instead of a spoken ELD UPPHÖR",
+    "spokenPrompts": "Spoken prompts",
+    "sourceNote": "Commands and timings per SHB 2026 D.6.2 p. 88. ELD UPPHÖR is drawn out over 3 s and ends exactly when the shooting time runs out.",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "reset": "Reset",
+    "markera": "Markera! (score the targets)",
+    "state": {
+      "idle": "Ready to start",
+      "prep": "Loading",
+      "ready": "Alla klara? (all ready?)",
+      "shooting": "ELD (fire)",
+      "clearing": "Unload / inspection",
+      "done": "Markera"
+    },
+    "commands": {
+      "ladda": "Ladda! (load)",
+      "allaKlara": "Alla klara? (all ready?)",
+      "tenSeconds": "Tio sekunder kvar! (ten seconds left)",
+      "fardiga": "Färdiga! (ready)",
+      "eld": "Eld! (fire)",
+      "eldUpphor": "Eld upphör! (cease fire)",
+      "patronUr": "Patron ur! Proppa vapen! (unload, plug the gun)",
+      "visitation": "Visitation! (inspection)"
+    }
   },
   "vault": {
     "title": "Document vault",

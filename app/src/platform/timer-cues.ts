@@ -1,13 +1,15 @@
 // Platform wrapper for shot timer cues (§0 rule 6). `TimerEngine` (shared/src/timer)
 // emits cues as data only; this module is the thin, best-effort layer that
-// turns a `TimerCueKind` into an actual sound (expo-audio) and vibration
-// (react-native's `Vibration`). Every call is wrapped so a missing asset or
+// turns a `TimerCueKind` into an actual sound (expo-audio) and a haptic
+// pulse (platform/haptics.ts). Every call is wrapped so a missing asset or
 // an unsupported platform (e.g. the web preview) degrades to a silent no-op
 // instead of a crash — emulator/web audio can't be meaningfully verified
 // per the task's audio caveat; see docs/specs/shot-timer-evidence.md.
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
-import { Platform, Vibration } from 'react-native';
+import { Platform } from 'react-native';
 import type { TimerCueKind } from '@shotledger/shared';
+
+import { vibrate } from './haptics';
 
 const SOUND_SOURCES: Record<TimerCueKind, number> = {
   ready: require('../../assets/sounds/timer-ready.wav'),
@@ -49,12 +51,7 @@ export function playTimerCueSound(kind: TimerCueKind): void {
 
 /** Vibrates for one cue, when `TimerCue.vibrate` is true. Best-effort — never throws. */
 export function vibrateForTimerCue(): void {
-  if (Platform.OS === 'web') return;
-  try {
-    Vibration.vibrate(VIBRATION_PULSE_MS);
-  } catch {
-    // Best-effort.
-  }
+  vibrate(VIBRATION_PULSE_MS);
 }
 
 /** Releases all cached players — call on unmount so the timer screen doesn't leak native audio resources. */

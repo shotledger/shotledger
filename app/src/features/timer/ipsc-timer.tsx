@@ -13,7 +13,7 @@ import {
 } from '@shotledger/shared';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -22,8 +22,9 @@ import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
-import { useIpscTimer } from '@/features/timer/use-ipsc-timer';
+import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
 import { useLevelMeter } from '@/features/timer/use-level-meter';
+import { useSpokenPrompts } from '@/features/timer/use-timer-settings';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
@@ -52,8 +53,9 @@ export interface IpscTimerProps {
 }
 
 export function IpscTimer({ modeSelector }: IpscTimerProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
 
   // No settings store exists yet for the timer's other options (delay, PAR,
   // auto-stop are all component state too) — the trigger level lives here
@@ -80,7 +82,24 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
     };
   }, [delayMin, delayMax, parSeconds, autoStopSeconds, thresholdDb]);
 
-  const { phase, shots, summary, error, available, start, stop, reset } = useIpscTimer(config);
+  // Spoken in the app's current language — these are ordinary UI prompts,
+  // not the fälttimer's SPSF-regulated Swedish commands.
+  const prompts = useMemo<IpscSpokenPrompts | null>(
+    () =>
+      spokenPrompts
+        ? {
+            language: i18n.language.startsWith('sv') ? 'sv-SE' : 'en-US',
+            ready: t('ipscTimer.state.ready'),
+            standby: t('ipscTimer.state.standby'),
+          }
+        : null,
+    [spokenPrompts, i18n.language, t],
+  );
+
+  const { phase, shots, summary, error, available, start, stop, reset } = useIpscTimer(
+    config,
+    prompts,
+  );
   const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
 
   // Un-pauses the setup meter once the phase is back to idle (a fresh mount,
@@ -241,6 +260,17 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
             style={inputStyle}
             testID="ipsc-auto-stop"
           />
+
+          <View style={styles.switchRow}>
+            <ThemedText type="small" style={styles.flex}>
+              {t('timer.spokenPrompts')}
+            </ThemedText>
+            <Switch
+              value={spokenPrompts}
+              onValueChange={setSpokenPrompts}
+              testID="ipsc-spoken-prompts"
+            />
+          </View>
         </Card>
 
         <ThemedText type="small" themeColor="textSecondary" testID="ipsc-privacy-note">
@@ -338,6 +368,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.two,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignItems: 'center',
   },
   flex: {
     flex: 1,
