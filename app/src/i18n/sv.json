@@ -526,5 +526,57 @@
       "network": "Ingen kontakt med servern.",
       "unknown": "Något gick fel. Försök igen."
     }
+  },
+  "shotlog": {
+    "sectionRowTitle": "Importera från ShotLog (dev)",
+    "title": "ShotLog-import",
+    "intro": "Utvecklingsverktyg. ShotLog exporterar en rad per pass — en totalsumma, inga enskilda skott. Varje rad blir ett pass med en serie som bara har totalsumman. Tolka taggarna och granska sedan varje rad innan import.",
+    "pickFile": "Välj CSV-fil",
+    "pickFileSubtitle": "Välj filen som ShotLog exporterade",
+    "cancelled": "Ingen fil vald.",
+    "unavailable": "Import är inte tillgängligt här.",
+    "imported": "Importerade {{created}} pass ({{skipped}} överhoppade).",
+    "noRowsTitle": "Inget att importera",
+    "noRowsBody": "Filen innehöll inga läsbara passrader.",
+    "tagMappingTitle": "Vad betyder taggarna?",
+    "tagMappingIntro": "ShotLog har inget fält för gren, klass eller vapen — allt ligger i taggarna. Ändra valfri gissning innan import.",
+    "tagLabel": "{{tag}} ({{count}} rader)",
+    "role": {
+      "ignore": "Behåll som vanlig tagg",
+      "firearm": "Vapen: {{tag}}",
+      "competition": "Tävling (inte träning)",
+      "sighter": "Totalsumman inkluderar provskott",
+      "final": "Final",
+      "dnf": "Fullföljde inte",
+      "discipline": "Gren: {{name}}",
+      "weaponGroup": "Vapengrupp {{code}}"
+    },
+    "summaryTitle": "Förhandsgranskning",
+    "summaryCounts": "{{total}} rader · {{new}} nya · {{duplicates}} dubbletter · {{empty}} tomma · {{errors}} fel",
+    "summaryDateUnknown": "{{count}} rader delar samma tidsstämpel — deras riktiga datum gick förlorade i ShotLog och märks som okänt datum.",
+    "selectAll": "Markera alla",
+    "selectNone": "Avmarkera alla",
+    "unnamed": "(utan namn)",
+    "dateUnknown": "Okänt datum",
+    "disciplineUnknown": "Gren?",
+    "noFirearms": "Inga vapen ännu",
+    "applyToSimilar": "Tillämpa på alla liknande",
+    "showMore": "Visa fler ({{shown}} av {{total}})",
+    "import": "Importera {{count}} valda",
+    "status": {
+      "new": "Ny",
+      "empty": "Tomt pass",
+      "duplicate-in-file": "Dubblettrad i filen",
+      "exact-duplicate": "Redan importerad",
+      "probable-duplicate": "Finns troligen redan i journalen"
+    },
+    "warning": {
+      "inner-ten-exceeds-ten-count": "Centrumtior > tior",
+      "auto-generated-name": "Autonamngiven",
+      "firearm-column-unsupported": "Vapenkolumnen ignorerad",
+      "conflicting-discipline-tags": "Motstridiga grentaggar",
+      "conflicting-weapon-group-tags": "Motstridiga vapengruppstaggar",
+      "ambiguous-firearm-tag": "Tvetydig vapentagg"
+    }
   }
 }

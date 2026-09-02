@@ -54,6 +54,14 @@ export default function DevScreen() {
         <ThemedText type="linkPrimary">{t('dev.componentsTitle')}</ThemedText>
       </Pressable>
 
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push('/dev/shotlog-import')}
+        testID="dev-shotlog-import-link"
+      >
+        <ThemedText type="linkPrimary">{t('shotlog.sectionRowTitle')}</ThemedText>
+      </Pressable>
+
       <ThemedView style={styles.actions}>
         <PrimaryButton
           label={t('settings.loadDemoData')}

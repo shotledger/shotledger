@@ -17,6 +17,7 @@
     "shared/src/integrations/webshooter/stats/*.ts",
     "shared/src/sync/*.ts",
     "shared/src/sync-client/*.ts",
+    "shared/src/shotlog/*.ts",
     "backend/src/lib/quota.ts",
     "backend/src/lib/rate-limit.ts",
     "backend/src/lib/authz.ts",
@@ -25,7 +26,8 @@
     "shared/src/vault/types.ts",
     "shared/src/target-scoring/*.ts",
     "!**/*.test.ts",
-    "!shared/src/integrations/webshooter/api/fixtures.ts"
+    "!shared/src/integrations/webshooter/api/fixtures.ts",
+    "!shared/src/shotlog/fixtures.ts"
   ],
   "thresholds": {
     "high": 100,
