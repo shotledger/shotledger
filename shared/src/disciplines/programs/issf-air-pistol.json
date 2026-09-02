@@ -1,0 +1,20 @@
+{
+  "id": "issf-air-pistol",
+  "disciplineId": "issf-air-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Luftpistol",
+    "en": "10m Air Pistol"
+  },
+  "shotsPerSeries": 10,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 0,
+    "groups": [
+      {
+        "seriesCount": 6
+      }
+    ]
+  }
+}
