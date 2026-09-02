@@ -44,7 +44,12 @@ export default tseslint.config(
   },
   {
     // Node-run tooling scripts and jest mocks (not bundled by Metro).
-    files: ['app/scripts/**/*.js', 'app/**/__mocks__/**/*.js'],
+    files: [
+      'app/scripts/**/*.js',
+      'app/**/__mocks__/**/*.js',
+      'app/babel.config.js',
+      'app/metro.config.js',
+    ],
     languageOptions: {
       globals: globals.node,
     },
