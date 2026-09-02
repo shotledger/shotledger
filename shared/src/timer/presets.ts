@@ -73,7 +73,9 @@ export const PAR_INTERVAL_DRILL: ParPreset = {
  * this "should never happen" guard is actually exercised in tests, the
  * same defensive-but-tested pattern as `requireDiscipline`.
  */
-export function requireMilsnabbProgram(lookup: (id: string) => Program | undefined = getProgram): Program {
+export function requireMilsnabbProgram(
+  lookup: (id: string) => Program | undefined = getProgram,
+): Program {
   const program = lookup('spsf-milsnabb');
   if (!program) throw new Error('spsf-milsnabb program is not registered');
   return program;

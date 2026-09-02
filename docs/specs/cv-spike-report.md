@@ -26,31 +26,31 @@ piece; the classical stage should be kept for everything around it.
 23 camera-roll candidates were matched by range-session date and reviewed
 one by one.
 
-| Class | Count |
-|---|---|
-| Shooting targets, usable for the spike | 5 |
-| Not a target (ignored — not copied, not processed) | 18 |
+| Class                                              | Count |
+| -------------------------------------------------- | ----- |
+| Shooting targets, usable for the spike             | 5     |
+| Not a target (ignored — not copied, not processed) | 18    |
 
 The 5 targets are two different SHB target faces, which was not planned for
 and turned out to matter:
 
-| Photo | Face | Framing |
-|---|---|---|
-| `20251025_105532.jpg` | 25 m precision (F.7.1) | whole card, slight tilt, indoor |
+| Photo                 | Face                   | Framing                               |
+| --------------------- | ---------------------- | ------------------------------------- |
+| `20251025_105532.jpg` | 25 m precision (F.7.1) | whole card, slight tilt, indoor       |
 | `20260816_114337.jpg` | 25 m precision (F.7.1) | close crop, black zone cut left+right |
-| `20260726_145316.jpg` | milsnabb (J.7.1) | whole face, outdoors, heavily pasted |
-| `20260726_150229.jpg` | milsnabb (J.7.1) | extreme close crop, centre off-frame |
-| `20260726_153751.jpg` | milsnabb (J.7.1) | whole face, outdoors, heavily pasted |
+| `20260726_145316.jpg` | milsnabb (J.7.1)       | whole face, outdoors, heavily pasted  |
+| `20260726_150229.jpg` | milsnabb (J.7.1)       | extreme close crop, centre off-frame  |
+| `20260726_153751.jpg` | milsnabb (J.7.1)       | whole face, outdoors, heavily pasted  |
 
 Two things about this corpus are worth stating up front, because they set a
 ceiling on what the numbers below can mean:
 
 - **Only two photos are of the target this feature is for.** Three are the
   milsnabb face, shot with large calibre, and all three are club targets
-  carrying *hundreds* of repair patches. Those patches are the dominant
+  carrying _hundreds_ of repair patches. Those patches are the dominant
   visual feature and are individually the size and shape of a hole.
 - **Most shots on the precision photos are already pasted over**, so
-  "visually countable holes" means *fresh, unpasted* holes only. That is
+  "visually countable holes" means _fresh, unpasted_ holes only. That is
   4–5 per photo, not a full 5-shot series ×5.
 
 Annotated outputs and the raw CSVs stay in `~/tmp/shotledger-cv-spike/out/`
@@ -72,7 +72,7 @@ one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md
 2. **Identify the face.** Solid black disc → precision (black = 200 mm);
    black annulus round a lighter middle → milsnabb (black = 500 mm).
 3. **Deskew.** The fitted ellipse is mapped back to a circle. A single conic
-   does *not* determine a homography, so this undoes rotation and
+   does _not_ determine a homography, so this undoes rotation and
    anisotropic scale only — weak perspective. Output is a fixed 4 px/mm
    canvas, i.e. the working resolution is decoupled from the input photo.
 4. **Refine geometry.** Coarse-to-fine grid search over (dx, dy, scale)
@@ -81,7 +81,7 @@ one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md
    and it rescues geometry when stage 1 was clipped.
 5. **Find and score holes.** Over-sized top-hat for bright tears on black,
    black-hat for dark holes on paper, then a filter cascade. Scoring applies
-   SHB F.6.10.1 by comparing the hole's *inner* edge (centre radius minus
+   SHB F.6.10.1 by comparing the hole's _inner_ edge (centre radius minus
    2.8 mm) to each ring, so a hole tangenting a ring takes the higher value.
 
 ---
@@ -90,14 +90,14 @@ one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md
 
 At the planned 2048 px input downscale, auto target-type detection:
 
-| Photo | Face | Fresh holes visible | Detected | True pos. | False pos. | Pipeline score | My visual score |
-|---|---|---|---|---|---|---|---|
-| `20251025_105532` | precision | 5 | 3 | 3 | 0 | `X X X` = 30 | `X X 10 10 10` = 50 |
-| `20260816_114337` | precision | 5 | 4 | 2 | 2 | `10 10 8 6` = 34 | `10 10 10 10 10` = 50 |
-| `20260726_145316` | milsnabb | 5 | 7 | 0 | 7 | `8 8 7 7 7 6 5` = 48 | — |
-| `20260726_150229` | milsnabb | 3 | 6 | 0 | 6 | `6 5 5 5 5 5` = 31 | — |
-| `20260726_153751` | milsnabb | 3 | 1 | 0 | 1 | `8` = 8 | — |
-| **Total** | | **21** | **21** | **5** | **16** | | |
+| Photo             | Face      | Fresh holes visible | Detected | True pos. | False pos. | Pipeline score       | My visual score       |
+| ----------------- | --------- | ------------------- | -------- | --------- | ---------- | -------------------- | --------------------- |
+| `20251025_105532` | precision | 5                   | 3        | 3         | 0          | `X X X` = 30         | `X X 10 10 10` = 50   |
+| `20260816_114337` | precision | 5                   | 4        | 2         | 2          | `10 10 8 6` = 34     | `10 10 10 10 10` = 50 |
+| `20260726_145316` | milsnabb  | 5                   | 7        | 0         | 7          | `8 8 7 7 7 6 5` = 48 | —                     |
+| `20260726_150229` | milsnabb  | 3                   | 6        | 0         | 6          | `6 5 5 5 5 5` = 31   | —                     |
+| `20260726_153751` | milsnabb  | 3                   | 1        | 0         | 1          | `8` = 8              | —                     |
+| **Total**         |           | **21**              | **21**   | **5**     | **16**     |                      |                       |
 
 - **Recall 24 %** overall; **50 %** (5/10) on the two precision photos.
 - **Precision 24 %** overall; **71 %** (5/7) on the two precision photos.
@@ -112,12 +112,12 @@ Geometry is the good news and deserves its own number. After stage 4, I
 measured the residual between each drawn ring and the printed ring line it
 should sit on (peak of the angular-mean radial edge profile):
 
-| Photo | px/mm | Ring residuals (X, 10, 9, 8, 7) |
-|---|---|---|
-| `20251025_105532` @2048 | 4.09 | −0.49, −0.49, −0.49, 0.00, +1.71 mm |
-| `20260816_114337` @2048 | 3.65 | −0.27, +0.55, +0.55, +0.55, 0.00 mm |
-| `20251025_105532` @4000 | 4.09 | −0.49, −0.49, −0.49, −0.24, +1.47 mm |
-| `20260816_114337` @4000 | 3.65 | 0.00, −1.37, +0.55, 0.00, −0.55 mm |
+| Photo                   | px/mm | Ring residuals (X, 10, 9, 8, 7)      |
+| ----------------------- | ----- | ------------------------------------ |
+| `20251025_105532` @2048 | 4.09  | −0.49, −0.49, −0.49, 0.00, +1.71 mm  |
+| `20260816_114337` @2048 | 3.65  | −0.27, +0.55, +0.55, +0.55, 0.00 mm  |
+| `20251025_105532` @4000 | 4.09  | −0.49, −0.49, −0.49, −0.24, +1.47 mm |
+| `20260816_114337` @4000 | 3.65  | 0.00, −1.37, +0.55, 0.00, −0.55 mm   |
 
 Inner rings land within **±0.6 mm**, which is inside the ±0.2–2.0 mm print
 tolerance the SHB itself allows for the card. The ring-7 outlier on
@@ -142,13 +142,13 @@ precision face the ring numbers are knocked out of the black in the card's
 own paper colour, ~12–15 mm tall against a 5.6 mm hole. Everything obvious
 failed:
 
-- *Size*: only ~2.2× a hole. Too close to separate reliably.
-- *Aspect / fill*: a top-hat with a kernel smaller than a glyph keeps only
+- _Size_: only ~2.2× a hole. Too close to separate reliably.
+- _Aspect / fill_: a top-hat with a kernel smaller than a glyph keeps only
   its strokes, which fragment into compact, hole-shaped blobs.
-- *Solidity*: **backwards.** A bullet hole is a jagged star with low
+- _Solidity_: **backwards.** A bullet hole is a jagged star with low
   solidity; a printed glyph is smooth. Testing for compactness rejected the
   real holes and kept the digits.
-- *Dark-core test* ("a hole is a pit, a glyph is solid"): also backwards on
+- _Dark-core test_ ("a hole is a pit, a glyph is solid"): also backwards on
   these photos — the holes show bright backing board, no dark core at all.
 
 What finally worked was **colour**: a knocked-out digit is exactly the
@@ -166,7 +166,7 @@ Other confirmed failure modes:
   out `X X X` = 30 against a visual 50.
 - **Holes clipping a ring line** merged with the line. Switching the size
   test from bounding box to largest-inscribed-disc (distance transform)
-  fixed most of it, but a hole sitting *on* a line is still recentred
+  fixed most of it, but a hole sitting _on_ a line is still recentred
   approximately — exactly the case where the edge-touch rule matters.
 - **Repair patches are indistinguishable from holes** by any classical
   feature I tried. This alone sinks the three milsnabb photos: 14 of the 16
@@ -187,13 +187,13 @@ Other confirmed failure modes:
 
 Input downscale of 1024 / 2048 / 4000 px long side, same pipeline:
 
-| Photo | 1024 | 2048 | 4000 |
-|---|---|---|---|
-| `20251025_105532` | `10 9 9 4` (4) | `X X X` (3) | `X X 10 5` (4) |
-| `20260816_114337` | `10 9` (2) | `10 10 8 6` (4) | `10 8 6` (3) |
-| `20260726_145316` | 19 detections | 7 | 10 |
-| `20260726_150229` | 3 (typed precision) | 6 | 2 |
-| `20260726_153751` | 2 (typed milsnabb) | 1 | 7 |
+| Photo             | 1024                | 2048            | 4000           |
+| ----------------- | ------------------- | --------------- | -------------- |
+| `20251025_105532` | `10 9 9 4` (4)      | `X X X` (3)     | `X X 10 5` (4) |
+| `20260816_114337` | `10 9` (2)          | `10 10 8 6` (4) | `10 8 6` (3)   |
+| `20260726_145316` | 19 detections       | 7               | 10             |
+| `20260726_150229` | 3 (typed precision) | 6               | 2              |
+| `20260726_153751` | 2 (typed milsnabb)  | 1               | 7              |
 
 Runtime was **flat across all three** (~1 s), because stages 3–5 work on a
 fixed 4 px/mm canvas — only the warp's input sampling changes.
@@ -249,17 +249,17 @@ photos, with no training data. That is the part I expected to be hard and it
 is essentially solved.
 
 **Stage 5 needs a learned detector.** The evidence is not "classical CV
-scored poorly"; it is *why* it scored poorly. Every classical discriminator
+scored poorly"; it is _why_ it scored poorly. Every classical discriminator
 I tried was either too weak (size), actively inverted (solidity, dark core)
 or contingent on something outside the target (backing colour). A bullet
 hole is defined by texture — torn fibres, a raised lip, a shadow — which is
 what a small CNN learns easily and what morphology cannot express. The
-distinction that must be learned is *hole vs. repair patch vs. printed
-glyph*, and all three are the same size, shape class and often colour.
+distinction that must be learned is _hole vs. repair patch vs. printed
+glyph_, and all three are the same size, shape class and often colour.
 
 Scope: a single-class detector on 64–96 px crops, or a small heatmap/centre
 regressor over the rectified canvas (which is why the fixed 4 px/mm canvas
-is worth keeping — the model then sees holes at a *constant* pixel size,
+is worth keeping — the model then sees holes at a _constant_ pixel size,
 removing scale as a variable). Overlapping holes argue for a heatmap +
 peak-finding formulation over box detection, since the useful output is a
 count and centres, not boxes.
@@ -345,11 +345,11 @@ THRESH_BINARY_INV`), `morphologyEx` (OPEN/CLOSE/TOPHAT/BLACKHAT),
 
 Missing, and what each costs us:
 
-| Gap | Impact | Way round |
-|---|---|---|
-| `fitEllipseDirect` | **Real.** Plain `fitEllipse` is what performed badly on the clipped cards; switching to `fitEllipseDirect` was one of the fixes that made stage 1 usable | Patch a `case` into the fork (below), or lean harder on stage 4, which already rescues a bad stage-1 fit |
-| `remap` | Used for the radial profile in stage 4 | **`warpPolar` is exposed** and is the better primitive anyway — it turns the radial profile into a row reduction instead of a hand-built sampling grid |
-| `putText` | Debug annotation only | Irrelevant in the app; overlays are drawn in RN, not into the Mat |
+| Gap                | Impact                                                                                                                                                   | Way round                                                                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fitEllipseDirect` | **Real.** Plain `fitEllipse` is what performed badly on the clipped cards; switching to `fitEllipseDirect` was one of the fixes that made stage 1 usable | Patch a `case` into the fork (below), or lean harder on stage 4, which already rescues a bad stage-1 fit                                               |
+| `remap`            | Used for the radial profile in stage 4                                                                                                                   | **`warpPolar` is exposed** and is the better primitive anyway — it turns the radial profile into a row reduction instead of a hand-built sampling grid |
+| `putText`          | Debug annotation only                                                                                                                                    | Irrelevant in the app; overlays are drawn in RN, not into the Mat                                                                                      |
 
 Two partial gaps that do not bite this pipeline: `threshold` returns `void`
 so the Otsu-computed value cannot be read back (we never use it), and
@@ -411,7 +411,7 @@ worst error in this spike.
 Ship-photos-to-nothing, as intended. Nothing in the above needs a server:
 OpenCV runs in-process, the model file is bundled, and inference is local.
 Consistent with ADR 0001. The one thing to be deliberate about is the
-opt-in corrections corpus in §4.3 — that *is* photo upload, and it must be
+opt-in corrections corpus in §4.3 — that _is_ photo upload, and it must be
 explicit, off by default, and separable from the scoring feature itself.
 
 ---
@@ -426,7 +426,7 @@ Do **not** build v2 photo scoring on this pipeline as it stands.
 - **Next step, if this feature is pursued:** collect a labelled corpus.
   Roughly 50–100 photos of the 25 m precision face across lighting, crop and
   backing conditions, with fresh (unpasted) holes, hand-labelled. That
-  corpus is the prerequisite for both training a detector and for *any*
+  corpus is the prerequisite for both training a detector and for _any_
   honest accuracy claim — this spike's 5 photos cannot support one.
 - **Cheap interim win:** the geometry stage alone enables "photograph the
   target, tap each hole" with correct ring geometry and correct SHB
@@ -443,10 +443,10 @@ v2 (§ "Deferred" in `docs/implementation-plan.md`) and stays there.
 
 Sections 1–5 were written from 5 photos, 2 of which were the target this
 feature is actually for. The maintainer then hand-picked 38 more. Everything
-below re-runs the *unchanged* pipeline over the full corpus, adds one
+below re-runs the _unchanged_ pipeline over the full corpus, adds one
 improvement round, and asks whether §5 still holds.
 
-**It does, and more firmly.** Geometry got *better* on the bigger sample —
+**It does, and more firmly.** Geometry got _better_ on the bigger sample —
 sub-millimetre on every photo it locks, and it locks on two thirds of
 precision-face photos. Hole detection did not: 36 % recall / 43 % precision
 overall, and one focused round of classical improvement moved recall by
@@ -458,21 +458,21 @@ All 38 candidates were reviewed one by one. All 38 are genuine target
 photos; nothing was discarded as a non-target. Five of the 38 are the
 phase-1 photos re-supplied, so the corpus is 33 new + 5 known.
 
-| Class | Count |
-|---|---|
-| 25 m precision face (F.7.1) | 28 |
-| Milsnabb face (J.7.1) | 10 |
-| Not a target | 0 |
+| Class                       | Count |
+| --------------------------- | ----- |
+| 25 m precision face (F.7.1) | 28    |
+| Milsnabb face (J.7.1)       | 10    |
+| Not a target                | 0     |
 
 Camera angle matters enough to be its own axis, so photos are classified by
 how far off frontal the card is (judged visually, cross-checked against the
 fitted black-zone ellipse's axis ratio):
 
-| Angle class | Count | Geometry locked | Partial | Failed |
-|---|---|---|---|---|
-| Straight-on (≲15°) | 22 | 15 | 3 | 4 |
-| Moderate (~20–45°) | 14 | 3 | 2 | 9 |
-| **Excluded: extreme perspective** | **2** | — | — | 2 |
+| Angle class                       | Count | Geometry locked | Partial | Failed |
+| --------------------------------- | ----- | --------------- | ------- | ------ |
+| Straight-on (≲15°)                | 22    | 15              | 3       | 4      |
+| Moderate (~20–45°)                | 14    | 3               | 2       | 9      |
+| **Excluded: extreme perspective** | **2** | —               | —       | 2      |
 
 The two excluded photos are `20250906_135537` (card receding almost
 edge-on, plus a hand and marking rod across the centre) and
@@ -480,7 +480,7 @@ edge-on, plus a hand and marking rod across the centre) and
 frame, mounted on a stand). They are excluded from the hole metrics only —
 they stay in this table so the report says what the app will and will not
 handle rather than quietly improving its own numbers. Moderate angle is
-*not* excluded: it is the realistic case and the geometry stage exists to
+_not_ excluded: it is the realistic case and the geometry stage exists to
 handle it.
 
 Photos remain outside the repo. Annotated outputs are
@@ -491,30 +491,30 @@ from — plus `corpus_2048_base.csv` / `corpus_2048_v2.csv`. Reproduce with
 
 ### 6.2 Target-type detection
 
-| | Photos | Typed correctly |
-|---|---|---|
-| Precision | 28 | 26 (93 %) |
-| Milsnabb | 10 | 2 (20 %) |
-| **All** | **38** | **28 (74 %)** |
+|           | Photos | Typed correctly |
+| --------- | ------ | --------------- |
+| Precision | 28     | 26 (93 %)       |
+| Milsnabb  | 10     | 2 (20 %)        |
+| **All**   | **38** | **28 (74 %)**   |
 
 The milsnabb number is the headline failure. `guess_kind` compares the
 middle of the face against an annulus, and on a heavily pasted club
 milsnabb target the middle is dark with black repair patches — so it reads
 as a solid disc and is typed `precision`. That makes the ring scale 2.5×
-wrong, which invalidates geometry *and* every score on those photos before
+wrong, which invalidates geometry _and_ every score on those photos before
 hole detection is even reached. This is now the single largest source of
 whole-photo failure, and it is a two-class decision on a 200 mm-vs-500 mm
-black zone: it should be a *classifier*, not a hand-written intensity test.
+black zone: it should be a _classifier_, not a hand-written intensity test.
 
 ### 6.3 Geometry
 
 Geometry is the good news again, on a much better sample.
 
-| | Count | Share |
-|---|---|---|
-| Full lock (rings visually on the printed lines) | 18 | 47 % |
-| Partial (locked but visibly offset ≥1 mm) | 5 | 13 % |
-| Failed | 15 | 39 % |
+|                                                 | Count | Share |
+| ----------------------------------------------- | ----- | ----- |
+| Full lock (rings visually on the printed lines) | 18    | 47 %  |
+| Partial (locked but visibly offset ≥1 mm)       | 5     | 13 %  |
+| Failed                                          | 15    | 39 %  |
 
 Restricted to the face this feature is for, excluding extreme perspective
 (27 photos): **18 full locks (67 %), 5 partial (85 % cumulative), 4
@@ -528,24 +528,24 @@ each nominal radius):
 - **median 0.51 mm**
 - **17 of 18 within 0.92 mm**; worst 1.88 mm
 - §3's ±0.6 mm on two photos is confirmed, not contradicted, at 9× the
-  sample. The geometry stage is the part of this spike that is *done*.
+  sample. The geometry stage is the part of this spike that is _done_.
 
 One caveat that the bigger corpus makes unmissable: **the residual is not a
 validity check.** On `20250906_104730` the pipeline locked onto the sky and
 gravel behind the target and still reports a 2.3 mm residual, because the
-profile search finds *some* edge near each nominal radius. Residual is only
+profile search finds _some_ edge near each nominal radius. Residual is only
 meaningful once geometry is known to be on the target. A shipped pipeline
 needs a separate "is this actually a target face" confidence signal.
 
 The four geometry failures on the precision face each have a nameable
 cause, and none of them is perspective:
 
-| Photo | Cause |
-|---|---|
-| `20250831_125338` | Centre off-frame; one short arc of the black zone |
-| `20260609_181957` | Black zone fills the whole frame — Otsu has no paper/black boundary to find |
+| Photo             | Cause                                                                           |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `20250831_125338` | Centre off-frame; one short arc of the black zone                               |
+| `20260609_181957` | Black zone fills the whole frame — Otsu has no paper/black boundary to find     |
 | `20250906_104730` | Dark treeline + gravel outweigh the target; largest dark blob is the background |
-| `20250906_150442` | Same, gravel bank |
+| `20250906_150442` | Same, gravel bank                                                               |
 
 The last two are new and cheap to fix: "largest dark blob" is the wrong
 prior outdoors. A concentricity or circularity prior would pick the target
@@ -557,11 +557,11 @@ over a treeline in one pass.
 photos, against the phase-1 detector unchanged, at the planned 2048 px
 input:
 
-| Subset | Photos | Holes | Detections | TP | FP | Recall | Precision |
-|---|---|---|---|---|---|---|---|
-| Whole corpus | 36 | 165 | 140 | 60 | 80 | **36 %** | **43 %** |
-| Precision face, geometry locked | 18 | 90 | 87 | 53 | 34 | **59 %** | **61 %** |
-| Milsnabb face | 9 | 47 | 33 | 2 | 31 | **4 %** | **6 %** |
+| Subset                          | Photos | Holes | Detections | TP  | FP  | Recall   | Precision |
+| ------------------------------- | ------ | ----- | ---------- | --- | --- | -------- | --------- |
+| Whole corpus                    | 36     | 165   | 140        | 60  | 80  | **36 %** | **43 %**  |
+| Precision face, geometry locked | 18     | 90    | 87         | 53  | 34  | **59 %** | **61 %**  |
+| Milsnabb face                   | 9      | 47    | 33         | 2   | 31  | **4 %**  | **6 %**   |
 
 Against §3's 5-photo run (24 % / 24 %) this is better, and the improvement
 is almost entirely composition: the bigger corpus contains many more
@@ -574,18 +574,18 @@ milsnabb row is the same disaster at 2× the size.
 
 Failure-mode tally (counted by eye; a photo can appear in several rows):
 
-| Mode | Photos | Note |
-|---|---|---|
-| Repair patches on the face | ~17 | Still indistinguishable from holes by any classical feature |
-| Nested faces — a card stapled over a larger printed target | ~10 | **New.** The outer face's rings compete with the inner card's in the refine stage |
-| Moderate camera angle | 14 | Geometry, not holes, is what it breaks — see 6.3 |
-| Dark holes on black (no bright backing) | ~5 | **New**, and structurally undetectable by the phase-1 detector — see 6.5 |
-| Overlapping / touching holes | ~8 | Unchanged: merged into one blob |
-| Occlusion (hand, marking rod, pencil) | 3 | Two are false positives on the rod's own tip |
-| Large dark background winning Otsu | 3 | Outdoor photos only |
-| Centre off-frame / black zone filling the frame | 3 | Geometry fails outright |
-| Printed ring digits | all precision photos | The colour cue from §3 held up; it remains contingent on the backing |
-| Target types beyond precision/milsnabb | 0 | The corpus is entirely F.7.1 and J.7.1 |
+| Mode                                                       | Photos               | Note                                                                              |
+| ---------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------- |
+| Repair patches on the face                                 | ~17                  | Still indistinguishable from holes by any classical feature                       |
+| Nested faces — a card stapled over a larger printed target | ~10                  | **New.** The outer face's rings compete with the inner card's in the refine stage |
+| Moderate camera angle                                      | 14                   | Geometry, not holes, is what it breaks — see 6.3                                  |
+| Dark holes on black (no bright backing)                    | ~5                   | **New**, and structurally undetectable by the phase-1 detector — see 6.5          |
+| Overlapping / touching holes                               | ~8                   | Unchanged: merged into one blob                                                   |
+| Occlusion (hand, marking rod, pencil)                      | 3                    | Two are false positives on the rod's own tip                                      |
+| Large dark background winning Otsu                         | 3                    | Outdoor photos only                                                               |
+| Centre off-frame / black zone filling the frame            | 3                    | Geometry fails outright                                                           |
+| Printed ring digits                                        | all precision photos | The colour cue from §3 held up; it remains contingent on the backing              |
+| Target types beyond precision/milsnabb                     | 0                    | The corpus is entirely F.7.1 and J.7.1                                            |
 
 Two things the bigger corpus settles that §3 could only guess at:
 
@@ -594,7 +594,7 @@ Two things the bigger corpus settles that §3 could only guess at:
   now gone 38 photos without a single true positive.
 - **The backing is not reliably bright.** §3's colour discriminator assumed
   a hole shows neutral-white board behind the card. On this corpus the
-  backing is white on some photos, orange on one, and *nothing* on several —
+  backing is white on some photos, orange on one, and _nothing_ on several —
   the hole is a dark tear. A rule contingent on the backing is now measured
   as fragile, not merely suspected to be.
 
@@ -618,15 +618,15 @@ no code path. Three coupled changes (`variant="v2"` in `find_holes`):
 
 Before/after, same 36 photos, same 165 holes:
 
-| | Detections | TP | FP | Recall | Precision |
-|---|---|---|---|---|---|
-| v1 (phase-1 detector) | 140 | 60 | 80 | 36.4 % | 42.9 % |
-| v2 (this round) | 145 | 60 | 85 | **36.4 %** | **41.4 %** |
+|                       | Detections | TP  | FP  | Recall     | Precision  |
+| --------------------- | ---------- | --- | --- | ---------- | ---------- |
+| v1 (phase-1 detector) | 140        | 60  | 80  | 36.4 %     | 42.9 %     |
+| v2 (this round)       | 145        | 60  | 85  | **36.4 %** | **41.4 %** |
 
 **No improvement.** The new channel found one hole that v1 missed
 (`20250831_125338`), lost one that v1 had (`20260426_105819`), and added six
 false positives. The scoring-area cut removed nothing, because no false
-positive was ever outside ring 1. v2 is kept in the code and is *not* the
+positive was ever outside ring 1. v2 is kept in the code and is _not_ the
 default; `variant="v1"` is.
 
 An earlier composition of the same round applied the relative threshold to
@@ -680,7 +680,7 @@ What changes:
    is also a prerequisite for tap-to-mark being trustworthy.
 3. **The training corpus target in §5 is now met on quantity and short on
    variety.** 38 photos with 165 counted holes exist. What is missing for
-   training is per-hole *labels* and the conditions this corpus lacks:
+   training is per-hole _labels_ and the conditions this corpus lacks:
    holes in the light zone (0 examples), unpasted faces (most club targets
    here carry hundreds of patches), and a clean precision face shot at
    moderate angle. The opt-in corrections corpus from normal app use is

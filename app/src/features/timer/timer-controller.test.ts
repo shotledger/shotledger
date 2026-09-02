@@ -79,7 +79,12 @@ describe('TimerController', () => {
     controller.start(0);
     controller.tick(500);
     controller.reset();
-    expect(controller.getPhase()).toEqual({ kind: 'idle', seriesIndex: -1, remainingMs: 0, elapsedMs: 0 });
+    expect(controller.getPhase()).toEqual({
+      kind: 'idle',
+      seriesIndex: -1,
+      remainingMs: 0,
+      elapsedMs: 0,
+    });
     expect(controller.isRunning()).toBe(false);
 
     const soundsBeforeStaleTick = [...sounds];

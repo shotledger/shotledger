@@ -117,7 +117,12 @@ describe('TimerEngine validation', () => {
 describe('TimerEngine idle/start', () => {
   it('starts idle', () => {
     const engine = new TimerEngine(singleSeries());
-    expect(engine.getPhase()).toEqual({ kind: 'idle', seriesIndex: -1, remainingMs: 0, elapsedMs: 0 });
+    expect(engine.getPhase()).toEqual({
+      kind: 'idle',
+      seriesIndex: -1,
+      remainingMs: 0,
+      elapsedMs: 0,
+    });
     expect(engine.getElapsedMs()).toBe(0);
     expect(engine.currentSeriesSpec()).toBeUndefined();
   });
@@ -244,7 +249,12 @@ describe('TimerEngine single-series PAR drill', () => {
     engine.advance(1_500);
     expect(engine.getPhase().kind).toBe('series');
     engine.reset();
-    expect(engine.getPhase()).toEqual({ kind: 'idle', seriesIndex: -1, remainingMs: 0, elapsedMs: 0 });
+    expect(engine.getPhase()).toEqual({
+      kind: 'idle',
+      seriesIndex: -1,
+      remainingMs: 0,
+      elapsedMs: 0,
+    });
     expect(engine.getElapsedMs()).toBe(0);
     // and can be started again
     const events = engine.start();
@@ -270,7 +280,12 @@ describe('TimerEngine multi-series with rest', () => {
     const toRest = engine.advance(1_000); // series 0 ends -> stop, enters rest for series 1
     expect(toRest).toHaveLength(1);
     expect(toRest[0]!.cue).toEqual({ kind: 'stop', seriesIndex: 0, vibrate: true });
-    expect(engine.getPhase()).toEqual({ kind: 'rest', seriesIndex: 1, remainingMs: 800, elapsedMs: 0 });
+    expect(engine.getPhase()).toEqual({
+      kind: 'rest',
+      seriesIndex: 1,
+      remainingMs: 800,
+      elapsedMs: 0,
+    });
 
     const toReady1 = engine.advance(800); // rest ends -> readyDelay for series 1
     expect(toReady1).toHaveLength(1);
@@ -290,7 +305,14 @@ describe('TimerEngine multi-series with rest', () => {
     engine.start();
     const total = 500 + 1_000 + 800 + 500 + 1_500;
     const events = engine.advance(total);
-    expect(events.map((e) => e.cue.kind)).toEqual(['start', 'stop', 'ready', 'start', 'stop', 'complete']);
+    expect(events.map((e) => e.cue.kind)).toEqual([
+      'start',
+      'stop',
+      'ready',
+      'start',
+      'stop',
+      'complete',
+    ]);
     expect(events.map((e) => e.cue.seriesIndex)).toEqual([0, 0, 1, 1, 1, 1]);
     expect(engine.getElapsedMs()).toBe(total);
   });
@@ -359,7 +381,14 @@ describe('TimerEngine zero-length phases', () => {
     const engine = new TimerEngine(config);
     engine.start();
     const events = engine.advance(200);
-    expect(events.map((e) => e.cue.kind)).toEqual(['start', 'stop', 'ready', 'start', 'stop', 'complete']);
+    expect(events.map((e) => e.cue.kind)).toEqual([
+      'start',
+      'stop',
+      'ready',
+      'start',
+      'stop',
+      'complete',
+    ]);
   });
 
   it('getConfig() returns the config passed to the constructor', () => {

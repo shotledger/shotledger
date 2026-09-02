@@ -14,14 +14,14 @@
 
 ## 1. Source state and environment
 
-| Item        | Value                                                        |
-| ----------- | ------------------------------------------------------------- |
-| Branch      | `feat/shot-timer`, based on `feat/m7-release`                 |
+| Item        | Value                                                                       |
+| ----------- | --------------------------------------------------------------------------- |
+| Branch      | `feat/shot-timer`, based on `feat/m7-release`                               |
 | Isolation   | this agent's pre-existing worktree (has its own `node_modules`, `pnpm i`'d) |
-| Node / pnpm | v24.12.0 / 11.24.0                                             |
-| vitest      | 3.2.7                                                          |
-| TypeScript  | ~6.0.3                                                         |
-| Stryker     | @stryker-mutator/core 10.0.0 + @stryker-mutator/vitest-runner 10.0.0 |
+| Node / pnpm | v24.12.0 / 11.24.0                                                          |
+| vitest      | 3.2.7                                                                       |
+| TypeScript  | ~6.0.3                                                                      |
+| Stryker     | @stryker-mutator/core 10.0.0 + @stryker-mutator/vitest-runner 10.0.0        |
 
 New dependencies added (see spec §0 for the reasoning):
 `expo-audio` ~57.0.4, `expo-keep-awake` ~57.0.1 (both in `app/`, both via
@@ -31,11 +31,11 @@ tooling.
 
 ## 2. Modules and what covers them
 
-| Module                                    | Unit tests                | Coverage        | Mutation      |
-| ------------------------------------------ | -------------------------- | ---------------- | -------------- |
-| `shared/src/timer/engine.ts`               | `engine.test.ts` (32 tests) | 100% (all axes) | 97.7% (4 equivalent survivors, see §4) |
-| `shared/src/timer/presets.ts`              | `presets.test.ts` (16 tests) | 100% (all axes) | 100% |
-| `shared/src/timer/types.ts`                | (data shapes only, no branches) | n/a  | n/a |
+| Module                                       | Unit tests                                 | Coverage                                                     | Mutation                                 |
+| -------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
+| `shared/src/timer/engine.ts`                 | `engine.test.ts` (32 tests)                | 100% (all axes)                                              | 97.7% (4 equivalent survivors, see §4)   |
+| `shared/src/timer/presets.ts`                | `presets.test.ts` (16 tests)               | 100% (all axes)                                              | 100%                                     |
+| `shared/src/timer/types.ts`                  | (data shapes only, no branches)            | n/a                                                          | n/a                                      |
 | `app/src/features/timer/timer-controller.ts` | `timer-controller.test.ts` (7 tests, jest) | not gated (app/ has no coverage threshold, per M3 precedent) | not run (Stryker is scoped to `shared/`) |
 
 `app/src/features/timer/use-timer.ts` and `app/src/app/timer.tsx` are
@@ -84,9 +84,10 @@ Final mutation score of 97.85 is greater than or equal to break threshold 95
 `presets.ts` is a clean 100%: the original "program is malformed" guards
 were refactored from an optional-chain-on-a-defaulted-parameter (which made
 the `?.` mutant unreachable by construction) into `requireMilsnabbProgram()`
-+ `buildMilsnabbDrillConfigFrom()`, both independently testable with an
-injected bad program/lookup — the same shape as `requireDiscipline` in
-`shared/src/disciplines/index.ts`.
+
+- `buildMilsnabbDrillConfigFrom()`, both independently testable with an
+  injected bad program/lookup — the same shape as `requireDiscipline` in
+  `shared/src/disciplines/index.ts`.
 
 `engine.ts` has 4 survivors, all **equivalent mutants** (the mutated code is
 behaviorally indistinguishable from the original, given the surrounding
@@ -135,12 +136,12 @@ break threshold with room to spare.
 Per the task instructions, emulator audio cannot be meaningfully verified.
 What's actually verified, and at which layer:
 
-| Claim                                                    | Verified how                                                              |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| The engine emits the right cue at the right time, with the right `vibrate` flag | `engine.test.ts` — data assertions, 100% coverage/mutation (§3/§4) |
-| The controller calls `playSound`/`vibrate` once per cue, correctly gated by `cue.vibrate` | `timer-controller.test.ts` — mocked effect functions, asserts call sequences (e.g. `ready` never vibrates, `start`/`stop`/`complete` always do) |
-| `expo-audio`/`Vibration`/`expo-keep-awake` calls actually happen from the running app | **Not verified here** — `app/src/platform/timer-cues.ts` and `use-timer.ts` have no automated test (matches the existing `app/src/platform/*` precedent — none of `notifications.ts`/`csv-export.ts`/`pdf-export.ts` have one either) |
-| A real device plays audible beeps / vibrates / stays awake | **Not verified at all in this session** — flagged below as a maintainer smoke-test item |
+| Claim                                                                                     | Verified how                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The engine emits the right cue at the right time, with the right `vibrate` flag           | `engine.test.ts` — data assertions, 100% coverage/mutation (§3/§4)                                                                                                                                                                    |
+| The controller calls `playSound`/`vibrate` once per cue, correctly gated by `cue.vibrate` | `timer-controller.test.ts` — mocked effect functions, asserts call sequences (e.g. `ready` never vibrates, `start`/`stop`/`complete` always do)                                                                                       |
+| `expo-audio`/`Vibration`/`expo-keep-awake` calls actually happen from the running app     | **Not verified here** — `app/src/platform/timer-cues.ts` and `use-timer.ts` have no automated test (matches the existing `app/src/platform/*` precedent — none of `notifications.ts`/`csv-export.ts`/`pdf-export.ts` have one either) |
+| A real device plays audible beeps / vibrates / stays awake                                | **Not verified at all in this session** — flagged below as a maintainer smoke-test item                                                                                                                                               |
 
 **Maintainer smoke-test item:** install a dev build on a physical Android
 device, run each preset (especially the milsnabb drill, since it's the
@@ -177,8 +178,8 @@ Tests:       9 passed, 9 total
 ## 8. Deviations from a literal reading of the task
 
 - **`shotledger2` AVD did not exist** — created it (`avdmanager create avd
-  -n shotledger2 -k "system-images;android-36;google_apis;x86_64" -d
-  pixel_7`), same system image as the primary `shotledger` AVD, started on
+-n shotledger2 -k "system-images;android-36;google_apis;x86_64" -d
+pixel_7`), same system image as the primary `shotledger` AVD, started on
   `-port 5556` per the task's explicit port choice.
 - **`expo-av` vs `expo-audio`**: task said "check which is current in SDK
   57 — pick the supported one, flag." `expo-audio` is current;

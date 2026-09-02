@@ -4,7 +4,13 @@
 // `use-timer.ts` is a thin `useState`/`setInterval` wrapper around this that
 // isn't independently tested, matching this codebase's existing precedent
 // (`use-home-data.ts` has no test either — the logic underneath does).
-import { TimerEngine, type TimerConfig, type TimerCueKind, type TimerEvent, type TimerPhase } from '@shotledger/shared';
+import {
+  TimerEngine,
+  type TimerConfig,
+  type TimerCueKind,
+  type TimerEvent,
+  type TimerPhase,
+} from '@shotledger/shared';
 
 export interface TimerEffects {
   playSound: (kind: TimerCueKind) => void;

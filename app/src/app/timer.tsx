@@ -24,13 +24,22 @@ import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 type PresetId = 'parSingle' | 'parRandomStart' | 'parInterval' | 'milsnabb' | 'custom';
 
-const PAR_PRESET_BY_ID: Record<Exclude<PresetId, 'milsnabb' | 'custom'>, (typeof PAR_PRESETS)[number]> = {
+const PAR_PRESET_BY_ID: Record<
+  Exclude<PresetId, 'milsnabb' | 'custom'>,
+  (typeof PAR_PRESETS)[number]
+> = {
   parSingle: PAR_PRESETS[0]!,
   parRandomStart: PAR_PRESETS[1]!,
   parInterval: PAR_PRESETS[2]!,
 };
 
-const PRESET_IDS: readonly PresetId[] = ['parSingle', 'parRandomStart', 'parInterval', 'milsnabb', 'custom'];
+const PRESET_IDS: readonly PresetId[] = [
+  'parSingle',
+  'parRandomStart',
+  'parInterval',
+  'milsnabb',
+  'custom',
+];
 
 const PHASE_COLOR: Record<TimerPhaseKind, ThemeColor> = {
   idle: 'textSecondary',
@@ -45,7 +54,12 @@ function secondsInput(value: string): number {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function buildCustomConfig(parSeconds: string, readyDelaySeconds: string, reps: string, restSeconds: string): TimerConfig {
+function buildCustomConfig(
+  parSeconds: string,
+  readyDelaySeconds: string,
+  reps: string,
+  restSeconds: string,
+): TimerConfig {
   const par = Math.max(0.1, secondsInput(parSeconds) || 3);
   const ready = Math.max(0, secondsInput(readyDelaySeconds));
   const repCount = Math.max(1, Math.round(secondsInput(reps) || 1));
@@ -77,7 +91,8 @@ export default function ShotTimerScreen() {
 
   const config = useMemo<TimerConfig>(() => {
     if (presetId === 'milsnabb') return buildMilsnabbDrillConfig();
-    if (presetId === 'custom') return buildCustomConfig(parSeconds, readyDelaySeconds, reps, restSeconds);
+    if (presetId === 'custom')
+      return buildCustomConfig(parSeconds, readyDelaySeconds, reps, restSeconds);
     return PAR_PRESET_BY_ID[presetId].config;
   }, [presetId, parSeconds, readyDelaySeconds, reps, restSeconds]);
 
@@ -103,7 +118,9 @@ export default function ShotTimerScreen() {
                     : id === 'parInterval'
                       ? t('timer.presetSummaryInterval', {
                           reps: PAR_PRESET_BY_ID.parInterval.config.series.length,
-                          par: formatSeconds(PAR_PRESET_BY_ID.parInterval.config.series[0]!.durationMs),
+                          par: formatSeconds(
+                            PAR_PRESET_BY_ID.parInterval.config.series[0]!.durationMs,
+                          ),
                           rest: formatSeconds(PAR_PRESET_BY_ID.parInterval.config.restMs),
                         })
                       : t('timer.presetSummaryPar', {
@@ -114,7 +131,9 @@ export default function ShotTimerScreen() {
                           par: formatSeconds(PAR_PRESET_BY_ID[id].config.series[0]!.durationMs),
                         })
               }
-              trailing={presetId === id ? <ThemedText themeColor="primary">✓</ThemedText> : undefined}
+              trailing={
+                presetId === id ? <ThemedText themeColor="primary">✓</ThemedText> : undefined
+              }
               onPress={() => setPresetId(id)}
             />
           ))}

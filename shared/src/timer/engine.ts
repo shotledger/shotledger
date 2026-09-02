@@ -35,7 +35,8 @@ function validateConfig(config: TimerConfig): void {
   }
   if (config.randomReadyDelay) {
     const { minMs, maxMs } = config.randomReadyDelay;
-    if (!Number.isFinite(minMs) || minMs < 0) throw new Error('randomReadyDelay.minMs must be >= 0');
+    if (!Number.isFinite(minMs) || minMs < 0)
+      throw new Error('randomReadyDelay.minMs must be >= 0');
     if (!Number.isFinite(maxMs) || maxMs < minMs) {
       throw new Error('randomReadyDelay.maxMs must be >= minMs');
     }
@@ -188,7 +189,9 @@ export class TimerEngine {
       const finished = this.seriesIndex;
       const stopEvent = this.emit({ kind: 'stop', seriesIndex: finished, vibrate: true });
       const isLast = finished === this.config.series.length - 1;
-      return isLast ? [stopEvent, ...this.enterDone(finished)] : [stopEvent, ...this.enterRest(finished + 1)];
+      return isLast
+        ? [stopEvent, ...this.enterDone(finished)]
+        : [stopEvent, ...this.enterRest(finished + 1)];
     }
     return this.enterReadyDelay(this.seriesIndex);
   }

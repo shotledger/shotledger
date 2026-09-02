@@ -15,7 +15,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import type { TimerConfig, TimerPhase } from '@shotledger/shared';
 
-import { playTimerCueSound, releaseTimerCuePlayers, vibrateForTimerCue } from '@/platform/timer-cues';
+import {
+  playTimerCueSound,
+  releaseTimerCuePlayers,
+  vibrateForTimerCue,
+} from '@/platform/timer-cues';
 
 import { TimerController, type TimerEffects } from './timer-controller';
 

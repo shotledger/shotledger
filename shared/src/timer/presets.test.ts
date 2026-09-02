@@ -50,9 +50,18 @@ describe('buildMilsnabbDrillConfig', () => {
     const durations = config.series.map((s) => s.durationMs);
     expect(durations).toEqual([
       10_000, // provserie
-      10_000, 10_000, 10_000, 10_000,
-      8_000, 8_000, 8_000, 8_000,
-      6_000, 6_000, 6_000, 6_000,
+      10_000,
+      10_000,
+      10_000,
+      10_000,
+      8_000,
+      8_000,
+      8_000,
+      8_000,
+      6_000,
+      6_000,
+      6_000,
+      6_000,
     ]);
   });
 

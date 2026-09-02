@@ -9,18 +9,18 @@ run) — this report and the spec are the after-the-fact review artifacts.
 
 ## Behavior → test mapping
 
-| Spec ID | Test |
-|---|---|
-| B1–B12, B19, weight/fallback/future-exclusion additions | `shared/src/compliance/barometer.test.ts` (`computeRuleBarometer` describe block) |
-| B13, B14 | `barometer.test.ts` `computeBarometerForWeaponGroup` |
-| B15, B16 | `barometer.test.ts` `computeFirearmBarometer` |
-| B17, B18 | `barometer.test.ts` `computeOverallBarometer` |
-| I1–I9 + boundary/future additions | `shared/src/compliance/indicators.test.ts` |
-| P1–P4 | `shared/src/compliance/profile-registry.test.ts` |
-| Rolling-window month math (B19) | `shared/src/compliance/months.test.ts` |
-| N1 (no `app/` import) | structural: `shared/src/compliance/**` has zero imports outside `shared/`, verified by `pnpm typecheck` building `shared` as an isolated project and by manual grep (`grep -rn "from '@/" shared/src/compliance` → no matches) |
-| N2 (session-level only, no series input to activity counting) | structural: `ComplianceSession`/`computeRuleBarometer` types take no series-shaped input; `indicators.ts`'s märke helper explicitly takes `StatsSeries[]` only for the märke indicator, never for barometer counting |
-| N3 (existing suites untouched) | see full-suite run below — 343 pre-existing tests unaffected, all still pass |
+| Spec ID                                                       | Test                                                                                                                                                                                                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B1–B12, B19, weight/fallback/future-exclusion additions       | `shared/src/compliance/barometer.test.ts` (`computeRuleBarometer` describe block)                                                                                                                                              |
+| B13, B14                                                      | `barometer.test.ts` `computeBarometerForWeaponGroup`                                                                                                                                                                           |
+| B15, B16                                                      | `barometer.test.ts` `computeFirearmBarometer`                                                                                                                                                                                  |
+| B17, B18                                                      | `barometer.test.ts` `computeOverallBarometer`                                                                                                                                                                                  |
+| I1–I9 + boundary/future additions                             | `shared/src/compliance/indicators.test.ts`                                                                                                                                                                                     |
+| P1–P4                                                         | `shared/src/compliance/profile-registry.test.ts`                                                                                                                                                                               |
+| Rolling-window month math (B19)                               | `shared/src/compliance/months.test.ts`                                                                                                                                                                                         |
+| N1 (no `app/` import)                                         | structural: `shared/src/compliance/**` has zero imports outside `shared/`, verified by `pnpm typecheck` building `shared` as an isolated project and by manual grep (`grep -rn "from '@/" shared/src/compliance` → no matches) |
+| N2 (session-level only, no series input to activity counting) | structural: `ComplianceSession`/`computeRuleBarometer` types take no series-shaped input; `indicators.ts`'s märke helper explicitly takes `StatsSeries[]` only for the märke indicator, never for barometer counting           |
+| N3 (existing suites untouched)                                | see full-suite run below — 343 pre-existing tests unaffected, all still pass                                                                                                                                                   |
 
 ## Gauntlet layers
 
@@ -83,7 +83,7 @@ this task did not touch — out of scope, left as found.
 2. **`barometer.ts:101` reduce `<` → `<=`** in `worstStatus`. The reduce
    compares `STATUS_RANK[s] < STATUS_RANK[worst]`; on a tie
    (`STATUS_RANK[s] === STATUS_RANK[worst]`) both operators produce the same
-   *value* (`s`'s status string equals `worst`'s status string when ranks
+   _value_ (`s`'s status string equals `worst`'s status string when ranks
    tie only for identical status names in this 3-value enum), so no test can
    observe a difference on any input. Equivalent.
 3. **`indicators.ts:25` reduce `<` → `<=`** in `monthsOfLoggedActivity`

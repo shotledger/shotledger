@@ -42,10 +42,10 @@ CLAUDE.md and gets normal tests, not this loop.
 
 ## 1. Modules under specification
 
-| Module                       | Responsibility                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `shared/src/timer/types.ts`   | `TimerConfig`/`TimerPhase`/`TimerEvent`/`TimerCue` data shapes                     |
-| `shared/src/timer/engine.ts`  | `TimerEngine` — the state machine (ready delay → series → rest → … → done)         |
+| Module                        | Responsibility                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| `shared/src/timer/types.ts`   | `TimerConfig`/`TimerPhase`/`TimerEvent`/`TimerCue` data shapes                                      |
+| `shared/src/timer/engine.ts`  | `TimerEngine` — the state machine (ready delay → series → rest → … → done)                          |
 | `shared/src/timer/presets.ts` | PAR presets + `buildMilsnabbDrillConfig()` generated from the `spsf-milsnabb` program's `structure` |
 
 ## 2. Domain facts the milsnabb drill preset is built from
@@ -60,7 +60,7 @@ CLAUDE.md and gets normal tests, not this loop.
 - SHB J.6.2 p. 290: **"FÄRDIGA" (ready) is called 60 s after "LADDA" (load)",
   then targets appear for the series' time limit.** This is a once-per-omgång
   range-command cadence in a real match, not a per-series pause. Modelling
-  it before all 13 series (the engine's ready delay precedes *every* series
+  it before all 13 series (the engine's ready delay precedes _every_ series
   — see §3) would make a solo drill ~13 minutes of standing still, so
   `MILSNABB_PRACTICE_READY_DELAY_MS` (5 s) is the practice default; the
   authentic `MILSNABB_OFFICIAL_READY_DELAY_MS` (60 s) is exposed for a
@@ -81,7 +81,7 @@ idle --start()--> readyDelay(0) --> series(0) --[more series?]--> rest(1) --> re
 - **D1** `readyDelayMs`/`randomReadyDelay` is drawn **per series**, not once
   at the start of the whole drill — a shooter cannot anticipate the beep on
   rep 2+ of an interval drill either.
-- **D2** `restMs` only applies *between* series — never before series 0.
+- **D2** `restMs` only applies _between_ series — never before series 0.
 - **D3** The `rest` phase's `seriesIndex` is the series it is waiting to
   lead into (`i+1`), not the one that just finished — so a UI mid-rest can
   show "next: series 5" directly from `getPhase()`.
@@ -97,7 +97,7 @@ idle --start()--> readyDelay(0) --> series(0) --[more series?]--> rest(1) --> re
 - **D6** Time past `done` within the same `advance()` call is **dropped**,
   not carried into a next drill — `reset()` + `start()` is required to run
   again.
-- **D7** `reset()` returns to `idle` from *any* phase (including `done`) and
+- **D7** `reset()` returns to `idle` from _any_ phase (including `done`) and
   zeroes `getElapsedMs()`; it emits no cue (a UI-driven cancel is not a
   drill event).
 - **D8** Every `SeriesSpec.durationMs` must be `> 0` (validated in the
@@ -130,7 +130,7 @@ idle --start()--> readyDelay(0) --> series(0) --[more series?]--> rest(1) --> re
 - `pnpm mutation` (Stryker, `stryker.config.json` extended with
   `shared/src/timer/*.ts`): break threshold 95, same as M3.
 - Audio/vibration/keep-awake **cannot be verified on the sandboxed emulator**
-  (per task instructions) — the engine's unit tests assert the *data* (cue
+  (per task instructions) — the engine's unit tests assert the _data_ (cue
   events), and the app-layer hook's tests assert the expo-audio/Vibration/
-  expo-keep-awake calls are *made* (mocked), never that a real device plays
+  expo-keep-awake calls are _made_ (mocked), never that a real device plays
   a real sound. Flagged again as a maintainer smoke-test item in EVIDENCE.
