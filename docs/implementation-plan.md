@@ -613,19 +613,35 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 ## 5. Screen inventory (v1)
 
-| Route                                  | Purpose                                                          | Key states         |
-| -------------------------------------- | ---------------------------------------------------------------- | ------------------ |
-| `/` Home                               | totals card, latest sessions, barometer summary, FAB             | empty / seeded     |
-| `/session/new`                         | new-session form                                                 | validation errors  |
-| `/session/[id]`                        | series list + stats toggle, add series                           | zero series        |
-| `/session/[id]/series/[pos]`           | keypad entry                                                     | integer vs decimal |
-| `/stats`                               | filter form (period, type, discipline, series length, tags)      | no sessions at all |
-| `/stats/report`                        | generated report: records, sum + per-shot totals, charts, export | no data for filter |
-| `/firearms`                            | list + barometer chips                                           | empty              |
-| `/firearms/[id]`                       | detail: classes, license, maintenance, ammo usage                | expired license    |
-| `/firearms/new`, `/firearms/[id]/edit` | forms                                                            |                    |
-| `/settings`                            | language, theme, data, support, about                            |                    |
-| `/dev/components`                      | component gallery (dev only)                                     |                    |
+| Route                                      | Purpose                                                                                   | Key states         |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
+| `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
+| `/session/new`                             | new-session form                                                                          | validation errors  |
+| `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
+| `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
+| `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
+| `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
+| `/firearms`                                | list + barometer chips                                                                    | empty              |
+| `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
+| `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
+| `/settings`                                | language, theme, data, support, about                                                     |                    |
+| `/dev/components`                          | component gallery (dev only)                                                              |                    |
+| Route                                      | Purpose                                                                                   | Key states         |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
+| `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
+| `/session/new`                             | new-session form                                                                          | validation errors  |
+| `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
+| `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
+| `/stats`                                   | filters + tiles + charts                                                                  | no data for filter |
+| `/firearms`                                | list + barometer chips                                                                    | empty              |
+| `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
+| `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
+| `/tools`                                   | timers, vault, WebShooter — the non-settings hub                                          | disconnected       |
+| `/timer`                                   | PAR / IPSC / fält timer (segmented control)                                               | idle vs running    |
+| `/vault`                                   | encrypted licences, cards, codes                                                          | locked / empty     |
+| `/webshooter/import`, `/webshooter/starts` | WebShooter competitions and signups                                                       | not connected      |
+| `/settings`                                | language, theme, birth year, compliance, account & sync, backup/restore, CSV, about, wipe |                    |
+| `/dev/components`                          | component gallery (dev only)                                                              |                    |
 
 ## 6. Reference data and formulas
 
