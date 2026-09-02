@@ -553,7 +553,12 @@ code:
   §1's "appended at end… to minimise collision" convention, applied at key
   granularity here since the block already exists).
 
-### 10.4 Open item — flagged, not resolved
+### 10.4 Edge-touch rule for milsnabb — resolved 2026-09-02
+
+**Resolved:** SHB J.6.10.1 p. 293 (Militär snabbmatch, Markering) states
+the rule verbatim — "Kulhål räknas till det högre värdet så snart ringens
+ytterkant är tangerad" — so the single shared implementation in `score.ts`
+is correct for both faces. Original flag kept below for the record.
 
 The edge-touch rule (`score.ts`, SHB F.6.10.1 p.176 — "Kulhål räknas till
 det högre värdet så snart ringens ytterkant är tangerad") is cited to the

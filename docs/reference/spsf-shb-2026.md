@@ -39,6 +39,9 @@ Preceded by **one provserie of 5 shots at 10 s** (J.6.6.2). Vapengrupper
 A, B, C, R. Ready position arm 45° lowered (J.6.3.1); max 2 malfunctions
 (1 for R) (J.6.8.1).
 
+- Scoring rule identical to precision (J.6.10.1 p. 293): "Kulhål räknas
+  till det högre värdet så snart ringens ytterkant är tangerad."
+
 ## Pistolskyttemärke per-series thresholds ("guldserie")
 
 Bilaga 1 mom 5.1.1.1 p. 452 — per 5-shot precision series, by
