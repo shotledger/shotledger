@@ -235,13 +235,30 @@ barometer; no scoring), Skytteappen (club ecosystem).
         implementation; the fältskjutning discipline itself stays out of
         the logbook (not a v1/v2 discipline), only the timer is in scope.
         Voice cues need per-language recordings or TTS (sv first, en).
-  - [ ] **IPSC-style shot timer** — voice "Are you ready?" / "Standby",
+  - [x] **IPSC-style shot timer** — "Are you ready?" / "Standby",
         random-delay start beep, then split (lap) times detected from the
         sound of the shots via the microphone; shows first-shot time, splits,
-        total, shot count; sensitivity setting; PAR-time optional. Needs
-        expo-audio recording + on-device peak detection in
-        `app/src/platform/` (new dependency — ask before adding); no
-        recording is ever stored.
+        total, shot count; sensitivity setting; PAR-time optional
+        (`feat/ipsc-shot-timer`). Detection and the run state machine are
+        pure (`shared/src/timer/shot-detector.ts`, unit-tested); the mic
+        lives behind `app/src/platform/shot-listener.ts` (+ a web stub) on
+        the already-present expo-audio — no new dependency. Reached as the
+        second mode behind the Timer entry.
+        **No recording is ever stored:** expo-audio has no meter-without-
+        record mode, so a file must exist for `metering` to be populated —
+        it is written to the OS cache directory, never read back, shared or
+        synced, and deleted on stop.
+        Limits, deliberately: the prompts are **text plus a tone, not
+        spoken** (no TTS dependency in the lockfile — expo-speech is not
+        installed; adding it needs the maintainer's OK); detection is a
+        threshold on the recorder's ~60 ms peak metering plus an 80 ms
+        debounce, so it cannot separate a genuine sub-80 ms double-tap, and
+        the dB thresholds behind low/medium/high are sensible starting
+        points, not measured against a real firing line; a full magazine of
+        neighbouring shooters at the same bay will trigger it. Verified on
+        the emulator only, which has no microphone — the permission flow,
+        the start sequence, the beep and the stop/result path are exercised,
+        the detection itself is not.
 - [ ] Ammo performance comparison across lots
 - [ ] Cross-session heatmaps, coaching hints
 - [ ] GPS range auto-matching; Swedish range database

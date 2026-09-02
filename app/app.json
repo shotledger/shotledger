@@ -43,7 +43,12 @@
           "calendarPermission": "Allow $(PRODUCT_NAME) to add your WebShooter competition starts to your calendar."
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analysed live and never stored."
+        }
+      ],
       "expo-secure-store",
       "./plugins/withVaultBackupExclusion"
     ],

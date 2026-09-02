@@ -3,13 +3,18 @@
 // running (countdown) are two views of one screen, switched on the engine's
 // phase — `useTimer` (features/timer/use-timer.ts) drives the pure
 // `TimerController`/`TimerEngine` (shared/src/timer).
+//
+// One route, two modes: the regular PAR/interval timer below and the
+// microphone-driven IPSC timer in features/timer/ipsc-timer.tsx. The mode
+// segmented control is rendered by whichever mode is active, in its setup
+// view only — switching mid-run would strand a recorder or an interval.
 import {
   PAR_PRESETS,
   buildMilsnabbDrillConfig,
   type TimerConfig,
   type TimerPhaseKind,
 } from '@shotledger/shared';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -17,7 +22,9 @@ import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
+import { IpscTimer } from '@/features/timer/ipsc-timer';
 import { useTimer } from '@/features/timer/use-timer';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
@@ -79,7 +86,32 @@ function formatSeconds(ms: number): string {
   return (ms / 1_000).toFixed(1);
 }
 
+type TimerMode = 'regular' | 'ipsc';
+
 export default function ShotTimerScreen() {
+  const { t } = useTranslation();
+  const [mode, setMode] = useState<TimerMode>('regular');
+
+  const modeSelector = (
+    <SegmentedControl<TimerMode>
+      options={[
+        { value: 'regular', label: t('timer.modes.regular') },
+        { value: 'ipsc', label: t('timer.modes.ipsc') },
+      ]}
+      value={mode}
+      onChange={setMode}
+      testID="timer-mode"
+    />
+  );
+
+  return mode === 'ipsc' ? (
+    <IpscTimer modeSelector={modeSelector} />
+  ) : (
+    <RegularTimer modeSelector={modeSelector} />
+  );
+}
+
+function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -103,6 +135,7 @@ export default function ShotTimerScreen() {
   if (phase.kind === 'idle') {
     return (
       <Screen>
+        {modeSelector}
         <ThemedText type="smallBold">{t('timer.presetsTitle')}</ThemedText>
         <Card style={styles.presetList}>
           {PRESET_IDS.map((id) => (
