@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3f53bddc-3976-4e83-b4ee-2bf17e9dc899",
+  "id": "2b663312-00aa-4a0b-b0b1-7e40a5c235b5",
   "prevId": "5bfc3ea1-1476-4c6f-8ec0-ab28248eea89",
   "tables": {
     "ammo_lots": {
@@ -229,12 +229,8 @@
           "name": "firearm_groups_firearm_id_firearms_id_fk",
           "tableFrom": "firearm_groups",
           "tableTo": "firearms",
-          "columnsFrom": [
-            "firearm_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["firearm_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -447,12 +443,8 @@
           "name": "licenses_firearm_id_firearms_id_fk",
           "tableFrom": "licenses",
           "tableTo": "firearms",
-          "columnsFrom": [
-            "firearm_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["firearm_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -534,12 +526,8 @@
           "name": "maintenance_events_firearm_id_firearms_id_fk",
           "tableFrom": "maintenance_events",
           "tableTo": "firearms",
-          "columnsFrom": [
-            "firearm_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["firearm_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -615,35 +603,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "is_total_override": {
-          "name": "is_total_override",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "total_override_tenths": {
-          "name": "total_override_tenths",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "total_override_shot_count": {
-          "name": "total_override_shot_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -652,12 +611,8 @@
           "name": "series_session_id_sessions_id_fk",
           "tableFrom": "series",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -690,12 +645,8 @@
           "name": "session_tags_session_id_sessions_id_fk",
           "tableFrom": "session_tags",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -703,22 +654,15 @@
           "name": "session_tags_tag_id_tags_id_fk",
           "tableFrom": "session_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "session_tags_session_id_tag_id_pk": {
-          "columns": [
-            "session_id",
-            "tag_id"
-          ],
+          "columns": ["session_id", "tag_id"],
           "name": "session_tags_session_id_tag_id_pk"
         }
       },
@@ -869,48 +813,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "external_source": {
-          "name": "external_source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "external_ref": {
-          "name": "external_ref",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "external_synced_at": {
-          "name": "external_synced_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "webshooter_competition_id": {
-          "name": "webshooter_competition_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "official_placement": {
-          "name": "official_placement",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "official_standardmedalj": {
-          "name": "official_standardmedalj",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -919,12 +821,8 @@
           "name": "sessions_firearm_id_firearms_id_fk",
           "tableFrom": "sessions",
           "tableTo": "firearms",
-          "columnsFrom": [
-            "firearm_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["firearm_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -932,12 +830,8 @@
           "name": "sessions_ammo_lot_id_ammo_lots_id_fk",
           "tableFrom": "sessions",
           "tableTo": "ammo_lots",
-          "columnsFrom": [
-            "ammo_lot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ammo_lot_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -966,6 +860,82 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "shot_marks": {
+      "name": "shot_marks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "shot_id": {
+          "name": "shot_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "x_mm": {
+          "name": "x_mm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "y_mm": {
+          "name": "y_mm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caliber_mm": {
+          "name": "caliber_mm",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "shot_marks_shot_id_shots_id_fk": {
+          "name": "shot_marks_shot_id_shots_id_fk",
+          "tableFrom": "shot_marks",
+          "tableTo": "shots",
+          "columnsFrom": ["shot_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1045,12 +1015,8 @@
           "name": "shots_series_id_series_id_fk",
           "tableFrom": "shots",
           "tableTo": "series",
-          "columnsFrom": [
-            "series_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["series_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1101,9 +1067,7 @@
       "indexes": {
         "tags_name_unique": {
           "name": "tags_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         }
       },
