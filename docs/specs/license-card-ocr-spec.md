@@ -1,9 +1,13 @@
 # Licence-card scan (on-device OCR) — spec
 
-Scope: plan.md v2 "Scan a physical license card". When adding a licence or a
-renewal to a firearm, the user can photograph the physical Swedish
-`vapenlicens` card; the app reads it **on the device** and pre-fills the
-licence form for the user to confirm field by field.
+Scope: plan.md v2 "Scan a physical license card", amended 2026-09-03
+(`feat/licence-card-image`) to keep the scanned original by default and link
+it to the licence it was scanned for — see "Storing and linking the original
+photo" below. When adding a licence or a renewal to a firearm, the user can
+photograph the physical Swedish `vapenlicens` card; the app reads it **on the
+device** and pre-fills the licence form for the user to confirm field by
+field. The Vault's own "add document" screen offers the same scan for the
+Weapon license kind.
 
 Routine app-layer work per CLAUDE.md (UI + a pure parser), so ordinary
 vitest/jest tests rather than the old-coder gauntlet. Evidence:
@@ -11,13 +15,15 @@ vitest/jest tests rather than the old-coder gauntlet. Evidence:
 
 ## Modules
 
-| Module                                           | Responsibility                                         |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| `shared/src/licenses/card-parser.ts`             | Pure: recognised text → candidate field values         |
-| `app/src/platform/text-recognition.ts`           | ML Kit wrapper + deletion of the scanned image         |
-| `app/src/platform/text-recognition.web.ts`       | Web stub — reports `unsupported`                       |
-| `app/src/features/licenses/scan-license-card.ts` | Pick → recognise → parse, every dependency injectable  |
-| `app/src/app/firearms/[id]/index.tsx`            | The licence form: scan actions, pre-fill, confirmation |
+| Module                                           | Responsibility                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `shared/src/licenses/card-parser.ts`             | Pure: recognised text → candidate field values                                                                      |
+| `app/src/platform/text-recognition.ts`           | ML Kit wrapper + deletion of the scanned image                                                                      |
+| `app/src/platform/text-recognition.web.ts`       | Web stub — reports `unsupported`                                                                                    |
+| `app/src/features/licenses/scan-license-card.ts` | Pick → recognise → parse, plus `settleScannedLicenseImage` (keep/discard the original), every dependency injectable |
+| `app/src/app/firearms/[id]/index.tsx`            | The licence form: scan actions, pre-fill, confirmation, "Show License Card"                                         |
+| `app/src/app/vault/add.tsx`                      | The Vault's own Weapon-license + Photo scan, optional licence-record creation                                       |
+| `app/src/app/vault/[id].tsx`                     | The reused document viewer, now with a "document not found" state                                                   |
 
 ## Dependency
 
@@ -80,18 +86,93 @@ user turns on the separate "also update the firearm" switch.
   text is held in component state only.
 - **The photo is deleted as soon as its fate is known.** Recognition failure,
   an unsupported platform, or a parse that found nothing → deleted
-  immediately. On success it is held (in `expo-image-picker`'s cache) only
-  until the user presses Save, at which point it is either encrypted into the
-  document vault or deleted. A refused vault gate also deletes it — the copy
-  is lost rather than left in a plaintext cache.
-- **Storing it in the vault is opt-in and gated**: the switch is off by
-  default, and turning it on makes Save ask for the same
-  biometric/passcode gate as the vault screen (`requestVaultAccess`) before
-  `addPhotoDocument` runs. The vault is never synced (see
-  `document-vault-spec.md`), so neither is the card.
+  immediately. On a successful parse it is held (in `expo-image-picker`'s
+  cache) only until the user presses Save, at which point it is either
+  encrypted into the Vault or deleted — every path through
+  `settleScannedLicenseImage` ends with the picker's cache copy gone. A
+  refused vault gate also deletes it — the copy is lost rather than left in a
+  plaintext cache.
+- **Storing it in the vault is opt-OUT and gated** (amended 2026-09-03 — see
+  "Storing and linking the original photo" below): the switch defaults to
+  `true` (kept), and Save asks for the same biometric/passcode gate as the
+  vault screen (`requestVaultAccess`) before the vault write runs. Turning
+  the switch off skips the vault entirely — no gate prompt, straight
+  deletion. The vault is never synced (see `document-vault-spec.md`); the
+  `licenses.vault_document_id` pointer that links a licence to its document
+  is an opaque UUID with no meaning off-device, so syncing that pointer
+  leaks nothing.
 - **Nothing is written to the database without confirmation.** The scan only
   fills inputs; the existing Save button is still the only writer, and the
   form shows "Recognition can be wrong. Check every field before saving."
+
+## Storing and linking the original photo (2026-09-03)
+
+Amendment per the maintainer's report: "we want the original picture as
+well — shooting stores needs to see that." Two changes from the original
+design above:
+
+1. **Kept by default.** `settleScannedLicenseImage` (in
+   `scan-license-card.ts`) replaces the inline vault-write that used to live
+   in the firearm screen. Its `store` option defaults to `true` at every call
+   site — the switch in both the firearm form and the Vault's own "add
+   document" screen is now framed as an opt-**out** ("Keep the original card
+   photo in the Vault"), not an opt-in. The gate, the encryption, and the
+   final `deleteImage` of the picker's cache copy are unchanged from before;
+   only the default flipped.
+2. **Linked to the licence.** A nullable `licenses.vault_document_id` column
+   (migration 0005) holds the id of the vault document created for that
+   licence's scan, set at the same insert that creates the licence row (no
+   separate update). **Why a DB column and not a field inside the vault's own
+   encrypted index** (`VaultDocumentMeta`): the alternative — a
+   `linkedLicenseId` on the vault document, found by decrypting and
+   searching the whole index — would mean decrypting every document's
+   metadata (including unrelated door-code/membership-card labels) just to
+   answer "does this licence have a card", without the user ever asking to
+   open the vault. A plain nullable text column on the already-decrypted,
+   already-synced `licenses` row answers that instantly, with zero vault
+   access, so the firearm screen can decide whether to offer "Show licence
+   card" at all before ever calling `requestVaultAccess`. The id itself is
+   opaque and — being local-vault-only — meaningless on a device that pulls
+   the licence row via sync but lacks the matching vault document; that
+   device simply doesn't offer the action (see "must show nothing broken"
+   below).
+3. **"Show License Card"** appears on a licence row only when
+   `vaultDocumentId` is set. Pressing it calls `requestVaultAccess` (the same
+   gate as the Vault screen) and, once granted, pushes the existing
+   `/vault/[id]` document viewer — reused, not a new screen, but hardened
+   with a "document not found" state (instead of hanging on its loading
+   ellipsis) for the case a linked document is missing on this device — see
+   "Surviving a backup/restore" below. A denied gate shows an inline message
+   and does not navigate. A licence with no stored image (every licence
+   created before this change, or one whose user opted out) simply has no
+   action offered — nothing broken, nothing to explain.
+4. **The Vault's own "add document" screen** (`app/src/app/vault/add.tsx`)
+   gained the same scan when kind = Weapon license and content type = Photo.
+   Scanning is strictly **additive** to the plain "Take photo"/"Choose from
+   library" buttons already there: a failed, unsupported, or empty-parse scan
+   never removes the ability to just store the photo (it only means no
+   licence-record option is offered for that attempt). On a successful parse,
+   an opt-in switch plus a firearm picker (hidden when the user has no
+   firearms yet) lets the user additionally create a licence record —
+   `addLicense` with `vaultDocumentId` set to the just-created vault
+   document's id, in the same call shape as the firearm screen. Reuses
+   `scanLicenseCard`/`card-parser.ts` unchanged — no second parser.
+
+### Surviving a backup/restore
+
+`vaultDocumentId` is an ordinary `licenses` column, so it round-trips through
+the app's own backup bundles exactly like every other field on that row
+(`shared/src/backup/container.ts`). A same-device restore therefore keeps a
+licence pointed at the right document, and the Vault directory itself is
+untouched by a restore — it is excluded from every backup bundle by design
+(`docs/specs/document-vault-spec.md`), so it never needed restoring in the
+first place. The only way "Show License Card" ever finds nothing is a fresh
+install or a different device, where the Vault never held the file to begin
+with — inherent to "the vault never leaves the device," not something this
+feature could fix even with a different association mechanism. The
+`/vault/[id]` viewer's "document not found" state (added alongside this
+amendment) is what keeps that case from looking broken rather than something
+that recovers the image.
 
 ## Out of scope
 

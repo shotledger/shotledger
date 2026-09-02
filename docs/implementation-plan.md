@@ -113,7 +113,11 @@ licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
                 valid_until TEXT,              -- giltighetstid t.o.m.;
                                                -- NULL = tills vidare
                 conditions TEXT,               -- villkor (often empty)
-                authority TEXT                 -- e.g. 'Polismyndigheten'
+                authority TEXT,                -- e.g. 'Polismyndigheten'
+                vault_document_id TEXT         -- opaque pointer into the
+                                               -- on-device vault index
+                                               -- (migration 0005); NULL when
+                                               -- no scanned original was kept
                 -- expiry reminders (M4) key off the latest row per firearm
 
 firearm_groups  firearm_id FK, group_id TEXT,  -- federation-scoped id, e.g.
@@ -948,6 +952,15 @@ restates §0 rules 1–6 verbatim.
 > same filtered `SessionExport[]`) — the vault in none of them. Charts are
 > hand-drawn `react-native-svg`; §2's chart row has been corrected to say
 > so. See the 2026-09-03 plan.md decisions-log entries.
+> **The scanned original is now kept by default** (`feat/licence-card-image`,
+> maintainer report: "we want the original picture as well — shooting stores
+> need to see that"). The vault-store switch defaults to `true`; the licence
+> row gets a nullable `licenses.vault_document_id` column (migration 0005)
+> pointing at the vault document, and a "Show licence card" action on the
+> licence row opens it full-screen behind the vault's biometric gate. The
+> vault's own "Add to vault" screen (Weapon license + Photo) also offers the
+> same scan, and can create a licence record from it. See the updated
+> `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
 
 Photo target scoring; WebShooter import; document vault; iOS release.
 
