@@ -405,17 +405,6 @@ export default function SessionDetailScreen() {
                 onPress={onAddSeries}
                 testID="add-series"
               />
-              {seriesRows.length > 0 && (
-                <PrimaryButton
-                  label={t('photoScoring.scanTarget')}
-                  onPress={() =>
-                    router.push(
-                      `/session/${id}/scan?pos=${seriesRows[seriesRows.length - 1]?.position ?? 1}`,
-                    )
-                  }
-                  testID="scan-target"
-                />
-              )}
               {detail.canStartFinal && !nextIsFinal && (
                 <PrimaryButton
                   label={t('session.startFinal')}
@@ -423,6 +412,20 @@ export default function SessionDetailScreen() {
                   testID="start-final"
                 />
               )}
+            </Card>
+          )}
+
+          {seriesRows.length > 0 && (
+            <Card>
+              <PrimaryButton
+                label={t('photoScoring.scanTarget')}
+                onPress={() =>
+                  router.push(
+                    `/session/${id}/scan?pos=${seriesRows[seriesRows.length - 1]?.position ?? 1}`,
+                  )
+                }
+                testID="scan-target"
+              />
             </Card>
           )}
         </>

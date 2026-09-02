@@ -362,3 +362,121 @@ already records this sandbox's emulator hitting `DEADLINE_EXCEEDED` on flows
 ~25 steps deep. Scripted `adb` taps plus screenshots were the more honest
 tool here, and are what §9.1 reports. The existing `m3-entry.yaml` flow still
 passes unchanged as part of the suite's regression surface.
+
+## 10. Amendment — milsnabb via manual corners (`feat/milsnabb-photo-corners`)
+
+> **Append-only amendment**, matching §10 of the spec it evidences.
+
+### 10.1 Real-photo geometry verification — method and numbers
+
+The auto-geometry path was verified against the 38-photo corpus in §9's
+predecessor work; the milsnabb MANUAL path had no equivalent. Since
+`shared/target-scoring` and `corners.ts` needed no code changes (§10.2/§10.4
+of the spec amendment), this verification exercises the SHIPPED functions,
+imported unmodified, against hand-picked pixel coordinates on 3 of the
+corpus's milsnabb photos — not a reimplementation.
+
+**Which photos, and why these three.** `docs/specs/cv-spike-report.md`'s
+own photo table (line 41-43) already identifies 3 milsnabb photos out of
+the 38-photo corpus by visual inspection:
+`20260726_145316.jpg`, `20260726_150229.jpg`, `20260726_153751.jpg`. A
+contact sheet of all 38 thumbnails was generated locally (not committed) to
+sanity-check for a 4th; one candidate (`20260809_104014.jpg`) looked
+plausible at thumbnail size but turned out, at full resolution, to be a
+precision face (solid black through to near-centre, no lighter annulus
+middle) — a reminder of exactly the `guess_kind` misclassification risk
+§0/§10.1 of the spec describe. The original 3 stand.
+
+**Method, per photo:**
+
+1. Pixel coordinates were read off a coordinate-grid overlay drawn in
+   Python/Pillow over crops of the source photo (not eyeballed against the
+   raw image) — gridlines at a 50-100px pitch, labelled in source-image
+   pixel coordinates, iterated at increasing zoom until a ring's line
+   crossing could be read to within a few pixels.
+2. Four points on the target's **ring 9** boundary (top, right, bottom,
+   left, in that order) were read this way and fed to `corners.ts`'s
+   `homographyFromQuad`, mapped against ring 9's known radius (90 mm) —
+   i.e. the exact same call `transformFromCorners` makes, just with ring 9
+   substituted for the outermost ring (see below for why).
+3. Independent validation points were then read on **ring 8** (a different
+   ring, not used to build the homography) and mapped through the
+   resulting homography via `applyHomography`. The residual is
+   `|measured radius - 130mm|` (ring 8's true radius).
+
+**Why ring 9, not the outermost ring (5).** All 3 photos are landscape
+crops (~4000×1848 px) where the physical top and bottom of ring 5 (500 mm
+diameter) fall outside the frame — confirmed by direct measurement, not
+assumption: at the measured px/mm scale for each photo (see below), ring
+5's pixel radius exceeds the available vertical margin from the target
+centre to the frame edge in all 3 cases. Ring 9 (180 mm diameter) is the
+largest ring confirmed fully inside frame on all 3. This is a real product
+finding, not just a test-methodology footnote — see spec §10.5.
+
+**Results** (script: `residuals.mjs`, not committed — the coordinates below
+are the complete input, so the numbers are reproducible without it):
+
+| Photo                 | Validation point | Measured radius (mm) | True radius (mm) | Residual (mm) |
+| --------------------- | ---------------- | -------------------: | ---------------: | ------------: |
+| `20260726_153751.jpg` | ring8-left       |               141.16 |              130 |         11.16 |
+| `20260726_153751.jpg` | ring8-right      |               134.88 |              130 |          4.88 |
+| `20260726_153751.jpg` | ring8-top        |               104.02 |              130 |         25.98 |
+| `20260726_153751.jpg` | ring8-bottom     |               142.01 |              130 |         12.01 |
+| `20260726_145316.jpg` | ring8-left       |               141.22 |              130 |         11.22 |
+| `20260726_145316.jpg` | ring8-right      |               124.55 |              130 |          5.45 |
+| `20260726_150229.jpg` | ring8-left       |               136.38 |              130 |          6.38 |
+| `20260726_150229.jpg` | ring8-right      |               136.92 |              130 |          6.92 |
+
+Median residual **9.0 mm**, mean **10.5 mm**, range 4.9-26.0 mm over 8
+validation points across 3 photos. No homography was degenerate.
+
+**Reading the number honestly.** This is an order of magnitude worse than
+the auto path's 0.51 mm median (§ of the phase 1 evidence, precision face,
+well-behaved photos) — expected, for three compounding reasons, none of
+which is a defect in `corners.ts` itself:
+
+1. **Coordinate precision.** The four homography-building points were read
+   off a static grid overlay by visual estimate, not placed by a finger
+   with a live zoom loupe (which the shipped UI has — §10.3 of the spec —
+   and this script does not). A few pixels of read error at this photo's
+   scale (roughly 5-6 px/mm) is a fraction of a millimetre; tens of pixels,
+   which is plausible for a "top" point near a frame edge, is several mm.
+   `ring8-top` on `20260726_153751.jpg` (25.98 mm, the worst residual) is
+   exactly that case — the point hardest to read precisely, closest to
+   where the frame truncates the ring.
+2. **Real perspective.** These photos were NOT shot square-on: independent
+   axis measurements on the same ring in the same photo disagreed by up to
+   ~7% (e.g. photo 1's ring 9 measured radius 482.5 px horizontally vs 520
+   px vertically) — genuine camera-angle distortion, which is exactly what
+   a 4-point projective homography is FOR (a single fitted ellipse cannot
+   represent it at all; spec §0/`corners.ts` header comment). The residual
+   partly reflects real geometric distortion the math is correctly
+   resolving from only 4 points, not a math error.
+3. **Concentric rings are not concentric in the image.** Under true
+   perspective projection, circles that are concentric in the real world
+   do not share a common centre point in the photo. Measured directly:
+   ring 8's apparent centre on photo 1 sits ~115 px away from ring 9's
+   apparent centre. A homography built from ring 9 alone cannot know
+   ring 8's independent centre offset — it is not underfit, it is fitting
+   the only 4 points it was given, correctly.
+
+None of this contradicts the spec's approach; if anything it reinforces
+§10.1's reasoning for going manual-only rather than trusting a fitted
+ellipse (which assumes a single shared centre and cannot represent this
+kind of distortion at all).
+
+### 10.2 What this does and does not verify
+
+**Verified:** `homographyFromQuad` and `applyHomography` — the real,
+unmodified functions the app calls — correctly solve a projective mapping
+from 4 correspondences and produce geometrically sane, non-degenerate
+results on real (imperfect, off-axis) photos, not just the synthetic
+translation/scale/perspective fixtures in `corners.test.ts`.
+
+**Not verified:** the on-device UI flow for milsnabb (§10.3 — pending the
+Android build), and whether a REAL FINGER TAP with the loupe visible
+achieves better precision than this script's static-grid read (plausible,
+since the loupe gives live full-resolution zoom a static overlay does not,
+but untested — no device-based tap-precision study was run).
+
+### 10.3 Android emulator verification

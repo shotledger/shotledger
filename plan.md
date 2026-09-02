@@ -109,6 +109,18 @@ barometer; no scoring), Skytteappen (club ecosystem).
         2.5×-wrong ring scale. Includes the **validity gate** the spike's §6.3
         demands — two corpus photos locked onto sky and gravel with plausible
         residuals, so a residual is not a validity check.
+  - [x] **Milsnabb via manual corners** (`feat/milsnabb-photo-corners`; amends
+        §10 of the phase 1 spec/evidence). Auto-geometry is still never
+        attempted for milsnabb (2.5× ring-scale risk stands), but capture now
+        goes straight to the four-corner screen instead of "not supported" —
+        `corners.ts`'s homography math was already face-generic, as was the
+        milsnabb ring table/scoring in `shared/target-scoring`; the new work
+        was wiring `scan.tsx` to skip the auto path for this face and adding a
+        drag-tracking zoom loupe to `corner-adjuster.tsx`. Verified against
+        hand-picked corners on 3 real milsnabb corpus photos (median residual
+        ~9 mm on an independent validation ring — see evidence §10). One
+        finding flagged, not fixed: the true outermost ring isn't always in
+        frame on a landscape crop; no ring-choice UI was built for that.
   - [ ] Phase 2 — learned hole detector (centre heatmap on the 4 px/mm
         rectified canvas), trained on opt-in corrections; score-analysis
         heatmap screen
