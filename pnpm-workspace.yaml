@@ -50,3 +50,5 @@ minimumReleaseAgeExclude:
   - pretty-format@30.5.1
   - expo-sharing@57.0.17
   - expo-secure-store@57.0.3
+patchedDependencies:
+  eslint-plugin-react-native@5.0.0: patches/eslint-plugin-react-native@5.0.0.patch

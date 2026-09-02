@@ -96,7 +96,6 @@ export class TimerEngine {
         this.remainingMs -= remaining;
         this.elapsedInPhaseMs += remaining;
         this.totalElapsedMs += remaining;
-        remaining = 0;
         break;
       }
 

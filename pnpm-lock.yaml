@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  eslint-plugin-react-native@5.0.0: ad79d21c03b4134525d728dbd207749aee52dcfccadbf883a5f4427482abc566
+
 importers:
 
   .:
@@ -34,7 +37,7 @@ importers:
         version: 7.1.1(eslint@10.9.1(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-react-native:
         specifier: 5.0.0
-        version: 5.0.0(eslint@10.9.1(supports-color@10.2.2))
+        version: 5.0.0(patch_hash=ad79d21c03b4134525d728dbd207749aee52dcfccadbf883a5f4427482abc566)(eslint@10.9.1(supports-color@10.2.2))
       fast-check:
         specifier: 4.9.0
         version: 4.9.0
@@ -11005,7 +11008,7 @@ snapshots:
 
   eslint-plugin-react-native-globals@0.1.2: {}
 
-  eslint-plugin-react-native@5.0.0(eslint@10.9.1(supports-color@10.2.2)):
+  eslint-plugin-react-native@5.0.0(patch_hash=ad79d21c03b4134525d728dbd207749aee52dcfccadbf883a5f4427482abc566)(eslint@10.9.1(supports-color@10.2.2)):
     dependencies:
       eslint: 10.9.1(supports-color@10.2.2)
       eslint-plugin-react-native-globals: 0.1.2
