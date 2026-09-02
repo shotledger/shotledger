@@ -152,6 +152,18 @@ exec jest --passWithNoTests)`), run from the repo root. `pnpm i18n:check`
   the initial route, and the flow fails on a screen that vanished under
   it. Also, `extendedWaitUntil` does not scroll — wait for an element that
   stays on screen (e.g. `session-total`), or use `scrollUntilVisible`.
+- **Stale dev-client APK on a shared emulator** (found M-backup verification):
+  when another worktree/agent's `expo run:android` last installed onto the
+  same AVD, running your own `expo run:android --port <N>` can silently do
+  nothing — Gradle sees the native project as up to date and skips
+  repackaging, so the installed APK keeps its old build's dev-server target
+  (visible as `ReactNativeJNI`/`BridgelessReact` log lines connecting to a
+  different `10.0.2.2:<port>` than yours, or missing UI that exists in your
+  source and in your own Metro's bundle output). `adb install -r` of an
+  unchanged APK doesn't fix it either. Force it: `cd android && ./gradlew
+assembleDebug --rerun-tasks -PreactNativeDevServerPort=<port>`, then
+  `adb install -r app/build/outputs/apk/debug/app-debug.apk` explicitly
+  rather than trusting the Expo CLI's own install step.
 - Backend (`backend/`, never deployed by an agent — `wrangler deploy` is
   forbidden): `cd backend && pnpm test` runs its own Cloudflare Workers
   vitest suite; not wired into the root `pnpm check`. On this sandbox the

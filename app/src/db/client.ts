@@ -8,6 +8,14 @@ import { openDatabaseSync } from 'expo-sqlite';
 import * as schema from './schema';
 import type { Database } from './types';
 
-const expoDb = openDatabaseSync('shotledger.db', { enableChangeListener: false });
+// Exported so app/src/db/backup can VACUUM INTO a copy, and restore can
+// close this connection before overwriting the file on disk.
+export const DATABASE_FILENAME = 'shotledger.db';
+
+const expoDb = openDatabaseSync(DATABASE_FILENAME, { enableChangeListener: false });
 
 export const db: Database = drizzle(expoDb, { schema });
+
+/** The underlying expo-sqlite connection (raw SQL / VACUUM INTO / close),
+ * for app/src/db/backup — everything else should use `db`. */
+export const rawDb = expoDb;

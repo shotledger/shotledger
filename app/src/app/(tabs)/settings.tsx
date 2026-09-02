@@ -16,6 +16,7 @@ import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
+import { useBackupExportImport } from '@/features/backup/use-backup-export-import';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
 import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
@@ -34,6 +35,13 @@ export default function SettingsScreen() {
   } = useComplianceProfile();
   const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
+  const {
+    exportBundle,
+    planRestore,
+    confirmRestore,
+    statusText: backupStatusText,
+    lastBackupAt,
+  } = useBackupExportImport();
   const webshooter = useWebShooterConnection();
   const [wsUsername, setWsUsername] = useState('');
   const [wsPassword, setWsPassword] = useState('');
@@ -70,6 +78,41 @@ export default function SettingsScreen() {
       [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('csv.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
+      ],
+    );
+  }
+
+  async function onRestoreBundle() {
+    const planned = await planRestore();
+    if (!planned) return;
+    const { manifest } = planned.preview;
+    const photosNote =
+      manifest.kind === 'database+photos'
+        ? t('backup.restorePreviewPhotosNote', { count: manifest.counts.photos })
+        : '';
+    Alert.alert(
+      t('backup.restorePreviewTitle'),
+      t('backup.restorePreviewBody', {
+        date: new Date(manifest.createdAt).toLocaleDateString(),
+        sessions: manifest.counts.sessions,
+        series: manifest.counts.series,
+        shots: manifest.counts.shots,
+        firearms: manifest.counts.firearms,
+        photosNote,
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('backup.restoreConfirmAction'),
+          style: 'destructive',
+          onPress: () => {
+            void confirmRestore(planned.bytes).then(() => {
+              Alert.alert(t('backup.restoreRestartTitle'), t('backup.restoreRestartBody'), [
+                { text: t('backup.restoreRestartAction') },
+              ]);
+            });
+          },
+        },
       ],
     );
   }
@@ -185,6 +228,41 @@ export default function SettingsScreen() {
         {statusText ? (
           <ThemedText type="small" themeColor="textSecondary" testID="csv-status">
             {statusText}
+          </ThemedText>
+        ) : null}
+      </Card>
+
+      <Card>
+        <ThemedText type="smallBold">{t('backup.sectionTitle')}</ThemedText>
+        <ListRow
+          title={t('backup.exportDbTitle')}
+          subtitle={t('backup.exportDbSubtitle')}
+          onPress={() => void exportBundle('database')}
+          testID="settings-export-backup-db"
+        />
+        <ListRow
+          title={t('backup.exportPhotosTitle')}
+          subtitle={t('backup.exportPhotosSubtitle')}
+          onPress={() => void exportBundle('database+photos')}
+          testID="settings-export-backup-photos"
+        />
+        <ListRow
+          title={t('backup.restoreTitle')}
+          subtitle={t('backup.restoreSubtitle')}
+          onPress={() => void onRestoreBundle()}
+          testID="settings-restore-backup"
+        />
+        <ThemedText type="small" themeColor="textSecondary" testID="backup-last-backup">
+          {lastBackupAt
+            ? t('backup.lastBackup', { date: new Date(lastBackupAt).toLocaleString() })
+            : t('backup.neverBackedUp')}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('backup.vaultNote')}
+        </ThemedText>
+        {backupStatusText ? (
+          <ThemedText type="small" themeColor="textSecondary" testID="backup-status">
+            {backupStatusText}
           </ThemedText>
         ) : null}
       </Card>
