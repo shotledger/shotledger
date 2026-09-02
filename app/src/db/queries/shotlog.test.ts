@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { buildShotlogImportPlan, type ShotlogPlanRow } from '@shotledger/shared';
 
 import { createTestDb } from '../test-db';
+import { createFirearm, listFirearms } from './firearms';
 import type { Database } from '../types';
 import { listSeriesForSession } from './series';
 import { getSession } from './sessions';
@@ -68,7 +69,54 @@ describe('importShotlogRow', () => {
   it('writes the derived tags', () => {
     const [row] = planRows(csv([COMPETITION_LINE]));
     const id = importShotlogRow(db, row!);
-    expect(listTagsForSession(db, id).map((tag) => tag.name)).toEqual(['shotlog:warmup']);
+    expect(listTagsForSession(db, id).map((tag) => tag.name)).toEqual(['shotlog:includes-sighter']);
+  });
+
+  it('creates the firearm a tag named when the logbook has none like it', () => {
+    const [row] = planRows(
+      csv(['2026-05-04T09:00:00Z,Club Cup C,Practice,300,1,1,,Precision|Pistol Nine,']),
+    );
+    const id = importShotlogRow(db, row!);
+    const created = listFirearms(db).find((firearm) => firearm.make === 'Pistol Nine');
+    expect(created).toBeDefined();
+    expect(getSession(db, id)!.firearmId).toBe(created!.id);
+  });
+
+  it('reuses an existing firearm rather than creating a second one', () => {
+    const existing = createFirearm(db, { make: 'Pistol Nine', model: '' });
+    const [row] = planRows(
+      csv(['2026-05-04T09:00:00Z,Club Cup C,Practice,300,1,1,,Precision|Pistol Nine,']),
+      { knownFirearms: [{ id: existing.id, label: 'Pistol Nine' }] },
+    );
+    const id = importShotlogRow(db, row!);
+    expect(getSession(db, id)!.firearmId).toBe(existing.id);
+    expect(listFirearms(db)).toHaveLength(1);
+  });
+
+  it('leaves the firearm unset when no tag names one', () => {
+    const [row] = planRows(csv(['2026-05-04T09:00:00Z,Club Cup C,Practice,300,1,1,,Precision,']));
+    const id = importShotlogRow(db, row!);
+    expect(getSession(db, id)!.firearmId).toBeNull();
+    expect(listFirearms(db)).toEqual([]);
+  });
+
+  it('marks the series as a final when a tag said so', () => {
+    const [row] = planRows(
+      csv(['2026-05-04T09:00:00Z,Club Cup C,Practice,300,1,1,,Precision|Final,']),
+    );
+    const id = importShotlogRow(db, row!);
+    expect(listSeriesForSession(db, id)[0]!.isFinal).toBe(1);
+  });
+
+  it('never marks the only series as a sighter, even when the total includes one', () => {
+    const [row] = planRows(
+      csv(['2026-05-04T09:00:00Z,Club Cup C,Practice,300,1,1,,Precision|Warmup,']),
+    );
+    const id = importShotlogRow(db, row!);
+    const series = listSeriesForSession(db, id)[0]!;
+    expect(series.isSighter).toBe(0);
+    expect(series.totalOverrideTenths).toBe(3000);
+    expect(getSession(db, id)!.notes).toContain('includes a sighter series');
   });
 
   it('tags a date-uncertain row and keeps the recorded timestamp', () => {

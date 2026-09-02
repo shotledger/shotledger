@@ -8,6 +8,7 @@ import type { ShotlogExistingSession, ShotlogPlanRow } from '@shotledger/shared'
 
 import { sessions } from '../schema';
 import type { Database } from '../types';
+import { createFirearm, listFirearms } from './firearms';
 import { addSeries } from './series';
 import { createSession } from './sessions';
 import { addSessionTag, getOrCreateTag } from './tags';
@@ -41,11 +42,31 @@ export function isShotlogRowImportable(row: ShotlogPlanRow): boolean {
  * `totalOverrideShotCount` stays NULL — the stats layer's WS1 branches
  * already handle a total-only series.
  */
+/**
+ * The firearm a tag named, creating it when no existing one matches (§7).
+ * The label is stored whole as the `make`: ShotLog has no make/model split
+ * and inventing one would guess at the user's naming.
+ */
+function resolveFirearmId(db: Database, suggestion: ShotlogPlanRow['suggestion']): string | null {
+  if (suggestion.firearmId !== null) return suggestion.firearmId;
+  if (suggestion.firearmLabel === null) return null;
+
+  const wanted = suggestion.firearmLabel.trim().toLowerCase();
+  const existing = listFirearms(db).find(
+    (firearm) => `${firearm.make} ${firearm.model}`.trim().toLowerCase() === wanted,
+  );
+  if (existing) return existing.id;
+
+  return createFirearm(db, { make: suggestion.firearmLabel.trim(), model: '' }).id;
+}
+
 export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
   const { suggestion } = row;
   if (suggestion.disciplineId === null) {
     throw new Error(`ShotLog row ${row.line} has no discipline — refusing to guess one.`);
   }
+
+  const firearmId = resolveFirearmId(db, suggestion);
 
   const session = createSession(db, {
     name: row.name === '' ? row.datetime.slice(0, 10) : row.name,
@@ -54,7 +75,7 @@ export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
     competitionName: suggestion.competitionName,
     weaponGroup: suggestion.weaponGroup,
     shooterClass: suggestion.shooterClass,
-    firearmId: suggestion.firearmId,
+    firearmId,
     startedAt: row.datetime,
     notes: suggestion.note === '' ? null : suggestion.note,
     externalSource: 'shotlog',
@@ -62,9 +83,15 @@ export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
     externalSyncedAt: new Date().toISOString(),
   });
 
+  // `isSighter` stays false even when the total includes a sighter series:
+  // ShotLog gives one number, and flagging the only series as a sighter
+  // would drop the session out of every score statistic. The inclusion is
+  // recorded in the note and the `shotlog:includes-sighter` tag instead —
+  // the total is never adjusted (maintainer 2026-09-02).
   addSeries(db, {
     sessionId: session.id,
     position: 1,
+    isFinal: suggestion.isFinal,
     isTotalOverride: true,
     totalOverrideTenths: suggestion.totalTenths,
     totalOverrideShotCount: null,
