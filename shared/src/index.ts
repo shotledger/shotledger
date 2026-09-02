@@ -23,3 +23,4 @@ export * from './timer';
 export * from './target-scoring';
 export * from './backup';
 export * from './licenses';
+export * from './locations';
