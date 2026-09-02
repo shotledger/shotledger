@@ -16,6 +16,10 @@
     "backend/src/lib/quota.ts",
     "backend/src/lib/rate-limit.ts",
     "backend/src/lib/authz.ts",
+    "shared/src/timer/*.ts",
+    "shared/src/vault/envelope.ts",
+    "shared/src/vault/types.ts",
+    "shared/src/target-scoring/*.ts",
     "!**/*.test.ts"
   ],
   "thresholds": {

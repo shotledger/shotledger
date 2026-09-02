@@ -19,7 +19,12 @@ const DEFAULT_HEIGHT = 140;
 const PADDING = 12;
 
 /** Deterministic layout: a fixed viewBox scaled by point count, no animation. */
-export function TrendLineChart({ points, height = DEFAULT_HEIGHT, style, ...rest }: TrendLineChartProps) {
+export function TrendLineChart({
+  points,
+  height = DEFAULT_HEIGHT,
+  style,
+  ...rest
+}: TrendLineChartProps) {
   const theme = useTheme();
   const width = Math.max(points.length * 24, 200);
 
@@ -36,7 +41,10 @@ export function TrendLineChart({ points, height = DEFAULT_HEIGHT, style, ...rest
   const usableHeight = height - PADDING * 2;
 
   const coords = points.map((point, index) => {
-    const x = points.length === 1 ? PADDING + usableWidth / 2 : PADDING + (index / (points.length - 1)) * usableWidth;
+    const x =
+      points.length === 1
+        ? PADDING + usableWidth / 2
+        : PADDING + (index / (points.length - 1)) * usableWidth;
     const y = PADDING + usableHeight - ((point.meanTenths - min) / range) * usableHeight;
     return { x, y };
   });

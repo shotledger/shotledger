@@ -8,7 +8,7 @@ firearms/ammo tracking, the Swedish FAP 551-3 activity barometer, and CSV
 export/import.
 
 **Title tension to resolve (not silently changed here):** `plan.md`'s
-chosen store title is *"ShotLedger — Target Shooting Log & Scoring"*. The
+chosen store title is _"ShotLedger — Target Shooting Log & Scoring"_. The
 word "Scoring" reads naturally today because manual score entry ships in
 v1 — but it also risks implying the camera-based photo scoring positioning
 point (`plan.md` Positioning §2), which is v2-only. VERIFY with the

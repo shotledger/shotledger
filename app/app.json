@@ -36,7 +36,10 @@
       ],
       "expo-localization",
       "expo-sharing",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-audio",
+      "expo-secure-store",
+      "./plugins/withVaultBackupExclusion"
     ],
     "experiments": {
       "typedRoutes": true,
