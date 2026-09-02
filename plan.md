@@ -105,9 +105,49 @@ barometer; no scoring), Skytteappen (club ecosystem).
 - [ ] WebShooter competition import (API behind webshooter-cli): placements,
       per-station scores, weapon classes, standard medals → logbook +
       FAP 551-3 barometer
+- [ ] **ShotLog import** (decided 2026-09-02) — the maintainer uses ShotLog
+      and will supply a real export in its native format; map it onto
+      sessions/series/shots/firearms with the same selective, dedup-first
+      flow as the WebShooter import (preview → choose → import, never
+      blind). Spec + old-coder loop like `shared/csv/` since it writes
+      logbook data. Blocked on the sample file.
+- [ ] **Backup export/import** (decided 2026-09-02), two bundle kinds:
+  - [ ] _Database only_ — the SQLite file (`VACUUM INTO` a consistent copy,
+        never the live file), plus a manifest (app + schema version) so a
+        restore can refuse a newer schema and migrate an older one.
+  - [ ] _Database + all pictures_ — a single `.shotledger` zip: the same
+        SQLite copy + every target/series photo, paths rewritten so restore
+        is location-independent.
+  - [ ] Restore = full replace with confirmation (and an automatic pre-restore
+        backup), never merge; the vault (`feat/document-vault`) is excluded
+        by design — it never leaves the device.
+- [ ] **Export destinations** (feature list, to be prioritised): the OS share
+      sheet (any app — already used by CSV/PDF; covers Google Drive, iCloud
+      Drive, Nextcloud, mail, Signal… via their share targets, zero code);
+      save to a user-chosen folder (Android SAF / iOS Files —
+      `expo-file-system` + document picker); scheduled automatic backup to a
+      chosen folder (daily/weekly, keep last N); direct Google Drive
+      (Drive API + Google sign-in — only worth it for the scheduled case,
+      since the share sheet already reaches Drive manually); our own cloud
+      sync as the "just works" option once accounts exist. Order proposed:
+      share sheet → chosen folder → scheduled → Drive API.
 - [ ] Optional cloud sync (Cloudflare); photos to R2; share cards
 - [ ] Encrypted on-device document vault (license, membership card) — never
       synced
+- [ ] **Scan a physical license card** (decided 2026-09-02): when adding a
+      license, offer "Scan card" next to manual entry — photograph the
+      vapenlicens card, run on-device OCR, and pre-fill the license form
+      (license number, firearm make/model/caliber, purpose, decided-on date,
+      valid-until / "tills vidare", conditions, authority) for the user to
+      confirm field by field; never save without confirmation. Field layout
+      per the Polisen card (see the licenses table in
+      `docs/implementation-plan.md` §3); other jurisdictions' cards are a
+      per-profile template later. OCR must stay **on-device** (license data
+      never leaves the phone) and cross-platform — candidate: ML Kit text
+      recognition via a React Native wrapper (Android + iOS), new dependency
+      → ask before adding. The scanned photo can optionally go straight into
+      the vault. Reuse the perspective-correction step from photo scoring for
+      angled shots of the card.
 - [ ] iOS release (camera feature as the launch hook)
 
 ### v3+ — by user demand
