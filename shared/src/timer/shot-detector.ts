@@ -22,6 +22,13 @@ export const SENSITIVITY_THRESHOLD_DB: Record<ShotSensitivity, number> = {
   high: -32,
 };
 
+/** Valid range for a user-set trigger level (expo-audio's metering scale is <= 0 dBFS). */
+export const MIN_TRIGGER_DB = -60;
+export const MAX_TRIGGER_DB = 0;
+
+/** Step size the app's +/- trigger-level control moves by. */
+export const TRIGGER_DB_STEP = 2;
+
 /** Default debounce between two shots; below this a second peak is the same shot's tail. */
 export const DEFAULT_MIN_SHOT_GAP_MS = 80;
 
@@ -76,10 +83,18 @@ export class ShotDetector {
 
   constructor(options: ShotDetectorOptions = {}) {
     const preset = SENSITIVITY_THRESHOLD_DB[options.sensitivity ?? 'medium'];
-    this.thresholdDb = options.thresholdDb ?? preset;
+    const threshold = options.thresholdDb ?? preset;
+    if (!Number.isFinite(threshold) || threshold < MIN_TRIGGER_DB || threshold > MAX_TRIGGER_DB) {
+      throw new Error(`thresholdDb must be between ${MIN_TRIGGER_DB} and ${MAX_TRIGGER_DB}`);
+    }
+    this.thresholdDb = threshold;
     const gap = options.minGapMs ?? DEFAULT_MIN_SHOT_GAP_MS;
     if (!Number.isFinite(gap) || gap < 0) throw new Error('minGapMs must be >= 0');
     this.minGapMs = gap;
+  }
+
+  getThresholdDb(): number {
+    return this.thresholdDb;
   }
 
   /** Starts accepting samples. Called at the start beep. */
@@ -159,6 +174,8 @@ export interface IpscTimerConfig {
   /** Auto-stop after this much silence (from the beep, or the last shot). 0/undefined = manual stop only. */
   autoStopSilenceMs?: number;
   sensitivity?: ShotSensitivity;
+  /** Overrides `sensitivity` with an explicit dBFS trigger level (see MIN/MAX_TRIGGER_DB). */
+  thresholdDb?: number;
   minGapMs?: number;
 }
 
@@ -198,6 +215,7 @@ export class IpscTimerEngine {
   private newDetector(): ShotDetector {
     return new ShotDetector({
       sensitivity: this.config.sensitivity,
+      thresholdDb: this.config.thresholdDb,
       minGapMs: this.config.minGapMs,
     });
   }
@@ -312,5 +330,15 @@ function validateIpscConfig(config: IpscTimerConfig): void {
   }
   if (config.parMs !== undefined && (!Number.isFinite(config.parMs) || config.parMs <= 0)) {
     throw new Error('IpscTimerConfig.parMs must be > 0');
+  }
+  if (
+    config.thresholdDb !== undefined &&
+    (!Number.isFinite(config.thresholdDb) ||
+      config.thresholdDb < MIN_TRIGGER_DB ||
+      config.thresholdDb > MAX_TRIGGER_DB)
+  ) {
+    throw new Error(
+      `IpscTimerConfig.thresholdDb must be between ${MIN_TRIGGER_DB} and ${MAX_TRIGGER_DB}`,
+    );
   }
 }

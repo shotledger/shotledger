@@ -4,6 +4,8 @@ import {
   DEFAULT_IPSC_CONFIG,
   DEFAULT_MIN_SHOT_GAP_MS,
   IpscTimerEngine,
+  MAX_TRIGGER_DB,
+  MIN_TRIGGER_DB,
   SENSITIVITY_THRESHOLD_DB,
   ShotDetector,
   type IpscTimerConfig,
@@ -82,6 +84,22 @@ describe('ShotDetector', () => {
     const detector = armed();
     expect(detector.push({ atMs: 0, db: SENSITIVITY_THRESHOLD_DB.medium })).not.toBeNull();
     expect(armed().push({ atMs: 0, db: SENSITIVITY_THRESHOLD_DB.medium - 0.1 })).toBeNull();
+  });
+
+  it('accepts an explicit numeric thresholdDb overriding the sensitivity preset', () => {
+    const detector = new ShotDetector({ sensitivity: 'low', thresholdDb: -40 });
+    expect(detector.getThresholdDb()).toBe(-40);
+    detector.arm();
+    expect(detector.push({ atMs: 0, db: -41 })).toBeNull();
+    expect(detector.push({ atMs: 0, db: -40 })).not.toBeNull();
+  });
+
+  it('rejects a thresholdDb outside MIN_TRIGGER_DB..MAX_TRIGGER_DB', () => {
+    expect(() => new ShotDetector({ thresholdDb: MIN_TRIGGER_DB - 1 })).toThrow(/thresholdDb/);
+    expect(() => new ShotDetector({ thresholdDb: MAX_TRIGGER_DB + 1 })).toThrow(/thresholdDb/);
+    expect(() => new ShotDetector({ thresholdDb: Number.NaN })).toThrow(/thresholdDb/);
+    expect(() => new ShotDetector({ thresholdDb: MIN_TRIGGER_DB })).not.toThrow();
+    expect(() => new ShotDetector({ thresholdDb: MAX_TRIGGER_DB })).not.toThrow();
   });
 
   it('summarises a string: first shot, splits, total and slowest split', () => {
@@ -341,6 +359,16 @@ describe('IpscTimerEngine', () => {
       () => new IpscTimerEngine({ ...FIXED_CONFIG, randomDelay: { minMs: 3_000, maxMs: 1_000 } }),
     ).toThrow(/maxMs/);
     expect(() => new IpscTimerEngine({ ...FIXED_CONFIG, parMs: 0 })).toThrow(/parMs/);
+    expect(() => new IpscTimerEngine({ ...FIXED_CONFIG, thresholdDb: MAX_TRIGGER_DB + 1 })).toThrow(
+      /thresholdDb/,
+    );
+  });
+
+  it('uses an explicit thresholdDb over the sensitivity preset', () => {
+    const engine = startedRun({ ...FIXED_CONFIG, sensitivity: 'low', thresholdDb: -40 });
+    engine.advance(4_000);
+    expect(engine.pushLevel(-41)).toBeNull();
+    expect(engine.pushLevel(-40)).not.toBeNull();
   });
 
   it('ships a usable default config', () => {

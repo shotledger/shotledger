@@ -270,6 +270,22 @@ barometer; no scoring), Skytteappen (club ecosystem).
         the emulator only, which has no microphone — the permission flow,
         the start sequence, the beep and the stop/result path are exercised,
         the detection itself is not.
+        **User-set trigger level** (`feat/shot-timer-trigger-level`): the
+        low/medium/high presets are now starting points, not the only
+        choice — the setup screen has a numeric dBFS trigger level
+        (`shared/src/timer/shot-detector.ts`'s `thresholdDb`, `±2 dB` step
+        buttons plus the three preset chips, clamped to
+        `MIN_TRIGGER_DB..MAX_TRIGGER_DB` i.e. -60..0). A live level meter on
+        the same screen — metering only, no `ShotDetector`/engine involved,
+        `app/src/features/timer/use-level-meter.ts` — runs while mic
+        permission is already granted and the setup screen is visible, so
+        the shooter can clap/dry-fire and see the peak against the
+        threshold line before a run; it stops (and the temp recording is
+        deleted) the moment Start is pressed, the run finishes, or the
+        screen is left, same guarantee as the run path. No settings store
+        exists yet for the timer's other options (delay/PAR/auto-stop are
+        component state too), so the trigger level is component state as
+        well — not persisted across screens/restarts.
 - [ ] Ammo performance comparison across lots
 - [ ] Cross-session heatmaps, coaching hints
 - [ ] GPS range auto-matching; Swedish range database

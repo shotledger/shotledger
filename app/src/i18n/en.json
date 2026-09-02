@@ -446,13 +446,19 @@
   },
   "ipscTimer": {
     "settingsTitle": "Shot detection",
-    "sensitivity": "Microphone sensitivity",
     "sensitivities": {
       "low": "Low",
       "medium": "Medium",
       "high": "High"
     },
-    "sensitivityHint": "Higher sensitivity picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line.",
+    "triggerLevel": "Trigger level",
+    "triggerLevelDb": "{{value}} dBFS",
+    "decreaseLevel": "Lower the trigger level",
+    "increaseLevel": "Raise the trigger level",
+    "sensitivityHint": "Higher sensitivity (a level closer to 0) picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line — or use the live meter below to set it against your own shot's peak.",
+    "liveMeter": "Live level",
+    "liveMeterHint": "Clap or dry-fire near the phone, then set the level just below the peak.",
+    "liveMeterNeedsPermission": "Grant microphone permission (tap Start once) to see the live level here.",
     "randomDelay": "Random start delay — shortest / longest (s)",
     "randomDelayMin": "Shortest start delay in seconds",
     "randomDelayMax": "Longest start delay in seconds",

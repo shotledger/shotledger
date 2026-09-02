@@ -3,21 +3,27 @@
 // one screen, switched on the engine's phase, mirroring timer.tsx's shape.
 import {
   DEFAULT_IPSC_CONFIG,
+  MAX_TRIGGER_DB,
+  MIN_TRIGGER_DB,
+  SENSITIVITY_THRESHOLD_DB,
+  TRIGGER_DB_STEP,
   type IpscPhaseKind,
   type IpscTimerConfig,
   type ShotSensitivity,
 } from '@shotledger/shared';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
+import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer } from '@/features/timer/use-ipsc-timer';
+import { useLevelMeter } from '@/features/timer/use-level-meter';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
@@ -49,11 +55,17 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const { t } = useTranslation();
   const theme = useTheme();
 
-  const [sensitivity, setSensitivity] = useState<ShotSensitivity>('medium');
+  // No settings store exists yet for the timer's other options (delay, PAR,
+  // auto-stop are all component state too) — the trigger level lives here
+  // alongside them rather than introducing persistence on its own.
+  const [thresholdDb, setThresholdDb] = useState<number>(SENSITIVITY_THRESHOLD_DB.medium);
   const [delayMin, setDelayMin] = useState('1');
   const [delayMax, setDelayMax] = useState('4');
   const [parSeconds, setParSeconds] = useState('');
   const [autoStopSeconds, setAutoStopSeconds] = useState('10');
+  // Paused as soon as Start is pressed so the setup meter's recorder never
+  // overlaps the run's own (both use the same underlying mic listener).
+  const [meteringPaused, setMeteringPaused] = useState(false);
 
   const config = useMemo<IpscTimerConfig>(() => {
     const minMs = Math.round(seconds(delayMin, 1) * 1_000);
@@ -64,12 +76,35 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
       randomDelay: { minMs, maxMs },
       parMs: par > 0 ? Math.round(par * 1_000) : undefined,
       autoStopSilenceMs: Math.round(seconds(autoStopSeconds, 10) * 1_000),
-      sensitivity,
+      thresholdDb,
     };
-  }, [delayMin, delayMax, parSeconds, autoStopSeconds, sensitivity]);
+  }, [delayMin, delayMax, parSeconds, autoStopSeconds, thresholdDb]);
 
   const { phase, shots, summary, error, available, start, stop, reset } = useIpscTimer(config);
   const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
+
+  // Un-pauses the setup meter once the phase is back to idle (a fresh mount,
+  // or after reset()/a failed start put it there) — adjusting state during
+  // render rather than in an effect, per the "storing info from previous
+  // renders" pattern (react.dev/reference/react/useState#storing-information-from-previous-renders).
+  const [previousPhaseKind, setPreviousPhaseKind] = useState(phase.kind);
+  if (previousPhaseKind !== phase.kind) {
+    setPreviousPhaseKind(phase.kind);
+    if (phase.kind === 'idle' && meteringPaused) setMeteringPaused(false);
+  }
+
+  const handleStart = useCallback(() => {
+    setMeteringPaused(true);
+    start();
+  }, [start]);
+
+  const { currentDb, peakDb } = useLevelMeter(phase.kind === 'idle' && !meteringPaused);
+
+  const adjustThreshold = useCallback((deltaDb: number) => {
+    setThresholdDb((current) =>
+      Math.min(MAX_TRIGGER_DB, Math.max(MIN_TRIGGER_DB, current + deltaDb)),
+    );
+  }, []);
 
   const shotList =
     shots.length === 0 ? (
@@ -101,19 +136,71 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
         <ThemedText type="smallBold">{t('ipscTimer.settingsTitle')}</ThemedText>
         <Card style={styles.form} testID="ipsc-settings">
-          <ThemedText type="smallBold">{t('ipscTimer.sensitivity')}</ThemedText>
-          <SegmentedControl
-            options={SENSITIVITIES.map((value) => ({
-              value,
-              label: t(`ipscTimer.sensitivities.${value}` as const),
-            }))}
-            value={sensitivity}
-            onChange={setSensitivity}
-            testID="ipsc-sensitivity"
-          />
+          <ThemedText type="smallBold">{t('ipscTimer.triggerLevel')}</ThemedText>
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => adjustThreshold(-TRIGGER_DB_STEP)}
+              disabled={thresholdDb <= MIN_TRIGGER_DB}
+              accessibilityRole="button"
+              accessibilityLabel={t('ipscTimer.decreaseLevel')}
+              testID="ipsc-level-down"
+              style={[styles.stepButton, { borderColor: theme.border }]}
+            >
+              <ThemedText type="smallBold">−</ThemedText>
+            </Pressable>
+            <ThemedText
+              type="smallBold"
+              style={[styles.flex, styles.levelValue]}
+              testID="ipsc-level-value"
+            >
+              {t('ipscTimer.triggerLevelDb', { value: thresholdDb })}
+            </ThemedText>
+            <Pressable
+              onPress={() => adjustThreshold(TRIGGER_DB_STEP)}
+              disabled={thresholdDb >= MAX_TRIGGER_DB}
+              accessibilityRole="button"
+              accessibilityLabel={t('ipscTimer.increaseLevel')}
+              testID="ipsc-level-up"
+              style={[styles.stepButton, { borderColor: theme.border }]}
+            >
+              <ThemedText type="smallBold">+</ThemedText>
+            </Pressable>
+          </View>
+
+          <View style={styles.row} testID="ipsc-presets">
+            {SENSITIVITIES.map((preset) => (
+              <Pressable
+                key={preset}
+                onPress={() => setThresholdDb(SENSITIVITY_THRESHOLD_DB[preset])}
+                testID={`ipsc-preset-${preset}`}
+              >
+                <Chip
+                  label={t(`ipscTimer.sensitivities.${preset}` as const)}
+                  tone={thresholdDb === SENSITIVITY_THRESHOLD_DB[preset] ? 'primary' : 'neutral'}
+                />
+              </Pressable>
+            ))}
+          </View>
           <ThemedText type="small" themeColor="textSecondary">
             {t('ipscTimer.sensitivityHint')}
           </ThemedText>
+
+          {available ? (
+            <>
+              <ThemedText type="smallBold">{t('ipscTimer.liveMeter')}</ThemedText>
+              <LevelMeterBar
+                currentDb={currentDb}
+                peakDb={peakDb}
+                thresholdDb={thresholdDb}
+                testID="ipsc-level-meter"
+              />
+              <ThemedText type="small" themeColor="textSecondary" testID="ipsc-level-meter-hint">
+                {currentDb === null
+                  ? t('ipscTimer.liveMeterNeedsPermission')
+                  : t('ipscTimer.liveMeterHint')}
+              </ThemedText>
+            </>
+          ) : null}
 
           <ThemedText type="smallBold">{t('ipscTimer.randomDelay')}</ThemedText>
           <View style={styles.row}>
@@ -171,7 +258,7 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
           </ThemedText>
         )}
 
-        <PrimaryButton label={t('ipscTimer.start')} onPress={start} testID="ipsc-start" />
+        <PrimaryButton label={t('ipscTimer.start')} onPress={handleStart} testID="ipsc-start" />
       </Screen>
     );
   }
@@ -254,6 +341,18 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  stepButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  levelValue: {
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   shotList: {
     gap: Spacing.one,
