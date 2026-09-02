@@ -4,13 +4,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Switch, TextInput, View } from 'react-native';
 import {
   GENERIC_WEAPON_GROUPS,
   licenseExpiryNotifications,
   SPSF_WEAPON_GROUPS,
   shouldNotifyMaintenanceDue,
   weaponGroupCode,
+  type ParsedLicenseCard,
   type WeaponGroup,
 } from '@shotledger/shared';
 
@@ -28,11 +29,32 @@ import { addLicense } from '@/db/queries/licenses';
 import { adjustFirearmRoundCount, logMaintenanceEvent } from '@/db/queries/maintenance-events';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
+import {
+  countRecognizedFields,
+  licenseFormValues,
+  scanLicenseCard,
+  type ScanSource,
+} from '@/features/licenses/scan-license-card';
+import { addPhotoDocument } from '@/features/vault/vault-store';
 import { useTheme } from '@/hooks/use-theme';
 import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
+import { deleteScannedImage } from '@/platform/text-recognition';
+import { requestVaultAccess } from '@/platform/vault-auth';
 import { Spacing } from '@/theme/tokens';
 
 const ALL_GROUPS: readonly WeaponGroup[] = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS];
+
+/** ML Kit is a native module (platform/text-recognition.web.ts is a stub), so
+ *  the web preview shows the manual form only. */
+const SCAN_SUPPORTED = Platform.OS !== 'web';
+
+/** Card-scan progress for the licence form. `error.reason` maps 1:1 to a
+ *  `firearms.scan*` string, so the screen never composes a message. */
+type ScanState =
+  | { status: 'idle' }
+  | { status: 'busy' }
+  | { status: 'error'; reason: 'denied' | 'failed' | 'unsupported' | 'nothing' }
+  | { status: 'done'; count: number; parsed: ParsedLicenseCard };
 
 const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
@@ -65,6 +87,12 @@ export default function FirearmDetailScreen() {
   const [validUntil, setValidUntil] = useState('');
   const [conditions, setConditions] = useState('');
   const [authority, setAuthority] = useState('');
+
+  const [scan, setScan] = useState<ScanState>({ status: 'idle' });
+  const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
+  const [applyFirearmDetails, setApplyFirearmDetails] = useState(false);
+  const [storeScanInVault, setStoreScanInVault] = useState(false);
+  const [vaultDenied, setVaultDenied] = useState(false);
 
   const [showLogEvent, setShowLogEvent] = useState(false);
   const [eventKind, setEventKind] = useState('');
@@ -109,6 +137,74 @@ export default function FirearmDetailScreen() {
     refresh();
   }
 
+  /**
+   * Pick, recognise, parse — then pre-fill. Nothing reaches the database
+   * here: the parse only fills the form's inputs, which the user edits and
+   * confirms with the existing Save button (plan.md v2: "never save without
+   * confirmation").
+   */
+  async function onScanCard(source: ScanSource) {
+    setScan({ status: 'busy' });
+    setVaultDenied(false);
+    const previous = scannedImageUri;
+    const result = await scanLicenseCard(source);
+    if (previous) void deleteScannedImage(previous);
+    setScannedImageUri(null);
+
+    if (result.status === 'cancelled') return setScan({ status: 'idle' });
+    if (result.status !== 'scanned') return setScan({ status: 'error', reason: result.status });
+
+    const count = countRecognizedFields(result.parsed);
+    if (count === 0) {
+      void deleteScannedImage(result.imageUri);
+      return setScan({ status: 'error', reason: 'nothing' });
+    }
+
+    const next = licenseFormValues(result.parsed, {
+      licenseNumber,
+      purpose,
+      decidedOn,
+      validUntil,
+      conditions,
+      authority,
+    });
+    setLicenseNumber(next.licenseNumber);
+    setPurpose(next.purpose);
+    setDecidedOn(next.decidedOn);
+    setValidUntil(next.validUntil);
+    setConditions(next.conditions);
+    setAuthority(next.authority);
+    setScannedImageUri(result.imageUri);
+    setScan({ status: 'done', count, parsed: result.parsed });
+  }
+
+  function resetScan() {
+    setScan({ status: 'idle' });
+    setScannedImageUri(null);
+    setApplyFirearmDetails(false);
+    setStoreScanInVault(false);
+  }
+
+  /** The scanned image is the most sensitive thing the app has seen, so it
+   *  leaves the picker's cache the moment the user's decision about it is
+   *  known — encrypted into the vault, or deleted. */
+  async function settleScannedImage() {
+    const uri = scannedImageUri;
+    if (!uri) return;
+    if (storeScanInVault) {
+      // A refused gate loses the copy rather than leaving the card's photo
+      // sitting in the picker's cache: the user can scan again.
+      const access = await requestVaultAccess(t('vault.gateTitle'));
+      if (access.granted) {
+        await addPhotoDocument(uri, 'license', licenseNumber.trim() || t('firearms.licenseTitle'));
+      } else {
+        setVaultDenied(true);
+      }
+    }
+    await deleteScannedImage(uri);
+    setScannedImageUri(null);
+  }
+
   function onAddLicense() {
     if (!db) return;
     const license = addLicense(db, {
@@ -126,6 +222,20 @@ export default function FirearmDetailScreen() {
       `${firearm!.make} ${firearm!.model}`,
       notifications,
     );
+
+    // The card also carries the firearm's own identity; applying it is the
+    // user's separate, opt-in confirmation.
+    if (applyFirearmDetails && scan.status === 'done') {
+      const { make, model, caliber, vapenId } = scan.parsed;
+      updateFirearm(db, firearm!.id, {
+        ...(make ? { make } : {}),
+        ...(model ? { model } : {}),
+        ...(caliber ? { caliber } : {}),
+        ...(vapenId ? { vapenId } : {}),
+      });
+    }
+    void settleScannedImage();
+
     setLicenseNumber('');
     setPurpose('');
     setDecidedOn('');
@@ -133,6 +243,7 @@ export default function FirearmDetailScreen() {
     setConditions('');
     setAuthority('');
     setShowAddLicense(false);
+    resetScan();
     refresh();
   }
 
@@ -328,6 +439,73 @@ export default function FirearmDetailScreen() {
         )}
         {showAddLicense ? (
           <>
+            {SCAN_SUPPORTED ? (
+              <>
+                <ThemedText type="smallBold">{t('firearms.scanTitle')}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('firearms.scanHint')}
+                </ThemedText>
+                <PrimaryButton
+                  label={t('firearms.scanFromCamera')}
+                  onPress={() => void onScanCard('camera')}
+                  disabled={scan.status === 'busy'}
+                  testID="scan-card-camera"
+                />
+                <PrimaryButton
+                  label={t('firearms.scanFromLibrary')}
+                  onPress={() => void onScanCard('library')}
+                  disabled={scan.status === 'busy'}
+                  testID="scan-card-library"
+                />
+                {scan.status === 'busy' ? (
+                  <ThemedText type="small" themeColor="textSecondary" testID="scan-busy">
+                    {t('firearms.scanBusy')}
+                  </ThemedText>
+                ) : null}
+                {scan.status === 'error' ? (
+                  <ThemedText type="small" themeColor="danger" testID="scan-error">
+                    {t(`firearms.scanError${capitalize(scan.reason)}`)}
+                  </ThemedText>
+                ) : null}
+                {scan.status === 'done' ? (
+                  <>
+                    <ThemedText type="small" testID="scan-result">
+                      {t('firearms.scanRecognized', { recognized: scan.count })}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('firearms.scanCheckNotice')}
+                    </ThemedText>
+                    {scanFirearmSummary(scan.parsed) ? (
+                      <View style={styles.switchRow}>
+                        <ThemedText type="small" testID="scan-firearm-summary">
+                          {t('firearms.scanApplyFirearm', {
+                            details: scanFirearmSummary(scan.parsed),
+                          })}
+                        </ThemedText>
+                        <Switch
+                          value={applyFirearmDetails}
+                          onValueChange={setApplyFirearmDetails}
+                          testID="scan-apply-firearm"
+                        />
+                      </View>
+                    ) : null}
+                    <View style={styles.switchRow}>
+                      <ThemedText type="small">{t('firearms.scanStoreInVault')}</ThemedText>
+                      <Switch
+                        value={storeScanInVault}
+                        onValueChange={setStoreScanInVault}
+                        testID="scan-store-in-vault"
+                      />
+                    </View>
+                  </>
+                ) : null}
+                {vaultDenied ? (
+                  <ThemedText type="small" themeColor="danger" testID="scan-vault-denied">
+                    {t('firearms.scanVaultDenied')}
+                  </ThemedText>
+                ) : null}
+              </>
+            ) : null}
             <ThemedText type="small">{t('firearms.licenseNumber')}</ThemedText>
             <TextInput
               value={licenseNumber}
@@ -446,6 +624,12 @@ export default function FirearmDetailScreen() {
       </Card>
     </Screen>
   );
+}
+
+/** The firearm identity the card carried, for the "also update the firearm"
+ *  row. Empty when the card gave none — the row is then not offered. */
+function scanFirearmSummary(parsed: ParsedLicenseCard): string {
+  return [parsed.make, parsed.model, parsed.caliber, parsed.vapenId].filter(Boolean).join(' · ');
 }
 
 function capitalize(value: string): string {
