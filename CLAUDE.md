@@ -152,7 +152,23 @@ exec jest --passWithNoTests)`), run from the repo root. `pnpm i18n:check`
   the initial route, and the flow fails on a screen that vanished under
   it. Also, `extendedWaitUntil` does not scroll — wait for an element that
   stays on screen (e.g. `session-total`), or use `scrollUntilVisible`.
-- Backend (`backend/`, hello-world only, never deployed by an agent):
-  `cd backend && pnpm test` runs its own Cloudflare Workers vitest
-  suite; not wired into the root `pnpm check` (out of scope until it
-  ships real endpoints).
+- Backend (`backend/`, never deployed by an agent — `wrangler deploy` is
+  forbidden): `cd backend && pnpm test` runs its own Cloudflare Workers
+  vitest suite; not wired into the root `pnpm check`. On this sandbox the
+  Workers pool is slow enough that `test/sync.spec.ts`'s 205-row pagination
+  case can exceed vitest's default 5 s timeout — a sandbox artifact, not a
+  regression; re-run with `npx vitest run test/sync.spec.ts
+--testTimeout=60000` to confirm.
+- **Sync client end-to-end** (`backend/test/sync-client.spec.ts`, added in
+  `feat/sync-app`): drives the real `runSyncCycle` from
+  `shared/src/sync-client` and the real HTTP transport against the real
+  Worker _in-process_ on the Workers pool — real D1, R2 and better-auth,
+  `app.fetch` as the transport, two in-memory `LocalStore` "devices" on one
+  account. No `wrangler dev` process, no network, nothing deployed. Run it
+  with `cd backend && npx vitest run test/sync-client.spec.ts
+--testTimeout=60000`. This is the cheapest way to exercise a sync change
+  end to end; prefer it over the emulator.
+- Sync backend URL for a device build: `EXPO_PUBLIC_API_BASE_URL`, else
+  `app.json`'s `expo.extra.apiBaseUrl` (placeholder
+  `https://api.shotledger.app`). Never a secret — the session token lives in
+  SecureStore, never in the tree or the DB.
