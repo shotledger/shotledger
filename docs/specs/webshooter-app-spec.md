@@ -11,7 +11,7 @@
 ## WS1 — series-total-override read path (`shared/src/scoring/{totals,stats}.ts`)
 
 Per integration spec §1/§A.4: a WebShooter-imported series carries a
-*total* with no per-shot detail (`series.is_total_override=1`,
+_total_ with no per-shot detail (`series.is_total_override=1`,
 `total_override_tenths`, `total_override_shot_count`; no child `shots`
 rows). Every v1 read path that summed `shots` to derive a series total
 must branch. Both scoring modules gained an optional
@@ -22,12 +22,14 @@ either place, so a caller (the DB query layer, later) constructs one
 object per series regardless of which module consumes it.
 
 **Series-level metrics — include, using the stored total:**
+
 - `totals.ts`: `sessionResults` (beforeFinal/final/total),
   `seriesAverageTenths`.
 - `stats.ts`: `bestWorstSeries`.
 
 **Volume metrics — include, using the stored shot count (not
 `shots.length`, which is always 0):**
+
 - `totals.ts`: `shotVolume`.
 - `stats.ts`: `volumeShotCount`.
 
@@ -83,6 +85,7 @@ personal data from `~/.cache/webshooter`):
   concurrent photo-scoring agent's edits to the same file.
 
 ## Auth model (PR #19 comment, 2026-09-01 — supersedes integration spec
+
 §A.10's "the token is entered by the user" framing with the concrete
 three-tier flow)
 

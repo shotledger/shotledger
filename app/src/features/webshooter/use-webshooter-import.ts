@@ -5,7 +5,10 @@
 // happens before the review step's confirm button, per §A.1's own
 // "Done when" criterion.
 import { useCallback, useState } from 'react';
-import type { Competition, ResultRow } from '@shotledger/shared/src/integrations/webshooter/api/schemas';
+import type {
+  Competition,
+  ResultRow,
+} from '@shotledger/shared/src/integrations/webshooter/api/schemas';
 
 import { db } from '@/db/client';
 import {
@@ -35,7 +38,10 @@ export function useWebShooterCompetitions() {
         list
           .slice()
           .sort((a, b) => b.date.localeCompare(a.date))
-          .map((c) => ({ ...c, alreadyImportable: resolveDisciplineForImport(c.results_type) !== null })),
+          .map((c) => ({
+            ...c,
+            alreadyImportable: resolveDisciplineForImport(c.results_type) !== null,
+          })),
       );
     } catch {
       setError('fetchFailed');
@@ -57,24 +63,33 @@ export function useWebShooterReview(competitionId: number) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (options: { forceRefresh?: boolean } = {}) => {
-    if (!db) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = getWebShooterClient();
-      const [competition, results] = await Promise.all([
-        client.getCompetition(competitionId, options),
-        client.getResults(competitionId, options),
-      ]);
-      const info = { name: competition.name, date: competition.date, resultsType: competition.results_type };
-      setCandidates(results.map((row) => ({ row, candidate: classifyResultRow(db!, row, info) })));
-    } catch {
-      setError('fetchFailed');
-    } finally {
-      setLoading(false);
-    }
-  }, [competitionId]);
+  const load = useCallback(
+    async (options: { forceRefresh?: boolean } = {}) => {
+      if (!db) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const client = getWebShooterClient();
+        const [competition, results] = await Promise.all([
+          client.getCompetition(competitionId, options),
+          client.getResults(competitionId, options),
+        ]);
+        const info = {
+          name: competition.name,
+          date: competition.date,
+          resultsType: competition.results_type,
+        };
+        setCandidates(
+          results.map((row) => ({ row, candidate: classifyResultRow(db!, row, info) })),
+        );
+      } catch {
+        setError('fetchFailed');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [competitionId],
+  );
 
   /**
    * Confirms one candidate's import (§A.1: per-row confirm, never bulk

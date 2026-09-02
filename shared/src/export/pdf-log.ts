@@ -47,7 +47,10 @@ export interface PdfLogSummary {
 }
 
 /** Builds the shooting-log HTML string. Pure — no I/O, no RN. */
-export function buildShootingLogHtml(summary: PdfLogSummary, entries: readonly PdfLogEntry[]): string {
+export function buildShootingLogHtml(
+  summary: PdfLogSummary,
+  entries: readonly PdfLogEntry[],
+): string {
   const rows = entries
     .map(
       (entry) => `

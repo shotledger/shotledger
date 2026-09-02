@@ -42,7 +42,10 @@
         {
           "calendarPermission": "Allow $(PRODUCT_NAME) to add your WebShooter competition starts to your calendar."
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-secure-store",
+      "./plugins/withVaultBackupExclusion"
     ],
     "experiments": {
       "typedRoutes": true,

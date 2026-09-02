@@ -2,8 +2,21 @@
 // source of truth; they are validated against the zod schemas at module load,
 // so a malformed data file fails at startup rather than at scoring time.
 import genericRings from './definitions/generic-rings.json';
+// ISSF ships events, not vapengrupper (§6.4a) — every definition below has
+// weaponGroups: [] rather than a new "issf group" concept; see
+// docs/reference/issf-rules.md.
+import issfAirPistolDiscipline from './definitions/issf-air-pistol.json';
+import issfFreePistolDiscipline from './definitions/issf-free-pistol.json';
+import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.json';
+import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
+import issfStandardPistolDiscipline from './definitions/issf-standard-pistol.json';
 import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
+import issfAirPistolProgram from './programs/issf-air-pistol.json';
+import issfFreePistolProgram from './programs/issf-free-pistol.json';
+import issfRapidFirePistolProgram from './programs/issf-rapid-fire-pistol.json';
+import issfSportPistolProgram from './programs/issf-sport-pistol.json';
+import issfStandardPistolProgram from './programs/issf-standard-pistol.json';
 import spsfMilsnabbProgram from './programs/spsf-milsnabb.json';
 import spsfPrecisionProgram from './programs/spsf-precision.json';
 import { GENERIC_SHOOTER_CLASSES, SPSF_SHOOTER_CLASSES, type ShooterClass } from './classes';
@@ -18,11 +31,22 @@ export const DISCIPLINES: readonly Discipline[] = [
   spsfPrecisionDiscipline,
   spsfMilsnabbDiscipline,
   genericRings,
+  issfAirPistolDiscipline,
+  issfSportPistolDiscipline,
+  issfStandardPistolDiscipline,
+  issfRapidFirePistolDiscipline,
+  issfFreePistolDiscipline,
 ].map((raw) => disciplineSchema.parse(raw));
 
-export const PROGRAMS: readonly Program[] = [spsfPrecisionProgram, spsfMilsnabbProgram].map((raw) =>
-  programSchema.parse(raw),
-);
+export const PROGRAMS: readonly Program[] = [
+  spsfPrecisionProgram,
+  spsfMilsnabbProgram,
+  issfAirPistolProgram,
+  issfSportPistolProgram,
+  issfStandardPistolProgram,
+  issfRapidFirePistolProgram,
+  issfFreePistolProgram,
+].map((raw) => programSchema.parse(raw));
 
 /** One series the UI should pre-create for a fixed-format program (§6.3). */
 export interface SeriesSkeletonEntry {

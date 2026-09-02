@@ -1,0 +1,13 @@
+{
+  "id": "issf-air-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Luftpistol",
+    "en": "10m Air Pistol"
+  },
+  "targetFace": "issf-10m-air-pistol",
+  "defaultSeriesLength": 10,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}

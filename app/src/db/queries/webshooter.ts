@@ -60,7 +60,8 @@ export function resolveClassMapping(db: Database, classname: string): ClassnameM
   const patternResult = mapClassname(classname);
   if (patternResult.ok) return patternResult;
   const cached = lookupCachedClassMapping(db, classname);
-  if (cached) return { ok: true, weaponGroup: cached.weaponGroup, shooterClass: cached.shooterClass };
+  if (cached)
+    return { ok: true, weaponGroup: cached.weaponGroup, shooterClass: cached.shooterClass };
   return patternResult;
 }
 
@@ -217,7 +218,9 @@ export function importResultRow(
   const externalRef = buildExternalRef(row.competitions_id, row.signups_id);
   const classMapping = resolveClassMapping(db, row.weaponclass.classname);
   if (!classMapping.ok) {
-    throw new Error(`Unresolved WebShooter classname '${row.weaponclass.classname}': ${classMapping.reason}`);
+    throw new Error(
+      `Unresolved WebShooter classname '${row.weaponclass.classname}': ${classMapping.reason}`,
+    );
   }
   const official = mapOfficialResult(row);
 
@@ -249,11 +252,7 @@ export function importResultRow(
       webshooterCompetitionId: String(row.competitions_id),
       officialPlacement: merged.officialPlacement as number | null,
       officialStandardmedalj: merged.officialStandardmedalj as
-        | 'none'
-        | 'brons'
-        | 'silver'
-        | 'guld'
-        | null,
+        'none' | 'brons' | 'silver' | 'guld' | null,
       competitionName: merged.competitionName as string,
       // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
       // session's startedAt is that field's DB column, always overwritten

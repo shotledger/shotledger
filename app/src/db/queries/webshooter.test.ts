@@ -10,11 +10,7 @@ import type { Database } from '../types';
 import { createSession, getSession, updateSession } from './sessions';
 import { listSeriesForSession } from './series';
 import { getFirearm, createFirearm } from './firearms';
-import {
-  cacheManualClassMapping,
-  classifyResultRow,
-  importResultRow,
-} from './webshooter';
+import { cacheManualClassMapping, classifyResultRow, importResultRow } from './webshooter';
 
 let db: Database;
 
@@ -24,7 +20,9 @@ beforeEach(() => {
 
 const COMPETITION = { name: 'KM Precision', date: '2026-05-10', resultsType: 'precision' as const };
 
-function station(overrides: Partial<ResultRow['results'][number]> = {}): ResultRow['results'][number] {
+function station(
+  overrides: Partial<ResultRow['results'][number]> = {},
+): ResultRow['results'][number] {
   return {
     id: 1,
     signups_id: 555,
@@ -93,15 +91,30 @@ describe('classifyResultRow', () => {
 
   it('is not-importable when the classname cannot be mapped and has no cached override', () => {
     const row = resultRow({
-      weaponclass: { id: 9, weapongroups_id: 1, classname: 'OptR', championship: 0, classname_general: 'A' },
+      weaponclass: {
+        id: 9,
+        weapongroups_id: 1,
+        classname: 'OptR',
+        championship: 0,
+        classname_general: 'A',
+      },
     });
     const candidate = classifyResultRow(db, row, COMPETITION);
-    expect(candidate.verdict).toEqual({ kind: 'not-importable', reason: 'class-mapping-unresolved' });
+    expect(candidate.verdict).toEqual({
+      kind: 'not-importable',
+      reason: 'class-mapping-unresolved',
+    });
   });
 
   it('resolves via a cached manual mapping once one is confirmed (§A.8)', () => {
     const row = resultRow({
-      weaponclass: { id: 9, weapongroups_id: 1, classname: 'OptR', championship: 0, classname_general: 'A' },
+      weaponclass: {
+        id: 9,
+        weapongroups_id: 1,
+        classname: 'OptR',
+        championship: 0,
+        classname_general: 'A',
+      },
     });
     cacheManualClassMapping(db, 'OptR', { weaponGroup: 'spsf:A-opt', shooterClass: 'R' });
     const candidate = classifyResultRow(db, row, COMPETITION);

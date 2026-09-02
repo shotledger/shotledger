@@ -27,16 +27,19 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
-  const { selection: complianceSelection, profile, setSelection: setComplianceSelection } =
-    useComplianceProfile();
+  const {
+    selection: complianceSelection,
+    profile,
+    setSelection: setComplianceSelection,
+  } = useComplianceProfile();
   const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
   const webshooter = useWebShooterConnection();
   const [wsUsername, setWsUsername] = useState('');
   const [wsPassword, setWsPassword] = useState('');
   const [wsToken, setWsToken] = useState('');
-  const [devMockEnabled, setDevMockEnabled] = useState(
-    () => (db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false),
+  const [devMockEnabled, setDevMockEnabled] = useState(() =>
+    db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false,
   );
 
   function onToggleDevMock(next: boolean) {
@@ -145,6 +148,15 @@ export default function SettingsScreen() {
             {t('compliance.unverifiedHint')}
           </ThemedText>
         )}
+      </Card>
+
+      <Card>
+        <ListRow
+          title={t('vault.settingsRowTitle')}
+          subtitle={t('vault.settingsRowSubtitle')}
+          onPress={() => router.push('/vault')}
+          testID="settings-open-vault"
+        />
       </Card>
 
       <Card>

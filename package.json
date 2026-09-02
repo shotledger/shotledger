@@ -1,16 +1,17 @@
 {
   "name": "shotledger",
   "private": true,
-  "packageManager": "pnpm@11.24.0",
+  "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=22"
+    "node": "v26.8.1"
   },
   "scripts": {
     "typecheck": "tsc -b",
+    "typecheck:app": "node scripts/ensure-expo-env.mjs && cd app && pnpm exec tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --check .",
     "i18n:check": "node scripts/i18n-check.mjs",
-    "check": "pnpm typecheck && pnpm i18n:check && pnpm lint && vitest run && (cd app && pnpm exec jest --passWithNoTests)",
+    "check": "pnpm typecheck && pnpm typecheck:app && pnpm i18n:check && pnpm lint && pnpm format && vitest run && (cd app && pnpm exec jest --passWithNoTests)",
     "coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "mutation:schema": "node scripts/mutate-schema.mjs",
@@ -18,19 +19,19 @@
     "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
-    "@stryker-mutator/core": "^10.0.0",
-    "@stryker-mutator/vitest-runner": "^10.0.0",
-    "@vitest/coverage-v8": "^3.2.7",
-    "eslint": "^9.39.5",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-native": "^5.0.0",
-    "fast-check": "^4.9.0",
-    "globals": "^17.12.0",
-    "prettier": "^3.6.2",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.46.4",
-    "vitest": "^3.2.4"
+    "@eslint/js": "9.39.5",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@vitest/coverage-v8": "3.2.7",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-native": "5.0.0",
+    "fast-check": "4.9.0",
+    "globals": "17.12.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "3.2.7"
   }
 }

@@ -145,7 +145,9 @@ export default function StatsScreen() {
                 setPickerOpen(null);
                 if (!selected) return;
                 const value = toDateOnly(selected);
-                setFilters((f) => (pickerOpen === 'from' ? { ...f, customFrom: value } : { ...f, customTo: value }));
+                setFilters((f) =>
+                  pickerOpen === 'from' ? { ...f, customFrom: value } : { ...f, customTo: value },
+                );
               }}
             />
           )}
@@ -159,7 +161,9 @@ export default function StatsScreen() {
           ...data.disciplineIds.map((id) => ({ value: id, label: disciplineLabel(t, id) })),
         ]}
         value={filters.disciplineId ?? ALL}
-        onChange={(value) => setFilters((f) => ({ ...f, disciplineId: value === ALL ? null : value }))}
+        onChange={(value) =>
+          setFilters((f) => ({ ...f, disciplineId: value === ALL ? null : value }))
+        }
       />
 
       <OptionPicker
@@ -169,7 +173,9 @@ export default function StatsScreen() {
           ...data.shooterClasses.map((code) => ({ value: code, label: formatShooterClass(code) })),
         ]}
         value={filters.shooterClass ?? ALL}
-        onChange={(value) => setFilters((f) => ({ ...f, shooterClass: value === ALL ? null : value }))}
+        onChange={(value) =>
+          setFilters((f) => ({ ...f, shooterClass: value === ALL ? null : value }))
+        }
       />
 
       <OptionPicker
@@ -188,15 +194,35 @@ export default function StatsScreen() {
         <>
           <View style={styles.grid}>
             <View style={styles.gridRow}>
-              <StatTile testID="stat-total-shots" label={t('stats.totalShots')} value={String(data.totalShots)} />
-              <StatTile testID="stat-sessions" label={t('stats.sessions')} value={String(data.sessionCount)} />
+              <StatTile
+                testID="stat-total-shots"
+                label={t('stats.totalShots')}
+                value={String(data.totalShots)}
+              />
+              <StatTile
+                testID="stat-sessions"
+                label={t('stats.sessions')}
+                value={String(data.sessionCount)}
+              />
             </View>
             <View style={styles.gridRow}>
-              <StatTile testID="stat-mean" label={t('stats.mean')} value={formatMean(data.meanTenths)} />
-              <StatTile testID="stat-sd" label={t('stats.standardDeviation')} value={formatSd(data.sdTenths)} />
+              <StatTile
+                testID="stat-mean"
+                label={t('stats.mean')}
+                value={formatMean(data.meanTenths)}
+              />
+              <StatTile
+                testID="stat-sd"
+                label={t('stats.standardDeviation')}
+                value={formatSd(data.sdTenths)}
+              />
             </View>
             <View style={styles.gridRow}>
-              <StatTile testID="stat-x-percent" label={t('stats.xPercent')} value={formatPercent(data.xRatePercent)} />
+              <StatTile
+                testID="stat-x-percent"
+                label={t('stats.xPercent')}
+                value={formatPercent(data.xRatePercent)}
+              />
               <StatTile
                 testID="stat-guldserie-count"
                 label={t('stats.guldserieCount')}
@@ -225,7 +251,11 @@ export default function StatsScreen() {
             )}
           </Card>
 
-          <PrimaryButton testID="stats-export-pdf" label={t('compliance.exportPdf')} onPress={onExportPdf} />
+          <PrimaryButton
+            testID="stats-export-pdf"
+            label={t('compliance.exportPdf')}
+            onPress={onExportPdf}
+          />
         </>
       )}
     </Screen>

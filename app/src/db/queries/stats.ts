@@ -39,7 +39,9 @@ export function listAllStatsSeries(db: Database): StatsSeries[] {
       // WS1 (docs/specs/webshooter-app-spec.md): an imported WebShooter
       // series has no shot rows, only a stored total/shot-count.
       totalOverride:
-        row.isTotalOverride === 1 && row.totalOverrideTenths !== null && row.totalOverrideShotCount !== null
+        row.isTotalOverride === 1 &&
+        row.totalOverrideTenths !== null &&
+        row.totalOverrideShotCount !== null
           ? { tenths: row.totalOverrideTenths, shotCount: row.totalOverrideShotCount }
           : null,
     });

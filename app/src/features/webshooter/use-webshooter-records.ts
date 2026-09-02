@@ -2,7 +2,11 @@
 // over local data (imported + manual), no network (§B.4).
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { personalBests, bestNSeries, bestSession } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
+import {
+  personalBests,
+  bestNSeries,
+  bestSession,
+} from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import {
   yearStats,
   yearsWithData,
@@ -12,7 +16,10 @@ import {
 } from '@shotledger/shared/src/integrations/webshooter/stats/yearOverYear';
 
 import { db } from '@/db/client';
-import { listCompetitionResultsForStats, listFreeformSessionsForPb } from '@/db/queries/webshooter-stats';
+import {
+  listCompetitionResultsForStats,
+  listFreeformSessionsForPb,
+} from '@/db/queries/webshooter-stats';
 
 export interface OfficialPbRow {
   groupKey: string;
@@ -50,7 +57,9 @@ function computeRecords(): WebShooterRecordsData {
   const officialPbs: OfficialPbRow[] = [...pbMap.entries()].map(([groupKey, group]) => ({
     groupKey,
     allTimeTenths: group.allTime?.beforeFinalTenths ?? null,
-    yearTenths: new Map([...group.byYear.entries()].map(([year, r]) => [year, r.beforeFinalTenths])),
+    yearTenths: new Map(
+      [...group.byYear.entries()].map(([year, r]) => [year, r.beforeFinalTenths]),
+    ),
   }));
 
   const best5 = bestNSeries(freeformSessions, 5);

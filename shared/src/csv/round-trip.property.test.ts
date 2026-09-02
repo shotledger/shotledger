@@ -68,33 +68,36 @@ function scoringFingerprint(s: SessionExport) {
 describe('CSV round trip (property)', () => {
   it('preserves every scoring-relevant field through export -> parse -> group', () => {
     fc.assert(
-      fc.property(fc.uniqueArray(sessionArb, { selector: (s) => s.id, maxLength: 5 }), (sessions) => {
-        const csv = exportSessionsToCsv(sessions);
-        const { entries, errors: parseErrors } = parseImportCsv(csv);
-        expect(parseErrors).toEqual([]);
-        const { groups, errors: groupErrors } = groupRowsIntoSessions(entries);
-        expect(groupErrors).toEqual([]);
+      fc.property(
+        fc.uniqueArray(sessionArb, { selector: (s) => s.id, maxLength: 5 }),
+        (sessions) => {
+          const csv = exportSessionsToCsv(sessions);
+          const { entries, errors: parseErrors } = parseImportCsv(csv);
+          expect(parseErrors).toEqual([]);
+          const { groups, errors: groupErrors } = groupRowsIntoSessions(entries);
+          expect(groupErrors).toEqual([]);
 
-        const byId = new Map(groups.map((g) => [g.sessionId, g]));
-        expect(byId.size).toBe(sessions.length);
+          const byId = new Map(groups.map((g) => [g.sessionId, g]));
+          expect(byId.size).toBe(sessions.length);
 
-        for (const original of sessions) {
-          const imported = byId.get(original.id)!;
-          const originalFp = scoringFingerprint(original);
-          const importedFp = scoringFingerprint({
-            ...original,
-            disciplineId: imported.disciplineId,
-            programId: imported.programId,
-            competitionLevel: imported.competitionLevel,
-            weaponGroup: imported.weaponGroup,
-            shooterClass: imported.shooterClass,
-            decimalScoring: imported.decimalScoring,
-            extraRounds: imported.extraRounds,
-            series: imported.series,
-          });
-          expect(importedFp).toEqual(originalFp);
-        }
-      }),
+          for (const original of sessions) {
+            const imported = byId.get(original.id)!;
+            const originalFp = scoringFingerprint(original);
+            const importedFp = scoringFingerprint({
+              ...original,
+              disciplineId: imported.disciplineId,
+              programId: imported.programId,
+              competitionLevel: imported.competitionLevel,
+              weaponGroup: imported.weaponGroup,
+              shooterClass: imported.shooterClass,
+              decimalScoring: imported.decimalScoring,
+              extraRounds: imported.extraRounds,
+              series: imported.series,
+            });
+            expect(importedFp).toEqual(originalFp);
+          }
+        },
+      ),
       { numRuns: 200 },
     );
   });

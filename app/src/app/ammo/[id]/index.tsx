@@ -102,7 +102,12 @@ export default function AmmoLotDetailScreen() {
         <ThemedText type="smallBold">{t('ammo.caliber')}</ThemedText>
         <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
-        <TextInput value={quantity} onChangeText={setQuantity} keyboardType="number-pad" style={inputStyle} />
+        <TextInput
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
+          style={inputStyle}
+        />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
         <TextInput value={purchasedOn} onChangeText={setPurchasedOn} style={inputStyle} />
         <View style={styles.switchRow}>
@@ -153,9 +158,19 @@ export default function AmmoLotDetailScreen() {
           <ThemedText type="small">{t('ammo.brass')}</ThemedText>
           <TextInput value={brass} onChangeText={setBrass} style={inputStyle} />
           <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
-          <TextInput value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" style={inputStyle} />
+          <TextInput
+            value={colMm}
+            onChangeText={setColMm}
+            keyboardType="decimal-pad"
+            style={inputStyle}
+          />
           <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
-          <TextInput value={crimpMm} onChangeText={setCrimpMm} keyboardType="decimal-pad" style={inputStyle} />
+          <TextInput
+            value={crimpMm}
+            onChangeText={setCrimpMm}
+            keyboardType="decimal-pad"
+            style={inputStyle}
+          />
         </Card>
       )}
 

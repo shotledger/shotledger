@@ -42,5 +42,6 @@
     "rootDir": "."
   },
   "exclude": ["test", "dist"],
-  "include": ["worker-configuration.d.ts", "src/**/*.ts"]
+  "include": ["worker-configuration.d.ts", "src/**/*.ts"],
+  "references": [{ "path": "../shared" }]
 }

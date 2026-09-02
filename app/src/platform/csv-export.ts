@@ -18,7 +18,10 @@ export async function shareCsv(csvText: string, filename: string): Promise<boole
     file.write(csvText);
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) return false;
-    await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' });
+    await Sharing.shareAsync(file.uri, {
+      mimeType: 'text/csv',
+      UTI: 'public.comma-separated-values-text',
+    });
     return true;
   } catch {
     return false;

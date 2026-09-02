@@ -120,7 +120,10 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       // stand behind it; the official standardmedalj badge (§A.5) is the
       // authoritative medal for such a session, shown separately.
       isGuldserie:
-        !isTotalOverride && threshold !== null && !isSighter && tenthsToScore(totalTenths) >= threshold,
+        !isTotalOverride &&
+        threshold !== null &&
+        !isSighter &&
+        tenthsToScore(totalTenths) >= threshold,
       timeLimitSeconds: skeleton[row.position - 1] ?? null,
       isTotalOverride,
       totalOverrideShotCount: isTotalOverride ? row.totalOverrideShotCount : null,

@@ -1,10 +1,11 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { MigrationGate } from '@/db/migration-gate';
+import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
 import { AppSettingsProvider } from '@/state/app-settings';
 
@@ -13,11 +14,22 @@ SplashScreen.preventAutoHideAsync();
 // Hosts the (tabs) group inside a Stack alongside modal-stacked session
 // routes and dev routes — fixes the M1-reported gap where non-tab routes
 // had no host (the root layout rendered only the tab navigator).
+//
+// headerStyle/headerTintColor come from the app's theme tokens (not React
+// Navigation's own light/dark palette) so modal headers stay in the dark
+// "Purple Rain" theme instead of defaulting to white — flagged at theme time.
 function RootStack() {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: theme.backgroundElement },
+        headerTintColor: theme.text,
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="session/new"
@@ -30,6 +42,10 @@ function RootStack() {
       <Stack.Screen
         name="session/[id]/series/[pos]"
         options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
+      />
+      <Stack.Screen
+        name="session/[id]/scan"
+        options={{ presentation: 'modal', headerShown: true, title: t('photoScoring.title') }}
       />
       <Stack.Screen
         name="firearms/new"
@@ -51,22 +67,66 @@ function RootStack() {
         name="ammo/[id]/index"
         options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
       />
+      <Stack.Screen
+        name="timer"
+        options={{ presentation: 'modal', headerShown: true, title: t('timer.title') }}
+      />
+      <Stack.Screen
+        name="vault/index"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
+      />
+      <Stack.Screen
+        name="vault/add"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.addTitle') }}
+      />
+      <Stack.Screen
+        name="vault/[id]"
+        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
+      />
       <Stack.Screen name="dev" />
     </Stack>
   );
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+// Wraps RootStack with a React Navigation Theme built from the app's own
+// theme tokens (light or "Purple Rain" dark), keyed by the app's theme
+// setting rather than the raw device scheme — resolved by useResolvedThemeName.
+function ThemedApp() {
+  const theme = useTheme();
+  const resolvedThemeName = useResolvedThemeName();
+  const base = resolvedThemeName === 'dark' ? DarkTheme : DefaultTheme;
+
+  const navigationTheme = useMemo<Theme>(
+    () => ({
+      ...base,
+      dark: resolvedThemeName === 'dark',
+      colors: {
+        ...base.colors,
+        primary: theme.primary,
+        background: theme.background,
+        card: theme.backgroundElement,
+        text: theme.text,
+        border: theme.border,
+        notification: theme.danger,
+      },
+    }),
+    [base, resolvedThemeName, theme],
+  );
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <MigrationGate>
-        <AppSettingsProvider>
-          <AnimatedSplashOverlay />
-          <RootStack />
-        </AppSettingsProvider>
-      </MigrationGate>
+    <ThemeProvider value={navigationTheme}>
+      <AnimatedSplashOverlay />
+      <RootStack />
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <MigrationGate>
+      <AppSettingsProvider>
+        <ThemedApp />
+      </AppSettingsProvider>
+    </MigrationGate>
   );
 }

@@ -3,7 +3,10 @@
 // builds only, opt-in) the dev-mock transport from ./dev-mock.ts. Device→
 // webshooter.se directly — never through any ShotLedger backend (PR #19).
 import { createHttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
-import { createWebShooterClient, type WebShooterClient } from '@shotledger/shared/src/integrations/webshooter/api/client';
+import {
+  createWebShooterClient,
+  type WebShooterClient,
+} from '@shotledger/shared/src/integrations/webshooter/api/client';
 
 import { db } from '@/db/client';
 import { getSetting } from '@/db/queries/settings';

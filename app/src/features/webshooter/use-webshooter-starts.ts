@@ -7,7 +7,10 @@
 import { useCallback, useState } from 'react';
 import { resolveIdentity } from '@shotledger/shared/src/integrations/webshooter/identity';
 import { cardNumbersMatch } from '@shotledger/shared/src/integrations/webshooter/identity';
-import { buildCalendarEvent, type CalendarEvent } from '@shotledger/shared/src/integrations/webshooter/calendar';
+import {
+  buildCalendarEvent,
+  type CalendarEvent,
+} from '@shotledger/shared/src/integrations/webshooter/calendar';
 import type { Patrol, Signup } from '@shotledger/shared/src/integrations/webshooter/api/schemas';
 
 import { db } from '@/db/client';

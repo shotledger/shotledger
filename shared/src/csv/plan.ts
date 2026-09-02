@@ -56,10 +56,7 @@ export function buildDryRunPlan(
       firearmNames.set(group.firearm, index.firearmNames.has(group.firearm) ? 'reuse' : 'create');
     }
     if (group.ammoLot && !ammoLotNames.has(group.ammoLot)) {
-      ammoLotNames.set(
-        group.ammoLot,
-        index.ammoLotNames.has(group.ammoLot) ? 'reuse' : 'create',
-      );
+      ammoLotNames.set(group.ammoLot, index.ammoLotNames.has(group.ammoLot) ? 'reuse' : 'create');
     }
     for (const tag of group.tags) {
       if (!tagNames.has(tag)) {

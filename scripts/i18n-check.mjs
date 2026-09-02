@@ -95,19 +95,27 @@ for (const keyPath of commonKeys) {
 
 const issues = [];
 if (missingInEn.length > 0) {
-  issues.push(`Missing in en.json (present in sv.json):\n${missingInEn.map((k) => `  - ${k}`).join('\n')}`);
+  issues.push(
+    `Missing in en.json (present in sv.json):\n${missingInEn.map((k) => `  - ${k}`).join('\n')}`,
+  );
 }
 if (missingInSv.length > 0) {
-  issues.push(`Missing in sv.json (present in en.json):\n${missingInSv.map((k) => `  - ${k}`).join('\n')}`);
+  issues.push(
+    `Missing in sv.json (present in en.json):\n${missingInSv.map((k) => `  - ${k}`).join('\n')}`,
+  );
 }
 if (unused.length > 0) {
-  issues.push(`Unused keys (not referenced in app/src):\n${unused.map((k) => `  - ${k}`).join('\n')}`);
+  issues.push(
+    `Unused keys (not referenced in app/src):\n${unused.map((k) => `  - ${k}`).join('\n')}`,
+  );
 }
 
 if (issues.length > 0) {
   console.error('i18n-check: FAILED\n');
   console.error(issues.join('\n\n'));
-  console.error(`\ndynamic key prefixes treated as used: ${[...dynamicPrefixes].sort().join(', ') || '(none)'}`);
+  console.error(
+    `\ndynamic key prefixes treated as used: ${[...dynamicPrefixes].sort().join(', ') || '(none)'}`,
+  );
   process.exit(1);
 }
 

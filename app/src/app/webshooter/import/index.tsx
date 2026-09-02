@@ -58,7 +58,10 @@ export default function WebShooterImportBrowseScreen() {
 
       {years.length > 1 && (
         <SegmentedControl
-          options={years.map((y) => ({ value: y, label: y === ALL_YEARS ? t('webshooter.allYears') : y }))}
+          options={years.map((y) => ({
+            value: y,
+            label: y === ALL_YEARS ? t('webshooter.allYears') : y,
+          }))}
           value={year}
           onChange={setYear}
           testID="webshooter-import-year-filter"
@@ -66,7 +69,10 @@ export default function WebShooterImportBrowseScreen() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <EmptyState title={t('webshooter.noCompetitionsTitle')} body={t('webshooter.noCompetitionsBody')} />
+        <EmptyState
+          title={t('webshooter.noCompetitionsTitle')}
+          body={t('webshooter.noCompetitionsBody')}
+        />
       )}
 
       <View style={styles.list}>
