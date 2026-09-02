@@ -6,7 +6,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Platform } from 'react-native';
 
-import { PHOTO_JPEG_QUALITY, PHOTO_MAX_EDGE_PX } from '@shotledger/shared';
+import { parseSyncPhotoUri, PHOTO_JPEG_QUALITY, PHOTO_MAX_EDGE_PX } from '@shotledger/shared';
 
 const SYNC_PHOTO_DIR = 'sync-photos';
 
@@ -20,8 +20,15 @@ export function syncPhotoFile(photoId: string): File {
   return new File(directory(), `${photoId}.jpg`);
 }
 
-/** Absolute URI the UI can hand to <Image>, or null if not downloaded yet. */
-export function localSyncPhotoUri(photoId: string): string | null {
+/**
+ * Turns whatever `series.photo_uri` holds into something the UI can show: a
+ * local path passes through; a `shotledger-photo:` marker resolves to this
+ * device's downloaded copy, or `null` while the queue has not fetched it yet.
+ */
+export function resolveSeriesPhotoUri(photoUri: string | null): string | null {
+  if (photoUri === null) return null;
+  const photoId = parseSyncPhotoUri(photoUri);
+  if (photoId === null) return photoUri;
   if (Platform.OS === 'web') return null;
   const file = syncPhotoFile(photoId);
   return file.exists ? file.uri : null;
