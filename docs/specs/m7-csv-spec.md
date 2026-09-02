@@ -24,6 +24,7 @@ expo-sqlite dependency there). Two boundaries:
   sheet (expo-sharing). This layer is routine app work, not old-coder scope.
 
 ## Column set (extends the documented §6.8 set for the schema as it now
+
 stands — sessions carry program_id/competition_level/is_championship/
 competition_name/weapon_group/shooter_class/extra_rounds; series carry
 is_sighter/is_final; shots carry value_tenths/is_inner_ten)
@@ -168,7 +169,7 @@ Property-based (fast-check, already a devDependency):
 
 20. **Round trip**: for a generated `SessionExport[]` (arbitrary sessions/
     series/shots within schema-legal ranges), `parseCsv(stringifyRows(
-    buildCsvRows(sessions))) ` regrouped and replayed against an
+buildCsvRows(sessions))) ` regrouped and replayed against an
     `ExistingIndex` built from nothing reproduces, per session, the same
     ordered `(valueTenths, isInnerTen)` list per series, the same
     `isSighter`/`isFinal`/`extraRounds`, and the same scoring-input
@@ -223,15 +224,15 @@ not shared — needs expo-sqlite/better-sqlite3):
 
 ## Gauntlet plan (Tier 3, scaled to this repo's existing layers)
 
-| Layer | Command |
-|---|---|
-| Unit + property suite | `pnpm vitest run shared/src/csv` (then full `vitest run`) |
-| Types | `pnpm typecheck` |
-| Lint | `pnpm lint` |
+| Layer                    | Command                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit + property suite    | `pnpm vitest run shared/src/csv` (then full `vitest run`)                                                                                                                                                                                                                                                                                                                                                         |
+| Types                    | `pnpm typecheck`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Lint                     | `pnpm lint`                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Coverage (changed lines) | `pnpm coverage` — repo threshold is 100% on `shared/src/{scoring,disciplines}`; `csv/` isn't in that glob, so changed-line coverage is asserted by eyeballing the vitest coverage table for `shared/src/csv/**` in the same run (100% target, recorded in EVIDENCE) rather than a hard `--fail-under`, since the repo's own coverage gate doesn't cover this directory — noted as a real gap, not silently closed |
-| Mutation | manual — no Stryker config for `csv/`; 5 hand-mutants against `csv-codec.ts`/`plan.ts` (the two riskiest: quoting logic, match-vs-create branching), suite must kill all 5 |
-| App round-trip | `cd app && pnpm exec jest --passWithNoTests` (covers `app/src/db/csv/round-trip.test.ts`) |
-| Real execution | manual: run the round-trip test's fixture through the actual `stringifyRows`/`parseCsv` once outside the test harness (a scratch script) and print byte length + row count, to confirm it isn't only passing inside mocks |
+| Mutation                 | manual — no Stryker config for `csv/`; 5 hand-mutants against `csv-codec.ts`/`plan.ts` (the two riskiest: quoting logic, match-vs-create branching), suite must kill all 5                                                                                                                                                                                                                                        |
+| App round-trip           | `cd app && pnpm exec jest --passWithNoTests` (covers `app/src/db/csv/round-trip.test.ts`)                                                                                                                                                                                                                                                                                                                         |
+| Real execution           | manual: run the round-trip test's fixture through the actual `stringifyRows`/`parseCsv` once outside the test harness (a scratch script) and print byte length + row count, to confirm it isn't only passing inside mocks                                                                                                                                                                                         |
 
 Failure modes considered (Tier 3 failure model):
 

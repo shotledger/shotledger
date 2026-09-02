@@ -33,7 +33,12 @@ export function dryRunImport(db: Database, csvText: string): ImportDryRun {
   const errors = [...parseErrors, ...groupErrors];
 
   const sessionIds = new Set(
-    db.select({ id: sessions.id }).from(sessions).where(isNull(sessions.deletedAt)).all().map((r) => r.id),
+    db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(isNull(sessions.deletedAt))
+      .all()
+      .map((r) => r.id),
   );
   const firearmNames = new Set(
     db
@@ -44,10 +49,20 @@ export function dryRunImport(db: Database, csvText: string): ImportDryRun {
       .map((f) => `${f.make} ${f.model}`),
   );
   const ammoLotNames = new Set(
-    db.select({ label: ammoLots.label }).from(ammoLots).where(isNull(ammoLots.deletedAt)).all().map((a) => a.label),
+    db
+      .select({ label: ammoLots.label })
+      .from(ammoLots)
+      .where(isNull(ammoLots.deletedAt))
+      .all()
+      .map((a) => a.label),
   );
   const tagNames = new Set(
-    db.select({ name: tags.name }).from(tags).where(isNull(tags.deletedAt)).all().map((t) => t.name),
+    db
+      .select({ name: tags.name })
+      .from(tags)
+      .where(isNull(tags.deletedAt))
+      .all()
+      .map((t) => t.name),
   );
 
   const plan = buildDryRunPlan(groups, { sessionIds, firearmNames, ammoLotNames, tagNames });
@@ -110,7 +125,16 @@ export function applyImport(db: Database, groups: readonly SessionImportGroup[])
       const now = nowIso();
       const id = newId();
       tx.insert(firearms)
-        .values({ id, createdAt: now, updatedAt: now, deletedAt: null, make, model, roundCount: 0, roundsSinceMaintenance: 0 })
+        .values({
+          id,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          make,
+          model,
+          roundCount: 0,
+          roundsSinceMaintenance: 0,
+        })
         .run();
       firearmIdByName.set(name, id);
       return id;
@@ -132,7 +156,9 @@ export function applyImport(db: Database, groups: readonly SessionImportGroup[])
       }
       const now = nowIso();
       const id = newId();
-      tx.insert(ammoLots).values({ id, createdAt: now, updatedAt: now, deletedAt: null, label: name }).run();
+      tx.insert(ammoLots)
+        .values({ id, createdAt: now, updatedAt: now, deletedAt: null, label: name })
+        .run();
       ammoLotIdByName.set(name, id);
       return id;
     };
@@ -153,7 +179,11 @@ export function applyImport(db: Database, groups: readonly SessionImportGroup[])
       // A row with this id existing at all — deleted or not — means the id is
       // taken in this DB, so it's an update (and revives a tombstoned row)
       // rather than a fresh insert, which would violate the PK.
-      const existing = tx.select({ id: sessions.id }).from(sessions).where(eq(sessions.id, group.sessionId)).get();
+      const existing = tx
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(eq(sessions.id, group.sessionId))
+        .get();
       const isUpdate = existing != null;
 
       const sessionValues = {

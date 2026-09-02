@@ -56,7 +56,10 @@ export async function scheduleLicenseExpiryNotifications(
   firearmLabel: string,
   notifications: readonly LicenseExpiryNotification[],
 ): Promise<void> {
-  await cancelLicenseExpiryNotifications(licenseId, notifications.map((n) => n.leadDays));
+  await cancelLicenseExpiryNotifications(
+    licenseId,
+    notifications.map((n) => n.leadDays),
+  );
   if (!(await ensurePermission())) return;
   for (const { leadDays, fireAt } of notifications) {
     try {
@@ -81,7 +84,9 @@ export async function cancelLicenseExpiryNotifications(
 ): Promise<void> {
   for (const leadDays of leadDaysList) {
     try {
-      await Notifications.cancelScheduledNotificationAsync(licenseNotificationId(licenseId, leadDays));
+      await Notifications.cancelScheduledNotificationAsync(
+        licenseNotificationId(licenseId, leadDays),
+      );
     } catch {
       // nothing scheduled under that id — fine.
     }

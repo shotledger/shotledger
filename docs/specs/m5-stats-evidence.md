@@ -8,11 +8,11 @@ of `feat/m4-gear`).
 
 ## Behavior → test mapping
 
-| Behavior | Test |
-|---|---|
-| B1–B10 | `shared/src/scoring/standardmedalj.test.ts` → `describe('standardmedaljPoints')` |
-| B11–B12 | `shared/src/scoring/standardmedalj.test.ts` → `describe('standardmedaljForSession')` |
-| B13–B31 | `shared/src/scoring/stats.test.ts`, one `it` per behavior (see file; several behaviors have an extra mutation-hardening test alongside, named descriptively rather than `Bn`) |
+| Behavior | Test                                                                                                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1–B10   | `shared/src/scoring/standardmedalj.test.ts` → `describe('standardmedaljPoints')`                                                                                              |
+| B11–B12  | `shared/src/scoring/standardmedalj.test.ts` → `describe('standardmedaljForSession')`                                                                                          |
+| B13–B31  | `shared/src/scoring/stats.test.ts`, one `it` per behavior (see file; several behaviors have an extra mutation-hardening test alongside, named descriptively rather than `Bn`) |
 
 Every behavior in the spec has a corresponding test with the exact fixture
 values from the spec text; the spec's hand-computed expected values (e.g.
@@ -29,10 +29,12 @@ All commands run from the repo root on branch `feat/m5-stats`.
 ```
 pnpm exec vitest run
 ```
+
 ```
 Test Files  23 passed (23)
      Tests  270 passed (270)
 ```
+
 223 tests from the M4 baseline + 47 new (18 standardmedalj + 29 stats) = 270.
 Zero new failures; zero pre-existing failures (none existed at the M4
 baseline either).
@@ -49,12 +51,14 @@ pnpm lint        # eslint . — clean
 ```
 pnpm coverage
 ```
+
 ```
 Statements   : 100% ( 607/607 )
 Branches     : 100% ( 256/256 )
 Functions    : 100% ( 59/59 )
 Lines        : 100% ( 607/607 )
 ```
+
 Scoped to `shared/src/scoring/**` and `shared/src/disciplines/**`
 (`vitest.config.ts`); `standardmedalj.ts` and `stats.ts` are new files inside
 that glob, so this number is 100% including both.
@@ -64,6 +68,7 @@ that glob, so this number is 100% including both.
 ```
 pnpm mutation
 ```
+
 ```
 All files            98.15%   (581 killed / 2 timeout / 11 survived / 0 no-cov / 0 errors)
  scoring             98.52%   (466 killed / 0 timeout / 7 survived)
@@ -118,9 +123,11 @@ gaps, not just report a static pass.
 ```
 pnpm mutation:schema
 ```
+
 ```
 17/17 mutants killed.
 ```
+
 No zod schema changed in this branch; rerun proves zero regression.
 
 ### Format
@@ -166,6 +173,7 @@ test set left open, listed above and in the git history of this branch as a
 distinct commit from the modules' initial implementation.
 
 ## UI layer (not under the old-coder mandate — CLAUDE.md scopes that to
+
 `shared/scoring/`)
 
 The `/stats` tab and session-detail Stats toggle consume these two modules

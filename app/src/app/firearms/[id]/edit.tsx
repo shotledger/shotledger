@@ -27,7 +27,9 @@ export default function EditFirearmScreen() {
   const [make, setMake] = useState(firearm?.make ?? '');
   const [model, setModel] = useState(firearm?.model ?? '');
   const [caliber, setCaliber] = useState(firearm?.caliber ?? '');
-  const [weaponType, setWeaponType] = useState<WeaponType>((firearm?.weaponType as WeaponType) ?? 'pistol');
+  const [weaponType, setWeaponType] = useState<WeaponType>(
+    (firearm?.weaponType as WeaponType) ?? 'pistol',
+  );
   const [serialNumber, setSerialNumber] = useState(firearm?.serialNumber ?? '');
   const [vapenId, setVapenId] = useState(firearm?.vapenId ?? '');
   const [loadSystem, setLoadSystem] = useState(firearm?.loadSystem ?? '');
@@ -64,7 +66,12 @@ export default function EditFirearmScreen() {
         <ThemedText type="smallBold">{t('firearms.make')}</ThemedText>
         <TextInput value={make} onChangeText={setMake} style={inputStyle} testID="firearm-make" />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
-        <TextInput value={model} onChangeText={setModel} style={inputStyle} testID="firearm-model" />
+        <TextInput
+          value={model}
+          onChangeText={setModel}
+          style={inputStyle}
+          testID="firearm-model"
+        />
         <ThemedText type="smallBold">{t('firearms.caliber')}</ThemedText>
         <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
       </Card>

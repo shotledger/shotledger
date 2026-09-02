@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { analyzeGroup } from './group';
+import { CALIBER_MM } from '../target-scoring/score';
+import { SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
+import { analyzeGroup, analyzePointsLost } from './group';
+
+const CALIBER_22 = CALIBER_MM['.22'] as number;
+const FACE = SPSF_PISTOL_25M_PRECISION;
+
+function mark(xMm: number, yMm: number, caliberMm = CALIBER_22) {
+  return { xMm, yMm, caliberMm };
+}
 
 describe('analyzeGroup', () => {
   it('GR1: returns null for an empty group', () => {
@@ -99,5 +108,100 @@ describe('analyzeGroup', () => {
         { xMm: 0, yMm: Number.NEGATIVE_INFINITY },
       ]),
     ).toThrow(RangeError);
+  });
+});
+
+describe('analyzePointsLost', () => {
+  it('PL1: returns null for an empty group', () => {
+    expect(analyzePointsLost([], FACE)).toBeNull();
+  });
+
+  it('PL2: a single mark dead center scores actual = recentered = max', () => {
+    const result = analyzePointsLost([mark(0, 0)], FACE);
+    expect(result).toEqual({
+      actualScore: 10,
+      recenteredScore: 10,
+      maxScore: 10,
+      pointsLostToPosition: 0,
+      pointsLostToSize: 0,
+    });
+  });
+
+  it('PL3: recentering a single-mark group always lands it on center', () => {
+    // 60,80 is ring 7 (radius 100, minus caliber) off-center, actual = 7 -
+    // but a lone mark's MPI IS the mark, so recentering it always yields 0,0.
+    const result = analyzePointsLost([mark(60, 80)], FACE);
+    expect(result?.actualScore).toBe(7);
+    expect(result?.recenteredScore).toBe(result?.maxScore);
+    expect(result?.pointsLostToSize).toBe(0);
+  });
+
+  it('PL4: a group whose MPI is already at target center has recentered === actual', () => {
+    const marks = [mark(100, 0), mark(-100, 0), mark(0, 100), mark(0, -100)];
+    const result = analyzePointsLost(marks, FACE);
+    expect(result?.recenteredScore).toBe(result?.actualScore);
+  });
+
+  it('PL5: a tight off-center group loses mostly to position, nothing to size', () => {
+    const marks = [mark(95, 5), mark(100, -5), mark(105, 0)];
+    const result = analyzePointsLost(marks, FACE);
+    expect(result).toEqual({
+      actualScore: 20,
+      recenteredScore: 30,
+      maxScore: 30,
+      pointsLostToPosition: 10,
+      pointsLostToSize: 0,
+    });
+  });
+
+  it('PL6: a loose group already centered loses nothing to position, only to size', () => {
+    const marks = [mark(100, 0), mark(-100, 0), mark(0, 100), mark(0, -100)];
+    const result = analyzePointsLost(marks, FACE);
+    expect(result).toEqual({
+      actualScore: 28,
+      recenteredScore: 28,
+      maxScore: 40,
+      pointsLostToPosition: 0,
+      pointsLostToSize: 12,
+    });
+  });
+
+  it('PL7: points lost to size is never negative', () => {
+    for (const marks of [
+      [mark(0, 0)],
+      [mark(95, 5), mark(100, -5), mark(105, 0)],
+      [mark(100, 0), mark(-100, 0), mark(0, 100), mark(0, -100)],
+      [mark(0, 0), mark(0, 0), mark(300, 0)],
+    ]) {
+      expect(analyzePointsLost(marks, FACE)?.pointsLostToSize).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('PL8: actual + pointsLostToPosition + pointsLostToSize === maxScore', () => {
+    for (const marks of [
+      [mark(0, 0)],
+      [mark(95, 5), mark(100, -5), mark(105, 0)],
+      [mark(0, 0), mark(0, 0), mark(300, 0)],
+    ]) {
+      const result = analyzePointsLost(marks, FACE);
+      if (!result) throw new Error('expected a result');
+      expect(result.actualScore + result.pointsLostToPosition + result.pointsLostToSize).toBe(
+        result.maxScore,
+      );
+    }
+  });
+
+  it('PL9: a called flier can make points lost to position negative', () => {
+    // two marks dead center, one 300mm out: recentering pulls the MPI toward
+    // the flier and drags the two centered marks off the X ring.
+    const marks = [mark(0, 0), mark(0, 0), mark(300, 0)];
+    const result = analyzePointsLost(marks, FACE);
+    expect(result).toEqual({
+      actualScore: 20,
+      recenteredScore: 17,
+      maxScore: 30,
+      pointsLostToPosition: -3,
+      pointsLostToSize: 13,
+    });
   });
 });

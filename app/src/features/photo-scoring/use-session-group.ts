@@ -5,8 +5,8 @@
 // photo scoring would otherwise grow an empty tab.
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import type { GroupAnalysis, TargetFaceDefinition } from '@shotledger/shared';
-import { analyzeGroup, getDiscipline, getTargetFace } from '@shotledger/shared';
+import type { GroupAnalysis, PointsLostAnalysis, TargetFaceDefinition } from '@shotledger/shared';
+import { analyzeGroup, analyzePointsLost, getDiscipline, getTargetFace } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { getSession } from '@/db/queries/sessions';
@@ -15,6 +15,7 @@ import { type StoredMark, listMarksForSession } from '@/db/queries/shot-marks';
 export interface SessionGroup {
   readonly marks: readonly StoredMark[];
   readonly analysis: GroupAnalysis;
+  readonly pointsLost: PointsLostAnalysis;
   readonly target: TargetFaceDefinition;
 }
 
@@ -35,7 +36,10 @@ export function loadSessionGroup(sessionId: string): SessionGroup | null {
   const analysis = analyzeGroup(marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })));
   if (!analysis) return null;
 
-  return { marks, analysis, target };
+  // marks.length > 0 was already checked above, so this cannot be null.
+  const pointsLost = analyzePointsLost(marks, target) as PointsLostAnalysis;
+
+  return { marks, analysis, pointsLost, target };
 }
 
 /**

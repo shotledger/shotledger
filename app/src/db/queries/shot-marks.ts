@@ -125,13 +125,7 @@ function toStoredMark(r: {
 
 export function listMarksForSeries(db: Database, seriesId: string): StoredMark[] {
   return selectMarks(db)
-    .where(
-      and(
-        eq(shots.seriesId, seriesId),
-        isNull(shotMarks.deletedAt),
-        isNull(shots.deletedAt),
-      ),
-    )
+    .where(and(eq(shots.seriesId, seriesId), isNull(shotMarks.deletedAt), isNull(shots.deletedAt)))
     .orderBy(shots.position)
     .all()
     .map(toStoredMark);

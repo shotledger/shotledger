@@ -29,10 +29,7 @@ import { adjustFirearmRoundCount, logMaintenanceEvent } from '@/db/queries/maint
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  notifyMaintenanceDue,
-  scheduleLicenseExpiryNotifications,
-} from '@/platform/notifications';
+import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { Spacing } from '@/theme/tokens';
 
 const ALL_GROUPS: readonly WeaponGroup[] = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS];
@@ -95,7 +92,11 @@ export default function FirearmDetailScreen() {
 
   function onAddGroup() {
     if (!db || !newGroupId) return;
-    addFirearmGroup(db, { firearmId: firearm!.id, groupId: newGroupId, isDefaultForGroup: newGroupDefault });
+    addFirearmGroup(db, {
+      firearmId: firearm!.id,
+      groupId: newGroupId,
+      isDefaultForGroup: newGroupDefault,
+    });
     setNewGroupId(null);
     setNewGroupDefault(false);
     setShowAddGroup(false);
@@ -120,7 +121,11 @@ export default function FirearmDetailScreen() {
       authority: authority.trim() || null,
     });
     const notifications = licenseExpiryNotifications(license.validUntil);
-    void scheduleLicenseExpiryNotifications(license.id, `${firearm!.make} ${firearm!.model}`, notifications);
+    void scheduleLicenseExpiryNotifications(
+      license.id,
+      `${firearm!.make} ${firearm!.model}`,
+      notifications,
+    );
     setLicenseNumber('');
     setPurpose('');
     setDecidedOn('');
@@ -260,7 +265,9 @@ export default function FirearmDetailScreen() {
               onPress={group.isDefaultForGroup ? undefined : () => onSetDefaultGroup(group.id)}
               testID={`group-${group.groupId}`}
               trailing={
-                !group.isDefaultForGroup ? <ThemedText type="small">{t('firearms.setDefault')}</ThemedText> : undefined
+                !group.isDefaultForGroup ? (
+                  <ThemedText type="small">{t('firearms.setDefault')}</ThemedText>
+                ) : undefined
               }
             />
           ))
@@ -269,7 +276,11 @@ export default function FirearmDetailScreen() {
           <>
             <OptionPicker
               label={t('firearms.group')}
-              options={availableGroups.map((g) => ({ value: g.id, label: g.code, testID: `pick-group-${g.id}` }))}
+              options={availableGroups.map((g) => ({
+                value: g.id,
+                label: g.code,
+                testID: `pick-group-${g.id}`,
+              }))}
               value={newGroupId}
               onChange={setNewGroupId}
             />
@@ -318,7 +329,12 @@ export default function FirearmDetailScreen() {
         {showAddLicense ? (
           <>
             <ThemedText type="small">{t('firearms.licenseNumber')}</ThemedText>
-            <TextInput value={licenseNumber} onChangeText={setLicenseNumber} style={inputStyle} testID="license-number" />
+            <TextInput
+              value={licenseNumber}
+              onChangeText={setLicenseNumber}
+              style={inputStyle}
+              testID="license-number"
+            />
             <ThemedText type="small">{t('firearms.purpose')}</ThemedText>
             <TextInput value={purpose} onChangeText={setPurpose} style={inputStyle} />
             <ThemedText type="small">{t('firearms.decidedOn')}</ThemedText>
@@ -414,7 +430,11 @@ export default function FirearmDetailScreen() {
               style={inputStyle}
               testID="adjust-reason"
             />
-            <PrimaryButton label={t('firearms.adjustSave')} onPress={onAdjust} testID="save-adjust" />
+            <PrimaryButton
+              label={t('firearms.adjustSave')}
+              onPress={onAdjust}
+              testID="save-adjust"
+            />
           </>
         ) : (
           <PrimaryButton

@@ -45,15 +45,15 @@ fitted-ellipse aspect, the `partial` flag, px/mm and the per-ring residuals.
 
 ## Pipeline (`target_cv.py`)
 
-| Stage | What it does |
-|---|---|
-| `find_face` | Otsu on a heavily blurred grey copy → largest dark blob = the printed black zone; `fitEllipseDirect` on the contour, then `_refit_rays` re-fits from ray casts that ignore rays leaving the frame |
-| `guess_kind` | solid black disc → 25 m precision target (black = 200 mm); black annulus round a lighter middle → milsnabb (black = 500 mm) |
-| `build_geom` | maps the fitted ellipse back to a circle (rotation + anisotropic scale — weak perspective, *not* a full homography: one conic does not determine one) and warps to a fixed 4 px/mm canvas |
-| `refine_geom` | coarse-to-fine grid search over (dx, dy, scale) maximising a radial edge profile against the known ring radii — this is what rescues geometry when the black zone was clipped |
-| `ring_residuals` | per-ring distance from the drawn ring to the printed line it should sit on — the geometry accuracy number the report quotes |
-| `find_holes` | over-sized top-hat (bright tears on black) and black-hat (dark holes on paper); candidates filtered by area, largest inscribed disc, structure size at a low threshold with the ring lines removed, and colour against the card's own paper colour |
-| `score_hole` | radius in mm → ring, applying SHB F.6.10.1 (a hole counts to the higher value as soon as the ring's outer edge is tangented), so the hole's *inner* edge is compared to each ring |
+| Stage            | What it does                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `find_face`      | Otsu on a heavily blurred grey copy → largest dark blob = the printed black zone; `fitEllipseDirect` on the contour, then `_refit_rays` re-fits from ray casts that ignore rays leaving the frame                                                  |
+| `guess_kind`     | solid black disc → 25 m precision target (black = 200 mm); black annulus round a lighter middle → milsnabb (black = 500 mm)                                                                                                                        |
+| `build_geom`     | maps the fitted ellipse back to a circle (rotation + anisotropic scale — weak perspective, _not_ a full homography: one conic does not determine one) and warps to a fixed 4 px/mm canvas                                                          |
+| `refine_geom`    | coarse-to-fine grid search over (dx, dy, scale) maximising a radial edge profile against the known ring radii — this is what rescues geometry when the black zone was clipped                                                                      |
+| `ring_residuals` | per-ring distance from the drawn ring to the printed line it should sit on — the geometry accuracy number the report quotes                                                                                                                        |
+| `find_holes`     | over-sized top-hat (bright tears on black) and black-hat (dark holes on paper); candidates filtered by area, largest inscribed disc, structure size at a low threshold with the ring lines removed, and colour against the card's own paper colour |
+| `score_hole`     | radius in mm → ring, applying SHB F.6.10.1 (a hole counts to the higher value as soon as the ring's outer edge is tangented), so the hole's _inner_ edge is compared to each ring                                                                  |
 
 Ring diameters come from `docs/reference/spsf-shb-2026.md` (F.7.1 p. 182,
 J.7.1 p. 297) and are the only domain constants in the file.
