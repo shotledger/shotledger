@@ -15,6 +15,7 @@ export default defineConfig({
         'shared/src/disciplines/**/*.ts',
         'shared/src/compliance/**/*.ts',
         'shared/src/integrations/webshooter/**/*.ts',
+        'shared/src/shotlog/**/*.ts',
         'shared/src/sync/**/*.ts',
         'shared/src/sync-client/*.ts',
         'backend/src/lib/quota.ts',
