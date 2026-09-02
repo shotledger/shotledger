@@ -17,12 +17,17 @@
   "home": {
     "title": "Home",
     "shotsLoggedTotal": "Shots logged",
+    "sessionsTotal": "Sessions",
+    "competitionsTotal": "Competitions",
     "latestSessions": "Latest sessions",
     "newSession": "New session",
     "emptyTitle": "No sessions yet",
     "emptyBody": "Log your first training or competition session to see it here.",
     "emptyCta": "Log your first session",
-    "sessionSummary": "{{average}}/series · {{xCount}}X"
+    "filterAll": "All",
+    "filterEmpty": "No sessions match this filter",
+    "shapeSeries": "Series",
+    "shapeRounds": "Rounds"
   },
   "stats": {
     "title": "Statistics",
