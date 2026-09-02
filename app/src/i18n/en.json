@@ -427,7 +427,51 @@
       "done": "Done"
     },
     "seriesProgress": "Series {{current}} / {{total}}",
-    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, then 4×10 s, 4×8 s, 4×6 s. Ready delay is a practice default, not the match's 60 s LADDA→FÄRDIGA cadence."
+    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, then 4×10 s, 4×8 s, 4×6 s. Ready delay is a practice default, not the match's 60 s LADDA→FÄRDIGA cadence.",
+    "modes": {
+      "regular": "PAR timer",
+      "ipsc": "Shot timer (mic)"
+    }
+  },
+  "ipscTimer": {
+    "settingsTitle": "Shot detection",
+    "sensitivity": "Microphone sensitivity",
+    "sensitivities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "sensitivityHint": "Higher sensitivity picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line.",
+    "randomDelay": "Random start delay — shortest / longest (s)",
+    "randomDelayMin": "Shortest start delay in seconds",
+    "randomDelayMax": "Longest start delay in seconds",
+    "parSeconds": "PAR time (s)",
+    "parPlaceholder": "Optional",
+    "autoStopSeconds": "Stop automatically after silence (s)",
+    "privacyNote": "The microphone is analysed live on this device to find the shots. The recording is never stored, played back or sent anywhere — it is written to a temporary file the app can only meter, and deleted the moment the run ends.",
+    "webUnavailable": "The shot timer needs a native build — the microphone isn't available in this web preview.",
+    "errors": {
+      "unavailable": "No microphone is available on this device.",
+      "denied": "Microphone permission was denied — allow it in system settings to detect shots.",
+      "failed": "The microphone couldn't be started. Close other apps using it and try again."
+    },
+    "start": "Start",
+    "stop": "Stop",
+    "reset": "New run",
+    "state": {
+      "ready": "Are you ready?",
+      "standby": "Standby",
+      "running": "GO"
+    },
+    "noShots": "No shots detected yet",
+    "shotNumber": "Shot {{number}}",
+    "shotAt": "{{time}} s",
+    "split": "+{{time}} s",
+    "resultTitle": "Result",
+    "firstShot": "First shot (s)",
+    "total": "Total (s)",
+    "shotCount": "Shots",
+    "parOverrun": "PAR time exceeded by {{time}} s"
   },
   "vault": {
     "title": "Document vault",
