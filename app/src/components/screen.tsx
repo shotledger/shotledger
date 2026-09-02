@@ -48,6 +48,10 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     paddingHorizontal: Spacing.three,
     gap: Spacing.three,
+    // An absolutely-positioned child (the FAB) resolves `bottom` against this
+    // view, so it has to fill the viewport when the content is shorter —
+    // otherwise the FAB rides up into the list. See components/fab.tsx.
+    flexGrow: 1,
   },
   innerFlex: {
     flex: 1,
