@@ -25,6 +25,7 @@ import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
+import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
@@ -147,6 +148,8 @@ export default function SessionDetailScreen() {
             .join(' · ')}
         </ThemedText>
       </View>
+
+      <WebShooterSessionBadge session={session} />
 
       <Card>
         {results.hasFinal ? (

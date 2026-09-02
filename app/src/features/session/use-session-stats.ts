@@ -9,6 +9,7 @@ import {
   sampleStandardDeviationTenths,
   scoredShots,
   standardmedaljForSession,
+  sumValueTenths,
   xCount,
   type CompareRecentSeriesResult,
   type StandardmedaljResult,
@@ -48,12 +49,12 @@ function loadSessionStats(sessionId: string): SessionStats {
   const shots = scoredShots(sessionSeries);
   const hasFinal = sessionSeries.some((series) => series.isFinal);
 
-  const beforeFinalTenths = scoredNonFinal
-    .flatMap((s) => s.shots)
-    .reduce((sum, s) => sum + s.valueTenths, 0);
-  const finalTenths = scoredFinal
-    .flatMap((s) => s.shots)
-    .reduce((sum, s) => sum + s.valueTenths, 0);
+  // WS1 (docs/specs/webshooter-app-spec.md): an override series has no
+  // shots rows — use its stored total instead of summing an empty array.
+  const seriesTotalTenths = (s: (typeof sessionSeries)[number]) =>
+    s.totalOverride ? s.totalOverride.tenths : sumValueTenths(s.shots);
+  const beforeFinalTenths = scoredNonFinal.reduce((sum, s) => sum + seriesTotalTenths(s), 0);
+  const finalTenths = scoredFinal.reduce((sum, s) => sum + seriesTotalTenths(s), 0);
 
   const first = sessionSeries[0]!;
   const standardmedalj = standardmedaljForSession({

@@ -12,6 +12,9 @@
     "shared/src/scoring/*.ts",
     "shared/src/disciplines/*.ts",
     "shared/src/compliance/**/*.ts",
+    "shared/src/integrations/webshooter/*.ts",
+    "shared/src/integrations/webshooter/api/*.ts",
+    "shared/src/integrations/webshooter/stats/*.ts",
     "shared/src/sync/*.ts",
     "backend/src/lib/quota.ts",
     "backend/src/lib/rate-limit.ts",
@@ -20,7 +23,8 @@
     "shared/src/vault/envelope.ts",
     "shared/src/vault/types.ts",
     "shared/src/target-scoring/*.ts",
-    "!**/*.test.ts"
+    "!**/*.test.ts",
+    "!shared/src/integrations/webshooter/api/fixtures.ts"
   ],
   "thresholds": {
     "high": 100,

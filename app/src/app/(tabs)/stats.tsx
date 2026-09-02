@@ -2,6 +2,7 @@
 // focus/filter change from @shotledger/shared's stats.ts. M6 adds a Custom
 // period (from/to date pickers) and a PDF export of the filtered log.
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -10,6 +11,7 @@ import { formatShooterClass, tenthsToScore } from '@shotledger/shared';
 import { Card } from '@/components/card';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { EmptyState } from '@/components/empty-state';
+import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -55,6 +57,7 @@ function periodLabelCase(period: string): string {
 
 export default function StatsScreen() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [filters, setFilters] = useState<StatsFilters>(DEFAULT_STATS_FILTERS);
   const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
   const { data } = useStatsData(filters);
@@ -96,6 +99,13 @@ export default function StatsScreen() {
   return (
     <Screen>
       <ThemedText type="title">{t('stats.title')}</ThemedText>
+
+      <ListRow
+        title={t('webshooter.recordsTitle')}
+        subtitle={t('webshooter.recordsSubtitle')}
+        onPress={() => router.push('/stats/records')}
+        testID="stats-open-records"
+      />
 
       <SegmentedControl
         options={periodOptions}

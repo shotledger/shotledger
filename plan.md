@@ -117,9 +117,12 @@ barometer; no scoring), Skytteappen (club ecosystem).
 - [x] Group analytics: MPI (windage/elevation), mean radius, extreme spread
       (`shared/src/scoring/group.ts`, old-coder loop)
 - [ ] Group analytics, remainder: points-lost-to-group-size, session heatmaps
-- [ ] WebShooter competition import (API behind webshooter-cli): placements,
-      per-station scores, weapon classes, standard medals → logbook +
-      FAP 551-3 barometer
+- [x] WebShooter competition import: placements, per-station scores
+      (series-total granularity, no per-shot detail), weapon classes,
+      standard medals → logbook. `docs/specs/webshooter-integration-spec.md`,
+      `docs/specs/webshooter-core-spec.md`, `docs/specs/webshooter-app-spec.md`.
+      Auth: in-app password login direct to webshooter.se (PR #19), manual
+      token fallback; live login endpoint shape still VERIFY-stubbed.
 - [ ] **ShotLog import** (decided 2026-09-02) — the maintainer uses ShotLog
       and will supply a real export in its native format; map it onto
       sessions/series/shots/firearms with the same selective, dedup-first

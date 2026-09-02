@@ -14,6 +14,7 @@ export default defineConfig({
         'shared/src/scoring/**/*.ts',
         'shared/src/disciplines/**/*.ts',
         'shared/src/compliance/**/*.ts',
+        'shared/src/integrations/webshooter/**/*.ts',
         'shared/src/sync/**/*.ts',
         'backend/src/lib/quota.ts',
         'backend/src/lib/rate-limit.ts',

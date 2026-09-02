@@ -94,6 +94,15 @@ describe('sighter exclusion (B18)', () => {
     expect(volumeShotCount([sighterSeries, scoredOne])).toBe(10);
   });
 
+  it('WS1: volumeShotCount uses an override series stored shot count, not shots.length', () => {
+    const override = series({
+      id: 'override',
+      shots: [],
+      totalOverride: { tenths: 470, shotCount: 5 },
+    });
+    expect(volumeShotCount([override, scoredOne])).toBe(10);
+  });
+
   it('meanTenths over scoredShots ignores the sighter series', () => {
     expect(meanTenths(scoredShots([sighterSeries, scoredOne]))).toBe(90);
   });
@@ -146,6 +155,19 @@ describe('bestWorstSeries', () => {
     const sighter = series({ id: 'sighter', isSighter: true, shots: [shot(90)] });
     expect(bestWorstSeries([sighter])).toEqual({ best: null, worst: null });
     expect(bestWorstSeries([])).toEqual({ best: null, worst: null });
+  });
+
+  it('WS1: an override series (no shots) is included using its stored total', () => {
+    const s1 = series({ id: 's1', shots: Array(5).fill(shot(80)) }); // 400
+    const override = series({
+      id: 'override',
+      shots: [],
+      totalOverride: { tenths: 470, shotCount: 5 },
+    });
+    expect(bestWorstSeries([s1, override])).toEqual({
+      best: { id: 'override', totalTenths: 470 },
+      worst: { id: 's1', totalTenths: 400 },
+    });
   });
 });
 

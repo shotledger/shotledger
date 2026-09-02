@@ -36,6 +36,14 @@ export function listAllStatsSeries(db: Database): StatsSeries[] {
       isSighter: row.isSighter === 1,
       isFinal: row.isFinal === 1,
       shots: shotsBySeries.get(row.id) ?? [],
+      // WS1 (docs/specs/webshooter-app-spec.md): an imported WebShooter
+      // series has no shot rows, only a stored total/shot-count.
+      totalOverride:
+        row.isTotalOverride === 1 &&
+        row.totalOverrideTenths !== null &&
+        row.totalOverrideShotCount !== null
+          ? { tenths: row.totalOverrideTenths, shotCount: row.totalOverrideShotCount }
+          : null,
     });
   }
   return result;
