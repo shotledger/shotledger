@@ -89,6 +89,24 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
   flow, `openLink` right after `launchApp` can race the JS bundle's
   linking listener and silently no-op — wait for a screen to be visible
   first (see `app/e2e/m2-smoke.yaml`).
+- Maestro gotchas found in M4: after `inputText` on a field near the
+  bottom of a scrollable form, the keyboard covers the next target —
+  `pressKey: Back` closes it before `scrollUntilVisible`/`tapOn` (avoid
+  `hideKeyboard` and `waitForAnimationToEnd`, both observed to hang
+  indefinitely in this sandbox rather than returning). Killing a stuck
+  `maestro` process with `pkill -9` leaves a stale adb/gRPC connection
+  (`UNAVAILABLE`/"Command failed... closed" on the next run) — run `adb
+  kill-server && adb start-server` before retrying. This sandbox's
+  software-rendered emulator (`-gpu swiftshader_indirect`) is also
+  markedly slower and less consistent step-to-step than a real device;
+  expect individual `tapOn`/`inputText` steps to occasionally take 30s+.
+  On a longer flow (~25+ steps deep) this sandbox has reproducibly hit
+  `maestro.android.DeviceServerDiedException: ... DEADLINE_EXCEEDED after
+  120s` on `inputText` (the on-device maestro-driver gRPC server itself
+  stops responding, not a step in the flow) — a real limitation of this
+  sandboxed emulator instance, not the app or the flow; `adb kill-server
+  && adb start-server` plus a retry is the only known recovery, and it
+  does not always succeed on the first retry either.
 - Checks: `pnpm check` (= `pnpm typecheck && pnpm lint && vitest run &&
 (cd app && pnpm exec jest --passWithNoTests)`), run from the repo
   root. `pnpm exec prettier --check .` is available separately

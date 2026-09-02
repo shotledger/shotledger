@@ -31,6 +31,26 @@ function RootStack() {
         name="session/[id]/series/[pos]"
         options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
       />
+      <Stack.Screen
+        name="firearms/new"
+        options={{ presentation: 'modal', headerShown: true, title: t('firearms.newFirearm') }}
+      />
+      <Stack.Screen
+        name="firearms/[id]/index"
+        options={{ presentation: 'modal', headerShown: true, title: t('firearms.detailTitle') }}
+      />
+      <Stack.Screen
+        name="firearms/[id]/edit"
+        options={{ presentation: 'modal', headerShown: true, title: t('firearms.editFirearm') }}
+      />
+      <Stack.Screen
+        name="ammo/new"
+        options={{ presentation: 'modal', headerShown: true, title: t('ammo.newLot') }}
+      />
+      <Stack.Screen
+        name="ammo/[id]/index"
+        options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
+      />
       <Stack.Screen name="dev" />
     </Stack>
   );

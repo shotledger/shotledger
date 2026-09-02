@@ -14,8 +14,8 @@ import { ScoreKeypad } from '@/components/score-keypad';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { saveSeriesShots } from '@/db/queries/round-count';
 import { updateSeries } from '@/db/queries/series';
-import { replaceSeriesShots } from '@/db/queries/shots';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { Spacing } from '@/theme/tokens';
@@ -52,7 +52,7 @@ export default function SeriesEntryScreen() {
 
   function onSave() {
     if (db && row) {
-      replaceSeriesShots(
+      saveSeriesShots(
         db,
         row.id,
         enteredShots(state).map((shot) => ({
