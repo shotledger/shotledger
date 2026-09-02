@@ -157,36 +157,70 @@ where the work lives.
       the default number will not solve this.
 
       **Sequenced before the timer unification** (maintainer, 2026-09-03), so
-          unification does not ship detection as a known-unreliable option.
-          Research, 2026-09-03, gives four concrete leads:
+              unification does not ship detection as a known-unreliable option.
+              Research, 2026-09-03, gives four concrete leads:
 
-          1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
-             `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
-             `UNPROCESSED` gives raw audio and is the recommended fallback where
-             supported. `AutomaticGainControl` (AudioFx) can also be attached to an
-             `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
-             does not obviously expose the audio source, so this may need a config
-             plugin, a patch, or another capture path — establish that first.
-          2. **Commercial detectors gate on event duration, not amplitude alone.** A
-             muzzle blast is a very short impulse: an event is accepted as a gunshot
-             only when it is under ~400 ms, with sensitivity expressed as an event
-             length of 25-80 ms (shorter = more sensitive). We have no such
-             discriminator today.
-          3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
-             periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
-             frames. Rise-time or spectral analysis needs sample access, so it
-             likely requires a new capture dependency or a native module — a
-             maintainer decision under hard rule 2, not an assumption.
-          4. Modern smartphone gunshot detection is ML-classified precisely because
-             impulsive non-gunshot sounds resist rule-based rejection. A calibration
-             step ("fire one shot") that sets the threshold from the measured peak
-             and noise floor is a cheaper middle ground than a fixed dBFS value.
+              1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
+                 `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
+                 `UNPROCESSED` gives raw audio and is the recommended fallback where
+                 supported. `AutomaticGainControl` (AudioFx) can also be attached to an
+                 `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
+                 does not obviously expose the audio source, so this may need a config
+                 plugin, a patch, or another capture path — establish that first.
+              2. **Commercial detectors gate on event duration, not amplitude alone.** A
+                 muzzle blast is a very short impulse: an event is accepted as a gunshot
+                 only when it is under ~400 ms, with sensitivity expressed as an event
+                 length of 25-80 ms (shorter = more sensitive). We have no such
+                 discriminator today.
+              3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
+                 periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
+                 frames. Rise-time or spectral analysis needs sample access, so it
+                 likely requires a new capture dependency or a native module — a
+                 maintainer decision under hard rule 2, not an assumption.
+              4. Modern smartphone gunshot detection is ML-classified precisely because
+                 impulsive non-gunshot sounds resist rule-based rejection. A calibration
+                 step ("fire one shot") that sets the threshold from the measured peak
+                 and noise floor is a cheaper middle ground than a fixed dBFS value.
 
 - [ ] **Collapse the shot-detection options** — "I dont want to see the Shot
       detection options all the time. It should be able to expand/collapse or
       similar. Hopefully it does not need to change often."
 
-## 9. Timers — unify into one programmable timer
+## 9. Photo scoring
+
+Maintainer, 2026-09-03, after using it on a real target.
+
+- [ ] **Ask how to add a series**: manual entry or photo scoring, at the point
+      of adding the series.
+- [ ] **Rename the feature** — "targetscan is a competitor app - find a better
+      name e.g. Auto Score". Current strings say "Scan target". Note that
+      **"Auto Score" overclaims until detection is actually automatic** (below),
+      so either rename twice or pick a neutral name now — e.g. "Score from
+      Photo" / "Poang fran foto" — and take "Auto Score" when phase 2 lands.
+- [?] **"The scoring was not automatic yet. I had to place out circles for the
+  hits. That should be automatic."** This is the known phase-2 gap, and it
+  is not a small fix. The CV spike measured classical hole detection at
+  **24% recall and 24% precision** (5 of 21 visible holes, 16 false
+  positives) and found that **repair patches are indistinguishable from
+  holes by any classical method** — which is exactly why phase 1 shipped
+  deliberate tap-to-mark. Automatic detection needs a **learned detector**,
+  which means labelled training data (real target photos, which are PII
+  under rule 7 and must stay outside the repo), a model, and an on-device
+  inference runtime — a new dependency, so a maintainer decision. Until
+  then, marks stay manual and the honest framing is "assisted", not "auto".
+- [ ] **Marks must be movable for accuracy.** `features/photo-scoring/marks.ts`
+      already models a `move` action; confirm it is reachable in the UI and
+      comfortable to use, since the maintainer expects to nudge a mark.
+- [ ] **Zoom and pan** the target while the photo and the marks are shown —
+      "would be useful to be able to zoom in/out when the target and circles are
+      showing". Needed both for placing marks accurately and for reading the
+      result.
+- [ ] **Show the per-hit statistics the benchmark app shows** (maintainer sent
+      reference screenshots). We already compute windage, elevation, mean radius,
+      extreme spread and points lost to position vs size; compare against the
+      screenshots and fill the gaps.
+
+## 9b. Timers — unify into one programmable timer
 
 Maintainer, 2026-09-03: "I dont see a need for PAR timer and Shot timer they
 can be combined." Plus: a user-authored custom program, non-repetitive
