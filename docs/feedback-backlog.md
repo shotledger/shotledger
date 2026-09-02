@@ -157,30 +157,30 @@ where the work lives.
       the default number will not solve this.
 
       **Sequenced before the timer unification** (maintainer, 2026-09-03), so
-              unification does not ship detection as a known-unreliable option.
-              Research, 2026-09-03, gives four concrete leads:
+                  unification does not ship detection as a known-unreliable option.
+                  Research, 2026-09-03, gives four concrete leads:
 
-              1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
-                 `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
-                 `UNPROCESSED` gives raw audio and is the recommended fallback where
-                 supported. `AutomaticGainControl` (AudioFx) can also be attached to an
-                 `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
-                 does not obviously expose the audio source, so this may need a config
-                 plugin, a patch, or another capture path — establish that first.
-              2. **Commercial detectors gate on event duration, not amplitude alone.** A
-                 muzzle blast is a very short impulse: an event is accepted as a gunshot
-                 only when it is under ~400 ms, with sensitivity expressed as an event
-                 length of 25-80 ms (shorter = more sensitive). We have no such
-                 discriminator today.
-              3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
-                 periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
-                 frames. Rise-time or spectral analysis needs sample access, so it
-                 likely requires a new capture dependency or a native module — a
-                 maintainer decision under hard rule 2, not an assumption.
-              4. Modern smartphone gunshot detection is ML-classified precisely because
-                 impulsive non-gunshot sounds resist rule-based rejection. A calibration
-                 step ("fire one shot") that sets the threshold from the measured peak
-                 and noise floor is a cheaper middle ground than a fixed dBFS value.
+                  1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
+                     `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
+                     `UNPROCESSED` gives raw audio and is the recommended fallback where
+                     supported. `AutomaticGainControl` (AudioFx) can also be attached to an
+                     `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
+                     does not obviously expose the audio source, so this may need a config
+                     plugin, a patch, or another capture path — establish that first.
+                  2. **Commercial detectors gate on event duration, not amplitude alone.** A
+                     muzzle blast is a very short impulse: an event is accepted as a gunshot
+                     only when it is under ~400 ms, with sensitivity expressed as an event
+                     length of 25-80 ms (shorter = more sensitive). We have no such
+                     discriminator today.
+                  3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
+                     periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
+                     frames. Rise-time or spectral analysis needs sample access, so it
+                     likely requires a new capture dependency or a native module — a
+                     maintainer decision under hard rule 2, not an assumption.
+                  4. Modern smartphone gunshot detection is ML-classified precisely because
+                     impulsive non-gunshot sounds resist rule-based rejection. A calibration
+                     step ("fire one shot") that sets the threshold from the measured peak
+                     and noise floor is a cheaper middle ground than a fixed dBFS value.
 
 - [ ] **Collapse the shot-detection options** — "I dont want to see the Shot
       detection options all the time. It should be able to expand/collapse or
@@ -192,11 +192,11 @@ Maintainer, 2026-09-03, after using it on a real target.
 
 - [ ] **Ask how to add a series**: manual entry or photo scoring, at the point
       of adding the series.
-- [ ] **Rename the feature** — "targetscan is a competitor app - find a better
-      name e.g. Auto Score". Current strings say "Scan target". Note that
-      **"Auto Score" overclaims until detection is actually automatic** (below),
-      so either rename twice or pick a neutral name now — e.g. "Score from
-      Photo" / "Poang fran foto" — and take "Auto Score" when phase 2 lands.
+- [ ] **Renamed to "Score from Photo"** (maintainer, 2026-09-03: "Go with Score
+      from Photo for now"), replacing "Scan target" — "targetscan is a competitor
+      app". **"Auto Score" is reserved** for when detection is actually
+      automatic, since it would otherwise promise exactly what the maintainer
+      expected and did not get.
 - [?] **"The scoring was not automatic yet. I had to place out circles for the
   hits. That should be automatic."** This is the known phase-2 gap, and it
   is not a small fix. The CV spike measured classical hole detection at
@@ -219,6 +219,35 @@ Maintainer, 2026-09-03, after using it on a real target.
       reference screenshots). We already compute windage, elevation, mean radius,
       extreme spread and points lost to position vs size; compare against the
       screenshots and fill the gaps.
+
+### What "Auto Score" needs to be reliable
+
+Answering the maintainer's "What do you need to make it reliable?":
+
+1. **Labelled data, far more than the spike had.** The spike corpus was 38
+   photos; a learned detector needs several hundred, spanning both faces
+   (precision F.7.1, milsnabb J.7.1), **fresh and pasted/repaired** targets,
+   indoor and outdoor light, off-axis angles, several phone cameras, and both
+   .22 and centrefire hole sizes. Labels are hole centres in target
+   millimetres.
+2. **The app can label itself, for free.** Every tap-to-mark in "Score from
+   Photo" is a labelled example, and the geometry is already solved, so the
+   crop is rectified and canonical. Collecting corrections as training data
+   needs **explicit opt-in consent** — target photos are the maintainer's (and
+   later, users') personal data under rule 7 and never leave the device
+   otherwise.
+3. **A small heatmap/keypoint CNN**, run on the rectified crop rather than the
+   raw photo — rectifying first is what makes the problem tractable, and that
+   part already works (geometry solved to ~0.5 mm median).
+4. **An on-device inference runtime** — the new dependency. ML Kit is already
+   in the tree for licence OCR and supports custom TFLite models, so it is the
+   cheapest route; ONNX Runtime is the alternative.
+5. **A usable bar, agreed up front.** Roughly >=95% recall with under one false
+   positive per target; below that the user corrects more than they mark, which
+   is worse than marking from scratch.
+6. **Repair patches remain the hard case** — indistinguishable from holes by
+   classical means, and likely the main driver of label volume. May need
+   before/after photos, or an explicit "this target is pasted" mode.
 
 ## 9b. Timers — unify into one programmable timer
 
@@ -248,7 +277,9 @@ patterns, a start interval as two sliders, and clearer naming.
       "totally different use cases") — take the shape, drop the target-specific
       payload (`command: show/hide`, `target_system`).
 - [ ] **Per-event feedback is user-selectable** — "I do want the user to be able
-      to select sound and/or haptic feedback for every event". Each step carries
+      to select sound and/or haptic feedback for every event", and the same
+      applies to the **falttimer**: per command, choose **voice or beep**, and/or
+      haptic. Each step carries
       its own cue: a sound (or none), a haptic (or none), or both. This replaces
       rotation_target's `audio_ids` plus target command. `expo-speech` and
       `expo-haptics` are already dependencies.
@@ -259,6 +290,25 @@ patterns, a start interval as two sliders, and clearer naming.
       the non-repeating case, so this falls out of the step model above.
 - [ ] **Collapse the shot-detection options** behind an expander — "I dont want
       to see the Shot detection options all the time".
+
+## 9c. Range data-collection view (blocks the detector fix)
+
+- [ ] **A diagnostic view under Tools, for use at the range** (maintainer:
+      "Please add under a separate view (under Tools) which I can use at the
+      range to give you the feedback you need"). Purpose: gather real gunshot
+      metering data so the detector can be designed from measurements instead of
+      guesses — **without adding a capture dependency**, which the maintainer
+      would prefer to avoid ("If we can avoid a new capture dependency or native
+      module that would be good"). It therefore uses the existing `expo-audio`
+      metering path.
+      Needs: a live meter with peak hold and a running noise-floor estimate; a
+      **"mark shot" button** so the maintainer supplies ground truth as they
+      fire; a recorded log of every metering sample with timestamps; and an
+      export (JSON, share sheet) to send back. What it will tell us: how far a
+      real shot separates from ambient in dBFS, how many ~60 ms metering samples
+      a shot spans versus a snap or speech, and whether metering-only data is
+      enough to gate on event duration — i.e. whether the fix is possible
+      without raw PCM access at all.
 
 ## 10. Known broken
 
