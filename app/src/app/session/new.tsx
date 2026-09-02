@@ -1,7 +1,11 @@
-// New-session form (§4 M3). Everything the session needs before the first
-// series: type, discipline, program, competition details, vapengrupp + klass
-// (orthogonal, §6.4a), firearm, ammo lot, and the decimal toggle where the
-// rules allow one.
+// New-session form (§4 M3). Field order follows the maintainer's ruling
+// (2026-09-03): what the session IS (type + kind), what it is CALLED, WHERE it
+// was — then the shooting details.
+//
+// `kind` is the fork in the form: a 'series' session logs scored series and is
+// never offered extra_rounds here, a 'rounds' session logs a fixed shot count
+// and is never offered a program, a decimal toggle or series. The choice is
+// made once, at creation, and is immutable afterwards (§3 `sessions.kind`).
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +35,10 @@ import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
 import { listFirearms } from '@/db/queries/firearms';
 import { addSeries } from '@/db/queries/series';
 import { setSessionExtraRounds } from '@/db/queries/round-count';
-import { createSession, type SessionType } from '@/db/queries/sessions';
+import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
+import { createSession, type SessionKind, type SessionType } from '@/db/queries/sessions';
+import { addSessionTag, getOrCreateTag, listTags } from '@/db/queries/tags';
+import { LocationField } from '@/features/location/location-field';
 import {
   COMPETITION_LEVELS,
   disciplineLabel,
@@ -40,6 +47,7 @@ import {
   programLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
+import { TagSelect } from '@/features/tags/tag-select';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
@@ -51,6 +59,7 @@ export default function NewSessionScreen() {
   const theme = useTheme();
 
   const [type, setType] = useState<SessionType>('training');
+  const [kind, setKind] = useState<SessionKind>('series');
   const [disciplineId, setDisciplineId] = useState<string>(DISCIPLINES[0]?.id ?? 'spsf-precision');
   const [programId, setProgramId] = useState<string>(NO_PROGRAM);
   const [level, setLevel] = useState<CompetitionLevel>('forening');
@@ -62,17 +71,24 @@ export default function NewSessionScreen() {
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
   const [nameOverride, setNameOverride] = useState<string | null>(null);
-  const [extraRounds, setExtraRounds] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [roundsFired, setRoundsFired] = useState('');
 
   const discipline = requireDiscipline(disciplineId);
   const programs = programsForDiscipline(disciplineId);
-  const program = programs.find((p) => p.id === programId) ?? null;
+  const program = kind === 'series' ? (programs.find((p) => p.id === programId) ?? null) : null;
   const groups = weaponGroupsForDiscipline(disciplineId);
   const classes = shooterClassesForDiscipline(disciplineId);
-  const showDecimalToggle = decimalAllowed(discipline, program);
+  const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
 
   const firearms = useMemo(() => (db ? listFirearms(db) : []), []);
   const ammoLots = useMemo(() => (db ? listAmmoLots(db) : []), []);
+  const knownTags = useMemo(() => (db ? listTags(db).map((tag) => tag.name) : []), []);
+  const onlineLocationLookup = useMemo(
+    () => (db ? getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false) : false),
+    [],
+  );
 
   const startedAt = useMemo(() => new Date().toISOString(), []);
   const defaultName =
@@ -97,6 +113,18 @@ export default function NewSessionScreen() {
     setDecimalScoring(false);
   }
 
+  function onSelectKind(nextKind: SessionKind) {
+    setKind(nextKind);
+    // The two shapes share no scoring-side state: a rounds session has no
+    // program, no series and no decimal mode.
+    if (nextKind === 'rounds') {
+      setProgramId(NO_PROGRAM);
+      setDecimalScoring(false);
+    } else {
+      setRoundsFired('');
+    }
+  }
+
   function onSelectWeaponGroup(groupId: string) {
     setWeaponGroup(groupId);
     // Default the firearm to the one marked default for this vapengrupp (§4 M3).
@@ -111,6 +139,7 @@ export default function NewSessionScreen() {
     const session = createSession(db, {
       name: name.trim() || defaultName,
       type,
+      kind,
       disciplineId,
       programId: program?.id ?? null,
       competitionLevel: type === 'competition' ? level : null,
@@ -121,18 +150,22 @@ export default function NewSessionScreen() {
       firearmId,
       ammoLotId,
       startedAt,
+      location: location.trim() === '' ? null : location.trim(),
       decimalScoring: showDecimalToggle && decimalScoring,
     });
 
-    // Unscored extra rounds go through the round-count path so the firearm
-    // counter moves with them (spec A1 §A1.3 A-X1); never through createSession.
-    const parsedExtraRounds = extraRounds.trim() === '' ? null : Number(extraRounds.trim());
-    if (
-      parsedExtraRounds !== null &&
-      Number.isInteger(parsedExtraRounds) &&
-      parsedExtraRounds >= 0
-    ) {
-      setSessionExtraRounds(db, session.id, parsedExtraRounds);
+    for (const tagName of selectedTags) {
+      addSessionTag(db, session.id, getOrCreateTag(db, tagName).id);
+    }
+
+    // A rounds session's shot count IS extra_rounds: rounds fired but never
+    // scored (spec A1 §A1.3). It goes through the round-count path so the
+    // firearm counter moves with it — never through createSession.
+    if (kind === 'rounds') {
+      const parsed = roundsFired.trim() === '' ? null : Number(roundsFired.trim());
+      if (parsed !== null && Number.isInteger(parsed) && parsed >= 0) {
+        setSessionExtraRounds(db, session.id, parsed);
+      }
     }
 
     // A fixed-format program pre-creates its series skeleton (§6.3).
@@ -168,6 +201,43 @@ export default function NewSessionScreen() {
           value={type}
           onChange={setType}
         />
+        <OptionPicker
+          label={t('session.kind')}
+          options={toOptions(
+            [
+              { value: 'series' as SessionKind, label: t('sessionKind.series') },
+              { value: 'rounds' as SessionKind, label: t('sessionKind.rounds') },
+            ],
+            'kind',
+          )}
+          value={kind}
+          onChange={onSelectKind}
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.kindHint')}
+        </ThemedText>
+      </Card>
+
+      <Card>
+        <ThemedText type="smallBold">{t('session.name')}</ThemedText>
+        <TextInput
+          value={name}
+          onChangeText={setNameOverride}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+          testID="session-name"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.nameHint')}
+        </ThemedText>
+      </Card>
+
+      <Card>
+        <LocationField
+          value={location}
+          onChange={setLocation}
+          onlineEnabled={onlineLocationLookup}
+          language={i18n.language}
+        />
       </Card>
 
       <Card>
@@ -180,18 +250,20 @@ export default function NewSessionScreen() {
           value={disciplineId}
           onChange={onSelectDiscipline}
         />
-        <OptionPicker
-          label={t('session.program')}
-          options={toOptions(
-            [
-              { value: NO_PROGRAM, label: t('session.freeTraining') },
-              ...programs.map((p) => ({ value: p.id, label: programLabel(t, p.id) })),
-            ],
-            'program',
-          )}
-          value={programId}
-          onChange={setProgramId}
-        />
+        {kind === 'series' && (
+          <OptionPicker
+            label={t('session.program')}
+            options={toOptions(
+              [
+                { value: NO_PROGRAM, label: t('session.freeTraining') },
+                ...programs.map((p) => ({ value: p.id, label: programLabel(t, p.id) })),
+              ],
+              'program',
+            )}
+            value={programId}
+            onChange={setProgramId}
+          />
+        )}
       </Card>
 
       {type === 'competition' && (
@@ -225,6 +297,9 @@ export default function NewSessionScreen() {
             style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             testID="competition-name"
           />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('session.competitionNameHint')}
+          </ThemedText>
         </Card>
       )}
 
@@ -286,31 +361,27 @@ export default function NewSessionScreen() {
         </Card>
       )}
 
-      <Card>
-        <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
-        <TextInput
-          value={extraRounds}
-          onChangeText={setExtraRounds}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          placeholder="0"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
-          testID="extra-rounds"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.extraRoundsHint')}
-        </ThemedText>
-      </Card>
+      {kind === 'rounds' && (
+        <Card>
+          <ThemedText type="smallBold">{t('session.roundsFired')}</ThemedText>
+          <TextInput
+            value={roundsFired}
+            onChangeText={setRoundsFired}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            placeholder="0"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+            testID="rounds-fired"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('session.roundsFiredHint')}
+          </ThemedText>
+        </Card>
+      )}
 
       <Card>
-        <ThemedText type="smallBold">{t('session.name')}</ThemedText>
-        <TextInput
-          value={name}
-          onChangeText={setNameOverride}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
-          testID="session-name"
-        />
+        <TagSelect known={knownTags} selected={selectedTags} onChange={setSelectedTags} />
       </Card>
 
       <PrimaryButton label={t('session.create')} onPress={onCreate} testID="create-session" />
