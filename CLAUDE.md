@@ -22,6 +22,9 @@ sync. Android first — **all code must stay iOS-compatible**.
   engine** — the maintainer does not read that code line by line; the
   approved spec and evidence report are the review. Routine UI work uses
   normal tests instead.
+- `docs/feedback-backlog.md` — maintainer UI/UX feedback tracked to
+  completion, with status per item. Check it before starting UI work and
+  tick items in the same branch as the change.
 - `docs/release.md` — the repeatable release checklist (maintainer-only
   one-time setup vs. every-release steps); `docs/store-listing.md` — the
   draft EN/SV store listing. Both from M7; update `docs/release.md` if
