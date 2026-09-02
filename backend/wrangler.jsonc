@@ -15,4 +15,18 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Local/test-only placeholder — never deployed (no real bucket_name).
+  // See docs/specs/backend-auth-photos-spec.md §5.
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "shotledger-photos-dev",
+    },
+  ],
+  // Dev/test-only placeholder value — production secret is provisioned via
+  // `wrangler secret put BETTER_AUTH_SECRET` by the maintainer, never
+  // committed here (docs/specs/backend-auth-photos-spec.md §2).
+  "vars": {
+    "BETTER_AUTH_SECRET": "dev-placeholder-secret-never-use-in-production",
+  },
 }

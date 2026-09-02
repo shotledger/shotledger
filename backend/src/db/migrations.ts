@@ -1,3 +1,6 @@
+import { AUTH_MIGRATIONS } from './auth-migrations';
+import { PHOTO_MIGRATIONS } from './photo-migrations';
+
 /**
  * Shape expected by `applyD1Migrations` from `cloudflare:test` (test-only
  * module — not imported here to keep this file buildable by the
@@ -47,4 +50,11 @@ export const SYNC_MIGRATIONS: D1Migration[] = [
       )`,
     ],
   },
+];
+
+/** All migrations in dependency order — sync, then auth, then photos (photos has no FK on auth, order is documentation-only). */
+export const ALL_MIGRATIONS: D1Migration[] = [
+  ...SYNC_MIGRATIONS,
+  ...AUTH_MIGRATIONS,
+  ...PHOTO_MIGRATIONS,
 ];
