@@ -1,11 +1,13 @@
 // Session detail (§4 M3): the series list with per-shot chips and per-series
 // totals, the derived Before final / Final / Total results (§6.3), the
 // guldserie badge (§6.5), and the controls that grow the session — add
-// series, sighter toggle, start final.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+// series, start final. Swipe a series row left to delete it (§4 fix batch,
+// 2026-09-03).
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -20,14 +22,14 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
-import { setSessionExtraRounds } from '@/db/queries/round-count';
+import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/theme/tokens';
+import { Radius, Spacing } from '@/theme/tokens';
 
 type DetailView = 'series' | 'stats' | 'group';
 
@@ -39,11 +41,10 @@ export default function SessionDetailScreen() {
   const { detail, refresh } = useSessionDetail(id);
   const stats = useSessionStats(id);
   const group = useSessionGroup(id);
-  const [nextIsSighter, setNextIsSighter] = useState(false);
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
 
-  const { session, seriesRows, results, mainHasSighter, finalHasSighter } = detail;
+  const { session, seriesRows, results } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
     session?.extraRounds == null ? '' : String(session.extraRounds),
   );
@@ -56,8 +57,6 @@ export default function SessionDetailScreen() {
     );
   }
 
-  const sighterDisabled = nextIsFinal ? finalHasSighter : mainHasSighter;
-
   function openSeries(position: number) {
     router.push(`/session/${id}/series/${position}`);
   }
@@ -68,10 +67,8 @@ export default function SessionDetailScreen() {
     addSeries(db, {
       sessionId: id,
       position,
-      isSighter: nextIsSighter && !sighterDisabled,
       isFinal: nextIsFinal,
     });
-    setNextIsSighter(false);
     refresh();
     openSeries(position);
   }
@@ -94,46 +91,113 @@ export default function SessionDetailScreen() {
 
   function onStartFinal() {
     setNextIsFinal(true);
-    setNextIsSighter(false);
+  }
+
+  function onDeleteSeries(row: SeriesRow) {
+    Alert.alert(
+      t('session.deleteSeriesConfirmTitle', { position: row.position }),
+      t('session.deleteSeriesConfirmBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('session.deleteSeries'),
+          style: 'destructive',
+          onPress: () => {
+            if (!db) return;
+            deleteSeriesAndShots(db, row.id);
+            refresh();
+          },
+        },
+      ],
+    );
   }
 
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
 
-  const renderSeries = (row: SeriesRow) => (
-    <Pressable
-      key={row.id}
-      accessibilityRole="button"
-      testID={`series-${row.position}`}
-      onPress={() => openSeries(row.position)}
-      style={({ pressed }) => [styles.seriesRow, pressed && styles.pressed]}
-    >
-      <View style={styles.seriesHeader}>
-        <ThemedText type="smallBold">
-          {t('session.seriesTitle', { position: row.position })}
-        </ThemedText>
-        <View style={styles.badges}>
-          {row.isSighter && <Chip label={t('session.sighter')} />}
-          {row.timeLimitSeconds !== null && (
-            <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
-          )}
-          {row.photoUri && <Chip label={t('session.photoAdded')} />}
-          {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
+  const renderSeries = (row: SeriesRow) => {
+    const content = (
+      <Pressable
+        accessibilityRole="button"
+        testID={`series-${row.position}`}
+        onPress={() => openSeries(row.position)}
+        style={({ pressed }) => [styles.seriesRow, pressed && styles.pressed]}
+      >
+        <View style={styles.seriesHeader}>
           <ThemedText type="smallBold">
-            {row.isSighter ? '–' : tenthsToScore(row.totalTenths)}
+            {t('session.seriesTitle', { position: row.position })}
           </ThemedText>
+          <View style={styles.badges}>
+            {row.isSighter && <Chip label={t('session.sighter')} />}
+            {row.timeLimitSeconds !== null && (
+              <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
+            )}
+            {row.photoUri && <Chip label={t('session.photoAdded')} />}
+            {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
+            <ThemedText type="smallBold">
+              {row.isSighter ? '–' : tenthsToScore(row.totalTenths)}
+            </ThemedText>
+          </View>
         </View>
-      </View>
-      <ShotChips
-        shots={row.shots}
-        mode={detail.scoringMode}
-        testIDPrefix={`s${row.position}-shot`}
-      />
-    </Pressable>
-  );
+        <ShotChips
+          shots={row.shots}
+          mode={detail.scoringMode}
+          testIDPrefix={`s${row.position}-shot`}
+        />
+      </Pressable>
+    );
+
+    // A fixed-format program pre-creates its series to match the match
+    // structure (§6.3) — removing one would leave that structure incomplete,
+    // so swipe-to-delete is offered only for freely-added series.
+    if (detail.isFixedFormat) {
+      return (
+        <View key={row.id} style={styles.seriesWrapper}>
+          {content}
+        </View>
+      );
+    }
+
+    return (
+      <Swipeable
+        key={row.id}
+        containerStyle={styles.seriesWrapper}
+        overshootRight={false}
+        renderRightActions={() => (
+          <Pressable
+            accessibilityRole="button"
+            testID={`series-${row.position}-delete`}
+            onPress={() => onDeleteSeries(row)}
+            style={[styles.deleteAction, { backgroundColor: theme.danger }]}
+          >
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              {t('session.deleteSeries')}
+            </ThemedText>
+          </Pressable>
+        )}
+      >
+        {content}
+      </Swipeable>
+    );
+  };
 
   return (
     <Screen>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              testID="edit-session"
+              hitSlop={8}
+              onPress={() => router.push(`/session/${id}/edit`)}
+            >
+              <ThemedText type="linkPrimary">{t('common.edit')}</ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
+
       <View>
         <ThemedText type="subtitle" style={styles.title}>
           {session.name}
@@ -151,40 +215,28 @@ export default function SessionDetailScreen() {
 
       <WebShooterSessionBadge session={session} />
 
-      <PrimaryButton
-        label={t('share.share')}
-        onPress={() => router.push(`/session/${id}/share`)}
-        testID="share-session"
-      />
-
-      <Card>
-        {results.hasFinal ? (
-          <View style={styles.resultsRow}>
-            <ResultCell
-              label={t('session.beforeFinal')}
-              tenths={results.beforeFinalTenths}
-              testID="result-before-final"
-            />
-            <ResultCell
-              label={t('session.final')}
-              tenths={results.finalTenths}
-              testID="result-final"
-            />
-            <ResultCell
-              label={t('session.total')}
-              tenths={results.totalTenths}
-              testID="session-total"
-            />
-          </View>
-        ) : (
-          <ResultCell
+      <Card style={styles.metricCard}>
+        <View style={styles.metricRow}>
+          {results.hasFinal && (
+            <>
+              <MetricTile
+                label={t('session.beforeFinal')}
+                value={String(tenthsToScore(results.beforeFinalTenths))}
+                testID="result-before-final"
+              />
+              <MetricTile
+                label={t('session.final')}
+                value={String(tenthsToScore(results.finalTenths))}
+                testID="result-final"
+              />
+            </>
+          )}
+          <MetricTile
             label={t('session.total')}
-            tenths={results.totalTenths}
+            value={String(tenthsToScore(results.totalTenths))}
             testID="session-total"
           />
-        )}
-        <View style={styles.resultsRow}>
-          <ResultCellText
+          <MetricTile
             label={t('session.seriesAverage')}
             value={
               detail.seriesAverageTenths === null
@@ -193,17 +245,12 @@ export default function SessionDetailScreen() {
             }
             testID="session-series-average"
           />
-          <ResultCellText
+          <MetricTile
             label={t('session.innerTenCount')}
             value={String(detail.innerTenCount)}
             testID="session-inner-ten-count"
           />
         </View>
-        {seriesRows[0]?.guldThreshold != null && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('session.guldAt', { points: seriesRows[0].guldThreshold })}
-          </ThemedText>
-        )}
       </Card>
 
       <Card>
@@ -315,21 +362,40 @@ export default function SessionDetailScreen() {
 
       {view === 'stats' && seriesRows.length > 0 ? (
         <Card testID="session-stats-view">
-          <View style={styles.resultsRow}>
-            <StatTile
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            {t('stats.statsPerShotTitle')}
+          </ThemedText>
+          <View style={styles.metricRow}>
+            <MetricTile
               testID="session-stat-mean"
               label={t('stats.statsMean')}
               value={stats.meanTenths === null ? '–' : tenthsToScore(stats.meanTenths).toFixed(1)}
             />
-            <StatTile
+            <MetricTile
               testID="session-stat-sd"
               label={t('stats.statsSd')}
               value={stats.sdTenths === null ? '–' : tenthsToScore(stats.sdTenths).toFixed(2)}
             />
-            <StatTile
+            <MetricTile
               testID="session-stat-x-count"
               label={t('stats.statsXCount')}
               value={String(stats.xCount)}
+            />
+          </View>
+
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            {t('stats.statsSumTitle')}
+          </ThemedText>
+          <View style={styles.metricRow}>
+            <MetricTile
+              testID="session-stat-total-points"
+              label={t('stats.statsTotalPoints')}
+              value={String(tenthsToScore(stats.sumTenths))}
+            />
+            <MetricTile
+              testID="session-stat-total-shots"
+              label={t('stats.statsTotalShots')}
+              value={String(stats.shotCount)}
             />
           </View>
 
@@ -395,17 +461,6 @@ export default function SessionDetailScreen() {
 
           {!detail.isFixedFormat && (
             <Card>
-              <View style={styles.switchRow}>
-                <ThemedText type="small" themeColor={sighterDisabled ? 'textSecondary' : 'text'}>
-                  {sighterDisabled ? t('session.sighterUsed') : t('session.sighter')}
-                </ThemedText>
-                <Switch
-                  value={nextIsSighter && !sighterDisabled}
-                  disabled={sighterDisabled}
-                  onValueChange={setNextIsSighter}
-                  testID="sighter-toggle"
-                />
-              </View>
               <PrimaryButton
                 label={t('session.addSeries')}
                 onPress={onAddSeries}
@@ -440,36 +495,26 @@ export default function SessionDetailScreen() {
   );
 }
 
-/** A header cell whose value is already formatted (average, counts). */
-function ResultCellText({
-  label,
-  value,
-  testID,
-}: {
-  label: string;
-  value: string;
-  testID: string;
-}) {
+/**
+ * A compact labeled number — the results card and the per-shot/sum stat
+ * rows. Deliberately lighter than `StatTile` (no nested Card padding, single-
+ * line ellipsized label) so 3-5 of these fit one row at phone widths without
+ * a long Swedish label ("Standardavvikelse") wrapping character-by-character.
+ */
+function MetricTile({ label, value, testID }: { label: string; value: string; testID?: string }) {
   return (
-    <View style={styles.resultCell}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      <ThemedText type="subtitle" testID={testID}>
+    <View style={styles.metricTile}>
+      <ThemedText type="smallBold" numberOfLines={1} testID={testID}>
         {value}
       </ThemedText>
-    </View>
-  );
-}
-
-function ResultCell({ label, tenths, testID }: { label: string; tenths: number; testID: string }) {
-  return (
-    <View style={styles.resultCell}>
-      <ThemedText type="small" themeColor="textSecondary">
+      <ThemedText
+        type="small"
+        themeColor="textSecondary"
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={styles.metricLabel}
+      >
         {label}
-      </ThemedText>
-      <ThemedText type="subtitle" testID={testID}>
-        {tenthsToScore(tenths)}
       </ThemedText>
     </View>
   );
@@ -485,14 +530,34 @@ const styles = StyleSheet.create({
   },
   resultsRow: {
     flexDirection: 'row',
-    gap: Spacing.four,
+    gap: Spacing.two,
   },
-  resultCell: {
+  metricCard: {
+    paddingVertical: Spacing.two,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.three,
+  },
+  metricTile: {
+    flexGrow: 1,
+    flexBasis: 64,
+    minWidth: 0,
     gap: Spacing.half,
+  },
+  metricLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  seriesWrapper: {
+    // Swipeable measures its own children — keep the row's own vertical
+    // rhythm here instead of on the Pressable so the swiped-open action
+    // aligns with the row rather than any surrounding gap.
+    paddingVertical: Spacing.one,
   },
   seriesRow: {
     gap: Spacing.two,
-    paddingVertical: Spacing.two,
   },
   seriesHeader: {
     flexDirection: 'row',
@@ -505,11 +570,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  switchRow: {
-    flexDirection: 'row',
+  deleteAction: {
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    borderRadius: Radius.medium,
   },
   pressed: {
     opacity: 0.6,
