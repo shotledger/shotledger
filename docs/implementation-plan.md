@@ -321,15 +321,40 @@ the toggle disables once used.
 - Series saved ⇒ append next empty series automatically; session total
   updates live. Guldserie: when discipline+class has a threshold (§6.5)
   show "Guld vid N poäng" and a badge when reached.
-- [ ] Keypad component + logic in `shared/scoring/entry.ts` (pure,
+- [x] Keypad component + logic in `shared/scoring/entry.ts` (pure,
       vitest-tested: all key sequences, both modes, edit flows)
-- [ ] Session detail screen: Series list (chips per shot, per-series
+      — built under the old-coder loop (CLAUDE.md makes it mandatory for
+      `shared/scoring/`): executable spec in `docs/specs/m3-scoring-spec.md`,
+      evidence in `docs/specs/m3-scoring-evidence.md`. The spec was **not
+      approved by the maintainer before implementation** (autonomous run) —
+      it is the artifact to review after the fact. Two open VERIFY items are
+      recorded there: the `(X)` semantics (implemented behind the
+      `innerTenDecimalEnabled` flag, default off, so no data is written with
+      it) and which key types "10" in decimal mode (this build uses `X` for
+      ring 10, because `0` is needed for a decimal miss).
+- [x] Session detail screen: Series list (chips per shot, per-series
       totals) / Stats toggle (M5 fills stats)
-- [ ] Attach photo to series (expo-image-picker; camera or library) —
+      — series list, Before final / Final / Total results (§6.3), guldserie
+      badge + "Guld vid N" (§6.5, hidden when the vapengrupp has no märke row
+      or the birth year is unknown — new `birthYear` setting on /settings).
+      The Stats toggle itself is left to M5, which fills it.
+- [x] Attach photo to series (expo-image-picker; camera or library) —
       free, stored as local URI
+      — library picker via `app/src/features/session/pick-photo.ts`; the
+      camera path is the same API and ships when the firearms/maintenance
+      screens need it (M4).
+- Also in this branch: the new-session form (§4 M3), discipline/program
+  data files with zod schemas (§6.2/§6.3), federation-scoped vapengrupper
+  and klasser (§6.4a), and the milsnabb fixed-format skeleton.
 - **Done when:** Maestro flow enters a full 5-series C-precision session
   by tapping and asserts the computed total; unit tests cover scoring
   edge cases (0, miss, X in both modes).
+  — `app/e2e/m3-entry.yaml` does exactly that (five series of 5x9, asserts
+  the computed total 225) on the `shotledger` AVD dev build. Unit tests:
+  187 vitest tests total, 100% line/branch/function coverage on the shared
+  scoring + discipline modules, Stryker 98.26% (7 survivors, all classified
+  equivalent in the evidence report) plus a persisted on-disk mutation
+  runner for the zod schemas (17/17 killed).
 
 ### M4 — firearms, ammo, compliance data (branch `feat/m4-gear`)
 

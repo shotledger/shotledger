@@ -93,6 +93,22 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
 (cd app && pnpm exec jest --passWithNoTests)`), run from the repo
   root. `pnpm exec prettier --check .` is available separately
   (`pnpm format`) but not part of `check` per the implementation plan.
+  Note `pnpm typecheck` (`tsc -b`) covers `shared/` and `backend/` only —
+  the `app/` project is not in the build graph; check it by hand with
+  `cd app && pnpm exec tsc --noEmit -p tsconfig.json` (three pre-existing
+  M0/M1 errors there as of M3).
+- Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
+  `pnpm coverage` (vitest + v8, 100% threshold on
+  `shared/src/{scoring,disciplines}`, exits nonzero when missed),
+  `pnpm mutation` (Stryker; `stryker.config.json` sets `ignoreStatic`
+  because the vitest runner cannot activate mutants in module-load code),
+  `pnpm mutation:schema` (on-disk mutation of the zod schemas, which is
+  what `ignoreStatic` skips). `pnpm gauntlet` runs every layer.
+- **Never edit files in the working tree while a Maestro flow is running**
+  against a Metro dev build: Metro hot-reloads, the dev client returns to
+  the initial route, and the flow fails on a screen that vanished under
+  it. Also, `extendedWaitUntil` does not scroll — wait for an element that
+  stays on screen (e.g. `session-total`), or use `scrollUntilVisible`.
 - Backend (`backend/`, hello-world only, never deployed by an agent):
   `cd backend && pnpm test` runs its own Cloudflare Workers vitest
   suite; not wired into the root `pnpm check` (out of scope until it

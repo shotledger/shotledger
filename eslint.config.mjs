@@ -13,6 +13,9 @@ export default tseslint.config(
       '**/.expo/**',
       '**/.wrangler/**',
       '**/android/**',
+      '**/.stryker-tmp/**',
+      'coverage/**',
+      'reports/**',
       '**/ios/**',
       '**/*.d.ts',
       'app/expo-env.d.ts',
@@ -45,6 +48,7 @@ export default tseslint.config(
   {
     // Node-run tooling scripts and jest mocks (not bundled by Metro).
     files: [
+      'scripts/**/*.mjs',
       'app/scripts/**/*.js',
       'app/**/__mocks__/**/*.js',
       'app/babel.config.js',

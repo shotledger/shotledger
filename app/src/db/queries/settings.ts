@@ -8,6 +8,8 @@ import type { Database } from '../types';
 export const SETTINGS_KEYS = {
   language: 'language', // 'system' | 'sv' | 'en'
   theme: 'theme', // 'system' | 'light' | 'dark'
+  // Shooter's birth year — drives the märke age reduction (§6.5). null = unknown.
+  birthYear: 'birthYear',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

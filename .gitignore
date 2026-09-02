@@ -22,3 +22,7 @@ build/
 .idea/
 .vscode/
 .DS_Store
+
+.stryker-tmp/
+coverage/
+reports/

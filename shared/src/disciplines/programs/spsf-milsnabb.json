@@ -1,0 +1,17 @@
+{
+  "id": "spsf-milsnabb",
+  "disciplineId": "spsf-milsnabb",
+  "federation": "SPSF",
+  "name": { "sv": "Militär snabbmatch", "en": "Military rapid fire" },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      { "seriesCount": 4, "timeLimitSeconds": 10 },
+      { "seriesCount": 4, "timeLimitSeconds": 8 },
+      { "seriesCount": 4, "timeLimitSeconds": 6 }
+    ]
+  }
+}
