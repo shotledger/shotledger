@@ -111,6 +111,14 @@ export default function SessionDetailScreen() {
     );
   }
 
+  // `sessions.kind` is chosen at creation and immutable (§3): a 'rounds'
+  // session logs a fired-shot count and never gets series, a 'series'
+  // session is the reverse. Show only the controls that belong to the kind
+  // rather than offering both (maintainer, 2026-09-03: "It's either or and
+  // determined when the session is created"). Gating only — a legacy row's
+  // stored extra_rounds and series are left untouched either way.
+  const isRoundsSession = session.kind === 'rounds';
+
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
 
@@ -252,22 +260,24 @@ export default function SessionDetailScreen() {
         </View>
       </Card>
 
-      <Card>
-        <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
-        <TextField
-          value={extraRounds}
-          onChangeText={setExtraRounds}
-          onBlur={onCommitExtraRounds}
-          onSubmitEditing={onCommitExtraRounds}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          placeholder="0"
-          testID="extra-rounds"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.extraRoundsHint')}
-        </ThemedText>
-      </Card>
+      {isRoundsSession && (
+        <Card>
+          <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
+          <TextField
+            value={extraRounds}
+            onChangeText={setExtraRounds}
+            onBlur={onCommitExtraRounds}
+            onSubmitEditing={onCommitExtraRounds}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            placeholder="0"
+            testID="extra-rounds"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('session.extraRoundsHint')}
+          </ThemedText>
+        </Card>
+      )}
 
       {seriesRows.length > 0 && (
         <SegmentedControl
@@ -438,7 +448,9 @@ export default function SessionDetailScreen() {
       ) : (
         <>
           {seriesRows.length === 0 ? (
-            <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+            isRoundsSession ? null : (
+              <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+            )
           ) : (
             <Card>
               {mainRows.length > 0 && finalRows.length > 0 && (
@@ -456,7 +468,7 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
-          {!detail.isFixedFormat && (
+          {!detail.isFixedFormat && !isRoundsSession && (
             <Card>
               <PrimaryButton
                 label={t('session.addSeries')}
@@ -473,7 +485,7 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
-          {seriesRows.length > 0 && (
+          {!isRoundsSession && seriesRows.length > 0 && (
             <Card>
               <PrimaryButton
                 label={t('photoScoring.scanTarget')}
