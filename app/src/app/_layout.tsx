@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-
 import * as SplashScreen from 'expo-splash-screen';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { MigrationGate } from '@/db/migration-gate';
@@ -43,6 +44,10 @@ function RootStack() {
       <Stack.Screen
         name="session/[id]/series/[pos]"
         options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
+      />
+      <Stack.Screen
+        name="session/[id]/edit"
+        options={{ presentation: 'modal', headerShown: true, title: t('session.editTitle') }}
       />
       <Stack.Screen
         name="session/[id]/scan"
@@ -137,10 +142,15 @@ function ThemedApp() {
 
 export default function RootLayout() {
   return (
-    <MigrationGate>
-      <AppSettingsProvider>
-        <ThemedApp />
-      </AppSettingsProvider>
-    </MigrationGate>
+    // Required by react-native-gesture-handler (Swipeable et al. — first
+    // used by the session detail series list's swipe-to-delete); expo-router
+    // does not add this wrapper itself.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <MigrationGate>
+        <AppSettingsProvider>
+          <ThemedApp />
+        </AppSettingsProvider>
+      </MigrationGate>
+    </GestureHandlerRootView>
   );
 }

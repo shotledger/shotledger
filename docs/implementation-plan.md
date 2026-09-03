@@ -320,12 +320,15 @@ it). Name defaults to `<level> <program> <general class>` for
 competitions, `<discipline> — <local date>` for training.
 
 **Series flow (never a fixed count):** series are added one at a time.
-The add-series screen has a **Sighter toggle**; when the session's
-program `supportsFinal`, a **"Start final" action** appears after at
-least one scored series — series added after it get `is_final=1` and the
-session detail shows a Final section divider plus three results: Before
-final · Final · Total (§6.3). Each section allows at most one sighter;
-the toggle disables once used.
+When the session's program `supportsFinal`, a **"Start final" action**
+appears after at least one scored series — series added after it get
+`is_final=1` and the session detail shows a Final section divider plus
+three results: Before final · Final · Total (§6.3). Each section allows
+at most one sighter. (Amended in `fix/session-detail-ui`, 2026-09-03: the
+sighter choice moved off the add-series area and onto the series entry
+screen itself, next to Save — see the plan.md decisions log entry for
+that date. It still enforces one sighter per section, and a series that
+already is the sighter can un-set itself.)
 
 **ScoreKeypad spec** (get this exactly right):
 
@@ -336,7 +339,7 @@ the toggle disables once used.
   `0` ⇒ a miss. Decimal mode: two taps per shot — `"10"` then `"9"` ⇒ 10.9
   with no flag; `X` then `"9"` ⇒ 10.9 + `is_inner_ten`; `0` then `0` ⇒ a
   decimal miss. There is no `(X)` key, and `is_inner_ten_decimal` is
-  deprecated (§3). Statistics that count "X" count centrumtior.
+  deprecated (§3). Statistics that count "X" count innertior.
 - Extra rounds: the session form and session detail carry an
   `extra_rounds` field for rounds fired but not scored — volume only
   (round counter, ammo-lot usage, shots-logged totals), never score.
@@ -363,6 +366,23 @@ the toggle disables once used.
       badge + "Guld vid N" (§6.5, hidden when the vapengrupp has no märke row
       or the birth year is unknown — new `birthYear` setting on /settings).
       The Stats toggle itself is left to M5, which fills it.
+      Amended in `fix/session-detail-ui` (2026-09-03, maintainer-requested
+      polish batch — see plan.md decisions log): the results card
+      (Total/Before final/Final, avg/series, X count) is now a single
+      compact row roughly a button's height, the session-level
+      "Guld vid N p" line is dropped (the per-series hint on the series
+      entry screen stays), the standalone Share button moved off this
+      screen onto the new `session/[id]/edit.tsx` metadata screen (reached
+      via a header Edit action) and onto the sessions list, and each series
+      row gets swipe-to-delete (`react-native-gesture-handler`
+      `ReanimatedSwipeable`, confirm dialog, soft-deletes its shots and
+      backs out the deleted shot count from the linked firearm's round
+      counters — `deleteSeriesAndShots` in
+      `app/src/db/queries/round-count.ts`; disabled for a fixed-format
+      program's pre-created skeleton, since removing one series would
+      leave the structure incomplete). Series positions are intentionally
+      left with gaps after a delete rather than renumbered, since position
+      indexes a fixed-format program's skeleton (`timeLimitSeconds`).
 - [x] Attach photo to series (expo-image-picker; camera or library) —
       free, stored as local URI
       — library picker via `app/src/features/session/pick-photo.ts`; the
@@ -427,7 +447,7 @@ All math in `shared/scoring/stats.ts` (vitest): sighter series are
 excluded from every score metric but included in volume metrics (total
 shots, rounds fired). Series mean, session mean
 per shot, standard deviation (sample), best/worst series, X counts
-(= centrumtior, `is_inner_ten`; labelled "X" / sv "centrumtior"),
+(= innertior, `is_inner_ten`; labelled "X" / sv "innertior"),
 rolling trend (per-session mean over time), comparison of last N series
 vs previous N (default N=100), guldserie count per period, per-firearm
 and per-ammo-lot aggregates.
@@ -440,13 +460,19 @@ and per-ammo-lot aggregates.
       `app/src/features/stats/use-stats-data.ts`, no generate button;
       empty state both for no data at all and for no data in the current
       filter.
-- [x] Session detail Stats toggle: totals, mean, SD, X count (centrumtior),
+- [x] Session detail Stats toggle: totals, mean, SD, X count (innertior),
       distribution mini-chart, comparison vs the user's last 100 series
       of the same discipline/class
       — segmented Series/Stats toggle in `app/src/app/session/[id]/index.tsx`;
       `app/src/features/session/use-session-stats.ts` adds the
       standardmedalj line (§6.5b, evaluates beforeFinal) on top of the
-      shared M5 stats engine.
+      shared M5 stats engine. Amended in `fix/session-detail-ui`
+      (2026-09-03): the per-shot row (mean/SD/X) sits alongside a second
+      "whole session" row (total points, total shots) so both readings
+      are visible together; the tile grid also switched to a single-line,
+      ellipsis-truncated label to stop long Swedish labels
+      (e.g. "Standardavvikelse") from wrapping character-by-character in
+      a 3-up row.
 - **Done when:** stats screens render from seed deterministically
   (Maestro screenshot compares stable numbers), formulas unit-tested
   against hand-computed fixtures.

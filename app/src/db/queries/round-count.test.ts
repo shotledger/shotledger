@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
-import { addSeries } from './series';
+import { addSeries, getSeries } from './series';
 import { createSession } from './sessions';
 import { createFirearm, getFirearm } from './firearms';
-import { applyRoundCountDelta, saveSeriesShots } from './round-count';
+import { listShotsForSeries } from './shots';
+import { applyRoundCountDelta, deleteSeriesAndShots, saveSeriesShots } from './round-count';
 
 let db: Database;
 
@@ -95,6 +96,61 @@ describe('saveSeriesShots — M4 round counter (§4 M4 "Done when")', () => {
 
     const updated = getFirearm(db, firearm.id);
     expect(updated?.roundsSinceMaintenance).toBe(2);
+  });
+});
+
+describe('deleteSeriesAndShots', () => {
+  it('soft-deletes the shots and the series, and backs the round count out', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId: firearm.id,
+      startedAt: new Date().toISOString(),
+    });
+    const s = addSeries(db, { sessionId: session.id, position: 1 });
+    saveSeriesShots(db, s.id, [shot(90), shot(90), shot(90)]);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(3);
+
+    deleteSeriesAndShots(db, s.id);
+
+    expect(getSeries(db, s.id)).toBeUndefined();
+    expect(listShotsForSeries(db, s.id)).toHaveLength(0);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+
+  it('does not touch the round count for a session with no firearm link', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: new Date().toISOString(),
+    });
+    const s = addSeries(db, { sessionId: session.id, position: 1 });
+    saveSeriesShots(db, s.id, [shot(90), shot(90)]);
+
+    deleteSeriesAndShots(db, s.id);
+
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+
+  it('deletes an empty series without touching the round count', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId: firearm.id,
+      startedAt: new Date().toISOString(),
+    });
+    const s = addSeries(db, { sessionId: session.id, position: 1 });
+
+    deleteSeriesAndShots(db, s.id);
+
+    expect(getSeries(db, s.id)).toBeUndefined();
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
   });
 });
 

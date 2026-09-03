@@ -4,7 +4,8 @@ import { series, sessions } from '../schema';
 import type { Database } from '../types';
 import { getFirearm, updateFirearm } from './firearms';
 import { getSession, updateSession } from './sessions';
-import { listShotsForSeries, replaceSeriesShots, type AddShotInput } from './shots';
+import { softDeleteSeries } from './series';
+import { listShotsForSeries, replaceSeriesShots, softDeleteShot, type AddShotInput } from './shots';
 
 /** Adds `delta` rounds to a firearm's lifetime and since-maintenance counters (never below zero). */
 export function applyRoundCountDelta(db: Database, firearmId: string, delta: number) {
@@ -44,6 +45,32 @@ export function saveSeriesShots(
   }
 
   return saved;
+}
+
+/**
+ * Deletes a series (swipe-to-delete on the session detail's series list):
+ * soft-deletes its shots and the series row (§3: soft-delete everywhere),
+ * and backs the shot count out of the linked firearm's round counters —
+ * mirrors `saveSeriesShots`' delta convention (removing N shots is the same
+ * adjustment as editing them away). An override series (WebShooter/ShotLog
+ * import) has no `shots` rows and was never counted into the round counter
+ * on creation, so it contributes no delta here either.
+ */
+export function deleteSeriesAndShots(db: Database, seriesId: string) {
+  const seriesShots = listShotsForSeries(db, seriesId);
+  for (const shot of seriesShots) {
+    softDeleteShot(db, shot.id);
+  }
+
+  const seriesRow = db.select().from(series).where(eq(series.id, seriesId)).get();
+  const sessionRow = seriesRow
+    ? db.select().from(sessions).where(eq(sessions.id, seriesRow.sessionId)).get()
+    : undefined;
+  if (sessionRow?.firearmId && seriesShots.length > 0) {
+    applyRoundCountDelta(db, sessionRow.firearmId, -seriesShots.length);
+  }
+
+  softDeleteSeries(db, seriesId);
 }
 
 /**

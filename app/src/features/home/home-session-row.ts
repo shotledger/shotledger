@@ -31,7 +31,7 @@ export interface HomeSessionRow {
   total: number;
   /** Mean of the session's scored series, in display points. `null` when none. */
   seriesAverage: number | null;
-  /** Inner tens (centrumtior) in the session's scored series. */
+  /** Inner tens (Swedish: innertior) in the session's scored series. */
   innerTenCount: number;
   shape: SessionShape | null;
 }

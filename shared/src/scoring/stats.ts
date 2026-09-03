@@ -59,7 +59,7 @@ export function sampleStandardDeviationTenths(shots: readonly StatsShot[]): numb
 /**
  * Centrumtia count — `is_inner_ten`, which since Amendment A1 (§A1.1) means
  * the shooter pressed `(X)`. A plain `X` is an ordinary ten and is not counted.
- * UI labels this "(X)" / "inner tens" / sv "centrumtior", never bare "X".
+ * UI labels this "(X)" / "inner tens" / sv "innertior", never bare "X".
  */
 export function xCount(shots: readonly StatsShot[]): number {
   return shots.filter((shot) => shot.isInnerTen).length;

@@ -23,6 +23,15 @@ export interface SessionStats {
   meanTenths: number | null;
   sdTenths: number | null;
   xCount: number;
+  /**
+   * Sum across the session's scored shots — the aggregate reading shown
+   * alongside the per-shot mean/SD/X above (maintainer request: "stats for
+   * the sum (all X shots) and per shot"). Same pooled shots as the per-shot
+   * figures, so it shares their sighter-exclusion and override-series
+   * caveats (see `scoredShots`).
+   */
+  sumTenths: number;
+  shotCount: number;
   distribution: DistributionBucket[];
   comparison: CompareRecentSeriesResult | null;
   standardmedalj: StandardmedaljResult | null;
@@ -32,6 +41,8 @@ const EMPTY: SessionStats = {
   meanTenths: null,
   sdTenths: null,
   xCount: 0,
+  sumTenths: 0,
+  shotCount: 0,
   distribution: [],
   comparison: null,
   standardmedalj: null,
@@ -76,6 +87,8 @@ function loadSessionStats(sessionId: string): SessionStats {
     meanTenths: meanTenths(shots),
     sdTenths: sampleStandardDeviationTenths(shots),
     xCount: xCount(shots),
+    sumTenths: sumValueTenths(shots),
+    shotCount: shots.length,
     distribution: buildDistribution(shots),
     comparison,
     standardmedalj: standardmedalj.valor ? standardmedalj : null,

@@ -8,6 +8,7 @@ import {
   addSeries,
   getSeries,
   listSeriesForSession,
+  setSeriesSighter,
   softDeleteSeries,
 } from './series';
 
@@ -88,5 +89,50 @@ describe('getSeries', () => {
     const s = addSeries(db, { sessionId, position: 1 });
     softDeleteSeries(db, s.id);
     expect(getSeries(db, s.id)).toBeUndefined();
+  });
+});
+
+describe('setSeriesSighter', () => {
+  it('sets the sighter flag on a plain series', () => {
+    const s = addSeries(db, { sessionId, position: 1 });
+    const updated = setSeriesSighter(db, s.id, true);
+    expect(updated?.isSighter).toBe(1);
+  });
+
+  it('a series that is already the sighter can turn itself off', () => {
+    const s = addSeries(db, { sessionId, position: 1, isSighter: true });
+    const updated = setSeriesSighter(db, s.id, false);
+    expect(updated?.isSighter).toBe(0);
+    // and can be turned back on since the section has no sighter now
+    expect(setSeriesSighter(db, s.id, true)?.isSighter).toBe(1);
+  });
+
+  it('rejects a second sighter in the same section', () => {
+    addSeries(db, { sessionId, position: 1, isSighter: true });
+    const other = addSeries(db, { sessionId, position: 2 });
+    expect(() => setSeriesSighter(db, other.id, true)).toThrow(SighterLimitExceededError);
+  });
+
+  it('main and final sections are independent', () => {
+    addSeries(db, { sessionId, position: 1, isSighter: true });
+    const finalSeries = addSeries(db, { sessionId, position: 2, isFinal: true });
+    expect(setSeriesSighter(db, finalSeries.id, true)?.isSighter).toBe(1);
+  });
+
+  it('rejects sighter on an override series', () => {
+    const override = addSeries(db, {
+      sessionId,
+      position: 1,
+      isTotalOverride: true,
+      totalOverrideTenths: 470,
+      totalOverrideShotCount: 5,
+    });
+    expect(() => setSeriesSighter(db, override.id, true)).toThrow(RangeError);
+  });
+
+  it('returns undefined for a tombstoned series', () => {
+    const s = addSeries(db, { sessionId, position: 1 });
+    softDeleteSeries(db, s.id);
+    expect(setSeriesSighter(db, s.id, true)).toBeUndefined();
   });
 });

@@ -206,3 +206,16 @@ start -a android.intent.action.VIEW -d
   `app.json`'s `expo.extra.apiBaseUrl` (placeholder
   `https://api.shotledger.app`). Never a secret — the session token lives in
   SecureStore, never in the tree or the DB.
+- **A stuck emulator can serve a phantom pre-edit bundle that survives every
+  ordinary fix** (found in `fix/session-detail-ui`): after this sandbox's
+  System UI ANR'd mid-session (a `System UI isn't responding` dialog that
+  didn't clear even after `input keyevent KEYCODE_BACK`/waiting), the app
+  kept rendering an OLDER version of a screen than what was on disk and in
+  the Metro bundle — confirmed stale by checking the actual file content,
+  clearing Metro's cache (`--clear`), restarting Metro, and even a full
+  `am force-stop` + relaunch, none of which helped. Only `adb uninstall
+app.shotledger` followed by a fresh `adb install` fixed it — something
+  about the wedged process/APK state survived every softer reset. If a
+  screen stops matching its source after any ANR or unexpected app exit to
+  the launcher, don't trust further debugging on that install; uninstall
+  and reinstall before spending more time on it.

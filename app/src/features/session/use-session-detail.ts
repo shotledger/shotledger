@@ -47,7 +47,7 @@ export interface SessionDetail {
   results: SessionResults;
   /** Mean of the scored series' totals, in tenths — the header's "snitt/serie". */
   seriesAverageTenths: number | null;
-  /** Centrumtior in the scored series (spec A-S7). */
+  /** Innertior (centrumtia count) in the scored series (spec A-S7). */
   innerTenCount: number;
   /** Series length used for new series: the program's, else the discipline's. */
   seriesLength: number;

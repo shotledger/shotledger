@@ -4,7 +4,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -15,7 +15,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { saveSeriesShots } from '@/db/queries/round-count';
-import { updateSeries } from '@/db/queries/series';
+import { SighterLimitExceededError, setSeriesSighter, updateSeries } from '@/db/queries/series';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
@@ -42,6 +42,22 @@ export default function SeriesEntryScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(() =>
     resolveSeriesPhotoUri(row?.photoUri ?? null),
   );
+  const [isSighter, setIsSighter] = useState(row?.isSighter ?? false);
+
+  // The sighter choice lives here, not on the add-series step (maintainer:
+  // "the sighter toggle should be one step down"). A section allows at most
+  // one sighter (§6.3): hide the option once another series in this round
+  // already holds it. Deliberately excludes this row itself — reusing
+  // detail.mainHasSighter/finalHasSighter as-is would count this series'
+  // own (possibly stale, possibly just-toggled-off) flag and hide the
+  // control out from under whoever is using it, breaking "a series that IS
+  // the current sighter must still be able to turn itself off". Fixed-format
+  // programs pre-create their series to match the skeleton, so the choice
+  // isn't offered there at all.
+  const otherSeriesHasSighter = detail.seriesRows.some(
+    (other) => other.id !== row?.id && other.isFinal === row?.isFinal && other.isSighter,
+  );
+  const showSighterOption = !detail.isFixedFormat && row != null && !otherSeriesHasSighter;
 
   async function onAttachPhoto() {
     const uri = await pickSeriesPhoto();
@@ -65,6 +81,21 @@ export default function SeriesEntryScreen() {
           isInnerTen: shot.isInnerTen,
         })),
       );
+      if (isSighter !== (row.isSighter ?? false)) {
+        try {
+          setSeriesSighter(db, row.id, isSighter);
+        } catch (error) {
+          // The UI already hides the option once another series holds the
+          // section's sighter, so this is a defensive fallback, not the
+          // normal path.
+          if (error instanceof SighterLimitExceededError) {
+            Alert.alert(t('session.sighterUsed'));
+            router.back();
+            return;
+          }
+          throw error;
+        }
+      }
     }
     router.back();
   }
@@ -76,7 +107,7 @@ export default function SeriesEntryScreen() {
           {t('session.seriesTitle', { position })}
         </ThemedText>
         <View style={styles.badges}>
-          {row?.isSighter && <Chip label={t('session.sighter')} />}
+          {isSighter && <Chip label={t('session.sighter')} />}
           {row?.timeLimitSeconds != null && (
             <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
           )}
@@ -84,7 +115,7 @@ export default function SeriesEntryScreen() {
         </View>
       </View>
 
-      {row?.guldThreshold != null && !row.isSighter && (
+      {row?.guldThreshold != null && !isSighter && (
         <ThemedText type="small" themeColor="textSecondary" testID="guld-hint">
           {t('session.guldAt', { points: row.guldThreshold })}
         </ThemedText>
@@ -95,6 +126,16 @@ export default function SeriesEntryScreen() {
       </Card>
 
       <PrimaryButton label={t('session.addPhoto')} onPress={onAttachPhoto} testID="attach-photo" />
+
+      {showSighterOption && (
+        <Card>
+          <View style={styles.switchRow}>
+            <ThemedText type="small">{t('session.sighterOnThisSeries')}</ThemedText>
+            <Switch value={isSighter} onValueChange={setIsSighter} testID="series-sighter-toggle" />
+          </View>
+        </Card>
+      )}
+
       <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />
       {row && row.shots.length > 0 && (
         <PrimaryButton
@@ -119,5 +160,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
   },
 });

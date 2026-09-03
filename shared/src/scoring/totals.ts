@@ -132,7 +132,7 @@ export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): nu
   return totals.reduce((sum, total) => sum + total, 0) / totals.length;
 }
 
-/** Centrumtior in a session's scored series — sighter (X)s excluded (A-S7). */
+/** Innertior (centrumtia count) in a session's scored series — sighter (X)s excluded (A-S7). */
 export function sessionInnerTenCount(seriesList: readonly FlaggedSeriesForResults[]): number {
   return seriesList
     .filter((series) => !series.isSighter)
