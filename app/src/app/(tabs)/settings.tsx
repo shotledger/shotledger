@@ -1,15 +1,22 @@
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
+import { SearchablePicker, type SearchablePickerOption } from '@/components/searchable-picker';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
-import type { ProfileSelection } from '@shotledger/shared';
+import {
+  allMarkeThresholds,
+  ageReduction,
+  type MarkeGroup,
+  type MarkeValor,
+  type ProfileSelection,
+} from '@shotledger/shared';
 
 import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
@@ -19,7 +26,6 @@ import { useBackupExportImport } from '@/features/backup/use-backup-export-impor
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 export default function SettingsScreen() {
@@ -31,7 +37,6 @@ export default function SettingsScreen() {
     profile,
     setSelection: setComplianceSelection,
   } = useComplianceProfile();
-  const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
   const {
     exportBundle,
@@ -108,21 +113,47 @@ export default function SettingsScreen() {
     );
   }
 
-  const [birthYear, setBirthYear] = useState(() => {
-    const stored = db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null;
-    return stored === null ? '' : String(stored);
-  });
+  const [birthYear, setBirthYear] = useState<number | null>(() =>
+    db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
+  );
 
-  // Only a plausible four-digit year is stored; anything else clears the
-  // setting, and the märke age reduction then simply does not apply (§6.5).
-  function onChangeBirthYear(text: string) {
-    const digits = text.replace(/[^0-9]/g, '').slice(0, 4);
-    setBirthYear(digits);
-    if (!db) return;
-    const year = Number(digits);
-    const valid = digits.length === 4 && year >= 1900 && year <= new Date().getFullYear();
-    setSetting<number | null>(db, SETTINGS_KEYS.birthYear, valid ? year : null);
+  function onChangeBirthYear(year: number) {
+    setBirthYear(year);
+    if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, year);
   }
+
+  function onClearBirthYear() {
+    setBirthYear(null);
+    if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
+  }
+
+  // Newest first, spanning ages 10-100 — plausible for a shooting license.
+  const currentYear = new Date().getFullYear();
+  const birthYearOptions = useMemo<SearchablePickerOption<number>[]>(() => {
+    const options: SearchablePickerOption<number>[] = [];
+    for (let year = currentYear - 10; year >= currentYear - 100; year--) {
+      options.push({ value: year, label: String(year), testID: `birth-year-option-${year}` });
+    }
+    return options;
+  }, [currentYear]);
+
+  const markeThresholds = useMemo(
+    () => allMarkeThresholds({ birthYear, year: currentYear }),
+    [birthYear, currentYear],
+  );
+  const markeReduction = useMemo(
+    () => ageReduction(birthYear, currentYear),
+    [birthYear, currentYear],
+  );
+  // −1 p/series from the year after turning 55, −2 from the year after
+  // turning 65 (SHB Bilaga 1 mom 5.1.1.1) — so the reduction that applies
+  // today started the year the shooter turned 56 or 66, respectively.
+  const markeReductionSinceYear =
+    birthYear === null || markeReduction === 0
+      ? null
+      : birthYear + (markeReduction === 2 ? 66 : 56);
+  const markeGroups: MarkeGroup[] = ['A', 'B', 'C'];
+  const markeValors: MarkeValor[] = ['brons', 'silver', 'guld'];
 
   const languageOptions: { value: LanguageSetting; label: string }[] = [
     { value: 'system', label: t('settings.languageSystem') },
@@ -150,20 +181,57 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('settings.birthYear')}</ThemedText>
-        <TextInput
+        <SearchablePicker
+          label={t('settings.birthYear')}
+          options={birthYearOptions}
           value={birthYear}
-          onChangeText={onChangeBirthYear}
+          onChange={onChangeBirthYear}
+          placeholder={t('settings.birthYearPlaceholder')}
+          searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
+          emptyLabel={t('settings.birthYearNoMatch')}
+          clearable
+          clearLabel={t('common.clear')}
+          onClear={onClearBirthYear}
           keyboardType="number-pad"
-          maxLength={4}
-          placeholder="1970"
-          placeholderTextColor={colors.textSecondary}
-          style={[styles.input, { color: colors.text, borderColor: colors.border }]}
           testID="birth-year"
         />
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.birthYearHelp')}
         </ThemedText>
+
+        <View style={styles.markeTable} testID="marke-requirement">
+          <ThemedText type="smallBold">{t('settings.markeTitle')}</ThemedText>
+          <View style={styles.markeRow}>
+            <View style={styles.markeCellLabel} />
+            {markeGroups.map((group) => (
+              <ThemedText key={group} type="smallBold" style={styles.markeCell}>
+                {group}
+              </ThemedText>
+            ))}
+          </View>
+          {markeValors.map((valor) => (
+            <View key={valor} style={styles.markeRow}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.markeCellLabel}>
+                {t(`webshooter.medal.${valor}`)}
+              </ThemedText>
+              {markeGroups.map((group) => (
+                <ThemedText key={group} type="default" style={styles.markeCell}>
+                  {markeThresholds[group][valor]}
+                </ThemedText>
+              ))}
+            </View>
+          ))}
+          <ThemedText type="small" themeColor="textSecondary">
+            {birthYear === null
+              ? t('settings.markeNoYearNote')
+              : markeReductionSinceYear !== null
+                ? t('settings.markeReductionNote', {
+                    points: markeReduction,
+                    sinceYear: markeReductionSinceYear,
+                  })
+                : t('settings.markeReductionNoneNote')}
+          </ThemedText>
+        </View>
       </Card>
 
       <Card>
@@ -328,11 +396,19 @@ const styles = StyleSheet.create({
   devSection: {
     gap: Spacing.two,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
+  markeTable: {
+    gap: Spacing.one,
+  },
+  markeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  markeCellLabel: {
+    flex: 2,
+  },
+  markeCell: {
+    flex: 1,
+    textAlign: 'center',
   },
 });

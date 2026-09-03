@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ageReduction,
+  allMarkeThresholds,
   guldserieThreshold,
   isGuldserie,
   markeGroupForWeaponGroup,
@@ -176,5 +177,37 @@ describe('mutation-hardening', () => {
 
   it('an undefined birth year is treated as unknown, not as an error', () => {
     expect(ageReduction(undefined, 2026)).toBe(0);
+  });
+});
+
+describe('allMarkeThresholds', () => {
+  it('matches markeThreshold for every valor/group cell, no reduction', () => {
+    const table = allMarkeThresholds({ year: 2026 });
+    for (const markeGroup of ['A', 'B', 'C'] as MarkeGroup[]) {
+      for (const valor of ['brons', 'silver', 'guld'] as MarkeValor[]) {
+        expect(table[markeGroup][valor]).toBe(markeThreshold({ valor, markeGroup, year: 2026 }));
+      }
+    }
+  });
+
+  it('has the documented base values', () => {
+    expect(allMarkeThresholds({ year: 2026 })).toEqual({
+      A: { brons: 32, silver: 38, guld: 43 },
+      B: { brons: 33, silver: 39, guld: 45 },
+      C: { brons: 34, silver: 40, guld: 46 },
+    });
+  });
+
+  it('applies the age reduction to every cell', () => {
+    const table = allMarkeThresholds({ birthYear: 1960, year: 2026 });
+    expect(table).toEqual({
+      A: { brons: 30, silver: 36, guld: 41 },
+      B: { brons: 31, silver: 37, guld: 43 },
+      C: { brons: 32, silver: 38, guld: 44 },
+    });
+  });
+
+  it('rejects an impossible birth year, same as markeThreshold', () => {
+    expect(() => allMarkeThresholds({ birthYear: 3000, year: 2026 })).toThrow(RangeError);
   });
 });

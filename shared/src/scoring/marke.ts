@@ -96,3 +96,35 @@ export function isGuldserie(points: number, input: SeriesThresholdInput): boolea
   const threshold = guldserieThreshold(input);
   return threshold !== null && points >= threshold;
 }
+
+const MARKE_VALORS: readonly MarkeValor[] = ['brons', 'silver', 'guld'];
+const MARKE_GROUPS: readonly MarkeGroup[] = ['A', 'B', 'C'];
+
+export type MarkeThresholdTable = Record<MarkeGroup, Record<MarkeValor, number>>;
+
+export interface MarkeThresholdTableInput {
+  birthYear?: number | null;
+  year: number;
+}
+
+/**
+ * Every brons/silver/guld × A/B/C threshold for one birth year and year, age
+ * reduction applied — for UI that shows the whole table (e.g. a settings
+ * screen) rather than a single cell via {@link markeThreshold}.
+ */
+export function allMarkeThresholds(input: MarkeThresholdTableInput): MarkeThresholdTable {
+  const table = {} as MarkeThresholdTable;
+  for (const markeGroup of MARKE_GROUPS) {
+    const row = {} as Record<MarkeValor, number>;
+    for (const valor of MARKE_VALORS) {
+      row[valor] = markeThreshold({
+        valor,
+        markeGroup,
+        birthYear: input.birthYear,
+        year: input.year,
+      });
+    }
+    table[markeGroup] = row;
+  }
+  return table;
+}

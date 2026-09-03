@@ -2,7 +2,8 @@
   "common": {
     "save": "Spara",
     "edit": "Redigera",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "clear": "Rensa"
   },
   "tabs": {
     "home": "Hem",
@@ -239,7 +240,14 @@
     "supportSubtitle": "Öppnar Buy Me a Coffee i webbläsaren. Gratis app; donationer låser inte upp något.",
     "about": "Om appen",
     "birthYear": "Födelseår",
-    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav."
+    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
+    "birthYearPlaceholder": "Välj ett år",
+    "birthYearSearchPlaceholder": "T.ex. 1970",
+    "birthYearNoMatch": "Inget matchande år",
+    "markeTitle": "Pistolskyttemärkets seriekrav",
+    "markeNoYearNote": "Inget födelseår angivet — visar fulla poängkrav utan åldersavdrag.",
+    "markeReductionNote": "Åldersavdrag på {{points}} p/serie gäller från {{sinceYear}}.",
+    "markeReductionNoneNote": "Inget åldersavdrag gäller ännu."
   },
   "about": {
     "title": "Om appen",
@@ -276,7 +284,7 @@
     "restoreSubtitle": "Välj en .shotledger-fil — detta ersätter allt på den här enheten",
     "lastBackup": "Senaste säkerhetskopia: {{date}}",
     "neverBackedUp": "Ingen säkerhetskopia än",
-    "vaultNote": "Dokumentvalvet ingår aldrig — det stannar bara på den här enheten",
+    "vaultNote": "Valvet ingår aldrig — det stannar bara på den här enheten",
     "restorePreviewTitle": "Återställ den här säkerhetskopian?",
     "restorePreviewBody": "Från {{date}}: {{sessions}} pass, {{series}} serier, {{shots}} skott, {{firearms}} vapen{{photosNote}}. Detta ERSÄTTER allt som finns på den här enheten nu — en säkerhetskopia av nuvarande data görs först.",
     "restorePreviewPhotosNote": ", {{count}} foto(n)",
@@ -633,18 +641,18 @@
     }
   },
   "vault": {
-    "title": "Dokumentvalv",
+    "title": "Valv",
     "settingsRowTitle": "Valv",
     "settingsRowSubtitle": "Vapenlicens, medlemskort, portkoder — krypterat, synkas aldrig",
-    "webUnavailable": "Dokumentvalvet kräver en nativ build — säker lagring är inte tillgänglig i den här webbförhandsvisningen.",
+    "webUnavailable": "Valvet kräver en nativ build — säker lagring är inte tillgänglig i den här webbförhandsvisningen.",
     "gateTitle": "Lås upp valvet",
-    "gateBody": "Verifiera att det är du för att visa dina krypterade dokument.",
+    "gateBody": "Verifiera att det är du för att visa dina krypterade objekt.",
     "gateUnlockCta": "Lås upp",
     "gateDenied": "Autentiseringen misslyckades.",
     "gateDeviceUnsecuredWarning": "Den här enheten saknar skärmlås — vem som helst som håller i den kan öppna valvet. Ställ in kod, mönster eller biometriskt lås i systeminställningarna för verkligt skydd.",
     "emptyTitle": "Inget sparat än",
     "emptyBody": "Foton och koder du lägger till här stannar på den här enheten, krypterade, och synkas eller exporteras aldrig.",
-    "addCta": "Lägg till dokument",
+    "addCta": "Lägg till objekt",
     "kindLicense": "Vapenlicens",
     "kindMembershipCard": "Medlemskort",
     "kindDoorCode": "Portkod",
@@ -674,7 +682,7 @@
     "scanNoFirearms": "Lägg till ett vapen först för att skapa en licens från den här skanningen — fotot kan ändå sparas för sig.",
     "detailAddedOn": "Tillagt {{date}}",
     "detailDelete": "Ta bort",
-    "detailDeleteConfirmTitle": "Ta bort det här dokumentet?",
+    "detailDeleteConfirmTitle": "Ta bort det här objektet?",
     "detailDeleteConfirmBody": "Det går inte att ångra.",
     "detailDeleteConfirmCancel": "Avbryt",
     "detailDeleteConfirmConfirm": "Ta bort",
@@ -688,7 +696,7 @@
     "permissionDenied": "Behörighet nekades. Tillåt kamera och foton för att skanna en tavla.",
     "analyzing": "Låser på tavlan…",
     "unsupportedTitle": "Stöds inte ännu",
-    "unsupportedBody": "Fotoräkning fungerar just nu bara på 25 m precisionstavla. Den här passet använder {{face}}.",
+    "unsupportedBody": "Fotoräkning fungerar just nu bara på 25 m precisionstavla. Det här passet använder {{face}}.",
     "lockFailedTitle": "Kunde inte låsa tavlan",
     "lockFailedBody": "Ringarna kunde inte placeras på det här fotot. Ta om det rakt framifrån med bra ljus, eller placera de fyra hörnen själv.",
     "reasonAxisRatio": "Tavlan ser för vinklad ut, eller formen som hittades är inte rund.",
