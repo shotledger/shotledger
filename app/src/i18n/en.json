@@ -123,8 +123,8 @@
     "statsTotalPoints": "Total Points",
     "statsTotalShots": "Total Shots",
     "statsPerSeriesTitle": "Per Series",
-    "statsSeriesMean": "Mean/Series",
-    "statsSeriesSd": "SD/Series",
+    "statsSeriesMean": "Mean",
+    "statsSeriesSd": "SD",
     "statsSeriesCount": "Series",
     "comparisonHint": "Mean series score."
   },
