@@ -35,6 +35,15 @@ describe('selectNextPhotoTask', () => {
     expect(selectNextPhotoTask([newer, older])?.id).toBe('old');
   });
 
+  it('keeps the oldest when a newer entry follows it', () => {
+    // The mirror of the case above: there the second entry displaces the
+    // first, here it must not. Without both orders the "already have an
+    // older one" branch never runs.
+    const older = entry({ id: 'old', createdAt: '2026-09-01T00:00:00.000Z' });
+    const newer = entry({ id: 'new', createdAt: '2026-09-02T00:00:00.000Z' });
+    expect(selectNextPhotoTask([older, newer])?.id).toBe('old');
+  });
+
   it('skips entries that have exhausted their attempts', () => {
     const dead = entry({ id: 'dead', attempts: MAX_PHOTO_ATTEMPTS, createdAt: '2026-01-01' });
     const live = entry({ id: 'live', createdAt: '2026-02-01' });
