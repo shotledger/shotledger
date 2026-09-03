@@ -55,7 +55,9 @@ export function defaultVaultStoreDeps(): VaultStoreDeps {
 const utf8Encoder = new TextEncoder();
 const utf8Decoder = new TextDecoder();
 
-async function loadIndex(deps: VaultStoreDeps): Promise<VaultIndex> {
+/** Exported for features/backup/vault-transfer.ts, which reads and merges the
+ * index when the user opts the vault into a backup bundle. */
+export async function loadIndex(deps: VaultStoreDeps): Promise<VaultIndex> {
   const sealed = deps.readIndexBytes();
   if (!sealed) return EMPTY_VAULT_INDEX;
   const key = await deps.getKey();
@@ -63,7 +65,7 @@ async function loadIndex(deps: VaultStoreDeps): Promise<VaultIndex> {
   return JSON.parse(utf8Decoder.decode(plaintext)) as VaultIndex;
 }
 
-async function saveIndex(index: VaultIndex, deps: VaultStoreDeps): Promise<void> {
+export async function saveIndex(index: VaultIndex, deps: VaultStoreDeps): Promise<void> {
   const key = await deps.getKey();
   const plaintext = utf8Encoder.encode(JSON.stringify(index));
   const sealed = await seal(plaintext, key, deps.provider);
