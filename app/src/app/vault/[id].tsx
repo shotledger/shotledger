@@ -24,11 +24,17 @@ export default function VaultDocumentScreen() {
   const [meta, setMeta] = useState<VaultDocumentMeta | null>(null);
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [text, setText] = useState<string | null>(null);
+  // A linked document can be legitimately missing — e.g. a licence's
+  // vaultDocumentId survived a restore onto a device whose Vault never had
+  // the file (the Vault itself is never backed up, by design). Distinguish
+  // that from "still loading" so this screen doesn't hang on its ellipsis.
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getDocumentContent(id).then((content) => {
-      if (cancelled || !content) return;
+      if (cancelled) return;
+      if (!content) return setNotFound(true);
       setMeta(content.meta);
       if (content.meta.contentType === 'image') {
         setImageDataUri(`data:image/jpeg;base64,${bytesToBase64(content.bytes)}`);
@@ -53,6 +59,21 @@ export default function VaultDocumentScreen() {
         },
       },
     ]);
+  }
+
+  if (notFound) {
+    return (
+      <Screen>
+        <ThemedText type="default" themeColor="textSecondary" testID="vault-document-not-found">
+          {t('vault.detailNotFound')}
+        </ThemedText>
+        <PrimaryButton
+          label={t('vault.detailNotFoundBack')}
+          onPress={() => router.back()}
+          testID="vault-document-not-found-back"
+        />
+      </Screen>
+    );
   }
 
   if (!meta) {

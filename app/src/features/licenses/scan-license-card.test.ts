@@ -2,7 +2,9 @@ import {
   countRecognizedFields,
   licenseFormValues,
   scanLicenseCard,
+  settleScannedLicenseImage,
   type ScanLicenseCardDeps,
+  type SettleScannedLicenseImageDeps,
 } from './scan-license-card';
 import type { ParsedLicenseCard } from '@shotledger/shared';
 
@@ -115,6 +117,76 @@ describe('countRecognizedFields', () => {
         vapenId: 'SE1234567',
       }),
     ).toBe(9);
+  });
+});
+
+describe('settleScannedLicenseImage', () => {
+  function settleDeps(overrides: Partial<SettleScannedLicenseImageDeps> = {}) {
+    const deleted: string[] = [];
+    const stored: string[] = [];
+    const base: SettleScannedLicenseImageDeps = {
+      requestVaultAccess: async () => ({ granted: true, deviceUnsecured: false }),
+      addPhotoDocument: async (sourceUri) => {
+        stored.push(sourceUri);
+        return {
+          id: 'doc-1',
+          kind: 'license',
+          contentType: 'image',
+          label: 'A000.000/2026-01',
+          addedAt: '2026-01-15T00:00:00.000Z',
+        };
+      },
+      deleteImage: async (uri) => {
+        deleted.push(uri);
+      },
+      ...overrides,
+    };
+    return { deps: base, deleted, stored };
+  }
+
+  it('keeps the image by default: gates, encrypts into the vault, then clears the cache copy', async () => {
+    const { deps, deleted, stored } = settleDeps();
+    const result = await settleScannedLicenseImage(
+      'file:///cache/card.jpg',
+      { store: true, label: 'A000.000/2026-01', promptMessage: 'Unlock vault' },
+      deps,
+    );
+    expect(result).toEqual({ status: 'stored', documentId: 'doc-1' });
+    expect(stored).toEqual(['file:///cache/card.jpg']);
+    expect(deleted).toEqual(['file:///cache/card.jpg']);
+  });
+
+  it('opt-out (store: false) never gates and just deletes the cache copy', async () => {
+    let gated = false;
+    const { deps, deleted, stored } = settleDeps({
+      requestVaultAccess: async () => {
+        gated = true;
+        return { granted: true, deviceUnsecured: false };
+      },
+    });
+    const result = await settleScannedLicenseImage(
+      'file:///cache/card.jpg',
+      { store: false, label: 'A000.000/2026-01', promptMessage: 'Unlock vault' },
+      deps,
+    );
+    expect(result).toEqual({ status: 'discarded' });
+    expect(gated).toBe(false);
+    expect(stored).toEqual([]);
+    expect(deleted).toEqual(['file:///cache/card.jpg']);
+  });
+
+  it('a refused vault gate loses the copy rather than leaving it in the cache', async () => {
+    const { deps, deleted, stored } = settleDeps({
+      requestVaultAccess: async () => ({ granted: false, deviceUnsecured: false }),
+    });
+    const result = await settleScannedLicenseImage(
+      'file:///cache/card.jpg',
+      { store: true, label: 'A000.000/2026-01', promptMessage: 'Unlock vault' },
+      deps,
+    );
+    expect(result).toEqual({ status: 'vaultDenied' });
+    expect(stored).toEqual([]);
+    expect(deleted).toEqual(['file:///cache/card.jpg']);
   });
 });
 

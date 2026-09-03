@@ -43,6 +43,12 @@ export const licenses = sqliteTable('licenses', {
   conditions: text('conditions'), // villkor (often empty)
   authority: text('authority'), // e.g. 'Polismyndigheten'
   // expiry reminders (M4) key off the latest row per firearm
+  // Opaque pointer into the on-device vault index (app/src/features/vault) —
+  // never a FK, since the vault is deliberately outside app/src/db and never
+  // synced (docs/specs/document-vault-spec.md). Syncing this id is harmless:
+  // it is meaningless without the local vault that produced it, and a device
+  // without that vault document simply shows no "Show licence card" action.
+  vaultDocumentId: text('vault_document_id'),
 });
 
 export const firearmGroups = sqliteTable('firearm_groups', {

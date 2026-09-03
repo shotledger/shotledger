@@ -6,6 +6,7 @@ import m0001 from './0001_fixed_multiple_man.sql';
 import m0002 from './0002_young_hardball.sql';
 import m0003 from './0003_soft_hemingway.sql';
 import m0004 from './0004_motionless_the_fury.sql';
+import m0005 from './0005_parallel_northstar.sql';
 
 export default {
   journal,
@@ -15,5 +16,6 @@ export default {
     m0002,
     m0003,
     m0004,
+    m0005,
   },
 };

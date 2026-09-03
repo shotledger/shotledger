@@ -14,11 +14,14 @@ import {
   pickVaultPhotoFromLibrary,
   type PickVaultPhotoResult,
 } from '@/features/vault/pick-vault-photo';
+import { addPhotoDocument } from '@/features/vault/vault-store';
+import type { VaultDocumentMeta } from '@/features/vault/types';
 import {
   deleteScannedImage,
   recognizeText,
   type RecognizeTextResult,
 } from '@/platform/text-recognition';
+import { requestVaultAccess, type VaultGateResult } from '@/platform/vault-auth';
 
 export type ScanSource = 'camera' | 'library';
 
@@ -83,6 +86,68 @@ export function countRecognizedFields(parsed: ParsedLicenseCard): number {
     parsed.vapenId,
   ];
   return values.filter((v) => v !== null).length + (parsed.validUntilIndefinite ? 1 : 0);
+}
+
+export type SettleScannedLicenseImageResult =
+  /** Kept: encrypted into the vault. `documentId` is what the licence row's
+   *  `vaultDocumentId` should be set to. */
+  | { status: 'stored'; documentId: string }
+  /** The user opted out of storing the original — deleted, nothing kept. */
+  | { status: 'discarded' }
+  /** The user asked to store it but the vault gate refused — the copy is
+   *  lost rather than left in the picker's plaintext cache; they can scan
+   *  again. */
+  | { status: 'vaultDenied' };
+
+export interface SettleScannedLicenseImageOptions {
+  /** Keep the original by encrypting it into the vault (default: true —
+   *  a gun shop needs to see the actual card). False is the explicit opt-out. */
+  store: boolean;
+  /** Vault document label, e.g. the licence number. */
+  label: string;
+  /** Biometric/passcode prompt shown before the vault write. */
+  promptMessage: string;
+}
+
+export interface SettleScannedLicenseImageDeps {
+  requestVaultAccess(promptMessage: string): Promise<VaultGateResult>;
+  addPhotoDocument(sourceUri: string, label: string): Promise<VaultDocumentMeta>;
+  deleteImage(imageUri: string): Promise<void>;
+}
+
+export function defaultSettleScannedLicenseImageDeps(): SettleScannedLicenseImageDeps {
+  return {
+    requestVaultAccess,
+    addPhotoDocument: (sourceUri, label) => addPhotoDocument(sourceUri, 'license', label),
+    deleteImage: deleteScannedImage,
+  };
+}
+
+/**
+ * Decides the scanned original's fate once the licence form is saved: kept
+ * (encrypted into the vault, the default) or discarded (explicit opt-out).
+ * The image is the most sensitive thing the app has seen, so every path
+ * ends with it gone from the picker's plaintext cache.
+ */
+export async function settleScannedLicenseImage(
+  imageUri: string,
+  options: SettleScannedLicenseImageOptions,
+  deps: SettleScannedLicenseImageDeps = defaultSettleScannedLicenseImageDeps(),
+): Promise<SettleScannedLicenseImageResult> {
+  if (!options.store) {
+    await deps.deleteImage(imageUri);
+    return { status: 'discarded' };
+  }
+
+  const access = await deps.requestVaultAccess(options.promptMessage);
+  if (!access.granted) {
+    await deps.deleteImage(imageUri);
+    return { status: 'vaultDenied' };
+  }
+
+  const meta = await deps.addPhotoDocument(imageUri, options.label);
+  await deps.deleteImage(imageUri);
+  return { status: 'stored', documentId: meta.id };
 }
 
 /** The licence form's text-input values for a parse. A field the parse missed
