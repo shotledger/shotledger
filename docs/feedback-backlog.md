@@ -323,6 +323,84 @@ patterns, a start interval as two sliders, and clearer naming.
       manual-token fallback; the token path also needs end-to-end verification.
       Recorded in plan.md's Open list (#65).
 
+## 11. Second review (2026-09-03, verified live on emulator)
+
+Maintainer feedback from a second pass, largely on data already merged from
+the first batch. Items marked "verified live" were checked by navigating the
+running app (tap/swipe/screenshot via adb on AVD `shotledger`), not just read
+from source — several turned out to already work, and one live-only bug
+surfaced that no code read would have found.
+
+### Session detail and series entry
+
+- [x] **Already works, verified live**: a new series starts with shot 1
+      focused, and entering a value auto-advances focus to the next shot and
+      updates the series total — exactly what was asked
+      ("when I edit a series it should start in round 1 and when I choose e.g.
+      10 enter that and move to next round/shot"). No fix needed.
+- [ ] **"no need for share series"** — remove the "Share Series" button from
+      the series entry screen (confirmed present, full-width button below
+      Save Series).
+- [ ] **Live-only bug found**: navigating into "Add Series" and back via the
+      hardware back button — without tapping Save — leaves an **orphaned empty
+      series** behind (a "Series N · 0" row with no shots). It is deletable via
+      the existing swipe gesture, but should not be created at all until the
+      first shot is entered, or should be cleaned up on unmount if still empty.
+- [x] **Swipe-to-delete a series already works, verified live**: swipe reveals
+      a red "Delete Series" action; tapping it shows a confirm dialog ("Delete
+      Series N? Its shots will be removed too. This can't be undone." /
+      Cancel / Delete Series); confirming removes it and recomputes the
+      session total. No fix needed for delete. **Reorder is not implemented**
+      and its usefulness is unclear for a chronological shooting log — flagged
+      as a question rather than assumed, see the maintainer item below.
+- [?] **"need to be able to ... reorder"** — series are numbered
+  chronologically (Series 1, 2, 3…); it is unclear what reordering would
+  mean for a shooting log where series happen in a real sequence. Needs
+  the maintainer's use case before building anything.
+- [ ] **"Extra rounds" can not be combined with actual series data. It's
+      either or and determined when the session is created.** Verified live:
+      a session with 7 real series still shows an editable "Extra Rounds (not
+      scored)" field. The `session.kind` column (`'series' | 'rounds'`) has
+      existed on `main` since PR #73 for exactly this distinction — the field
+      simply is not gated on it yet. Fix: show the Extra Rounds field only
+      when `kind === 'rounds'`, and hide/disable series entry (Add Series,
+      Start Final, Score from Photo) when `kind === 'rounds'`.
+- [ ] **Session Stats tab: per-series, not per-shot, is the primary figure.**
+      "The stats are per shot. It need to be per series, e.g. avg is 45.24 for
+      5 rounds (but you can show per shot as well)." Verified live: the tab
+      currently leads with a "Per Shot" block (Mean/SD/X Count), then "Whole
+      Session" totals, then a distribution chart, then "Vs. Last 100 Series" —
+      which itself compares **per-shot** means (8.06 vs 7.84), not per-series
+      averages. Rework: lead with per-series figures (mean series score, SD of
+      series scores — the top result card's "Avg/Series" already computes
+      this, reuse it), keep per-shot as a secondary/labelled block, and fix
+      the comparison to be series-score-based.
+
+### Sessions list
+
+- [ ] **Remove the share icon** from each row (added in PR #67; reversed here).
+- [ ] **Swipe a row for a menu**: delete session (with confirmation, mirroring
+      the series delete dialog) and share session — replacing the static share
+      icon.
+- [ ] **Row layout**: date, total, avg and inner tens already render on one
+      line (verified live: `3 Sept 2026 · 251p · ⌀ 41.8 · 1X`) — no change
+      needed there. Move on: drop the shape chip ("Series"/"Rounds")
+      entirely — "No need to show 'Series' (guessing it's series or Extra
+      rounds or)?" indicates it reads as confusing rather than useful,
+      especially since the All/Series/Rounds filter above the list already
+      covers that distinction. Keep the Training/Competition chip, inline
+      after the stats line as it is today.
+
+### Cross-cutting
+
+- [x] **"Shots Logged" / "Competitions" wrap at the top"** — root cause
+      confirmed live: not reproducible on the emulator's default font scale,
+      but real on the maintainer's phone (larger system font scale), and
+      structural — "Competitions" is one word with no space to break at, so
+      once it does not fit, wrapping has no choice but to split it mid-word.
+      Fixed in **#76**: `StatTile` labels now shrink to fit
+      (`adjustsFontSizeToFit`) instead of wrapping.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
