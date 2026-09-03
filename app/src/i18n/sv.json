@@ -2,7 +2,8 @@
   "common": {
     "save": "Spara",
     "edit": "Redigera",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "clear": "Rensa"
   },
   "tabs": {
     "home": "Hem",
@@ -239,7 +240,14 @@
     "supportSubtitle": "Öppnar Buy Me a Coffee i webbläsaren. Gratis app; donationer låser inte upp något.",
     "about": "Om appen",
     "birthYear": "Födelseår",
-    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav."
+    "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
+    "birthYearPlaceholder": "Välj ett år",
+    "birthYearSearchPlaceholder": "T.ex. 1970",
+    "birthYearNoMatch": "Inget matchande år",
+    "markeTitle": "Pistolskyttemärkets seriekrav",
+    "markeNoYearNote": "Inget födelseår angivet — visar fulla poängkrav utan åldersavdrag.",
+    "markeReductionNote": "Åldersavdrag på {{points}} p/serie gäller från {{sinceYear}}.",
+    "markeReductionNoneNote": "Inget åldersavdrag gäller ännu."
   },
   "about": {
     "title": "Om appen",

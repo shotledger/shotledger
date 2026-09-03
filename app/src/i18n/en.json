@@ -2,7 +2,8 @@
   "common": {
     "save": "Save",
     "edit": "Edit",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "clear": "Clear"
   },
   "tabs": {
     "home": "Home",
@@ -238,8 +239,15 @@
     "supportDevelopment": "Support Development",
     "supportSubtitle": "Opens Buy Me a Coffee in your browser. Free app; donations unlock nothing.",
     "about": "About",
-    "birthYear": "Birth year",
-    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement."
+    "birthYear": "Birth Year",
+    "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement.",
+    "birthYearPlaceholder": "Select a year",
+    "birthYearSearchPlaceholder": "e.g. 1970",
+    "birthYearNoMatch": "No matching year",
+    "markeTitle": "Pistolskyttemärke Requirement",
+    "markeNoYearNote": "No birth year set — showing full-points requirements with no age reduction.",
+    "markeReductionNote": "Age reduction of {{points}} p/series applies from {{sinceYear}}.",
+    "markeReductionNoneNote": "No age reduction applies yet."
   },
   "about": {
     "title": "About",
