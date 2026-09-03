@@ -6,6 +6,7 @@ import {
   packVaultPayload,
   unpackVaultPayload,
   vaultDocumentEntryName,
+  VAULT_PAYLOAD_DOCUMENT_PREFIX,
   VAULT_PAYLOAD_INDEX_NAME,
 } from './vault-payload';
 
@@ -61,9 +62,19 @@ describe('vault payload', () => {
     expect(identical).toBe(true);
   });
 
-  it('P4: rejects a payload with no index entry', () => {
+  it('P4: rejects a payload with no index entry, saying so', () => {
     const noIndex = packContainer([{ name: vaultDocumentEntryName('a'), data: bytes(1) }]);
     expect(() => unpackVaultPayload(noIndex)).toThrow(InvalidContainerError);
+    expect(() => unpackVaultPayload(noIndex)).toThrow('vault payload has no index entry');
+  });
+
+  it('P6: drops a document entry with an empty id rather than restoring a nameless file', () => {
+    const emptyId = packContainer([
+      { name: VAULT_PAYLOAD_INDEX_NAME, data: new TextEncoder().encode('{}') },
+      { name: VAULT_PAYLOAD_DOCUMENT_PREFIX, data: bytes(1, 2) },
+      { name: vaultDocumentEntryName('real'), data: bytes(3) },
+    ]);
+    expect(unpackVaultPayload(emptyId).documents).toEqual([{ id: 'real', bytes: bytes(3) }]);
   });
 
   it('P5: ignores unknown entries rather than failing (forward compatibility)', () => {

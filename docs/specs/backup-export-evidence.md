@@ -72,7 +72,23 @@ in the bundle.
   Plus the published vectors: FIPS 180-4 (`abc`, empty, 448-bit), RFC 4231
   HMAC cases 1/2/6, RFC 7914 §11 PBKDF2-HMAC-SHA256 (c=1 and c=80000).
 
-  This is why these two files are **not** in the Stryker `mutate` list even
+- **Mutation:** `npx stryker run --mutate "shared/src/backup/{hex,vault-payload,vault-crypt}.ts"`.
+  First run: 89 mutants, **85.56%**, 13 survivors — six error-message/name
+  string literals the tests caught by type but never by content, three in the
+  `finally` that zeroes the derived key and the encoded passphrase (invisible
+  from outside by construction), three on the empty-document-id guard in
+  `unpackVaultPayload`, and one off-by-one on `hexToBytes`'s loop bound that no
+  test could ever catch, because writing past the end of a pre-sized
+  `Uint8Array` is a silent no-op. Fixed by asserting the exact `.name` and
+  wording on the errors a user actually reads, adding P6 (an entry named
+  literally `documents/` is dropped rather than restored as a nameless file),
+  adding V14 (a capturing `importRawKey` plus a `TextEncoder` spy assert both
+  buffers are all-zero after the seal — which turns spec constraint N3 from a
+  claim into a check), and collecting `hexToBytes` into a plain array before
+  converting, so an extra iteration changes the output length. **Final: 100.00%
+  (83 killed, 5 timeouts, 0 survived).**
+
+  This is why `sha256.ts` and `pbkdf2.ts` are **not** in the Stryker `mutate` list even
   though they are in the coverage list: a mutant anywhere in SHA-256 or PBKDF2
   is killed by construction — any change to the algorithm diverges from OpenSSL
   on the first vector — while mutating them would re-run the 80 000- and

@@ -24,9 +24,12 @@ export function hexToBytes(hex: string): Uint8Array {
   if (!/^[0-9a-fA-F]*$/.test(hex)) {
     throw new InvalidHexError('hex string contains a non-hex character');
   }
-  const out = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  // Collected into a plain array first, then converted: writing past the end
+  // of a pre-sized Uint8Array is a silent no-op, which would make an
+  // off-by-one in this loop invisible to any test.
+  const bytes: number[] = [];
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes.push(Number.parseInt(hex.slice(i, i + 2), 16));
   }
-  return out;
+  return Uint8Array.from(bytes);
 }

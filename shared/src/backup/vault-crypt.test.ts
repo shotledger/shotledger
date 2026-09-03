@@ -53,6 +53,23 @@ describe('vault section crypto', () => {
     await expect(
       openVaultSection(sealed.sealed, 'wrong passphrase', sealed.saltHex, sealed.iterations, deps),
     ).rejects.toBeInstanceOf(BackupVaultPassphraseError);
+
+    // The name and wording are asserted, not just the type: this is the one
+    // message that tells a user their data is fine and only the passphrase
+    // was wrong, so an empty or renamed error is a real regression.
+    try {
+      await openVaultSection(
+        sealed.sealed,
+        'wrong passphrase',
+        sealed.saltHex,
+        sealed.iterations,
+        deps,
+      );
+      expect.unreachable();
+    } catch (error) {
+      expect((error as Error).name).toBe('BackupVaultPassphraseError');
+      expect((error as Error).message).toContain('Wrong passphrase for this backup');
+    }
   });
 
   it('V3: rejects the right passphrase against the wrong salt', async () => {
@@ -166,6 +183,45 @@ describe('vault section crypto', () => {
     } finally {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (String.prototype as any).normalize = original;
+    }
+  });
+
+  it('V14: wipes the derived key and the encoded passphrase once they have been used', async () => {
+    // Spec constraint N3: no key material or passphrase is left lying in
+    // memory after an export. Both buffers are zeroed in a `finally`, which is
+    // invisible from outside unless a test reaches in and looks.
+    const passphrase = 'zeroize-me-please';
+    const encoded: Uint8Array[] = [];
+    const originalEncode = TextEncoder.prototype.encode;
+    TextEncoder.prototype.encode = function encode(this: TextEncoder, input?: string) {
+      const out = originalEncode.call(this, input);
+      encoded.push(out);
+      return out;
+    };
+
+    const derived: Uint8Array[] = [];
+    const capturing: VaultCryptoDeps<CryptoKey> = {
+      provider: webCryptoProvider,
+      importRawKey: (raw) => {
+        derived.push(raw);
+        return importWebCryptoKey(raw);
+      },
+    };
+
+    try {
+      await sealVaultSection(payload, passphrase, capturing, TEST_ITERATIONS);
+    } finally {
+      TextEncoder.prototype.encode = originalEncode;
+    }
+
+    expect(derived).toHaveLength(1);
+    expect(derived[0]!.length).toBe(VAULT_KDF_KEY_BYTES);
+    expect(Array.from(derived[0]!)).toEqual(Array.from(new Uint8Array(VAULT_KDF_KEY_BYTES)));
+
+    const passphraseBuffers = encoded.filter((e) => e.length === passphrase.length);
+    expect(passphraseBuffers.length).toBeGreaterThan(0);
+    for (const buffer of passphraseBuffers) {
+      expect(Array.from(buffer)).toEqual(Array.from(new Uint8Array(passphrase.length)));
     }
   });
 });
