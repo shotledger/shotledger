@@ -156,31 +156,35 @@ where the work lives.
       a louder threshold, plus AGC disabled if the platform allows it. Re-tuning
       the default number will not solve this.
 
-      **Sequenced before the timer unification** (maintainer, 2026-09-03), so
-                      unification does not ship detection as a known-unreliable option.
-                      Research, 2026-09-03, gives four concrete leads:
+### Why the shot detector cannot simply be re-tuned
 
-                      1. **AGC can be turned off on Android.** `MediaRecorder.AudioSource`
-                         `VOICE_RECOGNITION` (6) applies no AGC and no noise suppression;
-                         `UNPROCESSED` gives raw audio and is the recommended fallback where
-                         supported. `AutomaticGainControl` (AudioFx) can also be attached to an
-                         `AudioRecord` session and disabled explicitly. **Open:** `expo-audio`
-                         does not obviously expose the audio source, so this may need a config
-                         plugin, a patch, or another capture path — establish that first.
-                      2. **Commercial detectors gate on event duration, not amplitude alone.** A
-                         muzzle blast is a very short impulse: an event is accepted as a gunshot
-                         only when it is under ~400 ms, with sensitivity expressed as an event
-                         length of 25-80 ms (shorter = more sensitive). We have no such
-                         discriminator today.
-                      3. **Hard constraint on the current plumbing:** `expo-audio` exposes only
-                         periodic `metering` values (a coarse ~60 ms envelope), not raw PCM
-                         frames. Rise-time or spectral analysis needs sample access, so it
-                         likely requires a new capture dependency or a native module — a
-                         maintainer decision under hard rule 2, not an assumption.
-                      4. Modern smartphone gunshot detection is ML-classified precisely because
-                         impulsive non-gunshot sounds resist rule-based rejection. A calibration
-                         step ("fire one shot") that sets the threshold from the measured peak
-                         and noise floor is a cheaper middle ground than a fixed dBFS value.
+Sequenced before the timer unification (maintainer, 2026-09-03), so unification
+does not ship detection as a known-unreliable option. Research on 2026-09-03
+gives four concrete leads.
+
+**AGC can be turned off on Android.** `MediaRecorder.AudioSource`
+`VOICE_RECOGNITION` (6) applies no AGC and no noise suppression; `UNPROCESSED`
+gives raw audio and is the recommended fallback where supported.
+`AutomaticGainControl` (AudioFx) can also be attached to an `AudioRecord`
+session and disabled explicitly. Open question: `expo-audio` does not obviously
+expose the audio source, so this may need a config plugin, a patch, or another
+capture path — establish that before promising the fix.
+
+**Commercial detectors gate on event duration, not amplitude alone.** A muzzle
+blast is a very short impulse: an event is accepted as a gunshot only when it is
+under ~400 ms, with sensitivity expressed as an event length of 25-80 ms
+(shorter = more sensitive). We have no such discriminator today.
+
+**A hard constraint on the current plumbing:** `expo-audio` exposes only
+periodic `metering` values (a coarse ~60 ms envelope), not raw PCM frames.
+Rise-time or spectral analysis needs sample access, so it likely requires a new
+capture dependency or a native module — a maintainer decision under hard rule 2,
+not an assumption.
+
+**Rule-based rejection has limits.** Modern smartphone gunshot detection is
+ML-classified precisely because impulsive non-gunshot sounds resist rules. A
+calibration step ("fire one shot") that sets the threshold from the measured
+peak and noise floor is a cheaper middle ground than a fixed dBFS value.
 
 - [ ] **Collapse the shot-detection options** — "I dont want to see the Shot
       detection options all the time. It should be able to expand/collapse or
