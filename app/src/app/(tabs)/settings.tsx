@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -26,7 +26,6 @@ import { useBackupExportImport } from '@/features/backup/use-backup-export-impor
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 export default function SettingsScreen() {
@@ -38,7 +37,6 @@ export default function SettingsScreen() {
     profile,
     setSelection: setComplianceSelection,
   } = useComplianceProfile();
-  const colors = useTheme();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
   const {
     exportBundle,
@@ -397,13 +395,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   devSection: {
     gap: Spacing.two,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
   markeTable: {
     gap: Spacing.one,
