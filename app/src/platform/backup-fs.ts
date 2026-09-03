@@ -13,6 +13,8 @@ import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
+import { syncPhotoFile, writeSyncPhoto } from './sync-photos';
+
 const TMP_DIR_NAME = 'backup-tmp';
 const COPY_DB_NAME = 'db-copy.sqlite3';
 export const RESTORED_PHOTOS_DIR_NAME = 'backup-photos';
@@ -180,5 +182,31 @@ export async function restorePhotosAndRewritePaths(
     }
   } finally {
     conn.closeSync();
+  }
+}
+
+/** Reads a synced photo's bytes from this device's sync-photo cache
+ * (`shotledger-photo:<id>` resolves here). `null` when the queue has not
+ * downloaded it yet — export counts that photo as unreadable rather than
+ * failing. */
+export async function readSyncPhotoBytes(photoId: string): Promise<Uint8Array | null> {
+  if (Platform.OS === 'web') return null;
+  try {
+    const file = syncPhotoFile(photoId);
+    if (!file.exists) return null;
+    return await file.bytes();
+  } catch {
+    return null;
+  }
+}
+
+/** Writes restored synced photos back into this device's sync-photo cache.
+ * Unlike `restorePhotosAndRewritePaths` this touches no database column: the
+ * series keeps its `shotledger-photo:<id>` marker, which is what makes the
+ * photo the same photo on every device. */
+export function restoreSyncPhotos(photos: readonly { photoId: string; data: Uint8Array }[]): void {
+  if (Platform.OS === 'web') return;
+  for (const photo of photos) {
+    writeSyncPhoto(photo.photoId, photo.data);
   }
 }

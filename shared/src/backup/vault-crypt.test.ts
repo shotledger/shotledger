@@ -142,4 +142,30 @@ describe('vault section crypto', () => {
   it('V11: ships a default iteration count that is a real barrier', () => {
     expect(VAULT_KDF_ITERATIONS).toBeGreaterThanOrEqual(100_000);
   });
+
+  it('V12: defaults to the shipped iteration count when the caller omits one', async () => {
+    const sealed = await sealVaultSection(payload, 'passphrase', deps);
+    expect(sealed.iterations).toBe(VAULT_KDF_ITERATIONS);
+    await expect(
+      openVaultSection(sealed.sealed, 'passphrase', sealed.saltHex, sealed.iterations, deps),
+    ).resolves.toEqual(payload);
+  }, 120_000);
+
+  it('V13: still derives a key on a runtime without String.prototype.normalize', async () => {
+    // Hermes can be built without full Unicode support; the KDF must not
+    // throw there, it just skips normalisation (both devices skip it alike).
+    const original = String.prototype.normalize;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (String.prototype as any).normalize;
+    try {
+      expect(normalizePassphrase('  spaced  ')).toBe('spaced');
+      const sealed = await sealVaultSection(payload, ' passphrase ', deps, TEST_ITERATIONS);
+      await expect(
+        openVaultSection(sealed.sealed, 'passphrase', sealed.saltHex, sealed.iterations, deps),
+      ).resolves.toEqual(payload);
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (String.prototype as any).normalize = original;
+    }
+  });
 });
