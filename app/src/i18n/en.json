@@ -439,7 +439,8 @@
     "sighterOnThisSeries": "Mark as Sighter",
     "deleteSeries": "Delete Series",
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
-    "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone."
+    "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
+    "newSeriesHint": "This series is saved when you tap Save."
   },
   "share": {
     "title": "Share Session",

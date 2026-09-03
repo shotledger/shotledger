@@ -24,7 +24,6 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
-import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
@@ -62,16 +61,15 @@ export default function SessionDetailScreen() {
     router.push(`/session/${id}/series/${position}`);
   }
 
+  /**
+   * Adding a series only navigates — the row is written by the entry screen's
+   * Save. Creating it here left an orphaned "Series N · 0" behind whenever
+   * the user backed out with the hardware back button (maintainer, verified
+   * live 2026-09-03).
+   */
   function onAddSeries() {
-    if (!db) return;
     const position = seriesRows.reduce((max, row) => Math.max(max, row.position), 0) + 1;
-    addSeries(db, {
-      sessionId: id,
-      position,
-      isFinal: nextIsFinal,
-    });
-    refresh();
-    openSeries(position);
+    router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);
   }
 
   /**

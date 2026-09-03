@@ -439,7 +439,8 @@
     "sighterOnThisSeries": "Sätt som provserie",
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
-    "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra."
+    "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
+    "newSeriesHint": "Serien sparas när du trycker på Spara."
   },
   "share": {
     "title": "Dela pass",
