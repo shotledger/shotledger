@@ -1,0 +1,371 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-03T00:00:00.000Z",
+  "title": "Design System: ShotLedger",
+  "extensions": {
+    "colorMeta": {
+      "signal-lavender": {
+        "role": "primary",
+        "displayName": "Signal Lavender",
+        "canonical": "#B98CFF",
+        "tonalRamp": [
+          "#170F26",
+          "#241640",
+          "#37225F",
+          "#4B307E",
+          "#6544A4",
+          "#8B65CE",
+          "#B98CFF",
+          "#DCC5FF"
+        ]
+      },
+      "on-lavender": {
+        "role": "primary",
+        "displayName": "Deep Aubergine",
+        "canonical": "#1A1226",
+        "tonalRamp": [
+          "#0C0812",
+          "#130D1B",
+          "#1A1226",
+          "#2A1D3C",
+          "#3E2B57",
+          "#5A4079",
+          "#8168A5",
+          "#B7A6CE"
+        ]
+      },
+      "ink-purple": {
+        "role": "neutral",
+        "displayName": "Ink Purple",
+        "canonical": "#16101F",
+        "tonalRamp": [
+          "#0B0810",
+          "#100B17",
+          "#16101F",
+          "#221934",
+          "#33264D",
+          "#4C3A70",
+          "#7A64A3",
+          "#B6A6CF"
+        ]
+      },
+      "surface-purple": {
+        "role": "neutral",
+        "displayName": "Surface Purple",
+        "canonical": "#221934",
+        "tonalRamp": [
+          "#0F0B17",
+          "#181125",
+          "#221934",
+          "#2E2246",
+          "#3F2F60",
+          "#5B4587",
+          "#8368B5",
+          "#BCA9DA"
+        ]
+      },
+      "surface-purple-raised": {
+        "role": "neutral",
+        "displayName": "Raised Surface Purple",
+        "canonical": "#2E2246",
+        "tonalRamp": [
+          "#130E1E",
+          "#1D1630",
+          "#2E2246",
+          "#3D2D5C",
+          "#523D79",
+          "#6F53A0",
+          "#9A80C9",
+          "#C6B4E0"
+        ]
+      },
+      "bone-white": {
+        "role": "neutral",
+        "displayName": "Bone White",
+        "canonical": "#F6EEE4",
+        "tonalRamp": [
+          "#2A2118",
+          "#463829",
+          "#65523E",
+          "#8A7458",
+          "#B09A7D",
+          "#D2C0A8",
+          "#F6EEE4",
+          "#FDFAF6"
+        ]
+      },
+      "muted-lilac": {
+        "role": "neutral",
+        "displayName": "Muted Lilac",
+        "canonical": "#C9B9DC",
+        "tonalRamp": [
+          "#1F1728",
+          "#332746",
+          "#4C3B67",
+          "#68538A",
+          "#8B76AC",
+          "#A897C6",
+          "#C9B9DC",
+          "#E8DFF1"
+        ]
+      },
+      "border-violet": {
+        "role": "neutral",
+        "displayName": "Border Violet",
+        "canonical": "#7360B0",
+        "tonalRamp": [
+          "#151021",
+          "#221A38",
+          "#332755",
+          "#473775",
+          "#5C4894",
+          "#7360B0",
+          "#9A87CB",
+          "#C4B5E4"
+        ]
+      },
+      "alert-coral": {
+        "role": "tertiary",
+        "displayName": "Alert Coral",
+        "canonical": "#FF7A85",
+        "tonalRamp": [
+          "#2C1013",
+          "#4A1A20",
+          "#6E262F",
+          "#963440",
+          "#C04654",
+          "#E45F6C",
+          "#FF7A85",
+          "#FFB6BC"
+        ]
+      },
+      "confirm-mint": {
+        "role": "tertiary",
+        "displayName": "Confirm Mint",
+        "canonical": "#4FD68C",
+        "tonalRamp": [
+          "#0C2418",
+          "#133C28",
+          "#1B573A",
+          "#25744E",
+          "#309464",
+          "#3DB57B",
+          "#4FD68C",
+          "#A5EDC5"
+        ]
+      },
+      "light-signal-blue": {
+        "role": "secondary",
+        "displayName": "Range Blue",
+        "canonical": "#208AEF",
+        "tonalRamp": [
+          "#06192C",
+          "#0A2B4B",
+          "#0E406F",
+          "#135794",
+          "#186FBA",
+          "#1D7DD5",
+          "#208AEF",
+          "#8FC7F7"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen titles only — one per screen, at the top."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The number that is the point of a card: session totals, stat-tile values."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "List-row titles, form values, primary reading text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Secondary text, subtitles, chips, segment labels, metadata."
+      },
+      "label-strong": {
+        "displayName": "Label Strong",
+        "purpose": "Button labels and in-card section headers — same size as Label, separated by weight alone."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Identifiers and raw values; 700 weight on Android."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-action",
+        "value": "elevation: 4; shadowColor: #000; shadowOffset: 0 2; shadowOpacity: 0.2; shadowRadius: 6",
+        "purpose": "The floating action button ONLY. The single shadow in the system; every other surface is flat and separates by tone."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press-feedback",
+        "value": "opacity 0.85 while pressed",
+        "purpose": "The universal touch response for buttons, rows and FAB. No hover states — this is a touch platform."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "max-content",
+        "value": "800px",
+        "purpose": "Content column cap (MaxContentWidth) so list rows stay readable on tablets."
+      },
+      {
+        "name": "bottom-tab-inset-ios",
+        "value": "50px",
+        "purpose": "Scroll-content padding clearing the tab bar on iOS."
+      },
+      {
+        "name": "bottom-tab-inset-android",
+        "value": "80px",
+        "purpose": "Scroll-content padding clearing the tab bar on Android."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single most important action on a screen. Full width, one per screen.",
+      "html": "<button class=\"ds-btn-primary\">Save Changes</button>",
+      "css": ".ds-btn-primary { background: #B98CFF; color: #1A1226; font-size: 14px; font-weight: 700; line-height: 20px; padding: 16px 24px; width: 100%; border: none; border-radius: 12px; transition: opacity 0.15s; } .ds-btn-primary:active { opacity: 0.85; } .ds-btn-primary:focus-visible { outline: 2px solid #F6EEE4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The base raised surface for tiles, list groups and forms. Flat — never shadowed.",
+      "html": "<div class=\"ds-card\"><span class=\"ds-card-label\">Latest session</span><span class=\"ds-card-value\">251p</span></div>",
+      "css": ".ds-card { background: #221934; color: #F6EEE4; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; } .ds-card-label { font-size: 14px; font-weight: 500; line-height: 20px; color: #C9B9DC; } .ds-card-value { font-size: 32px; font-weight: 600; line-height: 44px; }"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "custom",
+      "refersTo": "stat-tile",
+      "description": "A big number above its caption — Home's header totals and every stats readout.",
+      "html": "<div class=\"ds-stat-tile\"><span class=\"ds-stat-value\">1202</span><span class=\"ds-stat-label\">Shots Logged</span></div>",
+      "css": ".ds-stat-tile { background: #221934; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; } .ds-stat-value { color: #F6EEE4; font-size: 32px; font-weight: 600; line-height: 36px; } .ds-stat-label { color: #C9B9DC; font-size: 14px; font-weight: 500; line-height: 20px; white-space: nowrap; }"
+    },
+    {
+      "name": "Chip (neutral)",
+      "kind": "chip",
+      "refersTo": "chip-neutral",
+      "description": "Small pill label — session type, tags, discipline.",
+      "html": "<span class=\"ds-chip\">Training</span>",
+      "css": ".ds-chip { display: inline-block; background: #2E2246; color: #F6EEE4; font-size: 14px; font-weight: 500; line-height: 20px; padding: 2px 8px; border-radius: 999px; }"
+    },
+    {
+      "name": "Chip (primary)",
+      "kind": "chip",
+      "refersTo": "chip-primary",
+      "description": "Reserved for a genuine achievement or an active filter — never general labelling.",
+      "html": "<span class=\"ds-chip-primary\">Guldserie</span>",
+      "css": ".ds-chip-primary { display: inline-block; background: #B98CFF; color: #1A1226; font-size: 14px; font-weight: 500; line-height: 20px; padding: 2px 8px; border-radius: 999px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "nav",
+      "refersTo": "segmented-track",
+      "description": "The app's signature selector. Labels never wrap; past four options it scrolls instead of squeezing.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-item ds-seg-item--on\">All</button><button class=\"ds-seg-item\">Series</button><button class=\"ds-seg-item\">Rounds</button></div>",
+      "css": ".ds-seg { display: flex; gap: 2px; padding: 2px; background: #221934; border-radius: 12px; } .ds-seg-item { flex: 1; padding: 8px; border: none; background: transparent; color: #C9B9DC; font-size: 14px; font-weight: 500; line-height: 20px; border-radius: 8px; white-space: nowrap; cursor: pointer; } .ds-seg-item--on { background: #2E2246; color: #F6EEE4; } .ds-seg-item:focus-visible { outline: 2px solid #B98CFF; outline-offset: -2px; }"
+    },
+    {
+      "name": "List Row",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "One row in a list group — session, firearm or settings entry. Separated by tone, not dividers.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-row-text\"><span class=\"ds-row-title\">Träning Precision</span><span class=\"ds-row-sub\">3 Sept 2026 · 251p · ⌀ 41.8 · 1X</span></span><span class=\"ds-chip\">Training</span></div>",
+      "css": ".ds-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; gap: 8px; } .ds-row-text { display: flex; flex-direction: column; } .ds-row-title { color: #F6EEE4; font-size: 16px; font-weight: 500; line-height: 24px; } .ds-row-sub { color: #C9B9DC; font-size: 14px; font-weight: 500; line-height: 20px; } .ds-row:active { opacity: 0.85; }"
+    },
+    {
+      "name": "Floating Action Button",
+      "kind": "button",
+      "refersTo": "fab",
+      "description": "Bottom-right, above the tab bar. The only element in the system that casts a shadow.",
+      "html": "<button class=\"ds-fab\">New Session</button>",
+      "css": ".ds-fab { position: absolute; right: 16px; bottom: 16px; background: #B98CFF; color: #1A1226; font-size: 14px; font-weight: 700; line-height: 20px; padding: 16px 24px; border: none; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); cursor: pointer; } .ds-fab:active { opacity: 0.85; }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Never a bare 'no results' line — a title, an explanation, and the action that would fill the screen.",
+      "html": "<div class=\"ds-empty\"><span class=\"ds-empty-title\">No Sessions Yet</span><span class=\"ds-empty-body\">Log your first training or competition session to see it here.</span><button class=\"ds-btn-primary\">Log Your First Session</button></div>",
+      "css": ".ds-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 64px 24px; text-align: center; } .ds-empty-title { color: #F6EEE4; font-size: 32px; font-weight: 600; line-height: 44px; } .ds-empty-body { color: #C9B9DC; font-size: 16px; font-weight: 500; line-height: 24px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precision Logbook",
+    "overview": "ShotLedger is the notebook a shooter keeps at the range, built to the tolerances of a measuring instrument. A paper logbook is unadorned because its job is to hold numbers accurately and be readable in whatever light the range has; a scoring gauge is exact because a tenth of a millimetre decides a ring. This system answers to both. Every surface exists to report a value, and anything that does not help a number read is removed.\n\nThe app is dark by default and near-monochrome by discipline. The ground is a deep ink purple (#16101F), not black, and every neutral above it is purple-tinted rather than grey. Depth comes from tone, not from shadow: surfaces separate by getting lighter, and the only shadow in the entire application belongs to the floating action button. A single lavender accent carries every interactive affordance, and its scarcity is what makes it readable at a glance between series.\n\nRestraint here is functional, not stylistic. The app is used outdoors in bright sunlight, where glare eats low-contrast detail, and it is used in the seconds between shooting one series and starting the next. Contrast is asserted in tests, not eyeballed. Ornament would cost legibility and buy nothing.",
+    "keyCharacteristics": [
+      "Dark ground, purple-tinted neutrals, never grey",
+      "Depth by tonal layering; exactly one shadow in the system",
+      "One accent, used sparingly, carrying all interaction",
+      "A four-step radius scale and a seven-step spacing scale — no ad-hoc values",
+      "Contrast treated as a tested invariant, because the range is sunlit",
+      "Precise and restrained: tight spacing, sharp hierarchy, no decoration"
+    ],
+    "rules": [
+      {
+        "name": "The Purple-Tinted Neutral Rule",
+        "body": "There is no grey in the dark theme. Text, secondary text, borders, and every surface carry purple. A neutral grey introduced anywhere reads instantly as foreign and is a defect, not a variation.",
+        "section": "colors"
+      },
+      {
+        "name": "The Scarce Accent Rule",
+        "body": "Signal Lavender marks interaction and nothing else. It is never decorative, never a heading color, never a background for content. If two lavender elements compete on one screen, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rejected Gold Rule",
+        "body": "A gold accent (#E8B84B) was designed, passed contrast, and was rejected by the maintainer for interactive use. It survives in tokens.ts as PURPLE_RAIN_GOLD_ACCENT_REJECTED so the contrast work is not lost. Never assign it to primary or any other interactive token.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight-Not-Size Rule",
+        "body": "Label and Label Strong are the same 14px; the only difference is weight. Emphasis at small sizes is a weight change, never a size bump, which keeps line rhythm intact in dense rows.",
+        "section": "typography"
+      },
+      {
+        "name": "The Single-Line Control Rule",
+        "body": "Control labels never wrap. Segmented-control labels are single-line and shrink or scroll rather than breaking; a label that splits mid-word is a layout defect. Past four options a segmented control scrolls horizontally instead of squeezing every label.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Shadow Rule",
+        "body": "The floating action button is the only element in ShotLedger permitted a shadow. Cards, tiles, sheets, headers, and chips are flat and separate by tone. Adding a shadow to a card is a defect, not a refinement — it breaks the one signal that means 'this floats'.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Primary Action Rule",
+        "body": "PrimaryButton is the single most important action on a screen. A screen with three of them has no primary action.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do express depth with the tonal stack — Ink Purple → Surface Purple → Raised Surface Purple.",
+      "Do take spacing from the seven-step scale (2/4/8/16/24/32/64) and radius from the four-step scale (8/12/20/999).",
+      "Do keep Signal Lavender scarce; one interactive accent per screen region.",
+      "Do assert contrast in app/src/theme/tokens.test.ts when adding or changing a color — sunlight legibility is a tested invariant here, not a judgement call.",
+      "Do keep control labels on one line, shrinking or scrolling instead of wrapping.",
+      "Do use weight, not size, to emphasise at 14px."
+    ],
+    "donts": [
+      "Don't add a shadow to anything but the floating action button.",
+      "Don't introduce a neutral grey into the dark theme; every neutral is purple-tinted.",
+      "Don't assign PURPLE_RAIN_GOLD_ACCENT_REJECTED (#E8B84B) to primary or any interactive token — it is retained for its contrast work only.",
+      "Don't put more than one Primary Button on a screen.",
+      "Don't invent a radius or spacing value outside the scales.",
+      "Don't load a custom typeface; the platform system font is the deliberate choice.",
+      "Don't let a tab or control label truncate — shorten the string instead."
+    ]
+  }
+}
