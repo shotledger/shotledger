@@ -206,6 +206,51 @@ start -a android.intent.action.VIEW -d
   `app.json`'s `expo.extra.apiBaseUrl` (placeholder
   `https://api.shotledger.app`). Never a secret — the session token lives in
   SecureStore, never in the tree or the DB.
+- **Verify UI/UX changes by navigating the running app, not by reading the
+  source.** Read the code to find where to fix, then drive the actual app —
+  tap, swipe, screenshot — to confirm the fix (or to check whether a reported
+  bug already exists in the current build at all). Several real findings only
+  turned up this way and would not have from a code read: a shot-entry
+  auto-advance the maintainer thought was missing was already correct, a
+  swipe-to-delete-with-confirmation flow already worked, and a genuine bug
+  (an empty, orphaned series left behind when "Add Series" is backed out of
+  without saving) was only visible by actually doing it. Default to the
+  **emulator**, not a maintainer's physical device — it drives identically
+  (same `adb`, same taps/swipes/screenshots) and doesn't have a phone's flaky
+  USB connection to fight; reach for a real device only for something
+  genuinely hardware-dependent (camera, sensors, real Bluetooth/USB
+  peripherals).
+  - Headless emulator + install, reusing an already-built APK:
+    `emulator -avd shotledger -no-window -no-audio -gpu swiftshader_indirect &`,
+    then `adb wait-for-device`, poll
+    `adb shell getprop sys.boot_completed` for `1`, then
+    `adb install -r app/android/app/build/outputs/apk/debug/app-debug.apk`.
+    A debug build needs Metro serving: `adb reverse tcp:8081 tcp:8081` +
+    `expo start --port 8081` (backgrounded; poll
+    `curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/status`
+    for `200`), then launch via
+    `adb shell am start -a android.intent.action.VIEW -d "app://dev" app.shotledger`
+    (or `am start -a android.intent.action.VIEW -d "app://" app.shotledger` for
+    Home; `monkey -p app.shotledger -c android.intent.category.LAUNCHER 1`
+    also launches but injects one random touch event first — fine for a cold
+    start, never use it once you're mid-flow, it can land on and activate
+    whatever's under it).
+  - Interact with `adb shell input tap <x> <y>` / `input swipe <x1> <y1> <x2>
+<y2> <duration_ms>`, and capture with
+    `adb exec-out screencap -p > shot.png` then Read the PNG.
+  - **Coordinate scaling gotcha (hit repeatedly — check every time):** `input
+tap`/`input swipe` take coordinates in the device's real pixel space
+    (`adb shell wm size`, e.g. `1080x2400`), but a screenshot you Read back is
+    very often shown to you downscaled, with the tool telling you the
+    displayed size and a multiply factor (e.g. "displayed at 900x2000...
+    multiply by 1.20"). Tapping the raw displayed-image coordinate instead of
+    multiplying it up hits the wrong element — silently, since the tap still
+    "succeeds" against whatever happens to be there. Always convert
+    (`displayed_x * factor`, `displayed_y * factor`) before every tap, not
+    just the first one in a sequence.
+  - Screenshot again after every tap before reasoning about what happened —
+    a tap can land on the wrong control, or the screen can be mid-transition,
+    and the next screenshot is what tells you which.
 - **A stuck emulator can serve a phantom pre-edit bundle that survives every
   ordinary fix** (found in `fix/session-detail-ui`): after this sandbox's
   System UI ANR'd mid-session (a `System UI isn't responding` dialog that
