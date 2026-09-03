@@ -143,11 +143,9 @@ export default function HomeScreen() {
                         accessibilityRole="button"
                         testID={`home-session-${index}-share`}
                         onPress={() => router.push(`/session/${session.id}/share`)}
-                        style={[styles.rowAction, { backgroundColor: theme.primary }]}
+                        style={[styles.rowAction, { backgroundColor: theme.backgroundSelected }]}
                       >
-                        <ThemedText type="smallBold" themeColor="onPrimary">
-                          {t('home.shareSession')}
-                        </ThemedText>
+                        <ThemedText type="smallBold">{t('home.shareSession')}</ThemedText>
                       </Pressable>
                       <Pressable
                         accessibilityRole="button"
