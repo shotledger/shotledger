@@ -42,7 +42,14 @@ sync. Android first — **all code must stay iOS-compatible**.
    `~/agents/shotledger/`. Stage explicit paths only; never `git add -A`.
 4. Anything marked `VERIFY:` in the docs is unconfirmed — stop and ask
    the maintainer; never guess regulatory or scoring values.
-5. All UI strings via i18n (sv + en) from the first screen.
+5. All UI strings via i18n (sv + en) from the first screen. **Casing:**
+   English screen titles, section headers, field labels, tab labels and
+   button labels are **Title Case** ("Account & Sync", "Birth Year",
+   "Shot Timer"); English body copy, help text, placeholders and
+   subtitles stay sentence case. Swedish is **sentence case
+   throughout** — Title Case is not a Swedish convention ("Konto och
+   synk", "Födelseår"). Same rule already applied to discipline names
+   (decisions log, 2026-09-01).
 6. No Android-only native modules; platform quirks go behind wrappers in
    `app/src/platform/`.
 7. **Never commit PII.** No license cards or license numbers, no personal
