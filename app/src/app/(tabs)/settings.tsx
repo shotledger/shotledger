@@ -22,7 +22,7 @@ import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
-import { useBackupExportImport } from '@/features/backup/use-backup-export-import';
+import { BackupCard } from '@/features/backup/backup-card';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
@@ -38,18 +38,6 @@ export default function SettingsScreen() {
     setSelection: setComplianceSelection,
   } = useComplianceProfile();
   const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
-  const {
-    exportBundle,
-    saveBundleToFolder,
-    changeFolder,
-    forgetFolder,
-    planRestore,
-    confirmRestore,
-    statusText: backupStatusText,
-    lastBackupAt,
-    folderUri,
-    isFolderSaveSupported,
-  } = useBackupExportImport();
 
   async function onImportCsv() {
     const dryRun = await planImport();
@@ -74,41 +62,6 @@ export default function SettingsScreen() {
       [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('csv.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
-      ],
-    );
-  }
-
-  async function onRestoreBundle() {
-    const planned = await planRestore();
-    if (!planned) return;
-    const { manifest } = planned.preview;
-    const photosNote =
-      manifest.kind === 'database+photos'
-        ? t('backup.restorePreviewPhotosNote', { count: manifest.counts.photos })
-        : '';
-    Alert.alert(
-      t('backup.restorePreviewTitle'),
-      t('backup.restorePreviewBody', {
-        date: new Date(manifest.createdAt).toLocaleDateString(),
-        sessions: manifest.counts.sessions,
-        series: manifest.counts.series,
-        shots: manifest.counts.shots,
-        firearms: manifest.counts.firearms,
-        photosNote,
-      }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('backup.restoreConfirmAction'),
-          style: 'destructive',
-          onPress: () => {
-            void confirmRestore(planned.bytes).then(() => {
-              Alert.alert(t('backup.restoreRestartTitle'), t('backup.restoreRestartBody'), [
-                { text: t('backup.restoreRestartAction') },
-              ]);
-            });
-          },
-        },
       ],
     );
   }
@@ -282,78 +235,7 @@ export default function SettingsScreen() {
         ) : null}
       </Card>
 
-      <Card>
-        <ThemedText type="smallBold">{t('backup.sectionTitle')}</ThemedText>
-        <ListRow
-          title={t('backup.exportDbTitle')}
-          subtitle={t('backup.exportDbSubtitle')}
-          onPress={() => void exportBundle('database')}
-          testID="settings-export-backup-db"
-        />
-        <ListRow
-          title={t('backup.exportPhotosTitle')}
-          subtitle={t('backup.exportPhotosSubtitle')}
-          onPress={() => void exportBundle('database+photos')}
-          testID="settings-export-backup-photos"
-        />
-        <ListRow
-          title={t('backup.restoreTitle')}
-          subtitle={t('backup.restoreSubtitle')}
-          onPress={() => void onRestoreBundle()}
-          testID="settings-restore-backup"
-        />
-        <ListRow
-          title={t('backup.saveDbToFolderTitle')}
-          subtitle={
-            isFolderSaveSupported
-              ? folderUri
-                ? t('backup.folderChosenSubtitle')
-                : t('backup.saveToFolderSubtitle')
-              : t('backup.folderSaveIosFallbackSubtitle')
-          }
-          onPress={() => void saveBundleToFolder('database')}
-          testID="settings-save-backup-db-folder"
-        />
-        <ListRow
-          title={t('backup.savePhotosToFolderTitle')}
-          subtitle={
-            isFolderSaveSupported
-              ? folderUri
-                ? t('backup.folderChosenSubtitle')
-                : t('backup.saveToFolderSubtitle')
-              : t('backup.folderSaveIosFallbackSubtitle')
-          }
-          onPress={() => void saveBundleToFolder('database+photos')}
-          testID="settings-save-backup-photos-folder"
-        />
-        {isFolderSaveSupported && folderUri ? (
-          <>
-            <ListRow
-              title={t('backup.changeFolderTitle')}
-              onPress={() => void changeFolder()}
-              testID="settings-change-backup-folder"
-            />
-            <ListRow
-              title={t('backup.forgetFolderTitle')}
-              onPress={forgetFolder}
-              testID="settings-forget-backup-folder"
-            />
-          </>
-        ) : null}
-        <ThemedText type="small" themeColor="textSecondary" testID="backup-last-backup">
-          {lastBackupAt
-            ? t('backup.lastBackup', { date: new Date(lastBackupAt).toLocaleString() })
-            : t('backup.neverBackedUp')}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('backup.vaultNote')}
-        </ThemedText>
-        {backupStatusText ? (
-          <ThemedText type="small" themeColor="textSecondary" testID="backup-status">
-            {backupStatusText}
-          </ThemedText>
-        ) : null}
-      </Card>
+      <BackupCard />
 
       <Card>
         <ListRow
