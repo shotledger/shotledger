@@ -42,14 +42,16 @@ function loadHomeData(): HomeData {
   };
 }
 
-export function useHomeData(): HomeData {
+export function useHomeData(): HomeData & { refresh: () => void } {
   const [data, setData] = useState<HomeData>(() => loadHomeData());
+
+  const refresh = useCallback(() => setData(loadHomeData()), []);
 
   useFocusEffect(
     useCallback(() => {
-      setData(loadHomeData());
-    }, []),
+      refresh();
+    }, [refresh]),
   );
 
-  return data;
+  return { ...data, refresh };
 }
