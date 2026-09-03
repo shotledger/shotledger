@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { series, sessions } from '../schema';
 import type { Database } from '../types';
 import { getFirearm, updateFirearm } from './firearms';
-import { getSession, updateSession } from './sessions';
-import { softDeleteSeries } from './series';
+import { getSession, softDeleteSession, updateSession } from './sessions';
+import { listSeriesForSession, softDeleteSeries } from './series';
 import { listShotsForSeries, replaceSeriesShots, softDeleteShot, type AddShotInput } from './shots';
 
 /** Adds `delta` rounds to a firearm's lifetime and since-maintenance counters (never below zero). */
@@ -71,6 +71,29 @@ export function deleteSeriesAndShots(db: Database, seriesId: string) {
   }
 
   softDeleteSeries(db, seriesId);
+}
+
+/**
+ * Deletes a session (swipe-to-delete on the sessions list): soft-deletes
+ * every series under it via `deleteSeriesAndShots` — which already tombstones
+ * each series' shots and backs the shot count out of the linked firearm's
+ * round counters — then backs out the session's own unscored extra rounds
+ * (spec A1 §A1.3, never a shot row) the same way, and finally soft-deletes
+ * the session row itself (§3: soft-delete everywhere).
+ */
+export function deleteSessionAndSeries(db: Database, sessionId: string) {
+  const sessionRow = getSession(db, sessionId);
+  if (!sessionRow) return;
+
+  for (const seriesRow of listSeriesForSession(db, sessionId)) {
+    deleteSeriesAndShots(db, seriesRow.id);
+  }
+
+  if (sessionRow.firearmId && sessionRow.extraRounds) {
+    applyRoundCountDelta(db, sessionRow.firearmId, -sessionRow.extraRounds);
+  }
+
+  softDeleteSession(db, sessionId);
 }
 
 /**
