@@ -43,7 +43,6 @@ export default function ToolsScreen() {
       <ThemedText type="title">{t('tools.title')}</ThemedText>
 
       <Card>
-        <ThemedText type="smallBold">{t('tools.timersSectionTitle')}</ThemedText>
         <ListRow
           title={t('timer.title')}
           subtitle={t('tools.timerSubtitle')}
