@@ -18,6 +18,10 @@ export const SETTINGS_KEYS = {
   // (mode, prep/shooting time, parti boundaries, whistle) — plan.md "Timers".
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
+  // Opt-in online place lookup for the session Location field (Photon/OSM).
+  // OFF by default: with it on, what the user types is sent to a third-party
+  // server, which an offline-first app must not do without being asked.
+  onlineLocationLookup: 'onlineLocationLookup',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

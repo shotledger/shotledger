@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -108,6 +108,16 @@ export default function SettingsScreen() {
   const markeGroups: MarkeGroup[] = ['A', 'B', 'C'];
   const markeValors: MarkeValor[] = ['brons', 'silver', 'guld'];
 
+  // Opt-in online place lookup for the session Location field. Off by default:
+  // when on, what the user types there is sent to photon.komoot.io.
+  const [onlineLocationLookup, setOnlineLocationLookup] = useState(() =>
+    db ? getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false) : false,
+  );
+
+  function onToggleOnlineLocationLookup(next: boolean) {
+    setOnlineLocationLookup(next);
+    if (db) setSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, next);
+  }
   const languageOptions: { value: LanguageSetting; label: string }[] = [
     { value: 'system', label: t('settings.languageSystem') },
     { value: 'sv', label: t('settings.languageSv') },
@@ -185,6 +195,21 @@ export default function SettingsScreen() {
                 : t('settings.markeReductionNoneNote')}
           </ThemedText>
         </View>
+      </Card>
+
+      <Card>
+        <ThemedText type="smallBold">{t('settings.locationLookup')}</ThemedText>
+        <View style={styles.switchRow}>
+          <ThemedText type="small">{t('settings.locationLookupOnline')}</ThemedText>
+          <Switch
+            value={onlineLocationLookup}
+            onValueChange={onToggleOnlineLocationLookup}
+            testID="online-location-lookup"
+          />
+        </View>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('settings.locationLookupHelp')}
+        </ThemedText>
       </Card>
 
       <Card>
@@ -292,5 +317,11 @@ const styles = StyleSheet.create({
   markeCell: {
     flex: 1,
     textAlign: 'center',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
   },
 });

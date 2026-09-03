@@ -90,6 +90,14 @@ export const sessions = sqliteTable('sessions', {
   ...common,
   name: text('name').notNull(), // default: program/discipline + date
   type: text('type', { enum: ['training', 'competition'] }).notNull(),
+  // What the session records, chosen at creation and orthogonal to `type`
+  // (maintainer ruling 2026-09-03): 'series' logs scored series, 'rounds' logs
+  // a fixed number of fired shots in `extra_rounds` and never gets series.
+  // The two are mutually exclusive by construction, which is what makes the
+  // sessions list sortable/filterable on shape without deriving it per row.
+  kind: text('kind', { enum: ['series', 'rounds'] })
+    .notNull()
+    .default('series'),
   disciplineId: text('discipline_id').notNull(), // key into discipline defs (§6.2)
   programId: text('program_id'), // predefined match format (§6.3); NULL = free-form training
   // only when type='competition'; SHB 2026 C.3.1 (p. 52) levels

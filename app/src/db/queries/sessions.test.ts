@@ -5,6 +5,7 @@ import type { Database } from '../types';
 import {
   createSession,
   getSession,
+  listLocationUsage,
   listSessions,
   softDeleteSession,
   updateSession,
@@ -122,5 +123,61 @@ describe('listSessions', () => {
     const second = makeSession({ startedAt: '2026-02-01T00:00:00.000Z' });
     const rows = listSessions(db);
     expect(rows.map((r) => r.id)).toEqual([second.id, first.id]);
+  });
+});
+
+describe('session kind', () => {
+  it('defaults to series when the caller does not choose', () => {
+    expect(makeSession().kind).toBe('series');
+    expect(getSession(db, makeSession().id)?.kind).toBe('series');
+  });
+
+  it('stores an explicit rounds session', () => {
+    const rounds = makeSession({ kind: 'rounds' });
+    expect(getSession(db, rounds.id)?.kind).toBe('rounds');
+  });
+
+  it('filters the list by kind', () => {
+    const series = makeSession({ kind: 'series' });
+    const rounds = makeSession({ kind: 'rounds' });
+    expect(listSessions(db, { kind: 'rounds' }).map((r) => r.id)).toEqual([rounds.id]);
+    expect(listSessions(db, { kind: 'series' }).map((r) => r.id)).toEqual([series.id]);
+  });
+});
+
+describe('listLocationUsage', () => {
+  it('is empty when no session has a location', () => {
+    makeSession();
+    expect(listLocationUsage(db)).toEqual([]);
+  });
+
+  it('counts sessions per location and reports the latest use', () => {
+    makeSession({ location: 'Klubbens bana', startedAt: '2026-01-01T00:00:00.000Z' });
+    makeSession({ location: 'Klubbens bana', startedAt: '2026-03-01T00:00:00.000Z' });
+    makeSession({ location: 'Kretsbanan', startedAt: '2026-02-01T00:00:00.000Z' });
+
+    expect([...listLocationUsage(db)].sort((a, b) => a.location.localeCompare(b.location))).toEqual(
+      [
+        { location: 'Klubbens bana', count: 2, lastUsedAt: '2026-03-01T00:00:00.000Z' },
+        { location: 'Kretsbanan', count: 1, lastUsedAt: '2026-02-01T00:00:00.000Z' },
+      ],
+    );
+  });
+
+  it('groups case-insensitively and ignores surrounding whitespace', () => {
+    makeSession({ location: 'Klubbens bana', startedAt: '2026-01-01T00:00:00.000Z' });
+    makeSession({ location: '  klubbens bana ', startedAt: '2026-02-01T00:00:00.000Z' });
+    const rows = listLocationUsage(db);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.count).toBe(2);
+    expect(rows[0]?.lastUsedAt).toBe('2026-02-01T00:00:00.000Z');
+  });
+
+  it('skips blank locations and soft-deleted sessions', () => {
+    makeSession({ location: '   ' });
+    makeSession({ location: '' });
+    const deleted = makeSession({ location: 'Gone' });
+    softDeleteSession(db, deleted.id);
+    expect(listLocationUsage(db)).toEqual([]);
   });
 });

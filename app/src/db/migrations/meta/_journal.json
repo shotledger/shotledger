@@ -43,6 +43,13 @@
       "when": 1788387279869,
       "tag": "0005_parallel_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788420136450,
+      "tag": "0006_session_kind",
+      "breakpoints": true
     }
   ]
 }

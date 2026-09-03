@@ -141,6 +141,17 @@ ammo_lots       label TEXT NOT NULL,           -- display name
 
 sessions        name TEXT NOT NULL,            -- default: program/discipline + date
                 type TEXT NOT NULL CHECK(type IN ('training','competition')),
+                kind TEXT NOT NULL DEFAULT 'series'
+                                               -- CHECK(kind IN ('series','rounds'))
+                                               -- what the session RECORDS,
+                                               -- orthogonal to `type` and
+                                               -- chosen at creation (maintainer
+                                               -- ruling 2026-09-03): 'series'
+                                               -- logs scored series, 'rounds'
+                                               -- logs a fixed shot count in
+                                               -- extra_rounds and never gets
+                                               -- series. Immutable afterwards
+                                               -- (migration 0006, 2026-09-03)
                 discipline_id TEXT NOT NULL,   -- key into discipline defs (§6.2)
                 program_id TEXT NULL,          -- predefined match format (§6.3);
                                                -- NULL = free-form training
@@ -172,7 +183,10 @@ sessions        name TEXT NOT NULL,            -- default: program/discipline + 
                                                -- totals; excluded from every
                                                -- score statistic and from the
                                                -- series/shots structures
-                                               -- (migration 0001, 2026-09-01)
+                                               -- (migration 0001, 2026-09-01).
+                                               -- On a kind='rounds' session
+                                               -- this column IS the session's
+                                               -- shot count.
 
 series          session_id FK NOT NULL, position INTEGER NOT NULL, -- 1-based
                 is_sighter INTEGER NOT NULL DEFAULT 0, -- provskott: excluded
@@ -344,6 +358,14 @@ already is the sighter can un-set itself.)
   with no flag; `X` then `"9"` ⇒ 10.9 + `is_inner_ten`; `0` then `0` ⇒ a
   decimal miss. There is no `(X)` key, and `is_inner_ten_decimal` is
   deprecated (§3). Statistics that count "X" count innertior.
+- Session kind (§3 `sessions.kind`, 2026-09-03): the new-session form asks
+  up front whether the session logs **scored series** or a **fixed number of
+  rounds**, and adapts — a `'rounds'` session collects a shot count (stored in
+  `extra_rounds`) and is offered no program, no decimal toggle and no series;
+  a `'series'` session is never offered `extra_rounds` at creation. Field
+  order: Type → Logging → Session name (auto-derived, overridable) → Location
+  → discipline/program → competition details → vapengrupp/klass → firearm/ammo
+  → shot count (rounds only) → tags.
 - Extra rounds: the session form and session detail carry an
   `extra_rounds` field for rounds fired but not scored — volume only
   (round counter, ammo-lot usage, shots-logged totals), never score.
@@ -616,7 +638,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
 | `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
-| `/session/new`                             | new-session form                                                                          | validation errors  |
+| `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
@@ -629,7 +651,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
 | `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
-| `/session/new`                             | new-session form                                                                          | validation errors  |
+| `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filters + tiles + charts                                                                  | no data for filter |
