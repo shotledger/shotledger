@@ -688,7 +688,7 @@
     "permissionDenied": "Behörighet nekades. Tillåt kamera och foton för att skanna en tavla.",
     "analyzing": "Låser på tavlan…",
     "unsupportedTitle": "Stöds inte ännu",
-    "unsupportedBody": "Fotoräkning fungerar just nu bara på 25 m precisionstavla. Den här passet använder {{face}}.",
+    "unsupportedBody": "Fotoräkning fungerar just nu bara på 25 m precisionstavla. Det här passet använder {{face}}.",
     "lockFailedTitle": "Kunde inte låsa tavlan",
     "lockFailedBody": "Ringarna kunde inte placeras på det här fotot. Ta om det rakt framifrån med bra ljus, eller placera de fyra hörnen själv.",
     "reasonAxisRatio": "Tavlan ser för vinklad ut, eller formen som hittades är inte rund.",
