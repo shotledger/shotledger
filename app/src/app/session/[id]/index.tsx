@@ -370,6 +370,33 @@ export default function SessionDetailScreen() {
       {view === 'stats' && seriesRows.length > 0 ? (
         <Card testID="session-stats-view">
           <ThemedText type="smallBold" themeColor="textSecondary">
+            {t('stats.statsPerSeriesTitle')}
+          </ThemedText>
+          <View style={styles.metricRow}>
+            <MetricTile
+              testID="session-stat-series-mean"
+              label={t('stats.statsSeriesMean')}
+              value={
+                stats.seriesMeanTenths === null
+                  ? '–'
+                  : tenthsToScore(stats.seriesMeanTenths).toFixed(2)
+              }
+            />
+            <MetricTile
+              testID="session-stat-series-sd"
+              label={t('stats.statsSeriesSd')}
+              value={
+                stats.seriesSdTenths === null ? '–' : tenthsToScore(stats.seriesSdTenths).toFixed(2)
+              }
+            />
+            <MetricTile
+              testID="session-stat-series-count"
+              label={t('stats.statsSeriesCount')}
+              value={String(stats.seriesCount)}
+            />
+          </View>
+
+          <ThemedText type="smallBold" themeColor="textSecondary">
             {t('stats.statsPerShotTitle')}
           </ThemedText>
           <View style={styles.metricRow}>
@@ -415,23 +442,28 @@ export default function SessionDetailScreen() {
 
           <View>
             <ThemedText type="smallBold">{t('stats.comparisonTitle')}</ThemedText>
-            {stats.comparison?.previousMeanTenths == null ? (
+            {stats.comparison?.previousSeriesMeanTenths == null ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {t('stats.comparisonNotEnough')}
               </ThemedText>
             ) : (
-              <View style={styles.resultsRow}>
-                <StatTile
-                  testID="comparison-recent"
-                  label={t('stats.comparisonRecent')}
-                  value={tenthsToScore(stats.comparison.recentMeanTenths ?? 0).toFixed(2)}
-                />
-                <StatTile
-                  testID="comparison-previous"
-                  label={t('stats.comparisonPrevious')}
-                  value={tenthsToScore(stats.comparison.previousMeanTenths).toFixed(2)}
-                />
-              </View>
+              <>
+                <View style={styles.resultsRow}>
+                  <StatTile
+                    testID="comparison-recent"
+                    label={t('stats.comparisonRecent')}
+                    value={tenthsToScore(stats.comparison.recentSeriesMeanTenths ?? 0).toFixed(2)}
+                  />
+                  <StatTile
+                    testID="comparison-previous"
+                    label={t('stats.comparisonPrevious')}
+                    value={tenthsToScore(stats.comparison.previousSeriesMeanTenths).toFixed(2)}
+                  />
+                </View>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('stats.comparisonHint')}
+                </ThemedText>
+              </>
             )}
           </View>
 

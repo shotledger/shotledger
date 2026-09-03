@@ -121,7 +121,12 @@
     "statsPerShotTitle": "Per skott",
     "statsSumTitle": "Hela passet",
     "statsTotalPoints": "Totalpoäng",
-    "statsTotalShots": "Skott totalt"
+    "statsTotalShots": "Skott totalt",
+    "statsPerSeriesTitle": "Per serie",
+    "statsSeriesMean": "Snitt/serie",
+    "statsSeriesSd": "Standardavvikelse/serie",
+    "statsSeriesCount": "Serier",
+    "comparisonHint": "Snittpoäng per serie."
   },
   "firearms": {
     "title": "Vapen & ammo",

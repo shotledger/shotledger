@@ -39,21 +39,34 @@ export interface StatsSeries {
   totalOverride?: { tenths: number; shotCount: number } | null;
 }
 
-// --- Low-level shot math -------------------------------------------------
+// --- Low-level tenths math -----------------------------------------------
+//
+// The mean/SD pair is shared by the per-shot and per-series metrics: the
+// only difference between them is what goes into the array (one shot's
+// value, or one whole series' total).
+
+/** Arithmetic mean of a tenths array. `null` for an empty set (undefined, not 0). */
+function mean(values: readonly number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((acc, value) => acc + value, 0) / values.length;
+}
+
+/** Sample standard deviation (n-1 denominator) of a tenths array. `null` when n<2. */
+function sampleStandardDeviation(values: readonly number[]): number | null {
+  if (values.length < 2) return null;
+  const average = mean(values) as number;
+  const sumSquaredDeviation = values.reduce((acc, value) => acc + (value - average) ** 2, 0);
+  return Math.sqrt(sumSquaredDeviation / (values.length - 1));
+}
 
 /** Arithmetic mean of value_tenths. `null` for an empty set (undefined, not 0). */
 export function meanTenths(shots: readonly StatsShot[]): number | null {
-  if (shots.length === 0) return null;
-  const sum = shots.reduce((acc, shot) => acc + shot.valueTenths, 0);
-  return sum / shots.length;
+  return mean(shots.map((shot) => shot.valueTenths));
 }
 
 /** Sample standard deviation (n-1 denominator) of value_tenths. `null` when n<2. */
 export function sampleStandardDeviationTenths(shots: readonly StatsShot[]): number | null {
-  if (shots.length < 2) return null;
-  const mean = meanTenths(shots) as number;
-  const sumSquaredDeviation = shots.reduce((acc, shot) => acc + (shot.valueTenths - mean) ** 2, 0);
-  return Math.sqrt(sumSquaredDeviation / (shots.length - 1));
+  return sampleStandardDeviation(shots.map((shot) => shot.valueTenths));
 }
 
 /**
@@ -95,6 +108,43 @@ export function volumeShotCount(seriesList: readonly StatsSeries[]): number {
   );
 }
 
+// --- Per-series score math ---------------------------------------------------
+//
+// The primary reading on the session Stats tab (maintainer, 2026-09-03: "the
+// stats are per shot. It need to be per series, e.g. avg is 45.24 for 5
+// rounds"). Same sighter exclusion as every score statistic; an override
+// series (WS1) counts here because a series total is exactly what it stores.
+
+/** One series' total in tenths — its stored override (WS1), else the sum of its shots. */
+function seriesTotalTenths(series: StatsSeries): number {
+  return series.totalOverride
+    ? series.totalOverride.tenths
+    : series.shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
+}
+
+/**
+ * Totals of the scored series that actually carry data, in tenths. A series
+ * with no shots entered yet is omitted rather than counted as 0, so adding
+ * an empty series never drags the mean down — the same rule
+ * `seriesAverageTenths` (totals.ts) applies to the session header, kept in
+ * lock-step with it so the Stats tab and the result card agree.
+ */
+export function scoredSeriesTotalsTenths(seriesList: readonly StatsSeries[]): number[] {
+  return scoredSeries(seriesList)
+    .filter((series) => series.totalOverride != null || series.shots.length > 0)
+    .map(seriesTotalTenths);
+}
+
+/** Mean series total in tenths. `null` when no scored series carries data. */
+export function seriesMeanTenths(seriesList: readonly StatsSeries[]): number | null {
+  return mean(scoredSeriesTotalsTenths(seriesList));
+}
+
+/** Sample standard deviation (n-1) of the series totals. `null` when fewer than 2. */
+export function seriesSdTenths(seriesList: readonly StatsSeries[]): number | null {
+  return sampleStandardDeviation(scoredSeriesTotalsTenths(seriesList));
+}
+
 // --- Best / worst series ----------------------------------------------------
 
 export interface SeriesTotal {
@@ -116,12 +166,7 @@ export interface BestWorstSeries {
 export function bestWorstSeries(seriesList: readonly StatsSeries[]): BestWorstSeries {
   const totals = scoredSeries(seriesList)
     .filter((series) => series.totalOverride != null || series.shots.length > 0)
-    .map((series) => ({
-      id: series.id,
-      totalTenths: series.totalOverride
-        ? series.totalOverride.tenths
-        : series.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
-    }));
+    .map((series) => ({ id: series.id, totalTenths: seriesTotalTenths(series) }));
 
   if (totals.length === 0) return { best: null, worst: null };
 
@@ -173,9 +218,18 @@ export interface CompareTarget {
 }
 
 export interface CompareRecentSeriesResult {
+  /** Per-shot mean of the recent window — the Statistics tab's reading. */
   recentMeanTenths: number | null;
   previousMeanTenths: number | null;
   deltaTenths: number | null;
+  /**
+   * Per-series mean of the same two windows — what the session Stats tab
+   * shows, since a shooter compares series scores ("45.24 for 5 rounds"),
+   * not shot values (maintainer, 2026-09-03).
+   */
+  recentSeriesMeanTenths: number | null;
+  previousSeriesMeanTenths: number | null;
+  deltaSeriesTenths: number | null;
   recentCount: number;
   previousCount: number;
 }
@@ -184,10 +238,10 @@ const DEFAULT_COMPARE_N = 100;
 
 /**
  * Compares the last N scored series of a discipline+class against the N
- * before that, both pooled at shot level (§4 M5). Series are matched by
- * `disciplineId` and `shooterClass`, sorted chronologically by
+ * before that, at both shot level and series level (§4 M5). Series are
+ * matched by `disciplineId` and `shooterClass`, sorted chronologically by
  * `startedAt`. Fewer than N previous series never fabricates a baseline —
- * `previousMeanTenths`/`deltaTenths` are `null` when there is nothing to
+ * the `previous*`/`delta*` figures are `null` when there is nothing to
  * compare against.
  */
 export function compareRecentSeries(
@@ -210,14 +264,18 @@ export function compareRecentSeries(
 
   const recentMeanTenths = meanTenths(recent.flatMap((series) => series.shots));
   const previousMeanTenths = meanTenths(previous.flatMap((series) => series.shots));
+  const recentSeriesMeanTenths = seriesMeanTenths(recent);
+  const previousSeriesMeanTenths = seriesMeanTenths(previous);
+
+  const delta = (a: number | null, b: number | null) => (a !== null && b !== null ? a - b : null);
 
   return {
     recentMeanTenths,
     previousMeanTenths,
-    deltaTenths:
-      recentMeanTenths !== null && previousMeanTenths !== null
-        ? recentMeanTenths - previousMeanTenths
-        : null,
+    deltaTenths: delta(recentMeanTenths, previousMeanTenths),
+    recentSeriesMeanTenths,
+    previousSeriesMeanTenths,
+    deltaSeriesTenths: delta(recentSeriesMeanTenths, previousSeriesMeanTenths),
     recentCount: recent.length,
     previousCount: previous.length,
   };
