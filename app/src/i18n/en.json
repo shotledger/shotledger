@@ -33,7 +33,11 @@
     "filterAll": "All",
     "filterEmpty": "No sessions match this filter",
     "shapeSeries": "Series",
-    "shapeRounds": "Rounds"
+    "shapeRounds": "Rounds",
+    "shareSession": "Share Session",
+    "deleteSession": "Delete Session",
+    "deleteSessionConfirmTitle": "Delete Session?",
+    "deleteSessionConfirmBody": "Its series and shots will be removed too. This can't be undone."
   },
   "stats": {
     "title": "Statistics",
