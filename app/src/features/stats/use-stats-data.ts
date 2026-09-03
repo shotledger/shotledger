@@ -1,80 +1,68 @@
-// M5 (§4 M5): live statistics for the /stats tab. Refetches on focus, like
-// Home and session detail (§4 M2/M3 — no true reactive live-query yet).
-// All math delegates to @shotledger/shared's stats.ts; this file only does
-// period/filter slicing and DB access.
+// Statistics data layer. Since the analytics rebuild the Statistics tab is
+// a *filter form* that generates a report (maintainer: "see screenshots for
+// how the statistics can be generic but also generated on the fly"), so
+// this file has two halves:
+//
+//   - `useAnalyticsFilterOptions` — what the filter form can offer (which
+//     disciplines, series lengths and tags actually exist).
+//   - `useAnalyticsReport` — the generated report for one filter.
+//
+// All math delegates to @shotledger/shared's analytics.ts/stats.ts; this
+// file only does DB access, period→range resolution and label lookup.
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  bestWorstSeries,
+  analyticsRecords,
+  analyticsSessionPoints,
+  analyticsTotals,
   compareRecentSeries,
+  filterAnalyticsSeries,
   guldserieCount,
-  meanTenths,
   sampleStandardDeviationTenths,
   scoredShots,
-  sessionTrend,
   tenthsToScore,
-  volumeShotCount,
-  xRate,
-  type SessionTrendPoint,
-  type StatsSeries,
+  type AnalyticsFilter,
+  type AnalyticsRecords,
+  type AnalyticsSessionPoint,
+  type AnalyticsSessionType,
+  type AnalyticsTotals,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
-import { listFirearms } from '@/db/queries/firearms';
+import { listAllAnalyticsSeries, listAllStatsSeries } from '@/db/queries/stats';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
-import { sumExtraRounds } from '@/db/queries/sessions';
-import { listAllStatsSeries } from '@/db/queries/stats';
+import { listSessions, sumExtraRounds } from '@/db/queries/sessions';
+import { listTags } from '@/db/queries/tags';
 
 export const STATS_PERIODS = ['30d', '6m', '12m', 'all', 'custom'] as const;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
 
-export interface StatsFilters {
+/** The filter form's state. Serialised into the report route's params. */
+export interface AnalyticsFilterState {
   period: StatsPeriod;
-  disciplineId: string | null;
-  shooterClass: string | null;
-  firearmId: string | null;
   /** 'YYYY-MM-DD', only meaningful when period === 'custom'. */
   customFrom: string | null;
   customTo: string | null;
+  sessionType: AnalyticsSessionType | null;
+  disciplineId: string | null;
+  shotsPerSeries: number | null;
+  tagIds: string[];
 }
 
-export const DEFAULT_STATS_FILTERS: StatsFilters = {
+export const DEFAULT_ANALYTICS_FILTER: AnalyticsFilterState = {
   period: '6m',
-  disciplineId: null,
-  shooterClass: null,
-  firearmId: null,
   customFrom: null,
   customTo: null,
+  sessionType: null,
+  disciplineId: null,
+  shotsPerSeries: null,
+  tagIds: [],
 };
 
 export interface DistributionBucket {
   /** Ring value in points (0-10); X shots count under 10. */
   value: number;
   count: number;
-}
-
-export interface FilterOption {
-  id: string;
-  label: string;
-}
-
-export interface StatsData {
-  hasAnyData: boolean;
-  hasFilteredData: boolean;
-  totalShots: number;
-  sessionCount: number;
-  meanTenths: number | null;
-  sdTenths: number | null;
-  xRatePercent: number | null;
-  guldserieCountInPeriod: number;
-  bestSeriesTenths: number | null;
-  worstSeriesTenths: number | null;
-  trend: SessionTrendPoint[];
-  distribution: DistributionBucket[];
-  /** Ids only — the screen localizes discipline/class labels via i18n. */
-  disciplineIds: string[];
-  shooterClasses: string[];
-  firearmOptions: FilterOption[];
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -90,7 +78,9 @@ export interface PeriodRange {
 }
 
 /** The [from, to] ISO range a period filter resolves to; both null = all time. */
-export function periodRange(filters: StatsFilters): PeriodRange {
+export function periodRange(
+  filters: Pick<AnalyticsFilterState, 'period' | 'customFrom' | 'customTo'>,
+): PeriodRange {
   if (filters.period === 'all') return { fromIso: null, toIso: null };
   if (filters.period === 'custom') {
     return {
@@ -104,16 +94,32 @@ export function periodRange(filters: StatsFilters): PeriodRange {
   };
 }
 
-function inPeriod(seriesList: readonly StatsSeries[], range: PeriodRange): StatsSeries[] {
-  return seriesList.filter(
-    (series) =>
-      (range.fromIso === null || series.startedAt >= range.fromIso) &&
-      (range.toIso === null || series.startedAt <= range.toIso),
-  );
+/** The form state as the pure engine's filter. */
+export function toAnalyticsFilter(state: AnalyticsFilterState): AnalyticsFilter {
+  const range = periodRange(state);
+  return {
+    fromIso: range.fromIso,
+    toIso: range.toIso,
+    sessionType: state.sessionType,
+    disciplineId: state.disciplineId,
+    shotsPerSeries: state.shotsPerSeries,
+    tagIds: state.tagIds,
+  };
 }
 
-function uniqueSorted(values: readonly (string | null | undefined)[]): string[] {
-  return [...new Set(values.filter((v): v is string => Boolean(v)))].sort();
+/** Round-trips the filter through the report route's params. */
+export function encodeAnalyticsFilter(state: AnalyticsFilterState): string {
+  return JSON.stringify(state);
+}
+
+/** Never throws: a malformed param falls back to the default filter. */
+export function decodeAnalyticsFilter(raw: string | undefined): AnalyticsFilterState {
+  if (!raw) return DEFAULT_ANALYTICS_FILTER;
+  try {
+    return { ...DEFAULT_ANALYTICS_FILTER, ...(JSON.parse(raw) as Partial<AnalyticsFilterState>) };
+  } catch {
+    return DEFAULT_ANALYTICS_FILTER;
+  }
 }
 
 /** Exported for reuse by the session-detail mini distribution (§4 M5). */
@@ -130,73 +136,175 @@ export function buildDistribution(
     .map(([value, count]) => ({ value, count }));
 }
 
-function loadStatsData(filters: StatsFilters): StatsData {
-  if (!db) {
-    return {
-      hasAnyData: false,
-      hasFilteredData: false,
-      totalShots: 0,
-      sessionCount: 0,
-      meanTenths: null,
-      sdTenths: null,
-      xRatePercent: null,
-      guldserieCountInPeriod: 0,
-      bestSeriesTenths: null,
-      worstSeriesTenths: null,
-      trend: [],
-      distribution: [],
-      disciplineIds: [],
-      shooterClasses: [],
-      firearmOptions: [],
-    };
+// --- Filter form -------------------------------------------------------------
+
+export interface TagOption {
+  id: string;
+  name: string;
+}
+
+export interface AnalyticsFilterOptions {
+  hasAnyData: boolean;
+  disciplineIds: string[];
+  /** Series lengths that actually occur, so "shots per series" is never a guess. */
+  shotsPerSeriesValues: number[];
+  tags: TagOption[];
+}
+
+const NO_OPTIONS: AnalyticsFilterOptions = {
+  hasAnyData: false,
+  disciplineIds: [],
+  shotsPerSeriesValues: [],
+  tags: [],
+};
+
+function loadFilterOptions(): AnalyticsFilterOptions {
+  if (!db) return NO_OPTIONS;
+
+  const all = listAllAnalyticsSeries(db);
+  const lengths = new Set<number>();
+  for (const series of all) {
+    const count = series.totalOverride?.shotCount ?? series.shots.length;
+    if (count > 0) lengths.add(count);
   }
-
-  const all = listAllStatsSeries(db);
-  const periodSeries = inPeriod(all, periodRange(filters));
-
-  const filtered = periodSeries.filter(
-    (series) =>
-      (filters.disciplineId === null || series.disciplineId === filters.disciplineId) &&
-      (filters.shooterClass === null || series.shooterClass === filters.shooterClass) &&
-      (filters.firearmId === null || series.firearmId === filters.firearmId),
-  );
-
-  const shots = scoredShots(filtered);
-  const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
-  const { best, worst } = bestWorstSeries(filtered);
-
-  const firearmNames = new Map(
-    listFirearms(db).map((firearm) => [firearm.id, `${firearm.make} ${firearm.model}`.trim()]),
-  );
 
   return {
     hasAnyData: all.length > 0,
-    hasFilteredData: filtered.length > 0,
-    // Volume, so unscored extra rounds count too (spec A1 §A1.3 A-X3); every
-    // score statistic below is computed from `shots`/`filtered` and so cannot
-    // see them (A-X4).
-    totalShots:
-      volumeShotCount(filtered) +
-      sumExtraRounds(db, [...new Set(filtered.map((series) => series.sessionId))]),
-    sessionCount: new Set(filtered.map((series) => series.sessionId)).size,
-    meanTenths: meanTenths(shots),
-    sdTenths: sampleStandardDeviationTenths(shots),
-    xRatePercent: (() => {
-      const rate = xRate(shots);
-      return rate === null ? null : rate * 100;
-    })(),
-    guldserieCountInPeriod: guldserieCount(filtered, { birthYear }),
-    bestSeriesTenths: best?.totalTenths ?? null,
-    worstSeriesTenths: worst?.totalTenths ?? null,
-    trend: sessionTrend(filtered),
-    distribution: buildDistribution(shots),
-    disciplineIds: uniqueSorted(periodSeries.map((series) => series.disciplineId)),
-    shooterClasses: uniqueSorted(periodSeries.map((series) => series.shooterClass)),
-    firearmOptions: uniqueSorted(periodSeries.map((series) => series.firearmId)).map((id) => ({
-      id,
-      label: firearmNames.get(id) ?? id,
-    })),
+    disciplineIds: [...new Set(all.map((series) => series.disciplineId))].sort(),
+    shotsPerSeriesValues: [...lengths].sort((a, b) => a - b),
+    tags: listTags(db).map((tag) => ({ id: tag.id, name: tag.name })),
   };
+}
+
+export function useAnalyticsFilterOptions(): AnalyticsFilterOptions {
+  const [options, setOptions] = useState<AnalyticsFilterOptions>(loadFilterOptions);
+
+  useFocusEffect(
+    useCallback(() => {
+      setOptions(loadFilterOptions());
+    }, []),
+  );
+
+  return options;
+}
+
+// --- Generated report --------------------------------------------------------
+
+/** A record plus the human-readable session it came from. */
+export interface NamedRecord {
+  sessionId: string;
+  startedAt: string;
+  value: number;
+  sessionName: string;
+}
+
+export interface AnalyticsReportData {
+  hasAnyData: boolean;
+  hasMatches: boolean;
+  totals: AnalyticsTotals;
+  sdTenths: number | null;
+  /**
+   * SPSF guldserier in the filtered set. Federation-specific, so the report
+   * only shows the tile when it is non-zero — an ISSF or NRA user never
+   * sees a metric that does not apply to them.
+   */
+  guldserieCount: number;
+  /** The raw records, as the JSON export wants them. */
+  records: AnalyticsRecords;
+  bestSessionScore: NamedRecord | null;
+  mostInnerTens: NamedRecord | null;
+  mostTens: NamedRecord | null;
+  points: AnalyticsSessionPoint[];
+  distribution: DistributionBucket[];
+  /** Ids of the sessions the filter matched — the export's working set. */
+  sessionIds: string[];
+  /** Names of the filter's tags, so the report can echo them instead of a count. */
+  tagNames: string[];
+}
+
+const EMPTY_TOTALS: AnalyticsTotals = {
+  sessionCount: 0,
+  scoredSeriesCount: 0,
+  volumeShotCount: 0,
+  scoredShotCount: 0,
+  sumTenths: 0,
+  meanShotTenths: null,
+  meanSeriesTenths: null,
+  innerTenCount: 0,
+  tenCount: 0,
+};
+
+const EMPTY_REPORT: AnalyticsReportData = {
+  hasAnyData: false,
+  hasMatches: false,
+  totals: EMPTY_TOTALS,
+  sdTenths: null,
+  guldserieCount: 0,
+  records: { bestSessionTotalTenths: null, mostInnerTens: null, mostTens: null },
+  bestSessionScore: null,
+  mostInnerTens: null,
+  mostTens: null,
+  points: [],
+  distribution: [],
+  sessionIds: [],
+  tagNames: [],
+};
+
+function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
+  if (!db) return EMPTY_REPORT;
+
+  const all = listAllAnalyticsSeries(db);
+  const matched = filterAnalyticsSeries(all, toAnalyticsFilter(state));
+  const sessionIds = [...new Set(matched.map((series) => series.sessionId))];
+  const points = analyticsSessionPoints(matched);
+  const records: AnalyticsRecords = analyticsRecords(points);
+  const shots = scoredShots(matched);
+  const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
+
+  const nameById = new Map(listSessions(db).map((session) => [session.id, session.name] as const));
+  const named = (record: AnalyticsRecords[keyof AnalyticsRecords]): NamedRecord | null =>
+    record === null
+      ? null
+      : { ...record, sessionName: nameById.get(record.sessionId) ?? record.sessionId };
+
+  const totals = analyticsTotals(matched);
+
+  return {
+    hasAnyData: all.length > 0,
+    hasMatches: matched.length > 0,
+    totals: {
+      ...totals,
+      // Volume so unscored extra rounds count too (spec A1 §A1.3 A-X3);
+      // every score statistic above is computed from shots/series and so
+      // cannot see them (A-X4).
+      volumeShotCount: totals.volumeShotCount + sumExtraRounds(db, sessionIds),
+    },
+    sdTenths: sampleStandardDeviationTenths(shots),
+    guldserieCount: guldserieCount(matched, { birthYear }),
+    records,
+    bestSessionScore: named(records.bestSessionTotalTenths),
+    mostInnerTens: named(records.mostInnerTens),
+    mostTens: named(records.mostTens),
+    points,
+    distribution: buildDistribution(shots),
+    sessionIds,
+    tagNames: listTags(db)
+      .filter((tag) => state.tagIds.includes(tag.id))
+      .map((tag) => tag.name),
+  };
+}
+
+export function useAnalyticsReport(state: AnalyticsFilterState): AnalyticsReportData {
+  const [data, setData] = useState<AnalyticsReportData>(() => loadReport(state));
+  const key = encodeAnalyticsFilter(state);
+
+  useFocusEffect(
+    useCallback(() => {
+      setData(loadReport(decodeAnalyticsFilter(key)));
+    }, [key]),
+  );
+
+  return data;
 }
 
 /** Comparison of the most recent 100 series vs the 100 before that, same discipline+class. */
@@ -204,26 +312,4 @@ export function loadComparisonForSession(disciplineId: string, shooterClass: str
   if (!db) return null;
   const all = listAllStatsSeries(db);
   return compareRecentSeries(all, { disciplineId, shooterClass });
-}
-
-export function useStatsData(filters: StatsFilters): { data: StatsData; refresh: () => void } {
-  const [data, setData] = useState<StatsData>(() => loadStatsData(filters));
-
-  const refresh = useCallback(() => setData(loadStatsData(filters)), [filters]);
-
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-      filters.period,
-      filters.disciplineId,
-      filters.shooterClass,
-      filters.firearmId,
-      filters.customFrom,
-      filters.customTo,
-    ]),
-  );
-
-  return { data, refresh };
 }

@@ -88,6 +88,14 @@ function RootStack() {
         name="vault/[id]"
         options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />
+      <Stack.Screen
+        name="stats/records"
+        options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
+      />
+      <Stack.Screen
+        name="stats/report"
+        options={{ presentation: 'modal', headerShown: true, title: t('stats.reportTitle') }}
+      />
       <Stack.Screen name="dev" />
     </Stack>
   );

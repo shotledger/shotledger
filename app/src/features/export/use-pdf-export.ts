@@ -21,6 +21,13 @@ export interface PdfExportFilters {
   startedFromIso: string | null;
   startedToIso: string | null;
   firearmId: string | null;
+  /**
+   * Restricts the log to exactly these sessions. The analytics report
+   * passes the ids its own filter matched (session type, discipline,
+   * shots per series, tags) — dimensions this date/firearm-shaped filter
+   * cannot express. `null` = no restriction.
+   */
+  sessionIds?: readonly string[] | null;
 }
 
 function formatDate(iso: string, locale: string): string {
@@ -35,10 +42,13 @@ export function buildShootingLogHtmlForFilters(
 ): string | null {
   if (!db) return null;
 
+  const allowed = filters.sessionIds ? new Set(filters.sessionIds) : null;
   const sessions = listSessions(db, {
     startedFrom: filters.startedFromIso ?? undefined,
     startedTo: filters.startedToIso ?? undefined,
-  }).filter((session) => !filters.firearmId || session.firearmId === filters.firearmId);
+  })
+    .filter((session) => !filters.firearmId || session.firearmId === filters.firearmId)
+    .filter((session) => allowed === null || allowed.has(session.id));
 
   const entries: PdfLogEntry[] = sessions.map((session) => {
     const nonSighterSeries = listSeriesForSession(db, session.id).filter((s) => s.isSighter === 0);

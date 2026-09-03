@@ -74,7 +74,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 | Migrations    | drizzle-kit                                           | SQL files in `app/src/db/migrations/`, bundled, run at app start via Drizzle's migrator            |
 | IDs           | UUIDv7 (`uuidv7` pkg)                                 | sortable, sync-friendly                                                                            |
 | State         | zustand (UI state only) + Drizzle live queries (data) | no Redux                                                                                           |
-| Charts        | victory-native                                        | Skia-based                                                                                         |
+| Charts        | **react-native-svg** (hand-drawn)                     | victory-native/Skia was planned but never adopted — see plan.md 2026-09-03; do not add one         |
 | Dates         | date-fns + date-fns-tz                                | store UTC ISO-8601 in DB; display local                                                            |
 | Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                  |
 | i18n          | i18next + react-i18next + expo-localization           |                                                                                                    |
@@ -583,18 +583,19 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 ## 5. Screen inventory (v1)
 
-| Route                                  | Purpose                                              | Key states         |
-| -------------------------------------- | ---------------------------------------------------- | ------------------ |
-| `/` Home                               | totals card, latest sessions, barometer summary, FAB | empty / seeded     |
-| `/session/new`                         | new-session form                                     | validation errors  |
-| `/session/[id]`                        | series list + stats toggle, add series               | zero series        |
-| `/session/[id]/series/[pos]`           | keypad entry                                         | integer vs decimal |
-| `/stats`                               | filters + tiles + charts                             | no data for filter |
-| `/firearms`                            | list + barometer chips                               | empty              |
-| `/firearms/[id]`                       | detail: classes, license, maintenance, ammo usage    | expired license    |
-| `/firearms/new`, `/firearms/[id]/edit` | forms                                                |                    |
-| `/settings`                            | language, theme, data, support, about                |                    |
-| `/dev/components`                      | component gallery (dev only)                         |                    |
+| Route                                  | Purpose                                                          | Key states         |
+| -------------------------------------- | ---------------------------------------------------------------- | ------------------ |
+| `/` Home                               | totals card, latest sessions, barometer summary, FAB             | empty / seeded     |
+| `/session/new`                         | new-session form                                                 | validation errors  |
+| `/session/[id]`                        | series list + stats toggle, add series                           | zero series        |
+| `/session/[id]/series/[pos]`           | keypad entry                                                     | integer vs decimal |
+| `/stats`                               | filter form (period, type, discipline, series length, tags)      | no sessions at all |
+| `/stats/report`                        | generated report: records, sum + per-shot totals, charts, export | no data for filter |
+| `/firearms`                            | list + barometer chips                                           | empty              |
+| `/firearms/[id]`                       | detail: classes, license, maintenance, ammo usage                | expired license    |
+| `/firearms/new`, `/firearms/[id]/edit` | forms                                                            |                    |
+| `/settings`                            | language, theme, data, support, about                            |                    |
+| `/dev/components`                      | component gallery (dev only)                                     |                    |
 
 ## 6. Reference data and formulas
 
@@ -907,6 +908,20 @@ restates §0 rules 1–6 verbatim.
 > plan.md decisions-log entry). See `docs/specs/license-card-ocr-spec.md`/
 > `-evidence.md` for the parser rules, the privacy boundary and the
 > synthetic-card device verification (screenshot `ocr-01-scan-prefill.png`).
+
+> **The Statistics tab has since been rebuilt** on `feat/analytics-filters`
+> (maintainer feedback: streamline the UI/UX, add the missing tag filter,
+> generate the statistics on the fly). `/stats` is a filter form and
+> `/stats/report` the generated report; the pure engine is
+> `shared/src/scoring/analytics.ts` (old-coder loop —
+> `docs/specs/analytics-report-spec.md`/`-evidence.md`, 100% coverage,
+> Stryker 98.70%). The report also carries the sum totals next to the
+> per-shot ones, and its Export button now asks for a format: PDF (the M6
+> shooting-log builder, restricted to the matched session ids), JSON (the
+> new `shared/src/export/json-log.ts`) or CSV (the M7 exporter over the
+> same filtered `SessionExport[]`) — the vault in none of them. Charts are
+> hand-drawn `react-native-svg`; §2's chart row has been corrected to say
+> so. See the 2026-09-03 plan.md decisions-log entries.
 
 Photo target scoring; WebShooter import; document vault; iOS release.
 
