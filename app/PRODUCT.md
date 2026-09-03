@@ -1,0 +1,124 @@
+# Product
+
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+android
+
+## Users
+
+Primary: **sport pistol shooters competing and training under SPSF rules**
+(Svenska Pistolskytteförbundet). The maintainer is one, and a member of Malmö
+Skyttegille. They log scores at the range — typically immediately after each
+series — and review progress between sessions.
+
+**International by design**: Sweden is the first market, not the boundary.
+Federation rules (disciplines, programs, vapengrupper, shooter classes,
+competition levels) and jurisdiction-specific compliance live in pluggable data
+files, never hard-coded into core; compliance UI hides itself where no profile
+applies.
+
+Scope is **target shooting only** — never hunting, never tactical.
+
+## Product Purpose
+
+A free, donation-funded target-shooting logbook. It records training and
+competition sessions down to individual shots, scores paper targets from a
+photograph, tracks firearms and ammunition, and keeps the activity log Swedish
+shooters need when renewing a firearm licence (FAP 551-3).
+
+Success is a shooter who logs a session in seconds at the range without fighting
+the app, and who can later answer "am I improving?" and "can I document enough
+range activity for my licence?" without exporting anything to a spreadsheet.
+
+## Positioning
+
+No existing app combines all of: fast score logging (training and competition),
+camera-based scoring of Swedish SPSF precision and fält targets — which no
+photo-scoring app supports — FAP 551-3 activity logging, and cross-platform,
+free, offline-first operation with no forced account.
+
+Incumbents each cover one slice: ShotLog (logging; paywalls basics its own users
+resent), TargetScan (photo scoring; no logbook), Shotlytic (Swedish compliance;
+iOS-only, no scoring), LoggaSkott (licence barometer; no scoring), Skytteappen
+(club ecosystem).
+
+## Operating Context
+
+Used **at the range, phone in hand, between series** — a series is shot, its
+shots are tapped in, then the next series. Entry is incremental and interleaved
+with shooting, not a data-entry session afterwards.
+
+**Bright outdoor sunlight is a confirmed condition of use.** Screen glare is a
+real constraint on contrast and legibility; a design that only reads indoors is
+not sufficient.
+
+Competition use adds range-officer command sequences (the fältskjutning command
+timer follows SHB D.6.2 wording and timings) and post-session verification of
+scores against official results.
+
+## Capabilities and Constraints
+
+- **Offline-first, no account required.** Device SQLite is the source of truth;
+  Cloudflare sync is strictly optional and opt-in.
+- **v1 disciplines are SPSF precision and militär snabbmatch**; ISSF definitions
+  exist, fältskjutning has no discipline definition yet (only its timer).
+- Sessions are **either series-logged or a fixed round count** (`sessions.kind`),
+  chosen at creation — never both.
+- Photo scoring is **assisted, not automatic**: geometry is solved
+  automatically, hole detection is not (a CV spike measured 24% recall / 24%
+  precision from classical detection, and repair patches are indistinguishable
+  from holes), so shots are tap-marked. Automation needs a learned detector.
+- An encrypted on-device **Vault** holds licences, membership cards and door
+  codes; it is never synced, and is excluded from exports unless the user
+  explicitly opts in with a passphrase.
+- **The WebShooter integration does not currently work** (password login
+  unusable); deferred, not abandoned.
+- Every UI string is i18n'd in Swedish and English from the first screen.
+- **Large system font scales are explicitly not a binding design constraint**
+  (maintainer, 2026-09-03). Layout bugs at increased font scale are fixed as
+  found, but layouts are not designed around them. Recorded so this is not
+  re-litigated or wrongly assumed.
+
+## Brand Commitments
+
+- Name: **ShotLedger**. Store subtitle: "Target Shooting Log & Scoring".
+- **"Purple Rain" dark theme** — deep near-black purple ground, purple-tinted
+  text and borders, **lavender accent** (`#B98CFF`). Gold was explicitly
+  rejected for interactive elements: "do not use yellow for buttons".
+- **Casing**: English screen titles, section headers, field labels, tab and
+  button labels are Title Case; English body copy, help text and placeholders
+  are sentence case; **Swedish is sentence case throughout**.
+- Donation-funded via Buy Me a Coffee, framed as an optional gift that unlocks
+  nothing. Features are never gated — series length, session type, firearm
+  linking and statistics are all free, deliberately, because competitors
+  paywalling them is a stated grievance of their own users.
+
+## Evidence on Hand
+
+- Real shooting data exists (the maintainer's own logbook, ShotLog exports,
+  target photographs) but lives **outside the working tree** and must never be
+  committed. Fixtures, tests, docs and screenshots use **synthetic** data or the
+  `/dev` demo seed.
+- Verified domain facts with page citations: `docs/reference/spsf-shb-2026.md`
+  (SHB 2026, upplaga 21).
+- A CV spike report with measured detection numbers:
+  `docs/specs/cv-spike-report.md`.
+- **No customers, testimonials, benchmarks, pricing, or press exist.** The app
+  is unreleased and the repository is private. Future work must not fabricate
+  any of these.
+
+## Product Principles
+
+1. **Never gate the basics.** Series length, session type, firearm linking and
+   statistics stay free — the resentment competitors earned by paywalling them
+   is a positioning asset.
+2. **Statistics are live views, never a "generate report" form.**
+3. **The app works fully offline with no account.** Sync is an option, never a
+   precondition.
+4. **The user's data is theirs**: local SQLite, CSV/JSON/PDF export always
+   available, backups the user controls.
+5. **Never guess a regulatory or scoring value.** Anything unconfirmed is marked
+   `VERIFY:` and asked, because a wrong threshold silently corrupts a shooter's
+   competition record.
