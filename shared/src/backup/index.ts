@@ -2,3 +2,8 @@ export * from './container';
 export * from './types';
 export * from './compat';
 export * from './photo-path';
+export * from './hex';
+export * from './sha256';
+export * from './pbkdf2';
+export * from './vault-payload';
+export * from './vault-crypt';

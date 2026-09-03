@@ -1,8 +1,14 @@
 // Glue layer (mirrors db/csv/build-export.ts): assembles a backup bundle
-// (manifest.json + database.sqlite3 + optional photos/) from the live DB.
-// Uses a VACUUM INTO'd copy throughout (plan.md v2: "never the live file"):
-// the copy is what gets its photo_uri columns rewritten to relative bundle
-// paths, counted for the manifest, and serialized into the bundle.
+// (manifest.json + database.sqlite3 + optional photos/, sync-photos/ and an
+// opt-in sealed vault section) from the live DB. Uses a VACUUM INTO'd copy
+// throughout (plan.md v2: "never the live file"): the copy is what gets its
+// photo_uri columns rewritten to relative bundle paths, counted for the
+// manifest, and serialized into the bundle.
+//
+// Export scope is "everything except the vault, unless the user opted it in"
+// — see docs/specs/backup-export-spec.md for what is deliberately left out
+// (caches, pre-restore bundles, keystore secrets) and why. This module holds
+// no crypto: the caller hands it an already-sealed vault section.
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { eq, isNull, sql } from 'drizzle-orm';
 import Constants from 'expo-constants';
@@ -11,19 +17,34 @@ import {
   type BackupCounts,
   type BackupKind,
   type BackupManifest,
+  type BackupVaultSection,
   BACKUP_CONTAINER_FORMAT_VERSION,
   type ContainerEntry,
   DATABASE_ENTRY_NAME,
   extensionFromUri,
   MANIFEST_ENTRY_NAME,
   packContainer,
+  parseSyncPhotoUri,
   photoEntryName,
+  syncPhotoEntryName,
+  VAULT_ENTRY_NAME,
 } from '@shotledger/shared';
 
-import { readPhotoBytes, vacuumIntoTempCopy } from '@/platform/backup-fs';
+import { readPhotoBytes, readSyncPhotoBytes, vacuumIntoTempCopy } from '@/platform/backup-fs';
 
 import journalMeta from '../migrations/meta/_journal.json';
 import * as schema from '../schema';
+
+/** A vault section produced by `features/backup/vault-transfer.ts` and sealed
+ * under the user's export passphrase. Absent unless the user opted in. */
+export interface SealedVaultSectionForBundle extends BackupVaultSection {
+  sealed: Uint8Array;
+}
+
+export interface BuildBundleOptions {
+  kind: BackupKind;
+  vault?: SealedVaultSectionForBundle;
+}
 
 type CountableTable =
   | typeof schema.firearms
@@ -44,7 +65,11 @@ function countRows(copyDb: ReturnType<typeof drizzle>, table: CountableTable): n
   return row?.c ?? 0;
 }
 
-function buildManifest(kind: BackupKind, counts: BackupCounts): BackupManifest {
+function buildManifest(
+  kind: BackupKind,
+  counts: BackupCounts,
+  vault: BackupVaultSection | undefined,
+): BackupManifest {
   const entries = journalMeta.entries;
   const lastEntry = entries[entries.length - 1];
   return {
@@ -56,44 +81,96 @@ function buildManifest(kind: BackupKind, counts: BackupCounts): BackupManifest {
     kind,
     createdAt: new Date().toISOString(),
     counts,
+    ...(vault ? { vault } : {}),
   };
+}
+
+interface PhotoCollection {
+  entries: ContainerEntry[];
+  syncPhotos: number;
+  unreadable: number;
+}
+
+/**
+ * Copies every series photo into the bundle. Two namespaces, because the two
+ * kinds of `series.photo_uri` behave differently on restore:
+ *
+ * - a local path (camera roll, restored copy) becomes `photos/<seriesId>.<ext>`
+ *   and the DB copy's column is rewritten to that bundle-relative name, so the
+ *   restore is location-independent;
+ * - a `shotledger-photo:<id>` sync marker becomes `sync-photos/<id>.jpg` and
+ *   the column is left exactly as it is — the marker is the photo's identity
+ *   across devices, and rewriting it would fork the photo away from the
+ *   server's copy.
+ */
+async function collectPhotos(copyDb: ReturnType<typeof drizzle>): Promise<PhotoCollection> {
+  const seriesWithPhotos = copyDb
+    .select({ id: schema.series.id, photoUri: schema.series.photoUri })
+    .from(schema.series)
+    .where(isNull(schema.series.deletedAt))
+    .all()
+    .filter((s): s is { id: string; photoUri: string } => s.photoUri !== null);
+
+  const entries: ContainerEntry[] = [];
+  const seenSyncPhotoIds = new Set<string>();
+  let syncPhotos = 0;
+  let unreadable = 0;
+
+  for (const s of seriesWithPhotos) {
+    const syncPhotoId = parseSyncPhotoUri(s.photoUri);
+
+    if (syncPhotoId !== null) {
+      // One sync photo can back several series — store it once.
+      if (seenSyncPhotoIds.has(syncPhotoId)) continue;
+      const bytes = await readSyncPhotoBytes(syncPhotoId);
+      if (!bytes) {
+        // Not downloaded onto this device yet. The server still has it, so
+        // this is a gap in the bundle, not lost data — count it and move on.
+        unreadable++;
+        continue;
+      }
+      seenSyncPhotoIds.add(syncPhotoId);
+      entries.push({ name: syncPhotoEntryName(syncPhotoId), data: bytes });
+      syncPhotos++;
+      continue;
+    }
+
+    const bytes = await readPhotoBytes(s.photoUri);
+    if (!bytes) {
+      // Unreadable/missing local file — skip rather than fail the whole export.
+      unreadable++;
+      continue;
+    }
+    const entryName = photoEntryName(s.id, extensionFromUri(s.photoUri));
+    entries.push({ name: entryName, data: bytes });
+    copyDb
+      .update(schema.series)
+      .set({ photoUri: entryName })
+      .where(eq(schema.series.id, s.id))
+      .run();
+  }
+
+  return { entries, syncPhotos, unreadable };
 }
 
 /** Builds a `.shotledger` bundle (packed container bytes) from the live DB.
  * `kind: 'database'` includes only the VACUUM'd DB copy + manifest;
- * `'database+photos'` also copies every series photo into the bundle and
- * rewrites that copy's `photo_uri` columns to the relative bundle path
- * (`photos/<seriesId>.<ext>`) — the vault is never touched (plan.md v2: it
- * never leaves the device). */
+ * `'database+photos'` also copies every series photo (local and synced).
+ * `options.vault` is included only when the user explicitly opted in and
+ * supplied an export passphrase — see features/backup/vault-transfer.ts. */
 export async function buildBackupBundle(
   liveDb: SQLiteDatabase,
-  kind: BackupKind,
+  options: BuildBundleOptions,
 ): Promise<Uint8Array> {
+  const { kind, vault } = options;
   const { copy, cleanup } = await vacuumIntoTempCopy(liveDb);
   try {
     const copyDb = drizzle(copy, { schema });
 
-    const photoEntries: ContainerEntry[] = [];
-    if (kind === 'database+photos') {
-      const seriesWithPhotos = copyDb
-        .select({ id: schema.series.id, photoUri: schema.series.photoUri })
-        .from(schema.series)
-        .where(isNull(schema.series.deletedAt))
-        .all()
-        .filter((s): s is { id: string; photoUri: string } => s.photoUri !== null);
-
-      for (const s of seriesWithPhotos) {
-        const bytes = await readPhotoBytes(s.photoUri);
-        if (!bytes) continue; // unreadable/missing photo — skip rather than fail the whole export
-        const entryName = photoEntryName(s.id, extensionFromUri(s.photoUri));
-        photoEntries.push({ name: entryName, data: bytes });
-        copyDb
-          .update(schema.series)
-          .set({ photoUri: entryName })
-          .where(eq(schema.series.id, s.id))
-          .run();
-      }
-    }
+    const photos: PhotoCollection =
+      kind === 'database+photos'
+        ? await collectPhotos(copyDb)
+        : { entries: [], syncPhotos: 0, unreadable: 0 };
 
     const counts: BackupCounts = {
       firearms: countRows(copyDb, schema.firearms),
@@ -104,17 +181,32 @@ export async function buildBackupBundle(
       shots: countRows(copyDb, schema.shots),
       maintenanceEvents: countRows(copyDb, schema.maintenanceEvents),
       tags: countRows(copyDb, schema.tags),
-      photos: photoEntries.length,
+      photos: photos.entries.length,
+      syncPhotos: photos.syncPhotos,
+      photosUnreadable: photos.unreadable,
+      ...(vault ? { vaultDocuments: vault.documents } : {}),
     };
 
-    const manifest = buildManifest(kind, counts);
+    const manifest = buildManifest(
+      kind,
+      counts,
+      vault
+        ? {
+            kdf: vault.kdf,
+            saltHex: vault.saltHex,
+            iterations: vault.iterations,
+            documents: vault.documents,
+          }
+        : undefined,
+    );
     const dbBytes = await copy.serializeAsync();
     const encoder = new TextEncoder();
 
     return packContainer([
       { name: MANIFEST_ENTRY_NAME, data: encoder.encode(JSON.stringify(manifest, null, 2)) },
       { name: DATABASE_ENTRY_NAME, data: dbBytes },
-      ...photoEntries,
+      ...photos.entries,
+      ...(vault ? [{ name: VAULT_ENTRY_NAME, data: vault.sealed }] : []),
     ]);
   } finally {
     cleanup();

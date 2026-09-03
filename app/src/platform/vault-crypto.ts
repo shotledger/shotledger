@@ -9,7 +9,9 @@ import {
   aesEncryptAsync,
   getRandomBytes,
 } from 'expo-crypto';
-import type { AesGcmProvider } from '@shotledger/shared';
+import type { AesGcmProvider, VaultCryptoDeps } from '@shotledger/shared';
+
+import { bytesToBase64 } from './base64';
 
 export type VaultKey = AESEncryptionKey;
 
@@ -42,4 +44,13 @@ export const vaultCryptoProvider: AesGcmProvider<VaultKey> = {
     const sealed = AESSealedData.fromParts(iv, ciphertext, tag);
     return aesDecryptAsync(sealed, key, { output: 'bytes' });
   },
+};
+
+/** The same AES-GCM primitive, keyed by a passphrase-derived key instead of
+ * the device's keystore key — used only for the opt-in vault section of a
+ * backup bundle (shared/src/backup/vault-crypt.ts). The derived bytes are
+ * never persisted; they exist for the duration of one export or restore. */
+export const bundleVaultCryptoDeps: VaultCryptoDeps<VaultKey> = {
+  provider: vaultCryptoProvider,
+  importRawKey: (raw) => AESEncryptionKey.import(bytesToBase64(raw), 'base64'),
 };

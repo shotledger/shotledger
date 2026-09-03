@@ -906,6 +906,27 @@ restates §0 rules 1–6 verbatim.
 > backups go to the same folder with one tap; "Change folder"/"Forget
 > folder" rows appear once a folder is remembered.
 
+> **Export scope and the vault opt-in have since shipped** on
+> `feat/export-scope-vault-optin`, implementing the maintainer's requirement
+> "Export data shall include everything except Vault per default (Vault is
+> exported with warning if user explicitly wants it)". Settings -> Backup is
+> now two rows (Back Up / Restore) with contents and destination chosen in a
+> dialog, replacing the four export rows. The scope audit found one real gap:
+> **synced photos were silently dropped** from every "database + photos"
+> bundle, because a synced series' `photo_uri` is a `shotledger-photo:<id>`
+> marker rather than a path -- they now travel in their own `sync-photos/`
+> namespace and restore without disturbing the marker. Everything else the app
+> stores was already in the DB file; what stays out (caches, pre-restore
+> bundles, keystore secrets) is now excluded on purpose and documented. The
+> vault is included only behind an acknowledged warning and a passphrase, and
+> is **re-wrapped** rather than copied -- the device key cannot leave the
+> keystore, so raw vault ciphertext in a bundle would be undecryptable
+> anywhere. No new dependency: `expo-crypto` supplies AES-256-GCM and the
+> CSPRNG, and PBKDF2-HMAC-SHA256 is implemented in `shared/src/backup/`
+> (differentially verified against OpenSSL) because expo-crypto's only hashing
+> is a per-call native `digest()`. Spec and evidence:
+> `docs/specs/backup-export-spec.md`, `docs/specs/backup-export-evidence.md`.
+
 > **Cloud sync + accounts has since shipped** across three branches:
 > `feat/sync-backend` (protocol + D1 changelog),
 > `feat/backend-auth-photos` (better-auth, R2 photos, quota/rate limit,

@@ -12,10 +12,13 @@ import {
   checkSchemaCompatibility,
   DATABASE_ENTRY_NAME,
   isPhotoEntryName,
+  isSyncPhotoEntryName,
   MANIFEST_ENTRY_NAME,
   photoEntryFilename,
   type SchemaCompatibility,
+  syncPhotoEntryId,
   unpackContainer,
+  VAULT_ENTRY_NAME,
 } from '@shotledger/shared';
 
 import {
@@ -23,6 +26,7 @@ import {
   closeLiveDatabase,
   replaceLiveDatabaseFile,
   restorePhotosAndRewritePaths,
+  restoreSyncPhotos,
   writeLocalBundleFile,
 } from '@/platform/backup-fs';
 
@@ -33,6 +37,9 @@ import { buildBackupBundle } from './export-bundle';
 export interface RestorePreview {
   manifest: BackupManifest;
   compatibility: SchemaCompatibility;
+  /** True when the bundle carries a passphrase-sealed vault section, so the
+   * caller must collect a passphrase before restoring. */
+  hasVault: boolean;
 }
 
 /** Parses and validates a picked bundle's manifest without touching the DB.
@@ -60,7 +67,26 @@ export function inspectBundle(bytes: Uint8Array): RestorePreview | null {
     result.data.schemaMigrationIdx,
     journalMeta.entries.length,
   );
-  return { manifest: result.data, compatibility };
+  return {
+    manifest: result.data,
+    compatibility,
+    hasVault: result.data.vault !== undefined && readVaultSection(entries) !== null,
+  };
+}
+
+function readVaultSection(entries: readonly { name: string; data: Uint8Array }[]) {
+  return entries.find((e) => e.name === VAULT_ENTRY_NAME)?.data ?? null;
+}
+
+/** The sealed vault bytes from a bundle, or `null` when it has none. The
+ * caller decrypts them with the user's passphrase (`openVaultSection`) — this
+ * module never sees a key. */
+export function readBundleVaultSection(bytes: Uint8Array): Uint8Array | null {
+  try {
+    return readVaultSection(unpackContainer(bytes));
+  } catch {
+    return null;
+  }
 }
 
 function preRestoreBackupFilename(): string {
@@ -80,13 +106,20 @@ export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): 
   const photoEntries = entries
     .filter((e) => isPhotoEntryName(e.name))
     .map((e) => ({ entryName: e.name, filename: photoEntryFilename(e.name), data: e.data }));
+  // Synced photos go back into this device's sync-photo cache under their own
+  // id; their `shotledger-photo:<id>` markers in the restored database are
+  // already correct and must not be rewritten.
+  const syncPhotoEntries = entries
+    .filter((e) => isSyncPhotoEntryName(e.name))
+    .map((e) => ({ photoId: syncPhotoEntryId(e.name), data: e.data }));
 
-  const preRestoreBundle = await buildBackupBundle(liveDb, 'database');
+  const preRestoreBundle = await buildBackupBundle(liveDb, { kind: 'database' });
   writeLocalBundleFile(PRE_RESTORE_BACKUPS_DIR_NAME, preRestoreBundle, preRestoreBackupFilename());
 
   closeLiveDatabase(liveDb);
   replaceLiveDatabaseFile(liveDb, dbEntry.data);
   await restorePhotosAndRewritePaths(liveDb, DATABASE_FILENAME, photoEntries);
+  restoreSyncPhotos(syncPhotoEntries);
 
   return true;
 }
