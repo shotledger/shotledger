@@ -57,7 +57,7 @@ appId: app.shotledger
 - takeScreenshot: m6-02-home-barometer
 
 # --- Firearms tab / firearm detail: per-firearm barometer ---------------
-- tapOn: 'Firearms & Ammo'
+- tapOn: 'Firearms'
 - extendedWaitUntil:
     visible: 'Pardini K22'
     timeout: 15000
@@ -68,7 +68,7 @@ appId: app.shotledger
 - takeScreenshot: m6-03-firearm-detail-barometer
 - pressKey: Back
 - extendedWaitUntil:
-    visible: 'Firearms & Ammo'
+    visible: 'Firearms'
     timeout: 15000
 
 # --- Stats: Custom period ------------------------------------------------

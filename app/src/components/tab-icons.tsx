@@ -69,3 +69,14 @@ export function SettingsTabIcon({ color, size = DEFAULT_SIZE }: TabIconProps) {
     </Svg>
   );
 }
+
+// Wrench — the Tools tab is a hub of utilities (timers, vault, WebShooter),
+// so a tool glyph rather than another target/gear.
+export function ToolsTabIcon({ color, size = DEFAULT_SIZE }: TabIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M20.5 7.5A4 4 0 1 1 16.5 3.5" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path d="M14.2 9.8 5.6 18.4" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    </Svg>
+  );
+}

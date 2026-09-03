@@ -1,4 +1,4 @@
-# M2 smoke flow (§4 "Done when"): walks all four tabs on seeded data,
+# M2 smoke flow (§4 "Done when"): walks all five tabs on seeded data,
 # screenshotting each. Loads demo data via the dev-only /dev route first
 # (native only — see docs/implementation-plan.md M1 report on web's
 # expo-sqlite gap).
@@ -23,6 +23,9 @@ appId: app.shotledger
 - tapOn: 'Firearms'
 - assertVisible: 'Firearms'
 - takeScreenshot: m2-smoke-firearms
+- tapOn: 'Tools'
+- assertVisible: 'Tools'
+- takeScreenshot: m2-smoke-tools
 - tapOn: 'Settings'
 - assertVisible: 'Settings'
 - takeScreenshot: m2-smoke-settings
