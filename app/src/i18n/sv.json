@@ -17,12 +17,17 @@
   "home": {
     "title": "Hem",
     "shotsLoggedTotal": "Loggade skott",
+    "sessionsTotal": "Pass",
+    "competitionsTotal": "Tävlingar",
     "latestSessions": "Senaste passen",
     "newSession": "Nytt pass",
     "emptyTitle": "Inga pass än",
     "emptyBody": "Logga ditt första tränings- eller tävlingspass för att se det här.",
     "emptyCta": "Logga ditt första pass",
-    "sessionSummary": "{{average}}/serie · {{xCount}}X"
+    "filterAll": "Alla",
+    "filterEmpty": "Inga pass matchar filtret",
+    "shapeSeries": "Serier",
+    "shapeRounds": "Skott"
   },
   "stats": {
     "title": "Statistik",
