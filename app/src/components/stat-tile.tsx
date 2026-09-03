@@ -16,7 +16,13 @@ export function StatTile({ label, value, style, ...rest }: StatTileProps) {
       <ThemedText type="subtitle" style={styles.value}>
         {value}
       </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
+      <ThemedText
+        type="small"
+        themeColor="textSecondary"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
         {label}
       </ThemedText>
     </Card>
