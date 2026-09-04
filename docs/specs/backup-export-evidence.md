@@ -46,14 +46,14 @@ default restore, by design: nothing validates the column, the viewer already
 has a "document not found" state, and the restore preview says the Vault is not
 in the bundle.
 
-## Gauntlet layer — `shared/src/backup/{hex,sha256,pbkdf2,vault-payload,vault-crypt}.ts`
+## Gauntlet layer — `shared/src/backup/{hex,pbkdf2,vault-payload,vault-crypt}.ts`
 
-- **Tests:** `sha256.test.ts` (8), `pbkdf2.test.ts` (5), `hex.test.ts` (5),
-  `vault-payload.test.ts` (5), `vault-crypt.test.ts` (13), `bundle.test.ts` (8)
-  plus the extended `types.test.ts` (M1–M6) and `photo-path.test.ts`. Run:
-  `npx vitest run shared/src/backup`.
-- **Coverage:** `vitest.config.ts`'s coverage `include` extended to the five
-  files above, at the repo's existing 100/100/100/100 threshold. All five report
+- **Tests:** `noble-hashes.test.ts` (6), `pbkdf2.test.ts` (5), `hex.test.ts` (5),
+  `kdf-compat.test.ts` (2), `vault-payload.test.ts` (5), `vault-crypt.test.ts`
+  (13), `bundle.test.ts` (8) plus the extended `types.test.ts` (M1–M6) and
+  `photo-path.test.ts`. Run: `npx vitest run shared/src/backup`.
+- **Coverage:** `vitest.config.ts`'s coverage `include` extended to the four
+  files above, at the repo's existing 100/100/100/100 threshold. All four report
   100% statements / branches / functions / lines.
 - **Differential verification instead of trusting the implementation.** The
   strongest evidence here is not the test count but that SHA-256, HMAC-SHA256
@@ -72,6 +72,24 @@ in the bundle.
   Plus the published vectors: FIPS 180-4 (`abc`, empty, 448-bit), RFC 4231
   HMAC cases 1/2/6, RFC 7914 §11 PBKDF2-HMAC-SHA256 (c=1 and c=80000).
 
+  These assertions were written against a hand-written SHA-256/PBKDF2 and
+  were kept verbatim when that was replaced by `@noble/hashes` (see below):
+  they now pin the dependency, so a Renovate bump has to reproduce them.
+  Only H4 and H8 were dropped — they exercised the streaming and
+  precomputed-pad internals of the deleted `Sha256`/`HmacSha256` classes,
+  which a library call has no counterpart for.
+
+- **Cross-implementation compatibility (`kdf-compat.test.ts`).** A bundle
+  exported before the `@noble/hashes` swap must still restore after it. C1
+  asserts four derived keys — captured by _running_ the deleted
+  implementation, including at the shipped 150 000 iterations with a
+  non-ASCII passphrase and a three-block output — byte for byte against the
+  current one. C2 goes further: a vault section sealed end-to-end by that
+  implementation (fixed salt, iteration count, sealed bytes) is opened by
+  today's `openVaultSection` and unpacks to the same index and document.
+  These are golden values; regenerating them to make a test pass would mean
+  every existing bundle had become unreadable.
+
 - **Mutation:** `npx stryker run --mutate "shared/src/backup/{hex,vault-payload,vault-crypt}.ts"`.
   First run: 89 mutants, **85.56%**, 13 survivors — six error-message/name
   string literals the tests caught by type but never by content, three in the
@@ -88,13 +106,35 @@ in the bundle.
   converting, so an extra iteration changes the output length. **Final: 100.00%
   (83 killed, 5 timeouts, 0 survived).**
 
-  This is why `sha256.ts` and `pbkdf2.ts` are **not** in the Stryker `mutate` list even
-  though they are in the coverage list: a mutant anywhere in SHA-256 or PBKDF2
-  is killed by construction — any change to the algorithm diverges from OpenSSL
-  on the first vector — while mutating them would re-run the 80 000- and
-  150 000-iteration cases per mutant, for hours, to prove something the
-  differential tests already prove more strongly. `hex.ts`,
-  `vault-payload.ts` and `vault-crypt.ts` _are_ in the mutate list.
+  `sha256.ts` and `pbkdf2.ts` used to sit outside that `mutate` list (though
+  inside the coverage list): a mutant anywhere in a hand-written SHA-256 or
+  PBKDF2 is killed by construction — any change to the algorithm diverges from
+  OpenSSL on the first vector — while mutating them meant re-running the
+  80 000- and 150 000-iteration cases per mutant, for hours. Both reasons died
+  with the implementations. `sha256.ts` is gone; `pbkdf2.ts` is now ~10 lines of
+  parameter guards around a library call, and noble derives the shipped 150 000
+  iterations in ~140 ms against the hand-written version's ~1 080 ms, so it is
+  in the `mutate` list now.
+
+  Adding it exposed three mutants the exclusion had been hiding: two blank
+  error messages, and `keyLength <= 1` in place of `< 1`. K5 was extended (not
+  weakened) to assert both messages verbatim and to derive a legal 1-byte key
+  against OpenSSL. `pbkdf2.ts` and `hex.ts` now report **100.00% (33 killed,
+  0 survived)**.
+
+- **`hex.ts` after the swap.** `@noble/hashes/utils` exports `hexToBytes` /
+  `bytesToHex`, and the off-by-one above is exactly the class of bug that
+  argues for using them. `hex.ts` now delegates to noble but stays as a seam
+  rather than being deleted, for one concrete reason: noble's decoder has two
+  code paths — `Uint8Array.fromHex` where the runtime provides it (Node 26,
+  modern browsers) and a portable fallback otherwise (Hermes today) — whose
+  rejections differ in wording and, on the built-in path, in class
+  (`SyntaxError` remapped to `RangeError`). The wrapper is ~10 lines with no
+  loop of its own, it keeps `InvalidHexError` (a public export of
+  `@shotledger/shared`, and the type `hex.test.ts` asserts on), and it makes a
+  malformed `saltHex` fail the same way on every platform. The manifest schema
+  already gates `saltHex` on `/^[0-9a-f]+$/`, so this is defence in depth, not
+  the primary check.
 
 ## Routine app-layer work (ordinary tests, no gauntlet)
 
