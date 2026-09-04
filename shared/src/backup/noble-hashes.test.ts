@@ -1,12 +1,19 @@
-// Differential + vector tests for the portable SHA-256/HMAC-SHA256 used by
-// the bundle passphrase KDF. `node:crypto` here is OpenSSL — an entirely
-// independent implementation — so byte equality across randomised inputs is
-// the evidence that this file is correct (spec behaviours H1–H8).
+// Vectors that pin `@noble/hashes` — the SHA-256 and HMAC-SHA256 the bundle
+// passphrase KDF is built on (pbkdf2.ts). These assertions are the ones that
+// used to guard the hand-written implementation this replaced, kept verbatim
+// so a Renovate bump of the dependency has to reproduce them: `node:crypto`
+// here is OpenSSL, an entirely independent implementation, so byte equality
+// across randomised inputs is the evidence (spec behaviours H1–H3, H6–H7).
 import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { hmac } from '@noble/hashes/hmac.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { describe, expect, it } from 'vitest';
 
-import { HmacSha256, Sha256, hmacSha256, sha256 } from './sha256';
 import { bytesToHex } from './hex';
+
+function hmacSha256(key: Uint8Array, message: Uint8Array): Uint8Array {
+  return hmac(sha256, key, message);
+}
 
 function opensslSha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
@@ -45,18 +52,6 @@ describe('sha256', () => {
       const input = new Uint8Array(randomBytes(Math.floor(Math.random() * 1000)));
       expect(bytesToHex(sha256(input))).toBe(opensslSha256(input));
     }
-  });
-
-  it('H4: streaming updates in arbitrary chunks equal a single update', () => {
-    const input = new Uint8Array(randomBytes(1234));
-    const chunked = new Sha256();
-    let offset = 0;
-    while (offset < input.length) {
-      const size = 1 + Math.floor(Math.random() * 100);
-      chunked.update(input.subarray(offset, offset + size));
-      offset += size;
-    }
-    expect(bytesToHex(chunked.digest())).toBe(opensslSha256(input));
   });
 
   it('H5: hashes a multi-megabyte input the same as OpenSSL (length encoding > 2^16 bits)', () => {
@@ -98,15 +93,6 @@ describe('hmacSha256', () => {
           opensslHmac(key, message),
         );
       }
-    }
-  });
-
-  it('H8: a reused HmacSha256 instance signs independently each time', () => {
-    const key = new Uint8Array(randomBytes(48));
-    const hmac = new HmacSha256(key);
-    for (let i = 0; i < 20; i++) {
-      const message = new Uint8Array(randomBytes(1 + i * 13));
-      expect(bytesToHex(hmac.sign(message))).toBe(opensslHmac(key, message));
     }
   });
 });
