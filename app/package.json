@@ -73,15 +73,5 @@
     "lint": "expo lint",
     "test": "jest"
   },
-  "jest": {
-    "preset": "jest-expo",
-    "moduleNameMapper": {
-      "\\.(css|module\\.css)$": "<rootDir>/src/__mocks__/css.js"
-    },
-    "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/src/db/"
-    ]
-  },
   "private": true
 }
