@@ -378,11 +378,13 @@ surfaced that no code read would have found.
 
 ### Sessions list
 
-- [ ] **Remove the share icon** from each row (added in PR #67; reversed here).
-- [ ] **Swipe a row for a menu**: delete session (with confirmation, mirroring
+- [x] **Remove the share icon** from each row (added in PR #67; reversed here).
+- [x] **Swipe a row for a menu**: delete session (with confirmation, mirroring
       the series delete dialog) and share session — replacing the static share
-      icon.
-- [ ] **Row layout**: date, total, avg and inner tens already render on one
+      icon. `deleteSessionAndSeries` (new, `app/src/db/queries/round-count.ts`)
+      soft-deletes every series and shot under the session and backs the
+      linked firearm's round counters out, mirroring `deleteSeriesAndShots`.
+- [x] **Row layout**: date, total, avg and inner tens already render on one
       line (verified live: `3 Sept 2026 · 251p · ⌀ 41.8 · 1X`) — no change
       needed there. Move on: drop the shape chip ("Series"/"Rounds")
       entirely — "No need to show 'Series' (guessing it's series or Extra
