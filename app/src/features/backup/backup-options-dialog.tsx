@@ -9,9 +9,10 @@
 // does anything.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/primary-button';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
@@ -175,7 +176,7 @@ export function BackupOptionsDialog({
                   </ThemedText>
                 </Pressable>
 
-                <TextInput
+                <TextField
                   value={passphrase}
                   onChangeText={setPassphrase}
                   editable={acknowledged}
@@ -183,11 +184,9 @@ export function BackupOptionsDialog({
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder={t('backup.vaultPassphrasePlaceholder')}
-                  placeholderTextColor={theme.textSecondary}
-                  style={[styles.input, { borderColor: theme.border, color: theme.text }]}
                   testID="backup-vault-passphrase"
                 />
-                <TextInput
+                <TextField
                   value={repeated}
                   onChangeText={setRepeated}
                   editable={acknowledged}
@@ -195,8 +194,6 @@ export function BackupOptionsDialog({
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder={t('backup.vaultPassphraseRepeatPlaceholder')}
-                  placeholderTextColor={theme.textSecondary}
-                  style={[styles.input, { borderColor: theme.border, color: theme.text }]}
                   testID="backup-vault-passphrase-repeat"
                 />
                 {tooShort ? (
@@ -324,12 +321,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderWidth: 2,
     borderRadius: Radius.small,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Radius.small,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
   },
   pillRow: {
     flexDirection: 'row',

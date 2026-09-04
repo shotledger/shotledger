@@ -6,20 +6,21 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
-import { GroupPlot } from '@/components/group-plot';
 import { EmptyState } from '@/components/empty-state';
+import { GroupPlot } from '@/components/group-plot';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
@@ -255,7 +256,7 @@ export default function SessionDetailScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
-        <TextInput
+        <TextField
           value={extraRounds}
           onChangeText={setExtraRounds}
           onBlur={onCommitExtraRounds}
@@ -263,8 +264,6 @@ export default function SessionDetailScreen() {
           keyboardType="number-pad"
           inputMode="numeric"
           placeholder="0"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           testID="extra-rounds"
         />
         <ThemedText type="small" themeColor="textSecondary">
@@ -578,12 +577,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.6,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

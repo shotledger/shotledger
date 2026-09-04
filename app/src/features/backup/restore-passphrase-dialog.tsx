@@ -5,12 +5,12 @@
 // has lost the passphrase must still be able to get their logbook back.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/primary-button';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export interface RestorePassphraseDialogProps {
@@ -34,7 +34,6 @@ export function RestorePassphraseDialog({
   onSubmit,
 }: RestorePassphraseDialogProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [passphrase, setPassphrase] = useState('');
 
   function submit() {
@@ -61,15 +60,13 @@ export function RestorePassphraseDialog({
               {t('backup.restoreVaultWrongPassphrase')}
             </ThemedText>
           ) : null}
-          <TextInput
+          <TextField
             value={passphrase}
             onChangeText={setPassphrase}
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
             placeholder={t('backup.vaultPassphrasePlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { borderColor: theme.border, color: theme.text }]}
             testID="restore-vault-passphrase"
           />
           <PrimaryButton
@@ -115,12 +112,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.large,
     padding: Spacing.three,
     gap: Spacing.two,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Radius.small,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
   },
   secondary: {
     alignItems: 'center',

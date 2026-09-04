@@ -3,26 +3,24 @@
 // only place that changes.
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput } from 'react-native';
+import { Alert } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { apiBaseUrl } from '@/constants/backend';
 import { db } from '@/db/client';
 import { useAccount } from '@/features/account/use-account';
 import { useSync } from '@/features/sync/use-sync';
-import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/theme/tokens';
 
 type Mode = 'signIn' | 'signUp';
 
 export default function AccountScreen() {
   const { t } = useTranslation();
-  const colors = useTheme();
   const account = useAccount();
   const { status, syncNow } = useSync(account.signedIn);
 
@@ -132,25 +130,21 @@ export default function AccountScreen() {
             onChange={setMode}
             testID="account-mode"
           />
-          <TextInput
+          <TextField
             value={email}
             onChangeText={setEmail}
             placeholder={t('account.emailPlaceholder')}
-            placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             testID="account-email-input"
           />
-          <TextInput
+          <TextField
             value={password}
             onChangeText={setPassword}
             placeholder={t('account.passwordPlaceholder')}
-            placeholderTextColor={colors.textSecondary}
             secureTextEntry
             autoCapitalize="none"
-            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             testID="account-password-input"
           />
           <PrimaryButton
@@ -175,13 +169,3 @@ export default function AccountScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-});

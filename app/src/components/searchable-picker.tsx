@@ -1,13 +1,7 @@
 import { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -111,11 +105,10 @@ export function SearchablePicker<T extends string | number>({
             { borderColor: theme.border, backgroundColor: theme.backgroundElement },
           ]}
         >
-          <TextInput
+          <TextField
             value={query}
             onChangeText={setQuery}
             placeholder={searchPlaceholder ?? label}
-            placeholderTextColor={theme.textSecondary}
             keyboardType={keyboardType}
             autoFocus
             style={[styles.searchInput, { color: theme.text, borderColor: theme.border }]}

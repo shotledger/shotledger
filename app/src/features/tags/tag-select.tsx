@@ -3,8 +3,9 @@
 // screen owns that, after the session row exists.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -76,17 +77,15 @@ export function TagSelect({ known, selected, onChange }: TagSelectProps) {
           })}
         </View>
       )}
-      <TextInput
+      <TextField
         value={draft}
         onChangeText={setDraft}
         onSubmitEditing={commitDraft}
         onBlur={commitDraft}
         returnKeyType="done"
         placeholder={t('session.tagPlaceholder')}
-        placeholderTextColor={theme.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, { color: theme.text, borderColor: theme.border }]}
         testID="session-tag-input"
       />
     </View>
@@ -107,12 +106,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: Radius.pill,
     borderWidth: 2,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

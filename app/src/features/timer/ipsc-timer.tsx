@@ -13,13 +13,14 @@ import {
 } from '@shotledger/shared';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
@@ -100,7 +101,6 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
     config,
     prompts,
   );
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
 
   // Un-pauses the setup meter once the phase is back to idle (a fresh mount,
   // or after reset()/a failed start put it there) — adjusting state during
@@ -223,41 +223,38 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
           <ThemedText type="smallBold">{t('ipscTimer.randomDelay')}</ThemedText>
           <View style={styles.row}>
-            <TextInput
+            <TextField
               value={delayMin}
               onChangeText={setDelayMin}
               keyboardType="decimal-pad"
-              style={[...inputStyle, styles.flex]}
+              style={styles.flex}
               testID="ipsc-delay-min"
               accessibilityLabel={t('ipscTimer.randomDelayMin')}
             />
-            <TextInput
+            <TextField
               value={delayMax}
               onChangeText={setDelayMax}
               keyboardType="decimal-pad"
-              style={[...inputStyle, styles.flex]}
+              style={styles.flex}
               testID="ipsc-delay-max"
               accessibilityLabel={t('ipscTimer.randomDelayMax')}
             />
           </View>
 
           <ThemedText type="smallBold">{t('ipscTimer.parSeconds')}</ThemedText>
-          <TextInput
+          <TextField
             value={parSeconds}
             onChangeText={setParSeconds}
             keyboardType="decimal-pad"
             placeholder={t('ipscTimer.parPlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={inputStyle}
             testID="ipsc-par"
           />
 
           <ThemedText type="smallBold">{t('ipscTimer.autoStopSeconds')}</ThemedText>
-          <TextInput
+          <TextField
             value={autoStopSeconds}
             onChangeText={setAutoStopSeconds}
             keyboardType="decimal-pad"
-            style={inputStyle}
             testID="ipsc-auto-stop"
           />
 
@@ -358,12 +355,6 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 const styles = StyleSheet.create({
   form: {
     gap: Spacing.two,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.two,
   },
   row: {
     flexDirection: 'row',
