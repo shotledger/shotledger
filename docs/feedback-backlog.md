@@ -338,14 +338,16 @@ surfaced that no code read would have found.
       updates the series total — exactly what was asked
       ("when I edit a series it should start in round 1 and when I choose e.g.
       10 enter that and move to next round/shot"). No fix needed.
-- [ ] **"no need for share series"** — remove the "Share Series" button from
-      the series entry screen (confirmed present, full-width button below
-      Save Series).
-- [ ] **Live-only bug found**: navigating into "Add Series" and back via the
+- [x] **"no need for share series"** — removed in **#81**. The share route
+      still accepts `?series=`, so the per-series card itself is untouched;
+      only its entry point is gone.
+- [x] **Live-only bug found**: navigating into "Add Series" and back via the
       hardware back button — without tapping Save — leaves an **orphaned empty
-      series** behind (a "Series N · 0" row with no shots). It is deletable via
-      the existing swipe gesture, but should not be created at all until the
-      first shot is entered, or should be cleaned up on unmount if still empty.
+      series** behind (a "Series N · 0" row with no shots). Fixed in **#81** by
+      never creating the row until Save: "Add Series" now only navigates
+      (`?new=1`), and the entry screen writes the row, its shots, its photo and
+      its sighter flag in one step from `onSave`. Backing out writes nothing at
+      all, so no cleanup pass can ever delete a series the user did save.
 - [x] **Swipe-to-delete a series already works, verified live**: swipe reveals
       a red "Delete Series" action; tapping it shows a confirm dialog ("Delete
       Series N? Its shots will be removed too. This can't be undone." /
@@ -357,24 +359,24 @@ surfaced that no code read would have found.
   chronologically (Series 1, 2, 3…); it is unclear what reordering would
   mean for a shooting log where series happen in a real sequence. Needs
   the maintainer's use case before building anything.
-- [ ] **"Extra rounds" can not be combined with actual series data. It's
-      either or and determined when the session is created.** Verified live:
-      a session with 7 real series still shows an editable "Extra Rounds (not
-      scored)" field. The `session.kind` column (`'series' | 'rounds'`) has
-      existed on `main` since PR #73 for exactly this distinction — the field
-      simply is not gated on it yet. Fix: show the Extra Rounds field only
-      when `kind === 'rounds'`, and hide/disable series entry (Add Series,
-      Start Final, Score from Photo) when `kind === 'rounds'`.
-- [ ] **Session Stats tab: per-series, not per-shot, is the primary figure.**
+- [x] **"Extra rounds" can not be combined with actual series data. It's
+      either or and determined when the session is created.** Gated on
+      `session.kind` in **#81**: `'rounds'` shows Extra Rounds and hides Add
+      Series / Start Final / Score from Photo (and the "no series yet" empty
+      state that invited adding one); `'series'` drops the Extra Rounds field
+      entirely. UI gating only — no migration, no write-path change.
+- [x] **Session Stats tab: per-series, not per-shot, is the primary figure.**
       "The stats are per shot. It need to be per series, e.g. avg is 45.24 for
-      5 rounds (but you can show per shot as well)." Verified live: the tab
-      currently leads with a "Per Shot" block (Mean/SD/X Count), then "Whole
-      Session" totals, then a distribution chart, then "Vs. Last 100 Series" —
-      which itself compares **per-shot** means (8.06 vs 7.84), not per-series
-      averages. Rework: lead with per-series figures (mean series score, SD of
-      series scores — the top result card's "Avg/Series" already computes
-      this, reuse it), keep per-shot as a secondary/labelled block, and fix
-      the comparison to be series-score-based.
+      5 rounds (but you can show per shot as well)." Reworked in **#81**: the
+      tab opens with a Per Series block (mean series score, sample SD of the
+      series totals, series count) and keeps Per Shot and Whole Session below
+      it. The lead figure is the same number as the result card's
+      "Avg/Series". "Vs. Last 100 Series" turned out to window correctly all
+      along — last N scored series of the discipline and class against the N
+      before — but then pooled each window's shots and took a _shot_ mean;
+      `compareRecentSeries` now reports a per-series mean for the same two
+      windows alongside the per-shot one, and the session tab reads the series
+      figures. The Statistics tab keeps its per-shot reading.
 
 ### Sessions list
 
