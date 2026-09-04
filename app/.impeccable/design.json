@@ -154,26 +154,26 @@
           "#A5EDC5"
         ]
       },
-      "light-signal-blue": {
+      "light-signal-lavender": {
         "role": "secondary",
-        "displayName": "Range Blue",
-        "canonical": "#208AEF",
+        "displayName": "Light Signal Lavender",
+        "canonical": "#6E30CF",
         "tonalRamp": [
-          "#06192C",
-          "#0A2B4B",
-          "#0E406F",
-          "#135794",
-          "#186FBA",
-          "#1D7DD5",
-          "#208AEF",
-          "#8FC7F7"
+          "#120821",
+          "#231042",
+          "#371867",
+          "#4B218C",
+          "#5D29AE",
+          "#6E30CF",
+          "#8651D6",
+          "#BFA4EA"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Screen titles only — one per screen, at the top."
+        "purpose": "Screen titles only \u2014 one per screen, at the top."
       },
       "headline": {
         "displayName": "Headline",
@@ -189,7 +189,7 @@
       },
       "label-strong": {
         "displayName": "Label Strong",
-        "purpose": "Button labels and in-card section headers — same size as Label, separated by weight alone."
+        "purpose": "Button labels and in-card section headers \u2014 same size as Label, separated by weight alone."
       },
       "code": {
         "displayName": "Code",
@@ -207,7 +207,7 @@
       {
         "name": "press-feedback",
         "value": "opacity 0.85 while pressed",
-        "purpose": "The universal touch response for buttons, rows and FAB. No hover states — this is a touch platform."
+        "purpose": "The universal touch response for buttons, rows and FAB. No hover states \u2014 this is a touch platform."
       }
     ],
     "breakpoints": [
@@ -241,7 +241,7 @@
       "name": "Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "The base raised surface for tiles, list groups and forms. Flat — never shadowed.",
+      "description": "The base raised surface for tiles, list groups and forms. Flat \u2014 never shadowed.",
       "html": "<div class=\"ds-card\"><span class=\"ds-card-label\">Latest session</span><span class=\"ds-card-value\">251p</span></div>",
       "css": ".ds-card { background: #221934; color: #F6EEE4; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; } .ds-card-label { font-size: 14px; font-weight: 500; line-height: 20px; color: #C9B9DC; } .ds-card-value { font-size: 32px; font-weight: 600; line-height: 44px; }"
     },
@@ -249,7 +249,7 @@
       "name": "Stat Tile",
       "kind": "custom",
       "refersTo": "stat-tile",
-      "description": "A big number above its caption — Home's header totals and every stats readout.",
+      "description": "A big number above its caption \u2014 Home's header totals and every stats readout.",
       "html": "<div class=\"ds-stat-tile\"><span class=\"ds-stat-value\">1202</span><span class=\"ds-stat-label\">Shots Logged</span></div>",
       "css": ".ds-stat-tile { background: #221934; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; } .ds-stat-value { color: #F6EEE4; font-size: 32px; font-weight: 600; line-height: 36px; } .ds-stat-label { color: #C9B9DC; font-size: 14px; font-weight: 500; line-height: 20px; white-space: nowrap; }"
     },
@@ -257,7 +257,7 @@
       "name": "Chip (neutral)",
       "kind": "chip",
       "refersTo": "chip-neutral",
-      "description": "Small pill label — session type, tags, discipline.",
+      "description": "Small pill label \u2014 session type, tags, discipline.",
       "html": "<span class=\"ds-chip\">Training</span>",
       "css": ".ds-chip { display: inline-block; background: #2E2246; color: #F6EEE4; font-size: 14px; font-weight: 500; line-height: 20px; padding: 2px 8px; border-radius: 999px; }"
     },
@@ -265,7 +265,7 @@
       "name": "Chip (primary)",
       "kind": "chip",
       "refersTo": "chip-primary",
-      "description": "Reserved for a genuine achievement or an active filter — never general labelling.",
+      "description": "Reserved for a genuine achievement or an active filter \u2014 never general labelling.",
       "html": "<span class=\"ds-chip-primary\">Guldserie</span>",
       "css": ".ds-chip-primary { display: inline-block; background: #B98CFF; color: #1A1226; font-size: 14px; font-weight: 500; line-height: 20px; padding: 2px 8px; border-radius: 999px; }"
     },
@@ -281,8 +281,8 @@
       "name": "List Row",
       "kind": "custom",
       "refersTo": "card",
-      "description": "One row in a list group — session, firearm or settings entry. Separated by tone, not dividers.",
-      "html": "<div class=\"ds-row\"><span class=\"ds-row-text\"><span class=\"ds-row-title\">Träning Precision</span><span class=\"ds-row-sub\">3 Sept 2026 · 251p · ⌀ 41.8 · 1X</span></span><span class=\"ds-chip\">Training</span></div>",
+      "description": "One row in a list group \u2014 session, firearm or settings entry. Separated by tone, not dividers.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-row-text\"><span class=\"ds-row-title\">Tr\u00e4ning Precision</span><span class=\"ds-row-sub\">3 Sept 2026 \u00b7 251p \u00b7 \u2300 41.8 \u00b7 1X</span></span><span class=\"ds-chip\">Training</span></div>",
       "css": ".ds-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; gap: 8px; } .ds-row-text { display: flex; flex-direction: column; } .ds-row-title { color: #F6EEE4; font-size: 16px; font-weight: 500; line-height: 24px; } .ds-row-sub { color: #C9B9DC; font-size: 14px; font-weight: 500; line-height: 20px; } .ds-row:active { opacity: 0.85; }"
     },
     {
@@ -297,7 +297,7 @@
       "name": "Empty State",
       "kind": "custom",
       "refersTo": "card",
-      "description": "Never a bare 'no results' line — a title, an explanation, and the action that would fill the screen.",
+      "description": "Never a bare 'no results' line \u2014 a title, an explanation, and the action that would fill the screen.",
       "html": "<div class=\"ds-empty\"><span class=\"ds-empty-title\">No Sessions Yet</span><span class=\"ds-empty-body\">Log your first training or competition session to see it here.</span><button class=\"ds-btn-primary\">Log Your First Session</button></div>",
       "css": ".ds-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 64px 24px; text-align: center; } .ds-empty-title { color: #F6EEE4; font-size: 32px; font-weight: 600; line-height: 44px; } .ds-empty-body { color: #C9B9DC; font-size: 16px; font-weight: 500; line-height: 24px; }"
     }
@@ -309,7 +309,7 @@
       "Dark ground, purple-tinted neutrals, never grey",
       "Depth by tonal layering; exactly one shadow in the system",
       "One accent, used sparingly, carrying all interaction",
-      "A four-step radius scale and a seven-step spacing scale — no ad-hoc values",
+      "A four-step radius scale and a seven-step spacing scale \u2014 no ad-hoc values",
       "Contrast treated as a tested invariant, because the range is sunlit",
       "Precise and restrained: tight spacing, sharp hierarchy, no decoration"
     ],
@@ -341,7 +341,7 @@
       },
       {
         "name": "The One Shadow Rule",
-        "body": "The floating action button is the only element in ShotLedger permitted a shadow. Cards, tiles, sheets, headers, and chips are flat and separate by tone. Adding a shadow to a card is a defect, not a refinement — it breaks the one signal that means 'this floats'.",
+        "body": "The floating action button is the only element in ShotLedger permitted a shadow. Cards, tiles, sheets, headers, and chips are flat and separate by tone. Adding a shadow to a card is a defect, not a refinement \u2014 it breaks the one signal that means 'this floats'.",
         "section": "elevation"
       },
       {
@@ -351,21 +351,21 @@
       }
     ],
     "dos": [
-      "Do express depth with the tonal stack — Ink Purple → Surface Purple → Raised Surface Purple.",
+      "Do express depth with the tonal stack \u2014 Ink Purple \u2192 Surface Purple \u2192 Raised Surface Purple.",
       "Do take spacing from the seven-step scale (2/4/8/16/24/32/64) and radius from the four-step scale (8/12/20/999).",
       "Do keep Signal Lavender scarce; one interactive accent per screen region.",
-      "Do assert contrast in app/src/theme/tokens.test.ts when adding or changing a color — sunlight legibility is a tested invariant here, not a judgement call.",
+      "Do assert contrast in app/src/theme/tokens.test.ts when adding or changing a color \u2014 sunlight legibility is a tested invariant here, not a judgement call.",
       "Do keep control labels on one line, shrinking or scrolling instead of wrapping.",
       "Do use weight, not size, to emphasise at 14px."
     ],
     "donts": [
       "Don't add a shadow to anything but the floating action button.",
       "Don't introduce a neutral grey into the dark theme; every neutral is purple-tinted.",
-      "Don't assign PURPLE_RAIN_GOLD_ACCENT_REJECTED (#E8B84B) to primary or any interactive token — it is retained for its contrast work only.",
+      "Don't assign PURPLE_RAIN_GOLD_ACCENT_REJECTED (#E8B84B) to primary or any interactive token \u2014 it is retained for its contrast work only.",
       "Don't put more than one Primary Button on a screen.",
       "Don't invent a radius or spacing value outside the scales.",
       "Don't load a custom typeface; the platform system font is the deliberate choice.",
-      "Don't let a tab or control label truncate — shorten the string instead."
+      "Don't let a tab or control label truncate \u2014 shorten the string instead."
     ]
   }
 }

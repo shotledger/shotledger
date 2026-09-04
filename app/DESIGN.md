@@ -12,13 +12,13 @@ colors:
   border-violet: '#7360B0'
   alert-coral: '#FF7A85'
   confirm-mint: '#4FD68C'
-  light-signal-blue: '#208AEF'
-  light-paper: '#ffffff'
-  light-surface: '#F0F0F3'
-  light-surface-raised: '#E0E1E6'
-  light-ink: '#000000'
-  light-muted: '#60646C'
-  light-border: '#D8D9DE'
+  light-signal-lavender: '#6E30CF'
+  light-paper: '#FCFBFE'
+  light-surface: '#F4F1F8'
+  light-surface-raised: '#E7E1EF'
+  light-ink: '#1A1325'
+  light-muted: '#635874'
+  light-border: '#D4CDDF'
 typography:
   display:
     fontFamily: 'system-ui'
@@ -165,9 +165,12 @@ outcome.
 
 ### Secondary
 
-- **Range Blue** (`#208AEF`): the light theme's accent. The light theme is a
-  complete, supported theme, not a fallback, but Purple Rain is the app's
-  identity and the one this system is written around.
+- **Light Signal Lavender** (`#6E30CF`): the light theme's accent — Signal
+  Lavender held at the same hue (263.5°) and taken down in lightness until white
+  text clears AA on it. The light theme is a complete, supported theme, not a
+  fallback; it is Purple Rain in a higher key, not a second palette. The stock
+  blue it replaced (`#208AEF`) was unrelated to the dark accent and carried only
+  3.53:1 against its own white label.
 
 ### Neutral
 
@@ -193,9 +196,12 @@ outcome.
 
 ### Named Rules
 
-**The Purple-Tinted Neutral Rule.** There is no grey in the dark theme. Text,
-secondary text, borders, and every surface carry purple. A neutral grey
+**The Purple-Tinted Neutral Rule.** There is no grey in either theme. Text,
+secondary text, borders, and every surface carry the accent hue. A neutral grey
 introduced anywhere reads instantly as foreign and is a defect, not a variation.
+`tokens.test.ts` asserts the hue on both palettes, so a grey cannot re-enter
+unnoticed. Bone White is the one deliberate exception: dark's primary text is
+warm on purpose, to keep it from vibrating against the cool ground.
 
 **The Scarce Accent Rule.** Signal Lavender marks interaction and nothing else.
 It is never decorative, never a heading color, never a background for content.
@@ -292,9 +298,9 @@ it breaks the one signal that means "this floats".
 A four-step radius scale, each step with a settled job:
 
 - **8px** (`small`): elements nested inside another rounded surface — a segment
-  inside a segmented-control track.
-- **12px** (`medium`): the workhorse — cards, tiles, buttons, inputs, list
-  groups. If a surface is rounded and you are unsure, it is 12.
+  inside a segmented-control track, a field inside a card.
+- **12px** (`medium`): the workhorse — cards, tiles, buttons, list groups. If a
+  surface is rounded and you are unsure, it is 12.
 - **20px** (`large`): large containers that need a softer silhouette.
 - **999px** (`pill`): chips and the floating action button — anything that reads
   as a token or a floating control rather than a panel.
@@ -337,9 +343,14 @@ ornament, and state changes that are unmistakable but never loud.
 
 ### Inputs / Fields
 
-- **Style:** 1px Border Violet outline, transparent ground, 12px radius, Body
-  text, placeholder in Muted Lilac.
-- **Focus:** the platform's own focus treatment; no custom glow.
+`app/src/components/text-field.tsx` (`TextField`) is the only text input in the
+app. Nothing should style a bare `TextInput` again.
+
+- **Style:** 1px Border Violet outline, transparent ground, 8px radius (it nests
+  inside a card), 16px text, placeholder in Muted Lilac.
+- **Focus:** the outline becomes Signal Lavender. This is the one place the
+  Scarce Accent Rule admits a second lavender element on screen — focus is
+  interaction, and only one field holds it at a time.
 
 ### Navigation
 
