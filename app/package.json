@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/ui": "57.0.14",
+    "@expo/ui": "57.0.15",
     "@react-native-community/datetimepicker": "9.2.0",
     "@react-native-ml-kit/text-recognition": "2.0.0",
     "@shotledger/shared": "workspace:*",
