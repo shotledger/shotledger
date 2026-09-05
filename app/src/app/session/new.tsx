@@ -9,7 +9,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 import {
   buildProgramSkeleton,
   decimalAllowed,
@@ -28,6 +28,7 @@ import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
@@ -48,7 +49,6 @@ import {
   type CompetitionLevel,
 } from '@/features/session/labels';
 import { TagSelect } from '@/features/tags/tag-select';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 const NO_PROGRAM = 'none';
@@ -56,7 +56,6 @@ const NO_PROGRAM = 'none';
 export default function NewSessionScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
 
   const [type, setType] = useState<SessionType>('training');
   const [kind, setKind] = useState<SessionKind>('series');
@@ -220,12 +219,7 @@ export default function NewSessionScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('session.name')}</ThemedText>
-        <TextInput
-          value={name}
-          onChangeText={setNameOverride}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
-          testID="session-name"
-        />
+        <TextField value={name} onChangeText={setNameOverride} testID="session-name" />
         <ThemedText type="small" themeColor="textSecondary">
           {t('session.nameHint')}
         </ThemedText>
@@ -289,12 +283,10 @@ export default function NewSessionScreen() {
             />
           </View>
           <ThemedText type="smallBold">{t('session.competitionName')}</ThemedText>
-          <TextInput
+          <TextField
             value={competitionName}
             onChangeText={setCompetitionName}
             placeholder={t('session.competitionNamePlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             testID="competition-name"
           />
           <ThemedText type="small" themeColor="textSecondary">
@@ -364,14 +356,12 @@ export default function NewSessionScreen() {
       {kind === 'rounds' && (
         <Card>
           <ThemedText type="smallBold">{t('session.roundsFired')}</ThemedText>
-          <TextInput
+          <TextField
             value={roundsFired}
             onChangeText={setRoundsFired}
             keyboardType="number-pad"
             inputMode="numeric"
             placeholder="0"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             testID="rounds-fired"
           />
           <ThemedText type="small" themeColor="textSecondary">
@@ -395,12 +385,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

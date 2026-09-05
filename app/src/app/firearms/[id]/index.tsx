@@ -4,7 +4,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
   GENERIC_WEAPON_GROUPS,
   licenseExpiryNotifications,
@@ -21,6 +21,7 @@ import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-groups';
@@ -36,7 +37,6 @@ import {
   settleScannedLicenseImage,
   type ScanSource,
 } from '@/features/licenses/scan-license-card';
-import { useTheme } from '@/hooks/use-theme';
 import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
 import { requestVaultAccess } from '@/platform/vault-auth';
@@ -71,7 +71,6 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
 export default function FirearmDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useComplianceProfile();
   const { detail, refresh } = useFirearmDetail(id, profile);
@@ -116,7 +115,6 @@ export default function FirearmDetailScreen() {
     );
   }
 
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
   const usedGroupIds = new Set(detail.groups.map((g) => g.groupId));
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
@@ -535,33 +533,26 @@ export default function FirearmDetailScreen() {
               </>
             ) : null}
             <ThemedText type="small">{t('firearms.licenseNumber')}</ThemedText>
-            <TextInput
+            <TextField
               value={licenseNumber}
               onChangeText={setLicenseNumber}
-              style={inputStyle}
               testID="license-number"
             />
             <ThemedText type="small">{t('firearms.purpose')}</ThemedText>
-            <TextInput value={purpose} onChangeText={setPurpose} style={inputStyle} />
+            <TextField value={purpose} onChangeText={setPurpose} />
             <ThemedText type="small">{t('firearms.decidedOn')}</ThemedText>
-            <TextInput
-              value={decidedOn}
-              onChangeText={setDecidedOn}
-              placeholder="YYYY-MM-DD"
-              style={inputStyle}
-            />
+            <TextField value={decidedOn} onChangeText={setDecidedOn} placeholder="YYYY-MM-DD" />
             <ThemedText type="small">{t('firearms.validUntil')}</ThemedText>
-            <TextInput
+            <TextField
               value={validUntil}
               onChangeText={setValidUntil}
               placeholder="YYYY-MM-DD"
-              style={inputStyle}
               testID="license-valid-until"
             />
             <ThemedText type="small">{t('firearms.conditions')}</ThemedText>
-            <TextInput value={conditions} onChangeText={setConditions} style={inputStyle} />
+            <TextField value={conditions} onChangeText={setConditions} />
             <ThemedText type="small">{t('firearms.authority')}</ThemedText>
-            <TextInput value={authority} onChangeText={setAuthority} style={inputStyle} />
+            <TextField value={authority} onChangeText={setAuthority} />
             <PrimaryButton
               label={t('common.save')}
               onPress={() => void onAddLicense()}
@@ -581,11 +572,10 @@ export default function FirearmDetailScreen() {
       <Card>
         <ThemedText type="smallBold">{t('firearms.maintenanceTitle')}</ThemedText>
         <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
-        <TextInput
+        <TextField
           value={intervalValue}
           onChangeText={setIntervalInput}
           keyboardType="number-pad"
-          style={inputStyle}
           testID="maintenance-interval"
         />
         <PrimaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
@@ -603,15 +593,14 @@ export default function FirearmDetailScreen() {
         {showLogEvent ? (
           <>
             <ThemedText type="small">{t('firearms.kind')}</ThemedText>
-            <TextInput
+            <TextField
               value={eventKind}
               onChangeText={setEventKind}
               placeholder={t('firearms.kindPlaceholder')}
-              style={inputStyle}
               testID="event-kind"
             />
             <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextInput value={eventNotes} onChangeText={setEventNotes} style={inputStyle} />
+            <TextField value={eventNotes} onChangeText={setEventNotes} />
             <PrimaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
           </>
         ) : (
@@ -625,19 +614,17 @@ export default function FirearmDetailScreen() {
         {showAdjust ? (
           <>
             <ThemedText type="small">{t('firearms.adjustDelta')}</ThemedText>
-            <TextInput
+            <TextField
               value={adjustDelta}
               onChangeText={setAdjustDelta}
               keyboardType="numbers-and-punctuation"
-              style={inputStyle}
               testID="adjust-delta"
             />
             <ThemedText type="small">{t('firearms.adjustReason')}</ThemedText>
-            <TextInput
+            <TextField
               value={adjustReason}
               onChangeText={setAdjustReason}
               placeholder={t('firearms.adjustReasonPlaceholder')}
-              style={inputStyle}
               testID="adjust-reason"
             />
             <PrimaryButton
@@ -689,12 +676,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

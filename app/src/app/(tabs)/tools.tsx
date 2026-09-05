@@ -7,24 +7,23 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 export default function ToolsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const colors = useTheme();
   const webshooter = useWebShooterConnection();
   const [wsUsername, setWsUsername] = useState('');
   const [wsPassword, setWsPassword] = useState('');
@@ -80,22 +79,18 @@ export default function ToolsScreen() {
             <ThemedText type="small" themeColor="textSecondary">
               {t('webshooter.connectHelp')}
             </ThemedText>
-            <TextInput
+            <TextField
               value={wsUsername}
               onChangeText={setWsUsername}
               placeholder={t('webshooter.usernamePlaceholder')}
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
-              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
               testID="webshooter-username"
             />
-            <TextInput
+            <TextField
               value={wsPassword}
               onChangeText={setWsPassword}
               placeholder={t('webshooter.passwordPlaceholder')}
-              placeholderTextColor={colors.textSecondary}
               secureTextEntry
-              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
               testID="webshooter-password"
             />
             <PrimaryButton
@@ -111,13 +106,11 @@ export default function ToolsScreen() {
             <ThemedText type="small" themeColor="textSecondary">
               {t('webshooter.tokenFallbackHelp')}
             </ThemedText>
-            <TextInput
+            <TextField
               value={wsToken}
               onChangeText={setWsToken}
               placeholder={t('webshooter.tokenPlaceholder')}
-              placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
-              style={[styles.input, { color: colors.text, borderColor: colors.border }]}
               testID="webshooter-token"
             />
             <PrimaryButton
@@ -173,12 +166,5 @@ export default function ToolsScreen() {
 const styles = StyleSheet.create({
   devSection: {
     gap: Spacing.two,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

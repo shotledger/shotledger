@@ -3,24 +3,21 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TextInput } from 'react-native';
 
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getFirearm, updateFirearm, type WeaponType } from '@/db/queries/firearms';
-import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/theme/tokens';
 
 const WEAPON_TYPES: WeaponType[] = ['pistol', 'revolver', 'rifle', 'airgun'];
 
 export default function EditFirearmScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const firearm = db ? getFirearm(db, id) : undefined;
 
@@ -43,8 +40,6 @@ export default function EditFirearmScreen() {
     );
   }
 
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
-
   function onSave() {
     if (!db || !firearm) return;
     updateFirearm(db, firearm.id, {
@@ -64,16 +59,11 @@ export default function EditFirearmScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('firearms.make')}</ThemedText>
-        <TextInput value={make} onChangeText={setMake} style={inputStyle} testID="firearm-make" />
+        <TextField value={make} onChangeText={setMake} testID="firearm-make" />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
-        <TextInput
-          value={model}
-          onChangeText={setModel}
-          style={inputStyle}
-          testID="firearm-model"
-        />
+        <TextField value={model} onChangeText={setModel} testID="firearm-model" />
         <ThemedText type="smallBold">{t('firearms.caliber')}</ThemedText>
-        <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
+        <TextField value={caliber} onChangeText={setCaliber} />
       </Card>
 
       <Card>
@@ -90,29 +80,19 @@ export default function EditFirearmScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('firearms.serialNumber')}</ThemedText>
-        <TextInput value={serialNumber} onChangeText={setSerialNumber} style={inputStyle} />
+        <TextField value={serialNumber} onChangeText={setSerialNumber} />
         <ThemedText type="smallBold">{t('firearms.vapenId')}</ThemedText>
-        <TextInput value={vapenId} onChangeText={setVapenId} style={inputStyle} />
+        <TextField value={vapenId} onChangeText={setVapenId} />
         <ThemedText type="smallBold">{t('firearms.loadSystem')}</ThemedText>
-        <TextInput value={loadSystem} onChangeText={setLoadSystem} style={inputStyle} />
+        <TextField value={loadSystem} onChangeText={setLoadSystem} />
       </Card>
 
       <Card>
         <ThemedText type="smallBold">{t('firearms.notes')}</ThemedText>
-        <TextInput value={notes} onChangeText={setNotes} style={inputStyle} multiline />
+        <TextField value={notes} onChangeText={setNotes} multiline />
       </Card>
 
       <PrimaryButton label={t('firearms.save')} onPress={onSave} testID="save-firearm" />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-});

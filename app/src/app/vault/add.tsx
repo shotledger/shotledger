@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { licenseExpiryNotifications, type ParsedLicenseCard } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -9,6 +9,7 @@ import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listFirearms } from '@/db/queries/firearms';
@@ -24,7 +25,6 @@ import {
   pickVaultPhotoFromLibrary,
 } from '@/features/vault/pick-vault-photo';
 import type { VaultDocumentKind } from '@/features/vault/types';
-import { useTheme } from '@/hooks/use-theme';
 import { scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
 import { Spacing } from '@/theme/tokens';
@@ -46,7 +46,6 @@ type ScanState =
 export default function AddVaultDocumentScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
 
   const [contentType, setContentType] = useState<ContentType>('photo');
   const [kind, setKind] = useState<VaultDocumentKind>('license');
@@ -155,12 +154,10 @@ export default function AddVaultDocumentScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('vault.addLabelPlaceholder')}</ThemedText>
-        <TextInput
+        <TextField
           value={label}
           onChangeText={setLabel}
           placeholder={t('vault.addLabelPlaceholder')}
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           testID="vault-add-label"
         />
       </Card>
@@ -284,12 +281,10 @@ export default function AddVaultDocumentScreen() {
             ) : null}
           </>
         ) : (
-          <TextInput
+          <TextField
             value={text}
             onChangeText={setText}
             placeholder={t('vault.addTextPlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             testID="vault-add-text"
           />
         )}
@@ -310,13 +305,6 @@ function capitalize(value: string): string {
 }
 
 const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

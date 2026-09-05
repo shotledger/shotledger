@@ -6,11 +6,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { Alert, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TextField } from '@/components/text-field';
 import {
   SeriesShareCardSvg,
   SessionShareCardSvg,
@@ -111,12 +112,10 @@ export default function ShareCardScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('share.noteLabel')}</ThemedText>
-        <TextInput
+        <TextField
           value={note}
           onChangeText={setNote}
           placeholder={t('share.notePlaceholder')}
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           maxLength={120}
           testID="share-note"
         />
@@ -144,12 +143,5 @@ const styles = StyleSheet.create({
   },
   previewInner: {
     transformOrigin: 'top left',
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

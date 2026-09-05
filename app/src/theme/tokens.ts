@@ -1,6 +1,7 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens. Both themes are built on one accent hue —
+ * `SIGNAL_LAVENDER_HUE` — so light is a tonal variation of Purple Rain rather
+ * than a separate palette; `tokens.test.ts` asserts that and the WCAG floors.
  */
 
 import '@/global.css';
@@ -8,17 +9,21 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
+  // Light is the same world in a higher key: neutrals carry the lavender hue
+  // rather than being neutral grey, and `primary` is Signal Lavender darkened
+  // until white text clears AA on it. The previous stock blue (#208AEF) and
+  // green (#2E9E5B) both failed AA against the ground they were drawn on.
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    primary: '#208AEF',
-    onPrimary: '#ffffff',
-    border: '#D8D9DE',
-    danger: '#D2402D',
-    success: '#2E9E5B',
+    text: '#1A1325',
+    background: '#FCFBFE',
+    backgroundElement: '#F4F1F8',
+    backgroundSelected: '#E7E1EF',
+    textSecondary: '#635874',
+    primary: '#6E30CF',
+    onPrimary: '#FFFFFF',
+    border: '#D4CDDF',
+    danger: '#C4321F',
+    success: '#1F7A44',
   },
   // "Purple Rain" dark theme. Deep near-black purple ground with
   // purple-tinted (never gray) text and borders. Two accent options were
@@ -61,6 +66,13 @@ export const PURPLE_RAIN_GOLD_ACCENT_REJECTED = {
   primary: '#E8B84B',
   onPrimary: '#1A1226',
 } as const;
+
+/**
+ * The hue both themes are tuned to (HSL degrees). Dark uses it at high
+ * lightness (#B98CFF), light at low (#6E30CF); the shared hue is what makes
+ * them one identity instead of two palettes that happen to ship together.
+ */
+export const SIGNAL_LAVENDER_HUE = 263.5;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 

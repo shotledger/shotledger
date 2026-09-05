@@ -3,8 +3,9 @@
 // with the online lookup off, with an empty history, it is still a text box.
 import { OSM_ATTRIBUTION } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { useLocationSuggestions } from '@/features/location/use-location-suggestions';
 import { useTheme } from '@/hooks/use-theme';
@@ -49,14 +50,12 @@ export function LocationField({ value, onChange, onlineEnabled, language }: Loca
   return (
     <View style={styles.container}>
       <ThemedText type="smallBold">{t('session.location')}</ThemedText>
-      <TextInput
+      <TextField
         value={value}
         onChangeText={onChange}
         placeholder={t('session.locationPlaceholder')}
-        placeholderTextColor={theme.textSecondary}
         autoCapitalize="words"
         autoCorrect={false}
-        style={[styles.input, { color: theme.text, borderColor: theme.border }]}
         testID="session-location"
       />
 
@@ -98,12 +97,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: Radius.pill,
     borderWidth: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

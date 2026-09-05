@@ -4,15 +4,15 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { createAmmoLot } from '@/db/queries/ammo-lots';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 function numberOrNull(value: string): number | null {
@@ -23,7 +23,6 @@ function numberOrNull(value: string): number | null {
 export default function NewAmmoLotScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
 
   const [label, setLabel] = useState('');
   const [caliber, setCaliber] = useState('');
@@ -48,7 +47,6 @@ export default function NewAmmoLotScreen() {
   const [notes, setNotes] = useState('');
 
   const canCreate = label.trim().length > 0;
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
 
   function onCreate() {
     if (!db || !canCreate) return;
@@ -79,23 +77,13 @@ export default function NewAmmoLotScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('ammo.label')}</ThemedText>
-        <TextInput value={label} onChangeText={setLabel} style={inputStyle} testID="ammo-label" />
+        <TextField value={label} onChangeText={setLabel} testID="ammo-label" />
         <ThemedText type="smallBold">{t('ammo.caliber')}</ThemedText>
-        <TextInput value={caliber} onChangeText={setCaliber} style={inputStyle} />
+        <TextField value={caliber} onChangeText={setCaliber} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
-        <TextInput
-          value={quantity}
-          onChangeText={setQuantity}
-          keyboardType="number-pad"
-          style={inputStyle}
-        />
+        <TextField value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
-        <TextInput
-          value={purchasedOn}
-          onChangeText={setPurchasedOn}
-          placeholder="YYYY-MM-DD"
-          style={inputStyle}
-        />
+        <TextField value={purchasedOn} onChangeText={setPurchasedOn} placeholder="YYYY-MM-DD" />
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
           <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
@@ -105,25 +93,24 @@ export default function NewAmmoLotScreen() {
       {!isHandload && (
         <Card>
           <ThemedText type="smallBold">{t('ammo.brand')}</ThemedText>
-          <TextInput value={brand} onChangeText={setBrand} style={inputStyle} />
+          <TextField value={brand} onChangeText={setBrand} />
           <ThemedText type="smallBold">{t('ammo.product')}</ThemedText>
-          <TextInput value={product} onChangeText={setProduct} style={inputStyle} />
+          <TextField value={product} onChangeText={setProduct} />
           <ThemedText type="smallBold">{t('ammo.lotNumber')}</ThemedText>
-          <TextInput value={lotNumber} onChangeText={setLotNumber} style={inputStyle} />
+          <TextField value={lotNumber} onChangeText={setLotNumber} />
         </Card>
       )}
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.bulletMake')}</ThemedText>
-        <TextInput value={bulletMake} onChangeText={setBulletMake} style={inputStyle} />
+        <TextField value={bulletMake} onChangeText={setBulletMake} />
         <ThemedText type="smallBold">{t('ammo.bulletModel')}</ThemedText>
-        <TextInput value={bulletModel} onChangeText={setBulletModel} style={inputStyle} />
+        <TextField value={bulletModel} onChangeText={setBulletModel} />
         <ThemedText type="smallBold">{t('ammo.bulletWeightGr')}</ThemedText>
-        <TextInput
+        <TextField
           value={bulletWeightGr}
           onChangeText={setBulletWeightGr}
           keyboardType="decimal-pad"
-          style={inputStyle}
         />
       </Card>
 
@@ -131,43 +118,27 @@ export default function NewAmmoLotScreen() {
         <Card testID="handload-recipe">
           <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
           <ThemedText type="small">{t('ammo.powder')}</ThemedText>
-          <TextInput
-            value={powder}
-            onChangeText={setPowder}
-            style={inputStyle}
-            testID="ammo-powder"
-          />
+          <TextField value={powder} onChangeText={setPowder} testID="ammo-powder" />
           <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
-          <TextInput
+          <TextField
             value={powderChargeGr}
             onChangeText={setPowderChargeGr}
             keyboardType="decimal-pad"
-            style={inputStyle}
           />
           <ThemedText type="small">{t('ammo.primer')}</ThemedText>
-          <TextInput value={primer} onChangeText={setPrimer} style={inputStyle} />
+          <TextField value={primer} onChangeText={setPrimer} />
           <ThemedText type="small">{t('ammo.brass')}</ThemedText>
-          <TextInput value={brass} onChangeText={setBrass} style={inputStyle} />
+          <TextField value={brass} onChangeText={setBrass} />
           <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
-          <TextInput
-            value={colMm}
-            onChangeText={setColMm}
-            keyboardType="decimal-pad"
-            style={inputStyle}
-          />
+          <TextField value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" />
           <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
-          <TextInput
-            value={crimpMm}
-            onChangeText={setCrimpMm}
-            keyboardType="decimal-pad"
-            style={inputStyle}
-          />
+          <TextField value={crimpMm} onChangeText={setCrimpMm} keyboardType="decimal-pad" />
         </Card>
       )}
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.notes')}</ThemedText>
-        <TextInput value={notes} onChangeText={setNotes} style={inputStyle} multiline />
+        <TextField value={notes} onChangeText={setNotes} multiline />
       </Card>
 
       <PrimaryButton
@@ -186,12 +157,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
   },
 });

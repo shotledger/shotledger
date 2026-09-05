@@ -9,7 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
   formatShooterClass,
   shooterClassesForDiscipline,
@@ -21,6 +21,7 @@ import { Chip } from '@/components/chip';
 import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
@@ -37,7 +38,6 @@ import {
   formatLocalDate,
   type CompetitionLevel,
 } from '@/features/session/labels';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 function toDateOnly(date: Date): string {
@@ -47,7 +47,6 @@ function toDateOnly(date: Date): string {
 export default function EditSessionScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = db ? getSession(db, id) : undefined;
 
@@ -81,8 +80,6 @@ export default function EditSessionScreen() {
   const classes = shooterClassesForDiscipline(session.disciplineId);
   const firearms = listFirearms(db);
   const ammoLots = listAmmoLots(db);
-
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
 
   const toOptions = <T extends string>(
     values: readonly { value: T; label: string }[],
@@ -128,7 +125,7 @@ export default function EditSessionScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('session.name')}</ThemedText>
-        <TextInput value={name} onChangeText={setName} style={inputStyle} testID="edit-name" />
+        <TextField value={name} onChangeText={setName} testID="edit-name" />
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
         <PrimaryButton
@@ -151,21 +148,10 @@ export default function EditSessionScreen() {
         )}
 
         <ThemedText type="smallBold">{t('session.location')}</ThemedText>
-        <TextInput
-          value={location}
-          onChangeText={setLocation}
-          style={inputStyle}
-          testID="edit-location"
-        />
+        <TextField value={location} onChangeText={setLocation} testID="edit-location" />
 
         <ThemedText type="smallBold">{t('session.notes')}</ThemedText>
-        <TextInput
-          value={notes}
-          onChangeText={setNotes}
-          style={inputStyle}
-          multiline
-          testID="edit-notes"
-        />
+        <TextField value={notes} onChangeText={setNotes} multiline testID="edit-notes" />
       </Card>
 
       {isCompetition && (
@@ -188,12 +174,10 @@ export default function EditSessionScreen() {
             />
           </View>
           <ThemedText type="smallBold">{t('session.competitionName')}</ThemedText>
-          <TextInput
+          <TextField
             value={competitionName}
             onChangeText={setCompetitionName}
             placeholder={t('session.competitionNamePlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={inputStyle}
             testID="edit-competition-name"
           />
         </Card>
@@ -261,12 +245,11 @@ export default function EditSessionScreen() {
           ))}
         </View>
         <View style={styles.tagAddRow}>
-          <TextInput
+          <TextField
             value={newTag}
             onChangeText={setNewTag}
             placeholder={t('session.tagPlaceholder')}
-            placeholderTextColor={theme.textSecondary}
-            style={[inputStyle, styles.tagInput]}
+            style={styles.tagInput}
             onSubmitEditing={onAddTag}
             testID="edit-tag-input"
           />
@@ -286,13 +269,6 @@ export default function EditSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

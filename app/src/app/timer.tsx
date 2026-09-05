@@ -16,18 +16,18 @@ import {
 } from '@shotledger/shared';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
 import { useTimer } from '@/features/timer/use-timer';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 type PresetId = 'parSingle' | 'parRandomStart' | 'parInterval' | 'milsnabb' | 'custom';
@@ -113,7 +113,6 @@ export default function ShotTimerScreen() {
 
 function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const [presetId, setPresetId] = useState<PresetId>('parSingle');
   const [parSeconds, setParSeconds] = useState('3');
@@ -130,7 +129,6 @@ function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
 
   const { phase, start, reset } = useTimer(config);
   const totalSeries = config.series.length;
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.border }];
 
   if (phase.kind === 'idle') {
     return (
@@ -181,35 +179,31 @@ function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
         {presetId === 'custom' && (
           <Card style={styles.customForm} testID="timer-custom-form">
             <ThemedText type="smallBold">{t('timer.custom.parSeconds')}</ThemedText>
-            <TextInput
+            <TextField
               value={parSeconds}
               onChangeText={setParSeconds}
               keyboardType="decimal-pad"
-              style={inputStyle}
               testID="timer-custom-par"
             />
             <ThemedText type="smallBold">{t('timer.custom.readyDelaySeconds')}</ThemedText>
-            <TextInput
+            <TextField
               value={readyDelaySeconds}
               onChangeText={setReadyDelaySeconds}
               keyboardType="decimal-pad"
-              style={inputStyle}
               testID="timer-custom-ready"
             />
             <ThemedText type="smallBold">{t('timer.custom.reps')}</ThemedText>
-            <TextInput
+            <TextField
               value={reps}
               onChangeText={setReps}
               keyboardType="number-pad"
-              style={inputStyle}
               testID="timer-custom-reps"
             />
             <ThemedText type="smallBold">{t('timer.custom.restSeconds')}</ThemedText>
-            <TextInput
+            <TextField
               value={restSeconds}
               onChangeText={setRestSeconds}
               keyboardType="decimal-pad"
-              style={inputStyle}
               testID="timer-custom-rest"
             />
           </Card>
@@ -266,12 +260,6 @@ const styles = StyleSheet.create({
   },
   customForm: {
     gap: Spacing.two,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.two,
   },
   runningScreen: {
     justifyContent: 'space-between',
