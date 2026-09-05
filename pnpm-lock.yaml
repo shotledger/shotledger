@@ -69,8 +69,8 @@ importers:
   app:
     dependencies:
       '@expo/ui':
-        specifier: 57.0.14
-        version: 57.0.14(7c721135c4e6c4c85c69925e87446f69)
+        specifier: 57.0.15
+        version: 57.0.15(7c721135c4e6c4c85c69925e87446f69)
       '@react-native-community/datetimepicker':
         specifier: 9.2.0
         version: 9.2.0(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
@@ -1492,8 +1492,8 @@ packages:
   '@expo/sudo-prompt@9.3.2':
     resolution: {integrity: sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==}
 
-  '@expo/ui@57.0.14':
-    resolution: {integrity: sha512-m8Z5dCplkOOQ70lu/xfB67qhk00Muw4U1T9frHBIW3LxxJeJZQ+jOmV6vCk6O6zVgoG/ib1et7PeX6etxI4Rsw==}
+  '@expo/ui@57.0.15':
+    resolution: {integrity: sha512-qNntEAbDEq0VGkAUMaopIZLJEZofQMDJNjx8YBngqeG3oZJKjpQFOSI8ui951NbN8nABzJ5Jd55SXdZKYWslDw==}
     peerDependencies:
       '@babel/core': '*'
       expo: '*'
@@ -2708,9 +2708,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/node@26.4.0':
-    resolution: {integrity: sha512-faiGnoIrLH/V8cibOMEAZ8pMw6oXqSukl29ra4mN8GdaB2ZewzeaLj+INpV5N+Z1eKWzY+IzaIZH2EIR6YZRNQ==}
 
   '@types/node@26.4.1':
     resolution: {integrity: sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA==}
@@ -8134,7 +8131,7 @@ snapshots:
 
   '@expo/sudo-prompt@9.3.2': {}
 
-  '@expo/ui@57.0.14(7c721135c4e6c4c85c69925e87446f69)':
+  '@expo/ui@57.0.15(7c721135c4e6c4c85c69925e87446f69)':
     dependencies:
       expo: 57.0.18(667cbcb68190ed52c29de80438643f93)
       react: 19.2.3
@@ -8485,7 +8482,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       jest-mock: 29.7.0
 
   '@jest/environment@30.5.1':
@@ -8521,7 +8518,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -8675,7 +8672,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -9379,7 +9376,7 @@ snapshots:
 
   '@types/graceful-fs@4.1.9':
     dependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
 
   '@types/hammerjs@2.0.46': {}
 
@@ -9407,10 +9404,6 @@ snapshots:
   '@types/jsesc@2.5.1': {}
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/node@26.4.0':
-    dependencies:
-      undici-types: 8.3.0
 
   '@types/node@26.4.1':
     dependencies:
@@ -10843,7 +10836,7 @@ snapshots:
       '@expo/log-box': 57.0.4(@expo/dom-webview@57.0.1)(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       '@expo/metro-runtime': 57.0.14(@expo/log-box@57.0.4)(expo@57.0.18)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       '@expo/schema-utils': 57.0.2
-      '@expo/ui': 57.0.14(7c721135c4e6c4c85c69925e87446f69)
+      '@expo/ui': 57.0.15(7c721135c4e6c4c85c69925e87446f69)
       '@radix-ui/react-slot': 1.3.3(@types/react@19.2.18)(react@19.2.3)
       '@radix-ui/react-tabs': 1.1.21(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-native-masked-view/masked-view': 0.3.2(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
@@ -11537,7 +11530,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
@@ -11584,7 +11577,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@types/graceful-fs': 4.1.9
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -11657,7 +11650,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       jest-util: 29.7.0
 
   jest-mock@30.5.1:
@@ -11797,7 +11790,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -11871,7 +11864,7 @@ snapshots:
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.4.1
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
