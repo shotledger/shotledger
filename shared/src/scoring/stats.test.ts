@@ -452,6 +452,27 @@ describe('compareRecentSeries', () => {
     );
     expect(withDefault).toEqual(withExplicit100);
   });
+
+  it('B27b: a recent window with no scored data yields no delta, both per-shot and per-series', () => {
+    // scoredSeries() drops only sighters, so a series with no shots still
+    // reaches the recent window while the previous window has scores. Both
+    // sides of the delta need guarding, not just the previous one.
+    const pair = [
+      series({ id: 'r0', startedAt: '2026-03-01T00:00:00.000Z', shots: [shot(90), shot(90)] }),
+      series({ id: 'r1', startedAt: '2026-03-02T00:00:00.000Z', shots: [] }),
+    ];
+    const result = compareRecentSeries(
+      pair,
+      { disciplineId: 'spsf-precision', shooterClass: '2' },
+      1,
+    );
+    expect(result.recentMeanTenths).toBeNull();
+    expect(result.previousMeanTenths).toBe(90);
+    expect(result.deltaTenths).toBeNull();
+    expect(result.recentSeriesMeanTenths).toBeNull();
+    expect(result.previousSeriesMeanTenths).toBe(180);
+    expect(result.deltaSeriesTenths).toBeNull();
+  });
 });
 
 describe('guldserieCount', () => {
