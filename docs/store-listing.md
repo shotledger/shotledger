@@ -113,5 +113,6 @@ samt fri träning. Endast Android tills vidare.
   capture from a real device/emulator run before submission.
 - Privacy policy URL: not produced. VERIFY — required by Play Console
   even for a no-account, fully local-storage app; a short static page
-  describing "no data leaves the device" is likely sufficient once the
-  domain (`shotledger.app`, `plan.md` Open section) is registered.
+  describing "no data leaves the device" is likely sufficient. The domain
+  is no longer the blocker: `shotledger.app` was registered 2026-09-06
+  (decisions log), so what remains is writing and hosting the page.
