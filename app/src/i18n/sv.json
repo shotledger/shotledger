@@ -33,7 +33,11 @@
     "filterAll": "Alla",
     "filterEmpty": "Inga pass matchar filtret",
     "shapeSeries": "Serier",
-    "shapeRounds": "Skott"
+    "shapeRounds": "Skott",
+    "shareSession": "Dela pass",
+    "deleteSession": "Ta bort pass",
+    "deleteSessionConfirmTitle": "Ta bort pass?",
+    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
   },
   "stats": {
     "title": "Statistik",

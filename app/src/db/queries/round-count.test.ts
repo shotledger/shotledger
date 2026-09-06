@@ -3,10 +3,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { addSeries, getSeries } from './series';
-import { createSession } from './sessions';
+import { createSession, getSession } from './sessions';
 import { createFirearm, getFirearm } from './firearms';
 import { listShotsForSeries } from './shots';
-import { applyRoundCountDelta, deleteSeriesAndShots, saveSeriesShots } from './round-count';
+import {
+  applyRoundCountDelta,
+  deleteSeriesAndShots,
+  deleteSessionAndSeries,
+  saveSeriesShots,
+  setSessionExtraRounds,
+} from './round-count';
 
 let db: Database;
 
@@ -151,6 +157,71 @@ describe('deleteSeriesAndShots', () => {
 
     expect(getSeries(db, s.id)).toBeUndefined();
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+});
+
+describe('deleteSessionAndSeries', () => {
+  it('soft-deletes the session, its series and their shots, and backs the round count out', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId: firearm.id,
+      startedAt: new Date().toISOString(),
+    });
+    const s1 = addSeries(db, { sessionId: session.id, position: 1 });
+    saveSeriesShots(db, s1.id, [shot(90), shot(90), shot(90)]);
+    const s2 = addSeries(db, { sessionId: session.id, position: 2 });
+    saveSeriesShots(db, s2.id, [shot(100), shot(90)]);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(5);
+
+    deleteSessionAndSeries(db, session.id);
+
+    expect(getSession(db, session.id)).toBeUndefined();
+    expect(getSeries(db, s1.id)).toBeUndefined();
+    expect(getSeries(db, s2.id)).toBeUndefined();
+    expect(listShotsForSeries(db, s1.id)).toHaveLength(0);
+    expect(listShotsForSeries(db, s2.id)).toHaveLength(0);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+
+  it("also backs out the session's own unscored extra rounds", () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId: firearm.id,
+      startedAt: new Date().toISOString(),
+    });
+    setSessionExtraRounds(db, session.id, 20);
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(20);
+
+    deleteSessionAndSeries(db, session.id);
+
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+
+  it('does not touch the round count for a session with no firearm link', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: new Date().toISOString(),
+    });
+    const s = addSeries(db, { sessionId: session.id, position: 1 });
+    saveSeriesShots(db, s.id, [shot(90), shot(90)]);
+
+    deleteSessionAndSeries(db, session.id);
+
+    expect(getSession(db, session.id)).toBeUndefined();
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
+  });
+
+  it('is a no-op for an unknown or already-deleted session id', () => {
+    expect(() => deleteSessionAndSeries(db, 'missing')).not.toThrow();
   });
 });
 
