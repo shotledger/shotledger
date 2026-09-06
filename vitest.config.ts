@@ -25,7 +25,6 @@ export default defineConfig({
         'shared/src/vault/envelope.ts',
         'shared/src/vault/types.ts',
         'shared/src/backup/hex.ts',
-        'shared/src/backup/sha256.ts',
         'shared/src/backup/pbkdf2.ts',
         'shared/src/backup/vault-payload.ts',
         'shared/src/backup/vault-crypt.ts',

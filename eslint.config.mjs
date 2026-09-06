@@ -56,6 +56,7 @@ export default tseslint.config(
       'app/plugins/**/*.js',
       'app/**/__mocks__/**/*.js',
       'app/babel.config.js',
+      'app/jest.config.js',
       'app/metro.config.js',
     ],
     languageOptions: {

@@ -70,5 +70,21 @@ describe('pbkdf2Sha256', () => {
     expect(() => pbkdf2Sha256(utf8.encode('x'), salt, 1.5, 32)).toThrow(RangeError);
     expect(() => pbkdf2Sha256(utf8.encode('x'), salt, 10, 0)).toThrow(RangeError);
     expect(() => pbkdf2Sha256(utf8.encode('x'), salt, 10, -8)).toThrow(RangeError);
+
+    // The wording is asserted, not just the type: `@noble/hashes` answers a
+    // bare `Error` for c === 0 and dkLen === 0, so these guards exist to keep
+    // this module's contract, and a blank message would hide which one fired.
+    expect(() => pbkdf2Sha256(utf8.encode('x'), salt, 0, 32)).toThrow(
+      'pbkdf2Sha256: iterations must be a positive integer, got 0',
+    );
+    expect(() => pbkdf2Sha256(utf8.encode('x'), salt, 10, 0)).toThrow(
+      'pbkdf2Sha256: keyLength must be a positive integer, got 0',
+    );
+
+    // …and the smallest legal values are still accepted: the guards reject
+    // what is nonsensical, not what is merely small.
+    expect(bytesToHex(pbkdf2Sha256(utf8.encode('x'), salt, 1, 1))).toBe(
+      openssl(utf8.encode('x'), salt, 1, 1),
+    );
   });
 });

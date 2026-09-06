@@ -1,7 +1,14 @@
-// PBKDF2-HMAC-SHA256 (RFC 8018 §5.2) over the portable HMAC in sha256.ts.
-// Used only to stretch a user passphrase into the AES-256 key that protects
-// the vault section of a backup bundle; see docs/specs/backup-export-spec.md.
-import { HmacSha256, SHA256_DIGEST_BYTES } from './sha256';
+// PBKDF2-HMAC-SHA256 (RFC 8018 §5.2) for the vault section of a backup
+// bundle: it stretches a user passphrase into the AES-256 key that protects
+// that section. See docs/specs/backup-export-spec.md.
+//
+// The primitive comes from `@noble/hashes` — audited, zero-dependency, pure
+// JavaScript, so it works on Hermes without a native module. `expo-crypto`
+// is not an option here: its only hashing entry point is an async
+// whole-message `digest()`, one native round trip per call, which puts a
+// six-figure iteration count out of reach.
+import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 /**
  * @param password Passphrase bytes (UTF-8; normalise with
@@ -17,6 +24,9 @@ export function pbkdf2Sha256(
   iterations: number,
   keyLength: number,
 ): Uint8Array {
+  // Checked here rather than left to noble: it answers a bare `Error` for
+  // `c === 0` and `dkLen === 0`, and callers of this module are documented to
+  // get a RangeError for every nonsensical parameter.
   if (!Number.isInteger(iterations) || iterations < 1) {
     throw new RangeError(`pbkdf2Sha256: iterations must be a positive integer, got ${iterations}`);
   }
@@ -24,26 +34,5 @@ export function pbkdf2Sha256(
     throw new RangeError(`pbkdf2Sha256: keyLength must be a positive integer, got ${keyLength}`);
   }
 
-  const hmac = new HmacSha256(password);
-  const blocks = Math.ceil(keyLength / SHA256_DIGEST_BYTES);
-  const out = new Uint8Array(blocks * SHA256_DIGEST_BYTES);
-
-  // salt || INT_32_BE(blockIndex), reused across blocks.
-  const seed = new Uint8Array(salt.length + 4);
-  seed.set(salt);
-  const seedView = new DataView(seed.buffer, seed.byteOffset, seed.byteLength);
-
-  for (let block = 1; block <= blocks; block++) {
-    seedView.setUint32(salt.length, block, false);
-
-    let u = hmac.sign(seed);
-    const accumulator = Uint8Array.from(u);
-    for (let i = 1; i < iterations; i++) {
-      u = hmac.sign(u);
-      for (let j = 0; j < SHA256_DIGEST_BYTES; j++) accumulator[j] = accumulator[j]! ^ u[j]!;
-    }
-    out.set(accumulator, (block - 1) * SHA256_DIGEST_BYTES);
-  }
-
-  return out.slice(0, keyLength);
+  return pbkdf2(sha256, password, salt, { c: iterations, dkLen: keyLength });
 }

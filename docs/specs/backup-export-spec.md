@@ -123,21 +123,34 @@ Export therefore:
 Restore derives the same key from the passphrase the user types, opens the
 section, and re-seals every document under **this** device's key.
 
-### Why the KDF is hand-written, and what makes that safe
+### Where the KDF comes from
 
 `expo-crypto` provides AES-256-GCM and CSPRNG bytes natively, but its only
 hashing is `digest()` — async, whole-message, one native round trip per call.
 An HMAC costs two of those, so PBKDF2 at any realistic iteration count would be
-hundreds of thousands of bridge round trips. No hashing library is in the
-lockfile (checked: no `@noble/hashes` in the app's tree, no `hash-wasm`, no
-`crypto-js`) and CLAUDE.md rule 2 forbids adding one without asking.
+hundreds of thousands of bridge round trips. The KDF therefore has to run in
+JavaScript.
 
-SHA-256, HMAC-SHA256 and PBKDF2 are therefore implemented in portable
-TypeScript in `shared/src/backup/{sha256,pbkdf2}.ts`. This is a hash and a key
-derivation function, not a cipher: **confidentiality still rests entirely on
-native, reviewed AES-256-GCM.** A bug in this code cannot weaken AES-GCM; the
-worst it could do is derive the wrong key bytes, which byte-for-byte agreement
-with OpenSSL rules out.
+It runs on **`@noble/hashes`** (`pbkdf2` over `sha256`), pinned as a direct
+dependency of `shared/`: audited, zero-dependency, pure JavaScript, so it needs
+no native module and works identically on Hermes, Node and the web build.
+`shared/src/backup/pbkdf2.ts` is a thin wrapper that keeps this module's
+parameter contract (a `RangeError` for every nonsensical iteration count or key
+length, where noble answers a bare `Error` for two of them).
+
+This is a hash and a key derivation function, not a cipher: **confidentiality
+still rests entirely on native, reviewed AES-256-GCM.** A bug here cannot
+weaken AES-GCM; the worst it could do is derive the wrong key bytes, which
+byte-for-byte agreement with OpenSSL rules out.
+
+The first implementation (PR #75) hand-wrote SHA-256, HMAC-SHA256 and PBKDF2 in
+portable TypeScript, because no hashing library was then a direct dependency
+and CLAUDE.md rule 2 forbids adding one unasked. The maintainer approved the
+dependency afterwards and the hand-written `sha256.ts`/`pbkdf2.ts` were
+deleted. The swap is like-for-like — same KDF, iteration count, salt handling,
+manifest fields and envelope — and `kdf-compat.test.ts` holds golden vectors
+captured from the deleted implementation, so bundles written before it still
+restore (behaviours C1–C2).
 
 Parameters (`vault-crypt.ts`, all recorded per bundle so they can be raised
 later without breaking existing bundles):
@@ -204,23 +217,29 @@ bundle fail validation and report as "not a ShotLedger backup".
 
 ## Behaviours
 
-### Hashing and KDF — `sha256.ts`, `pbkdf2.ts`
+### Hashing and KDF — `noble-hashes.test.ts`, `pbkdf2.ts`, `kdf-compat.test.ts`
 
-| #   | Scenario                                                               | Expected                                                                  |
-| --- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| H1  | FIPS 180-4 published vectors (`abc`, empty, 448-bit)                   | exact match                                                               |
-| H2  | Every input length 0–200 bytes, against OpenSSL                        | exact match at every length (block and padding boundaries)                |
-| H3  | 200 randomised inputs up to 1000 bytes, against OpenSSL                | exact match                                                               |
-| H4  | Streaming `update()` in random chunk sizes                             | equals a single-shot hash                                                 |
-| H5  | 2 MB input (64-bit length field exercised beyond 16 bits)              | exact match                                                               |
-| H6  | RFC 4231 HMAC vectors 1, 2 and 6 (including a 131-byte key)            | exact match                                                               |
-| H7  | HMAC across key lengths 0–200 × message lengths 0–300, against OpenSSL | exact match                                                               |
-| H8  | A reused `HmacSha256` instance signing 20 different messages           | each equals a fresh OpenSSL HMAC (precomputed pad state is not corrupted) |
-| K1  | RFC 7914 §11 PBKDF2-HMAC-SHA256 vectors (c=1 and c=80000)              | exact match                                                               |
-| K2  | 40 randomised (password, salt, count, length) tuples, against OpenSSL  | exact match                                                               |
-| K3  | Derived keys of 31/32/33/64/65/96 bytes (block boundaries)             | exact match                                                               |
-| K4  | The exact parameters the app ships                                     | exact match                                                               |
-| K5  | Zero, negative or fractional iterations; zero or negative key length   | `RangeError` — never weak key material                                    |
+H1–H7 pin the `@noble/hashes` primitives the KDF is built on: they are the
+assertions that used to guard the hand-written implementation, kept so a
+dependency bump has to reproduce them. (H4 and H8 tested the streaming and
+pad-reuse internals of the deleted `Sha256`/`HmacSha256` classes and have no
+counterpart in a library call.)
+
+| #   | Scenario                                                                 | Expected                                                              |
+| --- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| H1  | FIPS 180-4 published vectors (`abc`, empty, 448-bit)                     | exact match                                                           |
+| H2  | Every input length 0–200 bytes, against OpenSSL                          | exact match at every length (block and padding boundaries)            |
+| H3  | 200 randomised inputs up to 1000 bytes, against OpenSSL                  | exact match                                                           |
+| H5  | 2 MB input (64-bit length field exercised beyond 16 bits)                | exact match                                                           |
+| H6  | RFC 4231 HMAC vectors 1, 2 and 6 (including a 131-byte key)              | exact match                                                           |
+| H7  | HMAC across key lengths 0–200 × message lengths 0–300, against OpenSSL   | exact match                                                           |
+| K1  | RFC 7914 §11 PBKDF2-HMAC-SHA256 vectors (c=1 and c=80000)                | exact match                                                           |
+| K2  | 40 randomised (password, salt, count, length) tuples, against OpenSSL    | exact match                                                           |
+| K3  | Derived keys of 31/32/33/64/65/96 bytes (block boundaries)               | exact match                                                           |
+| K4  | The exact parameters the app ships                                       | exact match                                                           |
+| K5  | Zero, negative or fractional iterations; zero or negative key length     | `RangeError` naming the offending parameter — never weak key material |
+| C1  | The pre-`@noble/hashes` implementation's derived keys, as golden vectors | byte-identical, including at the shipped 150 000 iterations           |
+| C2  | A vault section sealed end-to-end by that implementation                 | opens and unpacks unchanged                                           |
 
 ### Vault section crypto — `vault-crypt.ts`
 
@@ -296,10 +315,10 @@ bundle fail validation and report as "not a ShotLedger backup".
 ## Gauntlet plan
 
 - `pnpm coverage` — coverage `include` extended to
-  `shared/src/backup/{hex,sha256,pbkdf2,vault-payload,vault-crypt}.ts` at the
-  same 100/100/100/100 threshold as the other gauntlet-covered directories.
+  `shared/src/backup/{hex,pbkdf2,vault-payload,vault-crypt}.ts` at the same
+  100/100/100/100 threshold as the other gauntlet-covered directories.
 - `pnpm mutation` — `stryker.config.json`'s `mutate` glob extended to the same
-  five files.
+  four files.
 - `pnpm check` (typecheck, i18n parity, lint, format, vitest, jest).
 - Device verification on an emulator: export without the vault, export with it,
   restore both onto a wiped app, and a deliberate wrong-passphrase restore —
