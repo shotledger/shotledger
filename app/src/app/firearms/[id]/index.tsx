@@ -6,9 +6,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
-  GENERIC_WEAPON_GROUPS,
   licenseExpiryNotifications,
-  SPSF_WEAPON_GROUPS,
+  selectableWeaponGroups,
   shouldNotifyMaintenanceDue,
   weaponGroupCode,
   type ParsedLicenseCard,
@@ -42,7 +41,10 @@ import { deleteScannedImage } from '@/platform/text-recognition';
 import { requestVaultAccess } from '@/platform/vault-auth';
 import { Spacing } from '@/theme/tokens';
 
-const ALL_GROUPS: readonly WeaponGroup[] = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS];
+/** Only groups a session can actually be logged under — see
+ *  `selectableWeaponGroups`. Offering M1-M9 here would promise a
+ *  Magnumprecision session the app cannot create yet. */
+const ALL_GROUPS: readonly WeaponGroup[] = selectableWeaponGroups();
 
 /** ML Kit is a native module (platform/text-recognition.web.ts is a stub), so
  *  the web preview shows the manual form only. */

@@ -112,6 +112,33 @@ export function weaponGroupsForDiscipline(disciplineId: string): readonly Weapon
   return resolveWeaponGroupIds(discipline.weaponGroups, `Discipline ${disciplineId}`);
 }
 
+/**
+ * Vapengrupper a session could actually be logged under — the union of every
+ * implemented discipline's groups, plus the generic ones.
+ *
+ * `SPSF_WEAPON_GROUPS` is the full SHB taxonomy, which is wider than what v1
+ * implements: the magnum groups M1-M9 belong to Magnumprecision (SHB Part G),
+ * a discipline this app does not have yet, so offering them on the firearm
+ * form promises a session the user cannot then create. Deriving the list from
+ * `DISCIPLINES` rather than hard-coding an exclusion means they reappear on
+ * their own the moment a discipline declares them — nobody has to remember.
+ */
+export function selectableWeaponGroups(): readonly WeaponGroup[] {
+  const seen = new Set<string>();
+  const groups: WeaponGroup[] = [];
+  for (const discipline of DISCIPLINES) {
+    for (const group of resolveWeaponGroupIds(
+      discipline.weaponGroups,
+      `Discipline ${discipline.id}`,
+    )) {
+      if (seen.has(group.id)) continue;
+      seen.add(group.id);
+      groups.push(group);
+    }
+  }
+  return groups;
+}
+
 export function shooterClassesForDiscipline(disciplineId: string): readonly ShooterClass[] {
   return requireDiscipline(disciplineId).federation === 'SPSF'
     ? SPSF_SHOOTER_CLASSES

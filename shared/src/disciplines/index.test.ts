@@ -22,6 +22,7 @@ import {
   requireDiscipline,
   resolveWeaponGroupIds,
   scoringModeFor,
+  selectableWeaponGroups,
   shooterClassesForDiscipline,
   SPSF_WEAPON_GROUPS,
   weaponGroupCode,
@@ -267,13 +268,37 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     expect(ids).not.toContain('spsf:R');
   });
 
-  it('G11: milsnabb adds R', () => {
+  it('G11: milsnabb adds R and A-opt, and no A sub-groups', () => {
+    // SHB J.4 lists exactly five groups for militär snabbmatch: J.4.1 A,
+    // J.4.2 B, J.4.3 C, J.4.4 R, and J.4.5 "Vapengrupp A optiska riktmedel"
+    // (p. 288, which follows D.4.1's rules with a 2000 g optic weight cap).
+    // AM/AP/AG appear nowhere in J.4 — they are precision (F.4.1.1-F.4.1.3)
+    // and fältskjutning (D.4.1.1-D.4.1.4) only, so their absence is correct.
     expect(weaponGroupsForDiscipline('spsf-milsnabb').map((g) => g.id)).toEqual([
       'spsf:A',
+      'spsf:A-opt',
       'spsf:B',
       'spsf:C',
       'spsf:R',
     ]);
+  });
+
+  it('selectableWeaponGroups omits magnum groups no discipline declares', () => {
+    // M1-M9 belong to Magnumprecision (SHB Part G), which this app does not
+    // implement yet. They stay defined in the taxonomy but must not be
+    // offered where a session cannot follow.
+    const ids = selectableWeaponGroups().map((g) => g.id);
+    expect(ids).toContain('spsf:A-opt');
+    expect(ids).toContain('generic:airgun');
+    expect(ids.filter((id) => /^spsf:M\d$/.test(id))).toEqual([]);
+  });
+
+  it('selectableWeaponGroups is the union of the disciplines, without duplicates', () => {
+    const ids = selectableWeaponGroups().map((g) => g.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const discipline of DISCIPLINES) {
+      for (const id of discipline.weaponGroups) expect(ids).toContain(id);
+    }
   });
 
   it('generic ships the airgun group only', () => {
