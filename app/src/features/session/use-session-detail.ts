@@ -51,6 +51,14 @@ export interface SessionDetail {
   innerTenCount: number;
   /** Series length used for new series: the program's, else the discipline's. */
   seriesLength: number;
+  /**
+   * Guld threshold in points for this session's series, or null when the
+   * märke rule does not apply. Session-level: `guldserieThreshold` reads
+   * only session data plus the series length, so every series of a session
+   * shares one value — the series entry screen uses it for a series that
+   * does not exist in the database yet.
+   */
+  guldThreshold: number | null;
   scoringMode: 'integer' | 'decimal';
   /** A section may hold at most one sighter (§6.3). */
   mainHasSighter: boolean;
@@ -68,6 +76,7 @@ const EMPTY: SessionDetail = {
   seriesAverageTenths: null,
   innerTenCount: 0,
   seriesLength: 5,
+  guldThreshold: null,
   scoringMode: 'integer',
   mainHasSighter: false,
   finalHasSighter: false,
@@ -86,6 +95,13 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   const year = new Date(session.startedAt).getFullYear();
   const skeleton = program ? buildProgramSkeleton(program).map((e) => e.timeLimitSeconds) : [];
+  const guldThreshold = guldserieThreshold({
+    weaponGroup: session.weaponGroup,
+    disciplineId: session.disciplineId,
+    seriesLength,
+    birthYear,
+    year,
+  });
 
   const seriesRows: SeriesRow[] = listSeriesForSession(db, session.id).map((row) => {
     const shots: EntryShot[] = listShotsForSeries(db, row.id).map((shot) => ({
@@ -99,13 +115,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     const totalTenths = isTotalOverride
       ? row.totalOverrideTenths!
       : shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
-    const threshold = guldserieThreshold({
-      weaponGroup: session.weaponGroup,
-      disciplineId: session.disciplineId,
-      seriesLength,
-      birthYear,
-      year,
-    });
     const isSighter = row.isSighter === 1;
     return {
       id: row.id,
@@ -115,15 +124,15 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       photoUri: row.photoUri,
       shots,
       totalTenths,
-      guldThreshold: threshold,
+      guldThreshold,
       // Never awarded locally for an override series — no per-shot data to
       // stand behind it; the official standardmedalj badge (§A.5) is the
       // authoritative medal for such a session, shown separately.
       isGuldserie:
         !isTotalOverride &&
-        threshold !== null &&
+        guldThreshold !== null &&
         !isSighter &&
-        tenthsToScore(totalTenths) >= threshold,
+        tenthsToScore(totalTenths) >= guldThreshold,
       timeLimitSeconds: skeleton[row.position - 1] ?? null,
       isTotalOverride,
       totalOverrideShotCount: isTotalOverride ? row.totalOverrideShotCount : null,
@@ -148,6 +157,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     seriesAverageTenths: seriesAverageTenths(forResults),
     innerTenCount: sessionInnerTenCount(forResults),
     seriesLength,
+    guldThreshold,
     scoringMode: session.decimalScoring === 1 ? 'decimal' : 'integer',
     mainHasSighter: seriesRows.some((row) => row.isSighter && !row.isFinal),
     finalHasSighter: seriesRows.some((row) => row.isSighter && row.isFinal),

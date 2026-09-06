@@ -66,7 +66,7 @@
     "toggleStats": "Statistik",
     "toggleSeries": "Serier",
     "statsMean": "Medel",
-    "statsSd": "Standardavvikelse",
+    "statsSd": "Std.avv.",
     "statsXCount": "Innertior",
     "comparisonTitle": "Mot senaste 100 serierna",
     "comparisonRecent": "Senaste 100",
@@ -121,7 +121,12 @@
     "statsPerShotTitle": "Per skott",
     "statsSumTitle": "Hela passet",
     "statsTotalPoints": "Totalpoäng",
-    "statsTotalShots": "Skott totalt"
+    "statsTotalShots": "Skott totalt",
+    "statsPerSeriesTitle": "Per serie",
+    "statsSeriesMean": "Medel",
+    "statsSeriesSd": "Std.avv.",
+    "statsSeriesCount": "Serier",
+    "comparisonHint": "Snittpoäng per serie."
   },
   "firearms": {
     "title": "Vapen & ammo",
@@ -439,13 +444,13 @@
     "sighterOnThisSeries": "Sätt som provserie",
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
-    "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra."
+    "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
+    "newSeriesHint": "Serien sparas när du trycker på Spara."
   },
   "share": {
     "title": "Dela pass",
     "seriesTitle": "Dela serie",
     "share": "Dela",
-    "shareSeries": "Dela serie",
     "sharing": "Delar…",
     "shareFailed": "Kunde inte skapa delningsbilden på den här enheten.",
     "noteLabel": "Lägg till en kommentar (valfritt)",

@@ -8,6 +8,8 @@ import {
   meanTenths,
   sampleStandardDeviationTenths,
   scoredShots,
+  seriesMeanTenths,
+  seriesSdTenths,
   standardmedaljForSession,
   sumValueTenths,
   xCount,
@@ -20,6 +22,15 @@ import { listAllStatsSeries } from '@/db/queries/stats';
 import { buildDistribution, type DistributionBucket } from '@/features/stats/use-stats-data';
 
 export interface SessionStats {
+  /**
+   * Per-series figures — the primary reading (maintainer, 2026-09-03: "the
+   * stats are per shot. It need to be per series"). `seriesMeanTenths` is
+   * the same number as the header card's "Avg/Series"; both come from the
+   * mean of the scored series' totals.
+   */
+  seriesMeanTenths: number | null;
+  seriesSdTenths: number | null;
+  seriesCount: number;
   meanTenths: number | null;
   sdTenths: number | null;
   xCount: number;
@@ -38,6 +49,9 @@ export interface SessionStats {
 }
 
 const EMPTY: SessionStats = {
+  seriesMeanTenths: null,
+  seriesSdTenths: null,
+  seriesCount: 0,
   meanTenths: null,
   sdTenths: null,
   xCount: 0,
@@ -84,6 +98,9 @@ function loadSessionStats(sessionId: string): SessionStats {
   });
 
   return {
+    seriesMeanTenths: seriesMeanTenths(sessionSeries),
+    seriesSdTenths: seriesSdTenths(sessionSeries),
+    seriesCount: scoredNonFinal.length + scoredFinal.length,
     meanTenths: meanTenths(shots),
     sdTenths: sampleStandardDeviationTenths(shots),
     xCount: xCount(shots),

@@ -121,7 +121,12 @@
     "statsPerShotTitle": "Per Shot",
     "statsSumTitle": "Whole Session",
     "statsTotalPoints": "Total Points",
-    "statsTotalShots": "Total Shots"
+    "statsTotalShots": "Total Shots",
+    "statsPerSeriesTitle": "Per Series",
+    "statsSeriesMean": "Mean",
+    "statsSeriesSd": "SD",
+    "statsSeriesCount": "Series",
+    "comparisonHint": "Mean series score."
   },
   "firearms": {
     "title": "Firearms & Ammo",
@@ -439,13 +444,13 @@
     "sighterOnThisSeries": "Mark as Sighter",
     "deleteSeries": "Delete Series",
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
-    "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone."
+    "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
+    "newSeriesHint": "This series is saved when you tap Save."
   },
   "share": {
     "title": "Share Session",
     "seriesTitle": "Share Series",
     "share": "Share",
-    "shareSeries": "Share Series",
     "sharing": "Sharing…",
     "shareFailed": "Couldn't create the share image on this device.",
     "noteLabel": "Add a Note (optional)",

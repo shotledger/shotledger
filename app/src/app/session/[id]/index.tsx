@@ -24,7 +24,6 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
-import { addSeries } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
@@ -62,16 +61,15 @@ export default function SessionDetailScreen() {
     router.push(`/session/${id}/series/${position}`);
   }
 
+  /**
+   * Adding a series only navigates — the row is written by the entry screen's
+   * Save. Creating it here left an orphaned "Series N · 0" behind whenever
+   * the user backed out with the hardware back button (maintainer, verified
+   * live 2026-09-03).
+   */
   function onAddSeries() {
-    if (!db) return;
     const position = seriesRows.reduce((max, row) => Math.max(max, row.position), 0) + 1;
-    addSeries(db, {
-      sessionId: id,
-      position,
-      isFinal: nextIsFinal,
-    });
-    refresh();
-    openSeries(position);
+    router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);
   }
 
   /**
@@ -112,6 +110,14 @@ export default function SessionDetailScreen() {
       ],
     );
   }
+
+  // `sessions.kind` is chosen at creation and immutable (§3): a 'rounds'
+  // session logs a fired-shot count and never gets series, a 'series'
+  // session is the reverse. Show only the controls that belong to the kind
+  // rather than offering both (maintainer, 2026-09-03: "It's either or and
+  // determined when the session is created"). Gating only — a legacy row's
+  // stored extra_rounds and series are left untouched either way.
+  const isRoundsSession = session.kind === 'rounds';
 
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
@@ -254,22 +260,24 @@ export default function SessionDetailScreen() {
         </View>
       </Card>
 
-      <Card>
-        <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
-        <TextField
-          value={extraRounds}
-          onChangeText={setExtraRounds}
-          onBlur={onCommitExtraRounds}
-          onSubmitEditing={onCommitExtraRounds}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          placeholder="0"
-          testID="extra-rounds"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.extraRoundsHint')}
-        </ThemedText>
-      </Card>
+      {isRoundsSession && (
+        <Card>
+          <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
+          <TextField
+            value={extraRounds}
+            onChangeText={setExtraRounds}
+            onBlur={onCommitExtraRounds}
+            onSubmitEditing={onCommitExtraRounds}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            placeholder="0"
+            testID="extra-rounds"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('session.extraRoundsHint')}
+          </ThemedText>
+        </Card>
+      )}
 
       {seriesRows.length > 0 && (
         <SegmentedControl
@@ -362,6 +370,33 @@ export default function SessionDetailScreen() {
       {view === 'stats' && seriesRows.length > 0 ? (
         <Card testID="session-stats-view">
           <ThemedText type="smallBold" themeColor="textSecondary">
+            {t('stats.statsPerSeriesTitle')}
+          </ThemedText>
+          <View style={styles.metricRow}>
+            <MetricTile
+              testID="session-stat-series-mean"
+              label={t('stats.statsSeriesMean')}
+              value={
+                stats.seriesMeanTenths === null
+                  ? '–'
+                  : tenthsToScore(stats.seriesMeanTenths).toFixed(2)
+              }
+            />
+            <MetricTile
+              testID="session-stat-series-sd"
+              label={t('stats.statsSeriesSd')}
+              value={
+                stats.seriesSdTenths === null ? '–' : tenthsToScore(stats.seriesSdTenths).toFixed(2)
+              }
+            />
+            <MetricTile
+              testID="session-stat-series-count"
+              label={t('stats.statsSeriesCount')}
+              value={String(stats.seriesCount)}
+            />
+          </View>
+
+          <ThemedText type="smallBold" themeColor="textSecondary">
             {t('stats.statsPerShotTitle')}
           </ThemedText>
           <View style={styles.metricRow}>
@@ -407,23 +442,28 @@ export default function SessionDetailScreen() {
 
           <View>
             <ThemedText type="smallBold">{t('stats.comparisonTitle')}</ThemedText>
-            {stats.comparison?.previousMeanTenths == null ? (
+            {stats.comparison?.previousSeriesMeanTenths == null ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {t('stats.comparisonNotEnough')}
               </ThemedText>
             ) : (
-              <View style={styles.resultsRow}>
-                <StatTile
-                  testID="comparison-recent"
-                  label={t('stats.comparisonRecent')}
-                  value={tenthsToScore(stats.comparison.recentMeanTenths ?? 0).toFixed(2)}
-                />
-                <StatTile
-                  testID="comparison-previous"
-                  label={t('stats.comparisonPrevious')}
-                  value={tenthsToScore(stats.comparison.previousMeanTenths).toFixed(2)}
-                />
-              </View>
+              <>
+                <View style={styles.resultsRow}>
+                  <StatTile
+                    testID="comparison-recent"
+                    label={t('stats.comparisonRecent')}
+                    value={tenthsToScore(stats.comparison.recentSeriesMeanTenths ?? 0).toFixed(2)}
+                  />
+                  <StatTile
+                    testID="comparison-previous"
+                    label={t('stats.comparisonPrevious')}
+                    value={tenthsToScore(stats.comparison.previousSeriesMeanTenths).toFixed(2)}
+                  />
+                </View>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('stats.comparisonHint')}
+                </ThemedText>
+              </>
             )}
           </View>
 
@@ -440,7 +480,9 @@ export default function SessionDetailScreen() {
       ) : (
         <>
           {seriesRows.length === 0 ? (
-            <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+            isRoundsSession ? null : (
+              <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+            )
           ) : (
             <Card>
               {mainRows.length > 0 && finalRows.length > 0 && (
@@ -458,7 +500,7 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
-          {!detail.isFixedFormat && (
+          {!detail.isFixedFormat && !isRoundsSession && (
             <Card>
               <PrimaryButton
                 label={t('session.addSeries')}
@@ -475,7 +517,7 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
-          {seriesRows.length > 0 && (
+          {!isRoundsSession && seriesRows.length > 0 && (
             <Card>
               <PrimaryButton
                 label={t('photoScoring.scanTarget')}

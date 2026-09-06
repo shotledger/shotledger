@@ -1,6 +1,12 @@
 // Series entry (§4 M3): the ScoreKeypad bound to one series. All keypad
 // behaviour lives in shared/scoring/entry.ts; this screen seeds the state
 // from the stored shots, persists on save, and offers the per-series photo.
+//
+// A series reached via "Add Series" (`?new=1`) does not exist in the database
+// yet — it is created here, by Save, and only when there is something to
+// record. Creating it up front left an orphaned "Series N · 0" row behind
+// every time the user backed out without saving (maintainer, verified live
+// 2026-09-03).
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +21,12 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { saveSeriesShots } from '@/db/queries/round-count';
-import { SighterLimitExceededError, setSeriesSighter, updateSeries } from '@/db/queries/series';
+import {
+  addSeries,
+  SighterLimitExceededError,
+  setSeriesSighter,
+  updateSeries,
+} from '@/db/queries/series';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
@@ -24,11 +35,20 @@ import { Spacing } from '@/theme/tokens';
 export default function SeriesEntryScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos } = useLocalSearchParams<{ id: string; pos: string }>();
+  const { id, pos, final } = useLocalSearchParams<{
+    id: string;
+    pos: string;
+    new?: string;
+    final?: string;
+  }>();
   const position = Number(pos);
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
+  // "Not saved yet" is the absence of a row, not the `?new=1` flag — coming
+  // back to a series that was saved on a previous visit must edit it in place.
+  const isUnsaved = row == null;
+  const isFinal = row?.isFinal ?? final === '1';
 
   const [state, setState] = useState<KeypadState>(() =>
     createKeypadState({
@@ -55,9 +75,11 @@ export default function SeriesEntryScreen() {
   // programs pre-create their series to match the skeleton, so the choice
   // isn't offered there at all.
   const otherSeriesHasSighter = detail.seriesRows.some(
-    (other) => other.id !== row?.id && other.isFinal === row?.isFinal && other.isSighter,
+    (other) => other.id !== row?.id && other.isFinal === isFinal && other.isSighter,
   );
-  const showSighterOption = !detail.isFixedFormat && row != null && !otherSeriesHasSighter;
+  const showSighterOption = !detail.isFixedFormat && !otherSeriesHasSighter;
+
+  const guldThreshold = row ? row.guldThreshold : detail.guldThreshold;
 
   async function onAttachPhoto() {
     const uri = await pickSeriesPhoto();
@@ -65,38 +87,68 @@ export default function SeriesEntryScreen() {
       Alert.alert(t('session.photoPermissionDenied'));
       return;
     }
-    if (uri && db && row) {
-      setPhotoUri(uri);
-      updateSeries(db, row.id, { photoUri: uri });
-    }
+    if (!uri) return;
+    setPhotoUri(uri);
+    // An unsaved series has no row to patch — the picked photo rides along
+    // with the row Save creates.
+    if (db && row) updateSeries(db, row.id, { photoUri: uri });
   }
 
   function onSave() {
-    if (db && row) {
-      saveSeriesShots(
-        db,
-        row.id,
-        enteredShots(state).map((shot) => ({
-          valueTenths: shot.valueTenths,
-          isInnerTen: shot.isInnerTen,
-        })),
-      );
-      if (isSighter !== (row.isSighter ?? false)) {
-        try {
-          setSeriesSighter(db, row.id, isSighter);
-        } catch (error) {
-          // The UI already hides the option once another series holds the
-          // section's sighter, so this is a defensive fallback, not the
-          // normal path.
-          if (error instanceof SighterLimitExceededError) {
-            Alert.alert(t('session.sighterUsed'));
-            router.back();
-            return;
-          }
-          throw error;
+    if (!db) {
+      router.back();
+      return;
+    }
+
+    const shots = enteredShots(state).map((shot) => ({
+      valueTenths: shot.valueTenths,
+      isInnerTen: shot.isInnerTen,
+    }));
+
+    let seriesId = row?.id;
+    if (seriesId === undefined) {
+      // Nothing entered, nothing to keep: saving a blank new series would
+      // recreate exactly the empty row this flow exists to avoid.
+      if (shots.length === 0 && photoUri === null && !isSighter) {
+        router.back();
+        return;
+      }
+      try {
+        seriesId = addSeries(db, {
+          sessionId: id,
+          position,
+          isFinal,
+          isSighter,
+          photoUri,
+        }).id;
+      } catch (error) {
+        if (error instanceof SighterLimitExceededError) {
+          Alert.alert(t('session.sighterUsed'));
+          router.back();
+          return;
         }
+        throw error;
       }
     }
+
+    saveSeriesShots(db, seriesId, shots);
+
+    if (row && isSighter !== (row.isSighter ?? false)) {
+      try {
+        setSeriesSighter(db, row.id, isSighter);
+      } catch (error) {
+        // The UI already hides the option once another series holds the
+        // section's sighter, so this is a defensive fallback, not the
+        // normal path.
+        if (error instanceof SighterLimitExceededError) {
+          Alert.alert(t('session.sighterUsed'));
+          router.back();
+          return;
+        }
+        throw error;
+      }
+    }
+
     router.back();
   }
 
@@ -115,9 +167,9 @@ export default function SeriesEntryScreen() {
         </View>
       </View>
 
-      {row?.guldThreshold != null && !isSighter && (
+      {guldThreshold != null && !isSighter && (
         <ThemedText type="small" themeColor="textSecondary" testID="guld-hint">
-          {t('session.guldAt', { points: row.guldThreshold })}
+          {t('session.guldAt', { points: guldThreshold })}
         </ThemedText>
       )}
 
@@ -137,12 +189,10 @@ export default function SeriesEntryScreen() {
       )}
 
       <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />
-      {row && row.shots.length > 0 && (
-        <PrimaryButton
-          label={t('share.shareSeries')}
-          onPress={() => router.push(`/session/${id}/share?series=${position}`)}
-          testID="share-series"
-        />
+      {isUnsaved && (
+        <ThemedText type="small" themeColor="textSecondary" testID="unsaved-series-hint">
+          {t('session.newSeriesHint')}
+        </ThemedText>
       )}
     </Screen>
   );

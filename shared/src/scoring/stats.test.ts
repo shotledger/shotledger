@@ -9,7 +9,10 @@ import {
   guldserieCount,
   meanTenths,
   sampleStandardDeviationTenths,
+  scoredSeriesTotalsTenths,
   scoredShots,
+  seriesMeanTenths,
+  seriesSdTenths,
   sessionTrend,
   volumeShotCount,
   xCount,
@@ -208,6 +211,78 @@ describe('sessionTrend', () => {
   });
 });
 
+describe('per-series score math', () => {
+  const fiveShots = (perShotTenths: number) => Array(5).fill(shot(perShotTenths));
+
+  it('averages series totals, not shot values', () => {
+    // 45p and 43p (in tenths) — mean 44.0p, which is what the session
+    // header's "Avg/Series" shows and what the Stats tab must lead with.
+    const list = [
+      series({ id: 's1', shots: [...fiveShots(90)] }),
+      series({ id: 's2', shots: [shot(90), shot(90), shot(90), shot(80), shot(80)] }),
+    ];
+    expect(scoredSeriesTotalsTenths(list)).toEqual([450, 430]);
+    expect(seriesMeanTenths(list)).toBe(440);
+  });
+
+  it('excludes sighter series', () => {
+    const list = [
+      series({ id: 'sighter', isSighter: true, shots: fiveShots(20) }),
+      series({ id: 's1', shots: fiveShots(90) }),
+    ];
+    expect(scoredSeriesTotalsTenths(list)).toEqual([450]);
+    expect(seriesMeanTenths(list)).toBe(450);
+  });
+
+  it('includes final series alongside the main round', () => {
+    const list = [
+      series({ id: 's1', shots: fiveShots(90) }),
+      series({ id: 'f1', isFinal: true, shots: fiveShots(80) }),
+    ];
+    expect(seriesMeanTenths(list)).toBe(425);
+  });
+
+  it('omits a scored series with no shots entered yet rather than counting it as 0', () => {
+    const list = [series({ id: 's1', shots: fiveShots(90) }), series({ id: 'empty', shots: [] })];
+    expect(scoredSeriesTotalsTenths(list)).toEqual([450]);
+    expect(seriesMeanTenths(list)).toBe(450);
+  });
+
+  it('uses an override series stored total (WS1), which has no shot rows', () => {
+    const list = [
+      series({ id: 'ws', shots: [], totalOverride: { tenths: 470, shotCount: 5 } }),
+      series({ id: 's1', shots: fiveShots(90) }),
+    ];
+    expect(scoredSeriesTotalsTenths(list)).toEqual([470, 450]);
+    expect(seriesMeanTenths(list)).toBe(460);
+  });
+
+  it('is null when nothing qualifies', () => {
+    expect(scoredSeriesTotalsTenths([])).toEqual([]);
+    expect(seriesMeanTenths([])).toBeNull();
+    expect(
+      seriesMeanTenths([series({ id: 'sighter', isSighter: true, shots: fiveShots(90) })]),
+    ).toBeNull();
+  });
+
+  it('seriesSdTenths is the sample SD of the series totals', () => {
+    // Totals 400, 450, 500 -> sample SD 50 (n-1 denominator), which is a
+    // different number from the SD of the pooled shot values.
+    const list = [
+      series({ id: 's1', shots: fiveShots(80) }),
+      series({ id: 's2', shots: fiveShots(90) }),
+      series({ id: 's3', shots: fiveShots(100) }),
+    ];
+    expect(seriesSdTenths(list)).toBe(50);
+    expect(sampleStandardDeviationTenths(scoredShots(list))).toBeCloseTo(8.4515, 3);
+  });
+
+  it('seriesSdTenths is null with fewer than two series', () => {
+    expect(seriesSdTenths([])).toBeNull();
+    expect(seriesSdTenths([series({ id: 's1', shots: fiveShots(90) })])).toBeNull();
+  });
+});
+
 describe('compareRecentSeries', () => {
   // 10 series, one shot each, chronological, values 80..98 step 2.
   const values = [80, 82, 84, 86, 88, 90, 92, 94, 96, 98];
@@ -229,6 +304,12 @@ describe('compareRecentSeries', () => {
       recentMeanTenths: 95,
       previousMeanTenths: 87,
       deltaTenths: 8,
+      // One shot per series in this fixture, so the series-level figures
+      // coincide with the per-shot ones — the windowing is what is under
+      // test here; the series/shot split has its own cases below.
+      recentSeriesMeanTenths: 95,
+      previousSeriesMeanTenths: 87,
+      deltaSeriesTenths: 8,
       recentCount: 4,
       previousCount: 4,
     });
@@ -258,6 +339,12 @@ describe('compareRecentSeries', () => {
       recentMeanTenths: 95,
       previousMeanTenths: 87,
       deltaTenths: 8,
+      // One shot per series in this fixture, so the series-level figures
+      // coincide with the per-shot ones — the windowing is what is under
+      // test here; the series/shot split has its own cases below.
+      recentSeriesMeanTenths: 95,
+      previousSeriesMeanTenths: 87,
+      deltaSeriesTenths: 8,
       recentCount: 4,
       previousCount: 4,
     });
@@ -274,6 +361,58 @@ describe('compareRecentSeries', () => {
     expect(result.previousCount).toBe(0);
     expect(result.previousMeanTenths).toBeNull();
     expect(result.deltaTenths).toBeNull();
+    expect(result.previousSeriesMeanTenths).toBeNull();
+    expect(result.deltaSeriesTenths).toBeNull();
+  });
+
+  it('compares series scores, not shot values, at series level', () => {
+    // Four 5-shot series: two old at 40p, two recent at 45p. The per-shot
+    // mean moves 80 -> 90 tenths; the per-series mean moves 400 -> 450.
+    const fiveShots = (perShotTenths: number) => Array(5).fill(shot(perShotTenths));
+    const four = [80, 80, 90, 90].map((v, i) =>
+      series({
+        id: `p${i}`,
+        startedAt: `2026-02-0${i + 1}T00:00:00.000Z`,
+        shots: fiveShots(v),
+      }),
+    );
+    const result = compareRecentSeries(
+      four,
+      { disciplineId: 'spsf-precision', shooterClass: '2' },
+      2,
+    );
+    expect(result.recentMeanTenths).toBe(90);
+    expect(result.previousMeanTenths).toBe(80);
+    expect(result.recentSeriesMeanTenths).toBe(450);
+    expect(result.previousSeriesMeanTenths).toBe(400);
+    expect(result.deltaSeriesTenths).toBe(50);
+  });
+
+  it('windows of unequal series length shift the two means differently', () => {
+    // A 10-shot series and a 5-shot series at the same per-shot average:
+    // identical per-shot means, but the series means differ 2:1 — the case
+    // the per-shot reading was hiding.
+    const long = series({
+      id: 'long',
+      startedAt: '2026-03-01T00:00:00.000Z',
+      shots: Array(10).fill(shot(90)),
+    });
+    const short = series({
+      id: 'short',
+      startedAt: '2026-03-02T00:00:00.000Z',
+      shots: Array(5).fill(shot(90)),
+    });
+    const result = compareRecentSeries(
+      [long, short],
+      { disciplineId: 'spsf-precision', shooterClass: '2' },
+      1,
+    );
+    expect(result.recentMeanTenths).toBe(90);
+    expect(result.previousMeanTenths).toBe(90);
+    expect(result.deltaTenths).toBe(0);
+    expect(result.recentSeriesMeanTenths).toBe(450);
+    expect(result.previousSeriesMeanTenths).toBe(900);
+    expect(result.deltaSeriesTenths).toBe(-450);
   });
 
   it('sorts input chronologically regardless of array order', () => {
@@ -289,6 +428,12 @@ describe('compareRecentSeries', () => {
       recentMeanTenths: 95,
       previousMeanTenths: 87,
       deltaTenths: 8,
+      // One shot per series in this fixture, so the series-level figures
+      // coincide with the per-shot ones — the windowing is what is under
+      // test here; the series/shot split has its own cases below.
+      recentSeriesMeanTenths: 95,
+      previousSeriesMeanTenths: 87,
+      deltaSeriesTenths: 8,
       recentCount: 4,
       previousCount: 4,
     });
@@ -306,6 +451,27 @@ describe('compareRecentSeries', () => {
       100,
     );
     expect(withDefault).toEqual(withExplicit100);
+  });
+
+  it('B27b: a recent window with no scored data yields no delta, both per-shot and per-series', () => {
+    // scoredSeries() drops only sighters, so a series with no shots still
+    // reaches the recent window while the previous window has scores. Both
+    // sides of the delta need guarding, not just the previous one.
+    const pair = [
+      series({ id: 'r0', startedAt: '2026-03-01T00:00:00.000Z', shots: [shot(90), shot(90)] }),
+      series({ id: 'r1', startedAt: '2026-03-02T00:00:00.000Z', shots: [] }),
+    ];
+    const result = compareRecentSeries(
+      pair,
+      { disciplineId: 'spsf-precision', shooterClass: '2' },
+      1,
+    );
+    expect(result.recentMeanTenths).toBeNull();
+    expect(result.previousMeanTenths).toBe(90);
+    expect(result.deltaTenths).toBeNull();
+    expect(result.recentSeriesMeanTenths).toBeNull();
+    expect(result.previousSeriesMeanTenths).toBe(180);
+    expect(result.deltaSeriesTenths).toBeNull();
   });
 });
 
