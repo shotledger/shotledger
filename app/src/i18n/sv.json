@@ -123,8 +123,6 @@
     },
     "exportVaultNote": "Endast dina egna data — valvet ingår aldrig i en export.",
     "statsPerShotTitle": "Per skott",
-    "statsSumTitle": "Hela passet",
-    "statsTotalShots": "Skott totalt",
     "statsPerSeriesTitle": "Per serie",
     "statsSeriesMean": "Medel",
     "statsSeriesSd": "Std.avv.",

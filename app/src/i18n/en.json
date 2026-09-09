@@ -123,8 +123,6 @@
     },
     "exportVaultNote": "Your own data only — the vault is never part of an export.",
     "statsPerShotTitle": "Per Shot",
-    "statsSumTitle": "Whole Session",
-    "statsTotalShots": "Total Shots",
     "statsPerSeriesTitle": "Per Series",
     "statsSeriesMean": "Mean",
     "statsSeriesSd": "SD",

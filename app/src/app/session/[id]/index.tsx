@@ -215,46 +215,51 @@ export default function SessionDetailScreen() {
       <WebShooterSessionBadge session={session} />
 
       <Card style={styles.metricCard}>
-        <View style={styles.metricRow}>
-          {results.hasFinal && (
-            <>
-              <MetricTile
-                label={t('session.beforeFinal')}
-                value={String(tenthsToScore(results.beforeFinalTenths))}
-                testID="result-before-final"
-              />
-              <MetricTile
-                label={t('session.final')}
-                value={String(tenthsToScore(results.finalTenths))}
-                testID="result-final"
-              />
-            </>
-          )}
-          <MetricTile
-            label={t('session.total')}
-            value={String(tenthsToScore(results.totalTenths))}
-            testID="session-total"
-          />
-          <MetricTile
-            label={t('session.seriesAverage')}
-            value={
+        {metricRows([
+          ...(results.hasFinal
+            ? [
+                {
+                  label: t('session.beforeFinal'),
+                  value: String(tenthsToScore(results.beforeFinalTenths)),
+                  testID: 'result-before-final',
+                },
+                {
+                  label: t('session.final'),
+                  value: String(tenthsToScore(results.finalTenths)),
+                  testID: 'result-final',
+                },
+              ]
+            : []),
+          {
+            label: t('session.total'),
+            value: String(tenthsToScore(results.totalTenths)),
+            testID: 'session-total',
+          },
+          {
+            label: t('session.seriesAverage'),
+            value:
               detail.seriesAverageTenths === null
-                ? '–'
-                : tenthsToScore(detail.seriesAverageTenths).toFixed(1)
-            }
-            testID="session-series-average"
-          />
-          <MetricTile
-            label={t('session.innerTenCount')}
-            value={String(detail.innerTenCount)}
-            testID="session-inner-ten-count"
-          />
-          <MetricTile
-            label={t('session.innerTenAverage')}
-            value={detail.innerTenAverage === null ? '–' : detail.innerTenAverage.toFixed(1)}
-            testID="session-inner-ten-average"
-          />
-        </View>
+                ? '\u2013'
+                : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
+            testID: 'session-series-average',
+          },
+          {
+            label: t('session.innerTenCount'),
+            value: String(detail.innerTenCount),
+            testID: 'session-inner-ten-count',
+          },
+          {
+            label: t('session.innerTenAverage'),
+            value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
+            testID: 'session-inner-ten-average',
+          },
+        ]).map((row, index) => (
+          <View key={index} style={styles.metricRow}>
+            {row.map((tile) => (
+              <MetricTile key={tile.testID} {...tile} />
+            ))}
+          </View>
+        ))}
       </Card>
 
       {isRoundsSession && (
@@ -421,20 +426,10 @@ export default function SessionDetailScreen() {
             />
           </View>
 
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            {t('stats.statsSumTitle')}
-          </ThemedText>
-          <View style={styles.metricRow}>
-            {/* No Total Points tile: it is the same number as the result
-                card's `session-total` above the tab selector, by a second
-                code path (maintainer, third review: "redundant"). */}
-            <MetricTile
-              testID="session-stat-total-shots"
-              label={t('stats.statsTotalShots')}
-              value={String(stats.shotCount)}
-            />
-          </View>
-
+          {/* No "Whole Session" block: its Total Points was the result card's
+              `session-total` by a second code path, and its Total Shots is the
+              count now in the distribution heading below (maintainer, third
+              review, both called redundant). */}
           {stats.distribution.length > 0 && (
             <View>
               <ThemedText type="smallBold">
@@ -538,6 +533,19 @@ export default function SessionDetailScreen() {
       )}
     </Screen>
   );
+}
+
+/**
+ * Rows for the results card. Four tiles fit one line down to a 320 dp phone,
+ * but a session with a final carries six, which do not — laying those out as
+ * a balanced 3 + 3 beats the ragged 5 + 1 that `flexWrap` produces on its own
+ * (found on device, third review).
+ */
+function metricRows<T>(tiles: readonly T[]): T[][] {
+  if (tiles.length <= 4) return [[...tiles]];
+  const rows: T[][] = [];
+  for (let i = 0; i < tiles.length; i += 3) rows.push(tiles.slice(i, i + 3));
+  return rows;
 }
 
 /**
