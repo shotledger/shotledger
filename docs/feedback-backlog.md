@@ -740,6 +740,21 @@ a standalone build onto the maintainer's phone.
       in a release build — **never set for a Play build; it ships a wipe
       button**.
 
+## 15. Sixth review (2026-09-10)
+
+- [ ] **A preset list of calibers, with recent/most-used first.** Maintainer:
+      _"Can we add a preset list of calibers? And when we show it always show
+      recent/most used on top?"_ Caliber is free text today on both `firearms`
+      and `ammo_lots`, which is why the demo fixture alone spells things three
+      ways (`.22 LR`, `9×19 mm`, `4.5 mm`). Notes for whoever builds it: - **Free text must survive.** A preset list that cannot express an
+      unusual chambering is worse than none; the picker offers presets and
+      still accepts anything typed. - **"Most used" comes from the user's own rows**, counted across firearms
+      and ammo lots — no new column, no new table. - **International by design** (plan.md principle): the list cannot be
+      SPSF-only or Sweden-only, and both metric and imperial naming have to
+      appear the way shooters actually write them. - Canonical spelling is the real value here: `9×19` vs `9x19` vs
+      `9 mm Luger` are one caliber, and free text makes them three. Whatever
+      the presets say becomes the de facto standard, so pick deliberately.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
