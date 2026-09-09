@@ -695,49 +695,36 @@
   },
   "faltTimer": {
     "modes": {
-      "competition": "Competition",
-      "training": "Training"
+      "rangeOfficer": "Range Officer",
+      "solo": "Solo"
     },
-    "prepTime": "Preparation time before ALLA KLARA (s)",
-    "decreasePrep": "Decrease the preparation time",
-    "increasePrep": "Increase the preparation time",
-    "shootingTime": "Shooting Time (s)",
-    "decreaseShooting": "Decrease the shooting time",
-    "increaseShooting": "Increase the shooting time",
+    "modeHint": {
+      "rangeOfficer": "Ladda is called, then you press when the shooters are ready — nothing in between is on a clock. The second press starts the automatic countdown.",
+      "solo": "Automatic from Ladda, for timing yourself."
+    },
+    "shootingTime": "Shooting Time",
+    "laddaTime": "Time Between Ladda and Alla klara",
     "seconds": "{{value}} s",
-    "events": "Partier (stages within the series)",
-    "eventsHint": "Add whole seconds inside the shooting time — each boundary gives a short beep and a vibration. The numbers above the timeline are the seconds between boundaries.",
-    "eventNumber": "Parti {{number}}",
-    "decreaseEvent": "Move the boundary earlier",
-    "increaseEvent": "Move the boundary later",
-    "addEvent": "Add a Boundary",
-    "removeEvent": "Remove the Last Boundary",
-    "whistle": "Whistle Signal Instead of a Spoken ELD UPPHÖR",
+    "secondsRange": "{{from}}–{{to}} s",
+    "onPress": "on press",
+    "partier": "Partier (Stages Within the Series)",
+    "partierHint": "Whole seconds inside the shooting time — each boundary gives a short beep. The numbers above the timeline are the seconds between boundaries.",
+    "decreaseParti": "Move the boundary earlier",
+    "increaseParti": "Move the boundary later",
+    "addParti": "Add a boundary",
+    "removeParti": "Remove the last boundary",
+    "whistle": "Whistle Signal Instead of a Spoken Eld upphör",
+    "vibration": "Vibrate at Eld, Each Parti and When Time Is Up",
     "spokenPrompts": "Spoken Prompts",
-    "sourceNote": "Commands and timings per SHB 2026 D.6.2 p. 88. ELD UPPHÖR is drawn out over 3 s and ends exactly when the shooting time runs out.",
+    "sourceNote": "Commands and timings per SHB 2026 D.6.2 p. 88, on a timeline anchored at Eld (t = 0). Eld upphör is drawn out over the last 3 s so it ends exactly when the shooting time runs out.",
+    "pressHint": "Press when everyone is ready.",
+    "allaKlaraButton": "Alla klara?",
+    "startCountdownButton": "Tio sekunder kvar!",
     "start": "Start",
     "pause": "Pause",
     "resume": "Resume",
-    "reset": "Reset",
-    "markera": "Markera! (score the targets)",
-    "state": {
-      "idle": "Ready to Start",
-      "prep": "Loading",
-      "ready": "Alla klara? (all ready?)",
-      "shooting": "ELD (fire)",
-      "clearing": "Unload / Inspection",
-      "done": "Markera"
-    },
-    "commands": {
-      "ladda": "Ladda! (load)",
-      "allaKlara": "Alla klara? (all ready?)",
-      "tenSeconds": "Tio sekunder kvar! (ten seconds left)",
-      "fardiga": "Färdiga! (ready)",
-      "eld": "Eld! (fire)",
-      "eldUpphor": "Eld upphör! (cease fire)",
-      "patronUr": "Patron ur! Proppa vapen! (unload, plug the gun)",
-      "visitation": "Visitation! (inspection)"
-    }
+    "restart": "Restart",
+    "settings": "Settings"
   },
   "vault": {
     "title": "Vault",

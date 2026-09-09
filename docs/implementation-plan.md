@@ -987,9 +987,14 @@ restates §0 rules 1–6 verbatim.
 > picked with a segmented control ("PAR-timer" / "Skottimer (mik)" /
 > "Fält"). The fälttimer plays the SHB 2026 D.6.2 p. 88 command sequence
 > (LADDA → ALLA KLARA → 10 SEKUNDER KVAR → FÄRDIGA → ELD → the prolonged
-> ELD UPPHÖR → PATRON UR → VISITATION → MARKERA on tap), with user-set
-> preparation and shooting times and parti boundaries on the timeline; its
-> commands are spoken in sv-SE regardless of the UI language. Only that
+> ELD UPPHÖR → PATRON UR → VISITATION), with user-set shooting time and
+> parti boundaries on the timeline; its commands are Swedish, spoken and
+> on screen, regardless of the UI language. **Reworked 2026-09-09**
+> (`feat/field-timer-rework`): the timeline is anchored at ELD (t = 0,
+> preparatory commands at negative seconds), it has a range-officer mode
+> where LADDA and ALLA KLARA are button presses and a solo mode that is
+> automatic from LADDA, each command is numbered and marked on the
+> timeline, and MARKERA was dropped — see plan.md's Timers block. Only that
 > branch added dependencies — `expo-speech` and `expo-haptics`, both
 > maintainer-approved 2026-09-02, behind `app/src/platform/speech.ts` and
 > `app/src/platform/haptics.ts`; speech also gave the IPSC prompts a voice,

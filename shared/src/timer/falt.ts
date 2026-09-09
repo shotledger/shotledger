@@ -1,33 +1,54 @@
 // Fälttimer — the range officer's command sequence for fältskjutning
-// (plan.md "Timers"/"Fälttimer"). Pure: a plan builder that turns the
-// user's settings into a list of cues at absolute times, plus a cursor
-// engine over that plan. No RN/audio/speech imports — the app layer maps
-// each cue to speech (expo-speech), a tone and a vibration.
+// (plan.md "Timers"/"Fälttimer"). Pure: a program builder that turns the
+// user's settings into a numbered list of commands at times **relative to
+// ELD**, plus a cursor engine over that program. No RN/audio/speech imports —
+// the app layer maps each cue to speech, a tone and a vibration.
+//
+// **t = 0 is ELD.** Preparatory commands sit at negative times and the firing
+// period runs positive, which is how the sequence is actually described on
+// the line ("tio sekunder kvar" = t −10). The two anchors that follow from it
+// and that the tests pin: TIO SEKUNDER KVAR at exactly −10, and ELD UPPHÖR
+// *starting* at T−3 so the drawn-out call ends exactly at T.
 //
 // Commands and their timings are SHB 2026 D.6.2 p. 88 ("Kommandoord"):
 // LADDA ca 30 s före ALLA KLARA, 10 SEKUNDER KVAR 10 s före ELD, FÄRDIGA
-// 3 s före seriens början, ELD UPPHÖR "utdrages under 3 sek" (i.e. the
-// call *begins* 3 s before the shooting time runs out and ends exactly at
-// its end), PATRON UR/PROPPA VAPEN efter skjuttidens slut, then
-// VISITATION and MARKERA.
+// 3 s före seriens början, ELD UPPHÖR "utdrages under 3 sek", PATRON UR/
+// PROPPA VAPEN efter skjuttidens slut, then VISITATION. SHB gives no interval
+// for ALLA KLARA itself; the ~5 s before TIO SEKUNDER KVAR is the maintainer's
+// (2026-09-09), so shooters can announce that they are not ready.
 
-/** Competition starts at LADDA with a preparation countdown; training starts at ALLA KLARA. */
-export type FaltMode = 'competition' | 'training';
+/**
+ * Who is running the sequence.
+ *
+ * - `rangeOfficer` — LADDA and ALLA KLARA are given by a button press, because
+ *   how long the shooters need is the range officer's judgement, not a timer's.
+ *   The clock only takes over at TIO SEKUNDER KVAR (t −10).
+ * - `solo` — one shooter timing themselves: automatic from LADDA, with a
+ *   settable LADDA → ALLA KLARA gap that only this mode has.
+ */
+export type FaltMode = 'rangeOfficer' | 'solo';
 
-export const DEFAULT_PREP_SECONDS = 30;
-export const MIN_PREP_SECONDS = 10;
-export const MAX_PREP_SECONDS = 90;
+/** LADDA → ALLA KLARA, solo mode only (SHB: "ca 30 s före ALLA KLARA"). */
+export const DEFAULT_LADDA_SECONDS = 30;
+export const MIN_LADDA_SECONDS = 5;
+export const MAX_LADDA_SECONDS = 90;
 
 export const DEFAULT_SHOOTING_SECONDS = 8;
 export const MIN_SHOOTING_SECONDS = 3;
 export const MAX_SHOOTING_SECONDS = 300;
+/**
+ * Where the shooting-time slider ends. Every ordinary fält station is inside
+ * it; a 3–300 s slider would be a fifth of a pixel per second and unusable for
+ * the 6–15 s that are actually shot. Longer times stay legal in the model — a
+ * stored one still runs — they just are not dialled in by dragging.
+ */
+export const MAX_SHOOTING_SLIDER_SECONDS = 60;
 
-/** One-tap shooting times offered in the UI. Ordinary fältskjutning series are short; the longer ones cover magnum/precision stations. */
-export const SHOOTING_TIME_PRESETS: readonly number[] = [6, 8, 10, 12, 15, 20, 30];
-
-/** ALLA KLARA → ELD (SHB: "10 sekunder före ELD"). */
-export const READY_COUNTDOWN_SECONDS = 10;
-/** FÄRDIGA lead before ELD (SHB: "3 sekunder före seriens början"). */
+/** ALLA KLARA → TIO SEKUNDER KVAR, so shooters can say they are not ready. */
+export const ALLA_KLARA_LEAD_SECONDS = 5;
+/** TIO SEKUNDER KVAR before ELD (SHB: "10 sekunder före ELD"). */
+export const TEN_SECONDS_LEAD_SECONDS = 10;
+/** FÄRDIGA before ELD (SHB: "3 sekunder före seriens början"). */
 export const FARDIGA_LEAD_SECONDS = 3;
 /** ELD UPPHÖR is drawn out over the last 3 s of the shooting time (SHB: "utdrages under 3 sek"). */
 export const ELD_UPPHOR_LEAD_SECONDS = 3;
@@ -36,30 +57,43 @@ export const PATRON_UR_DELAY_SECONDS = 3;
 /** VISITATION! after PATRON UR. */
 export const VISITATION_DELAY_SECONDS = 4;
 
+/** ALLA KLARA's place on the ELD-anchored timeline: −15 s. */
+export const ALLA_KLARA_AT_SECONDS = -(TEN_SECONDS_LEAD_SECONDS + ALLA_KLARA_LEAD_SECONDS);
+
+/** One-tap shooting times offered in the UI. Ordinary fältskjutning series are short; the longer ones cover magnum/precision stations. */
+export const SHOOTING_TIME_PRESETS: readonly number[] = [6, 8, 10, 12, 15, 20, 30];
+
 /** Speech rate multiplier for the drawn-out ELD UPPHÖR (1 = normal). */
 export const ELD_UPPHOR_SPEECH_RATE = 0.55;
 
-export type FaltCueKind =
+/** A numbered step of the sequence. */
+export type FaltCommandKind =
   | 'ladda'
   | 'allaKlara'
   | 'tenSeconds'
   | 'fardiga'
   | 'eld'
-  /** The prolonged "Eld upphör!" call begins (shooting end − 3 s). */
-  | 'eldUpphor'
-  /** The shooting time is over — the moment the prolonged call ends. */
-  | 'ceaseFire'
-  | 'patronUr'
-  | 'visitation'
   /** A user-placed parti/delmoment boundary inside the shooting time. */
-  | 'event';
+  | 'parti'
+  /** The prolonged "Eld upphör!" call begins (T − 3 s) and ends at T. */
+  | 'eldUpphor'
+  | 'patronUr'
+  | 'visitation';
+
+/** `timeUp` is the tail of ELD UPPHÖR, not a command of its own — it carries no number. */
+export type FaltCueKind = FaltCommandKind | 'timeUp';
 
 /**
- * The Swedish command wording is SPSF-regulated (SHB D.6.2) and is spoken
- * in sv-SE whatever the app's UI language is — so it lives here as data,
- * not in the i18n catalogues (whose job is the *labels* around it).
+ * **Do not translate these, and do not move them into the i18n catalogues.**
+ * Decided with the maintainer 2026-09-09: the commands stay Swedish in both
+ * app languages, spoken and on screen, because they are what is actually
+ * called on the line at a Swedish match — an English "Load!" would be wrong,
+ * not helpful. The wording is SPSF-regulated (SHB D.6.2 p. 88) and is spoken
+ * in sv-SE whatever the UI language is. Hard rule 5 still holds for the chrome
+ * around them (screen title, buttons, settings labels), which is translated as
+ * usual.
  */
-export const FALT_COMMAND_TEXT: Record<Exclude<FaltCueKind, 'ceaseFire' | 'event'>, string> = {
+export const FALT_COMMAND_TEXT: Record<Exclude<FaltCommandKind, 'parti'>, string> = {
   ladda: 'Ladda!',
   allaKlara: 'Alla klara?',
   tenSeconds: 'Tio sekunder kvar!',
@@ -70,54 +104,72 @@ export const FALT_COMMAND_TEXT: Record<Exclude<FaltCueKind, 'ceaseFire' | 'event
   visitation: 'Visitation!',
 };
 
-/** MARKERA is untimed — given by tap after VISITATION, so it is not part of the plan's cues. */
-export const FALT_MARKERA_TEXT = 'Markera!';
+/**
+ * What to show (and speak) for one step. Swedish in both app languages: these
+ * are the words actually called on the line at a Swedish match — see
+ * `FALT_COMMAND_TEXT`. `timeUp` is the tail of the drawn-out ELD UPPHÖR and
+ * carries its text.
+ */
+export function faltCommandText(cue: Pick<FaltCue, 'kind' | 'partiNumber'>): string {
+  if (cue.kind === 'parti') return `Parti ${cue.partiNumber}`;
+  if (cue.kind === 'timeUp') return FALT_COMMAND_TEXT.eldUpphor;
+  return FALT_COMMAND_TEXT[cue.kind];
+}
 
-/** One cue at an absolute time on the plan's own clock (0 = the first command). */
+/** One step of the sequence: a numbered command, or the unnumbered `timeUp` marker. */
 export interface FaltCue {
   kind: FaltCueKind;
-  atMs: number;
-  /** Swedish command to speak, or undefined for the tone-only cues ('ceaseFire', 'event'). */
+  /** 1-based position in the on-screen numbered list; null for `timeUp`. */
+  number: number | null;
+  /** Seconds relative to ELD (t = 0), negative before it; null = untimed, given by a button press. */
+  atSeconds: number | null;
+  /** How long the call is drawn out: 3 s for ELD UPPHÖR so it ends exactly at T, 0 for everything else. */
+  durationSeconds: number;
+  /** Swedish command to speak; undefined for the wordless cues (`parti`, `timeUp`, the whistle variant). */
   speech?: string;
   /** Speech rate multiplier; only set where it differs from normal (the drawn-out ELD UPPHÖR). */
   speechRate?: number;
-  /** Whether the host should vibrate for this cue. */
+  /** 1-based parti number, for `parti` cues only. */
+  partiNumber?: number;
+  /** A vibration point — ELD, each parti, and when the time is up. The host still gates on the user's setting. */
   vibrate: boolean;
-  /** 1-based position of the parti boundary, for 'event' cues only. */
-  eventIndex?: number;
 }
 
 export interface FaltTimerSettings {
   mode: FaltMode;
-  /** LADDA → ALLA KLARA. Competition mode only; ignored in training. */
-  prepSeconds: number;
+  /** LADDA → ALLA KLARA. Solo mode only; forced to 0 in range-officer mode, where LADDA is a button press. */
+  laddaSeconds: number;
   shootingSeconds: number;
-  /** Whole seconds strictly inside the shooting window, ascending and unique. */
-  eventSeconds: readonly number[];
+  /** Parti boundaries: whole seconds strictly inside the shooting window, ascending and unique. */
+  partiSeconds: readonly number[];
   /** Replace the spoken "Eld upphör!" with a whistle-style tone (SHB: "kan ersättas med visselsignal"). */
   whistle: boolean;
+  /** Vibrate at ELD, at each parti, and when the time is up. */
+  vibration: boolean;
 }
 
 export const DEFAULT_FALT_SETTINGS: FaltTimerSettings = {
-  mode: 'competition',
-  prepSeconds: DEFAULT_PREP_SECONDS,
+  mode: 'rangeOfficer',
+  laddaSeconds: DEFAULT_LADDA_SECONDS,
   shootingSeconds: DEFAULT_SHOOTING_SECONDS,
-  eventSeconds: [],
+  partiSeconds: [],
   whistle: false,
+  vibration: true,
 };
 
-export interface FaltPlan {
-  /** The settings the plan was built from, normalized (events sorted, prep zeroed in training). */
+export interface FaltProgram {
+  /** The settings the program was built from, normalized. */
   settings: FaltTimerSettings;
+  /** Every numbered command, in the order it is given — the on-screen list. */
+  commands: readonly FaltCue[];
+  /** The button-press commands, in order. Empty in solo mode. */
+  manualCues: readonly FaltCue[];
+  /** The clock-driven cues, ascending, including the unnumbered `timeUp`. */
   cues: readonly FaltCue[];
-  /** ALLA KLARA. 0 in training mode. */
-  readyStartMs: number;
-  /** ELD — the start of the shooting time. */
-  eldAtMs: number;
-  /** End of the shooting time. */
-  shootingEndMs: number;
-  /** VISITATION, after which the plan waits for the untimed MARKERA tap. */
-  totalMs: number;
+  /** Where the clock starts: LADDA in solo mode, TIO SEKUNDER KVAR (−10) in range-officer mode. */
+  startSeconds: number;
+  /** VISITATION — the end of the program. */
+  endSeconds: number;
 }
 
 function requireIntegerInRange(value: number, min: number, max: number, name: string): void {
@@ -126,7 +178,7 @@ function requireIntegerInRange(value: number, min: number, max: number, name: st
   }
 }
 
-/** Validates and normalizes settings: sorts events, zeroes an unused prep time. */
+/** Validates and normalizes settings: sorts partier, zeroes an unused LADDA gap. */
 export function normalizeFaltSettings(settings: FaltTimerSettings): FaltTimerSettings {
   requireIntegerInRange(
     settings.shootingSeconds,
@@ -134,233 +186,303 @@ export function normalizeFaltSettings(settings: FaltTimerSettings): FaltTimerSet
     MAX_SHOOTING_SECONDS,
     'shootingSeconds',
   );
-  if (settings.mode === 'competition') {
-    requireIntegerInRange(settings.prepSeconds, MIN_PREP_SECONDS, MAX_PREP_SECONDS, 'prepSeconds');
+  if (settings.mode === 'solo') {
+    requireIntegerInRange(
+      settings.laddaSeconds,
+      MIN_LADDA_SECONDS,
+      MAX_LADDA_SECONDS,
+      'laddaSeconds',
+    );
   }
 
-  const events = [...settings.eventSeconds].sort((a, b) => a - b);
-  events.forEach((second, i) => {
+  const partier = [...settings.partiSeconds].sort((a, b) => a - b);
+  partier.forEach((second, i) => {
     if (!Number.isInteger(second) || second <= 0 || second >= settings.shootingSeconds) {
       throw new Error(
-        `eventSeconds must be whole seconds strictly inside the shooting time (0 < t < ${settings.shootingSeconds})`,
+        `partiSeconds must be whole seconds strictly inside the shooting time (0 < t < ${settings.shootingSeconds})`,
       );
     }
-    if (i > 0 && second === events[i - 1]) throw new Error('eventSeconds must be unique');
+    if (i > 0 && second === partier[i - 1]) throw new Error('partiSeconds must be unique');
   });
 
   return {
     mode: settings.mode,
-    prepSeconds: settings.mode === 'competition' ? settings.prepSeconds : 0,
+    laddaSeconds: settings.mode === 'solo' ? settings.laddaSeconds : 0,
     shootingSeconds: settings.shootingSeconds,
-    eventSeconds: events,
+    partiSeconds: partier,
     whistle: settings.whistle,
+    vibration: settings.vibration,
   };
 }
 
-function command(kind: Exclude<FaltCueKind, 'ceaseFire' | 'event'>, atMs: number): FaltCue {
-  return { kind, atMs, speech: FALT_COMMAND_TEXT[kind], vibrate: kind === 'eld' };
+function command(
+  kind: Exclude<FaltCommandKind, 'parti'>,
+  atSeconds: number | null,
+  vibrate = false,
+): FaltCue {
+  return {
+    kind,
+    number: 0, // assigned in build order below
+    atSeconds,
+    durationSeconds: 0,
+    speech: FALT_COMMAND_TEXT[kind],
+    vibrate,
+  };
 }
 
 /**
- * Builds the full command plan. Times are ms on the plan's own clock, with
- * 0 at the first command (LADDA in competition, ALLA KLARA in training).
+ * Builds the program. Times are seconds relative to ELD; `null` marks the two
+ * range-officer commands that wait for a press instead of the clock.
  */
-export function buildFaltPlan(settings: FaltTimerSettings): FaltPlan {
+export function buildFaltProgram(settings: FaltTimerSettings): FaltProgram {
   const normalized = normalizeFaltSettings(settings);
-  const readyStartMs = normalized.prepSeconds * 1_000;
-  const eldAtMs = readyStartMs + READY_COUNTDOWN_SECONDS * 1_000;
-  const shootingEndMs = eldAtMs + normalized.shootingSeconds * 1_000;
-  const patronUrMs = shootingEndMs + PATRON_UR_DELAY_SECONDS * 1_000;
-  const visitationMs = patronUrMs + VISITATION_DELAY_SECONDS * 1_000;
+  const { mode, laddaSeconds, shootingSeconds, partiSeconds, whistle, vibration } = normalized;
+  const manual = mode === 'rangeOfficer';
 
-  const cues: FaltCue[] = [];
-  if (normalized.mode === 'competition') cues.push(command('ladda', 0));
-  cues.push(command('allaKlara', readyStartMs));
-  // SHB puts "10 SEKUNDER KVAR" 10 s before ELD, i.e. immediately after
-  // ALLA KLARA — the host speaks them back to back.
-  cues.push(command('tenSeconds', readyStartMs));
-  cues.push(command('fardiga', eldAtMs - FARDIGA_LEAD_SECONDS * 1_000));
-  cues.push(command('eld', eldAtMs));
+  const laddaAt = manual ? null : ALLA_KLARA_AT_SECONDS - laddaSeconds;
+  const allaKlaraAt = manual ? null : ALLA_KLARA_AT_SECONDS;
+  const eldUpphorAt = Math.max(0, shootingSeconds - ELD_UPPHOR_LEAD_SECONDS);
+  const patronUrAt = shootingSeconds + PATRON_UR_DELAY_SECONDS;
+  const visitationAt = patronUrAt + VISITATION_DELAY_SECONDS;
 
-  normalized.eventSeconds.forEach((second, i) => {
-    cues.push({ kind: 'event', atMs: eldAtMs + second * 1_000, vibrate: true, eventIndex: i + 1 });
-  });
+  const ordered: FaltCue[] = [
+    command('ladda', laddaAt),
+    command('allaKlara', allaKlaraAt),
+    command('tenSeconds', -TEN_SECONDS_LEAD_SECONDS),
+    command('fardiga', -FARDIGA_LEAD_SECONDS),
+    command('eld', 0, vibration),
+    ...partiSeconds.map<FaltCue>((second, i) => ({
+      kind: 'parti',
+      number: 0,
+      atSeconds: second,
+      durationSeconds: 0,
+      partiNumber: i + 1,
+      vibrate: vibration,
+    })),
+    {
+      ...command('eldUpphor', eldUpphorAt),
+      durationSeconds: ELD_UPPHOR_LEAD_SECONDS,
+      // The whistle variant replaces the words entirely.
+      speech: whistle ? undefined : FALT_COMMAND_TEXT.eldUpphor,
+      speechRate: whistle ? undefined : ELD_UPPHOR_SPEECH_RATE,
+    },
+    command('patronUr', patronUrAt),
+    command('visitation', visitationAt),
+  ];
 
-  // The drawn-out call starts 3 s before the end — clamped to ELD itself for
-  // a 3 s shooting time, the shortest allowed, where the two coincide.
-  const eldUpphorAtMs = Math.max(eldAtMs, shootingEndMs - ELD_UPPHOR_LEAD_SECONDS * 1_000);
-  cues.push({
-    ...command('eldUpphor', eldUpphorAtMs),
-    // The whistle variant replaces the words entirely.
-    speech: normalized.whistle ? undefined : FALT_COMMAND_TEXT.eldUpphor,
-    speechRate: normalized.whistle ? undefined : ELD_UPPHOR_SPEECH_RATE,
-  });
-  cues.push({ kind: 'ceaseFire', atMs: shootingEndMs, vibrate: true });
-  cues.push(command('patronUr', patronUrMs));
-  cues.push(command('visitation', visitationMs));
+  // Numbering follows the order the commands are given: the untimed presses
+  // first, then everything the clock drives. A parti can fall after ELD UPPHÖR
+  // has begun (e.g. a parti at 6 s of an 8 s time), so the timed ones are
+  // sorted before numbering; the sort is stable, so a parti landing exactly on
+  // T−3 keeps the lower number.
+  const untimed = ordered.filter((cue) => cue.atSeconds === null);
+  const timed = ordered
+    .filter((cue) => cue.atSeconds !== null)
+    .sort((a, b) => a.atSeconds! - b.atSeconds!);
+  const commands = [...untimed, ...timed].map((cue, i) => ({ ...cue, number: i + 1 }));
 
-  cues.sort((a, b) => a.atMs - b.atMs);
+  const timeUp: FaltCue = {
+    kind: 'timeUp',
+    number: null,
+    atSeconds: shootingSeconds,
+    durationSeconds: 0,
+    vibrate: vibration,
+  };
+
+  const cues = [...commands.filter((cue) => cue.atSeconds !== null), timeUp].sort(
+    (a, b) => a.atSeconds! - b.atSeconds!,
+  );
 
   return {
     settings: normalized,
+    commands,
+    manualCues: commands.filter((cue) => cue.atSeconds === null),
     cues,
-    readyStartMs,
-    eldAtMs,
-    shootingEndMs,
-    totalMs: visitationMs,
+    startSeconds: manual ? -TEN_SECONDS_LEAD_SECONDS : laddaAt!,
+    endSeconds: visitationAt,
   };
 }
 
 /**
  * Seconds between consecutive parti boundaries — the intervals shown on the
- * timeline: 0 → first event, between events, last event → end of the
- * shooting time. With no events this is just `[shootingSeconds]`.
+ * timeline: 0 → first parti, between partier, last parti → end of the
+ * shooting time. With no partier this is just `[shootingSeconds]`.
  */
-export function faltEventIntervals(settings: FaltTimerSettings): readonly number[] {
-  const { eventSeconds, shootingSeconds } = normalizeFaltSettings(settings);
-  const bounds = [0, ...eventSeconds, shootingSeconds];
+export function faltPartiIntervals(settings: FaltTimerSettings): readonly number[] {
+  const { partiSeconds, shootingSeconds } = normalizeFaltSettings(settings);
+  const bounds = [0, ...partiSeconds, shootingSeconds];
   return bounds.slice(1).map((second, i) => second - bounds[i]!);
 }
 
 export type FaltPhaseKind =
   | 'idle'
-  /** LADDA → ALLA KLARA (competition only). */
+  /** Range officer: LADDA given, waiting for the "Alla klara" press. */
+  | 'ladda'
+  /** Range officer: ALLA KLARA given, waiting for the press that starts the clock. */
+  | 'allaKlara'
+  /** Solo: LADDA → ALLA KLARA. */
   | 'prep'
   /** ALLA KLARA → ELD. */
-  | 'ready'
+  | 'countdown'
   /** ELD → the end of the shooting time. */
   | 'shooting'
-  /** After the shooting time: PATRON UR, VISITATION, then waiting for MARKERA. */
+  /** After the shooting time: PATRON UR, VISITATION. */
   | 'clearing'
-  /** MARKERA has been given. */
+  /** The program has run out. */
   | 'done';
 
 export interface FaltPhase {
   kind: FaltPhaseKind;
-  /** ms since the first command. */
-  elapsedMs: number;
-  /** ms left in the current phase; 0 in idle/clearing/done. */
-  remainingMs: number;
-  /** ms since ELD, clamped to the shooting time; 0 before it. */
-  shootingElapsedMs: number;
-  /** ms of shooting time left; 0 outside it. */
+  /** ms relative to ELD, negative before it. Parked at the program's start until the clock runs. */
+  atMs: number;
+  /** ms until ELD; 0 once it has been given. */
+  toEldMs: number;
+  /** ms of shooting time left; 0 outside the shooting window. */
   shootingRemainingMs: number;
-  /** Parti boundaries already passed (0-based count), for the timeline highlight. */
-  eventsPassed: number;
+  /** Parti boundaries already passed, for the timeline highlight. */
+  partierPassed: number;
 }
 
 /**
- * A cursor over a `FaltPlan`: `start()`, `advance(deltaMs)`, `pause()`,
- * `resume()`, `reset()` are the only ways time moves, so the host owns the
- * clock (a `setInterval` in the app, fake time in tests).
+ * A cursor over a `FaltProgram`: `start()`, `advanceManual()`,
+ * `advance(deltaMs)`, `pause()`, `resume()`, `reset()` are the only ways the
+ * sequence moves, so the host owns the clock (a `setInterval` in the app,
+ * fake time in tests).
  */
 export class FaltTimerEngine {
-  private readonly plan: FaltPlan;
-  private elapsedMs = 0;
+  private readonly program: FaltProgram;
+  private atMs: number;
   private nextCueIndex = 0;
+  private manualGiven = 0;
   private running = false;
   private started = false;
-  private marked = false;
+  /** The clock has been let go at least once — what separates "paused" from "waiting for a press". */
+  private clockStarted = false;
 
   constructor(settings: FaltTimerSettings = DEFAULT_FALT_SETTINGS) {
-    this.plan = buildFaltPlan(settings);
+    this.program = buildFaltProgram(settings);
+    this.atMs = this.program.startSeconds * 1_000;
   }
 
-  getPlan(): FaltPlan {
-    return this.plan;
+  getProgram(): FaltProgram {
+    return this.program;
   }
 
-  /** idle → the first command. Returns the cues at t = 0. Throws if already started. */
+  /**
+   * idle → the first command. In range-officer mode that is LADDA, and the
+   * clock does not run until `advanceManual()` has worked through the presses.
+   * Throws if already started.
+   */
   start(): readonly FaltCue[] {
     if (this.started) throw new Error('FaltTimerEngine.start() called twice');
     this.started = true;
-    this.running = true;
-    return this.collectCuesUpTo(0);
+    if (this.program.manualCues.length > 0) {
+      this.manualGiven = 1;
+      return [this.program.manualCues[0]!];
+    }
+    this.startClock();
+    return this.collectCuesUpTo(this.atMs);
   }
 
-  /** Advances the clock, returning every cue crossed, in order. No-op while paused, before start, or after MARKERA. */
+  /**
+   * The range officer's button: gives the next untimed command, or — once
+   * they are all given — starts the clock. No-op in solo mode or once the
+   * clock is running.
+   */
+  advanceManual(): readonly FaltCue[] {
+    if (!this.started || this.clockStarted) return [];
+    const pending = this.program.manualCues[this.manualGiven];
+    if (pending) {
+      this.manualGiven += 1;
+      return [pending];
+    }
+    this.startClock();
+    return this.collectCuesUpTo(this.atMs);
+  }
+
+  /** True while the sequence is waiting for `advanceManual()`. */
+  isAwaitingPress(): boolean {
+    return this.started && !this.clockStarted;
+  }
+
+  /** Advances the clock, returning every cue crossed, in order. No-op while paused or before the clock runs. */
   advance(deltaMs: number): readonly FaltCue[] {
     if (!Number.isFinite(deltaMs) || deltaMs < 0) {
       throw new Error('FaltTimerEngine.advance() requires deltaMs >= 0');
     }
     if (!this.running) return [];
-    this.elapsedMs = Math.min(this.plan.totalMs, this.elapsedMs + deltaMs);
-    return this.collectCuesUpTo(this.elapsedMs);
+    this.atMs = Math.min(this.program.endSeconds * 1_000, this.atMs + deltaMs);
+    return this.collectCuesUpTo(this.atMs);
   }
 
-  /** Holds the clock (the range officer stopping the series). No-op unless running. */
+  /** Holds the clock (the range officer stopping the series). */
   pause(): void {
-    if (this.started && !this.marked) this.running = false;
+    this.running = false;
   }
 
   resume(): void {
-    if (this.started && !this.marked) this.running = true;
+    // Only a paused *clock* resumes — a sequence still waiting for a press
+    // stays there, otherwise Resume would skip the range officer's commands.
+    if (this.clockStarted && !this.isFinished()) this.running = true;
   }
 
   isRunning(): boolean {
     return this.running;
   }
 
-  /** MARKERA — the untimed final command, given by tap. */
-  markera(): void {
-    if (!this.started) return;
-    this.marked = true;
-    this.running = false;
-  }
-
   /** Back to idle, discarding the run. */
   reset(): void {
-    this.elapsedMs = 0;
+    this.atMs = this.program.startSeconds * 1_000;
     this.nextCueIndex = 0;
+    this.manualGiven = 0;
     this.running = false;
     this.started = false;
-    this.marked = false;
+    this.clockStarted = false;
   }
 
-  getElapsedMs(): number {
-    return this.elapsedMs;
+  getAtMs(): number {
+    return this.atMs;
   }
 
   getPhase(): FaltPhase {
-    const { eldAtMs, readyStartMs, shootingEndMs, settings } = this.plan;
-    const elapsed = this.elapsedMs;
-    const shootingElapsed = Math.min(
-      Math.max(0, elapsed - eldAtMs),
-      settings.shootingSeconds * 1_000,
-    );
+    const { settings, manualCues } = this.program;
+    const shootingMs = settings.shootingSeconds * 1_000;
+    const at = this.atMs;
 
     let kind: FaltPhaseKind;
-    let remainingMs = 0;
-    if (this.marked) kind = 'done';
-    else if (!this.started) kind = 'idle';
-    else if (elapsed < readyStartMs) {
-      kind = 'prep';
-      remainingMs = readyStartMs - elapsed;
-    } else if (elapsed < eldAtMs) {
-      kind = 'ready';
-      remainingMs = eldAtMs - elapsed;
-    } else if (elapsed < shootingEndMs) {
-      kind = 'shooting';
-      remainingMs = shootingEndMs - elapsed;
-    } else kind = 'clearing';
+    if (!this.started) kind = 'idle';
+    // Waiting for a press: the phase is simply the last command given.
+    else if (!this.clockStarted)
+      kind = manualCues[this.manualGiven - 1]!.kind === 'allaKlara' ? 'allaKlara' : 'ladda';
+    else if (at < ALLA_KLARA_AT_SECONDS * 1_000) kind = 'prep';
+    else if (at < 0) kind = 'countdown';
+    else if (at < shootingMs) kind = 'shooting';
+    else if (at < this.program.endSeconds * 1_000) kind = 'clearing';
+    else kind = 'done';
 
     return {
       kind,
-      elapsedMs: elapsed,
-      remainingMs,
-      shootingElapsedMs: shootingElapsed,
-      shootingRemainingMs:
-        kind === 'shooting' ? settings.shootingSeconds * 1_000 - shootingElapsed : 0,
-      eventsPassed: settings.eventSeconds.filter((second) => shootingElapsed >= second * 1_000)
-        .length,
+      atMs: at,
+      toEldMs: Math.max(0, -at),
+      shootingRemainingMs: at >= 0 ? Math.max(0, shootingMs - at) : 0,
+      partierPassed: settings.partiSeconds.filter((second) => at >= second * 1_000).length,
     };
+  }
+
+  private startClock(): void {
+    this.clockStarted = true;
+    this.running = true;
+  }
+
+  private isFinished(): boolean {
+    return this.atMs >= this.program.endSeconds * 1_000;
   }
 
   private collectCuesUpTo(atMs: number): readonly FaltCue[] {
     const due: FaltCue[] = [];
-    while (this.nextCueIndex < this.plan.cues.length) {
-      const cue = this.plan.cues[this.nextCueIndex]!;
-      if (cue.atMs > atMs) break;
+    while (this.nextCueIndex < this.program.cues.length) {
+      const cue = this.program.cues[this.nextCueIndex]!;
+      if (cue.atSeconds! * 1_000 > atMs) break;
       due.push(cue);
       this.nextCueIndex += 1;
     }

@@ -33,9 +33,11 @@ export function useFaltSettings(
   const [settings, setSettings] = useState<FaltTimerSettings>(() => {
     if (!db) return defaults;
     const stored = getSetting<FaltTimerSettings | null>(db, SETTINGS_KEYS.faltTimer, null);
-    if (!stored || (stored.mode !== 'competition' && stored.mode !== 'training')) return defaults;
+    // A row written before the 2026-09-09 rework carries the old
+    // competition/training modes; the mode check drops it back to defaults.
+    if (!stored || (stored.mode !== 'rangeOfficer' && stored.mode !== 'solo')) return defaults;
     try {
-      return normalizeFaltSettings(stored);
+      return normalizeFaltSettings({ ...defaults, ...stored });
     } catch {
       return defaults;
     }
