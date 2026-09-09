@@ -193,7 +193,7 @@ export default function SessionDetailScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => <SessionMenu sessionId={id} firearmId={session.firearmId ?? null} />,
+          headerRight: () => <SessionMenu sessionId={id} sightsFirearmId={session.firearmId} />,
         }}
       />
 

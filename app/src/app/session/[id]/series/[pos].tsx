@@ -157,9 +157,7 @@ export default function SeriesEntryScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => (
-            <SessionMenu sessionId={id} firearmId={detail.session?.firearmId ?? null} />
-          ),
+          headerRight: () => <SessionMenu sessionId={id} />,
         }}
       />
 

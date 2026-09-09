@@ -1,8 +1,7 @@
-// Session-level actions, moved off the header into an overflow menu (§4
-// fix batch, 2026-09-09) — the header row had run out of room for Sights,
-// Edit, Share and Delete side by side. Sights lives here rather than on the
-// session or shot-entry screens (maintainer, 2026-09-09: changing sights
-// mid-session is reached through this menu, not shown inline).
+// Session-level actions, moved off the header into an overflow menu (§4 fix
+// batch, 2026-09-09) — the header row had run out of room. Sights is reached
+// only from here, never shown inline on a screen, and only on the session
+// view: sights are not adjusted while entering shots.
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,13 +21,18 @@ import { useTheme } from '@/hooks/use-theme';
 
 export interface SessionMenuProps {
   sessionId: string;
-  firearmId: string | null;
+  /**
+   * Firearm whose sight settings this menu can switch. Omitted on the
+   * shot-entry screen: sights are not adjusted while entering shots
+   * (maintainer, 2026-09-09).
+   */
+  sightsFirearmId?: string | null;
   onDeleted?: () => void;
 }
 
 type OpenSheet = 'none' | 'main' | 'sights';
 
-export function SessionMenu({ sessionId, firearmId, onDeleted }: SessionMenuProps) {
+export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMenuProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
@@ -36,8 +40,8 @@ export function SessionMenu({ sessionId, firearmId, onDeleted }: SessionMenuProp
   const [sightSettings, setSightSettings] = useState<ReturnType<typeof listSightSettings>>([]);
 
   function loadSights() {
-    if (!db || !firearmId) return [];
-    const rows = listSightSettings(db, firearmId);
+    if (!db || !sightsFirearmId) return [];
+    const rows = listSightSettings(db, sightsFirearmId);
     setSightSettings(rows);
     return rows;
   }
@@ -59,12 +63,15 @@ export function SessionMenu({ sessionId, firearmId, onDeleted }: SessionMenuProp
   }
 
   const actions: ActionSheetAction[] = [
-    {
-      key: 'sights',
-      label: t('session.menuSights'),
-      disabled: sightSettings.length === 0,
-      onPress: () => setSheet('sights'),
-    },
+    ...(sightSettings.length > 0
+      ? [
+          {
+            key: 'sights',
+            label: t('session.menuSights'),
+            onPress: () => setSheet('sights'),
+          },
+        ]
+      : []),
     {
       key: 'edit',
       label: t('session.menuEdit'),
@@ -89,8 +96,8 @@ export function SessionMenu({ sessionId, firearmId, onDeleted }: SessionMenuProp
     label: sightSettingLabel(t, current, setting),
     selected: setting.id === current?.id,
     onPress: () => {
-      if (!db || !firearmId) return;
-      setActiveSightSetting(db, firearmId, setting.id);
+      if (!db || !sightsFirearmId) return;
+      setActiveSightSetting(db, sightsFirearmId, setting.id);
       loadSights();
     },
   }));
