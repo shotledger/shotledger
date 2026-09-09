@@ -113,7 +113,9 @@ export const sessions = sqliteTable('sessions', {
   // the GUN: federation-scoped group id, e.g. 'spsf:C' (§6.4a); valid set
   // depends on the discipline's federation
   weaponGroup: text('weapon_group'),
-  // the SHOOTER (klass, §6.4a): 1|1u|1b|1s|2|3|Jun|Dam1|Dam2|Dam3|VetY|VetÄ
+  // the SHOOTER (klass, §6.4a): 1|2|3|Jun|Dam1|Dam2|Dam3|VetY|VetÄ. Free text,
+  // not an enum — an import may carry a code the picker does not offer (the
+  // F.2.5 klass-1 variants 1u/1b/1s were dropped from the picker 2026-09-09).
   shooterClass: text('shooter_class'),
   firearmId: text('firearm_id').references(() => firearms.id),
   ammoLotId: text('ammo_lot_id').references(() => ammoLots.id),

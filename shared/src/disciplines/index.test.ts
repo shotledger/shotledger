@@ -318,12 +318,9 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     );
   });
 
-  it('G12: SPSF shooter classes per SHB F.2.1', () => {
+  it('G12: SPSF shooter classes per SHB F.2.1, without the F.2.5 klass-1 variants', () => {
     expect(shooterClassesForDiscipline('spsf-precision')).toEqual([
       '1',
-      '1u',
-      '1b',
-      '1s',
       '2',
       '3',
       'Jun',
@@ -333,6 +330,9 @@ describe('weapon groups and classes (spec G10-G14)', () => {
       'VetY',
       'VetÄ',
     ]);
+    for (const dropped of ['1u', '1b', '1s']) {
+      expect(shooterClassesForDiscipline('spsf-precision')).not.toContain(dropped);
+    }
     expect(shooterClassesForDiscipline('spsf-milsnabb')).toEqual(
       shooterClassesForDiscipline('spsf-precision'),
     );
@@ -353,7 +353,7 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     expect(formatShooterClass('VetY')).toBe('Vet Y');
     expect(formatShooterClass('VetÄ')).toBe('Vet Ä');
     expect(formatShooterClass('2')).toBe('2');
-    expect(formatShooterClass('1u')).toBe('1u');
+    expect(formatShooterClass('3')).toBe('3');
     expect(formatShooterClass(null)).toBe('');
   });
 

@@ -5,11 +5,10 @@ import { weaponGroupCode } from './groups';
 
 export type ShooterClass = string;
 
+// The F.2.5 variants of klass 1 (1u nybörjare, 1b bronsskytt, 1s silverskytt)
+// are deliberately not offered — maintainer ruling 2026-09-09.
 export const SPSF_SHOOTER_CLASSES: readonly ShooterClass[] = [
   '1',
-  '1u', // nybörjare
-  '1b', // bronsskytt
-  '1s', // silverskytt
   '2',
   '3', // riksmästarklass
   'Jun',
