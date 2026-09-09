@@ -249,6 +249,11 @@ export default function SessionDetailScreen() {
             value={String(detail.innerTenCount)}
             testID="session-inner-ten-count"
           />
+          <MetricTile
+            label={t('session.innerTenAverage')}
+            value={detail.innerTenAverage === null ? '–' : detail.innerTenAverage.toFixed(1)}
+            testID="session-inner-ten-average"
+          />
         </View>
       </Card>
 
@@ -382,6 +387,13 @@ export default function SessionDetailScreen() {
               }
             />
             <MetricTile
+              testID="session-stat-series-inner-tens"
+              label={t('stats.statsSeriesInnerTens')}
+              value={
+                stats.seriesInnerTenAverage === null ? '–' : stats.seriesInnerTenAverage.toFixed(1)
+              }
+            />
+            <MetricTile
               testID="session-stat-series-count"
               label={t('stats.statsSeriesCount')}
               value={String(stats.seriesCount)}
@@ -413,11 +425,9 @@ export default function SessionDetailScreen() {
             {t('stats.statsSumTitle')}
           </ThemedText>
           <View style={styles.metricRow}>
-            <MetricTile
-              testID="session-stat-total-points"
-              label={t('stats.statsTotalPoints')}
-              value={String(tenthsToScore(stats.sumTenths))}
-            />
+            {/* No Total Points tile: it is the same number as the result
+                card's `session-total` above the tab selector, by a second
+                code path (maintainer, third review: "redundant"). */}
             <MetricTile
               testID="session-stat-total-shots"
               label={t('stats.statsTotalShots')}
@@ -427,7 +437,9 @@ export default function SessionDetailScreen() {
 
           {stats.distribution.length > 0 && (
             <View>
-              <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
+              <ThemedText type="smallBold">
+                {t('stats.distributionTitleWithCount', { count: stats.shotCount })}
+              </ThemedText>
               <DistributionBarChart buckets={stats.distribution} height={100} />
             </View>
           )}
@@ -531,8 +543,11 @@ export default function SessionDetailScreen() {
 /**
  * A compact labeled number — the results card and the per-shot/sum stat
  * rows. Deliberately lighter than `StatTile` (no nested Card padding, single-
- * line ellipsized label) so 3-5 of these fit one row at phone widths without
- * a long Swedish label ("Standardavvikelse") wrapping character-by-character.
+ * line label) so 4-6 of these fit one row at phone widths without a long
+ * Swedish label ("Standardavvikelse") wrapping character-by-character. The
+ * label shrinks to fit rather than ellipsizing, the same treatment `StatTile`
+ * got in #76 — at four tiles a row "X (Inner Tens)" would otherwise clip to
+ * "X (Inne…".
  */
 function MetricTile({ label, value, testID }: { label: string; value: string; testID?: string }) {
   return (
@@ -544,6 +559,8 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
         type="small"
         themeColor="textSecondary"
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         ellipsizeMode="tail"
         style={styles.metricLabel}
       >
@@ -571,11 +588,16 @@ const styles = StyleSheet.create({
   metricRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.three,
+    // The results card carries four tiles since the third review. Screen and
+    // Card padding eat 64 dp, so a 320 dp phone leaves 256: at the previous
+    // gap/basis (16/64) four tiles need 304 and wrap 3 + 1, making the card
+    // TALLER — the opposite of the "much smaller" backlog §1 asks for. 8/56
+    // needs 248 and stays on one line; flexGrow still spreads them to fill.
+    gap: Spacing.two,
   },
   metricTile: {
     flexGrow: 1,
-    flexBasis: 64,
+    flexBasis: 56,
     minWidth: 0,
     gap: Spacing.half,
   },

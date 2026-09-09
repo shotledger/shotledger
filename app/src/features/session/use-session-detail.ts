@@ -9,6 +9,7 @@ import {
   getProgram,
   guldserieThreshold,
   seriesAverageTenths,
+  seriesInnerTenAverage,
   sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
@@ -49,6 +50,8 @@ export interface SessionDetail {
   seriesAverageTenths: number | null;
   /** Innertior (centrumtia count) in the scored series (spec A-S7). */
   innerTenCount: number;
+  /** Mean innertior per scored series — the card's "snitt X/serie". */
+  innerTenAverage: number | null;
   /** Series length used for new series: the program's, else the discipline's. */
   seriesLength: number;
   /**
@@ -75,6 +78,7 @@ const EMPTY: SessionDetail = {
   results: { beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false },
   seriesAverageTenths: null,
   innerTenCount: 0,
+  innerTenAverage: null,
   seriesLength: 5,
   guldThreshold: null,
   scoringMode: 'integer',
@@ -156,6 +160,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     results,
     seriesAverageTenths: seriesAverageTenths(forResults),
     innerTenCount: sessionInnerTenCount(forResults),
+    innerTenAverage: seriesInnerTenAverage(forResults),
     seriesLength,
     guldThreshold,
     scoringMode: session.decimalScoring === 1 ? 'decimal' : 'integer',
