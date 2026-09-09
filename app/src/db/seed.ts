@@ -181,42 +181,33 @@ export function seedDemoData(db: Database) {
     makeActive: true,
   });
 
-  // Fripistol i .22 LR: vapengrupp C is ".22 LR only" (F.4.6).
-  const freePistol = createFirearm(db, {
+  // Andra luftpistolen. Two guns in one group is the case that makes the
+  // per-group default flag legible: only one can be the default for airgun.
+  const airPistol2 = createFirearm(db, {
     make: 'Feinwerkbau',
     model: 'P8X',
-    caliber: '.22 LR',
-    weaponType: 'pistol',
-    vapenId: 'DEMO-VID-0004',
+    caliber: '4.5 mm',
+    weaponType: 'airgun',
     serialNumber: 'DEMO-P8X-0004',
     loadSystem: 'Enkelskott',
-    notes: 'Fripistol',
-    maintenanceIntervalRounds: 1000,
+    notes: 'Luftpistol 10 m',
   });
-  addFirearmGroup(db, { firearmId: freePistol.id, groupId: 'spsf:C', isDefaultForGroup: true });
+  addFirearmGroup(db, { firearmId: airPistol2.id, groupId: 'generic:airgun' });
   logMaintenanceEvent(db, {
-    firearmId: freePistol.id,
+    firearmId: airPistol2.id,
     performedAt: isoDaysAgo(120),
     kind: 'Rengöring',
     notes: 'Pipa och slutstycke',
   });
-  addLicense(db, {
-    firearmId: freePistol.id,
-    licenseNumber: 'DEMO-2024-0004',
-    purpose: 'Målskjutning',
-    decidedOn: isoDaysAgo(180),
-    validUntil: isoDaysFromNow(548), // ~18 months out
-    authority: 'Polismyndigheten',
-  });
   createSightSetting(db, {
-    firearmId: freePistol.id,
+    firearmId: airPistol2.id,
     label: 'Mitt-mitt',
     elevationClicks: 4,
     windageClicks: -2,
     makeActive: true,
   });
   createSightSetting(db, {
-    firearmId: freePistol.id,
+    firearmId: airPistol2.id,
     label: 'Boll',
     elevationClicks: 10,
     windageClicks: -2,
@@ -225,7 +216,10 @@ export function seedDemoData(db: Database) {
   // --- Ammo lots ------------------------------------------------------
   // Only what is actually known is filled in: no invented primer, brass or COL
   // on the handloads.
-  const skPistolMatch = createAmmoLot(db, {
+  // The two .22 lots sit in inventory with no session using them: none of the
+  // four demo firearms is chambered in .22 LR. Kept because the maintainer
+  // listed them — do not invent a .22 pistol to justify them.
+  createAmmoLot(db, {
     label: 'SK Pistol Match',
     caliber: '.22 LR',
     quantity: 500,
@@ -235,7 +229,7 @@ export function seedDemoData(db: Database) {
     product: 'Pistol Match',
     lotNumber: 'DEMO-LOT-01',
   });
-  const skPistolMatchSpecial = createAmmoLot(db, {
+  createAmmoLot(db, {
     label: 'SK Pistol Match Special',
     caliber: '.22 LR',
     quantity: 500,
@@ -283,13 +277,13 @@ export function seedDemoData(db: Database) {
   // (enkelskott, or an airgun); `lots: [null]` means it burns no tracked ammo.
   const setups = [
     {
-      firearm: freePistol,
-      disciplineId: 'spsf-precision' as const,
-      precisionGroup: 'spsf:C',
+      firearm: airPistol2,
+      disciplineId: 'generic-rings' as const,
+      precisionGroup: 'generic:airgun',
       milsnabbGroup: null,
-      shooterClass: '2' as string | null,
-      lots: [skPistolMatch.id, skPistolMatchSpecial.id] as (string | null)[],
-      label: 'Precision',
+      shooterClass: null as string | null, // generic disciplines have no klass
+      lots: [null] as (string | null)[],
+      label: 'Luftpistol',
     },
     {
       firearm: sportPistol,
