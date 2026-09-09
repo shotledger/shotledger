@@ -23,6 +23,7 @@ import {
   series,
   sessions,
   shots,
+  sightSettings,
   syncControl,
   syncOutbox,
   syncState,
@@ -45,6 +46,7 @@ export const SYNC_TABLES: Record<SyncTableName, SQLiteTable> = {
   shots,
   maintenance_events: maintenanceEvents,
   tags,
+  sight_settings: sightSettings,
 };
 
 /**

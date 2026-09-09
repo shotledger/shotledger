@@ -223,6 +223,22 @@ maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
                    kind TEXT NOT NULL,         -- free text v1
                    round_count_at INTEGER, notes TEXT
 
+sight_settings  firearm_id FK NOT NULL,
+                label TEXT NOT NULL,           -- free text; the same aiming
+                                               -- method recurs per discipline
+                                               -- with different clicks, and not
+                                               -- every discipline is modelled,
+                                               -- so no discipline FK (#114)
+                elevation_clicks INTEGER,      -- signed, + = up; NULL = not set
+                windage_clicks INTEGER,        -- signed, + = right
+                                               -- both relative to whatever zero
+                                               -- the shooter picked: only the
+                                               -- DIFFERENCE between two rows
+                                               -- means anything
+                is_active INTEGER NOT NULL DEFAULT 0,  -- "aktuell inställning";
+                                               -- ≤1 per firearm, query-enforced
+                notes TEXT
+
 tags            name TEXT NOT NULL UNIQUE
 session_tags    session_id FK, tag_id FK, PRIMARY KEY(session_id, tag_id)
 
@@ -1020,6 +1036,21 @@ restates §0 rules 1–6 verbatim.
 > vault's own "Add to vault" screen (Weapon license + Photo) also offers the
 > same scan, and can create a licence record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
+
+> **Sight settings have since shipped** on `feat/sight-settings` (issue #114,
+> replacing a phone note the maintainer kept per firearm). A `sight_settings`
+> row is a shooter-named profile — free-text label, signed elevation/windage
+> clicks, notes, and an `is_active` flag ("aktuell inställning") — hanging off
+> a firearm (migration `0007`, synced like every other firearm-owned table).
+> Clicks are relative to whatever zero the shooter picked, so the app never
+> asserts an absolute setting: `sightTurnsBetween` in
+> `shared/src/firearms/sight-settings.ts` reports only the **difference** from
+> the active profile, which is what actually gets dialled. Two surfaces: the
+> firearm detail screen manages the list, and the session detail screen shows
+> a one-tap chip row ("Boll · 6 up") so the sights can be switched between
+> series without leaving scoring. `resolveActiveSightSetting` tolerates two
+> rows arriving active from a last-write-wins sync. No new dependency, no
+> backend change — `sync_rows` is table-agnostic.
 
 Photo target scoring; WebShooter import; document vault; iOS release.
 

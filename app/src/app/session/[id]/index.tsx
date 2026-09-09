@@ -8,7 +8,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
+import {
+  formatGroupAndClass,
+  resolveActiveSightSetting,
+  sightTurnsBetween,
+  tenthsToScore,
+} from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -24,6 +29,8 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
+import { setActiveSightSetting } from '@/db/queries/sight-settings';
+import { sightTurnsText } from '@/features/firearms/sight-turns-text';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { useSessionStats } from '@/features/session/use-session-stats';
@@ -88,6 +95,17 @@ export default function SessionDetailScreen() {
     refresh();
   }
 
+  /**
+   * Switching sights between series. `is_active` lives on the firearm, not the
+   * session, so this is the same state the Firearms tab shows — the gun is
+   * physically dialled to one setting at a time.
+   */
+  function onSetSight(settingId: string) {
+    if (!db || !session?.firearmId) return;
+    setActiveSightSetting(db, session.firearmId, settingId);
+    refresh();
+  }
+
   function onStartFinal() {
     setNextIsFinal(true);
   }
@@ -121,6 +139,7 @@ export default function SessionDetailScreen() {
 
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
+  const activeSight = resolveActiveSightSetting(detail.sightSettings);
 
   const renderSeries = (row: SeriesRow) => {
     const content = (
@@ -259,6 +278,38 @@ export default function SessionDetailScreen() {
           />
         </View>
       </Card>
+
+      {detail.sightSettings.length > 0 && (
+        <Card testID="session-sights">
+          <ThemedText type="smallBold">{t('session.sightsTitle')}</ThemedText>
+          <View style={styles.chipsRow}>
+            {detail.sightSettings.map((setting) => {
+              const isCurrent = setting.id === activeSight?.id;
+              const turns = isCurrent
+                ? ''
+                : sightTurnsText(t, sightTurnsBetween(activeSight, setting));
+              return (
+                <Pressable
+                  key={setting.id}
+                  onPress={() => onSetSight(setting.id)}
+                  disabled={isCurrent}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isCurrent }}
+                  testID={`session-sight-${setting.id}`}
+                >
+                  <Chip
+                    label={turns ? `${setting.label} · ${turns}` : setting.label}
+                    tone={isCurrent ? 'primary' : 'neutral'}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {activeSight ? t('session.sightsHint') : t('session.sightsNoneCurrentHint')}
+          </ThemedText>
+        </Card>
+      )}
 
       {isRoundsSession && (
         <Card>
@@ -562,6 +613,11 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 }
 
 const styles = StyleSheet.create({
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
   groupPlot: {
     alignItems: 'center',
   },

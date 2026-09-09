@@ -32,6 +32,7 @@ export const SYNC_TABLE_NAMES = [
   'shots',
   'maintenance_events',
   'tags',
+  'sight_settings',
 ] as const;
 
 export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);

@@ -1,14 +1,18 @@
 // Firearm detail (§4 M4 §5 /firearms/[id]): weapon groups (federation-scoped,
-// one default per group), license register (append-only history + status),
-// maintenance (interval, rounds-since indicator, event log, manual adjust).
+// one default per group), sight settings (#114: free-text label, click
+// counts, turns-to-switch from the currently active one), license register
+// (append-only history + status), maintenance (interval, rounds-since
+// indicator, event log, manual adjust).
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
   licenseExpiryNotifications,
+  resolveActiveSightSetting,
   selectableWeaponGroups,
   shouldNotifyMaintenanceDue,
+  sightTurnsBetween,
   weaponGroupCode,
   type ParsedLicenseCard,
   type WeaponGroup,
@@ -27,8 +31,15 @@ import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-gr
 import { updateFirearm } from '@/db/queries/firearms';
 import { addLicense } from '@/db/queries/licenses';
 import { adjustFirearmRoundCount, logMaintenanceEvent } from '@/db/queries/maintenance-events';
+import {
+  createSightSetting,
+  setActiveSightSetting,
+  softDeleteSightSetting,
+  updateSightSetting,
+} from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
+import { sightClicksText, sightTurnsText } from '@/features/firearms/sight-turns-text';
 import {
   countRecognizedFields,
   licenseFormValues,
@@ -108,6 +119,13 @@ export default function FirearmDetailScreen() {
 
   const [intervalInput, setIntervalInput] = useState<string | null>(null);
 
+  const [showSightForm, setShowSightForm] = useState(false);
+  const [editingSightId, setEditingSightId] = useState<string | null>(null);
+  const [sightLabel, setSightLabel] = useState('');
+  const [sightElevation, setSightElevation] = useState('');
+  const [sightWindage, setSightWindage] = useState('');
+  const [sightNotes, setSightNotes] = useState('');
+
   const { firearm } = detail;
   if (!db || !firearm) {
     return (
@@ -120,6 +138,9 @@ export default function FirearmDetailScreen() {
   const usedGroupIds = new Set(detail.groups.map((g) => g.groupId));
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
+  const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
+  const editingIsCurrentSightSetting =
+    editingSightId != null && currentSightSetting?.id === editingSightId;
 
   function onAddGroup() {
     if (!db || !newGroupId) return;
@@ -295,6 +316,74 @@ export default function FirearmDetailScreen() {
     refresh();
   }
 
+  function onAddSightSetting() {
+    setEditingSightId(null);
+    setSightLabel('');
+    setSightElevation('');
+    setSightWindage('');
+    setSightNotes('');
+    setShowSightForm(true);
+  }
+
+  function onEditSightSetting(setting: (typeof detail.sightSettings)[number]) {
+    setEditingSightId(setting.id);
+    setSightLabel(setting.label);
+    setSightElevation(setting.elevationClicks == null ? '' : String(setting.elevationClicks));
+    setSightWindage(setting.windageClicks == null ? '' : String(setting.windageClicks));
+    setSightNotes(setting.notes ?? '');
+    setShowSightForm(true);
+  }
+
+  function closeSightForm() {
+    setShowSightForm(false);
+    setEditingSightId(null);
+  }
+
+  function onSaveSightSetting() {
+    if (!db || !sightLabel.trim()) return;
+    const elevationClicks = sightElevation.trim() ? Number(sightElevation) : null;
+    const windageClicks = sightWindage.trim() ? Number(sightWindage) : null;
+    if (
+      (elevationClicks !== null && !Number.isFinite(elevationClicks)) ||
+      (windageClicks !== null && !Number.isFinite(windageClicks))
+    ) {
+      return;
+    }
+    const notes = sightNotes.trim() || null;
+    if (editingSightId) {
+      updateSightSetting(db, editingSightId, {
+        label: sightLabel.trim(),
+        elevationClicks,
+        windageClicks,
+        notes,
+      });
+    } else {
+      createSightSetting(db, {
+        firearmId: firearm!.id,
+        label: sightLabel.trim(),
+        elevationClicks,
+        windageClicks,
+        notes,
+      });
+    }
+    closeSightForm();
+    refresh();
+  }
+
+  function onSetCurrentSightSetting() {
+    if (!db || !editingSightId) return;
+    setActiveSightSetting(db, firearm!.id, editingSightId);
+    closeSightForm();
+    refresh();
+  }
+
+  function onDeleteSightSetting() {
+    if (!db || !editingSightId) return;
+    softDeleteSightSetting(db, editingSightId);
+    closeSightForm();
+    refresh();
+  }
+
   return (
     <Screen>
       <View>
@@ -420,6 +509,102 @@ export default function FirearmDetailScreen() {
             label={t('firearms.addGroup')}
             onPress={() => setShowAddGroup(true)}
             testID="add-group"
+          />
+        )}
+      </Card>
+
+      {/* Sight settings (#114) */}
+      <Card>
+        <ThemedText type="smallBold">{t('firearms.sightSettingsTitle')}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('firearms.sightSettingsHint')}
+        </ThemedText>
+        {detail.sightSettings.length === 0 ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('firearms.noSightSettings')}
+          </ThemedText>
+        ) : (
+          detail.sightSettings.map((setting) => {
+            const isCurrent = currentSightSetting?.id === setting.id;
+            const summary = t('firearms.sightSummary', {
+              elevation: sightClicksText(setting.elevationClicks),
+              windage: sightClicksText(setting.windageClicks),
+            });
+            const turns = isCurrent
+              ? ''
+              : sightTurnsText(t, sightTurnsBetween(currentSightSetting, setting));
+            return (
+              <ListRow
+                key={setting.id}
+                title={setting.label}
+                subtitle={
+                  turns ? `${summary}\n${t('firearms.sightSwitchHint', { turns })}` : summary
+                }
+                trailing={
+                  isCurrent ? <Chip label={t('firearms.sightCurrent')} tone="primary" /> : undefined
+                }
+                onPress={() => onEditSightSetting(setting)}
+                testID={`sight-row-${setting.id}`}
+              />
+            );
+          })
+        )}
+        {showSightForm ? (
+          <>
+            <ThemedText type="small">{t('firearms.sightLabel')}</ThemedText>
+            <TextField
+              value={sightLabel}
+              onChangeText={setSightLabel}
+              placeholder={t('firearms.sightLabelPlaceholder')}
+              testID="sight-label"
+            />
+            <ThemedText type="small">{t('firearms.sightElevation')}</ThemedText>
+            <TextField
+              value={sightElevation}
+              onChangeText={setSightElevation}
+              keyboardType="numbers-and-punctuation"
+              testID="sight-elevation"
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('firearms.sightElevationHint')}
+            </ThemedText>
+            <ThemedText type="small">{t('firearms.sightWindage')}</ThemedText>
+            <TextField
+              value={sightWindage}
+              onChangeText={setSightWindage}
+              keyboardType="numbers-and-punctuation"
+              testID="sight-windage"
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('firearms.sightWindageHint')}
+            </ThemedText>
+            <ThemedText type="small">{t('firearms.notes')}</ThemedText>
+            <TextField value={sightNotes} onChangeText={setSightNotes} testID="sight-notes" />
+            <PrimaryButton
+              label={t('common.save')}
+              onPress={onSaveSightSetting}
+              testID="save-sight-setting"
+            />
+            {editingSightId && !editingIsCurrentSightSetting ? (
+              <PrimaryButton
+                label={t('firearms.sightSetCurrent')}
+                onPress={onSetCurrentSightSetting}
+                testID="sight-set-current"
+              />
+            ) : null}
+            {editingSightId ? (
+              <PrimaryButton
+                label={t('firearms.sightDelete')}
+                onPress={onDeleteSightSetting}
+                testID="sight-delete"
+              />
+            ) : null}
+          </>
+        ) : (
+          <PrimaryButton
+            label={t('firearms.addSightSetting')}
+            onPress={onAddSightSetting}
+            testID="add-sight-setting"
           />
         )}
       </Card>

@@ -1,5 +1,6 @@
 // Firearm detail data (§4 M4): groups, license history + status, maintenance
-// history + status, all from the M1/M4 query layer. Refetches on focus.
+// history + status, sight settings (#114), all from the query layer.
+// Refetches on focus.
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -19,12 +20,14 @@ import { listFirearmGroups } from '@/db/queries/firearm-groups';
 import { getFirearm } from '@/db/queries/firearms';
 import { listLicenses } from '@/db/queries/licenses';
 import { listMaintenanceEvents } from '@/db/queries/maintenance-events';
+import { listSightSettings } from '@/db/queries/sight-settings';
 
 export interface FirearmDetail {
   firearm: NonNullable<ReturnType<typeof getFirearm>> | null;
   groups: ReturnType<typeof listFirearmGroups>;
   licenses: ReturnType<typeof listLicenses>;
   maintenanceEvents: ReturnType<typeof listMaintenanceEvents>;
+  sightSettings: ReturnType<typeof listSightSettings>;
   licenseStatus: LicenseStatus;
   maintenanceStatus: MaintenanceStatus;
   maintenanceProgress: number | null;
@@ -37,6 +40,7 @@ const EMPTY: FirearmDetail = {
   groups: [],
   licenses: [],
   maintenanceEvents: [],
+  sightSettings: [],
   licenseStatus: 'none',
   maintenanceStatus: 'unknown',
   maintenanceProgress: null,
@@ -65,6 +69,7 @@ export function loadFirearmDetail(
     groups,
     licenses,
     maintenanceEvents: listMaintenanceEvents(db, firearmId),
+    sightSettings: listSightSettings(db, firearmId),
     licenseStatus: licenseStatus(licenses[0]?.validUntil),
     maintenanceStatus: maintenanceStatus(
       firearm.roundsSinceMaintenance,

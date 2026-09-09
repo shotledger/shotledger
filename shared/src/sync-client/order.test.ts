@@ -20,6 +20,7 @@ describe('APPLY_ORDER', () => {
       ['firearms', 'licenses'],
       ['firearms', 'firearm_groups'],
       ['firearms', 'maintenance_events'],
+      ['firearms', 'sight_settings'],
       ['firearms', 'sessions'],
       ['ammo_lots', 'sessions'],
       ['sessions', 'series'],
