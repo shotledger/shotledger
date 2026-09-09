@@ -429,15 +429,20 @@ funding, the About screen, ammo, firearms and information architecture.
       between countries and between federations _within_ a country — SPSF vs.
       Svenska Skyttesportförbundet
       (<https://www.skyttesport.se/vaara-idrottsgrenar/pistol/>) — and **a
-      shooter can be a member of several at once**. Tracked as its own GitHub
-      issue; too large for this batch.
+      shooter can be a member of several at once**. Raised as **#116**; too
+      large for this batch.
 
 ### New session screen
 
 - [ ] **Default the session name** to `<Training|Competition> - <date>`.
-- [?] **"What is Program? Free Training or Precision?"** — the field's meaning
-  is not clear from its label or its options. Needs either a rename, a
-  help line, or removal.
+- [?] **"What is Program? Free Training or Precision?"** — answered and raised
+  as **#117**, deliberately not built. Program is the shot program within a
+  discipline: shots per series, integer vs. decimal scoring, whether a final
+  exists, and for fixed formats it pre-builds the series skeleton;
+  `Free Training` means no program. The confusion is real — you pick
+  Discipline = Precision and then Program = Precision, and "training" appears
+  as a value in two pickers that mean different things. Maintainer,
+  2026-09-09: _"it seems like a bigger task that needs some thinking."_
 
 ### Session detail > Stats
 
@@ -453,9 +458,19 @@ funding, the About screen, ammo, firearms and information architecture.
 ### Export / import
 
 - [?] **"I think we should export and import as JSON or YAML and not CSV."**
-  Format choice (JSON vs. YAML) and migration path for the existing CSV
-  round-trip need a decision before building. Note `shared/csv/` is under
-  the old-coder evidence-first rule, so its replacement is too.
+  Maintainer, 2026-09-09, wants two shapes — _"relative (think foreign keys)
+  and full (each session has complete information)"_ — then answered
+  themselves: _"should we skip relative via JSON since then the user could
+  export SQLite database?"_ That is the right call. The backup bundle already
+  ships the real `database.sqlite3`, which is a lossless relational export;
+  a normalised JSON export would duplicate it at lower fidelity. So: **one
+  self-contained JSON export**, and Backup for the exact relational copy.
+  **JSON, not YAML** — no YAML parser is in the lockfile and adding one hits
+  hard rule 2; JSON5/JSONC do not help either, since `JSON.parse` cannot read
+  them. Comments ride along as a metadata header (format id, version,
+  generated-at, app version) inside plain JSON. `shared/src/csv/` is under the
+  old-coder evidence-first rule, so its replacement is too. Awaiting the
+  maintainer's OK on this shape before building.
 
 ### Funding
 
@@ -476,9 +491,14 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### Firearms
 
-- [ ] **Two default weapon groups at once** — "Steyr LP10 (test data) has
-      airgun (Default) set, but I can add another group that is also default".
-      Setting a default must clear the previous one.
+- [~] **Two weapon groups both marked "Default"** — "Steyr LP10 (test data) has
+  airgun (Default) set, but I can add another group that is also default".
+  Investigated: **not a logic bug.** `isDefaultForGroup` means _the default
+  firearm for this weapon group_ — it is what pre-selects the right gun when
+  you start a session in group C — so one firearm being the default for two
+  groups it belongs to is legitimate (the MR73 in both R and B). The bug is
+  the bare "Default" subtitle. Decided 2026-09-09: keep the logic, label it
+  "Default for C".
 - [ ] **Sight Settings > Name hint is Swedish in the English UI**
       ("e.g. mitt-mitt…").
 - [ ] **Elevation and Windage should be constrained inputs** — "should be
@@ -486,8 +506,15 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### Statistics
 
-- [?] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
-  the suffix is unexplained at the point of use.
+- [ ] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
+      answered: `webshooter.recordsSubtitle` is _"Personal bests and
+      year-to-year (WebShooter)"_, the only literal `(WebShooter)` in the whole
+      i18n tree. It names the integration the Records screen was built under,
+      not the data it shows — and that is wrong, because the screen mixes
+      WebShooter-imported competition results (Official PBs, Year to Year) with
+      **ordinary locally-logged sessions** (Freeform PBs), computed entirely
+      over local data with no network. The suffix tells the user their own
+      manually logged bests came from WebShooter. Drop it.
 
 ### Information architecture
 
