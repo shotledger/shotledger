@@ -108,9 +108,8 @@ export function seedDemoData(db: Database) {
     makeActive: true,
   });
 
-  // Grovkalibrig halvautomat: vapengrupp B ("grovkalibrig pistol/revolver
-  // ≤600 J", F.4.3) — grupp A additionally demands 420-600 J anslagsenergi,
-  // which the soft 9 mm handload below would not reach.
+  // Grovkalibrig halvautomat: vapengrupp A (7,6-11,4 mm, 420-600 J, ≤1400 g,
+  // pipa ≤153 mm — F.4.1). Maintainer's own classification.
   const sportPistol = createFirearm(db, {
     make: 'CZ',
     model: 'Tactical Sport 2 Orange',
@@ -121,7 +120,7 @@ export function seedDemoData(db: Database) {
     loadSystem: 'Halvautomat',
     maintenanceIntervalRounds: 1500,
   });
-  addFirearmGroup(db, { firearmId: sportPistol.id, groupId: 'spsf:B', isDefaultForGroup: true });
+  addFirearmGroup(db, { firearmId: sportPistol.id, groupId: 'spsf:A', isDefaultForGroup: true });
   logMaintenanceEvent(db, {
     firearmId: sportPistol.id,
     performedAt: isoDaysAgo(60),
@@ -295,8 +294,8 @@ export function seedDemoData(db: Database) {
     {
       firearm: sportPistol,
       disciplineId: 'spsf-precision' as const,
-      precisionGroup: 'spsf:B',
-      milsnabbGroup: 'spsf:B',
+      precisionGroup: 'spsf:A',
+      milsnabbGroup: 'spsf:A',
       shooterClass: '2' as string | null,
       lots: [nineMmHandload.id, fiocchiNineMm.id] as (string | null)[],
       label: 'Precision',

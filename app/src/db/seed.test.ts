@@ -48,7 +48,7 @@ describe('seedDemoData', () => {
   it('registers each firearm in the vapengrupper it may actually be used in', () => {
     seedDemoData(db);
     expect(groupIds(firearmByModel('AW93').id)).toEqual(['generic:airgun']);
-    expect(groupIds(firearmByModel('Tactical Sport 2 Orange').id)).toEqual(['spsf:B']);
+    expect(groupIds(firearmByModel('Tactical Sport 2 Orange').id)).toEqual(['spsf:A']);
     // R is "Ej tillämplig" in precision (SHB F.4.4) — the revolver is B there.
     expect(groupIds(firearmByModel('MR73 Sport').id)).toEqual(['spsf:B', 'spsf:R']);
     expect(groupIds(firearmByModel('P8X').id)).toEqual(['spsf:C']);
@@ -151,7 +151,7 @@ describe('seedDemoData', () => {
     const milsnabb = listSessions(db).filter((s) => s.disciplineId === 'spsf-milsnabb');
     expect(milsnabb.length).toBeGreaterThan(0);
     for (const session of milsnabb) {
-      expect(['spsf:B', 'spsf:R']).toContain(session.weaponGroup);
+      expect(['spsf:A', 'spsf:R']).toContain(session.weaponGroup);
     }
   });
 
