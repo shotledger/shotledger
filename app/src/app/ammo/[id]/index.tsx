@@ -1,6 +1,7 @@
 // Ammo lot detail/edit (§4 M4 §5): usage stats (sessions x shots) at top,
 // then the same fields as new.tsx, editable in place. No separate detail vs
 // edit route — lot-vs-lot comparison stays v3, so a form is the whole screen.
+import { powerFactor } from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +42,9 @@ export default function AmmoLotDetailScreen() {
   const [bulletWeightGr, setBulletWeightGr] = useState(
     lot?.bulletWeightGr != null ? String(lot.bulletWeightGr) : '',
   );
+  const [velocityMps, setVelocityMps] = useState(
+    lot?.velocityMps != null ? String(lot.velocityMps) : '',
+  );
   const [powder, setPowder] = useState(lot?.powder ?? '');
   const [powderChargeGr, setPowderChargeGr] = useState(
     lot?.powderChargeGr != null ? String(lot.powderChargeGr) : '',
@@ -50,6 +54,8 @@ export default function AmmoLotDetailScreen() {
   const [colMm, setColMm] = useState(lot?.colMm != null ? String(lot.colMm) : '');
   const [crimpMm, setCrimpMm] = useState(lot?.crimpMm != null ? String(lot.crimpMm) : '');
   const [notes, setNotes] = useState(lot?.notes ?? '');
+
+  const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
   if (!db || !lot) {
     return (
@@ -73,6 +79,7 @@ export default function AmmoLotDetailScreen() {
       bulletMake: bulletMake.trim() || null,
       bulletModel: bulletModel.trim() || null,
       bulletWeightGr: numberOrNull(bulletWeightGr),
+      velocityMps: numberOrNull(velocityMps),
       powder: isHandload ? powder.trim() || null : null,
       powderChargeGr: isHandload ? numberOrNull(powderChargeGr) : null,
       primer: isHandload ? primer.trim() || null : null,
@@ -130,6 +137,27 @@ export default function AmmoLotDetailScreen() {
           onChangeText={setBulletWeightGr}
           keyboardType="decimal-pad"
         />
+        <ThemedText type="smallBold">{t('ammo.velocityMps')}</ThemedText>
+        <TextField
+          value={velocityMps}
+          onChangeText={setVelocityMps}
+          keyboardType="decimal-pad"
+          testID="ammo-velocity"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('ammo.velocityHint')}
+        </ThemedText>
+        {derivedPowerFactor != null && (
+          <>
+            <View style={styles.derivedRow}>
+              <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
+              <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ammo.powerFactorHint')}
+            </ThemedText>
+          </>
+        )}
       </Card>
 
       {isHandload && (
@@ -165,6 +193,12 @@ export default function AmmoLotDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  derivedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

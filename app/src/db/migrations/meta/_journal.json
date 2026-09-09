@@ -57,6 +57,13 @@
       "when": 1788959986405,
       "tag": "0007_polite_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788983925609,
+      "tag": "0008_ammo_velocity",
+      "breakpoints": true
     }
   ]
 }

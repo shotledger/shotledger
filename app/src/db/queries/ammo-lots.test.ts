@@ -42,6 +42,22 @@ describe('createAmmoLot', () => {
     expect(lot.powderChargeGr).toBe(1.8);
     expect(lot.colMm).toBe(31.75);
   });
+
+  it('round-trips the chronographed velocity', () => {
+    const lot = createAmmoLot(db, {
+      label: '9x19 124 gr',
+      bulletWeightGr: 124,
+      velocityMps: 350.5,
+    });
+    expect(lot.velocityMps).toBe(350.5);
+    expect(getAmmoLot(db, lot.id)?.velocityMps).toBe(350.5);
+  });
+
+  it('leaves velocity null when not supplied', () => {
+    const lot = createAmmoLot(db, { label: 'No chrono' });
+    expect(lot.velocityMps).toBeNull();
+    expect(getAmmoLot(db, lot.id)?.velocityMps).toBeNull();
+  });
 });
 
 describe('listAmmoLots / softDeleteAmmoLot', () => {
@@ -60,5 +76,11 @@ describe('updateAmmoLot', () => {
     const updated = updateAmmoLot(db, lot.id, { quantity: 42 });
     expect(updated?.quantity).toBe(42);
     expect(updated?.updatedAt).toBeTruthy();
+  });
+
+  it('sets and clears velocity', () => {
+    const lot = createAmmoLot(db, { label: 'A', bulletWeightGr: 124 });
+    expect(updateAmmoLot(db, lot.id, { velocityMps: 348 })?.velocityMps).toBe(348);
+    expect(updateAmmoLot(db, lot.id, { velocityMps: null })?.velocityMps).toBeNull();
   });
 });

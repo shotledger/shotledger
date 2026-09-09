@@ -76,6 +76,9 @@ export const ammoLots = sqliteTable('ammo_lots', {
   bulletMake: text('bullet_make'),
   bulletModel: text('bullet_model'),
   bulletWeightGr: real('bullet_weight_gr'),
+  // chronographed muzzle velocity, m/s — what a chronograph here reads; power
+  // factor converts to fps for the conventional grain·fps/1000 figure.
+  velocityMps: real('velocity_mps'),
   // handload recipe:
   powder: text('powder'), // e.g. 'Vihtavuori N320'
   powderChargeGr: real('powder_charge_gr'), // grains
