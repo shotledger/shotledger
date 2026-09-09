@@ -4,11 +4,13 @@ import { describe, expect, it } from 'vitest';
 import {
   countInnerTens,
   seriesAverageTenths,
+  seriesInnerTenAverage,
   sessionInnerTenCount,
   sessionResults,
   shotVolume,
   sumValueTenths,
   tenthsToScore,
+  type FlaggedSeriesForResults,
   type SeriesForResults,
 } from './totals';
 
@@ -323,5 +325,101 @@ describe('sessionInnerTenCount (spec A-S7)', () => {
   it('A-S7b: no inner tens at all counts 0', () => {
     expect(sessionInnerTenCount([flagged([[100, false]])])).toBe(0);
     expect(sessionInnerTenCount([])).toBe(0);
+  });
+});
+
+describe('seriesInnerTenAverage (spec docs/specs/session-stats-inner-tens-spec.md IT-1..IT-10)', () => {
+  const series = (
+    innerTenFlags: boolean[],
+    opts: { isSighter?: boolean; isFinal?: boolean; valueTenths?: number } = {},
+  ): FlaggedSeriesForResults => ({
+    isSighter: opts.isSighter ?? false,
+    isFinal: opts.isFinal ?? false,
+    shots: innerTenFlags.map((isInnerTen) => ({
+      valueTenths: opts.valueTenths ?? (isInnerTen ? 100 : 90),
+      isInnerTen,
+    })),
+  });
+
+  it('IT-1: no series at all means no average', () => {
+    expect(seriesInnerTenAverage([])).toBeNull();
+  });
+
+  it('IT-2: averages the per-series inner-ten counts', () => {
+    const list = [
+      series([true, true, false]),
+      series([true, false, false]),
+      series([false, false, false]),
+    ];
+    expect(seriesInnerTenAverage(list)).toBe(1);
+  });
+
+  it('IT-3: a sighter series is in neither the numerator nor the denominator', () => {
+    const list = [series([true, false]), series([true, true, true], { isSighter: true })];
+    expect(seriesInnerTenAverage(list)).toBe(1);
+  });
+
+  it('IT-4: final series are included', () => {
+    const list = [series([false, false]), series([true, true], { isFinal: true })];
+    expect(seriesInnerTenAverage(list)).toBe(1);
+  });
+
+  it('IT-5: a scored series with no shots yet is not a zero in the denominator', () => {
+    expect(seriesInnerTenAverage([series([true]), series([])])).toBe(1);
+  });
+
+  it('IT-6: only sighters, or only empty scored series, means no average', () => {
+    expect(seriesInnerTenAverage([series([true], { isSighter: true })])).toBeNull();
+    expect(seriesInnerTenAverage([series([])])).toBeNull();
+  });
+
+  it('IT-7: scored series with no flagged shot average a real 0, not null', () => {
+    expect(seriesInnerTenAverage([series([false, false]), series([false])])).toBe(0);
+  });
+
+  it('IT-8: decimal shot values count identically — the flag decides, never the value', () => {
+    const list = [
+      series([true, false], { valueTenths: 109 }),
+      series([true, true], { valueTenths: 104 }),
+    ];
+    expect(seriesInnerTenAverage(list)).toBe(1.5);
+  });
+
+  it('IT-9: a WS1 override series counts in the denominator with 0 inner tens', () => {
+    const override: FlaggedSeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      shots: [],
+      totalOverride: { tenths: 450, shotCount: 5 },
+    };
+    expect(seriesInnerTenAverage([series([true, true]), override])).toBe(1);
+  });
+
+  it('IT-10: a non-integer average is returned exactly, unrounded', () => {
+    const list = [series([true]), series([]), series([false]), series([false])];
+    expect(seriesInnerTenAverage(list)).toBe(1 / 3);
+  });
+
+  it('IT-P1: equals sessionInnerTenCount over the count of qualifying series', () => {
+    const seriesArb = fc.record({
+      isSighter: fc.boolean(),
+      isFinal: fc.boolean(),
+      shots: fc.array(
+        fc.record({ valueTenths: fc.integer({ min: 0, max: 109 }), isInnerTen: fc.boolean() }),
+        { maxLength: 10 },
+      ),
+    });
+
+    fc.assert(
+      fc.property(fc.array(seriesArb, { maxLength: 12 }), (list) => {
+        const qualifying = list.filter((s) => !s.isSighter && s.shots.length > 0);
+        const average = seriesInnerTenAverage(list);
+        if (qualifying.length === 0) {
+          expect(average).toBeNull();
+          return;
+        }
+        expect(average).toBe(sessionInnerTenCount(list) / qualifying.length);
+      }),
+    );
   });
 });

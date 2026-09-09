@@ -107,6 +107,23 @@ export interface FlaggedSeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
   shots: readonly FlaggedShot[];
+  /** Set only for an imported WebShooter series with no shot rows (WS1). */
+  totalOverride?: SeriesTotalOverride | null;
+}
+
+/**
+ * A scored series that carries data — the set every per-series mean averages
+ * over. Sighters are excluded (N1); a series with no shots entered yet is
+ * omitted rather than counted as 0, so adding an empty series never drags an
+ * average down. Shared by `seriesAverageTenths` and `seriesInnerTenAverage`
+ * so the two can never disagree about which series they cover.
+ */
+function isScoredWithData(series: {
+  isSighter: boolean;
+  shots: readonly unknown[];
+  totalOverride?: SeriesTotalOverride | null;
+}): boolean {
+  return !series.isSighter && (series.totalOverride != null || series.shots.length > 0);
 }
 
 /**
@@ -122,9 +139,7 @@ export interface FlaggedSeriesForResults {
  */
 export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): number | null {
   const totals = seriesList
-    .filter(
-      (series) => !series.isSighter && (series.totalOverride != null || series.shots.length > 0),
-    )
+    .filter(isScoredWithData)
     .map((series) =>
       series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots),
     );
@@ -137,4 +152,21 @@ export function sessionInnerTenCount(seriesList: readonly FlaggedSeriesForResult
   return seriesList
     .filter((series) => !series.isSighter)
     .reduce((count, series) => count + countInnerTens(series.shots), 0);
+}
+
+/**
+ * Mean number of innertior per SCORED series — the card's "snitt X/serie"
+ * (maintainer, third review 2026-09-09). Averaged over exactly the series
+ * `seriesAverageTenths` averages over, so `X ÷ series count = this figure`
+ * holds for what the card shows. A plain count, not tenths; `null` when
+ * nothing qualifies. An override series (WS1) has no per-shot detail, so it
+ * counts in the denominator contributing 0 — the same 0 it already
+ * contributes to `sessionInnerTenCount`.
+ */
+export function seriesInnerTenAverage(
+  seriesList: readonly FlaggedSeriesForResults[],
+): number | null {
+  const scored = seriesList.filter(isScoredWithData);
+  if (scored.length === 0) return null;
+  return scored.reduce((count, series) => count + countInnerTens(series.shots), 0) / scored.length;
 }
