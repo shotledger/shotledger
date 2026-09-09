@@ -59,9 +59,9 @@ appId: app.shotledger
 # --- Firearms tab / firearm detail: per-firearm barometer ---------------
 - tapOn: 'Firearms'
 - extendedWaitUntil:
-    visible: 'Pardini K22'
+    visible: 'CZ Tactical Sport 2 Orange'
     timeout: 15000
-- tapOn: 'Pardini K22'
+- tapOn: 'CZ Tactical Sport 2 Orange'
 - extendedWaitUntil:
     visible: 'Activity barometer (vapenlicens)'
     timeout: 15000

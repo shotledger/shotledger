@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { listAmmoLots } from './queries/ammo-lots';
+import { listFirearmGroups } from './queries/firearm-groups';
 import { listFirearms } from './queries/firearms';
 import { latestLicense } from './queries/licenses';
 import { listSessions, sumExtraRounds } from './queries/sessions';
@@ -16,30 +17,98 @@ beforeEach(() => {
   db = createTestDb();
 });
 
+function firearmByModel(model: string) {
+  const firearm = listFirearms(db).find((f) => f.model === model);
+  expect(firearm, `no seeded firearm with model ${model}`).toBeDefined();
+  return firearm!;
+}
+
+/** Shot fields the deterministic PRNG decides — ids and timestamps are not. */
+function sortableShot(row: { position: number; valueTenths: number; isInnerTen: number }) {
+  return { position: row.position, valueTenths: row.valueTenths, isInnerTen: row.isInnerTen };
+}
+
+function groupIds(firearmId: string) {
+  return listFirearmGroups(db, firearmId)
+    .map((g) => g.groupId)
+    .sort();
+}
+
 describe('seedDemoData', () => {
-  it('creates 2 firearms, one with a license valid ~18 months out', () => {
+  it('creates the 4 demo firearms', () => {
     seedDemoData(db);
-    const firearms = listFirearms(db);
-    expect(firearms).toHaveLength(2);
-    const pistol = firearms.find((f) => f.weaponType === 'pistol');
-    expect(pistol).toBeDefined();
-    const license = latestLicense(db, pistol!.id);
-    expect(license).toBeDefined();
+    expect(listFirearms(db).map((f) => `${f.make} ${f.model}`)).toEqual([
+      'CZ Tactical Sport 2 Orange',
+      'Feinwerkbau AW93',
+      'Feinwerkbau P8X',
+      'Manurhin MR73 Sport',
+    ]);
+  });
+
+  it('registers each firearm in the vapengrupper it may actually be used in', () => {
+    seedDemoData(db);
+    expect(groupIds(firearmByModel('AW93').id)).toEqual(['generic:airgun']);
+    expect(groupIds(firearmByModel('Tactical Sport 2 Orange').id)).toEqual(['spsf:B']);
+    // R is "Ej tillämplig" in precision (SHB F.4.4) — the revolver is B there.
+    expect(groupIds(firearmByModel('MR73 Sport').id)).toEqual(['spsf:B', 'spsf:R']);
+    expect(groupIds(firearmByModel('P8X').id)).toEqual(['spsf:C']);
+  });
+
+  it('licenses every cartridge firearm; the ~10 J airgun needs none', () => {
+    seedDemoData(db);
+    for (const model of ['Tactical Sport 2 Orange', 'MR73 Sport', 'P8X']) {
+      expect(latestLicense(db, firearmByModel(model).id), model).toBeDefined();
+    }
+    expect(latestLicense(db, firearmByModel('AW93').id)).toBeUndefined();
+  });
+
+  it('gives the free pistol a license valid ~18 months out', () => {
+    seedDemoData(db);
+    const license = latestLicense(db, firearmByModel('P8X').id);
     const monthsOut =
       (new Date(license!.validUntil!).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30);
     expect(monthsOut).toBeGreaterThan(12);
     expect(monthsOut).toBeLessThan(24);
   });
 
-  it('creates 2 ammo lots, one factory and one handload', () => {
+  it('never seeds anything that could pass for a real license or serial', () => {
+    seedDemoData(db);
+    for (const firearm of listFirearms(db)) {
+      const license = latestLicense(db, firearm.id);
+      for (const value of [firearm.serialNumber, firearm.vapenId, license?.licenseNumber]) {
+        if (value != null) expect(value, value).toMatch(/^DEMO-/u);
+      }
+    }
+    for (const lot of listAmmoLots(db)) {
+      if (lot.lotNumber != null) expect(lot.lotNumber).toMatch(/^DEMO-/u);
+    }
+  });
+
+  it('creates the 5 ammo lots, 3 factory and 2 handload', () => {
     seedDemoData(db);
     const lots = listAmmoLots(db);
-    expect(lots).toHaveLength(2);
-    expect(lots.some((l) => l.isHandload === 0)).toBe(true);
-    const handload = lots.find((l) => l.isHandload === 1);
-    expect(handload?.powder).toBeTruthy();
-    expect(handload?.powderChargeGr).toBeTruthy();
-    expect(handload?.colMm).toBeTruthy();
+    expect(lots.map((l) => l.label).sort()).toEqual(
+      [
+        '.38 Spl HN Wadcutter 125 gr / N310 3.1 gr',
+        '9 mm HN HP 124 gr / N320 4.1 gr',
+        'Fiocchi 9 mm 115 gr',
+        'SK Pistol Match',
+        'SK Pistol Match Special',
+      ].sort(),
+    );
+    expect(lots.filter((l) => l.isHandload === 0)).toHaveLength(3);
+    const handloads = lots.filter((l) => l.isHandload === 1);
+    expect(handloads).toHaveLength(2);
+    for (const handload of handloads) {
+      expect(handload.powder, handload.label).toBeTruthy();
+      expect(handload.powderChargeGr, handload.label).toBeTruthy();
+      expect(handload.bulletMake, handload.label).toBe('H&N');
+      expect(handload.bulletWeightGr, handload.label).toBeTruthy();
+      // Load data the maintainer did not supply stays NULL — never invented.
+      expect(handload.primer, handload.label).toBeNull();
+      expect(handload.brass, handload.label).toBeNull();
+      expect(handload.colMm, handload.label).toBeNull();
+    }
   });
 
   it('creates ~30 sessions with a mix of training/competition and one final', () => {
@@ -50,6 +119,61 @@ describe('seedDemoData', () => {
     expect(sessions.some((s) => s.type === 'training')).toBe(true);
     expect(sessions.some((s) => s.disciplineId === 'spsf-milsnabb')).toBe(true);
     expect(sessions.some((s) => s.isChampionship === 1)).toBe(true);
+  });
+
+  it('exercises every firearm and every ammo lot', () => {
+    seedDemoData(db);
+    const sessions = listSessions(db);
+    for (const firearm of listFirearms(db)) {
+      expect(
+        sessions.some((s) => s.firearmId === firearm.id),
+        firearm.model,
+      ).toBe(true);
+    }
+    for (const lot of listAmmoLots(db)) {
+      expect(
+        sessions.some((s) => s.ammoLotId === lot.id),
+        lot.label,
+      ).toBe(true);
+    }
+  });
+
+  it("every session's vapengrupp is one its firearm is registered in", () => {
+    seedDemoData(db);
+    for (const session of listSessions(db)) {
+      expect(session.firearmId).toBeTruthy();
+      expect(groupIds(session.firearmId!), session.name).toContain(session.weaponGroup);
+    }
+  });
+
+  it('milsnabb is only ever logged with a gun that can shoot it (never C, never air)', () => {
+    seedDemoData(db);
+    const milsnabb = listSessions(db).filter((s) => s.disciplineId === 'spsf-milsnabb');
+    expect(milsnabb.length).toBeGreaterThan(0);
+    for (const session of milsnabb) {
+      expect(['spsf:B', 'spsf:R']).toContain(session.weaponGroup);
+    }
+  });
+
+  it('air-pistol sessions are freeform and carry no klass or ammo lot', () => {
+    seedDemoData(db);
+    const airgun = listSessions(db).filter((s) => s.weaponGroup === 'generic:airgun');
+    expect(airgun.length).toBeGreaterThan(0);
+    for (const session of airgun) {
+      expect(session.disciplineId).toBe('generic-rings');
+      expect(session.programId).toBeNull(); // generic-rings has no program
+      expect(session.shooterClass).toBeNull(); // generic disciplines have no klass
+      expect(session.ammoLotId).toBeNull();
+      expect(session.firearmId).toBe(firearmByModel('AW93').id);
+    }
+  });
+
+  it('is reproducible: two seeds of a fresh db produce identical scores', () => {
+    seedDemoData(db);
+    const first = db.select().from(shots).all().map(sortableShot);
+    const other = createTestDb();
+    seedDemoData(other);
+    expect(other.select().from(shots).all().map(sortableShot)).toEqual(first);
   });
 
   it('creates the KM, Tävling and Träning tags', () => {
@@ -65,7 +189,9 @@ describe('seedDemoData', () => {
     seedDemoData(db);
     seedDemoData(db);
     expect(listSessions(db)).toHaveLength(30);
-    expect(listFirearms(db)).toHaveLength(2);
+    expect(listFirearms(db)).toHaveLength(4);
+    expect(listAmmoLots(db)).toHaveLength(5);
+    expect(listFirearmGroups(db, firearmByModel('MR73 Sport').id)).toHaveLength(2);
   });
 });
 
