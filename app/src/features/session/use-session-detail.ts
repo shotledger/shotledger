@@ -21,7 +21,6 @@ import { db } from '@/db/client';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSeriesForSession } from '@/db/queries/series';
 import { listShotsForSeries } from '@/db/queries/shots';
-import { listSightSettings } from '@/db/queries/sight-settings';
 import { getSession } from '@/db/queries/sessions';
 
 export interface SeriesRow {
@@ -67,9 +66,6 @@ export interface SessionDetail {
   canStartFinal: boolean;
   /** Skeleton programs pre-create their series; nothing may be appended. */
   isFixedFormat: boolean;
-  /** The session firearm's sight settings, so the sights can be switched
-   *  mid-match without leaving scoring. Empty when no firearm is linked. */
-  sightSettings: ReturnType<typeof listSightSettings>;
 }
 
 const EMPTY: SessionDetail = {
@@ -86,7 +82,6 @@ const EMPTY: SessionDetail = {
   finalHasSighter: false,
   canStartFinal: false,
   isFixedFormat: false,
-  sightSettings: [],
 };
 
 export function loadSessionDetail(sessionId: string): SessionDetail {
@@ -171,7 +166,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       !results.hasFinal &&
       seriesRows.some((row) => !row.isSighter && row.shots.length > 0),
     isFixedFormat: program?.structure !== undefined,
-    sightSettings: session.firearmId ? listSightSettings(db, session.firearmId) : [],
   };
 }
 

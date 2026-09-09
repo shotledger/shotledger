@@ -447,8 +447,6 @@
     "extraRounds": "Extra Rounds (not scored)",
     "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only",
     "sightsTitle": "Sights",
-    "sightsHint": "Tap a setting to make it current; the clicks shown are what to turn.",
-    "sightsNoneCurrentHint": "No setting is marked current yet, so there is nothing to count clicks from.",
     "roundsFired": "Rounds Fired",
     "roundsFiredHint": "The session's shot count. Counted toward the round counter and ammo use; never scored.",
     "editTitle": "Edit Session",

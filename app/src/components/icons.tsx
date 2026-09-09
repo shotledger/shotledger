@@ -2,7 +2,7 @@
 // the same reason tab-icons.tsx gives: `@expo/vector-icons` is not in this
 // project's dependency tree and adding it needs the maintainer's OK.
 import type { ColorValue } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 export interface IconProps {
   color: ColorValue;
@@ -10,6 +10,20 @@ export interface IconProps {
 }
 
 const DEFAULT_SIZE = 24;
+
+export function CheckIcon({ color, size = DEFAULT_SIZE }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="m5 12.5 4.5 4.5L19 7"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 /** Material's overflow affordance: three filled dots, vertically stacked. */
 export function OverflowIcon({ color, size = DEFAULT_SIZE }: IconProps) {

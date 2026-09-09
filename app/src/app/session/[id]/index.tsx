@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { formatGroupAndClass, resolveActiveSightSetting, tenthsToScore } from '@shotledger/shared';
+import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -24,8 +24,6 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
-import { setActiveSightSetting } from '@/db/queries/sight-settings';
-import { sightSettingLabel } from '@/features/firearms/sight-turns-text';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
@@ -91,17 +89,6 @@ export default function SessionDetailScreen() {
     refresh();
   }
 
-  /**
-   * Switching sights between series. `is_active` lives on the firearm, not the
-   * session, so this is the same state the Firearms tab shows — the gun is
-   * physically dialled to one setting at a time.
-   */
-  function onSetSight(settingId: string) {
-    if (!db || !session?.firearmId) return;
-    setActiveSightSetting(db, session.firearmId, settingId);
-    refresh();
-  }
-
   function onStartFinal() {
     setNextIsFinal(true);
   }
@@ -135,7 +122,6 @@ export default function SessionDetailScreen() {
 
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
-  const activeSight = resolveActiveSightSetting(detail.sightSettings);
 
   const renderSeries = (row: SeriesRow) => {
     const content = (
@@ -265,24 +251,6 @@ export default function SessionDetailScreen() {
           />
         </View>
       </Card>
-
-      {detail.sightSettings.length > 0 && (
-        <Card testID="session-sights">
-          <ThemedText type="smallBold">{t('session.sightsTitle')}</ThemedText>
-          <SegmentedControl
-            testID="session-sights-control"
-            options={detail.sightSettings.map((setting) => ({
-              value: setting.id,
-              label: sightSettingLabel(t, activeSight, setting),
-            }))}
-            value={activeSight?.id ?? ''}
-            onChange={onSetSight}
-          />
-          <ThemedText type="small" themeColor="textSecondary">
-            {activeSight ? t('session.sightsHint') : t('session.sightsNoneCurrentHint')}
-          </ThemedText>
-        </Card>
-      )}
 
       {isRoundsSession && (
         <Card>

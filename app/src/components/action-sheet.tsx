@@ -5,8 +5,10 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CheckIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export interface ActionSheetAction {
@@ -15,6 +17,8 @@ export interface ActionSheetAction {
   onPress: () => void;
   destructive?: boolean;
   disabled?: boolean;
+  /** Marks the choice already in effect, for a sheet used as a picker. */
+  selected?: boolean;
 }
 
 export interface ActionSheetProps {
@@ -25,6 +29,8 @@ export interface ActionSheetProps {
 }
 
 export function ActionSheet({ visible, onClose, title, actions }: ActionSheetProps) {
+  const theme = useTheme();
+
   function select(action: ActionSheetAction) {
     if (action.disabled) return;
     onClose();
@@ -65,12 +71,20 @@ export function ActionSheet({ visible, onClose, title, actions }: ActionSheetPro
                 >
                   <ThemedText
                     type="default"
+                    style={styles.rowLabel}
                     themeColor={
-                      action.disabled ? 'textSecondary' : action.destructive ? 'danger' : undefined
+                      action.disabled
+                        ? 'textSecondary'
+                        : action.destructive
+                          ? 'danger'
+                          : action.selected
+                            ? 'primary'
+                            : undefined
                     }
                   >
                     {action.label}
                   </ThemedText>
+                  {action.selected ? <CheckIcon color={theme.primary} size={20} /> : null}
                 </Pressable>
               ))}
               <View style={styles.bottomSpacer} />
@@ -99,8 +113,14 @@ const styles = StyleSheet.create({
   },
   row: {
     minHeight: 48,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
     paddingHorizontal: Spacing.three,
+  },
+  rowLabel: {
+    flexShrink: 1,
   },
   bottomSpacer: {
     height: Spacing.two,
