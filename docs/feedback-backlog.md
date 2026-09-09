@@ -405,6 +405,399 @@ surfaced that no code read would have found.
       Fixed in **#76**: `StatTile` labels now shrink to fit
       (`adjustsFontSizeToFit`) instead of wrapping.
 
+## 12. Third review (2026-09-09)
+
+A batch spanning demo data, session creation, session stats, export format,
+funding, the About screen, ammo, firearms and information architecture.
+
+### Demo / test data
+
+- [~] **Remove shooter classes `1u`, `1b`, `1s`** ("remove classes 1ubs") from
+  `SPSF_SHOOTER_CLASSES` (`shared/src/disciplines/classes.ts`) and anywhere
+  they are consumed. **#118**.
+- [~] **Demo firearms must match the maintainer's own** — "no pardini Steyr
+  LP10". Replace with **FWB AW93**, **CZ Tactical Sport 2 Orange (TS2O)**,
+  **Manurhin MR73 Sport**, **FWB P8X**, each in its correct vapengrupp. **#118**.
+- [~] **Demo ammo**: SK Pistol Match · SK Pistol Match Special · 9 mm HN HP
+  124 gr / N320 4.1 gr · .38 Spl HN Wadcutter 125 gr / N310 3.1 gr ·
+  Fiocchi 9 mm 115 gr. Handloads and factory ammo both represented, and
+  each lot linked to a firearm that can actually chamber it. **#118**.
+
+### Federation model
+
+- [ ] **Weapon group and klass must be dynamic, not hard-coded.** They differ
+      between countries and between federations _within_ a country — SPSF vs.
+      Svenska Skyttesportförbundet
+      (<https://www.skyttesport.se/vaara-idrottsgrenar/pistol/>) — and **a
+      shooter can be a member of several at once**. Raised as **#116**; too
+      large for this batch.
+
+### New session screen
+
+- [~] **Default the session name** to `<Training|Competition> - <date>`. **#125**.
+- [?] **"What is Program? Free Training or Precision?"** — answered and raised
+  as **#117**, deliberately not built. Program is the shot program within a
+  discipline: shots per series, integer vs. decimal scoring, whether a final
+  exists, and for fixed formats it pre-builds the series skeleton;
+  `Free Training` means no program. The confusion is real — you pick
+  Discipline = Precision and then Program = Precision, and "training" appears
+  as a value in two pickers that mean different things. Maintainer,
+  2026-09-09: _"it seems like a bigger task that needs some thinking."_
+
+### Session detail > Stats
+
+- [~] **The session total is shown twice** — "251 points is shown above
+  Series/Stats tab redundant". Drop it from one of the two places. **#121**.
+- [~] **Average inner tens per series.** "Under Per series, would be useful
+  with average no of inner tens per series" — and it "might also fit
+  highest on the view with Total, Avg Points/Series, X (Inner Tens) - and
+  then Avg Inner Tens/Series". **#121**.
+- [~] **Total shots in the section header** — "perhaps total shot can be in
+  the header of 'Shot Distribution (x shots)'". **#121**.
+
+### Export / import
+
+- [?] **"I think we should export and import as JSON or YAML and not CSV."**
+  Maintainer, 2026-09-09, wants two shapes — _"relative (think foreign keys)
+  and full (each session has complete information)"_ — then answered
+  themselves: _"should we skip relative via JSON since then the user could
+  export SQLite database?"_ That is the right call. The backup bundle already
+  ships the real `database.sqlite3`, which is a lossless relational export;
+  a normalised JSON export would duplicate it at lower fidelity. So: **one
+  self-contained JSON export**, and Backup for the exact relational copy.
+  **JSON, not YAML** — no YAML parser is in the lockfile and adding one hits
+  hard rule 2; JSON5/JSONC do not help either, since `JSON.parse` cannot read
+  them. Comments ride along as a metadata header (format id, version,
+  generated-at, app version) inside plain JSON. `shared/src/csv/` is under the
+  old-coder evidence-first rule, so its replacement is too. Awaiting the
+  maintainer's OK on this shape before building.
+
+### Funding
+
+- [?] **"Is GitHub Sponsors a better alternative than Buy Me A Coffee?"** and
+  _"Can people send directly to my paypal account e.g.?"_ and _"Is Revolut an
+  option?"_ Researched against primary sources 2026-09-09; comparison table
+  delivered, maintainer choosing. Findings that will not change:
+  - **Buy Me a Coffee is the most expensive mainstream option** — 5% platform
+    plus Stripe 2.9% + $0.30 plus 0.5% payout plus 1% non-US, ≈ **15-16%** of
+    a 50 kr tip, then paid out in USD.
+  - **PayPal.me is disqualified on privacy**: its own terms publish "namn…
+    profilbild eller logotyp samt den **ort** som är kopplad till ditt
+    PayPal-konto" to anyone who opens the link. The zero-fee friends-and-family
+    route is explicitly barred for donations, with retroactive fees threatened,
+    so the honest rate is 3.40% + 3.25 kr ≈ **9.9%**.
+  - **Swish privat is disqualified twice over**: restricted to "privatpersoner
+    för enskilt bruk", and receiving publishes the maintainer's **name and
+    mobile number** to the payer. Swish Företag needs an organisationsnummer
+    and costs 39 kr/mån + 2 kr/betalning — ~12% at ten donations a month.
+  - **Revolut does not beat Stripe.** Revolut Pro is open to a self-employed
+    natural person with no company and leaks only a username, but it is dearer
+    at this ticket size (~6.2% vs ~5.1%, the gap being a £0.20-equivalent fixed
+    fee), publishes its Swedish schedule in pounds, settles to a Lithuanian
+    IBAN, and has **no Swish path**. Revolut.Me caps at 40 payments/month and
+    Revolut Donations is registered-charities-only.
+  - **Recommendation: a Stripe Payment Link as primary** (~5.1%, giver needs no
+    account, SEK-native, exposes only a descriptor you choose) **plus GitHub
+    Sponsors** (0% all-in from personal accounts, but the giver needs a GitHub
+    account) — and point `SUPPORT_URL` at a page on `shotledger.app` rather
+    than hard-coding a provider into a shipped binary. Add Swish via Stripe
+    when it leaves private preview.
+  - **Both stores permit the outbound link.** Google: a contribution where
+    "100% … goes to the creator" and which grants no digital content is a
+    peer-to-peer payment outside Play Billing. Apple 3.2.2(iv) explicitly
+    allows collecting "outside of the app, such as via Safari". The existing
+    string _"Free app; donations unlock nothing"_ is almost verbatim Google's
+    test — keep it, never let a donation unlock anything, and keep donation
+    language out of the Play listing (anti-steering names it explicitly).
+  - **Tax:** Skatteverket treats donations given because you run the project as
+    taxable hobby income (bilaga T2), whichever rail is used — a reason to pick
+    one with clean exportable records, not a reason to prefer any of them.
+
+### About screen
+
+- [~] **Open Source Licenses**: add the dependency list to
+  About > Open Source Licenses, **and add a rule to `CLAUDE.md` that it is
+  kept up to date when dependencies are added or removed**. **#120**.
+- [~] **Fix About > Source Code** — the link is wrong; "perhaps GitHub
+  Repository instead of Source Code?" **#120**.
+
+### Ammo
+
+- [~] **Power factor from velocity** — "For ammo lot I'd like to be able to
+  enter the speed and the power factor should be calculated automatically." **#119**.
+
+### Firearms
+
+- [~] **Two weapon groups both marked "Default"** — "Steyr LP10 (test data) has
+  airgun (Default) set, but I can add another group that is also default".
+  Investigated: **not a logic bug.** `isDefaultForGroup` means _the default
+  firearm for this weapon group_ — it is what pre-selects the right gun when
+  you start a session in group C — so one firearm being the default for two
+  groups it belongs to is legitimate (the MR73 in both R and B). The bug is
+  the bare "Default" subtitle. Decided 2026-09-09: keep the logic, label it
+  "Default for C". **#122**.
+- [~] **Sight Settings > Name hint is Swedish in the English UI**
+  ("e.g. mitt-mitt…"). **#122**.
+- [~] **Elevation and Windage should be constrained inputs** — "should be
+  fixed (dropdown, +/- buttons or similar)", not free text. **#122**.
+
+### Statistics
+
+- [~] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
+  answered: `webshooter.recordsSubtitle` is _"Personal bests and
+  year-to-year (WebShooter)"_, the only literal `(WebShooter)` in the whole
+  i18n tree. It names the integration the Records screen was built under,
+  not the data it shows — and that is wrong, because the screen mixes
+  WebShooter-imported competition results (Official PBs, Year to Year) with
+  **ordinary locally-logged sessions** (Freeform PBs), computed entirely
+  over local data with no network. The suffix tells the user their own
+  manually logged bests came from WebShooter. Drop it. **#126**.
+
+### Information architecture
+
+- [?] **"Settings and Tools feels like SPA (i.e. very much scrolling). Is
+  this the best way?"** — critique with the `impeccable` skill before
+  changing anything.
+
+## 13. Fourth review (2026-09-09) — the timers
+
+A second batch the same day, almost entirely on the three timers. Sequence
+these against §9b, which already decided the PAR and IPSC timers get unified
+into one programmable timer — several items below are cheaper to do as part of
+that than before it.
+
+### Broken
+
+- [~] **Shot Timer crashes on Start** — "Shot Timer worked one time but
+  pressing start now kills app". Works the first time, hard-crashes on a
+  later Start. Highest priority in this batch. A "works once" signature
+  points at a resource created on start and never released on stop
+  (`expo-audio` recorder, a metering listener registered twice, a native
+  object used after release) — to be confirmed from an actual `logcat`
+  trace, not guessed. **#127**.
+
+### Naming and copy
+
+- [ ] **Three names for the same three timers.** The entry row says "PAR, IPSC
+      and field timers"; the tabs say "PAR Timer", "Shot Timer", "Field
+      timers" — "different names and casing". §9b already renames PAR to
+      **Time Limit**; settle the whole set at once.
+- [ ] **The tab reads "Shot Timer…"** — "why '...'?" Truncation, same family
+      as #62/#76.
+- [ ] **"Parti 1" / "Parti 2"** — "is that English or Swedish?" Swedish
+      leaking into the English UI, like the sight-label hint in #122.
+
+### Controls
+
+- [ ] **Trigger Level should be a slider**, not +/− — "e.g. slider with Low and
+      High Sensitiveness". Note §8: the detector is not merely mis-tuned, so a
+      better control must not imply the numbers work yet.
+- [ ] **A slider for shooting time** too.
+- [ ] **"PAR Time (s)" is not an obvious control** — "not obvious for user".
+
+### Long help text should be a tooltip
+
+- [~] **Move long inline help behind an `[i]` affordance** — "Some of the
+  information like the long text next to Trigger Level (contains 'Try High
+  for .22) would be better as a 'tooltip'. Not sure if that exists in
+  Android and iOS. if not perhaps an icon [i] for information and then a
+  modal or similar will pop up. **Check the entire app for this pattern.**"
+  There is no native cross-platform tooltip, so this is an `[i]` button
+  plus the existing `ActionSheet`/modal. It is an app-wide sweep, not a
+  timer fix — the IA critique measured ~240dp of permanently-expanded prose
+  on Settings alone (`locationLookupHelp` at 184 chars, `vaultNote` at 131),
+  so the same component pays for itself several times over. **#128**.
+
+### Field timer
+
+The largest item in this batch. The maintainer's fuller description resolves
+what first looked like a contradiction: **there are two modes**, and the
+timeline is anchored at **Eld**, not at Start.
+
+**Two modes, because there are two jobs.**
+
+- [ ] **Range-officer mode — manual advance.** "Normally, I don't want a timer
+      between Ladda and 'Tio sekunder kvar'. The amount of time there depends
+      on the shooters and when I think that they're ready." So: an **"Alla
+      klara"** button advances the stage on a press. "If everyone is ready then
+      I'll press again and the '10 sekunder kvar' and it's automatic from
+      there."
+- [ ] **Solo mode — fully automatic.** "The above works when I am 'controlling'
+      other shooters but I'd also like to use it for myself. And then I want it
+      to start at 'Ladda' and be automatic from there (and in this use-case I
+      want to set a time between Ladda and 'Alla klara')." So solo mode adds
+      one setting the RO mode does not have: the Ladda → Alla klara duration.
+
+**Timing that is currently wrong.**
+
+- [ ] **"Tio sekunder kvar" must be exactly ten seconds before Eld.** "Now it's
+      10s from 'Alla klara' which means that when '10 sekunder kvar' it should
+      be 10s left." Today the call is anchored to the wrong event.
+- [ ] **A ~5 s gap between "Alla klara" and "Tio sekunder kvar"** — "so that
+      shooters can announce if they're not ready".
+- [ ] **"Eld upphör" is drawn out over the last 3 s**, so the command _ends_
+      exactly as time runs out rather than starting there.
+- [ ] **The timeline starts at Eld.** "The time line should start at 'Eld/Fire'
+      and the timer should count down prior to that (e.g. at '10 sekunder kvar'
+      → −10s)." So t=0 is Eld, the preparatory commands sit at negative times,
+      and the firing period runs positive.
+
+**The view itself.**
+
+- [ ] **Number the commands and mark the numbers on the timeline** — "Make a
+      numbers list of commands and indicate those numbers on the time line."
+- [ ] **Drop the Competition/Training tabs** — "Don't see the purpose. KISS."
+- [ ] **Remove the "Markera" button.**
+- [ ] **Restart from the timeline view** — "I would like to be able to restart
+      from the view where I see the timeline."
+- [ ] **Swedish only on this page** — "you can remove the english translation
+      on this page (it's a Swedish event)". Reading this as: the **commands**
+      are the real spoken Swedish commands and stay Swedish whatever the app
+      language, since that is what is called on the line. Confirm whether the
+      surrounding chrome (buttons, headings) should also stop translating —
+      that would be the first deliberate exception to hard rule 5.
+- [ ] **"Parti 1" / "Parti 2"** — see Naming above; if the commands stay
+      Swedish by design, this stops being a bug and the English UI simply has
+      to stop pretending to translate them.
+
+**Feedback.**
+
+- [ ] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n" and
+      **"time is up"**.
+
+### PAR timer
+
+- [ ] **Rename it.** "We had a discussion between about the PAR Timer. You said
+      that the name came from golf (shooting on par). It makes no sense here."
+      §9b already settled on **Time Limit**; this confirms it.
+- [ ] **Remove "Choose a Drill" for now** — "let users just fill in
+      themselves".
+- [ ] **Cue selection**: vibration and/or beep, each on/off — "Or perhaps it
+      does not make sense to have both of so 1) vib, 2) beep 3) vib + beep".
+      Three-way choice is the simpler control and covers every combination
+      except "neither", which a silent timer nobody can perceive does not need.
+      Same mechanism as the field timer's vibration setting — build one cue
+      model for both, per §9b.
+
+## 14. Fifth review (2026-09-09) — decisions and build/tooling
+
+Answers to the open `[?]` items above, plus new questions raised while getting
+a standalone build onto the maintainer's phone.
+
+### Corrections to the demo set
+
+- [ ] **FWB AW93 is a .22 LR pistol**, not an air pistol. That was my error, and
+      it is the second correction to this fixture (the P8X went the other way —
+      it _is_ an air pistol). With AW93 on .22 the set finally closes: the two
+      SK Pistol Match lots have a gun that chambers them, and **vapengrupp C
+      (".22 LR only") is exercised**, which it was not before. Final set:
+      AW93 → `spsf:C`, P8X → `generic:airgun`, CZ TS2 Orange → `spsf:A`,
+      MR73 Sport → `spsf:R` + `spsf:B`.
+
+### Decisions taken
+
+- [ ] **Funding: point `SUPPORT_URL` at `https://shotledger.app/support`.**
+      A page the maintainer controls, so the payment rail can change without an
+      app release. Rail choice itself still open; the research in §12 stands.
+- [ ] **Export: a parser may be added.** Maintainer, 2026-09-09: _"we could add
+      a YAML or JSON5/JSONC parser and allow user to toggle comments or no
+      comments if e.g. Excel does not support comments in JSON"_. This lifts the
+      hard-rule-2 blocker that made plain JSON the only option. **The toggle is
+      the load-bearing part**: a commented file is not valid JSON, so anything
+      consuming it with a standard parser (Excel/Power Query included) fails —
+      comments must be opt-in and off by default for machine consumption.
+- [ ] **Settings/Tools: do the full restructure** ("fix"), not just the quick
+      wins already in #128. Note the §7 conflict: moving the märke table to its
+      own screen contradicts the earlier request that it show live _beneath_
+      Birth Year. Resolve that before building.
+- [ ] **Declare `babel-preset-expo`** — approved, see below.
+
+### Build and tooling
+
+- [ ] **`babel-preset-expo` is declared in no `package.json`** yet
+      `app/babel.config.js` requires it. It exists in the maintainer's checkout
+      only as a stale symlink from an older install; every fresh worktree lacks
+      it and `pnpm install` will not recreate it, so **a fresh clone cannot
+      bundle**. Found while building a release APK; almost certainly what the
+      abandoned `fix/release-build-babel-preset` branch was for. Approved to
+      declare it in `app` devDependencies.
+- [ ] **Use a real slider instead of the hand-rolled `PanResponder` one.**
+      The fälttimer branch built `app/src/components/slider.tsx` from
+      `PanResponder` because no slider package is in the lockfile and rule 2
+      forbade adding one. Maintainer asks why — approved to reconsider adding
+      `@react-native-community/slider`.
+- [?] **State the supported Android versions and architectures.** Maintainer:
+  _"Should we state what versions of Android we support and what arch?"_
+  Today `minSdk=24` (Android 7.0) and `targetSdk=36` come from the Expo
+  template and are recorded nowhere the user or the store listing can see.
+  Needs a decision on the floor, then documenting in `docs/store-listing.md`
+  and `docs/release.md`.
+- [ ] **Document the local standalone build.** No `CONTRIBUTING.md` exists, so
+      this goes in `CLAUDE.md`'s agentic loop beside the emulator commands:
+      `assembleRelease` (debug-keystore-signed, JS bundled, no Metro),
+      `-PreactNativeArchitectures=arm64-v8a` to cut a 295 MB universal APK to
+      90 MB, and `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` to make demo data reachable
+      in a release build — **never set for a Play build; it ships a wipe
+      button**.
+
+## 15. Sixth review (2026-09-10)
+
+### Caliber presets
+
+Maintainer: _"Can we add a preset list of calibers? And when we show it always
+show recent/most used on top?"_
+
+- [ ] **A preset caliber list, most-used first.** Caliber is free text today on
+      both `firearms` and `ammo_lots`, which is why the demo fixture alone
+      spells things three ways (`.22 LR`, `9×19 mm`, `4.5 mm`).
+- [ ] **Presets only — no free text.** Revised by the maintainer 2026-09-10
+      (_"caliber and load system, presets only"_), superseding the first pass
+      here. That raises the bar on the list: a shooter whose chambering is
+      missing is simply stuck, so it has to be genuinely comprehensive, and
+      existing free-text values need a backfill onto canonical presets with an
+      explicit decision about anything unrecognised.
+- [ ] **"Most used" is counted from the user's own rows**, across firearms and
+      ammo lots — no new column, no new table.
+- [ ] **International by design** (plan.md principle): the list cannot be
+      SPSF-only or Sweden-only, and metric and imperial naming both have to
+      appear the way shooters actually write them.
+
+Canonical spelling is the real prize: `9×19`, `9x19` and `9 mm Luger` are one
+caliber, and free text makes them three. Whatever the presets say becomes the
+de facto standard, so pick deliberately.
+
+### Load system — presets only
+
+Maintainer: _"Same with load system - provide presets only"_ — note **only**,
+unlike caliber, which keeps its free-text escape.
+
+- [ ] **Replace the free-text load system with a fixed set.** Values are a
+      small closed vocabulary (single shot, semi-automatic, revolver, bolt
+      action…), so free text buys nothing and costs consistency.
+- [ ] **This also fixes an i18n leak.** `firearms.load_system` currently stores
+      the _display string_, and the demo fixture stores Swedish (`Enkelskott`,
+      `Halvautomat`) — which then renders untranslated in the English UI, the
+      same class of bug as the sight-label hint in #122. Store a stable code
+      and translate at render, per hard rule 5.
+- [ ] **Existing rows need a migration and an honest backfill** — map the
+      strings actually in the wild onto codes, and decide what happens to
+      anything unrecognised rather than silently dropping it.
+
+### More [i] candidates
+
+Maintainer, 2026-09-10: _"still a bunch of descriptions that should use [i],
+see e.g. Firearm > Weapon Groups, Sight Settings"_
+
+- [ ] **Apply the `[i]` sheet to the firearm screen's hints** — at minimum
+      `firearms.groupsHint` (the default-per-group explanation added in #122)
+      and `firearms.sightSettingsHint`, plus the elevation/windage hints.
+- [ ] **Revisit #128's "keep it inline" calls.** That sweep deliberately kept
+      anything under ~90 characters and anything that "is the field's meaning",
+      and it kept both of these. The maintainer disagrees, so the threshold was
+      wrong: the rule to keep is **warnings and anything that changes what you
+      are about to do stay visible** — length is not the test. Re-audit the
+      inventory in #128 against that narrower rule.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
