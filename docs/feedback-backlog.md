@@ -522,6 +522,69 @@ funding, the About screen, ammo, firearms and information architecture.
   this the best way?"** — critique with the `impeccable` skill before
   changing anything.
 
+## 13. Fourth review (2026-09-09) — the timers
+
+A second batch the same day, almost entirely on the three timers. Sequence
+these against §9b, which already decided the PAR and IPSC timers get unified
+into one programmable timer — several items below are cheaper to do as part of
+that than before it.
+
+### Broken
+
+- [ ] **Shot Timer crashes on Start** — "Shot Timer worked one time but
+      pressing start now kills app". Works the first time, hard-crashes on a
+      later Start. Highest priority in this batch. A "works once" signature
+      points at a resource created on start and never released on stop
+      (`expo-audio` recorder, a metering listener registered twice, a native
+      object used after release) — to be confirmed from an actual `logcat`
+      trace, not guessed.
+
+### Naming and copy
+
+- [ ] **Three names for the same three timers.** The entry row says "PAR, IPSC
+      and field timers"; the tabs say "PAR Timer", "Shot Timer", "Field
+      timers" — "different names and casing". §9b already renames PAR to
+      **Time Limit**; settle the whole set at once.
+- [ ] **The tab reads "Shot Timer…"** — "why '...'?" Truncation, same family
+      as #62/#76.
+- [ ] **"Parti 1" / "Parti 2"** — "is that English or Swedish?" Swedish
+      leaking into the English UI, like the sight-label hint in #122.
+
+### Controls
+
+- [ ] **Trigger Level should be a slider**, not +/− — "e.g. slider with Low and
+      High Sensitiveness". Note §8: the detector is not merely mis-tuned, so a
+      better control must not imply the numbers work yet.
+- [ ] **A slider for shooting time** too.
+- [ ] **"PAR Time (s)" is not an obvious control** — "not obvious for user".
+
+### Long help text should be a tooltip
+
+- [ ] **Move long inline help behind an `[i]` affordance** — "Some of the
+      information like the long text next to Trigger Level (contains 'Try High
+      for .22) would be better as a 'tooltip'. Not sure if that exists in
+      Android and iOS. if not perhaps an icon [i] for information and then a
+      modal or similar will pop up. **Check the entire app for this pattern.**"
+      There is no native cross-platform tooltip, so this is an `[i]` button
+      plus the existing `ActionSheet`/modal. It is an app-wide sweep, not a
+      timer fix — the IA critique measured ~240dp of permanently-expanded prose
+      on Settings alone (`locationLookupHelp` at 184 chars, `vaultNote` at 131),
+      so the same component pays for itself several times over.
+
+### Field timer
+
+- [ ] **Drop the Competition/Training tabs** — "Don't see the purpose. KISS."
+- [ ] **No fixed timer between "Ladda" and "Tio sekunder kvar".** How long that
+      takes depends on the shooters, and only the range officer knows when they
+      are ready. Replace it with an **"Alla klara"** button that advances the
+      stage on a press; from "10 sekunder kvar" onwards it runs automatically.
+- [ ] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n".
+- [?] **What Start should do is unresolved.** "When I press start it should
+  start with 'Tio sekunder kvar'. Never Ladda or Alla Klara. I want you to
+  show those two and allow the" — the message ends mid-sentence, and as
+  written it also pulls against the "Alla klara" button above. Needs the
+  rest of the sentence before anything is built.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
