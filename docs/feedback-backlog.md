@@ -742,18 +742,43 @@ a standalone build onto the maintainer's phone.
 
 ## 15. Sixth review (2026-09-10)
 
-- [ ] **A preset list of calibers, with recent/most-used first.** Maintainer:
-      _"Can we add a preset list of calibers? And when we show it always show
-      recent/most used on top?"_ Caliber is free text today on both `firearms`
-      and `ammo_lots`, which is why the demo fixture alone spells things three
-      ways (`.22 LR`, `9×19 mm`, `4.5 mm`). Notes for whoever builds it: - **Free text must survive.** A preset list that cannot express an
-      unusual chambering is worse than none; the picker offers presets and
-      still accepts anything typed. - **"Most used" comes from the user's own rows**, counted across firearms
-      and ammo lots — no new column, no new table. - **International by design** (plan.md principle): the list cannot be
-      SPSF-only or Sweden-only, and both metric and imperial naming have to
-      appear the way shooters actually write them. - Canonical spelling is the real value here: `9×19` vs `9x19` vs
-      `9 mm Luger` are one caliber, and free text makes them three. Whatever
-      the presets say becomes the de facto standard, so pick deliberately.
+### Caliber presets
+
+Maintainer: _"Can we add a preset list of calibers? And when we show it always
+show recent/most used on top?"_
+
+- [ ] **A preset caliber list, most-used first.** Caliber is free text today on
+      both `firearms` and `ammo_lots`, which is why the demo fixture alone
+      spells things three ways (`.22 LR`, `9×19 mm`, `4.5 mm`).
+- [ ] **Free text must survive.** A preset list that cannot express an unusual
+      chambering is worse than none: the picker offers presets and still
+      accepts anything typed.
+- [ ] **"Most used" is counted from the user's own rows**, across firearms and
+      ammo lots — no new column, no new table.
+- [ ] **International by design** (plan.md principle): the list cannot be
+      SPSF-only or Sweden-only, and metric and imperial naming both have to
+      appear the way shooters actually write them.
+
+Canonical spelling is the real prize: `9×19`, `9x19` and `9 mm Luger` are one
+caliber, and free text makes them three. Whatever the presets say becomes the
+de facto standard, so pick deliberately.
+
+### Load system — presets only
+
+Maintainer: _"Same with load system - provide presets only"_ — note **only**,
+unlike caliber, which keeps its free-text escape.
+
+- [ ] **Replace the free-text load system with a fixed set.** Values are a
+      small closed vocabulary (single shot, semi-automatic, revolver, bolt
+      action…), so free text buys nothing and costs consistency.
+- [ ] **This also fixes an i18n leak.** `firearms.load_system` currently stores
+      the _display string_, and the demo fixture stores Swedish (`Enkelskott`,
+      `Halvautomat`) — which then renders untranslated in the English UI, the
+      same class of bug as the sight-label hint in #122. Store a stable code
+      and translate at render, per hard rule 5.
+- [ ] **Existing rows need a migration and an honest backfill** — map the
+      strings actually in the wild onto codes, and decide what happens to
+      anything unrecognised rather than silently dropping it.
 
 ## Decisions taken while working through this feedback
 
