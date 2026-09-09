@@ -47,30 +47,28 @@ describe('seedDemoData', () => {
 
   it('registers each firearm in the vapengrupper it may actually be used in', () => {
     seedDemoData(db);
-    expect(groupIds(firearmByModel('AW93').id)).toEqual(['generic:airgun']);
+    expect(groupIds(firearmByModel('AW93').id)).toEqual(['spsf:C']);
     expect(groupIds(firearmByModel('Tactical Sport 2 Orange').id)).toEqual(['spsf:A']);
     // R is "Ej tillämplig" in precision (SHB F.4.4) — the revolver is B there.
     expect(groupIds(firearmByModel('MR73 Sport').id)).toEqual(['spsf:B', 'spsf:R']);
     expect(groupIds(firearmByModel('P8X').id)).toEqual(['generic:airgun']);
   });
 
-  it('licenses every cartridge firearm; the ~10 J airguns need none', () => {
+  it('licenses every cartridge firearm; the ~10 J airgun needs none', () => {
     seedDemoData(db);
-    for (const model of ['Tactical Sport 2 Orange', 'MR73 Sport']) {
+    for (const model of ['AW93', 'Tactical Sport 2 Orange', 'MR73 Sport']) {
       expect(latestLicense(db, firearmByModel(model).id), model).toBeDefined();
     }
-    for (const model of ['AW93', 'P8X']) {
-      expect(latestLicense(db, firearmByModel(model).id), model).toBeUndefined();
-    }
+    expect(latestLicense(db, firearmByModel('P8X').id)).toBeUndefined();
   });
 
-  it('only one firearm is the default for the airgun group, though two are in it', () => {
+  it('exercises vapengrupp C, which only a .22 LR gun may enter', () => {
     seedDemoData(db);
-    const airgunRows = listFirearms(db)
-      .flatMap((f) => listFirearmGroups(db, f.id))
-      .filter((g) => g.groupId === 'generic:airgun');
-    expect(airgunRows).toHaveLength(2);
-    expect(airgunRows.filter((g) => g.isDefaultForGroup === 1)).toHaveLength(1);
+    const c = listSessions(db).filter((s) => s.weaponGroup === 'spsf:C');
+    expect(c.length).toBeGreaterThan(0);
+    for (const session of c) {
+      expect(session.firearmId).toBe(firearmByModel('AW93').id);
+    }
   });
 
   it('never seeds anything that could pass for a real license or serial', () => {
@@ -123,7 +121,7 @@ describe('seedDemoData', () => {
     expect(sessions.some((s) => s.isChampionship === 1)).toBe(true);
   });
 
-  it('exercises every firearm, and every lot a demo firearm can chamber', () => {
+  it('exercises every firearm and every ammo lot', () => {
     seedDemoData(db);
     const sessions = listSessions(db);
     for (const firearm of listFirearms(db)) {
@@ -132,15 +130,12 @@ describe('seedDemoData', () => {
         firearm.model,
       ).toBe(true);
     }
-    // The two .22 LR lots are inventory only: no demo firearm is chambered in
-    // .22, and inventing one to use them up would be worse than leaving them.
-    for (const lot of listAmmoLots(db).filter((l) => l.caliber !== '.22 LR')) {
+    for (const lot of listAmmoLots(db)) {
       expect(
         sessions.some((s) => s.ammoLotId === lot.id),
         lot.label,
       ).toBe(true);
     }
-    expect(listAmmoLots(db).filter((l) => l.caliber === '.22 LR')).toHaveLength(2);
   });
 
   it("every session's vapengrupp is one its firearm is registered in", () => {
@@ -156,7 +151,7 @@ describe('seedDemoData', () => {
     const milsnabb = listSessions(db).filter((s) => s.disciplineId === 'spsf-milsnabb');
     expect(milsnabb.length).toBeGreaterThan(0);
     for (const session of milsnabb) {
-      expect(['spsf:A', 'spsf:R']).toContain(session.weaponGroup);
+      expect(['spsf:A', 'spsf:C', 'spsf:R']).toContain(session.weaponGroup);
     }
   });
 
