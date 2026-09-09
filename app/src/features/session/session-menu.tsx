@@ -1,7 +1,7 @@
 // Session-level actions, moved off the header into an overflow menu (§4 fix
-// batch, 2026-09-09) — the header row had run out of room. Sights is reached
-// only from here, never shown inline on a screen, and only on the session
-// view: sights are not adjusted while entering shots.
+// batch, 2026-09-09) — the header row had run out of room. Session view only:
+// the shot-entry screen carries none of this, since nothing here is done
+// while entering shots.
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,12 +21,9 @@ import { useTheme } from '@/hooks/use-theme';
 
 export interface SessionMenuProps {
   sessionId: string;
-  /**
-   * Firearm whose sight settings this menu can switch. Omitted on the
-   * shot-entry screen: sights are not adjusted while entering shots
-   * (maintainer, 2026-09-09).
-   */
-  sightsFirearmId?: string | null;
+  /** Firearm whose sight settings this menu can switch; null when the
+   *  session has no firearm linked, which drops the Sights row. */
+  sightsFirearmId: string | null;
   onDeleted?: () => void;
 }
 

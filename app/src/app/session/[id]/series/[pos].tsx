@@ -7,7 +7,7 @@
 // record. Creating it up front left an orphaned "Series N · 0" row behind
 // every time the user backed out without saving (maintainer, verified live
 // 2026-09-03).
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
@@ -29,7 +29,6 @@ import {
 } from '@/db/queries/series';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
-import { SessionMenu } from '@/features/session/session-menu';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Spacing } from '@/theme/tokens';
 
@@ -155,12 +154,6 @@ export default function SeriesEntryScreen() {
 
   return (
     <Screen>
-      <Stack.Screen
-        options={{
-          headerRight: () => <SessionMenu sessionId={id} />,
-        }}
-      />
-
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.title}>
           {t('session.seriesTitle', { position })}
