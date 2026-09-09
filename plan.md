@@ -286,25 +286,25 @@ barometer; no scoring), Skytteappen (club ecosystem).
 
 ### v1 — the logbook (Android)
 
-- [ ] Fast score entry: per-shot keypad with dedicated `10` and `X`
+- [x] Fast score entry: per-shot keypad with dedicated `10` and `X`
       (centrumtia) keys, integer + decimal (10.9) scoring, 5/6/10-shot and
       custom series, running totals
-- [ ] Disciplines — SPSF only in v1: precision + militär snabbmatch
+- [x] Disciplines — SPSF only in v1: precision + militär snabbmatch
       (+ generic ring-scoring for free training); vapengrupp + klass per
       SHB; märke/"guldserie" thresholds (age-adjusted). ISSF and
       fältskytte deferred to v2+
-- [ ] Sessions: training vs competition, tags, notes, target-photo
+- [x] Sessions: training vs competition, tags, notes, target-photo
       attachment (photo only, no scoring yet)
-- [ ] Firearms & ammo: inventory, per-class defaults, automatic round
+- [x] Firearms & ammo: inventory, per-class defaults, automatic round
       counter, maintenance intervals with reminders, license expiry
       reminders, ammo-lot tracking
-- [ ] Statistics (live views): trends, per-firearm/per-ammo comparison,
+- [x] Statistics (live views): trends, per-firearm/per-ammo comparison,
       mean + standard deviation, best/worst, comparison vs last-N series
-- [ ] FAP 551-3: rolling 6-month activity barometer per weapon, PDF export
+- [x] FAP 551-3: rolling 6-month activity barometer per weapon, PDF export
       formatted for license applications / föreningsintyg
-- [ ] CSV export/import
-- [ ] Swedish + English; light/dark theme
-- [ ] Local SQLite; schema carries `last_modified` + tombstones from day one
+- [x] CSV export/import
+- [x] Swedish + English; light/dark theme
+- [x] Local SQLite; schema carries `last_modified` + tombstones from day one
       so sync bolts on without migration
 
 ### v2 — the camera + sync
@@ -673,7 +673,7 @@ sync code; see CLAUDE.md.
 
 **Manual steps for the maintainer:**
 
-- [ ] Install the Renovate GitHub App on the repo:
+- [x] Install the Renovate GitHub App on the repo:
       https://github.com/apps/renovate → Configure → select
       `jimisola/shotledger` (config is already in the repo)
 - [ ] Nothing else is possible on a free-plan private repo: branch
@@ -707,18 +707,18 @@ judgment is marked `VERIFY:` and must be resolved with the maintainer.
 ## Roadmap / next steps
 
 - [x] Register shotledger.app
-- [ ] Create private GitHub repo, push bootstrap
-- [ ] Scaffold monorepo: `app/` (Expo), `backend/` (Workers), `shared/`
+- [x] Create private GitHub repo, push bootstrap
+- [x] Scaffold monorepo: `app/` (Expo), `backend/` (Workers), `shared/`
       (types, scoring logic)
-- [ ] v1 SQLite schema: sessions, series, shots, firearms, ammo_lots,
+- [x] v1 SQLite schema: sessions, series, shots, firearms, ammo_lots,
       licenses, maintenance_log (+ `last_modified`/tombstones)
-- [ ] Discipline/target definitions as data (JSON), not code — community
+- [x] Discipline/target definitions as data (JSON), not code — community
       can add disciplines via PR once public
-- [ ] Screen map for v1 (benchmark: Shotlytic's tabs — Enter Score /
+- [x] Screen map for v1 (benchmark: Shotlytic's tabs — Enter Score /
       History / Trends / Profile; ShotLog's X/(X) keypad)
-- [ ] Install Android SDK + pinned JDK 17/21 on the dev machine; create
+- [x] Install Android SDK + pinned JDK 17/21 on the dev machine; create
       KVM-accelerated emulator image
-- [ ] CLAUDE.md: agent instructions for run/seed/screenshot/test loops
-- [ ] Maestro setup + first smoke flow with screenshots
-- [ ] GitHub Actions: lint + typecheck + test on PR; Android build
+- [x] CLAUDE.md: agent instructions for run/seed/screenshot/test loops
+- [x] Maestro setup + first smoke flow with screenshots
+- [x] GitHub Actions: lint + typecheck + test on PR; Android build
 - [ ] Google Play account + closed testing track
