@@ -262,8 +262,8 @@ to integer precision scoring only, so tenths ÷ 10 is exact.
 | G12 | `shooterClassesForDiscipline('spsf-*')`           | 1, 1u, 1b, 1s, 2, 3, Jun, Dam1-3, VetY, VetÄ                                          |
 | G13 | `formatGroupAndClass('spsf:C', '2')`              | `'C 2'` (SHB F.2.6–F.2.7 display convention, N4)                                      |
 | G14 | `formatShooterClass('Dam1'/'VetY'/'2')`           | `'Dam 1'` / `'Vet Y'` / `'2'`                                                         |
-| G15 | `defaultSessionName` competition                  | `'KM Precision C'` from level label + program label + group code (§6.3)               |
-| G16 | `defaultSessionName` training                     | `'<discipline> — <date>'`                                                             |
+| G15 | `defaultSessionName` training                     | `'<type> — <date>'` from the localized session type and local date                    |
+| G16 | `defaultSessionName` competition                  | same shape — competitions carry their own Competition Name field                      |
 | G17 | `defaultSessionName` with blank parts             | no double spaces, no dangling separator                                               |
 | G18 | `allowsDecimal` false + program scoring `integer` | `decimalAllowed()` false — the UI toggle is unavailable (§4 M3)                       |
 
