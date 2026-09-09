@@ -16,6 +16,7 @@ export interface CreateAmmoLotInput {
   bulletMake?: string | null;
   bulletModel?: string | null;
   bulletWeightGr?: number | null;
+  velocityMps?: number | null;
   powder?: string | null;
   powderChargeGr?: number | null;
   primer?: string | null;
@@ -43,6 +44,7 @@ export function createAmmoLot(db: Database, input: CreateAmmoLotInput) {
     bulletMake: input.bulletMake ?? null,
     bulletModel: input.bulletModel ?? null,
     bulletWeightGr: input.bulletWeightGr ?? null,
+    velocityMps: input.velocityMps ?? null,
     powder: input.powder ?? null,
     powderChargeGr: input.powderChargeGr ?? null,
     primer: input.primer ?? null,

@@ -1,0 +1,1 @@
+ALTER TABLE `ammo_lots` ADD `velocity_mps` real;

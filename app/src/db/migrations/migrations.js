@@ -9,6 +9,7 @@ import m0004 from './0004_motionless_the_fury.sql';
 import m0005 from './0005_parallel_northstar.sql';
 import m0006 from './0006_session_kind.sql';
 import m0007 from './0007_polite_texas_twister.sql';
+import m0008 from './0008_ammo_velocity.sql';
 
 export default {
   journal,
@@ -21,5 +22,6 @@ export default {
     m0005,
     m0006,
     m0007,
+    m0008,
   },
 };

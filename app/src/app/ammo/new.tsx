@@ -1,6 +1,7 @@
 // New ammo lot form (§4 M4): factory fields always shown; the handload
 // recipe section (powder/charge/primer/brass/COL/crimp) toggles with
 // isHandload (§3).
+import { powerFactor } from '@shotledger/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ export default function NewAmmoLotScreen() {
   const [bulletMake, setBulletMake] = useState('');
   const [bulletModel, setBulletModel] = useState('');
   const [bulletWeightGr, setBulletWeightGr] = useState('');
+  const [velocityMps, setVelocityMps] = useState('');
 
   const [powder, setPowder] = useState('');
   const [powderChargeGr, setPowderChargeGr] = useState('');
@@ -47,6 +49,7 @@ export default function NewAmmoLotScreen() {
   const [notes, setNotes] = useState('');
 
   const canCreate = label.trim().length > 0;
+  const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
   function onCreate() {
     if (!db || !canCreate) return;
@@ -62,6 +65,7 @@ export default function NewAmmoLotScreen() {
       bulletMake: bulletMake.trim() || null,
       bulletModel: bulletModel.trim() || null,
       bulletWeightGr: numberOrNull(bulletWeightGr),
+      velocityMps: numberOrNull(velocityMps),
       powder: isHandload ? powder.trim() || null : null,
       powderChargeGr: isHandload ? numberOrNull(powderChargeGr) : null,
       primer: isHandload ? primer.trim() || null : null,
@@ -112,6 +116,27 @@ export default function NewAmmoLotScreen() {
           onChangeText={setBulletWeightGr}
           keyboardType="decimal-pad"
         />
+        <ThemedText type="smallBold">{t('ammo.velocityMps')}</ThemedText>
+        <TextField
+          value={velocityMps}
+          onChangeText={setVelocityMps}
+          keyboardType="decimal-pad"
+          testID="ammo-velocity"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('ammo.velocityHint')}
+        </ThemedText>
+        {derivedPowerFactor != null && (
+          <>
+            <View style={styles.derivedRow}>
+              <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
+              <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ammo.powerFactorHint')}
+            </ThemedText>
+          </>
+        )}
       </Card>
 
       {isHandload && (
@@ -152,6 +177,12 @@ export default function NewAmmoLotScreen() {
 }
 
 const styles = StyleSheet.create({
+  derivedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
