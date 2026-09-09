@@ -1,17 +1,20 @@
-// About screen (§4 M7): version, open-source licenses note, repo link.
+// About screen (§4 M7): version, open-source licenses, repo link.
 // Read-only informational content, reachable from Settings.
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import licenses from '@/constants/licenses.json';
 import { REPO_URL } from '@/constants/links';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const version = Constants.expoConfig?.version ?? '—';
 
   return (
@@ -24,13 +27,12 @@ export default function AboutScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('about.licensesTitle')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('about.licensesBody')}
-        </ThemedText>
-      </Card>
-
-      <Card>
+        <ListRow
+          title={t('about.licensesTitle')}
+          subtitle={t('about.licensesSubtitle', { count: licenses.length })}
+          onPress={() => router.push('/about/licenses')}
+          testID="about-licenses-link"
+        />
         <ListRow
           title={t('about.repoLink')}
           onPress={() => Linking.openURL(REPO_URL)}

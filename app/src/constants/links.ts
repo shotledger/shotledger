@@ -4,6 +4,6 @@
 // VERIFY: maintainer's actual Buy Me a Coffee page — placeholder handle
 export const SUPPORT_URL = 'https://buymeacoffee.com/shotledger';
 
-// VERIFY: repo is private (plan.md decisions log, 2026-08-31); placeholder
-// until it goes public.
-export const REPO_URL = 'https://github.com/shotledger/mobile-app';
+// Still a private repo — the link 404s for anyone but the maintainer until it
+// goes public.
+export const REPO_URL = 'https://github.com/jimisola/shotledger';

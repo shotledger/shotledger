@@ -305,8 +305,9 @@
     "appName": "ShotLedger",
     "version": "Version {{version}}",
     "licensesTitle": "Licenser för öppen källkod",
-    "licensesBody": "ShotLedger byggs med paket med öppen källkod. En fullständig licenslista publiceras tillsammans med källkoden.",
-    "repoLink": "Källkod"
+    "licensesSubtitle": "{{count}} paket",
+    "licensesIntro": "ShotLedger byggs med dessa paket med öppen källkod.",
+    "repoLink": "GitHub-repo"
   },
   "csv": {
     "sectionTitle": "Data (CSV)",

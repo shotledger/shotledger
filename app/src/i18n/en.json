@@ -305,8 +305,9 @@
     "appName": "ShotLedger",
     "version": "Version {{version}}",
     "licensesTitle": "Open-Source Licenses",
-    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
-    "repoLink": "Source Code"
+    "licensesSubtitle": "{{count}} packages",
+    "licensesIntro": "ShotLedger is built on these open-source packages.",
+    "repoLink": "GitHub Repository"
   },
   "csv": {
     "sectionTitle": "Data (CSV)",
