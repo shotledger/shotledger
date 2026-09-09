@@ -564,7 +564,7 @@
     "calendarAddFailed": "Could not add to the calendar",
     "calendarPermissionDenied": "Calendar permission denied",
     "recordsTitle": "Records",
-    "recordsSubtitle": "Personal bests and year-to-year (WebShooter)",
+    "recordsSubtitle": "Personal bests and year-to-year",
     "noRecordsTitle": "No Records Yet",
     "noRecordsBody": "Import competition results or log sessions to see personal bests here.",
     "officialPbTitle": "Official Personal Bests",
