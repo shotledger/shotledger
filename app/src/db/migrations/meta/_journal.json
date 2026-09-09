@@ -64,6 +64,13 @@
       "when": 1788983925609,
       "tag": "0008_ammo_velocity",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788983926609,
+      "tag": "0009_caliber_load_system_presets",
+      "breakpoints": true
     }
   ]
 }
