@@ -11,6 +11,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import licenses from '@/constants/licenses.json';
 import { REPO_URL } from '@/constants/links';
+import { NATIVE_LICENSES } from '@/constants/native-licenses';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
@@ -29,7 +30,9 @@ export default function AboutScreen() {
       <Card>
         <ListRow
           title={t('about.licensesTitle')}
-          subtitle={t('about.licensesSubtitle', { count: licenses.length })}
+          subtitle={t('about.licensesSubtitle', {
+            count: licenses.length + NATIVE_LICENSES.length,
+          })}
           onPress={() => router.push('/about/licenses')}
           testID="about-licenses-link"
         />

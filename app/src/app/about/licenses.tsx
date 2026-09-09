@@ -1,5 +1,6 @@
-// Open-source license list. The data is generated from the lockfile by
-// scripts/generate-licenses.mjs; `pnpm licenses:check` fails on drift.
+// Open-source license list. The JavaScript half is generated from Metro's
+// bundle by scripts/generate-licenses.mjs; the native half is hand-maintained
+// in constants/native-licenses.ts because no npm manifest describes it.
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -7,7 +8,21 @@ import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import licenses from '@/constants/licenses.json';
+import { NATIVE_LICENSES, type NativeLicense } from '@/constants/native-licenses';
 import { Spacing } from '@/theme/tokens';
+
+function LicenseRow({ name, version, license }: NativeLicense) {
+  return (
+    <View style={styles.row}>
+      <ThemedText type="small" style={styles.name} numberOfLines={2}>
+        {name} {version}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {license}
+      </ThemedText>
+    </View>
+  );
+}
 
 export default function LicensesScreen() {
   const { t } = useTranslation();
@@ -18,21 +33,23 @@ export default function LicensesScreen() {
         {t('about.licensesIntro')}
       </ThemedText>
 
+      <ThemedText type="smallBold">{t('about.licensesNativeTitle')}</ThemedText>
+      <Card>
+        {NATIVE_LICENSES.map((item) => (
+          <LicenseRow key={item.name} {...item} />
+        ))}
+      </Card>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('about.licensesNativeNote')}
+      </ThemedText>
+
+      <ThemedText type="smallBold">{t('about.licensesJsTitle')}</ThemedText>
       <Card style={styles.card}>
         <FlatList
           data={licenses}
           keyExtractor={(item) => `${item.name}@${item.version}`}
           testID="licenses-list"
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <ThemedText type="small" style={styles.name} numberOfLines={2}>
-                {item.name} {item.version}
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.license}
-              </ThemedText>
-            </View>
-          )}
+          renderItem={({ item }) => <LicenseRow {...item} />}
         />
       </Card>
     </Screen>

@@ -305,8 +305,11 @@
     "appName": "ShotLedger",
     "version": "Version {{version}}",
     "licensesTitle": "Licenser för öppen källkod",
-    "licensesSubtitle": "{{count}} paket",
-    "licensesIntro": "ShotLedger byggs med dessa paket med öppen källkod.",
+    "licensesSubtitle": "{{count}} komponenter",
+    "licensesIntro": "ShotLedger byggs med programvara med öppen källkod. Här listas det som följer med i appen, inte verktygen som bygger den.",
+    "licensesNativeTitle": "Inbyggda komponenter",
+    "licensesNativeNote": "Kompileras in i appen i stället för att buntas som JavaScript. Alla är inte öppen källkod, och Android-plattformens egna bibliotek listas inte.",
+    "licensesJsTitle": "JavaScript-paket",
     "repoLink": "GitHub-repo"
   },
   "csv": {
