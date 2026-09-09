@@ -12,7 +12,7 @@ export async function getMicPermission(): Promise<MicPermission> {
   return 'unavailable';
 }
 
-export async function requestMicPermission(): Promise<MicPermission> {
+export async function ensureMicPermission(): Promise<MicPermission> {
   return 'unavailable';
 }
 

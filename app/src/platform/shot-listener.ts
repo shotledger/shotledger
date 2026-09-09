@@ -43,8 +43,17 @@ export async function getMicPermission(): Promise<MicPermission> {
   }
 }
 
-export async function requestMicPermission(): Promise<MicPermission> {
+/**
+ * Permission for a run, prompting only when it isn't already held. Asking
+ * again when it is looks like a no-op but isn't: Android answers every
+ * `requestPermissions` by opening (and instantly closing) the system grant
+ * activity, which backgrounds and foregrounds this one — and expo-audio
+ * reacts to that by pausing every recorder it still believes is recording.
+ */
+export async function ensureMicPermission(): Promise<MicPermission> {
   if (!isShotListeningAvailable()) return 'unavailable';
+  const current = await getMicPermission();
+  if (current === 'granted') return current;
   try {
     const response = await AudioModule.requestRecordingPermissionsAsync();
     return response.granted ? 'granted' : 'denied';
@@ -54,14 +63,40 @@ export async function requestMicPermission(): Promise<MicPermission> {
 }
 
 /**
+ * One recorder at a time. The setup level meter and the run meter the same
+ * microphone through this module, and their handles are stopped fire-and-
+ * forget from React effect cleanups — so without a queue a new recorder is
+ * opened while the previous one is still releasing. Android then holds a
+ * recorder expo-audio still counts as recording, and the next time the
+ * activity goes to the background (which the permission prompt itself does)
+ * expo-audio asks it to pause: `MediaRecorder.pause()` throws
+ * `IllegalStateException` on the main thread and the process dies.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+
+/** The listener currently holding the microphone, stopped before a new one opens. */
+let active: { stop: () => Promise<void> } | null = null;
+
+function serialize<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task, task);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+/**
  * Starts metering the microphone, calling `onLevel` with the current peak in
  * dBFS (<= 0) roughly every 60 ms. Rejects when the microphone is
  * unavailable or permission was refused.
  */
-export async function startShotListening(
-  onLevel: (db: number) => void,
-): Promise<ShotListenerHandle> {
-  if (!isShotListeningAvailable()) throw new Error('shot listening unavailable on this platform');
+export function startShotListening(onLevel: (db: number) => void): Promise<ShotListenerHandle> {
+  if (!isShotListeningAvailable()) {
+    return Promise.reject(new Error('shot listening unavailable on this platform'));
+  }
+  return serialize(() => openRecorder(onLevel));
+}
+
+async function openRecorder(onLevel: (db: number) => void): Promise<ShotListenerHandle> {
+  await active?.stop();
 
   // Lowest-quality preset on purpose: the audio is never played back, only
   // metered, so there is no reason to write a larger temporary file.
@@ -71,9 +106,19 @@ export async function startShotListening(
     directory: 'cache',
   });
 
-  await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-  await recorder.prepareToRecordAsync();
-  recorder.record();
+  try {
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
+  } catch (error) {
+    // A recorder that never started must not stay registered with expo-audio.
+    try {
+      recorder.release();
+    } catch {
+      // Best-effort cleanup.
+    }
+    throw error;
+  }
 
   const interval = setInterval(() => {
     try {
@@ -85,9 +130,10 @@ export async function startShotListening(
   }, POLL_INTERVAL_MS);
 
   let stopped = false;
-  const stop = async (): Promise<void> => {
+  const stopNow = async (): Promise<void> => {
     if (stopped) return;
     stopped = true;
+    if (active?.stop === stopNow) active = null;
     clearInterval(interval);
     const uri = recorder.uri;
     try {
@@ -103,7 +149,11 @@ export async function startShotListening(
     }
   };
 
-  return { stop };
+  active = { stop: stopNow };
+
+  // The handle's stop goes through the queue; `stopNow` is what a following
+  // start calls directly, since that already holds the queue.
+  return { stop: () => serialize(stopNow) };
 }
 
 /** Deletes the temp recording. Best-effort and synchronous so it also runs from a `finally`. */
