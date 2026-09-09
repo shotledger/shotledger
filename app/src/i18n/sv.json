@@ -8,7 +8,7 @@
     "deleteSessionConfirmTitle": "Ta bort pass?",
     "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra.",
     "close": "Stäng",
-    "infoAbout": "Mer information om {{subject}}"
+    "infoAbout": "Mer information om {{subject}}",
     "caliberPlaceholder": "Välj kaliber",
     "caliberSearchPlaceholder": "Sök kaliber",
     "caliberNoMatch": "Ingen kaliber matchar.",

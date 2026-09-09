@@ -8,7 +8,7 @@
     "deleteSessionConfirmTitle": "Delete Session?",
     "deleteSessionConfirmBody": "Its series and shots will be removed too. This can't be undone.",
     "close": "Close",
-    "infoAbout": "More information about {{subject}}"
+    "infoAbout": "More information about {{subject}}",
     "caliberPlaceholder": "Select a caliber",
     "caliberSearchPlaceholder": "Search calibers",
     "caliberNoMatch": "No caliber matches.",

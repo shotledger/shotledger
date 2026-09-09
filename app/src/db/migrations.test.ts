@@ -194,8 +194,8 @@ describe('0005 session kind backfill on a populated pre-0005 database', () => {
   });
 });
 
-describe('0008 caliber and load-system backfill on a populated pre-0008 database', () => {
-  const PRESETS_TAG = '0008_caliber_load_system_presets';
+describe('0009 caliber and load-system backfill on a populated pre-0009 database', () => {
+  const PRESETS_TAG = '0009_caliber_load_system_presets';
   const T0 = '2026-01-01T00:00:00.000Z';
 
   function insertFirearm(
@@ -222,8 +222,8 @@ describe('0008 caliber and load-system backfill on a populated pre-0008 database
       .run(id, T0, T0, id, caliber);
   }
 
-  /** A database migrated to the revision immediately before 0008, then seeded. */
-  function populatedPre0008() {
+  /** A database migrated to the revision immediately before 0009, then seeded. */
+  function populatedPre0009() {
     const tags = journalTags();
     const cutoff = tags.indexOf(PRESETS_TAG);
     expect(cutoff).toBeGreaterThan(0);
@@ -263,7 +263,7 @@ describe('0008 caliber and load-system backfill on a populated pre-0008 database
   }
 
   it('rewrites every recognised caliber spelling to its canonical form', () => {
-    const byId = Object.fromEntries(firearmRows(populatedPre0008()).map((r) => [r.id, r.caliber]));
+    const byId = Object.fromEntries(firearmRows(populatedPre0009()).map((r) => [r.id, r.caliber]));
     expect(byId).toEqual({
       'canonical-already': '.22 LR',
       swedish: '9×19 mm',
@@ -279,7 +279,7 @@ describe('0008 caliber and load-system backfill on a populated pre-0008 database
   });
 
   it('normalises ammo lots by the same table', () => {
-    const rows = populatedPre0008().prepare('SELECT id, caliber FROM ammo_lots').all() as {
+    const rows = populatedPre0009().prepare('SELECT id, caliber FROM ammo_lots').all() as {
       id: string;
       caliber: string | null;
     }[];
@@ -292,7 +292,7 @@ describe('0008 caliber and load-system backfill on a populated pre-0008 database
 
   it('replaces display strings with load-system codes and keeps what it cannot read', () => {
     const byId = Object.fromEntries(
-      firearmRows(populatedPre0008()).map((r) => [r.id, r.loadSystem]),
+      firearmRows(populatedPre0009()).map((r) => [r.id, r.loadSystem]),
     );
     expect(byId).toEqual({
       'canonical-already': 'single_shot',
@@ -309,14 +309,14 @@ describe('0008 caliber and load-system backfill on a populated pre-0008 database
   });
 
   it('touches updated_at only on the rows it actually changed', () => {
-    const changed = firearmRows(populatedPre0008())
+    const changed = firearmRows(populatedPre0009())
       .filter((row) => row.updatedAt !== T0)
       .map((row) => row.id);
     expect(changed.sort()).toEqual(['comma', 'diacritic', 'shouty', 'swedish']);
   });
 
   it('is idempotent — re-applying changes nothing', () => {
-    const sqlite = populatedPre0008();
+    const sqlite = populatedPre0009();
     const before = firearmRows(sqlite);
     applyMigration(sqlite, PRESETS_TAG);
     expect(firearmRows(sqlite)).toEqual(before);
