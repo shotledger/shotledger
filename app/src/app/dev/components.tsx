@@ -6,7 +6,9 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { FAB } from '@/components/fab';
+import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { MarkOverlay } from '@/components/mark-overlay';
 import { PrimaryButton } from '@/components/primary-button';
@@ -174,6 +176,32 @@ export default function ComponentsGalleryScreen() {
         </Card>
       </Section>
 
+      <Section title="DrillDownRow">
+        <Card>
+          <DrillDownRow title="Account & Sync" subtitle="Not signed in" onPress={() => {}} />
+          <DrillDownRow title="Shot Timer" value="IPSC" onPress={() => {}} />
+        </Card>
+      </Section>
+
+      <Section title="InfoButton">
+        <Card>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold">Trigger Level</ThemedText>
+            <InfoButton
+              title="Trigger Level"
+              body={
+                'Higher sensitivity picks up quieter shots, but also more background noise.' +
+                '\n\nTry High for .22 or indoors, Low next to a busy firing line.'
+              }
+              testID="gallery-info"
+            />
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            The paragraph that used to sit here lives behind the [i].
+          </ThemedText>
+        </Card>
+      </Section>
+
       <Section title="EmptyState">
         <Card>
           <EmptyState
@@ -231,6 +259,12 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.two,
   },
   noGap: {

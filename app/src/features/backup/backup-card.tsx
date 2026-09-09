@@ -7,11 +7,14 @@
 // see backup-options-dialog.tsx and docs/specs/backup-export-spec.md.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { ThemedText } from '@/components/themed-text';
+import { useTheme } from '@/hooks/use-theme';
+import { Spacing } from '@/theme/tokens';
 import type { RestorePreview } from '@/db/backup/restore-bundle';
 
 import { BackupOptionsDialog } from './backup-options-dialog';
@@ -25,6 +28,7 @@ interface PendingRestore {
 
 export function BackupCard() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const {
     exportBundle,
     changeFolder,
@@ -107,18 +111,21 @@ export function BackupCard() {
 
   return (
     <Card>
-      <ThemedText type="smallBold">{t('backup.sectionTitle')}</ThemedText>
+      <View style={styles.headerRow}>
+        <ThemedText type="smallBold" style={styles.headerLabel}>
+          {t('backup.sectionTitle')}
+        </ThemedText>
+        <InfoButton
+          title={t('backup.sectionTitle')}
+          body={t('backup.vaultInfo')}
+          testID="backup-info"
+        />
+      </View>
       <ListRow
         title={t('backup.exportTitle')}
         subtitle={t('backup.exportSubtitle')}
         onPress={() => setOptionsVisible(true)}
         testID="settings-backup-export"
-      />
-      <ListRow
-        title={t('backup.restoreTitle')}
-        subtitle={t('backup.restoreSubtitle')}
-        onPress={() => void onRestore()}
-        testID="settings-restore-backup"
       />
       {isFolderSaveSupported && folderUri ? (
         <>
@@ -148,6 +155,18 @@ export function BackupCard() {
         </ThemedText>
       ) : null}
 
+      {/* Restore replaces the whole device database, so it is kept off the
+          export rows above by a rule rather than sitting flush against them. */}
+      <View style={[styles.destructiveGroup, { borderTopColor: theme.border }]}>
+        <ListRow
+          title={t('backup.restoreTitle')}
+          subtitle={t('backup.restoreSubtitle')}
+          themeColor="danger"
+          onPress={() => void onRestore()}
+          testID="settings-restore-backup"
+        />
+      </View>
+
       <BackupOptionsDialog
         visible={optionsVisible}
         busy={busy}
@@ -175,3 +194,20 @@ export function BackupCard() {
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  headerLabel: {
+    flexShrink: 1,
+  },
+  destructiveGroup: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: Spacing.two,
+    marginTop: Spacing.one,
+  },
+});

@@ -25,6 +25,18 @@ export function CheckIcon({ color, size = DEFAULT_SIZE }: IconProps) {
   );
 }
 
+// The "i" is drawn, not typed: a Unicode glyph would inherit the text font
+// and drift in weight and baseline against the other icons here.
+export function InfoIcon({ color, size = DEFAULT_SIZE }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={2} />
+      <Circle cx={12} cy={7.6} r={1.3} fill={color} />
+      <Path d="M12 11v6" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 /** Material's overflow affordance: three filled dots, vertically stacked. */
 export function OverflowIcon({ color, size = DEFAULT_SIZE }: IconProps) {
   return (

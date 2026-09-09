@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -42,7 +43,7 @@ export default function ToolsScreen() {
       <ThemedText type="title">{t('tools.title')}</ThemedText>
 
       <Card>
-        <ListRow
+        <DrillDownRow
           title={t('timer.title')}
           subtitle={t('tools.timerSubtitle')}
           onPress={() => router.push('/timer')}
@@ -53,7 +54,7 @@ export default function ToolsScreen() {
       <Card>
         {/* `vault.settingsRow*` keys keep their names so the vault rename
             landing in parallel does not conflict with this move. */}
-        <ListRow
+        <DrillDownRow
           title={t('vault.settingsRowTitle')}
           subtitle={t('vault.settingsRowSubtitle')}
           onPress={() => router.push('/vault')}
@@ -125,13 +126,13 @@ export default function ToolsScreen() {
             )}
           </>
         )}
-        <ListRow
+        <DrillDownRow
           title={t('webshooter.importTitle')}
           subtitle={t('webshooter.importSubtitle')}
           onPress={() => router.push('/webshooter/import')}
           testID="webshooter-open-import"
         />
-        <ListRow
+        <DrillDownRow
           title={t('webshooter.startsTitle')}
           subtitle={t('webshooter.startsSubtitle')}
           onPress={() => router.push('/webshooter/starts')}
