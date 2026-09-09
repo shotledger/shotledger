@@ -82,12 +82,21 @@ while ((match = dynamicPrefixRegex.exec(combinedSource)) !== null) {
   if (match[1].includes('.')) dynamicPrefixes.add(match[1]);
 }
 
+// i18next plural keys are never written out in source: the call site says
+// `t('stats.distributionTitleWithCount', { count })` and i18next appends the
+// CLDR category itself. Such a key counts as referenced when its BASE key is.
+// Only the suffix is exempted — a plural key whose base is unreferenced still
+// fails, and the en/sv identical-key-set check above is untouched, so a
+// missing `_one` in one language is still an error.
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+
 const commonKeys = [...enKeys.keys()].filter((k) => svKeys.has(k)).sort();
 const unused = [];
 for (const keyPath of commonKeys) {
   const isDynamic = [...dynamicPrefixes].some((prefix) => keyPath.startsWith(prefix));
   if (isDynamic) continue;
-  const literalPattern = new RegExp(`['"]${keyPath.replace(/\./g, '\\.')}['"]`);
+  const lookupKey = keyPath.replace(PLURAL_SUFFIX, '');
+  const literalPattern = new RegExp(`['"]${lookupKey.replace(/\./g, '\\.')}['"]`);
   if (!literalPattern.test(combinedSource)) {
     unused.push(keyPath);
   }

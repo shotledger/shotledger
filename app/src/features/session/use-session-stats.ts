@@ -8,6 +8,7 @@ import {
   meanTenths,
   sampleStandardDeviationTenths,
   scoredShots,
+  seriesInnerTenAverage,
   seriesMeanTenths,
   seriesSdTenths,
   standardmedaljForSession,
@@ -30,6 +31,12 @@ export interface SessionStats {
    */
   seriesMeanTenths: number | null;
   seriesSdTenths: number | null;
+  /**
+   * Mean innertior per scored series (maintainer, third review 2026-09-09:
+   * "average no of inner tens per series"). Same series set as
+   * `seriesMeanTenths`, so the two read as one row.
+   */
+  seriesInnerTenAverage: number | null;
   seriesCount: number;
   meanTenths: number | null;
   sdTenths: number | null;
@@ -51,6 +58,7 @@ export interface SessionStats {
 const EMPTY: SessionStats = {
   seriesMeanTenths: null,
   seriesSdTenths: null,
+  seriesInnerTenAverage: null,
   seriesCount: 0,
   meanTenths: null,
   sdTenths: null,
@@ -100,6 +108,7 @@ function loadSessionStats(sessionId: string): SessionStats {
   return {
     seriesMeanTenths: seriesMeanTenths(sessionSeries),
     seriesSdTenths: seriesSdTenths(sessionSeries),
+    seriesInnerTenAverage: seriesInnerTenAverage(sessionSeries),
     seriesCount: scoredNonFinal.length + scoredFinal.length,
     meanTenths: meanTenths(shots),
     sdTenths: sampleStandardDeviationTenths(shots),

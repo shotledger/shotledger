@@ -215,41 +215,51 @@ export default function SessionDetailScreen() {
       <WebShooterSessionBadge session={session} />
 
       <Card style={styles.metricCard}>
-        <View style={styles.metricRow}>
-          {results.hasFinal && (
-            <>
-              <MetricTile
-                label={t('session.beforeFinal')}
-                value={String(tenthsToScore(results.beforeFinalTenths))}
-                testID="result-before-final"
-              />
-              <MetricTile
-                label={t('session.final')}
-                value={String(tenthsToScore(results.finalTenths))}
-                testID="result-final"
-              />
-            </>
-          )}
-          <MetricTile
-            label={t('session.total')}
-            value={String(tenthsToScore(results.totalTenths))}
-            testID="session-total"
-          />
-          <MetricTile
-            label={t('session.seriesAverage')}
-            value={
+        {metricRows([
+          ...(results.hasFinal
+            ? [
+                {
+                  label: t('session.beforeFinal'),
+                  value: String(tenthsToScore(results.beforeFinalTenths)),
+                  testID: 'result-before-final',
+                },
+                {
+                  label: t('session.final'),
+                  value: String(tenthsToScore(results.finalTenths)),
+                  testID: 'result-final',
+                },
+              ]
+            : []),
+          {
+            label: t('session.total'),
+            value: String(tenthsToScore(results.totalTenths)),
+            testID: 'session-total',
+          },
+          {
+            label: t('session.seriesAverage'),
+            value:
               detail.seriesAverageTenths === null
-                ? '–'
-                : tenthsToScore(detail.seriesAverageTenths).toFixed(1)
-            }
-            testID="session-series-average"
-          />
-          <MetricTile
-            label={t('session.innerTenCount')}
-            value={String(detail.innerTenCount)}
-            testID="session-inner-ten-count"
-          />
-        </View>
+                ? '\u2013'
+                : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
+            testID: 'session-series-average',
+          },
+          {
+            label: t('session.innerTenCount'),
+            value: String(detail.innerTenCount),
+            testID: 'session-inner-ten-count',
+          },
+          {
+            label: t('session.innerTenAverage'),
+            value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
+            testID: 'session-inner-ten-average',
+          },
+        ]).map((row, index) => (
+          <View key={index} style={styles.metricRow}>
+            {row.map((tile) => (
+              <MetricTile key={tile.testID} {...tile} />
+            ))}
+          </View>
+        ))}
       </Card>
 
       {isRoundsSession && (
@@ -382,6 +392,13 @@ export default function SessionDetailScreen() {
               }
             />
             <MetricTile
+              testID="session-stat-series-inner-tens"
+              label={t('stats.statsSeriesInnerTens')}
+              value={
+                stats.seriesInnerTenAverage === null ? '–' : stats.seriesInnerTenAverage.toFixed(1)
+              }
+            />
+            <MetricTile
               testID="session-stat-series-count"
               label={t('stats.statsSeriesCount')}
               value={String(stats.seriesCount)}
@@ -409,25 +426,15 @@ export default function SessionDetailScreen() {
             />
           </View>
 
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            {t('stats.statsSumTitle')}
-          </ThemedText>
-          <View style={styles.metricRow}>
-            <MetricTile
-              testID="session-stat-total-points"
-              label={t('stats.statsTotalPoints')}
-              value={String(tenthsToScore(stats.sumTenths))}
-            />
-            <MetricTile
-              testID="session-stat-total-shots"
-              label={t('stats.statsTotalShots')}
-              value={String(stats.shotCount)}
-            />
-          </View>
-
+          {/* No "Whole Session" block: its Total Points was the result card's
+              `session-total` by a second code path, and its Total Shots is the
+              count now in the distribution heading below (maintainer, third
+              review, both called redundant). */}
           {stats.distribution.length > 0 && (
             <View>
-              <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
+              <ThemedText type="smallBold">
+                {t('stats.distributionTitleWithCount', { count: stats.shotCount })}
+              </ThemedText>
               <DistributionBarChart buckets={stats.distribution} height={100} />
             </View>
           )}
@@ -529,10 +536,26 @@ export default function SessionDetailScreen() {
 }
 
 /**
+ * Rows for the results card. Four tiles fit one line down to a 320 dp phone,
+ * but a session with a final carries six, which do not — laying those out as
+ * a balanced 3 + 3 beats the ragged 5 + 1 that `flexWrap` produces on its own
+ * (found on device, third review).
+ */
+function metricRows<T>(tiles: readonly T[]): T[][] {
+  if (tiles.length <= 4) return [[...tiles]];
+  const rows: T[][] = [];
+  for (let i = 0; i < tiles.length; i += 3) rows.push(tiles.slice(i, i + 3));
+  return rows;
+}
+
+/**
  * A compact labeled number — the results card and the per-shot/sum stat
  * rows. Deliberately lighter than `StatTile` (no nested Card padding, single-
- * line ellipsized label) so 3-5 of these fit one row at phone widths without
- * a long Swedish label ("Standardavvikelse") wrapping character-by-character.
+ * line label) so 4-6 of these fit one row at phone widths without a long
+ * Swedish label ("Standardavvikelse") wrapping character-by-character. The
+ * label shrinks to fit rather than ellipsizing, the same treatment `StatTile`
+ * got in #76 — at four tiles a row "X (Inner Tens)" would otherwise clip to
+ * "X (Inne…".
  */
 function MetricTile({ label, value, testID }: { label: string; value: string; testID?: string }) {
   return (
@@ -544,6 +567,8 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
         type="small"
         themeColor="textSecondary"
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         ellipsizeMode="tail"
         style={styles.metricLabel}
       >
@@ -571,11 +596,16 @@ const styles = StyleSheet.create({
   metricRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.three,
+    // The results card carries four tiles since the third review. Screen and
+    // Card padding eat 64 dp, so a 320 dp phone leaves 256: at the previous
+    // gap/basis (16/64) four tiles need 304 and wrap 3 + 1, making the card
+    // TALLER — the opposite of the "much smaller" backlog §1 asks for. 8/56
+    // needs 248 and stays on one line; flexGrow still spreads them to fill.
+    gap: Spacing.two,
   },
   metricTile: {
     flexGrow: 1,
-    flexBasis: 64,
+    flexBasis: 56,
     minWidth: 0,
     gap: Spacing.half,
   },
