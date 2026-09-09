@@ -36,6 +36,23 @@ export function sightClicksText(clicks: number | null): string {
   return clicks > 0 ? `+${clicks}` : String(clicks);
 }
 
+/**
+ * "+5 up" / "-3 left" — the signed count plus the direction it means, because
+ * a bare sign is not legible as up/down or left/right. Zero has no direction,
+ * and `null` falls back to `sightClicksText`'s em dash.
+ */
+export function sightClicksDirectionText(
+  t: TFunction,
+  clicks: number | null,
+  axis: 'elevation' | 'windage',
+): string {
+  const text = sightClicksText(clicks);
+  if (clicks === null || clicks === 0) return text;
+  const direction =
+    axis === 'elevation' ? (clicks > 0 ? 'Up' : 'Down') : clicks > 0 ? 'Right' : 'Left';
+  return `${text} ${t(`firearms.sightDirection${direction}`)}`;
+}
+
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
