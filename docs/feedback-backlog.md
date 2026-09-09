@@ -750,9 +750,12 @@ show recent/most used on top?"_
 - [ ] **A preset caliber list, most-used first.** Caliber is free text today on
       both `firearms` and `ammo_lots`, which is why the demo fixture alone
       spells things three ways (`.22 LR`, `9×19 mm`, `4.5 mm`).
-- [ ] **Free text must survive.** A preset list that cannot express an unusual
-      chambering is worse than none: the picker offers presets and still
-      accepts anything typed.
+- [ ] **Presets only — no free text.** Revised by the maintainer 2026-09-10
+      (_"caliber and load system, presets only"_), superseding the first pass
+      here. That raises the bar on the list: a shooter whose chambering is
+      missing is simply stuck, so it has to be genuinely comprehensive, and
+      existing free-text values need a backfill onto canonical presets with an
+      explicit decision about anything unrecognised.
 - [ ] **"Most used" is counted from the user's own rows**, across firearms and
       ammo lots — no new column, no new table.
 - [ ] **International by design** (plan.md principle): the list cannot be
