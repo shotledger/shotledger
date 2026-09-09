@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/ui": "57.0.15",
+    "@expo/ui": "57.0.16",
     "@react-native-community/datetimepicker": "9.2.0",
     "@react-native-ml-kit/text-recognition": "2.0.0",
     "@shotledger/shared": "workspace:*",
@@ -37,7 +37,7 @@
     "expo-symbols": "~57.0.2",
     "expo-system-ui": "~57.0.3",
     "expo-web-browser": "~57.0.2",
-    "i18next": "26.4.1",
+    "i18next": "26.4.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "17.0.13",
