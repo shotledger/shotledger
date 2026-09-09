@@ -820,6 +820,21 @@ First feedback from the maintainer using a standalone build on their own phone.
       demo fixture baking `"/ N310 3.1 gr"` into `label`. Fix the seed labels at
       the same time, or the two will disagree.
 
+### FAB placement
+
+- [ ] **The "New X" FAB blocks the rows underneath it.** Maintainer, 2026-09-10,
+      on the Ammunition list: _"The button to add New X needs to be in a
+      location where it is less blocking of what's below"_ — the "New Ammo Lot"
+      button sits over the "SK Pistol Match" row, hiding half of it.
+      **This is #62 recurring in a new form.** That fix moved the FAB out of the
+      scroll content so its absolute position resolved against the screen rather
+      than the content box. Here it resolves correctly but still lands _inside_
+      a short list, because nothing reserves space beneath the last row. So the
+      fix is two-part: anchor it to the bottom-right above the tab bar, **and**
+      give the list bottom padding the height of the FAB plus a gap, so the last
+      row can always scroll clear of it. Applies to every list with a FAB, not
+      just Ammunition.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
