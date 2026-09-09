@@ -41,6 +41,24 @@ describe('createSightSetting', () => {
     expect(row?.isActive).toBe(0);
   });
 
+  it('stores an unrecorded axis as NULL, not as zero', () => {
+    const firearmId = firearm();
+    createSightSetting(db, { firearmId, label: 'Untracked', elevationClicks: null });
+
+    const [row] = listSightSettings(db, firearmId);
+    expect(row?.elevationClicks).toBeNull();
+    expect(row?.windageClicks).toBeNull();
+  });
+
+  it('keeps a recorded zero distinct from an unrecorded axis', () => {
+    const firearmId = firearm();
+    createSightSetting(db, { firearmId, label: 'Zero', elevationClicks: 0, windageClicks: null });
+
+    const [row] = listSightSettings(db, firearmId);
+    expect(row?.elevationClicks).toBe(0);
+    expect(row?.windageClicks).toBeNull();
+  });
+
   it('makeActive clears a previously active setting on the same firearm', () => {
     const firearmId = firearm();
     const first = createSightSetting(db, { firearmId, label: 'Mitt-mitt', makeActive: true });
@@ -95,6 +113,22 @@ describe('updateSightSetting', () => {
     expect(after.windageClicks).toBe(-2);
     expect(after.label).toBe('Mitt-mitt');
     expect(after.updatedAt >= before.updatedAt).toBe(true);
+  });
+
+  it('clears a recorded axis back to NULL', () => {
+    const firearmId = firearm();
+    const id = createSightSetting(db, {
+      firearmId,
+      label: 'Mitt-mitt',
+      elevationClicks: 4,
+      windageClicks: -2,
+    });
+
+    updateSightSetting(db, id, { elevationClicks: null });
+
+    const after = listSightSettings(db, firearmId)[0]!;
+    expect(after.elevationClicks).toBeNull();
+    expect(after.windageClicks).toBe(-2);
   });
 });
 

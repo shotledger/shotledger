@@ -14,6 +14,7 @@ import { ScoreKeypad } from '@/components/score-keypad';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
+import { Stepper } from '@/components/stepper';
 import {
   CALIBER_MM,
   createKeypadState,
@@ -94,6 +95,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ComponentsGalleryScreen() {
   const [segment, setSegment] = useState<'a' | 'b' | 'c'>('a');
+  const [clicks, setClicks] = useState<number | null>(null);
   const [keypad, setKeypad] = useState<KeypadState>(() =>
     createKeypadState({ mode: 'integer', seriesLength: 5 }),
   );
@@ -133,6 +135,26 @@ export default function ComponentsGalleryScreen() {
           ]}
           value={segment}
           onChange={setSegment}
+        />
+      </Section>
+
+      <Section title="Stepper — signed integer, nullable">
+        <ThemedText type="small" themeColor="textSecondary">
+          Starts &quot;not recorded&quot; (null); the first press of either button enters the range
+          at 0. Bounded to ±20 here.
+        </ThemedText>
+        <Stepper
+          value={clicks}
+          onChange={setClicks}
+          min={-20}
+          max={20}
+          decrementLabel="Decrease Elevation"
+          incrementLabel="Increase Elevation"
+          clearLabel="Clear"
+          format={(value) =>
+            value === null ? 'Not recorded' : value > 0 ? `+${value}` : `${value}`
+          }
+          testID="gallery-stepper"
         />
       </Section>
 
