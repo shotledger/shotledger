@@ -474,7 +474,44 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### Funding
 
-- [?] **"Is GitHub Sponsors a better alternative than Buy Me A Coffee?"**
+- [?] **"Is GitHub Sponsors a better alternative than Buy Me A Coffee?"** and
+  _"Can people send directly to my paypal account e.g.?"_ and _"Is Revolut an
+  option?"_ Researched against primary sources 2026-09-09; comparison table
+  delivered, maintainer choosing. Findings that will not change:
+  - **Buy Me a Coffee is the most expensive mainstream option** — 5% platform
+    plus Stripe 2.9% + $0.30 plus 0.5% payout plus 1% non-US, ≈ **15-16%** of
+    a 50 kr tip, then paid out in USD.
+  - **PayPal.me is disqualified on privacy**: its own terms publish "namn…
+    profilbild eller logotyp samt den **ort** som är kopplad till ditt
+    PayPal-konto" to anyone who opens the link. The zero-fee friends-and-family
+    route is explicitly barred for donations, with retroactive fees threatened,
+    so the honest rate is 3.40% + 3.25 kr ≈ **9.9%**.
+  - **Swish privat is disqualified twice over**: restricted to "privatpersoner
+    för enskilt bruk", and receiving publishes the maintainer's **name and
+    mobile number** to the payer. Swish Företag needs an organisationsnummer
+    and costs 39 kr/mån + 2 kr/betalning — ~12% at ten donations a month.
+  - **Revolut does not beat Stripe.** Revolut Pro is open to a self-employed
+    natural person with no company and leaks only a username, but it is dearer
+    at this ticket size (~6.2% vs ~5.1%, the gap being a £0.20-equivalent fixed
+    fee), publishes its Swedish schedule in pounds, settles to a Lithuanian
+    IBAN, and has **no Swish path**. Revolut.Me caps at 40 payments/month and
+    Revolut Donations is registered-charities-only.
+  - **Recommendation: a Stripe Payment Link as primary** (~5.1%, giver needs no
+    account, SEK-native, exposes only a descriptor you choose) **plus GitHub
+    Sponsors** (0% all-in from personal accounts, but the giver needs a GitHub
+    account) — and point `SUPPORT_URL` at a page on `shotledger.app` rather
+    than hard-coding a provider into a shipped binary. Add Swish via Stripe
+    when it leaves private preview.
+  - **Both stores permit the outbound link.** Google: a contribution where
+    "100% … goes to the creator" and which grants no digital content is a
+    peer-to-peer payment outside Play Billing. Apple 3.2.2(iv) explicitly
+    allows collecting "outside of the app, such as via Safari". The existing
+    string _"Free app; donations unlock nothing"_ is almost verbatim Google's
+    test — keep it, never let a donation unlock anything, and keep donation
+    language out of the Play listing (anti-steering names it explicitly).
+  - **Tax:** Skatteverket treats donations given because you run the project as
+    taxable hobby income (bilaga T2), whichever rail is used — a reason to pick
+    one with clean exportable records, not a reason to prefer any of them.
 
 ### About screen
 
@@ -573,17 +610,74 @@ that than before it.
 
 ### Field timer
 
+The largest item in this batch. The maintainer's fuller description resolves
+what first looked like a contradiction: **there are two modes**, and the
+timeline is anchored at **Eld**, not at Start.
+
+**Two modes, because there are two jobs.**
+
+- [ ] **Range-officer mode — manual advance.** "Normally, I don't want a timer
+      between Ladda and 'Tio sekunder kvar'. The amount of time there depends
+      on the shooters and when I think that they're ready." So: an **"Alla
+      klara"** button advances the stage on a press. "If everyone is ready then
+      I'll press again and the '10 sekunder kvar' and it's automatic from
+      there."
+- [ ] **Solo mode — fully automatic.** "The above works when I am 'controlling'
+      other shooters but I'd also like to use it for myself. And then I want it
+      to start at 'Ladda' and be automatic from there (and in this use-case I
+      want to set a time between Ladda and 'Alla klara')." So solo mode adds
+      one setting the RO mode does not have: the Ladda → Alla klara duration.
+
+**Timing that is currently wrong.**
+
+- [ ] **"Tio sekunder kvar" must be exactly ten seconds before Eld.** "Now it's
+      10s from 'Alla klara' which means that when '10 sekunder kvar' it should
+      be 10s left." Today the call is anchored to the wrong event.
+- [ ] **A ~5 s gap between "Alla klara" and "Tio sekunder kvar"** — "so that
+      shooters can announce if they're not ready".
+- [ ] **"Eld upphör" is drawn out over the last 3 s**, so the command _ends_
+      exactly as time runs out rather than starting there.
+- [ ] **The timeline starts at Eld.** "The time line should start at 'Eld/Fire'
+      and the timer should count down prior to that (e.g. at '10 sekunder kvar'
+      → −10s)." So t=0 is Eld, the preparatory commands sit at negative times,
+      and the firing period runs positive.
+
+**The view itself.**
+
+- [ ] **Number the commands and mark the numbers on the timeline** — "Make a
+      numbers list of commands and indicate those numbers on the time line."
 - [ ] **Drop the Competition/Training tabs** — "Don't see the purpose. KISS."
-- [ ] **No fixed timer between "Ladda" and "Tio sekunder kvar".** How long that
-      takes depends on the shooters, and only the range officer knows when they
-      are ready. Replace it with an **"Alla klara"** button that advances the
-      stage on a press; from "10 sekunder kvar" onwards it runs automatically.
-- [ ] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n".
-- [?] **What Start should do is unresolved.** "When I press start it should
-  start with 'Tio sekunder kvar'. Never Ladda or Alla Klara. I want you to
-  show those two and allow the" — the message ends mid-sentence, and as
-  written it also pulls against the "Alla klara" button above. Needs the
-  rest of the sentence before anything is built.
+- [ ] **Remove the "Markera" button.**
+- [ ] **Restart from the timeline view** — "I would like to be able to restart
+      from the view where I see the timeline."
+- [ ] **Swedish only on this page** — "you can remove the english translation
+      on this page (it's a Swedish event)". Reading this as: the **commands**
+      are the real spoken Swedish commands and stay Swedish whatever the app
+      language, since that is what is called on the line. Confirm whether the
+      surrounding chrome (buttons, headings) should also stop translating —
+      that would be the first deliberate exception to hard rule 5.
+- [ ] **"Parti 1" / "Parti 2"** — see Naming above; if the commands stay
+      Swedish by design, this stops being a bug and the English UI simply has
+      to stop pretending to translate them.
+
+**Feedback.**
+
+- [ ] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n" and
+      **"time is up"**.
+
+### PAR timer
+
+- [ ] **Rename it.** "We had a discussion between about the PAR Timer. You said
+      that the name came from golf (shooting on par). It makes no sense here."
+      §9b already settled on **Time Limit**; this confirms it.
+- [ ] **Remove "Choose a Drill" for now** — "let users just fill in
+      themselves".
+- [ ] **Cue selection**: vibration and/or beep, each on/off — "Or perhaps it
+      does not make sense to have both of so 1) vib, 2) beep 3) vib + beep".
+      Three-way choice is the simpler control and covers every combination
+      except "neither", which a silent timer nobody can perceive does not need.
+      Same mechanism as the field timer's vibration setting — build one cue
+      model for both, per §9b.
 
 ## Decisions taken while working through this feedback
 
