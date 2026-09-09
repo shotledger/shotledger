@@ -412,16 +412,16 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### Demo / test data
 
-- [ ] **Remove shooter classes `1u`, `1b`, `1s`** ("remove classes 1ubs") from
-      `SPSF_SHOOTER_CLASSES` (`shared/src/disciplines/classes.ts`) and anywhere
-      they are consumed.
-- [ ] **Demo firearms must match the maintainer's own** — "no pardini Steyr
-      LP10". Replace with **FWB AW93**, **CZ Tactical Sport 2 Orange (TS2O)**,
-      **Manurhin MR73 Sport**, **FWB P8X**, each in its correct vapengrupp.
-- [ ] **Demo ammo**: SK Pistol Match · SK Pistol Match Special · 9 mm HN HP
-      124 gr / N320 4.1 gr · .38 Spl HN Wadcutter 125 gr / N310 3.1 gr ·
-      Fiocchi 9 mm 115 gr. Handloads and factory ammo both represented, and
-      each lot linked to a firearm that can actually chamber it.
+- [~] **Remove shooter classes `1u`, `1b`, `1s`** ("remove classes 1ubs") from
+  `SPSF_SHOOTER_CLASSES` (`shared/src/disciplines/classes.ts`) and anywhere
+  they are consumed. **#118**.
+- [~] **Demo firearms must match the maintainer's own** — "no pardini Steyr
+  LP10". Replace with **FWB AW93**, **CZ Tactical Sport 2 Orange (TS2O)**,
+  **Manurhin MR73 Sport**, **FWB P8X**, each in its correct vapengrupp. **#118**.
+- [~] **Demo ammo**: SK Pistol Match · SK Pistol Match Special · 9 mm HN HP
+  124 gr / N320 4.1 gr · .38 Spl HN Wadcutter 125 gr / N310 3.1 gr ·
+  Fiocchi 9 mm 115 gr. Handloads and factory ammo both represented, and
+  each lot linked to a firearm that can actually chamber it. **#118**.
 
 ### Federation model
 
@@ -434,7 +434,7 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### New session screen
 
-- [ ] **Default the session name** to `<Training|Competition> - <date>`.
+- [~] **Default the session name** to `<Training|Competition> - <date>`. **#125**.
 - [?] **"What is Program? Free Training or Precision?"** — answered and raised
   as **#117**, deliberately not built. Program is the shot program within a
   discipline: shots per series, integer vs. decimal scoring, whether a final
@@ -446,14 +446,14 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### Session detail > Stats
 
-- [ ] **The session total is shown twice** — "251 points is shown above
-      Series/Stats tab redundant". Drop it from one of the two places.
-- [ ] **Average inner tens per series.** "Under Per series, would be useful
-      with average no of inner tens per series" — and it "might also fit
-      highest on the view with Total, Avg Points/Series, X (Inner Tens) - and
-      then Avg Inner Tens/Series".
-- [ ] **Total shots in the section header** — "perhaps total shot can be in
-      the header of 'Shot Distribution (x shots)'".
+- [~] **The session total is shown twice** — "251 points is shown above
+  Series/Stats tab redundant". Drop it from one of the two places. **#121**.
+- [~] **Average inner tens per series.** "Under Per series, would be useful
+  with average no of inner tens per series" — and it "might also fit
+  highest on the view with Total, Avg Points/Series, X (Inner Tens) - and
+  then Avg Inner Tens/Series". **#121**.
+- [~] **Total shots in the section header** — "perhaps total shot can be in
+  the header of 'Shot Distribution (x shots)'". **#121**.
 
 ### Export / import
 
@@ -515,16 +515,16 @@ funding, the About screen, ammo, firearms and information architecture.
 
 ### About screen
 
-- [ ] **Open Source Licenses**: add the dependency list to
-      About > Open Source Licenses, **and add a rule to `CLAUDE.md` that it is
-      kept up to date when dependencies are added or removed**.
-- [ ] **Fix About > Source Code** — the link is wrong; "perhaps GitHub
-      Repository instead of Source Code?"
+- [~] **Open Source Licenses**: add the dependency list to
+  About > Open Source Licenses, **and add a rule to `CLAUDE.md` that it is
+  kept up to date when dependencies are added or removed**. **#120**.
+- [~] **Fix About > Source Code** — the link is wrong; "perhaps GitHub
+  Repository instead of Source Code?" **#120**.
 
 ### Ammo
 
-- [ ] **Power factor from velocity** — "For ammo lot I'd like to be able to
-      enter the speed and the power factor should be calculated automatically."
+- [~] **Power factor from velocity** — "For ammo lot I'd like to be able to
+  enter the speed and the power factor should be calculated automatically." **#119**.
 
 ### Firearms
 
@@ -535,23 +535,23 @@ funding, the About screen, ammo, firearms and information architecture.
   you start a session in group C — so one firearm being the default for two
   groups it belongs to is legitimate (the MR73 in both R and B). The bug is
   the bare "Default" subtitle. Decided 2026-09-09: keep the logic, label it
-  "Default for C".
-- [ ] **Sight Settings > Name hint is Swedish in the English UI**
-      ("e.g. mitt-mitt…").
-- [ ] **Elevation and Windage should be constrained inputs** — "should be
-      fixed (dropdown, +/- buttons or similar)", not free text.
+  "Default for C". **#122**.
+- [~] **Sight Settings > Name hint is Swedish in the English UI**
+  ("e.g. mitt-mitt…"). **#122**.
+- [~] **Elevation and Windage should be constrained inputs** — "should be
+  fixed (dropdown, +/- buttons or similar)", not free text. **#122**.
 
 ### Statistics
 
-- [ ] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
-      answered: `webshooter.recordsSubtitle` is _"Personal bests and
-      year-to-year (WebShooter)"_, the only literal `(WebShooter)` in the whole
-      i18n tree. It names the integration the Records screen was built under,
-      not the data it shows — and that is wrong, because the screen mixes
-      WebShooter-imported competition results (Official PBs, Year to Year) with
-      **ordinary locally-logged sessions** (Freeform PBs), computed entirely
-      over local data with no network. The suffix tells the user their own
-      manually logged bests came from WebShooter. Drop it.
+- [~] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
+  answered: `webshooter.recordsSubtitle` is _"Personal bests and
+  year-to-year (WebShooter)"_, the only literal `(WebShooter)` in the whole
+  i18n tree. It names the integration the Records screen was built under,
+  not the data it shows — and that is wrong, because the screen mixes
+  WebShooter-imported competition results (Official PBs, Year to Year) with
+  **ordinary locally-logged sessions** (Freeform PBs), computed entirely
+  over local data with no network. The suffix tells the user their own
+  manually logged bests came from WebShooter. Drop it. **#126**.
 
 ### Information architecture
 
@@ -568,13 +568,13 @@ that than before it.
 
 ### Broken
 
-- [ ] **Shot Timer crashes on Start** — "Shot Timer worked one time but
-      pressing start now kills app". Works the first time, hard-crashes on a
-      later Start. Highest priority in this batch. A "works once" signature
-      points at a resource created on start and never released on stop
-      (`expo-audio` recorder, a metering listener registered twice, a native
-      object used after release) — to be confirmed from an actual `logcat`
-      trace, not guessed.
+- [~] **Shot Timer crashes on Start** — "Shot Timer worked one time but
+  pressing start now kills app". Works the first time, hard-crashes on a
+  later Start. Highest priority in this batch. A "works once" signature
+  points at a resource created on start and never released on stop
+  (`expo-audio` recorder, a metering listener registered twice, a native
+  object used after release) — to be confirmed from an actual `logcat`
+  trace, not guessed. **#127**.
 
 ### Naming and copy
 
@@ -597,16 +597,16 @@ that than before it.
 
 ### Long help text should be a tooltip
 
-- [ ] **Move long inline help behind an `[i]` affordance** — "Some of the
-      information like the long text next to Trigger Level (contains 'Try High
-      for .22) would be better as a 'tooltip'. Not sure if that exists in
-      Android and iOS. if not perhaps an icon [i] for information and then a
-      modal or similar will pop up. **Check the entire app for this pattern.**"
-      There is no native cross-platform tooltip, so this is an `[i]` button
-      plus the existing `ActionSheet`/modal. It is an app-wide sweep, not a
-      timer fix — the IA critique measured ~240dp of permanently-expanded prose
-      on Settings alone (`locationLookupHelp` at 184 chars, `vaultNote` at 131),
-      so the same component pays for itself several times over.
+- [~] **Move long inline help behind an `[i]` affordance** — "Some of the
+  information like the long text next to Trigger Level (contains 'Try High
+  for .22) would be better as a 'tooltip'. Not sure if that exists in
+  Android and iOS. if not perhaps an icon [i] for information and then a
+  modal or similar will pop up. **Check the entire app for this pattern.**"
+  There is no native cross-platform tooltip, so this is an `[i]` button
+  plus the existing `ActionSheet`/modal. It is an app-wide sweep, not a
+  timer fix — the IA critique measured ~240dp of permanently-expanded prose
+  on Settings alone (`locationLookupHelp` at 184 chars, `vaultNote` at 131),
+  so the same component pays for itself several times over. **#128**.
 
 ### Field timer
 
@@ -678,6 +678,67 @@ timeline is anchored at **Eld**, not at Start.
       except "neither", which a silent timer nobody can perceive does not need.
       Same mechanism as the field timer's vibration setting — build one cue
       model for both, per §9b.
+
+## 14. Fifth review (2026-09-09) — decisions and build/tooling
+
+Answers to the open `[?]` items above, plus new questions raised while getting
+a standalone build onto the maintainer's phone.
+
+### Corrections to the demo set
+
+- [ ] **FWB AW93 is a .22 LR pistol**, not an air pistol. That was my error, and
+      it is the second correction to this fixture (the P8X went the other way —
+      it _is_ an air pistol). With AW93 on .22 the set finally closes: the two
+      SK Pistol Match lots have a gun that chambers them, and **vapengrupp C
+      (".22 LR only") is exercised**, which it was not before. Final set:
+      AW93 → `spsf:C`, P8X → `generic:airgun`, CZ TS2 Orange → `spsf:A`,
+      MR73 Sport → `spsf:R` + `spsf:B`.
+
+### Decisions taken
+
+- [ ] **Funding: point `SUPPORT_URL` at `https://shotledger.app/support`.**
+      A page the maintainer controls, so the payment rail can change without an
+      app release. Rail choice itself still open; the research in §12 stands.
+- [ ] **Export: a parser may be added.** Maintainer, 2026-09-09: _"we could add
+      a YAML or JSON5/JSONC parser and allow user to toggle comments or no
+      comments if e.g. Excel does not support comments in JSON"_. This lifts the
+      hard-rule-2 blocker that made plain JSON the only option. **The toggle is
+      the load-bearing part**: a commented file is not valid JSON, so anything
+      consuming it with a standard parser (Excel/Power Query included) fails —
+      comments must be opt-in and off by default for machine consumption.
+- [ ] **Settings/Tools: do the full restructure** ("fix"), not just the quick
+      wins already in #128. Note the §7 conflict: moving the märke table to its
+      own screen contradicts the earlier request that it show live _beneath_
+      Birth Year. Resolve that before building.
+- [ ] **Declare `babel-preset-expo`** — approved, see below.
+
+### Build and tooling
+
+- [ ] **`babel-preset-expo` is declared in no `package.json`** yet
+      `app/babel.config.js` requires it. It exists in the maintainer's checkout
+      only as a stale symlink from an older install; every fresh worktree lacks
+      it and `pnpm install` will not recreate it, so **a fresh clone cannot
+      bundle**. Found while building a release APK; almost certainly what the
+      abandoned `fix/release-build-babel-preset` branch was for. Approved to
+      declare it in `app` devDependencies.
+- [ ] **Use a real slider instead of the hand-rolled `PanResponder` one.**
+      The fälttimer branch built `app/src/components/slider.tsx` from
+      `PanResponder` because no slider package is in the lockfile and rule 2
+      forbade adding one. Maintainer asks why — approved to reconsider adding
+      `@react-native-community/slider`.
+- [?] **State the supported Android versions and architectures.** Maintainer:
+  _"Should we state what versions of Android we support and what arch?"_
+  Today `minSdk=24` (Android 7.0) and `targetSdk=36` come from the Expo
+  template and are recorded nowhere the user or the store listing can see.
+  Needs a decision on the floor, then documenting in `docs/store-listing.md`
+  and `docs/release.md`.
+- [ ] **Document the local standalone build.** No `CONTRIBUTING.md` exists, so
+      this goes in `CLAUDE.md`'s agentic loop beside the emulator commands:
+      `assembleRelease` (debug-keystore-signed, JS bundled, no Metro),
+      `-PreactNativeArchitectures=arm64-v8a` to cut a 295 MB universal APK to
+      90 MB, and `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` to make demo data reachable
+      in a release build — **never set for a Play build; it ships a wipe
+      button**.
 
 ## Decisions taken while working through this feedback
 
