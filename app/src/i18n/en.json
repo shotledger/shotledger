@@ -166,7 +166,7 @@
     "noSightSettings": "No sight settings yet.",
     "addSightSetting": "Add Sight Setting",
     "sightLabel": "Name",
-    "sightLabelPlaceholder": "e.g. mitt-mitt, boll, mitt-mitt fält",
+    "sightLabelPlaceholder": "e.g. centre hold, six o'clock hold, field centre hold",
     "sightElevation": "Elevation",
     "sightWindage": "Windage",
     "sightElevationHint": "Clicks up from your zero; negative is down.",
