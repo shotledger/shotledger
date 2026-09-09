@@ -149,6 +149,7 @@ export default function FirearmDetailScreen() {
 
   const usedGroupIds = new Set(detail.groups.map((g) => g.groupId));
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
+  const newGroupCode = availableGroups.find((g) => g.id === newGroupId)?.code ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
@@ -467,6 +468,9 @@ export default function FirearmDetailScreen() {
       {/* Weapon groups */}
       <Card>
         <ThemedText type="smallBold">{t('firearms.groupsTitle')}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('firearms.groupsHint')}
+        </ThemedText>
         {detail.groups.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t('firearms.noGroups')}
@@ -476,7 +480,14 @@ export default function FirearmDetailScreen() {
             <ListRow
               key={group.id}
               title={weaponGroupCode(group.groupId)}
-              subtitle={group.isDefaultForGroup ? t('firearms.default') : undefined}
+              // Scoped on purpose: a firearm can be the default for several
+              // groups, so two rows each reading a bare "Default" looked like
+              // a bug (maintainer, third review).
+              subtitle={
+                group.isDefaultForGroup
+                  ? t('firearms.defaultForGroup', { group: weaponGroupCode(group.groupId) })
+                  : undefined
+              }
               onPress={group.isDefaultForGroup ? undefined : () => onSetDefaultGroup(group.id)}
               testID={`group-${group.groupId}`}
               trailing={
@@ -500,7 +511,11 @@ export default function FirearmDetailScreen() {
               onChange={setNewGroupId}
             />
             <View style={styles.switchRow}>
-              <ThemedText type="small">{t('firearms.default')}</ThemedText>
+              <ThemedText type="small">
+                {newGroupCode
+                  ? t('firearms.defaultForGroup', { group: newGroupCode })
+                  : t('firearms.defaultForThisGroup')}
+              </ThemedText>
               <Switch value={newGroupDefault} onValueChange={setNewGroupDefault} />
             </View>
             <PrimaryButton
