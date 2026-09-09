@@ -16,8 +16,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TimerCueKind } from '@shotledger/shared';
 
 import {
+  ensureMicPermission,
   isShotListeningAvailable,
-  requestMicPermission,
   startShotListening,
   type ShotListenerHandle,
 } from '@/platform/shot-listener';
@@ -141,7 +141,7 @@ export function useIpscTimer(
     setShots([]);
 
     void (async () => {
-      const permission = await requestMicPermission();
+      const permission = await ensureMicPermission();
       if (permission !== 'granted') {
         setError(permission === 'unavailable' ? 'unavailable' : 'denied');
         return;
