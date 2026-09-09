@@ -18,7 +18,6 @@ import {
   programsForDiscipline,
   requireDiscipline,
   shooterClassesForDiscipline,
-  weaponGroupCode,
   weaponGroupsForDiscipline,
   formatShooterClass,
 } from '@shotledger/shared';
@@ -44,7 +43,6 @@ import {
   COMPETITION_LEVELS,
   disciplineLabel,
   formatLocalDate,
-  levelShortLabel,
   programLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
@@ -90,19 +88,10 @@ export default function NewSessionScreen() {
   );
 
   const startedAt = useMemo(() => new Date().toISOString(), []);
-  const defaultName =
-    type === 'competition'
-      ? defaultSessionName({
-          kind: 'competition',
-          levelLabel: levelShortLabel(t, level, isChampionship),
-          programLabel: program ? programLabel(t, program.id) : null,
-          weaponGroupCode: weaponGroupCode(weaponGroup),
-        })
-      : defaultSessionName({
-          kind: 'training',
-          disciplineLabel: disciplineLabel(t, disciplineId),
-          dateLabel: formatLocalDate(startedAt, i18n.language),
-        });
+  const defaultName = defaultSessionName({
+    typeLabel: t(`sessionType.${type}`),
+    dateLabel: formatLocalDate(startedAt, i18n.language),
+  });
   const name = nameOverride ?? defaultName;
 
   function onSelectDiscipline(nextId: string) {

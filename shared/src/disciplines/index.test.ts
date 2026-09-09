@@ -369,46 +369,25 @@ describe('weapon groups and classes (spec G10-G14)', () => {
 });
 
 describe('session naming (spec G15-G17)', () => {
-  it('G15: competition names combine level, program and vapengrupp', () => {
-    expect(
-      defaultSessionName({
-        kind: 'competition',
-        levelLabel: 'KM',
-        programLabel: 'Precision',
-        weaponGroupCode: 'C',
-      }),
-    ).toBe('KM Precision C');
+  it('G15: names combine the session type and the local date', () => {
+    expect(defaultSessionName({ typeLabel: 'Training', dateLabel: '30 aug 2026' })).toBe(
+      'Training \u2014 30 aug 2026',
+    );
+    expect(defaultSessionName({ typeLabel: 'T\u00e4vling', dateLabel: '30 aug 2026' })).toBe(
+      'T\u00e4vling \u2014 30 aug 2026',
+    );
   });
 
-  it('G16: training names combine discipline and local date', () => {
-    expect(
-      defaultSessionName({
-        kind: 'training',
-        disciplineLabel: 'Precision',
-        dateLabel: '30 aug. 2026',
-      }),
-    ).toBe('Precision — 30 aug. 2026');
+  it('G16: competitions use the same shape as training', () => {
+    expect(defaultSessionName({ typeLabel: 'Competition', dateLabel: '30 aug 2026' })).toBe(
+      'Competition \u2014 30 aug 2026',
+    );
   });
 
   it('G17: missing parts never leave double spaces or dangling separators', () => {
-    expect(
-      defaultSessionName({ kind: 'competition', levelLabel: 'KM', weaponGroupCode: 'C' }),
-    ).toBe('KM C');
-    expect(
-      defaultSessionName({
-        kind: 'competition',
-        levelLabel: '',
-        programLabel: '  ',
-        weaponGroupCode: 'C',
-      }),
-    ).toBe('C');
-    expect(defaultSessionName({ kind: 'competition', levelLabel: '' })).toBe('');
-    expect(
-      defaultSessionName({ kind: 'training', disciplineLabel: '', dateLabel: '2026-08-30' }),
-    ).toBe('2026-08-30');
-    expect(
-      defaultSessionName({ kind: 'training', disciplineLabel: 'Precision', dateLabel: '' }),
-    ).toBe('Precision');
+    expect(defaultSessionName({ typeLabel: '', dateLabel: '2026-08-30' })).toBe('2026-08-30');
+    expect(defaultSessionName({ typeLabel: 'Training', dateLabel: '' })).toBe('Training');
+    expect(defaultSessionName({ typeLabel: '  ', dateLabel: '  ' })).toBe('');
   });
 });
 
@@ -472,21 +451,9 @@ describe('mutation-hardening', () => {
   });
 
   it('trims the parts of a session name', () => {
-    expect(
-      defaultSessionName({
-        kind: 'training',
-        disciplineLabel: '  Precision  ',
-        dateLabel: ' 2026-08-30 ',
-      }),
-    ).toBe('Precision — 2026-08-30');
-    expect(
-      defaultSessionName({
-        kind: 'competition',
-        levelLabel: ' KM ',
-        programLabel: ' Precision ',
-        weaponGroupCode: ' C ',
-      }),
-    ).toBe('KM Precision C');
+    expect(defaultSessionName({ typeLabel: '  Training  ', dateLabel: ' 2026-08-30 ' })).toBe(
+      'Training \u2014 2026-08-30',
+    );
   });
 
   it('a program that scores decimal forces decimal', () => {

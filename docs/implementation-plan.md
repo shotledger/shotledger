@@ -748,9 +748,10 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
 pistol) are **v2** — their defaults carry VERIFY items to resolve then.
 
-Session names default to `<championship-or-level label> <program>
-<weapon_group>` for competitions (e.g. "KM Precision C" — KM being
-förening level + championship flag).
+Session names default to `<session type> — <local date>` (e.g. "Tävling —
+9 sep 2026") for both types; a competition's identity lives in its own
+Competition Name field. Superseded the `<level> <program> <weapon_group>`
+competition form on 2026-09-09 at the maintainer's request.
 
 **Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
 decided, **no provskott**) is out of v1 scope — log such series as

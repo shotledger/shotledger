@@ -57,17 +57,9 @@ export interface SeriesSkeletonEntry {
   timeLimitSeconds: number | null;
 }
 
-export interface CompetitionNameParts {
-  kind: 'competition';
-  /** Localized level label, already including the mästerskap flag (e.g. 'KM'). */
-  levelLabel: string;
-  programLabel?: string | null;
-  weaponGroupCode?: string | null;
-}
-
-export interface TrainingNameParts {
-  kind: 'training';
-  disciplineLabel: string;
+export interface SessionNameParts {
+  /** Localized session type, e.g. 'Training' / 'Tävling'. */
+  typeLabel: string;
   dateLabel: string;
 }
 
@@ -202,16 +194,10 @@ export function scoringModeFor(
 }
 
 /**
- * Default session name (§6.3): `<level> <program> <vapengrupp>` for
- * competitions (e.g. "KM Precision C"), `<discipline> — <local date>` for
- * training. Labels arrive already localized from the UI.
+ * Default session name: `<type> — <local date>`, e.g. "Training — 9 Sep 2026".
+ * Labels arrive already localized from the UI. Competitions carry their own
+ * Competition Name field, so this stays the same shape for both types.
  */
-export function defaultSessionName(parts: CompetitionNameParts | TrainingNameParts): string {
-  if (parts.kind === 'competition') {
-    return [parts.levelLabel, parts.programLabel, parts.weaponGroupCode]
-      .map((part) => part?.trim() ?? '')
-      .filter(Boolean)
-      .join(' ');
-  }
-  return [parts.disciplineLabel.trim(), parts.dateLabel.trim()].filter(Boolean).join(' — ');
+export function defaultSessionName(parts: SessionNameParts): string {
+  return [parts.typeLabel.trim(), parts.dateLabel.trim()].filter(Boolean).join(' — ');
 }
