@@ -74,119 +74,118 @@ export default function HomeScreen() {
   const filteredSessions = filterSessionRowsByShape(latestSessions, shapeFilter);
 
   return (
-    <>
-      <Screen>
-        <ThemedText type="title" style={styles.title}>
-          {t('home.title')}
-        </ThemedText>
+    <Screen
+      fab={<FAB label={t('home.newSession')} onPress={onNewSession} testID="new-session-fab" />}
+    >
+      <ThemedText type="title" style={styles.title}>
+        {t('home.title')}
+      </ThemedText>
 
-        <View style={styles.statsRow}>
-          <StatTile
-            testID="home-stat-shots-logged"
-            label={t('home.shotsLoggedTotal')}
-            value={String(shotsLoggedTotal)}
-          />
-          <StatTile
-            testID="home-stat-sessions"
-            label={t('home.sessionsTotal')}
-            value={String(sessionCount)}
-          />
-          <StatTile
-            testID="home-stat-competitions"
-            label={t('home.competitionsTotal')}
-            value={String(competitionCount)}
-          />
-        </View>
-
-        <ListRow
-          testID="home-timer-entry"
-          title={t('timer.homeEntry')}
-          onPress={() => router.push('/timer')}
+      <View style={styles.statsRow}>
+        <StatTile
+          testID="home-stat-shots-logged"
+          label={t('home.shotsLoggedTotal')}
+          value={String(shotsLoggedTotal)}
         />
+        <StatTile
+          testID="home-stat-sessions"
+          label={t('home.sessionsTotal')}
+          value={String(sessionCount)}
+        />
+        <StatTile
+          testID="home-stat-competitions"
+          label={t('home.competitionsTotal')}
+          value={String(competitionCount)}
+        />
+      </View>
 
-        {profile && overall && (
-          <Chip
-            testID="home-barometer"
-            label={t(`compliance.barometer${capitalize(overall)}`)}
-            tone={BAROMETER_TONE[overall]}
-          />
-        )}
+      <ListRow
+        testID="home-timer-entry"
+        title={t('timer.homeEntry')}
+        onPress={() => router.push('/timer')}
+      />
 
-        {latestSessions.length === 0 ? (
-          <EmptyState
-            title={t('home.emptyTitle')}
-            body={t('home.emptyBody')}
-            ctaLabel={t('home.emptyCta')}
-            onPressCta={onNewSession}
+      {profile && overall && (
+        <Chip
+          testID="home-barometer"
+          label={t(`compliance.barometer${capitalize(overall)}`)}
+          tone={BAROMETER_TONE[overall]}
+        />
+      )}
+
+      {latestSessions.length === 0 ? (
+        <EmptyState
+          title={t('home.emptyTitle')}
+          body={t('home.emptyBody')}
+          ctaLabel={t('home.emptyCta')}
+          onPressCta={onNewSession}
+        />
+      ) : (
+        <View style={styles.list}>
+          <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
+          <SegmentedControl
+            testID="home-shape-filter"
+            options={shapeFilterOptions}
+            value={shapeFilter}
+            onChange={setShapeFilter}
           />
-        ) : (
-          <View style={styles.list}>
-            <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
-            <SegmentedControl
-              testID="home-shape-filter"
-              options={shapeFilterOptions}
-              value={shapeFilter}
-              onChange={setShapeFilter}
-            />
-            {filteredSessions.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('home.filterEmpty')}
-              </ThemedText>
-            ) : (
-              filteredSessions.map((session, index) => (
-                <Swipeable
-                  key={session.id}
-                  overshootRight={false}
-                  renderRightActions={() => (
-                    <View style={styles.rowActions}>
-                      <Pressable
-                        accessibilityRole="button"
-                        testID={`home-session-${index}-share`}
-                        onPress={() => router.push(`/session/${session.id}/share`)}
-                        style={[styles.rowAction, { backgroundColor: theme.backgroundSelected }]}
-                      >
-                        <ThemedText type="smallBold">{t('home.shareSession')}</ThemedText>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        testID={`home-session-${index}-delete`}
-                        onPress={() => onDeleteSession(session)}
-                        style={[styles.rowAction, { backgroundColor: theme.danger }]}
-                      >
-                        <ThemedText type="smallBold" themeColor="onPrimary">
-                          {t('common.deleteSession')}
-                        </ThemedText>
-                      </Pressable>
-                    </View>
-                  )}
-                >
-                  <ListRow
-                    testID={`home-session-${index}`}
-                    title={session.name}
-                    subtitle={[
-                      formatSessionDate(session.startedAt, i18n.language),
-                      formatSessionTotal(session.total),
-                      // Average and inner-ten count are omitted, never printed
-                      // as 0/NaN, when the session has nothing scored yet
-                      // (spec B-L2).
-                      session.seriesAverage === null
-                        ? null
-                        : formatSeriesAverage(session.seriesAverage),
-                      session.seriesAverage === null ? null : `${session.innerTenCount}X`,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                    trailing={<Chip label={t(`sessionType.${session.type}`)} />}
-                    onPress={() => router.push(`/session/${session.id}`)}
-                  />
-                </Swipeable>
-              ))
-            )}
-          </View>
-        )}
-      </Screen>
-      <FAB label={t('home.newSession')} onPress={onNewSession} testID="new-session-fab" />
-    </>
+          {filteredSessions.length === 0 ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('home.filterEmpty')}
+            </ThemedText>
+          ) : (
+            filteredSessions.map((session, index) => (
+              <Swipeable
+                key={session.id}
+                overshootRight={false}
+                renderRightActions={() => (
+                  <View style={styles.rowActions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      testID={`home-session-${index}-share`}
+                      onPress={() => router.push(`/session/${session.id}/share`)}
+                      style={[styles.rowAction, { backgroundColor: theme.backgroundSelected }]}
+                    >
+                      <ThemedText type="smallBold">{t('home.shareSession')}</ThemedText>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      testID={`home-session-${index}-delete`}
+                      onPress={() => onDeleteSession(session)}
+                      style={[styles.rowAction, { backgroundColor: theme.danger }]}
+                    >
+                      <ThemedText type="smallBold" themeColor="onPrimary">
+                        {t('common.deleteSession')}
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                )}
+              >
+                <ListRow
+                  testID={`home-session-${index}`}
+                  title={session.name}
+                  subtitle={[
+                    formatSessionDate(session.startedAt, i18n.language),
+                    formatSessionTotal(session.total),
+                    // Average and inner-ten count are omitted, never printed
+                    // as 0/NaN, when the session has nothing scored yet
+                    // (spec B-L2).
+                    session.seriesAverage === null
+                      ? null
+                      : formatSeriesAverage(session.seriesAverage),
+                    session.seriesAverage === null ? null : `${session.innerTenCount}X`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  trailing={<Chip label={t(`sessionType.${session.type}`)} />}
+                  onPress={() => router.push(`/session/${session.id}`)}
+                />
+              </Swipeable>
+            ))
+          )}
+        </View>
+      )}
+    </Screen>
   );
 }
 

@@ -70,7 +70,15 @@ function VaultScreenNative() {
   }
 
   return (
-    <Screen>
+    <Screen
+      fab={
+        <FAB
+          label={t('vault.addCta')}
+          onPress={() => router.push('/vault/add')}
+          testID="vault-add-fab"
+        />
+      }
+    >
       <ThemedText type="title">{t('vault.title')}</ThemedText>
 
       {state.deviceUnsecured ? (
@@ -98,12 +106,6 @@ function VaultScreenNative() {
           ))}
         </Card>
       )}
-
-      <FAB
-        label={t('vault.addCta')}
-        onPress={() => router.push('/vault/add')}
-        testID="vault-add-fab"
-      />
     </Screen>
   );
 }
