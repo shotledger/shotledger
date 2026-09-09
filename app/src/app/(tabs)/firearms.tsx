@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
+import { formatAmmoRecipe } from '@/features/ammo/format-ammo-recipe';
 import { useFirearmsList } from '@/features/firearms/use-firearms-list';
 import { Spacing } from '@/theme/tokens';
 
@@ -44,7 +45,15 @@ export default function FirearmsScreen() {
     : [];
 
   return (
-    <Screen>
+    <Screen
+      fab={
+        <FAB
+          label={section === 'firearms' ? t('firearms.newFirearm') : t('ammo.newLot')}
+          testID="firearms-fab"
+          onPress={() => router.push(section === 'firearms' ? '/firearms/new' : '/ammo/new')}
+        />
+      }
+    >
       <ThemedText type="title">{t('firearms.title')}</ThemedText>
       <SegmentedControl
         options={[
@@ -100,22 +109,21 @@ export default function FirearmsScreen() {
               key={lot.id}
               testID={`ammo-${lot.id}`}
               title={lot.label}
-              subtitle={t('ammo.usageCount', {
-                sessions: usage.sessionCount,
-                shots: usage.shotCount,
-              })}
+              subtitle={[
+                // The load is derived from the recipe columns, on its own
+                // line — never baked into `label` (maintainer, 2026-09-10).
+                formatAmmoRecipe(lot, (value) => t('ammo.grainsValue', { value })),
+                t('ammo.usageCount', {
+                  sessions: usage.sessionCount,
+                  shots: usage.shotCount,
+                }),
+              ]}
               onPress={() => router.push(`/ammo/${lot.id}`)}
               trailing={lot.isHandload ? <Chip label={t('ammo.isHandload')} /> : undefined}
             />
           ))}
         </Card>
       )}
-
-      <FAB
-        label={section === 'firearms' ? t('firearms.newFirearm') : t('ammo.newLot')}
-        testID="firearms-fab"
-        onPress={() => router.push(section === 'firearms' ? '/firearms/new' : '/ammo/new')}
-      />
     </Screen>
   );
 }

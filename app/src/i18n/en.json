@@ -267,7 +267,8 @@
     "save": "Save",
     "create": "Create Ammo Lot",
     "usage": "Usage",
-    "usageCount": "{{sessions}} sessions · {{shots}} shots"
+    "usageCount": "{{sessions}} sessions · {{shots}} shots",
+    "grainsValue": "{{value}} gr"
   },
   "settings": {
     "title": "Settings",

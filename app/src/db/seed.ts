@@ -227,7 +227,8 @@ export function seedDemoData(db: Database) {
 
   // --- Ammo lots ------------------------------------------------------
   // Only what is actually known is filled in: no invented primer, brass or COL
-  // on the handloads.
+  // on the handloads. `label` is the lot's name only — the load lives in the
+  // recipe columns and the UI derives its own line from them.
   const skPistolMatch = createAmmoLot(db, {
     label: 'SK Pistol Match',
     caliber: '.22 LR',
@@ -249,7 +250,7 @@ export function seedDemoData(db: Database) {
     lotNumber: 'DEMO-LOT-02',
   });
   const nineMmHandload = createAmmoLot(db, {
-    label: '9 mm HN HP 124 gr / N320 4.1 gr',
+    label: '9 mm handload',
     caliber: '9×19 mm',
     quantity: 400,
     isHandload: true,
@@ -260,7 +261,7 @@ export function seedDemoData(db: Database) {
     powderChargeGr: 4.1,
   });
   const wadcutterHandload = createAmmoLot(db, {
-    label: '.38 Spl HN Wadcutter 125 gr / N310 3.1 gr',
+    label: '.38 Spl handload',
     caliber: '.38 Special',
     quantity: 300,
     isHandload: true,
@@ -271,7 +272,7 @@ export function seedDemoData(db: Database) {
     powderChargeGr: 3.1,
   });
   const fiocchiNineMm = createAmmoLot(db, {
-    label: 'Fiocchi 9 mm 115 gr',
+    label: 'Fiocchi 9 mm',
     caliber: '9×19 mm',
     quantity: 500,
     purchasedOn: isoDaysAgo(90),

@@ -89,13 +89,19 @@ describe('seedDemoData', () => {
     const lots = listAmmoLots(db);
     expect(lots.map((l) => l.label).sort()).toEqual(
       [
-        '.38 Spl HN Wadcutter 125 gr / N310 3.1 gr',
-        '9 mm HN HP 124 gr / N320 4.1 gr',
-        'Fiocchi 9 mm 115 gr',
+        '.38 Spl handload',
+        '9 mm handload',
+        'Fiocchi 9 mm',
         'SK Pistol Match',
         'SK Pistol Match Special',
       ].sort(),
     );
+    // The label is the lot's name only: the load is read from the recipe
+    // columns, so a label that repeats it would render the recipe twice.
+    for (const lot of lots) {
+      expect(lot.label, lot.label).not.toContain('/');
+      expect(lot.label, lot.label).not.toMatch(/\bgr\b/u);
+    }
     expect(lots.filter((l) => l.isHandload === 0)).toHaveLength(3);
     const handloads = lots.filter((l) => l.isHandload === 1);
     expect(handloads).toHaveLength(2);
