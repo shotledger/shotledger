@@ -405,6 +405,96 @@ surfaced that no code read would have found.
       Fixed in **#76**: `StatTile` labels now shrink to fit
       (`adjustsFontSizeToFit`) instead of wrapping.
 
+## 12. Third review (2026-09-09)
+
+A batch spanning demo data, session creation, session stats, export format,
+funding, the About screen, ammo, firearms and information architecture.
+
+### Demo / test data
+
+- [ ] **Remove shooter classes `1u`, `1b`, `1s`** ("remove classes 1ubs") from
+      `SPSF_SHOOTER_CLASSES` (`shared/src/disciplines/classes.ts`) and anywhere
+      they are consumed.
+- [ ] **Demo firearms must match the maintainer's own** — "no pardini Steyr
+      LP10". Replace with **FWB AW93**, **CZ Tactical Sport 2 Orange (TS2O)**,
+      **Manurhin MR73 Sport**, **FWB P8X**, each in its correct vapengrupp.
+- [ ] **Demo ammo**: SK Pistol Match · SK Pistol Match Special · 9 mm HN HP
+      124 gr / N320 4.1 gr · .38 Spl HN Wadcutter 125 gr / N310 3.1 gr ·
+      Fiocchi 9 mm 115 gr. Handloads and factory ammo both represented, and
+      each lot linked to a firearm that can actually chamber it.
+
+### Federation model
+
+- [ ] **Weapon group and klass must be dynamic, not hard-coded.** They differ
+      between countries and between federations _within_ a country — SPSF vs.
+      Svenska Skyttesportförbundet
+      (<https://www.skyttesport.se/vaara-idrottsgrenar/pistol/>) — and **a
+      shooter can be a member of several at once**. Tracked as its own GitHub
+      issue; too large for this batch.
+
+### New session screen
+
+- [ ] **Default the session name** to `<Training|Competition> - <date>`.
+- [?] **"What is Program? Free Training or Precision?"** — the field's meaning
+  is not clear from its label or its options. Needs either a rename, a
+  help line, or removal.
+
+### Session detail > Stats
+
+- [ ] **The session total is shown twice** — "251 points is shown above
+      Series/Stats tab redundant". Drop it from one of the two places.
+- [ ] **Average inner tens per series.** "Under Per series, would be useful
+      with average no of inner tens per series" — and it "might also fit
+      highest on the view with Total, Avg Points/Series, X (Inner Tens) - and
+      then Avg Inner Tens/Series".
+- [ ] **Total shots in the section header** — "perhaps total shot can be in
+      the header of 'Shot Distribution (x shots)'".
+
+### Export / import
+
+- [?] **"I think we should export and import as JSON or YAML and not CSV."**
+  Format choice (JSON vs. YAML) and migration path for the existing CSV
+  round-trip need a decision before building. Note `shared/csv/` is under
+  the old-coder evidence-first rule, so its replacement is too.
+
+### Funding
+
+- [?] **"Is GitHub Sponsors a better alternative than Buy Me A Coffee?"**
+
+### About screen
+
+- [ ] **Open Source Licenses**: add the dependency list to
+      About > Open Source Licenses, **and add a rule to `CLAUDE.md` that it is
+      kept up to date when dependencies are added or removed**.
+- [ ] **Fix About > Source Code** — the link is wrong; "perhaps GitHub
+      Repository instead of Source Code?"
+
+### Ammo
+
+- [ ] **Power factor from velocity** — "For ammo lot I'd like to be able to
+      enter the speed and the power factor should be calculated automatically."
+
+### Firearms
+
+- [ ] **Two default weapon groups at once** — "Steyr LP10 (test data) has
+      airgun (Default) set, but I can add another group that is also default".
+      Setting a default must clear the previous one.
+- [ ] **Sight Settings > Name hint is Swedish in the English UI**
+      ("e.g. mitt-mitt…").
+- [ ] **Elevation and Windage should be constrained inputs** — "should be
+      fixed (dropdown, +/- buttons or similar)", not free text.
+
+### Statistics
+
+- [?] **"Personal Bests and year-to-year: why '(Webshooter)' there?"** —
+  the suffix is unexplained at the point of use.
+
+### Information architecture
+
+- [?] **"Settings and Tools feels like SPA (i.e. very much scrolling). Is
+  this the best way?"** — critique with the `impeccable` skill before
+  changing anything.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
