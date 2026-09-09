@@ -455,29 +455,54 @@ barometer; no scoring), Skytteappen (club ecosystem).
         is a cursor over it advanced by an injected clock — the app layer
         only maps a cue to speech, a tone and a vibration.
         Sequence and timings are **SHB 2026 D.6.2 p. 88 "Kommandoord"**
-        (quoted in `docs/reference/spsf-shb-2026.md`): LADDA! + a preparation
-        countdown (default 30 s per SHB's "ca 30 s före ALLA KLARA",
-        adjustable 10–90 s, competition mode only — training starts at ALLA
-        KLARA), ALLA KLARA? immediately followed by TIO SEKUNDER KVAR! at
-        T−10, FÄRDIGA! at T−3, ELD! at T=0, the **prolonged** ELD UPPHÖR!
-        beginning at T_end−3 and ending exactly at T_end (SHB: "utdrages
-        under 3 sek" — implemented as speech at a lowered `rate`, plus a
-        tone at T_end; a setting swaps the words for a signal tone, SHB's
-        "kan ersättas med visselsignal"), PATRON UR! PROPPA VAPEN! 3 s after
-        the shooting time, VISITATION! 4 s later, and MARKERA! on a tap
-        (untimed). Shooting time 3 s–5 min in 1 s steps (default 8 s) with
-        preset chips. **Partier** (delmoment) are whole seconds inside the
+        (quoted in `docs/reference/spsf-shb-2026.md`). **Reworked
+        2026-09-09** (`feat/field-timer-rework`) on maintainer feedback —
+        **the timeline is anchored at ELD, not at Start**: ELD is t = 0,
+        every preparatory command sits at a negative second and the firing
+        period runs positive, so "TIO SEKUNDER KVAR" is at exactly −10 and
+        genuinely means ten seconds left. ALLA KLARA? is at −15, i.e. ~5 s
+        ahead of it so shooters can announce that they are _not_ ready (SHB
+        gives no interval for ALLA KLARA; the 5 s is the maintainer's).
+        FÄRDIGA! at −3, ELD! at 0, the **prolonged** ELD UPPHÖR! beginning
+        at T−3 and ending exactly at T (SHB: "utdrages under 3 sek" —
+        speech at a lowered `rate`, plus a tone at T; a setting swaps the
+        words for a signal tone, SHB's "kan ersättas med visselsignal"),
+        PATRON UR! PROPPA VAPEN! at T+3, VISITATION! at T+7.
+        **Two modes**, replacing the old competition/training tabs:
+        _skjutledare_ (range officer, the default) shows LADDA and then
+        waits for a press — nothing between LADDA and the automatic run is
+        on a clock, because how long the shooters need is the range
+        officer's judgement; a first press calls ALLA KLARA?, a second
+        starts the clock at −10. _Ensam_ (solo) is automatic from LADDA,
+        and is the only mode with a LADDA → ALLA KLARA setting (default
+        30 s per SHB's "ca 30 s före ALLA KLARA", 5–90 s).
+        Shooting time 3 s–5 min (default 8 s), set with a **slider**
+        (3–60 s, the realistic station range) plus preset chips.
+        **Partier** (delmoment) are whole seconds inside the
         shooting window, added/removed with +/− and nudged a second at a
-        time; each fires a short beep and a vibration, and the timeline
-        badges the interval between consecutive boundaries. Mode, prep time,
-        shooting time, partier and the whistle toggle persist in the
-        existing key/value `settings` table. Layout is a horizontal
+        time; each fires a short beep, and the timeline badges the interval
+        between consecutive boundaries. **Vibration is a setting** (on by
+        default) firing at ELD, at each parti and when the time is up.
+        MARKERA! and the "Markera" button were **removed** (maintainer:
+        it added nothing the range officer needed). Mode, LADDA gap,
+        shooting time, partier, the whistle toggle and the vibration
+        toggle persist in the existing key/value `settings` table; a row
+        written before the rework carries the old competition/training mode
+        and falls back to the defaults. Layout is a horizontal
         timeline (grey prep → grey countdown → green shooting → amber last
-        3 s → red after) with a large clock and the command list
-        highlighting the current command — **not** the benchmark app's dial
+        3 s → red after) with a large clock, **each numbered command marked
+        at its second on the timeline**, and the numbered command list
+        below it highlighting the current command — **not** the benchmark app's dial
         ([Fältskyttetimer](https://carlemil.github.io/FieldShootingTimer/),
         which remains the reference for behaviour); the maintainer settled
-        that a bar is enough. Keeps the screen awake (expo-keep-awake).
+        that a bar is enough. A **Restart** button re-runs the sequence
+        without leaving the timeline view. The commands themselves stay
+        **Swedish in both app languages** (`FALT_COMMAND_TEXT`) — they are
+        what is called on the line at a Swedish match; the chrome around
+        them is translated as usual. The slider is
+        `app/src/components/slider.tsx`, built from `PanResponder` like
+        `corner-adjuster.tsx` — no slider package is a dependency and none
+        was added. Keeps the screen awake (expo-keep-awake).
         Limits, deliberately: **silent mode is not respected** — expo-speech
         offers no such gate and the app does not set an iOS audio session
         category for it, so a phone on silent may still speak (Android

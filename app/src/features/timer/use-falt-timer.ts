@@ -4,7 +4,6 @@
 // the cue → speech/tone/vibration mapping. Not independently tested — the
 // same precedent as those two.
 import {
-  FALT_MARKERA_TEXT,
   FaltTimerEngine,
   type FaltCue,
   type FaltCueKind,
@@ -25,11 +24,10 @@ const COMMAND_LANGUAGE = 'sv-SE';
 
 const IDLE_PHASE: FaltPhase = {
   kind: 'idle',
-  elapsedMs: 0,
-  remainingMs: 0,
-  shootingElapsedMs: 0,
+  atMs: 0,
+  toEldMs: 0,
   shootingRemainingMs: 0,
-  eventsPassed: 0,
+  partierPassed: 0,
 };
 
 /**
@@ -45,23 +43,28 @@ const CUE_SOUND: Record<FaltCueKind, TimerCueKind | null> = {
   fardiga: null,
   eld: 'start',
   eldUpphor: 'stop',
-  ceaseFire: 'complete',
+  timeUp: 'complete',
   patronUr: null,
   visitation: null,
-  event: 'ready',
+  parti: 'ready',
 };
 
 export interface UseFaltTimerResult {
   phase: FaltPhase;
-  /** The command last given, for the highlighted row in the command list. */
-  currentCue: FaltCueKind | null;
+  /** The number of the command last given, for the highlighted row in the numbered list. */
+  currentNumber: number | null;
   isRunning: boolean;
+  /** True while the range officer's next button press is what moves the sequence on. */
+  isAwaitingPress: boolean;
   start: () => void;
+  /** The range officer's button: the next untimed command, or the start of the automatic run. */
+  advanceManual: () => void;
   pause: () => void;
   resume: () => void;
+  /** Back to the settings view. */
   reset: () => void;
-  /** MARKERA — the untimed final command. */
-  markera: () => void;
+  /** Run the same sequence again without leaving the timeline view. */
+  restart: () => void;
 }
 
 export function useFaltTimer(
@@ -69,8 +72,9 @@ export function useFaltTimer(
   spokenPrompts: boolean,
 ): UseFaltTimerResult {
   const [phase, setPhase] = useState<FaltPhase>(IDLE_PHASE);
-  const [currentCue, setCurrentCue] = useState<FaltCueKind | null>(null);
+  const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isAwaitingPress, setIsAwaitingPress] = useState(false);
 
   // Built fresh in `start()`, from whatever `settings` are current then —
   // mirrors use-ipsc-timer.ts's `engineRef`. A ref (not `useMemo`) because
@@ -107,7 +111,7 @@ export function useFaltTimer(
             : false;
         if (tone !== null || !spoke) playTimerCueSound(tone ?? 'ready');
         if (cue.vibrate) vibrate();
-        setCurrentCue(cue.kind);
+        if (cue.number !== null) setCurrentNumber(cue.number);
       }
     },
     [spokenPrompts],
@@ -126,6 +130,12 @@ export function useFaltTimer(
     };
   }, [teardown]);
 
+  const syncFrom = useCallback((engine: FaltTimerEngine) => {
+    setPhase(engine.getPhase());
+    setIsRunning(engine.isRunning());
+    setIsAwaitingPress(engine.isAwaitingPress());
+  }, []);
+
   const tick = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -135,10 +145,9 @@ export function useFaltTimer(
     playCues(engine.advance(delta));
     const next = engine.getPhase();
     setPhase(next);
-    // The plan ends at VISITATION; MARKERA is an untimed tap, so the
-    // interval and keep-awake can go once the clock has run out.
-    if (next.elapsedMs >= engine.getPlan().totalMs) {
+    if (next.kind === 'done') {
       stopInterval();
+      setIsRunning(false);
       deactivateKeepAwake(KEEP_AWAKE_TAG);
     }
   }, [playCues, stopInterval]);
@@ -149,15 +158,25 @@ export function useFaltTimer(
     intervalRef.current = setInterval(tick, TICK_MS);
   }, [stopInterval, tick]);
 
-  const start = useCallback(() => {
+  const begin = useCallback(() => {
     const engine = new FaltTimerEngine(settings);
     engineRef.current = engine;
+    setCurrentNumber(null);
     playCues(engine.start());
-    setPhase(engine.getPhase());
-    setIsRunning(engine.isRunning());
+    syncFrom(engine);
     void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
-    runInterval();
-  }, [settings, playCues, runInterval]);
+    // In range-officer mode the clock only starts after the presses, so the
+    // interval waits too — nothing between LADDA and the run is timed.
+    if (engine.isRunning()) runInterval();
+  }, [settings, playCues, runInterval, syncFrom]);
+
+  const advanceManual = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    playCues(engine.advanceManual());
+    syncFrom(engine);
+    if (engine.isRunning() && intervalRef.current === null) runInterval();
+  }, [playCues, runInterval, syncFrom]);
 
   const pause = useCallback(() => {
     const engine = engineRef.current;
@@ -165,46 +184,42 @@ export function useFaltTimer(
     engine.pause();
     stopInterval();
     stopSpeaking();
-    setPhase(engine.getPhase());
-    setIsRunning(engine.isRunning());
-  }, [stopInterval]);
+    syncFrom(engine);
+  }, [stopInterval, syncFrom]);
 
   const resume = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
     engine.resume();
-    setPhase(engine.getPhase());
-    setIsRunning(engine.isRunning());
-    runInterval();
-  }, [runInterval]);
+    syncFrom(engine);
+    if (engine.isRunning()) runInterval();
+  }, [runInterval, syncFrom]);
 
   const reset = useCallback(() => {
     teardown();
     engineRef.current = null;
     setPhase(IDLE_PHASE);
-    setCurrentCue(null);
+    setCurrentNumber(null);
     setIsRunning(false);
+    setIsAwaitingPress(false);
   }, [teardown]);
 
-  const markera = useCallback(() => {
-    const engine = engineRef.current;
-    if (!engine) return;
+  const restart = useCallback(() => {
     teardown();
-    if (spokenPrompts) speak(FALT_MARKERA_TEXT, { language: COMMAND_LANGUAGE });
-    engine.markera();
-    setPhase(engine.getPhase());
-    setCurrentCue(null);
-    setIsRunning(engine.isRunning());
-  }, [spokenPrompts, teardown]);
+    engineRef.current = null;
+    begin();
+  }, [teardown, begin]);
 
   return {
     phase,
-    currentCue,
+    currentNumber,
     isRunning,
-    start,
+    isAwaitingPress,
+    start: begin,
+    advanceManual,
     pause,
     resume,
     reset,
-    markera,
+    restart,
   };
 }

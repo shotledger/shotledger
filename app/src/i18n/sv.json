@@ -695,49 +695,36 @@
   },
   "faltTimer": {
     "modes": {
-      "competition": "Tävling",
-      "training": "Träning"
+      "rangeOfficer": "Skjutledare",
+      "solo": "Ensam"
     },
-    "prepTime": "Förberedelsetid före ALLA KLARA (s)",
-    "decreasePrep": "Minska förberedelsetiden",
-    "increasePrep": "Öka förberedelsetiden",
-    "shootingTime": "Skjuttid (s)",
-    "decreaseShooting": "Minska skjuttiden",
-    "increaseShooting": "Öka skjuttiden",
+    "modeHint": {
+      "rangeOfficer": "Ladda kommenderas, sedan trycker du när skyttarna är klara – inget däremellan är tidsatt. Andra trycket startar den automatiska nedräkningen.",
+      "solo": "Automatiskt från ladda, när du tar tid på dig själv."
+    },
+    "shootingTime": "Skjuttid",
+    "laddaTime": "Tid mellan ladda och alla klara",
     "seconds": "{{value}} s",
-    "events": "Partier (delmoment)",
-    "eventsHint": "Lägg till hela sekunder inne i skjuttiden – varje parti markeras med en kort signal och en vibration. Siffrorna över tidslinjen är antalet sekunder mellan gränserna.",
-    "eventNumber": "Parti {{number}}",
-    "decreaseEvent": "Flytta partigränsen bakåt",
-    "increaseEvent": "Flytta partigränsen framåt",
-    "addEvent": "Lägg till parti",
-    "removeEvent": "Ta bort sista partiet",
-    "whistle": "Visselsignal i stället för talat ELD UPPHÖR",
+    "secondsRange": "{{from}}–{{to}} s",
+    "onPress": "på tryck",
+    "partier": "Partier (delmoment)",
+    "partierHint": "Hela sekunder inne i skjuttiden – varje partigräns markeras med en kort signal. Siffrorna över tidslinjen är antalet sekunder mellan gränserna.",
+    "decreaseParti": "Flytta partigränsen bakåt",
+    "increaseParti": "Flytta partigränsen framåt",
+    "addParti": "Lägg till parti",
+    "removeParti": "Ta bort sista partiet",
+    "whistle": "Visselsignal i stället för talat eld upphör",
+    "vibration": "Vibrera vid eld, varje parti och när tiden är ute",
     "spokenPrompts": "Talade kommandon",
-    "sourceNote": "Kommandoord och tider enligt SHB 2026 D.6.2 s. 88. ELD UPPHÖR utdrages under 3 sek och slutar exakt när skjuttiden går ut.",
+    "sourceNote": "Kommandoord och tider enligt SHB 2026 D.6.2 s. 88, på en tidslinje med noll vid eld. Eld upphör utdrages under de sista 3 sekunderna och slutar exakt när skjuttiden går ut.",
+    "pressHint": "Tryck när alla är klara.",
+    "allaKlaraButton": "Alla klara?",
+    "startCountdownButton": "Tio sekunder kvar!",
     "start": "Starta",
     "pause": "Paus",
     "resume": "Fortsätt",
-    "reset": "Nollställ",
-    "markera": "Markera!",
-    "state": {
-      "idle": "Klar att starta",
-      "prep": "Laddning",
-      "ready": "Alla klara?",
-      "shooting": "ELD",
-      "clearing": "Patron ur / visitation",
-      "done": "Markera"
-    },
-    "commands": {
-      "ladda": "Ladda!",
-      "allaKlara": "Alla klara?",
-      "tenSeconds": "Tio sekunder kvar!",
-      "fardiga": "Färdiga!",
-      "eld": "Eld!",
-      "eldUpphor": "Eld upphör!",
-      "patronUr": "Patron ur! Proppa vapen!",
-      "visitation": "Visitation!"
-    }
+    "restart": "Starta om",
+    "settings": "Inställningar"
   },
   "vault": {
     "title": "Valv",

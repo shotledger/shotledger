@@ -4,17 +4,23 @@
 // timer.tsx and ipsc-timer.tsx. All sequence logic lives in the pure
 // `FaltTimerEngine` (shared/src/timer/falt.ts); this file is layout plus
 // the settings editor.
+//
+// The commands themselves stay Swedish in both app languages — "Ladda",
+// "Alla klara", "Tio sekunder kvar" are what is called on the line at a
+// Swedish match, so they come from `faltCommandText`, not the i18n
+// catalogues; the chrome around them is translated as usual.
 import {
   DEFAULT_FALT_SETTINGS,
-  MAX_PREP_SECONDS,
+  MAX_LADDA_SECONDS,
   MAX_SHOOTING_SECONDS,
-  MIN_PREP_SECONDS,
+  MAX_SHOOTING_SLIDER_SECONDS,
+  MIN_LADDA_SECONDS,
   MIN_SHOOTING_SECONDS,
   SHOOTING_TIME_PRESETS,
-  buildFaltPlan,
-  type FaltCueKind,
+  buildFaltProgram,
+  faltCommandText,
   type FaltMode,
-  type FaltPhaseKind,
+  type FaltProgram,
   type FaltTimerSettings,
 } from '@shotledger/shared';
 import { type ReactNode, useCallback, useMemo } from 'react';
@@ -26,44 +32,22 @@ import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { Slider } from '@/components/slider';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimeline } from '@/features/timer/falt-timeline';
 import { useFaltTimer } from '@/features/timer/use-falt-timer';
 import { useFaltSettings, useSpokenPrompts } from '@/features/timer/use-timer-settings';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing, type ThemeColor } from '@/theme/tokens';
-
-const PREP_STEP_SECONDS = 5;
-
-/** The commands as listed on screen, in the order they are given. */
-const COMMAND_ORDER: readonly FaltCueKind[] = [
-  'ladda',
-  'allaKlara',
-  'tenSeconds',
-  'fardiga',
-  'eld',
-  'eldUpphor',
-  'patronUr',
-  'visitation',
-];
-
-const PHASE_COLOR: Record<FaltPhaseKind, ThemeColor> = {
-  idle: 'textSecondary',
-  prep: 'textSecondary',
-  ready: 'primary',
-  shooting: 'success',
-  clearing: 'danger',
-  done: 'primary',
-};
+import { Radius, Spacing } from '@/theme/tokens';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
 /** Places a new parti boundary in the middle of the longest free stretch; returns the settings unchanged when every second is taken. */
-export function withAddedEvent(settings: FaltTimerSettings): FaltTimerSettings {
-  const taken = new Set(settings.eventSeconds);
-  const bounds = [0, ...settings.eventSeconds, settings.shootingSeconds];
+export function withAddedParti(settings: FaltTimerSettings): FaltTimerSettings {
+  const taken = new Set(settings.partiSeconds);
+  const bounds = [0, ...settings.partiSeconds, settings.shootingSeconds];
   let best: number | null = null;
   let bestGap = 0;
   for (let i = 1; i < bounds.length; i += 1) {
@@ -77,22 +61,22 @@ export function withAddedEvent(settings: FaltTimerSettings): FaltTimerSettings {
     }
   }
   if (best === null) return settings;
-  return { ...settings, eventSeconds: [...settings.eventSeconds, best].sort((a, b) => a - b) };
+  return { ...settings, partiSeconds: [...settings.partiSeconds, best].sort((a, b) => a - b) };
 }
 
 /** Moves one boundary by `deltaSeconds`, refusing to land on 0, the end, or another boundary. */
-export function withMovedEvent(
+export function withMovedParti(
   settings: FaltTimerSettings,
   index: number,
   deltaSeconds: number,
 ): FaltTimerSettings {
-  const current = settings.eventSeconds[index];
+  const current = settings.partiSeconds[index];
   if (current === undefined) return settings;
   const next = current + deltaSeconds;
   if (next <= 0 || next >= settings.shootingSeconds) return settings;
-  if (settings.eventSeconds.includes(next)) return settings;
-  const eventSeconds = settings.eventSeconds.map((second, i) => (i === index ? next : second));
-  return { ...settings, eventSeconds: [...eventSeconds].sort((a, b) => a - b) };
+  if (settings.partiSeconds.includes(next)) return settings;
+  const partiSeconds = settings.partiSeconds.map((second, i) => (i === index ? next : second));
+  return { ...settings, partiSeconds: [...partiSeconds].sort((a, b) => a - b) };
 }
 
 /** Drops boundaries that a shorter shooting time has pushed outside the window. */
@@ -104,7 +88,7 @@ function withShootingSeconds(
   return {
     ...settings,
     shootingSeconds: clamped,
-    eventSeconds: settings.eventSeconds.filter((second) => second < clamped),
+    partiSeconds: settings.partiSeconds.filter((second) => second < clamped),
   };
 }
 
@@ -119,11 +103,19 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
 
   const [settings, setSettings] = useFaltSettings(DEFAULT_FALT_SETTINGS);
   const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
-  const { phase, currentCue, isRunning, start, pause, resume, reset, markera } = useFaltTimer(
-    settings,
-    spokenPrompts,
-  );
-  const plan = useMemo(() => buildFaltPlan(settings), [settings]);
+  const {
+    phase,
+    currentNumber,
+    isRunning,
+    isAwaitingPress,
+    start,
+    advanceManual,
+    pause,
+    resume,
+    reset,
+    restart,
+  } = useFaltTimer(settings, spokenPrompts);
+  const program = useMemo(() => buildFaltProgram(settings), [settings]);
 
   const stepButton = useCallback(
     (label: string, accessibilityLabel: string, testID: string, onPress: () => void) => (
@@ -147,66 +139,34 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
 
         <SegmentedControl<FaltMode>
           options={[
-            { value: 'competition', label: t('faltTimer.modes.competition') },
-            { value: 'training', label: t('faltTimer.modes.training') },
+            { value: 'rangeOfficer', label: t('faltTimer.modes.rangeOfficer') },
+            { value: 'solo', label: t('faltTimer.modes.solo') },
           ]}
           value={settings.mode}
           onChange={(mode) => setSettings({ ...settings, mode })}
           testID="falt-mode"
         />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t(`faltTimer.modeHint.${settings.mode}` as const)}
+        </ThemedText>
 
         <Card style={styles.form} testID="falt-settings">
-          {settings.mode === 'competition' && (
-            <>
-              <ThemedText type="smallBold">{t('faltTimer.prepTime')}</ThemedText>
-              <View style={styles.row}>
-                {stepButton('−', t('faltTimer.decreasePrep'), 'falt-prep-down', () =>
-                  setSettings({
-                    ...settings,
-                    prepSeconds: clamp(
-                      settings.prepSeconds - PREP_STEP_SECONDS,
-                      MIN_PREP_SECONDS,
-                      MAX_PREP_SECONDS,
-                    ),
-                  }),
-                )}
-                <ThemedText
-                  type="smallBold"
-                  style={[styles.flex, styles.value]}
-                  testID="falt-prep-value"
-                >
-                  {t('faltTimer.seconds', { value: settings.prepSeconds })}
-                </ThemedText>
-                {stepButton('+', t('faltTimer.increasePrep'), 'falt-prep-up', () =>
-                  setSettings({
-                    ...settings,
-                    prepSeconds: clamp(
-                      settings.prepSeconds + PREP_STEP_SECONDS,
-                      MIN_PREP_SECONDS,
-                      MAX_PREP_SECONDS,
-                    ),
-                  }),
-                )}
-              </View>
-            </>
-          )}
-
-          <ThemedText type="smallBold">{t('faltTimer.shootingTime')}</ThemedText>
-          <View style={styles.row}>
-            {stepButton('−', t('faltTimer.decreaseShooting'), 'falt-shooting-down', () =>
-              setSettings(withShootingSeconds(settings, settings.shootingSeconds - 1)),
-            )}
-            <ThemedText
-              type="smallBold"
-              style={[styles.flex, styles.value]}
-              testID="falt-shooting-value"
-            >
+          <View style={styles.labelRow}>
+            <ThemedText type="smallBold" style={styles.flex}>
+              {t('faltTimer.shootingTime')}
+            </ThemedText>
+            <ThemedText type="smallBold" style={styles.value} testID="falt-shooting-value">
               {t('faltTimer.seconds', { value: settings.shootingSeconds })}
             </ThemedText>
-            {stepButton('+', t('faltTimer.increaseShooting'), 'falt-shooting-up', () =>
-              setSettings(withShootingSeconds(settings, settings.shootingSeconds + 1)),
-            )}
           </View>
+          <Slider
+            value={settings.shootingSeconds}
+            min={MIN_SHOOTING_SECONDS}
+            max={MAX_SHOOTING_SLIDER_SECONDS}
+            onChange={(seconds) => setSettings(withShootingSeconds(settings, seconds))}
+            accessibilityLabel={t('faltTimer.shootingTime')}
+            testID="falt-shooting-slider"
+          />
           <View style={styles.row} testID="falt-shooting-presets">
             {SHOOTING_TIME_PRESETS.map((preset) => (
               <Pressable
@@ -222,36 +182,57 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
             ))}
           </View>
 
-          <ThemedText type="smallBold">{t('faltTimer.events')}</ThemedText>
+          {settings.mode === 'solo' && (
+            <>
+              <View style={styles.labelRow}>
+                <ThemedText type="smallBold" style={styles.flex}>
+                  {t('faltTimer.laddaTime')}
+                </ThemedText>
+                <ThemedText type="smallBold" style={styles.value} testID="falt-ladda-value">
+                  {t('faltTimer.seconds', { value: settings.laddaSeconds })}
+                </ThemedText>
+              </View>
+              <Slider
+                value={settings.laddaSeconds}
+                min={MIN_LADDA_SECONDS}
+                max={MAX_LADDA_SECONDS}
+                onChange={(laddaSeconds) => setSettings({ ...settings, laddaSeconds })}
+                accessibilityLabel={t('faltTimer.laddaTime')}
+                testID="falt-ladda-slider"
+              />
+            </>
+          )}
+
+          <ThemedText type="smallBold">{t('faltTimer.partier')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {t('faltTimer.eventsHint')}
+            {t('faltTimer.partierHint')}
           </ThemedText>
-          {settings.eventSeconds.map((second, index) => (
+          {settings.partiSeconds.map((second, index) => (
             <View key={`${index}-${second}`} style={styles.row}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
-                {t('faltTimer.eventNumber', { number: index + 1 })}
+                {faltCommandText({ kind: 'parti', partiNumber: index + 1 })}
               </ThemedText>
-              {stepButton('−', t('faltTimer.decreaseEvent'), `falt-event-${index}-down`, () =>
-                setSettings(withMovedEvent(settings, index, -1)),
+              {stepButton('−', t('faltTimer.decreaseParti'), `falt-parti-${index}-down`, () =>
+                setSettings(withMovedParti(settings, index, -1)),
               )}
-              <ThemedText type="smallBold" style={styles.value} testID={`falt-event-${index}`}>
+              <ThemedText type="smallBold" style={styles.value} testID={`falt-parti-${index}`}>
                 {t('faltTimer.seconds', { value: second })}
               </ThemedText>
-              {stepButton('+', t('faltTimer.increaseEvent'), `falt-event-${index}-up`, () =>
-                setSettings(withMovedEvent(settings, index, 1)),
+              {stepButton('+', t('faltTimer.increaseParti'), `falt-parti-${index}-up`, () =>
+                setSettings(withMovedParti(settings, index, 1)),
               )}
             </View>
           ))}
           <View style={styles.row}>
-            {stepButton('−', t('faltTimer.removeEvent'), 'falt-event-remove', () =>
-              setSettings({ ...settings, eventSeconds: settings.eventSeconds.slice(0, -1) }),
+            {stepButton('−', t('faltTimer.removeParti'), 'falt-parti-remove', () =>
+              setSettings({ ...settings, partiSeconds: settings.partiSeconds.slice(0, -1) }),
             )}
-            {stepButton('+', t('faltTimer.addEvent'), 'falt-event-add', () =>
-              setSettings(withAddedEvent(settings)),
+            {stepButton('+', t('faltTimer.addParti'), 'falt-parti-add', () =>
+              setSettings(withAddedParti(settings)),
             )}
           </View>
 
-          <View style={styles.switchRow}>
+          <View style={styles.labelRow}>
             <ThemedText type="small" style={styles.flex}>
               {t('faltTimer.whistle')}
             </ThemedText>
@@ -261,7 +242,17 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
               testID="falt-whistle"
             />
           </View>
-          <View style={styles.switchRow}>
+          <View style={styles.labelRow}>
+            <ThemedText type="small" style={styles.flex}>
+              {t('faltTimer.vibration')}
+            </ThemedText>
+            <Switch
+              value={settings.vibration}
+              onValueChange={(vibration) => setSettings({ ...settings, vibration })}
+              testID="falt-vibration"
+            />
+          </View>
+          <View style={styles.labelRow}>
             <ThemedText type="small" style={styles.flex}>
               {t('faltTimer.spokenPrompts')}
             </ThemedText>
@@ -273,7 +264,8 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
           </View>
         </Card>
 
-        <FaltTimeline plan={plan} elapsedMs={0} testID="falt-timeline-preview" />
+        <FaltTimeline program={program} atMs={program.startSeconds * 1_000} testID="falt-preview" />
+        <CommandList program={program} currentNumber={null} />
         <ThemedText type="small" themeColor="textSecondary" testID="falt-source-note">
           {t('faltTimer.sourceNote')}
         </ThemedText>
@@ -283,65 +275,117 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
     );
   }
 
-  const bigNumber =
+  const current = program.commands.find((command) => command.number === currentNumber);
+  const clock =
     phase.kind === 'shooting'
       ? (phase.shootingRemainingMs / 1_000).toFixed(1)
       : phase.kind === 'clearing' || phase.kind === 'done'
         ? '—'
-        : Math.ceil(phase.remainingMs / 1_000).toString();
+        : `−${Math.ceil(phase.toEldMs / 1_000)}`;
 
   return (
     <Screen>
       <ThemedText
         type="title"
-        themeColor={PHASE_COLOR[phase.kind]}
-        style={styles.stateLabel}
-        testID="falt-state-label"
+        themeColor={phase.kind === 'shooting' ? 'success' : 'primary'}
+        style={styles.commandLine}
+        testID="falt-current-command"
       >
-        {t(`faltTimer.state.${phase.kind}` as const)}
+        {current ? faltCommandText(current) : ''}
       </ThemedText>
       <ThemedText
         type="title"
-        themeColor={PHASE_COLOR[phase.kind]}
+        themeColor={phase.kind === 'shooting' ? 'success' : 'textSecondary'}
         style={styles.clock}
         testID="falt-clock"
       >
-        {bigNumber}
+        {isAwaitingPress ? '—' : clock}
       </ThemedText>
 
-      <FaltTimeline plan={plan} elapsedMs={phase.elapsedMs} testID="falt-timeline" />
+      <FaltTimeline program={program} atMs={phase.atMs} testID="falt-timeline" />
+      <CommandList program={program} currentNumber={currentNumber} />
 
-      <Card style={styles.commandList} testID="falt-commands">
-        {COMMAND_ORDER.filter((kind) => kind !== 'ladda' || settings.mode === 'competition').map(
-          (kind) => (
-            <ThemedText
-              key={kind}
-              type={currentCue === kind ? 'smallBold' : 'small'}
-              themeColor={currentCue === kind ? 'primary' : 'textSecondary'}
-              testID={`falt-command-${kind}`}
-            >
-              {t(`faltTimer.commands.${kind}` as const)}
-            </ThemedText>
-          ),
-        )}
-      </Card>
-
-      <View style={styles.row}>
-        <View style={styles.flex}>
+      {isAwaitingPress ? (
+        <>
+          <ThemedText type="small" themeColor="textSecondary" testID="falt-press-hint">
+            {t('faltTimer.pressHint')}
+          </ThemedText>
+          <PrimaryButton
+            label={
+              phase.kind === 'ladda'
+                ? t('faltTimer.allaKlaraButton')
+                : t('faltTimer.startCountdownButton')
+            }
+            onPress={advanceManual}
+            testID="falt-advance"
+          />
+        </>
+      ) : (
+        phase.kind !== 'done' && (
           <PrimaryButton
             label={isRunning ? t('faltTimer.pause') : t('faltTimer.resume')}
             onPress={isRunning ? pause : resume}
             testID="falt-pause"
           />
+        )
+      )}
+      <View style={styles.row}>
+        <View style={styles.flex}>
+          <PrimaryButton label={t('faltTimer.restart')} onPress={restart} testID="falt-restart" />
         </View>
         <View style={styles.flex}>
-          <PrimaryButton label={t('faltTimer.reset')} onPress={reset} testID="falt-reset" />
+          <PrimaryButton label={t('faltTimer.settings')} onPress={reset} testID="falt-reset" />
         </View>
       </View>
-      {(phase.kind === 'clearing' || phase.kind === 'done') && (
-        <PrimaryButton label={t('faltTimer.markera')} onPress={markera} testID="falt-markera" />
-      )}
     </Screen>
+  );
+}
+
+/** The numbered command list — the numbers are what the timeline marks. */
+function CommandList({
+  program,
+  currentNumber,
+}: {
+  program: FaltProgram;
+  currentNumber: number | null;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <Card style={styles.commandList} testID="falt-commands">
+      {program.commands.map((command) => {
+        const active = command.number === currentNumber;
+        return (
+          <View key={command.number} style={styles.labelRow}>
+            <ThemedText
+              type={active ? 'smallBold' : 'small'}
+              themeColor={active ? 'primary' : 'textSecondary'}
+              style={styles.commandNumber}
+            >
+              {command.number}.
+            </ThemedText>
+            <ThemedText
+              type={active ? 'smallBold' : 'small'}
+              themeColor={active ? 'primary' : 'text'}
+              style={styles.flex}
+              testID={`falt-command-${command.number}`}
+            >
+              {faltCommandText(command)}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.commandTime}>
+              {command.atSeconds === null
+                ? t('faltTimer.onPress')
+                : command.durationSeconds > 0
+                  ? t('faltTimer.secondsRange', {
+                      from: command.atSeconds,
+                      to: command.atSeconds + command.durationSeconds,
+                    })
+                  : t('faltTimer.seconds', { value: command.atSeconds })}
+            </ThemedText>
+          </View>
+        );
+      })}
+    </Card>
   );
 }
 
@@ -355,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
   },
-  switchRow: {
+  labelRow: {
     flexDirection: 'row',
     gap: Spacing.two,
     alignItems: 'center',
@@ -364,7 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   value: {
-    textAlign: 'center',
+    textAlign: 'right',
     minWidth: 56,
     fontVariant: ['tabular-nums'],
   },
@@ -379,7 +423,16 @@ const styles = StyleSheet.create({
   commandList: {
     gap: Spacing.one,
   },
-  stateLabel: {
+  commandNumber: {
+    minWidth: 22,
+    fontVariant: ['tabular-nums'],
+  },
+  commandTime: {
+    minWidth: 64,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  commandLine: {
     fontSize: 28,
     lineHeight: 34,
     textAlign: 'center',

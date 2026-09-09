@@ -1,8 +1,10 @@
-// The fälttimer's timeline: one horizontal bar for the whole command plan,
-// with the parti (delmoment) intervals badged above the shooting window.
-// Deliberately not the benchmark app's dial — the maintainer settled that a
-// bar is enough (plan.md).
-import { ELD_UPPHOR_LEAD_SECONDS, faltEventIntervals, type FaltPlan } from '@shotledger/shared';
+// The fälttimer's timeline. One horizontal bar for the whole program, drawn
+// on the ELD-anchored clock: everything before ELD is at a negative second,
+// the firing period is positive. Each numbered command is marked on the bar
+// with its number from the list below it (maintainer, 2026-09-09: "Make a
+// numbers list of commands and indicate those numbers on the time line"), and
+// the parti (delmoment) intervals are badged above the shooting window.
+import { ALLA_KLARA_AT_SECONDS, faltPartiIntervals, type FaltProgram } from '@shotledger/shared';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -16,67 +18,132 @@ import { Radius, Spacing } from '@/theme/tokens';
  */
 const AMBER = '#E8B84B';
 
+const MARKER_SIZE = 20;
+
 export interface FaltTimelineProps {
-  plan: FaltPlan;
-  elapsedMs: number;
+  program: FaltProgram;
+  /** Where the playhead sits, in ms relative to ELD. */
+  atMs: number;
   testID?: string;
 }
 
-interface Segment {
-  key: string;
-  ms: number;
-  color: string;
-}
-
-export function FaltTimeline({ plan, elapsedMs, testID }: FaltTimelineProps) {
+export function FaltTimeline({ program, atMs, testID }: FaltTimelineProps) {
   const theme = useTheme();
-  const { settings, readyStartMs, eldAtMs, shootingEndMs, totalMs } = plan;
-  const shootingMs = settings.shootingSeconds * 1_000;
-  const tailMs = Math.min(shootingMs, ELD_UPPHOR_LEAD_SECONDS * 1_000);
+  const { settings, startSeconds, endSeconds } = program;
+  const shooting = settings.shootingSeconds;
+  const span = endSeconds - startSeconds;
+  /** Fraction of the bar's width for a second on the ELD-anchored clock. */
+  const at = (second: number) => (span > 0 ? (second - startSeconds) / span : 0);
 
-  const segments: Segment[] = [
-    // prep (competition only) and the 10 s countdown: both "not yet firing".
-    { key: 'prep', ms: readyStartMs, color: theme.backgroundSelected },
-    { key: 'ready', ms: eldAtMs - readyStartMs, color: theme.border },
-    { key: 'shooting', ms: shootingMs - tailMs, color: theme.success },
-    { key: 'tail', ms: tailMs, color: AMBER },
-    { key: 'clearing', ms: totalMs - shootingEndMs, color: theme.danger },
-  ].filter((segment) => segment.ms > 0);
+  const bounds = [
+    startSeconds,
+    Math.max(startSeconds, ALLA_KLARA_AT_SECONDS),
+    0,
+    Math.max(0, shooting - 3),
+    shooting,
+    endSeconds,
+  ];
+  const colors = [
+    theme.backgroundSelected,
+    theme.border,
+    theme.success,
+    AMBER,
+    theme.danger,
+  ] as const;
+  const segments = colors
+    .map((color, i) => ({ key: `seg-${i}`, weight: bounds[i + 1]! - bounds[i]!, color }))
+    .filter((segment) => segment.weight > 0);
 
-  const intervals = faltEventIntervals(settings);
-  const progress = totalMs > 0 ? Math.min(1, elapsedMs / totalMs) : 0;
+  // Each interval's badge sits over the middle of that stretch of the shooting window.
+  const intervals = faltPartiIntervals(settings);
+  const partiBounds = [0, ...settings.partiSeconds, shooting];
 
   return (
     <View style={styles.wrapper} testID={testID}>
-      <View style={styles.badgeRow}>
-        <View style={{ flex: eldAtMs }} />
+      <View style={styles.overlayRow}>
         {intervals.map((seconds, index) => (
           <View
             key={`parti-${index}`}
-            style={[styles.badge, { flex: seconds * 1_000, borderColor: theme.border }]}
-            testID={`falt-parti-${index + 1}`}
+            style={[
+              styles.badge,
+              {
+                left: `${at((partiBounds[index]! + partiBounds[index + 1]!) / 2) * 100}%`,
+                borderColor: theme.border,
+                backgroundColor: theme.background,
+              },
+            ]}
+            testID={`falt-interval-${index + 1}`}
           >
             <ThemedText type="small" style={styles.badgeText}>
               {seconds}
             </ThemedText>
           </View>
         ))}
-        <View style={{ flex: totalMs - shootingEndMs }} />
+      </View>
+
+      <View style={styles.overlayRow}>
+        {program.commands
+          .filter((command) => command.atSeconds !== null)
+          .map((command) => (
+            <View
+              key={command.number}
+              style={[
+                styles.marker,
+                {
+                  left: `${at(command.atSeconds!) * 100}%`,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundElement,
+                },
+              ]}
+              testID={`falt-marker-${command.number}`}
+            >
+              <ThemedText type="small" style={styles.badgeText}>
+                {command.number}
+              </ThemedText>
+            </View>
+          ))}
       </View>
 
       <View style={styles.bar}>
         {segments.map((segment) => (
           <View
             key={segment.key}
-            style={{ flex: segment.ms, backgroundColor: segment.color }}
-            testID={`falt-segment-${segment.key}`}
+            style={{ flex: segment.weight, backgroundColor: segment.color }}
+            testID={`falt-${segment.key}`}
           />
         ))}
         <View
           pointerEvents="none"
-          style={[styles.playhead, { left: `${progress * 100}%`, backgroundColor: theme.text }]}
+          style={[
+            styles.playhead,
+            {
+              left: `${Math.min(1, Math.max(0, at(atMs / 1_000))) * 100}%`,
+              backgroundColor: theme.text,
+            },
+          ]}
           testID="falt-playhead"
         />
+      </View>
+
+      <View style={styles.scaleRow}>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.scaleText}>
+          {startSeconds}s
+        </ThemedText>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={[styles.scaleText, styles.scaleMark, { left: `${at(0) * 100}%` }]}
+          testID="falt-scale-eld"
+        >
+          0s
+        </ThemedText>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={[styles.scaleText, styles.scaleMark, { left: `${at(shooting) * 100}%` }]}
+        >
+          {shooting}s
+        </ThemedText>
       </View>
     </View>
   );
@@ -86,18 +153,29 @@ const styles = StyleSheet.create({
   wrapper: {
     gap: Spacing.one,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 22,
+  overlayRow: {
+    height: MARKER_SIZE + 2,
   },
   badge: {
+    position: 'absolute',
+    marginLeft: -MARKER_SIZE / 2,
+    minWidth: MARKER_SIZE,
+    paddingHorizontal: 2,
     borderWidth: 1,
     borderRadius: Radius.small,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 1,
-    height: 20,
+    height: MARKER_SIZE,
+  },
+  marker: {
+    position: 'absolute',
+    marginLeft: -MARKER_SIZE / 2,
+    width: MARKER_SIZE,
+    height: MARKER_SIZE,
+    borderWidth: 1,
+    borderRadius: MARKER_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeText: {
     fontVariant: ['tabular-nums'],
@@ -113,5 +191,15 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 2,
+  },
+  scaleRow: {
+    height: 16,
+  },
+  scaleText: {
+    fontVariant: ['tabular-nums'],
+  },
+  scaleMark: {
+    position: 'absolute',
+    marginLeft: -10,
   },
 });
