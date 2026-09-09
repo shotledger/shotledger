@@ -56,12 +56,13 @@
     "@types/better-sqlite3": "9.6.0",
     "@types/jest": "30.0.0",
     "@types/react": "19.2.18",
+    "@typescript/native": "npm:typescript@7.0.2",
     "babel-plugin-inline-import": "3.0.0",
+    "babel-preset-expo": "~57.0.10",
     "better-sqlite3": "13.0.3",
     "drizzle-kit": "0.31.10",
     "jest": "30.5.1",
     "jest-expo": "57.0.5",
-    "@typescript/native": "npm:typescript@7.0.2",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "scripts": {
