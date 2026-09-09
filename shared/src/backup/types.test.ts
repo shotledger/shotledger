@@ -124,4 +124,11 @@ describe('BackupManifestSchema', () => {
     expect(parsed.success).toBe(true);
     expect(parsed.success && 'somethingNewer' in parsed.data).toBe(false);
   });
+
+  it('M7: accepts the sightSettings count added in issue #114, and its absence', () => {
+    const base = validManifest();
+    expect(BackupManifestSchema.safeParse(base).success).toBe(true);
+    const withSightSettings = { ...base, counts: { ...base.counts, sightSettings: 2 } };
+    expect(BackupManifestSchema.safeParse(withSightSettings).success).toBe(true);
+  });
 });

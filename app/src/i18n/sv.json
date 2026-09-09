@@ -3,7 +3,10 @@
     "save": "Spara",
     "edit": "Redigera",
     "cancel": "Avbryt",
-    "clear": "Rensa"
+    "clear": "Rensa",
+    "deleteSession": "Ta bort pass",
+    "deleteSessionConfirmTitle": "Ta bort pass?",
+    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
   },
   "tabs": {
     "home": "Hem",
@@ -34,10 +37,7 @@
     "filterEmpty": "Inga pass matchar filtret",
     "shapeSeries": "Serier",
     "shapeRounds": "Skott",
-    "shareSession": "Dela pass",
-    "deleteSession": "Ta bort pass",
-    "deleteSessionConfirmTitle": "Ta bort pass?",
-    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
+    "shareSession": "Dela pass"
   },
   "stats": {
     "title": "Statistik",
@@ -161,6 +161,25 @@
     "group": "Grupp",
     "default": "Standard",
     "setDefault": "Ange som standard",
+    "sightSettingsTitle": "Siktinställningar",
+    "sightSettingsHint": "Klicken är relativa din egen nollställning — bara skillnaden mellan inställningar spelar roll.",
+    "noSightSettings": "Inga siktinställningar än.",
+    "addSightSetting": "Lägg till siktinställning",
+    "sightLabel": "Namn",
+    "sightLabelPlaceholder": "t.ex. mitt-mitt, boll, mitt-mitt fält",
+    "sightElevation": "Höjd",
+    "sightWindage": "Sida",
+    "sightElevationHint": "Klick upp från din nollställning; negativt är ner.",
+    "sightWindageHint": "Klick höger från din nollställning; negativt är vänster.",
+    "sightSummary": "Höjd {{elevation}} · Sida {{windage}}",
+    "sightSwitchHint": "För att byta: {{turns}}",
+    "sightDirectionUp": "upp",
+    "sightDirectionDown": "ner",
+    "sightDirectionLeft": "vänster",
+    "sightDirectionRight": "höger",
+    "sightCurrent": "Aktuell",
+    "sightSetCurrent": "Ange som aktuell",
+    "sightDelete": "Ta bort",
     "licenseTitle": "Licens",
     "noLicenses": "Ingen licens registrerad än.",
     "addLicense": "Lägg till förnyelse",
@@ -427,6 +446,7 @@
     "innerTenCount": "X (innertior)",
     "extraRounds": "Extra skott (räknas ej i statistik)",
     "extraRoundsHint": "Avlossade men opoängsatta skott — räknas bara mot skotträknare och ammunitionsåtgång",
+    "sightsTitle": "Sikte",
     "roundsFired": "Avlossade skott",
     "roundsFiredHint": "Passets antal skott. Räknas mot skotträknare och ammunitionsåtgång; poängsätts aldrig.",
     "editTitle": "Redigera pass",
@@ -445,7 +465,11 @@
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
-    "newSeriesHint": "Serien sparas när du trycker på Spara."
+    "newSeriesHint": "Serien sparas när du trycker på Spara.",
+    "menuLabel": "Passmeny",
+    "menuSights": "Sikte",
+    "menuEdit": "Redigera pass",
+    "menuShare": "Dela"
   },
   "share": {
     "title": "Dela pass",

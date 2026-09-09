@@ -367,8 +367,11 @@ The app's signature selector — session Series/Stats, Home's All/Series/Rounds,
 theme and language pickers.
 
 - **Track:** Surface Purple, 12px radius, 2px padding, 2px gap between segments.
-- **Segment:** 8px radius, 8px padding; selected segments take Raised Surface
-  Purple, unselected are transparent with Muted Lilac text.
+- **Segment:** 8px radius, 8px padding, **48dp minimum height**; selected
+  segments take Raised Surface Purple, unselected are transparent with Muted
+  Lilac text. The 48 is Material's touch-target floor, deliberately off the
+  spacing scale — a segment is a control, and a shooter taps it in gloves and
+  sunlight.
 - **Overflow:** labels are single-line always; **past four options** the control
   switches to content-width segments in a horizontal scroller rather than
   squeezing every label into an equal share.

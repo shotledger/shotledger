@@ -9,6 +9,7 @@ import { createSession } from './queries/sessions';
 import { addShot } from './queries/shots';
 import { createAmmoLot } from './queries/ammo-lots';
 import { createFirearm } from './queries/firearms';
+import { createSightSetting } from './queries/sight-settings';
 import { addSessionTag, getOrCreateTag } from './queries/tags';
 import {
   ammoLots,
@@ -20,6 +21,7 @@ import {
   sessionTags,
   sessions,
   shots,
+  sightSettings,
   tags,
 } from './schema';
 import type { Database } from './types';
@@ -103,6 +105,19 @@ export function seedDemoData(db: Database) {
     validUntil: isoDaysFromNow(548), // ~18 months out
     authority: 'Polismyndigheten',
   });
+  createSightSetting(db, {
+    firearmId: pistol.id,
+    label: 'Mitt-mitt',
+    elevationClicks: 4,
+    windageClicks: -2,
+    makeActive: true,
+  });
+  createSightSetting(db, {
+    firearmId: pistol.id,
+    label: 'Boll',
+    elevationClicks: 10,
+    windageClicks: -2,
+  });
 
   const airgun = createFirearm(db, {
     make: 'Steyr',
@@ -111,6 +126,13 @@ export function seedDemoData(db: Database) {
     weaponType: 'airgun',
   });
   addFirearmGroup(db, { firearmId: airgun.id, groupId: 'generic:airgun', isDefaultForGroup: true });
+  createSightSetting(db, {
+    firearmId: airgun.id,
+    label: 'Mitt-mitt',
+    elevationClicks: -3,
+    windageClicks: 1,
+    makeActive: true,
+  });
 
   // --- Ammo lots ------------------------------------------------------
   const factoryLot = createAmmoLot(db, {
@@ -221,6 +243,7 @@ export function wipeDemoData(db: Database) {
   db.delete(licenses).run();
   db.delete(firearmGroups).run();
   db.delete(maintenanceEvents).run();
+  db.delete(sightSettings).run();
   db.delete(firearms).run();
   db.delete(ammoLots).run();
   db.delete(tags).run();

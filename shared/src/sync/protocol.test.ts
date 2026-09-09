@@ -35,6 +35,7 @@ describe('SyncTableNameSchema', () => {
       'shots',
       'maintenance_events',
       'tags',
+      'sight_settings',
     ]) {
       expect(SyncTableNameSchema.safeParse(name).success).toBe(true);
     }

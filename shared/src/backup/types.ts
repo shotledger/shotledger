@@ -33,6 +33,8 @@ export const BackupCountsSchema = z.object({
   // written by an older build has neither field and must still validate.
   /** Photos stored under `sync-photos/` (synced series). Included in `photos`. */
   syncPhotos: z.number().int().nonnegative().optional(),
+  // Added alongside sight settings (issue #114) — optional for the same reason.
+  sightSettings: z.number().int().nonnegative().optional(),
   /** Series photos whose source file could no longer be read at export time. */
   photosUnreadable: z.number().int().nonnegative().optional(),
   /** Vault documents in the bundle's vault section, when one is present. */

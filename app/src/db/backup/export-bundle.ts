@@ -54,7 +54,8 @@ type CountableTable =
   | typeof schema.series
   | typeof schema.shots
   | typeof schema.maintenanceEvents
-  | typeof schema.tags;
+  | typeof schema.tags
+  | typeof schema.sightSettings;
 
 function countRows(copyDb: ReturnType<typeof drizzle>, table: CountableTable): number {
   const row = copyDb
@@ -181,6 +182,7 @@ export async function buildBackupBundle(
       shots: countRows(copyDb, schema.shots),
       maintenanceEvents: countRows(copyDb, schema.maintenanceEvents),
       tags: countRows(copyDb, schema.tags),
+      sightSettings: countRows(copyDb, schema.sightSettings),
       photos: photos.entries.length,
       syncPhotos: photos.syncPhotos,
       photosUnreadable: photos.unreadable,

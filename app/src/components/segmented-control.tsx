@@ -114,6 +114,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   segment: {
+    // Material's 48dp minimum touch target, not a spacing value — it is
+    // deliberately off the 2/4/8/16/24/32/64 scale and should stay 48.
+    minHeight: 48,
+    justifyContent: 'center',
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.two,
     borderRadius: Radius.small,

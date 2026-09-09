@@ -26,6 +26,7 @@ import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
+import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -192,16 +193,7 @@ export default function SessionDetailScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => (
-            <Pressable
-              accessibilityRole="button"
-              testID="edit-session"
-              hitSlop={8}
-              onPress={() => router.push(`/session/${id}/edit`)}
-            >
-              <ThemedText type="linkPrimary">{t('common.edit')}</ThemedText>
-            </Pressable>
-          ),
+          headerRight: () => <SessionMenu sessionId={id} sightsFirearmId={session.firearmId} />,
         }}
       />
 

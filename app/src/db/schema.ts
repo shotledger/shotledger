@@ -215,6 +215,26 @@ export const maintenanceEvents = sqliteTable('maintenance_events', {
   notes: text('notes'),
 });
 
+// Free-text label per firearm (issue #114) — the same aiming method recurs
+// across disciplines with different settings, so no discipline FK. Clicks are
+// signed and relative to whatever reference zero the shooter chose for that
+// firearm: only the DIFFERENCE between two rows is meaningful. Positive
+// elevation = up (raises point of impact); positive windage = right; NULL =
+// not recorded. `is_active` marks the setting the firearm is currently
+// dialled to ("aktuell inställning"); at most one per firearm, enforced in
+// the query layer.
+export const sightSettings = sqliteTable('sight_settings', {
+  ...common,
+  firearmId: text('firearm_id')
+    .notNull()
+    .references(() => firearms.id),
+  label: text('label').notNull(),
+  elevationClicks: integer('elevation_clicks'),
+  windageClicks: integer('windage_clicks'),
+  isActive: integer('is_active').notNull().default(0),
+  notes: text('notes'),
+});
+
 export const tags = sqliteTable('tags', {
   ...common,
   name: text('name').notNull().unique(),
