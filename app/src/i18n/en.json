@@ -305,8 +305,12 @@
     "appName": "ShotLedger",
     "version": "Version {{version}}",
     "licensesTitle": "Open-Source Licenses",
-    "licensesBody": "ShotLedger is built on open-source packages. A full license list will be published alongside the source code.",
-    "repoLink": "Source Code"
+    "licensesSubtitle": "{{count}} components",
+    "licensesIntro": "ShotLedger is built on open-source software. This lists what ships inside the app itself, not the tools used to build it.",
+    "licensesNativeTitle": "Native Components",
+    "licensesNativeNote": "Compiled into the app rather than bundled as JavaScript. Not all of these are open source, and the Android platform libraries the build links against are not listed.",
+    "licensesJsTitle": "JavaScript Packages",
+    "repoLink": "GitHub Repository"
   },
   "csv": {
     "sectionTitle": "Data (CSV)",

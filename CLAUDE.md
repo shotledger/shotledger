@@ -38,6 +38,11 @@ sync. Android first — **all code must stay iOS-compatible**.
 2. Never: add dependencies not listed in the implementation plan without
    asking; change the DB schema without a Drizzle migration; weaken or
    delete a test to make it pass; build later-milestone features early.
+   Adding or removing a dependency also means running
+   `pnpm licenses:generate` and committing the regenerated
+   `app/src/constants/licenses.json`. A **native** dependency (a Gradle
+   artifact, a vendored C/C++ library) is invisible to that script —
+   hand-edit `app/src/constants/native-licenses.ts` instead.
 3. Secrets never enter the working tree — they live under
    `~/agents/shotledger/`. Stage explicit paths only; never `git add -A`.
 4. Anything marked `VERIFY:` in the docs is unconfirmed — stop and ask
@@ -132,8 +137,19 @@ kill-server && adb start-server` before retrying. This sandbox's
 && adb start-server` plus a retry is the only known recovery, and it
   does not always succeed on the first retry either.
 - Checks: `pnpm check` (= `pnpm typecheck && pnpm typecheck:app && pnpm
-i18n:check && pnpm lint && pnpm format && vitest run && (cd app && pnpm
-exec jest --passWithNoTests)`), run from the repo root. `pnpm i18n:check`
+i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
+&& (cd app && pnpm exec jest --passWithNoTests)`), run from the repo root.
+  `pnpm licenses:check` (`scripts/generate-licenses.mjs --check`) is a cheap
+  invariant gate on the committed `app/src/constants/licenses.json` (~30 ms:
+  parses, non-empty, every entry has name/version/license, sorted, no
+  duplicates, no build tooling). It does **not** regenerate — that is
+  `pnpm licenses:generate`, which runs a real `expo export --source-maps` and
+  derives the list from Metro's module graph (~3 s with a warm metro cache,
+  ~20 s cold and ~3.5 CPU-minutes, plus ~20 MB of scratch in `$TMPDIR`), so it
+  stays manual/CI-only. Scoping it to the bundle rather than to
+  `pnpm licenses list --prod` is deliberate: `expo` declares `@expo/cli` as a
+  runtime dependency, so `--prod` credits metro, babel and terser, none of
+  which ship in the APK. `pnpm i18n:check`
   (`scripts/i18n-check.mjs`) gates on `app/src/i18n/{en,sv}.json` having
   identical key sets and every key actually referenced in `app/src`.
   `pnpm format` (`prettier --check .`) joined `check` in `feat/polish-1`

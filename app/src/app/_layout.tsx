@@ -94,6 +94,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />
       <Stack.Screen
+        name="about/licenses"
+        options={{ presentation: 'modal', headerShown: true, title: t('about.licensesTitle') }}
+      />
+      <Stack.Screen
         name="stats/records"
         options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
       />
