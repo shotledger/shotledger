@@ -564,7 +564,7 @@
     "calendarAddFailed": "Kunde inte lägga till i kalendern",
     "calendarPermissionDenied": "Kalenderbehörighet nekad",
     "recordsTitle": "Rekord",
-    "recordsSubtitle": "Personbästa och år för år (WebShooter)",
+    "recordsSubtitle": "Personbästa och år för år",
     "noRecordsTitle": "Inga rekord än",
     "noRecordsBody": "Importera tävlingsresultat eller logga sessioner för att se personbästa här.",
     "officialPbTitle": "Officiella personbästa",
