@@ -7,17 +7,23 @@
 // record. Creating it up front left an orphaned "Series N · 0" row behind
 // every time the user backed out without saving (maintainer, verified live
 // 2026-09-03).
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
-import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
+import {
+  createKeypadState,
+  enteredShots,
+  resolveActiveSightSetting,
+  type KeypadState,
+} from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
 import { Screen } from '@/components/screen';
+import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { saveSeriesShots } from '@/db/queries/round-count';
@@ -27,8 +33,11 @@ import {
   setSeriesSighter,
   updateSeries,
 } from '@/db/queries/series';
+import { listSightSettings, setActiveSightSetting } from '@/db/queries/sight-settings';
+import { sightSettingLabel } from '@/features/firearms/sight-turns-text';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { SessionMenu } from '@/features/session/session-menu';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Spacing } from '@/theme/tokens';
 
@@ -63,6 +72,17 @@ export default function SeriesEntryScreen() {
     resolveSeriesPhotoUri(row?.photoUri ?? null),
   );
   const [isSighter, setIsSighter] = useState(row?.isSighter ?? false);
+  // `loadSessionDetail` runs once via `useMemo` above, so switching the
+  // active setting needs its own state rather than relying on a re-render.
+  const [sightSettings, setSightSettings] = useState(detail.sightSettings);
+  const activeSight = resolveActiveSightSetting(sightSettings);
+
+  function onSetSight(settingId: string) {
+    const firearmId = detail.session?.firearmId;
+    if (!db || !firearmId) return;
+    setActiveSightSetting(db, firearmId, settingId);
+    setSightSettings(listSightSettings(db, firearmId));
+  }
 
   // The sighter choice lives here, not on the add-series step (maintainer:
   // "the sighter toggle should be one step down"). A section allows at most
@@ -154,6 +174,14 @@ export default function SeriesEntryScreen() {
 
   return (
     <Screen>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <SessionMenu sessionId={id} firearmId={detail.session?.firearmId ?? null} />
+          ),
+        }}
+      />
+
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.title}>
           {t('session.seriesTitle', { position })}
@@ -166,6 +194,21 @@ export default function SeriesEntryScreen() {
           {photoUri && <Chip label={t('session.photoAdded')} />}
         </View>
       </View>
+
+      {sightSettings.length > 0 && (
+        <View style={styles.sightsBlock}>
+          <ThemedText type="smallBold">{t('session.sightsTitle')}</ThemedText>
+          <SegmentedControl
+            testID="series-sights-control"
+            options={sightSettings.map((setting) => ({
+              value: setting.id,
+              label: sightSettingLabel(t, activeSight, setting),
+            }))}
+            value={activeSight?.id ?? ''}
+            onChange={onSetSight}
+          />
+        </View>
+      )}
 
       {guldThreshold != null && !isSighter && (
         <ThemedText type="small" themeColor="textSecondary" testID="guld-hint">
@@ -209,6 +252,9 @@ const styles = StyleSheet.create({
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  sightsBlock: {
     gap: Spacing.two,
   },
   switchRow: {

@@ -3,7 +3,10 @@
     "save": "Spara",
     "edit": "Redigera",
     "cancel": "Avbryt",
-    "clear": "Rensa"
+    "clear": "Rensa",
+    "deleteSession": "Ta bort pass",
+    "deleteSessionConfirmTitle": "Ta bort pass?",
+    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
   },
   "tabs": {
     "home": "Hem",
@@ -34,10 +37,7 @@
     "filterEmpty": "Inga pass matchar filtret",
     "shapeSeries": "Serier",
     "shapeRounds": "Skott",
-    "shareSession": "Dela pass",
-    "deleteSession": "Ta bort pass",
-    "deleteSessionConfirmTitle": "Ta bort pass?",
-    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
+    "shareSession": "Dela pass"
   },
   "stats": {
     "title": "Statistik",
@@ -467,7 +467,11 @@
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
-    "newSeriesHint": "Serien sparas när du trycker på Spara."
+    "newSeriesHint": "Serien sparas när du trycker på Spara.",
+    "menuLabel": "Passmeny",
+    "menuSights": "Sikte",
+    "menuEdit": "Redigera pass",
+    "menuShare": "Dela"
   },
   "share": {
     "title": "Dela pass",

@@ -3,7 +3,10 @@
     "save": "Save",
     "edit": "Edit",
     "cancel": "Cancel",
-    "clear": "Clear"
+    "clear": "Clear",
+    "deleteSession": "Delete Session",
+    "deleteSessionConfirmTitle": "Delete Session?",
+    "deleteSessionConfirmBody": "Its series and shots will be removed too. This can't be undone."
   },
   "tabs": {
     "home": "Home",
@@ -34,10 +37,7 @@
     "filterEmpty": "No sessions match this filter",
     "shapeSeries": "Series",
     "shapeRounds": "Rounds",
-    "shareSession": "Share Session",
-    "deleteSession": "Delete Session",
-    "deleteSessionConfirmTitle": "Delete Session?",
-    "deleteSessionConfirmBody": "Its series and shots will be removed too. This can't be undone."
+    "shareSession": "Share Session"
   },
   "stats": {
     "title": "Statistics",
@@ -467,7 +467,11 @@
     "deleteSeries": "Delete Series",
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
     "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
-    "newSeriesHint": "This series is saved when you tap Save."
+    "newSeriesHint": "This series is saved when you tap Save.",
+    "menuLabel": "Session Menu",
+    "menuSights": "Sights",
+    "menuEdit": "Edit Session",
+    "menuShare": "Share"
   },
   "share": {
     "title": "Share Session",

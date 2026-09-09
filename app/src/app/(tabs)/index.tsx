@@ -51,10 +51,10 @@ export default function HomeScreen() {
   const onNewSession = () => router.push('/session/new');
 
   function onDeleteSession(session: HomeSessionRow) {
-    Alert.alert(t('home.deleteSessionConfirmTitle'), t('home.deleteSessionConfirmBody'), [
+    Alert.alert(t('common.deleteSessionConfirmTitle'), t('common.deleteSessionConfirmBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
-        text: t('home.deleteSession'),
+        text: t('common.deleteSession'),
         style: 'destructive',
         onPress: () => {
           if (!db) return;
@@ -154,7 +154,7 @@ export default function HomeScreen() {
                         style={[styles.rowAction, { backgroundColor: theme.danger }]}
                       >
                         <ThemedText type="smallBold" themeColor="onPrimary">
-                          {t('home.deleteSession')}
+                          {t('common.deleteSession')}
                         </ThemedText>
                       </Pressable>
                     </View>
