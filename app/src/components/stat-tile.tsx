@@ -13,7 +13,15 @@ export interface StatTileProps extends ViewProps {
 export function StatTile({ label, value, style, ...rest }: StatTileProps) {
   return (
     <Card style={[styles.tile, style]} {...rest}>
-      <ThemedText type="subtitle" style={styles.value}>
+      {/* Both lines sit in a fixed-width slot, so they shrink or truncate —
+          never wrap (PRODUCT.md, font-scale exception). */}
+      <ThemedText
+        type="subtitle"
+        style={styles.value}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
+      >
         {value}
       </ThemedText>
       <ThemedText

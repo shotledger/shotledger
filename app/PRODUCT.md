@@ -80,6 +80,13 @@ scores against official results.
   (maintainer, 2026-09-03). Layout bugs at increased font scale are fixed as
   found, but layouts are not designed around them. Recorded so this is not
   re-litigated or wrongly assumed.
+  - **One binding exception** (2026-09-09, a refinement of that rule, not a
+    reversal): any control that puts text in a **fixed-width slot** — `StatTile`,
+    `SegmentedControl`, the tab bar, `DrillDownRow`'s `value` — must shrink-to-fit
+    or truncate, never wrap. #62, #63 and #76 were all of that class:
+    "Competitions" is one word with nowhere to break, so once it does not fit,
+    wrapping has to split it mid-word. It is a fix in a handful of shared
+    components every screen inherits, not a per-screen design burden.
 
 ## Brand Commitments
 

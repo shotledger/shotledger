@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { DrillDownRow } from '@/components/drill-down-row';
+import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { SearchablePicker, type SearchablePickerOption } from '@/components/searchable-picker';
@@ -21,7 +23,6 @@ import {
 import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
-import { seedDemoData, wipeDemoData } from '@/db/seed';
 import { BackupCard } from '@/features/backup/backup-card';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
@@ -163,7 +164,16 @@ export default function SettingsScreen() {
         </ThemedText>
 
         <View style={styles.markeTable} testID="marke-requirement">
-          <ThemedText type="smallBold">{t('settings.markeTitle')}</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('settings.markeTitle')}
+            </ThemedText>
+            <InfoButton
+              title={t('settings.markeTitle')}
+              body={t('settings.markeInfo')}
+              testID="marke-info"
+            />
+          </View>
           <View style={styles.markeRow}>
             <View style={styles.markeCellLabel} />
             {markeGroups.map((group) => (
@@ -198,7 +208,16 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('settings.locationLookup')}</ThemedText>
+        <View style={styles.headerRow}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('settings.locationLookup')}
+          </ThemedText>
+          <InfoButton
+            title={t('settings.locationLookup')}
+            body={t('settings.locationLookupInfo')}
+            testID="location-lookup-info"
+          />
+        </View>
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('settings.locationLookupOnline')}</ThemedText>
           <Switch
@@ -231,7 +250,7 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        <ListRow
+        <DrillDownRow
           title={t('account.settingsRowTitle')}
           subtitle={t('account.settingsRowSubtitle')}
           onPress={() => router.push('/account')}
@@ -269,39 +288,25 @@ export default function SettingsScreen() {
           onPress={() => Linking.openURL(SUPPORT_URL)}
           testID="settings-support-development"
         />
-        <ListRow
+        <DrillDownRow
           title={t('settings.about')}
           onPress={() => router.push('/about')}
           testID="settings-about"
         />
       </Card>
-
-      {__DEV__ && (
-        <View style={styles.devSection}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            {t('settings.devSection')}
-          </ThemedText>
-          <Card>
-            <ListRow
-              title={t('settings.loadDemoData')}
-              onPress={() => db && seedDemoData(db)}
-              testID="settings-load-demo-data"
-            />
-            <ListRow
-              title={t('settings.wipeData')}
-              onPress={() => db && wipeDemoData(db)}
-              testID="settings-wipe-data"
-            />
-          </Card>
-        </View>
-      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  devSection: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  headerLabel: {
+    flexShrink: 1,
   },
   markeTable: {
     gap: Spacing.one,

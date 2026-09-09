@@ -6,7 +6,9 @@
     "clear": "Rensa",
     "deleteSession": "Ta bort pass",
     "deleteSessionConfirmTitle": "Ta bort pass?",
-    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra."
+    "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra.",
+    "close": "Stäng",
+    "infoAbout": "Mer information om {{subject}}"
   },
   "tabs": {
     "home": "Hem",
@@ -283,14 +285,16 @@
     "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
     "locationLookup": "Plats",
     "locationLookupOnline": "Föreslå platser från kartan",
-    "locationLookupHelp": "Av: bara platser du använt tidigare föreslås, och inget lämnar telefonen. På: det du skriver i ett pass platsfält skickas till photon.komoot.io för att söka i OpenStreetMap.",
+    "locationLookupHelp": "När det är på skickas det du skriver i ett pass platsfält till photon.komoot.io.",
     "birthYearPlaceholder": "Välj ett år",
     "birthYearSearchPlaceholder": "T.ex. 1970",
     "birthYearNoMatch": "Inget matchande år",
     "markeTitle": "Pistolskyttemärkets seriekrav",
     "markeNoYearNote": "Inget födelseår angivet — visar fulla poängkrav utan åldersavdrag.",
     "markeReductionNote": "Åldersavdrag på {{points}} p/serie gäller från {{sinceYear}}.",
-    "markeReductionNoneNote": "Inget åldersavdrag gäller ännu."
+    "markeReductionNoneNote": "Inget åldersavdrag gäller ännu.",
+    "locationLookupInfo": "Av: bara platser du använt tidigare föreslås, och inget lämnar telefonen.\n\nPå: det du skriver i ett pass platsfält skickas till photon.komoot.io, som söker i OpenStreetMap. Inget annat om passet skickas, och du kan stänga av det igen när som helst.",
+    "markeInfo": "Poäng som krävs per precisionsserie om 5 skott för varje valör, per vapengrupp (SHB bilaga 1 mom 5.1.1.1).\n\nFrån året efter du fyller 55 sänks kravet med 1 poäng per serie, och med 2 poäng från året efter du fyller 65. Ange ditt födelseår ovan för att se tabellen med avdraget inräknat."
   },
   "about": {
     "title": "Om appen",
@@ -323,7 +327,7 @@
     "restoreSubtitle": "Välj en .shotledger-fil — detta ersätter allt på den här enheten",
     "lastBackup": "Senaste säkerhetskopia: {{date}}",
     "neverBackedUp": "Ingen säkerhetskopia än",
-    "vaultNote": "En säkerhetskopia innehåller allt utom valvet. Du kan lägga till valvet i en enskild säkerhetskopia, skyddat av en lösenfras du väljer.",
+    "vaultNote": "En säkerhetskopia innehåller allt utom valvet.",
     "restorePreviewTitle": "Återställ den här säkerhetskopian?",
     "restorePreviewBody": "Från {{date}}: {{sessions}} pass, {{series}} serier, {{shots}} skott, {{firearms}} vapen{{photosNote}}{{vaultNote}}. Detta ERSÄTTER allt som finns på den här enheten – en säkerhetskopia av nuvarande data görs först.",
     "restorePreviewPhotosNote": ", {{count}} foto(n)",
@@ -380,7 +384,8 @@
     "restoreVaultPromptSkip": "Återställ utan valvet",
     "restoreVaultWrongPassphrase": "Lösenfrasen öppnade inte valvet. Inget har ändrats – försök igen eller återställ utan valvet.",
     "restoreSuccessVaultMerged": "Återställningen är klar och valvet sammanfogat – stäng och öppna appen igen",
-    "restoreSuccessVaultSkipped": "Återställningen är klar utan valvet – stäng och öppna appen igen"
+    "restoreSuccessVaultSkipped": "Återställningen är klar utan valvet – stäng och öppna appen igen",
+    "vaultInfo": "En säkerhetskopia innehåller allt utom valvet.\n\nValvet kan läggas till i en enskild säkerhetskopia, från dialogen Säkerhetskopiera, skyddat av en lösenfras du väljer. Det utelämnas som standard så att filen inte kan avslöja dina licenskortsfoton och portkoder."
   },
   "compliance": {
     "settingsTitle": "Efterlevnad",

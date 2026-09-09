@@ -2,22 +2,26 @@ import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/theme/tokens';
+import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 export interface ListRowProps {
   title: string;
   subtitle?: string;
   trailing?: ReactNode;
   onPress?: () => void;
+  /** Tints the title — `danger` for a row that destroys data. */
+  themeColor?: ThemeColor;
   testID?: string;
 }
 
 /** One row in a list group — session, firearm, or settings entry. */
-export function ListRow({ title, subtitle, trailing, onPress, testID }: ListRowProps) {
+export function ListRow({ title, subtitle, trailing, onPress, themeColor, testID }: ListRowProps) {
   const content = (
     <View style={styles.row}>
       <View style={styles.text}>
-        <ThemedText type="default">{title}</ThemedText>
+        <ThemedText type="default" themeColor={themeColor}>
+          {title}
+        </ThemedText>
         {subtitle ? (
           <ThemedText type="small" themeColor="textSecondary">
             {subtitle}
