@@ -780,6 +780,21 @@ unlike caliber, which keeps its free-text escape.
       strings actually in the wild onto codes, and decide what happens to
       anything unrecognised rather than silently dropping it.
 
+### More [i] candidates
+
+Maintainer, 2026-09-10: _"still a bunch of descriptions that should use [i],
+see e.g. Firearm > Weapon Groups, Sight Settings"_
+
+- [ ] **Apply the `[i]` sheet to the firearm screen's hints** — at minimum
+      `firearms.groupsHint` (the default-per-group explanation added in #122)
+      and `firearms.sightSettingsHint`, plus the elevation/windage hints.
+- [ ] **Revisit #128's "keep it inline" calls.** That sweep deliberately kept
+      anything under ~90 characters and anything that "is the field's meaning",
+      and it kept both of these. The maintainer disagrees, so the threshold was
+      wrong: the rule to keep is **warnings and anything that changes what you
+      are about to do stay visible** — length is not the test. Re-audit the
+      inventory in #128 against that narrower rule.
+
 ## Decisions taken while working through this feedback
 
 Recorded in `plan.md`'s decisions log, not repeated here: the AGPL-3.0 + CLA
