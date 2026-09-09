@@ -9,6 +9,10 @@
     "deleteSessionConfirmBody": "Dess serier och skott tas också bort. Det går inte att ångra.",
     "close": "Stäng",
     "infoAbout": "Mer information om {{subject}}"
+    "caliberPlaceholder": "Välj kaliber",
+    "caliberSearchPlaceholder": "Sök kaliber",
+    "caliberNoMatch": "Ingen kaliber matchar.",
+    "caliberLegacyHint": "Sparad före förvalslistan — välj ett värde för att ersätta den."
   },
   "tabs": {
     "home": "Hem",
@@ -150,6 +154,17 @@
     "serialNumber": "Serienummer",
     "vapenId": "Vapenregister-id",
     "loadSystem": "Laddsystem",
+    "loadSystems": {
+      "single_shot": "Enkelskott",
+      "semi_automatic": "Halvautomat",
+      "revolver": "Revolver",
+      "bolt_action": "Cylinderrepeter",
+      "lever_action": "Hävstångsrepeter",
+      "pump_action": "Pumprepeter",
+      "break_action": "Brytvapen",
+      "fully_automatic": "Helautomat"
+    },
+    "loadSystemUnset": "Ej angivet",
     "notes": "Anteckningar",
     "save": "Spara",
     "create": "Skapa vapen",

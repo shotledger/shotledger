@@ -92,7 +92,7 @@ export function seedDemoData(db: Database) {
     weaponType: 'pistol',
     vapenId: 'DEMO-VID-0001',
     serialNumber: 'DEMO-AW93-0001',
-    loadSystem: 'Halvautomat',
+    loadSystem: 'semi_automatic',
     maintenanceIntervalRounds: 1000,
   });
   addFirearmGroup(db, {
@@ -125,7 +125,7 @@ export function seedDemoData(db: Database) {
     weaponType: 'pistol',
     vapenId: 'DEMO-VID-0002',
     serialNumber: 'DEMO-TS2O-0002',
-    loadSystem: 'Halvautomat',
+    loadSystem: 'semi_automatic',
     maintenanceIntervalRounds: 1500,
   });
   addFirearmGroup(db, { firearmId: sportPistol.id, groupId: 'spsf:A', isDefaultForGroup: true });
@@ -161,7 +161,7 @@ export function seedDemoData(db: Database) {
     weaponType: 'revolver',
     vapenId: 'DEMO-VID-0003',
     serialNumber: 'DEMO-MR73-0003',
-    loadSystem: 'Revolver',
+    loadSystem: 'revolver',
     notes: 'Skjuts med .38 Special',
     maintenanceIntervalRounds: 1000,
   });
@@ -197,7 +197,7 @@ export function seedDemoData(db: Database) {
     caliber: '4.5 mm',
     weaponType: 'airgun',
     serialNumber: 'DEMO-P8X-0004',
-    loadSystem: 'Enkelskott',
+    loadSystem: 'single_shot',
     notes: 'Luftpistol 10 m',
   });
   addFirearmGroup(db, {

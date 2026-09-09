@@ -1,11 +1,13 @@
 // Resolving a bullet diameter for the mark disc.
 // Spec: docs/specs/photo-scoring-phase1-spec.md §6.
 //
-// The app stores caliber as free text on `firearms.caliber` and
-// `ammo_lots.caliber` (".22 LR", "9x19", "9 mm Luger", …), so it has to be
-// matched rather than looked up. An unmatched string is NOT an error — it
-// falls back to .22 and tells the caller it guessed, so the UI can offer the
-// picker instead of silently scoring with the wrong disc.
+// `firearms.caliber` and `ammo_lots.caliber` now hold a caliber from
+// `shared/src/calibers` (".22 LR", "9×19 mm", …), but the vocabulary is much
+// wider than the five bullet diameters the disc needs, and pre-presets rows
+// can still hold anything — so a caliber is matched here, not looked up. An
+// unmatched string is NOT an error: it falls back to .22 and tells the caller
+// it guessed, so the UI can offer the picker instead of silently scoring with
+// the wrong disc.
 import { CALIBER_MM } from '@shotledger/shared';
 
 /** Presets offered in the fallback picker, in the order they are shown. */

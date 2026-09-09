@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
+  canonicalCaliber,
   licenseExpiryNotifications,
   resolveActiveSightSetting,
   selectableWeaponGroups,
@@ -261,10 +262,13 @@ export default function FirearmDetailScreen() {
     // user's separate, opt-in confirmation.
     if (applyFirearmDetails && scan.status === 'done') {
       const { make, model, caliber, vapenId } = scan.parsed;
+      // The card writes the caliber however the authority spelled it; store
+      // the preset it means so it matches what the picker offers.
+      const canonical = canonicalCaliber(caliber) ?? caliber;
       updateFirearm(db, firearm!.id, {
         ...(make ? { make } : {}),
         ...(model ? { model } : {}),
-        ...(caliber ? { caliber } : {}),
+        ...(canonical ? { caliber: canonical } : {}),
         ...(vapenId ? { vapenId } : {}),
       });
     }
