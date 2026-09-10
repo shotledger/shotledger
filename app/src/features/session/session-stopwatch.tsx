@@ -3,9 +3,11 @@
 // shot timer, fälttimer) count down and cue the shooter; this one only tells
 // you how long you have been at it.
 //
-// The clock belongs to the session, not to the screen (`stopwatch-store.ts`),
-// so the session view and series entry show the same running count and
-// navigating between them does not reset it (#138).
+// It lives on the session view, not inside series entry where #135 first put
+// it (maintainer, 2026-09-11: "probably better to have in the session"). The
+// clock is still keyed by session rather than by screen (`stopwatch-store.ts`),
+// so it keeps running while you move around inside that session — which is
+// what makes putting it back on another screen a one-line change.
 //
 // The tick just re-renders; the time itself comes from `stopwatchElapsedMs`
 // reading the clock, so a backgrounded screen picks up where the wall clock is
@@ -31,13 +33,11 @@ import { Radius, Spacing } from '@/theme/tokens';
 const TICK_MS = 250;
 
 export interface SessionStopwatchProps {
-  /** The session being timed — its clock is shared by every screen showing it. */
+  /** The session being timed. The clock is keyed by it, not by the screen. */
   sessionId: string;
-  /** `compact` drops the heading and shrinks the clock, for a busy screen. */
-  variant?: 'full' | 'compact';
 }
 
-export function SessionStopwatch({ sessionId, variant = 'full' }: SessionStopwatchProps) {
+export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const state = useSyncExternalStore(
@@ -68,13 +68,8 @@ export function SessionStopwatch({ sessionId, variant = 'full' }: SessionStopwat
 
   return (
     <Card>
-      {variant === 'full' && (
-        <ThemedText type="smallBold">{t('session.stopwatch.title')}</ThemedText>
-      )}
-      <ThemedText
-        style={variant === 'compact' ? styles.clockCompact : styles.clock}
-        testID="session-stopwatch-time"
-      >
+      <ThemedText type="smallBold">{t('session.stopwatch.title')}</ThemedText>
+      <ThemedText style={styles.clock} testID="session-stopwatch-time">
         {formatStopwatch(stopwatchElapsedMs(state, now))}
       </ThemedText>
       <View style={styles.buttons}>
@@ -113,12 +108,6 @@ const styles = StyleSheet.create({
   clock: {
     fontSize: 48,
     lineHeight: 54,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-  clockCompact: {
-    fontSize: 32,
-    lineHeight: 38,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },

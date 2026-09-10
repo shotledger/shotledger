@@ -215,7 +215,7 @@ export default function SessionDetailScreen() {
         <TagChips names={tags} testID="session-tags" />
       </View>
 
-      <SessionStopwatch sessionId={id} variant="compact" />
+      <SessionStopwatch sessionId={id} />
 
       <WebShooterSessionBadge session={session} />
 

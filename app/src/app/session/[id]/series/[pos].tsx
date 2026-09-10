@@ -28,7 +28,6 @@ import {
   updateSeries,
 } from '@/db/queries/series';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
-import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Spacing } from '@/theme/tokens';
@@ -177,8 +176,6 @@ export default function SeriesEntryScreen() {
       <Card>
         <ScoreKeypad state={state} onChange={setState} />
       </Card>
-
-      <SessionStopwatch sessionId={id} />
 
       <PrimaryButton label={t('session.addPhoto')} onPress={onAttachPhoto} testID="attach-photo" />
 
