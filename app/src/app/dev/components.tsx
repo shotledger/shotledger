@@ -103,7 +103,7 @@ export default function ComponentsGalleryScreen() {
   );
 
   return (
-    <Screen>
+    <Screen fab={<FAB label="New session" onPress={() => {}} />}>
       <ThemedText type="title" style={styles.title}>
         Components
       </ThemedText>
@@ -242,9 +242,6 @@ export default function ComponentsGalleryScreen() {
           onTapMark={() => {}}
         />
       </Section>
-
-      <View style={styles.fabSpacer} />
-      <FAB label="New session" onPress={() => {}} />
     </Screen>
   );
 }
@@ -270,8 +267,5 @@ const styles = StyleSheet.create({
   noGap: {
     gap: 0,
     padding: 0,
-  },
-  fabSpacer: {
-    height: Spacing.six,
   },
 });

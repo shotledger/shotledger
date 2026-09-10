@@ -267,7 +267,8 @@
     "save": "Spara",
     "create": "Skapa ammunitionsparti",
     "usage": "Förbrukning",
-    "usageCount": "{{sessions}} pass · {{shots}} skott"
+    "usageCount": "{{sessions}} pass · {{shots}} skott",
+    "grainsValue": "{{value}} gr"
   },
   "settings": {
     "title": "Inställningar",
