@@ -648,12 +648,7 @@
       "done": "Klart"
     },
     "cuesTitle": "Signaler",
-    "cuesHint": "Hur varje moment signaleras. Ställ telefonen på ljudlöst för att tysta pipen.",
-    "cueEvent": {
-      "ready": "Gör dig redo",
-      "go": "SKJUT",
-      "done": "Klart"
-    },
+    "cuesHint": "Gäller Gör dig redo, SKJUT och Klart. Ställ telefonen på ljudlöst för att tysta pipen.",
     "cueMode": {
       "beep": "Pip",
       "vibrate": "Vibration",

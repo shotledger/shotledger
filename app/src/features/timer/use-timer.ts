@@ -13,7 +13,7 @@
 // `react-hooks/refs` — it's only touched from callbacks/effect cleanup.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import type { TimerConfig, TimerCueSettings, TimerPhase } from '@shotledger/shared';
+import type { TimerConfig, TimerCueMode, TimerPhase } from '@shotledger/shared';
 
 import {
   playTimerCueSound,
@@ -34,17 +34,15 @@ export interface UseTimerResult {
   reset: () => void;
 }
 
-export function useTimer(config: TimerConfig, cueSettings?: TimerCueSettings): UseTimerResult {
+export function useTimer(config: TimerConfig, cueMode?: TimerCueMode): UseTimerResult {
   const effects = useMemo<TimerEffects>(
     () => ({ playSound: playTimerCueSound, vibrate: vibrateForTimerCue }),
     [],
   );
 
-  const [controller, setController] = useState(
-    () => new TimerController(config, effects, cueSettings),
-  );
+  const [controller, setController] = useState(() => new TimerController(config, effects, cueMode));
   const [controllerConfig, setControllerConfig] = useState(config);
-  const [controllerCues, setControllerCues] = useState(cueSettings);
+  const [controllerCueMode, setControllerCueMode] = useState(cueMode);
   const [phase, setPhase] = useState<TimerPhase>(() => controller.getPhase());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -55,16 +53,16 @@ export function useTimer(config: TimerConfig, cueSettings?: TimerCueSettings): U
     }
   }, []);
 
-  // `config` and `cueSettings` change only while the setup view is on
+  // `config` and `cueMode` change only while the setup view is on
   // screen (timer.tsx renders it solely when `phase.kind === 'idle'`), so a
   // rebuild here can never interrupt a running interval or keep-awake —
   // no side-effect cleanup needed, just derived state.
   let activeController = controller;
-  if (config !== controllerConfig || cueSettings !== controllerCues) {
-    activeController = new TimerController(config, effects, cueSettings);
+  if (config !== controllerConfig || cueMode !== controllerCueMode) {
+    activeController = new TimerController(config, effects, cueMode);
     setController(activeController);
     setControllerConfig(config);
-    setControllerCues(cueSettings);
+    setControllerCueMode(cueMode);
     setPhase(activeController.getPhase());
   }
 

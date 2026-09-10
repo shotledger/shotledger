@@ -9,7 +9,6 @@
 // active, in its setup view only — switching mid-run would strand a recorder
 // or an interval.
 import {
-  TIMER_CUE_EVENTS,
   TIMER_CUE_MODES,
   type TimerConfig,
   type TimerCueMode,
@@ -27,7 +26,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
-import { useTimerCueSettings } from '@/features/timer/use-timer-settings';
+import { useTimerCueMode } from '@/features/timer/use-timer-settings';
 import { useTimer } from '@/features/timer/use-timer';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
@@ -103,14 +102,14 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const [readyDelaySeconds, setReadyDelaySeconds] = useState('3');
   const [reps, setReps] = useState('1');
   const [restSeconds, setRestSeconds] = useState('0');
-  const [cueSettings, setCueSettings] = useTimerCueSettings();
+  const [cueMode, setCueMode] = useTimerCueMode();
 
   const config = useMemo<TimerConfig>(
     () => buildConfig(parSeconds, readyDelaySeconds, reps, restSeconds),
     [parSeconds, readyDelaySeconds, reps, restSeconds],
   );
 
-  const { phase, start, reset } = useTimer(config, cueSettings);
+  const { phase, start, reset } = useTimer(config, cueMode);
   const totalSeries = config.series.length;
 
   if (phase.kind === 'idle') {
@@ -150,20 +149,15 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
 
         <Card style={styles.setupForm} testID="timer-cues">
           <ThemedText type="smallBold">{t('timer.cuesTitle')}</ThemedText>
-          {TIMER_CUE_EVENTS.map((event) => (
-            <View key={event} style={styles.cueRow}>
-              <ThemedText type="small">{t(`timer.cueEvent.${event}` as const)}</ThemedText>
-              <SegmentedControl<TimerCueMode>
-                options={CUE_MODE_OPTIONS.map((mode) => ({
-                  value: mode,
-                  label: t(`timer.cueMode.${mode}` as const),
-                }))}
-                value={cueSettings[event]}
-                onChange={(mode) => setCueSettings({ ...cueSettings, [event]: mode })}
-                testID={`timer-cue-${event}`}
-              />
-            </View>
-          ))}
+          <SegmentedControl<TimerCueMode>
+            options={CUE_MODE_OPTIONS.map((mode) => ({
+              value: mode,
+              label: t(`timer.cueMode.${mode}` as const),
+            }))}
+            value={cueMode}
+            onChange={setCueMode}
+            testID="timer-cue-mode"
+          />
           <ThemedText type="small" themeColor="textSecondary">
             {t('timer.cuesHint')}
           </ThemedText>
@@ -215,9 +209,6 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
 const styles = StyleSheet.create({
   setupForm: {
     gap: Spacing.two,
-  },
-  cueRow: {
-    gap: Spacing.one,
   },
   runningScreen: {
     justifyContent: 'space-between',

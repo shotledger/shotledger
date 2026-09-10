@@ -26,12 +26,16 @@ function makeSpyEffects() {
 }
 
 describe('TimerController', () => {
-  it('start() plays the ready sound but does not vibrate (ready cue is silent)', () => {
+  // Get Ready used to be the one cue that never vibrated, because the engine
+  // hard-coded `vibrate: false` on it. One global cue mode replaced that
+  // (maintainer, 2026-09-11: "One global setting for all 3 events is good
+  // enough. KISS."), so Get Ready is now delivered like every other cue.
+  it('start() delivers the ready cue in the chosen mode', () => {
     const { effects, sounds, getVibrateCount } = makeSpyEffects();
     const controller = new TimerController(singleSeries(), effects);
     controller.start(0);
     expect(sounds).toEqual(['ready']);
-    expect(getVibrateCount()).toBe(0);
+    expect(getVibrateCount()).toBe(1);
     expect(controller.getPhase().kind).toBe('readyDelay');
   });
 
@@ -43,15 +47,27 @@ describe('TimerController', () => {
     expect(sounds).toEqual([]);
   });
 
-  it('running the whole drill plays start/stop/complete and vibrates for each (not for ready)', () => {
+  it('running the whole drill beeps and vibrates for every cue by default', () => {
     const { effects, sounds, getVibrateCount } = makeSpyEffects();
     const controller = new TimerController(singleSeries(), effects);
     controller.start(0);
     controller.tick(3_000); // 1000 readyDelay + 2000 series
     expect(sounds).toEqual(['ready', 'start', 'stop', 'complete']);
-    expect(getVibrateCount()).toBe(3); // start, stop, complete
+    expect(getVibrateCount()).toBe(4);
     expect(controller.getPhase().kind).toBe('done');
     expect(controller.isRunning()).toBe(false);
+  });
+
+  it("'beep' silences the vibration, and 'vibrate' silences the sound", () => {
+    const beepOnly = makeSpyEffects();
+    new TimerController(singleSeries(), beepOnly.effects, 'beep').start(0);
+    expect(beepOnly.sounds).toEqual(['ready']);
+    expect(beepOnly.getVibrateCount()).toBe(0);
+
+    const buzzOnly = makeSpyEffects();
+    new TimerController(singleSeries(), buzzOnly.effects, 'vibrate').start(0);
+    expect(buzzOnly.sounds).toEqual([]);
+    expect(buzzOnly.getVibrateCount()).toBe(1);
   });
 
   it('isRunning() is true mid-drill', () => {

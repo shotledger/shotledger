@@ -5,12 +5,12 @@
 // isn't independently tested, matching this codebase's existing precedent
 // (`use-home-data.ts` has no test either — the logic underneath does).
 import {
-  DEFAULT_TIMER_CUE_SETTINGS,
+  DEFAULT_TIMER_CUE_MODE,
   TimerEngine,
   resolveTimerCue,
   type TimerConfig,
   type TimerCueKind,
-  type TimerCueSettings,
+  type TimerCueMode,
   type TimerEvent,
   type TimerPhase,
 } from '@shotledger/shared';
@@ -23,17 +23,17 @@ export interface TimerEffects {
 export class TimerController {
   private readonly engine: TimerEngine;
   private readonly effects: TimerEffects;
-  private readonly cueSettings: TimerCueSettings;
+  private readonly cueMode: TimerCueMode;
   private lastTickAtMs: number | null = null;
 
   constructor(
     config: TimerConfig,
     effects: TimerEffects,
-    cueSettings: TimerCueSettings = DEFAULT_TIMER_CUE_SETTINGS,
+    cueMode: TimerCueMode = DEFAULT_TIMER_CUE_MODE,
   ) {
     this.engine = new TimerEngine(config);
     this.effects = effects;
-    this.cueSettings = cueSettings;
+    this.cueMode = cueMode;
   }
 
   /** Starts the drill at wall-clock time `nowMs` and applies effects for the initial ready cue. */
@@ -75,11 +75,11 @@ export class TimerController {
     return kind !== 'idle' && kind !== 'done';
   }
 
-  // `event.cue.vibrate` is the engine's own suggestion; the shooter's
-  // per-event choice overrides it in both directions (#138).
+  // `event.cue.vibrate` is the engine's own suggestion; the shooter's chosen
+  // mode overrides it in both directions (#138).
   private applyEvents(events: readonly TimerEvent[]): void {
+    const { beep, vibrate } = resolveTimerCue(this.cueMode);
     for (const event of events) {
-      const { beep, vibrate } = resolveTimerCue(event.cue.kind, this.cueSettings);
       if (beep) this.effects.playSound(event.cue.kind);
       if (vibrate) this.effects.vibrate();
     }
