@@ -11,31 +11,6 @@ required.
 
 Store listing: **"ShotLedger — Target Shooting Log & Scoring"**.
 
-## Positioning
-
-No existing app combines all of:
-
-1. Fast score logging (training and competition)
-2. Camera-based target scoring — including Swedish SPSF precision/fält
-   targets, which no photo-scoring app supports
-3. FAP 551-3 activity logging (license barometer, PDF for license
-   applications / föreningsintyg)
-4. Cross-platform, free, offline-first, no forced account
-
-Incumbents each do one slice: ShotLog (logging; buggy, resented paywall on
-basics), TargetScan (photo scoring; stale, no logbook), Shotlytic (Swedish
-compliance logbook; iOS-only, no photo scoring), LoggaSkott (license
-barometer; no scoring), Skytteappen (club ecosystem).
-
-**Non-negotiable product principles** (born from competitor complaints):
-
-- Never gate series length, session type, firearm linking, or statistics.
-  (ShotLog paywalls all four; its best users resent it.)
-- Statistics are live, always-visible views — never a "generate report" form.
-- The app is 100% functional offline with no account. Sync is opt-in.
-- The user's data is theirs: local SQLite, CSV export always available.
-- Target shooting only. No hunting, no tactical.
-
 ## Decisions log
 
 | Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -436,7 +411,7 @@ optional backup/sync add-on (a Firebase replacement, inverted):
 | Sync API         | Cloudflare Workers (Hono), TypeScript shared types with the app                                                                                                                                                                                                                                                                              |
 | Cloud DB         | Cloudflare D1                                                                                                                                                                                                                                                                                                                                |
 | Photos           | Cloudflare R2 ($0 egress)                                                                                                                                                                                                                                                                                                                    |
-| Auth (sync only) | better-auth on Workers/D1; Sign in with Apple + Google                                                                                                                                                                                                                                                                                       |
+| Auth (sync only) | better-auth on Workers/D1; opt-in email+password (bearer plugin) — no social provider is configured, corrected 2026-09-10 from an earlier "Sign in with Apple + Google" plan that was never built that way                                                                                                                                   |
 | Crash reporting  | Sentry (or none) — privacy-sensitive audience                                                                                                                                                                                                                                                                                                |
 
 **Sync protocol** (opt-in): per-user changelog. Every row carries
@@ -529,18 +504,6 @@ sync code; see CLAUDE.md.
 - [ ] When the repo goes public: add a `protect-main` ruleset with
       required checks, enable auto-merge, revisit safe-settings, and
       audit history before flipping (per the secrets rule)
-
-## Costs
-
-| Item                                               | Cost           |
-| -------------------------------------------------- | -------------- |
-| Google Play account                                | $25 once       |
-| Apple Developer Program (when iOS ships)           | $99/yr         |
-| Cloudflare (to ~1–2k active users)                 | $0/mo          |
-| Cloudflare Workers Paid (comfortable to ~5k users) | $5/mo          |
-| Domains (shotledger.app, optionally .se)           | ~125–225 kr/yr |
-
-Donation target to break even: roughly 30–40 coffees/year.
 
 ## Implementation
 
