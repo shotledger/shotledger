@@ -647,6 +647,18 @@
       "rest": "Rest",
       "done": "Done"
     },
+    "cuesTitle": "Cues",
+    "cuesHint": "How each moment is signalled. Set your phone to silent to mute the beeps.",
+    "cueEvent": {
+      "ready": "Get Ready",
+      "go": "GO",
+      "done": "Done"
+    },
+    "cueMode": {
+      "beep": "Beep",
+      "vibrate": "Vibrate",
+      "both": "Both"
+    },
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
       "regular": "Time Limit",

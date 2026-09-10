@@ -647,6 +647,18 @@
       "rest": "Vila",
       "done": "Klart"
     },
+    "cuesTitle": "Signaler",
+    "cuesHint": "Hur varje moment signaleras. Ställ telefonen på ljudlöst för att tysta pipen.",
+    "cueEvent": {
+      "ready": "Gör dig redo",
+      "go": "SKJUT",
+      "done": "Klart"
+    },
+    "cueMode": {
+      "beep": "Pip",
+      "vibrate": "Vibration",
+      "both": "Båda"
+    },
     "seriesProgress": "Serie {{current}} / {{total}}",
     "modes": {
       "regular": "Skjuttid",
