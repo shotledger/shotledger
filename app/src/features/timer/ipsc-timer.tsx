@@ -19,6 +19,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { Slider } from '@/components/slider';
 import { StatTile } from '@/components/stat-tile';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -26,7 +27,6 @@ import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
 import { useLevelMeter } from '@/features/timer/use-level-meter';
 import { useSpokenPrompts } from '@/features/timer/use-timer-settings';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 const SENSITIVITIES: readonly ShotSensitivity[] = ['low', 'medium', 'high'];
@@ -53,17 +53,19 @@ export interface IpscTimerProps {
   modeSelector: ReactNode;
 }
 
+/** Longest start delay the sliders offer — past this a random wait stops being a start signal. */
+const DELAY_MAX_SECONDS = 10;
+
 export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const { t, i18n } = useTranslation();
-  const theme = useTheme();
   const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
 
   // No settings store exists yet for the timer's other options (delay, PAR,
   // auto-stop are all component state too) — the trigger level lives here
   // alongside them rather than introducing persistence on its own.
   const [thresholdDb, setThresholdDb] = useState<number>(SENSITIVITY_THRESHOLD_DB.medium);
-  const [delayMin, setDelayMin] = useState('1');
-  const [delayMax, setDelayMax] = useState('4');
+  const [delayMin, setDelayMin] = useState(1);
+  const [delayMax, setDelayMax] = useState(4);
   const [parSeconds, setParSeconds] = useState('');
   const [autoStopSeconds, setAutoStopSeconds] = useState('10');
   // Paused as soon as Start is pressed so the setup meter's recorder never
@@ -71,8 +73,8 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const [meteringPaused, setMeteringPaused] = useState(false);
 
   const config = useMemo<IpscTimerConfig>(() => {
-    const minMs = Math.round(seconds(delayMin, 1) * 1_000);
-    const maxMs = Math.max(minMs, Math.round(seconds(delayMax, 4) * 1_000));
+    const minMs = Math.round(delayMin * 1_000);
+    const maxMs = Math.max(minMs, Math.round(delayMax * 1_000));
     const par = seconds(parSeconds, 0);
     return {
       readyMs: DEFAULT_IPSC_CONFIG.readyMs,
@@ -119,12 +121,6 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
   const { currentDb, peakDb } = useLevelMeter(phase.kind === 'idle' && !meteringPaused);
 
-  const adjustThreshold = useCallback((deltaDb: number) => {
-    setThresholdDb((current) =>
-      Math.min(MAX_TRIGGER_DB, Math.max(MIN_TRIGGER_DB, current + deltaDb)),
-    );
-  }, []);
-
   const shotList =
     shots.length === 0 ? (
       <ThemedText type="small" themeColor="textSecondary" testID="ipsc-no-shots">
@@ -155,35 +151,34 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
         <ThemedText type="smallBold">{t('ipscTimer.settingsTitle')}</ThemedText>
         <Card style={styles.form} testID="ipsc-settings">
-          <ThemedText type="smallBold">{t('ipscTimer.triggerLevel')}</ThemedText>
-          <View style={styles.row}>
-            <Pressable
-              onPress={() => adjustThreshold(-TRIGGER_DB_STEP)}
-              disabled={thresholdDb <= MIN_TRIGGER_DB}
-              accessibilityRole="button"
-              accessibilityLabel={t('ipscTimer.decreaseLevel')}
-              testID="ipsc-level-down"
-              style={[styles.stepButton, { borderColor: theme.border }]}
-            >
-              <ThemedText type="smallBold">−</ThemedText>
-            </Pressable>
-            <ThemedText
-              type="smallBold"
-              style={[styles.flex, styles.levelValue]}
-              testID="ipsc-level-value"
-            >
+          <View style={styles.labelRow}>
+            <ThemedText type="smallBold" style={styles.flex}>
+              {t('ipscTimer.triggerLevel')}
+            </ThemedText>
+            <ThemedText type="smallBold" testID="ipsc-level-value">
               {t('ipscTimer.triggerLevelDb', { value: thresholdDb })}
             </ThemedText>
-            <Pressable
-              onPress={() => adjustThreshold(TRIGGER_DB_STEP)}
-              disabled={thresholdDb >= MAX_TRIGGER_DB}
-              accessibilityRole="button"
-              accessibilityLabel={t('ipscTimer.increaseLevel')}
-              testID="ipsc-level-up"
-              style={[styles.stepButton, { borderColor: theme.border }]}
-            >
-              <ThemedText type="smallBold">+</ThemedText>
-            </Pressable>
+          </View>
+          {/* The slider runs in sensitivity, not dBFS: the detector fires on
+              `db >= threshold`, so a threshold near 0 demands a louder sound
+              and is the LEAST sensitive end. Negating keeps "right is more
+              sensitive", which is how the maintainer asked for it. */}
+          <Slider
+            value={-thresholdDb}
+            min={-MAX_TRIGGER_DB}
+            max={-MIN_TRIGGER_DB}
+            step={TRIGGER_DB_STEP}
+            onChange={(sensitivity) => setThresholdDb(-sensitivity)}
+            accessibilityLabel={t('ipscTimer.triggerLevel')}
+            testID="ipsc-level-slider"
+          />
+          <View style={styles.labelRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ipscTimer.sensitivityLow')}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ipscTimer.sensitivityHigh')}
+            </ThemedText>
           </View>
 
           <View style={styles.row} testID="ipsc-presets">
@@ -221,25 +216,36 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
             </>
           ) : null}
 
-          <ThemedText type="smallBold">{t('ipscTimer.randomDelay')}</ThemedText>
-          <View style={styles.row}>
-            <TextField
-              value={delayMin}
-              onChangeText={setDelayMin}
-              keyboardType="decimal-pad"
-              style={styles.flex}
-              testID="ipsc-delay-min"
-              accessibilityLabel={t('ipscTimer.randomDelayMin')}
-            />
-            <TextField
-              value={delayMax}
-              onChangeText={setDelayMax}
-              keyboardType="decimal-pad"
-              style={styles.flex}
-              testID="ipsc-delay-max"
-              accessibilityLabel={t('ipscTimer.randomDelayMax')}
-            />
+          <View style={styles.labelRow}>
+            <ThemedText type="smallBold" style={styles.flex}>
+              {t('ipscTimer.randomDelay')}
+            </ThemedText>
+            <ThemedText type="smallBold" testID="ipsc-delay-value">
+              {t('ipscTimer.delayRange', { from: delayMin, to: delayMax })}
+            </ThemedText>
           </View>
+          <Slider
+            value={delayMin}
+            min={0}
+            max={DELAY_MAX_SECONDS}
+            onChange={(next) => {
+              setDelayMin(next);
+              if (next > delayMax) setDelayMax(next);
+            }}
+            accessibilityLabel={t('ipscTimer.randomDelayMin')}
+            testID="ipsc-delay-min"
+          />
+          <Slider
+            value={delayMax}
+            min={0}
+            max={DELAY_MAX_SECONDS}
+            onChange={(next) => {
+              setDelayMax(next);
+              if (next < delayMin) setDelayMin(next);
+            }}
+            accessibilityLabel={t('ipscTimer.randomDelayMax')}
+            testID="ipsc-delay-max"
+          />
 
           <ThemedText type="smallBold">{t('ipscTimer.parSeconds')}</ThemedText>
           <TextField
@@ -360,6 +366,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.two,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
   switchRow: {
     flexDirection: 'row',
     gap: Spacing.two,
@@ -367,18 +379,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  stepButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  levelValue: {
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
   },
   shotList: {
     gap: Spacing.one,
