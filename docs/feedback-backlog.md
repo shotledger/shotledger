@@ -20,18 +20,18 @@ where the work lives.
       sessions list instead ("should be available in the list sessions").
 - [x] **Swipe a series to delete it** ("side swipe on a series shall be able to
       delete that series"). Soft-delete per §3 — never hard-delete rows. Verified working live (§11); no change was needed.
-- [ ] **Shrink the results card** (Totalt / Snitt / X / Guld) — "should be much
-      smaller (almost like the share button)".
-- [ ] **Drop the "Guld vid 46 p" line** from session detail, and render point
-      totals as `46p` — "always XXp without whitespace".
-- [ ] **Session metadata edit screen** — "there is no place to edit the sessions
-      metadata, e.g. description, date, tags, firearm etc"; put Share here too.
-- [ ] **Sighter flow rework**: a series added as a sighter must be changeable;
+- [x] **Shrink the results card** (Totalt / Snitt / X / Guld) — "should be much
+      smaller (almost like the share button)". Compact `MetricTile` sizing (`gap`/`flexBasis` reduced) shipped with #121 specifically to satisfy this.
+- [x] **Drop the "Guld vid 46 p" line** from session detail, and render point
+      totals as `46p` — "always XXp without whitespace". The line is off session detail (it now lives on series entry, as a live threshold while shooting) and already renders `{{points}}p` with no space.
+- [x] **Session metadata edit screen** — "there is no place to edit the sessions
+      metadata, e.g. description, date, tags, firearm etc"; put Share here too. `app/session/[id]/edit.tsx` — name, date, location, tags, firearm, weapon group/class, ammo lot, and a Share row.
+- [x] **Sighter flow rework**: a series added as a sighter must be changeable;
       the toggle must not appear when a sighter already exists; and it moves out
       of the session detail into the series save step — "when I select points and
-      further down save there should be option so set it as a sighter".
-- [ ] **Stats tab layout** — "formats a bit bad (3 chars then the last is wrapped
-      to next line)". Distinct from the segmented-control wrap fixed in #63.
+      further down save there should be option so set it as a sighter". The toggle is on the series save step, hidden once a section already has a sighter, and the current sighter can still turn itself off.
+- [x] **Stats tab layout** — "formats a bit bad (3 chars then the last is wrapped
+      to next line)". Distinct from the segmented-control wrap fixed in #63. Uses the same shrink-to-fit `MetricTile` as the results card.
 - [ ] **Sum and per-shot statistics** — "stats for the sum (all x shots) and per
       shots (as today)", both here and on the Statistics tab.
 
@@ -49,21 +49,21 @@ where the work lives.
 
 ## 3. New session screen
 
-- [ ] **Field order**: "Type then Name, would like to be able to add Location
+- [x] **Field order**: "Type then Name, would like to be able to add Location
       directly after". `sessions.location` already exists in the schema and CSV;
-      it is simply not exposed in the UI.
-- [ ] **Location autocomplete** — decided: **Photon** (OpenStreetMap, no API key,
+      it is simply not exposed in the UI. Confirmed: Type → Kind → Name → Location → Discipline.
+- [x] **Location autocomplete** — decided: **Photon** (OpenStreetMap, no API key,
       plain `fetch`, no new dependency), layered over remembered recents, and
       **opt-in** because it sends typed text to a third party. Recents remain the
-      offline path.
+      offline path. Photon, opt-in in Settings, off by default, with remembered recents as the offline path — all confirmed in code.
 - [ ] **Vapengrupper** — "there are Vapengrupp missing in addition to ABCR, see
       SHB 2026". Investigated: the data is already right (`groups.ts` has
       A/AM/AP/AG/A-opt/B/C/R/M1–M9; precision declares seven, milsnabb four), so
       the fault is in the picker UI, plausibly the same squeeze fixed in #63.
       Needs on-device confirmation.
-- [ ] **The name field at the bottom** — "what name is that. There is already a
+- [x] **The name field at the bottom** — "what name is that. There is already a
       Competition Name further up". It is the session's own display name,
-      auto-derived and overridable; its placement and labelling are the bug.
+      auto-derived and overridable; its placement and labelling are the bug. No longer at the bottom — Name is the third field, right after Type/Kind.
 - [ ] **Tags at creation** (see §7).
 - [?] **Session kind chosen at creation** — decided: an explicit column plus a
   Drizzle migration and an honest backfill, so a session is either
@@ -79,10 +79,10 @@ where the work lives.
       time-series charts. Must stay federation-generic. Charts are hand-drawn
       `react-native-svg` — `victory-native`/Skia are **not** in the lockfile
       despite what plan.md's library table says.
-- [ ] **Records row needs an affordance** — "It's not obvious that the 'Rekord,
-      personbästa och år för år' is clickable".
-- [ ] **Interval labels**: `30 dgr`, `6 mån`, `12 mån`, `Max`, `Anpassa`
-      (en: `30 d`, `6 mo`, `12 mo`, `Max`, `Custom`).
+- [x] **Records row needs an affordance** — "It's not obvious that the 'Rekord,
+      personbästa och år för år' is clickable". Already a `DrillDownRow` (chevron) — was already the case before this session's work started.
+- [x] **Interval labels**: `30 dgr`, `6 mån`, `12 mån`, `Max`, `Anpassa`
+      (en: `30 d`, `6 mo`, `12 mo`, `Max`, `Custom`). Exact match: `30 d`/`6 mo`/`12 mo`/`Max`/`Custom` (en), `30 dgr`/`6 mån`/`12 mån`/`Anpassa` (sv).
 - [x] **Interval chips wrapping** — root cause was the shared `SegmentedControl`;
       fixed in #63.
 - [ ] **Sum and per-shot statistics** here too.
@@ -91,7 +91,7 @@ where the work lives.
 
 - [ ] **Export format picker** — "For exports to PDF I would like to have JSON
       available as well. So an export button and then next user selects format."
-- [ ] **Default export scope**: everything **except** the Vault.
+- [x] **Default export scope**: everything **except** the Vault. `DEFAULT_EXPORT_OPTIONS.includeVault = false`, opt-in toggle in the dialog.
 - [?] **Vault export on explicit opt-in, with a warning.** Not a checkbox: vault
   items are AES-256-GCM encrypted under a key in SecureStore that cannot
   leave the device, so bundling raw ciphertext produces something no device
@@ -196,11 +196,11 @@ Maintainer, 2026-09-03, after using it on a real target.
 
 - [ ] **Ask how to add a series**: manual entry or photo scoring, at the point
       of adding the series.
-- [ ] **Renamed to "Score from Photo"** (maintainer, 2026-09-03: "Go with Score
+- [x] **Renamed to "Score from Photo"** (maintainer, 2026-09-03: "Go with Score
       from Photo for now"), replacing "Scan target" — "targetscan is a competitor
       app". **"Auto Score" is reserved** for when detection is actually
       automatic, since it would otherwise promise exactly what the maintainer
-      expected and did not get.
+      expected and did not get. Confirmed in both locales.
 - [?] **"The scoring was not automatic yet. I had to place out circles for the
   hits. That should be automatic."** This is the known phase-2 gap, and it
   is not a small fix. The CV spike measured classical hole detection at
@@ -212,9 +212,9 @@ Maintainer, 2026-09-03, after using it on a real target.
   under rule 7 and must stay outside the repo), a model, and an on-device
   inference runtime — a new dependency, so a maintainer decision. Until
   then, marks stay manual and the honest framing is "assisted", not "auto".
-- [ ] **Marks must be movable for accuracy.** `features/photo-scoring/marks.ts`
+- [x] **Marks must be movable for accuracy.** `features/photo-scoring/marks.ts`
       already models a `move` action; confirm it is reachable in the UI and
-      comfortable to use, since the maintainer expects to nudge a mark.
+      comfortable to use, since the maintainer expects to nudge a mark. Confirmed reachable — `mark-move` testID, `dispatch({type:'move'})`.
 - [ ] **Zoom and pan** the target while the photo and the marks are shown —
       "would be useful to be able to zoom in/out when the target and circles are
       showing". Needed both for placing marks accurately and for reading the
@@ -584,8 +584,8 @@ that than before it.
       **Time Limit**; settle the whole set at once.
 - [ ] **The tab reads "Shot Timer…"** — "why '...'?" Truncation, same family
       as #62/#76.
-- [ ] **"Parti 1" / "Parti 2"** — "is that English or Swedish?" Swedish
-      leaking into the English UI, like the sight-label hint in #122.
+- [x] **"Parti 1" / "Parti 2"** — "is that English or Swedish?" Swedish
+      leaking into the English UI, like the sight-label hint in #122. **#131** — deliberately Swedish, confirmed by the maintainer 2026-09-09; not a bug.
 
 ### Controls
 
@@ -654,9 +654,9 @@ timeline is anchored at **Eld**, not at Start.
       language, since that is what is called on the line. Confirm whether the
       surrounding chrome (buttons, headings) should also stop translating —
       that would be the first deliberate exception to hard rule 5. **#131** — commands stay Swedish, chrome stays translated; confirmed by the maintainer 2026-09-09.
-- [ ] **"Parti 1" / "Parti 2"** — see Naming above; if the commands stay
+- [x] **"Parti 1" / "Parti 2"** — see Naming above; if the commands stay
       Swedish by design, this stops being a bug and the English UI simply has
-      to stop pretending to translate them.
+      to stop pretending to translate them. **#131** — same resolution as above.
 
 **Feedback.**
 
@@ -708,7 +708,7 @@ a standalone build onto the maintainer's phone.
       wins already in #128. Note the §7 conflict: moving the märke table to its
       own screen contradicts the earlier request that it show live _beneath_
       Birth Year. Resolve that before building.
-- [ ] **Declare `babel-preset-expo`** — approved, see below.
+- [x] **Declare `babel-preset-expo`** — approved, see below. **#129** — resolved by resolving through `expo`, not by declaring it (declaring it links a peerless variant pnpm never materialises). See the item below.
 
 ### Build and tooling
 
