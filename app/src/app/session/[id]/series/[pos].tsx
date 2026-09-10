@@ -178,7 +178,7 @@ export default function SeriesEntryScreen() {
         <ScoreKeypad state={state} onChange={setState} />
       </Card>
 
-      <SessionStopwatch />
+      <SessionStopwatch sessionId={id} />
 
       <PrimaryButton label={t('session.addPhoto')} onPress={onAttachPhoto} testID="attach-photo" />
 

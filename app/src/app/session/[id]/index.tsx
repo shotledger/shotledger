@@ -21,6 +21,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
+import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
@@ -213,6 +214,8 @@ export default function SessionDetailScreen() {
         </ThemedText>
         <TagChips names={tags} testID="session-tags" />
       </View>
+
+      <SessionStopwatch sessionId={id} variant="compact" />
 
       <WebShooterSessionBadge session={session} />
 
