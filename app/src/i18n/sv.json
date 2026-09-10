@@ -489,6 +489,12 @@
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
     "newSeriesHint": "Serien sparas när du trycker på Spara.",
+    "stopwatch": {
+      "title": "Stoppur",
+      "start": "Starta",
+      "stop": "Stoppa",
+      "reset": "Nollställ"
+    },
     "menuLabel": "Passmeny",
     "menuSights": "Sikte",
     "menuEdit": "Redigera pass",
@@ -610,7 +616,6 @@
     }
   },
   "timer": {
-    "homeEntry": "Tidtagning",
     "title": "Tidtagning",
     "presetsTitle": "Välj en övning",
     "presets": {

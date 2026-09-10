@@ -489,6 +489,12 @@
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
     "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
     "newSeriesHint": "This series is saved when you tap Save.",
+    "stopwatch": {
+      "title": "Stopwatch",
+      "start": "Start",
+      "stop": "Stop",
+      "reset": "Reset"
+    },
     "menuLabel": "Session Menu",
     "menuSights": "Sights",
     "menuEdit": "Edit Session",
@@ -610,7 +616,6 @@
     }
   },
   "timer": {
-    "homeEntry": "Shot Timer",
     "title": "Shot Timer",
     "presetsTitle": "Choose a Drill",
     "presets": {

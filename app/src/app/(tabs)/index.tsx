@@ -99,12 +99,6 @@ export default function HomeScreen() {
         />
       </View>
 
-      <ListRow
-        testID="home-timer-entry"
-        title={t('timer.homeEntry')}
-        onPress={() => router.push('/timer')}
-      />
-
       {profile && overall && (
         <Chip
           testID="home-barometer"
