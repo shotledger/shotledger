@@ -129,6 +129,19 @@ describe('formatSessionTotal', () => {
   });
 });
 
+describe('buildHomeSessionRow tags', () => {
+  it('carries the tag names through, and defaults to none', () => {
+    const session = {
+      id: '1',
+      name: 'A',
+      type: 'training' as const,
+      startedAt: '2026-01-01T00:00:00.000Z',
+    };
+    expect(buildHomeSessionRow(session, [], ['KM', 'Tävling']).tags).toEqual(['KM', 'Tävling']);
+    expect(buildHomeSessionRow(session, []).tags).toEqual([]);
+  });
+});
+
 describe('formatSeriesAverage', () => {
   it('prefixes the average glyph and one decimal place', () => {
     expect(formatSeriesAverage(45)).toBe(`${AVERAGE_SYMBOL} 45.0`);
@@ -146,6 +159,7 @@ describe('filterSessionRowsByShape', () => {
       total: 0,
       seriesAverage: null,
       innerTenCount: 0,
+      tags: [],
       shape: 'series',
     },
     {
@@ -156,6 +170,7 @@ describe('filterSessionRowsByShape', () => {
       total: 0,
       seriesAverage: null,
       innerTenCount: 0,
+      tags: [],
       shape: 'roundsOnly',
     },
     {
@@ -166,6 +181,7 @@ describe('filterSessionRowsByShape', () => {
       total: 0,
       seriesAverage: null,
       innerTenCount: 0,
+      tags: [],
       shape: null,
     },
   ];

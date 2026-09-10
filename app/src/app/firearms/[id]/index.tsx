@@ -21,6 +21,7 @@ import {
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
@@ -470,10 +471,16 @@ export default function FirearmDetailScreen() {
 
       {/* Weapon groups */}
       <Card>
-        <ThemedText type="smallBold">{t('firearms.groupsTitle')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.groupsHint')}
-        </ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('firearms.groupsTitle')}
+          </ThemedText>
+          <InfoButton
+            title={t('firearms.groupsTitle')}
+            body={t('firearms.groupsHint')}
+            testID="groups-info"
+          />
+        </View>
         {detail.groups.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t('firearms.noGroups')}
@@ -539,10 +546,16 @@ export default function FirearmDetailScreen() {
 
       {/* Sight settings (#114) */}
       <Card>
-        <ThemedText type="smallBold">{t('firearms.sightSettingsTitle')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('firearms.sightSettingsHint')}
-        </ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('firearms.sightSettingsTitle')}
+          </ThemedText>
+          <InfoButton
+            title={t('firearms.sightSettingsTitle')}
+            body={t('firearms.sightSettingsHint')}
+            testID="sight-settings-info"
+          />
+        </View>
         {detail.sightSettings.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t('firearms.noSightSettings')}
@@ -582,7 +595,16 @@ export default function FirearmDetailScreen() {
               placeholder={t('firearms.sightLabelPlaceholder')}
               testID="sight-label"
             />
-            <ThemedText type="small">{t('firearms.sightElevation')}</ThemedText>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="small" style={styles.headerLabel}>
+                {t('firearms.sightElevation')}
+              </ThemedText>
+              <InfoButton
+                title={t('firearms.sightElevation')}
+                body={t('firearms.sightElevationHint')}
+                testID="sight-elevation-info"
+              />
+            </View>
             <Stepper
               value={sightElevation}
               onChange={setSightElevation}
@@ -598,10 +620,16 @@ export default function FirearmDetailScreen() {
               }
               testID="sight-elevation"
             />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('firearms.sightElevationHint')}
-            </ThemedText>
-            <ThemedText type="small">{t('firearms.sightWindage')}</ThemedText>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="small" style={styles.headerLabel}>
+                {t('firearms.sightWindage')}
+              </ThemedText>
+              <InfoButton
+                title={t('firearms.sightWindage')}
+                body={t('firearms.sightWindageHint')}
+                testID="sight-windage-info"
+              />
+            </View>
             <Stepper
               value={sightWindage}
               onChange={setSightWindage}
@@ -617,9 +645,6 @@ export default function FirearmDetailScreen() {
               }
               testID="sight-windage"
             />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('firearms.sightWindageHint')}
-            </ThemedText>
             <ThemedText type="small">{t('firearms.notes')}</ThemedText>
             <TextField value={sightNotes} onChangeText={setSightNotes} testID="sight-notes" />
             <PrimaryButton
@@ -899,6 +924,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerLabel: {
+    flexShrink: 1,
   },
   switchRow: {
     flexDirection: 'row',

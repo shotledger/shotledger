@@ -7,6 +7,7 @@ import {
   addSessionTag,
   getOrCreateTag,
   listTags,
+  listTagsBySession,
   listTagsForSession,
   removeSessionTag,
   softDeleteTag,
@@ -80,5 +81,41 @@ describe('session tags', () => {
     addSessionTag(db, sessionId, km.id);
     softDeleteTag(db, km.id);
     expect(listTagsForSession(db, sessionId)).toHaveLength(0);
+  });
+});
+
+describe('listTagsBySession', () => {
+  function session(name: string) {
+    return createSession(db, {
+      name,
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+  }
+
+  it('groups names by session, sorted, and omits untagged sessions', () => {
+    const a = session('A');
+    const b = session('B');
+    session('C');
+    const km = getOrCreateTag(db, 'KM');
+    const tavling = getOrCreateTag(db, 'Tävling');
+    addSessionTag(db, a, tavling.id);
+    addSessionTag(db, a, km.id);
+    addSessionTag(db, b, km.id);
+
+    const bySession = listTagsBySession(db);
+    expect(bySession.get(a)).toEqual(['KM', 'Tävling']);
+    expect(bySession.get(b)).toEqual(['KM']);
+    expect(bySession.has('missing')).toBe(false);
+    expect(bySession.size).toBe(2);
+  });
+
+  it('excludes a soft-deleted tag', () => {
+    const a = session('A');
+    const km = getOrCreateTag(db, 'KM');
+    addSessionTag(db, a, km.id);
+    softDeleteTag(db, km.id);
+    expect(listTagsBySession(db).size).toBe(0);
   });
 });

@@ -23,6 +23,7 @@ import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSeriesForSession } from '@/db/queries/series';
 import { listShotsForSeries } from '@/db/queries/shots';
 import { getSession } from '@/db/queries/sessions';
+import { listTagsForSession } from '@/db/queries/tags';
 
 export interface SeriesRow {
   id: string;
@@ -69,6 +70,8 @@ export interface SessionDetail {
   canStartFinal: boolean;
   /** Skeleton programs pre-create their series; nothing may be appended. */
   isFixedFormat: boolean;
+  /** Tag names for the header chips; empty when the session has none. */
+  tags: readonly string[];
 }
 
 const EMPTY: SessionDetail = {
@@ -86,6 +89,7 @@ const EMPTY: SessionDetail = {
   finalHasSighter: false,
   canStartFinal: false,
   isFixedFormat: false,
+  tags: [],
 };
 
 export function loadSessionDetail(sessionId: string): SessionDetail {
@@ -171,6 +175,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       !results.hasFinal &&
       seriesRows.some((row) => !row.isSighter && row.shots.length > 0),
     isFixedFormat: program?.structure !== undefined,
+    tags: listTagsForSession(db, session.id).map((tag) => tag.name),
   };
 }
 
