@@ -115,8 +115,8 @@ export function updateSeries(
 
 /**
  * Sets or clears a series' sighter flag after creation (the sighter choice
- * moved from the add-series step onto the series entry screen — plan.md
- * decisions log, 2026-09-03). Re-enforces the same one-sighter-per-section
+ * moved from the add-series step onto the series entry screen).
+ * Re-enforces the same one-sighter-per-section
  * rule as `addSeries`; a series that already is the section's sighter can
  * always turn itself off. Returns `undefined` for an unknown/tombstoned id.
  */

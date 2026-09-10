@@ -2,9 +2,9 @@
 // `Paths.document` + "vault" — see app/src/platform/vault-fs.ts) from
 // Android's app-controlled backups: Auto Backup for Apps (cloud, API 23+)
 // and the device-to-device transfer flow (API 31+). Files there are already
-// AES-256-GCM encrypted at rest (docs/specs/document-vault-spec.md), but
-// plan.md v2 is explicit the vault must "never [be] synced" by anything the
-// app controls — Android's own backup mechanism counts.
+// AES-256-GCM encrypted at rest (docs/specs/document-vault-spec.md), but the
+// vault must never be synced by anything the app controls — Android's own
+// backup mechanism counts.
 //
 // No `expo-*` module exposes this as a config option; it requires two
 // native pieces the Expo config-plugin system (`expo/config-plugins`,
@@ -25,7 +25,7 @@
 // iOS has no plugin here: no current Expo module exposes
 // `NSURLIsExcludedFromBackupKey` for a directory without a small custom
 // native module or a `withDangerousMod` Xcode-project edit — flagged as a
-// follow-up in plan.md's decisions log and docs/specs/document-vault-evidence.md.
+// follow-up in docs/specs/document-vault-evidence.md.
 //
 // Also folds in expo-secure-store's own backup exclusion (its
 // `plugin/build/withSecureStore.js` excludes `sharedpref`/"SecureStore" —

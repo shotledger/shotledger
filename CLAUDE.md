@@ -6,8 +6,15 @@ sync. Android first — **all code must stay iOS-compatible**.
 
 ## Read before working
 
-- `plan.md` — what and why; decisions log; roadmap. Update it in the
-  same branch as the change it describes.
+- `app/PRODUCT.md` — what and why: users, positioning, operating
+  context, capabilities/constraints, product principles. Update it in
+  the same branch as a change that shifts one of these.
+- `docs/architecture.md` — the tech-choice table and iOS-readiness
+  rules, at a glance.
+- `docs/decisions-log-archive.md` — the historical record of every
+  narrower decision (a bug's root cause, a library pick, a wording
+  call) that predates issue #138. Nothing here is open work; it
+  replaced `plan.md`, which is retired.
 - `docs/implementation-plan.md` — the execution spec: milestones,
   schema, screen inventory, per-task acceptance criteria. Follow it;
   do not improvise product decisions.
@@ -81,7 +88,11 @@ screenshot from the agentic loop.
   `backend/`). First install on a new machine also needs
   `pnpm approve-builds esbuild workerd` (native build scripts pnpm
   blocks by default — esbuild for bundling, workerd for
-  `backend`'s Cloudflare Workers vitest pool).
+  `backend`'s Cloudflare Workers vitest pool). Also one-time per
+  contributor after cloning (a security trust step, not a dependency
+  install): `claude plugin install impeccable@pbakaus-impeccable` — the
+  marketplace is already registered in `.claude/settings.json`, which
+  enables the plugin for everyone once installed.
 - Web preview (primary UI iteration surface): `cd app && pnpm exec expo
 start --web --port <port>` (backgrounded), poll
   `curl -s -o /dev/null -w '%{http_code}' http://localhost:<port>/`

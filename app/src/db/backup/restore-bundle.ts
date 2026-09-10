@@ -1,5 +1,5 @@
 // Glue layer for restore (mirrors export-bundle.ts). Restore is a full
-// replace, never a merge (plan.md v2): validate the manifest, write an
+// replace, never a merge: validate the manifest, write an
 // automatic pre-restore backup, close the live connection, overwrite the DB
 // file, then restore any bundled photos and rewrite their paths. The
 // existing migration gate (db/migration-gate.tsx) brings an older-schema

@@ -2,8 +2,8 @@
 // 2026-09-03): "no aug. - no suffix dot" — the abbreviated-month token some
 // locales render (e.g. Swedish "aug.") loses its trailing period, kept
 // otherwise unchanged. Supersedes the plain `dateStyle: 'medium'` call
-// recorded in docs/specs/m3-scoring-evidence.md §A.7 — see plan.md decisions
-// log. Never hand-rolls month names: `Intl.DateTimeFormat` still owns every
+// recorded in docs/specs/m3-scoring-evidence.md §A.7. Never hand-rolls
+// month names: `Intl.DateTimeFormat` still owns every
 // token, this only strips a trailing "." off the month part.
 //
 // English's bare `en` locale formats `dateStyle: 'medium'` as US-style

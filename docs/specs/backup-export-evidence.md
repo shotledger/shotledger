@@ -256,7 +256,7 @@ rather than ignored, but nothing in this branch's code path is implicated.
   limit today; it is recorded because it would become one if the vault ever
   stored many large files.
 - Restore still requires a full app restart (the pre-existing `expo-updates`
-  gap recorded in the 2026-09-02 plan.md entry). The vault merge happens before
+  gap recorded in the 2026-09-02 decisions-log entry). The vault merge happens before
   that restart and is complete when the prompt appears.
 - The passphrase is the only thing protecting an opted-in bundle. There is no
   recovery path, by design: the app cannot help a user who loses it, and the

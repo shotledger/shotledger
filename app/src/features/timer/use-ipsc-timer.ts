@@ -32,7 +32,7 @@ const IDLE_PHASE: IpscPhase = { kind: 'idle', remainingMs: 0, runElapsedMs: 0 };
 /**
  * Cue → existing timer sound. Played under the spoken prompt, and on its own
  * when spoken prompts are off or the platform's TTS refuses — the tone stays
- * the guarantee, speech is the addition (plan.md "Spoken prompts").
+ * the guarantee, speech is the addition.
  */
 const CUE_SOUND: Record<IpscCueKind, TimerCueKind> = {
   ready: 'ready',

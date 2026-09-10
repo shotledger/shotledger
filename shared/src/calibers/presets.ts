@@ -1,7 +1,7 @@
 // The caliber vocabulary. Free text made `9×19`, `9x19` and `9 mm Luger`
 // three different calibers; the picker now offers this list and nothing else.
 //
-// Canonical spelling, one rule per family (see `plan.md`, 2026-09-10):
+// Canonical spelling, one rule per family:
 //  - imperial: leading dot, no leading zero, then the cartridge's usual name
 //    with only the universally-abbreviated suffixes kept (LR, ACP, WMR, HMR,
 //    BMG, SIG, S&W, H&R) — manufacturers and "Magnum" spelled out.

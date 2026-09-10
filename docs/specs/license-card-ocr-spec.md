@@ -1,6 +1,6 @@
 # Licence-card scan (on-device OCR) — spec
 
-Scope: plan.md v2 "Scan a physical license card", amended 2026-09-03
+Scope: "Scan a physical license card", amended 2026-09-03
 (`feat/licence-card-image`) to keep the scanned original by default and link
 it to the licence it was scanned for — see "Storing and linking the original
 photo" below. When adding a licence or a renewal to a firearm, the user can
@@ -177,7 +177,7 @@ that recovers the image.
 ## Out of scope
 
 - **Only the Swedish Polisen layout.** Other jurisdictions' cards are a
-  per-profile template later (plan.md).
+  per-profile template later.
 - **No perspective correction.** The photo-scoring pipeline
   (`app/src/features/photo-scoring/opencv.ts`) rectifies a _circular_ target
   face from an ellipse fit; a card needs quadrilateral detection and a

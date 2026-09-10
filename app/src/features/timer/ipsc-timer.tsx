@@ -1,6 +1,6 @@
-// IPSC-style shot timer view — the second mode behind the Timer entry
-// (plan.md "IPSC-style shot timer"). Setup, run and result are three views of
-// one screen, switched on the engine's phase, mirroring timer.tsx's shape.
+// IPSC-style shot timer view — the second mode behind the Timer entry.
+// Setup, run and result are three views of one screen, switched on the
+// engine's phase, mirroring timer.tsx's shape.
 import {
   DEFAULT_IPSC_CONFIG,
   MAX_TRIGGER_DB,

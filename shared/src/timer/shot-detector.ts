@@ -1,5 +1,5 @@
-// IPSC-style shot timer: pure shot detection + run state machine (plan.md
-// "IPSC-style shot timer"). No RN/audio imports — the app layer feeds
+// IPSC-style shot timer: pure shot detection + run state machine. No
+// RN/audio imports — the app layer feeds
 // microphone metering samples in and maps the emitted cues to sound.
 //
 // Detection is deliberately simple and explainable: a sample counts as a shot

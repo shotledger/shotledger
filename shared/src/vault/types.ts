@@ -1,4 +1,4 @@
-// AES-256-GCM envelope for the on-device document vault (plan.md v2).
+// AES-256-GCM envelope for the on-device document vault.
 // See docs/specs/document-vault-spec.md. Pure types — no RN/Expo import
 // (shared/ convention, spec constraint N1).
 

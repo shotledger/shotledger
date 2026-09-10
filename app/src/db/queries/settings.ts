@@ -15,7 +15,7 @@ export const SETTINGS_KEYS = {
   // (se when device locale is sv, else none) rather than writing a row.
   complianceProfile: 'complianceProfile',
   // Timers: spoken prompts on/off, and the fälttimer's own settings blob
-  // (mode, prep/shooting time, parti boundaries, whistle) — plan.md "Timers".
+  // (mode, prep/shooting time, parti boundaries, whistle).
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
   // Opt-in online place lookup for the session Location field (Photon/OSM).

@@ -36,7 +36,8 @@ evidence stay untouched.
     `docs/specs/analytics-report-evidence.md`
 - **New dependencies:** none. Charts are drawn by hand with
   `react-native-svg`, already a direct dependency (see the M5 decision and
-  `plan.md`'s 2026-09-02 share-cards row — `victory-native` and
+  the 2026-09-02 share-cards row in `docs/decisions-log-archive.md` —
+  `victory-native` and
   `@shopify/react-native-skia` are _not_ in the lockfile despite the stale
   library table in `docs/implementation-plan.md` §"Libraries").
 - **Gauntlet composition:** `pnpm coverage` (vitest + v8; `vitest.config.ts`
@@ -69,7 +70,7 @@ already encoded in `stats.ts` and reused here rather than re-derived:
    is not a centrumtia.
 
 Genuinely new, and deliberately federation-agnostic (the app is
-international by design — `plan.md` §Positioning):
+international by design — see `app/PRODUCT.md`'s Positioning):
 
 5. **A "ten" is any shot with `valueTenths >= 100`.** In integer scoring a
    ten is exactly 100; in decimal scoring it is 100–109. Rounding

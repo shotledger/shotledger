@@ -1,4 +1,4 @@
-// Platform wrapper for share cards (plan.md v2). The card is a
+// Platform wrapper for share cards. The card is a
 // react-native-svg <Svg> (app/src/components/share-card-svg.tsx), rasterized
 // on-device via that library's own `Svg.toDataURL()` — no new dependency:
 // react-native-svg is already a direct dependency (used by GroupPlot and the

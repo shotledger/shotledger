@@ -1,27 +1,27 @@
 # Store listing draft (Google Play)
 
-Grounded in `plan.md`'s Positioning section. **v1 has no camera/photo-based
-target scoring** — that is a v2 feature (`plan.md` roadmap, "v2 — the
-camera + sync"). None of the copy below describes photo scoring; it
-describes what v1 actually ships: fast score logging, statistics,
-firearms/ammo tracking, the Swedish FAP 551-3 activity barometer, and CSV
-export/import.
+Grounded in `app/PRODUCT.md`'s Positioning section. **Written when v1 had
+no camera/photo-based target scoring** — phase 1 of photo scoring has
+since shipped (tap-to-mark, assisted not automatic; see
+`app/PRODUCT.md`'s Capabilities and Constraints), so the framing below
+is stale on that point and this listing wants a copy pass before
+submission, not just a citation fix.
 
-**Title tension to resolve (not silently changed here):** `plan.md`'s
-chosen store title is _"ShotLedger — Target Shooting Log & Scoring"_. The
-word "Scoring" reads naturally today because manual score entry ships in
-v1 — but it also risks implying the camera-based photo scoring positioning
-point (`plan.md` Positioning §2), which is v2-only. VERIFY with the
-maintainer whether the v1 listing should keep this title as-is (manual
-scoring is real and "Scoring" is accurate for it) or use a v1-scoped
-variant until photo scoring ships. Both variants are drafted below; pick
-one before submitting.
+**Title tension to resolve (not silently changed here):** the chosen
+store title is _"ShotLedger — Target Shooting Log & Scoring"_. The word
+"Scoring" reads naturally today because manual score entry ships in
+v1 — but it also risks implying the camera-based photo scoring
+positioning point, which was v2-only when this was written and is now
+partially shipped. VERIFY with the maintainer whether the v1 listing
+should keep this title as-is (manual scoring is real and "Scoring" is
+accurate for it) or use a v1-scoped variant. Both variants are drafted
+below; pick one before submitting.
 
 ---
 
 ## English
 
-**Title (as decided in plan.md):**
+**Title (as decided, see `docs/decisions-log-archive.md`):**
 ShotLedger — Target Shooting Log & Scoring
 
 **Title (v1-scoped alternative, VERIFY which to use):**
@@ -41,10 +41,12 @@ shoot.
 automatic round counters, maintenance interval reminders, and license
 expiry reminders.
 
-**See your progress.** Always-visible statistics — trends over time,
+**See your progress.** Filter by period, session type, discipline or
+tags and get a report generated on the spot — trends over time,
 per-firearm and per-ammo comparisons, mean and standard deviation,
 best/worst series, and how your last sessions compare to your history.
-No "generate report" step: the numbers are just there.
+Nothing is saved as a stale document; it is always computed fresh from
+what matches right now.
 
 **Built for Swedish shooters.** A rolling activity barometer tracks your
 logged sessions against the FAP 551-3 licensing requirement, and exports
@@ -63,7 +65,7 @@ plus free-form training. Android only for now.
 
 ## Svenska
 
-**Titel (enligt plan.md):**
+**Titel (enligt `docs/decisions-log-archive.md`):**
 ShotLedger — Skytteloggbok & Poängräkning
 
 **Titel (v1-anpassat alternativ, VERIFIERA vilken som ska användas):**
@@ -83,10 +85,12 @@ löpande totalsumma medan du skjuter.
 automatisk skotträknare, påminnelser om underhållsintervall och
 påminnelser om licensförnyelse.
 
-**Se din utveckling.** Alltid synlig statistik — trender över tid,
-jämförelser per vapen och ammunition, medelvärde och standardavvikelse,
-bästa/sämsta serie, och hur dina senaste pass står sig mot historiken.
-Inget "generera rapport"-steg — siffrorna finns bara där.
+**Se din utveckling.** Filtrera på period, passtyp, gren eller taggar
+och få en rapport genererad direkt — trender över tid, jämförelser per
+vapen och ammunition, medelvärde och standardavvikelse, bästa/sämsta
+serie, och hur dina senaste pass står sig mot historiken. Inget sparas
+som ett inaktuellt dokument; allt räknas fram på nytt utifrån det som
+matchar just nu.
 
 **Byggd för svenska skyttar.** En rullande aktivitetsbarometer följer
 dina loggade pass mot FAP 551-3:s aktivitetskrav och exporterar en PDF

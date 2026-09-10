@@ -1,6 +1,6 @@
-// Platform wrapper for "save to a user-chosen folder" (plan.md "Export
-// destinations": share sheet → save to a user-chosen folder → scheduled →
-// Drive API). Android default: Storage Access Framework, via the `legacy`
+// Platform wrapper for "save to a user-chosen folder" (the export-destination
+// ladder: share sheet → save to a user-chosen folder → scheduled → Drive
+// API). Android default: Storage Access Framework, via the `legacy`
 // FileSystem API — the new File/Directory API (see backup-fs.ts) has no SAF
 // support. iOS has no folder-pick-and-write API short of the document
 // picker's export mode (not implemented — no Mac available to verify), so

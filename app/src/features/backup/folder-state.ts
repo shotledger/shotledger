@@ -1,6 +1,6 @@
-// Pure state machine for the remembered "save to folder" destination
-// (plan.md "Export destinations"): which SAF folder URI (if any) is
-// persisted, and how it changes in response to a pick, a write, or an
+// Pure state machine for the remembered "save to folder" destination: which
+// SAF folder URI (if any) is persisted, and how it changes in response to a
+// pick, a write, or an
 // explicit "forget". No IO here — use-backup-export-import.ts drives this
 // with the platform/db calls and persists the result via the settings
 // table, the same way lastBackupAt is persisted.

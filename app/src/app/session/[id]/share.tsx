@@ -1,8 +1,7 @@
-// Share card preview (plan.md v2): renders the session (or, with `?series=`,
-// a single series) card, lets the user add an opt-in free-text line, and
-// shares the rasterized PNG through the OS share sheet — the user always
-// sees exactly what leaves the device before it does (plan.md "show a
-// preview before sharing").
+// Share card preview: renders the session (or, with `?series=`, a single
+// series) card, lets the user add an opt-in free-text line, and shares the
+// rasterized PNG through the OS share sheet — the user always sees exactly
+// what leaves the device before it does.
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

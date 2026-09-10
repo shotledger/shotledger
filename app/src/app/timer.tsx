@@ -1,6 +1,5 @@
-// Shot timer route (v3 backlog item, maintainer-approved scope expansion —
-// plan.md "PAR/interval shot timer"). Setup (preset/custom picker) and
-// running (countdown) are two views of one screen, switched on the engine's
+// Shot timer route. Setup (preset/custom picker) and running (countdown)
+// are two views of one screen, switched on the engine's
 // phase — `useTimer` (features/timer/use-timer.ts) drives the pure
 // `TimerController`/`TimerEngine` (shared/src/timer).
 //

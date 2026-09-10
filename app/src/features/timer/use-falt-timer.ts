@@ -34,7 +34,7 @@ const IDLE_PHASE: FaltPhase = {
  * Tone per cue — played alongside the spoken command, and on its own when
  * spoken prompts are off or the platform's TTS refuses. The regular timer's
  * four assets are all there is: there is no separate whistle sample, so the
- * whistle variant of ELD UPPHÖR borrows the stop tone (plan.md limit).
+ * whistle variant of ELD UPPHÖR borrows the stop tone.
  */
 const CUE_SOUND: Record<FaltCueKind, TimerCueKind | null> = {
   ladda: null,

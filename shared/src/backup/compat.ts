@@ -1,5 +1,5 @@
-// Schema-compatibility check for restore (plan.md v2: "refuse a restore of
-// a newer schema... migrate an older one"). Drizzle's own migrator tracks
+// Schema-compatibility check for restore: refuse a restore of a newer
+// schema, migrate an older one. Drizzle's own migrator tracks
 // which migrations a database has applied in a table stored inside the
 // database file itself, so a restored DB is brought up to date
 // automatically by the existing migration gate on next launch — the only

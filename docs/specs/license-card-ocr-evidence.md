@@ -13,7 +13,7 @@ tests, no old-coder gauntlet.
 | vitest      | 4.1.11                                          |
 
 New dependency: `@react-native-ml-kit/text-recognition@2.0.0` (MIT), see the
-2026-09-02 plan.md decisions-log entry and the spec's "Dependency" section.
+2026-09-02 decisions-log entry and the spec's "Dependency" section.
 
 ## 2. Unit tests
 
