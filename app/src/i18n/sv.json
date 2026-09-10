@@ -632,19 +632,7 @@
   },
   "timer": {
     "title": "Tidtagning",
-    "presetsTitle": "Välj en övning",
-    "presets": {
-      "parSingle": "Enkel skjuttid",
-      "parRandomStart": "Slumpad start",
-      "parInterval": "Intervallövning",
-      "milsnabb": "Militär snabbmatch",
-      "custom": "Anpassad"
-    },
-    "presetSummaryPar": "{{ready}} s laddningstid · {{par}} s skjuttid",
-    "presetSummaryInterval": "{{reps}} repetitioner · {{par}} s skjuttid · {{rest}} s vila",
-    "presetSummaryMilsnabb": "Provserie + 3 omgångar × 4 serier, 10/8/6 s",
-    "presetSummaryCustom": "Ställ in egen skjuttid, laddningstid och repetitioner",
-    "custom": {
+    "fields": {
       "parSeconds": "Skjuttid (s)",
       "readyDelaySeconds": "Laddningstid (s)",
       "reps": "Repetitioner",
@@ -660,10 +648,9 @@
       "done": "Klart"
     },
     "seriesProgress": "Serie {{current}} / {{total}}",
-    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, sedan 4×10 s, 4×8 s, 4×6 s. Laddningstiden är ett standardvärde för egen träning, inte matchens 60 s LADDA→FÄRDIGA.",
     "modes": {
-      "regular": "PAR-timer",
-      "ipsc": "Skottimer (mik)",
+      "regular": "Skjuttid",
+      "ipsc": "Skott",
       "falt": "Fält"
     },
     "spokenPrompts": "Talade kommandon"
@@ -686,7 +673,7 @@
     "randomDelay": "Slumpad startfördröjning – kortast / längst (s)",
     "randomDelayMin": "Kortaste startfördröjning i sekunder",
     "randomDelayMax": "Längsta startfördröjning i sekunder",
-    "parSeconds": "Skjuttid, PAR (s)",
+    "parSeconds": "Skjuttid (s)",
     "parPlaceholder": "Valfritt",
     "autoStopSeconds": "Stoppa automatiskt efter tystnad (s)",
     "privacyNote": "Mikrofonen analyseras direkt i telefonen för att hitta skotten. Inspelningen sparas aldrig, spelas aldrig upp och skickas ingenstans – den skrivs till en tillfällig fil som appen bara mäter ljudnivån i, och raderas så fort passet avslutas.",
@@ -941,6 +928,6 @@
   },
   "tools": {
     "title": "Verktyg",
-    "timerSubtitle": "PAR-, IPSC- och fälttimer"
+    "timerSubtitle": "Skjuttids-, skott- och fälttimer"
   }
 }
