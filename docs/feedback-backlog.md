@@ -18,8 +18,8 @@ where the work lives.
       `sv.json`. English keeps "inner tens".
 - [ ] **Remove "Dela"** from the session detail body; sharing belongs in the
       sessions list instead ("should be available in the list sessions").
-- [ ] **Swipe a series to delete it** ("side swipe on a series shall be able to
-      delete that series"). Soft-delete per §3 — never hard-delete rows.
+- [x] **Swipe a series to delete it** ("side swipe on a series shall be able to
+      delete that series"). Soft-delete per §3 — never hard-delete rows. Verified working live (§11); no change was needed.
 - [ ] **Shrink the results card** (Totalt / Snitt / X / Guld) — "should be much
       smaller (almost like the share button)".
 - [ ] **Drop the "Guld vid 46 p" line** from session detail, and render point
@@ -37,15 +37,15 @@ where the work lives.
 
 ## 2. Sessions list
 
-- [ ] **Row format**: `14 aug 2026 · XXXp · ⌀ XX.X · <inner tens>` — total gains
+- [x] **Row format**: `14 aug 2026 · XXXp · ⌀ XX.X · <inner tens>` — total gains
       a `p` suffix, the per-series average gains an average glyph and loses
-      "/serie".
-- [ ] **Date format**: "no aug. - no suffix dot". Supersedes the 2026-09-01
-      decision that fixed the locale medium style with its abbreviation dot.
-- [ ] **Header counts**: "show not only logged shots but also number of
-      competitions and sessions".
-- [ ] **Share entry point** here, replacing the one removed from session detail.
-- [ ] **Filter/sort by session shape** — series-logged vs fixed shot count.
+      "/serie". Verified: rows render `3 Sept 2026 · 251p · ⌀ 41.8 · 1X` (§11).
+- [x] **Date format**: "no aug. - no suffix dot". Supersedes the 2026-09-01
+      decision that fixed the locale medium style with its abbreviation dot. Verified: no abbreviation dot (§11).
+- [x] **Header counts**: "show not only logged shots but also number of
+      competitions and sessions". `shotsLoggedTotal`, `competitionsTotal` and `sessionCount` all render on Home.
+- [x] **Share entry point** here, replacing the one removed from session detail. `home-session-N-share` on each row.
+- [x] **Filter/sort by session shape** — series-logged vs fixed shot count. `SegmentedControl` above the list.
 
 ## 3. New session screen
 
@@ -104,16 +104,16 @@ where the work lives.
 
 ## 6. Navigation and information architecture
 
-- [ ] **Fifth tab, "Tools"** — decided: Home · Statistics · Firearms · **Tools**
+- [x] **Fifth tab, "Tools"** — decided: Home · Statistics · Firearms · **Tools**
       · Settings. Tools takes Timers, Vault and WebShooter; Settings keeps
       language/theme/birth year, compliance, account, backup, CSV, about, wipe.
       Settings had accumulated ten unrelated concerns and "Webshooter stuff does
-      not fit under Settings".
+      not fit under Settings". `app/src/app/(tabs)/tools.tsx` exists and carries Timers, Vault and WebShooter.
 - [ ] **Scan target belongs in series entry**, not in Tools — "where I enter a
       series".
-- [ ] **A plain count-up stopwatch (MM:SS)** on the series entry screen. This is
-      a new timer: the existing three are the PAR/interval drill timer, the IPSC
-      shot timer and the fälttimer command sequence. None counts up.
+- [~] **A plain count-up stopwatch (MM:SS)** on the series entry screen. This is
+  a new timer: the existing three are the PAR/interval drill timer, the IPSC
+  shot timer and the fälttimer command sequence. None counts up. **#135** — on series entry, counts up from timestamps so backgrounding does not lose time.
 - [?] **The PAR timer may not be wanted** — "not sure that I need it". Kept for
   now; do not build further on it until the maintainer decides.
 
@@ -616,54 +616,52 @@ timeline is anchored at **Eld**, not at Start.
 
 **Two modes, because there are two jobs.**
 
-- [ ] **Range-officer mode — manual advance.** "Normally, I don't want a timer
+- [x] **Range-officer mode — manual advance.** "Normally, I don't want a timer
       between Ladda and 'Tio sekunder kvar'. The amount of time there depends
       on the shooters and when I think that they're ready." So: an **"Alla
       klara"** button advances the stage on a press. "If everyone is ready then
       I'll press again and the '10 sekunder kvar' and it's automatic from
-      there."
-- [ ] **Solo mode — fully automatic.** "The above works when I am 'controlling'
+      there." **#131**.
+- [x] **Solo mode — fully automatic.** "The above works when I am 'controlling'
       other shooters but I'd also like to use it for myself. And then I want it
       to start at 'Ladda' and be automatic from there (and in this use-case I
       want to set a time between Ladda and 'Alla klara')." So solo mode adds
-      one setting the RO mode does not have: the Ladda → Alla klara duration.
+      one setting the RO mode does not have: the Ladda → Alla klara duration. **#131**.
+      **Timing that is currently wrong.**
 
-**Timing that is currently wrong.**
-
-- [ ] **"Tio sekunder kvar" must be exactly ten seconds before Eld.** "Now it's
+- [x] **"Tio sekunder kvar" must be exactly ten seconds before Eld.** "Now it's
       10s from 'Alla klara' which means that when '10 sekunder kvar' it should
-      be 10s left." Today the call is anchored to the wrong event.
-- [ ] **A ~5 s gap between "Alla klara" and "Tio sekunder kvar"** — "so that
-      shooters can announce if they're not ready".
-- [ ] **"Eld upphör" is drawn out over the last 3 s**, so the command _ends_
-      exactly as time runs out rather than starting there.
-- [ ] **The timeline starts at Eld.** "The time line should start at 'Eld/Fire'
+      be 10s left." Today the call is anchored to the wrong event. **#131** — pinned by test.
+- [x] **A ~5 s gap between "Alla klara" and "Tio sekunder kvar"** — "so that
+      shooters can announce if they're not ready". **#131**.
+- [x] **"Eld upphör" is drawn out over the last 3 s**, so the command _ends_
+      exactly as time runs out rather than starting there. **#131** — `atSeconds + durationSeconds === T`, pinned by test.
+- [x] **The timeline starts at Eld.** "The time line should start at 'Eld/Fire'
       and the timer should count down prior to that (e.g. at '10 sekunder kvar'
       → −10s)." So t=0 is Eld, the preparatory commands sit at negative times,
-      and the firing period runs positive.
+      and the firing period runs positive. **#131**.
+      **The view itself.**
 
-**The view itself.**
-
-- [ ] **Number the commands and mark the numbers on the timeline** — "Make a
-      numbers list of commands and indicate those numbers on the time line."
-- [ ] **Drop the Competition/Training tabs** — "Don't see the purpose. KISS."
-- [ ] **Remove the "Markera" button.**
-- [ ] **Restart from the timeline view** — "I would like to be able to restart
-      from the view where I see the timeline."
-- [ ] **Swedish only on this page** — "you can remove the english translation
+- [x] **Number the commands and mark the numbers on the timeline** — "Make a
+      numbers list of commands and indicate those numbers on the time line." **#131**.
+- [x] **Drop the Competition/Training tabs** — "Don't see the purpose. KISS." **#131** — no references remain.
+- [x] **Remove the "Markera" button.** **#131** — the whole `markera()` path is gone.
+- [x] **Restart from the timeline view** — "I would like to be able to restart
+      from the view where I see the timeline." **#131**.
+- [x] **Swedish only on this page** — "you can remove the english translation
       on this page (it's a Swedish event)". Reading this as: the **commands**
       are the real spoken Swedish commands and stay Swedish whatever the app
       language, since that is what is called on the line. Confirm whether the
       surrounding chrome (buttons, headings) should also stop translating —
-      that would be the first deliberate exception to hard rule 5.
+      that would be the first deliberate exception to hard rule 5. **#131** — commands stay Swedish, chrome stays translated; confirmed by the maintainer 2026-09-09.
 - [ ] **"Parti 1" / "Parti 2"** — see Naming above; if the commands stay
       Swedish by design, this stops being a bug and the English UI simply has
       to stop pretending to translate them.
 
 **Feedback.**
 
-- [ ] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n" and
-      **"time is up"**.
+- [x] **Selectable vibration**, firing at "Eld", "Parti 1" … "Parti n" and
+      **"time is up"**. **#131** — fires at Eld, each parti and time-up.
 
 ### PAR timer
 
@@ -686,13 +684,13 @@ a standalone build onto the maintainer's phone.
 
 ### Corrections to the demo set
 
-- [ ] **FWB AW93 is a .22 LR pistol**, not an air pistol. That was my error, and
+- [x] **FWB AW93 is a .22 LR pistol**, not an air pistol. That was my error, and
       it is the second correction to this fixture (the P8X went the other way —
       it _is_ an air pistol). With AW93 on .22 the set finally closes: the two
       SK Pistol Match lots have a gun that chambers them, and **vapengrupp C
       (".22 LR only") is exercised**, which it was not before. Final set:
       AW93 → `spsf:C`, P8X → `generic:airgun`, CZ TS2 Orange → `spsf:A`,
-      MR73 Sport → `spsf:R` + `spsf:B`.
+      MR73 Sport → `spsf:R` + `spsf:B`. **#118**.
 
 ### Decisions taken
 
@@ -714,13 +712,13 @@ a standalone build onto the maintainer's phone.
 
 ### Build and tooling
 
-- [ ] **`babel-preset-expo` is declared in no `package.json`** yet
+- [x] **`babel-preset-expo` is declared in no `package.json`** yet
       `app/babel.config.js` requires it. It exists in the maintainer's checkout
       only as a stale symlink from an older install; every fresh worktree lacks
       it and `pnpm install` will not recreate it, so **a fresh clone cannot
       bundle**. Found while building a release APK; almost certainly what the
       abandoned `fix/release-build-babel-preset` branch was for. Approved to
-      declare it in `app` devDependencies.
+      declare it in `app` devDependencies. **#129** — fixed by resolving through `expo` rather than declaring it: declaring it links a peerless variant pnpm never materialises, leaving a dangling symlink. Verified from a fresh worktree.
 - [ ] **Use a real slider instead of the hand-rolled `PanResponder` one.**
       The fälttimer branch built `app/src/components/slider.tsx` from
       `PanResponder` because no slider package is in the lockfile and rule 2
@@ -732,7 +730,7 @@ a standalone build onto the maintainer's phone.
   template and are recorded nowhere the user or the store listing can see.
   Needs a decision on the floor, then documenting in `docs/store-listing.md`
   and `docs/release.md`.
-- [ ] **Document the local standalone build.** No `CONTRIBUTING.md` exists, so
+- [x] **Document the local standalone build.** No `CONTRIBUTING.md` exists, so
       this goes in `CLAUDE.md`'s agentic loop beside the emulator commands:
       `assembleRelease` (debug-keystore-signed, JS bundled, no Metro),
       `-PreactNativeArchitectures=arm64-v8a` to cut a 295 MB universal APK to
@@ -747,41 +745,41 @@ a standalone build onto the maintainer's phone.
 Maintainer: _"Can we add a preset list of calibers? And when we show it always
 show recent/most used on top?"_
 
-- [ ] **A preset caliber list, most-used first.** Caliber is free text today on
-      both `firearms` and `ammo_lots`, which is why the demo fixture alone
-      spells things three ways (`.22 LR`, `9×19 mm`, `4.5 mm`).
-- [ ] **Presets only — no free text.** Revised by the maintainer 2026-09-10
-      (_"caliber and load system, presets only"_), superseding the first pass
-      here. That raises the bar on the list: a shooter whose chambering is
-      missing is simply stuck, so it has to be genuinely comprehensive, and
-      existing free-text values need a backfill onto canonical presets with an
-      explicit decision about anything unrecognised.
-- [ ] **"Most used" is counted from the user's own rows**, across firearms and
-      ammo lots — no new column, no new table.
-- [ ] **International by design** (plan.md principle): the list cannot be
-      SPSF-only or Sweden-only, and metric and imperial naming both have to
-      appear the way shooters actually write them.
+- [~] **A preset caliber list, most-used first.** Caliber is free text today on
+  both `firearms` and `ammo_lots`, which is why the demo fixture alone
+  spells things three ways (`.22 LR`, `9×19 mm`, `4.5 mm`). **#133**.
+- [~] **Presets only — no free text.** Revised by the maintainer 2026-09-10
+  (_"caliber and load system, presets only"_), superseding the first pass
+  here. That raises the bar on the list: a shooter whose chambering is
+  missing is simply stuck, so it has to be genuinely comprehensive, and
+  existing free-text values need a backfill onto canonical presets with an
+  explicit decision about anything unrecognised. **#133**.
+- [~] **"Most used" is counted from the user's own rows**, across firearms and
+  ammo lots — no new column, no new table. **#133**.
+- [~] **International by design** (plan.md principle): the list cannot be
+  SPSF-only or Sweden-only, and metric and imperial naming both have to
+  appear the way shooters actually write them.
 
 Canonical spelling is the real prize: `9×19`, `9x19` and `9 mm Luger` are one
 caliber, and free text makes them three. Whatever the presets say becomes the
-de facto standard, so pick deliberately.
+de facto standard, so pick deliberately. **#133**.
 
 ### Load system — presets only
 
 Maintainer: _"Same with load system - provide presets only"_ — note **only**,
 unlike caliber, which keeps its free-text escape.
 
-- [ ] **Replace the free-text load system with a fixed set.** Values are a
-      small closed vocabulary (single shot, semi-automatic, revolver, bolt
-      action…), so free text buys nothing and costs consistency.
-- [ ] **This also fixes an i18n leak.** `firearms.load_system` currently stores
-      the _display string_, and the demo fixture stores Swedish (`Enkelskott`,
-      `Halvautomat`) — which then renders untranslated in the English UI, the
-      same class of bug as the sight-label hint in #122. Store a stable code
-      and translate at render, per hard rule 5.
-- [ ] **Existing rows need a migration and an honest backfill** — map the
-      strings actually in the wild onto codes, and decide what happens to
-      anything unrecognised rather than silently dropping it.
+- [~] **Replace the free-text load system with a fixed set.** Values are a
+  small closed vocabulary (single shot, semi-automatic, revolver, bolt
+  action…), so free text buys nothing and costs consistency. **#133**.
+- [~] **This also fixes an i18n leak.** `firearms.load_system` currently stores
+  the _display string_, and the demo fixture stores Swedish (`Enkelskott`,
+  `Halvautomat`) — which then renders untranslated in the English UI, the
+  same class of bug as the sight-label hint in #122. Store a stable code
+  and translate at render, per hard rule 5. **#133**.
+- [~] **Existing rows need a migration and an honest backfill** — map the
+  strings actually in the wild onto codes, and decide what happens to
+  anything unrecognised rather than silently dropping it. **#133**.
 
 ### More [i] candidates
 
@@ -802,13 +800,13 @@ see e.g. Firearm > Weapon Groups, Sight Settings"_
 
 First feedback from the maintainer using a standalone build on their own phone.
 
-- [ ] **The shot timer belongs inside a session, not on the sessions list.**
-      Maintainer: _"the shot timer shall not show on the sessions list view but
-      when in a session. and it should just be a simple timer start at 0 and in
-      MM:SS"_. This sharpens §6's "plain count-up stopwatch (MM:SS)" item: it is
-      not a variant of the IPSC shot timer, it is a **plain count-up clock**
-      starting at 0, and its home is the session, not the list. Whatever
-      currently surfaces a timer on the list view comes off.
+- [~] **The shot timer belongs inside a session, not on the sessions list.**
+  Maintainer: _"the shot timer shall not show on the sessions list view but
+  when in a session. and it should just be a simple timer start at 0 and in
+  MM:SS"_. This sharpens §6's "plain count-up stopwatch (MM:SS)" item: it is
+  not a variant of the IPSC shot timer, it is a **plain count-up clock**
+  starting at 0, and its home is the session, not the list. Whatever
+  currently surfaces a timer on the list view comes off. **#135** — the Home row was only a `/timer` shortcut; removed.
 - [ ] **Ammo rows: put the handload recipe on its own line and drop the
       slash.** Maintainer: _"The hand loading info should be on a separate line
       and remove the slash /"_. Seen on the Ammunition list, where

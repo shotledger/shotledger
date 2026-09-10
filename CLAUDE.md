@@ -192,6 +192,17 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
 assembleDebug --rerun-tasks -PreactNativeDevServerPort=<port>`, then
   `adb install -r app/build/outputs/apk/debug/app-debug.apk` explicitly
   rather than trusting the Expo CLI's own install step.
+- **Standalone build for a phone** (no Metro, no EAS account): `cd app &&
+pnpm exec expo prebuild --platform android --no-install`, then `cd android &&
+./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a`. The Expo
+  template signs `release` with the debug keystore, so the APK installs by
+  `adb install -r` and updates in place over another debug-signed build without
+  losing data. Restricting the ABI cuts a 295 MB universal APK to 90 MB.
+  `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` and adds a
+  Developer row in Settings so demo data is reachable in a release build —
+  **never set it for a Play build; it ships a wipe button.** Note a release
+  build bundles JS at build time, so it fails immediately on any bundling
+  problem a dev build would only hit once Metro serves.
 - Backend (`backend/`, never deployed by an agent — `wrangler deploy` is
   forbidden): `cd backend && pnpm test` runs its own Cloudflare Workers
   vitest suite; not wired into the root `pnpm check`. On this sandbox the
