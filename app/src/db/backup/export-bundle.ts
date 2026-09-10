@@ -1,7 +1,7 @@
 // Glue layer (mirrors db/csv/build-export.ts): assembles a backup bundle
 // (manifest.json + database.sqlite3 + optional photos/, sync-photos/ and an
 // opt-in sealed vault section) from the live DB. Uses a VACUUM INTO'd copy
-// throughout (plan.md v2: "never the live file"): the copy is what gets its
+// throughout — never the live file: the copy is what gets its
 // photo_uri columns rewritten to relative bundle paths, counted for the
 // manifest, and serialized into the bundle.
 //

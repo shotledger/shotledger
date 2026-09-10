@@ -1,5 +1,5 @@
-// Fälttimer — the range officer's command sequence for fältskjutning
-// (plan.md "Timers"/"Fälttimer"). Pure: a program builder that turns the
+// Fälttimer — the range officer's command sequence for fältskjutning.
+// Pure: a program builder that turns the
 // user's settings into a numbered list of commands at times **relative to
 // ELD**, plus a cursor engine over that program. No RN/audio/speech imports —
 // the app layer maps each cue to speech, a tone and a vibration.

@@ -1,4 +1,4 @@
-// Backup bundle manifest (plan.md v2 "Backup export/import"). Packed as
+// Backup bundle manifest. Packed as
 // `manifest.json` inside the container alongside `database.sqlite3` and,
 // for the "database+photos" kind, `photos/<seriesId>.<ext>` entries.
 import { z } from 'zod';

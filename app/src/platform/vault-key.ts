@@ -1,5 +1,5 @@
-// Vault key lifecycle (plan.md v2, docs/specs/document-vault-spec.md "Key
-// lifecycle"). One AES-256 key per install, generated once and held only in
+// Vault key lifecycle (docs/specs/document-vault-spec.md "Key lifecycle").
+// One AES-256 key per install, generated once and held only in
 // expo-secure-store (Android Keystore-backed, hardware-backed on API 23+;
 // iOS Keychain) — never written to the app DB, CSV export, or any log.
 import * as SecureStore from 'expo-secure-store';

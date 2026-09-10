@@ -1,5 +1,5 @@
 // Fälttimer — the range officer's command sequence for fältskjutning, the
-// third mode behind the Timer entry (plan.md "Timers"). Setup and run are
+// third mode behind the Timer entry. Setup and run are
 // two views of one screen, switched on the engine's phase, mirroring
 // timer.tsx and ipsc-timer.tsx. All sequence logic lives in the pure
 // `FaltTimerEngine` (shared/src/timer/falt.ts); this file is layout plus

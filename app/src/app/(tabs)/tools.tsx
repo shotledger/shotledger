@@ -1,9 +1,8 @@
 // Tools tab — the utilities that are not app settings: timers, the
 // encrypted vault, and WebShooter. Settings had accumulated ten unrelated
-// concerns and WebShooter is a feature, not a preference (plan.md
-// 2026-09-03). This screen owns navigation entry points plus the WebShooter
-// connection controls that used to live in Settings; the destination
-// screens are unchanged.
+// concerns and WebShooter is a feature, not a preference. This screen owns
+// navigation entry points plus the WebShooter connection controls that used
+// to live in Settings; the destination screens are unchanged.
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-// Document-vault directory and file paths (plan.md v2). Everything the vault
+// Document-vault directory and file paths. Everything the vault
 // writes lives under one directory, `vault/`, inside the app's document
 // directory — the Android backup-exclusion plugin
 // (app/plugins/withVaultBackupExclusion.js) targets this exact path

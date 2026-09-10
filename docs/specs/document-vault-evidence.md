@@ -127,7 +127,7 @@ the exact generated XML.
   upstream Apple/Android platform crypto libraries; this project's
   responsibility is not re-implementing AES-GCM, which it doesn't).
 - iOS backup exclusion (`NSURLIsExcludedFromBackupKey`) is **not
-  implemented** — flagged as a follow-up in plan.md's decisions log. No Mac
+  implemented** — flagged as a follow-up in the decisions log. No Mac
   is available to this agent to build/verify an iOS target at all (repo
   convention: Android first, iOS later, all code iOS-ready) and no current
   Expo module exposes that flag without a small custom native module or a

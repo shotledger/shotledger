@@ -1,4 +1,4 @@
-// Share cards (plan.md v2): the card itself, drawn as react-native-svg
+// Share cards: the card itself, drawn as react-native-svg
 // primitives so the same tree both renders on screen (preview) and
 // rasterizes to PNG via `Svg.toDataURL()` (app/src/platform/share-card.ts) —
 // no Skia, no new dependency. Always the Purple Rain dark palette

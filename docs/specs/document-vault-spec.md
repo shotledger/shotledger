@@ -20,8 +20,8 @@ is on-device-only storage, not money/multi-user auth/concurrency), on branch
 
 ## Why this exists
 
-plan.md v2: "Encrypted on-device document vault (license, membership card) —
-never synced." Benchmark: Shotlytic (iOS-only) stores license/membership-card
+An encrypted on-device document vault (license, membership card), never
+synced. Benchmark: Shotlytic (iOS-only) stores license/membership-card
 photos and door codes on-device, CryptoKit-encrypted, as its distinctive
 feature. This module is the Android/RN equivalent of that primitive:
 authenticated encryption for arbitrary bytes (photos, short text secrets),

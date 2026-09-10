@@ -1,4 +1,4 @@
-// Vault list — reachable from Settings, not a tab (plan.md v2). Gated by a
+// Vault list — reachable from Settings, not a tab. Gated by a
 // biometric/passcode prompt (useVaultGate) before anything is decrypted or
 // even listed, since the index itself is an encrypted file.
 import { useRouter } from 'expo-router';

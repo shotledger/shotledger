@@ -115,7 +115,7 @@ export default function FirearmDetailScreen() {
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [applyFirearmDetails, setApplyFirearmDetails] = useState(false);
   // Kept by default — a gun shop needs to see the actual card. This is the
-  // opt-OUT switch (plan.md: the original image is now kept by default).
+  // opt-OUT switch.
   const [storeScanInVault, setStoreScanInVault] = useState(true);
   const [vaultDenied, setVaultDenied] = useState(false);
   const [cardViewDenied, setCardViewDenied] = useState(false);
@@ -178,8 +178,7 @@ export default function FirearmDetailScreen() {
   /**
    * Pick, recognise, parse — then pre-fill. Nothing reaches the database
    * here: the parse only fills the form's inputs, which the user edits and
-   * confirms with the existing Save button (plan.md v2: "never save without
-   * confirmation").
+   * confirms with the existing Save button.
    */
   async function onScanCard(source: ScanSource) {
     setScan({ status: 'busy' });
@@ -226,8 +225,8 @@ export default function FirearmDetailScreen() {
   async function onAddLicense() {
     if (!db) return;
     // Settle the scanned original's fate before the license row is created,
-    // so a kept image can be linked to it in a single insert (plan.md: kept
-    // by default, encrypted in the vault — a shop must be able to see it).
+    // so a kept image can be linked to it in a single insert. Kept by
+    // default, encrypted in the vault — a shop must be able to see it.
     const uri = scannedImageUri;
     let vaultDocumentId: string | null = null;
     if (uri) {

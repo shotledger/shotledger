@@ -1,10 +1,9 @@
-// Share cards (plan.md v2): pure layout-data builders for the session and
+// Share cards: pure layout-data builders for the session and
 // series share images. All labels arrive pre-localized (the caller resolves
 // i18n/date formatting, same split as shared/src/export/pdf-log.ts) — these
 // functions only shape the data: drop sighters from the series list, and
 // turn a blank opt-in note into `null` so the renderer can skip the line.
-// Never derive shooter identity or location here (CLAUDE.md rule 7 / plan.md
-// "never include shooter identity or location automatically").
+// Never derive shooter identity or location here (CLAUDE.md rule 7).
 
 export interface ShareCardSeriesEntry {
   position: number;

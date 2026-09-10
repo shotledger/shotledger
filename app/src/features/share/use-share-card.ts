@@ -1,8 +1,7 @@
-// Share cards (plan.md v2): turns DB rows + i18n labels into the pure
+// Share cards: turns DB rows + i18n labels into the pure
 // card-model input, mirroring the session/local split in
 // app/src/features/export/use-pdf-export.ts. Never reads session.location or
-// any shooter-identity field (CLAUDE.md rule 7 / plan.md "never include
-// shooter identity or location automatically") — only discipline, weapon
+// any shooter-identity field (CLAUDE.md rule 7) — only discipline, weapon
 // group/class, firearm and scores.
 import type { TFunction } from 'i18next';
 import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';

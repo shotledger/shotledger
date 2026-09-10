@@ -1,8 +1,7 @@
 # Shot timer — executable specification
 
 > Old-coder SPEC artifact for the v3-backlog shot timer (`feat/shot-timer`,
-> maintainer-approved scope expansion from `plan.md` v3+ "PAR/interval shot
-> timer").
+> a maintainer-approved scope expansion).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/shot-timer-spec.md`
 > Evidence report: `docs/specs/shot-timer-evidence.md`.
 >

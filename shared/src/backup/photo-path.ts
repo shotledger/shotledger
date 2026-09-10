@@ -1,5 +1,5 @@
 // Relative, location-independent path rewriting for the "database+photos"
-// bundle kind (plan.md v2: "paths rewritten so restore is location-independent").
+// bundle kind, so restore is location-independent.
 import { PHOTOS_ENTRY_PREFIX, SYNC_PHOTOS_ENTRY_PREFIX } from './types';
 
 /** Container entry name for one series' photo, e.g. `photos/<seriesId>.jpg`. */

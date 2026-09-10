@@ -1,7 +1,7 @@
 // Vault document CRUD: an encrypted JSON index (labels/types/dates) plus one
 // encrypted file per document. Deliberately not a Drizzle table — nothing
 // here ever touches app/src/db, so it structurally cannot end up in a sync
-// push/pull or CSV export, per plan.md v2 ("never synced"). Every dependency
+// push/pull or CSV export — the vault is never synced. Every dependency
 // is injectable (`VaultStoreDeps`) so this module is testable with fakes;
 // `defaultVaultStoreDeps()` wires the real expo-crypto/expo-secure-store/
 // expo-file-system-backed implementations for app code.

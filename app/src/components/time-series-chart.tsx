@@ -1,7 +1,7 @@
 // Hand-drawn time-series chart for the analytics report (x = session date).
 // Plain react-native-svg, like group-plot.tsx / distribution-bar-chart.tsx —
 // no charting library (victory-native and @shopify/react-native-skia are not
-// in the lockfile; see plan.md's 2026-09-02 decision row).
+// in the lockfile).
 //
 // Responsive by viewBox: width="100%" with a fixed coordinate space, so the
 // same chart fits any screen without measuring.

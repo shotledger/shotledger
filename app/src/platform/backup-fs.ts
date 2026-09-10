@@ -1,5 +1,5 @@
-// Platform wrapper for backup export/import (plan.md v2 "Backup export/
-// import"). Mirrors csv-export.ts/csv-import.ts's shape (expo-file-system +
+// Platform wrapper for backup export/import. Mirrors
+// csv-export.ts/csv-import.ts's shape (expo-file-system +
 // expo-sharing, no Android-only module, `File.pickFileAsync` instead of
 // expo-document-picker — see csv-import.ts). Degrades to a no-op/null on
 // web, where none of expo-sqlite/expo-file-system/expo-sharing has a usable

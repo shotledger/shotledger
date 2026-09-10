@@ -63,7 +63,7 @@ integration suite, not by mutation testing — the precedent set by
   - `app/src/app/account.tsx`, `app/src/app/(tabs)/settings.tsx` (edit: one
     row), `app/src/i18n/{en,sv}.json` (edit).
   - `backend/src/index.ts` (edit: §8), `backend/test/sync-client.spec.ts`.
-  - `docs/specs/sync-app-evidence.md`, `CLAUDE.md`, `plan.md`,
+  - `docs/specs/sync-app-evidence.md`, `CLAUDE.md`,
     `docs/implementation-plan.md`, `docs/release.md`.
 
 ## 1. What the backend actually exposes (checked, not assumed)

@@ -1,4 +1,4 @@
-// Biometric/passcode gate for the vault screen (plan.md v2). Graceful
+// Biometric/passcode gate for the vault screen. Graceful
 // fallback: expo-local-authentication's own authenticateAsync() already
 // falls back to the device passcode/PIN when biometrics fail or aren't
 // enrolled but a passcode exists (disableDeviceFallback defaults to false).

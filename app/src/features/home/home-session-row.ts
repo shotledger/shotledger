@@ -1,6 +1,4 @@
-// Pure builder for one Home session row (§4 M2, spec Amendment A2 §A2.4;
-// row-format and shape fields per the maintainer's 2026-09-03 Home list
-// revision — see plan.md decisions log).
+// Pure builder for one Home session row (§4 M2, spec Amendment A2 §A2.4).
 // Kept free of any DB import so it can be jest-unit-tested without pulling
 // in the native expo-sqlite client (see use-home-data.test.ts).
 import {
