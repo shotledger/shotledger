@@ -7,7 +7,7 @@ below is one-time setup the maintainer has to do before the first upload.
 ## (a) One-time setup (maintainer only)
 
 - [ ] **Google Play developer account.** VERIFY which account type
-      (plan.md "Open" section, not yet decided):
+      (tracked in issue [#138](https://github.com/jimisola/shotledger/issues/138), not yet decided):
   - _Personal account_: $25 one-time fee. Play Console requires
     **12 testers opted into closed testing for 14 continuous days**
     before an app can go to production — this gate has to be planned
@@ -104,3 +104,50 @@ cd app && eas build --platform android --profile preview
 Produces an installable `.apk` for ad-hoc sharing (e.g. sideloading to a
 test device) without going through Play Console at all. Useful for
 milestone demos before a store submission is warranted.
+
+## CI and build budget
+
+**GitHub Actions**, private repo: macOS minutes are limited (2,000 min/mo
+at a 10× multiplier ≈ 200 real minutes on the free plan) — the
+unlimited-free-macOS perk only applies once the repo is public. EAS's
+free tier (30 builds/mo, 15 iOS) covers app builds in the meantime.
+
+**iOS without a Mac.** EAS Build + EAS Submit run from Linux; TestFlight
+handles beta distribution (builds expire after 90 days). A real iPhone is
+still needed for camera testing — but no Mac is needed anywhere in the
+pipeline.
+
+## Distribution channels
+
+- **Android:** Google Play (main channel) + a direct APK via GitHub
+  Releases. Google's developer verification requirement (enforcing
+  2026-09-30 in BR/ID/SG/TH, global 2027) is satisfied by having a Play
+  account — register the package name and signing key once.
+- **Donations:** a "Support development" row in Settings opens the
+  configured funding link in the external browser; unlocks nothing, no
+  purchase language. Also linked from the store listing and README. The
+  rail itself is under reconsideration — see `app/PRODUCT.md`'s Brand
+  Commitments and issue #138.
+
+## Repo configuration
+
+`github.com/jimisola/shotledger`, private. Modeled on the skillsgateway
+org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
+title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
+squashes), delete-branch-on-merge, allow-update-branch, web commit
+signoff required, wiki/projects off, vulnerability alerts on, Dependabot
+security PRs off (Renovate owns dependency updates instead). Renovate's
+config (`renovate.json5`) extends the shared
+`github>skillsgateway/.github` preset; its labels (`bot-renovate*`,
+`renovate-version-*`, `security`, `dependencies`) are already created.
+The Renovate GitHub App is installed.
+
+**Blocked until the repo is public or on a paid plan:** branch
+protection, rulesets and auto-merge are all unavailable on a free-plan
+private repo (confirmed 2026-09-10: the rulesets API answers 403
+"Upgrade to GitHub Pro or make this repository public") — merge
+discipline stays workflow-based until then. Once the repo goes public,
+add a `protect-main` ruleset with required checks, enable auto-merge,
+revisit safe-settings, and **audit the full history before flipping
+visibility** — the secrets rule in `~/.claude/CLAUDE.md` applies to
+anything that was ever pushed, not just what is on `main` today.
