@@ -97,10 +97,14 @@ scores against official results.
 - **Casing**: English screen titles, section headers, field labels, tab and
   button labels are Title Case; English body copy, help text and placeholders
   are sentence case; **Swedish is sentence case throughout**.
-- Donation-funded via Buy Me a Coffee, framed as an optional gift that unlocks
-  nothing. Features are never gated — series length, session type, firearm
-  linking and statistics are all free, deliberately, because competitors
-  paywalling them is a stated grievance of their own users.
+- Donation-funded, framed as an optional gift that unlocks nothing. Features
+  are never gated — series length, session type, firearm linking and
+  statistics are all free, deliberately, because competitors paywalling them
+  is a stated grievance of their own users. **The rail is Buy Me a Coffee
+  today but under active reconsideration** (issue #138): researched against
+  primary sources 2026-09-09, it turned out to be the most expensive
+  mainstream option (~15–16% of a small tip); a Stripe Payment Link plus
+  GitHub Sponsors is the current recommendation, not yet decided.
 
 ## Evidence on Hand
 
@@ -121,7 +125,16 @@ scores against official results.
 1. **Never gate the basics.** Series length, session type, firearm linking and
    statistics stay free — the resentment competitors earned by paywalling them
    is a positioning asset.
-2. **Statistics are live views, never a "generate report" form.**
+2. **Statistics are computed fresh, never a stored, staleable report.**
+   The Statistics tab is filter-first (period, type, discipline, shots per
+   series, tags) and generates its report on the fly from whatever matches
+   right now — nothing is saved to disk, so there is no artifact that can
+   drift from the data it describes. Revised 2026-09-10: the tab used to be
+   a fixed set of live tiles with no filtering; the maintainer asked for a
+   filter-first rebuild instead (issue #138), and that shipped. What
+   survives from the original principle is the "no staleable artifact"
+   part, not "no form" — the form is exactly what makes the filtering
+   possible.
 3. **The app works fully offline with no account.** Sync is an option, never a
    precondition.
 4. **The user's data is theirs**: local SQLite, CSV/JSON/PDF export always
@@ -129,3 +142,17 @@ scores against official results.
 5. **Never guess a regulatory or scoring value.** Anything unconfirmed is marked
    `VERIFY:` and asked, because a wrong threshold silently corrupts a shooter's
    competition record.
+
+## Costs
+
+| Item                                               | Cost           |
+| -------------------------------------------------- | -------------- |
+| Google Play account                                | $25 once       |
+| Apple Developer Program (when iOS ships)           | $99/yr         |
+| Cloudflare (to ~1–2k active users)                 | $0/mo          |
+| Cloudflare Workers Paid (comfortable to ~5k users) | $5/mo          |
+| Domains (shotledger.app, optionally .se)           | ~125–225 kr/yr |
+
+Donation target to break even: roughly 30–40 coffees/year, or whatever the
+chosen funding rail's equivalent is (see issue #138 — the rail itself is
+still an open decision).
