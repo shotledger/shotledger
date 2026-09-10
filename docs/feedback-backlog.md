@@ -807,7 +807,7 @@ First feedback from the maintainer using a standalone build on their own phone.
   not a variant of the IPSC shot timer, it is a **plain count-up clock**
   starting at 0, and its home is the session, not the list. Whatever
   currently surfaces a timer on the list view comes off. **#135** — the Home row was only a `/timer` shortcut; removed.
-- [ ] **Ammo rows: put the handload recipe on its own line and drop the
+- [x] **Ammo rows: put the handload recipe on its own line and drop the
       slash.** Maintainer: _"The hand loading info should be on a separate line
       and remove the slash /"_. Seen on the Ammunition list, where
       `.38 Spl HN Wadcutter 125 gr / N310 3.1 gr` wraps across two lines mid-
@@ -816,28 +816,11 @@ First feedback from the maintainer using a standalone build on their own phone.
       in columns** (`powder`, `powderChargeGr`, `bulletMake`, `bulletWeightGr`),
       so the row should render a second line from those fields instead of the
       demo fixture baking `"/ N310 3.1 gr"` into `label`. Fix the seed labels at
-      the same time, or the two will disagree.
-- [ ] **The shot timer belongs inside a session, not on the sessions list.**
-      Maintainer: _"the shot timer shall not show on the sessions list view but
-      when in a session. and it should just be a simple timer start at 0 and in
-      MM:SS"_. This sharpens §6's "plain count-up stopwatch (MM:SS)" item: it is
-      not a variant of the IPSC shot timer, it is a **plain count-up clock**
-      starting at 0, and its home is the session, not the list. Whatever
-      currently surfaces a timer on the list view comes off.
-- [~] **Ammo rows: put the handload recipe on its own line and drop the
-  slash.** Maintainer: _"The hand loading info should be on a separate line
-  and remove the slash /"_. Seen on the Ammunition list, where
-  `.38 Spl HN Wadcutter 125 gr / N310 3.1 gr` wraps across two lines mid-
-  recipe and collides with the Handload chip.
-  The real fix is structural rather than cosmetic: the recipe is **already
-  in columns** (`powder`, `powderChargeGr`, `bulletMake`, `bulletWeightGr`),
-  so the row should render a second line from those fields instead of the
-  demo fixture baking `"/ N310 3.1 gr"` into `label`. Fix the seed labels at
-  the same time, or the two will disagree.
+      the same time, or the two will disagree. **#137**.
 
 ### FAB placement
 
-- [~] **The "New X" FAB blocks the rows underneath it.** Maintainer, 2026-09-10,
+- [x] **The "New X" FAB blocks the rows underneath it.** Maintainer, 2026-09-10,
   on the Ammunition list: _"The button to add New X needs to be in a
   location where it is less blocking of what's below"_, then _"the FAB is
   overlapping in many views"_.
@@ -847,7 +830,7 @@ First feedback from the maintainer using a standalone build on their own phone.
   space beneath the last row**, so on a short list it landed on top of one.
   Fixed once in the shared `Screen` component (a `fab` prop, so a new list
   screen gets the clearance for free and cannot get it wrong), covering
-  Home, Firearms/Ammunition, Vault and the dev gallery.
+  Home, Firearms/Ammunition, Vault and the dev gallery. **#137**.
 
 ## Decisions taken while working through this feedback
 
