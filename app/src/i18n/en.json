@@ -8,7 +8,11 @@
     "deleteSessionConfirmTitle": "Delete Session?",
     "deleteSessionConfirmBody": "Its series and shots will be removed too. This can't be undone.",
     "close": "Close",
-    "infoAbout": "More information about {{subject}}"
+    "infoAbout": "More information about {{subject}}",
+    "caliberPlaceholder": "Select a caliber",
+    "caliberSearchPlaceholder": "Search calibers",
+    "caliberNoMatch": "No caliber matches.",
+    "caliberLegacyHint": "Saved before the preset list — pick one to replace it."
   },
   "tabs": {
     "home": "Home",
@@ -150,6 +154,17 @@
     "serialNumber": "Serial Number",
     "vapenId": "National Register ID",
     "loadSystem": "Load System",
+    "loadSystems": {
+      "single_shot": "Single Shot",
+      "semi_automatic": "Semi-Automatic",
+      "revolver": "Revolver",
+      "bolt_action": "Bolt Action",
+      "lever_action": "Lever Action",
+      "pump_action": "Pump Action",
+      "break_action": "Break Action",
+      "fully_automatic": "Fully Automatic"
+    },
+    "loadSystemUnset": "Not Set",
     "notes": "Notes",
     "save": "Save",
     "create": "Create Firearm",

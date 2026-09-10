@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
+import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -30,7 +31,7 @@ export default function AmmoLotDetailScreen() {
   const usage = db && lot ? getAmmoLotUsage(db, lot.id) : { sessionCount: 0, shotCount: 0 };
 
   const [label, setLabel] = useState(lot?.label ?? '');
-  const [caliber, setCaliber] = useState(lot?.caliber ?? '');
+  const [caliber, setCaliber] = useState<string | null>(lot?.caliber ?? null);
   const [quantity, setQuantity] = useState(lot?.quantity != null ? String(lot.quantity) : '');
   const [purchasedOn, setPurchasedOn] = useState(lot?.purchasedOn ?? '');
   const [isHandload, setIsHandload] = useState(lot?.isHandload === 1);
@@ -69,7 +70,7 @@ export default function AmmoLotDetailScreen() {
     if (!db || !lot) return;
     updateAmmoLot(db, lot.id, {
       label: label.trim(),
-      caliber: caliber.trim() || null,
+      caliber,
       quantity: numberOrNull(quantity),
       purchasedOn: purchasedOn.trim() || null,
       isHandload,
@@ -103,8 +104,7 @@ export default function AmmoLotDetailScreen() {
       <Card>
         <ThemedText type="smallBold">{t('ammo.label')}</ThemedText>
         <TextField value={label} onChangeText={setLabel} />
-        <ThemedText type="smallBold">{t('ammo.caliber')}</ThemedText>
-        <TextField value={caliber} onChangeText={setCaliber} />
+        <CaliberPicker label={t('ammo.caliber')} value={caliber} onChange={setCaliber} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
         <TextField value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>

@@ -1,3 +1,4 @@
+import { isCaliberPreset, isLoadSystemCode } from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { listAmmoLots } from './queries/ammo-lots';
@@ -43,6 +44,13 @@ describe('seedDemoData', () => {
       'Feinwerkbau P8X',
       'Manurhin MR73 Sport',
     ]);
+    // Demo data speaks the closed vocabularies, not free text: a canonical
+    // caliber and a language-neutral load-system code.
+    const firearms = listFirearms(db);
+    expect(firearms.every((f) => f.caliber === null || isCaliberPreset(f.caliber))).toBe(true);
+    expect(firearms.every((f) => f.loadSystem === null || isLoadSystemCode(f.loadSystem))).toBe(
+      true,
+    );
   });
 
   it('registers each firearm in the vapengrupper it may actually be used in', () => {
@@ -115,6 +123,7 @@ describe('seedDemoData', () => {
       expect(handload.brass, handload.label).toBeNull();
       expect(handload.colMm, handload.label).toBeNull();
     }
+    expect(lots.every((l) => l.caliber === null || isCaliberPreset(l.caliber))).toBe(true);
   });
 
   it('creates ~30 sessions with a mix of training/competition and one final', () => {

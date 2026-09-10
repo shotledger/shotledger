@@ -4,7 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
+import { LoadSystemPicker } from '@/components/load-system-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -23,13 +25,13 @@ export default function EditFirearmScreen() {
 
   const [make, setMake] = useState(firearm?.make ?? '');
   const [model, setModel] = useState(firearm?.model ?? '');
-  const [caliber, setCaliber] = useState(firearm?.caliber ?? '');
+  const [caliber, setCaliber] = useState<string | null>(firearm?.caliber ?? null);
   const [weaponType, setWeaponType] = useState<WeaponType>(
     (firearm?.weaponType as WeaponType) ?? 'pistol',
   );
   const [serialNumber, setSerialNumber] = useState(firearm?.serialNumber ?? '');
   const [vapenId, setVapenId] = useState(firearm?.vapenId ?? '');
-  const [loadSystem, setLoadSystem] = useState(firearm?.loadSystem ?? '');
+  const [loadSystem, setLoadSystem] = useState<string | null>(firearm?.loadSystem ?? null);
   const [notes, setNotes] = useState(firearm?.notes ?? '');
 
   if (!db || !firearm) {
@@ -45,11 +47,11 @@ export default function EditFirearmScreen() {
     updateFirearm(db, firearm.id, {
       make: make.trim(),
       model: model.trim(),
-      caliber: caliber.trim() || null,
+      caliber,
       weaponType,
       serialNumber: serialNumber.trim() || null,
       vapenId: vapenId.trim() || null,
-      loadSystem: loadSystem.trim() || null,
+      loadSystem,
       notes: notes.trim() || null,
     });
     router.back();
@@ -62,8 +64,7 @@ export default function EditFirearmScreen() {
         <TextField value={make} onChangeText={setMake} testID="firearm-make" />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
         <TextField value={model} onChangeText={setModel} testID="firearm-model" />
-        <ThemedText type="smallBold">{t('firearms.caliber')}</ThemedText>
-        <TextField value={caliber} onChangeText={setCaliber} />
+        <CaliberPicker label={t('firearms.caliber')} value={caliber} onChange={setCaliber} />
       </Card>
 
       <Card>
@@ -83,8 +84,11 @@ export default function EditFirearmScreen() {
         <TextField value={serialNumber} onChangeText={setSerialNumber} />
         <ThemedText type="smallBold">{t('firearms.vapenId')}</ThemedText>
         <TextField value={vapenId} onChangeText={setVapenId} />
-        <ThemedText type="smallBold">{t('firearms.loadSystem')}</ThemedText>
-        <TextField value={loadSystem} onChangeText={setLoadSystem} />
+        <LoadSystemPicker
+          label={t('firearms.loadSystem')}
+          value={loadSystem}
+          onChange={setLoadSystem}
+        />
       </Card>
 
       <Card>
