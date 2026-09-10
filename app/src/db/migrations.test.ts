@@ -322,3 +322,33 @@ describe('0009 caliber and load-system backfill on a populated pre-0009 database
     expect(firearmRows(sqlite)).toEqual(before);
   });
 });
+
+/**
+ * Regression guard for the startup crash 0009 shipped with (#153).
+ *
+ * A chunk that holds only SQL comments is not nothing: `sqlite3_prepare`
+ * accepts it, returns SQLITE_OK and hands back a **NULL** statement handle.
+ * expo-sqlite's `NativeStatementBinding` then calls `sqlite3_clear_bindings`
+ * on that null pointer and the process dies with SIGSEGV before the first
+ * screen renders — on device and emulator alike.
+ *
+ * The rehearsal above cannot catch it: it uses better-sqlite3's `exec()`,
+ * which swallows a comment-only string happily. Only the prepare-per-chunk
+ * path that expo-sqlite uses is affected, so this asserts on the file shape
+ * instead of on behaviour.
+ */
+describe('migration statement chunks', () => {
+  it('no migration contains a comment-only statement', () => {
+    const offenders: string[] = [];
+
+    for (const tag of journalTags()) {
+      const sql = fs.readFileSync(path.join(migrationsDir, `${tag}.sql`), 'utf-8');
+      sql.split('--> statement-breakpoint').forEach((chunk, index) => {
+        const withoutComments = chunk.replace(/^\s*--.*$/gm, '').trim();
+        if (withoutComments === '') offenders.push(`${tag} chunk ${index}`);
+      });
+    }
+
+    expect(offenders).toEqual([]);
+  });
+});
