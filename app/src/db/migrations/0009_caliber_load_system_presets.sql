@@ -25,7 +25,9 @@
 -- `updated_at` is bumped only on rows that actually change, so migration 0004's
 -- outbox triggers enqueue exactly those for sync and nothing else.
 --
---> statement-breakpoint
+-- NB: no statement separator between this header and the first statement.
+-- A chunk holding only comments prepares to a NULL statement handle, which
+-- expo-sqlite then dereferences — see migrations.test.ts.
 CREATE TEMP TABLE `caliber_map` (`k` TEXT PRIMARY KEY, `name` TEXT NOT NULL);
 --> statement-breakpoint
 INSERT INTO `caliber_map` (`k`, `name`) VALUES
