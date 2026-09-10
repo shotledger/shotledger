@@ -20,6 +20,7 @@ import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
+import { TagChips } from '@/components/tag-chips';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
@@ -45,7 +46,7 @@ export default function SessionDetailScreen() {
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
 
-  const { session, seriesRows, results } = detail;
+  const { session, seriesRows, results, tags } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
     session?.extraRounds == null ? '' : String(session.extraRounds),
   );
@@ -210,6 +211,7 @@ export default function SessionDetailScreen() {
             .filter(Boolean)
             .join(' · ')}
         </ThemedText>
+        <TagChips names={tags} testID="session-tags" />
       </View>
 
       <WebShooterSessionBadge session={session} />

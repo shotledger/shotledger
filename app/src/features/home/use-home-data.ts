@@ -10,6 +10,7 @@ import { db } from '@/db/client';
 import { countVolumeRounds } from '@/db/queries/shots';
 import { listAllStatsSeries } from '@/db/queries/stats';
 import { listSessions } from '@/db/queries/sessions';
+import { listTagsBySession } from '@/db/queries/tags';
 
 import { countSessionsByType, type HomeSessionCounts } from './home-session-counts';
 import { buildHomeSessionRow, type HomeSessionRow } from './home-session-row';
@@ -28,10 +29,12 @@ function loadHomeData(): HomeData {
   const allSessions = listSessions(db);
   const sessions = allSessions.slice(0, 10);
   const allSeries = listAllStatsSeries(db);
+  const tagsBySession = listTagsBySession(db);
   const latestSessions = sessions.map((session) =>
     buildHomeSessionRow(
       session,
       allSeries.filter((series) => series.sessionId === session.id),
+      tagsBySession.get(session.id) ?? [],
     ),
   );
 

@@ -51,3 +51,25 @@ export function listTagsForSession(db: Database, sessionId: string) {
     .where(and(eq(sessionTags.sessionId, sessionId), isNull(tags.deletedAt)))
     .all();
 }
+
+/**
+ * Every session's tag names, keyed by session id — one query for a whole
+ * list, so the Home screen does not run `listTagsForSession` per row.
+ */
+export function listTagsBySession(db: Database): Map<string, string[]> {
+  const rows = db
+    .select({ sessionId: sessionTags.sessionId, name: tags.name })
+    .from(sessionTags)
+    .innerJoin(tags, eq(sessionTags.tagId, tags.id))
+    .where(isNull(tags.deletedAt))
+    .orderBy(tags.name)
+    .all();
+
+  const bySession = new Map<string, string[]>();
+  for (const row of rows) {
+    const existing = bySession.get(row.sessionId);
+    if (existing) existing.push(row.name);
+    else bySession.set(row.sessionId, [row.name]);
+  }
+  return bySession;
+}

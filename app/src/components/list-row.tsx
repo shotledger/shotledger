@@ -9,6 +9,8 @@ export interface ListRowProps {
   /** One line, or several stacked lines — a blank/absent entry renders nothing. */
   subtitle?: string | readonly (string | null | undefined)[];
   trailing?: ReactNode;
+  /** Rendered under the subtitle, inside the row's text column (e.g. tag chips). */
+  below?: ReactNode;
   onPress?: () => void;
   /** Tints the title — `danger` for a row that destroys data. */
   themeColor?: ThemeColor;
@@ -16,7 +18,15 @@ export interface ListRowProps {
 }
 
 /** One row in a list group — session, firearm, or settings entry. */
-export function ListRow({ title, subtitle, trailing, onPress, themeColor, testID }: ListRowProps) {
+export function ListRow({
+  title,
+  subtitle,
+  trailing,
+  below,
+  onPress,
+  themeColor,
+  testID,
+}: ListRowProps) {
   const subtitleLines = (typeof subtitle === 'string' ? [subtitle] : (subtitle ?? [])).filter(
     (line): line is string => Boolean(line),
   );
@@ -32,6 +42,7 @@ export function ListRow({ title, subtitle, trailing, onPress, themeColor, testID
             {line}
           </ThemedText>
         ))}
+        {below}
       </View>
       {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
     </View>

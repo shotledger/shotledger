@@ -31,6 +31,8 @@ export interface HomeSessionRow {
   seriesAverage: number | null;
   /** Inner tens (Swedish: innertior) in the session's scored series. */
   innerTenCount: number;
+  /** Tag names, already sorted; empty when the session has none. */
+  tags: readonly string[];
   shape: SessionShape | null;
 }
 
@@ -69,6 +71,7 @@ export function buildHomeSessionRow(
     extraRounds?: number | null;
   },
   sessionSeries: readonly StatsSeries[],
+  tags: readonly string[] = [],
 ): HomeSessionRow {
   const average = seriesAverageTenths(sessionSeries);
   return {
@@ -79,6 +82,7 @@ export function buildHomeSessionRow(
     total: tenthsToScore(sessionResults(sessionSeries).totalTenths),
     seriesAverage: average === null ? null : tenthsToScore(average),
     innerTenCount: sessionInnerTenCount(sessionSeries),
+    tags,
     shape: deriveSessionShapeFromContent(sessionSeries, session.extraRounds ?? null),
   };
 }

@@ -8,6 +8,7 @@ import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
+import { TagChips } from '@/components/tag-chips';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
@@ -171,6 +172,7 @@ export default function HomeScreen() {
                   ]
                     .filter(Boolean)
                     .join(' · ')}
+                  below={<TagChips names={session.tags} testID={`home-session-${index}-tags`} />}
                   trailing={<Chip label={t(`sessionType.${session.type}`)} />}
                   onPress={() => router.push(`/session/${session.id}`)}
                 />
