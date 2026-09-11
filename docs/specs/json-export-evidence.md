@@ -79,7 +79,10 @@ so the incompatibility is silent rather than a version error.
 
 **This matters beyond this change**: the repo's evidence-first claims for
 `shared/src/scoring` and friends rest on that layer, and it has been reporting
-nothing since #144. Raised separately; **not fixed here**, because fixing an
+nothing since #144. Raised as #171 — the cause is upstream
+(stryker-mutator/stryker-js#6210: Vitest 5 matches `testNamePattern` against the
+suite chain joined with `' > '`, the runner still joins with a space, so every
+covered mutant runs zero tests). **Not fixed here**, because fixing an
 unrelated pre-existing failure is scope creep and would have hidden it inside
 this diff.
 
