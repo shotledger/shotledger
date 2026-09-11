@@ -305,7 +305,7 @@
     "birthYearHelp": "Används för åldersavdrag på pistolskyttemärkets seriekrav.",
     "locationLookup": "Plats",
     "locationLookupOnline": "Föreslå platser från kartan",
-    "locationLookupHelp": "När det är på skickas det du skriver i ett pass platsfält till photon.komoot.io.",
+    "locationLookupHelp": "När det är på skickas det du skriver i ett pass platsfält till photon.komoot.io, och när du trycker på Använd min plats skickas dina koordinater till overpass-api.de.",
     "birthYearPlaceholder": "Välj ett år",
     "birthYearSearchPlaceholder": "T.ex. 1970",
     "birthYearNoMatch": "Inget matchande år",
@@ -313,7 +313,7 @@
     "markeNoYearNote": "Inget födelseår angivet — visar fulla poängkrav utan åldersavdrag.",
     "markeReductionNote": "Åldersavdrag på {{points}} p/serie gäller från {{sinceYear}}.",
     "markeReductionNoneNote": "Inget åldersavdrag gäller ännu.",
-    "locationLookupInfo": "Av: bara platser du använt tidigare föreslås, och inget lämnar telefonen.\n\nPå: det du skriver i ett pass platsfält skickas till photon.komoot.io, som söker i OpenStreetMap. Inget annat om passet skickas, och du kan stänga av det igen när som helst.",
+    "locationLookupInfo": "Av: bara platser du använt tidigare föreslås, och inget lämnar telefonen.\n\nPå: det du skriver i ett pass platsfält skickas till photon.komoot.io, som söker i OpenStreetMap. Där dyker också knappen Använd min plats upp; när du trycker på den hämtas en position en gång och de koordinaterna skickas till overpass-api.de för att slå upp skjutbanor nära dig. Inget skickas förrän du trycker, din position sparas aldrig och spåras aldrig i bakgrunden, och bara namnet på banan du väljer sparas med passet. Du kan stänga av det igen när som helst.",
     "markeInfo": "Poäng som krävs per precisionsserie om 5 skott för varje valör, per vapengrupp (SHB bilaga 1 mom 5.1.1.1).\n\nFrån året efter du fyller 55 sänks kravet med 1 poäng per serie, och med 2 poäng från året efter du fyller 65. Ange ditt födelseår ovan för att se tabellen med avdraget inräknat."
   },
   "about": {
@@ -532,7 +532,13 @@
       "manual": "Manuellt",
       "photo": "Foto"
     },
-    "entryModeHint": "Hur en ny serie läggs till. Fråga ger valet varje gång."
+    "entryModeHint": "Hur en ny serie läggs till. Fråga ger valet varje gång.",
+    "locationUseMyLocation": "Använd min plats",
+    "locationRangesNearby": "Banor nära dig",
+    "locationRangesNeedOnline": "Slå på Föreslå platser från kartan i Inställningar för att hitta banor nära dig.",
+    "locationRangeNone": "Ingen skjutbana finns kartlagd nära dig.",
+    "locationRangeDenied": "ShotLedger har inte behörighet att använda din plats. Du kan ge behörighet i telefonens inställningar.",
+    "locationRangeFailed": "Kunde inte hitta banor nära dig. Kontrollera att platstjänster är på och att du har uppkoppling."
   },
   "share": {
     "title": "Dela pass",

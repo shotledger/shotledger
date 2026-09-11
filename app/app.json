@@ -49,6 +49,15 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analysed live and never stored."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to suggest the shooting range you are at. Used only when you tap it, never in the background.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to suggest the shooting range you are at. Used only when you tap it, never in the background.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ],
       "expo-secure-store",
       "./plugins/withVaultBackupExclusion"
     ],

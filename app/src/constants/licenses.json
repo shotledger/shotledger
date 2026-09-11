@@ -235,6 +235,11 @@
     "license": "MIT"
   },
   {
+    "name": "expo-location",
+    "version": "57.0.16",
+    "license": "MIT"
+  },
+  {
     "name": "expo-modules-core",
     "version": "57.0.16",
     "license": "MIT"

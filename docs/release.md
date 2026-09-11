@@ -66,7 +66,13 @@ deploy` is forbidden to agents; every command below is the maintainer's.
       and photos the user chooses to sync, all deletable in-app via
       Settings → Account & sync → Delete account (`POST /account/delete`).
       Social sign-in is not offered — better-auth is configured for
-      email + password only.
+      email + password only. **Location** needs an answer too: the app
+      declares `ACCESS_COARSE_LOCATION`/`ACCESS_FINE_LOCATION` for the
+      session Location field's "Use my location" button. It is used, not
+      collected — one foreground fix, taken only on that tap, sent to
+      `overpass-api.de` to look up nearby ranges and then discarded; no
+      background access, nothing stored, and only the range name the user
+      picks is saved.
 
 ## (b) Repeatable steps, every release
 
