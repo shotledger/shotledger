@@ -637,29 +637,29 @@
     "spsf-milsnabb": "Military Rapid Fire"
   },
   "webshooter": {
-    "sectionTitle": "WebShooter",
-    "connectHelp": "Connect with your WebShooter password (sent directly to webshooter.se, never through ShotLedger's own servers) or paste a token.",
+    "sectionTitle": "Webshooter",
+    "connectHelp": "Connect with your Webshooter password (sent directly to webshooter.se, never through ShotLedger's own servers) or paste a token.",
     "usernamePlaceholder": "Username",
     "passwordPlaceholder": "Password",
     "connectWithPassword": "Connect with Password",
-    "tokenFallbackHelp": "Or paste a WebShooter API token directly.",
+    "tokenFallbackHelp": "Or paste a Webshooter API token directly.",
     "tokenPlaceholder": "API token",
     "connectWithToken": "Connect with Token",
     "connectFailed": "Could not connect — check the token and try again.",
     "connectedAs": "Connected — card number {{cardNumber}}",
     "disconnect": "Disconnect",
     "importTitle": "Import Results",
-    "importSubtitle": "Browse your WebShooter competitions",
+    "importSubtitle": "Browse your Webshooter competitions",
     "startsTitle": "My Starts",
     "startsSubtitle": "Upcoming signups and patrol times",
-    "devMockTitle": "WebShooter Dev Mock",
+    "devMockTitle": "Webshooter Dev Mock",
     "devMockSubtitle": "Use invented fixture data instead of a live account (dev builds only)",
-    "importBrowseTitle": "Import from WebShooter",
+    "importBrowseTitle": "Import from Webshooter",
     "refresh": "Refresh",
-    "fetchFailed": "Couldn't reach WebShooter — try again later.",
+    "fetchFailed": "Couldn't reach Webshooter — try again later.",
     "allYears": "All Years",
     "noCompetitionsTitle": "No Competitions Yet",
-    "noCompetitionsBody": "Connect a WebShooter account and refresh to see your competitions.",
+    "noCompetitionsBody": "Connect a Webshooter account and refresh to see your competitions.",
     "fieldNotSupported": "Fält — Not Supported",
     "reviewTitle": "Review Results",
     "noResultsTitle": "No Results",
@@ -674,8 +674,8 @@
     "reimport": "Re-import",
     "importConfirmedTitle": "Import Complete",
     "noStartsTitle": "No Upcoming Starts",
-    "noStartsBody": "Connect a WebShooter account and refresh to see your upcoming starts.",
-    "startDetails": "{{start}}–{{end}} · Lane {{lane}} · {{city}}",
+    "noStartsBody": "Connect a Webshooter account and refresh to see your upcoming starts.",
+    "startDetails": "Lane {{lane}} · {{city}}",
     "patrolMates": "{{count}} patrol mate(s) from your club",
     "addToCalendar": "Add to Calendar",
     "calendarAdded": "Added to your calendar",
@@ -694,7 +694,7 @@
     "yearOverYearTitle": "Year to Year",
     "yoyChange": "Change vs. previous year: {{absolute}} ({{percentage}}%)",
     "yoyTrend": "Trend: {{value}}/year",
-    "badge": "WebShooter",
+    "badge": "Webshooter",
     "officialPlacement": "Official placement: {{placement}}",
     "officialMedal": "Official medal: {{medal}}",
     "medal": {
@@ -705,9 +705,25 @@
     },
     "loginRejected": "Wrong username or password.",
     "loginUnreachable": "Couldn't reach webshooter.se. Check your connection and try again, or paste a token below.",
-    "loginNeedsUpdate": "WebShooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this.",
-    "loginFailed": "Couldn't log in to WebShooter. The detail below is what it reported — please pass it on.",
-    "identityFailed": "Logged in, but WebShooter would not say which card number the account belongs to. The detail below is what it reported."
+    "loginNeedsUpdate": "Webshooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this.",
+    "loginFailed": "Couldn't log in to Webshooter. The detail below is what it reported — please pass it on.",
+    "identityFailed": "Logged in, but Webshooter would not say which card number the account belongs to. The detail below is what it reported.",
+    "connectedNoCardNumber": "Signed in, but no card number yet.",
+    "retryIdentity": "Fetch Card Number",
+    "scanningForResults": "Checking {{checked}} of {{total}} competitions for your results…",
+    "notDrawnYet": "Start time not drawn yet",
+    "clubStartsSubtitle": "{{count}} from your club",
+    "calendarStale": "Calendar entry is out of date — add it again.",
+    "calendarAddedTo": "Added to {{calendar}}",
+    "squadTitle": "Squad",
+    "clubStartsTitle": "Club Start Times",
+    "squadEmpty": "Nobody has been drawn into this patrol yet.",
+    "clubStartsEmpty": "Nobody else from your club has entered this competition.",
+    "laneShort": "Lane {{lane}}",
+    "calendarRowTitle": "Calendar",
+    "calendarNotSelected": "Not selected",
+    "startsSkipped": "{{count}} competition(s) couldn't be read and were skipped.",
+    "patrolNumber": "Squad {{number}}"
   },
   "timer": {
     "title": "Timers",
@@ -1073,5 +1089,29 @@
     "openLabel": "Open the photo from {{session}}, series {{position}}",
     "shareHint": "Long-press a photo to share, copy or save it.",
     "allOf": "All"
+  },
+  "providers": {
+    "sectionTitle": "External Sites",
+    "settingsHint": "Sites you can sign in to for results and start times. Turn one on to connect it; it then appears under Tools.",
+    "enableSubtitle": "Use {{site}} in ShotLedger",
+    "rowSubtitle": "Results, start times and imports",
+    "noneEnabled": "No external sites yet. Turn one on in Settings.",
+    "notConnected": "Not signed in to {{site}} — connect it in Settings first.",
+    "unknownTitle": "Unknown Site",
+    "unknownBody": "This site is not available in this version of the app.",
+    "capability": {
+      "importResults": {
+        "title": "Import Results",
+        "subtitle": "Browse your competitions and import official results"
+      },
+      "myStarts": {
+        "title": "My Starts",
+        "subtitle": "Upcoming signups and patrol times"
+      },
+      "stats": {
+        "title": "Statistics",
+        "subtitle": "Statistics the site computes"
+      }
+    }
   }
 }

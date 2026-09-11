@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
-import { createHttpClient, WebShooterHttpError } from './httpClient';
+import { createHttpClient, WebshooterHttpError, WebshooterSchemaError } from './httpClient';
 
 const schema = z.object({ ok: z.boolean() });
 
@@ -13,6 +13,51 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 describe('createHttpClient', () => {
+  it('names the offending field when a response does not match', async () => {
+    // A raw ZodError repeats the same complaint once per array element —
+    // 108 entries for one wrong field, in the case that prompted this. The
+    // message has to be something a person can read on a phone and repeat
+    // in a bug report.
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: 'yes' }));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+    });
+
+    await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
+      WebshooterSchemaError,
+    );
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(/\/thing: ok — /);
+  });
+
+  it('counts the remaining issues rather than listing them', async () => {
+    const wide = z.object({ a: z.number(), b: z.number(), c: z.number() });
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, {}));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+    });
+
+    await expect(client.requestJson('/wide', wide)).rejects.toThrow('(+2 more)');
+  });
+
+  it('does not retry a schema failure: the answer will not change', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: 'yes' }));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+      sleep: () => Promise.resolve(),
+    });
+
+    await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
+      WebshooterSchemaError,
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it('parses a 200 response with the schema, one fetch call', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
     const client = createHttpClient({
@@ -83,12 +128,12 @@ describe('createHttpClient', () => {
       sleep,
     });
 
-    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebShooterHttpError);
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebshooterHttpError);
     expect(fetchImpl).toHaveBeenCalledTimes(3);
     expect(sleep.mock.calls).toEqual([[500], [1000]]);
   });
 
-  it('rejects with WebShooterHttpError carrying status and path on exhaustion', async () => {
+  it('rejects with WebshooterHttpError carrying status and path on exhaustion', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(503, {}));
     const client = createHttpClient({
       fetchImpl,
@@ -100,8 +145,8 @@ describe('createHttpClient', () => {
     await expect(client.requestJson('/thing', schema)).rejects.toMatchObject({
       status: 503,
       path: '/thing',
-      name: 'WebShooterHttpError',
-      message: 'WebShooter request to /thing failed with status 503',
+      name: 'WebshooterHttpError',
+      message: 'Webshooter request to /thing failed with status 503',
     });
   });
 
@@ -199,7 +244,7 @@ describe('createHttpClient', () => {
       retry: { maxAttempts: 2, baseDelayMs: 10, factor: 3 },
     });
 
-    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebShooterHttpError);
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebshooterHttpError);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(sleep.mock.calls).toEqual([[10]]);
   });

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -29,7 +30,7 @@ export default function AccountScreen() {
   const [password, setPassword] = useState('');
 
   // expo-sqlite has no usable web build under this Expo SDK, so `db` is null
-  // there and there is nothing to sync (same posture as WebShooter).
+  // there and there is nothing to sync (same posture as Webshooter).
   const syncAvailable = db !== null;
 
   function onSubmit() {
@@ -59,7 +60,7 @@ export default function AccountScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('account.title')}</ThemedText>
+      <ScreenTitle>{t('account.title')}</ScreenTitle>
 
       <Card>
         <ThemedText type="small" themeColor="textSecondary">

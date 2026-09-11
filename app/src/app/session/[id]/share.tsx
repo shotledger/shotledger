@@ -7,6 +7,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View, useWindowDimensions } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -57,7 +58,7 @@ export default function ShareCardScreen() {
   if (!detail.session || (seriesPosition !== null && !row)) {
     return (
       <Screen>
-        <ThemedText type="title">{t('share.title')}</ThemedText>
+        <ScreenTitle>{t('share.title')}</ScreenTitle>
       </Screen>
     );
   }
@@ -87,9 +88,9 @@ export default function ShareCardScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">
+      <ScreenTitle>
         {seriesPosition !== null ? t('share.seriesTitle') : t('share.title')}
-      </ThemedText>
+      </ScreenTitle>
 
       <View
         style={[

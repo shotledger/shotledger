@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { tenthsToScore } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { DrillDownRow } from '@/components/drill-down-row';
@@ -92,7 +93,7 @@ export default function StatsReportScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('stats.reportTitle')}</ThemedText>
+      <ScreenTitle>{t('stats.reportTitle')}</ScreenTitle>
 
       <Card>
         <ThemedText type="smallBold">{t('stats.filterEchoTitle')}</ThemedText>

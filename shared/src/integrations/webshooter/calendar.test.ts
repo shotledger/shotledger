@@ -12,11 +12,42 @@ function fixtureInput(overrides: Partial<CalendarEventInput> = {}): CalendarEven
     lane: 3,
     startLocal: '2026-06-13 09:00:00',
     endLocal: '2026-06-13 10:50:00',
+    competitionDate: '2026-06-13',
     ...overrides,
   };
 }
 
 describe('buildCalendarEvent', () => {
+  it('is an all-day FREE marker while patrol times are unpublished', () => {
+    // Entering a competition should show up in the diary immediately, but
+    // it must not block the day in other people's eyes — the shooter does
+    // not yet know which two hours of it they are busy.
+    const event = buildCalendarEvent(
+      fixtureInput({ startLocal: null, endLocal: null, patrolNumber: null }),
+    );
+
+    expect(event.allDay).toBe(true);
+    expect(event.busy).toBe(false);
+    // dateLocal, not startUtc: local midnight in Stockholm is 22:00Z on the
+    // 12th, and an all-day event built from that instant shows a day early.
+    expect(event.dateLocal).toBe('2026-06-13');
+    expect(event.startUtc.slice(0, 10)).toBe('2026-06-12');
+    expect(event.description).toContain('Skjutlag: ej lottad');
+  });
+
+  it('becomes a timed BUSY event once times exist, keeping the same UID', () => {
+    // Same UID is the whole point: the all-day marker is updated in place
+    // rather than leaving a duplicate behind.
+    const unscheduled = buildCalendarEvent(
+      fixtureInput({ startLocal: null, endLocal: null, patrolNumber: null }),
+    );
+    const scheduled = buildCalendarEvent(fixtureInput());
+
+    expect(scheduled.uid).toBe(unscheduled.uid);
+    expect(scheduled.allDay).toBe(false);
+    expect(scheduled.busy).toBe(true);
+  });
+
   it('builds the stable UID webshooter_{competition}-{signup}', () => {
     const event = buildCalendarEvent(fixtureInput());
     expect(event.uid).toBe('webshooter_9001-55001');

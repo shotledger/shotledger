@@ -1,4 +1,4 @@
-# WebShooter client core — evidence report
+# Webshooter client core — evidence report
 
 Spec: `docs/specs/webshooter-core-spec.md`. **Spec approval: not obtained
 (autonomous run)** — this report is the review artifact, per the old-coder
@@ -56,7 +56,7 @@ then reverting:
 
 1. **`api/client.ts:69`** — cache-key literal `'competitions'` mutated to
    `''`. Not observable: no other resource uses an empty cache key, so no
-   collision can be constructed through the public `WebShooterClient` API.
+   collision can be constructed through the public `WebshooterClient` API.
 2. **`stats/medals.ts:61`** (`betterMedal`, `>=` vs `>`) — `MEDAL_RANK` is a
    bijection between valor and rank, so an equal-rank comparison only ever
    happens when `a === b` (the same string); returning `a` or `b` is the
@@ -120,7 +120,7 @@ never read.
 
 1. `authUserSchema` — exact `authenticate/user` response shape unconfirmed.
 2. HTTP retry backoff (3 attempts/500ms/×2) and cache TTL (15 min) — no
-   published WebShooter SLA.
+   published Webshooter SLA.
 3. Pagination beyond page 1 for `/competitions` and `/signups` — not handled.
 4. `mapping.ts` classname enumeration — pattern table is confident, not
    claimed complete (spec §A.8's own open question 3).
@@ -132,7 +132,7 @@ never read.
    (flagged there as possibly a mis-described regression).
 8. Calendar description's optional `venue` field — an interpretation of the
    v2 spec's §C.2 wording, not a confirmed fact.
-9. WebShooter SPA login endpoint (path/body/response shape) — not
+9. Webshooter SPA login endpoint (path/body/response shape) — not
    implemented, stub only, per PR #19's auth refinement.
 
 ## What was NOT done (out of scope per the task)

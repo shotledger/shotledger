@@ -5,6 +5,7 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
@@ -20,7 +21,7 @@ export default function AboutScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('about.title')}</ThemedText>
+      <ScreenTitle>{t('about.title')}</ScreenTitle>
 
       <Card>
         <ThemedText type="smallBold">{t('about.appName')}</ThemedText>

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, StyleSheet } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -88,7 +89,7 @@ export default function VaultDocumentScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{meta.label}</ThemedText>
+      <ScreenTitle>{meta.label}</ScreenTitle>
       <ThemedText type="small" themeColor="textSecondary">
         {t('vault.detailAddedOn', { date: new Date(meta.addedAt).toLocaleDateString() })}
       </ThemedText>

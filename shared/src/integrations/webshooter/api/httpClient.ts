@@ -1,15 +1,36 @@
-// Fetch-injected HTTP client for WebShooter (spec §2.2). No module ever
+// Fetch-injected HTTP client for Webshooter (spec §2.2). No module ever
 // calls the global `fetch` directly — the caller injects it, so this tree
 // makes zero real network calls in tests or otherwise.
 import type { ZodType } from 'zod';
 
-export class WebShooterHttpError extends Error {
+/**
+ * A response we reached and could not understand.
+ *
+ * Distinct from an HTTP failure because the fix is different: this one is
+ * ours, and it names the field. A raw ZodError is 100+ entries of the same
+ * complaint repeated per array element — unreadable on a phone and useless
+ * in a bug report — so the message carries the first issue and a count.
+ */
+export class WebshooterSchemaError extends Error {
+  readonly path: string;
+
+  constructor(path: string, error: { issues: { path: PropertyKey[]; message: string }[] }) {
+    const [first] = error.issues;
+    const where = first ? first.path.map(String).join('.') : '(root)';
+    const more = error.issues.length > 1 ? ` (+${error.issues.length - 1} more)` : '';
+    super(`${path}: ${where} — ${first?.message ?? 'did not match'}${more}`);
+    this.name = 'WebshooterSchemaError';
+    this.path = path;
+  }
+}
+
+export class WebshooterHttpError extends Error {
   readonly status: number;
   readonly path: string;
 
   constructor(status: number, path: string) {
-    super(`WebShooter request to ${path} failed with status ${status}`);
-    this.name = 'WebShooterHttpError';
+    super(`Webshooter request to ${path} failed with status ${status}`);
+    this.name = 'WebshooterHttpError';
     this.status = status;
     this.path = path;
   }
@@ -70,18 +91,20 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
       const response = await config.fetchImpl(url, { headers });
       if (response.ok) {
         const body: unknown = await response.json();
-        return schema.parse(body);
+        const parsed = schema.safeParse(body);
+        if (!parsed.success) throw new WebshooterSchemaError(path, parsed.error);
+        return parsed.data;
       }
       lastStatus = response.status;
       if (!isServerError(response.status)) {
-        throw new WebShooterHttpError(response.status, path);
+        throw new WebshooterHttpError(response.status, path);
       }
       if (attempt < maxAttempts) {
         const delayMs = baseDelayMs * factor ** (attempt - 1);
         await sleep(delayMs);
       }
     }
-    throw new WebShooterHttpError(lastStatus, path);
+    throw new WebshooterHttpError(lastStatus, path);
   }
 
   return { requestJson };

@@ -1,9 +1,9 @@
-// Dev-only mock WebShooter server (never live network, never
+// Dev-only mock Webshooter server (never live network, never
 // ~/.cache/webshooter data — every value below is invented, matching only
 // the wire SHAPE from docs/specs/webshooter-core-spec.md §2.1). Injected in
 // place of the real HttpClient behind the same interface, so the import
 // flow, "My starts", and the review UI can be exercised end-to-end on a
-// dev build without a real WebShooter account. Toggled by the
+// dev build without a real Webshooter account. Toggled by the
 // `webshooterDevMock` setting (Settings → dev section, __DEV__ only).
 import type { HttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
 import {
@@ -140,7 +140,7 @@ const MOCK_UPCOMING_PATROLS: Patrol[] = [
 ];
 
 /**
- * Matches the real HttpClient interface exactly, so `createWebShooterClient`
+ * Matches the real HttpClient interface exactly, so `createWebshooterClient`
  * (the real endpoint/cache layer) works unmodified against it — only the
  * transport underneath is swapped, per the core client's own fetch-injection
  * design.
@@ -182,7 +182,7 @@ export function createDevMockHttpClient(): HttpClient {
           fullname: 'Mock Shooter',
         }) as never;
       }
-      throw new Error(`Dev mock WebShooter client: unhandled path '${path}'`);
+      throw new Error(`Dev mock Webshooter client: unhandled path '${path}'`);
     },
   };
 }

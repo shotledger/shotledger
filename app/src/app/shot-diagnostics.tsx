@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { useKeepAwakeOnScreen } from '@/features/timer/use-keep-awake-on-screen';
 import { PrimaryButton } from '@/components/primary-button';
@@ -40,7 +41,7 @@ export default function ShotDiagnosticsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('shotDiagnostics.title')}</ThemedText>
+      <ScreenTitle>{t('shotDiagnostics.title')}</ScreenTitle>
       <ThemedText type="small" themeColor="textSecondary">
         {t('shotDiagnostics.intro')}
       </ThemedText>

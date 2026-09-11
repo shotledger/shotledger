@@ -1,16 +1,16 @@
-// WebShooter client wiring (integration spec §A.11): builds the real
-// createWebShooterClient against webshooter.se with a live token, or (dev
+// Webshooter client wiring (integration spec §A.11): builds the real
+// createWebshooterClient against webshooter.se with a live token, or (dev
 // builds only, opt-in) the dev-mock transport from ./dev-mock.ts. Device→
 // webshooter.se directly — never through any ShotLedger backend (PR #19).
 import { createHttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
 import {
-  createWebShooterClient,
-  type WebShooterClient,
+  createWebshooterClient,
+  type WebshooterClient,
 } from '@shotledger/shared/src/integrations/webshooter/api/client';
 
 import { db } from '@/db/client';
 import { getSetting } from '@/db/queries/settings';
-import { getWebShooterToken } from '@/platform/secure-store';
+import { getWebshooterToken } from '@/platform/secure-store';
 import { createDevMockHttpClient } from './dev-mock';
 
 // The version segment is part of the API root, not an accident of it.
@@ -29,16 +29,16 @@ export function isDevMockEnabled(): boolean {
   return getSetting<boolean>(db, 'webshooterDevMock', false);
 }
 
-let cachedClient: WebShooterClient | null = null;
+let cachedClient: WebshooterClient | null = null;
 let cachedClientUsedMock = false;
 
 /**
  * Lazily built, memoized per (mock-mode) session — the underlying client
  * owns its own in-memory TTL cache (§A.11), so re-creating it on every call
  * would defeat that caching. Recreated if the dev-mock flag flips (a dev
- * convenience only) or after disconnect (see resetWebShooterClient below).
+ * convenience only) or after disconnect (see resetWebshooterClient below).
  */
-export function getWebShooterClient(): WebShooterClient {
+export function getWebshooterClient(): WebshooterClient {
   const useMock = isDevMockEnabled();
   if (cachedClient && cachedClientUsedMock === useMock) return cachedClient;
 
@@ -50,13 +50,13 @@ export function getWebShooterClient(): WebShooterClient {
         getToken: () => tokenCache,
       });
 
-  cachedClient = createWebShooterClient(httpClient);
+  cachedClient = createWebshooterClient(httpClient);
   cachedClientUsedMock = useMock;
   return cachedClient;
 }
 
 /** Drops the cached client (and its TTL cache) — call after connect/disconnect. */
-export function resetWebShooterClient(): void {
+export function resetWebshooterClient(): void {
   cachedClient = null;
 }
 
@@ -67,11 +67,11 @@ let tokenCache: string | null = null;
 
 export function setTokenCache(token: string | null): void {
   tokenCache = token;
-  resetWebShooterClient();
+  resetWebshooterClient();
 }
 
-/** Call once at app start (or first WebShooter screen mount) to warm the in-memory token mirror. */
+/** Call once at app start (or first Webshooter screen mount) to warm the in-memory token mirror. */
 export async function loadTokenCache(): Promise<string | null> {
-  tokenCache = await getWebShooterToken();
+  tokenCache = await getWebshooterToken();
   return tokenCache;
 }

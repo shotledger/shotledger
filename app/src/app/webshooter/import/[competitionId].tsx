@@ -1,4 +1,4 @@
-// WebShooter import — per-competition review (integration spec §A.1–§A.9):
+// Webshooter import — per-competition review (integration spec §A.1–§A.9):
 // each result row's verdict (new / exact-duplicate / probable-match /
 // not-importable) with a per-row confirm — no write happens before this
 // screen's confirm button, and there is deliberately no "import everything"
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { OptionPicker } from '@/components/option-picker';
@@ -17,7 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listFirearms } from '@/db/queries/firearms';
 import {
-  useWebShooterReview,
+  useWebshooterReview,
   type ReviewCandidate,
 } from '@/features/webshooter/use-webshooter-import';
 import { Spacing } from '@/theme/tokens';
@@ -37,11 +38,11 @@ function verdictLabelKey(candidate: ReviewCandidate['candidate']): string {
   }
 }
 
-export default function WebShooterImportReviewScreen() {
+export default function WebshooterImportReviewScreen() {
   const { t } = useTranslation();
   const { competitionId } = useLocalSearchParams<{ competitionId: string }>();
   const id = Number(competitionId);
-  const { candidates, loading, error, load, confirmImport } = useWebShooterReview(id);
+  const { candidates, loading, error, load, confirmImport } = useWebshooterReview(id);
   const [applySighterFirearmId, setApplySighterFirearmId] = useState<string | null>(null);
   const firearms = db ? listFirearms(db) : [];
 
@@ -67,7 +68,7 @@ export default function WebShooterImportReviewScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.reviewTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.reviewTitle')}</ScreenTitle>
 
       {error && (
         <ThemedText type="small" themeColor="textSecondary">

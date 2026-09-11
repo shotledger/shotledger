@@ -3,11 +3,11 @@ import {
   createSpaLoginClient,
   discoverPublishedClientSecret,
   createUnverifiedSpaLoginClient,
-  createWebShooterSpaLoginClient,
-  WebShooterSpaLoginClientRejectedError,
-  WebShooterSpaLoginNotVerifiedError,
-  WebShooterSpaLoginRejectedError,
-  WebShooterSpaLoginUnconfiguredError,
+  createWebshooterSpaLoginClient,
+  WebshooterSpaLoginClientRejectedError,
+  WebshooterSpaLoginNotVerifiedError,
+  WebshooterSpaLoginRejectedError,
+  WebshooterSpaLoginUnconfiguredError,
 } from './spaLogin';
 
 const CLIENT = { clientId: '1', clientSecret: 'test-secret' };
@@ -23,10 +23,10 @@ function respond(status: number, body: unknown): typeof fetch {
   ) as unknown as typeof fetch;
 }
 
-describe('createWebShooterSpaLoginClient', () => {
+describe('createWebshooterSpaLoginClient', () => {
   it('posts a password grant carrying both identities', async () => {
     const fetchImpl = respond(200, { access_token: 'tok', token_type: 'Bearer' });
-    const client = createWebShooterSpaLoginClient(fetchImpl, BASE, CLIENT);
+    const client = createWebshooterSpaLoginClient(fetchImpl, BASE, CLIENT);
 
     await expect(client.login({ username: 'a@b.se', password: 'pw' })).resolves.toEqual({
       token: 'tok',
@@ -49,7 +49,7 @@ describe('createWebShooterSpaLoginClient', () => {
 
   it('joins the URL without doubling or dropping the slash', async () => {
     const fetchImpl = respond(200, { access_token: 'tok' });
-    await createWebShooterSpaLoginClient(fetchImpl, `${BASE}/`, CLIENT).login({
+    await createWebshooterSpaLoginClient(fetchImpl, `${BASE}/`, CLIENT).login({
       username: 'a',
       password: 'b',
     });
@@ -60,14 +60,14 @@ describe('createWebShooterSpaLoginClient', () => {
   });
 
   it("reads a wrong password as the user's failure", async () => {
-    const client = createWebShooterSpaLoginClient(
+    const client = createWebshooterSpaLoginClient(
       respond(400, { error: 'invalid_grant', message: 'These credentials do not match' }),
       BASE,
       CLIENT,
     );
 
     await expect(client.login({ username: 'a', password: 'wrong' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginRejectedError,
+      WebshooterSpaLoginRejectedError,
     );
   });
 
@@ -75,29 +75,29 @@ describe('createWebShooterSpaLoginClient', () => {
     // The distinction is the point: a rotated client secret looks like a
     // login failure to the user, who would then retype a correct password
     // forever. Only we can fix it.
-    const client = createWebShooterSpaLoginClient(
+    const client = createWebshooterSpaLoginClient(
       respond(401, { error: 'invalid_client' }),
       BASE,
       CLIENT,
     );
 
     await expect(client.login({ username: 'a', password: 'pw' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginClientRejectedError,
+      WebshooterSpaLoginClientRejectedError,
     );
   });
 
   it('treats a 401 with no error body as a rejected login', async () => {
-    const client = createWebShooterSpaLoginClient(respond(401, null), BASE, CLIENT);
+    const client = createWebshooterSpaLoginClient(respond(401, null), BASE, CLIENT);
 
     await expect(client.login({ username: 'a', password: 'pw' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginRejectedError,
+      WebshooterSpaLoginRejectedError,
     );
   });
 
   it('refuses a 200 that carries no access_token', async () => {
     // webshooter.se answers an unrouted path with its SPA's HTML and a 200.
     // A success status is not evidence that a token came back.
-    const client = createWebShooterSpaLoginClient(respond(200, { message: 'ok' }), BASE, CLIENT);
+    const client = createWebshooterSpaLoginClient(respond(200, { message: 'ok' }), BASE, CLIENT);
 
     await expect(client.login({ username: 'a', password: 'pw' })).rejects.toThrow(
       'no access_token',
@@ -114,7 +114,7 @@ describe('createWebShooterSpaLoginClient', () => {
     ) as unknown as typeof fetch;
 
     await expect(
-      createWebShooterSpaLoginClient(fetchImpl, BASE, CLIENT).login({
+      createWebshooterSpaLoginClient(fetchImpl, BASE, CLIENT).login({
         username: 'a',
         password: 'pw',
       }),
@@ -126,7 +126,7 @@ describe('createWebShooterSpaLoginClient', () => {
     // "an error occurred" — no invalid_grant. The status alone cannot tell
     // a wrong password from a broken endpoint, so their text has to travel
     // with it or the reader has nothing.
-    const client = createWebShooterSpaLoginClient(
+    const client = createWebshooterSpaLoginClient(
       respond(500, { message: 'Ett fel inträffade. Vänligen försök igen.' }),
       BASE,
       CLIENT,
@@ -138,7 +138,7 @@ describe('createWebShooterSpaLoginClient', () => {
   });
 
   it('still reports the status when there is no message to carry', async () => {
-    const client = createWebShooterSpaLoginClient(respond(502, null), BASE, CLIENT);
+    const client = createWebshooterSpaLoginClient(respond(502, null), BASE, CLIENT);
 
     await expect(client.login({ username: 'a', password: 'pw' })).rejects.toThrow('HTTP 502');
   });
@@ -177,7 +177,7 @@ describe('discoverPublishedClientSecret', () => {
   });
 
   it('says the constant is absent, not merely that it failed', async () => {
-    // 'absent' is the one failure meaning WebShooter changed and this code
+    // 'absent' is the one failure meaning Webshooter changed and this code
     // has to follow. It must not read like a network blip.
     await expect(discoverPublishedClientSecret(html(200, '<html></html>'), SITE)).resolves.toEqual({
       secret: null,
@@ -293,10 +293,10 @@ describe('createSpaLoginClient', () => {
       .login({ username: 'a', password: 'b' })
       .catch((err: unknown) => err);
 
-    expect(error).toBeInstanceOf(WebShooterSpaLoginUnconfiguredError);
+    expect(error).toBeInstanceOf(WebshooterSpaLoginUnconfiguredError);
     // The reason reaches the caller rather than dying in a catch block.
-    expect((error as WebShooterSpaLoginUnconfiguredError).failure).toBe('rejected');
-    expect((error as WebShooterSpaLoginUnconfiguredError).detail).toBe('HTTP 404');
+    expect((error as WebshooterSpaLoginUnconfiguredError).failure).toBe('rejected');
+    expect((error as WebshooterSpaLoginUnconfiguredError).detail).toBe('HTTP 404');
     expect((error as Error).message).toContain('HTTP 404');
 
     // One call, to the site. The password never left the device.
@@ -307,18 +307,18 @@ describe('createSpaLoginClient', () => {
 });
 
 describe('createUnverifiedSpaLoginClient', () => {
-  it('login() always rejects with WebShooterSpaLoginNotVerifiedError', async () => {
+  it('login() always rejects with WebshooterSpaLoginNotVerifiedError', async () => {
     const fetchImpl = vi.fn();
     const client = createUnverifiedSpaLoginClient(fetchImpl, 'https://webshooter.se');
 
     await expect(client.login({ username: 'a', password: 'b' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginNotVerifiedError,
+      WebshooterSpaLoginNotVerifiedError,
     );
   });
 
   it('the error names itself and explains what is unverified and the credential-handling constraint', () => {
-    const error = new WebShooterSpaLoginNotVerifiedError();
-    expect(error.name).toBe('WebShooterSpaLoginNotVerifiedError');
+    const error = new WebshooterSpaLoginNotVerifiedError();
+    expect(error.name).toBe('WebshooterSpaLoginNotVerifiedError');
     expect(error.message).toContain('VERIFY: inspect the SPA login network');
     expect(error.message).toContain('request — path, request body field names, response shape');
     expect(error.message).toContain('Credentials/token must never transit a ShotLedger backend');

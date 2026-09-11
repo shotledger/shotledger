@@ -11,6 +11,7 @@ import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handle
 import { runOnJS } from 'react-native-reanimated';
 import { formatGroupAndClass, MIN_SHOTS_FOR_HEATMAP, tenthsToScore } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
@@ -39,7 +40,7 @@ import { useSessionDetail, type SeriesRow } from '@/features/session/use-session
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
-import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
+import { WebshooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
@@ -75,7 +76,7 @@ export default function SessionDetailScreen() {
   if (!session) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('session.detailTitle')}</ThemedText>
+        <ScreenTitle>{t('session.detailTitle')}</ScreenTitle>
       </Screen>
     );
   }
@@ -389,9 +390,7 @@ export default function SessionDetailScreen() {
       />
 
       <View>
-        <ThemedText type="subtitle" style={styles.title}>
-          {session.name}
-        </ThemedText>
+        <ScreenTitle>{session.name}</ScreenTitle>
         <ThemedText type="small" themeColor="textSecondary">
           {[
             t(`sessionType.${session.type}`),
@@ -407,7 +406,7 @@ export default function SessionDetailScreen() {
 
       <SessionStopwatch sessionId={id} />
 
-      <WebShooterSessionBadge session={session} />
+      <WebshooterSessionBadge session={session} />
 
       <Card style={styles.metricCard}>
         {metricRows([
@@ -796,10 +795,6 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 const styles = StyleSheet.create({
   groupPlot: {
     alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
   },
   resultsRow: {
     flexDirection: 'row',

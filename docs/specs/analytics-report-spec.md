@@ -63,7 +63,7 @@ already encoded in `stats.ts` and reused here rather than re-derived:
    **included** in volume metrics.
 2. `value_tenths` is the single integer storage for both scoring modes;
    division by 10 happens only at display time.
-3. A WebShooter-imported series (Amendment WS1) has no shot rows — only
+3. A Webshooter-imported series (Amendment WS1) has no shot rows — only
    `totalOverride: { tenths, shotCount }`. It counts in series-level and
    volume metrics and is invisible to per-shot metrics.
 4. `isInnerTen` means the shooter pressed `(X)` — a centrumtia. A plain ten
@@ -114,7 +114,7 @@ interface AnalyticsFilter {
 - **A-F4** `disciplineId` keeps only exact matches; `null` keeps all.
 - **A-F5** `shotsPerSeries` keeps only series whose **fired shot count**
   equals it. The fired count is `totalOverride.shotCount` when set,
-  otherwise `shots.length` — so a WebShooter series is filterable by its
+  otherwise `shots.length` — so a Webshooter series is filterable by its
   imported length even without shot rows.
 - **A-F6** A non-empty `tagIds` keeps a series when its `tagIds` intersects
   the filter's (OR, not AND — "any of these tags"). An empty filter list

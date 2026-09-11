@@ -1,4 +1,4 @@
-// Import write path for WebShooter results (integration spec §A). Glue
+// Import write path for Webshooter results (integration spec §A). Glue
 // layer (routine app work, not old-coder scope — the pure reconciliation
 // and mapping logic it calls lives in shared/src/integrations/webshooter,
 // already under old-coder discipline): classifies a fetched ResultRow
@@ -151,7 +151,7 @@ export function classifyResultRow(
 /**
  * §A.9 scope enforcement: only precision/milsnabb are importable. Takes
  * the competition's `results_type` (from `GET /competitions/{id}`, not on
- * the result row itself) since that is where WebShooter reports it.
+ * the result row itself) since that is where Webshooter reports it.
  */
 export function resolveDisciplineForImport(
   resultsType: 'precision' | 'field' | 'military' | 'pointfield' | null,
@@ -179,8 +179,8 @@ export interface ImportResultRowOptions {
 }
 
 function replaceOverrideSeries(db: Database, sessionId: string, row: ResultRow) {
-  // Every existing series on a WebShooter-linked session is override-only
-  // (§A.4 — the whole session came from WebShooter); re-import clears and
+  // Every existing series on a Webshooter-linked session is override-only
+  // (§A.4 — the whole session came from Webshooter); re-import clears and
   // rewrites them wholesale, since there is no per-shot enrichment on an
   // override series to preserve (photoUri is the only per-series
   // enrichment field and is never set on one, §A.3's field list).
@@ -219,7 +219,7 @@ export function importResultRow(
   const classMapping = resolveClassMapping(db, row.weaponclass.classname);
   if (!classMapping.ok) {
     throw new Error(
-      `Unresolved WebShooter classname '${row.weaponclass.classname}': ${classMapping.reason}`,
+      `Unresolved Webshooter classname '${row.weaponclass.classname}': ${classMapping.reason}`,
     );
   }
   const official = mapOfficialResult(row);
@@ -256,7 +256,7 @@ export function importResultRow(
       competitionName: merged.competitionName as string,
       // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
       // session's startedAt is that field's DB column, always overwritten
-      // on re-import (a WebShooter date correction, however rare).
+      // on re-import (a Webshooter date correction, however rare).
       startedAt: new Date(competition.date).toISOString(),
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
@@ -292,7 +292,7 @@ export function importResultRow(
     const session = getSession(db, sessionId);
     // setSessionExtraRounds only moves a firearm's round counters when the
     // session already carries a firearmId (round-count.ts's own contract) —
-    // a WebShooter import never sets one (WebShooter has no concept of
+    // a Webshooter import never sets one (Webshooter has no concept of
     // firearm), so the chosen firearm is assigned here, as an enrichment
     // field: never overwriting one the user already picked (§A.3's
     // "never clobber a user-entered value" rule extends to this write too).

@@ -1,17 +1,21 @@
-// Wire schemas for WebShooter API v4.1.9 (webshooter.se). Executable spec:
+// Wire schemas for Webshooter API v4.1.9 (webshooter.se). Executable spec:
 // docs/specs/webshooter-core-spec.md §2.1. Field sets and envelope nesting
 // were confirmed by reading ~/.cache/webshooter/ (wscli's response cache) —
 // SHAPES only, never copied values (see spec §0's real-data rule). Every
 // object schema is `z.object` (never `z.strictObject`): the real API returns
 // far more fields than we read, and a strict schema would fail on the next
-// unrelated field WebShooter adds upstream.
+// unrelated field Webshooter adds upstream.
 import { z } from 'zod';
 
 export const weaponClassSchema = z.object({
   id: z.number(),
   weapongroups_id: z.number(),
   classname: z.string(),
-  championship: z.number(),
+  // Absent from the weaponclass embedded in a patrol's signups, present in
+  // the one embedded in results. Nothing here reads it, so requiring it
+  // only ever cost us: it is the single field that made every My Starts
+  // fetch fail (2026-09-11).
+  championship: z.number().optional(),
   classname_general: z.string(),
 });
 export type WeaponClass = z.infer<typeof weaponClassSchema>;
@@ -28,7 +32,13 @@ export const stationResultSchema = z.object({
   figure_hits: z.number().nullable(),
   hits: z.number().nullable(),
   points: z.number().nullable(),
-  station_figure_hits: z.array(z.number()),
+  // Not validated at all, deliberately. Across live competitions this field
+  // arrives as numbers, as numeric strings, with null elements, and as a
+  // bare null instead of an array — four shapes, three rounds of patching,
+  // and NOTHING in this codebase reads it. Validating a field we never look
+  // at can only ever cost a working screen (competitions 341/349/351,
+  // 2026-09-11).
+  station_figure_hits: z.unknown(),
   deleted_at: z.string().nullable(),
 });
 export type StationResult = z.infer<typeof stationResultSchema>;
@@ -40,14 +50,18 @@ export const clubSchema = z.object({
 export type Club = z.infer<typeof clubSchema>;
 
 // Identity + same-club fields only (§A.10's personal-data boundary) — never
-// the full WebShooter user profile, even though the real payload has more.
+// the full Webshooter user profile, even though the real payload has more.
+// Require what we read, and no more. `clubs_id` and `clubs` are absent for
+// some shooters in live results (competition 349, 2026-09-11) and nothing
+// here has ever read them — a required field we never use can only ever
+// cost us a working screen.
 export const userSchema = z.object({
   fullname: z.string(),
   shooting_card_number: z.string().nullable(),
-  clubs_id: z.number(),
-  clubs: z.array(clubSchema),
+  clubs_id: z.number().optional(),
+  clubs: z.array(clubSchema).optional(),
 });
-export type WebShooterUser = z.infer<typeof userSchema>;
+export type WebshooterUser = z.infer<typeof userSchema>;
 
 export const signupSchema = z.object({
   id: z.number(),

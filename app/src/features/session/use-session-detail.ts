@@ -38,7 +38,7 @@ export interface SeriesRow {
   guldThreshold: number | null;
   isGuldserie: boolean;
   timeLimitSeconds: number | null;
-  /** WebShooter series-level-total granularity (spec Amendment WS1) — no shots exist for this row. */
+  /** Webshooter series-level-total granularity (spec Amendment WS1) — no shots exist for this row. */
   isTotalOverride: boolean;
   totalOverrideShotCount: number | null;
 }
@@ -121,7 +121,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen === 1,
     }));
-    // WS1 (docs/specs/webshooter-app-spec.md): an imported WebShooter series
+    // WS1 (docs/specs/webshooter-app-spec.md): an imported Webshooter series
     // has no shots rows, only a stored total — use it directly rather than
     // summing an array that's always empty for such a row.
     const isTotalOverride = row.isTotalOverride === 1 && row.totalOverrideTenths !== null;

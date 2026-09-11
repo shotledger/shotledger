@@ -43,7 +43,7 @@ describe('buildHomeSessionRow', () => {
     expect(row.total).toBe(17);
   });
 
-  // WS1: a WebShooter/ShotLog import stores a series total with no `shots`
+  // WS1: a Webshooter/ShotLog import stores a series total with no `shots`
   // rows. Regression for the Home screen showing 0 for such sessions.
   it('uses a total-override series stored total, not its (empty) shots', () => {
     const row = buildHomeSessionRow(session, [

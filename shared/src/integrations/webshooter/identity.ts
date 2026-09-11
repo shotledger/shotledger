@@ -1,17 +1,17 @@
 // Shooting-card-number normalization and identity resolution (spec §3,
 // v2 spec §A.8/§A.10).
 
-export class WebShooterIdentityUnresolvedError extends Error {
+export class WebshooterIdentityUnresolvedError extends Error {
   constructor() {
-    super('WebShooter identity could not be resolved: no override, stored value, or API result');
-    this.name = 'WebShooterIdentityUnresolvedError';
+    super('Webshooter identity could not be resolved: no override, stored value, or API result');
+    this.name = 'WebshooterIdentityUnresolvedError';
   }
 }
 
 /**
  * Strips whitespace (space, tab, non-breaking space) and normalizes
  * None/missing/empty to `null`. Alpha prefixes ("A1234") and casing are
- * preserved verbatim — WebShooter card numbers are not documented
+ * preserved verbatim — Webshooter card numbers are not documented
  * case-insensitive, so this never guesses at case folding.
  */
 export function normalizeCardNumber(raw: string | null | undefined): string | null {
@@ -59,5 +59,5 @@ export async function resolveIdentity(input: ResolveIdentityInput): Promise<stri
   const fetched = normalizeCardNumber(user.shooting_card_number);
   if (fetched !== null) return fetched;
 
-  throw new WebShooterIdentityUnresolvedError();
+  throw new WebshooterIdentityUnresolvedError();
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
@@ -48,7 +49,7 @@ function VaultScreenNative() {
   if (state.status === 'locked' || state.status === 'checking' || state.status === 'denied') {
     return (
       <Screen>
-        <ThemedText type="title">{t('vault.gateTitle')}</ThemedText>
+        <ScreenTitle>{t('vault.gateTitle')}</ScreenTitle>
         <Card>
           <ThemedText type="default" themeColor="textSecondary">
             {t('vault.gateBody')}
@@ -79,7 +80,7 @@ function VaultScreenNative() {
         />
       }
     >
-      <ThemedText type="title">{t('vault.title')}</ThemedText>
+      <ScreenTitle>{t('vault.title')}</ScreenTitle>
 
       {state.deviceUnsecured ? (
         <Card>

@@ -23,7 +23,7 @@ export interface FlaggedShot extends ScoredShot {
 }
 
 /**
- * WebShooter series-level-total granularity (spec Amendment WS1,
+ * Webshooter series-level-total granularity (spec Amendment WS1,
  * docs/specs/webshooter-app-spec.md): a series with no per-shot detail,
  * only a stored total and the shot count backing it. `shots` on the
  * carrying series is always `[]` when this is set.
@@ -38,7 +38,7 @@ export interface SeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
   shots: readonly ScoredShot[];
-  /** Set only for an imported WebShooter series with no shot rows (WS1). */
+  /** Set only for an imported Webshooter series with no shot rows (WS1). */
   totalOverride?: SeriesTotalOverride | null;
 }
 
@@ -107,7 +107,7 @@ export interface FlaggedSeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
   shots: readonly FlaggedShot[];
-  /** Set only for an imported WebShooter series with no shot rows (WS1). */
+  /** Set only for an imported Webshooter series with no shot rows (WS1). */
   totalOverride?: SeriesTotalOverride | null;
 }
 
@@ -134,7 +134,7 @@ function isScoredWithData(series: {
  * yet is excluded rather than counted as 0, so adding an empty series never
  * drops the running average. `null` when nothing qualifies. An override
  * series (WS1) counts as scored using its stored total — it is a
- * series-level metric, not a per-shot one, so WebShooter imports without
+ * series-level metric, not a per-shot one, so Webshooter imports without
  * per-shot detail still contribute (spec Amendment WS1).
  */
 export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): number | null {

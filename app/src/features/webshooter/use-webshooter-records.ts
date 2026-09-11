@@ -41,13 +41,13 @@ export interface YoYGroupRow {
   trendPerYear: number | null;
 }
 
-export interface WebShooterRecordsData {
+export interface WebshooterRecordsData {
   officialPbs: OfficialPbRow[];
   freeformPbs: FreeformPbRow[];
   yearOverYear: YoYGroupRow[];
 }
 
-function computeRecords(): WebShooterRecordsData {
+function computeRecords(): WebshooterRecordsData {
   if (!db) return { officialPbs: [], freeformPbs: [], yearOverYear: [] };
 
   const competitionResults = listCompetitionResultsForStats(db);
@@ -91,8 +91,8 @@ function computeRecords(): WebShooterRecordsData {
   return { officialPbs, freeformPbs, yearOverYear };
 }
 
-export function useWebShooterRecords(): WebShooterRecordsData {
-  const [data, setData] = useState<WebShooterRecordsData>(() => computeRecords());
+export function useWebshooterRecords(): WebshooterRecordsData {
+  const [data, setData] = useState<WebshooterRecordsData>(() => computeRecords());
 
   useFocusEffect(
     useCallback(() => {

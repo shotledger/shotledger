@@ -5,9 +5,13 @@ import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
+import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
+
 import { DrillDownRow } from '@/components/drill-down-row';
+import { ProviderSettingsRow } from '@/features/providers/provider-settings-row';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -169,7 +173,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('settings.title')}</ThemedText>
+      <ScreenTitle>{t('settings.title')}</ScreenTitle>
 
       <Card>
         <ThemedText type="smallBold">{t('settings.language')}</ThemedText>
@@ -330,6 +334,26 @@ export default function SettingsScreen() {
           testID="settings-open-account"
         />
       </Card>
+
+      {/* External sites (ADR 0010): enabling one is a preference, and
+          connecting to it is a credential — both belong here rather than in
+          Tools, which is for using them. */}
+      <Card>
+        <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('providers.settingsHint')}
+        </ThemedText>
+      </Card>
+
+      {/* One card per site. Sharing a card made two sites read as one
+          settings block with two switches in it, and a connected site's
+          credentials and calendar row ran straight into the next site's
+          name (maintainer, 2026-09-11). */}
+      {PROVIDERS.map((provider) => (
+        <Card key={provider.id}>
+          <ProviderSettingsRow provider={provider} />
+        </Card>
+      ))}
 
       <Card>
         <ThemedText type="smallBold">{t('jsonExport.sectionTitle')}</ThemedText>

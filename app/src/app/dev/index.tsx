@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
@@ -40,9 +41,7 @@ export default function DevScreen() {
 
   return (
     <Screen scroll={false}>
-      <ThemedText type="title" style={styles.title}>
-        {t('dev.title')}
-      </ThemedText>
+      <ScreenTitle>{t('dev.title')}</ScreenTitle>
 
       {!db && <ThemedText type="small">{t('dev.webUnavailable')}</ThemedText>}
 
@@ -91,10 +90,6 @@ export default function DevScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    lineHeight: 28,
-  },
   actions: {
     flexDirection: 'row',
     gap: Spacing.three,

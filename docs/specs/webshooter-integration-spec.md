@@ -1,4 +1,4 @@
-# WebShooter Integration Spec (v2)
+# Webshooter Integration Spec (v2)
 
 > Execution spec for implementing agents, in the style of
 > [`docs/implementation-plan.md`](../implementation-plan.md): says _exactly
@@ -10,7 +10,7 @@
 > schema change without a Drizzle migration, `VERIFY:` items confirmed
 > before shipping) apply unchanged to every task below.
 
-**Status.** WebShooter import is listed as deferred to v2 in
+**Status.** Webshooter import is listed as deferred to v2 in
 `docs/implementation-plan.md` §9. This document is that v2 spec. It does
 not change any v1 (M0–M7) task; it defines new milestones (`M8`–`M10`,
 numbered to follow the v1 sequence) to be scheduled after v1 ships.
@@ -26,11 +26,11 @@ shipping, same as any other unconfirmed fact.
 
 ## 0. Scope
 
-WebShooter (`webshooter.se`, API v4.1.9) is SPSF's competition-management
+Webshooter (`webshooter.se`, API v4.1.9) is SPSF's competition-management
 platform: competition listings, patrol/start-list assignment, and
 official results. This integration lets a shooter **import their own
 official results into ShotLedger** and **see their upcoming starts**. It
-is not a sync engine and not a general WebShooter client.
+is not a sync engine and not a general Webshooter client.
 
 In scope:
 
@@ -68,14 +68,14 @@ sessions        + external_source TEXT NULL             -- 'webshooter'; NULL = 
                                                           -- WHERE external_ref IS NOT NULL
                 + external_synced_at TEXT NULL            -- last successful re-import merge
                 + webshooter_competition_id TEXT NULL     -- for re-fetch on refresh
-                + official_placement INTEGER NULL         -- authoritative, from WebShooter
+                + official_placement INTEGER NULL         -- authoritative, from Webshooter
                 + official_standardmedalj TEXT NULL       -- CHECK(IN ('none','brons','silver','guld'))
-                                                          -- authoritative, from WebShooter;
+                                                          -- authoritative, from Webshooter;
                                                           -- app's own computed indicator (§6.5b)
                                                           -- stays a separate, always-computed value
 
 series          + is_total_override INTEGER NOT NULL DEFAULT 0  -- true when this series carries
-                                                          -- a WebShooter series/station TOTAL with
+                                                          -- a Webshooter series/station TOTAL with
                                                           -- no per-shot detail (see §A.4)
                 + total_override_tenths INTEGER NULL      -- populated only when is_total_override=1;
                                                           -- same units as shots.value_tenths sum
@@ -100,7 +100,7 @@ No new table for import candidates: duplicate/fuzzy matching (§A.2) is
 computed live at import time against existing `sessions`/`series`, not
 persisted.
 
-**The WebShooter access token is never a DB row.** It is entered by the
+**The Webshooter access token is never a DB row.** It is entered by the
 user and stored in `expo-secure-store` (device keychain), keyed
 per-device. It is explicitly excluded from any future cloud-sync payload
 (ADR 0001 local-first sync) — this is a hard rule, not a default to
@@ -111,7 +111,7 @@ candidate, the token store is not.
 
 ### A.1 Browse/pick UI
 
-- [ ] Import screen lists the user's WebShooter competitions (fetched via
+- [ ] Import screen lists the user's Webshooter competitions (fetched via
       `GET /competitions`, client-filtered — see §A.11) with date, name,
       venue, and an already-imported / not-yet-imported badge.
 - [ ] User selects one or more competitions to import; **no bulk
@@ -150,13 +150,13 @@ Two tiers, never silent:
 ### A.3 Editable imports + field-level merge on re-import
 
 - [ ] Imported sessions are **fully editable** like any local session —
-      firearm, ammo lot, notes, photos (fields WebShooter has no concept
+      firearm, ammo lot, notes, photos (fields Webshooter has no concept
       of) are set locally after import.
 - [ ] Re-importing a session already linked via `external_ref` (upstream
       correction, e.g. a results amendment) performs a **field-level
       merge**: - Score-bearing fields (series totals/overrides, shot data where
       present, `official_placement`, `official_standardmedalj`,
-      competition metadata) are **overwritten from WebShooter**. - Enrichment fields (`firearm_id`, `ammo_lot_id`, `notes`,
+      competition metadata) are **overwritten from Webshooter**. - Enrichment fields (`firearm_id`, `ammo_lot_id`, `notes`,
       series `photo_uri`, tags) are **never clobbered** — re-import
       only ever adds/updates score fields, and only touches enrichment
       fields when they are currently NULL/empty (never overwrites a
@@ -167,9 +167,9 @@ Two tiers, never silent:
 
 ### A.4 Granularity mismatch — series-level totals
 
-WebShooter's `/results` exposes **per-series (station) totals only**, no
+Webshooter's `/results` exposes **per-series (station) totals only**, no
 per-shot data. Imported series are created with `is_total_override=1`,
-`total_override_tenths` = the WebShooter series total, and
+`total_override_tenths` = the Webshooter series total, and
 `total_override_shot_count` = the program's `shotsPerSeries` (5 for both
 `spsf-precision` and `spsf-milsnabb`; see schema note in §1 for why the
 shot count is stored explicitly). No `shots` rows are created for these
@@ -179,24 +179,24 @@ per-series stats include).
 ### A.5 Official results as authoritative data
 
 - [ ] `sessions.official_placement` and `sessions.official_standardmedalj`
-      are populated verbatim from WebShooter's results payload and
+      are populated verbatim from Webshooter's results payload and
       displayed alongside — never merged into or replacing — the app's
       own computed standardmedalj indicator (`shared/scoring/standardmedalj.ts`,
       §6.5b of the implementation plan, computed for every session
       regardless of import source). Label both clearly in the UI (e.g.
       "Officiellt" vs. "Beräknat") since they can legitimately disagree
-      (WebShooter may apply age adjustments, féreningstävling caps, or
+      (Webshooter may apply age adjustments, féreningstävling caps, or
       placement-based medals the app's fixed-threshold calculator
       doesn't model).
 
 ### A.6 Finals and särskjutning mapping
 
-- [ ] WebShooter's `results_finals` block maps to series with
+- [ ] Webshooter's `results_finals` block maps to series with
       `is_final=1`, same section semantics as
       `docs/implementation-plan.md` §6.3 (Before final / Final / Total,
       all derived the same way for imported and locally-entered
       sessions).
-- [ ] WebShooter's `results_distinguish` (särskjutning) block maps to
+- [ ] Webshooter's `results_distinguish` (särskjutning) block maps to
       **ordinary extra scored series** (`is_final=0`, no special flag)
       with `series.note = 'särskjutning'`, matching the v1 decision in
       `docs/implementation-plan.md` §6.3 ("log such series as ordinary
@@ -204,7 +204,7 @@ per-series stats include).
 
 ### A.7 Missing sighters
 
-WebShooter's results feed does not report sighter (provskott) series at
+Webshooter's results feed does not report sighter (provskott) series at
 all — only scored totals. Since sighters count toward volume metrics
 (round counter, ammo-lot usage; §6.3) but never toward score, a silent
 omission would under-count rounds fired on the linked firearm.
@@ -225,14 +225,14 @@ omission would under-count rounds fired on the linked firearm.
 
 ### A.8 Class mapping
 
-- [ ] WebShooter `classname` strings map to the existing orthogonal
+- [ ] Webshooter `classname` strings map to the existing orthogonal
       `weapon_group` / `shooter_class` pair (`docs/implementation-plan.md`
       §6.4a): e.g. `'C2'` → `weapon_group: 'spsf:C'`,
       `shooter_class: '2'`. Mapping table lives in
       `shared/integrations/webshooter/classMapping.ts`.
-  - `VERIFY:` the full enumeration of WebShooter classname strings
+  - `VERIFY:` the full enumeration of Webshooter classname strings
     (letter+digit forms, and how it encodes `1u`/`1b`/`1s`, `Jun`,
-    `Dam1`–`3`, `VetY`, `VetÄ`) against a live API response or WebShooter
+    `Dam1`–`3`, `VetY`, `VetÄ`) against a live API response or Webshooter
     docs before shipping — this spec assumes but does not confirm a
     `<vapengrupp-letter><klass-code>` pattern.
   - An unrecognized classname **prompts the user to map it manually**
@@ -261,12 +261,12 @@ omission would under-count rounds fired on the linked firearm.
 ### A.10 Identity and auth
 
 - [ ] Identity key is `shooting_card_number` (SPSF pistolskyttekort
-      number), not a WebShooter internal user id. Resolution order,
+      number), not a Webshooter internal user id. Resolution order,
       first match wins: 1. Explicit override in `settings` (user manually set a card
       number to import as). 2. Previously stored card number (from a prior successful
       `authenticate/user` call). 3. `GET authenticate/user` with the stored token, which returns the
       authenticated user's card number.
-- [ ] The token is entered by the user (WebShooter issues personal API
+- [ ] The token is entered by the user (Webshooter issues personal API
       tokens; there is no OAuth flow in v4.1.9) and stored exclusively in
       `expo-secure-store` — see §1. It is **never** written to the
       `settings` table, never included in any export (CSV §6.8, PDF §M6),
@@ -307,7 +307,7 @@ survey). Computed **locally**, in `shared/scoring/stats.ts` (extending
 the v1 module from `docs/implementation-plan.md` §6.5), over ShotLedger's
 own data — imported and manually-logged sessions alike, once any import
 exists. This is a deliberate deviation from wscli, which proxies these
-calculations against the live WebShooter API; ShotLedger never proxies —
+calculations against the live Webshooter API; ShotLedger never proxies —
 §B.4.
 
 ### B.1 Personal-best grouping and validity
@@ -446,7 +446,7 @@ spec deliberately diverges:
 
 ### C.3 No aggregate upstream endpoint
 
-WebShooter has no "my upcoming starts across all competitions" endpoint.
+Webshooter has no "my upcoming starts across all competitions" endpoint.
 
 - [ ] The client iterates future competitions (from the cached
       `/competitions` listing, §A.11) and fetches `/patrols` per
@@ -471,14 +471,14 @@ WebShooter has no "my upcoming starts across all competitions" endpoint.
 ## Open questions (maintainer to confirm)
 
 1. Rate-limit courtesy numbers: retry backoff base delay/max attempts
-   (§A.11) and cache TTLs (§A.11, §C.3) — no published WebShooter SLA to
+   (§A.11) and cache TTLs (§A.11, §C.3) — no published Webshooter SLA to
    derive these from.
-2. Whether WebShooter's ToS permits a third-party client at all — the
+2. Whether Webshooter's ToS permits a third-party client at all — the
    maintainer needs to confirm this with the API owner (i.e., in his own
    club/federation context) before this milestone is scheduled, not just
    before it ships.
-3. Full WebShooter `classname` enumeration (§A.8) — needs a live API
-   sample or WebShooter's own docs, not assumed from the `'C2'` example
+3. Full Webshooter `classname` enumeration (§A.8) — needs a live API
+   sample or Webshooter's own docs, not assumed from the `'C2'` example
    alone.
 4. Milsnabb PB series count and the "figure hits" tiebreak term (§B.1) —
    confirm both against wscli's actual source rather than this spec's

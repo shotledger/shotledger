@@ -11,7 +11,7 @@ ShotLog is the third-party logbook the maintainer used before ShotLedger.
 Its CSV export is **one row per session** — no series, no shots. This spec
 covers reading that file and turning it into ShotLedger sessions with a
 single _total-only_ series (`series.is_total_override`), the same
-granularity WebShooter imports already use
+granularity Webshooter imports already use
 (`docs/specs/webshooter-integration-spec.md` §1/§A.4,
 `docs/specs/webshooter-app-spec.md` WS1 — the stats read paths already
 branch on that flag, so nothing in `shared/src/scoring/**` changes here).
@@ -21,9 +21,9 @@ Reused, not duplicated:
 - `shared/src/csv/csv-codec.ts` — `parseCsv` (RFC 4180, hand-rolled at M7).
 - `shared/src/disciplines/` — discipline ids (`spsf-precision`,
   `spsf-milsnabb`) and weapon-group ids (`spsf:A|B|C|R`, plus the
-  `spsf:A-opt` id the WebShooter classname table already mints).
+  `spsf:A-opt` id the Webshooter classname table already mints).
 - `app/src/db/queries/{sessions,series,tags,firearms}.ts` — every write.
-- The WebShooter import UI's shape: preview → per-row verdict → choose →
+- The Webshooter import UI's shape: preview → per-row verdict → choose →
   import → summary. Never blind, never "import everything".
 
 **Real-data rule (hard constraint).** The maintainer's real export at
@@ -240,7 +240,7 @@ Per-row status, in precedence order:
    row's ref. Re-import would be a no-op; not selected by default.
 4. `empty` — `Total score === 0`. Default **not selected**
    (`includeEmpty: false`); selectable in the UI.
-5. `probable-duplicate` — an existing session (WebShooter-imported ones
+5. `probable-duplicate` — an existing session (Webshooter-imported ones
    included) with the same **calendar day**, same `disciplineId` and same
    `weaponGroup` as the row's resolved suggestion. Surfaced with the
    candidate's name; never auto-merged, never auto-selected.

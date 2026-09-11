@@ -16,6 +16,7 @@ import {
   weaponGroupsForDiscipline,
 } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { OptionPicker, type PickerOption } from '@/components/option-picker';
@@ -75,7 +76,7 @@ export default function EditSessionScreen() {
   if (!db || !session) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('session.editTitle')}</ThemedText>
+        <ScreenTitle>{t('session.editTitle')}</ScreenTitle>
       </Screen>
     );
   }

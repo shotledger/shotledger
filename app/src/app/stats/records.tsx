@@ -11,26 +11,27 @@ import { tenthsToScore } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { useWebShooterRecords } from '@/features/webshooter/use-webshooter-records';
+import { useWebshooterRecords } from '@/features/webshooter/use-webshooter-records';
 import { Spacing } from '@/theme/tokens';
 
 function fmt(tenths: number | null): string {
   return tenths === null ? '–' : tenthsToScore(tenths).toFixed(1);
 }
 
-export default function WebShooterRecordsScreen() {
+export default function WebshooterRecordsScreen() {
   const { t } = useTranslation();
-  const { officialPbs, freeformPbs, yearOverYear } = useWebShooterRecords();
+  const { officialPbs, freeformPbs, yearOverYear } = useWebshooterRecords();
 
   const empty = officialPbs.length === 0 && freeformPbs.length === 0 && yearOverYear.length === 0;
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.recordsTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.recordsTitle')}</ScreenTitle>
 
       {empty && (
         <EmptyState title={t('webshooter.noRecordsTitle')} body={t('webshooter.noRecordsBody')} />

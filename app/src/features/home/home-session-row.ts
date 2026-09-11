@@ -58,7 +58,7 @@ export function deriveSessionShapeFromContent(
 
 /**
  * Builds one Home session row from its series. WS1: a total-override series
- * (WebShooter/ShotLog import) has no `shots` rows — `sessionResults` uses
+ * (Webshooter/ShotLog import) has no `shots` rows — `sessionResults` uses
  * its stored total instead of summing an empty array, matching the
  * session-detail and session-list screens (never sum `shots` directly here).
  */

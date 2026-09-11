@@ -20,6 +20,7 @@ import {
   type WeaponGroup,
 } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { InfoButton } from '@/components/info-button';
@@ -157,7 +158,7 @@ export default function FirearmDetailScreen() {
   if (!db || !firearm) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('firearms.detailTitle')}</ThemedText>
+        <ScreenTitle>{t('firearms.detailTitle')}</ScreenTitle>
       </Screen>
     );
   }
@@ -414,9 +415,9 @@ export default function FirearmDetailScreen() {
   return (
     <Screen>
       <View>
-        <ThemedText type="title">
+        <ScreenTitle>
           {firearm.make} {firearm.model}
-        </ThemedText>
+        </ScreenTitle>
         <View style={styles.chipsRow}>
           {firearm.weaponType && (
             <Chip label={t(`firearms.weaponType${capitalize(firearm.weaponType)}`)} />

@@ -206,7 +206,7 @@ describe('importShotlogRows', () => {
 });
 
 describe('listShotlogDedupCandidates', () => {
-  it('surfaces WebShooter-imported sessions as duplicate candidates', () => {
+  it('surfaces Webshooter-imported sessions as duplicate candidates', () => {
     createSession(db, {
       name: 'Locally entered',
       type: 'competition',

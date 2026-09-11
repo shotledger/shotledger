@@ -40,7 +40,7 @@ restorable.
 | Series/target photos stored as `shotledger-photo:<id>` sync markers                                                                                                                | `sync-photos/<photoId>.jpg`, **marker left alone** — see below                                                                             |
 
 The settings table is the reason "everything except the vault" is nearly free:
-language, theme, birth year, compliance profile, timer settings, the WebShooter
+language, theme, birth year, compliance profile, timer settings, the Webshooter
 mock flag, the backup folder URI and `lastBackupAt` are all rows in it.
 
 ### The synced-photo gap this closes

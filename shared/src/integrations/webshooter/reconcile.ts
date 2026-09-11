@@ -149,7 +149,7 @@ export interface MergeSessionFieldsResult<T> {
 }
 
 /**
- * Score-bearing fields always overwrite (WebShooter is authoritative, §A.3).
+ * Score-bearing fields always overwrite (Webshooter is authoritative, §A.3).
  * Enrichment fields overwrite only when currently empty (never clobber a
  * user-entered value). A field this module hasn't been told how to classify
  * is dropped, not guessed, and reported in `unknownFields` — a fail-soft

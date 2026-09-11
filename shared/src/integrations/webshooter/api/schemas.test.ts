@@ -8,6 +8,8 @@ import {
   fixtureSignup,
   fixtureSignupsResponse,
   fixtureStationResult,
+  fixturePatrol,
+  fixtureWeaponClass,
 } from './fixtures';
 import {
   authUserResponseSchema,
@@ -111,7 +113,7 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.fullname).toBeUndefined();
   });
 
-  it('accepts the nulls real WebShooter data is full of', () => {
+  it('accepts the nulls real Webshooter data is full of', () => {
     // Audited against wscli's 633 captured responses: with these fields
     // required, 124 of 256 results responses and 92 of 120 signups
     // responses failed to parse. Nulls here are the normal state, not
@@ -142,6 +144,73 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     );
 
     expect(parsed.results[0]!.signup).toBeNull();
+  });
+
+  it('accepts a weaponclass with no championship, as patrols return', () => {
+    // The single field that made every My Starts fetch fail: present in the
+    // weaponclass embedded in results, absent from the one embedded in a
+    // patrol's signups. Nothing in this codebase reads it.
+    const parsed = patrolsResponseSchema.parse(
+      fixturePatrolsResponse([
+        {
+          ...fixturePatrol(),
+          signups: [
+            {
+              ...fixtureSignup(),
+              weaponclass: { ...fixtureWeaponClass(), championship: undefined },
+            },
+          ],
+        },
+      ]),
+    );
+
+    expect(parsed.patrols[0]!.signups[0]!.weaponclass?.championship).toBeUndefined();
+  });
+
+  it('accepts a shooter with no club fields, as live results contain', () => {
+    // Required-but-unread is the recurring fault in these schemas: this one
+    // stopped the import scan dead on the first competition it met.
+    const signup = fixtureSignup();
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([
+        {
+          ...fixtureResultRow(),
+          signup: {
+            ...signup,
+            user: {
+              fullname: 'Testa Testsson',
+              shooting_card_number: '12345',
+            },
+          },
+        },
+      ]),
+    );
+
+    expect(parsed.results[0]!.signup!.user!.clubs_id).toBeUndefined();
+    expect(parsed.results[0]!.signup!.user!.shooting_card_number).toBe('12345');
+  });
+
+  it.each([
+    ['numbers', [1, 2, 3]],
+    ['numeric strings', ['1', '2']],
+    ['a mix', ['1', 0]],
+    ['null elements', [null, 1]],
+    ['a bare null instead of an array', null],
+  ])('accepts station_figure_hits as %s, all of which live data sends', (_label, value) => {
+    // Four shapes across live competitions, and not one line of this
+    // codebase reads the field. It is no longer validated at all.
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([
+        {
+          ...fixtureResultRow(),
+          results: [
+            { ...fixtureStationResult(), station_figure_hits: value as unknown as number[] },
+          ],
+        },
+      ]),
+    );
+
+    expect(parsed.results[0]!.results[0]!.station_figure_hits).toEqual(value);
   });
 
   it('requires the user envelope authenticate/user actually returns', () => {

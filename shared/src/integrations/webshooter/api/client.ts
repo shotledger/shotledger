@@ -1,4 +1,4 @@
-// Typed WebShooter endpoint client (spec §2.3). Polite-client defaults: every
+// Typed Webshooter endpoint client (spec §2.3). Polite-client defaults: every
 // method is one on-demand fetch, cached with a TTL, and only `forceRefresh`
 // or TTL expiry ever triggers a re-fetch — no background polling anywhere.
 import type { HttpClient } from './httpClient';
@@ -26,7 +26,7 @@ export interface FetchOptions {
   forceRefresh?: boolean;
 }
 
-export interface WebShooterClient {
+export interface WebshooterClient {
   listCompetitions(options?: FetchOptions): Promise<Competition[]>;
   getCompetition(id: number, options?: FetchOptions): Promise<Competition>;
   getPatrols(competitionId: number, options?: FetchOptions): Promise<Patrol[]>;
@@ -42,10 +42,10 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-export function createWebShooterClient(
+export function createWebshooterClient(
   httpClient: HttpClient,
   cacheConfig: CacheConfig = {},
-): WebShooterClient {
+): WebshooterClient {
   const ttlMs = cacheConfig.ttlMs ?? DEFAULT_TTL_MS;
   const now = cacheConfig.now ?? Date.now;
   const cache = new Map<string, CacheEntry<unknown>>();

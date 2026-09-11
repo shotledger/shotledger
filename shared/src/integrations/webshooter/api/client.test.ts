@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { HttpClient } from './httpClient';
-import { createWebShooterClient } from './client';
+import { createWebshooterClient } from './client';
 import {
   fixtureCompetitionDetailResponse,
   fixtureCompetitionsResponse,
@@ -16,10 +16,10 @@ function fakeHttpClient(
   return { requestJson } as unknown as { requestJson: ReturnType<typeof vi.fn> } & HttpClient;
 }
 
-describe('createWebShooterClient', () => {
+describe('createWebshooterClient', () => {
   it('listCompetitions: two calls within TTL make one underlying fetch', async () => {
     const http = fakeHttpClient({ '/competitions': fixtureCompetitionsResponse() });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     const first = await client.listCompetitions();
     const second = await client.listCompetitions();
@@ -30,7 +30,7 @@ describe('createWebShooterClient', () => {
 
   it('listCompetitions: forceRefresh bypasses a warm cache entry', async () => {
     const http = fakeHttpClient({ '/competitions': fixtureCompetitionsResponse() });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     await client.listCompetitions();
     await client.listCompetitions({ forceRefresh: true });
@@ -41,7 +41,7 @@ describe('createWebShooterClient', () => {
   it('listCompetitions: refetches once the TTL has elapsed', async () => {
     let now = 0;
     const http = fakeHttpClient({ '/competitions': fixtureCompetitionsResponse() });
-    const client = createWebShooterClient(http, { ttlMs: 1000, now: () => now });
+    const client = createWebshooterClient(http, { ttlMs: 1000, now: () => now });
 
     await client.listCompetitions();
     now = 1001;
@@ -53,7 +53,7 @@ describe('createWebShooterClient', () => {
   it('listCompetitions: treats the entry as expired at the exact expiresAt instant (boundary is exclusive)', async () => {
     let now = 0;
     const http = fakeHttpClient({ '/competitions': fixtureCompetitionsResponse() });
-    const client = createWebShooterClient(http, { ttlMs: 1000, now: () => now });
+    const client = createWebshooterClient(http, { ttlMs: 1000, now: () => now });
 
     await client.listCompetitions();
     now = 1000; // exactly expiresAt (now() + ttlMs at fetch time)
@@ -67,7 +67,7 @@ describe('createWebShooterClient', () => {
       '/competitions/1': fixtureCompetitionDetailResponse({ id: 1 }),
       '/competitions/2': fixtureCompetitionDetailResponse({ id: 2 }),
     });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     await client.getCompetition(1);
     await client.getCompetition(1);
@@ -81,7 +81,7 @@ describe('createWebShooterClient', () => {
       '/competitions/1/patrols': fixturePatrolsResponse(),
       '/competitions/2/patrols': fixturePatrolsResponse(),
     });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     await client.getPatrols(1);
     await client.getPatrols(1);
@@ -95,7 +95,7 @@ describe('createWebShooterClient', () => {
       '/competitions/1/results': fixtureResultsResponse(),
       '/competitions/2/results': fixtureResultsResponse(),
     });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     await client.getResults(1);
     await client.getResults(1);
@@ -109,7 +109,7 @@ describe('createWebShooterClient', () => {
       '/competitions/1/signups': fixtureSignupsResponse(),
       '/competitions/2/signups': fixtureSignupsResponse(),
     });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     const result = await client.getSignups(1);
     await client.getSignups(1);
@@ -125,7 +125,7 @@ describe('createWebShooterClient', () => {
     const http = fakeHttpClient({
       '/authenticate/user': { user: { shooting_card_number: '123' } },
     });
-    const client = createWebShooterClient(http);
+    const client = createWebshooterClient(http);
 
     const result = await client.authenticateUser();
     await client.authenticateUser();
