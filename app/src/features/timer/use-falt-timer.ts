@@ -33,8 +33,10 @@ const IDLE_PHASE: FaltPhase = {
 /**
  * Tone per cue — played alongside the spoken command, and on its own when
  * spoken prompts are off or the platform's TTS refuses. The regular timer's
- * four assets are all there is: there is no separate whistle sample, so the
- * whistle variant of ELD UPPHÖR borrows the stop tone.
+ * ELD UPPHÖR in whistle mode has its own 3 s asset: the call is drawn out
+ * ("utdraget", maintainer 2026-09-11), and the 0.39 s stop tone it used to
+ * borrow read as a beep rather than a blast. Spoken mode still gets the short
+ * tone beside the words.
  */
 const CUE_SOUND: Record<FaltCueKind, TimerCueKind | null> = {
   ladda: null,
@@ -98,7 +100,9 @@ export function useFaltTimer(
   const playCues = useCallback(
     (cues: readonly FaltCue[]) => {
       for (const cue of cues) {
-        const tone = CUE_SOUND[cue.kind];
+        // A cue may name its own sound: ELD UPPHÖR in whistle mode wants the
+        // 3 s blast instead of the short stop tone.
+        const tone = cue.tone ?? CUE_SOUND[cue.kind];
         // The Swedish command wording is SPSF-regulated (SHB D.6.2) and is
         // always spoken in sv-SE, whatever the app's UI language is.
         const spoke =

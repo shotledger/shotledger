@@ -129,6 +129,12 @@ export interface FaltCue {
   speech?: string;
   /** Speech rate multiplier; only set where it differs from normal (the drawn-out ELD UPPHÖR). */
   speechRate?: number;
+  /**
+   * Overrides the host's kind-to-sound mapping. Only ELD UPPHÖR sets it, and
+   * only in whistle mode: the blast *replaces* the words, so playing it beside
+   * the spoken command would talk over it.
+   */
+  tone?: 'whistle';
   /** 1-based parti number, for `parti` cues only. */
   partiNumber?: number;
   /** A vibration point — ELD, each parti, and when the time is up. The host still gates on the user's setting. */
@@ -265,6 +271,7 @@ export function buildFaltProgram(settings: FaltTimerSettings): FaltProgram {
       // The whistle variant replaces the words entirely.
       speech: whistle ? undefined : FALT_COMMAND_TEXT.eldUpphor,
       speechRate: whistle ? undefined : ELD_UPPHOR_SPEECH_RATE,
+      ...(whistle ? { tone: 'whistle' as const } : {}),
     },
     command('patronUr', patronUrAt),
     command('visitation', visitationAt),
