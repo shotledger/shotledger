@@ -1,29 +1,49 @@
 // Settings → WebShooter connect/disconnect (integration spec §A.10, PR #19
 // auth refinement). Primary: in-app password login, POSTed device→
-// webshooter.se directly via createUnverifiedSpaLoginClient — VERIFY-stubbed
-// in shared/src/integrations/webshooter/api/spaLogin.ts pending the real
-// endpoint shape, so this always surfaces the "not yet available" message
-// and falls back to manual token paste. Neither path ever calls a
-// ShotLedger backend.
+// webshooter.se directly — a Laravel Passport password grant, confirmed
+// 2026-09-11. Neither path ever calls a ShotLedger backend.
+//
+// The OAuth client secret is read from webshooter.se at login time — it is
+// published there to every anonymous visitor — so nothing secret is shipped
+// or stored, and a rotation on their side heals itself. The env fallback
+// only covers the case where that page cannot be read.
 import { useCallback, useEffect, useState } from 'react';
 import {
-  createUnverifiedSpaLoginClient,
-  WebShooterSpaLoginNotVerifiedError,
+  createSpaLoginClient,
+  WebShooterSpaLoginClientRejectedError,
+  WebShooterSpaLoginRejectedError,
+  WebShooterSpaLoginUnconfiguredError,
 } from '@shotledger/shared/src/integrations/webshooter/api/spaLogin';
 import { resolveIdentity } from '@shotledger/shared/src/integrations/webshooter/identity';
 
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { clearWebShooterToken, setWebShooterToken } from '@/platform/secure-store';
-import { getWebShooterClient, loadTokenCache, setTokenCache, WEBSHOOTER_BASE_URL } from './client';
+import {
+  getWebShooterClient,
+  loadTokenCache,
+  setTokenCache,
+  WEBSHOOTER_BASE_URL,
+  WEBSHOOTER_SITE_URL,
+} from './client';
 
 const CARD_NUMBER_SETTING_KEY = 'webshooterCardNumber';
+
+/**
+ * Fallback only, for a build made against a changed webshooter.se. Normally
+ * both are undefined and discovery supplies the secret.
+ */
+const OAUTH_CLIENT_FALLBACK = {
+  clientId: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_ID,
+  clientSecret: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_SECRET,
+};
 
 export interface WebShooterConnectionState {
   connected: boolean;
   cardNumber: string | null;
   loading: boolean;
   error: string | null;
+  errorDetail: string | null;
   connectWithPassword: (username: string, password: string) => Promise<void>;
   connectWithToken: (token: string) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -39,6 +59,10 @@ export function useWebShooterConnection(): WebShooterConnectionState {
   const [cardNumber, setCardNumber] = useState<string | null>(() => loadStoredCardNumber());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The status line or exception text behind `error`, shown small under the
+  // message — useless to most readers, the whole bug report to the one who
+  // has to fix it.
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,15 +95,34 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     async (username: string, password: string) => {
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
-        const loginClient = createUnverifiedSpaLoginClient(fetch, WEBSHOOTER_BASE_URL);
+        const loginClient = createSpaLoginClient(fetch, {
+          baseUrl: WEBSHOOTER_BASE_URL,
+          siteUrl: WEBSHOOTER_SITE_URL,
+          fallback: OAUTH_CLIENT_FALLBACK,
+        });
         const result = await loginClient.login({ username, password });
         await finishConnect(result.token);
       } catch (err) {
-        if (err instanceof WebShooterSpaLoginNotVerifiedError) {
-          setError('spaLoginNotVerified');
+        // Each failure gets its own message, because each needs a different
+        // thing from the reader: retype the password, check the connection,
+        // wait, or report that WebShooter changed and this needs updating.
+        // A single "login unavailable" for all of them leaves a field
+        // failure with nothing to act on.
+        if (err instanceof WebShooterSpaLoginRejectedError) {
+          setError('loginRejected');
+        } else if (err instanceof WebShooterSpaLoginUnconfiguredError) {
+          setError(err.failure === 'unreachable' ? 'loginUnreachable' : 'loginNeedsUpdate');
+          setErrorDetail(err.detail);
+        } else if (err instanceof WebShooterSpaLoginClientRejectedError) {
+          // Their server refused our client credentials outright: the same
+          // class of problem as a page we can no longer read.
+          setError('loginNeedsUpdate');
+          setErrorDetail('invalid_client');
         } else {
           setError('connectFailed');
+          setErrorDetail(err instanceof Error ? err.message : String(err));
         }
       } finally {
         setLoading(false);
@@ -92,6 +135,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     async (token: string) => {
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
         await finishConnect(token.trim());
       } catch {
@@ -116,6 +160,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     cardNumber,
     loading,
     error,
+    errorDetail,
     connectWithPassword,
     connectWithToken,
     disconnect,

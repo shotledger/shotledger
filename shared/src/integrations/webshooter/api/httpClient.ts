@@ -55,7 +55,12 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
   const factor = config.retry?.factor ?? DEFAULT_FACTOR;
 
   async function requestJson<T>(path: string, schema: ZodType<T>): Promise<T> {
-    const url = `${config.baseUrl}${path}`;
+    // Both halves normalised. `baseUrl` and the call sites disagreed about
+    // the slash — '/competitions' against 'authenticate/user' — which
+    // concatenation turned into `…/apiauthenticate/user`. webshooter.se
+    // answers an unrouted path with its SPA's index.html and a 200, so the
+    // request looked like a success and only failed later, in schema parsing.
+    const url = `${config.baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
     const token = config.getToken();
     const headers: Record<string, string> = {};
     if (token !== null) headers.Authorization = `Bearer ${token}`;

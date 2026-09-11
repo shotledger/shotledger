@@ -13,7 +13,15 @@ import { getSetting } from '@/db/queries/settings';
 import { getWebShooterToken } from '@/platform/secure-store';
 import { createDevMockHttpClient } from './dev-mock';
 
-export const WEBSHOOTER_BASE_URL = 'https://webshooter.se/api';
+// The version segment is part of the API root, not an accident of it.
+// Without it webshooter.se serves its SPA's index.html with a 200, so every
+// request "succeeded" and then died in schema parsing (verified against the
+// live host 2026-09-11: /api/competitions returns HTML, /api/v4.1.9/
+// competitions returns JSON). Same root wscli uses.
+export const WEBSHOOTER_BASE_URL = 'https://webshooter.se/api/v4.1.9';
+
+/** Site root, where the OAuth client secret is published to anonymous visitors. */
+export const WEBSHOOTER_SITE_URL = 'https://webshooter.se/';
 
 /** __DEV__-only opt-in flag (Settings dev section), never on in production builds. */
 export function isDevMockEnabled(): boolean {

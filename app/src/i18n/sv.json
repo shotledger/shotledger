@@ -642,7 +642,6 @@
     "usernamePlaceholder": "Användarnamn",
     "passwordPlaceholder": "Lösenord",
     "connectWithPassword": "Anslut med lösenord",
-    "spaLoginNotVerified": "Lösenordsinloggning är inte tillgänglig än — använd en manuell token nedan.",
     "tokenFallbackHelp": "Eller klistra in en WebShooter API-token direkt.",
     "tokenPlaceholder": "API-token",
     "connectWithToken": "Anslut med token",
@@ -703,7 +702,10 @@
       "brons": "Brons",
       "silver": "Silver",
       "guld": "Guld"
-    }
+    },
+    "loginRejected": "Fel användarnamn eller lösenord.",
+    "loginUnreachable": "Kunde inte nå webshooter.se. Kontrollera anslutningen och försök igen, eller klistra in en token nedan.",
+    "loginNeedsUpdate": "WebShooter har ändrat hur inloggningsinställningarna publiceras, så lösenordsinloggning kräver en uppdatering av ShotLedger. Klistra in en token nedan för att ansluta nu — och rapportera gärna detta."
   },
   "timer": {
     "title": "Tidtagning",
