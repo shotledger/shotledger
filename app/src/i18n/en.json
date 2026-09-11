@@ -513,7 +513,9 @@
     "menuLabel": "Session Menu",
     "menuSights": "Sights",
     "menuEdit": "Edit Session",
-    "menuShare": "Share"
+    "menuShare": "Share",
+    "moveSeriesUp": "Move series up",
+    "moveSeriesDown": "Move series down"
   },
   "share": {
     "title": "Share Session",

@@ -513,7 +513,9 @@
     "menuLabel": "Passmeny",
     "menuSights": "Sikte",
     "menuEdit": "Redigera pass",
-    "menuShare": "Dela"
+    "menuShare": "Dela",
+    "moveSeriesUp": "Flytta serien uppåt",
+    "moveSeriesDown": "Flytta serien nedåt"
   },
   "share": {
     "title": "Dela pass",

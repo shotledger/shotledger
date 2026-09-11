@@ -21,11 +21,13 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
+import { canMoveSeries, seriesSwapTarget } from '@/features/session/series-move';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
+import { swapSeriesPositions } from '@/db/queries/series';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
@@ -125,6 +127,34 @@ export default function SessionDetailScreen() {
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
 
+  function onMoveSeries(row: SeriesRow, direction: 'up' | 'down') {
+    if (!db) return;
+    const target = seriesSwapTarget(seriesRows, row.id, direction);
+    if (!target) return;
+    swapSeriesPositions(db, row.id, target.id);
+    refresh();
+  }
+
+  const MoveButton = ({ row, direction }: { row: SeriesRow; direction: 'up' | 'down' }) => {
+    const enabled = canMoveSeries(seriesRows, row.id, direction);
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t(
+          direction === 'up' ? 'session.moveSeriesUp' : 'session.moveSeriesDown',
+        )}
+        disabled={!enabled}
+        hitSlop={8}
+        onPress={() => onMoveSeries(row, direction)}
+        testID={`series-${row.position}-move-${direction}`}
+      >
+        <ThemedText type="smallBold" themeColor={enabled ? 'primary' : 'textSecondary'}>
+          {direction === 'up' ? '↑' : '↓'}
+        </ThemedText>
+      </Pressable>
+    );
+  };
+
   const renderSeries = (row: SeriesRow) => {
     const content = (
       <Pressable
@@ -147,6 +177,11 @@ export default function SessionDetailScreen() {
             <ThemedText type="smallBold">
               {row.isSighter ? '–' : tenthsToScore(row.totalTenths)}
             </ThemedText>
+            {/* Reordering a series you entered late (#138). The arrows sit in
+                the row rather than behind a swipe: the swipe gesture is
+                already taken by delete, and the two must not be neighbours. */}
+            <MoveButton row={row} direction="up" />
+            <MoveButton row={row} direction="down" />
           </View>
         </View>
         <ShotChips
