@@ -10,6 +10,7 @@ import {
   listSeriesForSession,
   setSeriesSighter,
   softDeleteSeries,
+  swapSeriesPositions,
 } from './series';
 
 let db: Database;
@@ -134,5 +135,58 @@ describe('setSeriesSighter', () => {
     const s = addSeries(db, { sessionId, position: 1 });
     softDeleteSeries(db, s.id);
     expect(setSeriesSighter(db, s.id, true)).toBeUndefined();
+  });
+});
+
+describe('swapSeriesPositions', () => {
+  it('exchanges two series positions and leaves the rest alone', () => {
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+    const a = addSeries(db, { sessionId, position: 1 });
+    const b = addSeries(db, { sessionId, position: 2 });
+    const c = addSeries(db, { sessionId, position: 3 });
+
+    swapSeriesPositions(db, b.id, c.id);
+
+    const byId = new Map(listSeriesForSession(db, sessionId).map((row) => [row.id, row.position]));
+    expect(byId.get(a.id)).toBe(1);
+    expect(byId.get(b.id)).toBe(3);
+    expect(byId.get(c.id)).toBe(2);
+  });
+
+  it('never leaves two series sharing a position', () => {
+    // The swap parks one row outside the range first; a half-applied swap
+    // would collide, and every read path orders by position.
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+    const a = addSeries(db, { sessionId, position: 1 });
+    const b = addSeries(db, { sessionId, position: 2 });
+
+    swapSeriesPositions(db, a.id, b.id);
+
+    const positions = listSeriesForSession(db, sessionId).map((row) => row.position);
+    expect(new Set(positions).size).toBe(positions.length);
+    expect(positions.some((p) => p < 1)).toBe(false);
+  });
+
+  it('does nothing when either series is gone', () => {
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+    const a = addSeries(db, { sessionId, position: 1 });
+
+    expect(() => swapSeriesPositions(db, a.id, 'missing')).not.toThrow();
+    expect(listSeriesForSession(db, sessionId)[0]!.position).toBe(1);
   });
 });

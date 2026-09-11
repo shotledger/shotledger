@@ -158,3 +158,32 @@ export function softDeleteSeries(db: Database, id: string) {
   const now = nowIso();
   db.update(series).set({ deletedAt: now, updatedAt: now }).where(eq(series.id, id)).run();
 }
+
+/**
+ * Swaps two series' positions — the "move up/down" press (#138). Both rows
+ * move in one transaction: a half-applied swap would leave two series sharing
+ * a position, which every read path orders by.
+ *
+ * The caller decides *which* two (see features/session/series-move.ts); this
+ * only performs the swap, and does nothing if either row has gone.
+ */
+export function swapSeriesPositions(db: Database, aId: string, bId: string) {
+  const a = getSeries(db, aId);
+  const b = getSeries(db, bId);
+  if (!a || !b) return;
+
+  const now = nowIso();
+  db.transaction((tx) => {
+    // Park one of them outside the used range first: `position` is unique per
+    // session in practice and a direct A->B write would collide mid-swap.
+    tx.update(series).set({ position: -1, updatedAt: now }).where(eq(series.id, a.id)).run();
+    tx.update(series)
+      .set({ position: a.position, updatedAt: now })
+      .where(eq(series.id, b.id))
+      .run();
+    tx.update(series)
+      .set({ position: b.position, updatedAt: now })
+      .where(eq(series.id, a.id))
+      .run();
+  });
+}
