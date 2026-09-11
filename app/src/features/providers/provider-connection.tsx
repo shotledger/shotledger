@@ -14,6 +14,7 @@ import { View, StyleSheet } from 'react-native';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { CalendarPicker } from '@/features/webshooter/calendar-picker';
 import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
 import { Spacing } from '@/theme/tokens';
 
@@ -68,6 +69,9 @@ export function ProviderConnection({ provider }: ProviderConnectionProps) {
             )}
           </>
         )}
+        {/* Only offered once connected: choosing a calendar for starts you
+            cannot fetch yet would be a setting about nothing. */}
+        <CalendarPicker />
         <PrimaryButton
           label={t('webshooter.disconnect')}
           onPress={() => void connection.disconnect()}
