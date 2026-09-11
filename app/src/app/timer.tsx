@@ -22,6 +22,7 @@ import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
+import { useKeepAwakeOnScreen } from '@/features/timer/use-keep-awake-on-screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimer } from '@/features/timer/falt-timer';
@@ -75,6 +76,10 @@ type TimerMode = 'regular' | 'ipsc' | 'falt';
 
 export default function TimersScreen() {
   const { t } = useTranslation();
+  // All three modes live on this route, so one lock covers them — and it
+  // holds between runs, not only during one.
+  useKeepAwakeOnScreen('timer-screen');
+
   const [mode, setMode] = useState<TimerMode>('regular');
 
   const modeSelector = (

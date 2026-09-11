@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { useKeepAwakeOnScreen } from '@/features/timer/use-keep-awake-on-screen';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
@@ -27,6 +28,9 @@ function db(value: number | null): string {
 
 export default function ShotDiagnosticsScreen() {
   const { t } = useTranslation();
+  // The point of this screen is to sit on a bench at the range for minutes
+  // at a time; locking loses the run.
+  useKeepAwakeOnScreen('shot-diagnostics-screen');
   const [note, setNote] = useState('');
   const diagnostics = useMicDiagnostics();
   const { stats } = diagnostics;
