@@ -125,7 +125,7 @@ export default function ShotDiagnosticsScreen() {
             {t('shotDiagnostics.lastMark', {
               peak: db(lastMark.peakDb),
               excess: db(lastMark.excessDb),
-              samples: lastMark.samplesAboveFloor,
+              count: lastMark.samplesAboveFloor,
             })}
           </ThemedText>
         )}
