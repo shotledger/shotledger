@@ -19,6 +19,8 @@ import {
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { OptionPicker, type PickerOption } from '@/components/option-picker';
+import { SegmentedControl } from '@/components/segmented-control';
+import type { SeriesEntryMode } from '@/features/session/series-entry-choice';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
@@ -54,6 +56,9 @@ export default function EditSessionScreen() {
   const [startedAt, setStartedAt] = useState(session?.startedAt ?? new Date().toISOString());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [location, setLocation] = useState(session?.location ?? '');
+  const [seriesEntryMode, setSeriesEntryMode] = useState<SeriesEntryMode>(
+    session?.seriesEntryMode ?? 'ask',
+  );
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [competitionName, setCompetitionName] = useState(session?.competitionName ?? '');
   const [level, setLevel] = useState<CompetitionLevel>(
@@ -117,6 +122,7 @@ export default function EditSessionScreen() {
       shooterClass,
       firearmId,
       ammoLotId,
+      seriesEntryMode,
     });
     router.back();
   }
@@ -182,6 +188,22 @@ export default function EditSessionScreen() {
           />
         </Card>
       )}
+
+      <Card>
+        <SegmentedControl<SeriesEntryMode>
+          options={[
+            { value: 'ask', label: t('session.entryMode.ask') },
+            { value: 'manual', label: t('session.entryMode.manual') },
+            { value: 'photo', label: t('session.entryMode.photo') },
+          ]}
+          value={seriesEntryMode}
+          onChange={setSeriesEntryMode}
+          testID="edit-series-entry-mode"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.entryModeHint')}
+        </ThemedText>
+      </Card>
 
       <Card>
         <OptionPicker

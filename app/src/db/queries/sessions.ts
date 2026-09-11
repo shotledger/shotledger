@@ -96,6 +96,8 @@ export type UpdateSessionInput = Partial<
     /** Unscored extra rounds (A1 §A1.3). Write it via `setSessionExtraRounds`
      * so the firearm round counter moves with it — never directly. */
     extraRounds: number | null;
+    /** How the next series is added: ask, or go straight to manual/photo. */
+    seriesEntryMode: 'ask' | 'manual' | 'photo';
   }
 >;
 
