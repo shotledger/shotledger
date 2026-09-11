@@ -142,7 +142,23 @@ export function createWebShooterSpaLoginClient(
       if (error === 'invalid_client') throw new WebShooterSpaLoginClientRejectedError();
       if (error === 'invalid_grant' || response.status === 401)
         throw new WebShooterSpaLoginRejectedError();
-      if (!response.ok) throw new Error(`WebShooter login failed with status ${response.status}`);
+      if (!response.ok) {
+        // webshooter.se answers a failed login with an opaque 500 and a
+        // Swedish "an error occurred" rather than Passport's invalid_grant
+        // (verified against the live host 2026-09-11, with valid client
+        // credentials and deliberately wrong user credentials). So the
+        // status alone says nothing — carry their message, or the reader
+        // is left with "could not connect" and no way to tell a wrong
+        // password from a broken endpoint.
+        const message =
+          typeof body === 'object' && body !== null
+            ? (body as { message?: unknown }).message
+            : undefined;
+        throw new Error(
+          `WebShooter login failed: HTTP ${response.status}` +
+            (typeof message === 'string' && message !== '' ? ` — ${message}` : ''),
+        );
+      }
 
       const token =
         typeof body === 'object' && body !== null

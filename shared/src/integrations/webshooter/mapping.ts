@@ -98,13 +98,20 @@ function mapSection(
   note: 'särskjutning' | null,
   shotsPerSeries: number,
 ): Omit<MappedSeriesOverride, 'position'>[] {
-  return rows.map((row) => ({
-    isFinal,
-    note,
-    isTotalOverride: true as const,
-    totalOverrideTenths: row.points * 10,
-    totalOverrideShotCount: shotsPerSeries,
-  }));
+  return (
+    rows
+      // A station with no points was not shot. It must not become a series:
+      // `null * 10` is 0 in JavaScript, so importing it would invent a
+      // zero-scored series and pull every average down after it.
+      .filter((row) => row.points !== null)
+      .map((row) => ({
+        isFinal,
+        note,
+        isTotalOverride: true as const,
+        totalOverrideTenths: row.points! * 10,
+        totalOverrideShotCount: shotsPerSeries,
+      }))
+  );
 }
 
 /**

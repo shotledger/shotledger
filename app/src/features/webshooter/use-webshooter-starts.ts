@@ -66,6 +66,11 @@ export function useWebShooterStarts() {
       for (const competition of competitions) {
         const patrols: Patrol[] = await client.getPatrols(competition.id, options);
         for (const patrol of patrols) {
+          // A patrol with no times has not been scheduled yet, so it is not
+          // a start: it has nothing to put in a calendar and nothing to show
+          // as a time. Real WebShooter data is full of these — inventing a
+          // time for them would be worse than leaving them out.
+          if (patrol.start_time === null || patrol.end_time === null) continue;
           const mine = patrol.signups.filter((s: Signup) =>
             cardNumbersMatch(s.user?.shooting_card_number ?? null, cardNumber),
           );

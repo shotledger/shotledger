@@ -22,9 +22,12 @@ export const stationResultSchema = z.object({
   finals: z.union([z.literal(0), z.literal(1)]),
   distinguish: z.union([z.literal(0), z.literal(1)]),
   stations_id: z.number(),
-  figure_hits: z.number(),
-  hits: z.number(),
-  points: z.number(),
+  // Null on a station that was not shot — 40 of wscli's 256 captured results
+  // responses carry a null `points`, 23 a null `hits`. Required here meant
+  // half the real corpus failed to parse.
+  figure_hits: z.number().nullable(),
+  hits: z.number().nullable(),
+  points: z.number().nullable(),
   station_figure_hits: z.array(z.number()),
   deleted_at: z.string().nullable(),
 });
@@ -52,8 +55,10 @@ export const signupSchema = z.object({
   patrols_id: z.number(),
   lane: z.number(),
   weaponclasses_id: z.number(),
-  start_time: z.string(),
-  end_time: z.string(),
+  // Null until a patrol is scheduled — by far the commonest null in the
+  // corpus (144 responses), and it is the normal state of an open signup.
+  start_time: z.string().nullable(),
+  end_time: z.string().nullable(),
   weaponclass: weaponClassSchema.optional(),
   user: userSchema.optional(),
   club: clubSchema.optional(),
@@ -65,12 +70,14 @@ export const resultRowSchema = z.object({
   competitions_id: z.number(),
   signups_id: z.number(),
   placement: z.number(),
-  figure_hits: z.number(),
-  hits: z.number(),
-  points: z.number(),
+  figure_hits: z.number().nullable(),
+  hits: z.number().nullable(),
+  points: z.number().nullable(),
   weaponclasses_id: z.number(),
   std_medal: z.enum(['B', 'S']).nullable(),
-  signup: signupSchema,
+  // A result row whose signup has been removed keeps the row: two captures
+  // have one.
+  signup: signupSchema.nullable(),
   weaponclass: weaponClassSchema,
   results: z.array(stationResultSchema),
   results_finals: z.array(stationResultSchema),
@@ -121,8 +128,8 @@ export type CompetitionsResponse = z.infer<typeof competitionsResponseSchema>;
 export const patrolSchema = z.object({
   id: z.number(),
   competitions_id: z.number(),
-  start_time: z.string(),
-  end_time: z.string(),
+  start_time: z.string().nullable(),
+  end_time: z.string().nullable(),
   patrol_size: z.number(),
   signups: z.array(signupSchema),
 });
@@ -150,3 +157,15 @@ export const authUserSchema = z.object({
   fullname: z.string().optional(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
+
+/**
+ * `authenticate/user` wraps the user; it does not return it bare.
+ *
+ * Confirmed against the wscli reference client, which reads
+ * `data["user"]["shooting_card_number"]`. Parsing the envelope as the user
+ * itself is how connecting an account ended with a stored token, a screen
+ * that said "connected", and no card number anywhere.
+ */
+export const authUserResponseSchema = z.object({
+  user: authUserSchema,
+});

@@ -120,7 +120,11 @@ describe('createWebShooterClient', () => {
   });
 
   it('authenticateUser is never cached: two calls, two fetches, hits the authenticate/user path', async () => {
-    const http = fakeHttpClient({ 'authenticate/user': { shooting_card_number: '123' } });
+    // The envelope is what webshooter.se actually returns, and the path now
+    // carries its leading slash like every other call site.
+    const http = fakeHttpClient({
+      '/authenticate/user': { user: { shooting_card_number: '123' } },
+    });
     const client = createWebShooterClient(http);
 
     const result = await client.authenticateUser();

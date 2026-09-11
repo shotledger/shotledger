@@ -103,7 +103,21 @@ export function useWebShooterConnection(): WebShooterConnectionState {
           fallback: OAUTH_CLIENT_FALLBACK,
         });
         const result = await loginClient.login({ username, password });
-        await finishConnect(result.token);
+        // Deliberately not inside the same try as the login: once a token
+        // has come back, the password worked, and a failure resolving the
+        // card number after that is a different problem with a different
+        // fix. Folding them together reports a working login as a failed
+        // one, which is the most misleading answer available.
+        try {
+          await finishConnect(result.token);
+        } catch (err) {
+          // Logged as well as shown: a screen truncates, and this is the
+          // branch where the exact text is the finding.
+          console.error('[webshooter] identity resolution failed', err);
+          setError('identityFailed');
+          setErrorDetail(err instanceof Error ? err.message : String(err));
+          return;
+        }
       } catch (err) {
         // Each failure gets its own message, because each needs a different
         // thing from the reader: retype the password, check the connection,
@@ -121,7 +135,11 @@ export function useWebShooterConnection(): WebShooterConnectionState {
           setError('loginNeedsUpdate');
           setErrorDetail('invalid_client');
         } else {
-          setError('connectFailed');
+          // Not a failure we can name. "Check the token" is wrong here —
+          // this path has no token — so it gets its own message, and the
+          // detail underneath is the only thing that will identify it.
+          console.error('[webshooter] login failed', err);
+          setError('loginFailed');
           setErrorDetail(err instanceof Error ? err.message : String(err));
         }
       } finally {
