@@ -192,8 +192,6 @@
     "sightWindageHint": "Klick höger från din nollställning; negativt är vänster. Lämna som inte noterat om du inte följer det.",
     "sightElevationDecrease": "Minska höjd",
     "sightElevationIncrease": "Öka höjd",
-    "sightWindageDecrease": "Minska sida",
-    "sightWindageIncrease": "Öka sida",
     "sightClicksClear": "Rensa",
     "sightClicksNotRecorded": "Inte noterat",
     "sightSummary": "Höjd {{elevation}} · Sida {{windage}}",
@@ -250,7 +248,8 @@
     "adjustReason": "Anledning",
     "adjustReasonPlaceholder": "Varför justeras detta?",
     "adjustSave": "Verkställ justering",
-    "eventDate": "Datum"
+    "eventDate": "Datum",
+    "sightWindageRange": "Område ±{{value}}"
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
