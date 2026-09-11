@@ -504,7 +504,6 @@
     "guldserie": "Guldserie",
     "guldAt": "Guld vid {{points}}p",
     "addPhoto": "Lägg till foto",
-    "photoAdded": "Foto bifogat",
     "photoPermissionDenied": "Appen fick inte tillgång till bilder.",
     "save": "Spara serie",
     "backspace": "Radera",
@@ -569,7 +568,12 @@
     "locationRangesNeedOnline": "Slå på Föreslå platser från kartan i Inställningar för att hitta banor nära dig.",
     "locationRangeNone": "Ingen skjutbana finns kartlagd nära dig.",
     "locationRangeDenied": "ShotLedger har inte behörighet att använda din plats. Du kan ge behörighet i telefonens inställningar.",
-    "locationRangeFailed": "Kunde inte hitta banor nära dig. Kontrollera att platstjänster är på och att du har uppkoppling."
+    "locationRangeFailed": "Kunde inte hitta banor nära dig. Kontrollera att platstjänster är på och att du har uppkoppling.",
+    "photoView": "Visa foto",
+    "photoRescore": "Poängsätt från det här fotot",
+    "replacePhoto": "Byt foto",
+    "photoMissingTitle": "Fotot är inte tillgängligt",
+    "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken."
   },
   "share": {
     "title": "Dela pass",
