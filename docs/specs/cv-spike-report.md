@@ -170,7 +170,10 @@ Other confirmed failure modes:
   approximately — exactly the case where the edge-touch rule matters.
 - **Repair patches are indistinguishable from holes** by any classical
   feature I tried. This alone sinks the three milsnabb photos: 14 of the 16
-  false positives are patch edges.
+  false positives are patch edges. **Superseded 2026-09-11**: true of the
+  _shape_ features tried here, not of classical features in general — local
+  variance separates hole from patch at AUC 0.94 on a 147-photo corpus. See
+  [`cv-corpus-validation-2026-09.md`](cv-corpus-validation-2026-09.md) §2.
 - **Target-type detection is unreliable on cropped photos** — two of the
   three milsnabb photos were typed as `precision`, which makes the entire
   ring scale 2.5× wrong. Every hole then scores wrong even if found.
@@ -574,18 +577,18 @@ milsnabb row is the same disaster at 2× the size.
 
 Failure-mode tally (counted by eye; a photo can appear in several rows):
 
-| Mode                                                       | Photos               | Note                                                                              |
-| ---------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------- |
-| Repair patches on the face                                 | ~17                  | Still indistinguishable from holes by any classical feature                       |
-| Nested faces — a card stapled over a larger printed target | ~10                  | **New.** The outer face's rings compete with the inner card's in the refine stage |
-| Moderate camera angle                                      | 14                   | Geometry, not holes, is what it breaks — see 6.3                                  |
-| Dark holes on black (no bright backing)                    | ~5                   | **New**, and structurally undetectable by the phase-1 detector — see 6.5          |
-| Overlapping / touching holes                               | ~8                   | Unchanged: merged into one blob                                                   |
-| Occlusion (hand, marking rod, pencil)                      | 3                    | Two are false positives on the rod's own tip                                      |
-| Large dark background winning Otsu                         | 3                    | Outdoor photos only                                                               |
-| Centre off-frame / black zone filling the frame            | 3                    | Geometry fails outright                                                           |
-| Printed ring digits                                        | all precision photos | The colour cue from §3 held up; it remains contingent on the backing              |
-| Target types beyond precision/milsnabb                     | 0                    | The corpus is entirely F.7.1 and J.7.1                                            |
+| Mode                                                       | Photos               | Note                                                                                 |
+| ---------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
+| Repair patches on the face                                 | ~17                  | Superseded 2026-09-11 — separable classically, see `cv-corpus-validation-2026-09.md` |
+| Nested faces — a card stapled over a larger printed target | ~10                  | **New.** The outer face's rings compete with the inner card's in the refine stage    |
+| Moderate camera angle                                      | 14                   | Geometry, not holes, is what it breaks — see 6.3                                     |
+| Dark holes on black (no bright backing)                    | ~5                   | **New**, and structurally undetectable by the phase-1 detector — see 6.5             |
+| Overlapping / touching holes                               | ~8                   | Unchanged: merged into one blob                                                      |
+| Occlusion (hand, marking rod, pencil)                      | 3                    | Two are false positives on the rod's own tip                                         |
+| Large dark background winning Otsu                         | 3                    | Outdoor photos only                                                                  |
+| Centre off-frame / black zone filling the frame            | 3                    | Geometry fails outright                                                              |
+| Printed ring digits                                        | all precision photos | The colour cue from §3 held up; it remains contingent on the backing                 |
+| Target types beyond precision/milsnabb                     | 0                    | The corpus is entirely F.7.1 and J.7.1                                               |
 
 Two things the bigger corpus settles that §3 could only guess at:
 
