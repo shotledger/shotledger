@@ -742,6 +742,40 @@
     "sensitivityHigh": "High",
     "delayRange": "{{from}}–{{to}} s"
   },
+  "shotDiagnostics": {
+    "title": "Shot Detection Diagnostics",
+    "intro": "Records what the microphone hears so shot detection can be built from real measurements. Start metering, tap Mark Shot each time you fire, then export the log and send it back.",
+    "liveTitle": "Live Level",
+    "level": "Level",
+    "peak": "Peak",
+    "noiseFloor": "Noise Floor",
+    "excess": "Above Floor",
+    "unitHint": "All values in dBFS, where 0 is the loudest the microphone can register. The noise floor follows the room, so \"above floor\" is how far an event separates from it.",
+    "resetPeak": "Reset Peak",
+    "clearRecording": "Clear Recording",
+    "start": "Start Metering",
+    "stop": "Stop Metering",
+    "markTitle": "Ground Truth",
+    "markHint": "Tap right after each shot. The marks are what tell a real shot from a door slamming when the log is analysed.",
+    "markShot": "Mark Shot",
+    "markCount": "Marked shots: {{marks}}",
+    "lastMark": "Last shot: peak {{peak}} dBFS, {{excess}} dB above the floor, spanning {{samples}} samples.",
+    "exportTitle": "Export",
+    "sampleCount": "{{samples}} of {{max}} samples recorded.",
+    "dropped": "{{dropped}} older samples dropped — the buffer keeps the most recent ones.",
+    "noteLabel": "Note",
+    "notePlaceholder": "Firearm, calibre, indoors or outdoors",
+    "export": "Export JSON",
+    "exportStatus": {
+      "success": "Log shared.",
+      "failed": "The log couldn't be shared."
+    },
+    "errors": {
+      "unavailable": "No microphone is available on this device.",
+      "denied": "Microphone permission was denied — allow it in system settings to meter.",
+      "failed": "The microphone couldn't be started. Close other apps using it and try again."
+    }
+  },
   "faltTimer": {
     "modes": {
       "rangeOfficer": "Range Officer",
@@ -976,6 +1010,8 @@
   },
   "tools": {
     "title": "Tools",
-    "timerSubtitle": "Time limit, shot and field timers"
+    "timerSubtitle": "Time limit, shot and field timers",
+    "diagnosticsTitle": "Shot Detection Diagnostics",
+    "diagnosticsSubtitle": "Measure what the microphone hears at the range"
   }
 }

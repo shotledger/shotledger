@@ -78,6 +78,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('timer.title') }}
       />
       <Stack.Screen
+        name="shot-diagnostics"
+        options={{ presentation: 'modal', headerShown: true, title: t('shotDiagnostics.title') }}
+      />
+      <Stack.Screen
         name="account"
         options={{ presentation: 'modal', headerShown: true, title: t('account.title') }}
       />
