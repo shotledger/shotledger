@@ -709,7 +709,8 @@
     "loginFailed": "Couldn't log in to WebShooter. The detail below is what it reported — please pass it on.",
     "identityFailed": "Logged in, but WebShooter would not say which card number the account belongs to. The detail below is what it reported.",
     "connectedNoCardNumber": "Signed in, but no card number yet.",
-    "retryIdentity": "Fetch Card Number"
+    "retryIdentity": "Fetch Card Number",
+    "scanningForResults": "Checking {{checked}} of {{total}} competitions for your results…"
   },
   "timer": {
     "title": "Timers",

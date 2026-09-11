@@ -167,6 +167,29 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.patrols[0]!.signups[0]!.weaponclass?.championship).toBeUndefined();
   });
 
+  it('accepts a shooter with no club fields, as live results contain', () => {
+    // Required-but-unread is the recurring fault in these schemas: this one
+    // stopped the import scan dead on the first competition it met.
+    const signup = fixtureSignup();
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([
+        {
+          ...fixtureResultRow(),
+          signup: {
+            ...signup,
+            user: {
+              fullname: 'Testa Testsson',
+              shooting_card_number: '12345',
+            },
+          },
+        },
+      ]),
+    );
+
+    expect(parsed.results[0]!.signup!.user!.clubs_id).toBeUndefined();
+    expect(parsed.results[0]!.signup!.user!.shooting_card_number).toBe('12345');
+  });
+
   it('requires the user envelope authenticate/user actually returns', () => {
     // wscli reads data["user"]["shooting_card_number"]. Parsing the envelope
     // as the user itself is how a connected account ended up with no card

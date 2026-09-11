@@ -2,7 +2,8 @@
 // lane, venue and patrol mates, plus a per-start "Add to calendar" action.
 // Aggressive caching + explicit refresh only — never a background poll
 // (§A.11/§C.3).
-import { useEffect } from 'react';
+import { useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
 
@@ -22,10 +23,13 @@ export default function WebShooterStartsScreen() {
   const { t } = useTranslation();
   const { starts, loading, error, load, addToCalendar, errorDetail } = useWebShooterStarts();
 
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount, refresh is explicit (§A.11/§C.3)
-  }, []);
+  // Refreshes whenever the screen comes into view, not only on first mount
+  // (maintainer, 2026-09-11). The client's TTL cache absorbs the repeats.
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   async function onAddToCalendar(start: (typeof starts)[number]) {
     try {

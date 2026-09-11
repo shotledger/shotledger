@@ -709,7 +709,8 @@
     "loginFailed": "Kunde inte logga in på WebShooter. Detaljen nedan är vad som rapporterades — skicka gärna vidare den.",
     "identityFailed": "Inloggningen lyckades, men WebShooter angav inte vilket kortnummer kontot tillhör. Detaljen nedan är vad som rapporterades.",
     "connectedNoCardNumber": "Inloggad, men inget kortnummer än.",
-    "retryIdentity": "Hämta kortnummer"
+    "retryIdentity": "Hämta kortnummer",
+    "scanningForResults": "Kontrollerar {{checked}} av {{total}} tävlingar efter dina resultat…"
   },
   "timer": {
     "title": "Tidtagning",

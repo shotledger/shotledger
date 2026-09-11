@@ -45,11 +45,15 @@ export type Club = z.infer<typeof clubSchema>;
 
 // Identity + same-club fields only (§A.10's personal-data boundary) — never
 // the full WebShooter user profile, even though the real payload has more.
+// Require what we read, and no more. `clubs_id` and `clubs` are absent for
+// some shooters in live results (competition 349, 2026-09-11) and nothing
+// here has ever read them — a required field we never use can only ever
+// cost us a working screen.
 export const userSchema = z.object({
   fullname: z.string(),
   shooting_card_number: z.string().nullable(),
-  clubs_id: z.number(),
-  clubs: z.array(clubSchema),
+  clubs_id: z.number().optional(),
+  clubs: z.array(clubSchema).optional(),
 });
 export type WebShooterUser = z.infer<typeof userSchema>;
 
