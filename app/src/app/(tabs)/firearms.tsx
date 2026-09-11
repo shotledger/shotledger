@@ -8,6 +8,7 @@ import { View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
@@ -103,26 +104,38 @@ export default function FirearmsScreen() {
       ) : ammoRows.length === 0 ? (
         <EmptyState title={t('ammo.emptyTitle')} body={t('ammo.emptyBody')} />
       ) : (
-        <Card>
-          {ammoRows.map(({ lot, usage }) => (
-            <ListRow
-              key={lot.id}
-              testID={`ammo-${lot.id}`}
-              title={lot.label}
-              subtitle={[
-                // The load is derived from the recipe columns, on its own
-                // line — never baked into `label` (maintainer, 2026-09-10).
-                formatAmmoRecipe(lot, (value) => t('ammo.grainsValue', { value })),
-                t('ammo.usageCount', {
-                  sessions: usage.sessionCount,
-                  shots: usage.shotCount,
-                }),
-              ]}
-              onPress={() => router.push(`/ammo/${lot.id}`)}
-              trailing={lot.isHandload ? <Chip label={t('ammo.isHandload')} /> : undefined}
-            />
-          ))}
-        </Card>
+        <>
+          {ammoRows.length > 1 && (
+            <Card>
+              <DrillDownRow
+                title={t('ammo.compareOpen')}
+                subtitle={t('ammo.compareOpenSubtitle')}
+                onPress={() => router.push('/ammo/compare')}
+                testID="ammo-open-compare"
+              />
+            </Card>
+          )}
+          <Card>
+            {ammoRows.map(({ lot, usage }) => (
+              <ListRow
+                key={lot.id}
+                testID={`ammo-${lot.id}`}
+                title={lot.label}
+                subtitle={[
+                  // The load is derived from the recipe columns, on its own
+                  // line — never baked into `label` (maintainer, 2026-09-10).
+                  formatAmmoRecipe(lot, (value) => t('ammo.grainsValue', { value })),
+                  t('ammo.usageCount', {
+                    sessions: usage.sessionCount,
+                    shots: usage.shotCount,
+                  }),
+                ]}
+                onPress={() => router.push(`/ammo/${lot.id}`)}
+                trailing={lot.isHandload ? <Chip label={t('ammo.isHandload')} /> : undefined}
+              />
+            ))}
+          </Card>
+        </>
       )}
     </Screen>
   );

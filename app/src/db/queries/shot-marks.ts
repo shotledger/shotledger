@@ -5,9 +5,10 @@
 // (`saveSeriesShots`), so firearm round counters stay correct and a
 // photo-scored series is indistinguishable from a keypad-entered one
 // everywhere downstream. This module only adds the geometry beside it.
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
+import type { AmmoLotGroupSample, GroupPoint } from '@shotledger/shared';
 
-import { series, shotMarks, shots } from '../schema';
+import { series, sessions, shotMarks, shots } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 import { saveSeriesShots } from './round-count';
@@ -156,4 +157,48 @@ export function listMarksForSession(db: Database, sessionId: string): StoredMark
 /** True when a session has any mark at all — the Group view is hidden otherwise. */
 export function sessionHasMarks(db: Database, sessionId: string): boolean {
   return listMarksForSession(db, sessionId).length > 0;
+}
+
+/**
+ * Every photo-scored series' marks, grouped per series and tagged with the
+ * session's ammo lot — the group half of the lot comparison. Sighters are
+ * excluded for the same reason as everywhere else; a series whose session
+ * has no lot cannot say anything about a lot and is dropped.
+ */
+export function listGroupSamplesByAmmoLot(db: Database): AmmoLotGroupSample[] {
+  const rows = db
+    .select({
+      seriesId: shots.seriesId,
+      ammoLotId: sessions.ammoLotId,
+      xMm: shotMarks.xMm,
+      yMm: shotMarks.yMm,
+    })
+    .from(shotMarks)
+    .innerJoin(shots, eq(shotMarks.shotId, shots.id))
+    .innerJoin(series, eq(shots.seriesId, series.id))
+    .innerJoin(sessions, eq(series.sessionId, sessions.id))
+    .where(
+      and(
+        eq(series.isSighter, 0),
+        isNotNull(sessions.ammoLotId),
+        isNull(shotMarks.deletedAt),
+        isNull(shots.deletedAt),
+        isNull(series.deletedAt),
+        isNull(sessions.deletedAt),
+      ),
+    )
+    .orderBy(series.position, shots.position)
+    .all();
+
+  const bySeries = new Map<string, { ammoLotId: string; points: GroupPoint[] }>();
+  for (const row of rows) {
+    // `isNotNull` above already excluded the null lots; the column type
+    // cannot express that.
+    const ammoLotId = row.ammoLotId as string;
+    const sample = bySeries.get(row.seriesId) ?? { ammoLotId, points: [] };
+    sample.points.push({ xMm: row.xMm, yMm: row.yMm });
+    bySeries.set(row.seriesId, sample);
+  }
+
+  return [...bySeries.entries()].map(([seriesId, sample]) => ({ seriesId, ...sample }));
 }
