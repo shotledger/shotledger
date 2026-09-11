@@ -518,7 +518,23 @@
     "menuShare": "Dela",
     "moveSeriesUp": "Flytta serien uppåt",
     "moveSeriesDown": "Flytta serien nedåt",
-    "sightsAdjustHint": "Ändringar sparas direkt, på den valda inställningen."
+    "sightsAdjustHint": "Ändringar sparas direkt, på den valda inställningen.",
+    "entryChoiceTitle": "Lägg till serie",
+    "entryChoiceRemember": "Använd för resten av passet",
+    "entryChoice": {
+      "manual": "Mata in manuellt",
+      "photo": "Poängsätt från foto"
+    },
+    "entryChoiceHint": {
+      "manual": "Knappa in skotten på knappsatsen.",
+      "photo": "Ta ett foto av tavlan, eller välj ett ur biblioteket, och peka ut träffarna."
+    },
+    "entryMode": {
+      "ask": "Fråga",
+      "manual": "Manuellt",
+      "photo": "Foto"
+    },
+    "entryModeHint": "Hur en ny serie läggs till. Fråga ger valet varje gång."
   },
   "share": {
     "title": "Dela pass",

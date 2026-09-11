@@ -23,11 +23,16 @@ import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
 import { canMoveSeries, seriesSwapTarget } from '@/features/session/series-move';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
+import {
+  SeriesEntryChoiceSheet,
+  type SeriesEntryChoice,
+} from '@/features/session/series-entry-choice';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { swapSeriesPositions } from '@/db/queries/series';
+import { updateSession } from '@/db/queries/sessions';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
@@ -48,6 +53,7 @@ export default function SessionDetailScreen() {
   const group = useSessionGroup(id);
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
+  const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
 
   const { session, seriesRows, results, tags, firearmName } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
@@ -72,9 +78,30 @@ export default function SessionDetailScreen() {
    * the user backed out with the hardware back button (maintainer, verified
    * live 2026-09-03).
    */
-  function onAddSeries() {
-    const position = seriesRows.reduce((max, row) => Math.max(max, row.position), 0) + 1;
+  function nextSeriesPosition(): number {
+    return seriesRows.reduce((max, row) => Math.max(max, row.position), 0) + 1;
+  }
+
+  function openSeriesEntry(choice: SeriesEntryChoice) {
+    const position = nextSeriesPosition();
+    if (choice === 'photo') {
+      router.push(`/session/${id}/scan?pos=${position}`);
+      return;
+    }
     router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);
+  }
+
+  function onAddSeries() {
+    if (session!.seriesEntryMode === 'ask') {
+      setEntryChoiceOpen(true);
+      return;
+    }
+    openSeriesEntry(session!.seriesEntryMode);
+  }
+
+  function onChooseEntry(choice: SeriesEntryChoice, remember: boolean) {
+    if (remember && db) updateSession(db, id, { seriesEntryMode: choice });
+    openSeriesEntry(choice);
   }
 
   /**
@@ -572,6 +599,11 @@ export default function SessionDetailScreen() {
           )}
         </>
       )}
+      <SeriesEntryChoiceSheet
+        visible={entryChoiceOpen}
+        onClose={() => setEntryChoiceOpen(false)}
+        onChoose={onChooseEntry}
+      />
     </Screen>
   );
 }

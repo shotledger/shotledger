@@ -518,7 +518,23 @@
     "menuShare": "Share",
     "moveSeriesUp": "Move series up",
     "moveSeriesDown": "Move series down",
-    "sightsAdjustHint": "Changes are saved as you make them, on the selected setting."
+    "sightsAdjustHint": "Changes are saved as you make them, on the selected setting.",
+    "entryChoiceTitle": "Add Series",
+    "entryChoiceRemember": "Use for the rest of this session",
+    "entryChoice": {
+      "manual": "Enter Manually",
+      "photo": "Score from Photo"
+    },
+    "entryChoiceHint": {
+      "manual": "Type the shots on the keypad.",
+      "photo": "Take a photo of the target, or pick one from your library, and tap the hits."
+    },
+    "entryMode": {
+      "ask": "Ask",
+      "manual": "Manual",
+      "photo": "Photo"
+    },
+    "entryModeHint": "How a new series is added. Ask offers the choice each time."
   },
   "share": {
     "title": "Share Session",

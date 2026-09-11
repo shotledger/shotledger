@@ -101,6 +101,12 @@ export const sessions = sqliteTable('sessions', {
   kind: text('kind', { enum: ['series', 'rounds'] })
     .notNull()
     .default('series'),
+  // How a new series is entered: ask each time, or go straight to manual
+  // entry / photo scoring. Per session so a shooter who is scanning targets
+  // all evening is not asked twelve times (#138).
+  seriesEntryMode: text('series_entry_mode', { enum: ['ask', 'manual', 'photo'] })
+    .notNull()
+    .default('ask'),
   disciplineId: text('discipline_id').notNull(), // key into discipline defs (§6.2)
   programId: text('program_id'), // predefined match format (§6.3); NULL = free-form training
   // only when type='competition'; SHB 2026 C.3.1 (p. 52) levels
