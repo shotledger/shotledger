@@ -5,7 +5,9 @@
 // numbers list of commands and indicate those numbers on the time line"), and
 // the parti (delmoment) intervals are badged above the shooting window.
 import { ALLA_KLARA_AT_SECONDS, faltPartiIntervals, type FaltProgram } from '@shotledger/shared';
-import { StyleSheet, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+
+import { useState } from 'react';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,14 +22,44 @@ const AMBER = '#E8B84B';
 
 const MARKER_SIZE = 20;
 
+const startSecondsOf = (program: FaltProgram) => program.startSeconds;
+const spanOf = (program: FaltProgram) => program.endSeconds - program.startSeconds;
+
 export interface FaltTimelineProps {
   program: FaltProgram;
   /** Where the playhead sits, in ms relative to ELD. */
   atMs: number;
+  /**
+   * Scrub target. Supplied only while the clock is paused — the bar is inert
+   * on a running timer, because a stray touch must not move a command
+   * sequence people are acting on.
+   */
+  onSeek?: (atMs: number) => void;
+  /** Announced for the scrub, when one is offered. */
+  accessibilityLabel?: string;
   testID?: string;
 }
 
-export function FaltTimeline({ program, atMs, testID }: FaltTimelineProps) {
+export function FaltTimeline({
+  program,
+  atMs,
+  onSeek,
+  accessibilityLabel,
+  testID,
+}: FaltTimelineProps) {
+  const [barWidth, setBarWidth] = useState(0);
+
+  function onBarLayout(event: LayoutChangeEvent) {
+    setBarWidth(event.nativeEvent.layout.width);
+  }
+
+  /** Touch x -> a position on the ELD-anchored clock. */
+  function seekTo(x: number) {
+    if (!onSeek || barWidth <= 0) return;
+    const fraction = Math.min(1, Math.max(0, x / barWidth));
+    onSeek((startSecondsOf(program) + fraction * spanOf(program)) * 1_000);
+  }
+
   const theme = useTheme();
   const { settings, startSeconds, endSeconds } = program;
   const shooting = settings.shootingSeconds;
@@ -104,7 +136,15 @@ export function FaltTimeline({ program, atMs, testID }: FaltTimelineProps) {
           ))}
       </View>
 
-      <View style={styles.bar}>
+      <Pressable
+        style={styles.bar}
+        onLayout={onBarLayout}
+        disabled={!onSeek}
+        accessibilityRole={onSeek ? 'adjustable' : undefined}
+        accessibilityLabel={onSeek ? accessibilityLabel : undefined}
+        onPress={(event) => seekTo(event.nativeEvent.locationX)}
+        testID={testID ? `${testID}-bar` : undefined}
+      >
         {segments.map((segment) => (
           <View
             key={segment.key}
@@ -123,7 +163,7 @@ export function FaltTimeline({ program, atMs, testID }: FaltTimelineProps) {
           ]}
           testID="falt-playhead"
         />
-      </View>
+      </Pressable>
 
       <View style={styles.scaleRow}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.scaleText}>

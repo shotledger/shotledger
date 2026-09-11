@@ -464,6 +464,36 @@ export class FaltTimerEngine {
     return this.running;
   }
 
+  /** True while the clock is held — the only state a scrub is allowed in. */
+  isPaused(): boolean {
+    return this.clockStarted && !this.running;
+  }
+
+  /**
+   * Moves the clock to `atMs` without firing anything.
+   *
+   * Scrubbing is navigation, not playback: seeking forward past ELD must not
+   * shout every command it crossed, and seeking back must not re-arm them to
+   * fire a second time. `nextCueIndex` is recomputed from the new position, so
+   * whatever lies behind the playhead is spent and whatever lies ahead is not.
+   *
+   * Only while paused. Allowing it on a running clock would let a stray touch
+   * move the series under the shooter, and the fälttimer is a command
+   * sequence people are acting on.
+   */
+  seek(atMs: number): void {
+    if (!Number.isFinite(atMs)) throw new Error('FaltTimerEngine.seek() requires a finite atMs');
+    if (!this.isPaused()) return;
+
+    this.atMs = Math.min(
+      this.program.endSeconds * 1_000,
+      Math.max(this.program.startSeconds * 1_000, atMs),
+    );
+    this.nextCueIndex = this.program.cues.filter(
+      (cue) => cue.atSeconds! * 1_000 <= this.atMs,
+    ).length;
+  }
+
   /** Back to idle, discarding the run. */
   reset(): void {
     this.atMs = this.program.startSeconds * 1_000;

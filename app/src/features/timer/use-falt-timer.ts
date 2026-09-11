@@ -63,6 +63,10 @@ export interface UseFaltTimerResult {
   advanceManual: () => void;
   pause: () => void;
   resume: () => void;
+  /** Move the clock while paused — the timeline scrub and tap-a-command-to-jump. */
+  seek: (atMs: number) => void;
+  /** True while the clock is held, i.e. while scrubbing is allowed. */
+  isPaused: boolean;
   /** Back to the settings view. */
   reset: () => void;
   /** Run the same sequence again without leaving the timeline view. */
@@ -77,6 +81,7 @@ export function useFaltTimer(
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isAwaitingPress, setIsAwaitingPress] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Built fresh in `start()`, from whatever `settings` are current then —
   // mirrors use-ipsc-timer.ts's `engineRef`. A ref (not `useMemo`) because
@@ -138,6 +143,7 @@ export function useFaltTimer(
     setPhase(engine.getPhase());
     setIsRunning(engine.isRunning());
     setIsAwaitingPress(engine.isAwaitingPress());
+    setIsPaused(engine.isPaused());
   }, []);
 
   const tick = useCallback(() => {
@@ -191,6 +197,20 @@ export function useFaltTimer(
     syncFrom(engine);
   }, [stopInterval, syncFrom]);
 
+  /**
+   * Scrub while paused. The engine refuses on a running clock, and fires no
+   * cues on the way — see FaltTimerEngine.seek.
+   */
+  const seek = useCallback(
+    (atMs: number) => {
+      const engine = engineRef.current;
+      if (!engine) return;
+      engine.seek(atMs);
+      syncFrom(engine);
+    },
+    [syncFrom],
+  );
+
   const resume = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -223,6 +243,8 @@ export function useFaltTimer(
     advanceManual,
     pause,
     resume,
+    seek,
+    isPaused,
     reset,
     restart,
   };

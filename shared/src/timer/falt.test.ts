@@ -544,3 +544,73 @@ describe('speech spellings', () => {
     expect(ELD_UPPHOR_SPEECH_RATE).toBeGreaterThan(0.25);
   });
 });
+
+describe('FaltTimerEngine.seek', () => {
+  const run = () => {
+    const engine = new FaltTimerEngine(DEFAULT_FALT_SETTINGS);
+    engine.start();
+    // Walk past any manual commands so the clock is actually running.
+    while (engine.isAwaitingPress()) engine.advanceManual();
+    return engine;
+  };
+
+  it('refuses to move a running clock', () => {
+    const engine = run();
+    const before = engine.getAtMs();
+    engine.seek(before + 5_000);
+    expect(engine.getAtMs()).toBe(before);
+  });
+
+  it('moves the clock while paused', () => {
+    const engine = run();
+    engine.pause();
+    engine.seek(2_000);
+    expect(engine.getAtMs()).toBe(2_000);
+  });
+
+  it('fires nothing on the way — scrubbing is navigation, not playback', () => {
+    const engine = run();
+    engine.pause();
+    engine.seek(engine.getAtMs() + 60_000);
+    // Resuming and ticking must not disgorge every command that was skipped.
+    engine.resume();
+    const cues = engine.advance(0);
+    expect(cues).toEqual([]);
+  });
+
+  it('does not re-arm a cue that is now behind the playhead again', () => {
+    const engine = run();
+    engine.pause();
+    engine.seek(10_000);
+    engine.seek(-10_000);
+    engine.resume();
+    // Everything before -10 s is spent; advancing re-crosses ELD and friends,
+    // which SHOULD fire, but nothing earlier than the new position.
+    const cues = engine.advance(0);
+    expect(cues).toEqual([]);
+  });
+
+  it('clamps to the programme rather than running off either end', () => {
+    const engine = run();
+    engine.pause();
+    engine.seek(-9_999_999);
+    expect(engine.getAtMs()).toBe(buildFaltProgram(DEFAULT_FALT_SETTINGS).startSeconds * 1_000);
+    engine.seek(9_999_999);
+    expect(engine.getAtMs()).toBe(buildFaltProgram(DEFAULT_FALT_SETTINGS).endSeconds * 1_000);
+  });
+
+  it('rejects a non-finite position rather than corrupting the clock', () => {
+    const engine = run();
+    engine.pause();
+    expect(() => engine.seek(Number.NaN)).toThrow();
+  });
+
+  it('reports paused only once the clock has started', () => {
+    const engine = new FaltTimerEngine(DEFAULT_FALT_SETTINGS);
+    expect(engine.isPaused()).toBe(false);
+    const running = run();
+    expect(running.isPaused()).toBe(false);
+    running.pause();
+    expect(running.isPaused()).toBe(true);
+  });
+});

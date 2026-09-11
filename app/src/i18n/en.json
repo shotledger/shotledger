@@ -773,7 +773,9 @@
     "pause": "Pause",
     "resume": "Resume",
     "restart": "Restart",
-    "settings": "Settings"
+    "settings": "Settings",
+    "scrub": "Scrub the timeline",
+    "scrubHint": "Paused — tap the bar or a command to move the clock."
   },
   "vault": {
     "title": "Vault",
