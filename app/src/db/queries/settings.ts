@@ -18,6 +18,9 @@ export const SETTINGS_KEYS = {
   // (mode, prep/shooting time, parti boundaries, whistle).
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
+  // The IPSC timer's own blob (trigger level, random delay range, PAR,
+  // auto-stop).
+  ipscTimer: 'ipscTimer',
   timerCues: 'timerCues',
   // Opt-in online place lookup for the session Location field (Photon/OSM).
   // OFF by default: with it on, what the user types is sent to a third-party
