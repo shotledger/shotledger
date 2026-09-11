@@ -1,24 +1,19 @@
-// Shot timer route. Setup (preset/custom picker) and running (countdown)
-// are two views of one screen, switched on the engine's
-// phase — `useTimer` (features/timer/use-timer.ts) drives the pure
-// `TimerController`/`TimerEngine` (shared/src/timer).
+// Timers route. Setup (the fields) and running (countdown) are two views of
+// one screen, switched on the engine's phase — `useTimer`
+// (features/timer/use-timer.ts) drives the pure `TimerController`/
+// `TimerEngine` (shared/src/timer).
 //
-// One route, two modes: the regular PAR/interval timer below and the
-// microphone-driven IPSC timer in features/timer/ipsc-timer.tsx. The mode
-// segmented control is rendered by whichever mode is active, in its setup
-// view only — switching mid-run would strand a recorder or an interval.
-import {
-  PAR_PRESETS,
-  buildMilsnabbDrillConfig,
-  type TimerConfig,
-  type TimerPhaseKind,
-} from '@shotledger/shared';
+// One route, three modes: the time-limit/interval timer below, the
+// microphone-driven shot timer in features/timer/ipsc-timer.tsx, and the
+// fälttimer. The mode segmented control is rendered by whichever mode is
+// active, in its setup view only — switching mid-run would strand a recorder
+// or an interval.
+import { type TimerConfig, type TimerPhaseKind } from '@shotledger/shared';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
-import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -28,25 +23,6 @@ import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
 import { useTimer } from '@/features/timer/use-timer';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
-
-type PresetId = 'parSingle' | 'parRandomStart' | 'parInterval' | 'milsnabb' | 'custom';
-
-const PAR_PRESET_BY_ID: Record<
-  Exclude<PresetId, 'milsnabb' | 'custom'>,
-  (typeof PAR_PRESETS)[number]
-> = {
-  parSingle: PAR_PRESETS[0]!,
-  parRandomStart: PAR_PRESETS[1]!,
-  parInterval: PAR_PRESETS[2]!,
-};
-
-const PRESET_IDS: readonly PresetId[] = [
-  'parSingle',
-  'parRandomStart',
-  'parInterval',
-  'milsnabb',
-  'custom',
-];
 
 const PHASE_COLOR: Record<TimerPhaseKind, ThemeColor> = {
   idle: 'textSecondary',
@@ -61,7 +37,7 @@ function secondsInput(value: string): number {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function buildCustomConfig(
+function buildConfig(
   parSeconds: string,
   readyDelaySeconds: string,
   reps: string,
@@ -88,7 +64,7 @@ function formatSeconds(ms: number): string {
 
 type TimerMode = 'regular' | 'ipsc' | 'falt';
 
-export default function ShotTimerScreen() {
+export default function TimersScreen() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<TimerMode>('regular');
 
@@ -107,24 +83,21 @@ export default function ShotTimerScreen() {
 
   if (mode === 'ipsc') return <IpscTimer modeSelector={modeSelector} />;
   if (mode === 'falt') return <FaltTimer modeSelector={modeSelector} />;
-  return <RegularTimer modeSelector={modeSelector} />;
+  return <TimeLimitTimer modeSelector={modeSelector} />;
 }
 
-function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
+function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const { t } = useTranslation();
 
-  const [presetId, setPresetId] = useState<PresetId>('parSingle');
   const [parSeconds, setParSeconds] = useState('3');
   const [readyDelaySeconds, setReadyDelaySeconds] = useState('3');
   const [reps, setReps] = useState('1');
   const [restSeconds, setRestSeconds] = useState('0');
 
-  const config = useMemo<TimerConfig>(() => {
-    if (presetId === 'milsnabb') return buildMilsnabbDrillConfig();
-    if (presetId === 'custom')
-      return buildCustomConfig(parSeconds, readyDelaySeconds, reps, restSeconds);
-    return PAR_PRESET_BY_ID[presetId].config;
-  }, [presetId, parSeconds, readyDelaySeconds, reps, restSeconds]);
+  const config = useMemo<TimerConfig>(
+    () => buildConfig(parSeconds, readyDelaySeconds, reps, restSeconds),
+    [parSeconds, readyDelaySeconds, reps, restSeconds],
+  );
 
   const { phase, start, reset } = useTimer(config);
   const totalSeries = config.series.length;
@@ -133,80 +106,36 @@ function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
     return (
       <Screen>
         {modeSelector}
-        <ThemedText type="smallBold">{t('timer.presetsTitle')}</ThemedText>
-        <Card style={styles.presetList}>
-          {PRESET_IDS.map((id) => (
-            <ListRow
-              key={id}
-              testID={`timer-preset-${id}`}
-              title={t(`timer.presets.${id}`)}
-              subtitle={
-                id === 'milsnabb'
-                  ? t('timer.presetSummaryMilsnabb')
-                  : id === 'custom'
-                    ? t('timer.presetSummaryCustom')
-                    : id === 'parInterval'
-                      ? t('timer.presetSummaryInterval', {
-                          reps: PAR_PRESET_BY_ID.parInterval.config.series.length,
-                          par: formatSeconds(
-                            PAR_PRESET_BY_ID.parInterval.config.series[0]!.durationMs,
-                          ),
-                          rest: formatSeconds(PAR_PRESET_BY_ID.parInterval.config.restMs),
-                        })
-                      : t('timer.presetSummaryPar', {
-                          ready: formatSeconds(
-                            PAR_PRESET_BY_ID[id].config.randomReadyDelay?.minMs ??
-                              PAR_PRESET_BY_ID[id].config.readyDelayMs,
-                          ),
-                          par: formatSeconds(PAR_PRESET_BY_ID[id].config.series[0]!.durationMs),
-                        })
-              }
-              trailing={
-                presetId === id ? <ThemedText themeColor="primary">✓</ThemedText> : undefined
-              }
-              onPress={() => setPresetId(id)}
-            />
-          ))}
+        <Card style={styles.setupForm} testID="timer-setup-form">
+          <ThemedText type="smallBold">{t('timer.fields.parSeconds')}</ThemedText>
+          <TextField
+            value={parSeconds}
+            onChangeText={setParSeconds}
+            keyboardType="decimal-pad"
+            testID="timer-par"
+          />
+          <ThemedText type="smallBold">{t('timer.fields.readyDelaySeconds')}</ThemedText>
+          <TextField
+            value={readyDelaySeconds}
+            onChangeText={setReadyDelaySeconds}
+            keyboardType="decimal-pad"
+            testID="timer-ready"
+          />
+          <ThemedText type="smallBold">{t('timer.fields.reps')}</ThemedText>
+          <TextField
+            value={reps}
+            onChangeText={setReps}
+            keyboardType="number-pad"
+            testID="timer-reps"
+          />
+          <ThemedText type="smallBold">{t('timer.fields.restSeconds')}</ThemedText>
+          <TextField
+            value={restSeconds}
+            onChangeText={setRestSeconds}
+            keyboardType="decimal-pad"
+            testID="timer-rest"
+          />
         </Card>
-
-        {presetId === 'milsnabb' && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('timer.milsnabbLegend')}
-          </ThemedText>
-        )}
-
-        {presetId === 'custom' && (
-          <Card style={styles.customForm} testID="timer-custom-form">
-            <ThemedText type="smallBold">{t('timer.custom.parSeconds')}</ThemedText>
-            <TextField
-              value={parSeconds}
-              onChangeText={setParSeconds}
-              keyboardType="decimal-pad"
-              testID="timer-custom-par"
-            />
-            <ThemedText type="smallBold">{t('timer.custom.readyDelaySeconds')}</ThemedText>
-            <TextField
-              value={readyDelaySeconds}
-              onChangeText={setReadyDelaySeconds}
-              keyboardType="decimal-pad"
-              testID="timer-custom-ready"
-            />
-            <ThemedText type="smallBold">{t('timer.custom.reps')}</ThemedText>
-            <TextField
-              value={reps}
-              onChangeText={setReps}
-              keyboardType="number-pad"
-              testID="timer-custom-reps"
-            />
-            <ThemedText type="smallBold">{t('timer.custom.restSeconds')}</ThemedText>
-            <TextField
-              value={restSeconds}
-              onChangeText={setRestSeconds}
-              keyboardType="decimal-pad"
-              testID="timer-custom-rest"
-            />
-          </Card>
-        )}
 
         <PrimaryButton label={t('timer.start')} onPress={start} testID="timer-start" />
       </Screen>
@@ -252,12 +181,7 @@ function RegularTimer({ modeSelector }: { modeSelector: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  presetList: {
-    gap: 0,
-    padding: 0,
-    paddingHorizontal: Spacing.three,
-  },
-  customForm: {
+  setupForm: {
     gap: Spacing.two,
   },
   runningScreen: {

@@ -977,15 +977,15 @@ restates §0 rules 1–6 verbatim.
 > in `sync-protocol-spec.md` §1 about whether `settings` and `session_tags`
 > should sync.
 
-> **All three timers have since shipped.** The regular PAR/interval timer
+> **All three timers have since shipped.** The time-limit/interval timer
 > (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style
 > microphone shot timer (`feat/ipsc-shot-timer`,
 > `shared/src/timer/shot-detector.ts` +
 > `app/src/platform/shot-listener.ts`) and the **fälttimer**
 > (`feat/falttimer`, `shared/src/timer/falt.ts` +
 > `app/src/features/timer/falt-timer.tsx`) sit behind one Timer entry,
-> picked with a segmented control ("PAR-timer" / "Skottimer (mik)" /
-> "Fält"). The fälttimer plays the SHB 2026 D.6.2 p. 88 command sequence
+> picked with a segmented control ("Skjuttid" / "Skott" / "Fält" — the
+> PAR naming was dropped, maintainer 2026-09-10). The fälttimer plays the SHB 2026 D.6.2 p. 88 command sequence
 > (LADDA → ALLA KLARA → 10 SEKUNDER KVAR → FÄRDIGA → ELD → the prolonged
 > ELD UPPHÖR → PATRON UR → VISITATION), with user-set shooting time and
 > parti boundaries on the timeline; its commands are Swedish, spoken and

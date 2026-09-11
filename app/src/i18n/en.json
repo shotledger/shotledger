@@ -631,21 +631,9 @@
     }
   },
   "timer": {
-    "title": "Shot Timer",
-    "presetsTitle": "Choose a Drill",
-    "presets": {
-      "parSingle": "Single PAR",
-      "parRandomStart": "Random Start",
-      "parInterval": "Interval Drill",
-      "milsnabb": "Milsnabb Drill",
-      "custom": "Custom"
-    },
-    "presetSummaryPar": "{{ready}} s ready · {{par}} s par time",
-    "presetSummaryInterval": "{{reps}} reps · {{par}} s par time · {{rest}} s rest",
-    "presetSummaryMilsnabb": "Provserie + 3 omgångar × 4 series, 10/8/6 s",
-    "presetSummaryCustom": "Set your own par time, ready delay and reps",
-    "custom": {
-      "parSeconds": "Par Time (s)",
+    "title": "Timers",
+    "fields": {
+      "parSeconds": "Time Limit (s)",
       "readyDelaySeconds": "Ready Delay (s)",
       "reps": "Repetitions",
       "restSeconds": "Rest Between Reps (s)"
@@ -660,10 +648,9 @@
       "done": "Done"
     },
     "seriesProgress": "Series {{current}} / {{total}}",
-    "milsnabbLegend": "SHB J.6.1/J.6.2: provserie 10 s, then 4×10 s, 4×8 s, 4×6 s. Ready delay is a practice default, not the match's 60 s LADDA→FÄRDIGA cadence.",
     "modes": {
-      "regular": "PAR Timer",
-      "ipsc": "Shot Timer (mic)",
+      "regular": "Time Limit",
+      "ipsc": "Shot",
       "falt": "Field"
     },
     "spokenPrompts": "Spoken Prompts"
@@ -686,7 +673,7 @@
     "randomDelay": "Random Start Delay — Shortest / Longest (s)",
     "randomDelayMin": "Shortest start delay in seconds",
     "randomDelayMax": "Longest start delay in seconds",
-    "parSeconds": "PAR Time (s)",
+    "parSeconds": "Time Limit (s)",
     "parPlaceholder": "Optional",
     "autoStopSeconds": "Stop Automatically After Silence (s)",
     "privacyNote": "The microphone is analysed live on this device to find the shots. The recording is never stored, played back or sent anywhere — it is written to a temporary file the app can only meter, and deleted the moment the run ends.",
@@ -712,7 +699,7 @@
     "firstShot": "First Shot (s)",
     "total": "Total (s)",
     "shotCount": "Shots",
-    "parOverrun": "PAR time exceeded by {{time}} s"
+    "parOverrun": "Time limit exceeded by {{time}} s"
   },
   "faltTimer": {
     "modes": {
@@ -941,6 +928,6 @@
   },
   "tools": {
     "title": "Tools",
-    "timerSubtitle": "PAR, IPSC and field timers"
+    "timerSubtitle": "Time limit, shot and field timers"
   }
 }
