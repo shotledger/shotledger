@@ -155,8 +155,8 @@ describe('toImportGroups', () => {
 
     expect(group).not.toHaveProperty('id');
     expect(group!.sessionId).toBe('s1');
-    const { id, ...withoutId } = input;
-    const { sessionId, ...groupWithoutSessionId } = group!;
+    const { id: _id, ...withoutId } = input;
+    const { sessionId: _sessionId, ...groupWithoutSessionId } = group!;
     expect(groupWithoutSessionId).toEqual(withoutId);
   });
 
