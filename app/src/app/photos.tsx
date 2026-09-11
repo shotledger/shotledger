@@ -153,7 +153,9 @@ export default function PhotosScreen() {
                       position: photo.position,
                     })}
                     onPress={() =>
-                      router.push(`/session/${photo.sessionId}/photo?pos=${photo.position}`)
+                      router.push(
+                        `/session/${photo.sessionId}/photo?pos=${photo.position}&from=gallery`,
+                      )
                     }
                     onLongPress={() => onShare(photo)}
                     testID={`photo-${photo.seriesId}`}
