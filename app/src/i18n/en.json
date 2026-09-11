@@ -249,7 +249,8 @@
     "adjustDelta": "Adjustment (+/- rounds)",
     "adjustReason": "Reason",
     "adjustReasonPlaceholder": "Why is this being adjusted?",
-    "adjustSave": "Apply Adjustment"
+    "adjustSave": "Apply Adjustment",
+    "eventDate": "Date"
   },
   "ammo": {
     "newLot": "New Ammo Lot",

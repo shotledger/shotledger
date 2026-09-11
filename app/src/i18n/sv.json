@@ -249,7 +249,8 @@
     "adjustDelta": "Justering (+/- skott)",
     "adjustReason": "Anledning",
     "adjustReasonPlaceholder": "Varför justeras detta?",
-    "adjustSave": "Verkställ justering"
+    "adjustSave": "Verkställ justering",
+    "eventDate": "Datum"
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
