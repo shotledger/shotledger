@@ -84,16 +84,19 @@ export default function HomeScreen() {
 
       <View style={styles.statsRow}>
         <StatTile
+          align="center"
           testID="home-stat-shots-logged"
           label={t('home.shotsLoggedTotal')}
           value={String(shotsLoggedTotal)}
         />
         <StatTile
+          align="center"
           testID="home-stat-sessions"
           label={t('home.sessionsTotal')}
           value={String(sessionCount)}
         />
         <StatTile
+          align="center"
           testID="home-stat-competitions"
           label={t('home.competitionsTotal')}
           value={String(competitionCount)}
