@@ -17,26 +17,26 @@ export interface ScreenProps extends ViewProps {
    */
   fab?: ReactNode;
   /**
-   * Also inset the bottom edge.
+   * Inset the bottom edge for the system navigation / gesture bar.
    *
-   * Off by default because a tab screen's bottom is already handled by
-   * `BottomTabInset` — adding the safe area there would double the gap. A
-   * PUSHED screen has no tab bar, so without this its last element sits
-   * under the Android gesture bar (maintainer, on device 2026-09-11: the
-   * photo viewer's "Score from This Photo" was behind the system menu).
+   * **Defaults to `!scroll`**, which is the whole of the problem it solves.
+   * A scrolling screen already clears the bottom: `scrollContent` pads
+   * `BottomTabInset + Spacing.four` (80 dp on Android), far more than a
+   * gesture bar. A `scroll={false}` screen gets `plainContent`, which is
+   * bare `flex: 1`, so its last element sits under the system bar —
+   * maintainer, on device 2026-09-11, first on the photo viewer and then
+   * "in other places as well".
+   *
+   * An audit of every route found **no tab screen uses `scroll={false}`**,
+   * so keying off `scroll` cannot double a tab bar's gap. Opting in per
+   * screen was the wrong shape: it left 9 screens broken and every new one
+   * broken by default.
    */
   safeBottom?: boolean;
 }
 
 /** Standard screen shell: safe area, max content width, bottom tab-bar clearance. */
-export function Screen({
-  children,
-  scroll = true,
-  fab,
-  safeBottom = false,
-  style,
-  ...rest
-}: ScreenProps) {
+export function Screen({ children, scroll = true, fab, safeBottom, style, ...rest }: ScreenProps) {
   const inner = (
     <View style={[styles.inner, !scroll && styles.innerFlex, style]} {...rest}>
       {children}
@@ -51,7 +51,9 @@ export function Screen({
     <ThemedView style={styles.container}>
       <SafeAreaView
         style={styles.safeArea}
-        edges={safeBottom ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+        edges={
+          (safeBottom ?? !scroll) ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']
+        }
       >
         {scroll ? (
           <ScrollView contentContainerStyle={contentStyle}>{inner}</ScrollView>
