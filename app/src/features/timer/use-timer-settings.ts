@@ -3,10 +3,13 @@
 // features/backup/use-backup-export-import.ts). `db` is null on web, where
 // the values simply stay in component state for the session.
 import {
+  DEFAULT_IPSC_SETTINGS,
   DEFAULT_TIMER_CUE_MODE,
   normalizeFaltSettings,
+  normalizeIpscSettings,
   normalizeTimerCueMode,
   type FaltTimerSettings,
+  type IpscTimerSettings,
   type TimerCueMode,
 } from '@shotledger/shared';
 import { useCallback, useState } from 'react';
@@ -51,6 +54,26 @@ export function useFaltSettings(
 
   const update = useCallback((next: FaltTimerSettings) => {
     if (db) setSetting(db, SETTINGS_KEYS.faltTimer, next);
+    setSettings(next);
+  }, []);
+
+  return [settings, update];
+}
+
+/**
+ * The IPSC timer's settings. Validated on the way out of storage, so a row
+ * from an older build cannot hand the engine a trigger level or delay range
+ * it rejects.
+ */
+export function useIpscSettings(): [IpscTimerSettings, (next: IpscTimerSettings) => void] {
+  const [settings, setSettings] = useState<IpscTimerSettings>(() =>
+    db
+      ? normalizeIpscSettings(getSetting<unknown>(db, SETTINGS_KEYS.ipscTimer, null))
+      : DEFAULT_IPSC_SETTINGS,
+  );
+
+  const update = useCallback((next: IpscTimerSettings) => {
+    if (db) setSetting(db, SETTINGS_KEYS.ipscTimer, next);
     setSettings(next);
   }, []);
 

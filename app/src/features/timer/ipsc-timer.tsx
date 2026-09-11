@@ -3,12 +3,15 @@
 // engine's phase, mirroring timer.tsx's shape.
 import {
   DEFAULT_IPSC_CONFIG,
+  DEFAULT_IPSC_SETTINGS,
+  IPSC_DELAY_MAX_SECONDS,
   MAX_TRIGGER_DB,
   MIN_TRIGGER_DB,
   SENSITIVITY_THRESHOLD_DB,
   TRIGGER_DB_STEP,
+  ipscConfigFromSettings,
   type IpscPhaseKind,
-  type IpscTimerConfig,
+  type IpscTimerSettings,
   type ShotSensitivity,
 } from '@shotledger/shared';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
@@ -27,7 +30,7 @@ import { ThemedText } from '@/components/themed-text';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
 import { useLevelMeter } from '@/features/timer/use-level-meter';
-import { useSpokenPrompts } from '@/features/timer/use-timer-settings';
+import { useIpscSettings, useSpokenPrompts } from '@/features/timer/use-timer-settings';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 const SENSITIVITIES: readonly ShotSensitivity[] = ['low', 'medium', 'high'];
@@ -49,42 +52,39 @@ function formatSeconds(ms: number | undefined): string {
   return ms === undefined ? '—' : (ms / 1_000).toFixed(2);
 }
 
+/** Stored seconds as field text; 0 means "off" for both PAR and auto-stop, which reads as an empty field. */
+function secondsText(value: number): string {
+  return value > 0 ? String(value) : '';
+}
+
 export interface IpscTimerProps {
   /** Rendered at the top of the setup view so the mode can be switched back. */
   modeSelector: ReactNode;
 }
 
-/** Longest start delay the sliders offer — past this a random wait stops being a start signal. */
-const DELAY_MAX_SECONDS = 10;
-
 export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const { t, i18n } = useTranslation();
   const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
+  const [settings, setSettings] = useIpscSettings();
+  const { thresholdDb, delayMinSeconds, delayMaxSeconds } = settings;
 
-  // No settings store exists yet for the timer's other options (delay, PAR,
-  // auto-stop are all component state too) — the trigger level lives here
-  // alongside them rather than introducing persistence on its own.
-  const [thresholdDb, setThresholdDb] = useState<number>(SENSITIVITY_THRESHOLD_DB.medium);
-  const [delayMin, setDelayMin] = useState(1);
-  const [delayMax, setDelayMax] = useState(4);
-  const [parSeconds, setParSeconds] = useState('');
-  const [autoStopSeconds, setAutoStopSeconds] = useState('10');
+  // The two numeric fields keep their own text, so a half-typed "1." stays on
+  // screen while the stored setting holds the parsed seconds.
+  const [parText, setParText] = useState(() => secondsText(settings.parSeconds));
+  const [autoStopText, setAutoStopText] = useState(() => secondsText(settings.autoStopSeconds));
   // Paused as soon as Start is pressed so the setup meter's recorder never
   // overlaps the run's own (both use the same underlying mic listener).
   const [meteringPaused, setMeteringPaused] = useState(false);
 
-  const config = useMemo<IpscTimerConfig>(() => {
-    const minMs = Math.round(delayMin * 1_000);
-    const maxMs = Math.max(minMs, Math.round(delayMax * 1_000));
-    const par = seconds(parSeconds, 0);
-    return {
-      readyMs: DEFAULT_IPSC_CONFIG.readyMs,
-      randomDelay: { minMs, maxMs },
-      parMs: par > 0 ? Math.round(par * 1_000) : undefined,
-      autoStopSilenceMs: Math.round(seconds(autoStopSeconds, 10) * 1_000),
-      thresholdDb,
-    };
-  }, [delayMin, delayMax, parSeconds, autoStopSeconds, thresholdDb]);
+  const update = useCallback(
+    (patch: Partial<IpscTimerSettings>) => setSettings({ ...settings, ...patch }),
+    [settings, setSettings],
+  );
+
+  const config = useMemo(
+    () => ipscConfigFromSettings(settings, DEFAULT_IPSC_CONFIG.readyMs),
+    [settings],
+  );
 
   // Spoken in the app's current language — these are ordinary UI prompts,
   // not the fälttimer's SPSF-regulated Swedish commands.
@@ -169,7 +169,7 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
             min={-MAX_TRIGGER_DB}
             max={-MIN_TRIGGER_DB}
             step={TRIGGER_DB_STEP}
-            onChange={(sensitivity) => setThresholdDb(-sensitivity)}
+            onChange={(sensitivity) => update({ thresholdDb: -sensitivity })}
             accessibilityLabel={t('ipscTimer.triggerLevel')}
             testID="ipsc-level-slider"
           />
@@ -186,7 +186,7 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
             {SENSITIVITIES.map((preset) => (
               <Pressable
                 key={preset}
-                onPress={() => setThresholdDb(SENSITIVITY_THRESHOLD_DB[preset])}
+                onPress={() => update({ thresholdDb: SENSITIVITY_THRESHOLD_DB[preset] })}
                 testID={`ipsc-preset-${preset}`}
               >
                 <Chip
@@ -222,20 +222,17 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
               {t('ipscTimer.randomDelay')}
             </ThemedText>
             <ThemedText type="smallBold" testID="ipsc-delay-value">
-              {t('ipscTimer.delayRange', { from: delayMin, to: delayMax })}
+              {t('ipscTimer.delayRange', { from: delayMinSeconds, to: delayMaxSeconds })}
             </ThemedText>
           </View>
           {/* One track, two thumbs: the delay is a range, and two stacked
               sliders read as two unrelated settings. */}
           <RangeSlider
-            low={delayMin}
-            high={delayMax}
+            low={delayMinSeconds}
+            high={delayMaxSeconds}
             min={0}
-            max={DELAY_MAX_SECONDS}
-            onChange={({ low, high }) => {
-              setDelayMin(low);
-              setDelayMax(high);
-            }}
+            max={IPSC_DELAY_MAX_SECONDS}
+            onChange={({ low, high }) => update({ delayMinSeconds: low, delayMaxSeconds: high })}
             lowAccessibilityLabel={t('ipscTimer.randomDelayMin')}
             highAccessibilityLabel={t('ipscTimer.randomDelayMax')}
             testID="ipsc-delay"
@@ -243,8 +240,11 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
           <ThemedText type="smallBold">{t('ipscTimer.parSeconds')}</ThemedText>
           <TextField
-            value={parSeconds}
-            onChangeText={setParSeconds}
+            value={parText}
+            onChangeText={(text) => {
+              setParText(text);
+              update({ parSeconds: seconds(text, DEFAULT_IPSC_SETTINGS.parSeconds) });
+            }}
             keyboardType="decimal-pad"
             placeholder={t('ipscTimer.parPlaceholder')}
             testID="ipsc-par"
@@ -252,8 +252,11 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
           <ThemedText type="smallBold">{t('ipscTimer.autoStopSeconds')}</ThemedText>
           <TextField
-            value={autoStopSeconds}
-            onChangeText={setAutoStopSeconds}
+            value={autoStopText}
+            onChangeText={(text) => {
+              setAutoStopText(text);
+              update({ autoStopSeconds: seconds(text, DEFAULT_IPSC_SETTINGS.autoStopSeconds) });
+            }}
             keyboardType="decimal-pad"
             testID="ipsc-auto-stop"
           />
