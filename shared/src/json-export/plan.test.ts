@@ -129,6 +129,16 @@ describe('buildDryRunPlan shot counts', () => {
                 { position: 2, valueTenths: 90, isInnerTen: false },
               ],
             },
+            {
+              position: 3,
+              isSighter: false,
+              isFinal: false,
+              shots: [
+                { position: 1, valueTenths: 80, isInnerTen: false },
+                { position: 2, valueTenths: 70, isInnerTen: false },
+                { position: 3, valueTenths: 60, isInnerTen: false },
+              ],
+            },
           ],
         },
       ],
@@ -140,7 +150,9 @@ describe('buildDryRunPlan shot counts', () => {
       },
     );
 
-    expect(plan.sessions[0]!.shotCount).toBe(2);
+    // 5 shots across 3 series: the two numbers must differ, or counting
+    // series instead of shots would pass unnoticed (mutation survivor, fixed).
+    expect(plan.sessions[0]!.shotCount).toBe(5);
   });
 });
 
