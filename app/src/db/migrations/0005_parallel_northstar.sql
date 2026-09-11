@@ -1,1 +1,0 @@
-ALTER TABLE `licenses` ADD `vault_document_id` text;

@@ -1,1 +1,0 @@
-ALTER TABLE `sessions` ADD `series_entry_mode` text DEFAULT 'ask' NOT NULL;
