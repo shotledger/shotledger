@@ -168,7 +168,11 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     seriesRows,
     results,
     seriesAverageTenths: seriesAverageTenths(forResults),
-    innerTenCount: sessionInnerTenCount(forResults),
+    // A stored counter wins where there are no shot flags to count: a
+    // ShotLog import is one total with no `shots` rows, so counting would
+    // always answer 0 and silently contradict the number ShotLog gave.
+    // Everywhere else it is null and the flags are the truth (schema.ts).
+    innerTenCount: session.innerTenCount ?? sessionInnerTenCount(forResults),
     innerTenAverage: seriesInnerTenAverage(forResults),
     seriesLength,
     guldThreshold,

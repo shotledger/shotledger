@@ -52,11 +52,13 @@ const EMPTY_SUMMARY_STATUSES: ShotlogRowStatus[] = [
 ];
 
 /**
- * The generated note. The ten and inner-ten counts go here because the
- * schema has nowhere else to put them: a total-override series carries no
- * `shots` rows, and every ten/inner-ten statistic in `shared/src/scoring`
- * counts shot flags. Recording the confirmed semantics (maintainer
- * 2026-09-02) in prose is the most this can do without a migration.
+ * The generated note — what a human needs told, and nothing that is now data.
+ *
+ * The ten and inner-ten counts used to be written here, because a
+ * total-override series carries no `shots` rows and every ten/inner-ten
+ * statistic in `shared/src/scoring` counts shot flags, so there was nowhere
+ * else to put them. Migration 0012 gave them columns on the session, so they
+ * are no longer duplicated into prose that nothing can read back.
  */
 function buildNote(
   row: ShotlogRow,
@@ -66,7 +68,6 @@ function buildNote(
 ): string {
   const lines: string[] = [];
   if (row.note !== '') lines.push(row.note);
-  lines.push(`ShotLog: ${row.tenCount} tens, ${row.innerTenCount} inner tens`);
   if (includesSighter) lines.push('ShotLog: total includes a sighter series');
   if (dnf) lines.push('ShotLog: did not finish');
   if (dateUncertain) lines.push('ShotLog: date unknown (bulk import)');
