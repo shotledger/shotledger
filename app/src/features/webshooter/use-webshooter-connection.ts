@@ -1,14 +1,17 @@
 // Settings → WebShooter connect/disconnect (integration spec §A.10, PR #19
 // auth refinement). Primary: in-app password login, POSTed device→
-// webshooter.se directly via createUnverifiedSpaLoginClient — VERIFY-stubbed
-// in shared/src/integrations/webshooter/api/spaLogin.ts pending the real
-// endpoint shape, so this always surfaces the "not yet available" message
-// and falls back to manual token paste. Neither path ever calls a
-// ShotLedger backend.
+// webshooter.se directly — a Laravel Passport password grant, confirmed
+// 2026-09-11. Neither path ever calls a ShotLedger backend.
+//
+// The OAuth client id/secret come from the environment at build time and are
+// deliberately absent from this tree (hard rule 3); a build without them
+// falls back to manual token paste and says so.
 import { useCallback, useEffect, useState } from 'react';
 import {
-  createUnverifiedSpaLoginClient,
-  WebShooterSpaLoginNotVerifiedError,
+  createSpaLoginClient,
+  WebShooterSpaLoginClientRejectedError,
+  WebShooterSpaLoginRejectedError,
+  WebShooterSpaLoginUnconfiguredError,
 } from '@shotledger/shared/src/integrations/webshooter/api/spaLogin';
 import { resolveIdentity } from '@shotledger/shared/src/integrations/webshooter/identity';
 
@@ -18,6 +21,16 @@ import { clearWebShooterToken, setWebShooterToken } from '@/platform/secure-stor
 import { getWebShooterClient, loadTokenCache, setTokenCache, WEBSHOOTER_BASE_URL } from './client';
 
 const CARD_NUMBER_SETTING_KEY = 'webshooterCardNumber';
+
+/**
+ * webshooter.se's own published web-client credentials, supplied at build
+ * time from ~/agents/shotledger/webshooter.env. They identify the calling
+ * application; the user's password is what authenticates the user.
+ */
+const OAUTH_CLIENT = {
+  clientId: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_ID,
+  clientSecret: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_SECRET,
+};
 
 export interface WebShooterConnectionState {
   connected: boolean;
@@ -72,11 +85,20 @@ export function useWebShooterConnection(): WebShooterConnectionState {
       setLoading(true);
       setError(null);
       try {
-        const loginClient = createUnverifiedSpaLoginClient(fetch, WEBSHOOTER_BASE_URL);
+        const loginClient = createSpaLoginClient(fetch, WEBSHOOTER_BASE_URL, OAUTH_CLIENT);
         const result = await loginClient.login({ username, password });
         await finishConnect(result.token);
       } catch (err) {
-        if (err instanceof WebShooterSpaLoginNotVerifiedError) {
+        // Three failures the user must be able to tell apart: their password
+        // is wrong (they can fix it), the build shipped without OAuth config
+        // or WebShooter rotated the secret (they cannot — token paste is the
+        // way through), or something else entirely.
+        if (err instanceof WebShooterSpaLoginRejectedError) {
+          setError('loginRejected');
+        } else if (
+          err instanceof WebShooterSpaLoginUnconfiguredError ||
+          err instanceof WebShooterSpaLoginClientRejectedError
+        ) {
           setError('spaLoginNotVerified');
         } else {
           setError('connectFailed');

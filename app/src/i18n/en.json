@@ -642,7 +642,7 @@
     "usernamePlaceholder": "Username",
     "passwordPlaceholder": "Password",
     "connectWithPassword": "Connect with Password",
-    "spaLoginNotVerified": "Password login isn't available yet — use a manual token below.",
+    "spaLoginNotVerified": "Password login isn't available in this build — use a manual token below.",
     "tokenFallbackHelp": "Or paste a WebShooter API token directly.",
     "tokenPlaceholder": "API token",
     "connectWithToken": "Connect with Token",
@@ -703,7 +703,8 @@
       "brons": "Bronze",
       "silver": "Silver",
       "guld": "Gold"
-    }
+    },
+    "loginRejected": "Wrong username or password."
   },
   "timer": {
     "title": "Timers",

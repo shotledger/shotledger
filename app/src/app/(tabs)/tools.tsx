@@ -107,6 +107,11 @@ export default function ToolsScreen() {
               onPress={() => void webshooter.connectWithPassword(wsUsername, wsPassword)}
               testID="webshooter-connect-password"
             />
+            {webshooter.error === 'loginRejected' && (
+              <ThemedText type="small" themeColor="danger" testID="webshooter-login-rejected">
+                {t('webshooter.loginRejected')}
+              </ThemedText>
+            )}
             {webshooter.error === 'spaLoginNotVerified' && (
               <ThemedText type="small" themeColor="textSecondary">
                 {t('webshooter.spaLoginNotVerified')}

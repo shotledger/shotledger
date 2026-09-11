@@ -642,7 +642,7 @@
     "usernamePlaceholder": "Användarnamn",
     "passwordPlaceholder": "Lösenord",
     "connectWithPassword": "Anslut med lösenord",
-    "spaLoginNotVerified": "Lösenordsinloggning är inte tillgänglig än — använd en manuell token nedan.",
+    "spaLoginNotVerified": "Lösenordsinloggning är inte tillgänglig i den här versionen — använd en token nedan.",
     "tokenFallbackHelp": "Eller klistra in en WebShooter API-token direkt.",
     "tokenPlaceholder": "API-token",
     "connectWithToken": "Anslut med token",
@@ -703,7 +703,8 @@
       "brons": "Brons",
       "silver": "Silver",
       "guld": "Guld"
-    }
+    },
+    "loginRejected": "Fel användarnamn eller lösenord."
   },
   "timer": {
     "title": "Tidtagning",
