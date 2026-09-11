@@ -47,7 +47,7 @@ export default function SessionDetailScreen() {
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
 
-  const { session, seriesRows, results, tags } = detail;
+  const { session, seriesRows, results, tags, firearmName } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
     session?.extraRounds == null ? '' : String(session.extraRounds),
   );
@@ -207,6 +207,7 @@ export default function SessionDetailScreen() {
           {[
             t(`sessionType.${session.type}`),
             formatGroupAndClass(session.weaponGroup, session.shooterClass),
+            firearmName,
             session.competitionName,
           ]
             .filter(Boolean)

@@ -22,6 +22,7 @@ import { db } from '@/db/client';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSeriesForSession } from '@/db/queries/series';
 import { listShotsForSeries } from '@/db/queries/shots';
+import { getFirearm } from '@/db/queries/firearms';
 import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
 
@@ -72,6 +73,8 @@ export interface SessionDetail {
   isFixedFormat: boolean;
   /** Tag names for the header chips; empty when the session has none. */
   tags: readonly string[];
+  /** "Make Model" of the session's firearm, for the header. Null when none is set. */
+  firearmName: string | null;
 }
 
 const EMPTY: SessionDetail = {
@@ -90,6 +93,7 @@ const EMPTY: SessionDetail = {
   canStartFinal: false,
   isFixedFormat: false,
   tags: [],
+  firearmName: null,
 };
 
 export function loadSessionDetail(sessionId: string): SessionDetail {
@@ -97,6 +101,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   const session = getSession(db, sessionId);
   if (!session) return EMPTY;
 
+  const firearm = session.firearmId ? (getFirearm(db, session.firearmId) ?? null) : null;
   const discipline = getDiscipline(session.disciplineId);
   const program = session.programId ? (getProgram(session.programId) ?? null) : null;
   const seriesLength = program?.shotsPerSeries ?? discipline?.defaultSeriesLength ?? 5;
@@ -176,6 +181,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       seriesRows.some((row) => !row.isSighter && row.shots.length > 0),
     isFixedFormat: program?.structure !== undefined,
     tags: listTagsForSession(db, session.id).map((tag) => tag.name),
+    firearmName: firearm ? `${firearm.make} ${firearm.model}` : null,
   };
 }
 
