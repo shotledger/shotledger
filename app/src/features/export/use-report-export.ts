@@ -13,20 +13,19 @@ import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import {
   buildAnalyticsReportJson,
-  exportSessionsToCsv,
   type AnalyticsRecords,
   type AnalyticsTotals,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
-import { buildSessionExports } from '@/db/csv/build-export';
+import { buildSessionExports } from '@/db/json-export/build-export';
 import { listTags } from '@/db/queries/tags';
 import { buildShootingLogHtmlForFilters } from '@/features/export/use-pdf-export';
 import type { AnalyticsFilterState, PeriodRange } from '@/features/stats/use-stats-data';
-import { shareCsv, shareJson } from '@/platform/csv-export';
+import { shareJson } from '@/platform/export-file';
 import { exportHtmlAsPdf } from '@/platform/pdf-export';
 
-export const EXPORT_FORMATS = ['pdf', 'json', 'csv'] as const;
+export const EXPORT_FORMATS = ['pdf', 'json'] as const;
 export type ExportFormat = (typeof EXPORT_FORMATS)[number];
 
 export interface ReportExportInput {
@@ -67,9 +66,7 @@ export function useReportExport(t: TFunction, locale: string) {
       ok = html !== null && (await exportHtmlAsPdf(html));
     } else {
       const sessions = filteredSessionExports(input.sessionIds);
-      if (format === 'csv') {
-        ok = await shareCsv(exportSessionsToCsv(sessions), `shotledger-report-${stamp()}.csv`);
-      } else {
+      {
         const tagNames = new Map(listTags(db).map((tag) => [tag.id, tag.name]));
         ok = await shareJson(
           buildAnalyticsReportJson({

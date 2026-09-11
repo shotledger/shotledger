@@ -17,7 +17,7 @@ export * from './compliance';
 export * from './export/pdf-log';
 export * from './export/json-log';
 export * from './vault';
-export * from './csv';
+export * from './json-export';
 export * from './shotlog';
 export * from './sync';
 export * from './sync-client';

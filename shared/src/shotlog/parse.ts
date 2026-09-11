@@ -1,7 +1,7 @@
 // ShotLog CSV row parsing (docs/specs/shotlog-import-spec.md §2). Row-level
 // errors are reported, never thrown: one malformed line must not cost the
 // user the other 276.
-import { parseCsv } from '../csv/csv-codec';
+import { parseCsv } from './csv-codec';
 import type { ShotlogParseResult, ShotlogRow, ShotlogRowError, ShotlogWarning } from './types';
 
 export const SHOTLOG_HEADER = [

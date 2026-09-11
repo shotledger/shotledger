@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
@@ -25,7 +26,7 @@ import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { BackupCard } from '@/features/backup/backup-card';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
-import { useCsvExportImport } from '@/features/csv/use-csv-export-import';
+import { useJsonExportImport } from '@/features/json-export/use-json-export-import';
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
 import { Spacing } from '@/theme/tokens';
 
@@ -38,23 +39,25 @@ export default function SettingsScreen() {
     profile,
     setSelection: setComplianceSelection,
   } = useComplianceProfile();
-  const { exportCsv, planImport, confirmImport, statusText } = useCsvExportImport();
+  const { exportJson, planImport, confirmImport, statusText } = useJsonExportImport(
+    Constants.expoConfig?.version ?? '0.0.0',
+  );
 
-  async function onImportCsv() {
+  async function onImportJson() {
     const dryRun = await planImport();
     if (!dryRun) return;
     if (dryRun.errors.length > 0) {
       Alert.alert(
-        t('csv.importErrorsTitle'),
-        t('csv.importErrors', { count: dryRun.errors.length }),
+        t('jsonExport.importErrorsTitle'),
+        t('jsonExport.importErrors', { count: dryRun.errors.length }),
       );
       return;
     }
     const created = dryRun.plan.sessions.filter((s) => s.action === 'create').length;
     const updated = dryRun.plan.sessions.filter((s) => s.action === 'update').length;
     Alert.alert(
-      t('csv.importConfirmTitle'),
-      t('csv.importSummary', {
+      t('jsonExport.importConfirmTitle'),
+      t('jsonExport.importSummary', {
         created,
         updated,
         firearms: dryRun.plan.firearms.filter((f) => f.action === 'create').length,
@@ -62,7 +65,7 @@ export default function SettingsScreen() {
       }),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('csv.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
+        { text: t('jsonExport.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
       ],
     );
   }
@@ -259,21 +262,21 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('csv.sectionTitle')}</ThemedText>
+        <ThemedText type="smallBold">{t('jsonExport.sectionTitle')}</ThemedText>
         <ListRow
-          title={t('csv.exportTitle')}
-          subtitle={t('csv.exportSubtitle')}
-          onPress={exportCsv}
-          testID="settings-export-csv"
+          title={t('jsonExport.exportTitle')}
+          subtitle={t('jsonExport.exportSubtitle')}
+          onPress={exportJson}
+          testID="settings-export-json"
         />
         <ListRow
-          title={t('csv.importTitle')}
-          subtitle={t('csv.importSubtitle')}
-          onPress={onImportCsv}
-          testID="settings-import-csv"
+          title={t('jsonExport.importTitle')}
+          subtitle={t('jsonExport.importSubtitle')}
+          onPress={onImportJson}
+          testID="settings-import-json"
         />
         {statusText ? (
-          <ThemedText type="small" themeColor="textSecondary" testID="csv-status">
+          <ThemedText type="small" themeColor="textSecondary" testID="json-export-status">
             {statusText}
           </ThemedText>
         ) : null}

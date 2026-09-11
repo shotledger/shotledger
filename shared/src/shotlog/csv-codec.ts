@@ -1,3 +1,8 @@
+// RFC4180-ish CSV reader/writer. It survived the move to JSON because
+// ShotLog's import needs it: ShotLog exports CSV, and that is a third-party
+// format we do not control (json-export-spec §1.1). It lives here, with its
+// only remaining consumer, rather than in a general module implying we still
+// have a CSV format of our own — we do not.
 // Minimal RFC 4180 codec. Hand-rolled per docs/specs/m7-csv-spec.md ("no CSV
 // library not in §2's fixed list") — kept small and fully covered by tests.
 

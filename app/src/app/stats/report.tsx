@@ -58,7 +58,6 @@ export default function StatsReportScreen() {
   const formatLabel: Record<ExportFormat, string> = {
     pdf: t('compliance.exportPdf'),
     json: t('stats.exportJson'),
-    csv: t('stats.exportCsv'),
   };
   const chart = (pick: (point: AnalyticsReportData['points'][number]) => number | null) =>
     data.points

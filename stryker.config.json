@@ -6,7 +6,10 @@
   "vitest": {
     "configFile": "vitest.config.ts"
   },
-  "reporters": ["progress", "clear-text"],
+  "reporters": [
+    "progress",
+    "clear-text"
+  ],
   "coverageAnalysis": "perTest",
   "mutate": [
     "shared/src/scoring/*.ts",
@@ -31,7 +34,8 @@
     "shared/src/target-scoring/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
-    "!shared/src/shotlog/fixtures.ts"
+    "!shared/src/shotlog/fixtures.ts",
+    "shared/src/json-export/*.ts"
   ],
   "thresholds": {
     "high": 100,
@@ -39,7 +43,9 @@
     "break": 95
   },
   "tempDirName": ".stryker-tmp",
-  "plugins": ["@stryker-mutator/vitest-runner"],
+  "plugins": [
+    "@stryker-mutator/vitest-runner"
+  ],
   "ignoreStatic": true,
   "_comment2": "ignoreStatic: mutants in code that only runs at module load (the zod schema declarations) cannot be activated by the vitest runner once the module is cached, so Stryker cannot evaluate them. They are covered instead by the on-disk manual mutants recorded in docs/specs/m3-scoring-evidence.md."
 }

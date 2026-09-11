@@ -14,15 +14,15 @@ CSV".
 Revision 1 asked three questions. The answers changed the spec, so it is re-shown
 here for approval rather than treated as already approved.
 
-| Question | Answer | Effect |
-| --- | --- | --- |
-| CSV stays or goes? | *"JSON only. no CSV… there are no existing user to consider so no csv import needed."* | **CSV is deleted outright**, app layer included. Revision 1 recommended keeping the reader; that recommendation is withdrawn. |
-| `json5` approved? | *"just do plain json for now."* | **No new dependency. The comments toggle is dropped**, and with it criteria 8, 14 and property 22. |
-| Existing session id on import? | not answered | Assumption stated in §6, still open. |
+| Question                       | Answer                                                                                 | Effect                                                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| CSV stays or goes?             | _"JSON only. no CSV… there are no existing user to consider so no csv import needed."_ | **CSV is deleted outright**, app layer included. Revision 1 recommended keeping the reader; that recommendation is withdrawn. |
+| `json5` approved?              | _"just do plain json for now."_                                                        | **No new dependency. The comments toggle is dropped**, and with it criteria 8, 14 and property 22.                            |
+| Existing session id on import? | not answered                                                                           | Assumption stated in §6, still open.                                                                                          |
 
 **On the side question — JSON5 and JSONC are not the same.** JSONC is JSON plus
 comments (and, in most implementations, trailing commas) — what `tsconfig.json`
-uses. JSON5 is a far larger superset: comments *and* unquoted keys, single
+uses. JSON5 is a far larger superset: comments _and_ unquoted keys, single
 quotes, hex numbers, leading/trailing decimal points, `Infinity`/`NaN`,
 multi-line strings. Both need a parser; neither is readable by `JSON.parse`.
 Plain JSON avoids the question entirely, which is why the answer above
@@ -52,6 +52,7 @@ Deleted — our own CSV export/import:
 - `app/src/features/csv/use-csv-export-import.ts`
 - the CSV card in `app/src/app/(tabs)/settings.tsx`
 - the `csv.*` i18n block (15 keys, both languages)
+- the CSV branch of the Statistics report export (§1.3a)
 
 **Not deleted — these are different CSVs and stay exactly as they are:**
 
@@ -71,6 +72,28 @@ out here so approval covers it explicitly, and it is asserted in §3.3.
 `buildDryRunPlan`) is **not CSV-specific** — it is reconciliation between "what
 the file contains" and "what the database already has". It moves to the JSON
 module with its tests intact, and its behaviour must not change (§3.3).
+
+## 1.3 Revision 3 — two things implementation found that revision 2 missed
+
+Recorded visibly rather than absorbed silently, per the spec's own rule.
+
+**(a) The Statistics report also offered a CSV export.**
+`app/src/features/export/use-report-export.ts` offers PDF / CSV / JSON for the
+filtered report, and its CSV branch calls `exportSessionsToCsv` — the function
+being deleted. §1.1 did not list it. Under "JSON only, no CSV" the CSV option
+goes and the report keeps PDF and JSON. Added to §1.1's delete list and asserted
+by criterion 23.
+
+**(b) ShotLog's file picker was about to be broken.**
+`pickCsvText` in `platform/csv-import.ts` was shared by our CSV import _and_
+ShotLog import. Renaming it to a JSON picker would have left ShotLog offering
+the user JSON files and rejecting their CSV — the exact §1.1 hazard, reached by
+a different route than the one anticipated (a shared platform helper, not a
+shared parser). `platform/import-file.ts` now exports **two** pickers,
+`pickJsonText` and `pickCsvText`, and ShotLog keeps the CSV one.
+
+**New criterion 23**: the Statistics report exports PDF and JSON, and no code
+path references `exportSessionsToCsv`.
 
 ---
 
@@ -93,7 +116,7 @@ it understands rather than guessing at unknown fields.
 **Session shape**: exactly today's `SessionExport` / `SeriesExport` /
 `ShotExport`, unchanged, nested — each session carries its series, each series
 its shots. No new fields, no renames. The type moves out of `shared/src/csv/`
-into the new module; the *data model* does not change.
+into the new module; the _data model_ does not change.
 
 Two things this buys over CSV, both consequences of nesting rather than new
 features: a **series with no shots** (a sighter, or a WebShooter total-override
@@ -161,13 +184,13 @@ Each becomes a named test.
 
 ### 3.5 Failure model (Tier 3)
 
-| Mode | Layer that catches it |
-| --- | --- |
-| Deleting CSV takes ShotLog import with it | criteria 14–15, asserted by ShotLog's own suite passing unchanged |
-| Hostile/corrupt file crashes the app | property 22 + criteria 9–11 |
-| Partial import leaves half a session | criterion 13, with a test that forces a mid-file failure and asserts rollback |
-| Silent data loss (a field dropped in the container change) | property 21, comparing whole objects rather than named fields |
-| Import overwrites a session the user wanted kept | criterion 16 + the dry run shown before any write |
+| Mode                                                       | Layer that catches it                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Deleting CSV takes ShotLog import with it                  | criteria 14–15, asserted by ShotLog's own suite passing unchanged             |
+| Hostile/corrupt file crashes the app                       | property 22 + criteria 9–11                                                   |
+| Partial import leaves half a session                       | criterion 13, with a test that forces a mid-file failure and asserts rollback |
+| Silent data loss (a field dropped in the container change) | property 21, comparing whole objects rather than named fields                 |
+| Import overwrites a session the user wanted kept           | criterion 16 + the dry run shown before any write                             |
 
 ---
 
@@ -212,5 +235,5 @@ whenever a file is imported twice, so it is not obviously safer.
 ## 7. Approval
 
 **Not approved yet.** This is revision 2. If §6 is wrong, say so and it becomes
-revision 3; otherwise an explicit approval of *this* document starts
+revision 3; otherwise an explicit approval of _this_ document starts
 implementation.
