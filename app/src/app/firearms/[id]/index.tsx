@@ -6,6 +6,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
   canonicalCaliber,
@@ -26,6 +27,7 @@ import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -94,7 +96,7 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
 };
 
 export default function FirearmDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useComplianceProfile();
@@ -124,6 +126,11 @@ export default function FirearmDetailScreen() {
   const [showLogEvent, setShowLogEvent] = useState(false);
   const [eventKind, setEventKind] = useState('');
   const [eventNotes, setEventNotes] = useState('');
+  // `performed_at` has always been required by the column; the form simply
+  // never offered it, so everything was stamped "now" and work done last week
+  // could not be logged truthfully (#138).
+  const [eventPerformedAt, setEventPerformedAt] = useState(() => new Date().toISOString());
+  const [eventDatePickerOpen, setEventDatePickerOpen] = useState(false);
 
   const [showAdjust, setShowAdjust] = useState(false);
   const [adjustDelta, setAdjustDelta] = useState('');
@@ -298,12 +305,13 @@ export default function FirearmDetailScreen() {
     if (!db || !eventKind.trim()) return;
     logMaintenanceEvent(db, {
       firearmId: firearm!.id,
-      performedAt: new Date().toISOString(),
+      performedAt: eventPerformedAt,
       kind: eventKind.trim(),
       notes: eventNotes.trim() || null,
     });
     setEventKind('');
     setEventNotes('');
+    setEventPerformedAt(new Date().toISOString());
     setShowLogEvent(false);
     refresh();
   }
@@ -846,6 +854,25 @@ export default function FirearmDetailScreen() {
 
         {showLogEvent ? (
           <>
+            <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
+            <PrimaryButton
+              label={formatLocalDate(eventPerformedAt, i18n.language)}
+              onPress={() => setEventDatePickerOpen(true)}
+              testID="event-date"
+            />
+            {eventDatePickerOpen && (
+              <DateTimePicker
+                testID="event-date-picker"
+                value={new Date(eventPerformedAt)}
+                mode="date"
+                maximumDate={new Date()}
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                onChange={(_event, selected) => {
+                  setEventDatePickerOpen(false);
+                  if (selected) setEventPerformedAt(selected.toISOString());
+                }}
+              />
+            )}
             <ThemedText type="small">{t('firearms.kind')}</ThemedText>
             <TextField
               value={eventKind}
