@@ -773,7 +773,9 @@
     "pause": "Paus",
     "resume": "Fortsätt",
     "restart": "Starta om",
-    "settings": "Inställningar"
+    "settings": "Inställningar",
+    "scrub": "Spola i tidslinjen",
+    "scrubHint": "Pausad — tryck på listen eller ett kommando för att flytta klockan."
   },
   "vault": {
     "title": "Valv",

@@ -112,6 +112,8 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
     advanceManual,
     pause,
     resume,
+    seek,
+    isPaused,
     reset,
     restart,
   } = useFaltTimer(settings, spokenPrompts);
@@ -302,8 +304,24 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
         {isAwaitingPress ? '—' : clock}
       </ThemedText>
 
-      <FaltTimeline program={program} atMs={phase.atMs} testID="falt-timeline" />
-      <CommandList program={program} currentNumber={currentNumber} />
+      <FaltTimeline
+        program={program}
+        atMs={phase.atMs}
+        onSeek={isPaused ? seek : undefined}
+        accessibilityLabel={t('faltTimer.scrub')}
+        testID="falt-timeline"
+      />
+      {isPaused && (
+        <ThemedText type="small" themeColor="textSecondary" testID="falt-scrub-hint">
+          {t('faltTimer.scrubHint')}
+        </ThemedText>
+      )}
+
+      <CommandList
+        program={program}
+        currentNumber={currentNumber}
+        onJump={isPaused ? seek : undefined}
+      />
 
       {isAwaitingPress ? (
         <>
@@ -345,9 +363,12 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
 function CommandList({
   program,
   currentNumber,
+  onJump,
 }: {
   program: FaltProgram;
   currentNumber: number | null;
+  /** Supplied only while paused — tapping a command jumps the clock to it. */
+  onJump?: (atMs: number) => void;
 }) {
   const { t } = useTranslation();
 
@@ -355,8 +376,18 @@ function CommandList({
     <Card style={styles.commandList} testID="falt-commands">
       {program.commands.map((command) => {
         const active = command.number === currentNumber;
+        // Only the timed commands can be jumped to: the two range-officer
+        // ones happen on a press, so they have no position on the clock.
+        const jumpable = onJump !== undefined && command.atSeconds !== null;
         return (
-          <View key={command.number} style={styles.labelRow}>
+          <Pressable
+            key={command.number}
+            style={styles.labelRow}
+            disabled={!jumpable}
+            accessibilityRole={jumpable ? 'button' : undefined}
+            onPress={() => onJump?.(command.atSeconds! * 1_000)}
+            testID={`falt-command-row-${command.number}`}
+          >
             <ThemedText
               type={active ? 'smallBold' : 'small'}
               themeColor={active ? 'primary' : 'textSecondary'}
@@ -382,7 +413,7 @@ function CommandList({
                     })
                   : t('faltTimer.seconds', { value: command.atSeconds })}
             </ThemedText>
-          </View>
+          </Pressable>
         );
       })}
     </Card>
