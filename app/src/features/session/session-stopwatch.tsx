@@ -16,6 +16,8 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useKeepAwakeWhile } from '@/features/timer/use-keep-awake-on-screen';
+
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { formatStopwatch, stopwatchElapsedMs } from '@/features/session/stopwatch';
@@ -47,6 +49,12 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
   const [now, setNow] = useState(() => Date.now());
 
   const isRunning = state.startedAt !== null;
+  // A running stopwatch is a timer like any other: the screen has to stay
+  // readable while it counts (maintainer, 2026-09-11, "and timer in session
+  // view"). Tied to running rather than to the screen — the session view is
+  // somewhere you sit and read, and holding the phone awake for all of that
+  // would be a battery cost for nothing.
+  useKeepAwakeWhile(isRunning, 'session-stopwatch');
 
   useEffect(() => {
     if (!isRunning) return;
