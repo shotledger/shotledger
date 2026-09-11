@@ -3,7 +3,7 @@
 // or TTL expiry ever triggers a re-fetch — no background polling anywhere.
 import type { HttpClient } from './httpClient';
 import {
-  authUserSchema,
+  authUserResponseSchema,
   competitionDetailResponseSchema,
   competitionsResponseSchema,
   patrolsResponseSchema,
@@ -114,7 +114,8 @@ export function createWebShooterClient(
 
     async authenticateUser() {
       // Never cached: identity resolution is explicitly a fresh call (spec §2.3/§A.10).
-      return httpClient.requestJson('authenticate/user', authUserSchema);
+      const response = await httpClient.requestJson('/authenticate/user', authUserResponseSchema);
+      return response.user;
     },
   };
 }

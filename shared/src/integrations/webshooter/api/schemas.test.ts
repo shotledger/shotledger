@@ -3,10 +3,14 @@ import {
   fixtureCompetitionDetailResponse,
   fixtureCompetitionsResponse,
   fixturePatrolsResponse,
+  fixtureResultRow,
   fixtureResultsResponse,
+  fixtureSignup,
   fixtureSignupsResponse,
+  fixtureStationResult,
 } from './fixtures';
 import {
+  authUserResponseSchema,
   authUserSchema,
   competitionDetailResponseSchema,
   competitionsResponseSchema,
@@ -105,6 +109,54 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
   it('parses an authenticate/user fixture with fullname omitted (optional)', () => {
     const parsed = authUserSchema.parse({ shooting_card_number: '12345' });
     expect(parsed.fullname).toBeUndefined();
+  });
+
+  it('accepts the nulls real WebShooter data is full of', () => {
+    // Audited against wscli's 633 captured responses: with these fields
+    // required, 124 of 256 results responses and 92 of 120 signups
+    // responses failed to parse. Nulls here are the normal state, not
+    // corruption — an unscheduled signup has no start_time, and a station
+    // nobody shot has no points. Synthetic values only (hard rule 7).
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([
+        {
+          ...fixtureResultRow(),
+          figure_hits: null,
+          hits: null,
+          points: null,
+          signup: { ...fixtureSignup(), start_time: null, end_time: null },
+          results: [{ ...fixtureStationResult(), figure_hits: null, hits: null, points: null }],
+        },
+      ]),
+    );
+
+    expect(parsed.results[0]!.points).toBeNull();
+    expect(parsed.results[0]!.signup!.start_time).toBeNull();
+    expect(parsed.results[0]!.results[0]!.hits).toBeNull();
+  });
+
+  it('accepts a result row whose signup is gone', () => {
+    // Two captures have one: the row survives the signup being removed.
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([{ ...fixtureResultRow(), signup: null }]),
+    );
+
+    expect(parsed.results[0]!.signup).toBeNull();
+  });
+
+  it('requires the user envelope authenticate/user actually returns', () => {
+    // wscli reads data["user"]["shooting_card_number"]. Parsing the envelope
+    // as the user itself is how a connected account ended up with no card
+    // number: the token stored, the screen saying connected, and zod
+    // rejecting the response out of sight.
+    const parsed = authUserResponseSchema.parse({
+      user: { shooting_card_number: '12345', fullname: 'Testa Testsson' },
+    });
+    expect(parsed.user.shooting_card_number).toBe('12345');
+  });
+
+  it('rejects a bare user object, which is what we used to expect', () => {
+    expect(() => authUserResponseSchema.parse({ shooting_card_number: '12345' })).toThrow();
   });
 
   it('parses a null shooting_card_number (nullable, not just optional)', () => {

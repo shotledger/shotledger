@@ -68,8 +68,30 @@ describe('mapStationResultsToSeries', () => {
       true,
     );
     expect(mapped.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(mapped[0]!.totalOverrideTenths).toBe(row.results[0]!.points * 10);
+    expect(mapped[0]!.totalOverrideTenths).toBe(row.results[0]!.points! * 10);
     expect(mapped[0]!.totalOverrideShotCount).toBe(5);
+  });
+
+  it('skips a station that was never shot rather than importing it as zero', () => {
+    // Real WebShooter data has null points on unshot stations. `null * 10`
+    // is 0 in JavaScript, so the naive mapping invents a zero-scored series
+    // — worse than dropping it, because it silently lowers every average.
+    const row = fixtureResultRow({
+      results: [
+        fixtureStationResult({ stations_id: 1, points: 40 }),
+        fixtureStationResult({ id: 2, stations_id: 2, points: null }),
+        fixtureStationResult({ id: 3, stations_id: 3, points: 44 }),
+      ],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    const mapped = mapStationResultsToSeries(row, 5);
+
+    expect(mapped).toHaveLength(2);
+    expect(mapped.map((s) => s.totalOverrideTenths)).toEqual([400, 440]);
+    // Positions close up: the gap must not leave a hole in the numbering.
+    expect(mapped.map((s) => s.position)).toEqual([1, 2]);
   });
 
   it('maps results_finals to isFinal true, no note, positions continuing after the main round', () => {
