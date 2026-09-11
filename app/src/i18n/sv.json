@@ -1039,6 +1039,19 @@
     "title": "Verktyg",
     "timerSubtitle": "Skjuttids-, skott- och fälttimer",
     "diagnosticsTitle": "Diagnostik för skottdetektering",
-    "diagnosticsSubtitle": "Mät vad mikrofonen hör på banan"
+    "diagnosticsSubtitle": "Mät vad mikrofonen hör på banan",
+    "photosSubtitle": "Alla tavelfoton du tagit, sökbara."
+  },
+  "photos": {
+    "title": "Foton",
+    "searchPlaceholder": "Sök på pass, plats eller gren",
+    "allLocations": "Alla platser",
+    "count": "Visar {{shown}} av {{total}}",
+    "noMatch": "Inga foton matchar sökningen.",
+    "emptyTitle": "Inga foton än",
+    "emptyBody": "Foton du lägger till på en serie, eller tar när du poängsätter från foto, samlas här.",
+    "notDownloaded": "Inte hämtat",
+    "openLabel": "Öppna fotot från {{session}}, serie {{position}}",
+    "shareHint": "Håll in ett foto för att dela, kopiera eller spara det."
   }
 }
