@@ -6,8 +6,14 @@
 // was resolved on 2026-09-11 by reading webshooter.se's own AngularJS client:
 // it is a Laravel Passport **password grant**. The user's email and password
 // authenticate the user; `client_id`/`client_secret` identify the calling
-// application, and are webshooter.se's own published web-client values. They
-// are injected, never hard-coded — see ~/agents/shotledger/webshooter.env.
+// application.
+//
+// The client secret is READ FROM webshooter.se AT LOGIN TIME rather than
+// shipped. It is published to every anonymous visitor in an inline <script>
+// on their homepage — it has to be, since their own client is JavaScript in
+// a browser — so fetching it is just reading what the browser reads, and it
+// means a rotation on their side heals itself instead of bricking login
+// until someone notices. Nothing is stored, in the tree or in the build.
 export interface WebShooterSpaLoginRequest {
   username: string;
   password: string;
@@ -38,12 +44,12 @@ export class WebShooterSpaLoginNotVerifiedError extends Error {
   }
 }
 
-/** The build carries no OAuth client config, so password login cannot be attempted. */
+/** The client secret could be neither read from webshooter.se nor fallen back to. */
 export class WebShooterSpaLoginUnconfiguredError extends Error {
   constructor() {
     super(
-      'WebShooter password login needs EXPO_PUBLIC_WEBSHOOTER_CLIENT_ID and ' +
-        'EXPO_PUBLIC_WEBSHOOTER_CLIENT_SECRET at build time; this build has neither.',
+      "WebShooter's published OAuth client secret could not be read, and this build " +
+        'carries no fallback. Use a manual API token instead.',
     );
     this.name = 'WebShooterSpaLoginUnconfiguredError';
   }
@@ -144,22 +150,69 @@ export function createWebShooterSpaLoginClient(
 }
 
 /**
- * Picks the real client when the build carries OAuth client config, and the
- * rejecting stub when it does not — so a build without the config fails with
- * a message that says why, rather than sending a request that cannot succeed.
+ * The web SPA's Passport client id, hard-coded as `client_id = 1` in their
+ * own bundle. An identifier, not a credential — it belongs in source.
+ */
+export const WEBSHOOTER_WEB_CLIENT_ID = '1';
+
+/** Matches `app.value('oauthClientSecret', '…')` however it is quoted or spaced. */
+const PUBLISHED_SECRET = /oauthClientSecret['"]\s*,\s*['"]([^'"]+)['"]/;
+
+/**
+ * Reads the client secret webshooter.se publishes to anonymous visitors.
+ *
+ * Returns null on anything unexpected — an unreachable host, a changed page,
+ * a redesign that moves the constant — so the caller can fall back rather
+ * than fail. Never throws: a login must not die because a scrape did.
+ */
+export async function discoverPublishedClientSecret(
+  fetchImpl: typeof fetch,
+  siteUrl: string,
+): Promise<string | null> {
+  try {
+    const response = await fetchImpl(siteUrl, { headers: { Accept: 'text/html' } });
+    if (!response.ok) return null;
+    const match = PUBLISHED_SECRET.exec(await response.text());
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export interface SpaLoginClientOptions {
+  /** API root, e.g. https://webshooter.se/api/v4.1.9 */
+  baseUrl: string;
+  /** Site root the client secret is published on, e.g. https://webshooter.se/ */
+  siteUrl: string;
+  /**
+   * Used only when the page cannot be read. Optional by design: the normal
+   * path needs no configured secret at all.
+   */
+  fallback?: Partial<WebShooterOAuthClientConfig> | null;
+}
+
+/**
+ * Login client that reads the client secret from webshooter.se per login,
+ * falling back to a configured value if the page cannot be read.
+ *
+ * The fallback is what keeps a page redesign from taking login out entirely;
+ * discovery is what keeps a rotation from doing the same. Neither covers the
+ * other, which is why both are here.
  */
 export function createSpaLoginClient(
   fetchImpl: typeof fetch,
-  baseUrl: string,
-  client: Partial<WebShooterOAuthClientConfig> | null,
+  options: SpaLoginClientOptions,
 ): WebShooterSpaLoginClient {
-  if (!client?.clientId || !client.clientSecret) {
-    return {
-      login: () => Promise.reject(new WebShooterSpaLoginUnconfiguredError()),
-    };
-  }
-  return createWebShooterSpaLoginClient(fetchImpl, baseUrl, {
-    clientId: client.clientId,
-    clientSecret: client.clientSecret,
-  });
+  return {
+    async login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult> {
+      const discovered = await discoverPublishedClientSecret(fetchImpl, options.siteUrl);
+      const clientSecret = discovered ?? options.fallback?.clientSecret;
+      if (!clientSecret) throw new WebShooterSpaLoginUnconfiguredError();
+
+      return createWebShooterSpaLoginClient(fetchImpl, options.baseUrl, {
+        clientId: options.fallback?.clientId || WEBSHOOTER_WEB_CLIENT_ID,
+        clientSecret,
+      }).login(request);
+    },
+  };
 }

@@ -3,9 +3,10 @@
 // webshooter.se directly — a Laravel Passport password grant, confirmed
 // 2026-09-11. Neither path ever calls a ShotLedger backend.
 //
-// The OAuth client id/secret come from the environment at build time and are
-// deliberately absent from this tree (hard rule 3); a build without them
-// falls back to manual token paste and says so.
+// The OAuth client secret is read from webshooter.se at login time — it is
+// published there to every anonymous visitor — so nothing secret is shipped
+// or stored, and a rotation on their side heals itself. The env fallback
+// only covers the case where that page cannot be read.
 import { useCallback, useEffect, useState } from 'react';
 import {
   createSpaLoginClient,
@@ -18,16 +19,21 @@ import { resolveIdentity } from '@shotledger/shared/src/integrations/webshooter/
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { clearWebShooterToken, setWebShooterToken } from '@/platform/secure-store';
-import { getWebShooterClient, loadTokenCache, setTokenCache, WEBSHOOTER_BASE_URL } from './client';
+import {
+  getWebShooterClient,
+  loadTokenCache,
+  setTokenCache,
+  WEBSHOOTER_BASE_URL,
+  WEBSHOOTER_SITE_URL,
+} from './client';
 
 const CARD_NUMBER_SETTING_KEY = 'webshooterCardNumber';
 
 /**
- * webshooter.se's own published web-client credentials, supplied at build
- * time from ~/agents/shotledger/webshooter.env. They identify the calling
- * application; the user's password is what authenticates the user.
+ * Fallback only, for a build made against a changed webshooter.se. Normally
+ * both are undefined and discovery supplies the secret.
  */
-const OAUTH_CLIENT = {
+const OAUTH_CLIENT_FALLBACK = {
   clientId: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_ID,
   clientSecret: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_SECRET,
 };
@@ -85,7 +91,11 @@ export function useWebShooterConnection(): WebShooterConnectionState {
       setLoading(true);
       setError(null);
       try {
-        const loginClient = createSpaLoginClient(fetch, WEBSHOOTER_BASE_URL, OAUTH_CLIENT);
+        const loginClient = createSpaLoginClient(fetch, {
+          baseUrl: WEBSHOOTER_BASE_URL,
+          siteUrl: WEBSHOOTER_SITE_URL,
+          fallback: OAUTH_CLIENT_FALLBACK,
+        });
         const result = await loginClient.login({ username, password });
         await finishConnect(result.token);
       } catch (err) {

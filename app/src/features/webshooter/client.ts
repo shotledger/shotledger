@@ -20,6 +20,9 @@ import { createDevMockHttpClient } from './dev-mock';
 // competitions returns JSON). Same root wscli uses.
 export const WEBSHOOTER_BASE_URL = 'https://webshooter.se/api/v4.1.9';
 
+/** Site root, where the OAuth client secret is published to anonymous visitors. */
+export const WEBSHOOTER_SITE_URL = 'https://webshooter.se/';
+
 /** __DEV__-only opt-in flag (Settings dev section), never on in production builds. */
 export function isDevMockEnabled(): boolean {
   if (!__DEV__ || !db) return false;

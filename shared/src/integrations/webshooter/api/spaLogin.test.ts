@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createSpaLoginClient,
+  discoverPublishedClientSecret,
   createUnverifiedSpaLoginClient,
   createWebShooterSpaLoginClient,
   WebShooterSpaLoginClientRejectedError,
@@ -127,33 +128,148 @@ describe('createWebShooterSpaLoginClient', () => {
   });
 });
 
+const SITE = 'https://webshooter.se/';
+
+/** The homepage as it is actually served, verified against the live host 2026-09-11. */
+const REAL_PAGE_SHAPE = `<!DOCTYPE html><html lang="sv" ng-app="app"><body>
+<script>app.value('ApiEndpointUrl', 'https://webshooter.se/api/v4.1.9/');</script>
+<script>app.value('oauthClientSecret', 'published-secret');</script>
+</body></html>`;
+
+function html(status: number, body: string): typeof fetch {
+  return vi.fn(() =>
+    Promise.resolve({
+      ok: status >= 200 && status < 300,
+      status,
+      text: () => Promise.resolve(body),
+    }),
+  ) as unknown as typeof fetch;
+}
+
+describe('discoverPublishedClientSecret', () => {
+  it('reads the value out of the page webshooter.se serves anonymously', async () => {
+    await expect(discoverPublishedClientSecret(html(200, REAL_PAGE_SHAPE), SITE)).resolves.toBe(
+      'published-secret',
+    );
+  });
+
+  it('tolerates double quotes and loose spacing', async () => {
+    const page = `<script>app.value( "oauthClientSecret" ,  "other-secret" );</script>`;
+    await expect(discoverPublishedClientSecret(html(200, page), SITE)).resolves.toBe(
+      'other-secret',
+    );
+  });
+
+  it('returns null when the page no longer carries it', async () => {
+    await expect(
+      discoverPublishedClientSecret(html(200, '<html></html>'), SITE),
+    ).resolves.toBeNull();
+  });
+
+  it('returns null on a non-ok response', async () => {
+    await expect(discoverPublishedClientSecret(html(503, ''), SITE)).resolves.toBeNull();
+  });
+
+  it('never throws when the host is unreachable', async () => {
+    // A login must not die because a scrape did — the fallback exists for
+    // exactly this, and it cannot run if discovery throws.
+    const fetchImpl = vi.fn(() =>
+      Promise.reject(new Error('network down')),
+    ) as unknown as typeof fetch;
+    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toBeNull();
+  });
+});
+
 describe('createSpaLoginClient', () => {
-  it('never sends a request when the build carries no client config', async () => {
-    const fetchImpl = vi.fn() as unknown as typeof fetch;
-    const client = createSpaLoginClient(fetchImpl, BASE, null);
+  function siteThenToken(page: string | null, token: unknown): typeof fetch {
+    return vi.fn((url: string) =>
+      url === SITE
+        ? Promise.resolve({
+            ok: page !== null,
+            status: page === null ? 404 : 200,
+            text: () => Promise.resolve(page ?? ''),
+          })
+        : Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(token) }),
+    ) as unknown as typeof fetch;
+  }
 
-    await expect(client.login({ username: 'a', password: 'b' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginUnconfiguredError,
-    );
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it('treats a half-configured build as unconfigured', async () => {
-    const fetchImpl = vi.fn() as unknown as typeof fetch;
-    const client = createSpaLoginClient(fetchImpl, BASE, { clientId: '1' });
-
-    await expect(client.login({ username: 'a', password: 'b' })).rejects.toBeInstanceOf(
-      WebShooterSpaLoginUnconfiguredError,
-    );
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it('uses the real client once both halves are present', async () => {
-    const fetchImpl = respond(200, { access_token: 'tok' });
+  it('logs in with the secret it just read, sending no configured value', async () => {
+    const fetchImpl = siteThenToken(REAL_PAGE_SHAPE, { access_token: 'tok' });
 
     await expect(
-      createSpaLoginClient(fetchImpl, BASE, CLIENT).login({ username: 'a', password: 'b' }),
+      createSpaLoginClient(fetchImpl, { baseUrl: BASE, siteUrl: SITE }).login({
+        username: 'a',
+        password: 'b',
+      }),
     ).resolves.toEqual({ token: 'tok' });
+
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls[0]![0]).toBe(SITE);
+    expect(JSON.parse((calls[1]![1] as { body: string }).body)).toMatchObject({
+      client_id: '1',
+      client_secret: 'published-secret',
+    });
+  });
+
+  it('picks up a rotated secret without a rebuild', async () => {
+    // The whole point of reading it per login: their value changes, ours
+    // follows, and nobody has to notice.
+    const rotated = REAL_PAGE_SHAPE.replace('published-secret', 'rotated-secret');
+    const fetchImpl = siteThenToken(rotated, { access_token: 'tok' });
+
+    await createSpaLoginClient(fetchImpl, { baseUrl: BASE, siteUrl: SITE }).login({
+      username: 'a',
+      password: 'b',
+    });
+
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe(
+      'rotated-secret',
+    );
+  });
+
+  it('falls back to a configured secret when the page cannot be read', async () => {
+    const fetchImpl = siteThenToken(null, { access_token: 'tok' });
+
+    await createSpaLoginClient(fetchImpl, {
+      baseUrl: BASE,
+      siteUrl: SITE,
+      fallback: CLIENT,
+    }).login({ username: 'a', password: 'b' });
+
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe('test-secret');
+  });
+
+  it('prefers the published secret over a stale configured one', async () => {
+    const fetchImpl = siteThenToken(REAL_PAGE_SHAPE, { access_token: 'tok' });
+
+    await createSpaLoginClient(fetchImpl, {
+      baseUrl: BASE,
+      siteUrl: SITE,
+      fallback: CLIENT,
+    }).login({ username: 'a', password: 'b' });
+
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe(
+      'published-secret',
+    );
+  });
+
+  it('never sends credentials when it has no secret at all', async () => {
+    const fetchImpl = siteThenToken(null, { access_token: 'tok' });
+
+    await expect(
+      createSpaLoginClient(fetchImpl, { baseUrl: BASE, siteUrl: SITE }).login({
+        username: 'a',
+        password: 'b',
+      }),
+    ).rejects.toBeInstanceOf(WebShooterSpaLoginUnconfiguredError);
+
+    // One call, to the site. The password never left the device.
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0]![0]).toBe(SITE);
   });
 });
 
