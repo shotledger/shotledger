@@ -705,7 +705,8 @@
     },
     "loginRejected": "Fel användarnamn eller lösenord.",
     "loginUnreachable": "Kunde inte nå webshooter.se. Kontrollera anslutningen och försök igen, eller klistra in en token nedan.",
-    "loginNeedsUpdate": "WebShooter har ändrat hur inloggningsinställningarna publiceras, så lösenordsinloggning kräver en uppdatering av ShotLedger. Klistra in en token nedan för att ansluta nu — och rapportera gärna detta."
+    "loginNeedsUpdate": "WebShooter har ändrat hur inloggningsinställningarna publiceras, så lösenordsinloggning kräver en uppdatering av ShotLedger. Klistra in en token nedan för att ansluta nu — och rapportera gärna detta.",
+    "loginFailed": "Kunde inte logga in på WebShooter. Detaljen nedan är vad som rapporterades — skicka gärna vidare den."
   },
   "timer": {
     "title": "Tidtagning",

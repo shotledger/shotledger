@@ -121,10 +121,26 @@ describe('createWebShooterSpaLoginClient', () => {
     ).rejects.toThrow('no access_token');
   });
 
-  it('surfaces any other non-ok status rather than inventing a token', async () => {
-    const client = createWebShooterSpaLoginClient(respond(500, { message: 'fel' }), BASE, CLIENT);
+  it("carries webshooter.se's own message out of an opaque failure", async () => {
+    // Their server answers a failed login with a bare 500 and a Swedish
+    // "an error occurred" — no invalid_grant. The status alone cannot tell
+    // a wrong password from a broken endpoint, so their text has to travel
+    // with it or the reader has nothing.
+    const client = createWebShooterSpaLoginClient(
+      respond(500, { message: 'Ett fel inträffade. Vänligen försök igen.' }),
+      BASE,
+      CLIENT,
+    );
 
-    await expect(client.login({ username: 'a', password: 'pw' })).rejects.toThrow('status 500');
+    await expect(client.login({ username: 'a', password: 'pw' })).rejects.toThrow(
+      'HTTP 500 — Ett fel inträffade. Vänligen försök igen.',
+    );
+  });
+
+  it('still reports the status when there is no message to carry', async () => {
+    const client = createWebShooterSpaLoginClient(respond(502, null), BASE, CLIENT);
+
+    await expect(client.login({ username: 'a', password: 'pw' })).rejects.toThrow('HTTP 502');
   });
 });
 

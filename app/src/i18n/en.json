@@ -705,7 +705,8 @@
     },
     "loginRejected": "Wrong username or password.",
     "loginUnreachable": "Couldn't reach webshooter.se. Check your connection and try again, or paste a token below.",
-    "loginNeedsUpdate": "WebShooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this."
+    "loginNeedsUpdate": "WebShooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this.",
+    "loginFailed": "Couldn't log in to WebShooter. The detail below is what it reported — please pass it on."
   },
   "timer": {
     "title": "Timers",

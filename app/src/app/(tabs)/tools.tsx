@@ -107,24 +107,6 @@ export default function ToolsScreen() {
               onPress={() => void webshooter.connectWithPassword(wsUsername, wsPassword)}
               testID="webshooter-connect-password"
             />
-            {webshooter.error !== null && webshooter.error !== 'connectFailed' && (
-              <>
-                <ThemedText type="small" themeColor="danger" testID="webshooter-login-error">
-                  {t(`webshooter.${webshooter.error}` as const)}
-                </ThemedText>
-                {/* The reason, verbatim. Nobody reads it until the day
-                    someone has to, and then it is the whole report. */}
-                {webshooter.errorDetail !== null && (
-                  <ThemedText
-                    type="small"
-                    themeColor="textSecondary"
-                    testID="webshooter-login-error-detail"
-                  >
-                    {webshooter.errorDetail}
-                  </ThemedText>
-                )}
-              </>
-            )}
             <ThemedText type="small" themeColor="textSecondary">
               {t('webshooter.tokenFallbackHelp')}
             </ThemedText>
@@ -140,10 +122,25 @@ export default function ToolsScreen() {
               onPress={() => void webshooter.connectWithToken(wsToken)}
               testID="webshooter-connect-token"
             />
-            {webshooter.error === 'connectFailed' && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('webshooter.connectFailed')}
-              </ThemedText>
+            {webshooter.error !== null && (
+              <>
+                <ThemedText type="small" themeColor="danger" testID="webshooter-login-error">
+                  {t(`webshooter.${webshooter.error}` as const)}
+                </ThemedText>
+                {/* The reason, verbatim. Nobody reads it until the day
+                    someone has to, and then it is the whole report — which
+                    is exactly why the generic failure must show it too: that
+                    is the branch that means "we do not know yet". */}
+                {webshooter.errorDetail !== null && (
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    testID="webshooter-login-error-detail"
+                  >
+                    {webshooter.errorDetail}
+                  </ThemedText>
+                )}
+              </>
             )}
           </>
         )}

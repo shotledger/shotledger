@@ -121,7 +121,10 @@ export function useWebShooterConnection(): WebShooterConnectionState {
           setError('loginNeedsUpdate');
           setErrorDetail('invalid_client');
         } else {
-          setError('connectFailed');
+          // Not a failure we can name. "Check the token" is wrong here —
+          // this path has no token — so it gets its own message, and the
+          // detail underneath is the only thing that will identify it.
+          setError('loginFailed');
           setErrorDetail(err instanceof Error ? err.message : String(err));
         }
       } finally {
