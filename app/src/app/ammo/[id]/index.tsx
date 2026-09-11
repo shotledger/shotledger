@@ -1,7 +1,7 @@
 // Ammo lot detail/edit (§4 M4 §5): usage stats (sessions x shots) at top,
 // then the same fields as new.tsx, editable in place. No separate detail vs
 // edit route — lot-vs-lot comparison stays v3, so a form is the whole screen.
-import { powerFactor } from '@shotledger/shared';
+import { muzzleEnergyJoules, powerFactor } from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,6 +57,7 @@ export default function AmmoLotDetailScreen() {
   const [notes, setNotes] = useState(lot?.notes ?? '');
 
   const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
+  const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
   if (!db || !lot) {
     return (
@@ -149,12 +150,25 @@ export default function AmmoLotDetailScreen() {
         </ThemedText>
         {derivedPowerFactor != null && (
           <>
+            {/* Side by side: both come from the same weight and velocity, so
+                they are two readings of one load rather than two settings. */}
             <View style={styles.derivedRow}>
-              <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
-              <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+              <View style={styles.derivedCell}>
+                <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
+                <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+              </View>
+              <View style={styles.derivedCell}>
+                <ThemedText type="smallBold">{t('ammo.muzzleEnergy')}</ThemedText>
+                <ThemedText testID="ammo-muzzle-energy">
+                  {derivedEnergy == null ? '–' : t('ammo.joules', { value: derivedEnergy })}
+                </ThemedText>
+              </View>
             </View>
             <ThemedText type="small" themeColor="textSecondary">
               {t('ammo.powerFactorHint')}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ammo.muzzleEnergyHint')}
             </ThemedText>
           </>
         )}
@@ -195,9 +209,14 @@ export default function AmmoLotDetailScreen() {
 const styles = StyleSheet.create({
   derivedRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: Spacing.three,
+  },
+  // Equal halves, so the two readings line up rather than one being pushed
+  // to the edge by the length of the other's label.
+  derivedCell: {
+    flex: 1,
+    gap: Spacing.one,
   },
   switchRow: {
     flexDirection: 'row',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { powerFactor } from './power-factor';
+import { muzzleEnergyJoules, powerFactor } from './power-factor';
 
 describe('powerFactor', () => {
   it('returns null when either input is missing', () => {
@@ -48,5 +48,50 @@ describe('powerFactor', () => {
 
   it('handles fractional bullet weights', () => {
     expect(powerFactor(122.5, 350)).toBe(140);
+  });
+});
+
+describe('muzzleEnergyJoules', () => {
+  it('computes E = half m v squared', () => {
+    // 124 gr = 0.00803506... kg; at 350 m/s that is 492.1 J.
+    expect(muzzleEnergyJoules(124, 350)).toBeCloseTo(492.1, 1);
+  });
+
+  it('keeps a decimal where the number is small', () => {
+    // An air pistol pellet: 8.2 gr at 145 m/s — single-digit joules, where
+    // whole-joule rounding would erase the interesting part.
+    const energy = muzzleEnergyJoules(8.2, 145)!;
+    expect(energy).toBeGreaterThan(5);
+    expect(energy).toBeLessThan(6);
+    expect(Number.isInteger(energy)).toBe(false);
+  });
+
+  it('scales with the square of velocity, not linearly', () => {
+    const single = muzzleEnergyJoules(100, 100)!;
+    const double = muzzleEnergyJoules(100, 200)!;
+    expect(double / single).toBeCloseTo(4, 3);
+  });
+
+  it('scales linearly with mass', () => {
+    expect(muzzleEnergyJoules(200, 300)! / muzzleEnergyJoules(100, 300)!).toBeCloseTo(2, 3);
+  });
+
+  it('is null for anything missing or not usable', () => {
+    expect(muzzleEnergyJoules(null, 350)).toBeNull();
+    expect(muzzleEnergyJoules(124, null)).toBeNull();
+    expect(muzzleEnergyJoules(undefined, undefined)).toBeNull();
+    expect(muzzleEnergyJoules(0, 350)).toBeNull();
+    expect(muzzleEnergyJoules(124, 0)).toBeNull();
+    expect(muzzleEnergyJoules(-124, 350)).toBeNull();
+    expect(muzzleEnergyJoules(124, -350)).toBeNull();
+    expect(muzzleEnergyJoules(Number.NaN, 350)).toBeNull();
+    expect(muzzleEnergyJoules(124, Number.POSITIVE_INFINITY)).toBeNull();
+  });
+
+  it('uses the defined grain, not a rounded one', () => {
+    // 0.0648 kg/1000gr would put this at 7.51 J; the defined constant does not.
+    const energy = muzzleEnergyJoules(8.2, 168.5)!;
+    expect(energy).toBeLessThanOrEqual(7.6);
+    expect(energy).toBeGreaterThan(7.0);
   });
 });

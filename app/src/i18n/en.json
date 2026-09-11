@@ -317,7 +317,10 @@
     "compareHeadInsufficient": "Too little data to compare {{leader}} with {{runnerUp}}. Both lots need at least {{count}} scored shots before a difference means anything.",
     "compareCaveatsTitle": "What This Cannot Tell You",
     "compareImbalance": "These lots differ {{ratio}}x in shot count, so the table is not a fair race — the lot with fewer shots has the less settled average.",
-    "compareCaveats": "Shots inside one series move together, so the true uncertainty is a little wider than the intervals shown. And nothing here separates the ammunition from your own form on the day a lot happened to be used."
+    "compareCaveats": "Shots inside one series move together, so the true uncertainty is a little wider than the intervals shown. And nothing here separates the ammunition from your own form on the day a lot happened to be used.",
+    "muzzleEnergy": "Muzzle Energy",
+    "joules": "{{value}} J",
+    "muzzleEnergyHint": "Energy at the muzzle, from bullet weight and velocity. Any legal limit is yours to check."
   },
   "settings": {
     "title": "Settings",
