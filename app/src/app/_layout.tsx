@@ -102,6 +102,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('about.licensesTitle') }}
       />
       <Stack.Screen
+        name="ammo/compare"
+        options={{ presentation: 'modal', headerShown: true, title: t('ammo.compareTitle') }}
+      />
+      <Stack.Screen
         name="stats/records"
         options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
       />

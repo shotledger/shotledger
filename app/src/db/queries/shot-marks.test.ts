@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { addSeries } from './series';
 import { createSession } from './sessions';
+import { createAmmoLot } from './ammo-lots';
 import {
+  listGroupSamplesByAmmoLot,
   listMarksForSeries,
   listMarksForSession,
   saveSeriesMarks,
@@ -160,5 +162,42 @@ describe('sessionHasMarks', () => {
     saveSeriesMarks(db, seriesId, [mark(0, 0, 100)]);
     saveSeriesMarks(db, seriesId, []);
     expect(sessionHasMarks(db, sessionId)).toBe(false);
+  });
+});
+
+describe('listGroupSamplesByAmmoLot', () => {
+  function markedSession(ammoLotId: string | null, isSighter = false) {
+    const id = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      ammoLotId,
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+    return addSeries(db, { sessionId: id, position: 1, isSighter }).id;
+  }
+
+  it('groups marks per series and tags them with the session lot', () => {
+    const lot = createAmmoLot(db, { label: 'Lot' });
+    const a = markedSession(lot.id);
+    const b = markedSession(lot.id);
+    saveSeriesMarks(db, a, [mark(0, 0, 100), mark(3, 4, 90)]);
+    saveSeriesMarks(db, b, [mark(1, 1, 100)]);
+
+    const samples = listGroupSamplesByAmmoLot(db);
+    expect(samples).toHaveLength(2);
+    expect(samples.every((sample) => sample.ammoLotId === lot.id)).toBe(true);
+    expect(samples.find((sample) => sample.seriesId === a)?.points).toEqual([
+      { xMm: 0, yMm: 0 },
+      { xMm: 3, yMm: 4 },
+    ]);
+  });
+
+  it('drops sighters and sessions with no ammo lot', () => {
+    const lot = createAmmoLot(db, { label: 'Lot' });
+    saveSeriesMarks(db, markedSession(lot.id, true), [mark(0, 0, 100)]);
+    saveSeriesMarks(db, markedSession(null), [mark(0, 0, 100)]);
+
+    expect(listGroupSamplesByAmmoLot(db)).toEqual([]);
   });
 });

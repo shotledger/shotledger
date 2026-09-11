@@ -112,6 +112,12 @@ export default function StatsScreen() {
           onPress={() => router.push('/stats/records')}
           testID="stats-open-records"
         />
+        <DrillDownRow
+          title={t('ammo.compareOpen')}
+          subtitle={t('ammo.compareOpenSubtitle')}
+          onPress={() => router.push('/ammo/compare')}
+          testID="stats-open-ammo-compare"
+        />
       </Card>
 
       <FilterCard title={t('stats.sectionPeriod')} hint={t('stats.sectionPeriodHint')}>
