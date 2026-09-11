@@ -420,9 +420,9 @@
     "folderSaveIosFallback": "Not available on iOS — opened Share instead",
     "folderSaveCancelled": "Folder selection cancelled",
     "folderSaveFailed": "Couldn't save to that folder — try choosing it again",
-    "exportTitle": "Back Up",
+    "exportTitle": "Backup",
     "exportSubtitle": "Choose what to include and where to save it",
-    "dialogTitle": "Back Up",
+    "dialogTitle": "Backup",
     "dialogContentsHeading": "Contents",
     "dialogAlwaysIncluded": "Always included: sessions, series, shots, firearms, ammunition, licences, tags, maintenance and settings.",
     "includePhotosTitle": "Include Photos",
@@ -441,7 +441,7 @@
     "destinationShare": "Share",
     "destinationFolder": "Folder",
     "destinationShareNote": "Opens the system share sheet.",
-    "dialogConfirm": "Back Up",
+    "dialogConfirm": "Backup",
     "dialogWorking": "Working…",
     "exportSuccessWithVault": "Backup exported with the Vault — keep the file and its passphrase apart",
     "exportVaultEmpty": "Backup exported — the Vault was empty, so nothing was added from it",
@@ -454,7 +454,7 @@
     "restoreVaultWrongPassphrase": "That passphrase did not open the Vault section. Nothing has been changed — try again, or restore without the Vault.",
     "restoreSuccessVaultMerged": "Restore complete and the Vault merged — close and reopen the app",
     "restoreSuccessVaultSkipped": "Restore complete without the Vault — close and reopen the app",
-    "vaultInfo": "A backup includes everything except the Vault.\n\nThe Vault can be added to one backup at a time, from the Back Up dialog, protected by a passphrase you choose. It stays out by default so the backup file cannot expose your licence card photos and door codes."
+    "vaultInfo": "A backup includes everything except the Vault.\n\nThe Vault can be added to one backup at a time, from the Backup dialog, protected by a passphrase you choose. It stays out by default so the backup file cannot expose your licence card photos and door codes."
   },
   "compliance": {
     "settingsTitle": "Compliance",
