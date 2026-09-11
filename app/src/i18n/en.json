@@ -249,7 +249,9 @@
     "adjustReasonPlaceholder": "Why is this being adjusted?",
     "adjustSave": "Apply Adjustment",
     "eventDate": "Date",
-    "sightWindageRange": "Range ±{{value}}"
+    "sightWindageRange": "Range ±{{value}}",
+    "sightWindageDecrease": "Decrease Windage",
+    "sightWindageIncrease": "Increase Windage"
   },
   "ammo": {
     "newLot": "New Ammo Lot",
@@ -515,7 +517,8 @@
     "menuEdit": "Edit Session",
     "menuShare": "Share",
     "moveSeriesUp": "Move series up",
-    "moveSeriesDown": "Move series down"
+    "moveSeriesDown": "Move series down",
+    "sightsAdjustHint": "Changes are saved as you make them, on the selected setting."
   },
   "share": {
     "title": "Share Session",

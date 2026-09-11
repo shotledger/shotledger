@@ -249,7 +249,9 @@
     "adjustReasonPlaceholder": "Varför justeras detta?",
     "adjustSave": "Verkställ justering",
     "eventDate": "Datum",
-    "sightWindageRange": "Område ±{{value}}"
+    "sightWindageRange": "Område ±{{value}}",
+    "sightWindageDecrease": "Minska sida",
+    "sightWindageIncrease": "Öka sida"
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
@@ -515,7 +517,8 @@
     "menuEdit": "Redigera pass",
     "menuShare": "Dela",
     "moveSeriesUp": "Flytta serien uppåt",
-    "moveSeriesDown": "Flytta serien nedåt"
+    "moveSeriesDown": "Flytta serien nedåt",
+    "sightsAdjustHint": "Ändringar sparas direkt, på den valda inställningen."
   },
   "share": {
     "title": "Dela pass",

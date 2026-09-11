@@ -6,8 +6,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet } from 'react-native';
-import { resolveActiveSightSetting } from '@shotledger/shared';
-
 import { ActionSheet, type ActionSheetAction } from '@/components/action-sheet';
 import { OverflowIcon } from '@/components/icons';
 import { db } from '@/db/client';
@@ -15,8 +13,8 @@ import { db } from '@/db/client';
 // the fired rounds out of the firearm's counter, which feeds the FAP 551-3
 // activity log. Same entry point Home's swipe-to-delete uses.
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
-import { listSightSettings, setActiveSightSetting } from '@/db/queries/sight-settings';
-import { sightSettingLabel } from '@/features/firearms/sight-turns-text';
+import { listSightSettings } from '@/db/queries/sight-settings';
+import { SessionSightsSheet } from '@/features/session/session-sights-sheet';
 import { useTheme } from '@/hooks/use-theme';
 
 export interface SessionMenuProps {
@@ -87,18 +85,6 @@ export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMe
     },
   ];
 
-  const current = resolveActiveSightSetting(sightSettings);
-  const sightActions: ActionSheetAction[] = sightSettings.map((setting) => ({
-    key: setting.id,
-    label: sightSettingLabel(t, current, setting),
-    selected: setting.id === current?.id,
-    onPress: () => {
-      if (!db || !sightsFirearmId) return;
-      setActiveSightSetting(db, sightsFirearmId, setting.id);
-      loadSights();
-    },
-  }));
-
   return (
     <>
       <Pressable
@@ -114,11 +100,12 @@ export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMe
         <OverflowIcon color={theme.primary} />
       </Pressable>
       <ActionSheet visible={sheet === 'main'} onClose={() => setSheet('none')} actions={actions} />
-      <ActionSheet
+      <SessionSightsSheet
         visible={sheet === 'sights'}
         onClose={() => setSheet('none')}
-        title={t('session.sightsTitle')}
-        actions={sightActions}
+        firearmId={sightsFirearmId}
+        settings={sightSettings}
+        onChanged={loadSights}
       />
     </>
   );
