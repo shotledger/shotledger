@@ -305,7 +305,7 @@
     "birthYearHelp": "Used for the age reduction on the pistolskyttemärke series requirement.",
     "locationLookup": "Location",
     "locationLookupOnline": "Suggest Places from the Map",
-    "locationLookupHelp": "When on, what you type in a session’s Location field is sent to photon.komoot.io.",
+    "locationLookupHelp": "When on, what you type in a session’s Location field is sent to photon.komoot.io, and tapping Use My Location sends your coordinates to overpass-api.de.",
     "birthYearPlaceholder": "Select a year",
     "birthYearSearchPlaceholder": "e.g. 1970",
     "birthYearNoMatch": "No matching year",
@@ -313,7 +313,7 @@
     "markeNoYearNote": "No birth year set — showing full-points requirements with no age reduction.",
     "markeReductionNote": "Age reduction of {{points}} p/series applies from {{sinceYear}}.",
     "markeReductionNoneNote": "No age reduction applies yet.",
-    "locationLookupInfo": "Off: only places you have used before are suggested, and nothing leaves your phone.\n\nOn: what you type in a session’s Location field is sent to photon.komoot.io, which searches OpenStreetMap. Nothing else about the session is sent, and you can turn this off again at any time.",
+    "locationLookupInfo": "Off: only places you have used before are suggested, and nothing leaves your phone.\n\nOn: what you type in a session’s Location field is sent to photon.komoot.io, which searches OpenStreetMap. A Use My Location button also appears there; tapping it takes one position fix and sends those coordinates to overpass-api.de to look up shooting ranges near you. Nothing is sent until you tap it, your position is never stored or tracked in the background, and only the range name you pick is saved with the session. You can turn this off again at any time.",
     "markeInfo": "Points needed per 5-shot precision series for each valör, by vapengrupp (SHB Bilaga 1 mom 5.1.1.1).\n\nFrom the year after you turn 55 the requirement drops by 1 point per series, and by 2 points from the year after you turn 65. Set your birth year above to see the table with that reduction applied."
   },
   "about": {
@@ -532,7 +532,13 @@
       "manual": "Manual",
       "photo": "Photo"
     },
-    "entryModeHint": "How a new series is added. Ask offers the choice each time."
+    "entryModeHint": "How a new series is added. Ask offers the choice each time.",
+    "locationUseMyLocation": "Use My Location",
+    "locationRangesNearby": "Ranges Near You",
+    "locationRangesNeedOnline": "Turn on Suggest Places from the Map in Settings to find ranges near you.",
+    "locationRangeNone": "No shooting range is mapped near you.",
+    "locationRangeDenied": "ShotLedger has no permission to use your location. You can grant it in your phone’s settings.",
+    "locationRangeFailed": "Could not find ranges near you. Check that location is on and you have a connection."
   },
   "share": {
     "title": "Share Session",

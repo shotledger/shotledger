@@ -13,6 +13,30 @@ rewritten from scratch.
 
 ## Decision
 
+**`expo-location@~57.0.16`** (MIT) — 2026-09-11, approved for GPS
+range auto-matching on the session Location field. One-shot
+`getCurrentPositionAsync` only: no background permission is declared, no
+`watchPositionAsync`, nothing runs until the shooter taps "Use my
+location", and the coordinates are never stored — what lands in the
+session is the range's name, a string they could have typed. Behind
+`app/src/platform/geolocation.ts`, with a `.web.ts` on
+`navigator.geolocation` per hard rule 6.
+
+Paired with it, and explicitly **not** a dependency: nearby ranges come
+from **OpenStreetMap via the Overpass API** (`overpass-api.de`), a plain
+HTTP POST returning JSON — same bargain as `photon.komoot.io` already
+makes for place-name lookup, and for the same reason (no key, no
+account, no SDK, so `fetch` does it). ODbL, so every surface showing a
+result credits OpenStreetMap.
+
+A **bundled Swedish range database was rejected** (maintainer, 2026-09-11):
+ranges open, close and are renamed, and a stale list that confidently
+names the wrong club is worse than no list. The cost is that matching
+needs a connection at the range, where signal is worst — accepted,
+because the field is plain text and the offline recents still work.
+Both the coordinate lookup and the existing keystroke lookup sit behind
+the one `onlineLocationLookup` setting, off by default.
+
 **`@react-native-ml-kit/text-recognition@2.0.0`** (MIT) — 2026-09-02,
 the maintainer-approved dependency for licence-card OCR (v2 "Scan a
 physical license card"). Google ML Kit text recognition v2 on both
