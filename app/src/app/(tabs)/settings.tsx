@@ -7,7 +7,10 @@ import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
+import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
+
 import { DrillDownRow } from '@/components/drill-down-row';
+import { ProviderSettingsRow } from '@/features/providers/provider-settings-row';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -329,6 +332,19 @@ export default function SettingsScreen() {
           onPress={() => router.push('/account')}
           testID="settings-open-account"
         />
+      </Card>
+
+      {/* External sites (ADR 0010): enabling one is a preference, and
+          connecting to it is a credential — both belong here rather than in
+          Tools, which is for using them. */}
+      <Card>
+        <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('providers.settingsHint')}
+        </ThemedText>
+        {PROVIDERS.map((provider) => (
+          <ProviderSettingsRow key={provider.id} provider={provider} />
+        ))}
       </Card>
 
       <Card>

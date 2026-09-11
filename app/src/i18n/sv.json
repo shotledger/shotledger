@@ -1073,5 +1073,29 @@
     "openLabel": "Öppna fotot från {{session}}, serie {{position}}",
     "shareHint": "Håll in ett foto för att dela, kopiera eller spara det.",
     "allOf": "Alla"
+  },
+  "providers": {
+    "sectionTitle": "Externa webbplatser",
+    "settingsHint": "Webbplatser du kan logga in på för resultat och starttider. Slå på en för att ansluta den; den visas sedan under Verktyg.",
+    "enableSubtitle": "Använd {{site}} i ShotLedger",
+    "rowSubtitle": "Resultat, starttider och import",
+    "noneEnabled": "Inga externa webbplatser än. Slå på en under Inställningar.",
+    "notConnected": "Inte inloggad på {{site}} — anslut den under Inställningar först.",
+    "unknownTitle": "Okänd webbplats",
+    "unknownBody": "Den här webbplatsen finns inte i den här versionen av appen.",
+    "capability": {
+      "importResults": {
+        "title": "Importera resultat",
+        "subtitle": "Bläddra bland dina tävlingar och importera officiella resultat"
+      },
+      "myStarts": {
+        "title": "Mina starter",
+        "subtitle": "Kommande anmälningar och patrulltider"
+      },
+      "stats": {
+        "title": "Statistik",
+        "subtitle": "Statistik som webbplatsen räknar fram"
+      }
+    }
   }
 }

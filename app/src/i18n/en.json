@@ -1073,5 +1073,29 @@
     "openLabel": "Open the photo from {{session}}, series {{position}}",
     "shareHint": "Long-press a photo to share, copy or save it.",
     "allOf": "All"
+  },
+  "providers": {
+    "sectionTitle": "External Sites",
+    "settingsHint": "Sites you can sign in to for results and start times. Turn one on to connect it; it then appears under Tools.",
+    "enableSubtitle": "Use {{site}} in ShotLedger",
+    "rowSubtitle": "Results, start times and imports",
+    "noneEnabled": "No external sites yet. Turn one on in Settings.",
+    "notConnected": "Not signed in to {{site}} — connect it in Settings first.",
+    "unknownTitle": "Unknown Site",
+    "unknownBody": "This site is not available in this version of the app.",
+    "capability": {
+      "importResults": {
+        "title": "Import Results",
+        "subtitle": "Browse your competitions and import official results"
+      },
+      "myStarts": {
+        "title": "My Starts",
+        "subtitle": "Upcoming signups and patrol times"
+      },
+      "stats": {
+        "title": "Statistics",
+        "subtitle": "Statistics the site computes"
+      }
+    }
   }
 }

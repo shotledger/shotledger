@@ -1,8 +1,10 @@
 // Tools tab — the utilities that are not app settings: timers, the
-// encrypted vault, and WebShooter. Settings had accumulated ten unrelated
-// concerns and WebShooter is a feature, not a preference. This screen owns
-// navigation entry points plus the WebShooter connection controls that used
-// to live in Settings; the destination screens are unchanged.
+// encrypted vault, and the external sites the shooter has enabled.
+//
+// External sites are one row each, and only when enabled (ADR 0010).
+// Connecting to them is back in Settings: the login form had turned a
+// third of this screen into a sign-in page for a site most sessions never
+// touch.
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,23 +13,19 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { ListRow } from '@/components/list-row';
-import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
-import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
+import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
+import { isProviderEnabled } from '@/features/providers/use-provider-enabled';
 import { Spacing } from '@/theme/tokens';
 
 export default function ToolsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const webshooter = useWebShooterConnection();
-  const [wsUsername, setWsUsername] = useState('');
-  const [wsPassword, setWsPassword] = useState('');
-  const [wsToken, setWsToken] = useState('');
+  const enabledProviders = PROVIDERS.filter((provider) => isProviderEnabled(provider.id));
   const [devMockEnabled, setDevMockEnabled] = useState(() =>
     db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false,
   );
@@ -71,91 +69,22 @@ export default function ToolsScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('webshooter.sectionTitle')}</ThemedText>
-        {webshooter.connected ? (
-          <>
-            <ThemedText type="default" testID="webshooter-identity">
-              {t('webshooter.connectedAs', { cardNumber: webshooter.cardNumber ?? '—' })}
-            </ThemedText>
-            <PrimaryButton
-              label={t('webshooter.disconnect')}
-              onPress={() => void webshooter.disconnect()}
-              testID="webshooter-disconnect"
-            />
-          </>
+        <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
+        {enabledProviders.length === 0 ? (
+          <ThemedText type="small" themeColor="textSecondary" testID="providers-empty">
+            {t('providers.noneEnabled')}
+          </ThemedText>
         ) : (
-          <>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('webshooter.connectHelp')}
-            </ThemedText>
-            <TextField
-              value={wsUsername}
-              onChangeText={setWsUsername}
-              placeholder={t('webshooter.usernamePlaceholder')}
-              autoCapitalize="none"
-              testID="webshooter-username"
+          enabledProviders.map((provider) => (
+            <DrillDownRow
+              key={provider.id}
+              title={provider.displayName}
+              subtitle={t('providers.rowSubtitle')}
+              onPress={() => router.push(`/external/${provider.id}` as never)}
+              testID={`providers-open-${provider.id}`}
             />
-            <TextField
-              value={wsPassword}
-              onChangeText={setWsPassword}
-              placeholder={t('webshooter.passwordPlaceholder')}
-              secureTextEntry
-              testID="webshooter-password"
-            />
-            <PrimaryButton
-              label={t('webshooter.connectWithPassword')}
-              onPress={() => void webshooter.connectWithPassword(wsUsername, wsPassword)}
-              testID="webshooter-connect-password"
-            />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('webshooter.tokenFallbackHelp')}
-            </ThemedText>
-            <TextField
-              value={wsToken}
-              onChangeText={setWsToken}
-              placeholder={t('webshooter.tokenPlaceholder')}
-              autoCapitalize="none"
-              testID="webshooter-token"
-            />
-            <PrimaryButton
-              label={t('webshooter.connectWithToken')}
-              onPress={() => void webshooter.connectWithToken(wsToken)}
-              testID="webshooter-connect-token"
-            />
-            {webshooter.error !== null && (
-              <>
-                <ThemedText type="small" themeColor="danger" testID="webshooter-login-error">
-                  {t(`webshooter.${webshooter.error}` as const)}
-                </ThemedText>
-                {/* The reason, verbatim. Nobody reads it until the day
-                    someone has to, and then it is the whole report — which
-                    is exactly why the generic failure must show it too: that
-                    is the branch that means "we do not know yet". */}
-                {webshooter.errorDetail !== null && (
-                  <ThemedText
-                    type="small"
-                    themeColor="textSecondary"
-                    testID="webshooter-login-error-detail"
-                  >
-                    {webshooter.errorDetail}
-                  </ThemedText>
-                )}
-              </>
-            )}
-          </>
+          ))
         )}
-        <DrillDownRow
-          title={t('webshooter.importTitle')}
-          subtitle={t('webshooter.importSubtitle')}
-          onPress={() => router.push('/webshooter/import')}
-          testID="webshooter-open-import"
-        />
-        <DrillDownRow
-          title={t('webshooter.startsTitle')}
-          subtitle={t('webshooter.startsSubtitle')}
-          onPress={() => router.push('/webshooter/starts')}
-          testID="webshooter-open-starts"
-        />
       </Card>
 
       {__DEV__ && (
