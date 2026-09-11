@@ -9,6 +9,7 @@ import { MIN_COMPARABLE_SHOTS, tenthsToScore } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
@@ -118,7 +119,7 @@ export default function AmmoCompareScreen() {
   if (!data.hasAnyData) {
     return (
       <Screen>
-        <ThemedText type="title">{t('ammo.compareTitle')}</ThemedText>
+        <ScreenTitle>{t('ammo.compareTitle')}</ScreenTitle>
         <EmptyState title={t('ammo.compareEmptyTitle')} body={t('ammo.compareEmptyBody')} />
       </Screen>
     );
@@ -126,7 +127,7 @@ export default function AmmoCompareScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('ammo.compareTitle')}</ThemedText>
+      <ScreenTitle>{t('ammo.compareTitle')}</ScreenTitle>
       <ThemedText type="small" themeColor="textSecondary">
         {t('ammo.compareIntro')}
       </ThemedText>

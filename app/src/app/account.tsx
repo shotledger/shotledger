@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -59,7 +60,7 @@ export default function AccountScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('account.title')}</ThemedText>
+      <ScreenTitle>{t('account.title')}</ScreenTitle>
 
       <Card>
         <ThemedText type="small" themeColor="textSecondary">

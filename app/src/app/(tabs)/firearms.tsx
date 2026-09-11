@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DrillDownRow } from '@/components/drill-down-row';
@@ -14,7 +15,6 @@ import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
-import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
@@ -55,7 +55,7 @@ export default function FirearmsScreen() {
         />
       }
     >
-      <ThemedText type="title">{t('firearms.title')}</ThemedText>
+      <ScreenTitle>{t('firearms.title')}</ScreenTitle>
       <SegmentedControl
         options={[
           { value: 'firearms' as Section, label: t('firearms.tabFirearms') },

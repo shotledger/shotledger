@@ -7,6 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
@@ -57,7 +58,7 @@ export default function WebShooterStartsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.startsTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.startsTitle')}</ScreenTitle>
 
       <PrimaryButton
         label={t('webshooter.refresh')}

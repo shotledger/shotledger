@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
@@ -95,7 +96,7 @@ export default function StatsScreen() {
   if (!options.hasAnyData) {
     return (
       <Screen>
-        <ThemedText type="title">{t('stats.title')}</ThemedText>
+        <ScreenTitle>{t('stats.title')}</ScreenTitle>
         <EmptyState title={t('stats.emptyTitle')} body={t('stats.emptyBody')} />
       </Screen>
     );
@@ -103,7 +104,7 @@ export default function StatsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('stats.title')}</ThemedText>
+      <ScreenTitle>{t('stats.title')}</ScreenTitle>
 
       <Card>
         <DrillDownRow

@@ -13,6 +13,7 @@ import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
+import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
 import { routedCapabilities } from '@/features/providers/capability-routes';
 import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
@@ -39,6 +40,9 @@ export default function ExternalSiteScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: provider.displayName }} />
+      {/* The site's own name, in the body: every other screen states what
+          it is rather than relying on the nav bar alone. */}
+      <ScreenTitle>{provider.displayName}</ScreenTitle>
 
       {!connection.connected && (
         <Card>

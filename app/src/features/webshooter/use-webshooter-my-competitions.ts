@@ -63,6 +63,8 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
     let cancelled = false;
 
     async function scan() {
+      const skippedIds: number[] = [];
+      let lastSkipReason = '';
       setScanning(true);
       setError(null);
       setErrorDetail(null);
@@ -83,8 +85,12 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
             }
           } catch (err) {
             // One unreadable competition must not end the scan: the rest of
-            // the year is still perfectly importable.
-            console.error('[webshooter] skipping competition', competition.id, err);
+            // the year is still perfectly importable. Collected rather than
+            // logged per competition — a handful of WebShooter 500s in a
+            // forty-competition scan is normal, and one red console entry
+            // each made routine weather look like a crash.
+            skippedIds.push(competition.id);
+            lastSkipReason = err instanceof Error ? err.message : String(err);
           }
           setChecked((n) => n + 1);
         }
@@ -94,6 +100,11 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
         setError('fetchFailed');
         setErrorDetail(err instanceof Error ? err.message : String(err));
       } finally {
+        if (skippedIds.length > 0) {
+          console.warn(
+            `[webshooter] skipped ${skippedIds.length} competition(s) while scanning: ${skippedIds.join(', ')} — last reason: ${lastSkipReason}`,
+          );
+        }
         if (!cancelled && runId.current === thisRun) setScanning(false);
       }
     }

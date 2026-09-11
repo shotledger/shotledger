@@ -11,6 +11,7 @@ import { tenthsToScore } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
@@ -30,7 +31,7 @@ export default function WebShooterRecordsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.recordsTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.recordsTitle')}</ScreenTitle>
 
       {empty && (
         <EmptyState title={t('webshooter.noRecordsTitle')} body={t('webshooter.noRecordsBody')} />

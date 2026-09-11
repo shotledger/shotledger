@@ -12,6 +12,7 @@ import {
   type ShotlogTagRole,
 } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
@@ -111,7 +112,7 @@ export default function ShotlogImportScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('shotlog.title')}</ThemedText>
+      <ScreenTitle>{t('shotlog.title')}</ScreenTitle>
       <ThemedText type="small" themeColor="textSecondary">
         {t('shotlog.intro')}
       </ThemedText>

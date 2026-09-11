@@ -190,19 +190,27 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.results[0]!.signup!.user!.shooting_card_number).toBe('12345');
   });
 
-  it('accepts numeric strings in station_figure_hits, as live data sends', () => {
-    // Fourth field of this kind: required by us, never read by us, and the
-    // only consequence of the strictness was a dead screen.
+  it.each([
+    ['numbers', [1, 2, 3]],
+    ['numeric strings', ['1', '2']],
+    ['a mix', ['1', 0]],
+    ['null elements', [null, 1]],
+    ['a bare null instead of an array', null],
+  ])('accepts station_figure_hits as %s, all of which live data sends', (_label, value) => {
+    // Four shapes across live competitions, and not one line of this
+    // codebase reads the field. It is no longer validated at all.
     const parsed = resultsResponseSchema.parse(
       fixtureResultsResponse([
         {
           ...fixtureResultRow(),
-          results: [{ ...fixtureStationResult(), station_figure_hits: ['1', 0, '2'] }],
+          results: [
+            { ...fixtureStationResult(), station_figure_hits: value as unknown as number[] },
+          ],
         },
       ]),
     );
 
-    expect(parsed.results[0]!.results[0]!.station_figure_hits).toEqual(['1', 0, '2']);
+    expect(parsed.results[0]!.results[0]!.station_figure_hits).toEqual(value);
   });
 
   it('requires the user envelope authenticate/user actually returns', () => {

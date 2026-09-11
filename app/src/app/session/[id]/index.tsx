@@ -11,6 +11,7 @@ import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handle
 import { runOnJS } from 'react-native-reanimated';
 import { formatGroupAndClass, MIN_SHOTS_FOR_HEATMAP, tenthsToScore } from '@shotledger/shared';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
@@ -75,7 +76,7 @@ export default function SessionDetailScreen() {
   if (!session) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('session.detailTitle')}</ThemedText>
+        <ScreenTitle>{t('session.detailTitle')}</ScreenTitle>
       </Screen>
     );
   }
@@ -389,9 +390,7 @@ export default function SessionDetailScreen() {
       />
 
       <View>
-        <ThemedText type="subtitle" style={styles.title}>
-          {session.name}
-        </ThemedText>
+        <ScreenTitle>{session.name}</ScreenTitle>
         <ThemedText type="small" themeColor="textSecondary">
           {[
             t(`sessionType.${session.type}`),
@@ -796,10 +795,6 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 const styles = StyleSheet.create({
   groupPlot: {
     alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
   },
   resultsRow: {
     flexDirection: 'row',

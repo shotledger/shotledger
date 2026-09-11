@@ -158,22 +158,31 @@ export function useWebShooterStarts() {
         let signups: Signup[];
         let patrols: Patrol[];
         try {
-          signups = await client.getSignups(competition.id, options);
-          const anyMine = signups.some((s) =>
-            cardNumbersMatch(s.user?.shooting_card_number ?? null, cardNumber),
-          );
-          // Only now is a patrol listing worth a request.
-          if (!anyMine) continue;
-          patrols = await client.getPatrols(competition.id, options);
+          // BOTH listings, because neither alone is complete. /signups
+          // misses entries that only appear once drawn — matching on it
+          // alone found nothing at all for a shooter with two real starts
+          // (2026-09-11). Patrols carry their own embedded signups and are
+          // what the working version used, but they cannot show an entry
+          // with no patrol yet, which is the whole point of this screen.
+          [patrols, signups] = await Promise.all([
+            client.getPatrols(competition.id, options),
+            client.getSignups(competition.id, options),
+          ]);
         } catch (err) {
           console.error('[webshooter] skipping competition', competition.id, err);
           unreadable += 1;
           continue;
         }
 
-        const mine = signups.filter((s) =>
+        // Deduplicated by signup id: a drawn entry appears in both.
+        const bySignupId = new Map<number, Signup>();
+        for (const signup of [...patrols.flatMap((p) => p.signups), ...signups]) {
+          if (!bySignupId.has(signup.id)) bySignupId.set(signup.id, signup);
+        }
+        const mine = [...bySignupId.values()].filter((s) =>
           cardNumbersMatch(s.user?.shooting_card_number ?? null, cardNumber),
         );
+        if (mine.length === 0) continue;
 
         for (const signup of mine) {
           const patrol = patrols.find((p) => p.signups.some((s) => s.id === signup.id)) ?? null;
@@ -260,6 +269,12 @@ export function useWebShooterStarts() {
           });
         }
       }
+      // One summary line instead of guesswork: how many competitions were
+      // considered, how many carried one of my signups, how many could not
+      // be read at all.
+      console.log(
+        `[webshooter] starts: ${competitions.length} upcoming, ${results.length} mine, ${unreadable} unreadable, card=${cardNumber ?? 'unresolved'}`,
+      );
       setStarts(results);
       setSkipped(unreadable);
     } catch (err) {

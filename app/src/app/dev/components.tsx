@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
@@ -107,9 +108,7 @@ export default function ComponentsGalleryScreen() {
 
   return (
     <Screen fab={<FAB label="New session" onPress={() => {}} />}>
-      <ThemedText type="title" style={styles.title}>
-        Components
-      </ThemedText>
+      <ScreenTitle>Components</ScreenTitle>
 
       <Section title="Card">
         <Card>
@@ -250,10 +249,6 @@ export default function ComponentsGalleryScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
   section: {
     gap: Spacing.two,
   },

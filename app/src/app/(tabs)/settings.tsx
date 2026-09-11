@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
 import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
@@ -172,7 +173,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('settings.title')}</ThemedText>
+      <ScreenTitle>{t('settings.title')}</ScreenTitle>
 
       <Card>
         <ThemedText type="smallBold">{t('settings.language')}</ThemedText>

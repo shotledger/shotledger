@@ -32,10 +32,13 @@ export const stationResultSchema = z.object({
   figure_hits: z.number().nullable(),
   hits: z.number().nullable(),
   points: z.number().nullable(),
-  // Live data mixes numbers and numeric strings in this array (competition
-  // 349, 2026-09-11). Nothing reads it — accepting both beats requiring a
-  // shape we never look at and losing the screen over it.
-  station_figure_hits: z.array(z.union([z.number(), z.string()])),
+  // Not validated at all, deliberately. Across live competitions this field
+  // arrives as numbers, as numeric strings, with null elements, and as a
+  // bare null instead of an array — four shapes, three rounds of patching,
+  // and NOTHING in this codebase reads it. Validating a field we never look
+  // at can only ever cost a working screen (competitions 341/349/351,
+  // 2026-09-11).
+  station_figure_hits: z.unknown(),
   deleted_at: z.string().nullable(),
 });
 export type StationResult = z.infer<typeof stationResultSchema>;

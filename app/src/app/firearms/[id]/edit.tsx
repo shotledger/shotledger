@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { LoadSystemPicker } from '@/components/load-system-picker';
@@ -37,7 +38,7 @@ export default function EditFirearmScreen() {
   if (!db || !firearm) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('firearms.editFirearm')}</ThemedText>
+        <ScreenTitle>{t('firearms.editFirearm')}</ScreenTitle>
       </Screen>
     );
   }

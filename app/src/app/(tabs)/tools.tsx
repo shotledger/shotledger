@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { ListRow } from '@/components/list-row';
@@ -37,7 +38,7 @@ export default function ToolsScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('tools.title')}</ThemedText>
+      <ScreenTitle>{t('tools.title')}</ScreenTitle>
 
       <Card>
         <DrillDownRow

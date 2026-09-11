@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
@@ -78,9 +79,7 @@ export default function HomeScreen() {
     <Screen
       fab={<FAB label={t('home.newSession')} onPress={onNewSession} testID="new-session-fab" />}
     >
-      <ThemedText type="title" style={styles.title}>
-        {t('home.title')}
-      </ThemedText>
+      <ScreenTitle>{t('home.title')}</ScreenTitle>
 
       <View style={styles.statsRow}>
         <StatTile
@@ -189,10 +188,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,

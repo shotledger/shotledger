@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { OptionPicker } from '@/components/option-picker';
@@ -67,7 +68,7 @@ export default function WebShooterImportReviewScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.reviewTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.reviewTitle')}</ScreenTitle>
 
       {error && (
         <ThemedText type="small" themeColor="textSecondary">

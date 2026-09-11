@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { EmptyState } from '@/components/empty-state';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -70,7 +71,7 @@ export default function WebShooterImportBrowseScreen() {
 
   return (
     <Screen>
-      <ThemedText type="title">{t('webshooter.importBrowseTitle')}</ThemedText>
+      <ScreenTitle>{t('webshooter.importBrowseTitle')}</ScreenTitle>
 
       <PrimaryButton
         label={t('webshooter.refresh')}

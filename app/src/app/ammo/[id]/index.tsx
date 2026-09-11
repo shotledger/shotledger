@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
+import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { PrimaryButton } from '@/components/primary-button';
@@ -62,7 +63,7 @@ export default function AmmoLotDetailScreen() {
   if (!db || !lot) {
     return (
       <Screen scroll={false}>
-        <ThemedText type="title">{t('ammo.editLot')}</ThemedText>
+        <ScreenTitle>{t('ammo.editLot')}</ScreenTitle>
       </Screen>
     );
   }
