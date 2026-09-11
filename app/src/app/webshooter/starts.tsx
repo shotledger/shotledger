@@ -21,7 +21,8 @@ import { Spacing } from '@/theme/tokens';
 
 export default function WebShooterStartsScreen() {
   const { t } = useTranslation();
-  const { starts, loading, error, load, addToCalendar, errorDetail } = useWebShooterStarts();
+  const { starts, loading, error, load, addToCalendar, errorDetail, skipped } =
+    useWebShooterStarts();
   // One section open at a time: these lists are long, and two open at once
   // pushes the rest of the screen out of reach.
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -81,6 +82,12 @@ export default function WebShooterStartsScreen() {
             </ThemedText>
           )}
         </>
+      )}
+
+      {skipped > 0 && (
+        <ThemedText type="small" themeColor="textSecondary" testID="webshooter-starts-skipped">
+          {t('webshooter.startsSkipped', { count: skipped })}
+        </ThemedText>
       )}
 
       {!loading && starts.length === 0 && (

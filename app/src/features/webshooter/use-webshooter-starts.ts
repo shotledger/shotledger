@@ -119,12 +119,15 @@ export function useWebShooterStarts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  /** Competitions whose data could not be read, so the count is visible. */
+  const [skipped, setSkipped] = useState(0);
 
   const load = useCallback(async (options: { forceRefresh?: boolean } = {}) => {
     if (!db) return;
     setLoading(true);
     setError(null);
     setErrorDetail(null);
+    setSkipped(0);
     try {
       // The token cache is a module variable that only the connection hook
       // fills. Reaching this screen without having mounted that hook sent
@@ -146,14 +149,31 @@ export function useWebShooterStarts() {
       );
 
       const results: MyStart[] = [];
+      let unreadable = 0;
       for (const competition of competitions) {
-        const signups: Signup[] = await client.getSignups(competition.id, options);
+        // One competition must not cost the shooter every other start.
+        // This walks dozens of them, and a single response we cannot parse
+        // — a field WebShooter sends differently for one event — used to
+        // throw the whole load away and show an empty screen.
+        let signups: Signup[];
+        let patrols: Patrol[];
+        try {
+          signups = await client.getSignups(competition.id, options);
+          const anyMine = signups.some((s) =>
+            cardNumbersMatch(s.user?.shooting_card_number ?? null, cardNumber),
+          );
+          // Only now is a patrol listing worth a request.
+          if (!anyMine) continue;
+          patrols = await client.getPatrols(competition.id, options);
+        } catch (err) {
+          console.error('[webshooter] skipping competition', competition.id, err);
+          unreadable += 1;
+          continue;
+        }
+
         const mine = signups.filter((s) =>
           cardNumbersMatch(s.user?.shooting_card_number ?? null, cardNumber),
         );
-        // Only now is a patrol listing worth a request.
-        if (mine.length === 0) continue;
-        const patrols: Patrol[] = await client.getPatrols(competition.id, options);
 
         for (const signup of mine) {
           const patrol = patrols.find((p) => p.signups.some((s) => s.id === signup.id)) ?? null;
@@ -241,6 +261,7 @@ export function useWebShooterStarts() {
         }
       }
       setStarts(results);
+      setSkipped(unreadable);
     } catch (err) {
       // Not swallowed: "couldn't reach WebShooter" is what every failure
       // here looked like, including ones that reached it perfectly well and
@@ -269,5 +290,5 @@ export function useWebShooterStarts() {
     return upserted.calendarTitle;
   }, []);
 
-  return { starts, loading, error, errorDetail, load, addToCalendar };
+  return { starts, loading, error, errorDetail, skipped, load, addToCalendar };
 }

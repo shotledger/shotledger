@@ -75,10 +75,16 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
 
         for (const competition of candidates) {
           if (cancelled || runId.current !== thisRun) return;
-          const results = await client.getResults(competition.id);
-          if (cancelled || runId.current !== thisRun) return;
-          if (hasResultForCard(results, cardNumber)) {
-            setMine((previous) => [...previous, competition]);
+          try {
+            const results = await client.getResults(competition.id);
+            if (cancelled || runId.current !== thisRun) return;
+            if (hasResultForCard(results, cardNumber)) {
+              setMine((previous) => [...previous, competition]);
+            }
+          } catch (err) {
+            // One unreadable competition must not end the scan: the rest of
+            // the year is still perfectly importable.
+            console.error('[webshooter] skipping competition', competition.id, err);
           }
           setChecked((n) => n + 1);
         }

@@ -70,22 +70,24 @@ export default function ToolsScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
-        {enabledProviders.length === 0 ? (
+        {enabledProviders.length === 0 && (
           <ThemedText type="small" themeColor="textSecondary" testID="providers-empty">
             {t('providers.noneEnabled')}
           </ThemedText>
-        ) : (
-          enabledProviders.map((provider) => (
-            <DrillDownRow
-              key={provider.id}
-              title={provider.displayName}
-              subtitle={t('providers.rowSubtitle')}
-              onPress={() => router.push(`/external/${provider.id}` as never)}
-              testID={`providers-open-${provider.id}`}
-            />
-          ))
         )}
       </Card>
+
+      {/* A card each, so two sites never blur into one list of rows. */}
+      {enabledProviders.map((provider) => (
+        <Card key={provider.id}>
+          <DrillDownRow
+            title={provider.displayName}
+            subtitle={t('providers.rowSubtitle')}
+            onPress={() => router.push(`/external/${provider.id}` as never)}
+            testID={`providers-open-${provider.id}`}
+          />
+        </Card>
+      ))}
 
       {__DEV__ && (
         <View style={styles.devSection}>

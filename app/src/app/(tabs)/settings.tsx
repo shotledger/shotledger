@@ -342,10 +342,17 @@ export default function SettingsScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {t('providers.settingsHint')}
         </ThemedText>
-        {PROVIDERS.map((provider) => (
-          <ProviderSettingsRow key={provider.id} provider={provider} />
-        ))}
       </Card>
+
+      {/* One card per site. Sharing a card made two sites read as one
+          settings block with two switches in it, and a connected site's
+          credentials and calendar row ran straight into the next site's
+          name (maintainer, 2026-09-11). */}
+      {PROVIDERS.map((provider) => (
+        <Card key={provider.id}>
+          <ProviderSettingsRow provider={provider} />
+        </Card>
+      ))}
 
       <Card>
         <ThemedText type="smallBold">{t('jsonExport.sectionTitle')}</ThemedText>

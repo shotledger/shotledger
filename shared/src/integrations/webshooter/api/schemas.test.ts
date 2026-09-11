@@ -190,6 +190,21 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.results[0]!.signup!.user!.shooting_card_number).toBe('12345');
   });
 
+  it('accepts numeric strings in station_figure_hits, as live data sends', () => {
+    // Fourth field of this kind: required by us, never read by us, and the
+    // only consequence of the strictness was a dead screen.
+    const parsed = resultsResponseSchema.parse(
+      fixtureResultsResponse([
+        {
+          ...fixtureResultRow(),
+          results: [{ ...fixtureStationResult(), station_figure_hits: ['1', 0, '2'] }],
+        },
+      ]),
+    );
+
+    expect(parsed.results[0]!.results[0]!.station_figure_hits).toEqual(['1', 0, '2']);
+  });
+
   it('requires the user envelope authenticate/user actually returns', () => {
     // wscli reads data["user"]["shooting_card_number"]. Parsing the envelope
     // as the user itself is how a connected account ended up with no card

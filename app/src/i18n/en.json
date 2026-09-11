@@ -722,7 +722,8 @@
     "you": "You",
     "laneShort": "Lane {{lane}}",
     "calendarRowTitle": "Calendar",
-    "calendarNotSelected": "Not selected"
+    "calendarNotSelected": "Not selected",
+    "startsSkipped": "{{count}} competition(s) couldn't be read and were skipped."
   },
   "timer": {
     "title": "Timers",

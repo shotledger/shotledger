@@ -32,7 +32,10 @@ export const stationResultSchema = z.object({
   figure_hits: z.number().nullable(),
   hits: z.number().nullable(),
   points: z.number().nullable(),
-  station_figure_hits: z.array(z.number()),
+  // Live data mixes numbers and numeric strings in this array (competition
+  // 349, 2026-09-11). Nothing reads it — accepting both beats requiring a
+  // shape we never look at and losing the screen over it.
+  station_figure_hits: z.array(z.union([z.number(), z.string()])),
   deleted_at: z.string().nullable(),
 });
 export type StationResult = z.infer<typeof stationResultSchema>;

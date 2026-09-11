@@ -13,8 +13,10 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionSheet, type ActionSheetAction } from '@/components/action-sheet';
-import { DrillDownRow } from '@/components/drill-down-row';
+import { Chevron } from '@/components/drill-down-row';
+import { ListRow } from '@/components/list-row';
 import { ThemedText } from '@/components/themed-text';
+import { useTheme } from '@/hooks/use-theme';
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { CALENDAR_ID_SETTING_KEY } from '@/features/webshooter/use-webshooter-starts';
@@ -28,6 +30,7 @@ function calendarLabel(calendar: WritableCalendar): string {
 
 export function CalendarPicker() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [calendars, setCalendars] = useState<WritableCalendar[]>([]);
   const [open, setOpen] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -71,9 +74,14 @@ export function CalendarPicker() {
 
   return (
     <>
-      <DrillDownRow
+      {/* Same row component as the site toggle above it, so the two read as
+          one list rather than two unrelated controls. The calendar name is
+          a subtitle, not a right-aligned value: an account name is long
+          enough to fight the title for width and win. */}
+      <ListRow
         title={t('webshooter.calendarRowTitle')}
-        value={chosenLabel ?? t('webshooter.calendarNotSelected')}
+        subtitle={chosenLabel ?? t('webshooter.calendarNotSelected')}
+        trailing={<Chevron color={theme.textSecondary} />}
         onPress={() => void openSheet()}
         testID="webshooter-calendar-row"
       />

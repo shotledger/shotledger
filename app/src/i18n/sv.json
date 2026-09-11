@@ -722,7 +722,8 @@
     "you": "Du",
     "laneShort": "Bana {{lane}}",
     "calendarRowTitle": "Kalender",
-    "calendarNotSelected": "Inte vald"
+    "calendarNotSelected": "Inte vald",
+    "startsSkipped": "{{count}} tävling(ar) kunde inte läsas och hoppades över."
   },
   "timer": {
     "title": "Tidtagning",
