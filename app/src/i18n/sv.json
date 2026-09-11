@@ -671,9 +671,7 @@
     },
     "triggerLevel": "Utlösningsnivå",
     "triggerLevelDb": "{{value}} dBFS",
-    "decreaseLevel": "Sänk utlösningsnivån",
-    "increaseLevel": "Höj utlösningsnivån",
-    "sensitivityHint": "Högre känslighet (en nivå närmare 0) fångar tystare skott, men även mer omgivningsljud. Prova Hög för .22 eller inomhus, Låg intill en full skjutlinje — eller använd nivåmätaren nedan för att ställa in den mot toppen på ditt eget skott.",
+    "sensitivityHint": "Högre känslighet (en nivå längre från 0) fångar tystare skott, men också mer bakgrundsljud. Prova Hög för .22 eller inomhus, Låg bredvid en livlig skjutlinje — eller använd mätaren nedan för att ställa in mot ditt eget skotts topp.",
     "liveMeter": "Nivå live",
     "liveMeterHint": "Klappa i händerna eller torrsmäll nära telefonen, ställ sedan in nivån strax under toppen.",
     "liveMeterNeedsPermission": "Ge mikrofonbehörighet (tryck på Starta en gång) för att se nivån live här.",
@@ -706,7 +704,10 @@
     "firstShot": "Första skottet (s)",
     "total": "Totalt (s)",
     "shotCount": "Skott",
-    "parOverrun": "Skjuttiden överskreds med {{time}} s"
+    "parOverrun": "Skjuttiden överskreds med {{time}} s",
+    "sensitivityLow": "Låg",
+    "sensitivityHigh": "Hög",
+    "delayRange": "{{from}}–{{to}} s"
   },
   "faltTimer": {
     "modes": {

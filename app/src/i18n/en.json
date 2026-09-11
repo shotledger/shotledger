@@ -671,9 +671,7 @@
     },
     "triggerLevel": "Trigger Level",
     "triggerLevelDb": "{{value}} dBFS",
-    "decreaseLevel": "Lower the trigger level",
-    "increaseLevel": "Raise the trigger level",
-    "sensitivityHint": "Higher sensitivity (a level closer to 0) picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line — or use the live meter below to set it against your own shot's peak.",
+    "sensitivityHint": "Higher sensitivity (a level further from 0) picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line — or use the live meter below to set it against your own shot's peak.",
     "liveMeter": "Live Level",
     "liveMeterHint": "Clap or dry-fire near the phone, then set the level just below the peak.",
     "liveMeterNeedsPermission": "Grant microphone permission (tap Start once) to see the live level here.",
@@ -706,7 +704,10 @@
     "firstShot": "First Shot (s)",
     "total": "Total (s)",
     "shotCount": "Shots",
-    "parOverrun": "Time limit exceeded by {{time}} s"
+    "parOverrun": "Time limit exceeded by {{time}} s",
+    "sensitivityLow": "Low",
+    "sensitivityHigh": "High",
+    "delayRange": "{{from}}–{{to}} s"
   },
   "faltTimer": {
     "modes": {
