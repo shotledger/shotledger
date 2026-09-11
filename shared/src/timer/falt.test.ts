@@ -8,6 +8,7 @@ import {
   ELD_UPPHOR_SPEECH_RATE,
   faltCommandText,
   faltPartiIntervals,
+  FALT_COMMAND_SPEECH,
   FALT_COMMAND_TEXT,
   FaltTimerEngine,
   normalizeFaltSettings,
@@ -511,5 +512,35 @@ describe('ELD UPPHÖR whistle', () => {
   it('is drawn out over the full lead, ending as the time runs out', () => {
     const cue = buildFaltProgram(settings(true)).commands.find((c) => c.kind === 'eldUpphor')!;
     expect(cue.durationSeconds).toBe(ELD_UPPHOR_LEAD_SECONDS);
+  });
+});
+
+describe('speech spellings', () => {
+  const commands = buildFaltProgram(DEFAULT_FALT_SETTINGS).commands;
+
+  it('speaks Visitation with a spelling a Swedish voice cannot anglicise', () => {
+    const cue = commands.find((c) => c.kind === 'visitation')!;
+    expect(cue.speech).toBe(FALT_COMMAND_SPEECH.visitation);
+    expect(cue.speech).toBe('Visitaschon!');
+  });
+
+  it('still SHOWS the real command, not the respelling', () => {
+    expect(FALT_COMMAND_TEXT.visitation).toBe('Visitation!');
+    expect(faltCommandText({ ...commands.find((c) => c.kind === 'visitation')! })).toBe(
+      'Visitation!',
+    );
+  });
+
+  it('leaves every other command spoken exactly as written', () => {
+    for (const cue of commands) {
+      if (cue.kind === 'visitation' || cue.speech === undefined) continue;
+      expect(cue.speech).toBe(FALT_COMMAND_TEXT[cue.kind as keyof typeof FALT_COMMAND_TEXT]);
+    }
+  });
+
+  it('draws ELD UPPHÖR out enough to fill its lead', () => {
+    // At 0.55 the utterance finished around 2 s of a 3 s call.
+    expect(ELD_UPPHOR_SPEECH_RATE).toBeLessThanOrEqual(0.45);
+    expect(ELD_UPPHOR_SPEECH_RATE).toBeGreaterThan(0.25);
   });
 });

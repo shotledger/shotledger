@@ -63,8 +63,19 @@ export const ALLA_KLARA_AT_SECONDS = -(TEN_SECONDS_LEAD_SECONDS + ALLA_KLARA_LEA
 /** One-tap shooting times offered in the UI. Ordinary fältskjutning series are short; the longer ones cover magnum/precision stations. */
 export const SHOOTING_TIME_PRESETS: readonly number[] = [6, 8, 10, 12, 15, 20, 30];
 
-/** Speech rate multiplier for the drawn-out ELD UPPHÖR (1 = normal). */
-export const ELD_UPPHOR_SPEECH_RATE = 0.55;
+/**
+ * Speech rate multiplier for the drawn-out ELD UPPHÖR (1 = normal).
+ *
+ * The call has to fill ELD_UPPHOR_LEAD_SECONDS: it begins at T−3 and the time
+ * is up as it ends. At 0.55 the utterance ran about 2 s and finished early
+ * (maintainer, on device 2026-09-11) — audibly not "utdraget". 0.4 is the
+ * slowest that still sounds like a command rather than a drag.
+ *
+ * TTS gives no duration guarantee: the actual length depends on the engine
+ * and voice, so this is a tuned approximation. Whistle mode is the exact
+ * three seconds, because that is a fixed-length asset rather than speech.
+ */
+export const ELD_UPPHOR_SPEECH_RATE = 0.4;
 
 /** A numbered step of the sequence. */
 export type FaltCommandKind =
@@ -93,6 +104,20 @@ export type FaltCueKind = FaltCommandKind | 'timeUp';
  * around them (screen title, buttons, settings labels), which is translated as
  * usual.
  */
+/**
+ * Spellings used only for speech, where the TTS voice mispronounces the real
+ * command. The displayed text is always FALT_COMMAND_TEXT — these never reach
+ * the screen.
+ *
+ * "Visitation" came out anglicised (maintainer, on device 2026-09-11:
+ * "sounds like Swenglish"). Swedish "-tion" is the sje-ljud /ɧ/, so it is
+ * respelled with "sch", which is unambiguous in Swedish orthography
+ * (schack, dusch) and cannot be read the English way.
+ */
+export const FALT_COMMAND_SPEECH: Partial<Record<FaltCueKind, string>> = {
+  visitation: 'Visitaschon!',
+};
+
 export const FALT_COMMAND_TEXT: Record<Exclude<FaltCommandKind, 'parti'>, string> = {
   ladda: 'Ladda!',
   allaKlara: 'Alla klara?',
@@ -231,7 +256,9 @@ function command(
     number: 0, // assigned in build order below
     atSeconds,
     durationSeconds: 0,
-    speech: FALT_COMMAND_TEXT[kind],
+    // Respelled where the voice needs it; the screen still shows the real
+    // command (FALT_COMMAND_SPEECH).
+    speech: FALT_COMMAND_SPEECH[kind] ?? FALT_COMMAND_TEXT[kind],
     vibrate,
   };
 }
