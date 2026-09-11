@@ -7,7 +7,7 @@ import {
   buildAnalyticsReportJson,
   type AnalyticsReportJsonInput,
 } from './json-log';
-import type { SessionExport } from '../csv/types';
+import type { SessionExport } from '../json-export/types';
 
 const session: SessionExport = {
   id: 'session-1',

@@ -1,8 +1,9 @@
 // Glue layer (routine app work, not old-coder scope — see
-// docs/specs/m7-csv-spec.md "Scope"): reads the DB into the plain
-// SessionExport[] shape shared/csv expects, and calls the pure exporter.
+// docs/specs/json-export-spec.md): reads the DB into the plain
+// SessionExport[] shape shared/json-export expects, and calls the pure
+// exporter.
 import { isNull } from 'drizzle-orm';
-import { exportSessionsToCsv, type SessionExport } from '@shotledger/shared';
+import { exportSessionsToJson, type SessionExport } from '@shotledger/shared';
 
 import { ammoLots, firearms, series, sessions, shots } from '../schema';
 import type { Database } from '../types';
@@ -13,7 +14,7 @@ function firearmDisplayName(f: { make: string; model: string }): string {
 }
 
 /** Assembles every non-deleted session (with its series/shots/tags) into
- * the shape `exportSessionsToCsv` expects. */
+ * the shape `exportSessionsToJson` expects. */
 export function buildSessionExports(db: Database): SessionExport[] {
   const sessionRows = db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
   const seriesRows = db.select().from(series).where(isNull(series.deletedAt)).all();
@@ -83,6 +84,6 @@ export function buildSessionExports(db: Database): SessionExport[] {
 }
 
 /** Builds the full CSV text for every non-deleted session in the DB. */
-export function buildExportCsv(db: Database): string {
-  return exportSessionsToCsv(buildSessionExports(db));
+export function buildExportJson(db: Database, appVersion: string): string {
+  return exportSessionsToJson(buildSessionExports(db), { appVersion });
 }

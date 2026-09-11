@@ -24,7 +24,7 @@ import {
   isShotlogRowImportable,
   listShotlogDedupCandidates,
 } from '@/db/queries/shotlog';
-import { pickCsvText } from '@/platform/csv-import';
+import { pickCsvText } from '@/platform/import-file';
 
 export type ShotlogImportStatus =
   | { kind: 'idle' }

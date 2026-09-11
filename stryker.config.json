@@ -31,7 +31,8 @@
     "shared/src/target-scoring/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
-    "!shared/src/shotlog/fixtures.ts"
+    "!shared/src/shotlog/fixtures.ts",
+    "shared/src/json-export/*.ts"
   ],
   "thresholds": {
     "high": 100,

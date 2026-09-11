@@ -117,13 +117,11 @@
     "export": "Export",
     "exportFormatTitle": "Choose a Format",
     "exportJson": "Export JSON",
-    "exportCsv": "Export CSV",
     "exportDone": "Export shared",
     "exportFailed": "Export failed",
     "exportHint": {
       "pdf": "A printable shooting log of the matched sessions.",
-      "json": "The matched sessions and the computed summary, as structured data.",
-      "csv": "Every matched session, series and shot as a spreadsheet."
+      "json": "The matched sessions and the computed summary, as structured data."
     },
     "exportVaultNote": "Your own data only — the vault is never part of an export.",
     "statsPerShotTitle": "Per Shot",
@@ -330,18 +328,18 @@
     "licensesJsTitle": "JavaScript Packages",
     "repoLink": "GitHub Repository"
   },
-  "csv": {
-    "sectionTitle": "Data (CSV)",
-    "exportTitle": "Export CSV",
-    "exportSubtitle": "Share every session, series and shot as a CSV file",
-    "importTitle": "Import CSV",
-    "importSubtitle": "Pick a CSV file to add or update sessions",
+  "jsonExport": {
+    "sectionTitle": "Sessions Export",
+    "exportTitle": "Export Sessions",
+    "exportSubtitle": "Share every session as one JSON file",
+    "importTitle": "Import Sessions",
+    "importSubtitle": "Pick a JSON file to add or update sessions",
     "exportSuccess": "CSV exported",
     "exportFailed": "CSV export failed",
     "importCancelled": "Import cancelled",
     "importFailed": "CSV import failed",
     "importErrorsTitle": "Import Has Errors",
-    "importErrors": "{{count}} row(s) could not be read — fix the file and try again",
+    "importErrors": "{{count}} session(s) could not be read and will be skipped.",
     "importConfirmTitle": "Import This File?",
     "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
     "importConfirmAction": "Import",

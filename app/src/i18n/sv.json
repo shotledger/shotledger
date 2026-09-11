@@ -117,13 +117,11 @@
     "export": "Exportera",
     "exportFormatTitle": "Välj format",
     "exportJson": "Exportera JSON",
-    "exportCsv": "Exportera CSV",
     "exportDone": "Export delad",
     "exportFailed": "Exporten misslyckades",
     "exportHint": {
       "pdf": "En utskrivbar skjutjournal över de matchade passen.",
-      "json": "De matchade passen och den beräknade sammanfattningen som strukturerad data.",
-      "csv": "Varje matchat pass, serie och skott som kalkylblad."
+      "json": "De matchade passen och den beräknade sammanfattningen som strukturerad data."
     },
     "exportVaultNote": "Endast dina egna data — valvet ingår aldrig i en export.",
     "statsPerShotTitle": "Per skott",
@@ -330,18 +328,18 @@
     "licensesJsTitle": "JavaScript-paket",
     "repoLink": "GitHub-repo"
   },
-  "csv": {
-    "sectionTitle": "Data (CSV)",
-    "exportTitle": "Exportera CSV",
-    "exportSubtitle": "Dela alla pass, serier och skott som en CSV-fil",
-    "importTitle": "Importera CSV",
-    "importSubtitle": "Välj en CSV-fil för att lägga till eller uppdatera pass",
+  "jsonExport": {
+    "sectionTitle": "Passexport",
+    "exportTitle": "Exportera pass",
+    "exportSubtitle": "Dela alla pass som en JSON-fil",
+    "importTitle": "Importera pass",
+    "importSubtitle": "Välj en JSON-fil för att lägga till eller uppdatera pass",
     "exportSuccess": "CSV exporterad",
     "exportFailed": "CSV-export misslyckades",
     "importCancelled": "Import avbruten",
     "importFailed": "CSV-import misslyckades",
     "importErrorsTitle": "Importen har fel",
-    "importErrors": "{{count}} rad(er) kunde inte läsas — åtgärda filen och försök igen",
+    "importErrors": "{{count}} pass kunde inte läsas och hoppas över.",
     "importConfirmTitle": "Importera den här filen?",
     "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{ammoLots}} nya ammunitionspartier",
     "importConfirmAction": "Importera",

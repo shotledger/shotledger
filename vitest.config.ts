@@ -29,6 +29,7 @@ export default defineConfig({
         'shared/src/backup/vault-payload.ts',
         'shared/src/backup/vault-crypt.ts',
         'shared/src/target-scoring/**/*.ts',
+        'shared/src/json-export/**/*.ts',
       ],
       exclude: ['**/*.test.ts'],
       reporter: ['text-summary', 'json-summary'],

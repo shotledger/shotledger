@@ -13,7 +13,7 @@
 // boundary by design (see shared/src/vault).
 
 import type { AnalyticsRecord, AnalyticsRecords, AnalyticsTotals } from '../scoring/analytics';
-import type { SessionExport } from '../csv/types';
+import type { SessionExport } from '../json-export/types';
 import { tenthsToScore } from '../scoring/totals';
 
 export const ANALYTICS_REPORT_FORMAT = 'shotledger.analytics-report';

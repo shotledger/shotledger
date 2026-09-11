@@ -32,7 +32,7 @@ import {
   tags,
 } from '../schema';
 import type { Database } from '../types';
-import { buildExportCsv } from './build-export';
+import { buildExportJson } from './build-export';
 import { applyImport, dryRunImport } from './apply-import';
 
 function seed(db: Database) {
@@ -152,12 +152,12 @@ describe('CSV export -> wipe -> import round trip', () => {
     seed(db);
 
     const before = snapshot(db);
-    const csv = buildExportCsv(db);
+    const json = buildExportJson(db, '1.0.0');
 
     wipeEverything(db);
     expect(listAllStatsSeries(db)).toEqual([]);
 
-    const { plan, errors, groups } = dryRunImport(db, csv);
+    const { plan, errors, groups } = dryRunImport(db, json);
     expect(errors).toEqual([]);
     expect(plan.sessions).toHaveLength(3);
     expect(plan.sessions.every((s) => s.action === 'create')).toBe(true);
@@ -170,10 +170,10 @@ describe('CSV export -> wipe -> import round trip', () => {
   it('matches an existing session id as update instead of duplicating it', () => {
     const db = createTestDb();
     const { sessionA } = seed(db);
-    const csv = buildExportCsv(db);
+    const json = buildExportJson(db, '1.0.0');
 
     // Don't wipe — re-import into the same (populated) DB.
-    const { plan, errors, groups } = dryRunImport(db, csv);
+    const { plan, errors, groups } = dryRunImport(db, json);
     expect(errors).toEqual([]);
     const sessionAPlan = plan.sessions.find((s) => s.sessionId === sessionA.id);
     expect(sessionAPlan?.action).toBe('update');

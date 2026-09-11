@@ -72,3 +72,21 @@ describe('parseCsv', () => {
     expect(parseCsv(stringifyRows(matrix))).toEqual(matrix);
   });
 });
+
+describe('parseCsv line endings', () => {
+  it('treats a lone CR as a row break, not just CRLF', () => {
+    // ShotLog files come from whatever exported them; a classic-Mac CR-only
+    // file must not collapse into one row.
+    expect(parseCsv('a,b\rc,d')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ]);
+  });
+
+  it('treats CRLF as a single row break', () => {
+    expect(parseCsv('a,b\r\nc,d')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ]);
+  });
+});

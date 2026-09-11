@@ -1,20 +1,20 @@
-// M7 (§4 M7): Settings-screen glue for CSV export/import. Data assembly and
-// the share sheet / file picker live in db/csv and platform/csv-*; this
-// hook turns them into the two Settings actions plus i18n'd status text.
+// Settings-screen glue for the sessions export/import. Data assembly and the
+// share sheet / file picker live in db/json-export and platform/*-file.ts;
+// this hook turns them into the two Settings actions plus i18n'd status text.
 // Import is a two-step dry-run -> confirm -> upsert flow (spec requirement):
 // `planImport` never touches the DB, `confirmImport` applies a plan the
 // caller already showed the user.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { DryRunPlan, SessionImportGroup } from '@shotledger/shared';
+import type { DryRunPlan, ImportError, SessionImportGroup } from '@shotledger/shared';
 
-import { applyImport, dryRunImport } from '@/db/csv/apply-import';
-import { buildExportCsv } from '@/db/csv/build-export';
+import { applyImport, dryRunImport } from '@/db/json-export/apply-import';
+import { buildExportJson } from '@/db/json-export/build-export';
 import { db } from '@/db/client';
-import { pickCsvText } from '@/platform/csv-import';
-import { shareCsv } from '@/platform/csv-export';
+import { pickJsonText } from '@/platform/import-file';
+import { shareJson } from '@/platform/export-file';
 
-export type CsvStatus =
+export type JsonExportStatus =
   | { kind: 'idle' }
   | { kind: 'export-success' }
   | { kind: 'export-failed' }
@@ -24,26 +24,25 @@ export type CsvStatus =
 
 export interface ImportDryRunResult {
   plan: DryRunPlan;
-  errors: readonly { row: number; column?: string; message: string }[];
+  errors: readonly ImportError[];
   groups: readonly SessionImportGroup[];
 }
 
-function csvFilename(): string {
+function exportFilename(): string {
   const date = new Date().toISOString().slice(0, 10);
-  return `shotledger-export-${date}.csv`;
+  return `shotledger-export-${date}.json`;
 }
 
-export function useCsvExportImport() {
+export function useJsonExportImport(appVersion: string) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<CsvStatus>({ kind: 'idle' });
+  const [status, setStatus] = useState<JsonExportStatus>({ kind: 'idle' });
 
-  async function exportCsv() {
+  async function exportJson() {
     if (!db) {
       setStatus({ kind: 'export-failed' });
       return;
     }
-    const csv = buildExportCsv(db);
-    const ok = await shareCsv(csv, csvFilename());
+    const ok = await shareJson(buildExportJson(db, appVersion), exportFilename());
     setStatus(ok ? { kind: 'export-success' } : { kind: 'export-failed' });
   }
 
@@ -54,7 +53,7 @@ export function useCsvExportImport() {
       setStatus({ kind: 'import-failed' });
       return null;
     }
-    const text = await pickCsvText();
+    const text = await pickJsonText();
     if (text === null) {
       setStatus({ kind: 'import-cancelled' });
       return null;
@@ -78,17 +77,17 @@ export function useCsvExportImport() {
       case 'idle':
         return null;
       case 'export-success':
-        return t('csv.exportSuccess');
+        return t('jsonExport.exportSuccess');
       case 'export-failed':
-        return t('csv.exportFailed');
+        return t('jsonExport.exportFailed');
       case 'import-success':
-        return t('csv.importSuccess', { count: status.sessionCount });
+        return t('jsonExport.importSuccess', { count: status.sessionCount });
       case 'import-cancelled':
-        return t('csv.importCancelled');
+        return t('jsonExport.importCancelled');
       case 'import-failed':
-        return t('csv.importFailed');
+        return t('jsonExport.importFailed');
     }
   })();
 
-  return { exportCsv, planImport, confirmImport, status, statusText };
+  return { exportJson, planImport, confirmImport, status, statusText };
 }

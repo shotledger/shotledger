@@ -1,14 +1,14 @@
 // Glue layer (routine app work, not old-coder scope — see
-// docs/specs/m7-csv-spec.md "Scope"): builds an ExistingIndex from the DB,
-// calls the pure shared/csv dry-run planner, and — on confirm — applies the
-// plan inside one transaction.
+// docs/specs/json-export-spec.md): builds an ExistingIndex from the DB, calls
+// the pure dry-run planner, and — on confirm — applies the plan inside one
+// transaction (spec criterion 13).
 import { eq, isNull } from 'drizzle-orm';
 import {
   buildDryRunPlan,
-  groupRowsIntoSessions,
-  parseImportCsv,
+  importSessionsFromJson,
+  toImportGroups,
   type DryRunPlan,
-  type RowError,
+  type ImportError,
   type SessionImportGroup,
 } from '@shotledger/shared';
 
@@ -22,15 +22,24 @@ import { newId, nowIso } from '../util';
 
 export interface ImportDryRun {
   plan: DryRunPlan;
-  errors: RowError[];
+  errors: ImportError[];
   groups: SessionImportGroup[];
 }
 
 /** Parses + validates + plans, without touching the DB. */
-export function dryRunImport(db: Database, csvText: string): ImportDryRun {
-  const { entries, errors: parseErrors } = parseImportCsv(csvText);
-  const { groups, errors: groupErrors } = groupRowsIntoSessions(entries);
-  const errors = [...parseErrors, ...groupErrors];
+export function dryRunImport(db: Database, jsonText: string): ImportDryRun {
+  const parsed = importSessionsFromJson(jsonText);
+  // A file-level failure (not ours, newer, malformed) plans nothing at all —
+  // unlike a bad session, which is skipped with the rest still importable.
+  if ('code' in parsed) {
+    return {
+      plan: { sessions: [], firearms: [], ammoLots: [], tags: [] },
+      errors: [parsed],
+      groups: [],
+    };
+  }
+  const groups = toImportGroups(parsed.sessions);
+  const errors = parsed.errors;
 
   const sessionIds = new Set(
     db
