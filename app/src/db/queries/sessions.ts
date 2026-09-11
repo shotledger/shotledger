@@ -33,6 +33,9 @@ export interface CreateSessionInput {
   startedAt: string;
   location?: string | null;
   notes?: string | null;
+  /** Session-level ten / inner-ten counts. Only for sessions with no shot rows to count — see schema.ts. */
+  tenCount?: number | null;
+  innerTenCount?: number | null;
   decimalScoring?: boolean;
   // WebShooter (integration spec §1/§A) and ShotLog CSV
   // (docs/specs/shotlog-import-spec.md §7) imports — unset for a locally
@@ -67,6 +70,8 @@ export function createSession(db: Database, input: CreateSessionInput) {
     startedAt: input.startedAt,
     location: input.location ?? null,
     notes: input.notes ?? null,
+    tenCount: input.tenCount ?? null,
+    innerTenCount: input.innerTenCount ?? null,
     decimalScoring: input.decimalScoring ? 1 : 0,
     externalSource: input.externalSource ?? null,
     externalRef: input.externalRef ?? null,

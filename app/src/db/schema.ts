@@ -128,6 +128,18 @@ export const sessions = sqliteTable('sessions', {
   startedAt: text('started_at').notNull(),
   location: text('location'),
   notes: text('notes'),
+  /**
+   * Ten and inner-ten counts recorded for the SESSION rather than derived
+   * from shot flags.
+   *
+   * Null wherever real `shots` rows exist — those are counted from the flags,
+   * and a stored copy would be a second truth that drifts. Set only where
+   * there is nothing to count: a ShotLog import writes a total-override
+   * series with no shots, so its "Number of X"/"(X)" values had nowhere to
+   * live and were parked in the note as prose (#138).
+   */
+  tenCount: integer('ten_count'),
+  innerTenCount: integer('inner_ten_count'),
   decimalScoring: integer('decimal_scoring').notNull().default(0),
   // Rounds fired in this session that were never scored (fouling shots,
   // function checks, plinking). Counted toward the firearm round counter,

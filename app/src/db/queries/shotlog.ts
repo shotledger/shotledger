@@ -78,6 +78,10 @@ export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
     firearmId,
     startedAt: row.datetime,
     notes: suggestion.note === '' ? null : suggestion.note,
+    // The counts now have columns of their own (migration 0012); the note no
+    // longer has to carry them as prose.
+    tenCount: suggestion.tenCount,
+    innerTenCount: suggestion.innerTenCount,
     externalSource: 'shotlog',
     externalRef: row.ref,
     externalSyncedAt: new Date().toISOString(),

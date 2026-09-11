@@ -68,7 +68,7 @@ describe('buildShotlogImportPlan — suggestions', () => {
       firearmLabel: null,
       competitionName: 'Club Cup C',
       tags: [],
-      note: 'ShotLog: 8 tens, 3 inner tens',
+      note: '',
       totalTenths: 3120,
       innerTenCount: 3,
       tenCount: 8,
@@ -157,14 +157,24 @@ describe('buildShotlogImportPlan — suggestions', () => {
   });
 
   it('keeps the CSV note above the generated lines', () => {
+    const result = plan([{ ...row, note: 'windy', tags: 'Precision|Warmup' }]);
+    expect(result.rows[0]!.suggestion.note).toBe('windy\nShotLog: total includes a sighter series');
+  });
+
+  it('carries the ten counts as data, not as prose in the note', () => {
+    // Migration 0012 gave them columns; duplicating them into the note would
+    // leave two copies and only one of them readable back.
     const result = plan([{ ...row, note: 'windy' }]);
-    expect(result.rows[0]!.suggestion.note).toBe('windy\nShotLog: 8 tens, 3 inner tens');
+    expect(result.rows[0]!.suggestion.tenCount).toBe(8);
+    expect(result.rows[0]!.suggestion.innerTenCount).toBe(3);
+    expect(result.rows[0]!.suggestion.note).toBe('windy');
+    expect(result.rows[0]!.suggestion.note).not.toContain('tens');
   });
 
   it('notes the sighter inclusion and the DNF without touching the total', () => {
     const result = plan([{ ...row, tags: 'Precision|Warmup|DNF' }]);
     expect(result.rows[0]!.suggestion.note).toBe(
-      'ShotLog: 8 tens, 3 inner tens\nShotLog: total includes a sighter series\nShotLog: did not finish',
+      'ShotLog: total includes a sighter series\nShotLog: did not finish',
     );
     expect(result.rows[0]!.suggestion.totalTenths).toBe(3120);
   });
