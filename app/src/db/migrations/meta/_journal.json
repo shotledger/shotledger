@@ -78,6 +78,13 @@
       "when": 1789086647547,
       "tag": "0010_series_entry_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1789113433204,
+      "tag": "0011_training_samples",
+      "breakpoints": true
     }
   ]
 }

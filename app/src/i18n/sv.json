@@ -314,7 +314,15 @@
     "markeReductionNote": "Åldersavdrag på {{points}} p/serie gäller från {{sinceYear}}.",
     "markeReductionNoneNote": "Inget åldersavdrag gäller ännu.",
     "locationLookupInfo": "Av: bara platser du använt tidigare föreslås, och inget lämnar telefonen.\n\nPå: det du skriver i ett pass platsfält skickas till photon.komoot.io, som söker i OpenStreetMap. Där dyker också knappen Använd min plats upp; när du trycker på den hämtas en position en gång och de koordinaterna skickas till overpass-api.de för att slå upp skjutbanor nära dig. Inget skickas förrän du trycker, din position sparas aldrig och spåras aldrig i bakgrunden, och bara namnet på banan du väljer sparas med passet. Du kan stänga av det igen när som helst.",
-    "markeInfo": "Poäng som krävs per precisionsserie om 5 skott för varje valör, per vapengrupp (SHB bilaga 1 mom 5.1.1.1).\n\nFrån året efter du fyller 55 sänks kravet med 1 poäng per serie, och med 2 poäng från året efter du fyller 65. Ange ditt födelseår ovan för att se tabellen med avdraget inräknat."
+    "markeInfo": "Poäng som krävs per precisionsserie om 5 skott för varje valör, per vapengrupp (SHB bilaga 1 mom 5.1.1.1).\n\nFrån året efter du fyller 55 sänks kravet med 1 poäng per serie, och med 2 poäng från året efter du fyller 65. Ange ditt födelseår ovan för att se tabellen med avdraget inräknat.",
+    "trainingTitle": "Förbättra automatisk poängräkning",
+    "trainingConsent": "Spara mina markeringar som träningsdata",
+    "trainingHelp": "Av som standard. Inget skickas någonstans — markeringarna stannar i telefonen.",
+    "trainingInfo": "Poängsätt från foto ber dig trycka på varje träff. Automatisk detektering finns inte än, och för att bygga den behövs exempel på var träffarna faktiskt sitter.\n\nNär det här är på sparas varje serie du poängsätter från foto som ett exempel: positionerna du tryckte på, i tavelmillimeter, och vilka du behövde justera. Själva fotot kopieras inte — bara en hänvisning till det som redan sparats med passet.\n\nDet här lämnar aldrig telefonen. Inget laddas upp, inget synkas, och tavelfoton är personuppgifter. Du kan stänga av det och radera allt som samlats in när som helst, utan att det påverkar loggboken.",
+    "trainingCount": "{{count}} serier sparade",
+    "trainingDelete": "Radera insamlad data",
+    "trainingDeleteTitle": "Radera insamlad data?",
+    "trainingDeleteBody": "Detta raderar permanent de {{count}} sparade serierna. Loggboken och fotona påverkas inte."
   },
   "about": {
     "title": "Om appen",
@@ -863,7 +871,12 @@
     "pointsLostPosition": "Till läge",
     "pointsLostSize": "Till spridning",
     "potentialScore": "Potentiell poäng",
-    "captureHint": "Kameran öppnas automatiskt. Backa ur den för att välja ett foto du redan tagit."
+    "captureHint": "Kameran öppnas automatiskt. Backa ur den för att välja ett foto du redan tagit.",
+    "cornerRing": "Ring du markerar",
+    "cornerRingHint": "Välj vilken ring de fyra hörnen ligger på. Den yttersta ringen hamnar ofta utanför bilden i liggande format — ange vilken ring du faktiskt använde, annars blir alla mått fel.",
+    "plotMode": "Plot",
+    "heatmapMode": "Värmekarta",
+    "zoomHint": "Nyp för att zooma, två fingrar för att panorera, dubbeltryck för att passa in."
   },
   "account": {
     "title": "Konto & synk",

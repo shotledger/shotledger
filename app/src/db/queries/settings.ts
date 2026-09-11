@@ -23,6 +23,11 @@ export const SETTINGS_KEYS = {
   // OFF by default: with it on, what the user types is sent to a third-party
   // server, which an offline-first app must not do without being asked.
   onlineLocationLookup: 'onlineLocationLookup',
+  // Opt-in collection of tap-to-mark positions as training data for a future
+  // learned hole detector (db/queries/training-samples.ts). OFF by default and
+  // local-only: target photos are personal data under hard rule 7, so consent
+  // here is consent to keep labels ON THIS DEVICE, not to send anything.
+  photoTrainingConsent: 'photoTrainingConsent',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

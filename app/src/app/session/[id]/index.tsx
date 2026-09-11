@@ -8,13 +8,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { formatGroupAndClass, tenthsToScore } from '@shotledger/shared';
+import { formatGroupAndClass, MIN_SHOTS_FOR_HEATMAP, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { EmptyState } from '@/components/empty-state';
 import { GroupPlot } from '@/components/group-plot';
+import { ShotHeatmap } from '@/components/shot-heatmap';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -54,6 +55,7 @@ export default function SessionDetailScreen() {
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
+  const [plotMode, setPlotMode] = useState<'plot' | 'heatmap'>('plot');
 
   const { session, seriesRows, results, tags, firearmName } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
@@ -366,16 +368,37 @@ export default function SessionDetailScreen() {
 
       {view === 'group' && group && (
         <Card testID="session-group-view">
-          <View style={styles.groupPlot}>
-            <GroupPlot
-              target={group.target}
-              shots={group.marks.map((m) => ({
-                xMm: m.xMm,
-                yMm: m.yMm,
-                caliberMm: m.caliberMm,
-              }))}
-              size={300}
+          {/* The heatmap only earns its toggle once the plot is a smear —
+              below that the two pictures say the same thing. */}
+          {group.marks.length >= MIN_SHOTS_FOR_HEATMAP && (
+            <SegmentedControl
+              testID="group-plot-mode"
+              options={[
+                { value: 'plot' as const, label: t('photoScoring.plotMode') },
+                { value: 'heatmap' as const, label: t('photoScoring.heatmapMode') },
+              ]}
+              value={plotMode}
+              onChange={setPlotMode}
             />
+          )}
+          <View style={styles.groupPlot}>
+            {plotMode === 'heatmap' && group.marks.length >= MIN_SHOTS_FOR_HEATMAP ? (
+              <ShotHeatmap
+                target={group.target}
+                shots={group.marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm }))}
+                size={300}
+              />
+            ) : (
+              <GroupPlot
+                target={group.target}
+                shots={group.marks.map((m) => ({
+                  xMm: m.xMm,
+                  yMm: m.yMm,
+                  caliberMm: m.caliberMm,
+                }))}
+                size={300}
+              />
+            )}
           </View>
           <View style={styles.resultsRow}>
             <StatTile

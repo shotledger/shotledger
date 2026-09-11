@@ -64,6 +64,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     caliberMm: EDGE_CALL_PREVIEW_CALIBER,
     isInnerTen: false,
     calledRingLabel: null,
+    moved: false,
   },
   {
     id: 'mid-ring',
@@ -72,6 +73,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     caliberMm: EDGE_CALL_PREVIEW_CALIBER,
     isInnerTen: false,
     calledRingLabel: null,
+    moved: false,
   },
   // Ring 9's boundary is radius 50mm; near-edge = radius - caliber/2, so
   // 52.3mm out puts the near-edge 0.5mm inside it — under the 1mm
@@ -83,6 +85,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     caliberMm: EDGE_CALL_PREVIEW_CALIBER,
     isInnerTen: false,
     calledRingLabel: null,
+    moved: false,
   },
 ];
 

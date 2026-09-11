@@ -314,7 +314,15 @@
     "markeReductionNote": "Age reduction of {{points}} p/series applies from {{sinceYear}}.",
     "markeReductionNoneNote": "No age reduction applies yet.",
     "locationLookupInfo": "Off: only places you have used before are suggested, and nothing leaves your phone.\n\nOn: what you type in a session’s Location field is sent to photon.komoot.io, which searches OpenStreetMap. A Use My Location button also appears there; tapping it takes one position fix and sends those coordinates to overpass-api.de to look up shooting ranges near you. Nothing is sent until you tap it, your position is never stored or tracked in the background, and only the range name you pick is saved with the session. You can turn this off again at any time.",
-    "markeInfo": "Points needed per 5-shot precision series for each valör, by vapengrupp (SHB Bilaga 1 mom 5.1.1.1).\n\nFrom the year after you turn 55 the requirement drops by 1 point per series, and by 2 points from the year after you turn 65. Set your birth year above to see the table with that reduction applied."
+    "markeInfo": "Points needed per 5-shot precision series for each valör, by vapengrupp (SHB Bilaga 1 mom 5.1.1.1).\n\nFrom the year after you turn 55 the requirement drops by 1 point per series, and by 2 points from the year after you turn 65. Set your birth year above to see the table with that reduction applied.",
+    "trainingTitle": "Improve Automatic Scoring",
+    "trainingConsent": "Keep My Marks as Training Data",
+    "trainingHelp": "Off by default. Nothing is sent anywhere — the marks stay on this phone.",
+    "trainingInfo": "Score from Photo asks you to tap each hole. Automatic detection does not exist yet, and building it needs examples of where holes really are.\n\nWhen this is on, each series you score from a photo is kept as an example: the positions you tapped, in target millimetres, and which ones you had to nudge. The photo itself is not copied — only a reference to the one already stored with the session.\n\nThis never leaves your phone. Nothing is uploaded, nothing is synced, and target photos are personal data. You can turn this off and delete everything collected at any time, without touching your logbook.",
+    "trainingCount": "{{count}} series kept",
+    "trainingDelete": "Delete Collected Data",
+    "trainingDeleteTitle": "Delete collected data?",
+    "trainingDeleteBody": "This permanently deletes the {{count}} kept series. Your logbook and photos are not affected."
   },
   "about": {
     "title": "About",
@@ -863,7 +871,12 @@
     "pointsLostPosition": "To Position",
     "pointsLostSize": "To Group Size",
     "potentialScore": "Potential Score",
-    "captureHint": "The camera opens by itself. Back out of it to pick a photo you already took."
+    "captureHint": "The camera opens by itself. Back out of it to pick a photo you already took.",
+    "cornerRing": "Ring You Are Marking",
+    "cornerRingHint": "Pick the ring the four corners sit on. The outermost one is often cut off in a landscape photo — say which ring you actually used, or every measurement will be wrong.",
+    "plotMode": "Plot",
+    "heatmapMode": "Heatmap",
+    "zoomHint": "Pinch to zoom, two fingers to pan, double-tap to fit."
   },
   "account": {
     "title": "Account & Sync",

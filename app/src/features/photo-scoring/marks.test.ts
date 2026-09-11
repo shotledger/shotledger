@@ -113,6 +113,7 @@ const mark = (patch: Partial<Mark>): Mark => ({
   caliberMm: 5.6,
   isInnerTen: false,
   calledRingLabel: null,
+  moved: false,
   ...patch,
 });
 
