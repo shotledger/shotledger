@@ -544,8 +544,6 @@
     "menuSights": "Sikte",
     "menuEdit": "Redigera pass",
     "menuShare": "Dela",
-    "moveSeriesUp": "Flytta serien uppåt",
-    "moveSeriesDown": "Flytta serien nedåt",
     "sightsAdjustHint": "Ändringar sparas direkt, på den valda inställningen.",
     "entryChoiceTitle": "Lägg till serie",
     "entryChoiceRemember": "Använd för resten av passet",
@@ -573,7 +571,8 @@
     "photoRescore": "Poängsätt från det här fotot",
     "replacePhoto": "Byt foto",
     "photoMissingTitle": "Fotot är inte tillgängligt",
-    "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken."
+    "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken.",
+    "reorderHint": "Håll in en serie för att flytta den."
   },
   "share": {
     "title": "Dela pass",

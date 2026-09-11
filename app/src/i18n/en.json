@@ -544,8 +544,6 @@
     "menuSights": "Sights",
     "menuEdit": "Edit Session",
     "menuShare": "Share",
-    "moveSeriesUp": "Move series up",
-    "moveSeriesDown": "Move series down",
     "sightsAdjustHint": "Changes are saved as you make them, on the selected setting.",
     "entryChoiceTitle": "Add Series",
     "entryChoiceRemember": "Use for the rest of this session",
@@ -573,7 +571,8 @@
     "photoRescore": "Score from This Photo",
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
-    "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync."
+    "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
+    "reorderHint": "Long-press a series to move it."
   },
   "share": {
     "title": "Share Session",

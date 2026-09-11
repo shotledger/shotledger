@@ -7,7 +7,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { formatGroupAndClass, MIN_SHOTS_FOR_HEATMAP, tenthsToScore } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -22,7 +23,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
-import { canMoveSeries, seriesSwapTarget } from '@/features/session/series-move';
+import { seriesDropPlan } from '@/features/session/series-move';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import {
   SeriesEntryChoiceSheet,
@@ -32,7 +33,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
-import { swapSeriesPositions } from '@/db/queries/series';
+import { setSeriesPositions } from '@/db/queries/series';
 import { updateSession } from '@/db/queries/sessions';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
@@ -40,6 +41,7 @@ import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
+import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -57,6 +59,13 @@ export default function SessionDetailScreen() {
   const [view, setView] = useState<DetailView>('series');
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
   const [plotMode, setPlotMode] = useState<'plot' | 'heatmap'>('plot');
+  const [dragging, setDragging] = useState<{ id: string; isFinal: boolean } | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  // Measured per row, in state rather than a ref: the rows are not a fixed
+  // height (a series with wrapped shot chips is taller), so the drop index
+  // cannot be arithmetic on a constant — and a ref cannot be read from the
+  // handlers, which are built during render.
+  const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
 
   const { session, seriesRows, results, tags, firearmName } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
@@ -157,41 +166,101 @@ export default function SessionDetailScreen() {
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
 
-  function onMoveSeries(row: SeriesRow, direction: 'up' | 'down') {
-    if (!db) return;
-    const target = seriesSwapTarget(seriesRows, row.id, direction);
-    if (!target) return;
-    swapSeriesPositions(db, row.id, target.id);
+  /**
+   * Drag-and-drop reorder. Long-press lifts a series, the drag moves it, and
+   * the drop commits — replacing the up/down arrows, which cost two controls
+   * per row and could only ever move one place at a time (maintainer, on
+   * device 2026-09-11: "no icons for re-ordering. If I long press a series
+   * then I should be able to drag-n-drop").
+   */
+
+  function sectionOf(isFinal: boolean): SeriesRow[] {
+    return seriesRows
+      .filter((row) => row.isFinal === isFinal)
+      .sort((a, b) => a.position - b.position);
+  }
+
+  /** How many places the drag has travelled, from the heights it crossed. */
+  function indexDelta(section: SeriesRow[], fromIndex: number, offset: number): number {
+    const step = offset > 0 ? 1 : -1;
+    let travelled = 0;
+    let moved = 0;
+    for (let i = fromIndex + step; i >= 0 && i < section.length; i += step) {
+      const height = rowHeights[(section[i] as SeriesRow).id] ?? 0;
+      // Half a row: the swap happens as the dragged row passes the midpoint
+      // of its neighbour, which is where it looks like it has taken its place.
+      travelled += height / 2;
+      if (Math.abs(offset) < travelled) break;
+      travelled += height / 2;
+      moved += step;
+    }
+    return moved;
+  }
+
+  function onDrop() {
+    const held = dragging;
+    const offset = dragOffset;
+    setDragging(null);
+    setDragOffset(0);
+    if (!held || !db) return;
+
+    const section = sectionOf(held.isFinal);
+    const fromIndex = section.findIndex((row) => row.id === held.id);
+    if (fromIndex === -1) return;
+
+    const plan = seriesDropPlan(
+      seriesRows,
+      held.id,
+      fromIndex + indexDelta(section, fromIndex, offset),
+    );
+    if (plan.length === 0) return;
+    setSeriesPositions(db, plan);
+    vibrate();
     refresh();
   }
 
-  const MoveButton = ({ row, direction }: { row: SeriesRow; direction: 'up' | 'down' }) => {
-    const enabled = canMoveSeries(seriesRows, row.id, direction);
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t(
-          direction === 'up' ? 'session.moveSeriesUp' : 'session.moveSeriesDown',
-        )}
-        disabled={!enabled}
-        hitSlop={8}
-        onPress={() => onMoveSeries(row, direction)}
-        testID={`series-${row.position}-move-${direction}`}
-      >
-        <ThemedText type="smallBold" themeColor={enabled ? 'primary' : 'textSecondary'}>
-          {direction === 'up' ? '↑' : '↓'}
-        </ThemedText>
-      </Pressable>
-    );
-  };
-
   const renderSeries = (row: SeriesRow) => {
+    const held = dragging?.id === row.id;
+    // Long-press to lift, then drag. `minDistance(0)` on the pan would steal
+    // the swipe-to-delete gesture, so the pan is gated behind the long press
+    // and does nothing until one has happened.
+    const lift = Gesture.LongPress()
+      .minDuration(300)
+      .onStart(() => {
+        runOnJS(setDragging)({ id: row.id, isFinal: row.isFinal });
+        runOnJS(vibrate)();
+      });
+    const drag = Gesture.Pan()
+      .manualActivation(true)
+      .onTouchesMove((_event, manager) => {
+        if (dragging?.id === row.id) manager.activate();
+      })
+      .onUpdate((event) => {
+        runOnJS(setDragOffset)(event.translationY);
+      })
+      .onEnd(() => {
+        runOnJS(onDrop)();
+      })
+      .onFinalize(() => {
+        runOnJS(onDrop)();
+      });
+
     const content = (
       <Pressable
         accessibilityRole="button"
         testID={`series-${row.position}`}
         onPress={() => openSeries(row.position)}
-        style={({ pressed }) => [styles.seriesRow, pressed && styles.pressed]}
+        onLayout={(event) => {
+          const height = event.nativeEvent.layout.height;
+          setRowHeights((current) =>
+            current[row.id] === height ? current : { ...current, [row.id]: height },
+          );
+        }}
+        style={({ pressed }) => [
+          styles.seriesRow,
+          pressed && styles.pressed,
+          held && [styles.lifted, { transform: [{ translateY: dragOffset }] }],
+        ]}
       >
         <View style={styles.seriesHeader}>
           <ThemedText type="smallBold">
@@ -223,8 +292,6 @@ export default function SessionDetailScreen() {
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
                 already taken by delete, and the two must not be neighbours. */}
-            <MoveButton row={row} direction="up" />
-            <MoveButton row={row} direction="down" />
           </View>
         </View>
         <ShotChips
@@ -241,7 +308,7 @@ export default function SessionDetailScreen() {
     if (detail.isFixedFormat) {
       return (
         <View key={row.id} style={styles.seriesWrapper}>
-          {content}
+          <GestureDetector gesture={Gesture.Simultaneous(lift, drag)}>{content}</GestureDetector>
         </View>
       );
     }
@@ -264,7 +331,7 @@ export default function SessionDetailScreen() {
           </Pressable>
         )}
       >
-        {content}
+        <GestureDetector gesture={Gesture.Simultaneous(lift, drag)}>{content}</GestureDetector>
       </Swipeable>
     );
   };
@@ -604,6 +671,14 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
+          {/* A drag gesture is invisible: nothing on the row says it can be
+              picked up, so the hint has to. */}
+          {!isRoundsSession && seriesRows.length > 1 && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('session.reorderHint')}
+            </ThemedText>
+          )}
+
           {!detail.isFixedFormat && !isRoundsSession && (
             <Card>
               <PrimaryButton
@@ -734,6 +809,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
     borderRadius: Radius.medium,
+  },
+  lifted: {
+    opacity: 0.9,
+    zIndex: 2,
+    elevation: 6,
   },
   pressed: {
     opacity: 0.6,
