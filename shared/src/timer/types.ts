@@ -42,7 +42,12 @@ export interface TimerPhase {
   elapsedMs: number;
 }
 
-export type TimerCueKind = 'ready' | 'start' | 'stop' | 'complete';
+/**
+ * `whistle` is the drawn-out ELD UPPHÖR blast, not a beep: SHB D.6.2 lets the
+ * spoken command be replaced by a visselsignal, and the call runs for the
+ * full ELD_UPPHOR_LEAD_SECONDS. The other four are short cues.
+ */
+export type TimerCueKind = 'ready' | 'start' | 'stop' | 'complete' | 'whistle';
 
 /** A cue the engine wants played, as data — never a direct audio/vibration call. */
 export interface TimerCue {

@@ -492,3 +492,24 @@ describe('FaltTimerEngine — lifecycle', () => {
     expect(new FaltTimerEngine().getProgram().startSeconds).toBe(-10);
   });
 });
+
+describe('ELD UPPHÖR whistle', () => {
+  const settings = (whistle: boolean) => ({ ...DEFAULT_FALT_SETTINGS, whistle });
+
+  it('asks for the drawn-out blast instead of the words in whistle mode', () => {
+    const cue = buildFaltProgram(settings(true)).commands.find((c) => c.kind === 'eldUpphor')!;
+    expect(cue.tone).toBe('whistle');
+    expect(cue.speech).toBeUndefined();
+  });
+
+  it('leaves the tone to the host in spoken mode, so the blast cannot talk over the words', () => {
+    const cue = buildFaltProgram(settings(false)).commands.find((c) => c.kind === 'eldUpphor')!;
+    expect(cue.tone).toBeUndefined();
+    expect(cue.speech).toBe('Eld upphör!');
+  });
+
+  it('is drawn out over the full lead, ending as the time runs out', () => {
+    const cue = buildFaltProgram(settings(true)).commands.find((c) => c.kind === 'eldUpphor')!;
+    expect(cue.durationSeconds).toBe(ELD_UPPHOR_LEAD_SECONDS);
+  });
+});

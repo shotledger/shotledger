@@ -16,6 +16,7 @@ const SOUND_SOURCES: Record<TimerCueKind, number> = {
   start: require('../../assets/sounds/timer-start.wav'),
   stop: require('../../assets/sounds/timer-stop.wav'),
   complete: require('../../assets/sounds/timer-complete.wav'),
+  whistle: require('../../assets/sounds/timer-whistle.wav'),
 };
 
 /** One vibration pulse in ms — a single short buzz, cue kinds don't need distinct patterns (the sound differs). */
