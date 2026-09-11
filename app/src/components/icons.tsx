@@ -47,3 +47,30 @@ export function OverflowIcon({ color, size = DEFAULT_SIZE }: IconProps) {
     </Svg>
   );
 }
+
+/**
+ * A photo: frame, horizon and sun. Marks a series that carries a target
+ * photo, and taps through to it — it replaced a "Photo attached" text chip,
+ * which cost a chip's width to say what an icon says at a glance, and did not
+ * look like something you could open (maintainer, on device 2026-09-11).
+ */
+export function PhotoIcon({ color, size = DEFAULT_SIZE }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Circle cx={8.5} cy={9.5} r={1.5} fill={color} />
+      <Path
+        d="m3.5 16.5 4.5-4 4 3.5 3.5-3 5 4.5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

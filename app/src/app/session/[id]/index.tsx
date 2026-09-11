@@ -39,6 +39,7 @@ import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
+import { PhotoIcon } from '@/components/icons';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -201,7 +202,20 @@ export default function SessionDetailScreen() {
             {row.timeLimitSeconds !== null && (
               <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
             )}
-            {row.photoUri && <Chip label={t('session.photoAdded')} />}
+            {row.photoUri && (
+              /* Tappable: the chip used to announce a photo that nothing
+                 could open. Stops the row's own press, which opens the
+                 series. */
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('session.photoView')}
+                onPress={() => router.push(`/session/${id}/photo?pos=${row.position}`)}
+                hitSlop={8}
+                testID={`series-photo-${row.position}`}
+              >
+                <PhotoIcon color={theme.primary} size={20} />
+              </Pressable>
+            )}
             {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
             <ThemedText type="smallBold">
               {row.isSighter ? '–' : tenthsToScore(row.totalTenths)}

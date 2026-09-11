@@ -504,7 +504,6 @@
     "guldserie": "Gold Series",
     "guldAt": "Gold at {{points}} pts",
     "addPhoto": "Add Photo",
-    "photoAdded": "Photo attached",
     "photoPermissionDenied": "The app was not granted access to photos.",
     "save": "Save Series",
     "backspace": "Delete",
@@ -569,7 +568,12 @@
     "locationRangesNeedOnline": "Turn on Suggest Places from the Map in Settings to find ranges near you.",
     "locationRangeNone": "No shooting range is mapped near you.",
     "locationRangeDenied": "ShotLedger has no permission to use your location. You can grant it in your phone’s settings.",
-    "locationRangeFailed": "Could not find ranges near you. Check that location is on and you have a connection."
+    "locationRangeFailed": "Could not find ranges near you. Check that location is on and you have a connection.",
+    "photoView": "View Photo",
+    "photoRescore": "Score from This Photo",
+    "replacePhoto": "Replace Photo",
+    "photoMissingTitle": "Photo Not Available",
+    "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync."
   },
   "share": {
     "title": "Share Session",

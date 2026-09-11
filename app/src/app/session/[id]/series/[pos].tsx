@@ -7,10 +7,11 @@
 // record. Creating it up front left an orphaned "Series N · 0" row behind
 // every time the user backed out without saving (maintainer, verified live
 // 2026-09-03).
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -30,7 +31,7 @@ import {
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
-import { Spacing } from '@/theme/tokens';
+import { Radius, Spacing } from '@/theme/tokens';
 
 export default function SeriesEntryScreen() {
   const { t } = useTranslation();
@@ -163,7 +164,6 @@ export default function SeriesEntryScreen() {
           {row?.timeLimitSeconds != null && (
             <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
           )}
-          {photoUri && <Chip label={t('session.photoAdded')} />}
         </View>
       </View>
 
@@ -177,7 +177,24 @@ export default function SeriesEntryScreen() {
         <ScoreKeypad state={state} onChange={setState} />
       </Card>
 
-      <PrimaryButton label={t('session.addPhoto')} onPress={onAttachPhoto} testID="attach-photo" />
+      {/* A thumbnail where Add Photo already lives, so the photo is visible
+          rather than merely announced. Tapping opens the full-screen view. */}
+      {photoUri && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('session.photoView')}
+          onPress={() => router.push(`/session/${id}/photo?pos=${position}`)}
+          testID="series-photo-thumb"
+        >
+          <Image source={{ uri: photoUri }} style={styles.thumb} contentFit="cover" />
+        </Pressable>
+      )}
+
+      <PrimaryButton
+        label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
+        onPress={onAttachPhoto}
+        testID="attach-photo"
+      />
 
       {showSighterOption && (
         <Card>
@@ -199,6 +216,11 @@ export default function SeriesEntryScreen() {
 }
 
 const styles = StyleSheet.create({
+  thumb: {
+    width: '100%',
+    height: 220,
+    borderRadius: Radius.medium,
+  },
   header: {
     gap: Spacing.two,
   },
