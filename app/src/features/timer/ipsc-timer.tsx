@@ -30,6 +30,7 @@ import { ThemedText } from '@/components/themed-text';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
 import { useLevelMeter } from '@/features/timer/use-level-meter';
+import { TimerMenu } from '@/features/timer/timer-menu';
 import { useIpscSettings, useSpokenPrompts } from '@/features/timer/use-timer-settings';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
@@ -150,7 +151,12 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
       <Screen>
         {modeSelector}
 
-        <ThemedText type="smallBold">{t('ipscTimer.settingsTitle')}</ThemedText>
+        <View style={styles.labelRow}>
+          <ThemedText type="smallBold" style={styles.flex}>
+            {t('ipscTimer.settingsTitle')}
+          </ThemedText>
+          <TimerMenu />
+        </View>
         <Card style={styles.form} testID="ipsc-settings">
           <View style={styles.labelRow}>
             <ThemedText type="smallBold" style={styles.flex}>
