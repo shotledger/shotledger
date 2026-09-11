@@ -583,7 +583,9 @@
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
     "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
-    "reorderHint": "Long-press a series to move it."
+    "reorderHint": "Long-press a series to move it.",
+    "scoredFromPhoto": "Scored from Photo",
+    "scoredManually": "Entered Manually"
   },
   "share": {
     "title": "Share Session",

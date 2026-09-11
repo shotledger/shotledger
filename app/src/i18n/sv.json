@@ -583,7 +583,9 @@
     "replacePhoto": "Byt foto",
     "photoMissingTitle": "Fotot är inte tillgängligt",
     "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken.",
-    "reorderHint": "Håll in en serie för att flytta den."
+    "reorderHint": "Håll in en serie för att flytta den.",
+    "scoredFromPhoto": "Poängsatt från foto",
+    "scoredManually": "Inmatad manuellt"
   },
   "share": {
     "title": "Dela pass",
