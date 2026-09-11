@@ -90,7 +90,7 @@ export default function SeriesPhotoScreen() {
 
   if (!uri) {
     return (
-      <Screen>
+      <Screen safeBottom>
         <Card>
           <ThemedText type="subtitle">{t('session.photoMissingTitle')}</ThemedText>
           <ThemedText themeColor="textSecondary">{t('session.photoMissingBody')}</ThemedText>
@@ -101,7 +101,7 @@ export default function SeriesPhotoScreen() {
   }
 
   return (
-    <Screen scroll={false}>
+    <Screen scroll={false} safeBottom>
       <ThemedText type="small" themeColor="textSecondary">
         {t('session.seriesTitle', { position })}
       </ThemedText>

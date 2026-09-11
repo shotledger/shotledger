@@ -17,15 +17,20 @@ import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { weaponGroupCode } from '@shotledger/shared';
+
 import { db } from '@/db/client';
 import { listSeriesPhotos } from '@/db/queries/photos';
 import {
+  filterPhotosByFacets,
   groupPhotosByDay,
-  photoLocations,
+  photoFacetValues,
   searchPhotos,
   type GalleryPhoto,
+  type PhotoFacet,
+  type PhotoFacetSelection,
 } from '@/features/photos/filter';
-import { formatLocalDate } from '@/features/session/labels';
+import { disciplineLabel, formatLocalDate } from '@/features/session/labels';
 import { shareExistingFile } from '@/platform/share-file';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -34,18 +39,62 @@ export default function PhotosScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [location, setLocation] = useState<string | null>(null);
+  const [facets, setFacets] = useState<PhotoFacetSelection>({});
 
   // Read once: the gallery is a snapshot, and a photo cannot appear while it
   // is open without leaving the screen first.
   const all = useMemo<GalleryPhoto[]>(() => (db ? listSeriesPhotos(db) : []), []);
-  const locations = useMemo(() => photoLocations(all), [all]);
+  // Firearm ids are what the rows carry; the chips have to say make + model.
+  const firearmNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const photo of all) {
+      if (!photo.firearmId || names[photo.firearmId]) continue;
+      names[photo.firearmId] = [photo.firearmMake, photo.firearmModel]
+        .filter((part): part is string => !!part)
+        .join(' ');
+    }
+    return names;
+  }, [all]);
+  const groups = useMemo(
+    () => groupPhotosByDay(searchPhotos(filterPhotosByFacets(all, facets), query)),
+    [all, query, facets],
+  );
 
-  const groups = useMemo(() => {
-    const byLocation =
-      location === null ? all : all.filter((photo) => (photo.location ?? '').trim() === location);
-    return groupPhotosByDay(searchPhotos(byLocation, query));
-  }, [all, query, location]);
+  /**
+   * A chip row per facet, offered only when there is something to choose
+   * between — one value narrows nothing and would be chrome.
+   */
+  function facetRow(facet: PhotoFacet, label: (value: string) => string) {
+    const values = photoFacetValues(all, facet);
+    if (values.length < 2) return null;
+    const selected = facets[facet] ?? null;
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+        <Pressable
+          onPress={() => setFacets((current) => ({ ...current, [facet]: null }))}
+          testID={`photos-${facet}-all`}
+        >
+          <Chip label={t('photos.allOf')} tone={selected === null ? 'primary' : 'neutral'} />
+        </Pressable>
+        {values.map((value) => (
+          <Pressable
+            key={value}
+            onPress={() =>
+              setFacets((current) => ({
+                ...current,
+                // Tapping the active chip clears it, so a filter can be undone
+                // without hunting for the "all" chip.
+                [facet]: current[facet] === value ? null : value,
+              }))
+            }
+            testID={`photos-${facet}-${value}`}
+          >
+            <Chip label={label(value)} tone={selected === value ? 'primary' : 'neutral'} />
+          </Pressable>
+        ))}
+      </ScrollView>
+    );
+  }
 
   const shown = groups.reduce((sum, group) => sum + group.photos.length, 0);
 
@@ -64,7 +113,7 @@ export default function PhotosScreen() {
   }
 
   return (
-    <Screen scroll={false}>
+    <Screen scroll={false} safeBottom>
       <TextField
         value={query}
         onChangeText={setQuery}
@@ -74,25 +123,10 @@ export default function PhotosScreen() {
         testID="photos-search"
       />
 
-      {locations.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          <Pressable onPress={() => setLocation(null)} testID="photos-location-all">
-            <Chip
-              label={t('photos.allLocations')}
-              tone={location === null ? 'primary' : 'neutral'}
-            />
-          </Pressable>
-          {locations.map((name) => (
-            <Pressable
-              key={name}
-              onPress={() => setLocation(name)}
-              testID={`photos-location-${name}`}
-            >
-              <Chip label={name} tone={location === name ? 'primary' : 'neutral'} />
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
+      {facetRow('location', (value) => value)}
+      {facetRow('disciplineId', (value) => disciplineLabel(t, value))}
+      {facetRow('firearmId', (value) => firearmNames[value] ?? value)}
+      {facetRow('weaponGroup', (value) => weaponGroupCode(value))}
 
       <ThemedText type="small" themeColor="textSecondary" testID="photos-count">
         {t('photos.count', { shown, total: all.length })}

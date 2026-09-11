@@ -16,10 +16,27 @@ export interface ScreenProps extends ViewProps {
    * the `fabLayer` comment below.
    */
   fab?: ReactNode;
+  /**
+   * Also inset the bottom edge.
+   *
+   * Off by default because a tab screen's bottom is already handled by
+   * `BottomTabInset` — adding the safe area there would double the gap. A
+   * PUSHED screen has no tab bar, so without this its last element sits
+   * under the Android gesture bar (maintainer, on device 2026-09-11: the
+   * photo viewer's "Score from This Photo" was behind the system menu).
+   */
+  safeBottom?: boolean;
 }
 
 /** Standard screen shell: safe area, max content width, bottom tab-bar clearance. */
-export function Screen({ children, scroll = true, fab, style, ...rest }: ScreenProps) {
+export function Screen({
+  children,
+  scroll = true,
+  fab,
+  safeBottom = false,
+  style,
+  ...rest
+}: ScreenProps) {
   const inner = (
     <View style={[styles.inner, !scroll && styles.innerFlex, style]} {...rest}>
       {children}
@@ -32,7 +49,10 @@ export function Screen({ children, scroll = true, fab, style, ...rest }: ScreenP
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={safeBottom ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+      >
         {scroll ? (
           <ScrollView contentContainerStyle={contentStyle}>{inner}</ScrollView>
         ) : (
