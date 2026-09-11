@@ -10,6 +10,7 @@ import {
 } from '@shotledger/shared';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -22,6 +23,8 @@ import {
 } from '@/platform/shot-listener';
 
 /** Kept in step with shot-listener.ts's POLL_INTERVAL_MS — reported, not enforced. */
+
+const KEEP_AWAKE_TAG = 'mic-diagnostics';
 const SAMPLE_INTERVAL_MS = 60;
 
 export type MicDiagnosticsError = 'unavailable' | 'denied' | 'failed';
@@ -49,6 +52,9 @@ export function useMicDiagnostics() {
       const listener = listenerRef.current;
       listenerRef.current = null;
       void listener?.stop();
+      // Leaving the screen must not leave the phone awake for the rest of
+      // the day.
+      deactivateKeepAwake(KEEP_AWAKE_TAG);
     },
     [],
   );
@@ -79,6 +85,10 @@ export function useMicDiagnostics() {
         recorder.push(Date.now() - startedAtRef.current, db);
         setStats(recorder.getLiveStats());
       });
+      // The screen locking mid-session stops the metering and loses the run
+      // (maintainer, at the range 2026-09-11). Same treatment the fälttimer
+      // already gives a running sequence.
+      await activateKeepAwakeAsync(KEEP_AWAKE_TAG);
       setError(null);
       setRecording(true);
     } catch {
@@ -90,6 +100,7 @@ export function useMicDiagnostics() {
     const listener = listenerRef.current;
     listenerRef.current = null;
     await listener?.stop();
+    deactivateKeepAwake(KEEP_AWAKE_TAG);
     setRecording(false);
   }, []);
 

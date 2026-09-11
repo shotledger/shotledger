@@ -197,14 +197,39 @@ describe('analyseMark', () => {
   });
 
   it('ignores a louder event outside the window', () => {
-    expect(analyseMark(samples, { index: 0, atMs: 1_100 }).peakDb).not.toBe(-2);
+    // 2_000 is beyond a tight custom window, though inside the 6 s default.
+    expect(
+      analyseMark(samples, { index: 0, atMs: 1_100 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
+    ).not.toBe(-2);
   });
 
-  it('reaches back further than forward, since the tap follows the shot', () => {
+  it('reaches back much further than forward, since the tap follows the shot', () => {
     expect(DEFAULT_MARK_WINDOW.lookbackMs).toBeGreaterThan(DEFAULT_MARK_WINDOW.lookaheadMs);
-    // A shot 500 ms before the tap is still found; the same gap ahead is not.
-    expect(analyseMark(samples, { index: 0, atMs: 1_460 }).peakDb).toBe(-8);
-    expect(analyseMark(samples, { index: 0, atMs: 460 }).peakDb).not.toBe(-8);
+    // The measured reaction ran to about 4 s at the range, so the window has
+    // to cover that and then some.
+    expect(DEFAULT_MARK_WINDOW.lookbackMs).toBeGreaterThanOrEqual(5_000);
+  });
+
+  it('reports how late the mark was, so the window can be narrowed from evidence', () => {
+    // The loudest thing in the window is -2 at 2_000; the mark is at 4_960,
+    // so the shot was pressed for just under three seconds after the fact.
+    const analysis = analyseMark(samples, { index: 0, atMs: 4_960 });
+    expect(analysis.peakDb).toBe(-2);
+    expect(analysis.peakOffsetMs).toBe(2_960);
+  });
+
+  it('still finds a shot marked four seconds late', () => {
+    // The old 600 ms window found nothing this far out; that is the bug.
+    expect(
+      analyseMark(samples, { index: 0, atMs: 4_960 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
+    ).toBeNull();
+    expect(analyseMark(samples, { index: 0, atMs: 4_960 }).peakDb).not.toBeNull();
+  });
+
+  it('measures the contiguous event, not every loud sample in six seconds', () => {
+    // Two separate loud events sit in the default window: -8/-20 around 960,
+    // and -2 alone at 2_000. Only the run containing the peak is the event.
+    expect(analyseMark(samples, { index: 0, atMs: 2_100 }).samplesAboveFloor).toBe(1);
   });
 
   it('honours a custom window', () => {
@@ -214,14 +239,15 @@ describe('analyseMark', () => {
   });
 
   it('reports nulls when no sample fell in the window', () => {
-    const analysis = analyseMark(samples, { index: 3, atMs: 10_000 });
+    const analysis = analyseMark(samples, { index: 3, atMs: 60_000 });
     expect(analysis).toEqual({
       index: 3,
-      atMs: 10_000,
+      atMs: 60_000,
       peakDb: null,
       noiseFloorDb: null,
       excessDb: null,
       samplesAboveFloor: 0,
+      peakOffsetMs: null,
     });
   });
 });
