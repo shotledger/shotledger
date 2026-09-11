@@ -40,3 +40,25 @@ describe('stats.distributionTitleWithCount', () => {
     );
   });
 });
+
+describe('shotDiagnostics.lastMark', () => {
+  const values = { peak: '-12.0', excess: '38.0' };
+
+  it('English says "sample" for a one-sample event', () => {
+    expect(t.t('shotDiagnostics.lastMark', { ...values, count: 1, lng: 'en' })).toContain(
+      'spanning 1 sample.',
+    );
+    expect(t.t('shotDiagnostics.lastMark', { ...values, count: 4, lng: 'en' })).toContain(
+      'spanning 4 samples.',
+    );
+  });
+
+  it('Swedish resolves both categories — "sampel" is invariant', () => {
+    expect(t.t('shotDiagnostics.lastMark', { ...values, count: 1, lng: 'sv' })).toContain(
+      'över 1 sampel.',
+    );
+    expect(t.t('shotDiagnostics.lastMark', { ...values, count: 4, lng: 'sv' })).toContain(
+      'över 4 sampel.',
+    );
+  });
+});

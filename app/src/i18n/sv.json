@@ -742,6 +742,41 @@
     "sensitivityHigh": "Hög",
     "delayRange": "{{from}}–{{to}} s"
   },
+  "shotDiagnostics": {
+    "title": "Diagnostik för skottdetektering",
+    "intro": "Spelar in vad mikrofonen hör så att skottdetekteringen kan byggas på riktiga mätningar. Starta mätningen, tryck på Markera skott varje gång du skjuter och exportera sedan loggen och skicka tillbaka den.",
+    "liveTitle": "Aktuell nivå",
+    "level": "Nivå",
+    "peak": "Topp",
+    "noiseFloor": "Brusgolv",
+    "excess": "Över golvet",
+    "unitHint": "Alla värden i dBFS, där 0 är det högsta mikrofonen kan registrera. Brusgolvet följer rummet, så \"över golvet\" är hur mycket en händelse sticker ut från det.",
+    "resetPeak": "Nollställ topp",
+    "clearRecording": "Rensa inspelning",
+    "start": "Starta mätning",
+    "stop": "Stoppa mätning",
+    "markTitle": "Facit",
+    "markHint": "Tryck direkt efter varje skott. Markeringarna är det som skiljer ett riktigt skott från en dörr som slår igen när loggen analyseras.",
+    "markShot": "Markera skott",
+    "markCount": "Markerade skott: {{marks}}",
+    "lastMark_one": "Senaste skottet: topp {{peak}} dBFS, {{excess}} dB över golvet, över {{count}} sampel.",
+    "lastMark_other": "Senaste skottet: topp {{peak}} dBFS, {{excess}} dB över golvet, över {{count}} sampel.",
+    "exportTitle": "Export",
+    "sampleCount": "{{samples}} av {{max}} sampel inspelade.",
+    "dropped": "{{dropped}} äldre sampel har kastats — bufferten behåller de senaste.",
+    "noteLabel": "Anteckning",
+    "notePlaceholder": "Vapen, kaliber, inomhus eller utomhus",
+    "export": "Exportera JSON",
+    "exportStatus": {
+      "success": "Loggen delades.",
+      "failed": "Loggen kunde inte delas."
+    },
+    "errors": {
+      "unavailable": "Ingen mikrofon är tillgänglig på den här enheten.",
+      "denied": "Mikrofonbehörighet nekades — tillåt den i systeminställningarna för att kunna mäta.",
+      "failed": "Mikrofonen kunde inte startas. Stäng andra appar som använder den och försök igen."
+    }
+  },
   "faltTimer": {
     "modes": {
       "rangeOfficer": "Skjutledare",
@@ -976,6 +1011,8 @@
   },
   "tools": {
     "title": "Verktyg",
-    "timerSubtitle": "Skjuttids-, skott- och fälttimer"
+    "timerSubtitle": "Skjuttids-, skott- och fälttimer",
+    "diagnosticsTitle": "Diagnostik för skottdetektering",
+    "diagnosticsSubtitle": "Mät vad mikrofonen hör på banan"
   }
 }
