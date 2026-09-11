@@ -7,7 +7,7 @@ describe('buildRangeQuery', () => {
     const query = buildRangeQuery(55.5, 13.0, 5000);
     expect(query).toContain('nwr(around:5000,55.5,13)');
     expect(query).toContain('[out:json]');
-    expect(query).toContain('out center tags 25;');
+    expect(query).toContain('out center tags 60;');
   });
 
   it('rounds the radius, because Overpass wants an integer', () => {
@@ -25,6 +25,7 @@ describe('buildRangeQuery', () => {
     expect(regex.test('shooting')).toBe(true);
     expect(regex.test('shooting;archery')).toBe(true);
     expect(regex.test('archery;shooting')).toBe(true);
+    expect(regex.test('shooting_range')).toBe(true);
     expect(regex.test('clay_shooting')).toBe(false);
   });
 });
@@ -40,14 +41,21 @@ describe('parseOverpassRanges', () => {
 
   it('reads a node', () => {
     expect(parseOverpassRanges({ elements: [node] })).toEqual([
-      { id: 'node/1', name: 'Skjutbanan', latitude: 55.6, longitude: 13.0, locality: 'Malmö' },
+      {
+        id: 'node/1',
+        name: 'Skjutbanan',
+        latitude: 55.6,
+        longitude: 13.0,
+        locality: 'Malmö',
+        isFacility: false,
+      },
     ]);
   });
 
   it('reads a way through its center', () => {
     const way = { type: 'way', id: 7, center: { lat: 55.1, lon: 13.1 }, tags: { name: 'Banan' } };
     expect(parseOverpassRanges({ elements: [way] })).toEqual([
-      { id: 'way/7', name: 'Banan', latitude: 55.1, longitude: 13.1 },
+      { id: 'way/7', name: 'Banan', latitude: 55.1, longitude: 13.1, isFacility: false },
     ]);
   });
 
@@ -74,6 +82,13 @@ describe('parseOverpassRanges', () => {
     expect(parseOverpassRanges({ elements: [badCenter] })).toEqual([]);
   });
 
+  it('flags a sports_centre as the club site rather than one of its lanes', () => {
+    const centre = { ...node, tags: { ...node.tags, leisure: 'sports_centre' } };
+    expect(parseOverpassRanges({ elements: [centre] })[0]!.isFacility).toBe(true);
+    const pitch = { ...node, tags: { ...node.tags, leisure: 'pitch' } };
+    expect(parseOverpassRanges({ elements: [pitch] })[0]!.isFacility).toBe(false);
+  });
+
   it('deduplicates repeated ids', () => {
     expect(parseOverpassRanges({ elements: [node, node] })).toHaveLength(1);
   });
@@ -98,7 +113,7 @@ describe('parseOverpassRanges', () => {
 });
 
 describe('formatRange', () => {
-  const range = { id: 'node/1', name: 'Banan', latitude: 0, longitude: 0 };
+  const range = { id: 'node/1', name: 'Banan', latitude: 0, longitude: 0, isFacility: false };
 
   it('appends the locality', () => {
     expect(formatRange({ ...range, locality: 'Malmö' })).toBe('Banan, Malmö');

@@ -24,6 +24,14 @@ export interface ShootingRange {
   longitude: number;
   /** Town or municipality, when OSM carries one. Shown to disambiguate. */
   locality?: string;
+  /**
+   * `leisure=sports_centre`, i.e. the whole club site rather than one of its
+   * firing lanes. Surveyed Swedish ranges map the club as a sports_centre and
+   * each lane as a `leisure=pitch`/`range` inside it — Malmö Skyttegille has
+   * eleven of the latter, named "A1 - 200 meter", "Älgen" and so on. See
+   * collapseToFacilities in match.ts, which is what this flag exists for.
+   */
+  isFacility: boolean;
 }
 
 /**
@@ -38,12 +46,12 @@ export function buildRangeQuery(
   latitude: number,
   longitude: number,
   radiusMeters: number,
-  limit = 25,
+  limit = 60,
 ): string {
   const around = `around:${Math.round(radiusMeters)},${latitude},${longitude}`;
   return [
     '[out:json][timeout:20];',
-    `nwr(${around})["sport"~"(^|;)shooting($|;)"];`,
+    `nwr(${around})["sport"~"(^|;)shooting(_range)?($|;)"];`,
     `out center tags ${limit};`,
   ].join('');
 }
@@ -89,6 +97,7 @@ interface RangeTags {
   name?: unknown;
   'name:sv'?: unknown;
   operator?: unknown;
+  leisure?: unknown;
   'addr:city'?: unknown;
   'addr:place'?: unknown;
 }
@@ -101,7 +110,7 @@ interface RangeTags {
  * better suggestion than nothing. An element with neither is dropped: an
  * anonymous chip helps no one.
  */
-export function parseOverpassRanges(body: unknown, limit = 25): ShootingRange[] {
+export function parseOverpassRanges(body: unknown, limit = 60): ShootingRange[] {
   if (!body || typeof body !== 'object') return [];
   const elements = (body as { elements?: unknown }).elements;
   if (!Array.isArray(elements)) return [];
@@ -130,7 +139,13 @@ export function parseOverpassRanges(body: unknown, limit = 25): ShootingRange[] 
     seen.add(key);
 
     const locality = str(tags['addr:city']) ?? str(tags['addr:place']) ?? undefined;
-    ranges.push({ id: key, name, ...position, ...(locality ? { locality } : {}) });
+    ranges.push({
+      id: key,
+      name,
+      ...position,
+      ...(locality ? { locality } : {}),
+      isFacility: str(tags.leisure) === 'sports_centre',
+    });
   }
 
   return ranges;

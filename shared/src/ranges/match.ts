@@ -43,6 +43,13 @@ export const HERE_RADIUS_METERS = 500;
 /** How far out we bother looking at all. */
 export const SEARCH_RADIUS_METERS = 5000;
 
+/**
+ * How close a lane has to be to a club site to count as part of it. Malmö
+ * Skyttegille's lanes span roughly 250 m end to end from the club node, which
+ * is what this is sized against.
+ */
+export const FACILITY_EXTENT_METERS = 500;
+
 const EARTH_RADIUS_METERS = 6371008.8;
 
 function toRadians(degrees: number): number {
@@ -59,6 +66,33 @@ export function haversineMeters(a: PositionFix, b: PositionFix): number {
   const h =
     Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/**
+ * Drops the individual firing lanes of a club whose site is itself in the list.
+ *
+ * Surveyed Swedish ranges map the club as `leisure=sports_centre` and each
+ * lane as a separate `leisure=pitch`/`range` inside it. Offering those raw
+ * would bury "Malmö Skyttegille" under "A1 - 200 meter", "B3 - 75 neter" and
+ * "Älgen" — none of which is a place a shooter would write in a logbook.
+ *
+ * A non-facility is kept when it is nowhere near a facility: "Lomma
+ * skytteförening" is tagged `leisure=pitch` and is nonetheless the whole club,
+ * and dropping it because of its tagging would lose a real range. Tag quality
+ * varies too much to do better than proximity here.
+ */
+export function collapseToFacilities(
+  ranges: readonly ShootingRange[],
+  extentMeters = FACILITY_EXTENT_METERS,
+): ShootingRange[] {
+  const facilities = ranges.filter((range) => range.isFacility);
+  if (facilities.length === 0) return [...ranges];
+
+  return ranges.filter(
+    (range) =>
+      range.isFacility ||
+      !facilities.some((facility) => haversineMeters(facility, range) <= extentMeters),
+  );
 }
 
 /**
@@ -91,7 +125,7 @@ export function matchRanges(
 ): RangeMatch[] {
   const matches: RangeMatch[] = [];
 
-  for (const range of ranges) {
+  for (const range of collapseToFacilities(ranges)) {
     const distanceMeters = haversineMeters(fix, range);
     if (distanceMeters > searchRadiusMeters) continue;
 

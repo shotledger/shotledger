@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { bestMatch, haversineMeters, matchRanges, type PositionFix } from './match';
+import {
+  bestMatch,
+  collapseToFacilities,
+  haversineMeters,
+  matchRanges,
+  type PositionFix,
+} from './match';
 import type { ShootingRange } from './overpass';
 
-function range(id: string, name: string, latitude: number, longitude: number): ShootingRange {
-  return { id, name, latitude, longitude };
+function range(
+  id: string,
+  name: string,
+  latitude: number,
+  longitude: number,
+  isFacility = true,
+): ShootingRange {
+  return { id, name, latitude, longitude, isFacility };
 }
 
 // Malmö, near enough the maintainer's home range to keep the numbers readable.
@@ -121,5 +133,50 @@ describe('bestMatch', () => {
 
   it('is null for no matches at all', () => {
     expect(bestMatch([])).toBeNull();
+  });
+});
+
+describe('collapseToFacilities', () => {
+  // The real shape from Malmö Skyttegille: a club node with its lanes mapped
+  // as separate features a few hundred metres away.
+  const club = range('node/1', 'Malmö Skyttegille', 55.6317, 13.0509);
+  const lane = range('way/2', 'A1 - 200 meter', 55.6338, 13.0488, false);
+  const otherLane = range('way/3', 'Älgen', 55.6345, 13.0494, false);
+
+  it("drops a club's own lanes", () => {
+    expect(collapseToFacilities([club, lane, otherLane])).toEqual([club]);
+  });
+
+  it('keeps a standalone range that is merely tagged as a pitch', () => {
+    // Lomma skytteförening is leisure=pitch and is nonetheless the club.
+    const lomma = range('node/4', 'Lomma skytteförening', 55.6505, 13.0557, false);
+    expect(collapseToFacilities([club, lomma]).map((r) => r.id)).toEqual(['node/1', 'node/4']);
+  });
+
+  it('keeps everything when no facility is in the list at all', () => {
+    expect(collapseToFacilities([lane, otherLane])).toHaveLength(2);
+  });
+
+  it('keeps two clubs sharing a site', () => {
+    const neighbour = range('node/5', 'Malmö Jaktskyttecenter', 55.6318, 13.0509);
+    expect(collapseToFacilities([club, neighbour])).toHaveLength(2);
+  });
+
+  it('is empty for an empty list', () => {
+    expect(collapseToFacilities([])).toEqual([]);
+  });
+});
+
+describe('matchRanges, on real OSM shapes', () => {
+  it('offers the club, not its eleven lanes', () => {
+    const fix = { latitude: 55.6317, longitude: 13.0509, accuracyMeters: 20 };
+    const matches = matchRanges(fix, [
+      range('node/1', 'Malmö Skyttegille', 55.6317, 13.0509),
+      range('way/2', 'A1 - 200 meter', 55.6338, 13.0488, false),
+      range('way/3', 'C - 50 meter', 55.6324, 13.0498, false),
+      range('way/4', 'Älgen', 55.6345, 13.0494, false),
+    ]);
+    expect(matches.map((m) => m.label)).toEqual(['Malmö Skyttegille']);
+    expect(bestMatch(matches)?.confidence).toBe('here');
   });
 });
