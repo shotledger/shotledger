@@ -202,3 +202,68 @@ export function listGroupSamplesByAmmoLot(db: Database): AmmoLotGroupSample[] {
 
   return [...bySeries.entries()].map(([seriesId, sample]) => ({ seriesId, ...sample }));
 }
+
+export interface SessionMarks {
+  sessionId: string;
+  startedAt: string;
+  disciplineId: string;
+  marks: StoredMark[];
+}
+
+/**
+ * Marks across every session, for the cross-session heatmap.
+ *
+ * Grouped by session rather than returned flat, because the caller has to
+ * filter by period and discipline — and because a group analysis is only
+ * meaningful per target face. Sighters are excluded for the same reason
+ * `listMarksForSession` excludes them: volume, never score.
+ */
+export function listMarksBySession(db: Database): SessionMarks[] {
+  // Its own select rather than `selectMarks`: that one is shared with the
+  // per-series and per-session queries, which do not join `sessions`, and
+  // adding session columns there would compile but fail at runtime.
+  const rows = db
+    .select({
+      shotId: shots.id,
+      position: shots.position,
+      xMm: shotMarks.xMm,
+      yMm: shotMarks.yMm,
+      caliberMm: shotMarks.caliberMm,
+      valueTenths: shots.valueTenths,
+      isInnerTen: shots.isInnerTen,
+      sessionId: sessions.id,
+      startedAt: sessions.startedAt,
+      disciplineId: sessions.disciplineId,
+    })
+    .from(shotMarks)
+    .innerJoin(shots, eq(shotMarks.shotId, shots.id))
+    .innerJoin(series, eq(shots.seriesId, series.id))
+    .innerJoin(sessions, eq(series.sessionId, sessions.id))
+    .where(
+      and(
+        eq(series.isSighter, 0),
+        isNull(shotMarks.deletedAt),
+        isNull(shots.deletedAt),
+        isNull(series.deletedAt),
+        isNull(sessions.deletedAt),
+      ),
+    )
+    .orderBy(sessions.startedAt, series.position, shots.position)
+    .all();
+
+  const bySession = new Map<string, SessionMarks>();
+  for (const row of rows as (typeof rows)[number][]) {
+    const key = row.sessionId;
+    const existing = bySession.get(key);
+    const mark = toStoredMark(row);
+    if (existing) existing.marks.push(mark);
+    else
+      bySession.set(key, {
+        sessionId: key,
+        startedAt: row.startedAt,
+        disciplineId: row.disciplineId,
+        marks: [mark],
+      });
+  }
+  return [...bySession.values()];
+}
