@@ -46,12 +46,19 @@ export class WebShooterSpaLoginNotVerifiedError extends Error {
 
 /** The client secret could be neither read from webshooter.se nor fallen back to. */
 export class WebShooterSpaLoginUnconfiguredError extends Error {
-  constructor() {
+  /** Which way discovery failed — the three need different things from the user. */
+  readonly failure: ClientSecretDiscoveryFailure;
+  /** Status line or exception text, for a bug report. */
+  readonly detail: string;
+
+  constructor(failure: ClientSecretDiscoveryFailure, detail: string) {
     super(
-      "WebShooter's published OAuth client secret could not be read, and this build " +
-        'carries no fallback. Use a manual API token instead.',
+      `WebShooter's published OAuth client secret could not be read (${failure}: ${detail}), ` +
+        'and this build carries no fallback. Use a manual API token instead.',
     );
     this.name = 'WebShooterSpaLoginUnconfiguredError';
+    this.failure = failure;
+    this.detail = detail;
   }
 }
 
@@ -155,28 +162,68 @@ export function createWebShooterSpaLoginClient(
  */
 export const WEBSHOOTER_WEB_CLIENT_ID = '1';
 
+/**
+ * How reading the published secret failed.
+ *
+ * - `unreachable` — no response at all; the user's connection, or the host.
+ * - `rejected` — a response, but not a 200; webshooter.se having a bad day.
+ * - `absent` — a page that no longer carries the constant. This one is ours
+ *   to fix: they changed something and this code has to follow.
+ */
+export type ClientSecretDiscoveryFailure = 'unreachable' | 'rejected' | 'absent';
+
+export type ClientSecretDiscovery =
+  { secret: string } | { secret: null; failure: ClientSecretDiscoveryFailure; detail: string };
+
 /** Matches `app.value('oauthClientSecret', '…')` however it is quoted or spaced. */
 const PUBLISHED_SECRET = /oauthClientSecret['"]\s*,\s*['"]([^'"]+)['"]/;
 
 /**
  * Reads the client secret webshooter.se publishes to anonymous visitors.
  *
- * Returns null on anything unexpected — an unreachable host, a changed page,
- * a redesign that moves the constant — so the caller can fall back rather
- * than fail. Never throws: a login must not die because a scrape did.
+ * Never throws — a login must not die because a scrape did — but always
+ * reports HOW it failed. The three failures need different things: one is
+ * the user's network, one is webshooter.se being down, and one means they
+ * changed their page and this code needs updating. Collapsing them into a
+ * bare null leaves a field failure with nothing to go on.
  */
 export async function discoverPublishedClientSecret(
   fetchImpl: typeof fetch,
   siteUrl: string,
-): Promise<string | null> {
+): Promise<ClientSecretDiscovery> {
+  let response: Awaited<ReturnType<typeof fetch>>;
   try {
-    const response = await fetchImpl(siteUrl, { headers: { Accept: 'text/html' } });
-    if (!response.ok) return null;
-    const match = PUBLISHED_SECRET.exec(await response.text());
-    return match?.[1] ?? null;
-  } catch {
-    return null;
+    response = await fetchImpl(siteUrl, { headers: { Accept: 'text/html' } });
+  } catch (err) {
+    return {
+      secret: null,
+      failure: 'unreachable',
+      detail: err instanceof Error ? err.message : String(err),
+    };
   }
+
+  if (!response.ok) return { secret: null, failure: 'rejected', detail: `HTTP ${response.status}` };
+
+  let body: string;
+  try {
+    body = await response.text();
+  } catch (err) {
+    return {
+      secret: null,
+      failure: 'unreachable',
+      detail: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  const match = PUBLISHED_SECRET.exec(body);
+  if (!match?.[1])
+    return {
+      secret: null,
+      failure: 'absent',
+      detail: `no oauthClientSecret in ${body.length} bytes`,
+    };
+
+  return { secret: match[1] };
 }
 
 export interface SpaLoginClientOptions {
@@ -206,8 +253,12 @@ export function createSpaLoginClient(
   return {
     async login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult> {
       const discovered = await discoverPublishedClientSecret(fetchImpl, options.siteUrl);
-      const clientSecret = discovered ?? options.fallback?.clientSecret;
-      if (!clientSecret) throw new WebShooterSpaLoginUnconfiguredError();
+      const clientSecret = discovered.secret ?? options.fallback?.clientSecret;
+      if (!clientSecret)
+        throw new WebShooterSpaLoginUnconfiguredError(
+          discovered.secret === null ? discovered.failure : 'absent',
+          discovered.secret === null ? discovered.detail : '',
+        );
 
       return createWebShooterSpaLoginClient(fetchImpl, options.baseUrl, {
         clientId: options.fallback?.clientId || WEBSHOOTER_WEB_CLIENT_ID,

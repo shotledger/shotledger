@@ -642,7 +642,6 @@
     "usernamePlaceholder": "Username",
     "passwordPlaceholder": "Password",
     "connectWithPassword": "Connect with Password",
-    "spaLoginNotVerified": "Password login isn't available in this build — use a manual token below.",
     "tokenFallbackHelp": "Or paste a WebShooter API token directly.",
     "tokenPlaceholder": "API token",
     "connectWithToken": "Connect with Token",
@@ -704,7 +703,9 @@
       "silver": "Silver",
       "guld": "Gold"
     },
-    "loginRejected": "Wrong username or password."
+    "loginRejected": "Wrong username or password.",
+    "loginUnreachable": "Couldn't reach webshooter.se. Check your connection and try again, or paste a token below.",
+    "loginNeedsUpdate": "WebShooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this."
   },
   "timer": {
     "title": "Timers",

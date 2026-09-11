@@ -148,35 +148,49 @@ function html(status: number, body: string): typeof fetch {
 
 describe('discoverPublishedClientSecret', () => {
   it('reads the value out of the page webshooter.se serves anonymously', async () => {
-    await expect(discoverPublishedClientSecret(html(200, REAL_PAGE_SHAPE), SITE)).resolves.toBe(
-      'published-secret',
-    );
+    await expect(discoverPublishedClientSecret(html(200, REAL_PAGE_SHAPE), SITE)).resolves.toEqual({
+      secret: 'published-secret',
+    });
   });
 
   it('tolerates double quotes and loose spacing', async () => {
     const page = `<script>app.value( "oauthClientSecret" ,  "other-secret" );</script>`;
-    await expect(discoverPublishedClientSecret(html(200, page), SITE)).resolves.toBe(
-      'other-secret',
-    );
+    await expect(discoverPublishedClientSecret(html(200, page), SITE)).resolves.toEqual({
+      secret: 'other-secret',
+    });
   });
 
-  it('returns null when the page no longer carries it', async () => {
-    await expect(
-      discoverPublishedClientSecret(html(200, '<html></html>'), SITE),
-    ).resolves.toBeNull();
+  it('says the constant is absent, not merely that it failed', async () => {
+    // 'absent' is the one failure meaning WebShooter changed and this code
+    // has to follow. It must not read like a network blip.
+    await expect(discoverPublishedClientSecret(html(200, '<html></html>'), SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'absent',
+      detail: 'no oauthClientSecret in 13 bytes',
+    });
   });
 
-  it('returns null on a non-ok response', async () => {
-    await expect(discoverPublishedClientSecret(html(503, ''), SITE)).resolves.toBeNull();
+  it('reports a non-ok response with its status', async () => {
+    await expect(discoverPublishedClientSecret(html(503, ''), SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'rejected',
+      detail: 'HTTP 503',
+    });
   });
 
-  it('never throws when the host is unreachable', async () => {
-    // A login must not die because a scrape did — the fallback exists for
-    // exactly this, and it cannot run if discovery throws.
+  it('never throws when the host is unreachable, and keeps the reason', async () => {
+    // A login must not die because a scrape did — the fallback cannot run if
+    // discovery throws — but the reason has to survive it, or a failure in
+    // the field has nothing to go on.
     const fetchImpl = vi.fn(() =>
       Promise.reject(new Error('network down')),
     ) as unknown as typeof fetch;
-    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toBeNull();
+
+    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'unreachable',
+      detail: 'network down',
+    });
   });
 });
 
@@ -256,15 +270,18 @@ describe('createSpaLoginClient', () => {
     );
   });
 
-  it('never sends credentials when it has no secret at all', async () => {
+  it('never sends credentials when it has no secret at all, and says why', async () => {
     const fetchImpl = siteThenToken(null, { access_token: 'tok' });
 
-    await expect(
-      createSpaLoginClient(fetchImpl, { baseUrl: BASE, siteUrl: SITE }).login({
-        username: 'a',
-        password: 'b',
-      }),
-    ).rejects.toBeInstanceOf(WebShooterSpaLoginUnconfiguredError);
+    const error = await createSpaLoginClient(fetchImpl, { baseUrl: BASE, siteUrl: SITE })
+      .login({ username: 'a', password: 'b' })
+      .catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(WebShooterSpaLoginUnconfiguredError);
+    // The reason reaches the caller rather than dying in a catch block.
+    expect((error as WebShooterSpaLoginUnconfiguredError).failure).toBe('rejected');
+    expect((error as WebShooterSpaLoginUnconfiguredError).detail).toBe('HTTP 404');
+    expect((error as Error).message).toContain('HTTP 404');
 
     // One call, to the site. The password never left the device.
     const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
