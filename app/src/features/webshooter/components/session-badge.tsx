@@ -1,4 +1,4 @@
-// Session detail: official placement/medal + a WebShooter badge when
+// Session detail: official placement/medal + a Webshooter badge when
 // external_ref is present (integration spec §A.5). Deliberately a single,
 // self-contained component — see app/src/app/session/[id]/index.tsx for
 // the one-line insertion point, kept minimal to avoid colliding with the
@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
-export interface WebShooterSessionBadgeProps {
+export interface WebshooterSessionBadgeProps {
   session: {
     externalSource: string | null;
     officialPlacement: number | null;
@@ -23,7 +23,7 @@ export interface WebShooterSessionBadgeProps {
  * unconditionally and let it decide, so the insertion point in
  * session/[id]/index.tsx never needs an extra if-check of its own.
  */
-export function WebShooterSessionBadge({ session }: WebShooterSessionBadgeProps) {
+export function WebshooterSessionBadge({ session }: WebshooterSessionBadgeProps) {
   const { t } = useTranslation();
   const theme = useTheme();
 

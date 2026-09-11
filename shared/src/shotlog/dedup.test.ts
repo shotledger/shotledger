@@ -193,7 +193,7 @@ describe('findProbableDuplicates', () => {
     expect(found.map((s) => s.id)).toEqual(['s1']);
   });
 
-  it('matches a WebShooter-imported session too', () => {
+  it('matches a Webshooter-imported session too', () => {
     const found = findProbableDuplicates(EXISTING, {
       datetime: '2026-05-04T23:59:59Z',
       disciplineId: 'spsf-milsnabb',

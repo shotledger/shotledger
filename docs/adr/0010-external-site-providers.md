@@ -4,12 +4,12 @@ Status: accepted (2026-09-11)
 
 ## Context
 
-WebShooter was built as _the_ external integration: `shared/integrations/webshooter/`,
-a WebShooter section on Tools, WebShooter routes, and a connection flow
+Webshooter was built as _the_ external integration: `shared/integrations/webshooter/`,
+a Webshooter section on Tools, Webshooter routes, and a connection flow
 that knows it is talking to webshooter.se. `docs/specs/webshooter-integration-spec.md`
 is written the same way.
 
-WebShooter is not the only site Swedish shooters use. pistol.nu is the
+Webshooter is not the only site Swedish shooters use. pistol.nu is the
 obvious next one, and the maintainer expects more. Each exposes a
 different subset — one may offer results and start lists, another only
 results, another statistics we do not compute ourselves — and each has
@@ -58,8 +58,8 @@ and is reviewed like any other code.
 ## Consequences
 
 - `docs/specs/webshooter-integration-spec.md` and `-app-spec.md` remain
-  correct about WebShooter's API and semantics; their framing of
-  WebShooter as _the_ integration is superseded by this ADR.
+  correct about Webshooter's API and semantics; their framing of
+  Webshooter as _the_ integration is superseded by this ADR.
 - The second provider is an implementation plus a descriptor, not a
   refactor. That is the whole point, and it is the claim to check when
   pistol.nu lands.

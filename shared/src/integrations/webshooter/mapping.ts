@@ -1,4 +1,4 @@
-// WebShooter -> ShotLedger mapping (spec §4). Fail-soft on anything not
+// Webshooter -> ShotLedger mapping (spec §4). Fail-soft on anything not
 // confidently resolvable — never a guess (spsf-domain rule 8 / v2 spec §A.8).
 import type { ResultRow, StationResult } from './api/schemas';
 
@@ -41,7 +41,7 @@ const CLASSNAME_PATTERNS: readonly ClassnamePattern[] = [
 ];
 
 /**
- * Maps a WebShooter `classname` string to ShotLedger's orthogonal
+ * Maps a Webshooter `classname` string to ShotLedger's orthogonal
  * weapon_group/shooter_class pair, or reports it as unmapped. Never guesses
  * (spec §4.1) — a `ok: false` result is the app layer's cue to prompt for a
  * manual mapping and cache it in `settings` (this module has no settings
@@ -55,13 +55,13 @@ export function mapClassname(classname: string): ClassnameMappingResult {
   return {
     ok: false,
     classname,
-    reason: `Unrecognized WebShooter classname "${classname}" — needs a manual mapping`,
+    reason: `Unrecognized Webshooter classname "${classname}" — needs a manual mapping`,
   };
 }
 
 // --- §4.2 competition type -> discipline/program ---------------------------
 
-export type WebShooterResultsType = 'precision' | 'field' | 'military' | 'pointfield' | null;
+export type WebshooterResultsType = 'precision' | 'field' | 'military' | 'pointfield' | null;
 
 export interface DisciplineProgramIds {
   disciplineId: string;
@@ -69,14 +69,14 @@ export interface DisciplineProgramIds {
 }
 
 const RESULTS_TYPE_TO_PROGRAM: Partial<
-  Record<NonNullable<WebShooterResultsType>, DisciplineProgramIds>
+  Record<NonNullable<WebshooterResultsType>, DisciplineProgramIds>
 > = {
   precision: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
   military: { disciplineId: 'spsf-milsnabb', programId: 'spsf-milsnabb' },
 };
 
 /** `null` for `field`/`pointfield`/`null` — not importable (spec §A.9). */
-export function mapResultsType(resultsType: WebShooterResultsType): DisciplineProgramIds | null {
+export function mapResultsType(resultsType: WebshooterResultsType): DisciplineProgramIds | null {
   if (resultsType === null) return null;
   return RESULTS_TYPE_TO_PROGRAM[resultsType] ?? null;
 }
@@ -208,7 +208,7 @@ function offsetMinutesAt(timeZone: string, ms: number): number {
 }
 
 /**
- * Converts a naive `"YYYY-MM-DD HH:mm:ss"` local timestamp (WebShooter's own
+ * Converts a naive `"YYYY-MM-DD HH:mm:ss"` local timestamp (Webshooter's own
  * format, no offset) to a UTC ISO string, without a date/tz library
  * dependency (spec §4.4). Fixed-point technique: guess the instant as if the
  * wall-clock components were UTC, sample the zone's actual offset at that

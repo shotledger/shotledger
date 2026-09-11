@@ -43,7 +43,7 @@ function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
       isSighter: row.isSighter === 1,
       isFinal: row.isFinal === 1,
       shots: shotsBySeries.get(row.id) ?? [],
-      // WS1 (docs/specs/webshooter-app-spec.md): an imported WebShooter
+      // WS1 (docs/specs/webshooter-app-spec.md): an imported Webshooter
       // series has no shot rows, only a stored total/shot-count.
       totalOverride:
         row.isTotalOverride === 1 &&

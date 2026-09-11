@@ -15,7 +15,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { CalendarPicker } from '@/features/webshooter/calendar-picker';
-import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
+import { useWebshooterConnection } from '@/features/webshooter/use-webshooter-connection';
 import { Spacing } from '@/theme/tokens';
 
 export interface ProviderConnectionProps {
@@ -26,7 +26,7 @@ export function ProviderConnection({ provider }: ProviderConnectionProps) {
   const { t } = useTranslation();
   // One provider today. When the second lands this becomes a lookup, not a
   // longer branch — the hook shape is the seam (ADR 0010).
-  const connection = useWebShooterConnection();
+  const connection = useWebshooterConnection();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');

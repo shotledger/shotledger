@@ -1,4 +1,4 @@
-# WebShooter client core — executable spec
+# Webshooter client core — executable spec
 
 > old-coder SPEC for `shared/src/integrations/webshooter/`. Autonomous run:
 > **spec approval: not obtained (autonomous run)** — this document is the
@@ -76,10 +76,10 @@ observed across the cache, which is itself the wire format, not personal data.
 ### 2.1 Wire schemas (`api/schemas.ts`)
 
 zod schemas for the fields this integration actually reads (not the full
-WebShooter payload — extra upstream fields are ignored, not rejected: plain
+Webshooter payload — extra upstream fields are ignored, not rejected: plain
 `z.object`, never `z.strictObject`, on every wire schema, because the real
 API returns dozens of fields we don't model and a strict schema would break
-on the next unrelated field WebShooter adds).
+on the next unrelated field Webshooter adds).
 
 - `weaponClassSchema`: `{ id, weapongroups_id, classname, championship,
 classname_general }`.
@@ -145,7 +145,7 @@ fetch, baseUrl, getToken: () => string | null, now?: () => number, sleep?:
   default **2** (500ms, 1000ms, 2000ms between the 3 attempts). Retries
   ONLY on HTTP 500–599. A 4xx never retries (client error, retrying can't
   help and risks hammering an auth failure). Non-retryable errors and the
-  final exhausted attempt reject with a `WebShooterHttpError` carrying
+  final exhausted attempt reject with a `WebshooterHttpError` carrying
   `status` and `path`.
 - `sleep`/`now` are injected (default `setTimeout`/`Date.now`) so tests run
   with a fake sleep and assert delay values without waiting in real time.
@@ -158,10 +158,10 @@ Behaviors:
 - 200 response: schema-parses and returns, one fetch call.
 - 500 then 200: two fetch calls, one sleep call at ~500ms, resolves with the
   200 body.
-- 500 × `maxAttempts`: rejects with `WebShooterHttpError`, `maxAttempts`
+- 500 × `maxAttempts`: rejects with `WebshooterHttpError`, `maxAttempts`
   fetch calls, `maxAttempts - 1` sleep calls with the documented backoff
   sequence.
-- 404: rejects immediately with `WebShooterHttpError{status:404}`, one fetch
+- 404: rejects immediately with `WebshooterHttpError{status:404}`, one fetch
   call, zero sleep calls.
 - No token (`getToken` returns null): request sent with no `Authorization`
   header (asserted on the injected fetch mock's call args).
@@ -169,7 +169,7 @@ Behaviors:
 
 ### 2.3 Typed endpoint client (`api/client.ts`)
 
-`createWebShooterClient(httpClient, cacheConfig?): WebShooterClient` with:
+`createWebshooterClient(httpClient, cacheConfig?): WebshooterClient` with:
 
 - `listCompetitions(options?: { forceRefresh?: boolean }): Promise<Competition[]>`
   — `GET /competitions` (§A.11: no changed-since param, always full list).
@@ -214,20 +214,20 @@ inspected; it is **not implemented against a live endpoint** (no network
 calls exist anywhere in this branch, per the task's hard constraint).
 
 ```ts
-export interface WebShooterSpaLoginRequest {
+export interface WebshooterSpaLoginRequest {
   username: string;
   password: string;
 }
-export interface WebShooterSpaLoginResult {
+export interface WebshooterSpaLoginResult {
   token: string;
 }
-export interface WebShooterSpaLoginClient {
-  login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult>;
+export interface WebshooterSpaLoginClient {
+  login(request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult>;
 }
 ```
 
-`createUnverifiedSpaLoginClient(fetchImpl, baseUrl): WebShooterSpaLoginClient`
-— throws `WebShooterSpaLoginNotVerifiedError` synchronously from `login()`
+`createUnverifiedSpaLoginClient(fetchImpl, baseUrl): WebshooterSpaLoginClient`
+— throws `WebshooterSpaLoginNotVerifiedError` synchronously from `login()`
 without ever calling `fetchImpl`. **`VERIFY:`** the exact login endpoint path,
 request body field names, and response shape (inspect the SPA's own login
 network request, per the maintainer's PR #19 comment) before replacing this
@@ -242,7 +242,7 @@ never invoked (mock call count 0).
 
 - `normalizeCardNumber(raw: string | null | undefined): string | null` —
   strips all whitespace (space, tab, non-breaking space ` `) via
-  `raw.replace(/\s/gu, '')`; `""`/`null`/`undefined`/`"None"` (WebShooter's
+  `raw.replace(/\s/gu, '')`; `""`/`null`/`undefined`/`"None"` (Webshooter's
   own null-ish string, per spec §A.8) all normalize to `null`; anything else
   (including an alpha prefix like `"A1234"`) is returned trimmed of
   whitespace only, case preserved.
@@ -254,7 +254,7 @@ fetchAuthenticatedUser: () => Promise<{ shooting_card_number: string |
 null }> }): Promise<string>` — resolution order (§A.10): (1) `override`
   if normalizes non-null, (2) `stored` if normalizes non-null, (3) calls
   `fetchAuthenticatedUser()` and normalizes its result. Throws
-  `WebShooterIdentityUnresolvedError` if all three normalize to null.
+  `WebshooterIdentityUnresolvedError` if all three normalize to null.
   `fetchAuthenticatedUser` is only invoked when both (1) and (2) miss
   (asserted via mock call count) — the point of the order is never issuing
   the network call when a stored/override value exists.
@@ -266,7 +266,7 @@ Behaviors (table, exact per §A.8/§A.10):
 | `"12 456"`  | `"12456"` | true                                                                                              |
 | `"12456"`   | `"12456"` | true                                                                                              |
 | `"A1234"`   | `"A1234"` | true                                                                                              |
-| `"A1234"`   | `"a1234"` | false (case-sensitive — WebShooter card numbers are not documented case-insensitive; not guessed) |
+| `"A1234"`   | `"a1234"` | false (case-sensitive — Webshooter card numbers are not documented case-insensitive; not guessed) |
 | `null`      | `"12456"` | false                                                                                             |
 | `null`      | `null`    | false                                                                                             |
 | `"None"`    | `"12456"` | false                                                                                             |
@@ -308,7 +308,7 @@ not a giant switch — new patterns are one array entry):
    is surfaced to the user for manual mapping and cached in `settings` by
    the **app layer** (not this module — this module is pure and has no
    settings access).
-   `VERIFY:` the full enumeration against a live API response or WebShooter
+   `VERIFY:` the full enumeration against a live API response or Webshooter
    docs remains open per spec §A.8/open-question 3 — this table only
    encodes patterns with a confident, spec-consistent reading (the Dam/Jun/
    VetY/VetÄ suffix convention matches `disciplines/classes.ts` exactly);
@@ -350,7 +350,7 @@ flag) into one array, `totalOverrideTenths = row.points * 10`,
 per §A.4 — 5 for both v1 programs, passed in rather than hardcoded so the
 function stays discipline-agnostic). `position` continues across all three
 sections in their concatenation order (main, finals, distinguish) —
-`VERIFY:` whether WebShooter's own `stations_id` numbering already
+`VERIFY:` whether Webshooter's own `stations_id` numbering already
 distinguishes finals/distinguish sections (it appears to restart at 1 per
 section in the cache) or whether the importer must offset them for
 `series.position` uniqueness within one session; this function offsets
@@ -369,7 +369,7 @@ it for a future accumulator, this mapper just never produces it.)
 ### 4.4 Local time → UTC
 
 `localToUtcIso(localDateTime: string, timeZone = 'Europe/Stockholm'):
-string` — WebShooter returns naive `"YYYY-MM-DD HH:mm:ss"` local timestamps,
+string` — Webshooter returns naive `"YYYY-MM-DD HH:mm:ss"` local timestamps,
 no offset. Converts using the fixed-point `Intl.DateTimeFormat` technique
 (no date/tz library dependency — see §5.6 for the one-paragraph algorithm
 and why a single iteration always converges for this offset range): returns
@@ -452,7 +452,7 @@ table lookup against the two arrays above (§A.3's own field lists).
 `mergeSessionFields<T extends Record<string, unknown>>(existing: T,
 incoming: Partial<T>): T` — for every key in `incoming`: if
 `classifyMergeField(key) === 'score'`, always overwrite (even to a "smaller"
-or `null`-ish value — WebShooter is authoritative, per §A.3); if `'enrichment'`,
+or `null`-ish value — Webshooter is authoritative, per §A.3); if `'enrichment'`,
 overwrite ONLY when `existing[key]` is `null`, `undefined`, or `''` (never
 clobber a user-entered value, per §A.3's exact wording); if `'unknown'`
 (a field neither list names), the incoming value is **dropped** (never
@@ -519,7 +519,7 @@ CompetitionResultForStats> }>` — filters to `isOfficialPbEligible`, groups
 by `groupKey`, ranks descending by `officialPbScore`, ties broken by
 `figureHits` desc (`VERIFY:` per spec §B.1 — "figure hits" term/definition
 not confirmed against wscli source, this module treats the field named
-`figure_hits` in the WebShooter payload as the tiebreak input at face
+`figure_hits` in the Webshooter payload as the tiebreak input at face
 value), then `innerTens` desc. `allTime` is the single best row overall per
 group; `byYear` is keyed by `new Date(result.date).getUTCFullYear()`.
 
@@ -719,7 +719,7 @@ report, not just here)
 1. `api/schemas.ts` `authUserSchema` — exact `authenticate/user` response
    shape, not in the cache.
 2. `api/httpClient.ts` retry backoff (3 attempts, 500ms base, ×2 factor) and
-   `api/client.ts` cache TTL (15 min) — no published WebShooter SLA.
+   `api/client.ts` cache TTL (15 min) — no published Webshooter SLA.
 3. `api/client.ts` — pagination beyond page 1 for `/competitions` and
    `/signups`, not handled.
 4. `mapping.ts` classname enumeration — pattern table is confident for the

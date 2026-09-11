@@ -9,7 +9,7 @@ import {
 } from './registry';
 
 describe('provider registry', () => {
-  it('has WebShooter as provider #1', () => {
+  it('has Webshooter as provider #1', () => {
     expect(PROVIDERS.map((p) => p.id)).toEqual([WEBSHOOTER_PROVIDER_ID]);
   });
 
@@ -34,7 +34,7 @@ describe('provider registry', () => {
 
     expect(providerSupports(webshooter, 'importResults')).toBe(true);
     expect(providerSupports(webshooter, 'myStarts')).toBe(true);
-    // WebShooter has statistics of its own, but we do not read them; the
+    // Webshooter has statistics of its own, but we do not read them; the
     // registry says what we support, not what the site happens to have.
     expect(providerSupports(webshooter, 'stats')).toBe(false);
   });

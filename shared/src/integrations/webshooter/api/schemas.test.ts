@@ -113,7 +113,7 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     expect(parsed.fullname).toBeUndefined();
   });
 
-  it('accepts the nulls real WebShooter data is full of', () => {
+  it('accepts the nulls real Webshooter data is full of', () => {
     // Audited against wscli's 633 captured responses: with these fields
     // required, 124 of 256 results responses and 92 of 120 signups
     // responses failed to parse. Nulls here are the normal state, not

@@ -4,10 +4,10 @@
 // iOS's `calendarItemExternalIdentifier` is read-only (assigned by the
 // system, not settable at creation). Documented limitation, not silently
 // worked around: dedup is done locally instead, by remembering the native
-// event id we created for each WebShooter UID (settings table, keyed
+// event id we created for each Webshooter UID (settings table, keyed
 // `webshooterCalendarEvent:<uid>`) and re-using/updating that id on a
 // second "Add to calendar" tap for the same start — this only dedups
-// within ShotLedger's own writes, not against wscli's or WebShooter's own
+// within ShotLedger's own writes, not against wscli's or Webshooter's own
 // calendar exports using the same UID scheme, despite spec §C.2's intent
 // ("a user who also uses wscli never gets a duplicate event") — that part
 // of the dedup guarantee cannot be delivered through expo-calendar's API.
@@ -85,7 +85,7 @@ async function getWritableCalendarId(preferredId: string | null): Promise<string
 }
 
 /**
- * Creates or updates the device calendar event for one WebShooter start
+ * Creates or updates the device calendar event for one Webshooter start
  * (§C.2). `existingEventId`, when passed, is the id ShotLedger previously
  * created for this UID (see the module comment above) — re-tapping "Add to
  * calendar" updates that event instead of creating a duplicate.
@@ -129,8 +129,19 @@ export async function upsertCalendarEvent(
 
   if (existingEventId) {
     try {
-      await Calendar.updateEventAsync(existingEventId, details);
-      return { eventId: existingEventId, calendarTitle };
+      // An event cannot change calendar in place. If the shooter has since
+      // picked a different calendar, the entry has to be moved — otherwise
+      // "choose a calendar" silently means "choose it for future starts
+      // only", and an entry added before the choice stays somewhere they
+      // may not even have visible (2026-09-11: a start that was added,
+      // recorded, and then simply not in the calendar they were looking at).
+      const existing = await Calendar.getEventAsync(existingEventId);
+      if (existing.calendarId !== undefined && existing.calendarId !== calendarId) {
+        await Calendar.deleteEventAsync(existingEventId);
+      } else {
+        await Calendar.updateEventAsync(existingEventId, details);
+        return { eventId: existingEventId, calendarTitle };
+      }
     } catch {
       // The previously-created event was removed outside the app (user
       // deleted it in their calendar app) — fall through to re-create.

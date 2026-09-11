@@ -4,7 +4,7 @@
 // normal state for weeks after entering, and it is exactly the thing you
 // want in your diary early.
 //
-// WebShooter has no aggregate "my competitions" endpoint, so this walks
+// Webshooter has no aggregate "my competitions" endpoint, so this walks
 // upcoming competitions and asks for their signups. Patrols are fetched
 // ONLY for competitions the shooter is actually in, which is strictly
 // fewer requests than the previous patrols-for-everything pass.
@@ -24,7 +24,7 @@ import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { upsertCalendarEvent } from '@/platform/calendar';
 
-import { getWebShooterClient, loadTokenCache } from './client';
+import { getWebshooterClient, loadTokenCache } from './client';
 
 /** Which calendar the shooter chose in Settings; null means "first writable". */
 export const CALENDAR_ID_SETTING_KEY = 'webshooterCalendarId';
@@ -33,6 +33,8 @@ export interface SquadMember {
   name: string;
   lane: number;
   weaponClass: string;
+  /** Club name, shown in full — "same club" alone loses who the others are. */
+  club: string;
   /** True for the shooter's own row, so the list can mark it. */
   isMe: boolean;
   sameClub: boolean;
@@ -42,8 +44,11 @@ export interface ClubStart {
   name: string;
   /** 'start|end' in wire format, or null while their patrol is undrawn. */
   window: string | null;
+  /** Derived the same way as the shooter's own — see the numbering below. */
+  patrolNumber: number | null;
   lane: number;
   weaponClass: string;
+  club: string;
 }
 
 export interface MyStart {
@@ -81,14 +86,21 @@ function calendarEventSettingKey(uid: string): string {
   return `webshooterCalendarEvent:${uid}`;
 }
 
-/** Everything a calendar entry shows; a change here means it must be rewritten. */
-function calendarSignature(event: CalendarEvent): string {
+/**
+ * Everything a calendar entry depends on; a change here means it must be
+ * rewritten. The target calendar is part of that: picking a different
+ * calendar changes nothing about the event's CONTENT, so without this the
+ * update-on-open pass sees no change and an entry added before the choice
+ * stays where it was, in a calendar the shooter may not even display.
+ */
+function calendarSignature(event: CalendarEvent, calendarId: string | null): string {
   return [
     event.startUtc,
     event.endUtc,
     String(event.allDay),
     event.summary,
     event.description,
+    calendarId ?? '',
   ].join('|');
 }
 
@@ -114,7 +126,7 @@ function writeStoredEntry(uid: string, entry: StoredCalendarEntry): void {
   setSetting<string>(db, calendarEventSettingKey(uid), JSON.stringify(entry));
 }
 
-export function useWebShooterStarts() {
+export function useWebshooterStarts() {
   const [starts, setStarts] = useState<MyStart[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +145,7 @@ export function useWebShooterStarts() {
       // fills. Reaching this screen without having mounted that hook sent
       // every request out with no Authorization header.
       await loadTokenCache();
-      const client = getWebShooterClient();
+      const client = getWebshooterClient();
       const cardNumber = await resolveIdentity({
         override: null,
         stored: getSetting<string | null>(db, 'webshooterCardNumber', null),
@@ -153,7 +165,7 @@ export function useWebShooterStarts() {
       for (const competition of competitions) {
         // One competition must not cost the shooter every other start.
         // This walks dozens of them, and a single response we cannot parse
-        // — a field WebShooter sends differently for one event — used to
+        // — a field Webshooter sends differently for one event — used to
         // throw the whole load away and show an empty screen.
         let signups: Signup[];
         let patrols: Patrol[];
@@ -173,6 +185,18 @@ export function useWebShooterStarts() {
           unreadable += 1;
           continue;
         }
+
+        // The skjutlag number is NOT in the API. A patrol carries only
+        // id/competitions_id/start_time/end_time/patrol_size/signups, and
+        // `id` is a global key — 8407 for a competition's first patrol —
+        // so printing it as the skjutlag number is simply wrong, which is
+        // what the calendar description had been doing. It is derived here
+        // from the running order instead: patrols in time order, numbered
+        // from one, which is the order they are shot in.
+        const patrolNumbers = new Map<number, number>();
+        [...patrols]
+          .sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? '') || a.id - b.id)
+          .forEach((p, index) => patrolNumbers.set(p.id, index + 1));
 
         // Deduplicated by signup id: a drawn entry appears in both.
         const bySignupId = new Map<number, Signup>();
@@ -195,7 +219,7 @@ export function useWebShooterStarts() {
             competitionName: competition.name,
             city: competition.contact_city,
             weaponGroup: signup.weaponclass?.classname_general ?? '',
-            patrolNumber: patrol?.id ?? null,
+            patrolNumber: patrol === null ? null : (patrolNumbers.get(patrol.id) ?? null),
             lane: signup.lane,
             startLocal: scheduled ? patrol.start_time : null,
             endLocal: scheduled ? patrol.end_time : null,
@@ -208,7 +232,10 @@ export function useWebShooterStarts() {
           // touches entries the shooter added — it never creates one.
           const stored = readStoredEntry(event.uid);
           let calendarStale = false;
-          if (stored !== null && stored.signature !== calendarSignature(event)) {
+          if (
+            stored !== null &&
+            stored.signature !== calendarSignature(event, preferredCalendarId)
+          ) {
             try {
               const upserted = await upsertCalendarEvent(
                 event,
@@ -217,7 +244,7 @@ export function useWebShooterStarts() {
               );
               writeStoredEntry(event.uid, {
                 eventId: upserted.eventId,
-                signature: calendarSignature(event),
+                signature: calendarSignature(event, preferredCalendarId),
               });
             } catch (err) {
               // Permission revoked, calendar deleted — the entry is now
@@ -234,7 +261,7 @@ export function useWebShooterStarts() {
             signupId: signup.id,
             patrolStart: scheduled ? patrol.start_time : null,
             patrolEnd: scheduled ? patrol.end_time : null,
-            patrolNumber: patrol?.id ?? null,
+            patrolNumber: patrol === null ? null : (patrolNumbers.get(patrol.id) ?? null),
             lane: signup.lane,
             city: competition.contact_city,
             // `classname` is the specific class (C, R, A…); classname_general
@@ -244,11 +271,21 @@ export function useWebShooterStarts() {
               name: s.user?.fullname ?? '',
               lane: s.lane,
               weaponClass: s.weaponclass?.classname ?? '',
+              club: s.club?.name ?? '',
               isMe: s.id === signup.id,
-              sameClub: s.club?.id === signup.club?.id,
+              // Only a real match counts: two signups with no club at all
+              // are not club mates, and `undefined === undefined` said they
+              // were.
+              sameClub: s.club?.id !== undefined && s.club.id === signup.club?.id,
             })),
-            clubStarts: signups
-              .filter((s) => s.id !== signup.id && s.club?.id === signup.club?.id)
+            // Built from the MERGED set, not from /signups: that listing
+            // does not contain this shooter, and filtering it against their
+            // own club found nobody even with three club mates in the squad.
+            clubStarts: [...bySignupId.values()]
+              .filter(
+                (s) =>
+                  s.id !== signup.id && s.club?.id !== undefined && s.club.id === signup.club?.id,
+              )
               .map((s) => {
                 const theirPatrol = patrols.find((p) => p.signups.some((x) => x.id === s.id));
                 const theirWindow =
@@ -260,8 +297,11 @@ export function useWebShooterStarts() {
                 return {
                   name: s.user?.fullname ?? '',
                   window: theirWindow,
+                  patrolNumber:
+                    theirPatrol === undefined ? null : (patrolNumbers.get(theirPatrol.id) ?? null),
                   lane: s.lane,
                   weaponClass: s.weaponclass?.classname ?? '',
+                  club: s.club?.name ?? '',
                 };
               }),
             event,
@@ -278,7 +318,7 @@ export function useWebShooterStarts() {
       setStarts(results);
       setSkipped(unreadable);
     } catch (err) {
-      // Not swallowed: "couldn't reach WebShooter" is what every failure
+      // Not swallowed: "couldn't reach Webshooter" is what every failure
       // here looked like, including ones that reached it perfectly well and
       // failed to parse the answer.
       console.error('[webshooter] starts failed', err);
@@ -293,14 +333,11 @@ export function useWebShooterStarts() {
   const addToCalendar = useCallback(async (start: MyStart): Promise<string> => {
     if (!db) return '';
     const stored = readStoredEntry(start.event.uid);
-    const upserted = await upsertCalendarEvent(
-      start.event,
-      stored?.eventId ?? null,
-      getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null),
-    );
+    const calendarId = getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null);
+    const upserted = await upsertCalendarEvent(start.event, stored?.eventId ?? null, calendarId);
     writeStoredEntry(start.event.uid, {
       eventId: upserted.eventId,
-      signature: calendarSignature(start.event),
+      signature: calendarSignature(start.event, calendarId),
     });
     return upserted.calendarTitle;
   }, []);

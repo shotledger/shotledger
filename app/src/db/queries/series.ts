@@ -20,7 +20,7 @@ export interface AddSeriesInput {
   /** e.g. 'särskjutning' (integration spec §A.6). */
   note?: string | null;
   /**
-   * WebShooter series-level-total granularity (integration spec §1/§A.4):
+   * Webshooter series-level-total granularity (integration spec §1/§A.4):
    * when true, no `shots` rows are ever created for this series and
    * totalOverrideTenths/totalOverrideShotCount must both be set.
    */
@@ -40,7 +40,7 @@ export function addSeries(db: Database, input: AddSeriesInput) {
   const isTotalOverride = input.isTotalOverride ?? false;
 
   if (isTotalOverride && isSighter) {
-    // Overrides come from WebShooter results, which never report sighter
+    // Overrides come from Webshooter results, which never report sighter
     // series (spec §A.7) — a caller mixing the two flags is a bug upstream.
     throw new RangeError('An override series cannot also be a sighter series.');
   }

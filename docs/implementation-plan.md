@@ -674,10 +674,10 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | `/firearms`                                | list + barometer chips                                                                    | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
-| `/tools`                                   | timers, vault, WebShooter — the non-settings hub                                          | disconnected       |
+| `/tools`                                   | timers, vault, Webshooter — the non-settings hub                                          | disconnected       |
 | `/timer`                                   | PAR / IPSC / fält timer (segmented control)                                               | idle vs running    |
 | `/vault`                                   | encrypted licences, cards, codes                                                          | locked / empty     |
-| `/webshooter/import`, `/webshooter/starts` | WebShooter competitions and signups                                                       | not connected      |
+| `/webshooter/import`, `/webshooter/starts` | Webshooter competitions and signups                                                       | not connected      |
 | `/settings`                                | language, theme, birth year, compliance, account & sync, backup/restore, CSV, about, wipe |                    |
 | `/dev/components`                          | component gallery (dev only)                                                              |                    |
 
@@ -1058,7 +1058,7 @@ restates §0 rules 1–6 verbatim.
 > rows arriving active from a last-write-wins sync. No new dependency, no
 > backend change — `sync_rows` is table-agnostic.
 
-Photo target scoring; WebShooter import; document vault; iOS release.
+Photo target scoring; Webshooter import; document vault; iOS release.
 
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.

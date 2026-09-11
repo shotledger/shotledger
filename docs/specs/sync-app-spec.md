@@ -462,7 +462,7 @@ D1, real better-auth, in-process) — the end-to-end requirement:
   blocking.
 - **The web build cannot sync.** `app/src/db/client.web.ts` exposes a null
   `db`; the Account & sync screen renders its sign-in form but reports sync
-  as unavailable there, matching the existing WebShooter posture.
+  as unavailable there, matching the existing Webshooter posture.
 - The server-side `sync_sequence` concurrency race documented in
   `sync-protocol-spec.md` §5 is inherited unchanged; the client's
   single-loop discipline (§7) is exactly the client-side assumption that

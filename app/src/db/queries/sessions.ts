@@ -37,7 +37,7 @@ export interface CreateSessionInput {
   tenCount?: number | null;
   innerTenCount?: number | null;
   decimalScoring?: boolean;
-  // WebShooter (integration spec §1/§A) and ShotLog CSV
+  // Webshooter (integration spec §1/§A) and ShotLog CSV
   // (docs/specs/shotlog-import-spec.md §7) imports — unset for a locally
   // created session (external_source stays NULL).
   externalSource?: 'webshooter' | 'shotlog' | null;

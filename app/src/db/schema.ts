@@ -147,7 +147,7 @@ export const sessions = sqliteTable('sessions', {
   // and from the series/shots structures (spec Amendment A1 §A1.3).
   // NULL and 0 both mean "none"; nullable so "never entered" stays visible.
   extraRounds: integer('extra_rounds'),
-  // WebShooter import (docs/specs/webshooter-integration-spec.md §1/§A).
+  // Webshooter import (docs/specs/webshooter-integration-spec.md §1/§A).
   // externalSource is 'webshooter' when imported; NULL = locally created.
   externalSource: text('external_source'),
   // 'webshooter:<competition_id>:<signup_id>' — exact-match key (§A.2).
@@ -156,8 +156,8 @@ export const sessions = sqliteTable('sessions', {
   externalRef: text('external_ref'),
   externalSyncedAt: text('external_synced_at'), // last successful re-import merge
   webshooterCompetitionId: text('webshooter_competition_id'), // for re-fetch on refresh
-  officialPlacement: integer('official_placement'), // authoritative, from WebShooter
-  // authoritative, from WebShooter; the app's own computed standardmedalj
+  officialPlacement: integer('official_placement'), // authoritative, from Webshooter
+  // authoritative, from Webshooter; the app's own computed standardmedalj
   // indicator (§6.5b) stays a separate, always-computed value — never merged
   officialStandardmedalj: text('official_standardmedalj', {
     enum: ['none', 'brons', 'silver', 'guld'],
@@ -177,7 +177,7 @@ export const series = sqliteTable('series', {
   // flags set)
   isFinal: integer('is_final').notNull().default(0),
   photoUri: text('photo_uri'), // local file URI
-  // WebShooter granularity mismatch (spec §1/§A.4): true when this series
+  // Webshooter granularity mismatch (spec §1/§A.4): true when this series
   // carries a series/station TOTAL with no per-shot detail. Such series
   // have NO child `shots` rows — every read path summing shots must branch
   // on this flag (see queries/webshooter.ts and shared/scoring extensions).

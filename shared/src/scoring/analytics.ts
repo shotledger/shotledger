@@ -47,7 +47,7 @@ export const ANY_ANALYTICS_FILTER: AnalyticsFilter = {
 };
 
 /**
- * Shots actually fired in one series. An imported WebShooter series (WS1)
+ * Shots actually fired in one series. An imported Webshooter series (WS1)
  * has no shot rows, only a stored count — so it is still filterable by
  * length.
  */

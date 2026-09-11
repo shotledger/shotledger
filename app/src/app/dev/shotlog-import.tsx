@@ -1,5 +1,5 @@
 // ShotLog CSV import — pick, preview, choose, import
-// (docs/specs/shotlog-import-spec.md §7). Mirrors the WebShooter import's
+// (docs/specs/shotlog-import-spec.md §7). Mirrors the Webshooter import's
 // contract: nothing is written before the user confirms on this screen, and
 // every suggestion the importer derived is visible and editable first.
 import { useState } from 'react';

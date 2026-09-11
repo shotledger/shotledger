@@ -2,7 +2,7 @@
 // result in (maintainer, 2026-09-11: "could eg have been sign-up but then
 // no show or dnf").
 //
-// WebShooter has no "my competitions" endpoint, and wscli's own commands
+// Webshooter has no "my competitions" endpoint, and wscli's own commands
 // solve it the same brute-force way: fetch /results per competition and
 // look for your card number. That is one request per competition, so this
 // hook is built to be POLITE rather than eager —
@@ -20,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { db } from '@/db/client';
 import { getSetting } from '@/db/queries/settings';
 
-import { getWebShooterClient, loadTokenCache } from './client';
+import { getWebshooterClient, loadTokenCache } from './client';
 
 /** Generic over the competition shape so callers keep whatever they enriched it with. */
 export interface MyCompetitionsScan<T> {
@@ -35,7 +35,7 @@ export interface MyCompetitionsScan<T> {
   rescan: () => void;
 }
 
-export function useWebShooterMyCompetitions<T extends { id: number }>(
+export function useWebshooterMyCompetitions<T extends { id: number }>(
   candidates: T[],
 ): MyCompetitionsScan<T> {
   const [mine, setMine] = useState<T[]>([]);
@@ -73,7 +73,7 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
       try {
         await loadTokenCache();
         const cardNumber = getSetting<string | null>(db!, 'webshooterCardNumber', null);
-        const client = getWebShooterClient();
+        const client = getWebshooterClient();
 
         for (const competition of candidates) {
           if (cancelled || runId.current !== thisRun) return;
@@ -86,7 +86,7 @@ export function useWebShooterMyCompetitions<T extends { id: number }>(
           } catch (err) {
             // One unreadable competition must not end the scan: the rest of
             // the year is still perfectly importable. Collected rather than
-            // logged per competition — a handful of WebShooter 500s in a
+            // logged per competition — a handful of Webshooter 500s in a
             // forty-competition scan is normal, and one red console entry
             // each made routine weather look like a crash.
             skippedIds.push(competition.id);

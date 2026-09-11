@@ -1,4 +1,4 @@
-// External sites, as providers (ADR 0010). WebShooter is provider #1;
+// External sites, as providers (ADR 0010). Webshooter is provider #1;
 // pistol.nu and anything after it register here rather than growing a
 // parallel stack or a pile of site checks in the screens.
 //
@@ -42,7 +42,7 @@ export const WEBSHOOTER_PROVIDER_ID = 'webshooter';
 
 const WEBSHOOTER: ProviderDescriptor = {
   id: WEBSHOOTER_PROVIDER_ID,
-  displayName: 'WebShooter',
+  displayName: 'Webshooter',
   siteUrl: 'https://webshooter.se/',
   // Fält results are listed by the API but not importable (integration
   // spec §D), which is a detail of importResults rather than a capability

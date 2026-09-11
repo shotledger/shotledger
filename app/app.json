@@ -40,7 +40,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Allow $(PRODUCT_NAME) to add your WebShooter competition starts to your calendar."
+          "calendarPermission": "Allow $(PRODUCT_NAME) to add your Webshooter competition starts to your calendar."
         }
       ],
       [

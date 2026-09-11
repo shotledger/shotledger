@@ -1,4 +1,4 @@
-// Settings → WebShooter connect/disconnect (integration spec §A.10, PR #19
+// Settings → Webshooter connect/disconnect (integration spec §A.10, PR #19
 // auth refinement). Primary: in-app password login, POSTed device→
 // webshooter.se directly — a Laravel Passport password grant, confirmed
 // 2026-09-11. Neither path ever calls a ShotLedger backend.
@@ -10,17 +10,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   createSpaLoginClient,
-  WebShooterSpaLoginClientRejectedError,
-  WebShooterSpaLoginRejectedError,
-  WebShooterSpaLoginUnconfiguredError,
+  WebshooterSpaLoginClientRejectedError,
+  WebshooterSpaLoginRejectedError,
+  WebshooterSpaLoginUnconfiguredError,
 } from '@shotledger/shared/src/integrations/webshooter/api/spaLogin';
 import { resolveIdentity } from '@shotledger/shared/src/integrations/webshooter/identity';
 
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
-import { clearWebShooterToken, setWebShooterToken } from '@/platform/secure-store';
+import { clearWebshooterToken, setWebshooterToken } from '@/platform/secure-store';
 import {
-  getWebShooterClient,
+  getWebshooterClient,
   loadTokenCache,
   setTokenCache,
   WEBSHOOTER_BASE_URL,
@@ -38,7 +38,7 @@ const OAUTH_CLIENT_FALLBACK = {
   clientSecret: process.env.EXPO_PUBLIC_WEBSHOOTER_CLIENT_SECRET,
 };
 
-export interface WebShooterConnectionState {
+export interface WebshooterConnectionState {
   connected: boolean;
   cardNumber: string | null;
   loading: boolean;
@@ -55,7 +55,7 @@ function loadStoredCardNumber(): string | null {
   return getSetting<string | null>(db, CARD_NUMBER_SETTING_KEY, null);
 }
 
-export function useWebShooterConnection(): WebShooterConnectionState {
+export function useWebshooterConnection(): WebshooterConnectionState {
   const [connected, setConnected] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | null>(() => loadStoredCardNumber());
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
    * Now it is retryable without re-entering a password.
    */
   const resolveAndStoreIdentity = useCallback(async () => {
-    const client = getWebShooterClient();
+    const client = getWebshooterClient();
     const resolved = await resolveIdentity({
       override: null,
       stored: loadStoredCardNumber(),
@@ -114,7 +114,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
 
   const finishConnect = useCallback(
     async (token: string) => {
-      await setWebShooterToken(token);
+      await setWebshooterToken(token);
       setTokenCache(token);
       await resolveAndStoreIdentity();
       setConnected(true);
@@ -152,15 +152,15 @@ export function useWebShooterConnection(): WebShooterConnectionState {
       } catch (err) {
         // Each failure gets its own message, because each needs a different
         // thing from the reader: retype the password, check the connection,
-        // wait, or report that WebShooter changed and this needs updating.
+        // wait, or report that Webshooter changed and this needs updating.
         // A single "login unavailable" for all of them leaves a field
         // failure with nothing to act on.
-        if (err instanceof WebShooterSpaLoginRejectedError) {
+        if (err instanceof WebshooterSpaLoginRejectedError) {
           setError('loginRejected');
-        } else if (err instanceof WebShooterSpaLoginUnconfiguredError) {
+        } else if (err instanceof WebshooterSpaLoginUnconfiguredError) {
           setError(err.failure === 'unreachable' ? 'loginUnreachable' : 'loginNeedsUpdate');
           setErrorDetail(err.detail);
-        } else if (err instanceof WebShooterSpaLoginClientRejectedError) {
+        } else if (err instanceof WebshooterSpaLoginClientRejectedError) {
           // Their server refused our client credentials outright: the same
           // class of problem as a page we can no longer read.
           setError('loginNeedsUpdate');
@@ -197,7 +197,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
   );
 
   const disconnect = useCallback(async () => {
-    await clearWebShooterToken();
+    await clearWebshooterToken();
     setTokenCache(null);
     if (db) setSetting<string | null>(db, CARD_NUMBER_SETTING_KEY, null);
     setCardNumber(null);

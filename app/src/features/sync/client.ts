@@ -1,7 +1,7 @@
 // Wiring: the shared HTTP adapters bound to this app's base URL and the
 // SecureStore-backed session token (docs/specs/sync-app-spec.md §7).
 // The token mirror is in memory because the shared client's getToken() is
-// synchronous while SecureStore is not — same pattern as the WebShooter
+// synchronous while SecureStore is not — same pattern as the Webshooter
 // client's tokenCache.
 import {
   createAccountApi,

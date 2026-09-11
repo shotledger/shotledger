@@ -1,4 +1,4 @@
-// SYNTHETIC fixtures mirroring WebShooter wire shapes (docs/specs/
+// SYNTHETIC fixtures mirroring Webshooter wire shapes (docs/specs/
 // webshooter-core-spec.md §0/§2.1/§8). Every name, card number, id, and club
 // below is invented — none of it was copied from ~/.cache/webshooter/, which
 // was read only to learn the shapes these fixtures reproduce.

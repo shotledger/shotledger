@@ -1,4 +1,4 @@
-// Integration tests for the WebShooter import write path (integration spec
+// Integration tests for the Webshooter import write path (integration spec
 // §A), through the query layer, against synthetic fixtures only — no live
 // API calls, no data from ~/.cache/webshooter, per the hard constraints in
 // docs/specs/webshooter-core-spec.md §0 and docs/specs/webshooter-app-spec.md.

@@ -73,7 +73,7 @@ scores against official results.
 - An encrypted on-device **Vault** holds licences, membership cards and door
   codes; it is never synced, and is excluded from exports unless the user
   explicitly opts in with a passphrase.
-- **The WebShooter integration does not currently work** (password login
+- **The Webshooter integration does not currently work** (password login
   unusable); deferred, not abandoned.
 - Every UI string is i18n'd in Swedish and English from the first screen.
 - **Large system font scales are explicitly not a binding design constraint**

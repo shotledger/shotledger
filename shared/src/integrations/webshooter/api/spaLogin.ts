@@ -1,4 +1,4 @@
-// In-app WebShooter login. Per the maintainer's PR #19 comment (2026-09-01):
+// In-app Webshooter login. Per the maintainer's PR #19 comment (2026-09-01):
 // device to webshooter.se directly — credentials and token NEVER transit or
 // touch a ShotLedger backend.
 //
@@ -14,38 +14,38 @@
 // a browser — so fetching it is just reading what the browser reads, and it
 // means a rotation on their side heals itself instead of bricking login
 // until someone notices. Nothing is stored, in the tree or in the build.
-export interface WebShooterSpaLoginRequest {
+export interface WebshooterSpaLoginRequest {
   username: string;
   password: string;
 }
 
-export interface WebShooterSpaLoginResult {
+export interface WebshooterSpaLoginResult {
   token: string;
 }
 
-export interface WebShooterSpaLoginClient {
-  login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult>;
+export interface WebshooterSpaLoginClient {
+  login(request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult>;
 }
 
 /** The OAuth client identity, supplied by the host so no secret lives in this tree. */
-export interface WebShooterOAuthClientConfig {
+export interface WebshooterOAuthClientConfig {
   clientId: string;
   clientSecret: string;
 }
 
-export class WebShooterSpaLoginNotVerifiedError extends Error {
+export class WebshooterSpaLoginNotVerifiedError extends Error {
   constructor() {
     super(
-      'WebShooter SPA login endpoint is not verified (VERIFY: inspect the SPA login network ' +
+      'Webshooter SPA login endpoint is not verified (VERIFY: inspect the SPA login network ' +
         'request — path, request body field names, response shape — before implementing). ' +
         'Credentials/token must never transit a ShotLedger backend once implemented.',
     );
-    this.name = 'WebShooterSpaLoginNotVerifiedError';
+    this.name = 'WebshooterSpaLoginNotVerifiedError';
   }
 }
 
 /** The client secret could be neither read from webshooter.se nor fallen back to. */
-export class WebShooterSpaLoginUnconfiguredError extends Error {
+export class WebshooterSpaLoginUnconfiguredError extends Error {
   /** Which way discovery failed — the three need different things from the user. */
   readonly failure: ClientSecretDiscoveryFailure;
   /** Status line or exception text, for a bug report. */
@@ -53,34 +53,34 @@ export class WebShooterSpaLoginUnconfiguredError extends Error {
 
   constructor(failure: ClientSecretDiscoveryFailure, detail: string) {
     super(
-      `WebShooter's published OAuth client secret could not be read (${failure}: ${detail}), ` +
+      `Webshooter's published OAuth client secret could not be read (${failure}: ${detail}), ` +
         'and this build carries no fallback. Use a manual API token instead.',
     );
-    this.name = 'WebShooterSpaLoginUnconfiguredError';
+    this.name = 'WebshooterSpaLoginUnconfiguredError';
     this.failure = failure;
     this.detail = detail;
   }
 }
 
 /** Wrong username or password — the user's half of the request. */
-export class WebShooterSpaLoginRejectedError extends Error {
+export class WebshooterSpaLoginRejectedError extends Error {
   constructor() {
-    super('WebShooter rejected the username or password.');
-    this.name = 'WebShooterSpaLoginRejectedError';
+    super('Webshooter rejected the username or password.');
+    this.name = 'WebshooterSpaLoginRejectedError';
   }
 }
 
 /**
- * WebShooter rejected the *app*, not the user — `invalid_client`.
+ * Webshooter rejected the *app*, not the user — `invalid_client`.
  *
  * Almost always means they rotated the client secret, which they can do
  * without warning. Distinguished from a bad password because the two need
  * opposite responses: one the user can fix, the other only we can.
  */
-export class WebShooterSpaLoginClientRejectedError extends Error {
+export class WebshooterSpaLoginClientRejectedError extends Error {
   constructor() {
-    super("WebShooter rejected this app's OAuth client credentials (invalid_client).");
-    this.name = 'WebShooterSpaLoginClientRejectedError';
+    super("Webshooter rejected this app's OAuth client credentials (invalid_client).");
+    this.name = 'WebshooterSpaLoginClientRejectedError';
   }
 }
 
@@ -91,12 +91,12 @@ export class WebShooterSpaLoginClientRejectedError extends Error {
 export function createUnverifiedSpaLoginClient(
   fetchImpl: typeof fetch,
   baseUrl: string,
-): WebShooterSpaLoginClient {
+): WebshooterSpaLoginClient {
   return {
-    login(_request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult> {
+    login(_request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult> {
       void fetchImpl;
       void baseUrl;
-      return Promise.reject(new WebShooterSpaLoginNotVerifiedError());
+      return Promise.reject(new WebshooterSpaLoginNotVerifiedError());
     },
   };
 }
@@ -112,13 +112,13 @@ function joinUrl(baseUrl: string, path: string): string {
  * user's. Nothing here is stored: the password exists for the duration of
  * one request, and only `access_token` is returned to the caller.
  */
-export function createWebShooterSpaLoginClient(
+export function createWebshooterSpaLoginClient(
   fetchImpl: typeof fetch,
   baseUrl: string,
-  client: WebShooterOAuthClientConfig,
-): WebShooterSpaLoginClient {
+  client: WebshooterOAuthClientConfig,
+): WebshooterSpaLoginClient {
   return {
-    async login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult> {
+    async login(request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult> {
       const response = await fetchImpl(joinUrl(baseUrl, 'oauth/token'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -139,9 +139,9 @@ export function createWebShooterSpaLoginClient(
       const error =
         typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : undefined;
 
-      if (error === 'invalid_client') throw new WebShooterSpaLoginClientRejectedError();
+      if (error === 'invalid_client') throw new WebshooterSpaLoginClientRejectedError();
       if (error === 'invalid_grant' || response.status === 401)
-        throw new WebShooterSpaLoginRejectedError();
+        throw new WebshooterSpaLoginRejectedError();
       if (!response.ok) {
         // webshooter.se answers a failed login with an opaque 500 and a
         // Swedish "an error occurred" rather than Passport's invalid_grant
@@ -155,7 +155,7 @@ export function createWebShooterSpaLoginClient(
             ? (body as { message?: unknown }).message
             : undefined;
         throw new Error(
-          `WebShooter login failed: HTTP ${response.status}` +
+          `Webshooter login failed: HTTP ${response.status}` +
             (typeof message === 'string' && message !== '' ? ` — ${message}` : ''),
         );
       }
@@ -165,7 +165,7 @@ export function createWebShooterSpaLoginClient(
           ? (body as { access_token?: unknown }).access_token
           : undefined;
       if (typeof token !== 'string' || token === '')
-        throw new Error('WebShooter login returned no access_token');
+        throw new Error('Webshooter login returned no access_token');
 
       return { token };
     },
@@ -251,7 +251,7 @@ export interface SpaLoginClientOptions {
    * Used only when the page cannot be read. Optional by design: the normal
    * path needs no configured secret at all.
    */
-  fallback?: Partial<WebShooterOAuthClientConfig> | null;
+  fallback?: Partial<WebshooterOAuthClientConfig> | null;
 }
 
 /**
@@ -265,18 +265,18 @@ export interface SpaLoginClientOptions {
 export function createSpaLoginClient(
   fetchImpl: typeof fetch,
   options: SpaLoginClientOptions,
-): WebShooterSpaLoginClient {
+): WebshooterSpaLoginClient {
   return {
-    async login(request: WebShooterSpaLoginRequest): Promise<WebShooterSpaLoginResult> {
+    async login(request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult> {
       const discovered = await discoverPublishedClientSecret(fetchImpl, options.siteUrl);
       const clientSecret = discovered.secret ?? options.fallback?.clientSecret;
       if (!clientSecret)
-        throw new WebShooterSpaLoginUnconfiguredError(
+        throw new WebshooterSpaLoginUnconfiguredError(
           discovered.secret === null ? discovered.failure : 'absent',
           discovered.secret === null ? discovered.detail : '',
         );
 
-      return createWebShooterSpaLoginClient(fetchImpl, options.baseUrl, {
+      return createWebshooterSpaLoginClient(fetchImpl, options.baseUrl, {
         clientId: options.fallback?.clientId || WEBSHOOTER_WEB_CLIENT_ID,
         clientSecret,
       }).login(request);

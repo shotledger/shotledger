@@ -21,7 +21,7 @@ const OFFICIAL_COMPETITION_TYPES = new Set(['spsf-precision', 'spsf-milsnabb']);
  * One row per competition session (§B.1's grouping unit), computed via
  * shared/scoring/totals.ts (WS1-aware — an override series contributes its
  * stored total). `figureHits` is not a column ShotLedger stores for
- * manually-logged sessions (only WebShooter's own payload has it, and this
+ * manually-logged sessions (only Webshooter's own payload has it, and this
  * spec never persisted it separately, docs/specs/webshooter-app-spec.md) —
  * left at 0 for every row, which the tiebreak in stats/pb.ts then falls
  * through to `innerTens` for, same as the module's own documented

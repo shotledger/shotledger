@@ -52,7 +52,7 @@ export function saveSeriesShots(
  * soft-deletes its shots and the series row (§3: soft-delete everywhere),
  * and backs the shot count out of the linked firearm's round counters —
  * mirrors `saveSeriesShots`' delta convention (removing N shots is the same
- * adjustment as editing them away). An override series (WebShooter/ShotLog
+ * adjustment as editing them away). An override series (Webshooter/ShotLog
  * import) has no `shots` rows and was never counted into the round counter
  * on creation, so it contributes no delta here either.
  */

@@ -29,7 +29,7 @@ export interface StatsSeries {
   isFinal: boolean;
   shots: readonly StatsShot[];
   /**
-   * WebShooter series-level-total granularity (spec Amendment WS1,
+   * Webshooter series-level-total granularity (spec Amendment WS1,
    * docs/specs/webshooter-app-spec.md): set only for an imported series
    * with no shot rows. `shots` is always `[]` when this is set. Included
    * in series-level metrics (bestWorstSeries, volume); every per-shot

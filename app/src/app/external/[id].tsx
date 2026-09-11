@@ -16,14 +16,14 @@ import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
 import { routedCapabilities } from '@/features/providers/capability-routes';
-import { useWebShooterConnection } from '@/features/webshooter/use-webshooter-connection';
+import { useWebshooterConnection } from '@/features/webshooter/use-webshooter-connection';
 
 export default function ExternalSiteScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const provider = findProvider(id ?? '');
-  const connection = useWebShooterConnection();
+  const connection = useWebshooterConnection();
 
   if (!provider) {
     // A route param from a build that had a provider this one does not.

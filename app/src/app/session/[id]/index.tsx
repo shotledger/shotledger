@@ -40,7 +40,7 @@ import { useSessionDetail, type SeriesRow } from '@/features/session/use-session
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
-import { WebShooterSessionBadge } from '@/features/webshooter/components/session-badge';
+import { WebshooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
@@ -406,7 +406,7 @@ export default function SessionDetailScreen() {
 
       <SessionStopwatch sessionId={id} />
 
-      <WebShooterSessionBadge session={session} />
+      <WebshooterSessionBadge session={session} />
 
       <Card style={styles.metricCard}>
         {metricRows([

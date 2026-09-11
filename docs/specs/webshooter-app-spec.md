@@ -1,4 +1,4 @@
-# WebShooter app integration — spec amendment
+# Webshooter app integration — spec amendment
 
 > Amendment to `docs/specs/webshooter-integration-spec.md` (v2, THE spec)
 > and `docs/specs/webshooter-core-spec.md`, covering the app-side pieces
@@ -10,7 +10,7 @@
 
 ## WS1 — series-total-override read path (`shared/src/scoring/{totals,stats}.ts`)
 
-Per integration spec §1/§A.4: a WebShooter-imported series carries a
+Per integration spec §1/§A.4: a Webshooter-imported series carries a
 _total_ with no per-shot detail (`series.is_total_override=1`,
 `total_override_tenths`, `total_override_shot_count`; no child `shots`
 rows). Every v1 read path that summed `shots` to derive a series total
@@ -62,7 +62,7 @@ this session for time — recommended before merge, same as any other
 ## App-layer scope (normal-tests discipline)
 
 Everything below is new code under `app/src/`, tested through the query
-layer with synthetic fixtures (never live WebShooter calls, never
+layer with synthetic fixtures (never live Webshooter calls, never
 personal data from `~/.cache/webshooter`):
 
 - `app/src/db/queries/webshooter.ts` — import write path: exact/heuristic
@@ -72,15 +72,15 @@ personal data from `~/.cache/webshooter`):
   increment. Wraps `shared/src/integrations/webshooter/{reconcile,mapping}.ts`.
 - `app/src/features/webshooter/` — settings connect/disconnect flow
   (expo-secure-store), import browse/review screens, "My starts" +
-  expo-calendar export, dev-mode fixture injection for the WebShooter
+  expo-calendar export, dev-mode fixture injection for the Webshooter
   client interface.
 - `app/src/app/webshooter/import/*`, `app/src/app/webshooter/starts.tsx`,
   `app/src/app/stats/records.tsx` — new routes (expo-router file
   convention, one folder per feature).
 - `app/src/app/session/[id]/index.tsx` — ONE isolated component insertion
-  (`<WebShooterSessionBadge session={session} />`, its own file under
+  (`<WebshooterSessionBadge session={session} />`, its own file under
   `app/src/features/webshooter/components/`) showing the official
-  placement/medal + a WebShooter badge when `external_ref` is set. No
+  placement/medal + a Webshooter badge when `external_ref` is set. No
   other line in this file is touched, to minimize collision with the
   concurrent photo-scoring agent's edits to the same file.
 
@@ -94,9 +94,9 @@ three-tier flow)
    Credentials are used once and never stored; only the resulting token is
    persisted (`expo-secure-store`). Implemented behind
    `shared/src/integrations/webshooter/api/spaLogin.ts`'s
-   `WebShooterSpaLoginClient` interface — the core module's
+   `WebshooterSpaLoginClient` interface — the core module's
    `createUnverifiedSpaLoginClient` stub always rejects with
-   `WebShooterSpaLoginNotVerifiedError` (no network call), per its own
+   `WebshooterSpaLoginNotVerifiedError` (no network call), per its own
    VERIFY note (exact endpoint shape unconfirmed). The app wires this
    interface behind a UI form; **VERIFY (flagged, not resolved here):**
    the app ships the login form and calls the injected client, so once the
@@ -104,7 +104,7 @@ three-tier flow)
    implementation needs to change — the app layer is written against the
    interface, not the stub.
 2. **Fallback: manual token paste** — always available, no VERIFY
-   dependency, since the user can obtain a token from WebShooter directly.
+   dependency, since the user can obtain a token from Webshooter directly.
 3. Card number (identity) resolved via
    `shared/src/integrations/webshooter/identity.ts`'s `resolveIdentity`,
    stored in `settings` (not secret) alongside the SecureStore token.

@@ -1,4 +1,4 @@
-// Which calendar WebShooter starts are written to.
+// Which calendar Webshooter starts are written to.
 //
 // Before this, `upsertCalendarEvent` took the first writable calendar the
 // device happened to return — so the app wrote into the shooter's diary

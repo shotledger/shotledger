@@ -123,7 +123,7 @@ inner-ten counts; and `Pistol Nine` created as a firearm and linked.
 
 **Known, pre-existing:** the Home screen shows `0` as an imported
 session's total, because `useHomeData` sums `shots` rows. Every
-total-override session has the same problem, WebShooter imports included,
+total-override session has the same problem, Webshooter imports included,
 so it is out of scope here — but it is worth a follow-up.
 
 ## 6. VERIFY items — answered by the maintainer 2026-09-02
@@ -160,7 +160,7 @@ The maintainer asked that `Number of X` and `(X)` be mapped onto "the
 app's tens/inner-ten counters". **There is no such counter to write to.**
 Ten and inner-ten statistics in `shared/src/scoring` count `is_inner_ten`
 flags on `shots` rows, and a total-override series deliberately has none —
-that is the whole point of the WS1 granularity the WebShooter import
+that is the whole point of the WS1 granularity the Webshooter import
 already uses. Storing them needs a new session- or series-level column,
 which is a schema change (Drizzle migration, hard rule 2) plus a
 stats-layer contract that does not exist yet.

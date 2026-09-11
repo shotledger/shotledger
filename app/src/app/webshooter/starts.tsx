@@ -5,7 +5,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -17,13 +17,13 @@ import { ThemedText } from '@/components/themed-text';
 import { CalendarPermissionDeniedError } from '@/platform/calendar';
 import { formatStartWindow } from '@shotledger/shared/src/integrations/webshooter/start-window';
 
-import { useWebShooterStarts } from '@/features/webshooter/use-webshooter-starts';
+import { useWebshooterStarts } from '@/features/webshooter/use-webshooter-starts';
 import { Spacing } from '@/theme/tokens';
 
-export default function WebShooterStartsScreen() {
+export default function WebshooterStartsScreen() {
   const { t } = useTranslation();
   const { starts, loading, error, load, addToCalendar, errorDetail, skipped } =
-    useWebShooterStarts();
+    useWebshooterStarts();
   // One section open at a time: these lists are long, and two open at once
   // pushes the rest of the screen out of reach.
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -37,22 +37,38 @@ export default function WebShooterStartsScreen() {
     }, [load]),
   );
 
+  // Shown on the card itself rather than in Alert.alert: a system dialog
+  // arrives in OS chrome — system grey, system type scale, an accent that
+  // is Android's and not the app's — and demands a tap to dismiss a message
+  // that is only a confirmation (maintainer, 2026-09-11).
+  const [feedback, setFeedback] = useState<{
+    signupId: number;
+    text: string;
+    failed: boolean;
+  } | null>(null);
+
   async function onAddToCalendar(start: (typeof starts)[number]) {
     try {
       // Naming the calendar matters: the app writes into the shooter's own
       // diary and used to do it without saying where.
       const calendarTitle = await addToCalendar(start);
-      Alert.alert(
-        calendarTitle === ''
-          ? t('webshooter.calendarAdded')
-          : t('webshooter.calendarAddedTo', { calendar: calendarTitle }),
-      );
+      setFeedback({
+        signupId: start.signupId,
+        text:
+          calendarTitle === ''
+            ? t('webshooter.calendarAdded')
+            : t('webshooter.calendarAddedTo', { calendar: calendarTitle }),
+        failed: false,
+      });
     } catch (err) {
-      Alert.alert(
-        err instanceof CalendarPermissionDeniedError
-          ? t('webshooter.calendarPermissionDenied')
-          : t('webshooter.calendarAddFailed'),
-      );
+      setFeedback({
+        signupId: start.signupId,
+        text:
+          err instanceof CalendarPermissionDeniedError
+            ? t('webshooter.calendarPermissionDenied')
+            : t('webshooter.calendarAddFailed'),
+        failed: true,
+      });
     }
   }
 
@@ -71,7 +87,7 @@ export default function WebShooterStartsScreen() {
           <ThemedText type="small" themeColor="danger" testID="webshooter-starts-error">
             {t('webshooter.fetchFailed')}
           </ThemedText>
-          {/* The reason, verbatim: "couldn't reach WebShooter" covered
+          {/* The reason, verbatim: "couldn't reach Webshooter" covered
               failures that reached it perfectly well. */}
           {errorDetail !== null && (
             <ThemedText
@@ -121,11 +137,18 @@ export default function WebShooterStartsScreen() {
                     themeColor="textSecondary"
                     testID={`webshooter-club-start-${start.signupId}-${index}`}
                   >
-                    {`${mate.name} · ${
+                    {[
+                      mate.weaponClass === '' ? mate.name : `${mate.name} (${mate.weaponClass})`,
+                      mate.patrolNumber === null
+                        ? null
+                        : t('webshooter.patrolNumber', { number: mate.patrolNumber }),
                       mate.window === null
                         ? t('webshooter.notDrawnYet')
-                        : formatStartWindow(...(mate.window.split('|') as [string, string]))
-                    }${mate.weaponClass === '' ? '' : ` · ${mate.weaponClass}`}`}
+                        : formatStartWindow(...(mate.window.split('|') as [string, string])),
+                      t('webshooter.laneShort', { lane: mate.lane }),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </ThemedText>
                 ))
               ))}
@@ -135,10 +158,14 @@ export default function WebShooterStartsScreen() {
                   ? t('webshooter.notDrawnYet')
                   : formatStartWindow(start.patrolStart, start.patrolEnd)
               }
-              subtitle={t('webshooter.startDetails', {
-                lane: start.lane,
-                city: start.city,
-              })}
+              subtitle={[
+                start.patrolNumber === null
+                  ? null
+                  : t('webshooter.patrolNumber', { number: start.patrolNumber }),
+                t('webshooter.startDetails', { lane: start.lane, city: start.city }),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
               value={start.weaponClass === '' ? undefined : start.weaponClass}
               expanded={expanded === `squad-${start.signupId}`}
               onPress={() => toggle(`squad-${start.signupId}`)}
@@ -157,9 +184,25 @@ export default function WebShooterStartsScreen() {
                     themeColor={member.isMe ? 'primary' : 'textSecondary'}
                     testID={`webshooter-squad-member-${start.signupId}-${index}`}
                   >
-                    {`${t('webshooter.laneShort', { lane: member.lane })} · ${
-                      member.isMe ? t('webshooter.you') : member.name
-                    }${member.weaponClass === '' ? '' : ` · ${member.weaponClass}`}`}
+                    {[
+                      t('webshooter.laneShort', { lane: member.lane }),
+                      // The shooter's own name, not "You": the line is read
+                      // alongside four other names, and a pronoun makes it
+                      // the odd one out rather than the findable one. It is
+                      // still tinted, which is what marks it.
+                      // Weapon class sits against the name it belongs to, in
+                      // parentheses: a fourth dot-separated field made every
+                      // line wrap on a phone.
+                      member.weaponClass === ''
+                        ? member.name
+                        : `${member.name} (${member.weaponClass})`,
+                      // Club in full rather than a same-club flag: knowing
+                      // WHO is next to you is the point, and a flag only
+                      // answers a question you did not ask.
+                      member.club,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </ThemedText>
                 ))
               ))}
@@ -177,6 +220,15 @@ export default function WebShooterStartsScreen() {
               onPress={() => void onAddToCalendar(start)}
               testID={`webshooter-add-to-calendar-${start.signupId}`}
             />
+            {feedback?.signupId === start.signupId && (
+              <ThemedText
+                type="small"
+                themeColor={feedback.failed ? 'danger' : 'textSecondary'}
+                testID={`webshooter-calendar-feedback-${start.signupId}`}
+              >
+                {feedback.text}
+              </ThemedText>
+            )}
           </Card>
         ))}
       </View>

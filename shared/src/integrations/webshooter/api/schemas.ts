@@ -1,10 +1,10 @@
-// Wire schemas for WebShooter API v4.1.9 (webshooter.se). Executable spec:
+// Wire schemas for Webshooter API v4.1.9 (webshooter.se). Executable spec:
 // docs/specs/webshooter-core-spec.md §2.1. Field sets and envelope nesting
 // were confirmed by reading ~/.cache/webshooter/ (wscli's response cache) —
 // SHAPES only, never copied values (see spec §0's real-data rule). Every
 // object schema is `z.object` (never `z.strictObject`): the real API returns
 // far more fields than we read, and a strict schema would fail on the next
-// unrelated field WebShooter adds upstream.
+// unrelated field Webshooter adds upstream.
 import { z } from 'zod';
 
 export const weaponClassSchema = z.object({
@@ -50,7 +50,7 @@ export const clubSchema = z.object({
 export type Club = z.infer<typeof clubSchema>;
 
 // Identity + same-club fields only (§A.10's personal-data boundary) — never
-// the full WebShooter user profile, even though the real payload has more.
+// the full Webshooter user profile, even though the real payload has more.
 // Require what we read, and no more. `clubs_id` and `clubs` are absent for
 // some shooters in live results (competition 349, 2026-09-11) and nothing
 // here has ever read them — a required field we never use can only ever
@@ -61,7 +61,7 @@ export const userSchema = z.object({
   clubs_id: z.number().optional(),
   clubs: z.array(clubSchema).optional(),
 });
-export type WebShooterUser = z.infer<typeof userSchema>;
+export type WebshooterUser = z.infer<typeof userSchema>;
 
 export const signupSchema = z.object({
   id: z.number(),

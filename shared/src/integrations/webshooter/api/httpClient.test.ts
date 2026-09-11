@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
-import { createHttpClient, WebShooterHttpError, WebShooterSchemaError } from './httpClient';
+import { createHttpClient, WebshooterHttpError, WebshooterSchemaError } from './httpClient';
 
 const schema = z.object({ ok: z.boolean() });
 
@@ -26,7 +26,7 @@ describe('createHttpClient', () => {
     });
 
     await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
-      WebShooterSchemaError,
+      WebshooterSchemaError,
     );
     await expect(client.requestJson('/thing', schema)).rejects.toThrow(/\/thing: ok — /);
   });
@@ -53,7 +53,7 @@ describe('createHttpClient', () => {
     });
 
     await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
-      WebShooterSchemaError,
+      WebshooterSchemaError,
     );
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
@@ -128,12 +128,12 @@ describe('createHttpClient', () => {
       sleep,
     });
 
-    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebShooterHttpError);
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebshooterHttpError);
     expect(fetchImpl).toHaveBeenCalledTimes(3);
     expect(sleep.mock.calls).toEqual([[500], [1000]]);
   });
 
-  it('rejects with WebShooterHttpError carrying status and path on exhaustion', async () => {
+  it('rejects with WebshooterHttpError carrying status and path on exhaustion', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(503, {}));
     const client = createHttpClient({
       fetchImpl,
@@ -145,8 +145,8 @@ describe('createHttpClient', () => {
     await expect(client.requestJson('/thing', schema)).rejects.toMatchObject({
       status: 503,
       path: '/thing',
-      name: 'WebShooterHttpError',
-      message: 'WebShooter request to /thing failed with status 503',
+      name: 'WebshooterHttpError',
+      message: 'Webshooter request to /thing failed with status 503',
     });
   });
 
@@ -244,7 +244,7 @@ describe('createHttpClient', () => {
       retry: { maxAttempts: 2, baseDelayMs: 10, factor: 3 },
     });
 
-    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebShooterHttpError);
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(WebshooterHttpError);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(sleep.mock.calls).toEqual([[10]]);
   });

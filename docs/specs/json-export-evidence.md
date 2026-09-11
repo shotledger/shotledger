@@ -35,7 +35,7 @@ All numbers below come from one fresh run after the last code edit.
 | 12  | one bad session skipped, rest imported                | `import.test.ts` C12 (×2) + the not-an-object case                                                                                   |
 | 13  | import writes in one transaction                      | `apply-import.ts` runs inside `db.transaction`; end-to-end in `round-trip.test.ts` ("reproduces identical stats and volume metrics") |
 | 14  | **ShotLog import still works**                        | `shared/src/shotlog/*` suites pass unchanged (85 shared test files green), plus two new `csv-codec.test.ts` cases                    |
-| 15  | WebShooter import still works                         | its suites pass unchanged                                                                                                            |
+| 15  | Webshooter import still works                         | its suites pass unchanged                                                                                                            |
 | 16  | dry-run plan behaves identically after moving         | `plan.test.ts` — **moved with zero assertion edits**, plus 3 added cases                                                             |
 | 17  | `SessionExport`/`SeriesExport`/`ShotExport` unchanged | types moved verbatim; `tsc -b` green across the monorepo                                                                             |
 | 18  | **no new dependency**                                 | lockfile unchanged; `licenses-check: 98 packages` (same as before)                                                                   |

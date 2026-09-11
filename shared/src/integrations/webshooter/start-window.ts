@@ -1,6 +1,6 @@
 // Formatting one patrol's start window.
 //
-// WebShooter gives both ends as full local timestamps, so the naive render
+// Webshooter gives both ends as full local timestamps, so the naive render
 // was "2026-09-12 09:50:00–2026-09-12 11:20:00" — the date twice and
 // seconds that are always zero. The date is said once, and a window that
 // runs past midnight borrows aviation's arrival convention: the end time

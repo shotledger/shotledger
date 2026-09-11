@@ -31,7 +31,7 @@ describe('mapClassname', () => {
       expect(result).toMatchObject({ classname });
       if (!result.ok) {
         expect(result.reason).toBe(
-          `Unrecognized WebShooter classname "${classname}" — needs a manual mapping`,
+          `Unrecognized Webshooter classname "${classname}" — needs a manual mapping`,
         );
       }
     },
@@ -73,7 +73,7 @@ describe('mapStationResultsToSeries', () => {
   });
 
   it('skips a station that was never shot rather than importing it as zero', () => {
-    // Real WebShooter data has null points on unshot stations. `null * 10`
+    // Real Webshooter data has null points on unshot stations. `null * 10`
     // is 0 in JavaScript, so the naive mapping invents a zero-scored series
     // — worse than dropping it, because it silently lowers every average.
     const row = fixtureResultRow({

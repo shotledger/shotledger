@@ -30,7 +30,7 @@ export default function AccountScreen() {
   const [password, setPassword] = useState('');
 
   // expo-sqlite has no usable web build under this Expo SDK, so `db` is null
-  // there and there is nothing to sync (same posture as WebShooter).
+  // there and there is nothing to sync (same posture as Webshooter).
   const syncAvailable = db !== null;
 
   function onSubmit() {

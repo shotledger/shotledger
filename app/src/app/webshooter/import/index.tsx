@@ -1,4 +1,4 @@
-// WebShooter import — competition browse (integration spec §A.1). Lists
+// Webshooter import — competition browse (integration spec §A.1). Lists
 // competitions from the cached client listing, with a year filter
 // (client-side, since /competitions has no server-side filter, §A.11) and
 // an already-imported badge is left to the review screen (§A.2 exact match
@@ -16,16 +16,16 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
-import { useWebShooterCompetitions } from '@/features/webshooter/use-webshooter-import';
-import { useWebShooterMyCompetitions } from '@/features/webshooter/use-webshooter-my-competitions';
+import { useWebshooterCompetitions } from '@/features/webshooter/use-webshooter-import';
+import { useWebshooterMyCompetitions } from '@/features/webshooter/use-webshooter-my-competitions';
 import { Spacing } from '@/theme/tokens';
 
 const ALL_YEARS = 'all';
 
-export default function WebShooterImportBrowseScreen() {
+export default function WebshooterImportBrowseScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { competitions, loading, error, load } = useWebShooterCompetitions();
+  const { competitions, loading, error, load } = useWebshooterCompetitions();
   const [year, setYear] = useState<string>(ALL_YEARS);
 
   // Refreshes whenever the screen comes into view, not only on first mount
@@ -66,7 +66,7 @@ export default function WebShooterImportBrowseScreen() {
   // result, and those must not be offered for import. Only checked for a
   // chosen year — see the hook for why this is not done for "all".
   const scanning = year !== ALL_YEARS;
-  const scan = useWebShooterMyCompetitions(scanning ? candidates : []);
+  const scan = useWebshooterMyCompetitions(scanning ? candidates : []);
   const filtered = scanning ? scan.mine : candidates;
 
   return (

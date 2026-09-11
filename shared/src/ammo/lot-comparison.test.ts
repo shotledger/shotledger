@@ -155,7 +155,7 @@ describe('summarizeAmmoLot', () => {
     expect(summary.meanRadiusMm).toBeNull();
   });
 
-  it('counts an imported WebShooter series (no shot rows) as a scored series', () => {
+  it('counts an imported Webshooter series (no shot rows) as a scored series', () => {
     const summary = summarizeAmmoLot('lot-a', [
       series({ shotValues: [], totalOverride: { tenths: 480, shotCount: 5 } }),
     ]);

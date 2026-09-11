@@ -36,7 +36,7 @@ export const SETTINGS_KEYS = {
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];
 
 // The key column is plain text (no enum in schema, comment above): callers
-// generating a dynamic key (e.g. one entry per WebShooter classname, §A.8)
+// generating a dynamic key (e.g. one entry per Webshooter classname, §A.8)
 // pass a plain `string` — `SettingKey` remains the typed convenience for
 // the fixed keys above, not an exhaustive constraint on the column itself.
 export function getSetting<T>(db: Database, key: SettingKey | string, fallback: T): T {

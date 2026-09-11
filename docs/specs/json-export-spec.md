@@ -59,7 +59,7 @@ Deleted — our own CSV export/import:
 - **ShotLog import** (`shared/src/shotlog/`, `app/src/features/shotlog/`,
   `app/src/db/queries/shotlog.ts`). This parses **ShotLog's own** export format,
   a third-party file we do not control. It has nothing to do with our export.
-- **WebShooter import**, likewise a foreign format.
+- **Webshooter import**, likewise a foreign format.
 
 This distinction is the single most dangerous thing in this spec: a careless
 "delete everything CSV" removes the ability to import from ShotLog, which is a
@@ -119,7 +119,7 @@ its shots. No new fields, no renames. The type moves out of `shared/src/csv/`
 into the new module; the _data model_ does not change.
 
 Two things this buys over CSV, both consequences of nesting rather than new
-features: a **series with no shots** (a sighter, or a WebShooter total-override
+features: a **series with no shots** (a sighter, or a Webshooter total-override
 series) is directly representable, and a **session with no series** needs no
 placeholder row.
 
@@ -165,7 +165,7 @@ Each becomes a named test.
 
 14. **ShotLog import still works.** Its tests pass unchanged and its files are
     untouched. This is the §1.1 hazard, asserted.
-15. **WebShooter import still works**, likewise.
+15. **Webshooter import still works**, likewise.
 16. **The dry-run plan behaves identically** after moving: `buildDryRunPlan`'s
     existing tests move with it and pass unmodified — no assertion edited.
 17. `SessionExport`, `SeriesExport`, `ShotExport` keep their current field names
@@ -199,7 +199,7 @@ Each becomes a named test.
 - **YAML**, **JSONC**, **JSON5**, comments, any parser dependency.
 - **Scheduled backup and Google Drive** — deferred and dropped (#138 log).
 - Any change to what a session contains.
-- Any change to ShotLog or WebShooter import.
+- Any change to ShotLog or Webshooter import.
 
 ---
 

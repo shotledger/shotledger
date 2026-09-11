@@ -6,7 +6,7 @@
 // merely signed up for (maintainer, 2026-09-11).
 //
 // This is the pure half. The expensive half — one /results call per
-// competition, since WebShooter has no "my competitions" endpoint and
+// competition, since Webshooter has no "my competitions" endpoint and
 // wscli's own commands iterate the same way — lives in the app hook.
 import { cardNumbersMatch } from './identity';
 import type { ResultRow } from './api/schemas';

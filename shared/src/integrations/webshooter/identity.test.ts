@@ -3,7 +3,7 @@ import {
   cardNumbersMatch,
   normalizeCardNumber,
   resolveIdentity,
-  WebShooterIdentityUnresolvedError,
+  WebshooterIdentityUnresolvedError,
 } from './identity';
 
 describe('normalizeCardNumber', () => {
@@ -69,18 +69,18 @@ describe('resolveIdentity', () => {
     expect(fetchAuthenticatedUser).toHaveBeenCalledTimes(1);
   });
 
-  it('throws WebShooterIdentityUnresolvedError when all three normalize to null', async () => {
+  it('throws WebshooterIdentityUnresolvedError when all three normalize to null', async () => {
     const fetchAuthenticatedUser = vi.fn().mockResolvedValue({ shooting_card_number: null });
     await expect(
       resolveIdentity({ override: 'None', stored: '', fetchAuthenticatedUser }),
-    ).rejects.toBeInstanceOf(WebShooterIdentityUnresolvedError);
+    ).rejects.toBeInstanceOf(WebshooterIdentityUnresolvedError);
   });
 
   it('the error names itself and explains why', () => {
-    const error = new WebShooterIdentityUnresolvedError();
-    expect(error.name).toBe('WebShooterIdentityUnresolvedError');
+    const error = new WebshooterIdentityUnresolvedError();
+    expect(error.name).toBe('WebshooterIdentityUnresolvedError');
     expect(error.message).toBe(
-      'WebShooter identity could not be resolved: no override, stored value, or API result',
+      'Webshooter identity could not be resolved: no override, stored value, or API result',
     );
   });
 });

@@ -17,13 +17,13 @@ import {
   resolveDisciplineForImport,
   type ImportCandidate,
 } from '@/db/queries/webshooter';
-import { getWebShooterClient } from './client';
+import { getWebshooterClient } from './client';
 
 export interface CompetitionListItem extends Competition {
   alreadyImportable: boolean; // false = fält, listed but marked "stöds ej" (§A.9)
 }
 
-export function useWebShooterCompetitions() {
+export function useWebshooterCompetitions() {
   const [competitions, setCompetitions] = useState<CompetitionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export function useWebShooterCompetitions() {
     setLoading(true);
     setError(null);
     try {
-      const client = getWebShooterClient();
+      const client = getWebshooterClient();
       const list = await client.listCompetitions(options);
       setCompetitions(
         list
@@ -58,7 +58,7 @@ export interface ReviewCandidate {
   candidate: ImportCandidate;
 }
 
-export function useWebShooterReview(competitionId: number) {
+export function useWebshooterReview(competitionId: number) {
   const [candidates, setCandidates] = useState<ReviewCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function useWebShooterReview(competitionId: number) {
       setLoading(true);
       setError(null);
       try {
-        const client = getWebShooterClient();
+        const client = getWebshooterClient();
         const [competition, results] = await Promise.all([
           client.getCompetition(competitionId, options),
           client.getResults(competitionId, options),

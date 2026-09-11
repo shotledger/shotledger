@@ -127,7 +127,7 @@ one gate that changed got the negative-control treatment above.
 
 ## 6. Known limits
 
-- A WebShooter-imported (WS1) session has no per-shot detail, so every override
+- A Webshooter-imported (WS1) session has no per-shot detail, so every override
   series contributes 0 inner tens while still counting in the denominator. Such
   a session reads "Avg X/Series 0.0". That is consistent with the X tile beside
   it, which already reads 0 for the same reason — but it is an absence of data,
