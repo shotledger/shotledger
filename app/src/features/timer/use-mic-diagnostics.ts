@@ -66,7 +66,14 @@ export function useMicDiagnostics() {
       return;
     }
 
-    startedAtRef.current = Date.now();
+    // The clock is set ONCE per recording, not per start. Stopping and
+    // starting again used to restart `atMs` at zero while the recorder kept
+    // accumulating, so one export held several runs whose timestamps
+    // overlapped — a mark's analysis window then pulled samples from runs it
+    // had nothing to do with. Seen in a real range capture: 13 of 16 marks
+    // were ambiguous, and the ones drawing on four runs at once reported
+    // 2.9-second "shots" peaking at 0 dBFS that were four runs stacked.
+    if (recorder.isEmpty()) startedAtRef.current = Date.now();
     try {
       listenerRef.current = await startShotListening((db) => {
         recorder.push(Date.now() - startedAtRef.current, db);

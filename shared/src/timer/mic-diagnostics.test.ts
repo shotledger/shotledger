@@ -291,3 +291,43 @@ describe('buildMicDiagnosticsJson', () => {
     expect(JSON.parse(JSON.stringify(json))).toEqual(json);
   });
 });
+
+describe('MicDiagnosticsRecorder.isEmpty', () => {
+  it('is true before anything is recorded', () => {
+    expect(new MicDiagnosticsRecorder().isEmpty()).toBe(true);
+  });
+
+  it('is false once a sample has arrived', () => {
+    const r = new MicDiagnosticsRecorder();
+    r.push(0, -40);
+    expect(r.isEmpty()).toBe(false);
+  });
+
+  it('is false once a mark has been made, even with no samples', () => {
+    const r = new MicDiagnosticsRecorder();
+    r.mark(0);
+    expect(r.isEmpty()).toBe(false);
+  });
+
+  it('is true again after a reset — a genuinely new recording', () => {
+    const r = new MicDiagnosticsRecorder();
+    r.push(0, -40);
+    r.mark(10);
+    r.reset();
+    expect(r.isEmpty()).toBe(true);
+  });
+
+  it('keeps a resumed recording on one timeline', () => {
+    // The bug this exists to stop: a second run restarting at zero puts two
+    // unrelated moments at the same atMs, and a mark window then spans both.
+    const r = new MicDiagnosticsRecorder();
+    r.push(0, -40);
+    r.push(100, -40);
+    // Host resumes: isEmpty() is false, so it keeps the original epoch and
+    // pushes continue past the old times rather than restarting.
+    expect(r.isEmpty()).toBe(false);
+    r.push(5_000, -20);
+    const times = r.getSnapshot().samples.map((s) => s.atMs);
+    expect(times).toEqual([...times].sort((a, b) => a - b));
+  });
+});

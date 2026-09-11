@@ -213,6 +213,17 @@ export class MicDiagnosticsRecorder {
     return mark;
   }
 
+  /**
+   * True when nothing has been recorded since the last `reset`.
+   *
+   * The host uses this to decide whether a start begins a new recording or
+   * resumes one, which is what keeps `atMs` monotonic across a stop/start —
+   * see use-mic-diagnostics.ts.
+   */
+  isEmpty(): boolean {
+    return this.totalSampleCount === 0 && this.marks.length === 0;
+  }
+
   /** Clears the peak hold without discarding the recording. */
   resetPeak(): void {
     this.peakDb = this.currentDb;
