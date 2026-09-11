@@ -606,20 +606,6 @@ export default function SessionDetailScreen() {
               )}
             </Card>
           )}
-
-          {!isRoundsSession && seriesRows.length > 0 && (
-            <Card>
-              <PrimaryButton
-                label={t('photoScoring.scanTarget')}
-                onPress={() =>
-                  router.push(
-                    `/session/${id}/scan?pos=${seriesRows[seriesRows.length - 1]?.position ?? 1}`,
-                  )
-                }
-                testID="scan-target"
-              />
-            </Card>
-          )}
         </>
       )}
       <SeriesEntryChoiceSheet
