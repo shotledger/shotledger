@@ -858,7 +858,8 @@
     "pointsLostTitle": "Points Lost",
     "pointsLostPosition": "To Position",
     "pointsLostSize": "To Group Size",
-    "potentialScore": "Potential Score"
+    "potentialScore": "Potential Score",
+    "captureHint": "The camera opens by itself. Back out of it to pick a photo you already took."
   },
   "account": {
     "title": "Account & Sync",

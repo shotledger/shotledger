@@ -6,7 +6,7 @@
 // judges, `markReducer` owns the interaction rules, `scoreHole` owns the SHB
 // edge rule. What is left here is sequencing and presentation.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { Point } from '@shotledger/shared';
@@ -167,6 +167,22 @@ export default function ScanScreen() {
     await analyze(result);
   }
 
+  // Straight into the camera on arrival (maintainer, 2026-09-11: "Is it not
+  // possible to just shot the camera direct"). Backing out of the OS camera
+  // lands on the capture card, where the library is one tap away — a gallery
+  // button *inside* the viewfinder is not possible here, because
+  // launchCameraAsync hands off to the system camera app, whose UI is not ours.
+  //
+  // A ref, not state: this must fire exactly once per visit and must not
+  // re-render when it flips.
+  const cameraAutoOpened = useRef(false);
+  useEffect(() => {
+    if (cameraAutoOpened.current) return;
+    cameraAutoOpened.current = true;
+    void onCapture('camera');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on arrival
+  }, []);
+
   function onUseCorners() {
     if (!target) return;
     const projective = transformFromCorners(corners, target);
@@ -230,6 +246,9 @@ export default function ScanScreen() {
         {phase === 'capture' && (
           <Card>
             <ThemedText type="subtitle">{t('photoScoring.title')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('photoScoring.captureHint')}
+            </ThemedText>
             <PrimaryButton
               label={t('photoScoring.capture')}
               onPress={() => onCapture('camera')}

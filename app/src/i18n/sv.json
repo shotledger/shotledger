@@ -858,7 +858,8 @@
     "pointsLostTitle": "Förlorade poäng",
     "pointsLostPosition": "Till läge",
     "pointsLostSize": "Till spridning",
-    "potentialScore": "Potentiell poäng"
+    "potentialScore": "Potentiell poäng",
+    "captureHint": "Kameran öppnas automatiskt. Backa ur den för att välja ett foto du redan tagit."
   },
   "account": {
     "title": "Konto & synk",
