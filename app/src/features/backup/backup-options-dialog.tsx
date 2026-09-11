@@ -1,5 +1,5 @@
-// "Back Up" dialog: what goes into the bundle, and where it goes. Settings
-// keeps only two rows (Back Up / Restore); every choice lives here.
+// "Backup" dialog: what goes into the bundle, and where it goes. Settings
+// keeps only two rows (Backup / Restore); every choice lives here.
 //
 // The Vault switch is the reason this dialog exists rather than a plain
 // action. Turning it on puts photographs of weapon licence cards, membership

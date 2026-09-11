@@ -949,7 +949,7 @@ restates §0 rules 1–6 verbatim.
 > `feat/export-scope-vault-optin`, implementing the maintainer's requirement
 > "Export data shall include everything except Vault per default (Vault is
 > exported with warning if user explicitly wants it)". Settings -> Backup is
-> now two rows (Back Up / Restore) with contents and destination chosen in a
+> now two rows (Backup / Restore) with contents and destination chosen in a
 > dialog, replacing the four export rows. The scope audit found one real gap:
 > **synced photos were silently dropped** from every "database + photos"
 > bundle, because a synced series' `photo_uri` is a `shotledger-photo:<id>`
