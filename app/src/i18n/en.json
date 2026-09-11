@@ -782,7 +782,9 @@
     "parOverrun": "Time limit exceeded by {{time}} s",
     "sensitivityLow": "Low",
     "sensitivityHigh": "High",
-    "delayRange": "{{from}}–{{to}} s"
+    "delayRange": "{{from}}–{{to}} s",
+    "menuLabel": "More",
+    "menuDiagnostics": "Shot Detection Diagnostics"
   },
   "shotDiagnostics": {
     "title": "Shot Detection Diagnostics",
@@ -1054,8 +1056,6 @@
   "tools": {
     "title": "Tools",
     "timerSubtitle": "Time limit, shot and field timers",
-    "diagnosticsTitle": "Shot Detection Diagnostics",
-    "diagnosticsSubtitle": "Measure what the microphone hears at the range",
     "photosSubtitle": "Every target photo you have taken, searchable."
   },
   "photos": {

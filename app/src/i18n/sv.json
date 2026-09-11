@@ -782,7 +782,9 @@
     "parOverrun": "Skjuttiden överskreds med {{time}} s",
     "sensitivityLow": "Låg",
     "sensitivityHigh": "Hög",
-    "delayRange": "{{from}}–{{to}} s"
+    "delayRange": "{{from}}–{{to}} s",
+    "menuLabel": "Mer",
+    "menuDiagnostics": "Diagnostik för skottdetektering"
   },
   "shotDiagnostics": {
     "title": "Diagnostik för skottdetektering",
@@ -1054,8 +1056,6 @@
   "tools": {
     "title": "Verktyg",
     "timerSubtitle": "Skjuttids-, skott- och fälttimer",
-    "diagnosticsTitle": "Diagnostik för skottdetektering",
-    "diagnosticsSubtitle": "Mät vad mikrofonen hör på banan",
     "photosSubtitle": "Alla tavelfoton du tagit, sökbara."
   },
   "photos": {

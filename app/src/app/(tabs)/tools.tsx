@@ -57,12 +57,6 @@ export default function ToolsScreen() {
           onPress={() => router.push('/timer')}
           testID="tools-open-timer"
         />
-        <DrillDownRow
-          title={t('tools.diagnosticsTitle')}
-          subtitle={t('tools.diagnosticsSubtitle')}
-          onPress={() => router.push('/shot-diagnostics')}
-          testID="tools-open-shot-diagnostics"
-        />
       </Card>
 
       <Card>
