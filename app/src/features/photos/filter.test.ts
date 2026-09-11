@@ -1,7 +1,8 @@
 import {
   filterPhotosByDate,
+  filterPhotosByFacets,
   groupPhotosByDay,
-  photoLocations,
+  photoFacetValues,
   searchPhotos,
   type GalleryPhoto,
 } from './filter';
@@ -15,6 +16,10 @@ const photo = (patch: Partial<GalleryPhoto>): GalleryPhoto => ({
   startedAt: '2026-09-01T10:00:00.000Z',
   location: 'Malmö Skyttegille',
   disciplineId: 'spsf-precision',
+  firearmId: 'f1',
+  firearmMake: 'Pardini',
+  firearmModel: 'SP',
+  weaponGroup: 'spsf:C',
   ...patch,
 });
 
@@ -40,6 +45,12 @@ describe('searchPhotos', () => {
 
   it('matches the discipline', () => {
     expect(searchPhotos(photos, 'falt').map((p) => p.seriesId)).toEqual(['c']);
+  });
+
+  it('matches the firearm', () => {
+    const mixed = [photo({ seriesId: 'x', firearmMake: 'Walther', firearmModel: 'GSP' })];
+    expect(searchPhotos(mixed, 'walther')).toHaveLength(1);
+    expect(searchPhotos(mixed, 'gsp')).toHaveLength(1);
   });
 
   it('is case- and whitespace-insensitive', () => {
@@ -125,24 +136,88 @@ describe('groupPhotosByDay', () => {
   });
 });
 
-describe('photoLocations', () => {
-  it('lists distinct locations, alphabetically', () => {
+describe('photoFacetValues', () => {
+  it('lists distinct values, alphabetically', () => {
     expect(
-      photoLocations([
-        photo({ location: 'Lund' }),
-        photo({ location: 'Malmö' }),
-        photo({ location: 'Lund' }),
-      ]),
+      photoFacetValues(
+        [photo({ location: 'Lund' }), photo({ location: 'Malmö' }), photo({ location: 'Lund' })],
+        'location',
+      ),
     ).toEqual(['Lund', 'Malmö']);
   });
 
   it('merges spellings that differ only in case or spacing', () => {
-    expect(photoLocations([photo({ location: 'Lund' }), photo({ location: '  lund ' })])).toEqual([
-      'Lund',
-    ]);
+    expect(
+      photoFacetValues([photo({ location: 'Lund' }), photo({ location: '  lund ' })], 'location'),
+    ).toEqual(['Lund']);
   });
 
-  it('drops blank and missing locations', () => {
-    expect(photoLocations([photo({ location: null }), photo({ location: '   ' })])).toEqual([]);
+  it('drops blank and missing values', () => {
+    expect(
+      photoFacetValues([photo({ location: null }), photo({ location: '   ' })], 'location'),
+    ).toEqual([]);
+  });
+
+  it('works the same for every facet', () => {
+    const photos = [
+      photo({ disciplineId: 'spsf-falt', firearmId: 'f2', weaponGroup: 'spsf:A' }),
+      photo({ disciplineId: 'spsf-precision', firearmId: 'f1', weaponGroup: 'spsf:C' }),
+    ];
+    expect(photoFacetValues(photos, 'disciplineId')).toEqual(['spsf-falt', 'spsf-precision']);
+    expect(photoFacetValues(photos, 'firearmId')).toEqual(['f1', 'f2']);
+    expect(photoFacetValues(photos, 'weaponGroup')).toEqual(['spsf:A', 'spsf:C']);
+  });
+});
+
+describe('filterPhotosByFacets', () => {
+  const photos = [
+    photo({
+      seriesId: 'a',
+      disciplineId: 'spsf-precision',
+      firearmId: 'f1',
+      weaponGroup: 'spsf:C',
+    }),
+    photo({ seriesId: 'b', disciplineId: 'spsf-falt', firearmId: 'f1', weaponGroup: 'spsf:A' }),
+    photo({
+      seriesId: 'c',
+      disciplineId: 'spsf-precision',
+      firearmId: 'f2',
+      weaponGroup: 'spsf:C',
+    }),
+  ];
+
+  it('does not narrow when nothing is selected', () => {
+    expect(filterPhotosByFacets(photos, {})).toHaveLength(3);
+    expect(filterPhotosByFacets(photos, { firearmId: null })).toHaveLength(3);
+  });
+
+  it('narrows by one facet', () => {
+    expect(filterPhotosByFacets(photos, { firearmId: 'f2' }).map((p) => p.seriesId)).toEqual(['c']);
+  });
+
+  it('ANDs several facets rather than widening', () => {
+    expect(
+      filterPhotosByFacets(photos, { disciplineId: 'spsf-precision', firearmId: 'f1' }).map(
+        (p) => p.seriesId,
+      ),
+    ).toEqual(['a']);
+    // A combination nothing satisfies returns nothing, not everything.
+    expect(filterPhotosByFacets(photos, { disciplineId: 'spsf-falt', firearmId: 'f2' })).toEqual(
+      [],
+    );
+  });
+
+  it('matches case- and space-insensitively, like the chips are built', () => {
+    expect(
+      filterPhotosByFacets(photos, { weaponGroup: ' SPSF:c ' }).map((p) => p.seriesId),
+    ).toEqual(['a', 'c']);
+  });
+
+  it('excludes rows with no value for a selected facet', () => {
+    const withNull = [...photos, photo({ seriesId: 'd', firearmId: null })];
+    expect(filterPhotosByFacets(withNull, { firearmId: 'f1' }).map((p) => p.seriesId)).toEqual([
+      'a',
+      'b',
+    ]);
   });
 });

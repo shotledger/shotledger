@@ -3,7 +3,7 @@
 // query behind the gallery.
 import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 
-import { series, sessions } from '../schema';
+import { firearms, series, sessions } from '../schema';
 import type { Database } from '../types';
 
 export interface PhotoRow {
@@ -15,6 +15,11 @@ export interface PhotoRow {
   startedAt: string;
   location: string | null;
   disciplineId: string | null;
+  firearmId: string | null;
+  /** Denormalised for the filter chips, as make + model. */
+  firearmMake: string | null;
+  firearmModel: string | null;
+  weaponGroup: string | null;
 }
 
 /** Newest session first, and within a session the series in order. */
@@ -30,9 +35,15 @@ export function listSeriesPhotos(db: Database): PhotoRow[] {
         startedAt: sessions.startedAt,
         location: sessions.location,
         disciplineId: sessions.disciplineId,
+        firearmId: sessions.firearmId,
+        firearmMake: firearms.make,
+        firearmModel: firearms.model,
+        weaponGroup: sessions.weaponGroup,
       })
       .from(series)
       .innerJoin(sessions, eq(series.sessionId, sessions.id))
+      // Left: a session without a firearm still has photos worth listing.
+      .leftJoin(firearms, eq(sessions.firearmId, firearms.id))
       .where(and(isNotNull(series.photoUri), isNull(series.deletedAt), isNull(sessions.deletedAt)))
       .orderBy(desc(sessions.startedAt), series.position)
       .all()

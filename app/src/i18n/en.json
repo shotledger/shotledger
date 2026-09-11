@@ -1056,13 +1056,13 @@
   "photos": {
     "title": "Photos",
     "searchPlaceholder": "Search by session, place or discipline",
-    "allLocations": "All Places",
     "count": "Showing {{shown}} of {{total}}",
     "noMatch": "No photos match that search.",
     "emptyTitle": "No Photos Yet",
     "emptyBody": "Photos you attach to a series, or take when scoring from a photo, collect here.",
     "notDownloaded": "Not downloaded",
     "openLabel": "Open the photo from {{session}}, series {{position}}",
-    "shareHint": "Long-press a photo to share, copy or save it."
+    "shareHint": "Long-press a photo to share, copy or save it.",
+    "allOf": "All"
   }
 }
