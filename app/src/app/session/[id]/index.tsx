@@ -295,7 +295,15 @@ export default function SessionDetailScreen() {
         style={({ pressed }) => [
           styles.seriesRow,
           pressed && styles.pressed,
-          held && [styles.lifted, { transform: [{ translateY: dragOffset }] }],
+          held && [
+            styles.lifted,
+            // An opaque ground is what makes the row occlude the list rather
+            // than let it show through. Without it the rows beneath are
+            // visible straight through the one under your finger, which reads
+            // as "sliding under" however the z-order is set.
+            { backgroundColor: theme.backgroundElement, borderColor: theme.primary },
+            { transform: [{ translateY: dragOffset }] },
+          ],
         ]}
       >
         <View style={styles.seriesHeader}>
@@ -846,10 +854,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     borderRadius: Radius.medium,
   },
+  /**
+   * The held row. `seriesRow` carries no background of its own — the card
+   * behind it is the ground — so a dragged row was see-through and the list
+   * beneath showed through it. The colour is set inline from the theme; what
+   * is fixed here is the shape that makes it read as picked up.
+   */
   lifted: {
-    // Opaque, not translucent: a see-through row over the list underneath
-    // reads as a rendering glitch rather than as "picked up".
     opacity: 1,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
     elevation: 12,
     shadowOpacity: 0.35,
     shadowRadius: 10,
