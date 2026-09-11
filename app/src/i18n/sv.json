@@ -130,7 +130,18 @@
     "statsSeriesSd": "Std.avv.",
     "statsSeriesInnerTens": "Snitt X",
     "statsSeriesCount": "Serier",
-    "comparisonHint": "Snittpoäng per serie."
+    "comparisonHint": "Snittpoäng per serie.",
+    "crossSessionTitle": "Var dina skott hamnar",
+    "crossSessionSubtitle": "{{shots}} markerade skott över {{sessions}} pass i {{discipline}}.",
+    "hintNumbers": "Av de förlorade poängen står läget för ungefär {{position}} och spridningen för {{size}}.",
+    "hintCaveat": "Det här läser bara markeringarna. Det ser inte ditt grepp, din siktbild eller om siktet helt enkelt var felställt.",
+    "hint": {
+      "sample": "För få markerade skott än för att säga något användbart.",
+      "adjustSights": "Mest en siktjustering: gruppen är tätare än läget antyder.",
+      "tightenGroup": "Mest jämnhet: gruppen ligger nära mitten men är spridd.",
+      "balanced": "Läge och spridning kostar ungefär lika mycket — båda behöver bli bättre.",
+      "onTarget": "Centrerad och tät. Lite kvar att hämta här."
+    }
   },
   "firearms": {
     "title": "Vapen & ammo",

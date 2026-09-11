@@ -130,7 +130,18 @@
     "statsSeriesSd": "SD",
     "statsSeriesInnerTens": "Avg X",
     "statsSeriesCount": "Series",
-    "comparisonHint": "Mean series score."
+    "comparisonHint": "Mean series score.",
+    "crossSessionTitle": "Where Your Shots Land",
+    "crossSessionSubtitle": "{{shots}} marked shots across {{sessions}} sessions of {{discipline}}.",
+    "hintNumbers": "Of the points lost, about {{position}} to where the group sits and {{size}} to how wide it is.",
+    "hintCaveat": "This reads the marks only. It cannot see your hold, your sight picture, or whether the sights were simply set wrong.",
+    "hint": {
+      "sample": "Not enough marked shots yet to say anything useful.",
+      "adjustSights": "Mostly a sight adjustment: the group is tighter than its position suggests.",
+      "tightenGroup": "Mostly consistency: the group is near the centre but spread out.",
+      "balanced": "Position and spread cost about the same — both would have to improve.",
+      "onTarget": "Centred and tight. Little left to take here."
+    }
   },
   "firearms": {
     "title": "Firearms & Ammo",

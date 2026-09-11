@@ -30,6 +30,8 @@ import {
   type AnalyticsReportData,
   type NamedRecord,
 } from '@/features/stats/use-stats-data';
+import { ShotHeatmap } from '@/components/shot-heatmap';
+import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
 import { Spacing } from '@/theme/tokens';
 
 const DASH = '–';
@@ -55,6 +57,12 @@ export default function StatsReportScreen() {
     );
 
   const range = periodRange(filter);
+  // Cross-session group: every photo-scored mark in the period, pooled.
+  const crossSession = useCrossSessionGroup(
+    range.fromIso?.slice(0, 10) ?? null,
+    range.toIso?.slice(0, 10) ?? null,
+    filter.disciplineId,
+  );
   const formatLabel: Record<ExportFormat, string> = {
     pdf: t('compliance.exportPdf'),
     json: t('stats.exportJson'),
@@ -108,6 +116,49 @@ export default function StatsReportScreen() {
           {t('stats.matchCount', { count: data.totals.sessionCount })}
         </ThemedText>
       </Card>
+
+      {crossSession && (
+        <Card testID="cross-session-group">
+          <ThemedText type="smallBold">{t('stats.crossSessionTitle')}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('stats.crossSessionSubtitle', {
+              shots: crossSession.analysis.shotCount,
+              sessions: crossSession.sessionCount,
+              discipline: disciplineLabel(t, crossSession.disciplineId),
+            })}
+          </ThemedText>
+
+          <View style={styles.centred}>
+            <ShotHeatmap
+              target={crossSession.target}
+              shots={crossSession.marks}
+              size={300}
+              testID="cross-session-heatmap"
+            />
+          </View>
+
+          {crossSession.hint && (
+            <>
+              <ThemedText type="smallBold" testID="coaching-hint">
+                {t(`stats.hint.${crossSession.hint.kind}`)}
+              </ThemedText>
+              {crossSession.hint.kind !== 'sample' && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('stats.hintNumbers', {
+                    position: (crossSession.hint.pointsToPosition ?? 0).toFixed(1),
+                    size: (crossSession.hint.pointsToSize ?? 0).toFixed(1),
+                  })}
+                </ThemedText>
+              )}
+              {/* What the numbers cannot tell you, said plainly rather than
+                  implied by silence. */}
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('stats.hintCaveat')}
+              </ThemedText>
+            </>
+          )}
+        </Card>
+      )}
 
       {!data.hasMatches ? (
         <EmptyState title={t('stats.emptyFilteredTitle')} body={t('stats.emptyFilteredBody')} />
@@ -298,6 +349,9 @@ export default function StatsReportScreen() {
 }
 
 const styles = StyleSheet.create({
+  centred: {
+    alignItems: 'center',
+  },
   gridRow: {
     flexDirection: 'row',
     gap: Spacing.two,
