@@ -192,8 +192,6 @@
     "sightWindageHint": "Clicks right from your zero; negative is left. Leave it not recorded if you don't track it.",
     "sightElevationDecrease": "Decrease Elevation",
     "sightElevationIncrease": "Increase Elevation",
-    "sightWindageDecrease": "Decrease Windage",
-    "sightWindageIncrease": "Increase Windage",
     "sightClicksClear": "Clear",
     "sightClicksNotRecorded": "Not recorded",
     "sightSummary": "Elevation {{elevation}} · Windage {{windage}}",
@@ -250,7 +248,8 @@
     "adjustReason": "Reason",
     "adjustReasonPlaceholder": "Why is this being adjusted?",
     "adjustSave": "Apply Adjustment",
-    "eventDate": "Date"
+    "eventDate": "Date",
+    "sightWindageRange": "Range ±{{value}}"
   },
   "ammo": {
     "newLot": "New Ammo Lot",

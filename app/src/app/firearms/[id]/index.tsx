@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
@@ -27,6 +27,7 @@ import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { Slider } from '@/components/slider';
 import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -47,6 +48,8 @@ import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
 import {
   SIGHT_CLICK_MAX,
   SIGHT_CLICK_MIN,
+  SIGHT_SLIDER_WINDOW_STEP,
+  expandedSightWindow,
   sightClicksForSave,
 } from '@/features/firearms/sight-clicks';
 import {
@@ -145,6 +148,9 @@ export default function FirearmDetailScreen() {
   // that state reachable.
   const [sightElevation, setSightElevation] = useState<number | null>(null);
   const [sightWindage, setSightWindage] = useState<number | null>(null);
+  // The slider's visible range grows with the value and never shrinks while
+  // one setting is being edited — see expandedSightWindow.
+  const [windageWindow, setWindageWindow] = useState(SIGHT_SLIDER_WINDOW_STEP);
   const [sightNotes, setSightNotes] = useState('');
 
   const { firearm } = detail;
@@ -346,6 +352,7 @@ export default function FirearmDetailScreen() {
     setSightLabel('');
     setSightElevation(null);
     setSightWindage(null);
+    setWindageWindow(SIGHT_SLIDER_WINDOW_STEP);
     setSightNotes('');
     setShowSightForm(true);
   }
@@ -355,6 +362,7 @@ export default function FirearmDetailScreen() {
     setSightLabel(setting.label);
     setSightElevation(setting.elevationClicks ?? null);
     setSightWindage(setting.windageClicks ?? null);
+    setWindageWindow(expandedSightWindow(SIGHT_SLIDER_WINDOW_STEP, setting.windageClicks ?? null));
     setSightNotes(setting.notes ?? '');
     setShowSightForm(true);
   }
@@ -638,21 +646,42 @@ export default function FirearmDetailScreen() {
                 testID="sight-windage-info"
               />
             </View>
-            <Stepper
-              value={sightWindage}
-              onChange={setSightWindage}
-              min={SIGHT_CLICK_MIN}
-              max={SIGHT_CLICK_MAX}
-              decrementLabel={t('firearms.sightWindageDecrease')}
-              incrementLabel={t('firearms.sightWindageIncrease')}
-              clearLabel={t('firearms.sightClicksClear')}
-              format={(clicks) =>
-                clicks === null
+            {/* Slider trial (#138): windage only, so it can be compared
+                against the elevation stepper directly above it. */}
+            <View style={styles.sectionHeader}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('firearms.sightWindageRange', { value: windageWindow })}
+              </ThemedText>
+              <ThemedText type="smallBold" testID="sight-windage-value">
+                {sightWindage === null
                   ? t('firearms.sightClicksNotRecorded')
-                  : sightClicksDirectionText(t, clicks, 'windage')
-              }
+                  : sightClicksDirectionText(t, sightWindage, 'windage')}
+              </ThemedText>
+            </View>
+            <Slider
+              value={sightWindage ?? 0}
+              min={-windageWindow}
+              max={windageWindow}
+              onChange={(clicks) => {
+                setSightWindage(clicks);
+                setWindageWindow((current) => expandedSightWindow(current, clicks));
+              }}
+              accessibilityLabel={t('firearms.sightWindage')}
               testID="sight-windage"
             />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSightWindage(null)}
+              disabled={sightWindage === null}
+              testID="sight-windage-clear"
+            >
+              <ThemedText
+                type="small"
+                themeColor={sightWindage === null ? 'textSecondary' : 'primary'}
+              >
+                {t('firearms.sightClicksClear')}
+              </ThemedText>
+            </Pressable>
             <ThemedText type="small">{t('firearms.notes')}</ThemedText>
             <TextField value={sightNotes} onChangeText={setSightNotes} testID="sight-notes" />
             <PrimaryButton

@@ -21,3 +21,29 @@ export function sightClicksForSave(value: number | null): number | null {
   if (value === null || !Number.isFinite(value)) return null;
   return clampStepperValue(value, SIGHT_CLICK_MIN, SIGHT_CLICK_MAX);
 }
+
+/**
+ * The slider trial (#138): a slider over the full ±200 range would give about
+ * two pixels per click, so instead it shows a window that starts at ±10 and
+ * grows by 10 whenever the value reaches within one click of an end —
+ * maintainer's suggestion, 2026-09-11.
+ *
+ * The window only ever grows while one setting is being edited. Deriving it
+ * from the value alone would shrink it again on the way back, and the thumb
+ * would jump outward the moment you crossed the boundary in the other
+ * direction — an oscillation right where the control most needs to feel
+ * steady. Callers hold the current window and feed it back in.
+ */
+export const SIGHT_SLIDER_WINDOW_STEP = 10;
+
+export function expandedSightWindow(currentWindow: number, value: number | null): number {
+  const floor = Math.max(SIGHT_SLIDER_WINDOW_STEP, currentWindow);
+  if (value === null || !Number.isFinite(value)) return Math.min(floor, SIGHT_CLICK_LIMIT);
+
+  // One click of headroom: 9 inside a ±10 window opens the next step, 8 does
+  // not. The +2 is that headroom plus the step's own exclusive upper edge.
+  const needed =
+    Math.ceil((Math.abs(Math.round(value)) + 2) / SIGHT_SLIDER_WINDOW_STEP) *
+    SIGHT_SLIDER_WINDOW_STEP;
+  return Math.min(Math.max(floor, needed), SIGHT_CLICK_LIMIT);
+}
