@@ -1039,6 +1039,19 @@
     "title": "Tools",
     "timerSubtitle": "Time limit, shot and field timers",
     "diagnosticsTitle": "Shot Detection Diagnostics",
-    "diagnosticsSubtitle": "Measure what the microphone hears at the range"
+    "diagnosticsSubtitle": "Measure what the microphone hears at the range",
+    "photosSubtitle": "Every target photo you have taken, searchable."
+  },
+  "photos": {
+    "title": "Photos",
+    "searchPlaceholder": "Search by session, place or discipline",
+    "allLocations": "All Places",
+    "count": "Showing {{shown}} of {{total}}",
+    "noMatch": "No photos match that search.",
+    "emptyTitle": "No Photos Yet",
+    "emptyBody": "Photos you attach to a series, or take when scoring from a photo, collect here.",
+    "notDownloaded": "Not downloaded",
+    "openLabel": "Open the photo from {{session}}, series {{position}}",
+    "shareHint": "Long-press a photo to share, copy or save it."
   }
 }

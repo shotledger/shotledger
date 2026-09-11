@@ -32,3 +32,24 @@ export async function shareTextFile(
     return false;
   }
 }
+
+/**
+ * Shares a file that already exists — a stored target photo, rather than text
+ * written on the fly. The share sheet is also how a photo gets copied,
+ * saved to the gallery, or sent anywhere else, so one entry point covers
+ * "copy/share/export" without the app owning any of those flows.
+ */
+export async function shareExistingFile(
+  uri: string,
+  mimeType: string,
+  uti: string,
+): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    if (!(await Sharing.isAvailableAsync())) return false;
+    await Sharing.shareAsync(uri, { mimeType, UTI: uti });
+    return true;
+  } catch {
+    return false;
+  }
+}

@@ -43,6 +43,15 @@ export default function ToolsScreen() {
 
       <Card>
         <DrillDownRow
+          title={t('photos.title')}
+          subtitle={t('tools.photosSubtitle')}
+          onPress={() => router.push('/photos')}
+          testID="tools-open-photos"
+        />
+      </Card>
+
+      <Card>
+        <DrillDownRow
           title={t('timer.title')}
           subtitle={t('tools.timerSubtitle')}
           onPress={() => router.push('/timer')}
