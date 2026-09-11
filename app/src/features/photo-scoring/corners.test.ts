@@ -3,25 +3,34 @@ import { SPSF_PISTOL_25M_PRECISION as TARGET } from '@shotledger/shared';
 import {
   applyHomography,
   homographyFromQuad,
-  outerRingReferencePoints,
+  ringReferencePoints,
   transformFromCorners,
 } from './corners';
 
 const p = (x: number, y: number) => ({ x, y });
 
-describe('outerRingReferencePoints', () => {
+describe('ringReferencePoints', () => {
   it('is the outermost ring extremes, top/right/bottom/left', () => {
     // precision face: ring 1 is 500mm across, so r = 250mm
-    expect(outerRingReferencePoints(TARGET)).toEqual([
-      p(0, -250),
-      p(250, 0),
-      p(0, 250),
-      p(-250, 0),
+    expect(ringReferencePoints(TARGET)).toEqual([p(0, -250), p(250, 0), p(0, 250), p(-250, 0)]);
+  });
+
+  it('uses the named ring when the outermost is not in frame', () => {
+    // The 7 ring is 200mm across on the precision face, so r = 100mm.
+    expect(ringReferencePoints(TARGET, '7')).toEqual([
+      p(0, -100),
+      p(100, 0),
+      p(0, 100),
+      p(-100, 0),
     ]);
   });
 
   it('throws for a target with no rings', () => {
-    expect(() => outerRingReferencePoints({ rings: [] })).toThrow(RangeError);
+    expect(() => ringReferencePoints({ rings: [] })).toThrow(RangeError);
+  });
+
+  it('throws rather than silently falling back for an unknown ring', () => {
+    expect(() => ringReferencePoints(TARGET, '11')).toThrow(RangeError);
   });
 });
 
@@ -63,7 +72,7 @@ describe('homographyFromQuad', () => {
 
   it('maps every correspondence exactly', () => {
     const from = [p(120, 90), p(880, 140), p(830, 760), p(160, 700)];
-    const to = outerRingReferencePoints(TARGET);
+    const to = ringReferencePoints(TARGET);
     const h = homographyFromQuad(from, to)!;
     from.forEach((q, i) => {
       const mapped = applyHomography(h, q);
@@ -74,10 +83,10 @@ describe('homographyFromQuad', () => {
 
   it('returns null for a degenerate quad instead of a matrix of NaNs', () => {
     const collinear = [p(0, 0), p(10, 0), p(20, 0), p(30, 0)];
-    expect(homographyFromQuad(collinear, outerRingReferencePoints(TARGET))).toBeNull();
+    expect(homographyFromQuad(collinear, ringReferencePoints(TARGET))).toBeNull();
 
     const coincident = [p(0, 0), p(0, 0), p(10, 10), p(0, 10)];
-    expect(homographyFromQuad(coincident, outerRingReferencePoints(TARGET))).toBeNull();
+    expect(homographyFromQuad(coincident, ringReferencePoints(TARGET))).toBeNull();
   });
 
   it('returns null for a NEARLY degenerate quad, not huge finite garbage', () => {
@@ -87,7 +96,7 @@ describe('homographyFromQuad', () => {
     // rejects it. This is the realistic case — a user dragging all four
     // handles onto very nearly the same line.
     const nearlyCollinear = [p(0, 0), p(10, 1e-14), p(20, 0), p(30, 1e-14)];
-    expect(homographyFromQuad(nearlyCollinear, outerRingReferencePoints(TARGET))).toBeNull();
+    expect(homographyFromQuad(nearlyCollinear, ringReferencePoints(TARGET))).toBeNull();
   });
 
   it('rejects the wrong number of correspondences', () => {
@@ -96,7 +105,28 @@ describe('homographyFromQuad', () => {
 
   it('rejects non-finite corners', () => {
     const bad = [p(Number.NaN, 0), p(10, 0), p(10, 10), p(0, 10)];
-    expect(() => homographyFromQuad(bad, outerRingReferencePoints(TARGET))).toThrow(RangeError);
+    expect(() => homographyFromQuad(bad, ringReferencePoints(TARGET))).toThrow(RangeError);
+  });
+});
+
+describe('transformFromCorners, on a ring other than the outermost', () => {
+  // The failure this exists to prevent: corners placed on the 7 ring while the
+  // code assumes the 1 ring scales every measurement by 500/200 = 2.5x, so a
+  // hole 50mm from centre reads as 125mm — an X scored as a 6.
+  const corners = [p(100, 0), p(200, 100), p(100, 200), p(0, 100)];
+
+  it('reads the scale from the ring the user says they used', () => {
+    const onSeven = transformFromCorners(corners, TARGET, '7')!;
+    // The quad is 100px from centre to edge and the 7 ring is 100mm to edge.
+    expect(applyHomography(onSeven.toMm, p(150, 50)).y).toBeCloseTo(-50, 6);
+  });
+
+  it('would be 2.5x wrong if the choice were ignored', () => {
+    const assumedOutermost = transformFromCorners(corners, TARGET)!;
+    const onSeven = transformFromCorners(corners, TARGET, '7')!;
+    const wrong = applyHomography(assumedOutermost.toMm, p(150, 50)).y;
+    const right = applyHomography(onSeven.toMm, p(150, 50)).y;
+    expect(wrong / right).toBeCloseTo(2.5, 6);
   });
 });
 

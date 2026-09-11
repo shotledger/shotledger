@@ -24,7 +24,9 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
 import { updateSeries } from '@/db/queries/series';
+import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { saveSeriesMarks } from '@/db/queries/shot-marks';
+import { recordTrainingSample } from '@/db/queries/training-samples';
 import {
   CALIBER_KEYS,
   type CaliberKey,
@@ -64,10 +66,31 @@ type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
  * a misdetection makes the ring scale 2.5x wrong, so the auto pipeline is
  * never attempted for it — capture goes straight to the four-corner screen.
  * Any other face still gets the "not supported" message.
+ *
+ * The ISSF faces join on the same rule, by what the auto pipeline was
+ * actually validated against rather than by federation:
+ * - `issf-25m-precision` is dimensionally the same sheet as the SPSF
+ *   precision face — a 200 mm solid black disc — so it takes the auto path.
+ * - `issf-25m-rapid-fire` is the same sheet as milsnabb, so it inherits
+ *   milsnabb's manual-only verdict for the same measured reason.
+ * - `issf-10m-air-pistol` is manual-only because nothing has measured it:
+ *   its black is 59.5 mm against the validated 200 mm, and a scale that far
+ *   outside the tested range is exactly where a confident wrong lock comes
+ *   from.
  */
-const AUTO_FACE_ID = 'spsf-pistol-25m-precision';
-const MANUAL_ONLY_FACE_ID = 'spsf-snabbskjutning-25m';
-const SUPPORTED_FACE_IDS: ReadonlySet<string> = new Set([AUTO_FACE_ID, MANUAL_ONLY_FACE_ID]);
+const AUTO_FACE_IDS: ReadonlySet<string> = new Set([
+  'spsf-pistol-25m-precision',
+  'issf-25m-precision',
+]);
+const MANUAL_ONLY_FACE_IDS: ReadonlySet<string> = new Set([
+  'spsf-snabbskjutning-25m',
+  'issf-25m-rapid-fire',
+  'issf-10m-air-pistol',
+]);
+const SUPPORTED_FACE_IDS: ReadonlySet<string> = new Set([
+  ...AUTO_FACE_IDS,
+  ...MANUAL_ONLY_FACE_IDS,
+]);
 
 const REASON_KEYS: Record<ValidityReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
@@ -87,7 +110,7 @@ export default function ScanScreen() {
   const row = detail.seriesRows.find((series) => series.position === position);
   const faceId = getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '';
   const supported = SUPPORTED_FACE_IDS.has(faceId);
-  const manualOnly = faceId === MANUAL_ONLY_FACE_ID;
+  const manualOnly = MANUAL_ONLY_FACE_IDS.has(faceId);
   const target = supported ? requireTargetFace(faceId) : undefined;
 
   // Caliber comes from the session's firearm; the picker is the fallback when
@@ -104,6 +127,11 @@ export default function ScanScreen() {
   const [corners, setCorners] = useState<readonly Point[]>([]);
   const [caliberKey, setCaliberKey] = useState<CaliberKey>(initialCaliber.key);
   const [notice, setNotice] = useState<string | null>(null);
+  // Which ring the four corners are being placed on. The outermost by
+  // default; changeable because a landscape crop of the 500 mm milsnabb face
+  // routinely cuts the 5 ring off, and placing the corners on a visible ring
+  // while the code assumes the outermost scales every measurement.
+  const [cornerRing, setCornerRing] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 
   const [markState, dispatch] = useReducer(
@@ -185,7 +213,7 @@ export default function ScanScreen() {
 
   function onUseCorners() {
     if (!target) return;
-    const projective = transformFromCorners(corners, target);
+    const projective = transformFromCorners(corners, target, cornerRing ?? undefined);
     if (!projective) {
       setNotice(t('photoScoring.cornersInvalid'));
       return;
@@ -200,6 +228,7 @@ export default function ScanScreen() {
     setGeometryImage(null);
     setTransform(null);
     setReasons([]);
+    setCornerRing(null);
     dispatch({ type: 'clear' });
     setMoving(false);
     setPhase('capture');
@@ -217,6 +246,27 @@ export default function ScanScreen() {
   function onSave(next: boolean) {
     if (db && row) {
       saveSeriesMarks(db, row.id, marksToShotMarkInputs(markState.marks, scores));
+
+      // Every tap-to-mark is a labelled example, already in canonical
+      // target-mm because the geometry is solved by now. Kept only with the
+      // shooter's explicit opt-in, and only on this device — see
+      // db/queries/training-samples.ts. The consent is read here, at the one
+      // call site, rather than hidden inside the write.
+      if (transform && getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false)) {
+        recordTrainingSample(db, {
+          seriesId: row.id,
+          targetFaceId: faceId,
+          geometrySource: transform.source,
+          photoUri: photo?.originalUri ?? null,
+          marks: markState.marks.map((m) => ({
+            xMm: m.xMm,
+            yMm: m.yMm,
+            caliberMm: m.caliberMm,
+            moved: m.moved,
+            calledRingLabel: m.calledRingLabel,
+          })),
+        });
+      }
     }
     if (next) {
       onRetake();
@@ -310,6 +360,29 @@ export default function ScanScreen() {
               scaleToOriginal={geometryImage.scaleToOriginal}
               labels={['1', '2', '3', '4']}
             />
+            {target && (
+              <Card>
+                <ThemedText type="smallBold">{t('photoScoring.cornerRing')}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('photoScoring.cornerRingHint')}
+                </ThemedText>
+                <View style={styles.row}>
+                  {target.rings.map((ring) => {
+                    const outermost = target.rings[target.rings.length - 1]?.label;
+                    const active = (cornerRing ?? outermost) === ring.label;
+                    return (
+                      <Pressable
+                        key={ring.label}
+                        onPress={() => setCornerRing(ring.label)}
+                        testID={`corner-ring-${ring.label}`}
+                      >
+                        <Chip label={ring.label} tone={active ? 'primary' : 'neutral'} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </Card>
+            )}
             {notice && <ThemedText themeColor="danger">{notice}</ThemedText>}
             <PrimaryButton
               label={t('photoScoring.useCorners')}
@@ -351,6 +424,9 @@ export default function ScanScreen() {
                 {t('photoScoring.markHint')}
               </ThemedText>
             )}
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('photoScoring.zoomHint')}
+            </ThemedText>
 
             {selectedScore && (
               <Card>

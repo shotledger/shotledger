@@ -9,6 +9,7 @@ import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
+import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SearchablePicker, type SearchablePickerOption } from '@/components/searchable-picker';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -24,6 +25,7 @@ import {
 import { SUPPORT_URL } from '@/constants/links';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
+import { countTrainingSamples, deleteAllTrainingSamples } from '@/db/queries/training-samples';
 import { BackupCard } from '@/features/backup/backup-card';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { useJsonExportImport } from '@/features/json-export/use-json-export-import';
@@ -117,6 +119,37 @@ export default function SettingsScreen() {
   const [onlineLocationLookup, setOnlineLocationLookup] = useState(() =>
     db ? getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false) : false,
   );
+
+  // Opt-in collection of tap-to-mark positions as training data for a future
+  // learned hole detector. Off by default; the count is what makes the
+  // promise checkable, and the delete is what makes the consent revocable.
+  const [trainingConsent, setTrainingConsent] = useState(() =>
+    db ? getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false) : false,
+  );
+  const [sampleCount, setSampleCount] = useState(() => (db ? countTrainingSamples(db) : 0));
+
+  function onToggleTrainingConsent(next: boolean) {
+    setTrainingConsent(next);
+    if (db) setSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, next);
+  }
+
+  function onDeleteTrainingSamples() {
+    Alert.alert(
+      t('settings.trainingDeleteTitle'),
+      t('settings.trainingDeleteBody', { count: sampleCount }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.trainingDelete'),
+          style: 'destructive',
+          onPress: () => {
+            if (db) deleteAllTrainingSamples(db);
+            setSampleCount(0);
+          },
+        },
+      ],
+    );
+  }
 
   function onToggleOnlineLocationLookup(next: boolean) {
     setOnlineLocationLookup(next);
@@ -232,6 +265,42 @@ export default function SettingsScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.locationLookupHelp')}
         </ThemedText>
+      </Card>
+
+      <Card>
+        <View style={styles.headerRow}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('settings.trainingTitle')}
+          </ThemedText>
+          <InfoButton
+            title={t('settings.trainingTitle')}
+            body={t('settings.trainingInfo')}
+            testID="photo-training-info"
+          />
+        </View>
+        <View style={styles.switchRow}>
+          <ThemedText type="small">{t('settings.trainingConsent')}</ThemedText>
+          <Switch
+            value={trainingConsent}
+            onValueChange={onToggleTrainingConsent}
+            testID="photo-training-consent"
+          />
+        </View>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('settings.trainingHelp')}
+        </ThemedText>
+        {sampleCount > 0 && (
+          <>
+            <ThemedText type="small" themeColor="textSecondary" testID="training-sample-count">
+              {t('settings.trainingCount', { count: sampleCount })}
+            </ThemedText>
+            <PrimaryButton
+              label={t('settings.trainingDelete')}
+              onPress={onDeleteTrainingSamples}
+              testID="training-delete"
+            />
+          </>
+        )}
       </Card>
 
       <Card>

@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { DISCIPLINES } from '../disciplines';
 import {
   getTargetFace,
+  ISSF_10M_AIR_PISTOL,
+  ISSF_25M_PRECISION,
+  ISSF_25M_RAPID_FIRE,
   requireTargetFace,
   SPSF_PISTOL_25M_PRECISION,
   SPSF_SNABBSKJUTNING_25M,
@@ -58,7 +61,13 @@ describe('SPSF_SNABBSKJUTNING_25M', () => {
 
 describe('ring value / isInnerTen', () => {
   it('TG7: only ring X has isInnerTen true, on both faces', () => {
-    for (const face of [SPSF_PISTOL_25M_PRECISION, SPSF_SNABBSKJUTNING_25M]) {
+    for (const face of [
+      SPSF_PISTOL_25M_PRECISION,
+      SPSF_SNABBSKJUTNING_25M,
+      ISSF_10M_AIR_PISTOL,
+      ISSF_25M_PRECISION,
+      ISSF_25M_RAPID_FIRE,
+    ]) {
       for (const r of face.rings) {
         expect(r.isInnerTen).toBe(r.label === 'X');
       }
@@ -70,6 +79,9 @@ describe('getTargetFace / requireTargetFace', () => {
   it('TG8: resolves both known ids', () => {
     expect(getTargetFace('spsf-pistol-25m-precision')).toBe(SPSF_PISTOL_25M_PRECISION);
     expect(getTargetFace('spsf-snabbskjutning-25m')).toBe(SPSF_SNABBSKJUTNING_25M);
+    expect(getTargetFace('issf-10m-air-pistol')).toBe(ISSF_10M_AIR_PISTOL);
+    expect(getTargetFace('issf-25m-precision')).toBe(ISSF_25M_PRECISION);
+    expect(getTargetFace('issf-25m-rapid-fire')).toBe(ISSF_25M_RAPID_FIRE);
   });
 
   it('TG9: unknown id returns undefined', () => {
@@ -78,6 +90,35 @@ describe('getTargetFace / requireTargetFace', () => {
 
   it('TG10: requireTargetFace throws on an unknown id', () => {
     expect(() => requireTargetFace('nonsense')).toThrow(/Unknown target face: nonsense/);
+  });
+
+  it('TG11b: every ISSF rings discipline resolves its targetFace without throwing', () => {
+    const issfRingsDisciplines = DISCIPLINES.filter(
+      (d) => d.scoring === 'rings' && d.federation === 'ISSF',
+    );
+    expect(issfRingsDisciplines.length).toBeGreaterThan(0);
+    for (const discipline of issfRingsDisciplines) {
+      expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
+    }
+  });
+
+  it('TG11c: the ISSF 25m precision face carries the same dimensions as the SPSF one', () => {
+    // Same sheet of paper (GTR 6.3.4.5 / SHB F.7.1). Kept as separate entries
+    // so a divergence in either rulebook is a data change; this asserts they
+    // have not drifted apart by accident in the meantime.
+    expect(ISSF_25M_PRECISION.rings.map((r) => [r.label, r.value, r.diameterMm])).toEqual(
+      SPSF_PISTOL_25M_PRECISION.rings.map((r) => [r.label, r.value, r.diameterMm]),
+    );
+    expect(ISSF_25M_RAPID_FIRE.rings.map((r) => [r.label, r.value, r.diameterMm])).toEqual(
+      SPSF_SNABBSKJUTNING_25M.rings.map((r) => [r.label, r.value, r.diameterMm]),
+    );
+  });
+
+  it('TG11d: the air pistol face is the GTR 6.3.4.6 dimensions', () => {
+    expect(ISSF_10M_AIR_PISTOL.rings.map((r) => r.diameterMm)).toEqual([
+      5, 11.5, 27.5, 43.5, 59.5, 75.5, 91.5, 107.5, 123.5, 139.5, 155.5,
+    ]);
+    expect(ISSF_10M_AIR_PISTOL.referenceDiameterMm).toBe(59.5);
   });
 
   it('TG11: every SPSF rings discipline resolves its targetFace without throwing', () => {
@@ -93,7 +134,13 @@ describe('getTargetFace / requireTargetFace', () => {
   });
 
   it('TG12: rings are strictly ascending with no duplicate labels or diameters', () => {
-    for (const face of [SPSF_PISTOL_25M_PRECISION, SPSF_SNABBSKJUTNING_25M]) {
+    for (const face of [
+      SPSF_PISTOL_25M_PRECISION,
+      SPSF_SNABBSKJUTNING_25M,
+      ISSF_10M_AIR_PISTOL,
+      ISSF_25M_PRECISION,
+      ISSF_25M_RAPID_FIRE,
+    ]) {
       const diameters = face.rings.map((r) => r.diameterMm);
       const labels = face.rings.map((r) => r.label);
       expect(new Set(labels).size).toBe(labels.length);

@@ -29,19 +29,38 @@ export interface ProjectiveTransform {
   readonly toImage: Homography;
 }
 
+interface RingLike {
+  readonly label: string;
+  readonly diameterMm: number;
+}
+
 /**
- * The four reference points the user drags onto the photo: the extreme
- * points of the OUTERMOST ring, in target-mm. Order is
- * top, right, bottom, left — and the UI must present them in that order,
- * because a homography from mismatched correspondences is silently wrong
- * rather than an error.
+ * The four reference points the user drags onto the photo: the extreme points
+ * of one ring, in target-mm. Order is top, right, bottom, left — and the UI
+ * must present them in that order, because a homography from mismatched
+ * correspondences is silently wrong rather than an error.
+ *
+ * `ringLabel` names which ring they are placing them on; without it, the
+ * outermost. The choice exists because the outermost ring is not always in
+ * the photo: a landscape crop of a 500 mm milsnabb face routinely cuts the
+ * 5 ring off, and placing the corners on the 7 ring while the code assumes
+ * the 5 scales every measurement by 500/340 — a silently wrong target, not a
+ * visibly wrong one. Flagged during phase-1 verification.
  */
-export function outerRingReferencePoints(target: {
-  rings: readonly { diameterMm: number }[];
-}): readonly Point[] {
-  const outermost = target.rings[target.rings.length - 1];
-  if (!outermost) throw new RangeError('target has no rings');
-  const r = outermost.diameterMm / 2;
+export function ringReferencePoints(
+  target: { rings: readonly RingLike[] },
+  ringLabel?: string,
+): readonly Point[] {
+  const ring =
+    (ringLabel === undefined
+      ? target.rings[target.rings.length - 1]
+      : target.rings.find((candidate) => candidate.label === ringLabel)) ?? undefined;
+  if (!ring) {
+    throw new RangeError(
+      ringLabel === undefined ? 'target has no rings' : `no ring labelled ${ringLabel}`,
+    );
+  }
+  const r = ring.diameterMm / 2;
   return [
     { x: 0, y: -r }, // top
     { x: r, y: 0 }, // right
@@ -134,14 +153,15 @@ export function applyHomography(h: Homography, p: Point): Point {
 
 /**
  * Builds the transform from four image points the user dragged onto the
- * outermost ring's top/right/bottom/left extremes. Returns null on a
- * degenerate quad.
+ * top/right/bottom/left extremes of `ringLabel`'s ring — the outermost when
+ * unnamed. Returns null on a degenerate quad.
  */
 export function transformFromCorners(
   imageCorners: readonly Point[],
-  target: { rings: readonly { diameterMm: number }[] },
+  target: { rings: readonly RingLike[] },
+  ringLabel?: string,
 ): ProjectiveTransform | null {
-  const reference = outerRingReferencePoints(target);
+  const reference = ringReferencePoints(target, ringLabel);
   const toMm = homographyFromQuad(imageCorners, reference);
   const toImage = homographyFromQuad(reference, imageCorners);
   if (!toMm || !toImage) return null;

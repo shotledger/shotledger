@@ -9,6 +9,7 @@ export * from './scoring/standardmedalj';
 export * from './scoring/stats';
 export * from './scoring/analytics';
 export * from './scoring/group';
+export * from './scoring/heatmap';
 export * from './disciplines';
 export * from './firearms';
 export * from './ammo';

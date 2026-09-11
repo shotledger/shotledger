@@ -22,6 +22,15 @@ export interface Mark {
    * boolean so that moving the mark afterwards invalidates it naturally.
    */
   readonly calledRingLabel: string | null;
+  /**
+   * The shooter nudged this mark after placing it.
+   *
+   * Carried for the opt-in training store (db/queries/training-samples.ts),
+   * where it is the most valuable bit in the row: a moved mark is a label
+   * that also records that the first placement was wrong. Nothing in scoring
+   * reads it.
+   */
+  readonly moved: boolean;
 }
 
 export interface MarkState {
@@ -78,6 +87,7 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
         caliberMm: state.caliberMm,
         isInnerTen: false,
         calledRingLabel: null,
+        moved: false,
       };
       // A new mark is selected, so Move/Delete is one tap away — the
       // benchmark's behaviour.
@@ -97,6 +107,7 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
         xMm: action.xMm,
         yMm: action.yMm,
         calledRingLabel: null,
+        moved: true,
       }));
     case 'delete':
       if (!state.selectedId) return state;

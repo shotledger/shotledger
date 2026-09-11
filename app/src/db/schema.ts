@@ -215,6 +215,40 @@ export const shotMarks = sqliteTable('shot_marks', {
   caliberMm: real('caliber_mm').notNull(),
 });
 
+/**
+ * Groundwork for a learned hole detector (#138, "Phase 2").
+ *
+ * Every tap-to-mark in Score from Photo is already a labelled example, and
+ * the geometry is solved by then, so the label is in canonical target-mm
+ * rather than in some photo's pixels. This table keeps those labels — and
+ * ONLY with the shooter's explicit opt-in, which is off by default.
+ *
+ * Three deliberate properties:
+ * - **Local only.** Not in `SYNC_TABLE_NAMES` (shared/src/sync/protocol.ts),
+ *   which is an allow-list, so these rows never leave the device. Target
+ *   photos are personal data (hard rule 7) and there is nowhere off-device
+ *   they are allowed to go.
+ * - **No photo bytes.** `photoUri` points at the file the series already
+ *   references; this table copies nothing and owns nothing, so deleting the
+ *   session's photo cannot leave an orphaned copy here.
+ * - **Deletable on its own.** The shooter can clear every row without
+ *   touching their logbook, which is what makes the consent revocable in
+ *   practice rather than only in principle.
+ */
+export const trainingSamples = sqliteTable('training_samples', {
+  ...common,
+  seriesId: text('series_id')
+    .notNull()
+    .references(() => series.id),
+  /** Which face the marks are in the coordinate system of. */
+  targetFaceId: text('target_face_id').notNull(),
+  /** 'auto' or 'manual' — a manually cornered photo is a weaker label. */
+  geometrySource: text('geometry_source').notNull(),
+  photoUri: text('photo_uri'),
+  /** JSON array of {xMm, yMm, caliberMm, moved, calledRingLabel}. */
+  marksJson: text('marks_json').notNull(),
+});
+
 export const maintenanceEvents = sqliteTable('maintenance_events', {
   ...common,
   firearmId: text('firearm_id')

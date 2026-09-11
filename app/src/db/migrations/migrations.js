@@ -12,6 +12,7 @@ import m0007 from './0007_polite_texas_twister.sql';
 import m0008 from './0008_ammo_velocity.sql';
 import m0009 from './0009_caliber_load_system_presets.sql';
 import m0010 from './0010_series_entry_mode.sql';
+import m0011 from './0011_training_samples.sql';
 
 export default {
   journal,
@@ -27,5 +28,6 @@ export default {
     m0008,
     m0009,
     m0010,
+    m0011,
   },
 };
