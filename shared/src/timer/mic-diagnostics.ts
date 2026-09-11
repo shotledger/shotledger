@@ -89,8 +89,23 @@ export const MAX_DIAGNOSTIC_SAMPLES = 20_000;
  * human taps *after* firing: the blast is behind the tap by a reaction time,
  * not centred on it.
  */
-export const MARK_LOOKBACK_MS = 600;
-export const MARK_LOOKAHEAD_MS = 200;
+/**
+ * How far back a mark looks for its shot.
+ *
+ * 600 ms was a guess at reaction time and it was wrong: at the range the
+ * delay between firing and pressing the button ran to about four seconds
+ * (maintainer, 2026-09-11), because the hand that fires is not the hand that
+ * taps and the phone may be face-down in a bag. Six seconds leaves margin
+ * over the worst observed case.
+ *
+ * A window this wide cannot be scanned for "how much was loud" — most of six
+ * seconds is room. `analyseMark` therefore locates the loudest moment and
+ * measures the contiguous event around it, which is the thing a detector
+ * would have to trigger on anyway.
+ */
+export const MARK_LOOKBACK_MS = 6_000;
+/** A little forward too: a mark can land a beat early on a called shot. */
+export const MARK_LOOKAHEAD_MS = 500;
 
 export interface MarkWindow {
   lookbackMs: number;
@@ -115,8 +130,22 @@ export interface MarkAnalysis {
   noiseFloorDb: number | null;
   /** peakDb - noiseFloorDb: how far the shot separated from the room. */
   excessDb: number | null;
-  /** Samples in the window at least EVENT_EXCESS_DB above their floor — the event's duration in samples. */
+  /**
+   * The **contiguous** run of samples above the floor containing the peak —
+   * the event's own duration.
+   *
+   * Counting every loud sample in the window measured the room once the
+   * window grew to six seconds. This measures the event.
+   */
   samplesAboveFloor: number;
+  /**
+   * How long before the mark the peak actually was, in ms; negative if the
+   * peak came after. Null with no sample in the window.
+   *
+   * This is the measurement that lets the window be narrowed from evidence
+   * rather than guessed again: it is the reaction time, recorded per shot.
+   */
+  peakOffsetMs: number | null;
 }
 
 export interface DiagnosticsSnapshot {
@@ -293,13 +322,36 @@ export function analyseMark(
 ): MarkAnalysis {
   const from = mark.atMs - window.lookbackMs;
   const to = mark.atMs + window.lookaheadMs;
-  let peak: DiagnosticSample | null = null;
-  let samplesAboveFloor = 0;
+  const inWindow = samples.filter((sample) => sample.atMs >= from && sample.atMs <= to);
 
-  for (const sample of samples) {
-    if (sample.atMs < from || sample.atMs > to) continue;
-    if (peak === null || sample.db > peak.db) peak = sample;
-    if (sample.db - sample.noiseFloorDb >= EVENT_EXCESS_DB) samplesAboveFloor += 1;
+  let peakIndex = -1;
+  for (let i = 0; i < inWindow.length; i += 1) {
+    if (
+      peakIndex === -1 ||
+      (inWindow[i] as DiagnosticSample).db > (inWindow[peakIndex] as DiagnosticSample).db
+    ) {
+      peakIndex = i;
+    }
+  }
+  const peak = peakIndex === -1 ? null : (inWindow[peakIndex] as DiagnosticSample);
+
+  // The contiguous stretch around the peak that is still above the floor.
+  // Counting every loud sample in the window would measure the room, not the
+  // shot, now the window is six seconds wide.
+  let samplesAboveFloor = 0;
+  if (peak && peak.db - peak.noiseFloorDb >= EVENT_EXCESS_DB) {
+    const loud = (sample: DiagnosticSample) => sample.db - sample.noiseFloorDb >= EVENT_EXCESS_DB;
+    samplesAboveFloor = 1;
+    for (let i = peakIndex - 1; i >= 0 && loud(inWindow[i] as DiagnosticSample); i -= 1) {
+      samplesAboveFloor += 1;
+    }
+    for (
+      let i = peakIndex + 1;
+      i < inWindow.length && loud(inWindow[i] as DiagnosticSample);
+      i += 1
+    ) {
+      samplesAboveFloor += 1;
+    }
   }
 
   return {
@@ -309,11 +361,18 @@ export function analyseMark(
     noiseFloorDb: peak?.noiseFloorDb ?? null,
     excessDb: peak ? peak.db - peak.noiseFloorDb : null,
     samplesAboveFloor,
+    peakOffsetMs: peak ? mark.atMs - peak.atMs : null,
   };
 }
 
 export const MIC_DIAGNOSTICS_FORMAT = 'shotledger.mic-diagnostics';
-export const MIC_DIAGNOSTICS_VERSION = 1;
+/**
+ * 2: the mark window widened to 6 s and `samplesAboveFloor` became the
+ * contiguous event around the peak rather than every loud sample in the
+ * window; `peakOffsetMs` added. A v1 export's mark figures are not
+ * comparable with a v2 one's.
+ */
+export const MIC_DIAGNOSTICS_VERSION = 2;
 
 /** Free-text context the app layer knows and this module does not. */
 export interface MicDiagnosticsMeta {
