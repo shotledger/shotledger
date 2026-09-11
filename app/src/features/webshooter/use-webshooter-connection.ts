@@ -44,6 +44,7 @@ export interface WebShooterConnectionState {
   loading: boolean;
   error: string | null;
   errorDetail: string | null;
+  retryIdentity: () => Promise<void>;
   connectWithPassword: (username: string, password: string) => Promise<void>;
   connectWithToken: (token: string) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -74,9 +75,15 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     };
   }, []);
 
-  const finishConnect = useCallback(async (token: string) => {
-    await setWebShooterToken(token);
-    setTokenCache(token);
+  /**
+   * Resolves the card number with the token already in place.
+   *
+   * Split out because identity can fail on its own: the token stores fine,
+   * the app reports connected, and nothing in the UI could ever fill the
+   * card number in afterwards — a dead end only a disconnect could clear.
+   * Now it is retryable without re-entering a password.
+   */
+  const resolveAndStoreIdentity = useCallback(async () => {
     const client = getWebShooterClient();
     const resolved = await resolveIdentity({
       override: null,
@@ -88,8 +95,32 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     });
     if (db) setSetting<string>(db, CARD_NUMBER_SETTING_KEY, resolved);
     setCardNumber(resolved);
-    setConnected(true);
   }, []);
+
+  const retryIdentity = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setErrorDetail(null);
+    try {
+      await resolveAndStoreIdentity();
+    } catch (err) {
+      console.error('[webshooter] identity resolution failed', err);
+      setError('identityFailed');
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [resolveAndStoreIdentity]);
+
+  const finishConnect = useCallback(
+    async (token: string) => {
+      await setWebShooterToken(token);
+      setTokenCache(token);
+      await resolveAndStoreIdentity();
+      setConnected(true);
+    },
+    [resolveAndStoreIdentity],
+  );
 
   const connectWithPassword = useCallback(
     async (username: string, password: string) => {
@@ -179,6 +210,7 @@ export function useWebShooterConnection(): WebShooterConnectionState {
     loading,
     error,
     errorDetail,
+    retryIdentity,
     connectWithPassword,
     connectWithToken,
     disconnect,

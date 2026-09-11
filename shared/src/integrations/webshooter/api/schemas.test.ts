@@ -8,6 +8,8 @@ import {
   fixtureSignup,
   fixtureSignupsResponse,
   fixtureStationResult,
+  fixturePatrol,
+  fixtureWeaponClass,
 } from './fixtures';
 import {
   authUserResponseSchema,
@@ -142,6 +144,27 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
     );
 
     expect(parsed.results[0]!.signup).toBeNull();
+  });
+
+  it('accepts a weaponclass with no championship, as patrols return', () => {
+    // The single field that made every My Starts fetch fail: present in the
+    // weaponclass embedded in results, absent from the one embedded in a
+    // patrol's signups. Nothing in this codebase reads it.
+    const parsed = patrolsResponseSchema.parse(
+      fixturePatrolsResponse([
+        {
+          ...fixturePatrol(),
+          signups: [
+            {
+              ...fixtureSignup(),
+              weaponclass: { ...fixtureWeaponClass(), championship: undefined },
+            },
+          ],
+        },
+      ]),
+    );
+
+    expect(parsed.patrols[0]!.signups[0]!.weaponclass?.championship).toBeUndefined();
   });
 
   it('requires the user envelope authenticate/user actually returns', () => {

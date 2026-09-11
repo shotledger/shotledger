@@ -16,7 +16,7 @@ import type { Patrol, Signup } from '@shotledger/shared/src/integrations/webshoo
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { upsertCalendarEvent } from '@/platform/calendar';
-import { getWebShooterClient } from './client';
+import { getWebShooterClient, loadTokenCache } from './client';
 
 export interface MyStart {
   competitionId: number;
@@ -26,6 +26,8 @@ export interface MyStart {
   patrolEnd: string;
   lane: number;
   city: string;
+  /** e.g. "C" — which gun this signup is for. Blank when the site omits it. */
+  weaponClass: string;
   patrolMates: { name: string; lane: number }[];
   event: CalendarEvent;
 }
@@ -42,12 +44,19 @@ export function useWebShooterStarts() {
   const [starts, setStarts] = useState<MyStart[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const load = useCallback(async (options: { forceRefresh?: boolean } = {}) => {
     if (!db) return;
     setLoading(true);
     setError(null);
+    setErrorDetail(null);
     try {
+      // The token cache is a module variable that only the connection hook
+      // fills. Reaching this screen without having mounted that hook sent
+      // every request out with no Authorization header — working by luck of
+      // navigation order rather than by design.
+      await loadTokenCache();
       const client = getWebShooterClient();
       const cardNumber = await resolveIdentity({
         override: null,
@@ -94,6 +103,9 @@ export function useWebShooterStarts() {
               patrolEnd: patrol.end_time,
               lane: signup.lane,
               city: competition.contact_city,
+              // `classname` is the specific class (C, R, A…); classname_general
+              // is the group it rolls up to. The shooter cares which gun.
+              weaponClass: signup.weaponclass?.classname ?? '',
               patrolMates: patrol.signups
                 .filter((s: Signup) => s.id !== signup.id && s.club?.id === signup.club?.id)
                 .map((s: Signup) => ({ name: s.user?.fullname ?? '', lane: s.lane })),
@@ -103,8 +115,13 @@ export function useWebShooterStarts() {
         }
       }
       setStarts(results);
-    } catch {
+    } catch (err) {
+      // Not swallowed: "couldn't reach WebShooter" is what every failure
+      // here looked like, including ones that reached it perfectly well and
+      // failed to parse the answer.
+      console.error('[webshooter] starts failed', err);
       setError('fetchFailed');
+      setErrorDetail(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -118,5 +135,5 @@ export function useWebShooterStarts() {
     setSetting<string>(db, key, eventId);
   }, []);
 
-  return { starts, loading, error, load, addToCalendar };
+  return { starts, loading, error, errorDetail, load, addToCalendar };
 }

@@ -3,6 +3,27 @@
 // makes zero real network calls in tests or otherwise.
 import type { ZodType } from 'zod';
 
+/**
+ * A response we reached and could not understand.
+ *
+ * Distinct from an HTTP failure because the fix is different: this one is
+ * ours, and it names the field. A raw ZodError is 100+ entries of the same
+ * complaint repeated per array element — unreadable on a phone and useless
+ * in a bug report — so the message carries the first issue and a count.
+ */
+export class WebShooterSchemaError extends Error {
+  readonly path: string;
+
+  constructor(path: string, error: { issues: { path: PropertyKey[]; message: string }[] }) {
+    const [first] = error.issues;
+    const where = first ? first.path.map(String).join('.') : '(root)';
+    const more = error.issues.length > 1 ? ` (+${error.issues.length - 1} more)` : '';
+    super(`${path}: ${where} — ${first?.message ?? 'did not match'}${more}`);
+    this.name = 'WebShooterSchemaError';
+    this.path = path;
+  }
+}
+
 export class WebShooterHttpError extends Error {
   readonly status: number;
   readonly path: string;
@@ -70,7 +91,9 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
       const response = await config.fetchImpl(url, { headers });
       if (response.ok) {
         const body: unknown = await response.json();
-        return schema.parse(body);
+        const parsed = schema.safeParse(body);
+        if (!parsed.success) throw new WebShooterSchemaError(path, parsed.error);
+        return parsed.data;
       }
       lastStatus = response.status;
       if (!isServerError(response.status)) {

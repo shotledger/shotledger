@@ -11,7 +11,11 @@ export const weaponClassSchema = z.object({
   id: z.number(),
   weapongroups_id: z.number(),
   classname: z.string(),
-  championship: z.number(),
+  // Absent from the weaponclass embedded in a patrol's signups, present in
+  // the one embedded in results. Nothing here reads it, so requiring it
+  // only ever cost us: it is the single field that made every My Starts
+  // fetch fail (2026-09-11).
+  championship: z.number().optional(),
   classname_general: z.string(),
 });
 export type WeaponClass = z.infer<typeof weaponClassSchema>;

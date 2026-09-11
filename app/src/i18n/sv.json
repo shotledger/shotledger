@@ -675,7 +675,7 @@
     "importConfirmedTitle": "Import klar",
     "noStartsTitle": "Inga kommande starter",
     "noStartsBody": "Anslut ett WebShooter-konto och uppdatera för att se dina kommande starter.",
-    "startDetails": "{{start}}–{{end}} · Bana {{lane}} · {{city}}",
+    "startDetails": "{{window}} · Bana {{lane}} · {{city}}",
     "patrolMates": "{{count}} patrullkamrat(er) från din klubb",
     "addToCalendar": "Lägg till i kalendern",
     "calendarAdded": "Tillagd i din kalender",
@@ -707,7 +707,9 @@
     "loginUnreachable": "Kunde inte nå webshooter.se. Kontrollera anslutningen och försök igen, eller klistra in en token nedan.",
     "loginNeedsUpdate": "WebShooter har ändrat hur inloggningsinställningarna publiceras, så lösenordsinloggning kräver en uppdatering av ShotLedger. Klistra in en token nedan för att ansluta nu — och rapportera gärna detta.",
     "loginFailed": "Kunde inte logga in på WebShooter. Detaljen nedan är vad som rapporterades — skicka gärna vidare den.",
-    "identityFailed": "Inloggningen lyckades, men WebShooter angav inte vilket kortnummer kontot tillhör. Detaljen nedan är vad som rapporterades."
+    "identityFailed": "Inloggningen lyckades, men WebShooter angav inte vilket kortnummer kontot tillhör. Detaljen nedan är vad som rapporterades.",
+    "connectedNoCardNumber": "Inloggad, men inget kortnummer än.",
+    "retryIdentity": "Hämta kortnummer"
   },
   "timer": {
     "title": "Tidtagning",

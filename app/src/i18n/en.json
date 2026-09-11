@@ -675,7 +675,7 @@
     "importConfirmedTitle": "Import Complete",
     "noStartsTitle": "No Upcoming Starts",
     "noStartsBody": "Connect a WebShooter account and refresh to see your upcoming starts.",
-    "startDetails": "{{start}}–{{end}} · Lane {{lane}} · {{city}}",
+    "startDetails": "{{window}} · Lane {{lane}} · {{city}}",
     "patrolMates": "{{count}} patrol mate(s) from your club",
     "addToCalendar": "Add to Calendar",
     "calendarAdded": "Added to your calendar",
@@ -707,7 +707,9 @@
     "loginUnreachable": "Couldn't reach webshooter.se. Check your connection and try again, or paste a token below.",
     "loginNeedsUpdate": "WebShooter has changed how it publishes its login settings, so password login needs a ShotLedger update. Paste a token below to connect now — and please report this.",
     "loginFailed": "Couldn't log in to WebShooter. The detail below is what it reported — please pass it on.",
-    "identityFailed": "Logged in, but WebShooter would not say which card number the account belongs to. The detail below is what it reported."
+    "identityFailed": "Logged in, but WebShooter would not say which card number the account belongs to. The detail below is what it reported.",
+    "connectedNoCardNumber": "Signed in, but no card number yet.",
+    "retryIdentity": "Fetch Card Number"
   },
   "timer": {
     "title": "Timers",

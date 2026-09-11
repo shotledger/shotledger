@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
-import { createHttpClient, WebShooterHttpError } from './httpClient';
+import { createHttpClient, WebShooterHttpError, WebShooterSchemaError } from './httpClient';
 
 const schema = z.object({ ok: z.boolean() });
 
@@ -13,6 +13,51 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 describe('createHttpClient', () => {
+  it('names the offending field when a response does not match', async () => {
+    // A raw ZodError repeats the same complaint once per array element —
+    // 108 entries for one wrong field, in the case that prompted this. The
+    // message has to be something a person can read on a phone and repeat
+    // in a bug report.
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: 'yes' }));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+    });
+
+    await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
+      WebShooterSchemaError,
+    );
+    await expect(client.requestJson('/thing', schema)).rejects.toThrow(/\/thing: ok — /);
+  });
+
+  it('counts the remaining issues rather than listing them', async () => {
+    const wide = z.object({ a: z.number(), b: z.number(), c: z.number() });
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, {}));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+    });
+
+    await expect(client.requestJson('/wide', wide)).rejects.toThrow('(+2 more)');
+  });
+
+  it('does not retry a schema failure: the answer will not change', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: 'yes' }));
+    const client = createHttpClient({
+      fetchImpl,
+      baseUrl: 'https://x.test',
+      getToken: () => 'tok',
+      sleep: () => Promise.resolve(),
+    });
+
+    await expect(client.requestJson('/thing', schema)).rejects.toBeInstanceOf(
+      WebShooterSchemaError,
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it('parses a 200 response with the schema, one fetch call', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
     const client = createHttpClient({

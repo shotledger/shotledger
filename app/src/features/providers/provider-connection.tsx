@@ -33,11 +33,41 @@ export function ProviderConnection({ provider }: ProviderConnectionProps) {
   if (provider.id !== WEBSHOOTER_PROVIDER_ID) return null;
 
   if (connection.connected) {
+    const identityMissing = connection.cardNumber === null;
     return (
       <View style={styles.section}>
         <ThemedText type="default" testID={`provider-${provider.id}-identity`}>
-          {t('webshooter.connectedAs', { cardNumber: connection.cardNumber ?? '—' })}
+          {identityMissing
+            ? t('webshooter.connectedNoCardNumber')
+            : t('webshooter.connectedAs', { cardNumber: connection.cardNumber })}
         </ThemedText>
+        {/* Signed in but with no card number is a real state, not a glitch:
+            the token stores before identity is resolved, so a failure there
+            leaves an account that works for nothing. Retrying needs no
+            password — the token is already good. */}
+        {identityMissing && (
+          <PrimaryButton
+            label={t('webshooter.retryIdentity')}
+            onPress={() => void connection.retryIdentity()}
+            testID={`provider-${provider.id}-retry-identity`}
+          />
+        )}
+        {connection.error !== null && (
+          <>
+            <ThemedText type="small" themeColor="danger" testID="webshooter-login-error">
+              {t(`webshooter.${connection.error}` as const)}
+            </ThemedText>
+            {connection.errorDetail !== null && (
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                testID="webshooter-login-error-detail"
+              >
+                {connection.errorDetail}
+              </ThemedText>
+            )}
+          </>
+        )}
         <PrimaryButton
           label={t('webshooter.disconnect')}
           onPress={() => void connection.disconnect()}
