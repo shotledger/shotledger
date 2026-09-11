@@ -2,7 +2,13 @@
 // `settings` table (same shape as the backup folder URI in
 // features/backup/use-backup-export-import.ts). `db` is null on web, where
 // the values simply stay in component state for the session.
-import { normalizeFaltSettings, type FaltTimerSettings } from '@shotledger/shared';
+import {
+  DEFAULT_TIMER_CUE_MODE,
+  normalizeFaltSettings,
+  normalizeTimerCueMode,
+  type FaltTimerSettings,
+  type TimerCueMode,
+} from '@shotledger/shared';
 import { useCallback, useState } from 'react';
 
 import { db } from '@/db/client';
@@ -49,4 +55,24 @@ export function useFaltSettings(
   }, []);
 
   return [settings, update];
+}
+
+/**
+ * How the Time Limit timer's cues are delivered. Validated on the way out of
+ * storage, so a row from an older build — including the per-event object this
+ * setting briefly used — cannot hand the timer a mode it cannot deliver.
+ */
+export function useTimerCueMode(): [TimerCueMode, (next: TimerCueMode) => void] {
+  const [mode, setMode] = useState<TimerCueMode>(() =>
+    db
+      ? normalizeTimerCueMode(getSetting<unknown>(db, SETTINGS_KEYS.timerCues, null))
+      : DEFAULT_TIMER_CUE_MODE,
+  );
+
+  const update = useCallback((next: TimerCueMode) => {
+    if (db) setSetting(db, SETTINGS_KEYS.timerCues, next);
+    setMode(next);
+  }, []);
+
+  return [mode, update];
 }

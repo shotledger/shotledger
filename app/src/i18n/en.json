@@ -647,6 +647,13 @@
       "rest": "Rest",
       "done": "Done"
     },
+    "cuesTitle": "Cues",
+    "cuesHint": "Applies to Get Ready, GO and Done. Set your phone to silent to mute the beeps.",
+    "cueMode": {
+      "beep": "Beep",
+      "vibrate": "Vibrate",
+      "both": "Both"
+    },
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
       "regular": "Time Limit",

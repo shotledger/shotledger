@@ -8,7 +8,12 @@
 // fälttimer. The mode segmented control is rendered by whichever mode is
 // active, in its setup view only — switching mid-run would strand a recorder
 // or an interval.
-import { type TimerConfig, type TimerPhaseKind } from '@shotledger/shared';
+import {
+  TIMER_CUE_MODES,
+  type TimerConfig,
+  type TimerCueMode,
+  type TimerPhaseKind,
+} from '@shotledger/shared';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -21,8 +26,12 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
+import { useTimerCueMode } from '@/features/timer/use-timer-settings';
 import { useTimer } from '@/features/timer/use-timer';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
+
+/** Copied to a plain array so the JSX map is not typed as `readonly`. */
+const CUE_MODE_OPTIONS: TimerCueMode[] = [...TIMER_CUE_MODES];
 
 const PHASE_COLOR: Record<TimerPhaseKind, ThemeColor> = {
   idle: 'textSecondary',
@@ -93,13 +102,14 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const [readyDelaySeconds, setReadyDelaySeconds] = useState('3');
   const [reps, setReps] = useState('1');
   const [restSeconds, setRestSeconds] = useState('0');
+  const [cueMode, setCueMode] = useTimerCueMode();
 
   const config = useMemo<TimerConfig>(
     () => buildConfig(parSeconds, readyDelaySeconds, reps, restSeconds),
     [parSeconds, readyDelaySeconds, reps, restSeconds],
   );
 
-  const { phase, start, reset } = useTimer(config);
+  const { phase, start, reset } = useTimer(config, cueMode);
   const totalSeries = config.series.length;
 
   if (phase.kind === 'idle') {
@@ -135,6 +145,22 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
             keyboardType="decimal-pad"
             testID="timer-rest"
           />
+        </Card>
+
+        <Card style={styles.setupForm} testID="timer-cues">
+          <ThemedText type="smallBold">{t('timer.cuesTitle')}</ThemedText>
+          <SegmentedControl<TimerCueMode>
+            options={CUE_MODE_OPTIONS.map((mode) => ({
+              value: mode,
+              label: t(`timer.cueMode.${mode}` as const),
+            }))}
+            value={cueMode}
+            onChange={setCueMode}
+            testID="timer-cue-mode"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('timer.cuesHint')}
+          </ThemedText>
         </Card>
 
         <PrimaryButton label={t('timer.start')} onPress={start} testID="timer-start" />

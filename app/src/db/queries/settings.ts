@@ -18,6 +18,7 @@ export const SETTINGS_KEYS = {
   // (mode, prep/shooting time, parti boundaries, whistle).
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
+  timerCues: 'timerCues',
   // Opt-in online place lookup for the session Location field (Photon/OSM).
   // OFF by default: with it on, what the user types is sent to a third-party
   // server, which an offline-first app must not do without being asked.

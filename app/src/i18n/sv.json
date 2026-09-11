@@ -647,6 +647,13 @@
       "rest": "Vila",
       "done": "Klart"
     },
+    "cuesTitle": "Signaler",
+    "cuesHint": "Gäller Gör dig redo, SKJUT och Klart. Ställ telefonen på ljudlöst för att tysta pipen.",
+    "cueMode": {
+      "beep": "Pip",
+      "vibrate": "Vibration",
+      "both": "Båda"
+    },
     "seriesProgress": "Serie {{current}} / {{total}}",
     "modes": {
       "regular": "Skjuttid",
