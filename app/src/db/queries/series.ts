@@ -187,3 +187,40 @@ export function swapSeriesPositions(db: Database, aId: string, bId: string) {
       .run();
   });
 }
+
+/**
+ * Applies a whole reordering at once — the drag-and-drop equivalent of
+ * `swapSeriesPositions`, which only ever exchanged two neighbours.
+ *
+ * Every row is parked outside the used range before any final value is
+ * written. A swap could get away with parking one row; an arbitrary
+ * permutation cannot, because any row's destination may still be occupied by
+ * a row that has not moved yet. Negative ids keep the parked values clear of
+ * every real position.
+ *
+ * Silently skips a row that has gone — the same tolerance `swapSeriesPositions`
+ * has, for the same reason: a concurrent delete must not fail the reorder.
+ */
+export function setSeriesPositions(
+  db: Database,
+  positions: readonly { id: string; position: number }[],
+): void {
+  const live = positions.filter((next) => getSeries(db, next.id) !== undefined);
+  if (live.length === 0) return;
+
+  const now = nowIso();
+  db.transaction((tx) => {
+    live.forEach((next, index) => {
+      tx.update(series)
+        .set({ position: -(index + 1), updatedAt: now })
+        .where(eq(series.id, next.id))
+        .run();
+    });
+    for (const next of live) {
+      tx.update(series)
+        .set({ position: next.position, updatedAt: now })
+        .where(eq(series.id, next.id))
+        .run();
+    }
+  });
+}

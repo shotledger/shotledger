@@ -46,3 +46,53 @@ export function canMoveSeries(
 ): boolean {
   return seriesSwapTarget(rows, id, direction) !== null;
 }
+
+/** One row's new home after a drop. */
+export interface SeriesPosition {
+  id: string;
+  position: number;
+}
+
+/**
+ * Where every series in a section lands when `id` is dropped at `toIndex`
+ * within that section. Returns only the rows whose position actually changes,
+ * so a drop that lands where it started writes nothing.
+ *
+ * The section keeps its own set of position values and merely redistributes
+ * them in the new order — same reasoning as `seriesSwapTarget`: for a
+ * fixed-format programme those values index the per-series time limits, so a
+ * series must take its new slot's limit rather than carry its old one along.
+ *
+ * `toIndex` is clamped, so a drag past either end parks at that end rather
+ * than being refused — a finger that overshoots still means "put it last".
+ */
+export function seriesDropPlan(
+  rows: readonly MovableSeries[],
+  id: string,
+  toIndex: number,
+): SeriesPosition[] {
+  const series = rows.find((row) => row.id === id);
+  if (!series) return [];
+
+  const section = rows
+    .filter((row) => row.isFinal === series.isFinal)
+    .sort((a, b) => a.position - b.position);
+
+  const fromIndex = section.findIndex((row) => row.id === id);
+  if (fromIndex === -1) return [];
+
+  const target = Math.min(section.length - 1, Math.max(0, Math.trunc(toIndex)));
+  if (target === fromIndex) return [];
+
+  const slots = section.map((row) => row.position);
+  const reordered = [...section];
+  const [moved] = reordered.splice(fromIndex, 1);
+  reordered.splice(target, 0, moved as MovableSeries);
+
+  return reordered
+    .map((row, index) => ({ id: row.id, position: slots[index] as number }))
+    .filter((next) => {
+      const before = section.find((row) => row.id === next.id);
+      return before !== undefined && before.position !== next.position;
+    });
+}
