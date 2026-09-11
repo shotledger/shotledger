@@ -197,6 +197,19 @@ export default function SessionDetailScreen() {
     return moved;
   }
 
+  /**
+   * Where the held row would land if released now — drives both the drop
+   * indicator and the drop itself, so what you are shown is what happens.
+   */
+  function dropIndexFor(held: { id: string; isFinal: boolean }, offset: number): number | null {
+    const section = sectionOf(held.isFinal);
+    const fromIndex = section.findIndex((row) => row.id === held.id);
+    if (fromIndex === -1) return null;
+    return fromIndex + indexDelta(section, fromIndex, offset);
+  }
+
+  const dropIndex = dragging ? dropIndexFor(dragging, dragOffset) : null;
+
   function onDrop() {
     const held = dragging;
     const offset = dragOffset;
@@ -218,6 +231,29 @@ export default function SessionDetailScreen() {
     vibrate();
     refresh();
   }
+
+  /**
+   * A section's rows with the drop indicator woven in. The indicator is a
+   * line in the gap the row would occupy — a drag with no target feedback
+   * asks you to guess where it lands (maintainer, on device 2026-09-11).
+   */
+  const renderSection = (rows: SeriesRow[], isFinal: boolean) => {
+    const active = dragging?.isFinal === isFinal && dropIndex !== null;
+    const indicator = (key: string) => (
+      <View
+        key={key}
+        style={[styles.dropIndicator, { backgroundColor: theme.primary }]}
+        testID="series-drop-indicator"
+      />
+    );
+    return rows.flatMap((row, index) => [
+      ...(active && dropIndex === index ? [indicator(`drop-${index}`)] : []),
+      renderSeries(row),
+      ...(active && dropIndex === rows.length && index === rows.length - 1
+        ? [indicator('drop-end')]
+        : []),
+    ]);
+  };
 
   const renderSeries = (row: SeriesRow) => {
     const held = dragging?.id === row.id;
@@ -307,7 +343,7 @@ export default function SessionDetailScreen() {
     // so swipe-to-delete is offered only for freely-added series.
     if (detail.isFixedFormat) {
       return (
-        <View key={row.id} style={styles.seriesWrapper}>
+        <View key={row.id} style={[styles.seriesWrapper, held && styles.liftedWrapper]}>
           <GestureDetector gesture={Gesture.Simultaneous(lift, drag)}>{content}</GestureDetector>
         </View>
       );
@@ -316,7 +352,7 @@ export default function SessionDetailScreen() {
     return (
       <Swipeable
         key={row.id}
-        containerStyle={styles.seriesWrapper}
+        containerStyle={[styles.seriesWrapper, held && styles.liftedWrapper]}
         overshootRight={false}
         renderRightActions={() => (
           <Pressable
@@ -661,13 +697,13 @@ export default function SessionDetailScreen() {
                   {t('session.mainSection')}
                 </ThemedText>
               )}
-              {mainRows.map(renderSeries)}
+              {renderSection(mainRows, false)}
               {finalRows.length > 0 && (
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   {t('session.finalSection')}
                 </ThemedText>
               )}
-              {finalRows.map(renderSeries)}
+              {renderSection(finalRows, true)}
             </Card>
           )}
 
@@ -811,9 +847,27 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
   },
   lifted: {
-    opacity: 0.9,
-    zIndex: 2,
-    elevation: 6,
+    // Opaque, not translucent: a see-through row over the list underneath
+    // reads as a rendering glitch rather than as "picked up".
+    opacity: 1,
+    elevation: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  /**
+   * The lift has to be on the WRAPPER. A later sibling paints over an earlier
+   * one whatever the child asks for, so raising the inner row left the held
+   * series behind the ones below it (maintainer, on device).
+   */
+  liftedWrapper: {
+    zIndex: 10,
+    elevation: 12,
+  },
+  dropIndicator: {
+    height: 3,
+    borderRadius: 2,
+    marginVertical: Spacing.one,
   },
   pressed: {
     opacity: 0.6,
