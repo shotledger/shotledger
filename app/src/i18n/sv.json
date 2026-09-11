@@ -721,8 +721,8 @@
     "clubStartsEmpty": "Ingen annan från din förening har anmält sig till den här tävlingen.",
     "you": "Du",
     "laneShort": "Bana {{lane}}",
-    "chooseCalendar": "Välj vilken kalender starter läggs till i",
-    "chooseCalendarHint": "Starter läggs till i kalendern du väljer här."
+    "calendarRowTitle": "Kalender",
+    "calendarNotSelected": "Inte vald"
   },
   "timer": {
     "title": "Tidtagning",

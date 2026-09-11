@@ -721,8 +721,8 @@
     "clubStartsEmpty": "Nobody else from your club has entered this competition.",
     "you": "You",
     "laneShort": "Lane {{lane}}",
-    "chooseCalendar": "Choose which calendar starts are added to",
-    "chooseCalendarHint": "Starts are added to the calendar you pick here."
+    "calendarRowTitle": "Calendar",
+    "calendarNotSelected": "Not selected"
   },
   "timer": {
     "title": "Timers",

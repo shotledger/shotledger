@@ -5,91 +5,89 @@
 // without asking and without saying where (maintainer, 2026-09-11: "I
 // didn't get to choose either"). A device typically offers several: a
 // personal Google calendar, a work one, birthdays, a shared family one.
+//
+// One row, showing the current choice, opening a sheet — not a wall of
+// chips. The row reads as settled or unset at a glance, which is the whole
+// job of a setting you touch once.
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Chip } from '@/components/chip';
+import { ActionSheet, type ActionSheetAction } from '@/components/action-sheet';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 import { CALENDAR_ID_SETTING_KEY } from '@/features/webshooter/use-webshooter-starts';
 import { listWritableCalendars, type WritableCalendar } from '@/platform/calendar';
-import { Spacing } from '@/theme/tokens';
+
+const CALENDAR_TITLE_SETTING_KEY = 'webshooterCalendarTitle';
+
+function calendarLabel(calendar: WritableCalendar): string {
+  return calendar.account === '' ? calendar.title : `${calendar.title} · ${calendar.account}`;
+}
 
 export function CalendarPicker() {
   const { t } = useTranslation();
-  const [calendars, setCalendars] = useState<WritableCalendar[] | null>(null);
-  const [chosen, setChosen] = useState<string | null>(() =>
+  const [calendars, setCalendars] = useState<WritableCalendar[]>([]);
+  const [open, setOpen] = useState(false);
+  const [denied, setDenied] = useState(false);
+  // The label is remembered alongside the id so the row can say which
+  // calendar is chosen without asking for calendar permission just to
+  // render a settings screen.
+  const [chosenLabel, setChosenLabel] = useState<string | null>(() =>
+    db ? getSetting<string | null>(db, CALENDAR_TITLE_SETTING_KEY, null) : null,
+  );
+  const [chosenId, setChosenId] = useState<string | null>(() =>
     db ? getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null) : null,
   );
-  const [denied, setDenied] = useState(false);
 
-  // Loaded on demand rather than on mount: listing calendars prompts for
-  // permission, and a shooter who never adds a start should never be asked.
-  const loadCalendars = useCallback(async () => {
+  const openSheet = useCallback(async () => {
     try {
+      // Listing prompts for permission, so it happens on the tap rather
+      // than on mount: a shooter who never uses this is never asked.
       setCalendars(await listWritableCalendars());
       setDenied(false);
+      setOpen(true);
     } catch {
       setDenied(true);
     }
   }, []);
 
-  function choose(id: string) {
-    setChosen(id);
-    if (db) setSetting<string>(db, CALENDAR_ID_SETTING_KEY, id);
+  function choose(calendar: WritableCalendar) {
+    setChosenId(calendar.id);
+    setChosenLabel(calendarLabel(calendar));
+    if (db) {
+      setSetting<string>(db, CALENDAR_ID_SETTING_KEY, calendar.id);
+      setSetting<string>(db, CALENDAR_TITLE_SETTING_KEY, calendarLabel(calendar));
+    }
   }
 
-  if (calendars === null) {
-    return (
-      <View style={styles.section}>
-        <Pressable onPress={() => void loadCalendars()} testID="webshooter-calendar-choose">
-          <ThemedText type="small" themeColor="primary">
-            {t('webshooter.chooseCalendar')}
-          </ThemedText>
-        </Pressable>
-        {denied && (
-          <ThemedText type="small" themeColor="danger">
-            {t('webshooter.calendarPermissionDenied')}
-          </ThemedText>
-        )}
-      </View>
-    );
-  }
+  const actions: ActionSheetAction[] = calendars.map((calendar) => ({
+    key: calendar.id,
+    label: calendarLabel(calendar),
+    selected: calendar.id === chosenId,
+    onPress: () => choose(calendar),
+  }));
 
   return (
-    <View style={styles.section}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('webshooter.chooseCalendarHint')}
-      </ThemedText>
-      <View style={styles.chips}>
-        {calendars.map((calendar) => (
-          <Pressable
-            key={calendar.id}
-            onPress={() => choose(calendar.id)}
-            testID={`webshooter-calendar-${calendar.id}`}
-          >
-            <Chip
-              label={
-                calendar.account === '' ? calendar.title : `${calendar.title} · ${calendar.account}`
-              }
-              tone={chosen === calendar.id ? 'primary' : 'neutral'}
-            />
-          </Pressable>
-        ))}
-      </View>
-    </View>
+    <>
+      <DrillDownRow
+        title={t('webshooter.calendarRowTitle')}
+        value={chosenLabel ?? t('webshooter.calendarNotSelected')}
+        onPress={() => void openSheet()}
+        testID="webshooter-calendar-row"
+      />
+      {denied && (
+        <ThemedText type="small" themeColor="danger" testID="webshooter-calendar-denied">
+          {t('webshooter.calendarPermissionDenied')}
+        </ThemedText>
+      )}
+      <ActionSheet
+        visible={open}
+        onClose={() => setOpen(false)}
+        title={t('webshooter.calendarRowTitle')}
+        actions={actions}
+      />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    gap: Spacing.one,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.one,
-  },
-});
