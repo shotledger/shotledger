@@ -1,7 +1,7 @@
 // New ammo lot form (§4 M4): factory fields always shown; the handload
 // recipe section (powder/charge/primer/brass/COL/crimp) toggles with
 // isHandload (§3).
-import { powerFactor } from '@shotledger/shared';
+import { muzzleEnergyJoules, powerFactor } from '@shotledger/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +51,7 @@ export default function NewAmmoLotScreen() {
 
   const canCreate = label.trim().length > 0;
   const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
+  const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
   function onCreate() {
     if (!db || !canCreate) return;
@@ -128,12 +129,25 @@ export default function NewAmmoLotScreen() {
         </ThemedText>
         {derivedPowerFactor != null && (
           <>
+            {/* Side by side: both come from the same weight and velocity, so
+                they are two readings of one load rather than two settings. */}
             <View style={styles.derivedRow}>
-              <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
-              <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+              <View style={styles.derivedCell}>
+                <ThemedText type="smallBold">{t('ammo.powerFactor')}</ThemedText>
+                <ThemedText testID="ammo-power-factor">{String(derivedPowerFactor)}</ThemedText>
+              </View>
+              <View style={styles.derivedCell}>
+                <ThemedText type="smallBold">{t('ammo.muzzleEnergy')}</ThemedText>
+                <ThemedText testID="ammo-muzzle-energy">
+                  {derivedEnergy == null ? '–' : t('ammo.joules', { value: derivedEnergy })}
+                </ThemedText>
+              </View>
             </View>
             <ThemedText type="small" themeColor="textSecondary">
               {t('ammo.powerFactorHint')}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('ammo.muzzleEnergyHint')}
             </ThemedText>
           </>
         )}
@@ -179,9 +193,14 @@ export default function NewAmmoLotScreen() {
 const styles = StyleSheet.create({
   derivedRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: Spacing.three,
+  },
+  // Equal halves, so the two readings line up rather than one being pushed
+  // to the edge by the length of the other's label.
+  derivedCell: {
+    flex: 1,
+    gap: Spacing.one,
   },
   switchRow: {
     flexDirection: 'row',
