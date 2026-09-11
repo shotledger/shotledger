@@ -19,6 +19,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { RangeSlider } from '@/components/range-slider';
 import { Slider } from '@/components/slider';
 import { StatTile } from '@/components/stat-tile';
 import { TextField } from '@/components/text-field';
@@ -224,27 +225,20 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
               {t('ipscTimer.delayRange', { from: delayMin, to: delayMax })}
             </ThemedText>
           </View>
-          <Slider
-            value={delayMin}
+          {/* One track, two thumbs: the delay is a range, and two stacked
+              sliders read as two unrelated settings. */}
+          <RangeSlider
+            low={delayMin}
+            high={delayMax}
             min={0}
             max={DELAY_MAX_SECONDS}
-            onChange={(next) => {
-              setDelayMin(next);
-              if (next > delayMax) setDelayMax(next);
+            onChange={({ low, high }) => {
+              setDelayMin(low);
+              setDelayMax(high);
             }}
-            accessibilityLabel={t('ipscTimer.randomDelayMin')}
-            testID="ipsc-delay-min"
-          />
-          <Slider
-            value={delayMax}
-            min={0}
-            max={DELAY_MAX_SECONDS}
-            onChange={(next) => {
-              setDelayMax(next);
-              if (next < delayMin) setDelayMin(next);
-            }}
-            accessibilityLabel={t('ipscTimer.randomDelayMax')}
-            testID="ipsc-delay-max"
+            lowAccessibilityLabel={t('ipscTimer.randomDelayMin')}
+            highAccessibilityLabel={t('ipscTimer.randomDelayMax')}
+            testID="ipsc-delay"
           />
 
           <ThemedText type="smallBold">{t('ipscTimer.parSeconds')}</ThemedText>
