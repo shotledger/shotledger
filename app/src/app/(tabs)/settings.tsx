@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
@@ -366,6 +367,20 @@ export default function SettingsScreen() {
           testID="settings-about"
         />
       </Card>
+
+      {/* The only tap-path to /dev. A dev build reaches it by deep link, but a
+          sideloaded release build built with EXPO_PUBLIC_ENABLE_DEV_TOOLS=1
+          cannot — and that build exists so the maintainer can load demo data
+          on a phone. */}
+      {DEV_TOOLS_ENABLED && (
+        <Card>
+          <DrillDownRow
+            title={t('settings.devSection')}
+            onPress={() => router.push('/dev')}
+            testID="settings-open-dev"
+          />
+        </Card>
+      )}
     </Screen>
   );
 }
