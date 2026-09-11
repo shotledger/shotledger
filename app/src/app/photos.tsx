@@ -113,7 +113,7 @@ export default function PhotosScreen() {
   }
 
   return (
-    <Screen scroll={false} safeBottom>
+    <Screen scroll={false}>
       <TextField
         value={query}
         onChangeText={setQuery}
