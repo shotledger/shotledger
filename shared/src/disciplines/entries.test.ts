@@ -7,6 +7,7 @@ import {
   SPSF_CLASS_DEFINITIONS,
   eventId,
   eventsForDiscipline,
+  categoryKey,
   findEvent,
 } from './entries';
 import {
@@ -250,5 +251,17 @@ describe('isEligibleForEvent', () => {
     expect(isEligibleForEvent(juniorWoman, womenJunior, 2026)).toBe(true);
     expect(isEligibleForEvent(juniorWoman, menOpen, 2026)).toBe(false);
     expect(isEligibleForEvent(juniorWoman, womenJunior, 2027)).toBe(false);
+  });
+});
+
+describe('categoryKey', () => {
+  it('names an open-age category by its gender alone', () => {
+    expect(categoryKey({ gender: 'women', age: 'open' })).toBe('women');
+    expect(categoryKey({ gender: 'open', age: 'open' })).toBe('open');
+  });
+
+  it('glues the age on when there is one', () => {
+    expect(categoryKey({ gender: 'men', age: 'junior' })).toBe('menJunior');
+    expect(categoryKey({ gender: 'open', age: 'veteranYounger' })).toBe('openVeteranYounger');
   });
 });

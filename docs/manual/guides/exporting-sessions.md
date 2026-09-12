@@ -58,6 +58,7 @@ One session, one scored series of three shots:
       "competitionName": null,
       "weaponGroup": "spsf:C",
       "shooterClass": "2",
+      "eventId": null,
       "firearm": "Pardini SP",
       "ammoLot": "Eley Match lot 22-114",
       "startedAt": "2026-09-12T17:00:00.000Z",
@@ -97,6 +98,7 @@ One session, one scored series of three shots:
 | `isInnerTen`  | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                      |
 | `isSighter`   | A sighting series. It carries no shots here and does not count towards a total.                                                 |
 | `weaponGroup` | The federation-scoped id, e.g. `spsf:C`. See [Vapengrupp and klass](../reference/vapengrupp-and-klass.md).                      |
+| `eventId`     | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a klass instead.                   |
 | `firearm`     | The firearm's make and model as one string, or `null`. An export names equipment; it does not carry your firearms list.         |
 
 !!! note "What an export is not"

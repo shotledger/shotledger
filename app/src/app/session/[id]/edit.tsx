@@ -11,6 +11,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
+  categoryKey,
+  eventsForDiscipline,
   formatShooterClass,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
@@ -68,6 +70,7 @@ export default function EditSessionScreen() {
   const [isChampionship, setIsChampionship] = useState(session?.isChampionship === 1);
   const [weaponGroup, setWeaponGroup] = useState<string | null>(session?.weaponGroup ?? null);
   const [shooterClass, setShooterClass] = useState<string | null>(session?.shooterClass ?? null);
+  const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
   const [firearmId, setFirearmId] = useState<string | null>(session?.firearmId ?? null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(session?.ammoLotId ?? null);
   const [tags, setTags] = useState(() => (db ? listTagsForSession(db, id) : []));
@@ -84,6 +87,9 @@ export default function EditSessionScreen() {
   const isCompetition = session.type === 'competition';
   const groups = weaponGroupsForDiscipline(session.disciplineId);
   const classes = shooterClassesForDiscipline(session.disciplineId);
+  // Unranked here, unlike the new-session screen: the discipline is fixed and
+  // the shooter is correcting a past session, not being offered a default.
+  const events = eventsForDiscipline(session.disciplineId);
   const firearms = listFirearms(db);
   const ammoLots = listAmmoLots(db);
 
@@ -121,6 +127,7 @@ export default function EditSessionScreen() {
       isChampionship: isCompetition && isChampionship,
       weaponGroup,
       shooterClass,
+      eventId,
       firearmId,
       ammoLotId,
       seriesEntryMode,
@@ -227,6 +234,21 @@ export default function EditSessionScreen() {
           onChange={setShooterClass}
           emptyLabel={t('session.none')}
         />
+        {events.length > 0 && (
+          <OptionPicker
+            label={t('session.event')}
+            options={toOptions(
+              events.map((event) => ({
+                value: event.id,
+                label: t(`eventCategory.${categoryKey(event.category)}`),
+              })),
+              'edit-event',
+            )}
+            value={eventId}
+            onChange={setEventId}
+            emptyLabel={t('session.none')}
+          />
+        )}
       </Card>
 
       <Card>

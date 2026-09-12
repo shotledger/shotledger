@@ -27,6 +27,8 @@ import { disciplineSchema, programSchema, type Discipline, type Program } from '
 export * from './schema';
 export * from './groups';
 export * from './classes';
+export * from './entries';
+export * from './eligibility';
 
 export const DISCIPLINES: readonly Discipline[] = [
   spsfPrecisionDiscipline,

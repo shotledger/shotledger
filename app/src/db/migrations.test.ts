@@ -1,9 +1,13 @@
 // The migration chain was squashed to a single baseline (2026-09-11,
 // maintainer's call — pre-release, no installed build's data has to survive).
-// What is worth testing changed with it: there is no upgrade path left to
-// rehearse, so these assert that the baseline is COMPLETE. It is not
-// generated in full — `drizzle-kit generate` derives it from schema.ts, which
-// models neither triggers nor seed rows, and both were carried over by hand.
+// What is worth testing changed with it: these assert that the baseline is
+// COMPLETE. It is not generated in full — `drizzle-kit generate` derives it
+// from schema.ts, which models neither triggers nor seed rows, and both were
+// carried over by hand.
+//
+// Migrations added AFTER the squash are ordinary forward migrations and are
+// applied on top by `freshDatabase()`, so the completeness assertions below
+// cover the whole chain, not just the baseline.
 import Database from 'better-sqlite3';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -50,8 +54,12 @@ function freshDatabase(): Database.Database {
 }
 
 describe('the baseline is the whole schema', () => {
-  it('is the only migration', () => {
-    expect(journalTags()).toEqual(['0000_baseline']);
+  it('is what the chain starts from', () => {
+    // Not "the only migration" any more — forward migrations are expected
+    // again post-squash. What must not change is where the chain begins: a
+    // second baseline, or a reordering, would silently skip real schema.
+    expect(journalTags()[0]).toBe('0000_baseline');
+    expect(journalTags().filter((tag) => tag.endsWith('_baseline'))).toHaveLength(1);
   });
 
   it('creates an outbox capture trigger pair for every synced table', () => {

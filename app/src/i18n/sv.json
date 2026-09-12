@@ -14,6 +14,14 @@
     "caliberNoMatch": "Ingen kaliber matchar.",
     "caliberLegacyHint": "Sparad före förvalslistan — välj ett värde för att ersätta den."
   },
+  "eventCategory": {
+    "men": "Herrar",
+    "menJunior": "Herrjunior",
+    "women": "Damer",
+    "womenJunior": "Damjunior",
+    "open": "Öppen",
+    "openJunior": "Junior"
+  },
   "tabs": {
     "home": "Hem",
     "stats": "Statistik",
@@ -500,6 +508,7 @@
     "competitionNameHint": "Tävlingens egna namn — bara för tävlingar, och inte samma sak som passets namn ovan.",
     "weaponGroup": "Vapengrupp",
     "shooterClass": "Klass",
+    "event": "Gren",
     "firearm": "Vapen",
     "ammoLot": "Ammunitionsparti",
     "none": "Ingen",

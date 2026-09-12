@@ -28,6 +28,7 @@ export interface CreateSessionInput {
   competitionName?: string | null;
   weaponGroup?: string | null;
   shooterClass?: string | null;
+  eventId?: string | null;
   firearmId?: string | null;
   ammoLotId?: string | null;
   startedAt: string;
@@ -65,6 +66,7 @@ export function createSession(db: Database, input: CreateSessionInput) {
     competitionName: input.competitionName ?? null,
     weaponGroup: input.weaponGroup ?? null,
     shooterClass: input.shooterClass ?? null,
+    eventId: input.eventId ?? null,
     firearmId: input.firearmId ?? null,
     ammoLotId: input.ammoLotId ?? null,
     startedAt: input.startedAt,

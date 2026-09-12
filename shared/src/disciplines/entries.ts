@@ -195,6 +195,18 @@ export function eventsForDiscipline(disciplineId: string): readonly EventDefinit
   return ISSF_EVENTS.filter((event) => event.disciplineId === disciplineId);
 }
 
+/**
+ * The i18n leaf naming a category: `men`, `menJunior`, `women`, `womenJunior`.
+ *
+ * A category is two axes, but its NAME is one word in both languages — SvSF
+ * prints exactly these (herrar, herrjunior, damer, damjunior; allmänna
+ * bestämmelser 2.6), so the label is a lookup rather than two joined strings.
+ */
+export function categoryKey(category: EntryCategory): string {
+  if (category.age === 'open') return category.gender;
+  return `${category.gender}${category.age[0]!.toUpperCase()}${category.age.slice(1)}`;
+}
+
 /** One event by id, or `undefined` — a stored id may predate a definition change. */
 export function findEvent(id: string): EventDefinition | undefined {
   return ISSF_EVENTS.find((event) => event.id === id);

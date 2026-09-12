@@ -43,8 +43,45 @@ as options for a session you could not then create.
 The veteran classes go by the **year** you reach the age, not by your birthday,
 which is why the app asks for your birth year.
 
-ISSF events and free training have no klass, and the app shows none rather than
-offering a "none" to pick.
+Free training has no klass, and the app shows none rather than offering a
+"none" to pick. ISSF has no klass either — it uses **events** instead, which
+the next section explains.
+
+## ISSF: events instead of klasser
+
+The two federations answer the same question in different places.
+
+- **SPSF** has one discipline with many klasser. Precision is precision; C 2,
+  C Dam 2 and C Vet Y are entries inside it. The category rides on **you**.
+- **ISSF** has many events, each fixed to one category. 10 m Air Pistol runs
+  as four separate events — men, men junior, women, women junior — and 25 m
+  Rapid Fire Pistol has only the two men's ones, because no women's version
+  exists. The category rides on **the event**.
+
+So an ISSF or SvSF session asks you which **Event** it was, in the same place
+an SPSF session asks for your klass. It is one picker or the other, never
+both.
+
+| Discipline           | Events                               |
+| -------------------- | ------------------------------------ |
+| 10 m Air Pistol      | Men, Men Junior, Women, Women Junior |
+| 25 m Rapid Fire      | Men, Men Junior                      |
+| 25 m Standard Pistol | Men, Men Junior, Women, Women Junior |
+| 25 m Sport Pistol    | Men Junior, Women, Women Junior      |
+| 50 m Pistol          | Men, Men Junior, Women, Women Junior |
+
+**25 m Sport Pistol has no senior men's event.** That is not an omission: the
+ISSF recognizes it for women, women juniors and men juniors only.
+
+A **junior** to the ISSF is anyone up to and including the year they turn 21
+— a year later than SPSF's juniorklass, which stops at the year you turn 20.
+The app uses whichever applies to the discipline you picked.
+
+Juniors are not confined to junior events. Entering the senior event is normal
+and expected, and the Swedish federation says so outright: at SM for herrar, a
+herrjunior may take part. So the app lists **every** event for the discipline,
+puts the ones matching you first, and preselects the first of those — the same
+rank-don't-gate rule as for klasser.
 
 ## Which groups each discipline allows
 

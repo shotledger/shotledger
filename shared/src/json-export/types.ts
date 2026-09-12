@@ -40,6 +40,8 @@ export interface SessionExport {
   competitionName: string | null;
   weaponGroup: string | null;
   shooterClass: string | null;
+  /** ISSF event id; `null` for a discipline whose category rides on the klass. */
+  eventId: string | null;
   /** `"{make} {model}"`, or `null` if the session has no firearm. */
   firearm: string | null;
   /** Ammo lot `label`, or `null`. */
@@ -87,6 +89,9 @@ export const sessionExportSchema = z.object({
   competitionName: z.string().nullable(),
   weaponGroup: z.string().nullable(),
   shooterClass: z.string().nullable(),
+  // Added after v1 shipped, so it defaults rather than being required: a file
+  // written by an earlier build has no eventId and must still import.
+  eventId: z.string().nullable().default(null),
   firearm: z.string().nullable(),
   ammoLot: z.string().nullable(),
   startedAt: z.string().min(1),

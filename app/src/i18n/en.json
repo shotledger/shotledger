@@ -14,6 +14,14 @@
     "caliberNoMatch": "No caliber matches.",
     "caliberLegacyHint": "Saved before the preset list — pick one to replace it."
   },
+  "eventCategory": {
+    "men": "Men",
+    "menJunior": "Men Junior",
+    "women": "Women",
+    "womenJunior": "Women Junior",
+    "open": "Open",
+    "openJunior": "Junior"
+  },
   "tabs": {
     "home": "Home",
     "stats": "Statistics",
@@ -500,6 +508,7 @@
     "competitionNameHint": "The event's own name — only for competitions, and not the same thing as the session name above.",
     "weaponGroup": "Weapon Group",
     "shooterClass": "Class",
+    "event": "Event",
     "firearm": "Firearm",
     "ammoLot": "Ammo Lot",
     "none": "None",

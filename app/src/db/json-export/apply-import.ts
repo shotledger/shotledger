@@ -205,6 +205,7 @@ export function applyImport(db: Database, groups: readonly SessionImportGroup[])
         competitionName: group.competitionName,
         weaponGroup: group.weaponGroup,
         shooterClass: group.shooterClass,
+        eventId: group.eventId,
         firearmId,
         ammoLotId,
         startedAt: group.startedAt,
