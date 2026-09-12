@@ -8,3 +8,6 @@ pnpm-lock.yaml
 app/expo-env.d.ts
 # Vendored (MIT, AmazingAng/old-coder) — keep byte-for-byte with upstream.
 .claude/skills/old-coder
+
+# mkdocs build output
+site

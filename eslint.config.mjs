@@ -14,6 +14,8 @@ export default tseslint.config(
       '**/.wrangler/**',
       '**/android/**',
       '**/.stryker-tmp/**',
+      // `mkdocs build` output. Generated, minified, and not ours to lint.
+      'site/**',
       // Agent worktrees are checkouts of this same repo; linting them lints
       // other branches' source through the root config.
       '.claude/worktrees/**',
