@@ -32,6 +32,10 @@ your own, and stops asking you every session. You can always override it.
 
 **Home → new session.** You choose:
 
+- **Regulation** — only if you have more than one turned on. It decides which
+  disciplines the next row offers, so you are choosing between SPSF's and
+  SvSF's worlds rather than scrolling one list that mixes them. With a single
+  regulation on there is nothing to choose and the row is not shown.
 - **Discipline** — for example SPSF precision or militär snabbmatch.
 - **Program** — the shot program within that discipline. It decides how many
   shots each series holds and whether the score is whole points or decimals.

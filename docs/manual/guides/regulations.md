@@ -6,6 +6,13 @@ Swedish pistol shooters are not all under one federation, and plenty are under
 two at once. What you turn on here decides which disciplines and weapon groups
 you are offered when you create a session.
 
+Turn on more than one and the new-session form asks which one you are shooting
+under before it asks for a discipline — a club's precision evening and an SvSF
+air pistol competition have no disciplines in common, and one merged list would
+make you hunt through the other federation's to find yours. Free training
+against a ring target belongs to no federation, so it stays on offer whichever
+regulation you pick.
+
 ## What is available
 
 | Regulation                                         | What it covers                                                                                |

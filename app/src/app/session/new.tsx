@@ -37,6 +37,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
@@ -58,6 +59,18 @@ import { TagSelect } from '@/features/tags/tag-select';
 import { Spacing } from '@/theme/tokens';
 
 const NO_PROGRAM = 'none';
+
+/**
+ * The discipline to land on when a regelverk is picked: the first one that is
+ * actually ITS own, not merely reachable through it. Generic disciplines
+ * survive every filter and sort first, so without this a shooter choosing
+ * SvSF would land on free training against a ring target.
+ */
+function firstDisciplineFor(regulationId: string): string | undefined {
+  const available = disciplinesForRegulations([regulationId]);
+  const federation = findRegulation(regulationId)?.federation;
+  return (available.find((d) => d.federation === federation) ?? available[0])?.id;
+}
 
 /**
  * The event to preselect: the first one the shooter is eligible for, or null
@@ -85,11 +98,24 @@ export default function NewSessionScreen() {
 
   const [type, setType] = useState<SessionType>('training');
   const [kind, setKind] = useState<SessionKind>('series');
-  // Only the disciplines the shooter's enabled regulations cover (ADR 0011).
-  // Silent filtering: the regulation is implied by the discipline rather than
-  // being a separate step (maintainer, 2026-09-12).
-  const availableDisciplines = disciplinesForRegulations(enabledRegulationIds());
-  const disciplineIdInitial = availableDisciplines[0]?.id ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
+  // One regelverk at a time (maintainer, 2026-09-12: pick the regulation
+  // first). With a single one enabled it is not a choice, so the picker stays
+  // hidden and its disciplines are simply the list — which is what a fresh
+  // SPSF-only install sees.
+  const regulations = useMemo<readonly Regulation[]>(
+    () =>
+      enabledRegulationIds()
+        .map(findRegulation)
+        .filter((regulation): regulation is Regulation => regulation !== null),
+    [],
+  );
+  const [regulationId, setRegulationId] = useState<string>(() => regulations[0]?.id ?? '');
+  // Generic disciplines survive every filter (ADR 0011), so free training is
+  // reachable whichever regelverk is selected — and with none enabled, the
+  // unknown id filters to exactly those.
+  const availableDisciplines = disciplinesForRegulations([regulationId]);
+  const disciplineIdInitial =
+    firstDisciplineFor(regulationId) ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(NO_PROGRAM);
   const [level, setLevel] = useState<CompetitionLevel>('forening');
@@ -156,6 +182,15 @@ export default function NewSessionScreen() {
     setWeaponGroup(null);
     setEventId(preferredEventId(nextId, shooterProfile));
     setDecimalScoring(false);
+  }
+
+  function onSelectRegulation(nextId: string) {
+    setRegulationId(nextId);
+    // The discipline the form was on may not exist under the new regelverk,
+    // and every field below it is discipline-shaped, so this cascades exactly
+    // as picking a discipline by hand does.
+    const first = firstDisciplineFor(nextId);
+    if (first !== undefined) onSelectDiscipline(first);
   }
 
   function onSelectKind(nextKind: SessionKind) {
@@ -282,6 +317,20 @@ export default function NewSessionScreen() {
       </Card>
 
       <Card>
+        {regulations.length > 1 && (
+          <OptionPicker
+            label={t('session.regulation')}
+            options={toOptions(
+              regulations.map((regulation) => ({
+                value: regulation.id,
+                label: regulation.shortName,
+              })),
+              'regulation',
+            )}
+            value={regulationId}
+            onChange={onSelectRegulation}
+          />
+        )}
         <OptionPicker
           label={t('session.discipline')}
           options={toOptions(
