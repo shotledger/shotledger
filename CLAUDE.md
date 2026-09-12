@@ -35,6 +35,9 @@ sync. Android first — **all code must stay iOS-compatible**.
   Check it before starting UI work, and tick the items your change closes
   (`gh issue edit 138 --body-file …`) in the same branch — noting anything
   you decided or could not resolve as a comment (`gh issue comment 138`).
+- `docs/manual/` — the **user** manual, published with MkDocs. Written for
+  shooters, not for contributors, and gated by `mkdocs build --strict`.
+  See the documentation rule under Definition of done.
 - `docs/release.md` — the repeatable release checklist (maintainer-only
   one-time setup vs. every-release steps); `docs/store-listing.md` — the
   draft EN/SV store listing. Both from M7; update `docs/release.md` if
@@ -81,6 +84,20 @@ sync. Android first — **all code must stay iOS-compatible**.
 Code + tests written; `pnpm check` green; the relevant checkbox ticked
 in `docs/implementation-plan.md` on the same branch; UI tasks include a
 screenshot from the agentic loop.
+
+**Documentation ships in the same PR as the change it describes.** A change
+that alters what a user sees or does — a screen, a flow, a setting, a file
+format, a limitation — SHALL update `docs/manual/` in the same pull request.
+Not a follow-up, not an issue: the same PR.
+
+The manual is built from the repo (`mkdocs build --strict`, gated in CI), so
+documentation that lags the code is documentation that is wrong, and a user
+reading it cannot tell which half to believe. The moment the change is made is
+also the only moment its reasoning is fully in hand.
+
+This covers `docs/manual/` — the user's manual. Contributor material
+(`docs/adr/`, `docs/specs/`, `docs/implementation-plan.md`) keeps its own
+existing rules above.
 
 ## Agentic loop (verified at M0 scaffold — keep this section updated)
 

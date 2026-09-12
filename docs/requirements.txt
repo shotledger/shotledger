@@ -1,0 +1,5 @@
+# Documentation toolchain. Keep pinned so local builds and CI agree.
+#
+#   pip install -r docs/requirements.txt
+#   mkdocs build --strict
+mkdocs-material==9.7.7

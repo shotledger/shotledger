@@ -1,0 +1,97 @@
+# MkDocs configuration for the ShotLedger user manual.
+#
+# Local build (must pass before any PR that touches docs/manual):
+#
+#   pip install -r docs/requirements.txt
+#   mkdocs build --strict
+#
+# `--strict` turns broken internal links and nav warnings into build failures,
+# which is what makes this usable as a gate.
+#
+# NOT versioned with mike, unlike skillsgateway. Versioned docs exist to let a
+# reader pick the manual matching the release they run; ShotLedger has not
+# released, and every reader is on the newest build. Add mike at the first
+# release, not before.
+
+site_name: ShotLedger
+site_description: >-
+  A free target-shooting logbook for SPSF pistol shooters — log sessions shot by
+  shot, score paper targets from a photograph, and keep the range activity your
+  licence renewal needs.
+site_url: https://jimisola.github.io/shotledger/
+repo_url: https://github.com/jimisola/shotledger
+repo_name: jimisola/shotledger
+edit_uri: edit/main/docs/manual/
+copyright: Free and open source. Donations unlock nothing.
+
+# docs/ already holds the material the app's contributors and agents work from —
+# ADRs, specs, the implementation plan. The user manual is a different audience
+# and gets its own clean directory rather than taking over docs/ wholesale.
+docs_dir: docs/manual
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Guides:
+      - Logging a session: guides/logging-a-session.md
+      - Scoring from a photo: guides/scoring-from-a-photo.md
+      - Timers: guides/timers.md
+      - Firearms and ammunition: guides/firearms-and-ammunition.md
+      - Licence activity: guides/licence-activity.md
+      - Webshooter: guides/webshooter.md
+      - The Vault: guides/vault.md
+      - Exporting sessions: guides/exporting-sessions.md
+      - Backup and restore: guides/backup-and-restore.md
+  - Reference:
+      - Vapengrupp and klass: reference/vapengrupp-and-klass.md
+      - Glossary: reference/glossary.md
+      - Your data and privacy: reference/privacy.md

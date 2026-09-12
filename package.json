@@ -13,12 +13,14 @@
     "i18n:check": "node scripts/i18n-check.mjs",
     "licenses:generate": "node scripts/generate-licenses.mjs",
     "licenses:check": "node scripts/generate-licenses.mjs --check",
-    "check": "pnpm typecheck && pnpm typecheck:app && pnpm i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run && (cd app && pnpm exec jest --passWithNoTests)",
+    "check": "pnpm typecheck && pnpm typecheck:app && pnpm schema:check && pnpm i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run && (cd app && pnpm exec jest --passWithNoTests)",
     "coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "mutation:schema": "node scripts/mutate-schema.mjs",
     "mutation:webshooter-schema": "node scripts/mutate-webshooter-schema.mjs",
-    "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema"
+    "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema",
+    "schema:generate": "node scripts/generate-export-schema.mjs",
+    "schema:check": "node scripts/generate-export-schema.mjs --check"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

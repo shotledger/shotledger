@@ -33,3 +33,6 @@ reports/
 
 # Agent worktrees (checkouts of this repo, never content of it)
 .claude/worktrees/
+
+# Built documentation site (mkdocs build)
+/site/
