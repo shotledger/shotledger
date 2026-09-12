@@ -25,7 +25,7 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
 import { seriesDropPlan } from '@/features/session/series-move';
-import { SessionStopwatch } from '@/features/session/session-stopwatch';
+import { SessionToolsRow } from '@/features/session/session-tools-row';
 import {
   SeriesEntryChoiceSheet,
   type SeriesEntryChoice,
@@ -332,7 +332,7 @@ export default function SessionDetailScreen() {
             )}
             {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
             <ThemedText type="smallBold">
-              {row.isSighter ? '–' : tenthsToScore(row.totalTenths)}
+              {row.isSighter ? t('session.notApplicable') : tenthsToScore(row.totalTenths)}
             </ThemedText>
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
@@ -385,7 +385,7 @@ export default function SessionDetailScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => <SessionMenu sessionId={id} sightsFirearmId={session.firearmId} />,
+          headerRight: () => <SessionMenu sessionId={id} />,
         }}
       />
 
@@ -404,7 +404,7 @@ export default function SessionDetailScreen() {
         <TagChips names={tags} testID="session-tags" />
       </View>
 
-      <SessionStopwatch sessionId={id} />
+      <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />
 
       <WebshooterSessionBadge session={session} />
 
@@ -774,7 +774,11 @@ function metricRows<T>(tiles: readonly T[]): T[][] {
 function MetricTile({ label, value, testID }: { label: string; value: string; testID?: string }) {
   return (
     <View style={styles.metricTile}>
-      <ThemedText type="smallBold" numberOfLines={1} testID={testID}>
+      {/* A step up from the 14px the labels and series totals use. These are
+          the figures the whole screen exists to report, and at body size they
+          read as just another field (maintainer, 2026-09-12). Still well
+          short of StatTile's 32px, which would dominate the card. */}
+      <ThemedText type="smallBold" style={styles.metricValue} numberOfLines={1} testID={testID}>
         {value}
       </ThemedText>
       <ThemedText
@@ -818,6 +822,10 @@ const styles = StyleSheet.create({
     flexBasis: 56,
     minWidth: 0,
     gap: Spacing.half,
+  },
+  metricValue: {
+    fontSize: 20,
+    lineHeight: 26,
   },
   metricLabel: {
     fontSize: 11,
