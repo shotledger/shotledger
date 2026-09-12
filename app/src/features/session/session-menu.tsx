@@ -13,33 +13,18 @@ import { db } from '@/db/client';
 // the fired rounds out of the firearm's counter, which feeds the FAP 551-3
 // activity log. Same entry point Home's swipe-to-delete uses.
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
-import { listSightSettings } from '@/db/queries/sight-settings';
-import { SessionSightsSheet } from '@/features/session/session-sights-sheet';
 import { useTheme } from '@/hooks/use-theme';
 
 export interface SessionMenuProps {
   sessionId: string;
-  /** Firearm whose sight settings this menu can switch; null when the
-   *  session has no firearm linked, which drops the Sights row. */
-  sightsFirearmId: string | null;
   onDeleted?: () => void;
 }
 
-type OpenSheet = 'none' | 'main' | 'sights';
-
-export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMenuProps) {
+export function SessionMenu({ sessionId, onDeleted }: SessionMenuProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
-  const [sheet, setSheet] = useState<OpenSheet>('none');
-  const [sightSettings, setSightSettings] = useState<ReturnType<typeof listSightSettings>>([]);
-
-  function loadSights() {
-    if (!db || !sightsFirearmId) return [];
-    const rows = listSightSettings(db, sightsFirearmId);
-    setSightSettings(rows);
-    return rows;
-  }
+  const [open, setOpen] = useState(false);
 
   function onDelete() {
     Alert.alert(t('common.deleteSessionConfirmTitle'), t('common.deleteSessionConfirmBody'), [
@@ -57,16 +42,11 @@ export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMe
     ]);
   }
 
+  // Sights is not here any more: it moved to a button on the session view
+  // itself (2026-09-12). Adjusting a sight setting happens between series,
+  // at the firing point, and a menu was the wrong depth for something done
+  // that often.
   const actions: ActionSheetAction[] = [
-    ...(sightSettings.length > 0
-      ? [
-          {
-            key: 'sights',
-            label: t('session.menuSights'),
-            onPress: () => setSheet('sights'),
-          },
-        ]
-      : []),
     {
       key: 'edit',
       label: t('session.menuEdit'),
@@ -91,22 +71,12 @@ export function SessionMenu({ sessionId, sightsFirearmId, onDeleted }: SessionMe
         accessibilityRole="button"
         accessibilityLabel={t('session.menuLabel')}
         testID="session-menu"
-        onPress={() => {
-          loadSights();
-          setSheet('main');
-        }}
+        onPress={() => setOpen(true)}
         style={styles.trigger}
       >
         <OverflowIcon color={theme.primary} />
       </Pressable>
-      <ActionSheet visible={sheet === 'main'} onClose={() => setSheet('none')} actions={actions} />
-      <SessionSightsSheet
-        visible={sheet === 'sights'}
-        onClose={() => setSheet('none')}
-        firearmId={sightsFirearmId}
-        settings={sightSettings}
-        onChanged={loadSights}
-      />
+      <ActionSheet visible={open} onClose={() => setOpen(false)} actions={actions} />
     </>
   );
 }
