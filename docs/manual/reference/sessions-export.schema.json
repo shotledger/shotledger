@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jimisola.github.io/shotledger/reference/sessions-export.schema.json",
+  "title": "ShotLedger sessions export",
+  "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\" and the current `formatVersion` is 1. An importer must refuse a higher formatVersion rather than dropping fields it does not understand.",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "shotledger.sessions"
+    },
+    "formatVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "app": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "sessions": {
+      "type": "array",
+      "items": {}
+    }
+  },
+  "required": [
+    "format",
+    "formatVersion",
+    "generatedAt",
+    "app",
+    "sessions"
+  ],
+  "additionalProperties": false
+}

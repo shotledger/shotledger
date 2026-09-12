@@ -89,6 +89,7 @@ nav:
       - Licence activity: guides/licence-activity.md
       - Webshooter: guides/webshooter.md
       - The Vault: guides/vault.md
+      - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
   - Reference:
       - Vapengrupp and klass: reference/vapengrupp-and-klass.md
