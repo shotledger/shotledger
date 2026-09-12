@@ -104,6 +104,37 @@ describe('the baseline is the whole schema', () => {
     ]);
   });
 
+  it('carries an existing install forward, keeping its rows', () => {
+    // The upgrade path, which the fresh-install rehearsals above do not
+    // exercise: a phone already on the baseline gets the later migrations
+    // applied to a database that has data in it. Verified against a real
+    // emulator install (2026-09-12) after `event_id` was added; this is the
+    // cheap standing version of that check.
+    const sqlite = new Database(':memory:');
+    sqlite.pragma('foreign_keys = ON');
+    applyMigration(sqlite, '0000_baseline');
+    sqlite
+      .prepare(
+        `INSERT INTO sessions (id, created_at, updated_at, name, type, kind, discipline_id, started_at)
+         VALUES ('s1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z',
+                 'Träning', 'training', 'series', 'spsf-precision', '2026-01-01T00:00:00.000Z')`,
+      )
+      .run();
+
+    for (const tag of journalTags().slice(1)) applyMigration(sqlite, tag);
+
+    expect(sqlite.prepare('SELECT id, name FROM sessions').all()).toEqual([
+      { id: 's1', name: 'Träning' },
+    ]);
+    // Every column schema.ts declares must exist after the chain, or the app
+    // crashes on its first query rather than on migration.
+    const columns = sqlite
+      .prepare(`SELECT name FROM pragma_table_info('sessions')`)
+      .all()
+      .map((row) => (row as { name: string }).name);
+    expect(columns).toContain('event_id');
+  });
+
   it('leaves the outbox alone while the sync engine is applying server rows', () => {
     const sqlite = freshDatabase();
     sqlite.prepare('UPDATE sync_control SET applying = 1 WHERE id = 0').run();

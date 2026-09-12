@@ -342,26 +342,33 @@ export default function NewSessionScreen() {
         </Card>
       )}
 
+      {/* A federation defines vapengrupper and klasser, or events — never both.
+          Rendering a picker with nothing in it printed an empty "Weapon Group"
+          and a "Class: None" on every ISSF session. */}
       <Card>
-        <OptionPicker
-          label={t('session.weaponGroup')}
-          options={toOptions(
-            groups.map((g) => ({ value: g.id, label: g.code })),
-            'group',
-          )}
-          value={weaponGroup}
-          onChange={onSelectWeaponGroup}
-        />
-        <OptionPicker
-          label={t('session.shooterClass')}
-          options={toOptions(
-            classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
-            'class',
-          )}
-          value={shooterClass}
-          onChange={setShooterClass}
-          emptyLabel={t('session.none')}
-        />
+        {groups.length > 0 && (
+          <OptionPicker
+            label={t('session.weaponGroup')}
+            options={toOptions(
+              groups.map((g) => ({ value: g.id, label: g.code })),
+              'group',
+            )}
+            value={weaponGroup}
+            onChange={onSelectWeaponGroup}
+          />
+        )}
+        {allClasses.length > 0 && (
+          <OptionPicker
+            label={t('session.shooterClass')}
+            options={toOptions(
+              classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
+              'class',
+            )}
+            value={shooterClass}
+            onChange={setShooterClass}
+            emptyLabel={t('session.none')}
+          />
+        )}
         {events.length > 0 && (
           <OptionPicker
             label={t('session.event')}
