@@ -109,3 +109,26 @@ describe('isJunior', () => {
     expect(isJunior(profile({ birthYear: null }), 2026)).toBe(false);
   });
 });
+
+describe('spsfEligibleClasses with a vapengrupp', () => {
+  it('drops Dam and Vet outside vapengrupp C', () => {
+    // SHB F.2.1: those classes exist only in C, so an A-gun session offers
+    // the open classes and nothing else.
+    const woman = profile({ birthYear: 1964, skillClass: '2', competesInWomensClasses: true });
+
+    expect(spsfEligibleClasses(woman, 2026, 'spsf:A')).toEqual(['2']);
+  });
+
+  it('keeps them in vapengrupp C', () => {
+    const woman = profile({ birthYear: 1964, skillClass: '2', competesInWomensClasses: true });
+
+    expect(spsfEligibleClasses(woman, 2026, 'spsf:C')).toEqual(['2', 'Dam2', 'VetY']);
+  });
+
+  it('offers everything when no gun has been chosen yet', () => {
+    // The session screen starts with no weapon group selected.
+    const woman = profile({ birthYear: 1964, skillClass: '2', competesInWomensClasses: true });
+
+    expect(spsfEligibleClasses(woman, 2026, null)).toEqual(['2', 'Dam2', 'VetY']);
+  });
+});

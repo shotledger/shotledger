@@ -118,7 +118,29 @@ count toward märkesprov/riksmästarklass/SM qualification (C.5.1).
 F.2.1 p. 163: **1** (variants 1u nybörjare, 1b bronsskytt, 1s
 silverskytt — F.2.5), **2**, **3** (riksmästarklass), **Jun** (≤ year
 turning 20), **Dam 1/2/3**, **Vet Y** (year turning 60+), **Vet Ä**
-(year turning 70+). Jun/Dam/Vet shoot vapengrupp C in precision/fält.
+(year turning 70+).
+
+**Vapengrupper per klass (F.2.1 table, p. 163):** klass **1/2/3 → A, B, C**;
+**Jun, Dam 1/2/3, Vet Y, Vet Ä → C only**. Confirmed in F.2.8/F.2.9/F.2.10
+("I junior-/dam-/veteranklass tävlas med vapen kaliber .22, vapengrupp C").
+
+**Klass is NOT per vapengrupp** (F.2.2 p. 163): "Skytt hänförs till viss klass
+oavsett i vilken vapengrupp kompetensfordringarna uppfyllts." One klass applies
+whichever gun is shot. Klass 3 qualification is precision-only.
+
+**Jun/Dam/Vet may also enter the open classes** (F.2.2 p. 163): they may
+"tävla i (öppen) klass 1, 2 eller 3 alltefter kompetens inom vapengrupperna
+A, B, eller C". Entering dam-, junior- or veteranklass is explicitly
+**voluntary** (F.2.8/F.2.9/F.2.10: "Att delta i … är frivilligt").
+
+**One start per competition in vapengrupp C** (F.2.2 p. 163): "i samma tävling
+inom vapengrupp C får skytten endast starta i en klass i precisionsskjutningar
+(t.ex. start i klass Vet Y och klass 3 C är inte tillåten)."
+
+**Jun and Vet are not gender-split** (F.2.8, F.2.10 p. 167): "Herr- och
+damjuniorer tävlar i samma klass"; "Veteranklass kan bestå av såväl herrar som
+damer" — though F.2.3 p. 164 splits them again when a class has under five
+entrants.
 Vet Ä may use stödhand in precision (F.6.3.2); anyone turning 70 may in
 A/B (F.6.3.3), and in A/B/R in milsnabb (J.6.3.3). Display convention:
 "C 2" = vapengrupp C, klass 2 (F.2.6–F.2.7).

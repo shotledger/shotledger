@@ -19,6 +19,12 @@
 // session screen always allows an override, because a shooter at a club
 // evening may enter a class this function would not have predicted.
 import type { ShooterClass } from './classes';
+import {
+  SPSF_CLASS_DEFINITIONS,
+  eventsForDiscipline,
+  type EntryCategory,
+  type EventDefinition,
+} from './entries';
 
 /** SPSF skill classes. The 1u/1b/1s variants of 1 are deliberately not offered. */
 export type SkillClass = '1' | '2' | '3';
@@ -51,6 +57,50 @@ export const ISSF_JUNIOR_MAX_AGE = 21;
 const VET_YOUNGER_AGE = 60;
 const VET_OLDER_AGE = 70;
 
+/**
+ * Whether a shooter may enter a given category this year.
+ *
+ * The one rule both carriers share: SPSF asks it of a klass, ISSF asks it of
+ * an event, and neither needs to know how the other is shaped.
+ */
+export function isEligibleForCategory(
+  profile: ShooterProfile,
+  category: EntryCategory,
+  year: number,
+  juniorMaxAge: number = SPSF_JUNIOR_MAX_AGE,
+): boolean {
+  const age = profile.birthYear === null ? null : ageInYear(profile.birthYear, year);
+
+  switch (category) {
+    case 'open':
+      return true;
+    case 'women':
+      return profile.competesInWomensClasses;
+    // `men` is the absence of a women's entry, not a separate stored fact:
+    // ISSF's men's events are what a shooter who does not compete in the
+    // women's ones enters.
+    case 'men':
+      return !profile.competesInWomensClasses;
+    case 'junior':
+      return age !== null && age <= juniorMaxAge;
+    case 'veteranYounger':
+      return age !== null && age >= VET_YOUNGER_AGE;
+    case 'veteranOlder':
+      return age !== null && age >= VET_OLDER_AGE;
+  }
+}
+
+/** The ISSF events this shooter may enter within a discipline. */
+export function eligibleEvents(
+  profile: ShooterProfile,
+  disciplineId: string,
+  year: number,
+): readonly EventDefinition[] {
+  return eventsForDiscipline(disciplineId).filter((event) =>
+    isEligibleForCategory(profile, event.category, year, ISSF_JUNIOR_MAX_AGE),
+  );
+}
+
 /** Age reached during `year`, which is what a year-based category asks for. */
 function ageInYear(birthYear: number, year: number): number {
   return year - birthYear;
@@ -68,30 +118,38 @@ export function isJunior(
  * Every SPSF klass the shooter may enter this year, in the order they are most
  * likely to want them: their own skill class first, then the categories.
  *
- * VERIFY: whether a shooter of 70+ may still enter Vet Y, or moves to Vet Ä
- * exclusively. SHB F.2.1 gives "Vet Y (year turning 60+), Vet Ä (year turning
- * 70+)" without saying the bands are exclusive. Both are offered from 70,
- * because this list only ever prefills an overridable picker — offering one
- * class too many costs a tap, hiding one the shooter is entitled to costs
- * them the entry.
+ * Entering a dam-, junior- or veteranklass is explicitly voluntary (SHB
+ * F.2.8/F.2.9/F.2.10, "Att delta i … är frivilligt"), and F.2.2 lets those
+ * shooters enter the open classes instead — so this is a list of what is
+ * ALLOWED, never a list of what is required.
+ *
+ * Both veteran classes are offered from 70: F.2.10 defines Vet Y as everyone
+ * "som under kalenderåret fyller 60 år eller mer" and Vet Ä as 70 or more, so
+ * a 70-year-old is inside both definitions.
  */
-export function spsfEligibleClasses(profile: ShooterProfile, year: number): ShooterClass[] {
-  const classes: ShooterClass[] = [];
-
-  if (profile.skillClass !== null) {
-    classes.push(profile.skillClass);
-    if (profile.competesInWomensClasses) classes.push(`Dam${profile.skillClass}`);
-  }
-
-  if (isJunior(profile, year)) classes.push('Jun');
-
-  if (profile.birthYear !== null) {
-    const age = ageInYear(profile.birthYear, year);
-    if (age >= VET_YOUNGER_AGE) classes.push('VetY');
-    if (age >= VET_OLDER_AGE) classes.push('VetÄ');
-  }
-
-  return classes;
+export function spsfEligibleClasses(
+  profile: ShooterProfile,
+  year: number,
+  weaponGroupId?: string | null,
+): ShooterClass[] {
+  return SPSF_CLASS_DEFINITIONS.filter((definition) => {
+    // Jun/Dam/Vet exist only in vapengrupp C (SHB F.2.1 table p. 163), so
+    // "A Dam 2" is not a class anyone can enter. Skipped when no gun is
+    // known yet, which is the state the session screen starts in.
+    if (
+      weaponGroupId !== undefined &&
+      weaponGroupId !== null &&
+      !definition.weaponGroupIds.includes(weaponGroupId)
+    ) {
+      return false;
+    }
+    // A klass carrying a skill level is only the shooter's if it is THEIR
+    // level: a class 2 shooter is Dam 2, never Dam 3.
+    if (definition.skillClass !== null && definition.skillClass !== profile.skillClass) {
+      return false;
+    }
+    return isEligibleForCategory(profile, definition.category, year);
+  }).map((definition) => definition.code);
 }
 
 /**

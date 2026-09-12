@@ -14,15 +14,15 @@ shooting the C-gun?" and "how am I doing in klass 2?" independently.
 
 ## Vapengrupper
 
-| Code                   | What it is                                                                 |
-| ---------------------- | -------------------------------------------------------------------------- |
-| **A**                  | Standard .22 pistol                                                        |
-| **AM**, **AP**, **AG** | Sub-groups of A                                                            |
-| **A-opt**              | A with an optical sight                                                    |
-| **B**                  | Centrefire                                                                 |
-| **C**                  | Centrefire                                                                 |
-| **R**                  | Large-calibre revolver — fält and militär snabbmatch only, never precision |
-| **airgun**             | Air pistol; used by ISSF events and general practice, not an SPSF group    |
+| Code                   | What it is                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| **A**                  | Centrefire, 7.6–11.4 mm, 420–600 J                                           |
+| **AM**, **AP**, **AG** | Sub-groups of A — pre-1945 military, Walther PP/PPK 7.65, Glock fixed sights |
+| **A-opt**              | A with an optical sight                                                      |
+| **B**                  | Centrefire pistol or revolver, up to 600 J                                   |
+| **C**                  | .22 LR only                                                                  |
+| **R**                  | Large-calibre revolver — fält and militär snabbmatch only, never precision   |
+| **airgun**             | Air pistol; used by ISSF events and general practice, not an SPSF group      |
 
 Magnum groups M1–M9 exist in the SPSF rules but are not offered, because
 Magnumprecision is not a discipline the app implements yet. They would appear
@@ -66,6 +66,24 @@ things at once:
 
 So a woman of 62 in class 2, shooting C, may enter **C 2**, **C Dam 2** _and_
 **C Vet Y**, and picks one per competition.
+
+Two rules shape that (SHB F.2.1 and F.2.2, p. 163):
+
+- **The open classes really are open.** A shooter in dam-, junior- or
+  veteranklass may instead enter klass 1, 2 or 3 according to their
+  competence, in vapengrupp A, B or C. Entering your category class is
+  explicitly voluntary.
+- **Jun, Dam and Vet exist only in vapengrupp C.** Klass 1/2/3 run in A, B and
+  C, but there is no "A Dam 2" — so choosing an A-gun leaves you the open
+  classes only. The app narrows the list by the gun you pick.
+
+One more, worth knowing before you enter two: within **vapengrupp C in
+precision you may start in only one class per competition** — Vet Y _and_
+klass 3 C in the same competition is not allowed.
+
+Your class is the same whichever gun you shoot: _"Skytt hänförs till viss
+klass oavsett i vilken vapengrupp kompetensfordringarna uppfyllts"_ (F.2.2).
+Only klass 3 is qualified for in precision specifically.
 
 The app works out what it can and asks for the rest:
 

@@ -112,7 +112,8 @@ export default function NewSessionScreen() {
   // user settings and allow override"). A club evening can put anyone in any
   // class, and the app should not argue.
   const allClasses = shooterClassesForDiscipline(disciplineId);
-  const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear());
+  // The chosen gun narrows it: Jun/Dam/Vet exist only in vapengrupp C.
+  const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear(), weaponGroup);
   const classes = [
     ...eligible.filter((klass) => allClasses.includes(klass)),
     ...allClasses.filter((klass) => !eligible.includes(klass)),
