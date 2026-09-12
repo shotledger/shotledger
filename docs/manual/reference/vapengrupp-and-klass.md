@@ -78,8 +78,13 @@ Two rules shape that (SHB F.2.1 and F.2.2, p. 163):
   classes only. The app narrows the list by the gun you pick.
 
 One more, worth knowing before you enter two: within **vapengrupp C in
-precision you may start in only one class per competition** — Vet Y _and_
-klass 3 C in the same competition is not allowed.
+precision the general rule is one class per competition** — Vet Y _and_
+klass 3 C together is not normally allowed.
+
+**Championships are the exception.** At SM, landsdels- or kretsmästerskap an
+organiser may permit a start in the open class as well as your own, and
+shooters do compete in C and another class there. It is the organiser's call,
+so the app never stops you logging either start.
 
 Your class is the same whichever gun you shoot: _"Skytt hänförs till viss
 klass oavsett i vilken vapengrupp kompetensfordringarna uppfyllts"_ (F.2.2).

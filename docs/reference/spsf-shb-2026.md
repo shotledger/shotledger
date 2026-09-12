@@ -133,9 +133,14 @@ whichever gun is shot. Klass 3 qualification is precision-only.
 A, B, eller C". Entering dam-, junior- or veteranklass is explicitly
 **voluntary** (F.2.8/F.2.9/F.2.10: "Att delta i … är frivilligt").
 
-**One start per competition in vapengrupp C** (F.2.2 p. 163): "i samma tävling
-inom vapengrupp C får skytten endast starta i en klass i precisionsskjutningar
-(t.ex. start i klass Vet Y och klass 3 C är inte tillåten)."
+**One start per competition in vapengrupp C — with a championship exception**
+(F.2.2 p. 163). The general rule: "i samma tävling inom vapengrupp C får
+skytten endast starta i en klass i precisionsskjutningar (t.ex. start i klass
+Vet Y och klass 3 C är inte tillåten)." The next bullet carves it open: "vid
+SM, landsdels- eller kretsmästerskap får en arrangör medge start, förutom i
+den egna klassen, **även i öppen klass**." Shooters do compete in C and
+another class at SM. **Not a rule the app may enforce** — the arrangör
+decides, and eligibility here is offered, never gated.
 
 **Jun and Vet are not gender-split** (F.2.8, F.2.10 p. 167): "Herr- och
 damjuniorer tävlar i samma klass"; "Veteranklass kan bestå av såväl herrar som
