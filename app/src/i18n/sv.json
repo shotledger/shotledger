@@ -361,7 +361,10 @@
     "trainingDeleteTitle": "Radera insamlad data?",
     "trainingDeleteBody": "Detta raderar permanent de {{count}} sparade serierna. Loggboken och fotona påverkas inte.",
     "birthYearSetOnce": "Du kan bara ställa in detta en gång — det avgör vilken veteranklass och vilka märkesgränser som gäller, även för redan loggade pass.",
-    "birthYearLocked": "Inställt en gång och sparat"
+    "birthYearLocked": "Inställt en gång och sparat",
+    "skillClass": "Din klass",
+    "womensClasses": "Damklasser och damgrenar",
+    "womensClassesHelp": "Visar Dam 1/2/3 vid sidan av din klass, och de ISSF-grenar som skjuts av damer."
   },
   "about": {
     "title": "Om appen",

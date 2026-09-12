@@ -361,7 +361,10 @@
     "trainingDeleteTitle": "Delete collected data?",
     "trainingDeleteBody": "This permanently deletes the {{count}} kept series. Your logbook and photos are not affected.",
     "birthYearSetOnce": "You can only set this once — it decides which veteran class and märke thresholds apply, including for sessions already logged.",
-    "birthYearLocked": "Set once and kept"
+    "birthYearLocked": "Set once and kept",
+    "skillClass": "Your Class",
+    "womensClasses": "Women’s Classes and Events",
+    "womensClassesHelp": "Offers Dam 1/2/3 alongside your class, and the ISSF events shot by women."
   },
   "about": {
     "title": "About",

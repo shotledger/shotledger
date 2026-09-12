@@ -9,6 +9,7 @@ import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
 import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
+import type { SkillClass } from '@shotledger/shared/src/disciplines/eligibility';
 import { effectiveRegulations } from '@shotledger/shared/src/regulations/registry';
 
 import { DrillDownRow } from '@/components/drill-down-row';
@@ -16,6 +17,7 @@ import { ProviderSettingsRow } from '@/features/providers/provider-settings-row'
 import { useRegulations } from '@/features/regulations/use-regulations';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
+import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SearchablePicker, type SearchablePickerOption } from '@/components/searchable-picker';
@@ -39,10 +41,29 @@ import { useJsonExportImport } from '@/features/json-export/use-json-export-impo
 import { useAppSettings, type LanguageSetting, type ThemeSetting } from '@/state/app-settings';
 import { Spacing } from '@/theme/tokens';
 
+/** 1, 2, 3 — the 1u/1b/1s variants are deliberately not offered (SHB F.2.5). */
+const SKILL_CLASS_OPTIONS: readonly SkillClass[] = ['1', '2', '3'];
+
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
+  const [skillClass, setSkillClass] = useState<SkillClass | null>(() =>
+    db ? getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null) : null,
+  );
+  const [womensClasses, setWomensClasses] = useState<boolean>(() =>
+    db ? getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false) : false,
+  );
+
+  function onChangeSkillClass(next: SkillClass) {
+    setSkillClass(next);
+    if (db) setSetting<SkillClass>(db, SETTINGS_KEYS.skillClass, next);
+  }
+
+  function onChangeWomensClasses(next: boolean) {
+    setWomensClasses(next);
+    if (db) setSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, next);
+  }
   // The short names of everything in effect, adoption included — "SPSF, ISSF,
   // SvSF" rather than only what has a switch turned on.
   const { enabled: enabledRegulations } = useRegulations();
@@ -232,6 +253,27 @@ export default function SettingsScreen() {
             </ThemedText>
           </>
         )}
+
+        {/* The two facts that cannot be derived. Everything else about which
+            klasser the shooter may enter falls out of the birth year above —
+            Jun, Vet Y and Vet Ä are all year-based in both federations. */}
+        <OptionPicker
+          label={t('settings.skillClass')}
+          options={SKILL_CLASS_OPTIONS.map((value) => ({ value, label: value }))}
+          value={skillClass}
+          onChange={onChangeSkillClass}
+        />
+        <ListRow
+          title={t('settings.womensClasses')}
+          subtitle={t('settings.womensClassesHelp')}
+          trailing={
+            <Switch
+              value={womensClasses}
+              onValueChange={onChangeWomensClasses}
+              testID="womens-classes"
+            />
+          }
+        />
 
         <View style={styles.markeTable} testID="marke-requirement">
           <View style={styles.headerRow}>

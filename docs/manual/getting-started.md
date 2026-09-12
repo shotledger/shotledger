@@ -13,13 +13,18 @@ program and the right competition class.
 If you handload, you can add ammunition later; nothing here blocks you from
 shooting.
 
-## 2. Set your class, once
+## 2. Tell it about you, once
 
-**Settings → Birth Year**, and your **klass** when you create a session.
+**Settings** wants three things, and then stops asking:
 
-Birth year matters more than it looks: veteran classes are decided by the year
-you turn 60 or 70, not by your birthday, and the app works that out rather than
-asking you to.
+- **Birth year** — set once, because it decides which veteran and junior
+  classes apply, including for sessions already logged. Both SPSF and ISSF go
+  by the **year** you reach an age, not your birthday, so the year is enough.
+- **Your class** — 1, 2 or 3. Nobody can derive an earned class.
+- **Women's classes and events** — if you compete in them.
+
+From those three the app works out every klass you are eligible for, preselects
+your own, and stops asking you every session. You can always override it.
 
 ## 3. Start a session
 

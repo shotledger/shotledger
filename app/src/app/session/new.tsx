@@ -30,6 +30,13 @@ import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import {
+  defaultShooterClass,
+  spsfEligibleClasses,
+  type ShooterProfile,
+  type SkillClass,
+} from '@shotledger/shared/src/disciplines/eligibility';
+
 import { db } from '@/db/client';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
@@ -54,6 +61,18 @@ import { Spacing } from '@/theme/tokens';
 const NO_PROGRAM = 'none';
 
 export default function NewSessionScreen() {
+  // Read once per screen: these are set in Settings and do not change while
+  // a session is being created.
+  const shooterProfile: ShooterProfile = useMemo(
+    () => ({
+      birthYear: db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
+      skillClass: db ? getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null) : null,
+      competesInWomensClasses: db
+        ? getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false)
+        : false,
+    }),
+    [],
+  );
   const { t, i18n } = useTranslation();
   const router = useRouter();
 
@@ -71,7 +90,10 @@ export default function NewSessionScreen() {
   const [isChampionship, setIsChampionship] = useState(false);
   const [competitionName, setCompetitionName] = useState('');
   const [weaponGroup, setWeaponGroup] = useState<string | null>(null);
-  const [shooterClass, setShooterClass] = useState<string | null>(null);
+  // Prefilled from the profile rather than asked afresh every session.
+  const [shooterClass, setShooterClass] = useState<string | null>(() =>
+    defaultShooterClass(shooterProfile, new Date().getFullYear()),
+  );
   const [firearmId, setFirearmId] = useState<string | null>(null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
@@ -84,7 +106,17 @@ export default function NewSessionScreen() {
   const programs = programsForDiscipline(disciplineId);
   const program = kind === 'series' ? (programs.find((p) => p.id === programId) ?? null) : null;
   const groups = weaponGroupsForDiscipline(disciplineId);
-  const classes = shooterClassesForDiscipline(disciplineId);
+  // Every klass the discipline's federation defines stays selectable — the
+  // shooter's own eligibility only decides the ORDER and the preselection,
+  // never what is on offer (maintainer, 2026-09-12: "pre populate based on
+  // user settings and allow override"). A club evening can put anyone in any
+  // class, and the app should not argue.
+  const allClasses = shooterClassesForDiscipline(disciplineId);
+  const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear());
+  const classes = [
+    ...eligible.filter((klass) => allClasses.includes(klass)),
+    ...allClasses.filter((klass) => !eligible.includes(klass)),
+  ];
   const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
 
   const firearms = useMemo(() => (db ? listFirearms(db) : []), []);

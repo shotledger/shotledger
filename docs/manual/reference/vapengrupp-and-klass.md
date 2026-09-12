@@ -55,6 +55,35 @@ offering a "none" to pick.
 | ISSF events             | none — ISSF does not use vapengrupper |
 | Practice (rings)        | airgun                                |
 
+## You hold several klasser at once
+
+A klass is not one slot you sit in. The nine SPSF klasser are really two
+things at once:
+
+- **Your class** — 1, 2, or 3 (riksmästarklass). Earned, and one class across
+  all vapengrupper.
+- **Categories** — Jun, Dam 1/2/3, Vet Y, Vet Ä.
+
+So a woman of 62 in class 2, shooting C, may enter **C 2**, **C Dam 2** _and_
+**C Vet Y**, and picks one per competition.
+
+The app works out what it can and asks for the rest:
+
+| Eligibility                      | How the app knows                                            |
+| -------------------------------- | ------------------------------------------------------------ |
+| **Vet Y** (60+), **Vet Ä** (70+) | Your birth year                                              |
+| **Jun**                          | Your birth year — the year you turn 20                       |
+| **Dam 1/2/3**                    | The "Women's Classes and Events" switch in Settings          |
+| **1 / 2 / 3**                    | "Your Class" in Settings — nobody can derive an earned class |
+
+Age categories are decided by the **year**, not your birthday, in both SPSF
+and ISSF — which is why a birth year is enough and the app never asks for a
+full date of birth.
+
+When you create a session, the classes you are eligible for are listed first
+and your own class is preselected. **Every class stays selectable**: a club
+evening can put anyone in any class, and the app does not argue with you.
+
 ## Which regulation they come from
 
 Vapengrupper are defined by a federation, which is why their ids are

@@ -26,6 +26,16 @@ export const SETTINGS_KEYS = {
   // OFF by default: with it on, what the user types is sent to a third-party
   // server, which an offline-first app must not do without being asked.
   onlineLocationLookup: 'onlineLocationLookup',
+  // The shooter's own klass (SPSF 1/2/3), one across all vapengrupper per the
+  // maintainer's ruling 2026-09-12. Earned rather than derived, so it has to
+  // be stored — everything else about eligibility falls out of birthYear.
+  skillClass: 'skillClass',
+  // Whether the shooter competes in women's classes and events. A competition
+  // fact rather than a gender: SPSF keys Dam 1/2/3 off it, ISSF keys whole
+  // EVENTS off it (25 m Pistol is women/juniors, 25 m Rapid Fire has no
+  // women's version). Never gates anything — it prefills an overridable
+  // picker.
+  competesInWomensClasses: 'competesInWomensClasses',
   // Opt-in collection of tap-to-mark positions as training data for a future
   // learned hole detector (db/queries/training-samples.ts). OFF by default and
   // local-only: target photos are personal data under hard rule 7, so consent
