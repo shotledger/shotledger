@@ -21,7 +21,7 @@ import type { ShooterClass } from './classes';
 import type { SkillClass } from './eligibility';
 
 /**
- * Who an entry is for.
+ * The gender an entry is restricted to.
  *
  * `open` means "no restriction", not "men". SHB F.2.2 p. 163 is explicit that
  * a shooter in junior-, dam- or veteranklass may also "tävla i (öppen) klass
@@ -29,15 +29,31 @@ import type { SkillClass } from './eligibility';
  * and treating them as men's would exclude a woman from her own klass 2.
  * ISSF's 25 m Rapid Fire Pistol, by contrast, genuinely is `men`.
  */
-export type EntryCategory = 'open' | 'men' | 'women' | 'junior' | 'veteranYounger' | 'veteranOlder';
+export type GenderCategory = 'open' | 'women' | 'men';
+
+/** The age band an entry is restricted to. */
+export type AgeCategory = 'open' | 'junior' | 'veteranYounger' | 'veteranOlder';
 
 /**
- * SPSF: a klass. An entry WITHIN a discipline.
+ * Who an entry is for — two independent axes, not one list.
  *
- * `skillClass` is the earned level the code embeds — `Dam2` is category
- * `women` at skill 2 — and is null for categories that carry no level of
- * their own, like Vet Y.
+ * They have to be independent because ISSF multiplies them: *10 m Air Pistol
+ * Junior Women* is a real event, and a single enum cannot name it. SPSF gets
+ * away with a flat list only because its klasser happen to vary one axis at a
+ * time — and even there the flat reading is wrong about two of them, since
+ * SHB F.2.8 and F.2.10 say juniors and veterans are NOT gender-split ("Herr-
+ * och damjuniorer tävlar i samma klass"; "Veteranklass kan bestå av såväl
+ * herrar som damer"). As a conjunction that falls out: Jun is
+ * `{ gender: 'open', age: 'junior' }`.
  */
+export interface EntryCategory {
+  gender: GenderCategory;
+  age: AgeCategory;
+}
+
+/** Reads as `open`/`women`/`men` crossed with the age band. */
+export const OPEN_CATEGORY: EntryCategory = { gender: 'open', age: 'open' };
+
 export interface ShooterClassDefinition {
   code: ShooterClass;
   category: EntryCategory;
@@ -69,23 +85,60 @@ export interface EventDefinition {
 }
 
 export function eventId(disciplineId: string, category: EntryCategory): string {
-  return `${disciplineId}:${category}`;
+  return `${disciplineId}:${category.gender}:${category.age}`;
 }
 
 /** Every SPSF klass, decomposed into the two dimensions its code encodes. */
 const OPEN_GROUPS = ['spsf:A', 'spsf:B', 'spsf:C'] as const;
 const C_ONLY = ['spsf:C'] as const;
 
+/**
+ * Note the `gender: 'open'` on Jun, Vet Y and Vet Ä: SHB F.2.8 and F.2.10 put
+ * men and women in the same junior and veteran classes. Only Dam carries a
+ * gender restriction. (F.2.3 p. 164 splits veterans by gender again when a
+ * class has fewer than five entrants — a sammanslagning rule about running a
+ * competition, not about who may enter, so it does not belong here.)
+ */
 export const SPSF_CLASS_DEFINITIONS: readonly ShooterClassDefinition[] = [
-  { code: '1', category: 'open', skillClass: '1', weaponGroupIds: OPEN_GROUPS },
-  { code: '2', category: 'open', skillClass: '2', weaponGroupIds: OPEN_GROUPS },
-  { code: '3', category: 'open', skillClass: '3', weaponGroupIds: OPEN_GROUPS },
-  { code: 'Jun', category: 'junior', skillClass: null, weaponGroupIds: C_ONLY },
-  { code: 'Dam1', category: 'women', skillClass: '1', weaponGroupIds: C_ONLY },
-  { code: 'Dam2', category: 'women', skillClass: '2', weaponGroupIds: C_ONLY },
-  { code: 'Dam3', category: 'women', skillClass: '3', weaponGroupIds: C_ONLY },
-  { code: 'VetY', category: 'veteranYounger', skillClass: null, weaponGroupIds: C_ONLY },
-  { code: 'VetÄ', category: 'veteranOlder', skillClass: null, weaponGroupIds: C_ONLY },
+  { code: '1', category: OPEN_CATEGORY, skillClass: '1', weaponGroupIds: OPEN_GROUPS },
+  { code: '2', category: OPEN_CATEGORY, skillClass: '2', weaponGroupIds: OPEN_GROUPS },
+  { code: '3', category: OPEN_CATEGORY, skillClass: '3', weaponGroupIds: OPEN_GROUPS },
+  {
+    code: 'Jun',
+    category: { gender: 'open', age: 'junior' },
+    skillClass: null,
+    weaponGroupIds: C_ONLY,
+  },
+  {
+    code: 'Dam1',
+    category: { gender: 'women', age: 'open' },
+    skillClass: '1',
+    weaponGroupIds: C_ONLY,
+  },
+  {
+    code: 'Dam2',
+    category: { gender: 'women', age: 'open' },
+    skillClass: '2',
+    weaponGroupIds: C_ONLY,
+  },
+  {
+    code: 'Dam3',
+    category: { gender: 'women', age: 'open' },
+    skillClass: '3',
+    weaponGroupIds: C_ONLY,
+  },
+  {
+    code: 'VetY',
+    category: { gender: 'open', age: 'veteranYounger' },
+    skillClass: null,
+    weaponGroupIds: C_ONLY,
+  },
+  {
+    code: 'VetÄ',
+    category: { gender: 'open', age: 'veteranOlder' },
+    skillClass: null,
+    weaponGroupIds: C_ONLY,
+  },
 ];
 
 /**
@@ -103,29 +156,28 @@ export const SPSF_CLASS_DEFINITIONS: readonly ShooterClassDefinition[] = [
  * which contradicts ADR 0011's aside that ISSF dropped it; that aside is about
  * SvSF keeping 50 m pistol as an *icke officiell gren*, not about ISSF.)
  */
+function issfEvent(disciplineId: string, gender: GenderCategory): EventDefinition {
+  const category: EntryCategory = { gender, age: 'open' };
+  return { id: eventId(disciplineId, category), disciplineId, category };
+}
+
 export const ISSF_EVENTS: readonly EventDefinition[] = [
-  { id: eventId('issf-air-pistol', 'men'), disciplineId: 'issf-air-pistol', category: 'men' },
-  { id: eventId('issf-air-pistol', 'women'), disciplineId: 'issf-air-pistol', category: 'women' },
-  {
-    id: eventId('issf-sport-pistol', 'women'),
-    disciplineId: 'issf-sport-pistol',
-    category: 'women',
-  },
-  {
-    id: eventId('issf-rapid-fire-pistol', 'men'),
-    disciplineId: 'issf-rapid-fire-pistol',
-    category: 'men',
-  },
+  issfEvent('issf-air-pistol', 'men'),
+  issfEvent('issf-air-pistol', 'women'),
+  issfEvent('issf-sport-pistol', 'women'),
+  issfEvent('issf-rapid-fire-pistol', 'men'),
 ];
 
 /**
- * The events a discipline offers.
+ * The events a discipline offers, or an empty list when none are defined.
  *
- * A discipline with none defined yields a single `open` event, so an
- * unconfirmed discipline stays fully usable rather than disappearing.
+ * Empty means "we have not read this discipline's categories", NOT "it has one
+ * open event" — the earlier synthetic `:open:open` event was the same
+ * unknown-as-open conflation this file warns about for gender, and it minted
+ * ids that would dangle on a stored session once the real events landed. A
+ * caller with no events simply has no event dimension to ask about, exactly as
+ * ISSF disciplines have no vapengrupp to ask about.
  */
 export function eventsForDiscipline(disciplineId: string): readonly EventDefinition[] {
-  const defined = ISSF_EVENTS.filter((event) => event.disciplineId === disciplineId);
-  if (defined.length > 0) return defined;
-  return [{ id: eventId(disciplineId, 'open'), disciplineId, category: 'open' }];
+  return ISSF_EVENTS.filter((event) => event.disciplineId === disciplineId);
 }

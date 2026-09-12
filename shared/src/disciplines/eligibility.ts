@@ -22,8 +22,10 @@ import type { ShooterClass } from './classes';
 import {
   SPSF_CLASS_DEFINITIONS,
   eventsForDiscipline,
+  type AgeCategory,
   type EntryCategory,
   type EventDefinition,
+  type GenderCategory,
 } from './entries';
 
 /** SPSF skill classes. The 1u/1b/1s variants of 1 are deliberately not offered. */
@@ -60,6 +62,11 @@ const VET_OLDER_AGE = 70;
 /**
  * Whether a shooter may enter a given category this year.
  *
+ * Both axes must hold — that is what makes the split worth having. A junior
+ * woman qualifies for `{ gender: 'women', age: 'junior' }` only by satisfying
+ * each independently, and ISSF's 10 m Air Pistol Junior Women is exactly that
+ * conjunction.
+ *
  * The one rule both carriers share: SPSF asks it of a klass, ISSF asks it of
  * an event, and neither needs to know how the other is shaped.
  */
@@ -69,36 +76,72 @@ export function isEligibleForCategory(
   year: number,
   juniorMaxAge: number = SPSF_JUNIOR_MAX_AGE,
 ): boolean {
-  const age = profile.birthYear === null ? null : ageInYear(profile.birthYear, year);
+  return (
+    matchesGender(profile, category.gender) && matchesAge(profile, category.age, year, juniorMaxAge)
+  );
+}
 
-  switch (category) {
+function matchesGender(profile: ShooterProfile, gender: GenderCategory): boolean {
+  switch (gender) {
     case 'open':
       return true;
     case 'women':
       return profile.competesInWomensClasses;
-    // `men` is the absence of a women's entry, not a separate stored fact:
-    // ISSF's men's events are what a shooter who does not compete in the
-    // women's ones enters.
+    // `men` is the absence of a women's entry rather than a second stored
+    // fact: ISSF's men's events are what a shooter who does not compete in
+    // the women's ones enters.
     case 'men':
       return !profile.competesInWomensClasses;
-    case 'junior':
-      return age !== null && age <= juniorMaxAge;
-    case 'veteranYounger':
-      return age !== null && age >= VET_YOUNGER_AGE;
-    case 'veteranOlder':
-      return age !== null && age >= VET_OLDER_AGE;
   }
 }
 
-/** The ISSF events this shooter may enter within a discipline. */
-export function eligibleEvents(
+function matchesAge(
+  profile: ShooterProfile,
+  age: AgeCategory,
+  year: number,
+  juniorMaxAge: number,
+): boolean {
+  if (age === 'open') return true;
+  if (profile.birthYear === null) return false;
+  const reached = ageInYear(profile.birthYear, year);
+  switch (age) {
+    case 'junior':
+      return reached <= juniorMaxAge;
+    case 'veteranYounger':
+      return reached >= VET_YOUNGER_AGE;
+    case 'veteranOlder':
+      return reached >= VET_OLDER_AGE;
+  }
+}
+
+/**
+ * A discipline's events with the ones this shooter may enter first.
+ *
+ * Ranked, never filtered — the same contract as the SPSF klass list. Filtering
+ * would mean a Swedish woman shooting snabbpistol at a club evening has
+ * nothing to log it under, and this module does not gate (see the header).
+ * An empty result means the discipline has no events defined, not that the
+ * shooter is excluded from all of them.
+ */
+export function rankEventsForShooter(
   profile: ShooterProfile,
   disciplineId: string,
   year: number,
 ): readonly EventDefinition[] {
-  return eventsForDiscipline(disciplineId).filter((event) =>
+  const events = eventsForDiscipline(disciplineId);
+  const eligible = events.filter((event) =>
     isEligibleForCategory(profile, event.category, year, ISSF_JUNIOR_MAX_AGE),
   );
+  return [...eligible, ...events.filter((event) => !eligible.includes(event))];
+}
+
+/** Whether this shooter may enter one specific event. */
+export function isEligibleForEvent(
+  profile: ShooterProfile,
+  event: EventDefinition,
+  year: number,
+): boolean {
+  return isEligibleForCategory(profile, event.category, year, ISSF_JUNIOR_MAX_AGE);
 }
 
 /** Age reached during `year`, which is what a year-based category asks for. */
@@ -153,12 +196,13 @@ export function spsfEligibleClasses(
 }
 
 /**
- * The one to preselect: the shooter's own skill class when known.
+ * The one to preselect: the first klass the shooter is eligible for.
  *
- * Not the veteran or Dam class, even when eligible — those are a choice made
- * per competition, while the skill class is the one they hold by default.
- * Null when nothing is known, which leaves the picker empty rather than
- * guessing.
+ * In practice that is their own skill class, because the definitions list the
+ * open classes before the categories — a klass 2 shooter gets `2` rather than
+ * `Dam2` or `VetY`, which is the one they hold by default. A shooter with no
+ * skill class recorded but an eligible age category gets that category
+ * instead, which beats preselecting nothing. Null only when nothing is known.
  */
 export function defaultShooterClass(profile: ShooterProfile, year: number): ShooterClass | null {
   return spsfEligibleClasses(profile, year)[0] ?? null;
