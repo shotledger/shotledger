@@ -15,6 +15,7 @@ import {
   decimalAllowed,
   defaultSessionName,
   DISCIPLINES,
+  disciplinesForRegulations,
   programsForDiscipline,
   requireDiscipline,
   shooterClassesForDiscipline,
@@ -30,6 +31,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
 import { listFirearms } from '@/db/queries/firearms';
@@ -57,7 +59,13 @@ export default function NewSessionScreen() {
 
   const [type, setType] = useState<SessionType>('training');
   const [kind, setKind] = useState<SessionKind>('series');
-  const [disciplineId, setDisciplineId] = useState<string>(DISCIPLINES[0]?.id ?? 'spsf-precision');
+  // Only the disciplines the shooter's enabled regulations cover (ADR 0011).
+  // Silent filtering: the regulation is implied by the discipline rather than
+  // being a separate step (maintainer, 2026-09-12).
+  const availableDisciplines = disciplinesForRegulations(enabledRegulationIds());
+  const [disciplineId, setDisciplineId] = useState<string>(
+    availableDisciplines[0]?.id ?? DISCIPLINES[0]?.id ?? 'spsf-precision',
+  );
   const [programId, setProgramId] = useState<string>(NO_PROGRAM);
   const [level, setLevel] = useState<CompetitionLevel>('forening');
   const [isChampionship, setIsChampionship] = useState(false);
@@ -227,7 +235,7 @@ export default function NewSessionScreen() {
         <OptionPicker
           label={t('session.discipline')}
           options={toOptions(
-            DISCIPLINES.map((d) => ({ value: d.id, label: disciplineLabel(t, d.id) })),
+            availableDisciplines.map((d) => ({ value: d.id, label: disciplineLabel(t, d.id) })),
             'discipline',
           )}
           value={disciplineId}

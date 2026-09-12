@@ -359,7 +359,9 @@
     "trainingCount": "{{count}} serier sparade",
     "trainingDelete": "Radera insamlad data",
     "trainingDeleteTitle": "Radera insamlad data?",
-    "trainingDeleteBody": "Detta raderar permanent de {{count}} sparade serierna. Loggboken och fotona påverkas inte."
+    "trainingDeleteBody": "Detta raderar permanent de {{count}} sparade serierna. Loggboken och fotona påverkas inte.",
+    "birthYearSetOnce": "Du kan bara ställa in detta en gång — det avgör vilken veteranklass och vilka märkesgränser som gäller, även för redan loggade pass.",
+    "birthYearLocked": "Inställt en gång och sparat"
   },
   "about": {
     "title": "Om appen",
@@ -1115,5 +1117,14 @@
         "subtitle": "Statistik som webbplatsen räknar fram"
       }
     }
+  },
+  "regulations": {
+    "title": "Reglementen",
+    "intro": "De regelverk du tävlar under. Slår du på ett läggs dess grenar och vapengrupper till när du skapar ett pass; redan loggade pass påverkas inte.",
+    "adopts": "Tävlar under {{adopted}}-regler",
+    "impliedBy": "Gäller redan — ett annat påslaget reglemente tillämpar det",
+    "footnote": "Svenska Skyttesportförbundet använder ISSF:s reglemente för sina grenar, så när du slår på det följer ISSF-grenarna med.",
+    "settingsRowTitle": "Reglementen",
+    "settingsRowNone": "Inga — endast träningspass"
   }
 }

@@ -9,9 +9,11 @@ import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
 import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
+import { effectiveRegulations } from '@shotledger/shared/src/regulations/registry';
 
 import { DrillDownRow } from '@/components/drill-down-row';
 import { ProviderSettingsRow } from '@/features/providers/provider-settings-row';
+import { useRegulations } from '@/features/regulations/use-regulations';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
@@ -41,6 +43,14 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language, setTheme, setLanguage } = useAppSettings();
+  // The short names of everything in effect, adoption included — "SPSF, ISSF,
+  // SvSF" rather than only what has a switch turned on.
+  const { enabled: enabledRegulations } = useRegulations();
+  const effective = effectiveRegulations(enabledRegulations);
+  const activeRegulationSummary =
+    effective.length === 0
+      ? t('regulations.settingsRowNone')
+      : effective.map((regulation) => regulation.shortName).join(' · ');
   const {
     selection: complianceSelection,
     profile,
@@ -84,11 +94,6 @@ export default function SettingsScreen() {
   function onChangeBirthYear(year: number) {
     setBirthYear(year);
     if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, year);
-  }
-
-  function onClearBirthYear() {
-    setBirthYear(null);
-    if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   }
 
   // Newest first, spanning ages 10-100 — plausible for a shooting license.
@@ -186,23 +191,47 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        <SearchablePicker
-          label={t('settings.birthYear')}
-          options={birthYearOptions}
-          value={birthYear}
-          onChange={onChangeBirthYear}
-          placeholder={t('settings.birthYearPlaceholder')}
-          searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
-          emptyLabel={t('settings.birthYearNoMatch')}
-          clearable
-          clearLabel={t('common.clear')}
-          onClear={onClearBirthYear}
-          keyboardType="number-pad"
-          testID="birth-year"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('settings.birthYearHelp')}
-        </ThemedText>
+        {/* Set once (maintainer, 2026-09-12). A birth year is a fact rather
+            than a preference, and the veteran classes and märke thresholds it
+            drives are retrospective — changing it silently rewrites which
+            class past sessions were shot in. Once recorded it is shown, not
+            offered. */}
+        {birthYear === null ? (
+          <>
+            <SearchablePicker
+              label={t('settings.birthYear')}
+              options={birthYearOptions}
+              value={birthYear}
+              onChange={onChangeBirthYear}
+              placeholder={t('settings.birthYearPlaceholder')}
+              searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
+              emptyLabel={t('settings.birthYearNoMatch')}
+              keyboardType="number-pad"
+              testID="birth-year"
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('settings.birthYearHelp')}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('settings.birthYearSetOnce')}
+            </ThemedText>
+          </>
+        ) : (
+          <>
+            <ListRow
+              title={t('settings.birthYear')}
+              subtitle={t('settings.birthYearLocked')}
+              trailing={
+                <ThemedText type="smallBold" testID="birth-year-value">
+                  {String(birthYear)}
+                </ThemedText>
+              }
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('settings.birthYearHelp')}
+            </ThemedText>
+          </>
+        )}
 
         <View style={styles.markeTable} testID="marke-requirement">
           <View style={styles.headerRow}>
@@ -324,6 +353,17 @@ export default function SettingsScreen() {
             {t('compliance.unverifiedHint')}
           </ThemedText>
         )}
+      </Card>
+
+      {/* Which rule sets are in play. The row shows the answer without
+          opening anything — a setting you check more often than you change. */}
+      <Card>
+        <DrillDownRow
+          title={t('regulations.settingsRowTitle')}
+          subtitle={activeRegulationSummary}
+          onPress={() => router.push('/regulations')}
+          testID="settings-open-regulations"
+        />
       </Card>
 
       <Card>

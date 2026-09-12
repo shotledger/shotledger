@@ -23,7 +23,9 @@ import {
   resolveWeaponGroupIds,
   scoringModeFor,
   selectableWeaponGroups,
+  disciplinesForRegulations,
   shooterClassesForDiscipline,
+  weaponGroupsForRegulations,
   SPSF_WEAPON_GROUPS,
   weaponGroupCode,
   weaponGroupsForDiscipline,
@@ -520,5 +522,58 @@ describe('mutation-hardening', () => {
     // an optional structure may legitimately be absent
     const { structure: _omitted, ...withoutStructure } = milsnabbProgramJson;
     expect(() => programSchema.parse(withoutStructure)).not.toThrow();
+  });
+});
+
+describe('disciplinesForRegulations', () => {
+  it('offers SPSF disciplines when SPSF is enabled', () => {
+    const ids = disciplinesForRegulations(['spsf']).map((d) => d.id);
+
+    expect(ids).toContain('spsf-precision');
+    expect(ids).toContain('spsf-milsnabb');
+  });
+
+  it('offers ISSF disciplines when only SvSF is enabled', () => {
+    // SvSF adopts ISSF rather than redefining its events, so enabling SvSF
+    // alone must still produce a discipline list.
+    const ids = disciplinesForRegulations(['svsf']).map((d) => d.id);
+
+    expect(ids).toContain('issf-air-pistol');
+    expect(ids).not.toContain('spsf-precision');
+  });
+
+  it('keeps generic practice available with nothing enabled at all', () => {
+    // A shooter who belongs to no federation can still log a session.
+    expect(disciplinesForRegulations([]).map((d) => d.id)).toEqual(['generic-rings']);
+  });
+
+  it('unions both when a shooter competes under SPSF and SvSF', () => {
+    const ids = disciplinesForRegulations(['spsf', 'svsf']).map((d) => d.id);
+
+    expect(ids).toContain('spsf-precision');
+    expect(ids).toContain('issf-air-pistol');
+  });
+});
+
+describe('weaponGroupsForRegulations', () => {
+  it('offers SPSF vapengrupper only when SPSF is enabled', () => {
+    const codes = weaponGroupsForRegulations(['spsf']).map((g) => g.code);
+
+    expect(codes).toContain('C');
+    expect(codes).toContain('R');
+  });
+
+  it('offers no SPSF groups to an SvSF-only shooter', () => {
+    // ISSF ships events, not vapengrupper — so this list is the generic one.
+    const codes = weaponGroupsForRegulations(['svsf']).map((g) => g.code);
+
+    expect(codes).not.toContain('C');
+    expect(codes).toContain('airgun');
+  });
+
+  it('never lists a group twice when two disciplines share it', () => {
+    const ids = weaponGroupsForRegulations(['spsf']).map((g) => g.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

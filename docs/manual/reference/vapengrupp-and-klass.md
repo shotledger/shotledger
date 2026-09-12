@@ -54,3 +54,13 @@ offering a "none" to pick.
 | SPSF militär snabbmatch | A, A-opt, B, C, R                     |
 | ISSF events             | none — ISSF does not use vapengrupper |
 | Practice (rings)        | airgun                                |
+
+## Which regulation they come from
+
+Vapengrupper are defined by a federation, which is why their ids are
+federation-scoped — `spsf:C` rather than a bare `C`. A second federation can
+define its own `C` without colliding with this one.
+
+Which of them you are offered depends on the regulations you have enabled; see
+[Regulations](../guides/regulations.md). ISSF ships events rather than
+vapengrupper, so an ISSF or SvSF session has no vapengrupp to choose.
