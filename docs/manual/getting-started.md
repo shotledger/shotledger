@@ -13,13 +13,15 @@ program and the right competition class.
 If you handload, you can add ammunition later; nothing here blocks you from
 shooting.
 
-## 2. Tell it about you, once
+## 2. Tell it about you
 
 **Settings** wants three things, and then stops asking:
 
-- **Birth year** — set once, because it decides which veteran and junior
-  classes apply, including for sessions already logged. Both SPSF and ISSF go
-  by the **year** you reach an age, not your birthday, so the year is enough.
+- **Birth year** — both SPSF and ISSF go by the **year** you reach an age, not
+  your birthday, so the year is enough. You can correct it whenever you like;
+  the app asks you to confirm first, because the veteran class and the märke
+  thresholds are worked out from it and will change for sessions you have
+  already logged as well as new ones.
 - **Your class** — 1, 2 or 3. Nobody can derive an earned class.
 - **Women's classes and events** — if you compete in them.
 

@@ -112,9 +112,27 @@ export default function SettingsScreen() {
     db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
   );
 
-  function onChangeBirthYear(year: number) {
+  function applyBirthYear(year: number) {
     setBirthYear(year);
     if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, year);
+  }
+
+  function onChangeBirthYear(year: number) {
+    // Changing an existing year is allowed but confirmed: the veteran class
+    // and the age-reduced marke thresholds are derived, so they recompute for
+    // sessions already logged, not only for new ones.
+    if (birthYear === null || year === birthYear) {
+      applyBirthYear(year);
+      return;
+    }
+    Alert.alert(
+      t('settings.birthYearChangeTitle'),
+      t('settings.birthYearChangeMessage', { from: birthYear, to: year }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('settings.birthYearChangeConfirm'), onPress: () => applyBirthYear(year) },
+      ],
+    );
   }
 
   // Newest first, spanning ages 10-100 — plausible for a shooting license.
@@ -212,47 +230,23 @@ export default function SettingsScreen() {
       </Card>
 
       <Card>
-        {/* Set once (maintainer, 2026-09-12). A birth year is a fact rather
-            than a preference, and the veteran classes and märke thresholds it
-            drives are retrospective — changing it silently rewrites which
-            class past sessions were shot in. Once recorded it is shown, not
-            offered. */}
-        {birthYear === null ? (
-          <>
-            <SearchablePicker
-              label={t('settings.birthYear')}
-              options={birthYearOptions}
-              value={birthYear}
-              onChange={onChangeBirthYear}
-              placeholder={t('settings.birthYearPlaceholder')}
-              searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
-              emptyLabel={t('settings.birthYearNoMatch')}
-              keyboardType="number-pad"
-              testID="birth-year"
-            />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('settings.birthYearHelp')}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('settings.birthYearSetOnce')}
-            </ThemedText>
-          </>
-        ) : (
-          <>
-            <ListRow
-              title={t('settings.birthYear')}
-              subtitle={t('settings.birthYearLocked')}
-              trailing={
-                <ThemedText type="smallBold" testID="birth-year-value">
-                  {String(birthYear)}
-                </ThemedText>
-              }
-            />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('settings.birthYearHelp')}
-            </ThemedText>
-          </>
-        )}
+        <SearchablePicker
+          label={t('settings.birthYear')}
+          options={birthYearOptions}
+          value={birthYear}
+          onChange={onChangeBirthYear}
+          placeholder={t('settings.birthYearPlaceholder')}
+          searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
+          emptyLabel={t('settings.birthYearNoMatch')}
+          keyboardType="number-pad"
+          testID="birth-year"
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('settings.birthYearHelp')}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('settings.birthYearRetroactive')}
+        </ThemedText>
 
         {/* The two facts that cannot be derived. Everything else about which
             klasser the shooter may enter falls out of the birth year above —
