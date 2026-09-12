@@ -883,6 +883,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "firearm_id": {
           "name": "firearm_id",
           "type": "text",

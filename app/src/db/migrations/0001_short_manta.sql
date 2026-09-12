@@ -1,1 +1,0 @@
-ALTER TABLE `sessions` ADD `event_id` text;

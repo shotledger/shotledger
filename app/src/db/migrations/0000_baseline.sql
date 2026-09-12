@@ -133,6 +133,7 @@ CREATE TABLE `sessions` (
 	`competition_name` text,
 	`weapon_group` text,
 	`shooter_class` text,
+	`event_id` text,
 	`firearm_id` text,
 	`ammo_lot_id` text,
 	`started_at` text NOT NULL,
