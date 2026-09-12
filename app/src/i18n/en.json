@@ -723,7 +723,8 @@
     "calendarRowTitle": "Calendar",
     "calendarNotSelected": "Not selected",
     "startsSkipped": "{{count}} competition(s) couldn't be read and were skipped.",
-    "patrolNumber": "Squad {{number}}"
+    "patrolNumber": "Squad {{number}}",
+    "lastUpdated": "Last updated {{at}}"
   },
   "timer": {
     "title": "Timers",

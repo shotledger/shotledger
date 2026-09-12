@@ -25,6 +25,9 @@ import { getSetting, setSetting } from '@/db/queries/settings';
 import { upsertCalendarEvent } from '@/platform/calendar';
 
 import { getWebshooterClient, loadTokenCache } from './client';
+import { formatFetchedAt, readCache, writeCache } from './refresh-cache';
+
+const STARTS_CACHE = 'starts';
 
 /** Which calendar the shooter chose in Settings; null means "first writable". */
 export const CALENDAR_ID_SETTING_KEY = 'webshooterCalendarId';
@@ -133,6 +136,16 @@ export function useWebshooterStarts() {
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
   /** Competitions whose data could not be read, so the count is visible. */
   const [skipped, setSkipped] = useState(0);
+  // Hydrated from the last fetch rather than refetched: one request per
+  // competition is not something to spend on every screen visit.
+  const [fetchedAt, setFetchedAt] = useState<string | null>(() => {
+    const cached = readCache<MyStart[]>(STARTS_CACHE);
+    return cached?.fetchedAt ?? null;
+  });
+  const [hydrated, setHydrated] = useState<MyStart[] | null>(() => {
+    const cached = readCache<MyStart[]>(STARTS_CACHE);
+    return cached?.data ?? null;
+  });
 
   const load = useCallback(async (options: { forceRefresh?: boolean } = {}) => {
     if (!db) return;
@@ -316,6 +329,8 @@ export function useWebshooterStarts() {
         `[webshooter] starts: ${competitions.length} upcoming, ${results.length} mine, ${unreadable} unreadable, card=${cardNumber ?? 'unresolved'}`,
       );
       setStarts(results);
+      setHydrated(null);
+      setFetchedAt(writeCache(STARTS_CACHE, results));
       setSkipped(unreadable);
     } catch (err) {
       // Not swallowed: "couldn't reach Webshooter" is what every failure
@@ -342,5 +357,28 @@ export function useWebshooterStarts() {
     return upserted.calendarTitle;
   }, []);
 
-  return { starts, loading, error, errorDetail, skipped, load, addToCalendar };
+  /**
+   * Fetches only when there is nothing to show.
+   *
+   * The screen calls this on focus; `load({ forceRefresh: true })` behind the
+   * Refresh button is the way to ask for new data deliberately.
+   */
+  const loadIfEmpty = useCallback(async () => {
+    if (readCache<MyStart[]>(STARTS_CACHE) !== null) return;
+    await load();
+  }, [load]);
+
+  return {
+    // The cached list until a fetch replaces it, so a cold start shows the
+    // last known starts instead of an empty screen.
+    starts: hydrated ?? starts,
+    loading,
+    error,
+    errorDetail,
+    skipped,
+    fetchedAt: fetchedAt === null ? null : formatFetchedAt(fetchedAt),
+    load,
+    loadIfEmpty,
+    addToCalendar,
+  };
 }

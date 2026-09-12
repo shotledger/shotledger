@@ -21,6 +21,7 @@ import { db } from '@/db/client';
 import { getSetting } from '@/db/queries/settings';
 
 import { getWebshooterClient, loadTokenCache } from './client';
+import { formatFetchedAt, readCache, writeCache } from './refresh-cache';
 
 /** Generic over the competition shape so callers keep whatever they enriched it with. */
 export interface MyCompetitionsScan<T> {
@@ -32,11 +33,18 @@ export interface MyCompetitionsScan<T> {
   scanning: boolean;
   error: string | null;
   errorDetail: string | null;
+  /** When this year's scan last ran, or null if it never has. */
+  fetchedAt: string | null;
   rescan: () => void;
 }
 
+/**
+ * @param cacheKey identifies the candidate set (the chosen year), so each
+ * year remembers its own scan rather than sharing one slot.
+ */
 export function useWebshooterMyCompetitions<T extends { id: number }>(
   candidates: T[],
+  cacheKey: string,
 ): MyCompetitionsScan<T> {
   const [mine, setMine] = useState<T[]>([]);
   const [checked, setChecked] = useState(0);
@@ -44,6 +52,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
   const [error, setError] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   // Bumped on unmount and on every new scan, so an in-flight sequential
   // walk can see that its results are no longer wanted and stop.
   const runId = useRef(0);
@@ -63,6 +72,20 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
     let cancelled = false;
 
     async function scan() {
+      // A scan is one request per competition. Having done it once, the
+      // result is remembered and NOT redone on the next visit (maintainer,
+      // 2026-09-12) — Refresh is how you ask for it again. Read inside the
+      // async body, not the effect's: a synchronous setState in an effect
+      // cascades a render, which the compiler rejects.
+      const cached = readCache<number[]>(`scan:${cacheKey}`);
+      if (cached !== null && attempt === 0) {
+        const ids = new Set(cached.data);
+        setMine(candidates.filter((c) => ids.has(c.id)));
+        setChecked(candidates.length);
+        setFetchedAt(cached.fetchedAt);
+        return;
+      }
+
       const skippedIds: number[] = [];
       let lastSkipReason = '';
       setScanning(true);
@@ -100,6 +123,17 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
         setError('fetchFailed');
         setErrorDetail(err instanceof Error ? err.message : String(err));
       } finally {
+        if (!cancelled && runId.current === thisRun) {
+          setMine((found) => {
+            setFetchedAt(
+              writeCache(
+                `scan:${cacheKey}`,
+                found.map((c) => c.id),
+              ),
+            );
+            return found;
+          });
+        }
         if (skippedIds.length > 0) {
           console.warn(
             `[webshooter] skipped ${skippedIds.length} competition(s) while scanning: ${skippedIds.join(', ')} — last reason: ${lastSkipReason}`,
@@ -117,7 +151,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
     // `key` stands in for the candidate list: a new array with the same ids
     // must not restart a scan that is already walking those competitions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, attempt]);
+  }, [key, attempt, cacheKey]);
 
   return {
     // Derived, so an emptied candidate list cannot leave stale rows behind.
@@ -127,6 +161,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
     scanning,
     error,
     errorDetail,
+    fetchedAt: fetchedAt === null ? null : formatFetchedAt(fetchedAt),
     rescan,
   };
 }

@@ -22,19 +22,32 @@ import { Spacing } from '@/theme/tokens';
 
 export default function WebshooterStartsScreen() {
   const { t } = useTranslation();
-  const { starts, loading, error, load, addToCalendar, errorDetail, skipped } =
-    useWebshooterStarts();
+  const {
+    starts,
+    loading,
+    error,
+    load,
+    loadIfEmpty,
+    addToCalendar,
+    errorDetail,
+    skipped,
+    fetchedAt,
+  } = useWebshooterStarts();
   // One section open at a time: these lists are long, and two open at once
   // pushes the rest of the screen out of reach.
   const [expanded, setExpanded] = useState<string | null>(null);
   const toggle = (key: string) => setExpanded((current) => (current === key ? null : key));
 
-  // Refreshes whenever the screen comes into view, not only on first mount
-  // (maintainer, 2026-09-11). The client's TTL cache absorbs the repeats.
+  // Fetches only when there is nothing to show (maintainer, 2026-09-12:
+  // "only refresh if there is no previous data. We don't want to stress the
+  // server"). Walking every upcoming competition costs a request each, and
+  // doing that on every visit — including every cold start, where the
+  // in-memory cache is gone — is not a reasonable thing to do to someone
+  // else's server. Refresh is the deliberate act.
   useFocusEffect(
     useCallback(() => {
-      void load();
-    }, [load]),
+      void loadIfEmpty();
+    }, [loadIfEmpty]),
   );
 
   // Shown on the card itself rather than in Alert.alert: a system dialog
@@ -81,6 +94,12 @@ export default function WebshooterStartsScreen() {
         onPress={() => void load({ forceRefresh: true })}
         testID="webshooter-starts-refresh"
       />
+
+      {fetchedAt !== null && (
+        <ThemedText type="small" themeColor="textSecondary" testID="webshooter-starts-fetched-at">
+          {t('webshooter.lastUpdated', { at: fetchedAt })}
+        </ThemedText>
+      )}
 
       {error && (
         <>

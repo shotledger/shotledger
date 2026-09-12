@@ -723,7 +723,8 @@
     "calendarRowTitle": "Kalender",
     "calendarNotSelected": "Inte vald",
     "startsSkipped": "{{count}} tävling(ar) kunde inte läsas och hoppades över.",
-    "patrolNumber": "Skjutlag {{number}}"
+    "patrolNumber": "Skjutlag {{number}}",
+    "lastUpdated": "Senast uppdaterad {{at}}"
   },
   "timer": {
     "title": "Tidtagning",

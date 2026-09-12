@@ -25,16 +25,19 @@ const ALL_YEARS = 'all';
 export default function WebshooterImportBrowseScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { competitions, loading, error, load } = useWebshooterCompetitions();
+  const { competitions, loading, error, load, loadIfEmpty } = useWebshooterCompetitions();
   const [year, setYear] = useState<string>(ALL_YEARS);
 
   // Refreshes whenever the screen comes into view, not only on first mount
   // (maintainer, 2026-09-11). The client's TTL cache absorbs the repeats,
   // so returning to this screen twice in a minute costs one request.
+  // Only when there is nothing yet (maintainer, 2026-09-12). The listing is
+  // one request, but the scan it feeds is one per competition, and neither
+  // should be spent on merely revisiting a screen.
   useFocusEffect(
     useCallback(() => {
-      void load();
-    }, [load]),
+      void loadIfEmpty();
+    }, [loadIfEmpty]),
   );
 
   const years = useMemo(() => {
@@ -66,7 +69,7 @@ export default function WebshooterImportBrowseScreen() {
   // result, and those must not be offered for import. Only checked for a
   // chosen year — see the hook for why this is not done for "all".
   const scanning = year !== ALL_YEARS;
-  const scan = useWebshooterMyCompetitions(scanning ? candidates : []);
+  const scan = useWebshooterMyCompetitions(scanning ? candidates : [], year);
   const filtered = scanning ? scan.mine : candidates;
 
   return (
@@ -75,9 +78,18 @@ export default function WebshooterImportBrowseScreen() {
 
       <PrimaryButton
         label={t('webshooter.refresh')}
-        onPress={() => void load({ forceRefresh: true })}
+        onPress={() => {
+          void load({ forceRefresh: true });
+          scan.rescan();
+        }}
         testID="webshooter-import-refresh"
       />
+
+      {scan.fetchedAt !== null && (
+        <ThemedText type="small" themeColor="textSecondary" testID="webshooter-import-fetched-at">
+          {t('webshooter.lastUpdated', { at: scan.fetchedAt })}
+        </ThemedText>
+      )}
 
       {error && (
         <ThemedText type="small" themeColor="textSecondary">

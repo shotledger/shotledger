@@ -18,13 +18,20 @@ import {
   type ImportCandidate,
 } from '@/db/queries/webshooter';
 import { getWebshooterClient } from './client';
+import { readCache, writeCache } from './refresh-cache';
+
+const LIST_CACHE = 'competitions';
 
 export interface CompetitionListItem extends Competition {
   alreadyImportable: boolean; // false = fält, listed but marked "stöds ej" (§A.9)
 }
 
 export function useWebshooterCompetitions() {
-  const [competitions, setCompetitions] = useState<CompetitionListItem[]>([]);
+  // Hydrated from the last fetch: the listing is the whole season, and a
+  // cold start should not re-download it just to show a screen.
+  const [competitions, setCompetitions] = useState<CompetitionListItem[]>(
+    () => readCache<CompetitionListItem[]>(LIST_CACHE)?.data ?? [],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,15 +41,15 @@ export function useWebshooterCompetitions() {
     try {
       const client = getWebshooterClient();
       const list = await client.listCompetitions(options);
-      setCompetitions(
-        list
-          .slice()
-          .sort((a, b) => b.date.localeCompare(a.date))
-          .map((c) => ({
-            ...c,
-            alreadyImportable: resolveDisciplineForImport(c.results_type) !== null,
-          })),
-      );
+      const mapped = list
+        .slice()
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map((c) => ({
+          ...c,
+          alreadyImportable: resolveDisciplineForImport(c.results_type) !== null,
+        }));
+      setCompetitions(mapped);
+      writeCache(LIST_CACHE, mapped);
     } catch {
       setError('fetchFailed');
     } finally {
@@ -50,7 +57,13 @@ export function useWebshooterCompetitions() {
     }
   }, []);
 
-  return { competitions, loading, error, load };
+  /** Fetches only when nothing has been fetched before. */
+  const loadIfEmpty = useCallback(async () => {
+    if (readCache<CompetitionListItem[]>(LIST_CACHE) !== null) return;
+    await load();
+  }, [load]);
+
+  return { competitions, loading, error, load, loadIfEmpty };
 }
 
 export interface ReviewCandidate {
