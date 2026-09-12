@@ -18,9 +18,14 @@ sync. Android first — **all code must stay iOS-compatible**.
 - `docs/implementation-plan.md` — the execution spec: milestones,
   schema, screen inventory, per-task acceptance criteria. Follow it;
   do not improvise product decisions.
-- `docs/reference/spsf-shb-2026.md` — verified domain facts (SPSF rules,
-  thresholds, targets) with page citations. The `spsf-domain` skill
-  summarizes the hard rules — it triggers on scoring/compliance work.
+- `docs/reference/` — verified domain facts, one file per federation,
+  each opening with links to that federation's rule books so a lookup
+  never has to hunt for the PDF again:
+  `spsf-shb-2026.md` (Svenska Pistolskytteförbundet, SHB upplaga 21),
+  `issf-rules.md` (ISSF) and `svsf-rules.md` (Svenska
+  Skyttesportförbundet). Every value carries a section/page citation;
+  the source wins over the file. The `spsf-domain` skill summarizes the
+  hard SPSF rules — it triggers on scoring/compliance work.
 - `docs/adr/` — architecture decision records. Add one when changing an
   architectural decision; never silently contradict an accepted ADR.
 - `.claude/skills/old-coder/` — evidence-first development loop (vendored

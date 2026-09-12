@@ -14,16 +14,17 @@ Skyttesportförbundet — and a shooter can be a member of several at once."_
 The maintainer asked for Svenska Skyttesportförbundet (SvSF) support and
 suggested that, if SvSF is 1:1 with ISSF, the app should simply call it ISSF.
 
-**It is not 1:1.** From SvSF's own regulations page:
+**It is not 1:1.** From SvSF's own regulations page (transcribed in
+docs/reference/svsf-rules.md):
 
 - SvSF publishes **Swedish translations of ISSF chapters 6, 7 and 8**, and
   those translations — not ISSF's English text — govern **national**
   competitions. ISSF's own text governs international ones.
 - SvSF adds a national layer ISSF has no concept of: _allmänna bestämmelser_,
   an approved SM/DM event list, its own _skyttemärken_.
-- SvSF keeps events **ISSF has dropped**, as _icke officiella grenar_ with
-  SvSF's own rules — 25 m standardpistol and 50 m pistol. _Nordiska grenar_
-  and _nordisk trap_ were never ISSF at all.
+- SvSF lists some events as _icke officiella grenar_ with SvSF's own rules —
+  25 m standardpistol and 50 m pistol. _Nordiska grenar_ and _nordisk trap_
+  were never ISSF at all.
 
 Calling SvSF "ISSF" would leave Swedish championships and those events with
 nowhere to live.
@@ -74,10 +75,26 @@ regulation's own default.
   "a member of several at once" means in practice.
 - The Settings row shows what is **in effect**, adoption included, so ISSF
   appearing from an SvSF switch is explained rather than surprising.
-- **Not addressed here**: SvSF's own disciplines are not yet defined — no
-  25 m standardpistol, no SM/DM event list. The model has the shape for them;
-  the data does not exist yet, and inventing regulatory detail is forbidden by
-  hard rule 4. SvSF currently means "ISSF's events, under Swedish membership".
+- **Not addressed here**: SvSF's SM/DM event list, _nordiska grenar_ and
+  _skyttemärken_ are not defined. The model has the shape for them; the data
+  does not, and inventing regulatory detail is forbidden by hard rule 4.
+
+## Correction, 2026-09-12
+
+The Context above said SvSF keeps 25 m standardpistol and 50 m pistol because
+**ISSF dropped them**. Reading the actual rule book showed that is wrong:
+Rule 3.3 still recognizes both in all four categories (STPM/STPW, FPM/FPW,
+all `WCH`). What they were dropped from is the **Olympic programme**, which
+is a different list. SvSF calling them _icke officiella_ is about its own
+national championship programme, not about whether ISSF defines them.
+
+So the consequence stands but for a better reason: SvSF needs no discipline
+definitions of its own for these two, because adopting ISSF already brings
+them — exactly the outcome "Use ISSF when you can. Do not duplicate events."
+was aiming at. See docs/reference/issf-rules.md, "Recognized events and their
+categories", and docs/reference/svsf-rules.md for what SvSF actually publishes
+for the two (national **mixed-team** formats, which the app has no model for).
+
 - Klasser remain federation-derived (`shooterClassesForDiscipline`). Making a
   shooter's klass per-federation — the second half of the #138 item — is still
   open.

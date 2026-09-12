@@ -1,10 +1,26 @@
 # SPSF domain facts — Skjuthandboken 2026 (upplaga 21)
 
-Verified extraction with section/page citations. PDF page numbers equal
-printed page numbers. Source: SHB_2026_upplaga-21_NY.pdf (496 pp, kept
-outside the repo). When SHB and this file disagree, SHB wins — fix this
-file. Known erratum in the book: `F.6.1.1` cross-references "C.6.1.1",
-which does not exist; the intended section is `C.3.6.1.1`.
+Verified extraction with section/page citations. One of three federation
+reference files — see also [ISSF](issf-rules.md) and [SvSF](svsf-rules.md).
+
+## Where to get the rule book
+
+Skjuthandboken (SHB) is Svenska Pistolskytteförbundet's rule book, reissued
+as a numbered upplaga. **Upplaga 21 applies from 1 January 2026.** Check for a
+newer upplaga before citing this file.
+
+| What                      | Link                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| SHB and SäkB landing page | <https://www.pistolskytteforbundet.se/om-pistolskytte/regler/skjuthandboken-och-sakb/> |
+| **SHB 2026, upplaga 21**  | <https://www.pistolskytteforbundet.se/app/uploads/2026/01/SHB_2026_upplaga-21_NY.pdf>  |
+| SäkB 2020 (säkerhet)      | <https://www.pistolskytteforbundet.se/app/uploads/2020/11/SäkB_2020.pdf>               |
+| Tabell (klassfordringar)  | <https://www.pistolskytteforbundet.se/app/uploads/2022/05/Tabell-2022.pdf>             |
+
+Source used below: `SHB_2026_upplaga-21_NY.pdf` (496 pp, kept outside the
+repo). PDF page numbers equal printed page numbers. When SHB and this file
+disagree, SHB wins — fix this file. Known erratum in the book: `F.6.1.1`
+cross-references "C.6.1.1", which does not exist; the intended section is
+`C.3.6.1.1`.
 
 ## Precisionsskjutning
 

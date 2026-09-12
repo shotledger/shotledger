@@ -73,13 +73,15 @@ export interface ShooterClassDefinition {
  * ISSF: an event. A competition item in its own right, belonging to a
  * discipline and fixed to one category.
  *
- * A discipline may have several — 10 m Air Pistol runs as both a men's and a
- * women's event — or exactly one, where the event IS the discipline as far as
- * entry is concerned.
+ * A discipline has one event per category the federation recognizes it in —
+ * 10 m Air Pistol runs as four (men, men junior, women, women junior), while
+ * 25 m Rapid Fire Pistol has only the two men's ones.
  */
 export interface EventDefinition {
-  /** Stable id, `<disciplineId>:<category>`. */
+  /** Stable id, `<disciplineId>:<gender>:<age>`. */
   id: string;
+  /** The regelverk that defines it (ADR 0011), so a second one can add its own. */
+  regulationId: string;
   disciplineId: string;
   category: EntryCategory;
 }
@@ -142,42 +144,58 @@ export const SPSF_CLASS_DEFINITIONS: readonly ShooterClassDefinition[] = [
 ];
 
 /**
- * ISSF pistol events, by the category each is shot in.
+ * ISSF recognized events, transcribed from the two Rule 3.3 tables ("EVENTS
+ * FOR MEN AND MEN JUNIOR", p. 182, and "EVENTS FOR WOMEN AND WOMEN JUNIOR",
+ * p. 183) of the ISSF Rule Book, EDITION 2025, effective 1 January 2026.
  *
- * Only what has been confirmed is listed. Sources, checked 2026-09-12:
- * 10 m Air Pistol runs as separate men's and women's events; 25 m Pistol is
- * shot internationally only by women and juniors; 25 m Rapid Fire Pistol has
- * never had a women's version.
+ * Rule 3.3 is the authority on WHICH events exist and for whom; Rule 8.11's
+ * Men/Women column only says how each is shot. The status letters below are
+ * the table's own, kept verbatim so a reader can diff this against the source
+ * line by line — see docs/reference/issf-rules.md for the full transcription.
  *
- * VERIFY: 50 m Pistol (`issf-free-pistol`) and 25 m Standard Pistol are not
- * listed — their men/women column in ISSF Rule 8.11 has not been read into
- * docs/reference/issf-rules.md, and hard rule 4 forbids guessing a regulatory
- * value. (Note that issf-rules.md:171 has 50 m Pistol still IN Rule 8.11,
- * which contradicts ADR 0011's aside that ISSF dropped it; that aside is about
- * SvSF keeping 50 m pistol as an *icke officiell gren*, not about ISSF.)
+ * The one that surprises: **25 m Pistol is `MJ only`** — recognized for men
+ * ONLY as a junior event, alongside the women's and women junior ones. And
+ * 25 m Standard Pistol and 50 m Pistol are both still fully recognized
+ * (M, MJ, W, WJ), which is why neither needs a SvSF definition of its own.
  */
-function issfEvent(disciplineId: string, gender: GenderCategory): EventDefinition {
-  const category: EntryCategory = { gender, age: 'open' };
-  return { id: eventId(disciplineId, category), disciplineId, category };
-}
+type Rule33Status = 'M' | 'MJ' | 'W' | 'WJ';
 
-export const ISSF_EVENTS: readonly EventDefinition[] = [
-  issfEvent('issf-air-pistol', 'men'),
-  issfEvent('issf-air-pistol', 'women'),
-  issfEvent('issf-sport-pistol', 'women'),
-  issfEvent('issf-rapid-fire-pistol', 'men'),
+const RULE_33_CATEGORY: Record<Rule33Status, EntryCategory> = {
+  M: { gender: 'men', age: 'open' },
+  MJ: { gender: 'men', age: 'junior' },
+  W: { gender: 'women', age: 'open' },
+  WJ: { gender: 'women', age: 'junior' },
+};
+
+const ISSF_RULE_33: readonly { disciplineId: string; status: readonly Rule33Status[] }[] = [
+  { disciplineId: 'issf-air-pistol', status: ['M', 'MJ', 'W', 'WJ'] },
+  { disciplineId: 'issf-rapid-fire-pistol', status: ['M', 'MJ'] },
+  { disciplineId: 'issf-standard-pistol', status: ['M', 'MJ', 'W', 'WJ'] },
+  { disciplineId: 'issf-sport-pistol', status: ['MJ', 'W', 'WJ'] },
+  { disciplineId: 'issf-free-pistol', status: ['M', 'MJ', 'W', 'WJ'] },
 ];
+
+export const ISSF_EVENTS: readonly EventDefinition[] = ISSF_RULE_33.flatMap(
+  ({ disciplineId, status }) =>
+    status.map((code) => {
+      const category = RULE_33_CATEGORY[code];
+      return { id: eventId(disciplineId, category), regulationId: 'ISSF', disciplineId, category };
+    }),
+);
 
 /**
  * The events a discipline offers, or an empty list when none are defined.
  *
- * Empty means "we have not read this discipline's categories", NOT "it has one
- * open event" — the earlier synthetic `:open:open` event was the same
- * unknown-as-open conflation this file warns about for gender, and it minted
- * ids that would dangle on a stored session once the real events landed. A
- * caller with no events simply has no event dimension to ask about, exactly as
- * ISSF disciplines have no vapengrupp to ask about.
+ * Empty means "this discipline has no event dimension" — an SPSF or generic
+ * one — NOT "it has one open event". A synthetic `:open:open` event would be
+ * the same unknown-as-open conflation this file warns about for gender, and
+ * would mint an id that dangles on a stored session.
  */
 export function eventsForDiscipline(disciplineId: string): readonly EventDefinition[] {
   return ISSF_EVENTS.filter((event) => event.disciplineId === disciplineId);
+}
+
+/** One event by id, or `undefined` — a stored id may predate a definition change. */
+export function findEvent(id: string): EventDefinition | undefined {
+  return ISSF_EVENTS.find((event) => event.id === id);
 }

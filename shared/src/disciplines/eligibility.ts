@@ -11,8 +11,8 @@
 // Most of it is derivable rather than stored. Age categories fall out of the
 // birth year the app already holds, and they are YEAR-based in both
 // federations — SPSF's Jun is "≤ the year turning 20" (SHB F.2.1 p. 163) and
-// ISSF's junior runs "until 31 December of the year the athlete turns 21"
-// (ISSF rule clarification, 2023-04-13). So a birth year is enough; a full
+// ISSF's junior runs until "the 31st December of the year in which they
+// become 21 years of age" (Rule 3.7.4.12). So a birth year is enough; a full
 // date of birth would be data we never need.
 //
 // Nothing here GATES anything. It produces a default and an offer; the
@@ -46,15 +46,16 @@ export interface ShooterProfile {
    * Stored as a competition fact rather than as a gender, because that is
    * exactly what both federations key off and all the app ever needs: SPSF's
    * Dam 1/2/3 are classes within a discipline, while ISSF's are separate
-   * EVENTS — 25 m Pistol is women and juniors only, 25 m Rapid Fire has no
-   * women's version. One attribute, two different uses.
+   * EVENTS — 25 m Pistol is recognized for women and for junior men, but not
+   * for senior men; 25 m Rapid Fire has no women's version at all (Rule 3.3).
+   * One attribute, two different uses.
    */
   competesInWomensClasses: boolean;
 }
 
 /** SPSF: the year the shooter turns 20 or earlier (SHB F.2.1 p. 163). */
 export const SPSF_JUNIOR_MAX_AGE = 20;
-/** ISSF: junior until 31 December of the year they turn 21. */
+/** ISSF: junior until 31 December of the year they turn 21 (Rule 3.7.4.12). */
 export const ISSF_JUNIOR_MAX_AGE = 21;
 const VET_YOUNGER_AGE = 60;
 const VET_OLDER_AGE = 70;
