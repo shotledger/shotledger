@@ -30,6 +30,7 @@ import {
 } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
+import { InfoButton } from '@/components/info-button';
 import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -341,18 +342,29 @@ export default function NewSessionScreen() {
           onChange={onSelectDiscipline}
         />
         {kind === 'series' && (
-          <OptionPicker
-            label={t('session.program')}
-            options={toOptions(
-              [
-                { value: NO_PROGRAM, label: t('session.freeTraining') },
-                ...programs.map((p) => ({ value: p.id, label: programLabel(t, p.id) })),
-              ],
-              'program',
-            )}
-            value={programId}
-            onChange={setProgramId}
-          />
+          <>
+            <View style={styles.headerRow}>
+              <ThemedText type="smallBold" style={styles.headerLabel}>
+                {t('session.program')}
+              </ThemedText>
+              <InfoButton
+                title={t('session.program')}
+                body={t('session.programInfo')}
+                testID="program-info"
+              />
+            </View>
+            <OptionPicker
+              options={toOptions(
+                [
+                  { value: NO_PROGRAM, label: t('session.freeTraining') },
+                  ...programs.map((p) => ({ value: p.id, label: programLabel(t, p.id) })),
+                ],
+                'program',
+              )}
+              value={programId}
+              onChange={setProgramId}
+            />
+          </>
         )}
       </Card>
 
@@ -498,6 +510,17 @@ export default function NewSessionScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The picker's own `label` is dropped for Program, so the heading and its
+  // [i] can share a row (see OptionPicker's `label` note).
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  headerLabel: {
+    flexShrink: 1,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
