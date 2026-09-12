@@ -15,11 +15,18 @@ import {
   decimalAllowed,
   defaultSessionName,
   DISCIPLINES,
+  disciplinesForRegulations,
   programsForDiscipline,
   requireDiscipline,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
   formatShooterClass,
+  categoryKey,
+  defaultShooterClass,
+  rankEventsForShooter,
+  spsfEligibleClasses,
+  type ShooterProfile,
+  type SkillClass,
 } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -30,6 +37,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
 import { listFirearms } from '@/db/queries/firearms';
@@ -51,19 +59,52 @@ import { Spacing } from '@/theme/tokens';
 
 const NO_PROGRAM = 'none';
 
+/**
+ * The event to preselect: the first one the shooter is eligible for, or null
+ * for a discipline that has no events (every SPSF and generic one).
+ */
+function preferredEventId(disciplineId: string, profile: ShooterProfile): string | null {
+  return rankEventsForShooter(profile, disciplineId, new Date().getFullYear())[0]?.id ?? null;
+}
+
 export default function NewSessionScreen() {
+  // Read once per screen: these are set in Settings and do not change while
+  // a session is being created.
+  const shooterProfile: ShooterProfile = useMemo(
+    () => ({
+      birthYear: db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
+      skillClass: db ? getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null) : null,
+      competesInWomensClasses: db
+        ? getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false)
+        : false,
+    }),
+    [],
+  );
   const { t, i18n } = useTranslation();
   const router = useRouter();
 
   const [type, setType] = useState<SessionType>('training');
   const [kind, setKind] = useState<SessionKind>('series');
-  const [disciplineId, setDisciplineId] = useState<string>(DISCIPLINES[0]?.id ?? 'spsf-precision');
+  // Only the disciplines the shooter's enabled regulations cover (ADR 0011).
+  // Silent filtering: the regulation is implied by the discipline rather than
+  // being a separate step (maintainer, 2026-09-12).
+  const availableDisciplines = disciplinesForRegulations(enabledRegulationIds());
+  const disciplineIdInitial = availableDisciplines[0]?.id ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
+  const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(NO_PROGRAM);
   const [level, setLevel] = useState<CompetitionLevel>('forening');
   const [isChampionship, setIsChampionship] = useState(false);
   const [competitionName, setCompetitionName] = useState('');
   const [weaponGroup, setWeaponGroup] = useState<string | null>(null);
-  const [shooterClass, setShooterClass] = useState<string | null>(null);
+  // Prefilled from the profile rather than asked afresh every session.
+  const [shooterClass, setShooterClass] = useState<string | null>(() =>
+    defaultShooterClass(shooterProfile, new Date().getFullYear()),
+  );
+  // ISSF puts the category on the EVENT, where SPSF puts it on the klass, so
+  // a session carries one or the other and never both.
+  const [eventId, setEventId] = useState<string | null>(() =>
+    preferredEventId(disciplineIdInitial, shooterProfile),
+  );
   const [firearmId, setFirearmId] = useState<string | null>(null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
@@ -76,7 +117,22 @@ export default function NewSessionScreen() {
   const programs = programsForDiscipline(disciplineId);
   const program = kind === 'series' ? (programs.find((p) => p.id === programId) ?? null) : null;
   const groups = weaponGroupsForDiscipline(disciplineId);
-  const classes = shooterClassesForDiscipline(disciplineId);
+  // Every klass the discipline's federation defines stays selectable — the
+  // shooter's own eligibility only decides the ORDER and the preselection,
+  // never what is on offer (maintainer, 2026-09-12: "pre populate based on
+  // user settings and allow override"). A club evening can put anyone in any
+  // class, and the app should not argue.
+  // Ranked, not filtered: a club evening can put anyone in any event, exactly
+  // as it can in any klass. Empty for an SPSF or generic discipline, which is
+  // what hides the picker rather than showing an empty one.
+  const events = rankEventsForShooter(shooterProfile, disciplineId, new Date().getFullYear());
+  const allClasses = shooterClassesForDiscipline(disciplineId);
+  // The chosen gun narrows it: Jun/Dam/Vet exist only in vapengrupp C.
+  const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear(), weaponGroup);
+  const classes = [
+    ...eligible.filter((klass) => allClasses.includes(klass)),
+    ...allClasses.filter((klass) => !eligible.includes(klass)),
+  ];
   const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
 
   const firearms = useMemo(() => (db ? listFirearms(db) : []), []);
@@ -98,6 +154,7 @@ export default function NewSessionScreen() {
     setDisciplineId(nextId);
     setProgramId(NO_PROGRAM);
     setWeaponGroup(null);
+    setEventId(preferredEventId(nextId, shooterProfile));
     setDecimalScoring(false);
   }
 
@@ -135,6 +192,7 @@ export default function NewSessionScreen() {
       competitionName: type === 'competition' && competitionName ? competitionName : null,
       weaponGroup,
       shooterClass,
+      eventId,
       firearmId,
       ammoLotId,
       startedAt,
@@ -227,7 +285,7 @@ export default function NewSessionScreen() {
         <OptionPicker
           label={t('session.discipline')}
           options={toOptions(
-            DISCIPLINES.map((d) => ({ value: d.id, label: disciplineLabel(t, d.id) })),
+            availableDisciplines.map((d) => ({ value: d.id, label: disciplineLabel(t, d.id) })),
             'discipline',
           )}
           value={disciplineId}
@@ -284,26 +342,48 @@ export default function NewSessionScreen() {
         </Card>
       )}
 
+      {/* A federation defines vapengrupper and klasser, or events — never both.
+          Rendering a picker with nothing in it printed an empty "Weapon Group"
+          and a "Class: None" on every ISSF session. */}
       <Card>
-        <OptionPicker
-          label={t('session.weaponGroup')}
-          options={toOptions(
-            groups.map((g) => ({ value: g.id, label: g.code })),
-            'group',
-          )}
-          value={weaponGroup}
-          onChange={onSelectWeaponGroup}
-        />
-        <OptionPicker
-          label={t('session.shooterClass')}
-          options={toOptions(
-            classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
-            'class',
-          )}
-          value={shooterClass}
-          onChange={setShooterClass}
-          emptyLabel={t('session.none')}
-        />
+        {groups.length > 0 && (
+          <OptionPicker
+            label={t('session.weaponGroup')}
+            options={toOptions(
+              groups.map((g) => ({ value: g.id, label: g.code })),
+              'group',
+            )}
+            value={weaponGroup}
+            onChange={onSelectWeaponGroup}
+          />
+        )}
+        {allClasses.length > 0 && (
+          <OptionPicker
+            label={t('session.shooterClass')}
+            options={toOptions(
+              classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
+              'class',
+            )}
+            value={shooterClass}
+            onChange={setShooterClass}
+            emptyLabel={t('session.none')}
+          />
+        )}
+        {events.length > 0 && (
+          <OptionPicker
+            label={t('session.event')}
+            options={toOptions(
+              events.map((event) => ({
+                value: event.id,
+                label: t(`eventCategory.${categoryKey(event.category)}`),
+              })),
+              'event',
+            )}
+            value={eventId}
+            onChange={setEventId}
+            emptyLabel={t('session.none')}
+          />
+        )}
       </Card>
 
       <Card>

@@ -13,6 +13,11 @@ renewal.
 Guldserie
 : A perfect series — every shot in the ten ring.
 
+Gren (event)
+: An ISSF competition item — a discipline shot in one category, such as
+10 m Air Pistol Women. ISSF puts the category on the event; SPSF puts it on
+the klass. See [Vapengrupp and klass](vapengrupp-and-klass.md).
+
 Klass
 : Your competition class as a shooter. See
 [Vapengrupp and klass](vapengrupp-and-klass.md).

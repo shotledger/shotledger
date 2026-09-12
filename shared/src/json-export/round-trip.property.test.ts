@@ -46,6 +46,7 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   competitionName: nullableText,
   weaponGroup: nullableText,
   shooterClass: nullableText,
+  eventId: nullableText,
   firearm: nullableText,
   ammoLot: nullableText,
   startedAt: fc.constant('2026-01-01T00:00:00.000Z'),

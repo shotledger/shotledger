@@ -1,21 +1,42 @@
 # ISSF pistol domain facts
 
-Verified extraction with rule/table citations. Sources (PDFs kept outside
-the repo, fetched 2026-09-01):
+Verified extraction with rule/table citations. One of three federation
+reference files — see also [SPSF](spsf-shb-2026.md) and [SvSF](svsf-rules.md).
 
-- **Pistol** — _ISSF Rule Book, Pistol Rules (Section 8)_, EDITION 2025
-  (First Print 12/2025), effective 1 January 2026 ("the Pistol Rules").
-  Mirror used: tiroalcorcon.com/wp-content/uploads/2026/01/PISTOL_ISSF2026.pdf
-- **General Technical Rules (Section 6)** and its **Annex — Rules for
-  Paper Target Scoring**, for target ring dimensions and paper-target
-  procedure ("the GTR"). Mirror used:
-  tiroalcorcon.com/wp-content/uploads/2020/10/1.-ISSF-General-Technical-Rules.pdf
-  — print date on the file is 2020, no edition/effective date is stamped
-  in the extracted text; ring dimensions are stable figures unchanged
-  across editions and independently cross-checked against a 2025 web
-  search snippet quoting the same values (10 ring 100 mm for RFP, 59.5 mm
-  black diameter for 10m AP). **VERIFY** the GTR edition currency if the
-  maintainer wants a page-stamped citation.
+## Where to get the rule books
+
+The ISSF publishes them per section and as one combined book. **Always check
+for a newer edition before citing this file** — an edition is stamped on every
+page ("EDITION 2025 (First Print 12/2025) Effective 1 January 2026").
+
+| What                             | Link                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| ISSF rules and regulations index | <https://www.issf-sports.org/theissf/rules_and_regulations.ashx>                                                                            |
+| Combined Rule Book 2026 (PDF)    | <https://www.tiroalcorcon.com/wp-content/uploads/2026/01/ISSF-Rule-Book-2026-Edition-2025-First-Print-12-2025-Effective-1-January-2026.pdf> |
+| Pistol Rules, Section 8 (PDF)    | <https://tiroalcorcon.com/wp-content/uploads/2026/01/PISTOL_ISSF2026.pdf>                                                                   |
+| General Technical Rules, Sec. 6  | <https://tiroalcorcon.com/wp-content/uploads/2020/10/1.-ISSF-General-Technical-Rules.pdf>                                                   |
+| Swedish translations (ch. 6/7/8) | see [SvSF](svsf-rules.md) — these, not the English text, govern Swedish national competitions                                               |
+
+The tiroalcorcon.com links are a club mirror, used because the ISSF's own
+index is a JavaScript page whose PDF links are not directly fetchable. The
+files are the ISSF's own, edition-stamped. Prefer the ISSF index when it
+works; fall back to the mirror.
+
+Editions used for the extraction below, both fetched 2026-09-12:
+
+- **Combined Rule Book**, EDITION 2025 (First Print 12/2025), effective
+  1 January 2026 — for the General Regulations (Section 3): the ISSF
+  RECOGNIZED SHOOTING EVENTS tables (Rule 3.3, pp. 181-183) and the junior
+  definition (Rule 3.7.4.12, p. 43).
+- **Pistol Rules (Section 8)**, same edition ("the Pistol Rules").
+- **General Technical Rules (Section 6)** and its **Annex — Rules for Paper
+  Target Scoring**, for target ring dimensions and paper-target procedure
+  ("the GTR"). The print date on that file is 2020 and no edition/effective
+  date is stamped in the extracted text; ring dimensions are stable figures
+  unchanged across editions and independently cross-checked against a 2025
+  web search snippet quoting the same values (10 ring 100 mm for RFP,
+  59.5 mm black diameter for 10 m AP). **VERIFY** the GTR edition currency if
+  a page-stamped citation is wanted.
 
 When these sources and this file disagree, the sources win — fix this
 file. Discipline/program JSON files carry their own inline citation via
@@ -33,6 +54,54 @@ already returns `GENERIC_SHOOTER_CLASSES` (`[]`) for any
 non-`'SPSF'` federation (see `shared/src/disciplines/classes.ts`). No
 schema change was needed; this is the "keep it minimal, documented"
 option named in the task, not a new concept.
+
+## Recognized events and their categories (Rule 3.3)
+
+Rule 3.3 is the authority on **which events exist and for whom**; Rule 8.11's
+Men/Women column only says how each is shot. Status letters are the tables'
+own: `M` men, `MJ` men junior, `W` women, `WJ` women junior, `Olympic` on the
+Olympic programme, `WCH` a mandatory World Championship event.
+
+Transcribed from EVENTS FOR MEN AND MEN JUNIOR (p. 182) and EVENTS FOR WOMEN
+AND WOMEN JUNIOR (p. 183), pistol rows only:
+
+| Event                  | Men's table   | Women's table | Encoded as               |
+| ---------------------- | ------------- | ------------- | ------------------------ |
+| 10m Air Pistol         | APM `M, MJ`   | APW `W, WJ`   | `issf-air-pistol`        |
+| 25m Rapid-Fire Pistol  | RFPM `M, MJ`  | —             | `issf-rapid-fire-pistol` |
+| 25m Standard Pistol    | STPM `M, MJ`  | STPW `W, WJ`  | `issf-standard-pistol`   |
+| 25m Pistol             | SPM `MJ only` | SPW `W, WJ`   | `issf-sport-pistol`      |
+| 25m Centre Fire Pistol | CFPM `M only` | CFPW `W`      | not encoded (deferred)   |
+| 50m Pistol             | FPM `M, MJ`   | FPW `W, WJ`   | `issf-free-pistol`       |
+
+Three things this settles that were previously unread or guessed:
+
+- **25m Pistol is `MJ only` for men.** It is recognized for women, women
+  juniors and men juniors — but not for senior men. It is the one pistol row
+  where the age axis genuinely cannot be folded into the gender one, and so
+  the reason `EntryCategory` is a pair rather than a flat enum.
+- **25m Standard Pistol and 50m Pistol are still fully recognized**, in all
+  four categories. Neither is Olympic; both are WCH. So SvSF needs no
+  definition of its own for either — see ADR 0011.
+- **25m Centre Fire Pistol has no junior categories at all** (`M only`, `W`).
+  Recorded for when that discipline is encoded; nothing ships for it yet.
+
+`shared/src/disciplines/entries.ts` carries this as `ISSF_RULE_33`, one row per
+discipline with the status letters verbatim, so it diffs against the table
+above line by line.
+
+### Juniors (Rule 3.7.4.12)
+
+> Athletes will remain as Juniors until the 31st December of the year in which
+> they become 21 years of age.
+
+Year-based, like SPSF's — so a birth year is enough, and the app never needs a
+full date of birth. `ISSF_JUNIOR_MAX_AGE = 21` cites this rule.
+
+Rule 3.7.4.13 adds that an athlete "can be part of the final ranking in one
+category only" — the ISSF counterpart to SHB F.2.2's one-start rule. Like that
+one it governs ranking at a championship, not what may be logged, so nothing
+in the app enforces it.
 
 ## 10m Air Pistol (Luftpistol)
 
@@ -68,7 +137,7 @@ ring values (integer); only specific _rifle_ events are decimal in
 qualification. Rule 6.3.3.3 — Finals are decimal, but v1 does not model
 finals (`supportsFinal: false`; see task framing). `allowsDecimal: false`.
 
-## 25m Sport Pistol / Sportpistol (women's event; current ISSF name "25m Pistol")
+## 25m Sport Pistol / Sportpistol (current ISSF name "25m Pistol")
 
 Pistol Rules Rule 8.11 table + Rule 8.7.6.4: **60 shots**, divided into
 two 30-shot stages:
@@ -168,13 +237,12 @@ Pistol, so `sighterSeries: 0` for the same documented reason. Fixed
 skeleton: **12 series of 5 = 60 shots**, no per-series time limit (the
 1.5 h figure is a whole-round budget).
 
-**Event status (VERIFY-adjacent, but confirmed present)**: 50m Pistol
-was dropped from the Olympic programme after Tokyo 2020, but it is
-**still a currently defined ISSF event** — it appears in Rule 8.11 of
-the Pistol Rules edition effective 1 January 2026 (the rulebook in
-force as of writing), so it is retained here as a "legacy/still-defined"
-event, not removed. If the maintainer wants an explicit Olympic-status
-flag, that is a schema addition out of this task's scope.
+**Event status**: 50m Pistol was dropped from the Olympic programme after
+Tokyo 2020, which is not the same as being dropped by the ISSF. Rule 3.3
+still recognizes it in four categories — **FPM "M, MJ, WCH"** and **FPW
+"W, WJ, WCH"** — so it is a mandatory World Championship event that is not
+an Olympic one. That is the whole of its status; the earlier VERIFY here is
+resolved, and no Olympic-status flag is needed to say it.
 
 **Target**: GTR Rule 6.3.4.5, "25m Precision and 50m Pistol Target" —
 same target and dimensions as 25m Standard Pistol above (`issf-25m-

@@ -17,6 +17,7 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     competitionName: null,
     weaponGroup: null,
     shooterClass: null,
+    eventId: null,
     firearm: null,
     ammoLot: null,
     startedAt: '2026-01-01T00:00:00.000Z',

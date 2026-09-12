@@ -1,10 +1,26 @@
 # SPSF domain facts — Skjuthandboken 2026 (upplaga 21)
 
-Verified extraction with section/page citations. PDF page numbers equal
-printed page numbers. Source: SHB_2026_upplaga-21_NY.pdf (496 pp, kept
-outside the repo). When SHB and this file disagree, SHB wins — fix this
-file. Known erratum in the book: `F.6.1.1` cross-references "C.6.1.1",
-which does not exist; the intended section is `C.3.6.1.1`.
+Verified extraction with section/page citations. One of three federation
+reference files — see also [ISSF](issf-rules.md) and [SvSF](svsf-rules.md).
+
+## Where to get the rule book
+
+Skjuthandboken (SHB) is Svenska Pistolskytteförbundet's rule book, reissued
+as a numbered upplaga. **Upplaga 21 applies from 1 January 2026.** Check for a
+newer upplaga before citing this file.
+
+| What                      | Link                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| SHB and SäkB landing page | <https://www.pistolskytteforbundet.se/om-pistolskytte/regler/skjuthandboken-och-sakb/> |
+| **SHB 2026, upplaga 21**  | <https://www.pistolskytteforbundet.se/app/uploads/2026/01/SHB_2026_upplaga-21_NY.pdf>  |
+| SäkB 2020 (säkerhet)      | <https://www.pistolskytteforbundet.se/app/uploads/2020/11/SäkB_2020.pdf>               |
+| Tabell (klassfordringar)  | <https://www.pistolskytteforbundet.se/app/uploads/2022/05/Tabell-2022.pdf>             |
+
+Source used below: `SHB_2026_upplaga-21_NY.pdf` (496 pp, kept outside the
+repo). PDF page numbers equal printed page numbers. When SHB and this file
+disagree, SHB wins — fix this file. Known erratum in the book: `F.6.1.1`
+cross-references "C.6.1.1", which does not exist; the intended section is
+`C.3.6.1.1`.
 
 ## Precisionsskjutning
 
@@ -118,7 +134,34 @@ count toward märkesprov/riksmästarklass/SM qualification (C.5.1).
 F.2.1 p. 163: **1** (variants 1u nybörjare, 1b bronsskytt, 1s
 silverskytt — F.2.5), **2**, **3** (riksmästarklass), **Jun** (≤ year
 turning 20), **Dam 1/2/3**, **Vet Y** (year turning 60+), **Vet Ä**
-(year turning 70+). Jun/Dam/Vet shoot vapengrupp C in precision/fält.
+(year turning 70+).
+
+**Vapengrupper per klass (F.2.1 table, p. 163):** klass **1/2/3 → A, B, C**;
+**Jun, Dam 1/2/3, Vet Y, Vet Ä → C only**. Confirmed in F.2.8/F.2.9/F.2.10
+("I junior-/dam-/veteranklass tävlas med vapen kaliber .22, vapengrupp C").
+
+**Klass is NOT per vapengrupp** (F.2.2 p. 163): "Skytt hänförs till viss klass
+oavsett i vilken vapengrupp kompetensfordringarna uppfyllts." One klass applies
+whichever gun is shot. Klass 3 qualification is precision-only.
+
+**Jun/Dam/Vet may also enter the open classes** (F.2.2 p. 163): they may
+"tävla i (öppen) klass 1, 2 eller 3 alltefter kompetens inom vapengrupperna
+A, B, eller C". Entering dam-, junior- or veteranklass is explicitly
+**voluntary** (F.2.8/F.2.9/F.2.10: "Att delta i … är frivilligt").
+
+**One start per competition in vapengrupp C — with a championship exception**
+(F.2.2 p. 163). The general rule: "i samma tävling inom vapengrupp C får
+skytten endast starta i en klass i precisionsskjutningar (t.ex. start i klass
+Vet Y och klass 3 C är inte tillåten)." The next bullet carves it open: "vid
+SM, landsdels- eller kretsmästerskap får en arrangör medge start, förutom i
+den egna klassen, **även i öppen klass**." Shooters do compete in C and
+another class at SM. **Not a rule the app may enforce** — the arrangör
+decides, and eligibility here is offered, never gated.
+
+**Jun and Vet are not gender-split** (F.2.8, F.2.10 p. 167): "Herr- och
+damjuniorer tävlar i samma klass"; "Veteranklass kan bestå av såväl herrar som
+damer" — though F.2.3 p. 164 splits them again when a class has under five
+entrants.
 Vet Ä may use stödhand in precision (F.6.3.2); anyone turning 70 may in
 A/B (F.6.3.3), and in A/B/R in milsnabb (J.6.3.3). Display convention:
 "C 2" = vapengrupp C, klass 2 (F.2.6–F.2.7).

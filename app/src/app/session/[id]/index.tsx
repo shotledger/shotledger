@@ -9,7 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
-import { formatGroupAndClass, MIN_SHOTS_FOR_HEATMAP, tenthsToScore } from '@shotledger/shared';
+import {
+  categoryKey,
+  findEvent,
+  formatGroupAndClass,
+  MIN_SHOTS_FOR_HEATMAP,
+  tenthsToScore,
+} from '@shotledger/shared';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -381,6 +387,13 @@ export default function SessionDetailScreen() {
     );
   };
 
+  // The ISSF half of the same sentence: where an SPSF session prints "C 2",
+  // an ISSF one prints its event's category. A session has one or the other.
+  const sessionEvent = session.eventId ? findEvent(session.eventId) : undefined;
+  const eventCategoryLabel = sessionEvent
+    ? t(`eventCategory.${categoryKey(sessionEvent.category)}`)
+    : null;
+
   return (
     <Screen>
       <Stack.Screen
@@ -395,6 +408,7 @@ export default function SessionDetailScreen() {
           {[
             t(`sessionType.${session.type}`),
             formatGroupAndClass(session.weaponGroup, session.shooterClass),
+            eventCategoryLabel,
             firearmName,
             session.competitionName,
           ]

@@ -123,6 +123,15 @@ export const sessions = sqliteTable('sessions', {
   // not an enum — an import may carry a code the picker does not offer (the
   // F.2.5 klass-1 variants 1u/1b/1s were dropped from the picker 2026-09-09).
   shooterClass: text('shooter_class'),
+  /**
+   * ISSF event id, `<disciplineId>:<gender>:<age>` (entries.ts).
+   *
+   * The klass/event split: SPSF puts the category on the SHOOTER's klass,
+   * ISSF on the EVENT itself, so a session carries whichever its federation
+   * uses and NULL for the other. Free text for the same reason as
+   * `shooter_class` — an import may name an event this build has not defined.
+   */
+  eventId: text('event_id'),
   firearmId: text('firearm_id').references(() => firearms.id),
   ammoLotId: text('ammo_lot_id').references(() => ammoLots.id),
   startedAt: text('started_at').notNull(),

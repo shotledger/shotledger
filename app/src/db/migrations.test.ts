@@ -1,14 +1,20 @@
-// The migration chain was squashed to a single baseline (2026-09-11,
-// maintainer's call — pre-release, no installed build's data has to survive).
+// The migration chain is a single baseline, regenerated rather than appended
+// to (2026-09-11, and again 2026-09-12 for `sessions.event_id`; maintainer's
+// call — pre-release, no installed build's data has to survive, so an
+// existing install is wiped rather than migrated).
 // What is worth testing changed with it: there is no upgrade path left to
 // rehearse, so these assert that the baseline is COMPLETE. It is not
 // generated in full — `drizzle-kit generate` derives it from schema.ts, which
 // models neither triggers nor seed rows, and both were carried over by hand.
 import Database from 'better-sqlite3';
+import { getTableColumns, getTableName, is } from 'drizzle-orm';
+import { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+
+import * as schema from './schema';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(dirname, 'migrations');
@@ -52,6 +58,27 @@ function freshDatabase(): Database.Database {
 describe('the baseline is the whole schema', () => {
   it('is the only migration', () => {
     expect(journalTags()).toEqual(['0000_baseline']);
+  });
+
+  it('creates every column schema.ts declares, on every table', () => {
+    // The baseline is regenerated rather than migrated (maintainer's call,
+    // pre-release), and the part below the line in it is carried BY HAND. So
+    // the drift this guards against is a column added to schema.ts while the
+    // SQL it is folded into is left behind: drizzle-kit would be happy, and
+    // the app would crash on its first query instead of on migration.
+    const sqlite = freshDatabase();
+
+    for (const table of Object.values(schema)) {
+      if (!is(table, SQLiteTable)) continue;
+      const name = getTableName(table);
+      const expected = Object.values(getTableColumns(table)).map((column) => column.name);
+      const actual = sqlite
+        .prepare(`SELECT name FROM pragma_table_info(?)`)
+        .all(name)
+        .map((row) => (row as { name: string }).name);
+
+      expect({ [name]: actual.slice().sort() }).toEqual({ [name]: expected.slice().sort() });
+    }
   });
 
   it('creates an outbox capture trigger pair for every synced table', () => {

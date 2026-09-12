@@ -58,6 +58,7 @@ export function buildSessionExports(db: Database): SessionExport[] {
         competitionName: session.competitionName,
         weaponGroup: session.weaponGroup,
         shooterClass: session.shooterClass,
+        eventId: session.eventId,
         firearm: firearm ? firearmDisplayName(firearm) : null,
         ammoLot: ammoLot ? ammoLot.label : null,
         startedAt: session.startedAt,

@@ -2,6 +2,7 @@
 // source of truth; they are validated against the zod schemas at module load,
 // so a malformed data file fails at startup rather than at scoring time.
 import genericRings from './definitions/generic-rings.json';
+import { activeFederations } from '../regulations/registry';
 // ISSF ships events, not vapengrupper (§6.4a) — every definition below has
 // weaponGroups: [] rather than a new "issf group" concept; see
 // docs/reference/issf-rules.md.
@@ -26,6 +27,8 @@ import { disciplineSchema, programSchema, type Discipline, type Program } from '
 export * from './schema';
 export * from './groups';
 export * from './classes';
+export * from './entries';
+export * from './eligibility';
 
 export const DISCIPLINES: readonly Discipline[] = [
   spsfPrecisionDiscipline,
@@ -119,6 +122,44 @@ export function selectableWeaponGroups(): readonly WeaponGroup[] {
   const seen = new Set<string>();
   const groups: WeaponGroup[] = [];
   for (const discipline of DISCIPLINES) {
+    for (const group of resolveWeaponGroupIds(
+      discipline.weaponGroups,
+      `Discipline ${discipline.id}`,
+    )) {
+      if (seen.has(group.id)) continue;
+      seen.add(group.id);
+      groups.push(group);
+    }
+  }
+  return groups;
+}
+
+/**
+ * The disciplines a shooter should be offered, given the regulations they have
+ * enabled (ADR 0011).
+ *
+ * Filtering is silent — the discipline list simply contains what applies, and
+ * the regulation is implied by the discipline rather than being a separate
+ * step when creating a session (maintainer, 2026-09-12).
+ *
+ * `generic` disciplines survive every filter: practice against a ring target
+ * belongs to no federation, so a shooter with everything switched off still
+ * has something to log.
+ */
+export function disciplinesForRegulations(
+  enabledRegulationIds: readonly string[],
+): readonly Discipline[] {
+  const federations = new Set(activeFederations(enabledRegulationIds));
+  return DISCIPLINES.filter((discipline) => federations.has(discipline.federation));
+}
+
+/** Vapengrupper reachable through the enabled regulations' disciplines. */
+export function weaponGroupsForRegulations(
+  enabledRegulationIds: readonly string[],
+): readonly WeaponGroup[] {
+  const seen = new Set<string>();
+  const groups: WeaponGroup[] = [];
+  for (const discipline of disciplinesForRegulations(enabledRegulationIds)) {
     for (const group of resolveWeaponGroupIds(
       discipline.weaponGroups,
       `Discipline ${discipline.id}`,

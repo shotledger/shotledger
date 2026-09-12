@@ -380,7 +380,8 @@ already is the sighter can un-set itself.)
   `extra_rounds`) and is offered no program, no decimal toggle and no series;
   a `'series'` session is never offered `extra_rounds` at creation. Field
   order: Type → Logging → Session name (auto-derived, overridable) → Location
-  → discipline/program → competition details → vapengrupp/klass → firearm/ammo
+  → discipline/program → competition details → vapengrupp/klass (SPSF) or
+  event (ISSF/SvSF) → firearm/ammo
   → shot count (rounds only) → tags.
 - Extra rounds: the session form and session detail carry an
   `extra_rounds` field for rounds fired but not scored — volume only
@@ -795,6 +796,21 @@ the same way.
 `Jun` (≤ year turning 20), `Dam1`/`Dam2`/`Dam3`, `VetY` (year turning
 60+), `VetÄ` (year turning 70+; stödhand allowed in precision, F.6.3.2).
 Jun/Dam/Vet shoot vapengrupp C in precision/fält (F.2.1).
+
+**ISSF: events, not klasser.** A federation says "this entry is for these
+shooters" in one of two places, and the app models both rather than flattening
+them (`shared/src/disciplines/entries.ts`). SPSF puts the category on the
+shooter's KLASS; ISSF puts it on the EVENT — 10 m Air Pistol runs as four
+separate events (men, men junior, women, women junior) and 25 m Rapid Fire
+Pistol as two, because no women's version is recognized. `EntryCategory` is
+the shared concept: `{ gender, age }`, two independent axes, because ISSF
+multiplies them and one flat enum cannot name _10 m Air Pistol Junior Women_.
+
+Event definitions are transcribed from ISSF Rule 3.3 with the status letters
+kept verbatim (`ISSF_RULE_33`); see `docs/reference/issf-rules.md`. A session
+stores `event_id` (`<disciplineId>:<gender>:<age>`) where an SPSF one stores
+`shooter_class`, and NULL for whichever does not apply. Eligibility ranks and
+never gates, on both sides.
 
 Enumerations live in `shared/disciplines/groups.ts` and `classes.ts`
 with per-discipline validity. Märke thresholds key off vapengrupp (§6.5).

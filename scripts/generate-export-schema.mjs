@@ -22,13 +22,19 @@ const outputPath = join(root, 'docs/manual/reference/sessions-export.schema.json
 
 const require = createRequire(join(root, 'shared/package.json'));
 const { z } = await import(pathToFileURL(require.resolve('zod')).href);
-const { envelopeSchema, JSON_EXPORT_FORMAT, JSON_EXPORT_VERSION } = await import(
-  pathToFileURL(join(root, 'shared/dist/json-export/types.js')).href
-);
+const { envelopeSchema, sessionExportSchema, JSON_EXPORT_FORMAT, JSON_EXPORT_VERSION } =
+  await import(pathToFileURL(join(root, 'shared/dist/json-export/types.js')).href);
 
 // `io: 'output'` describes what a file CONTAINS, which is what a reader
 // validating an export needs — not what the parser will accept as input.
 const generated = z.toJSONSchema(envelopeSchema, { io: 'output' });
+
+// `envelopeSchema` types `sessions` as `unknown[]` on purpose, so one bad
+// session is rejected on its own instead of failing the whole file. That is
+// right at runtime and useless in a published schema — it documented a
+// session as `{}`. Splice the real session shape back in for the DOCUMENT
+// only; the parser keeps its loose envelope.
+generated.properties.sessions.items = z.toJSONSchema(sessionExportSchema, { io: 'output' });
 
 const schema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',

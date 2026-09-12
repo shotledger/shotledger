@@ -14,6 +14,14 @@
     "caliberNoMatch": "No caliber matches.",
     "caliberLegacyHint": "Saved before the preset list — pick one to replace it."
   },
+  "eventCategory": {
+    "men": "Men",
+    "menJunior": "Men Junior",
+    "women": "Women",
+    "womenJunior": "Women Junior",
+    "open": "Open",
+    "openJunior": "Junior"
+  },
   "tabs": {
     "home": "Home",
     "stats": "Statistics",
@@ -359,7 +367,12 @@
     "trainingCount": "{{count}} series kept",
     "trainingDelete": "Delete Collected Data",
     "trainingDeleteTitle": "Delete collected data?",
-    "trainingDeleteBody": "This permanently deletes the {{count}} kept series. Your logbook and photos are not affected."
+    "trainingDeleteBody": "This permanently deletes the {{count}} kept series. Your logbook and photos are not affected.",
+    "birthYearSetOnce": "You can only set this once — it decides which veteran class and märke thresholds apply, including for sessions already logged.",
+    "birthYearLocked": "Set once and kept",
+    "skillClass": "Your Class",
+    "womensClasses": "Women’s Classes and Events",
+    "womensClassesHelp": "Offers Dam 1/2/3 alongside your class, and the ISSF events shot by women."
   },
   "about": {
     "title": "About",
@@ -495,6 +508,7 @@
     "competitionNameHint": "The event's own name — only for competitions, and not the same thing as the session name above.",
     "weaponGroup": "Weapon Group",
     "shooterClass": "Class",
+    "event": "Event",
     "firearm": "Firearm",
     "ammoLot": "Ammo Lot",
     "none": "None",
@@ -1115,5 +1129,14 @@
         "subtitle": "Statistics the site computes"
       }
     }
+  },
+  "regulations": {
+    "title": "Regulations",
+    "intro": "The rule sets you compete under. Turning one on adds its disciplines and weapon groups when you create a session; sessions already logged are untouched.",
+    "adopts": "Competes under {{adopted}} rules",
+    "impliedBy": "Already in effect — another regulation you enabled adopts it",
+    "footnote": "Svenska Skyttesportförbundet uses the ISSF rulebook for its events, so enabling it brings the ISSF disciplines with it.",
+    "settingsRowTitle": "Regulations",
+    "settingsRowNone": "None — only practice sessions"
   }
 }
