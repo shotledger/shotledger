@@ -13,12 +13,13 @@
 // Reads the COMPILED schema from shared/dist, so `pnpm typecheck` (tsc -b)
 // must have run first. `pnpm check` orders it that way.
 import { createRequire } from 'node:module';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const outputPath = join(root, 'docs/manual/reference/sessions-export.schema.json');
+const referenceDir = join(root, 'docs/manual/reference');
+const SITE = 'https://jimisola.github.io/shotledger/reference';
 
 const require = createRequire(join(root, 'shared/package.json'));
 const { z } = await import(pathToFileURL(require.resolve('zod')).href);
@@ -42,36 +43,128 @@ const sessionSchema = z.toJSONSchema(sessionExportSchema, { io: 'output' });
 delete sessionSchema.$schema;
 generated.properties.sessions.items = sessionSchema;
 
-const schema = {
-  $schema: 'https://json-schema.org/draft/2020-12/schema',
-  $id: 'https://jimisola.github.io/shotledger/reference/sessions-export.schema.json',
-  title: 'ShotLedger sessions export',
-  description:
-    `The file produced by Settings → Export Sessions. ` +
-    `\`format\` is always "${JSON_EXPORT_FORMAT}" and the current ` +
-    `\`formatVersion\` is ${JSON_EXPORT_VERSION}. An importer must refuse a ` +
-    `higher formatVersion rather than dropping fields it does not understand.`,
-  ...generated,
+// The parser accepts any formatVersion >= 1 so it can refuse a higher one with
+// a useful error. A published schema is not a parser: this document describes
+// exactly one version, so it pins it.
+generated.properties.formatVersion = {
+  ...generated.properties.formatVersion,
+  const: JSON_EXPORT_VERSION,
 };
+delete generated.properties.formatVersion.minimum;
+delete generated.properties.formatVersion.maximum;
 
-const serialised = `${JSON.stringify(schema, null, 2)}\n`;
+sessionSchema.title = 'Session';
+
+function document(id, description) {
+  return {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    $id: id,
+    $comment:
+      'Generated from shared/src/json-export/types.ts by scripts/generate-export-schema.mjs. ' +
+      'Do not hand-edit: `pnpm schema:check` fails when this file and that source disagree.',
+    title: 'ShotLedger sessions export',
+    description,
+    ...generated,
+    examples: [
+      {
+        format: JSON_EXPORT_FORMAT,
+        formatVersion: JSON_EXPORT_VERSION,
+        generatedAt: '2026-09-13T09:41:00.000Z',
+        app: { name: 'ShotLedger', version: '1.0.0' },
+        sessions: [
+          {
+            id: 'ses_7Qn2',
+            name: 'Precision — 13 Sep 2026',
+            type: 'training',
+            disciplineId: 'spsf-precision',
+            programId: null,
+            competitionLevel: null,
+            isChampionship: false,
+            competitionName: null,
+            weaponGroup: 'spsf:C',
+            shooterClass: null,
+            eventId: null,
+            firearm: 'Pardini SP',
+            ammoLot: null,
+            startedAt: '2026-09-13T08:00:00.000Z',
+            location: 'Klubbanan',
+            notes: null,
+            decimalScoring: false,
+            extraRounds: null,
+            tags: ['träning'],
+            series: [
+              {
+                position: 1,
+                isSighter: true,
+                isFinal: false,
+                shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+// Two files, one source. The bare URL is what existing references point at and
+// keeps describing whatever the current version is; the versioned one is what a
+// third party can pin to, and is never rewritten once the format moves on —
+// this only ever writes `v${JSON_EXPORT_VERSION}`, so v1 freezes the day v2
+// exists.
+const shared =
+  `The file produced by Settings → Export Sessions. ` +
+  `\`format\` is always "${JSON_EXPORT_FORMAT}". An importer must refuse a ` +
+  `higher \`formatVersion\` rather than dropping fields it does not understand.`;
+
+const outputs = [
+  {
+    path: join(referenceDir, 'sessions-export.schema.json'),
+    label: 'reference/sessions-export.schema.json',
+    body: document(
+      `${SITE}/sessions-export.schema.json`,
+      `${shared} This URL always describes the CURRENT format version, ` +
+        `today ${JSON_EXPORT_VERSION}; pin ` +
+        `${SITE}/v${JSON_EXPORT_VERSION}/sessions-export.schema.json instead if you need it to stay put.`,
+    ),
+  },
+  {
+    path: join(referenceDir, `v${JSON_EXPORT_VERSION}`, 'sessions-export.schema.json'),
+    label: `reference/v${JSON_EXPORT_VERSION}/sessions-export.schema.json`,
+    body: document(
+      `${SITE}/v${JSON_EXPORT_VERSION}/sessions-export.schema.json`,
+      `${shared} This URL describes format version ${JSON_EXPORT_VERSION} and will not change meaning.`,
+    ),
+  },
+];
+
+let stale = false;
+for (const output of outputs) {
+  const serialised = `${JSON.stringify(output.body, null, 2)}\n`;
+  if (process.argv.includes('--check')) {
+    let current;
+    try {
+      current = readFileSync(output.path, 'utf8');
+    } catch {
+      console.error(`export-schema: ${output.label} is missing`);
+      stale = true;
+      continue;
+    }
+    if (current !== serialised) {
+      console.error(`export-schema: ${output.label} is stale`);
+      stale = true;
+    }
+  } else {
+    mkdirSync(dirname(output.path), { recursive: true });
+    writeFileSync(output.path, serialised);
+    console.log(`export-schema: wrote ${output.label}`);
+  }
+}
 
 if (process.argv.includes('--check')) {
-  let current = '';
-  try {
-    current = readFileSync(outputPath, 'utf8');
-  } catch {
-    console.error('export-schema: docs/manual/reference/sessions-export.schema.json is missing');
+  if (stale) {
+    console.error('Run `pnpm schema:generate` and commit the result.');
     process.exit(1);
   }
-  if (current !== serialised) {
-    console.error(
-      'export-schema: the published schema is stale — run `pnpm schema:generate` and commit it',
-    );
-    process.exit(1);
-  }
-  console.log('export-schema: published schema matches shared/src/json-export/types.ts');
-} else {
-  writeFileSync(outputPath, serialised);
-  console.log(`export-schema: wrote ${outputPath}`);
+  console.log('export-schema: published schemas match shared/src/json-export/types.ts');
 }

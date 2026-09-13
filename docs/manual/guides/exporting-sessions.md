@@ -34,7 +34,20 @@ Validate a file against the published schema:
 { .md-button }
 
 The schema is generated from the same definitions the app validates imports
-against, so it cannot drift from what the app actually accepts.
+against, so it cannot drift from what the app actually accepts. Every field
+carries a description there, which is the quickest way to answer "what is this
+value".
+
+**Two URLs, and the difference matters if you are building against it:**
+
+| URL                                        | Describes                                             |
+| ------------------------------------------ | ----------------------------------------------------- |
+| `reference/sessions-export.schema.json`    | whatever the current `formatVersion` is — today **1** |
+| `reference/v1/sessions-export.schema.json` | format version **1**, and will not change meaning     |
+
+Pin the versioned one. The first URL is the convenient one to read, but the day
+a `formatVersion` 2 exists it starts describing that instead, and a file that
+validated yesterday will not validate today.
 
 ### A short example
 
