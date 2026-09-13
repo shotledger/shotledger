@@ -500,6 +500,7 @@
     "type": "Typ",
     "kind": "Loggning",
     "kindHint": "Väljs en gång: ett pass loggar antingen poängsatta serier eller bara ett antal avlossade skott. Det går inte att blanda.",
+    "regulation": "Reglemente",
     "discipline": "Gren",
     "program": "Program",
     "freeTraining": "Fri träning",

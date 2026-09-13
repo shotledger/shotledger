@@ -500,6 +500,7 @@
     "type": "Type",
     "kind": "Logging",
     "kindHint": "Chosen once: a session either logs scored series or just a number of rounds fired. It cannot be both.",
+    "regulation": "Regulation",
     "discipline": "Discipline",
     "program": "Program",
     "freeTraining": "Free Training",
