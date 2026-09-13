@@ -85,11 +85,19 @@ export default function EditSessionScreen() {
   }
 
   const isCompetition = session.type === 'competition';
+  // Same rule as the new-session form: vapengrupp and klass are competition
+  // concepts. Here it is one-way — a picker hides only when the session has no
+  // value stored, so editing can never strand a value it stopped showing.
+  // (Training sessions DO carry a derived vapengrupp, so that one stays
+  // visible and correctable.)
   const groups = weaponGroupsForDiscipline(session.disciplineId);
   const classes = shooterClassesForDiscipline(session.disciplineId);
   // Unranked here, unlike the new-session screen: the discipline is fixed and
   // the shooter is correcting a past session, not being offered a default.
   const events = eventsForDiscipline(session.disciplineId);
+  const showGroupPicker = groups.length > 0 && (isCompetition || weaponGroup !== null);
+  const showClassPicker = classes.length > 0 && (isCompetition || shooterClass !== null);
+  const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);
   const firearms = listFirearms(db);
   const ammoLots = listAmmoLots(db);
 
@@ -213,47 +221,49 @@ export default function EditSessionScreen() {
         </ThemedText>
       </Card>
 
-      <Card>
-        {groups.length > 0 && (
-          <OptionPicker
-            label={t('session.weaponGroup')}
-            options={toOptions(
-              groups.map((g) => ({ value: g.id, label: g.code })),
-              'edit-group',
-            )}
-            value={weaponGroup}
-            onChange={setWeaponGroup}
-            emptyLabel={t('session.none')}
-          />
-        )}
-        {classes.length > 0 && (
-          <OptionPicker
-            label={t('session.shooterClass')}
-            options={toOptions(
-              classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
-              'edit-class',
-            )}
-            value={shooterClass}
-            onChange={setShooterClass}
-            emptyLabel={t('session.none')}
-          />
-        )}
-        {events.length > 0 && (
-          <OptionPicker
-            label={t('session.event')}
-            options={toOptions(
-              events.map((event) => ({
-                value: event.id,
-                label: t(`eventCategory.${categoryKey(event.category)}`),
-              })),
-              'edit-event',
-            )}
-            value={eventId}
-            onChange={setEventId}
-            emptyLabel={t('session.none')}
-          />
-        )}
-      </Card>
+      {(showGroupPicker || showClassPicker || showEventPicker) && (
+        <Card>
+          {showGroupPicker && (
+            <OptionPicker
+              label={t('session.weaponGroup')}
+              options={toOptions(
+                groups.map((g) => ({ value: g.id, label: g.code })),
+                'edit-group',
+              )}
+              value={weaponGroup}
+              onChange={setWeaponGroup}
+              emptyLabel={t('session.none')}
+            />
+          )}
+          {showClassPicker && (
+            <OptionPicker
+              label={t('session.shooterClass')}
+              options={toOptions(
+                classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
+                'edit-class',
+              )}
+              value={shooterClass}
+              onChange={setShooterClass}
+              emptyLabel={t('session.none')}
+            />
+          )}
+          {showEventPicker && (
+            <OptionPicker
+              label={t('session.event')}
+              options={toOptions(
+                events.map((event) => ({
+                  value: event.id,
+                  label: t(`eventCategory.${categoryKey(event.category)}`),
+                })),
+                'edit-event',
+              )}
+              value={eventId}
+              onChange={setEventId}
+              emptyLabel={t('session.none')}
+            />
+          )}
+        </Card>
+      )}
 
       <Card>
         <OptionPicker

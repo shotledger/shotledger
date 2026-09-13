@@ -41,7 +41,7 @@ import { db } from '@/db/client';
 import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
-import { getDefaultFirearmForGroup } from '@/db/queries/firearm-groups';
+import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
 import { listFirearms } from '@/db/queries/firearms';
 import { addSeries } from '@/db/queries/series';
 import { setSessionExtraRounds } from '@/db/queries/round-count';
@@ -71,6 +71,28 @@ function firstDisciplineFor(regulationId: string): string | undefined {
   const available = disciplinesForRegulations([regulationId]);
   const federation = findRegulation(regulationId)?.federation;
   return (available.find((d) => d.federation === federation) ?? available[0])?.id;
+}
+
+/**
+ * The vapengrupp a training session takes from the gun instead of asking for
+ * it (maintainer, 2026-09-13: "the weapon group and class are not relevant for
+ * practise. only relevant when competing").
+ *
+ * Derived, never nulled: `guldserieThreshold` reads the weapon group, and
+ * practice series count towards the märkesprov, so a training session that
+ * stopped carrying one would silently stop counting.
+ *
+ * `isDefaultForGroup` marks the go-to firearm FOR a group rather than the
+ * primary group OF a firearm, so it is used only to break a tie. When it
+ * cannot, this returns null and the caller keeps showing the picker rather
+ * than guessing.
+ */
+function derivedWeaponGroup(firearmId: string | null): string | null {
+  if (!db || firearmId === null) return null;
+  const rows = listFirearmGroups(db, firearmId);
+  if (rows.length === 1) return rows[0]!.groupId;
+  const marked = rows.filter((row) => row.isDefaultForGroup === 1);
+  return marked.length === 1 ? marked[0]!.groupId : null;
 }
 
 /**
@@ -161,6 +183,22 @@ export default function NewSessionScreen() {
     ...allClasses.filter((klass) => !eligible.includes(klass)),
   ];
   const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
+  // Vapengrupp and klass are competition concepts. A training session still
+  // CARRIES a vapengrupp — the märke reads it — but takes it from the gun
+  // rather than asking. Klass and event are entry classifications with no
+  // meaning outside a competition, so they are simply not recorded.
+  const isCompetition = type === 'competition';
+  const derivedGroup = isCompetition ? null : derivedWeaponGroup(firearmId);
+  // The one case training still asks: a gun IS chosen but sits in several
+  // groups with no tie broken. Nulling it there would cost the shooter their
+  // märke count on a gun the app knows about. With no firearm chosen there is
+  // nothing to derive from and nothing to lose, so the picker stays hidden —
+  // otherwise "training does not ask for a vapengrupp" would be false for
+  // every session that has not picked a gun yet, which is most of them.
+  const showGroupPicker =
+    groups.length > 0 && (isCompetition || (firearmId !== null && derivedGroup === null));
+  const showClassPicker = allClasses.length > 0 && isCompetition;
+  const showEventPicker = events.length > 0 && isCompetition;
 
   const firearms = useMemo(() => (db ? listFirearms(db) : []), []);
   const ammoLots = useMemo(() => (db ? listAmmoLots(db) : []), []);
@@ -226,9 +264,9 @@ export default function NewSessionScreen() {
       competitionLevel: type === 'competition' ? level : null,
       isChampionship: type === 'competition' && isChampionship,
       competitionName: type === 'competition' && competitionName ? competitionName : null,
-      weaponGroup,
-      shooterClass,
-      eventId,
+      weaponGroup: isCompetition ? weaponGroup : (derivedGroup ?? weaponGroup),
+      shooterClass: isCompetition ? shooterClass : null,
+      eventId: isCompetition ? eventId : null,
       firearmId,
       ammoLotId,
       startedAt,
@@ -411,9 +449,9 @@ export default function NewSessionScreen() {
           and a "Class: None" on every ISSF session. The CARD needs the same
           guard as the pickers: the practice discipline has none of the three,
           and an always-rendered card left an empty box floating in the form. */}
-      {(groups.length > 0 || allClasses.length > 0 || events.length > 0) && (
+      {(showGroupPicker || showClassPicker || showEventPicker) && (
         <Card>
-          {groups.length > 0 && (
+          {showGroupPicker && (
             <OptionPicker
               label={t('session.weaponGroup')}
               options={toOptions(
@@ -424,7 +462,7 @@ export default function NewSessionScreen() {
               onChange={onSelectWeaponGroup}
             />
           )}
-          {allClasses.length > 0 && (
+          {showClassPicker && (
             <OptionPicker
               label={t('session.shooterClass')}
               options={toOptions(
@@ -436,7 +474,7 @@ export default function NewSessionScreen() {
               emptyLabel={t('session.none')}
             />
           )}
-          {events.length > 0 && (
+          {showEventPicker && (
             <OptionPicker
               label={t('session.event')}
               options={toOptions(

@@ -71,6 +71,11 @@ your own, and stops asking you every session. You can always override it.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
   Both are optional.
 
+For a **competition** you are also asked for your **vapengrupp** and **klass**,
+because that is what you are entered under. Training does not ask: the app takes
+the vapengrupp from the gun you picked, so your pistolskyttemärke still counts
+practice series, and it records no klass at all.
+
 A session created from a fixed program arrives with its series already laid
 out, so you are not building the scaffolding while the line is waiting.
 
