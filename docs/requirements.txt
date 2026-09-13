@@ -3,3 +3,7 @@
 #   pip install -r docs/requirements.txt
 #   mkdocs build --strict
 mkdocs-material==9.7.7
+# Swedish alongside English (issue #229). Suffix layout: getting-started.sv.md
+# sits next to getting-started.md, so a stale translation shows up in the same
+# diff as the English change rather than in a parallel tree nobody opens.
+mkdocs-static-i18n==1.3.1
