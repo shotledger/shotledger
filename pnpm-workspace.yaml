@@ -51,6 +51,11 @@ minimumReleaseAgeExclude:
   - expo-sharing@57.0.17
   - expo-secure-store@57.0.3
 patchedDependencies:
+  # Vitest 5 matches testNamePattern against the suite chain joined with ' > ',
+  # but the runner still builds test ids and the filter regex with a single
+  # space, so every mutant run selects zero tests and survives. Upstream:
+  # stryker-mutator/stryker-js#6210. Drop this when a release carries the fix.
+  '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch
   eslint-plugin-react-native@5.0.0: patches/eslint-plugin-react-native@5.0.0.patch
 overrides:
   qs: 6.16.0

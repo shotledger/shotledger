@@ -169,6 +169,7 @@ overrides:
   esbuild: 0.28.2
 
 patchedDependencies:
+  '@stryker-mutator/vitest-runner@10.0.0': 890316bd6edb446e7b450b23c08fe314a14cbba08ae7adedb1ce5614d07913e0
   eslint-plugin-react-native@5.0.0: ad79d21c03b4134525d728dbd207749aee52dcfccadbf883a5f4427482abc566
 
 importers:
@@ -183,7 +184,7 @@ importers:
         version: 10.0.0(@types/node@26.5.1)
       '@stryker-mutator/vitest-runner':
         specifier: 10.0.0
-        version: 10.0.0(@stryker-mutator/core@10.0.0(@types/node@26.5.1))(vitest@5.0.0)
+        version: 10.0.0(patch_hash=890316bd6edb446e7b450b23c08fe314a14cbba08ae7adedb1ce5614d07913e0)(@stryker-mutator/core@10.0.0(@types/node@26.5.1))(vitest@5.0.0)
       '@types/node':
         specifier: 26.5.1
         version: 26.5.1
@@ -9746,7 +9747,7 @@ snapshots:
 
   '@stryker-mutator/util@10.0.0': {}
 
-  '@stryker-mutator/vitest-runner@10.0.0(@stryker-mutator/core@10.0.0(@types/node@26.5.1))(vitest@5.0.0)':
+  '@stryker-mutator/vitest-runner@10.0.0(patch_hash=890316bd6edb446e7b450b23c08fe314a14cbba08ae7adedb1ce5614d07913e0)(@stryker-mutator/core@10.0.0(@types/node@26.5.1))(vitest@5.0.0)':
     dependencies:
       '@stryker-mutator/api': 10.0.0
       '@stryker-mutator/core': 10.0.0(@types/node@26.5.1)
