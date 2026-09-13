@@ -63,10 +63,11 @@ your own, and stops asking you every session. You can always override it.
 - **Discipline** — for example SPSF precision or militär snabbmatch.
 - **Program** — the shot program within that discipline. It decides how many
   shots each series holds, whether the score is whole points or decimals, and
-  whether a final can be added. Choose **Free Training** when you are shooting
-  the discipline without a fixed format: the series keep their normal length,
-  but the session is logged as training rather than as a match. The ⓘ beside
-  the heading says the same in the app.
+  whether a final can be added. Choose **Free Format** when you are shooting the
+  discipline without a fixed shot program: the series keep their normal length,
+  and nothing is pre-laid-out for you. The ⓘ beside the heading says the same in
+  the app. A discipline with no programs of its own — Practice (Ring Target) —
+  shows no Program row at all.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
   Both are optional.
 

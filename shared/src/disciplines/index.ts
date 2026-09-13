@@ -21,7 +21,7 @@ import issfStandardPistolProgram from './programs/issf-standard-pistol.json';
 import spsfMilsnabbProgram from './programs/spsf-milsnabb.json';
 import spsfPrecisionProgram from './programs/spsf-precision.json';
 import { GENERIC_SHOOTER_CLASSES, SPSF_SHOOTER_CLASSES, type ShooterClass } from './classes';
-import { findWeaponGroup, type WeaponGroup } from './groups';
+import { GENERIC_WEAPON_GROUPS, findWeaponGroup, type WeaponGroup } from './groups';
 import { disciplineSchema, programSchema, type Discipline, type Program } from './schema';
 
 export * from './schema';
@@ -109,7 +109,8 @@ export function weaponGroupsForDiscipline(disciplineId: string): readonly Weapon
 
 /**
  * Vapengrupper a session could actually be logged under — the union of every
- * implemented discipline's groups, plus the generic ones.
+ * implemented discipline's groups, plus the generic ones, which are appended
+ * explicitly because no discipline declares them.
  *
  * `SPSF_WEAPON_GROUPS` is the full SHB taxonomy, which is wider than what v1
  * implements: the magnum groups M1-M9 belong to Magnumprecision (SHB Part G),
@@ -130,6 +131,16 @@ export function selectableWeaponGroups(): readonly WeaponGroup[] {
       seen.add(group.id);
       groups.push(group);
     }
+  }
+  // Explicitly, not via a discipline. The generic groups belong to the firearm
+  // rather than to any discipline's rules, and deriving them from DISCIPLINES
+  // made `generic:airgun` vanish from the firearm form the moment the practice
+  // discipline stopped declaring it — taking the firearms already assigned to
+  // it with it.
+  for (const group of GENERIC_WEAPON_GROUPS) {
+    if (seen.has(group.id)) continue;
+    seen.add(group.id);
+    groups.push(group);
   }
   return groups;
 }

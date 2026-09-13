@@ -341,7 +341,10 @@ export default function NewSessionScreen() {
           value={disciplineId}
           onChange={onSelectDiscipline}
         />
-        {kind === 'series' && (
+        {/* A discipline with no programs of its own would render a picker whose
+            only option is "no program" — a choice that is not one. The
+            practice discipline is the case. */}
+        {kind === 'series' && programs.length > 0 && (
           <>
             <View style={styles.headerRow}>
               <ThemedText type="smallBold" style={styles.headerLabel}>
@@ -405,47 +408,51 @@ export default function NewSessionScreen() {
 
       {/* A federation defines vapengrupper and klasser, or events — never both.
           Rendering a picker with nothing in it printed an empty "Weapon Group"
-          and a "Class: None" on every ISSF session. */}
-      <Card>
-        {groups.length > 0 && (
-          <OptionPicker
-            label={t('session.weaponGroup')}
-            options={toOptions(
-              groups.map((g) => ({ value: g.id, label: g.code })),
-              'group',
-            )}
-            value={weaponGroup}
-            onChange={onSelectWeaponGroup}
-          />
-        )}
-        {allClasses.length > 0 && (
-          <OptionPicker
-            label={t('session.shooterClass')}
-            options={toOptions(
-              classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
-              'class',
-            )}
-            value={shooterClass}
-            onChange={setShooterClass}
-            emptyLabel={t('session.none')}
-          />
-        )}
-        {events.length > 0 && (
-          <OptionPicker
-            label={t('session.event')}
-            options={toOptions(
-              events.map((event) => ({
-                value: event.id,
-                label: t(`eventCategory.${categoryKey(event.category)}`),
-              })),
-              'event',
-            )}
-            value={eventId}
-            onChange={setEventId}
-            emptyLabel={t('session.none')}
-          />
-        )}
-      </Card>
+          and a "Class: None" on every ISSF session. The CARD needs the same
+          guard as the pickers: the practice discipline has none of the three,
+          and an always-rendered card left an empty box floating in the form. */}
+      {(groups.length > 0 || allClasses.length > 0 || events.length > 0) && (
+        <Card>
+          {groups.length > 0 && (
+            <OptionPicker
+              label={t('session.weaponGroup')}
+              options={toOptions(
+                groups.map((g) => ({ value: g.id, label: g.code })),
+                'group',
+              )}
+              value={weaponGroup}
+              onChange={onSelectWeaponGroup}
+            />
+          )}
+          {allClasses.length > 0 && (
+            <OptionPicker
+              label={t('session.shooterClass')}
+              options={toOptions(
+                classes.map((code) => ({ value: code, label: formatShooterClass(code) })),
+                'class',
+              )}
+              value={shooterClass}
+              onChange={setShooterClass}
+              emptyLabel={t('session.none')}
+            />
+          )}
+          {events.length > 0 && (
+            <OptionPicker
+              label={t('session.event')}
+              options={toOptions(
+                events.map((event) => ({
+                  value: event.id,
+                  label: t(`eventCategory.${categoryKey(event.category)}`),
+                })),
+                'event',
+              )}
+              value={eventId}
+              onChange={setEventId}
+              emptyLabel={t('session.none')}
+            />
+          )}
+        </Card>
+      )}
 
       <Card>
         <OptionPicker

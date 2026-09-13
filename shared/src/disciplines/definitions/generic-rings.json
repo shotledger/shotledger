@@ -2,12 +2,12 @@
   "id": "generic-rings",
   "federation": "generic",
   "name": {
-    "sv": "Fri träning (ringtavla)",
-    "en": "Free Training (Ring Target)"
+    "sv": "Träning (ringtavla)",
+    "en": "Practice (Ring Target)"
   },
   "targetFace": "generic-rings",
   "defaultSeriesLength": 10,
   "scoring": "rings",
   "allowsDecimal": true,
-  "weaponGroups": ["generic:airgun"]
+  "weaponGroups": []
 }
