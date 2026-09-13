@@ -96,6 +96,16 @@ means a series meeting the guld requirement.)
 Age reduction: **−1 p/series** from the year after turning 55;
 **−2 p/series** from the year after turning 65.
 
+**Practice series count.** A qualifying series does not have to be shot in
+competition — training counts towards the märkesprov. Maintainer ruling,
+2026-09-13, in answer to a direct question; no page citation was given, so this
+is the one entry here sourced from the maintainer rather than from SHB. Upgrade
+it to a citation if one turns up.
+
+This is why `guldserieCount()` applies no session-type filter, and why a
+training session must keep carrying a vapengrupp even if the form stops asking
+for one (issue #117) — the märke reads the gun, not the klass.
+
 ## Standardmedalj
 
 Two paths (C.5.1.2 pp. 70–71), mixable: (a) placement — silver to best
