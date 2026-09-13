@@ -503,6 +503,7 @@
     "regulation": "Regulation",
     "discipline": "Discipline",
     "program": "Program",
+    "programInfo": "A program is the shot program inside a discipline: how many shots each series holds, whether the score is whole points or decimals, and whether the match has a final.\n\nChoose Free Training when you are shooting the discipline without a fixed format. The series are the discipline's normal length — five shots in precision — but the session is logged as training rather than as a match, and no final is offered.\n\nChoose the named program when you are shooting that format. One with a fixed structure lays the series out for you: militär snabbmatch arrives with a sighter series and twelve scoring series at 10, 8 and 6 seconds.",
     "freeTraining": "Free Training",
     "competitionLevel": "Competition Level",
     "championship": "Championship",
