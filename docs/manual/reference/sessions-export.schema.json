@@ -1,37 +1,45 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://jimisola.github.io/shotledger/reference/sessions-export.schema.json",
+  "$comment": "Generated from shared/src/json-export/types.ts by scripts/generate-export-schema.mjs. Do not hand-edit: `pnpm schema:check` fails when this file and that source disagree.",
   "title": "ShotLedger sessions export",
-  "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\" and the current `formatVersion` is 1. An importer must refuse a higher formatVersion rather than dropping fields it does not understand.",
+  "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\". An importer must refuse a higher `formatVersion` rather than dropping fields it does not understand. This URL always describes the CURRENT format version, today 1; pin https://jimisola.github.io/shotledger/reference/v1/sessions-export.schema.json instead if you need it to stay put.",
   "type": "object",
   "properties": {
     "format": {
       "type": "string",
-      "const": "shotledger.sessions"
+      "const": "shotledger.sessions",
+      "description": "Identifies the file. Always `shotledger.sessions`."
     },
     "formatVersion": {
       "type": "integer",
-      "minimum": 1,
-      "maximum": 9007199254740991
+      "description": "Bumped only for a breaking change. An importer must refuse a higher version rather than dropping fields it does not understand.",
+      "const": 1
     },
     "generatedAt": {
-      "type": "string"
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+      "description": "When the file was written, ISO 8601."
     },
     "app": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The application that wrote the file."
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "That application's version."
         }
       },
       "required": [
         "name",
         "version"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "What wrote the file — for support, never for import decisions."
     },
     "sessions": {
       "type": "array",
@@ -40,51 +48,61 @@
         "properties": {
           "id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Stable id of the session. An import matches on this to update rather than duplicate."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The session's display name."
           },
           "type": {
             "type": "string",
             "enum": [
               "training",
               "competition"
-            ]
+            ],
+            "description": "Whether the session was training or a competition."
           },
           "disciplineId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Discipline id, e.g. `spsf-precision`. Free text: an import may name one this build does not define."
           },
           "programId": {
+            "description": "Shot-program id within the discipline, or null for no fixed format.",
             "type": [
               "string",
               "null"
             ]
           },
           "competitionLevel": {
+            "description": "Competition level (forening, krets, landsdel, national, riks), or null for training.",
             "type": [
               "string",
               "null"
             ]
           },
           "isChampionship": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the competition was a mästerskap — KM, DM, SM. A flag on the level, not a level of its own."
           },
           "competitionName": {
+            "description": "The event's own name, if it had one.",
             "type": [
               "string",
               "null"
             ]
           },
           "weaponGroup": {
+            "description": "Federation-scoped vapengrupp id, e.g. `spsf:C`. A training session takes this from its firearm rather than being asked; null when it could not be determined.",
             "type": [
               "string",
               "null"
             ]
           },
           "shooterClass": {
+            "description": "Klass the shooter entered under, e.g. `2` or `VetY`. Null on a training session — klass is a competition entry attribute.",
             "type": [
               "string",
               "null"
@@ -92,18 +110,21 @@
           },
           "eventId": {
             "default": null,
+            "description": "ISSF event id, `<disciplineId>:<gender>:<age>`. Null for a discipline whose category rides on the klass instead, and for training sessions.",
             "type": [
               "string",
               "null"
             ]
           },
           "firearm": {
+            "description": "`\"{make} {model}\"`, or null if the session has no firearm.",
             "type": [
               "string",
               "null"
             ]
           },
           "ammoLot": {
+            "description": "The ammunition lot's label, or null.",
             "type": [
               "string",
               "null"
@@ -111,22 +132,27 @@
           },
           "startedAt": {
             "type": "string",
-            "minLength": 1
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the session started, ISO 8601."
           },
           "location": {
+            "description": "Where it was shot, as free text.",
             "type": [
               "string",
               "null"
             ]
           },
           "notes": {
+            "description": "The session's notes.",
             "type": [
               "string",
               "null"
             ]
           },
           "decimalScoring": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether scores are decimal. Affects how `valueTenths` reads, never what it stores."
           },
           "extraRounds": {
             "anyOf": [
@@ -138,13 +164,15 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Rounds fired but never scored — the whole shot count of a rounds-only session."
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "The session's tags."
           },
           "series": {
             "type": "array",
@@ -154,13 +182,16 @@
                 "position": {
                   "type": "integer",
                   "minimum": 1,
-                  "maximum": 9007199254740991
+                  "maximum": 9007199254740991,
+                  "description": "1-based position of the series within its session."
                 },
                 "isSighter": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "description": "A sighter (provserie) is shot but not counted towards the session total."
                 },
                 "isFinal": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "description": "Whether the series belongs to a championship final."
                 },
                 "shots": {
                   "type": "array",
@@ -170,15 +201,18 @@
                       "position": {
                         "type": "integer",
                         "minimum": 1,
-                        "maximum": 9007199254740991
+                        "maximum": 9007199254740991,
+                        "description": "1-based position of the shot within its series."
                       },
                       "valueTenths": {
                         "type": "integer",
                         "minimum": 0,
-                        "maximum": 109
+                        "maximum": 109,
+                        "description": "Score in tenths of a point, so a decimal 10.9 is 109 and a whole 9 is 90. A miss is 0."
                       },
                       "isInnerTen": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Whether the shot counts as an inner ten (X), used for tie-breaks."
                       }
                     },
                     "required": [
@@ -187,7 +221,8 @@
                       "isInnerTen"
                     ],
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The shots of this series, in the order they were entered."
                 }
               },
               "required": [
@@ -197,7 +232,8 @@
                 "shots"
               ],
               "additionalProperties": false
-            }
+            },
+            "description": "The series of this session, in order."
           }
         },
         "required": [
@@ -222,8 +258,10 @@
           "tags",
           "series"
         ],
-        "additionalProperties": false
-      }
+        "additionalProperties": false,
+        "title": "Session"
+      },
+      "description": "The exported sessions. Typed loosely by the parser on purpose, so one bad session is rejected on its own rather than failing the whole file; the real shape is documented here."
     }
   },
   "required": [
@@ -233,5 +271,55 @@
     "app",
     "sessions"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "examples": [
+    {
+      "format": "shotledger.sessions",
+      "formatVersion": 1,
+      "generatedAt": "2026-09-13T09:41:00.000Z",
+      "app": {
+        "name": "ShotLedger",
+        "version": "1.0.0"
+      },
+      "sessions": [
+        {
+          "id": "ses_7Qn2",
+          "name": "Precision — 13 Sep 2026",
+          "type": "training",
+          "disciplineId": "spsf-precision",
+          "programId": null,
+          "competitionLevel": null,
+          "isChampionship": false,
+          "competitionName": null,
+          "weaponGroup": "spsf:C",
+          "shooterClass": null,
+          "eventId": null,
+          "firearm": "Pardini SP",
+          "ammoLot": null,
+          "startedAt": "2026-09-13T08:00:00.000Z",
+          "location": "Klubbanan",
+          "notes": null,
+          "decimalScoring": false,
+          "extraRounds": null,
+          "tags": [
+            "träning"
+          ],
+          "series": [
+            {
+              "position": 1,
+              "isSighter": true,
+              "isFinal": false,
+              "shots": [
+                {
+                  "position": 1,
+                  "valueTenths": 90,
+                  "isInnerTen": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
