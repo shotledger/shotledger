@@ -18,7 +18,7 @@ upp något.
 - **Sparar skjutaktiviteten** som en svensk skytt behöver vid förnyelse av
   vapenlicens.
 - **Tar tid på ditt skjutande** — en tidsgränstimer, en IPSC-liknande
-  skotttimer och SPSF:s fälttimer med talade kommandon.
+  skottimer och SPSF:s fälttimer med talade kommandon.
 
 ## Vad den inte är
 
