@@ -784,6 +784,7 @@
       "medium": "Mellan",
       "high": "Hög"
     },
+    "shotDetection": "Skottdetektering",
     "triggerLevel": "Utlösningsnivå",
     "triggerLevelDb": "{{value}} dBFS",
     "sensitivityHint": "Högre känslighet (en nivå längre från 0) fångar tystare skott, men också mer bakgrundsljud. Prova Hög för .22 eller inomhus, Låg bredvid en livlig skjutlinje — eller använd mätaren nedan för att ställa in mot ditt eget skotts topp.",

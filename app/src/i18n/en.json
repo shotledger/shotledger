@@ -784,6 +784,7 @@
       "medium": "Medium",
       "high": "High"
     },
+    "shotDetection": "Shot Detection",
     "triggerLevel": "Trigger Level",
     "triggerLevelDb": "{{value}} dBFS",
     "sensitivityHint": "Higher sensitivity (a level further from 0) picks up quieter shots, but also more background noise. Try High for .22 or indoors, Low next to a busy firing line — or use the live meter below to set it against your own shot's peak.",
