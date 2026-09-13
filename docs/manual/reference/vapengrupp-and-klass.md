@@ -14,15 +14,15 @@ shooting the C-gun?" and "how am I doing in klass 2?" independently.
 
 ## Vapengrupper
 
-| Code                   | What it is                                                                   |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| **A**                  | Centrefire, 7.6–11.4 mm, 420–600 J                                           |
-| **AM**, **AP**, **AG** | Sub-groups of A — pre-1945 military, Walther PP/PPK 7.65, Glock fixed sights |
-| **A-opt**              | A with an optical sight                                                      |
-| **B**                  | Centrefire pistol or revolver, up to 600 J                                   |
-| **C**                  | .22 LR only                                                                  |
-| **R**                  | Large-calibre revolver — fält and militär snabbmatch only, never precision   |
-| **airgun**             | Air pistol; used by ISSF events and general practice, not an SPSF group      |
+| Code                   | What it is                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| **A**                  | Centrefire, 7.6–11.4 mm, 420–600 J                                            |
+| **AM**, **AP**, **AG** | Sub-groups of A — pre-1945 military, Walther PP/PPK 7.65, Glock fixed sights  |
+| **A-opt**              | A with an optical sight                                                       |
+| **B**                  | Centrefire pistol or revolver, up to 600 J                                    |
+| **C**                  | .22 LR only                                                                   |
+| **R**                  | Large-calibre revolver — fält and militär snabbmatch only, never precision    |
+| **airgun**             | Air pistol. Not an SPSF group — you set it on the firearm, never on a session |
 
 Magnum groups M1–M9 exist in the SPSF rules but are not offered, because
 Magnumprecision is not a discipline the app implements yet. They would appear
@@ -90,7 +90,13 @@ rank-don't-gate rule as for klasser.
 | SPSF precision          | A, AM, AP, AG, A-opt, B, C            |
 | SPSF militär snabbmatch | A, A-opt, B, C, R                     |
 | ISSF events             | none — ISSF does not use vapengrupper |
-| Practice (rings)        | airgun                                |
+| Practice (Ring Target)  | none — see below                      |
+
+**Practice has no vapengrupp.** A vapengrupp is how SPSF sorts guns into
+competition classes, so it means nothing on a practice session that belongs to
+no federation. The app asks you for the gun instead, and the gun carries its own
+group — which is why _airgun_ is still there to choose when you add an air
+pistol to your firearms.
 
 ## You hold several klasser at once
 

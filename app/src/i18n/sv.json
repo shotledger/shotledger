@@ -504,7 +504,7 @@
     "discipline": "Gren",
     "program": "Program",
     "programInfo": "Ett program är skjutprogrammet inom en gren: hur många skott varje serie rymmer, om poängen är hela eller decimaler och om matchen har en final.\n\nVälj fri träning när du skjuter grenen utan fast format. Serierna har grenens vanliga längd — fem skott i precision — men passet loggas som träning i stället för som match, och ingen final erbjuds.\n\nVälj det namngivna programmet när du skjuter det formatet. Ett med fast struktur lägger upp serierna åt dig: militär snabbmatch kommer med en provserie och tolv tävlingsserier på 10, 8 och 6 sekunder.",
-    "freeTraining": "Fri träning",
+    "freeTraining": "Fritt format",
     "competitionLevel": "Tävlingsnivå",
     "championship": "Mästerskap",
     "competitionName": "Tävlingens namn",
@@ -650,7 +650,7 @@
   "discipline": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch",
-    "generic-rings": "Fri träning (ringtavla)"
+    "generic-rings": "Träning (ringtavla)"
   },
   "program": {
     "spsf-precision": "Precision",

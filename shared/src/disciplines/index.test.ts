@@ -303,8 +303,21 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     }
   });
 
-  it('generic ships the airgun group only', () => {
-    expect(weaponGroupsForDiscipline('generic-rings').map((g) => g.id)).toEqual(['generic:airgun']);
+  it('the practice discipline declares no vapengrupp', () => {
+    // Vapengrupp is an SPSF classification. The practice discipline belongs to
+    // no federation, so it has none to declare and the session form hides the
+    // picker — the same as every ISSF discipline. The gun itself is still
+    // recorded by the firearm field.
+    expect(weaponGroupsForDiscipline('generic-rings')).toEqual([]);
+  });
+
+  it('still offers the generic groups on the FIREARM form, which no discipline declares', () => {
+    // The regression guard for the trap this change walked into:
+    // selectableWeaponGroups() derived its list from DISCIPLINES alone, so the
+    // moment the practice discipline stopped declaring `generic:airgun` the
+    // group vanished from the firearm form and orphaned every firearm already
+    // assigned to it.
+    expect(selectableWeaponGroups().map((g) => g.id)).toContain('generic:airgun');
   });
 
   it('an unknown discipline has no groups to offer', () => {
@@ -563,12 +576,13 @@ describe('weaponGroupsForRegulations', () => {
     expect(codes).toContain('R');
   });
 
-  it('offers no SPSF groups to an SvSF-only shooter', () => {
-    // ISSF ships events, not vapengrupper — so this list is the generic one.
-    const codes = weaponGroupsForRegulations(['svsf']).map((g) => g.code);
-
-    expect(codes).not.toContain('C');
-    expect(codes).toContain('airgun');
+  it('offers no vapengrupp at all to an SvSF-only shooter', () => {
+    // ISSF ships events, not vapengrupper, and the practice discipline now
+    // declares none either — so a shooter under SvSF alone has no vapengrupp
+    // to choose on a session. Empty is the honest answer, not a gap:
+    // `selectableWeaponGroups()` still offers the generic groups on the
+    // firearm form, which is where the gun is described.
+    expect(weaponGroupsForRegulations(['svsf'])).toEqual([]);
   });
 
   it('never lists a group twice when two disciplines share it', () => {
