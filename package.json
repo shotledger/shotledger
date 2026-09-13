@@ -20,7 +20,8 @@
     "mutation:webshooter-schema": "node scripts/mutate-webshooter-schema.mjs",
     "gauntlet": "pnpm typecheck && pnpm lint && pnpm format && pnpm coverage && (cd app && pnpm exec jest --passWithNoTests) && pnpm mutation && pnpm mutation:schema && pnpm mutation:webshooter-schema",
     "schema:generate": "node scripts/generate-export-schema.mjs",
-    "schema:check": "node scripts/generate-export-schema.mjs --check"
+    "schema:check": "node scripts/generate-export-schema.mjs --check",
+    "docs:translations": "node scripts/docs-translation-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

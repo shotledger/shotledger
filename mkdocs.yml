@@ -34,7 +34,10 @@ theme:
   icon:
     repo: fontawesome/brands/github
   features:
-    - navigation.instant
+    # navigation.instant is deliberately absent: it is incompatible with the
+    # language switcher's contextual link, which is what makes "switch to
+    # Swedish" land on the SAME page rather than on the Swedish home page.
+    # Staying where you are matters more than SPA-style page loads.
     - navigation.tracking
     - navigation.sections
     - navigation.top
@@ -76,7 +79,48 @@ markdown_extensions:
   - pymdownx.superfences
 
 plugins:
-  - search
+  # i18n must come BEFORE search: it registers the per-language file set that
+  # search then indexes, and the plugin's own docs are explicit about the order.
+  - i18n:
+      docs_structure: suffix
+      # A page with no `.sv.md` serves the English one rather than 404ing, so
+      # the translation can land page by page instead of as one 15-file commit.
+      fallback_to_default: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: sv
+          name: Svenska
+          build: true
+          site_description: >-
+            En fri skytteloggbok för pistolskyttar — logga pass skott för skott,
+            räkna tavlor från ett foto och håll den skjutaktivitet som
+            licensförnyelsen kräver.
+          nav_translations:
+            Home: Start
+            Getting started: Kom igång
+            Guides: Guider
+            Regulations: Reglementen
+            Logging a session: Logga ett pass
+            Scoring from a photo: Räkna från foto
+            Timers: Timers
+            Firearms and ammunition: Vapen och ammunition
+            Licence activity: Skjutaktivitet
+            External sites: Externa webbplatser
+            Webshooter: Webshooter
+            The Vault: Valvet
+            Exporting sessions: Exportera pass
+            Backup and restore: Säkerhetskopiering
+            Reference: Referens
+            Vapengrupp and klass: Vapengrupp och klass
+            Glossary: Ordlista
+            Your data and privacy: Dina data och integritet
+  - search:
+      lang:
+        - en
+        - sv
 
 nav:
   - Home: index.md

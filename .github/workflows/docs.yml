@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          # The translation check compares git commit times, so it needs more
+          # than the default single commit.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v7.0.0
         with:
@@ -40,6 +44,12 @@ jobs:
 
       - name: Install the documentation toolchain
         run: pip install -r docs/requirements.txt
+
+      # `--strict` cannot see a translation that has fallen behind its English
+      # source: stale Swedish is valid markdown. This can, and it needs the git
+      # history, hence fetch-depth 0 on the checkout above.
+      - name: Check translations are not stale
+        run: node scripts/docs-translation-check.mjs
 
       # The same gate contributors run locally. `--strict` fails the build on a
       # broken internal link, so a bad cross-reference never reaches the site —
