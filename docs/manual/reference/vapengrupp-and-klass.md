@@ -92,6 +92,19 @@ rank-don't-gate rule as for klasser.
 | ISSF events             | none — ISSF does not use vapengrupper |
 | Practice (Ring Target)  | none — see below                      |
 
+## Only competitions ask you
+
+A vapengrupp and a klass are what you are **entered under**, so the app asks for
+them when the session is a competition and not otherwise.
+
+A training session still carries a vapengrupp — it is taken from the firearm you
+picked, so the pistolskyttemärke keeps counting your practice series — and it
+records no klass. If a gun is in more than one vapengrupp and none of them is
+marked as its default, the app asks rather than guessing.
+
+You can still correct either one afterwards: editing a session shows whatever it
+has stored.
+
 **Practice has no vapengrupp.** A vapengrupp is how SPSF sorts guns into
 competition classes, so it means nothing on a practice session that belongs to
 no federation. The app asks you for the gun instead, and the gun carries its own
