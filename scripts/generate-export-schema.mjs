@@ -34,7 +34,13 @@ const generated = z.toJSONSchema(envelopeSchema, { io: 'output' });
 // right at runtime and useless in a published schema — it documented a
 // session as `{}`. Splice the real session shape back in for the DOCUMENT
 // only; the parser keeps its loose envelope.
-generated.properties.sessions.items = z.toJSONSchema(sessionExportSchema, { io: 'output' });
+const sessionSchema = z.toJSONSchema(sessionExportSchema, { io: 'output' });
+// `toJSONSchema` emits `$schema` at the root of whatever it is handed, and
+// this one is not a root: 2020-12 §8.1.1 allows the dialect keyword only on a
+// document root or an embedded resource, and an embedded resource needs an
+// `$id`. Left in, it declares a dialect for a subschema that cannot have one.
+delete sessionSchema.$schema;
+generated.properties.sessions.items = sessionSchema;
 
 const schema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
