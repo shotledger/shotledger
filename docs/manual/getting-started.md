@@ -1,19 +1,43 @@
 # Getting started
 
-This is the order you would do things at the range, on your first visit with
-the app.
+## The short version
 
-## 1. Add the firearm you are shooting
+You can log a session the minute you install the app. Nothing has to be set up
+first.
 
-**Firearms → add.** At minimum it needs a make and model. What makes the rest
-of the app work properly is the **vapengrupp** — whether this is your A-gun,
-your C-gun, and so on — because that is what links a session to the right
-program and the right competition class.
+1. **Home → new session.** Pick a discipline. Everything else on the form has a
+   sensible default.
+2. **Tap a series, tap the shots.** The keypad advances on its own, so a
+   five-shot series is five taps.
+3. That is it. It is saved as you go.
+
+Then, when you have five quiet minutes, do the rest below — it is what turns a
+list of scores into a logbook that knows which klass you shot in.
+
+And whenever you get round to it, make a backup. Everything lives on your phone
+by default: no account, no server, nothing to leak — and a lost phone is a lost
+logbook unless you have a copy. **Settings → Backup**, and keep the file
+somewhere that is not the phone. See
+[Backup and restore](guides/backup-and-restore.md).
+
+## The full setup
+
+This is the order you would do things at the range, on your first visit.
+
+### 1. Add the firearm you are shooting
+
+**Firearms → add.** At minimum it needs a make and model.
+
+A session does not require a firearm — leave it as **None** and the session
+still logs, scores and counts normally. What naming the firearm buys you is its
+**vapengrupp** — whether this is your A-gun, your C-gun, and so on — which is
+what lets the app offer the right klasser, apply the right märke thresholds,
+and keep a round count per gun.
 
 If you handload, you can add ammunition later; nothing here blocks you from
 shooting.
 
-## 2. Tell it about you
+### 2. Tell it about you
 
 **Settings** wants three things, and then stops asking:
 
@@ -28,7 +52,7 @@ shooting.
 From those three the app works out every klass you are eligible for, preselects
 your own, and stops asking you every session. You can always override it.
 
-## 3. Start a session
+### 3. Start a session
 
 **Home → new session.** You choose:
 
@@ -44,11 +68,12 @@ your own, and stops asking you every session. You can always override it.
   but the session is logged as training rather than as a match. The ⓘ beside
   the heading says the same in the app.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
+  Both are optional.
 
 A session created from a fixed program arrives with its series already laid
 out, so you are not building the scaffolding while the line is waiting.
 
-## 4. Enter shots as you shoot
+### 4. Enter shots as you shoot
 
 Tap the series, tap the shots. The keypad advances on its own, so a five-shot
 series is five taps and nothing else.
@@ -56,19 +81,9 @@ series is five taps and nothing else.
 You can leave a series half-entered, walk to the target, and come back to it.
 Everything is saved as you go — there is no "save" button to forget.
 
-## 5. Look at it afterwards
+### 5. Look at it afterwards
 
 **Statistics** shows how you are trending. **Home** shows your recent sessions.
 
 If your licence renewal needs documented range activity, turn on the Swedish
 compliance profile in Settings and see [Licence activity](guides/licence-activity.md).
-
-## The one thing worth doing early
-
-Make a backup. **Settings → Backup**, choose where it goes, and keep the file
-somewhere that is not the phone. See
-[Backup and restore](guides/backup-and-restore.md).
-
-Everything lives on your phone by default. That is a feature — no account, no
-server, nothing to leak — and it means a lost phone is a lost logbook unless
-you have a copy.

@@ -132,7 +132,8 @@ nav:
       - Timers: guides/timers.md
       - Firearms and ammunition: guides/firearms-and-ammunition.md
       - Licence activity: guides/licence-activity.md
-      - Webshooter: guides/webshooter.md
+      - External sites:
+          - Webshooter: guides/webshooter.md
       - The Vault: guides/vault.md
       - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
