@@ -227,7 +227,7 @@ export default function EditSessionScreen() {
             <OptionPicker
               label={t('session.weaponGroup')}
               options={toOptions(
-                groups.map((g) => ({ value: g.id, label: g.code })),
+                groups.map((g) => ({ value: g.id, label: g.label })),
                 'edit-group',
               )}
               value={weaponGroup}

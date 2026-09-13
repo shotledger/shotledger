@@ -15,7 +15,7 @@ import {
   selectableWeaponGroups,
   shouldNotifyMaintenanceDue,
   sightTurnsBetween,
-  weaponGroupCode,
+  weaponGroupLabel,
   type ParsedLicenseCard,
   type WeaponGroup,
 } from '@shotledger/shared';
@@ -165,7 +165,7 @@ export default function FirearmDetailScreen() {
 
   const usedGroupIds = new Set(detail.groups.map((g) => g.groupId));
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
-  const newGroupCode = availableGroups.find((g) => g.id === newGroupId)?.code ?? null;
+  const newGroupLabel = availableGroups.find((g) => g.id === newGroupId)?.label ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
@@ -506,13 +506,13 @@ export default function FirearmDetailScreen() {
           detail.groups.map((group) => (
             <ListRow
               key={group.id}
-              title={weaponGroupCode(group.groupId)}
+              title={weaponGroupLabel(group.groupId)}
               // Scoped on purpose: a firearm can be the default for several
               // groups, so two rows each reading a bare "Default" looked like
               // a bug (maintainer, third review).
               subtitle={
                 group.isDefaultForGroup
-                  ? t('firearms.defaultForGroup', { group: weaponGroupCode(group.groupId) })
+                  ? t('firearms.defaultForGroup', { group: weaponGroupLabel(group.groupId) })
                   : undefined
               }
               onPress={group.isDefaultForGroup ? undefined : () => onSetDefaultGroup(group.id)}
@@ -531,7 +531,7 @@ export default function FirearmDetailScreen() {
               label={t('firearms.group')}
               options={availableGroups.map((g) => ({
                 value: g.id,
-                label: g.code,
+                label: g.label,
                 testID: `pick-group-${g.id}`,
               }))}
               value={newGroupId}
@@ -539,8 +539,8 @@ export default function FirearmDetailScreen() {
             />
             <View style={styles.switchRow}>
               <ThemedText type="small">
-                {newGroupCode
-                  ? t('firearms.defaultForGroup', { group: newGroupCode })
+                {newGroupLabel
+                  ? t('firearms.defaultForGroup', { group: newGroupLabel })
                   : t('firearms.defaultForThisGroup')}
               </ThemedText>
               <Switch value={newGroupDefault} onValueChange={setNewGroupDefault} />

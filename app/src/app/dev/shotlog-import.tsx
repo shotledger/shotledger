@@ -105,7 +105,7 @@ export default function ShotlogImportScreen() {
       })),
       ...SPSF_WEAPON_GROUPS.map((group) => ({
         value: `group|${group.id}|`,
-        label: t('shotlog.role.weaponGroup', { code: group.code }),
+        label: t('shotlog.role.weaponGroup', { code: group.label }),
       })),
     ];
   }
@@ -270,7 +270,7 @@ export default function ShotlogImportScreen() {
                         label={t('session.weaponGroup')}
                         options={SPSF_WEAPON_GROUPS.map((group) => ({
                           value: group.id,
-                          label: group.code,
+                          label: group.label,
                         }))}
                         value={row.suggestion.weaponGroup}
                         onChange={(value) => editRow(row.line, { weaponGroup: value })}
