@@ -748,11 +748,12 @@
   "timer": {
     "title": "Tidtagning",
     "fields": {
-      "parSeconds": "Skjuttid (s)",
-      "readyDelaySeconds": "Laddningstid (s)",
+      "timeLimit": "Skjuttid",
+      "readyDelay": "Laddningstid",
       "reps": "Repetitioner",
-      "restSeconds": "Vila mellan repetitioner (s)"
+      "rest": "Vila mellan repetitioner"
     },
+    "seconds": "{{value}} s",
     "start": "Starta",
     "stop": "Stoppa",
     "reset": "Nollställ",
