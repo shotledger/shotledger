@@ -327,3 +327,22 @@ app.shotledger` followed by a fresh `adb install` fixed it — something
   screen stops matching its source after any ANR or unexpected app exit to
   the launcher, don't trust further debugging on that install; uninstall
   and reinstall before spending more time on it.
+- **An emulator's dev client talks to `10.0.2.2:<port>` — the HOST loopback —
+  so `adb reverse` does not redirect it.** Pointing the emulator at a Metro on
+  another port by remapping the reverse silently does nothing; the app keeps
+  hitting whatever holds that port on the host. Either free the port and start
+  your own Metro on it, or rebuild with `-PreactNativeDevServerPort=<port>`.
+  `adb reverse` still matters for a USB-connected phone, which uses
+  `localhost`.
+- **A long-running Metro poisons its own resolution cache across a dependency
+  bump.** A Metro left up over a zod upgrade served `Unable to resolve module
+./schemas.js from .../zod/v4/classic/external.js` for a file that was
+  present on disk, while a freshly started Metro returned the identical bundle
+  URL at 200. `--clear` on the OLD process is not enough — start a new one, and
+  confirm with `curl` against the exact bundle URL before blaming the
+  dependency or reverting a merged bump.
+- **`mkdocs serve` does not pick up a newly installed plugin**, so a language
+  selector or nav change can be invisible in a server started before it.
+  Restart it. And never `pkill -f "mkdocs serve"` — the pattern matches the
+  shell running it and kills your own session; kill the PID, and list with
+  `ps -eo pid,args | grep … | grep -v grep` for the same reason.
