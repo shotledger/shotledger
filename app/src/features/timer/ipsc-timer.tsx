@@ -20,6 +20,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { RangeSlider } from '@/components/range-slider';
@@ -76,6 +77,10 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
   // Paused as soon as Start is pressed so the setup meter's recorder never
   // overlaps the run's own (both use the same underlying mic listener).
   const [meteringPaused, setMeteringPaused] = useState(false);
+  // Collapsed by default: the detection options are tuned once and then
+  // left alone, so they should not push the timer's own settings down the
+  // screen on every visit.
+  const [detectionOpen, setDetectionOpen] = useState(false);
 
   const update = useCallback(
     (patch: Partial<IpscTimerSettings>) => setSettings({ ...settings, ...patch }),
@@ -158,70 +163,79 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
           <TimerMenu />
         </View>
         <Card style={styles.form} testID="ipsc-settings">
-          <View style={styles.labelRow}>
-            <ThemedText type="smallBold" style={styles.flex}>
-              {t('ipscTimer.triggerLevel')}
-            </ThemedText>
-            <ThemedText type="smallBold" testID="ipsc-level-value">
-              {t('ipscTimer.triggerLevelDb', { value: thresholdDb })}
-            </ThemedText>
-          </View>
-          {/* The slider runs in sensitivity, not dBFS: the detector fires on
+          <DrillDownRow
+            title={t('ipscTimer.shotDetection')}
+            value={t('ipscTimer.triggerLevelDb', { value: thresholdDb })}
+            expanded={detectionOpen}
+            onPress={() => setDetectionOpen((open) => !open)}
+            testID="ipsc-detection-row"
+          />
+          {detectionOpen && (
+            <>
+              {/* The slider runs in sensitivity, not dBFS: the detector fires on
               `db >= threshold`, so a threshold near 0 demands a louder sound
               and is the LEAST sensitive end. Negating keeps "right is more
               sensitive", which is how the maintainer asked for it. */}
-          <Slider
-            value={-thresholdDb}
-            min={-MAX_TRIGGER_DB}
-            max={-MIN_TRIGGER_DB}
-            step={TRIGGER_DB_STEP}
-            onChange={(sensitivity) => update({ thresholdDb: -sensitivity })}
-            accessibilityLabel={t('ipscTimer.triggerLevel')}
-            testID="ipsc-level-slider"
-          />
-          <View style={styles.labelRow}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('ipscTimer.sensitivityLow')}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('ipscTimer.sensitivityHigh')}
-            </ThemedText>
-          </View>
-
-          <View style={styles.row} testID="ipsc-presets">
-            {SENSITIVITIES.map((preset) => (
-              <Pressable
-                key={preset}
-                onPress={() => update({ thresholdDb: SENSITIVITY_THRESHOLD_DB[preset] })}
-                testID={`ipsc-preset-${preset}`}
-              >
-                <Chip
-                  label={t(`ipscTimer.sensitivities.${preset}` as const)}
-                  tone={thresholdDb === SENSITIVITY_THRESHOLD_DB[preset] ? 'primary' : 'neutral'}
-                />
-              </Pressable>
-            ))}
-          </View>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('ipscTimer.sensitivityHint')}
-          </ThemedText>
-
-          {available ? (
-            <>
-              <ThemedText type="smallBold">{t('ipscTimer.liveMeter')}</ThemedText>
-              <LevelMeterBar
-                currentDb={currentDb}
-                peakDb={peakDb}
-                thresholdDb={thresholdDb}
-                testID="ipsc-level-meter"
+              <Slider
+                value={-thresholdDb}
+                min={-MAX_TRIGGER_DB}
+                max={-MIN_TRIGGER_DB}
+                step={TRIGGER_DB_STEP}
+                onChange={(sensitivity) => update({ thresholdDb: -sensitivity })}
+                accessibilityLabel={t('ipscTimer.triggerLevel')}
+                testID="ipsc-level-slider"
               />
-              <ThemedText type="small" themeColor="textSecondary" testID="ipsc-level-meter-hint">
-                {currentDb === null
-                  ? t('ipscTimer.liveMeterNeedsPermission')
-                  : t('ipscTimer.liveMeterHint')}
+              <View style={styles.labelRow}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('ipscTimer.sensitivityLow')}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('ipscTimer.sensitivityHigh')}
+                </ThemedText>
+              </View>
+
+              <View style={styles.row} testID="ipsc-presets">
+                {SENSITIVITIES.map((preset) => (
+                  <Pressable
+                    key={preset}
+                    onPress={() => update({ thresholdDb: SENSITIVITY_THRESHOLD_DB[preset] })}
+                    testID={`ipsc-preset-${preset}`}
+                  >
+                    <Chip
+                      label={t(`ipscTimer.sensitivities.${preset}` as const)}
+                      tone={
+                        thresholdDb === SENSITIVITY_THRESHOLD_DB[preset] ? 'primary' : 'neutral'
+                      }
+                    />
+                  </Pressable>
+                ))}
+              </View>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('ipscTimer.sensitivityHint')}
               </ThemedText>
+
+              {available ? (
+                <>
+                  <ThemedText type="smallBold">{t('ipscTimer.liveMeter')}</ThemedText>
+                  <LevelMeterBar
+                    currentDb={currentDb}
+                    peakDb={peakDb}
+                    thresholdDb={thresholdDb}
+                    testID="ipsc-level-meter"
+                  />
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    testID="ipsc-level-meter-hint"
+                  >
+                    {currentDb === null
+                      ? t('ipscTimer.liveMeterNeedsPermission')
+                      : t('ipscTimer.liveMeterHint')}
+                  </ThemedText>
+                </>
+              ) : null}
             </>
-          ) : null}
+          )}
 
           <View style={styles.labelRow}>
             <ThemedText type="smallBold" style={styles.flex}>
