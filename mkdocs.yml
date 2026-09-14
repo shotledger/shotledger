@@ -114,7 +114,7 @@ plugins:
             Exporting sessions: Exportera pass
             Backup and restore: Säkerhetskopiering
             Reference: Referens
-            Vapengrupp and klass: Vapengrupp och klass
+            Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
             Your data and privacy: Dina data och integritet
   - search:
@@ -138,6 +138,6 @@ nav:
       - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
   - Reference:
-      - Vapengrupp and klass: reference/vapengrupp-and-klass.md
+      - Weapon group and class: reference/weapon-group-and-class.md
       - Glossary: reference/glossary.md
       - Your data and privacy: reference/privacy.md

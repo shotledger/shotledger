@@ -2,9 +2,9 @@
 
 ## Firearms
 
-**Firearms → add.** Make and model identify it; the **vapengrupp** is what
-connects it to the rest of the app — see
-[Vapengrupp and klass](../reference/vapengrupp-and-klass.md).
+**Firearms → add.** Make and model identify it; the **weapon group** (sv
+_vapengrupp_) is what connects it to the rest of the app — see
+[Weapon group and class](../reference/weapon-group-and-class.md).
 
 A firearm accumulates:
 

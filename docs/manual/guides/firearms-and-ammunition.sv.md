@@ -4,7 +4,7 @@
 
 **Vapen → lägg till.** Fabrikat och modell identifierar vapnet; det är
 **vapengruppen** som kopplar det till resten av appen — se
-[Vapengrupp och klass](../reference/vapengrupp-and-klass.md).
+[Vapengrupp och klass](../reference/weapon-group-and-class.md).
 
 Till ett vapen samlas:
 

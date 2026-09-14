@@ -110,8 +110,8 @@ One session, one scored series of three shots:
 | `valueTenths` | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score. |
 | `isInnerTen`  | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                      |
 | `isSighter`   | A sighting series. It carries no shots here and does not count towards a total.                                                 |
-| `weaponGroup` | The federation-scoped id, e.g. `spsf:C`. See [Vapengrupp and klass](../reference/vapengrupp-and-klass.md).                      |
-| `eventId`     | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a klass instead.                   |
+| `weaponGroup` | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                  |
+| `eventId`     | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                   |
 | `firearm`     | The firearm's make and model as one string, or `null`. An export names equipment; it does not carry your firearms list.         |
 
 !!! note "What an export is not"

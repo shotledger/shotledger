@@ -14,7 +14,7 @@ sina egna begrepp.
 Event
 : Gren i ISSF:s mening — en gren skjuten i en kategori, till exempel
 10 m Air Pistol Women. ISSF lägger kategorin på grenen; SPSF lägger den på
-klassen. Se [Vapengrupp och klass](vapengrupp-and-klass.md).
+klassen. Se [Vapengrupp och klass](weapon-group-and-class.md).
 
 Category
 : Kategorin i en ISSF-gren — Men, Women, Junior. Motsvarar inte klass: en

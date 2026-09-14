@@ -1,18 +1,19 @@
-# Vapengrupp and klass
+# Weapon group and class
 
 Two independent things, and the app keeps them apart because they answer
 different questions.
 
-- **Vapengrupp** describes **the gun**. It changes when you pick up a different
-  pistol — an A-gun and a C-gun on the same day are two vapengrupper.
-- **Klass** describes **the shooter**. It is a property of you, and the same
-  all day whichever gun you are holding.
+- **Weapon group** (sv _vapengrupp_) describes **the gun**. It changes when you
+  pick up a different pistol — an A-gun and a C-gun on the same day are two
+  weapon groups.
+- **Class** (sv _klass_) describes **the shooter**. It is a property of you, and
+  the same all day whichever gun you are holding.
 
 Written together they look like one thing — "C 2" — but that is a display
 convention, not a value. Keeping them separate is what lets you ask "how am I
-shooting the C-gun?" and "how am I doing in klass 2?" independently.
+shooting the C-gun?" and "how am I doing in class 2?" independently.
 
-## Vapengrupper
+## Weapon groups
 
 | Code                   | What it is                                                                    |
 | ---------------------- | ----------------------------------------------------------------------------- |
@@ -28,7 +29,7 @@ Magnum groups M1–M9 exist in the SPSF rules but are not offered, because
 Magnumprecision is not a discipline the app implements yet. They would appear
 as options for a session you could not then create.
 
-## Klasser
+## Classes
 
 | Class                           | Who shoots it                             |
 | ------------------------------- | ----------------------------------------- |
@@ -40,18 +41,21 @@ as options for a session you could not then create.
 | **Vet Y**                       | Veteran yngre — from the year you turn 60 |
 | **Vet Ä**                       | Veteran äldre — from the year you turn 70 |
 
+The class names themselves stay Swedish, because that is what is written on
+the start list.
+
 The veteran classes go by the **year** you reach the age, not by your birthday,
 which is why the app asks for your birth year.
 
-Free training has no klass, and the app shows none rather than offering a
-"none" to pick. ISSF has no klass either — it uses **events** instead, which
+Free training has no class, and the app shows none rather than offering a
+"none" to pick. ISSF has no class either — it uses **events** instead, which
 the next section explains.
 
-## ISSF: events instead of klasser
+## ISSF: events instead of classes
 
 The two federations answer the same question in different places.
 
-- **SPSF** has one discipline with many klasser. Precision is precision; C 2,
+- **SPSF** has one discipline with many classes. Precision is precision; C 2,
   C Dam 2 and C Vet Y are entries inside it. The category rides on **you**.
 - **ISSF** has many events, each fixed to one category. 10 m Air Pistol runs
   as four separate events — men, men junior, women, women junior — and 25 m
@@ -59,7 +63,7 @@ The two federations answer the same question in different places.
   exists. The category rides on **the event**.
 
 So an ISSF or SvSF session asks you which **Event** it was, in the same place
-an SPSF session asks for your klass. It is one picker or the other, never
+an SPSF session asks for your class. It is one picker or the other, never
 both.
 
 | Discipline           | Events                               |
@@ -81,43 +85,43 @@ Juniors are not confined to junior events. Entering the senior event is normal
 and expected, and the Swedish federation says so outright: at SM for herrar, a
 herrjunior may take part. So the app lists **every** event for the discipline,
 puts the ones matching you first, and preselects the first of those — the same
-rank-don't-gate rule as for klasser.
+rank-don't-gate rule as for classes.
 
 ## Which groups each discipline allows
 
-| Discipline              | Groups                                |
-| ----------------------- | ------------------------------------- |
-| SPSF precision          | A, AM, AP, AG, A-opt, B, C            |
-| SPSF militär snabbmatch | A, A-opt, B, C, R                     |
-| ISSF events             | none — ISSF does not use vapengrupper |
-| Practice (Ring Target)  | none — see below                      |
+| Discipline              | Groups                                 |
+| ----------------------- | -------------------------------------- |
+| SPSF precision          | A, AM, AP, AG, A-opt, B, C             |
+| SPSF militär snabbmatch | A, A-opt, B, C, R                      |
+| ISSF events             | none — ISSF does not use weapon groups |
+| Practice (Ring Target)  | none — see below                       |
 
 ## Only competitions ask you
 
-A vapengrupp and a klass are what you are **entered under**, so the app asks for
-them when the session is a competition and not otherwise.
+A weapon group and a class are what you are **entered under**, so the app asks
+for them when the session is a competition and not otherwise.
 
-A training session still carries a vapengrupp — it is taken from the firearm you
-picked, so the pistolskyttemärke keeps counting your practice series — and it
-records no klass. If a gun is in more than one vapengrupp and none of them is
-marked as its default, the app asks rather than guessing.
+A training session still carries a weapon group — it is taken from the firearm
+you picked, so the pistolskyttemärke keeps counting your practice series — and
+it records no class. If a gun is in more than one weapon group and none of them
+is marked as its default, the app asks rather than guessing.
 
 You can still correct either one afterwards: editing a session shows whatever it
 has stored.
 
-**Practice has no vapengrupp.** A vapengrupp is how SPSF sorts guns into
+**Practice has no weapon group.** A weapon group is how SPSF sorts guns into
 competition classes, so it means nothing on a practice session that belongs to
 no federation. The app asks you for the gun instead, and the gun carries its own
 group — which is why _airgun_ is still there to choose when you add an air
 pistol to your firearms.
 
-## You hold several klasser at once
+## You hold several classes at once
 
-A klass is not one slot you sit in. The nine SPSF klasser are really two
+A class is not one slot you sit in. The nine SPSF classes are really two
 things at once:
 
 - **Your class** — 1, 2, or 3 (riksmästarklass). Earned, and one class across
-  all vapengrupper.
+  all weapon groups.
 - **Categories** — Jun, Dam 1/2/3, Vet Y, Vet Ä.
 
 So a woman of 62 in class 2, shooting C, may enter **C 2**, **C Dam 2** _and_
@@ -125,17 +129,17 @@ So a woman of 62 in class 2, shooting C, may enter **C 2**, **C Dam 2** _and_
 
 Two rules shape that (SHB F.2.1 and F.2.2, p. 163):
 
-- **The open classes really are open.** A shooter in dam-, junior- or
-  veteranklass may instead enter klass 1, 2 or 3 according to their
-  competence, in vapengrupp A, B or C. Entering your category class is
+- **The open classes really are open.** A shooter in a women's, junior or
+  veteran class may instead enter class 1, 2 or 3 according to their
+  competence, in weapon group A, B or C. Entering your category class is
   explicitly voluntary.
-- **Jun, Dam and Vet exist only in vapengrupp C.** Klass 1/2/3 run in A, B and
-  C, but there is no "A Dam 2" — so choosing an A-gun leaves you the open
+- **Jun, Dam and Vet exist only in weapon group C.** Class 1/2/3 run in A, B
+  and C, but there is no "A Dam 2" — so choosing an A-gun leaves you the open
   classes only. The app narrows the list by the gun you pick.
 
-One more, worth knowing before you enter two: within **vapengrupp C in
+One more, worth knowing before you enter two: within **weapon group C in
 precision the general rule is one class per competition** — Vet Y _and_
-klass 3 C together is not normally allowed.
+class 3 C together is not normally allowed.
 
 **Championships are the exception.** At SM, landsdels- or kretsmästerskap an
 organiser may permit a start in the open class as well as your own, and
@@ -144,7 +148,7 @@ so the app never stops you logging either start.
 
 Your class is the same whichever gun you shoot: _"Skytt hänförs till viss
 klass oavsett i vilken vapengrupp kompetensfordringarna uppfyllts"_ (F.2.2).
-Only klass 3 is qualified for in precision specifically.
+Only class 3 is qualified for in precision specifically.
 
 The app works out what it can and asks for the rest:
 
@@ -165,10 +169,10 @@ evening can put anyone in any class, and the app does not argue with you.
 
 ## Which regulation they come from
 
-Vapengrupper are defined by a federation, which is why their ids are
+Weapon groups are defined by a federation, which is why their ids are
 federation-scoped — `spsf:C` rather than a bare `C`. A second federation can
 define its own `C` without colliding with this one.
 
 Which of them you are offered depends on the regulations you have enabled; see
-[Regulations](../guides/regulations.md). ISSF ships events rather than
-vapengrupper, so an ISSF or SvSF session has no vapengrupp to choose.
+[Regulations](../guides/regulations.md). ISSF ships events rather than weapon
+groups, so an ISSF or SvSF session has no weapon group to choose.
