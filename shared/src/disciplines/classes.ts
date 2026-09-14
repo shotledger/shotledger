@@ -1,7 +1,7 @@
 // Klasser (the SHOOTER) — orthogonal to vapengrupp, never one string (§6.4a).
 // SHB 2026 F.2.1 p. 163, variants F.2.5. Display convention "C 2" is
 // F.2.6-F.2.7.
-import { weaponGroupCode } from './groups';
+import { weaponGroupLabel } from './groups';
 
 export type ShooterClass = string;
 
@@ -31,5 +31,5 @@ export function formatShooterClass(code?: string | null): string {
 
 /** Combined display, e.g. 'C 2'. Omits whichever half is missing. */
 export function formatGroupAndClass(groupId?: string | null, classCode?: string | null): string {
-  return [weaponGroupCode(groupId), formatShooterClass(classCode)].filter(Boolean).join(' ');
+  return [weaponGroupLabel(groupId), formatShooterClass(classCode)].filter(Boolean).join(' ');
 }

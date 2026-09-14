@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { weaponGroupCode } from '@shotledger/shared';
+import { weaponGroupLabel } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { listSeriesPhotos } from '@/db/queries/photos';
@@ -126,7 +126,7 @@ export default function PhotosScreen() {
       {facetRow('location', (value) => value)}
       {facetRow('disciplineId', (value) => disciplineLabel(t, value))}
       {facetRow('firearmId', (value) => firearmNames[value] ?? value)}
-      {facetRow('weaponGroup', (value) => weaponGroupCode(value))}
+      {facetRow('weaponGroup', (value) => weaponGroupLabel(value))}
 
       <ThemedText type="small" themeColor="textSecondary" testID="photos-count">
         {t('photos.count', { shown, total: all.length })}

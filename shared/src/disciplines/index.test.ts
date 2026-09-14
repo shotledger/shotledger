@@ -27,7 +27,7 @@ import {
   shooterClassesForDiscipline,
   weaponGroupsForRegulations,
   SPSF_WEAPON_GROUPS,
-  weaponGroupCode,
+  weaponGroupLabel,
   weaponGroupsForDiscipline,
 } from './index';
 
@@ -326,7 +326,7 @@ describe('weapon groups and classes (spec G10-G14)', () => {
 
   it('a data file naming a group that does not exist is a hard error', () => {
     expect(resolveWeaponGroupIds(['spsf:C'], 'test')).toEqual([
-      { id: 'spsf:C', code: 'C', federation: 'SPSF' },
+      { id: 'spsf:C', code: 'C', label: 'C', federation: 'SPSF' },
     ]);
     expect(() => resolveWeaponGroupIds(['spsf:C', 'spsf:ZZ'], 'test')).toThrow(
       /unknown weapon group spsf:ZZ/,
@@ -356,7 +356,7 @@ describe('weapon groups and classes (spec G10-G14)', () => {
 
   it('G13: group and class display combined, never stored as one string', () => {
     expect(formatGroupAndClass('spsf:C', '2')).toBe('C 2');
-    expect(formatGroupAndClass('spsf:A-opt', 'VetY')).toBe('A-opt Vet Y');
+    expect(formatGroupAndClass('spsf:A-opt', 'VetY')).toBe('A Opt Vet Y');
     expect(formatGroupAndClass('spsf:C', null)).toBe('C');
     expect(formatGroupAndClass(null, '2')).toBe('2');
     expect(formatGroupAndClass(null, null)).toBe('');
@@ -372,14 +372,31 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     expect(formatShooterClass(null)).toBe('');
   });
 
-  it('weapon group ids resolve to codes', () => {
-    expect(weaponGroupCode('spsf:A-opt')).toBe('A-opt');
-    expect(weaponGroupCode('generic:airgun')).toBe('airgun');
-    expect(weaponGroupCode('unknown:zz')).toBe('');
-    expect(weaponGroupCode(null)).toBe('');
-    expect(findWeaponGroup('spsf:R')).toEqual({ id: 'spsf:R', code: 'R', federation: 'SPSF' });
-    expect(findWeaponGroup('spsf:M9')?.code).toBe('M9');
+  it('weapon group ids resolve to labels', () => {
+    expect(weaponGroupLabel('spsf:A-opt')).toBe('A Opt');
+    expect(weaponGroupLabel('generic:airgun')).toBe('airgun');
+    expect(weaponGroupLabel('unknown:zz')).toBe('');
+    expect(weaponGroupLabel(null)).toBe('');
+    expect(findWeaponGroup('spsf:R')).toEqual({
+      id: 'spsf:R',
+      code: 'R',
+      label: 'R',
+      federation: 'SPSF',
+    });
+    expect(findWeaponGroup('spsf:M9')?.label).toBe('M9');
     expect(findWeaponGroup(null)).toBeNull();
+  });
+
+  it('relabelling A-opt leaves the stored id alone', () => {
+    // The label changed for display only; `spsf:A-opt` is what sessions and
+    // firearms already have on disk, so it must not move without a migration.
+    const group = findWeaponGroup('spsf:A-opt');
+    expect(group).toEqual({
+      id: 'spsf:A-opt',
+      code: 'A-opt',
+      label: 'A Opt',
+      federation: 'SPSF',
+    });
   });
 });
 
@@ -453,7 +470,7 @@ describe('mutation-hardening', () => {
     ]);
     expect(SPSF_WEAPON_GROUPS.every((g) => g.federation === 'SPSF')).toBe(true);
     expect(GENERIC_WEAPON_GROUPS).toEqual([
-      { id: 'generic:airgun', code: 'airgun', federation: 'generic' },
+      { id: 'generic:airgun', code: 'airgun', label: 'airgun', federation: 'generic' },
     ]);
   });
 
