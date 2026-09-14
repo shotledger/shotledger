@@ -15,8 +15,8 @@ så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
 ## Provserier
 
 Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot
-passets total. Dess resultat visas som **N/A** i stället för en siffra,
-eftersom en provserie medvetet inte räknas — den saknar inte ett resultat.
+passets total. Resultatet visas ändå, med en asterisk — **45\*** — eftersom en
+provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
 
 ## Att ändra ordning
 

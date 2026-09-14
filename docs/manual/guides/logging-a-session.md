@@ -15,8 +15,9 @@ reaching for a "next" button between shots.
 ## Sighters
 
 Mark a series as a **sighter** from the series menu, and it stops counting
-towards the session total. Its score shows as **N/A** rather than a number,
-because a sighter is deliberately unscored rather than missing a score.
+towards the session total. Its score is still shown, with an asterisk —
+**45\*** — because a sighter is deliberately unscored rather than missing a
+score, and what you shot is still worth seeing.
 
 ## Reordering
 
