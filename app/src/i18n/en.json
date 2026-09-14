@@ -607,7 +607,7 @@
     "reorderHint": "Long-press a series to move it.",
     "scoredFromPhoto": "Scored from Photo",
     "scoredManually": "Entered Manually",
-    "notApplicable": "N/A",
+    "sighterScore": "{{score}}*",
     "stopwatchButton": "Stopwatch"
   },
   "share": {

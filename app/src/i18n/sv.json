@@ -607,7 +607,7 @@
     "reorderHint": "Håll in en serie för att flytta den.",
     "scoredFromPhoto": "Poängsatt från foto",
     "scoredManually": "Inmatad manuellt",
-    "notApplicable": "Ej tillämpligt",
+    "sighterScore": "{{score}}*",
     "stopwatchButton": "Tidtagarur"
   },
   "share": {

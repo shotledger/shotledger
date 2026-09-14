@@ -338,7 +338,12 @@ export default function SessionDetailScreen() {
             )}
             {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
             <ThemedText type="smallBold">
-              {row.isSighter ? t('session.notApplicable') : tenthsToScore(row.totalTenths)}
+              {/* A sighter's score is shown with a marker rather than hidden:
+                  it is deliberately unscored, not unknown, and the row already
+                  carries a Sighter chip to say which. */}
+              {row.isSighter
+                ? t('session.sighterScore', { score: tenthsToScore(row.totalTenths) })
+                : tenthsToScore(row.totalTenths)}
             </ThemedText>
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
