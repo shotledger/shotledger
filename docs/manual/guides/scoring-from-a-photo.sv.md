@@ -50,7 +50,7 @@ siktesproblem från ett teknikproblem, och de kräver olika arbete.
 
 ## Att hjälpa den bli bättre
 
-**Inställningar → Spara mina markeringar som träningsdata** är avstängt som
+**Inställningar → Förbättra automatisk poängräkning → Spara mina markeringar som träningsdata** är avstängt som
 standard. Slår du på det sparas dina markeringar — även de du rättade — i
 telefonen, så att en håldetektor så småningom kan tränas på verkliga tavlor.
 

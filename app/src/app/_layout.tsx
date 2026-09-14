@@ -98,6 +98,38 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />
       <Stack.Screen
+        name="settings/personal"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.personal') }}
+      />
+      <Stack.Screen
+        name="settings/language"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.language') }}
+      />
+      <Stack.Screen
+        name="settings/theme"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.theme') }}
+      />
+      <Stack.Screen
+        name="settings/location"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.locationLookup') }}
+      />
+      <Stack.Screen
+        name="settings/training-data"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.trainingTitle') }}
+      />
+      <Stack.Screen
+        name="settings/compliance"
+        options={{ presentation: 'modal', headerShown: true, title: t('compliance.settingsTitle') }}
+      />
+      <Stack.Screen
+        name="settings/external-sites"
+        options={{ presentation: 'modal', headerShown: true, title: t('providers.sectionTitle') }}
+      />
+      <Stack.Screen
+        name="settings/data"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.dataTitle') }}
+      />
+      <Stack.Screen
         name="about/licenses"
         options={{ presentation: 'modal', headerShown: true, title: t('about.licensesTitle') }}
       />

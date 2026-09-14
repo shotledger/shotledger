@@ -50,7 +50,7 @@ problem from a technique problem, and they need different work.
 
 ## Helping it get better
 
-**Settings → Keep My Marks as Training Data** is off by default. Turning it on
+**Settings → Improve Automatic Scoring → Keep My Marks as Training Data** is off by default. Turning it on
 stores your marks — including the ones you corrected — on the phone, so that a
 hole detector can eventually be trained on real targets.
 

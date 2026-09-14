@@ -1,6 +1,6 @@
 # Exportera och importera pass
 
-**Inställningar → Passexport.** En JSON-fil som rymmer varje pass, serie och
+**Inställningar → Säkerhetskopiering och data → Passexport.** En JSON-fil som rymmer varje pass, serie och
 skott.
 
 Det är inte samma sak som en [säkerhetskopia](backup-and-restore.md). En

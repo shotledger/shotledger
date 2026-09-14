@@ -1,6 +1,6 @@
 # Exporting and importing sessions
 
-**Settings → Sessions Export.** One JSON file holding every session, series
+**Settings → Backup & Data → Sessions Export.** One JSON file holding every session, series
 and shot.
 
 This is not the same thing as a [backup](backup-and-restore.md). A backup is

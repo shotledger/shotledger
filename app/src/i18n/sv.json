@@ -374,7 +374,14 @@
     "trainingDeleteBody": "Detta raderar permanent de {{count}} sparade serierna. Loggboken och fotona påverkas inte.",
     "skillClass": "Din klass",
     "womensClasses": "Damklasser och damgrenar",
-    "womensClassesHelp": "Visar Dam 1/2/3 vid sidan av din klass, och de ISSF-grenar som skjuts av damer."
+    "womensClassesHelp": "Visar Dam 1/2/3 vid sidan av din klass, och de ISSF-grenar som skjuts av damer.",
+    "personal": "Personligt",
+    "personalSubtitle": "Födelseår, din klass, märkeskrav",
+    "locationRowSubtitle": "Platsförslag för ett pass platsfält",
+    "externalSitesRowSubtitle": "Slå på en sajt och logga in på den",
+    "dataTitle": "Säkerhetskopiering och data",
+    "dataRowSubtitle": "Krypterad säkerhetskopia, JSON-export och import",
+    "trainingRowSubtitle": "Spara dina markeringar för bättre håldetektering"
   },
   "about": {
     "title": "Om appen",
