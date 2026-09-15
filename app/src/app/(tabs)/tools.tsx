@@ -5,8 +5,8 @@
 // Connecting to them is back in Settings: the login form had turned a
 // third of this screen into a sign-in page for a site most sessions never
 // touch.
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
@@ -26,7 +26,17 @@ import { Spacing } from '@/theme/tokens';
 export default function ToolsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const enabledProviders = PROVIDERS.filter((provider) => isProviderEnabled(provider.id));
+  // Re-read on focus, not once per mount: the tab stays mounted while the
+  // shooter turns a site on over in Settings, so a plain render-time read
+  // showed the site only after an app restart.
+  const [enabledProviders, setEnabledProviders] = useState(() =>
+    PROVIDERS.filter((provider) => isProviderEnabled(provider.id)),
+  );
+  useFocusEffect(
+    useCallback(() => {
+      setEnabledProviders(PROVIDERS.filter((provider) => isProviderEnabled(provider.id)));
+    }, []),
+  );
   const [devMockEnabled, setDevMockEnabled] = useState(() =>
     db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false,
   );
@@ -69,14 +79,15 @@ export default function ToolsScreen() {
         />
       </Card>
 
-      <Card>
-        <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
-        {enabledProviders.length === 0 && (
-          <ThemedText type="small" themeColor="textSecondary" testID="providers-empty">
-            {t('providers.noneEnabled')}
-          </ThemedText>
-        )}
-      </Card>
+      {/* Only once a site is actually enabled. A heading over "none enabled"
+          is a card that can never be acted on, and Tools is for using things
+          — Settings → External Sites is where one gets turned on, and says so
+          there. */}
+      {enabledProviders.length > 0 && (
+        <Card>
+          <ThemedText type="smallBold">{t('providers.sectionTitle')}</ThemedText>
+        </Card>
+      )}
 
       {/* A card each, so two sites never blur into one list of rows. */}
       {enabledProviders.map((provider) => (

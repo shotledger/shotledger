@@ -4,7 +4,9 @@
 entries, start lists and official results. ShotLedger can read your own data
 from it.
 
-**Settings → External Sites → Webshooter.** Turn it on, then connect.
+**Settings → External Sites → Webshooter.** Turn it on, then connect. It
+appears under Tools once it is on, and if you have not signed in yet, that
+screen links you back here.
 
 ## Connecting
 
