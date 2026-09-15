@@ -687,7 +687,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 ### 6.2 Discipline definitions (data, not code)
 
 `shared/disciplines/definitions/*.json`, validated by zod schema
-`disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'generic',
+`disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'SvSF'|'generic',
 name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
 allowsDecimal, weaponGroups}`. **v1 is SPSF-only** (maintainer decision
 2026-09-01): SPSF precision (target: Pistoltavla 25 m precision — §6.5c),
@@ -748,6 +748,12 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
 ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
 pistol) are **v2** — their defaults carry VERIFY items to resolve then.
+
+Added 2026-09-16 (#228): `issf-centre-fire-pistol` (ISSF, Grovpistol — the
+same structure as `issf-sport-pistol`, Pistol Rules 8.7.6.4) and
+`svsf-snabbluftpistol` (SvSF — 1 sighter, then 2 × 10 s + 2 × 8 s + 2 × 6 s
+twice, 5 shots each; Reglemente för 10 m Snabbluftpistol §6.1/§6.3). Cited in
+`docs/reference/issf-rules.md` and `docs/reference/svsf-rules.md`.
 
 Session names default to `<session type> — <local date>` (e.g. "Tävling —
 9 sep 2026") for both types; a competition's identity lives in its own

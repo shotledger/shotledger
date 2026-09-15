@@ -1,0 +1,24 @@
+{
+  "id": "issf-centre-fire-pistol",
+  "disciplineId": "issf-centre-fire-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Grovpistol",
+    "en": "25m Centre Fire Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      {
+        "seriesCount": 6,
+        "timeLimitSeconds": 240
+      },
+      {
+        "seriesCount": 6
+      }
+    ]
+  }
+}

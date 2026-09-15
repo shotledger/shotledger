@@ -1,0 +1,41 @@
+{
+  "id": "svsf-snabbluftpistol",
+  "disciplineId": "svsf-snabbluftpistol",
+  "federation": "SvSF",
+  "name": {
+    "sv": "Snabbluftpistol",
+    "en": "10m Rapid Fire Air Pistol"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "sighterSeries": 1,
+    "groups": [
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 10
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 8
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 6
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 10
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 8
+      },
+      {
+        "seriesCount": 2,
+        "timeLimitSeconds": 6
+      }
+    ]
+  }
+}

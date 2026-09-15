@@ -7,6 +7,7 @@ import {
   SVSF_REGULATION_ID,
   activeFederations,
   defaultEnabledRegulationIds,
+  effectiveRegulationIds,
   effectiveRegulations,
   findRegulation,
   regulationEnabledSettingKey,
@@ -90,6 +91,27 @@ describe('activeFederations', () => {
 
   it('does not include SPSF for a shooter who only shoots SvSF', () => {
     expect(activeFederations([SVSF_REGULATION_ID])).not.toContain('SPSF');
+  });
+
+  it('includes SvSF itself when SvSF is on, for the definitions it owns', () => {
+    // Snabbluftpistol and the SM/DM categories are SvSF's, not ISSF's.
+    expect(activeFederations([SVSF_REGULATION_ID])).toEqual(['generic', 'ISSF', 'SvSF']);
+  });
+
+  it('does not include SvSF for a shooter who only shoots ISSF', () => {
+    // Adoption runs one way: ISSF alone must not surface Swedish additions.
+    expect(activeFederations([ISSF_REGULATION_ID])).not.toContain('SvSF');
+  });
+});
+
+describe('effectiveRegulationIds', () => {
+  it('is the ids of effectiveRegulations, adoption included, in registry order', () => {
+    expect(effectiveRegulationIds([SVSF_REGULATION_ID])).toEqual([
+      ISSF_REGULATION_ID,
+      SVSF_REGULATION_ID,
+    ]);
+    expect(effectiveRegulationIds([ISSF_REGULATION_ID])).toEqual([ISSF_REGULATION_ID]);
+    expect(effectiveRegulationIds([])).toEqual([]);
   });
 });
 

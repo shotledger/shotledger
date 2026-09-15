@@ -30,8 +30,8 @@ const MUTANTS = [
   [23, "z.literal('rings')", "z.literal('')", 'scoring literal is wrong'],
   [
     12,
-    "z.enum(['SPSF', 'ISSF', 'generic'])",
-    "z.enum(['SPSF', 'ISSF', 'generic', 'NRA'])",
+    "z.enum(['SPSF', 'ISSF', 'SvSF', 'generic'])",
+    "z.enum(['SPSF', 'ISSF', 'SvSF', 'generic', 'NRA'])",
     'federation enum admits an extra federation',
   ],
   [35, 'z.strictObject({', 'z.object({', 'program accepts unknown keys'],

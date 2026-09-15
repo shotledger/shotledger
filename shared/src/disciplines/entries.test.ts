@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
+import { ISSF_REGULATION_ID, SVSF_REGULATION_ID } from '../regulations/registry';
 import { SPSF_SHOOTER_CLASSES } from './classes';
 import {
+  EVENTS,
   ISSF_EVENTS,
+  ISSF_JUNIOR_MAX_AGE,
   OPEN_CATEGORY,
   SPSF_CLASS_DEFINITIONS,
+  SVSF_EVENTS,
+  SVSF_NATIONAL_JUNIOR_MAX_AGE,
   eventId,
   eventsForDiscipline,
   categoryKey,
@@ -68,15 +73,20 @@ describe('SPSF class definitions', () => {
   });
 });
 
+/** `<gender>:<age>` for each event, in definition order. */
+function categories(disciplineId: string, regulationIds?: readonly string[]): string[] {
+  return eventsForDiscipline(disciplineId, regulationIds).map(
+    (e) => `${e.category.gender}:${e.category.age}`,
+  );
+}
+
 describe('ISSF events', () => {
-  /** `<gender>:<age>` for each event, in definition order. */
-  function categories(disciplineId: string): string[] {
-    return eventsForDiscipline(disciplineId).map((e) => `${e.category.gender}:${e.category.age}`);
-  }
+  /** Rule 3.3's own list — what ISSF recognizes, before SvSF adds anything. */
+  const ISSF = [ISSF_REGULATION_ID];
 
   it('gives 10 m air pistol all four Rule 3.3 events', () => {
     // Table p. 182 APM "M, MJ"; table p. 183 APW "W, WJ".
-    expect(categories('issf-air-pistol')).toEqual([
+    expect(categories('issf-air-pistol', ISSF)).toEqual([
       'men:open',
       'men:junior',
       'women:open',
@@ -86,14 +96,23 @@ describe('ISSF events', () => {
 
   it("has no women's rapid fire event, because none is recognized", () => {
     // RFPM "M, MJ" on p. 182; the event does not appear in the women's table.
-    expect(categories('issf-rapid-fire-pistol')).toEqual(['men:open', 'men:junior']);
+    expect(categories('issf-rapid-fire-pistol', ISSF)).toEqual(['men:open', 'men:junior']);
   });
 
   it('recognizes 25 m pistol for men ONLY as a junior event', () => {
     // SPM on p. 182 reads "MJ only" — the one row where the men's and women's
     // tables disagree about the senior event, and the reason the age axis
     // cannot be folded into the gender one.
-    expect(categories('issf-sport-pistol')).toEqual(['men:junior', 'women:open', 'women:junior']);
+    expect(categories('issf-sport-pistol', ISSF)).toEqual([
+      'men:junior',
+      'women:open',
+      'women:junior',
+    ]);
+  });
+
+  it('recognizes 25 m centre fire pistol for seniors only', () => {
+    // CFPM "M only", CFPW "W" — no junior row in either table.
+    expect(categories('issf-centre-fire-pistol', ISSF)).toEqual(['men:open', 'women:open']);
   });
 
   it('still recognizes 25 m standard pistol and 50 m pistol', () => {
@@ -101,7 +120,7 @@ describe('ISSF events', () => {
     // being dropped: STPM/STPW and FPM/FPW are WCH events in the 2026 book.
     // So SvSF needs no definition of its own for either (ADR 0011).
     for (const disciplineId of ['issf-standard-pistol', 'issf-free-pistol']) {
-      expect(categories(disciplineId)).toEqual([
+      expect(categories(disciplineId, ISSF)).toEqual([
         'men:open',
         'men:junior',
         'women:open',
@@ -119,7 +138,11 @@ describe('ISSF events', () => {
   it('gives every event a unique id, and attributes each to its regelverk', () => {
     const ids = ISSF_EVENTS.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ISSF_EVENTS.every((e) => e.regulationId === 'ISSF')).toBe(true);
+    expect(ISSF_EVENTS.every((e) => e.regulationId === ISSF_REGULATION_ID)).toBe(true);
+  });
+
+  it('runs juniors to the year they turn 21 on every event (Rule 3.7.4.12)', () => {
+    expect(ISSF_EVENTS.every((e) => e.juniorMaxAge === ISSF_JUNIOR_MAX_AGE)).toBe(true);
   });
 
   it('builds ids from the discipline and BOTH axes', () => {
@@ -136,7 +159,83 @@ describe('ISSF events', () => {
   it('looks an event up by id, and says so when there is none', () => {
     // A session stores the id; a later edition may stop recognizing it.
     expect(findEvent('issf-sport-pistol:women:junior')?.disciplineId).toBe('issf-sport-pistol');
-    expect(findEvent('issf-sport-pistol:men:open')).toBeUndefined();
+    expect(findEvent('issf-rapid-fire-pistol:women:open')).toBeUndefined();
+  });
+});
+
+describe('SvSF events', () => {
+  const SVSF = [SVSF_REGULATION_ID];
+
+  it('is exactly the Tävlings-PM 15.1 rows ISSF Rule 3.3 has no event for', () => {
+    // Pinned so a row cannot slip in unnoticed; every one traces to a 15.1
+    // line in docs/reference/svsf-rules.md.
+    expect(SVSF_EVENTS.map((e) => e.id)).toEqual([
+      'issf-sport-pistol:men:open',
+      'issf-standard-pistol:open:junior',
+      'issf-rapid-fire-pistol:open:open',
+      'issf-rapid-fire-pistol:open:junior',
+      'issf-free-pistol:open:open',
+      'issf-free-pistol:open:junior',
+      'issf-centre-fire-pistol:open:open',
+      'svsf-snabbluftpistol:open:open',
+      'svsf-snabbluftpistol:open:junior',
+    ]);
+    expect(SVSF_EVENTS.every((e) => e.regulationId === SVSF_REGULATION_ID)).toBe(true);
+  });
+
+  it('never duplicates an ISSF event — "ISSF has prio"', () => {
+    // The do-not-duplicate rule (ADR 0011) as an executable check: an SvSF
+    // row with an ISSF id would be the same event defined twice.
+    const issfIds = new Set(ISSF_EVENTS.map((e) => e.id));
+    for (const event of SVSF_EVENTS) expect(issfIds.has(event.id)).toBe(false);
+    const ids = EVENTS.map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('uses the ISSF junior age on ISSF grenar and the national one on its own', () => {
+    // Allmänna bestämmelser 1.5.1 vs 1.5.2: 21 on ISSF grenar, 20 otherwise.
+    for (const event of SVSF_EVENTS) {
+      const expected =
+        event.disciplineId === 'svsf-snabbluftpistol'
+          ? SVSF_NATIONAL_JUNIOR_MAX_AGE
+          : ISSF_JUNIOR_MAX_AGE;
+      expect(event.juniorMaxAge).toBe(expected);
+    }
+    expect(SVSF_NATIONAL_JUNIOR_MAX_AGE).toBe(20);
+    expect(ISSF_JUNIOR_MAX_AGE).toBe(21);
+  });
+
+  it("adds a men's sportpistol event that ISSF does not have", () => {
+    // Rule 3.3 has 25 m Pistol as "MJ only" for men; SM list and 15.1 have
+    // Sportpistol Herr. Offered only when SvSF is in play.
+    expect(categories('issf-sport-pistol', [ISSF_REGULATION_ID])).not.toContain('men:open');
+    expect(categories('issf-sport-pistol', [ISSF_REGULATION_ID, SVSF_REGULATION_ID])).toEqual([
+      'men:junior',
+      'women:open',
+      'women:junior',
+      'men:open',
+    ]);
+    expect(categories('issf-sport-pistol', SVSF)).toEqual(['men:open']);
+  });
+
+  it("returns every regelverk's events when no filter is given", () => {
+    expect(categories('issf-rapid-fire-pistol')).toEqual([
+      'men:open',
+      'men:junior',
+      'open:open',
+      'open:junior',
+    ]);
+  });
+
+  it('finds an SvSF event by id, and keeps it findable with SvSF switched off', () => {
+    // findEvent searches everything: a stored session must still resolve.
+    expect(findEvent('svsf-snabbluftpistol:open:junior')?.regulationId).toBe(SVSF_REGULATION_ID);
+    expect(findEvent('issf-sport-pistol:men:open')?.regulationId).toBe(SVSF_REGULATION_ID);
+  });
+
+  it('has nothing to add to air pistol', () => {
+    // Herr, dam, herrjunior and damjunior are all ISSF events already.
+    expect(categories('issf-air-pistol', SVSF)).toEqual([]);
   });
 });
 
@@ -183,11 +282,14 @@ describe('isEligibleForCategory', () => {
 });
 
 describe('rankEventsForShooter', () => {
+  const ISSF = [ISSF_REGULATION_ID];
+
   it("puts a woman's air pistol events first without hiding the men's", () => {
     const events = rankEventsForShooter(
       profile({ competesInWomensClasses: true }),
       'issf-air-pistol',
       2026,
+      ISSF,
     );
 
     expect(events.map((e) => `${e.category.gender}:${e.category.age}`)).toEqual([
@@ -219,12 +321,69 @@ describe('rankEventsForShooter', () => {
       profile({ competesInWomensClasses: true }),
       'issf-rapid-fire-pistol',
       2026,
+      ISSF,
     );
 
     expect(events.map((e) => e.id)).toEqual([
       'issf-rapid-fire-pistol:men:open',
       'issf-rapid-fire-pistol:men:junior',
     ]);
+  });
+
+  it("ranks SvSF's open snabbpistol class first for her once SvSF is in play", () => {
+    // Under SvSF she has an event she is eligible for; the ISSF men's ones
+    // follow rather than vanish.
+    const events = rankEventsForShooter(
+      profile({ competesInWomensClasses: true }),
+      'issf-rapid-fire-pistol',
+      2026,
+      [ISSF_REGULATION_ID, SVSF_REGULATION_ID],
+    );
+
+    expect(events.map((e) => e.id)).toEqual([
+      'issf-rapid-fire-pistol:open:open',
+      'issf-rapid-fire-pistol:men:open',
+      'issf-rapid-fire-pistol:men:junior',
+      'issf-rapid-fire-pistol:open:junior',
+    ]);
+  });
+
+  it('offers nothing from a regelverk that is not in play', () => {
+    expect(rankEventsForShooter(profile(), 'svsf-snabbluftpistol', 2026, ISSF)).toEqual([]);
+    expect(rankEventsForShooter(profile(), 'svsf-snabbluftpistol', 2026).map((e) => e.id)).toEqual([
+      'svsf-snabbluftpistol:open:open',
+      'svsf-snabbluftpistol:open:junior',
+    ]);
+  });
+
+  it('asks each event its own junior age: 21 is a junior in fripistol, not in snabbluftpistol', () => {
+    // Born 2005 is 21 in 2026 — inside 1.5.1's limit on an ISSF gren, past
+    // 1.5.2's on SvSF's own.
+    const born2005 = profile({ birthYear: 2005 });
+
+    expect(rankEventsForShooter(born2005, 'issf-free-pistol', 2026).map((e) => e.id)).toEqual([
+      'issf-free-pistol:men:open',
+      'issf-free-pistol:men:junior',
+      'issf-free-pistol:open:open',
+      'issf-free-pistol:open:junior',
+      'issf-free-pistol:women:open',
+      'issf-free-pistol:women:junior',
+    ]);
+    expect(rankEventsForShooter(born2005, 'svsf-snabbluftpistol', 2026).map((e) => e.id)).toEqual([
+      'svsf-snabbluftpistol:open:open',
+      'svsf-snabbluftpistol:open:junior',
+    ]);
+    expect(isEligibleForEvent(born2005, findEvent('issf-free-pistol:open:junior')!, 2026)).toBe(
+      true,
+    );
+    expect(isEligibleForEvent(born2005, findEvent('svsf-snabbluftpistol:open:junior')!, 2026)).toBe(
+      false,
+    );
+    // A year younger clears both.
+    const born2006 = profile({ birthYear: 2006 });
+    expect(isEligibleForEvent(born2006, findEvent('svsf-snabbluftpistol:open:junior')!, 2026)).toBe(
+      true,
+    );
   });
 
   it('uses the ISSF junior age, not the SPSF one', () => {
@@ -263,5 +422,10 @@ describe('categoryKey', () => {
   it('glues the age on when there is one', () => {
     expect(categoryKey({ gender: 'men', age: 'junior' })).toBe('menJunior');
     expect(categoryKey({ gender: 'open', age: 'veteranYounger' })).toBe('openVeteranYounger');
+  });
+
+  it("names SvSF's open classes, which the i18n files carry as open/openJunior", () => {
+    expect(categoryKey({ gender: 'open', age: 'open' })).toBe('open');
+    expect(categoryKey({ gender: 'open', age: 'junior' })).toBe('openJunior');
   });
 });

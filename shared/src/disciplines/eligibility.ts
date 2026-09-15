@@ -13,7 +13,9 @@
 // federations — SPSF's Jun is "≤ the year turning 20" (SHB F.2.1 p. 163) and
 // ISSF's junior runs until "the 31st December of the year in which they
 // become 21 years of age" (Rule 3.7.4.12). So a birth year is enough; a full
-// date of birth would be data we never need.
+// date of birth would be data we never need. An event carries its own
+// junior age, because SvSF uses ISSF's 21 on ISSF grenar and 20 on its own
+// (allmänna bestämmelser 1.5.1/1.5.2).
 //
 // Nothing here GATES anything. It produces a default and an offer; the
 // session screen always allows an override, because a shooter at a club
@@ -55,8 +57,6 @@ export interface ShooterProfile {
 
 /** SPSF: the year the shooter turns 20 or earlier (SHB F.2.1 p. 163). */
 export const SPSF_JUNIOR_MAX_AGE = 20;
-/** ISSF: junior until 31 December of the year they turn 21 (Rule 3.7.4.12). */
-export const ISSF_JUNIOR_MAX_AGE = 21;
 const VET_YOUNGER_AGE = 60;
 const VET_OLDER_AGE = 70;
 
@@ -118,31 +118,32 @@ function matchesAge(
 /**
  * A discipline's events with the ones this shooter may enter first.
  *
- * Ranked, never filtered — the same contract as the SPSF klass list. Filtering
- * would mean a Swedish woman shooting snabbpistol at a club evening has
- * nothing to log it under, and this module does not gate (see the header).
- * An empty result means the discipline has no events defined, not that the
- * shooter is excluded from all of them.
+ * Ranked, never filtered by eligibility — the same contract as the SPSF klass
+ * list. Filtering would mean a Swedish woman shooting snabbpistol at a club
+ * evening has nothing to log it under, and this module does not gate (see
+ * the header). `regulationIds` is a different kind of narrowing: which
+ * regelverk are in play at all, not who the shooter is. An empty result means
+ * the discipline has no events defined, not that the shooter is excluded
+ * from all of them.
  */
 export function rankEventsForShooter(
   profile: ShooterProfile,
   disciplineId: string,
   year: number,
+  regulationIds?: readonly string[],
 ): readonly EventDefinition[] {
-  const events = eventsForDiscipline(disciplineId);
-  const eligible = events.filter((event) =>
-    isEligibleForCategory(profile, event.category, year, ISSF_JUNIOR_MAX_AGE),
-  );
+  const events = eventsForDiscipline(disciplineId, regulationIds);
+  const eligible = events.filter((event) => isEligibleForEvent(profile, event, year));
   return [...eligible, ...events.filter((event) => !eligible.includes(event))];
 }
 
-/** Whether this shooter may enter one specific event. */
+/** Whether this shooter may enter one specific event, at that event's junior age. */
 export function isEligibleForEvent(
   profile: ShooterProfile,
   event: EventDefinition,
   year: number,
 ): boolean {
-  return isEligibleForCategory(profile, event.category, year, ISSF_JUNIOR_MAX_AGE);
+  return isEligibleForCategory(profile, event.category, year, event.juniorMaxAge);
 }
 
 /** Age reached during `year`, which is what a year-based category asks for. */

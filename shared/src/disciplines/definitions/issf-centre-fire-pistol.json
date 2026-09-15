@@ -1,0 +1,13 @@
+{
+  "id": "issf-centre-fire-pistol",
+  "federation": "ISSF",
+  "name": {
+    "sv": "Grovpistol",
+    "en": "25m Centre Fire Pistol"
+  },
+  "targetFace": "issf-25m-precision",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}

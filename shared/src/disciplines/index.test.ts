@@ -67,17 +67,27 @@ describe('data validation (spec G1-G4)', () => {
     ).toThrow();
   });
 
-  it('G4: v1 ships the SPSF + ISSF pistol discipline set (§6.2)', () => {
+  it('G4: v1 ships the SPSF + ISSF + SvSF pistol discipline set (§6.2)', () => {
     expect(DISCIPLINES.map((d) => d.id).sort()).toEqual([
       'generic-rings',
       'issf-air-pistol',
+      'issf-centre-fire-pistol',
       'issf-free-pistol',
       'issf-rapid-fire-pistol',
       'issf-sport-pistol',
       'issf-standard-pistol',
       'spsf-milsnabb',
       'spsf-precision',
+      'svsf-snabbluftpistol',
     ]);
+  });
+
+  it('lists every ISSF discipline before the SvSF ones', () => {
+    // The new-session form lands on the first non-generic discipline of the
+    // regelverk picked; an SvSF shooter should get luftpistol, not
+    // snabbluftpistol.
+    const federations = DISCIPLINES.map((d) => d.federation);
+    expect(federations.lastIndexOf('ISSF')).toBeLessThan(federations.indexOf('SvSF'));
   });
 
   it('lookups find and reject by id', () => {
@@ -183,6 +193,7 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
     { id: 'issf-standard-pistol', shots: 60, series: 12, sighterSeries: 1 },
     { id: 'issf-rapid-fire-pistol', shots: 60, series: 12, sighterSeries: 1 },
     { id: 'issf-sport-pistol', shots: 60, series: 12, sighterSeries: 1 },
+    { id: 'issf-centre-fire-pistol', shots: 60, series: 12, sighterSeries: 1 },
   ];
 
   it.each(issfPrograms)(
@@ -247,11 +258,74 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
     ]);
   });
 
+  it('issf-centre-fire-pistol: the same course as 25m Pistol (8.7.6.4 governs both)', () => {
+    // Rule 8.7.6.4 is "Specific Rules for 25m Pistol and 25m Centre Fire
+    // Pistol"; the calibre lives on the firearm, so the programs are one shape.
+    const centreFire = getProgram('issf-centre-fire-pistol');
+    const sportPistol = getProgram('issf-sport-pistol');
+    expect(centreFire?.structure).toEqual(sportPistol?.structure);
+    expect(centreFire?.shotsPerSeries).toBe(sportPistol?.shotsPerSeries);
+    expect(getDiscipline('issf-centre-fire-pistol')?.targetFace).toBe(
+      getDiscipline('issf-sport-pistol')?.targetFace,
+    );
+    expect(getDiscipline('issf-centre-fire-pistol')?.name).toEqual({
+      sv: 'Grovpistol',
+      en: '25m Centre Fire Pistol',
+    });
+  });
+
   it('ISSF disciplines ship no vapengrupper (§6.4a) and no klasser', () => {
     for (const id of issfPrograms.map((p) => p.id)) {
       expect(weaponGroupsForDiscipline(id)).toEqual([]);
       expect(shooterClassesForDiscipline(id)).toEqual([]);
     }
+  });
+});
+
+describe('SvSF pistol programs (docs/reference/svsf-rules.md)', () => {
+  it('svsf-snabbluftpistol: 60 shots as two rounds of 2x10 s, 2x8 s, 2x6 s (§6.1)', () => {
+    const program = getProgram('svsf-snabbluftpistol');
+    expect(program).toMatchObject({
+      federation: 'SvSF',
+      shotsPerSeries: 5,
+      scoring: 'integer',
+      supportsFinal: false,
+    });
+    expect(program?.structure).toEqual({
+      // §6.3: one 5-shot provserie at 10 s before each round; one leading
+      // sighter is the schema's shape, as for ISSF rapid fire.
+      sighterSeries: 1,
+      groups: [
+        { seriesCount: 2, timeLimitSeconds: 10 },
+        { seriesCount: 2, timeLimitSeconds: 8 },
+        { seriesCount: 2, timeLimitSeconds: 6 },
+        { seriesCount: 2, timeLimitSeconds: 10 },
+        { seriesCount: 2, timeLimitSeconds: 8 },
+        { seriesCount: 2, timeLimitSeconds: 6 },
+      ],
+    });
+    const skeleton = buildProgramSkeleton(program!);
+    expect(skeleton).toHaveLength(13);
+    expect(skeleton[0]).toMatchObject({ isSighter: true, timeLimitSeconds: 10 });
+    expect(skeleton.slice(1).reduce((n, s) => n + s.shots, 0)).toBe(60);
+  });
+
+  it('svsf-snabbluftpistol is SvSF-owned, integer, and scored on its own 10 m face', () => {
+    const discipline = requireDiscipline('svsf-snabbluftpistol');
+    expect(discipline).toMatchObject({
+      federation: 'SvSF',
+      targetFace: 'svsf-10m-snabbluftpistol',
+      defaultSeriesLength: 5,
+      scoring: 'rings',
+      allowsDecimal: false,
+      weaponGroups: [],
+    });
+    expect(discipline.name).toEqual({ sv: 'Snabbluftpistol', en: '10m Rapid Fire Air Pistol' });
+    expect(programsForDiscipline('svsf-snabbluftpistol').map((p) => p.id)).toEqual([
+      'svsf-snabbluftpistol',
+    ]);
+    // SPSF klasser are SPSF's; an SvSF discipline carries events instead.
+    expect(shooterClassesForDiscipline('svsf-snabbluftpistol')).toEqual([]);
   });
 });
 
@@ -547,7 +621,7 @@ describe('mutation-hardening', () => {
     }
 
     // every federation the schema does accept
-    for (const federation of ['SPSF', 'ISSF', 'generic']) {
+    for (const federation of ['SPSF', 'ISSF', 'SvSF', 'generic']) {
       expect(() =>
         disciplineSchema.parse({ ...precisionDisciplineJson, federation }),
       ).not.toThrow();
@@ -573,6 +647,14 @@ describe('disciplinesForRegulations', () => {
 
     expect(ids).toContain('issf-air-pistol');
     expect(ids).not.toContain('spsf-precision');
+  });
+
+  it("offers SvSF's own discipline only when SvSF is enabled", () => {
+    // ISSF alone is the international list; snabbluftpistol is Swedish.
+    expect(disciplinesForRegulations(['issf']).map((d) => d.id)).not.toContain(
+      'svsf-snabbluftpistol',
+    );
+    expect(disciplinesForRegulations(['svsf']).map((d) => d.id)).toContain('svsf-snabbluftpistol');
   });
 
   it('keeps generic practice available with nothing enabled at all', () => {

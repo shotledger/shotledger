@@ -9,6 +9,7 @@ import {
   requireTargetFace,
   SPSF_PISTOL_25M_PRECISION,
   SPSF_SNABBSKJUTNING_25M,
+  SVSF_10M_SNABBLUFTPISTOL,
 } from './targets';
 
 describe('SPSF_PISTOL_25M_PRECISION', () => {
@@ -59,14 +60,34 @@ describe('SPSF_SNABBSKJUTNING_25M', () => {
   });
 });
 
+describe('SVSF_10M_SNABBLUFTPISTOL', () => {
+  it('TG4b: 7 rings X,10..5 with the snabbluftpistol reglemente §3 diameters', () => {
+    expect(SVSF_10M_SNABBLUFTPISTOL.rings.map((r) => [r.label, r.value, r.diameterMm])).toEqual([
+      ['X', 10, 11],
+      ['10', 10, 22],
+      ['9', 9, 48.5],
+      ['8', 8, 75],
+      ['7', 7, 101.5],
+      ['6', 6, 128],
+      ['5', 5, 154.5],
+    ]);
+  });
+
+  it('TG5b: referenceDiameterMm is 154.5 (black across 5-10) and not a solid disc', () => {
+    expect(SVSF_10M_SNABBLUFTPISTOL.referenceDiameterMm).toBe(154.5);
+    expect(SVSF_10M_SNABBLUFTPISTOL.referenceIsSolidBlack).toBe(false);
+  });
+});
+
 describe('ring value / isInnerTen', () => {
-  it('TG7: only ring X has isInnerTen true, on both faces', () => {
+  it('TG7: only ring X has isInnerTen true, on every face', () => {
     for (const face of [
       SPSF_PISTOL_25M_PRECISION,
       SPSF_SNABBSKJUTNING_25M,
       ISSF_10M_AIR_PISTOL,
       ISSF_25M_PRECISION,
       ISSF_25M_RAPID_FIRE,
+      SVSF_10M_SNABBLUFTPISTOL,
     ]) {
       for (const r of face.rings) {
         expect(r.isInnerTen).toBe(r.label === 'X');
@@ -82,6 +103,7 @@ describe('getTargetFace / requireTargetFace', () => {
     expect(getTargetFace('issf-10m-air-pistol')).toBe(ISSF_10M_AIR_PISTOL);
     expect(getTargetFace('issf-25m-precision')).toBe(ISSF_25M_PRECISION);
     expect(getTargetFace('issf-25m-rapid-fire')).toBe(ISSF_25M_RAPID_FIRE);
+    expect(getTargetFace('svsf-10m-snabbluftpistol')).toBe(SVSF_10M_SNABBLUFTPISTOL);
   });
 
   it('TG9: unknown id returns undefined', () => {
@@ -98,6 +120,16 @@ describe('getTargetFace / requireTargetFace', () => {
     );
     expect(issfRingsDisciplines.length).toBeGreaterThan(0);
     for (const discipline of issfRingsDisciplines) {
+      expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
+    }
+  });
+
+  it('TG11e: every SvSF rings discipline resolves its targetFace without throwing', () => {
+    const svsfRingsDisciplines = DISCIPLINES.filter(
+      (d) => d.scoring === 'rings' && d.federation === 'SvSF',
+    );
+    expect(svsfRingsDisciplines.length).toBeGreaterThan(0);
+    for (const discipline of svsfRingsDisciplines) {
       expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
     }
   });
@@ -140,6 +172,7 @@ describe('getTargetFace / requireTargetFace', () => {
       ISSF_10M_AIR_PISTOL,
       ISSF_25M_PRECISION,
       ISSF_25M_RAPID_FIRE,
+      SVSF_10M_SNABBLUFTPISTOL,
     ]) {
       const diameters = face.rings.map((r) => r.diameterMm);
       const labels = face.rings.map((r) => r.label);

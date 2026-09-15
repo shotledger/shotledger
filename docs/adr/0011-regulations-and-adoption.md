@@ -98,3 +98,27 @@ for the two (national **mixed-team** formats, which the app has no model for).
 - Klasser remain federation-derived (`shooterClassesForDiscipline`). Making a
   shooter's klass per-federation — the second half of the #138 item — is still
   open.
+
+## Addendum, 2026-09-16 (#228)
+
+SvSF now owns `federation: 'SvSF'` in the registry instead of borrowing
+ISSF's, because it has definitions of its own: `svsf-snabbluftpistol`, its one
+pistol discipline with a Swedish special reglemente, and `SVSF_EVENTS`, the
+SM/DM categories ISSF Rule 3.3 has no row for — a men's sportpistol event, a
+common junior event in standardpistol, and open senior and junior events in
+snabbpistol, fripistol, grovpistol and snabbluftpistol
+(docs/reference/svsf-rules.md, "What ISSF Rule 3.3 lacks"). Grovpistol is
+ISSF's 25 m Centre Fire Pistol and so was added as `issf-centre-fire-pistol`,
+not as an SvSF discipline — the adoption rule applied. ISSF's definitions still
+arrive through `adopts`; `activeFederations(['svsf'])` now yields generic,
+ISSF and SvSF, and an event carries the `regulationId` that defines it, so a
+shooter who enabled ISSF alone is not offered SvSF's categories. Each event
+also carries its own junior age (21 on ISSF grenar, 20 on snabbluftpistol —
+allmänna bestämmelser 1.5.1/1.5.2).
+
+Still unencoded, and why: falling target (hit-or-miss scoring, one point per
+hit, does not fit ring scoring), finals of any gren, Tävlings-PM 14's
+klassindelning (hederspris, junior äldre/yngre, youth, veteran and stödhand
+classes — a class layer for SvSF sessions is a maintainer decision), every
+team format (no team model) and skyttemärken SvSF. Nordiska grenar turned out
+not to exist for pistol.
