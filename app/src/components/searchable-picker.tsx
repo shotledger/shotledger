@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 
 import { TextField } from '@/components/text-field';
@@ -14,6 +14,8 @@ export interface SearchablePickerOption<T extends string | number> {
 
 export interface SearchablePickerProps<T extends string | number> {
   label: string;
+  /** Rendered on the label row, e.g. an `InfoButton`. */
+  labelTrailing?: ReactNode;
   options: readonly SearchablePickerOption<T>[];
   value: T | null;
   onChange: (value: T) => void;
@@ -39,6 +41,7 @@ export interface SearchablePickerProps<T extends string | number> {
  */
 export function SearchablePicker<T extends string | number>({
   label,
+  labelTrailing,
   options,
   value,
   onChange,
@@ -71,7 +74,10 @@ export function SearchablePicker<T extends string | number>({
   return (
     <View style={styles.container} testID={testID}>
       <View style={styles.labelRow}>
-        <ThemedText type="smallBold">{label}</ThemedText>
+        <ThemedText type="smallBold" style={styles.label}>
+          {label}
+        </ThemedText>
+        {labelTrailing}
         {clearable && selected && onClear && clearLabel ? (
           <Pressable
             accessibilityRole="button"
@@ -155,6 +161,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  label: {
+    flex: 1,
   },
   field: {
     borderWidth: 1,

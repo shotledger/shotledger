@@ -5,6 +5,7 @@ import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { licenseExpiryNotifications, type ParsedLicenseCard } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
+import { InfoButton } from '@/components/info-button';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -209,10 +210,16 @@ export default function AddVaultDocumentScreen() {
 
             {kind === 'license' && SCAN_SUPPORTED ? (
               <>
-                <ThemedText type="smallBold">{t('vault.scanTitle')}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('vault.scanHint')}
-                </ThemedText>
+                <View style={styles.headerRow}>
+                  <ThemedText type="smallBold" style={styles.headerLabel}>
+                    {t('vault.scanTitle')}
+                  </ThemedText>
+                  <InfoButton
+                    title={t('vault.scanTitle')}
+                    body={t('vault.scanHint')}
+                    testID="vault-scan-info"
+                  />
+                </View>
                 <PrimaryButton
                   label={t('vault.scanFromCamera')}
                   onPress={() => void onScanCard('camera')}
@@ -305,6 +312,15 @@ function capitalize(value: string): string {
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  headerLabel: {
+    flexShrink: 1,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

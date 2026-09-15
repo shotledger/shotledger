@@ -29,6 +29,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { InfoButton } from '@/components/info-button';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -205,10 +206,16 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
             </>
           )}
 
-          <ThemedText type="smallBold">{t('faltTimer.partier')}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('faltTimer.partierHint')}
-          </ThemedText>
+          <View style={styles.labelRow}>
+            <ThemedText type="smallBold" style={styles.flex}>
+              {t('faltTimer.partier')}
+            </ThemedText>
+            <InfoButton
+              title={t('faltTimer.partier')}
+              body={t('faltTimer.partierHint')}
+              testID="falt-partier-info"
+            />
+          </View>
           {settings.partiSeconds.map((second, index) => (
             <View key={`${index}-${second}`} style={styles.row}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
@@ -266,11 +273,18 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
           </View>
         </Card>
 
+        <View style={styles.labelRow}>
+          <ThemedText type="smallBold" style={styles.flex}>
+            {t('faltTimer.commandsTitle')}
+          </ThemedText>
+          <InfoButton
+            title={t('faltTimer.commandsTitle')}
+            body={t('faltTimer.sourceNote')}
+            testID="falt-source-info"
+          />
+        </View>
         <FaltTimeline program={program} atMs={program.startSeconds * 1_000} testID="falt-preview" />
         <CommandList program={program} currentNumber={null} />
-        <ThemedText type="small" themeColor="textSecondary" testID="falt-source-note">
-          {t('faltTimer.sourceNote')}
-        </ThemedText>
 
         <PrimaryButton label={t('faltTimer.start')} onPress={start} testID="falt-start" />
       </Screen>
