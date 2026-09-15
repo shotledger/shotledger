@@ -44,6 +44,7 @@ import {
 } from 'react-native-fast-opencv';
 
 import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
+import type { RectifiedCanvas } from './tap-snap';
 import type { GeometryMetrics } from './validity';
 
 /** Rectified working canvas resolution, as in the spike. Fixing it makes
@@ -54,6 +55,18 @@ export interface GeometryPipelineResult {
   readonly transform: RectificationTransform;
   readonly ellipse: EllipseFit;
   readonly metrics: GeometryMetrics;
+  /**
+   * The rectified grey canvas, copied out before the native Mats are
+   * released, so tap-snap can run on a typed array with no OpenCV call per
+   * tap (see tap-snap.ts). One copy per photo — a few megabytes that the
+   * caller drops when it leaves the marking phase.
+   *
+   * `centre*Px` and `pxPerMm` describe the mapping the refinement settled on,
+   * taken from the same numbers the refinement was scored with rather than
+   * re-derived: the profile search centres on `canvasSize / 2 + dxMm *
+   * CANVAS_PX_PER_MM` and scores ring radii at `CANVAS_PX_PER_MM * scale`.
+   */
+  readonly canvas: RectifiedCanvas;
 }
 
 /**
@@ -458,7 +471,22 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
       profileScore: mad > 1e-6 ? refined.score / mad : 0,
     };
 
-    return { transform, ellipse, metrics };
+    // `.buffer` is the typed array itself, not an ArrayBuffer, despite the name.
+    const { buffer: bytes } = canvas.toBuffer('uint8');
+    return {
+      transform,
+      ellipse,
+      metrics,
+      canvas: {
+        // Copied: the buffer is a view on native memory that releaseAll frees.
+        // Copied: the view points at native memory that releaseAll frees.
+        data: Uint8Array.from(bytes),
+        size: canvasSize,
+        centreXPx: canvasSize / 2 + refined.dxMm * CANVAS_PX_PER_MM,
+        centreYPx: canvasSize / 2 + refined.dyMm * CANVAS_PX_PER_MM,
+        pxPerMm: CANVAS_PX_PER_MM * refined.scale,
+      },
+    };
   } finally {
     arena.releaseAll();
   }
