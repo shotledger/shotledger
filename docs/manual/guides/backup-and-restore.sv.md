@@ -4,7 +4,7 @@ Allt ligger i telefonen. Inget konto krävs, ingenting laddas upp om du inte
 slår på synk — vilket är själva poängen, och vilket betyder att **en förlorad
 telefon är en förlorad loggbok om du inte har en kopia**.
 
-**Inställningar → Säkerhetskopiering.**
+**Inställningar → Säkerhetskopiering och data.**
 
 ## Att göra en
 

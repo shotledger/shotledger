@@ -149,12 +149,12 @@ Bara klass 3 kvalificerar man sig till i just precision.
 
 Appen räknar ut det den kan och frågar efter resten:
 
-| Behörighet                       | Hur appen vet                                                      |
-| -------------------------------- | ------------------------------------------------------------------ |
-| **Vet Y** (60+), **Vet Ä** (70+) | Ditt födelseår                                                     |
-| **Jun**                          | Ditt födelseår — det år du fyller 20                               |
-| **Dam 1/2/3**                    | Brytaren "Damklasser och damgrenar" i inställningarna              |
-| **1 / 2 / 3**                    | "Din klass" i inställningarna — ingen kan härleda en skjuten klass |
+| Behörighet                       | Hur appen vet                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| **Vet Y** (60+), **Vet Ä** (70+) | Ditt födelseår                                                                    |
+| **Jun**                          | Ditt födelseår — det år du fyller 20                                              |
+| **Dam 1/2/3**                    | Brytaren "Damklasser och damgrenar" under Inställningar → Personligt              |
+| **1 / 2 / 3**                    | "Din klass" under Inställningar → Personligt — ingen kan härleda en skjuten klass |
 
 Ålderskategorier avgörs av **året**, inte av din födelsedag, i både SPSF och
 ISSF — vilket är varför ett födelseår räcker och appen aldrig frågar efter ett

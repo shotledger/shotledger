@@ -34,7 +34,7 @@ loggning — ett banbesök du inte loggade finns inte med.
 
 ## Att få ut det
 
-**Inställningar → Säkerhetskopiering** exporterar allt. Det finns även en
+**Inställningar → Säkerhetskopiering och data** exporterar allt. Det finns även en
 PDF-export av föreningsloggen för den sammanställning en förening kan be om.
 
 !!! note

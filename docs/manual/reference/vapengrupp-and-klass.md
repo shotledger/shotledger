@@ -148,12 +148,12 @@ Only klass 3 is qualified for in precision specifically.
 
 The app works out what it can and asks for the rest:
 
-| Eligibility                      | How the app knows                                            |
-| -------------------------------- | ------------------------------------------------------------ |
-| **Vet Y** (60+), **Vet Ä** (70+) | Your birth year                                              |
-| **Jun**                          | Your birth year — the year you turn 20                       |
-| **Dam 1/2/3**                    | The "Women's Classes and Events" switch in Settings          |
-| **1 / 2 / 3**                    | "Your Class" in Settings — nobody can derive an earned class |
+| Eligibility                      | How the app knows                                                       |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| **Vet Y** (60+), **Vet Ä** (70+) | Your birth year                                                         |
+| **Jun**                          | Your birth year — the year you turn 20                                  |
+| **Dam 1/2/3**                    | The "Women's Classes and Events" switch in Settings → Personal          |
+| **1 / 2 / 3**                    | "Your Class" in Settings → Personal — nobody can derive an earned class |
 
 Age categories are decided by the **year**, not your birthday, in both SPSF
 and ISSF — which is why a birth year is enough and the app never asks for a

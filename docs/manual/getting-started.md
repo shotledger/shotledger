@@ -16,7 +16,7 @@ list of scores into a logbook that knows which klass you shot in.
 
 And whenever you get round to it, make a backup. Everything lives on your phone
 by default: no account, no server, nothing to leak — and a lost phone is a lost
-logbook unless you have a copy. **Settings → Backup**, and keep the file
+logbook unless you have a copy. **Settings → Backup & Data → Back Up**, and keep the file
 somewhere that is not the phone. See
 [Backup and restore](guides/backup-and-restore.md).
 
@@ -39,7 +39,7 @@ shooting.
 
 ### 2. Tell it about you
 
-**Settings** wants three things, and then stops asking:
+**Settings → Personal** wants three things, and then stops asking:
 
 - **Birth year** — both SPSF and ISSF go by the **year** you reach an age, not
   your birthday, so the year is enough. You can correct it whenever you like;

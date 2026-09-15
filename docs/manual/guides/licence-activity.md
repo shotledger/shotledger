@@ -34,7 +34,7 @@ logging — a range visit you did not log is not in it.
 
 ## Getting it out
 
-**Settings → Backup** exports everything. A club-log PDF export also exists for
+**Settings → Backup & Data** exports everything. A club-log PDF export also exists for
 the summary a förening might ask for.
 
 !!! note

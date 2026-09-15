@@ -374,7 +374,14 @@
     "trainingDeleteBody": "This permanently deletes the {{count}} kept series. Your logbook and photos are not affected.",
     "skillClass": "Your Class",
     "womensClasses": "Women’s Classes and Events",
-    "womensClassesHelp": "Offers Dam 1/2/3 alongside your class, and the ISSF events shot by women."
+    "womensClassesHelp": "Offers Dam 1/2/3 alongside your class, and the ISSF events shot by women.",
+    "personal": "Personal",
+    "personalSubtitle": "Birth year, your class, märke requirement",
+    "locationRowSubtitle": "Place suggestions for a session’s location",
+    "externalSitesRowSubtitle": "Turn a site on and sign in to it",
+    "dataTitle": "Backup & Data",
+    "dataRowSubtitle": "Encrypted backup, JSON export and import",
+    "trainingRowSubtitle": "Keep your marks to improve hole detection"
   },
   "about": {
     "title": "About",

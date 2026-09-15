@@ -40,6 +40,13 @@ appId: app.shotledger
 
 # --- Settings: select the Sweden compliance profile ---------------------
 - tapOn: 'Settings'
+# Settings is a menu of drill-downs; the profile picker lives one page in.
+- extendedWaitUntil:
+    visible:
+      id: 'settings-open-compliance'
+    timeout: 15000
+- tapOn:
+    id: 'settings-open-compliance'
 - extendedWaitUntil:
     visible:
       id: 'compliance-profile-picker'
@@ -47,6 +54,12 @@ appId: app.shotledger
 - tapOn: 'Sweden (FAP 551-3)'
 - assertVisible: 'Activity requirements are unverified placeholders, pending confirmation against FAP 551-3 or a real föreningsintyg.'
 - takeScreenshot: m6-01-settings-compliance
+# Back out of the drill-down before the tab bar is used again.
+- pressKey: Back
+- extendedWaitUntil:
+    visible:
+      id: 'settings-open-compliance'
+    timeout: 15000
 
 # --- Home: overall barometer chip visible --------------------------------
 - tapOn: 'Home'

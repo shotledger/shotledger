@@ -4,7 +4,7 @@ Everything lives on your phone. No account is required, nothing is uploaded
 unless you turn on sync — which is the point, and which means **a lost phone is
 a lost logbook unless you have a copy**.
 
-**Settings → Backup.**
+**Settings → Backup & Data.**
 
 ## Making one
 

@@ -17,7 +17,7 @@ en lista med poäng till en loggbok som vet vilken klass du sköt i.
 Och när du ändå kommer dig för det: gör en säkerhetskopia. Allt ligger i
 telefonen som standard — inget konto, ingen server, ingenting att läcka — och en
 förlorad telefon är en förlorad loggbok om du inte har en kopia.
-**Inställningar → Säkerhetskopiering**, och förvara filen någon annanstans än i
+**Inställningar → Säkerhetskopiering och data → Säkerhetskopiera**, och förvara filen någon annanstans än i
 telefonen. Se [Säkerhetskopiering och återställning](guides/backup-and-restore.md).
 
 ## Hela uppsättningen
@@ -40,7 +40,7 @@ från att skjuta.
 
 ### 2. Berätta om dig själv
 
-**Inställningar** vill ha tre saker, och slutar sedan fråga:
+**Inställningar → Personligt** vill ha tre saker, och slutar sedan fråga:
 
 - **Födelseår** — både SPSF och ISSF utgår från det **år** du uppnår en ålder,
   inte från födelsedagen, så året räcker. Du kan rätta det när du vill; appen
