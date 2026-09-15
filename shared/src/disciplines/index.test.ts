@@ -355,8 +355,11 @@ describe('weapon groups and classes (spec G10-G14)', () => {
   });
 
   it('G13: group and class display combined, never stored as one string', () => {
-    expect(formatGroupAndClass('spsf:C', '2')).toBe('C 2');
+    expect(formatGroupAndClass('spsf:C', '2')).toBe('C2');
     expect(formatGroupAndClass('spsf:A-opt', 'VetY')).toBe('A Opt Vet Y');
+    // Multi-word halves keep the space; 'CDam 1' would be unreadable.
+    expect(formatGroupAndClass('spsf:C', 'Dam1')).toBe('C Dam 1');
+    expect(formatGroupAndClass('spsf:A', '3')).toBe('A3');
     expect(formatGroupAndClass('spsf:C', null)).toBe('C');
     expect(formatGroupAndClass(null, '2')).toBe('2');
     expect(formatGroupAndClass(null, null)).toBe('');

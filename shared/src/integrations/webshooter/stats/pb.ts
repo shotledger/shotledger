@@ -48,9 +48,16 @@ export function officialPbScore(result: CompetitionResultForStats): number {
     : result.totalTenths;
 }
 
-/** Full class string, e.g. `'spsf-precision:spsf:C2'` — group+class, never either alone. */
+/**
+ * Discipline + vapengrupp, e.g. `'spsf-precision:spsf:C'`.
+ *
+ * Klass is deliberately NOT part of it (maintainer, 2026-09-15: "We only show
+ * person best per weapon group. Class does not matter."). A shooter who moved
+ * from klass 2 to klass 3 has one best per gun, not one per gun per klass —
+ * and the year-over-year key has always grouped this way.
+ */
 export function officialPbGroupKey(result: CompetitionResultForStats): string {
-  return `${result.competitionType}:${result.weaponGroup}${result.shooterClass}`;
+  return `${result.competitionType}:${result.weaponGroup}`;
 }
 
 export interface PersonalBestGroup {
@@ -116,8 +123,9 @@ export interface FreeformSessionForPb {
   seriesTenths: readonly number[];
 }
 
+/** Same shape and the same klass-free rule as `officialPbGroupKey`. */
 function freeformGroupKey(session: FreeformSessionForPb): string {
-  return `${session.disciplineId}:${session.weaponGroup}${session.shooterClass}`;
+  return `${session.disciplineId}:${session.weaponGroup}`;
 }
 
 export interface BestSeriesResult {
@@ -168,4 +176,23 @@ export function bestSession(
   }
 
   return best;
+}
+
+export interface StatsGroup {
+  /** Discipline id, e.g. 'spsf-precision'. */
+  disciplineId: string;
+  /** Federation-scoped vapengrupp id, e.g. 'spsf:C'. */
+  weaponGroupId: string;
+}
+
+/**
+ * Splits a group key back into its two halves, so a screen can render written
+ * -out names instead of the raw key (#138: "This is not for humans").
+ *
+ * Split on the FIRST colon only: the vapengrupp id carries one of its own.
+ */
+export function parseStatsGroupKey(key: string): StatsGroup {
+  const at = key.indexOf(':');
+  if (at < 0) return { disciplineId: key, weaponGroupId: '' };
+  return { disciplineId: key.slice(0, at), weaponGroupId: key.slice(at + 1) };
 }

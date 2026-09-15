@@ -4,6 +4,7 @@ import {
   bestSession,
   isOfficialPbEligible,
   officialPbGroupKey,
+  parseStatsGroupKey,
   officialPbScore,
   personalBests,
   type CompetitionResultForStats,
@@ -90,14 +91,49 @@ describe('officialPbScore', () => {
 });
 
 describe('officialPbGroupKey', () => {
-  it('concatenates weaponGroup and shooterClass (full class string, not either alone)', () => {
-    expect(officialPbGroupKey(precisionResult())).toBe('spsf-precision:spsf:C2');
+  it('is discipline and vapengrupp, without the klass', () => {
+    expect(officialPbGroupKey(precisionResult())).toBe('spsf-precision:spsf:C');
   });
 
-  it('tracks C2 and C3 as separate groups', () => {
-    expect(officialPbGroupKey(precisionResult({ shooterClass: '2' }))).not.toBe(
+  // A personal best belongs to the gun, not to the klass the shooter happened
+  // to be entered in (maintainer, 2026-09-15).
+  it('keeps C2 and C3 in one group', () => {
+    expect(officialPbGroupKey(precisionResult({ shooterClass: '2' }))).toBe(
       officialPbGroupKey(precisionResult({ shooterClass: '3' })),
     );
+  });
+
+  it('separates vapengrupper, and disciplines', () => {
+    expect(officialPbGroupKey(precisionResult({ weaponGroup: 'spsf:C' }))).not.toBe(
+      officialPbGroupKey(precisionResult({ weaponGroup: 'spsf:A' })),
+    );
+    expect(officialPbGroupKey(precisionResult({ competitionType: 'spsf-milsnabb' }))).not.toBe(
+      officialPbGroupKey(precisionResult({ competitionType: 'spsf-precision' })),
+    );
+  });
+});
+
+describe('parseStatsGroupKey', () => {
+  it('splits on the first colon only — the vapengrupp id carries one', () => {
+    expect(parseStatsGroupKey('spsf-precision:spsf:C')).toEqual({
+      disciplineId: 'spsf-precision',
+      weaponGroupId: 'spsf:C',
+    });
+  });
+
+  it('round-trips a built key', () => {
+    const key = officialPbGroupKey(precisionResult());
+    expect(parseStatsGroupKey(key)).toEqual({
+      disciplineId: 'spsf-precision',
+      weaponGroupId: 'spsf:C',
+    });
+  });
+
+  it('gives an empty group for a key with no colon', () => {
+    expect(parseStatsGroupKey('generic-rings')).toEqual({
+      disciplineId: 'generic-rings',
+      weaponGroupId: '',
+    });
   });
 });
 
@@ -112,7 +148,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'low', beforeFinalTenths: 300 }),
       precisionResult({ sessionId: 'high', beforeFinalTenths: 330 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('high');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('high');
   });
 
   it('breaks ties by figureHits, then innerTens', () => {
@@ -120,7 +156,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'a', beforeFinalTenths: 300, figureHits: 1, innerTens: 5 }),
       precisionResult({ sessionId: 'b', beforeFinalTenths: 300, figureHits: 2, innerTens: 1 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('b');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('b');
   });
 
   it('breaks a figureHits tie by innerTens', () => {
@@ -128,7 +164,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'a', beforeFinalTenths: 300, figureHits: 1, innerTens: 5 }),
       precisionResult({ sessionId: 'b', beforeFinalTenths: 300, figureHits: 1, innerTens: 9 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('b');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('b');
   });
 
   it('keeps the higher-score result when a lower-score one arrives later (does not blindly replace)', () => {
@@ -136,7 +172,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'high', beforeFinalTenths: 330 }),
       precisionResult({ sessionId: 'low', beforeFinalTenths: 300 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('high');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('high');
   });
 
   it('keeps the higher-figureHits result when a lower one arrives later on an equal score', () => {
@@ -154,7 +190,7 @@ describe('personalBests', () => {
         innerTens: 5,
       }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('higher-fh');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('higher-fh');
   });
 
   it('keeps the higher-innerTens result when a lower one arrives later on an equal score/figureHits', () => {
@@ -172,7 +208,7 @@ describe('personalBests', () => {
         innerTens: 5,
       }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('higher-it');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('higher-it');
   });
 
   it('a complete tie (score/figureHits/innerTens all equal) keeps the first-seen result', () => {
@@ -180,7 +216,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'first', beforeFinalTenths: 300, figureHits: 1, innerTens: 5 }),
       precisionResult({ sessionId: 'second', beforeFinalTenths: 300, figureHits: 1, innerTens: 5 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.allTime?.sessionId).toBe('first');
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('first');
   });
 
   it('per-year PB also keeps the higher-score result when a lower one arrives later in the same year', () => {
@@ -188,7 +224,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: 'high', date: '2026-01-01', beforeFinalTenths: 330 }),
       precisionResult({ sessionId: 'low', date: '2026-06-01', beforeFinalTenths: 300 }),
     ]);
-    expect(groups.get('spsf-precision:spsf:C2')?.byYear.get(2026)?.sessionId).toBe('high');
+    expect(groups.get('spsf-precision:spsf:C')?.byYear.get(2026)?.sessionId).toBe('high');
   });
 
   it('maintains a separate per-year PB alongside the all-time PB', () => {
@@ -196,7 +232,7 @@ describe('personalBests', () => {
       precisionResult({ sessionId: '2025-best', date: '2025-05-01', beforeFinalTenths: 300 }),
       precisionResult({ sessionId: '2026-best', date: '2026-05-01', beforeFinalTenths: 330 }),
     ]);
-    const group = groups.get('spsf-precision:spsf:C2')!;
+    const group = groups.get('spsf-precision:spsf:C')!;
     expect(group.allTime?.sessionId).toBe('2026-best');
     expect(group.byYear.get(2025)?.sessionId).toBe('2025-best');
     expect(group.byYear.get(2026)?.sessionId).toBe('2026-best');
@@ -205,8 +241,8 @@ describe('personalBests', () => {
   it('groups precision and milsnabb results independently', () => {
     const groups = personalBests([precisionResult(), milsnabbResult()]);
     expect(groups.size).toBe(2);
-    expect(groups.has('spsf-precision:spsf:C2')).toBe(true);
-    expect(groups.has('spsf-milsnabb:spsf:A2')).toBe(true);
+    expect(groups.has('spsf-precision:spsf:C')).toBe(true);
+    expect(groups.has('spsf-milsnabb:spsf:A')).toBe(true);
   });
 });
 
@@ -225,12 +261,12 @@ function freeformSession(overrides: Partial<FreeformSessionForPb> = {}): Freefor
 describe('bestNSeries', () => {
   it('sums the N highest-scoring series in a session', () => {
     const result = bestNSeries([freeformSession({ seriesTenths: [400, 410, 420, 430, 440] })], 3);
-    expect(result.get('spsf-precision:spsf:C2')?.totalTenths).toBe(420 + 430 + 440);
+    expect(result.get('spsf-precision:spsf:C')?.totalTenths).toBe(420 + 430 + 440);
   });
 
   it('skips a session with fewer series than N, never zero-padding', () => {
     const result = bestNSeries([freeformSession({ seriesTenths: [400, 410] })], 5);
-    expect(result.has('spsf-precision:spsf:C2')).toBe(false);
+    expect(result.has('spsf-precision:spsf:C')).toBe(false);
   });
 
   it('keeps the best sum across multiple qualifying sessions in the same group', () => {
@@ -241,7 +277,7 @@ describe('bestNSeries', () => {
       ],
       3,
     );
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('higher');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
   it('groups by discipline+weaponGroup+shooterClass independently', () => {
@@ -260,7 +296,7 @@ describe('bestNSeries', () => {
       ],
       3,
     );
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('higher');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
   it('an exact tie keeps the first-seen session', () => {
@@ -271,14 +307,14 @@ describe('bestNSeries', () => {
       ],
       3,
     );
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('first');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('first');
   });
 });
 
 describe('bestSession', () => {
   it('sums all series regardless of count', () => {
     const result = bestSession([freeformSession({ seriesTenths: [1, 2, 3, 4] })]);
-    expect(result.get('spsf-precision:spsf:C2')?.totalTenths).toBe(10);
+    expect(result.get('spsf-precision:spsf:C')?.totalTenths).toBe(10);
   });
 
   it('keeps the higher-total session per group', () => {
@@ -286,12 +322,12 @@ describe('bestSession', () => {
       freeformSession({ sessionId: 'lower', seriesTenths: [1, 1] }),
       freeformSession({ sessionId: 'higher', seriesTenths: [1, 1, 1] }),
     ]);
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('higher');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
   it('handles an empty series list as a 0 total, not an error', () => {
     const result = bestSession([freeformSession({ seriesTenths: [] })]);
-    expect(result.get('spsf-precision:spsf:C2')?.totalTenths).toBe(0);
+    expect(result.get('spsf-precision:spsf:C')?.totalTenths).toBe(0);
   });
 
   it('keeps the higher-total session when a lower one arrives later (does not blindly replace)', () => {
@@ -299,7 +335,7 @@ describe('bestSession', () => {
       freeformSession({ sessionId: 'higher', seriesTenths: [1, 1, 1] }),
       freeformSession({ sessionId: 'lower', seriesTenths: [1, 1] }),
     ]);
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('higher');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
   it('an exact tie keeps the first-seen session', () => {
@@ -307,6 +343,6 @@ describe('bestSession', () => {
       freeformSession({ sessionId: 'first', seriesTenths: [1, 1] }),
       freeformSession({ sessionId: 'second', seriesTenths: [1, 1] }),
     ]);
-    expect(result.get('spsf-precision:spsf:C2')?.sessionId).toBe('first');
+    expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('first');
   });
 });

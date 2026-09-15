@@ -7,7 +7,8 @@
 // existing filter model. Reachable from Settings (§A) and, if wired later,
 // a "Records" entry on the Stats tab itself (not done here — kept as a
 // standalone route per the task's "your call, note it").
-import { tenthsToScore } from '@shotledger/shared';
+import { getDiscipline, tenthsToScore, weaponGroupLabel } from '@shotledger/shared';
+import { parseStatsGroupKey } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -25,6 +26,19 @@ function fmt(tenths: number | null): string {
 
 export default function WebshooterRecordsScreen() {
   const { t } = useTranslation();
+
+  // The group key is an id, not a label — "spsf-precision:spsf:A" is what the
+  // screen used to print (#138: "This is not for humans"). Written out it is
+  // the federation, the discipline and the vapengrupp: "SPSF Precision · A".
+  function groupLabel(groupKey: string): string {
+    const { disciplineId, weaponGroupId } = parseStatsGroupKey(groupKey);
+    const discipline = getDiscipline(disciplineId);
+    const name = discipline ? t(`discipline.${disciplineId}` as const) : disciplineId;
+    const federation =
+      discipline && discipline.federation !== 'generic' ? `${discipline.federation} ` : '';
+    const group = weaponGroupLabel(weaponGroupId);
+    return group ? `${federation}${name} · ${group}` : `${federation}${name}`;
+  }
   const { officialPbs, freeformPbs, yearOverYear } = useWebshooterRecords();
 
   const empty = officialPbs.length === 0 && freeformPbs.length === 0 && yearOverYear.length === 0;
@@ -42,7 +56,7 @@ export default function WebshooterRecordsScreen() {
           <ThemedText type="smallBold">{t('webshooter.officialPbTitle')}</ThemedText>
           {officialPbs.map((row) => (
             <Card key={row.groupKey}>
-              <ThemedText type="default">{row.groupKey}</ThemedText>
+              <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {t('webshooter.allTimeBest', { value: fmt(row.allTimeTenths) })}
               </ThemedText>
@@ -56,7 +70,7 @@ export default function WebshooterRecordsScreen() {
           <ThemedText type="smallBold">{t('webshooter.freeformPbTitle')}</ThemedText>
           {freeformPbs.map((row) => (
             <Card key={row.groupKey}>
-              <ThemedText type="default">{row.groupKey}</ThemedText>
+              <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {t('webshooter.freeformBest5', { value: fmt(row.best5Tenths) })}
                 {' · '}
@@ -74,7 +88,7 @@ export default function WebshooterRecordsScreen() {
           <ThemedText type="smallBold">{t('webshooter.yearOverYearTitle')}</ThemedText>
           {yearOverYear.map((row) => (
             <Card key={row.groupKey}>
-              <ThemedText type="default">{row.groupKey}</ThemedText>
+              <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
               {row.years.map((year) => (
                 <ThemedText key={year.year} type="small" themeColor="textSecondary">
                   {year.year}: {fmt(year.meanTenths)} ({year.count})
