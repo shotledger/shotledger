@@ -14,13 +14,15 @@ export const SETTINGS_KEYS = {
   // choice yet — the Settings screen applies the locale-based default
   // (se when device locale is sv, else none) rather than writing a row.
   complianceProfile: 'complianceProfile',
-  // Timers: spoken prompts on/off, and the fälttimer's own settings blob
-  // (mode, prep/shooting time, parti boundaries, whistle).
+  // Timers. `spokenPrompts` is legacy — read once to seed the per-timer cue
+  // settings that replaced it, never written. The fälttimer's own blob
+  // (mode, prep/shooting time, parti boundaries, a cue per command).
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
   // The IPSC timer's own blob (trigger level, random delay range, PAR,
-  // auto-stop).
+  // auto-stop, cue mode, spoken prompts).
   ipscTimer: 'ipscTimer',
+  // The Time Limit timer's cue mode.
   timerCues: 'timerCues',
   // Opt-in online place lookup for the session Location field (Photon/OSM).
   // OFF by default: with it on, what the user types is sent to a third-party

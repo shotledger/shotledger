@@ -16,6 +16,11 @@
 // PROPPA VAPEN efter skjuttidens slut, then VISITATION. SHB gives no interval
 // for ALLA KLARA itself; the ~5 s before TIO SEKUNDER KVAR is the maintainer's
 // (2026-09-09), so shooters can announce that they are not ready.
+import {
+  normalizeTimerCueDelivery,
+  type TimerCueDelivery,
+  type TimerCueSound,
+} from './cue-settings';
 
 /**
  * Who is running the sequence.
@@ -150,21 +155,72 @@ export interface FaltCue {
   atSeconds: number | null;
   /** How long the call is drawn out: 3 s for ELD UPPHÖR so it ends exactly at T, 0 for everything else. */
   durationSeconds: number;
-  /** Swedish command to speak; undefined for the wordless cues (`parti`, `timeUp`, the whistle variant). */
+  /**
+   * What the cue sounds like, from the user's per-command choice: the spoken
+   * command, a beep, the ELD UPPHÖR whistle, or nothing (haptic only). The
+   * host plays exactly this — a whistle *replaces* the words, so it is never
+   * played beside them.
+   */
+  sound: TimerCueSound | null;
+  /** Swedish command to speak; set only when `sound` is `voice`. */
   speech?: string;
   /** Speech rate multiplier; only set where it differs from normal (the drawn-out ELD UPPHÖR). */
   speechRate?: number;
-  /**
-   * Overrides the host's kind-to-sound mapping. Only ELD UPPHÖR sets it, and
-   * only in whistle mode: the blast *replaces* the words, so playing it beside
-   * the spoken command would talk over it.
-   */
-  tone?: 'whistle';
   /** 1-based parti number, for `parti` cues only. */
   partiNumber?: number;
-  /** A vibration point — ELD, each parti, and when the time is up. The host still gates on the user's setting. */
+  /** Buzz at this cue, from the user's per-command choice. */
   vibrate: boolean;
 }
+
+/** How each command reaches the shooter — one cue per command, `parti` covering every boundary. */
+export type FaltCues = Record<FaltCommandKind, TimerCueDelivery>;
+
+/** The commands in the order they are given, for a settings list. */
+export const FALT_COMMAND_KINDS: readonly FaltCommandKind[] = [
+  'ladda',
+  'allaKlara',
+  'tenSeconds',
+  'fardiga',
+  'eld',
+  'parti',
+  'eldUpphor',
+  'patronUr',
+  'visitation',
+];
+
+/**
+ * Which sounds each command may make. Every spoken command can be the voice
+ * or a beep; only ELD UPPHÖR may also be the whistle (SHB D.6.2: the spoken
+ * command "kan ersättas med visselsignal"); a parti boundary has no words.
+ */
+export const FALT_CUE_SOUNDS: Record<FaltCommandKind, readonly TimerCueSound[]> = {
+  ladda: ['voice', 'beep'],
+  allaKlara: ['voice', 'beep'],
+  tenSeconds: ['voice', 'beep'],
+  fardiga: ['voice', 'beep'],
+  eld: ['voice', 'beep'],
+  parti: ['beep'],
+  eldUpphor: ['voice', 'whistle', 'beep'],
+  patronUr: ['voice', 'beep'],
+  visitation: ['voice', 'beep'],
+};
+
+/**
+ * Spoken throughout, with a buzz where the shooter's hands matter more than
+ * their ears: at ELD, at each parti, and when the time is up (the end of
+ * ELD UPPHÖR's drawn-out call — see `buildFaltProgram`).
+ */
+export const DEFAULT_FALT_CUES: FaltCues = {
+  ladda: { sound: 'voice', vibrate: false },
+  allaKlara: { sound: 'voice', vibrate: false },
+  tenSeconds: { sound: 'voice', vibrate: false },
+  fardiga: { sound: 'voice', vibrate: false },
+  eld: { sound: 'voice', vibrate: true },
+  parti: { sound: 'beep', vibrate: true },
+  eldUpphor: { sound: 'voice', vibrate: true },
+  patronUr: { sound: 'voice', vibrate: false },
+  visitation: { sound: 'voice', vibrate: false },
+};
 
 export interface FaltTimerSettings {
   mode: FaltMode;
@@ -173,10 +229,8 @@ export interface FaltTimerSettings {
   shootingSeconds: number;
   /** Parti boundaries: whole seconds strictly inside the shooting window, ascending and unique. */
   partiSeconds: readonly number[];
-  /** Replace the spoken "Eld upphör!" with a whistle-style tone (SHB: "kan ersättas med visselsignal"). */
-  whistle: boolean;
-  /** Vibrate at ELD, at each parti, and when the time is up. */
-  vibration: boolean;
+  /** How each command reaches the shooter. */
+  cues: FaltCues;
 }
 
 export const DEFAULT_FALT_SETTINGS: FaltTimerSettings = {
@@ -184,9 +238,54 @@ export const DEFAULT_FALT_SETTINGS: FaltTimerSettings = {
   laddaSeconds: DEFAULT_LADDA_SECONDS,
   shootingSeconds: DEFAULT_SHOOTING_SECONDS,
   partiSeconds: [],
-  whistle: false,
-  vibration: true,
+  cues: DEFAULT_FALT_CUES,
 };
+
+/**
+ * Validates a stored `cues` blob command by command: a sound the command
+ * cannot make, a missing field or an unperceivable cue falls back to that
+ * command's default, and the rest keep the shooter's choices.
+ */
+export function normalizeFaltCues(value: unknown): FaltCues {
+  const stored = (typeof value === 'object' && value !== null ? value : {}) as Record<
+    string,
+    unknown
+  >;
+  const cues = {} as FaltCues;
+  for (const kind of FALT_COMMAND_KINDS) {
+    cues[kind] = normalizeTimerCueDelivery(
+      stored[kind],
+      FALT_CUE_SOUNDS[kind],
+      DEFAULT_FALT_CUES[kind],
+    );
+  }
+  return cues;
+}
+
+/**
+ * What a row written before the per-command cues meant. Those builds had
+ * three independent toggles — a whistle for ELD UPPHÖR, vibration at
+ * ELD/parti/time-up, and spoken prompts for everything — so an upgrade keeps
+ * the shooter's choices instead of resetting them. A missing toggle takes
+ * that build's default.
+ */
+export function faltCuesFromLegacy(legacy: {
+  whistle?: unknown;
+  vibration?: unknown;
+  spokenPrompts?: unknown;
+}): FaltCues {
+  const whistle = legacy.whistle === true;
+  const vibration = legacy.vibration !== false;
+  const spoken = legacy.spokenPrompts !== false;
+  const cues = {} as FaltCues;
+  for (const kind of FALT_COMMAND_KINDS) {
+    const base = DEFAULT_FALT_CUES[kind];
+    const sound: TimerCueSound =
+      kind === 'eldUpphor' && whistle ? 'whistle' : spoken ? base.sound! : 'beep';
+    cues[kind] = { sound, vibrate: base.vibrate && vibration };
+  }
+  return cues;
+}
 
 export interface FaltProgram {
   /** The settings the program was built from, normalized. */
@@ -241,25 +340,27 @@ export function normalizeFaltSettings(settings: FaltTimerSettings): FaltTimerSet
     laddaSeconds: settings.mode === 'solo' ? settings.laddaSeconds : 0,
     shootingSeconds: settings.shootingSeconds,
     partiSeconds: partier,
-    whistle: settings.whistle,
-    vibration: settings.vibration,
+    cues: normalizeFaltCues(settings.cues),
   };
 }
 
 function command(
   kind: Exclude<FaltCommandKind, 'parti'>,
   atSeconds: number | null,
-  vibrate = false,
+  cue: TimerCueDelivery,
 ): FaltCue {
   return {
     kind,
     number: 0, // assigned in build order below
     atSeconds,
     durationSeconds: 0,
+    sound: cue.sound,
     // Respelled where the voice needs it; the screen still shows the real
     // command (FALT_COMMAND_SPEECH).
-    speech: FALT_COMMAND_SPEECH[kind] ?? FALT_COMMAND_TEXT[kind],
-    vibrate,
+    ...(cue.sound === 'voice'
+      ? { speech: FALT_COMMAND_SPEECH[kind] ?? FALT_COMMAND_TEXT[kind] }
+      : {}),
+    vibrate: cue.vibrate,
   };
 }
 
@@ -269,7 +370,7 @@ function command(
  */
 export function buildFaltProgram(settings: FaltTimerSettings): FaltProgram {
   const normalized = normalizeFaltSettings(settings);
-  const { mode, laddaSeconds, shootingSeconds, partiSeconds, whistle, vibration } = normalized;
+  const { mode, laddaSeconds, shootingSeconds, partiSeconds, cues: chosen } = normalized;
   const manual = mode === 'rangeOfficer';
 
   const laddaAt = manual ? null : ALLA_KLARA_AT_SECONDS - laddaSeconds;
@@ -279,29 +380,30 @@ export function buildFaltProgram(settings: FaltTimerSettings): FaltProgram {
   const visitationAt = patronUrAt + VISITATION_DELAY_SECONDS;
 
   const ordered: FaltCue[] = [
-    command('ladda', laddaAt),
-    command('allaKlara', allaKlaraAt),
-    command('tenSeconds', -TEN_SECONDS_LEAD_SECONDS),
-    command('fardiga', -FARDIGA_LEAD_SECONDS),
-    command('eld', 0, vibration),
+    command('ladda', laddaAt, chosen.ladda),
+    command('allaKlara', allaKlaraAt, chosen.allaKlara),
+    command('tenSeconds', -TEN_SECONDS_LEAD_SECONDS, chosen.tenSeconds),
+    command('fardiga', -FARDIGA_LEAD_SECONDS, chosen.fardiga),
+    command('eld', 0, chosen.eld),
     ...partiSeconds.map<FaltCue>((second, i) => ({
       kind: 'parti',
       number: 0,
       atSeconds: second,
       durationSeconds: 0,
       partiNumber: i + 1,
-      vibrate: vibration,
+      sound: chosen.parti.sound,
+      vibrate: chosen.parti.vibrate,
     })),
     {
-      ...command('eldUpphor', eldUpphorAt),
+      ...command('eldUpphor', eldUpphorAt, chosen.eldUpphor),
       durationSeconds: ELD_UPPHOR_LEAD_SECONDS,
-      // The whistle variant replaces the words entirely.
-      speech: whistle ? undefined : FALT_COMMAND_TEXT.eldUpphor,
-      speechRate: whistle ? undefined : ELD_UPPHOR_SPEECH_RATE,
-      ...(whistle ? { tone: 'whistle' as const } : {}),
+      ...(chosen.eldUpphor.sound === 'voice' ? { speechRate: ELD_UPPHOR_SPEECH_RATE } : {}),
+      // The command's buzz marks the moment the time is up — the end of the
+      // drawn-out call, carried by `timeUp` below — not the start of it.
+      vibrate: false,
     },
-    command('patronUr', patronUrAt),
-    command('visitation', visitationAt),
+    command('patronUr', patronUrAt, chosen.patronUr),
+    command('visitation', visitationAt, chosen.visitation),
   ];
 
   // Numbering follows the order the commands are given: the untimed presses
@@ -315,12 +417,16 @@ export function buildFaltProgram(settings: FaltTimerSettings): FaltProgram {
     .sort((a, b) => a.atSeconds! - b.atSeconds!);
   const commands = [...untimed, ...timed].map((cue, i) => ({ ...cue, number: i + 1 }));
 
+  // The tail of ELD UPPHÖR: a short tone (never the voice or the whistle,
+  // which have just finished) and the command's buzz, exactly when the time
+  // is up. Silent only when the command itself is haptic-only.
   const timeUp: FaltCue = {
     kind: 'timeUp',
     number: null,
     atSeconds: shootingSeconds,
     durationSeconds: 0,
-    vibrate: vibration,
+    sound: chosen.eldUpphor.sound === null ? null : 'beep',
+    vibrate: chosen.eldUpphor.vibrate,
   };
 
   const cues = [...commands.filter((cue) => cue.atSeconds !== null), timeUp].sort(

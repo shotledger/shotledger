@@ -777,6 +777,12 @@
       "vibrate": "Vibrate",
       "both": "Both"
     },
+    "cueSound": {
+      "voice": "Voice",
+      "beep": "Beep",
+      "whistle": "Whistle"
+    },
+    "cueVibrate": "Vibrate",
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
       "regular": "Time Limit",
@@ -805,6 +811,7 @@
     "parSeconds": "Time Limit (s)",
     "parPlaceholder": "Optional",
     "autoStopSeconds": "Stop Automatically After Silence (s)",
+    "cuesHint": "Applies to Are You Ready?, Standby, the start beep and the stop tone. Sounds play even on silent while the microphone is listening.",
     "privacyNote": "The microphone is analysed live on this device to find the shots. The recording is never stored, played back or sent anywhere — it is written to a temporary file the app can only meter, and deleted the moment the run ends.",
     "webUnavailable": "The shot timer needs a native build — the microphone isn't available in this web preview.",
     "errors": {
@@ -890,9 +897,9 @@
     "increaseParti": "Move the boundary later",
     "addParti": "Add a boundary",
     "removeParti": "Remove the last boundary",
-    "whistle": "Whistle Signal Instead of a Spoken Eld upphör",
-    "vibration": "Vibrate at Eld, Each Parti and When Time Is Up",
-    "spokenPrompts": "Spoken Prompts",
+    "cues": "Cues per Command",
+    "cuesHint": "Tap to choose how each command reaches you: voice or beep, vibration, or both. Eld upphör can also be a whistle, as the rules allow. At least one stays on.",
+    "partiCueLabel": "Parti boundaries",
     "commandsTitle": "Commands",
     "sourceNote": "Commands and timings per SHB 2026 D.6.2 p. 88, on a timeline anchored at Eld (t = 0). Eld upphör is drawn out over the last 3 s so it ends exactly when the shooting time runs out.",
     "pressHint": "Press when everyone is ready.",

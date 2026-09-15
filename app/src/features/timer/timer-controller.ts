@@ -78,9 +78,9 @@ export class TimerController {
   // `event.cue.vibrate` is the engine's own suggestion; the shooter's chosen
   // mode overrides it in both directions (#138).
   private applyEvents(events: readonly TimerEvent[]): void {
-    const { beep, vibrate } = resolveTimerCue(this.cueMode);
+    const { sound, vibrate } = resolveTimerCue(this.cueMode);
     for (const event of events) {
-      if (beep) this.effects.playSound(event.cue.kind);
+      if (sound !== null) this.effects.playSound(event.cue.kind);
       if (vibrate) this.effects.vibrate();
     }
   }

@@ -3,17 +3,23 @@ import { describe, expect, it } from 'vitest';
 import {
   ALLA_KLARA_AT_SECONDS,
   buildFaltProgram,
+  DEFAULT_FALT_CUES,
   DEFAULT_FALT_SETTINGS,
   ELD_UPPHOR_LEAD_SECONDS,
   ELD_UPPHOR_SPEECH_RATE,
   faltCommandText,
+  faltCuesFromLegacy,
   faltPartiIntervals,
+  FALT_COMMAND_KINDS,
   FALT_COMMAND_SPEECH,
   FALT_COMMAND_TEXT,
+  FALT_CUE_SOUNDS,
   FaltTimerEngine,
+  normalizeFaltCues,
   normalizeFaltSettings,
   type FaltCue,
   type FaltCueKind,
+  type FaltCues,
   type FaltTimerSettings,
 } from './falt';
 
@@ -22,9 +28,22 @@ const rangeOfficer: FaltTimerSettings = {
   laddaSeconds: 30,
   shootingSeconds: 8,
   partiSeconds: [],
-  whistle: false,
-  vibration: true,
+  cues: DEFAULT_FALT_CUES,
 };
+
+/** The default cues with one command's cue replaced. */
+function withCue(cues: FaltCues, kind: keyof FaltCues, cue: FaltCues[keyof FaltCues]): FaltCues {
+  return { ...cues, [kind]: cue };
+}
+
+/** Every command's cue patched the same way — vibration off everywhere, say. */
+function allCues(patch: Partial<FaltCues[keyof FaltCues]>): FaltCues {
+  const cues = {} as FaltCues;
+  for (const kind of FALT_COMMAND_KINDS) {
+    cues[kind] = { ...DEFAULT_FALT_CUES[kind], ...patch };
+  }
+  return cues;
+}
 
 const solo: FaltTimerSettings = { ...rangeOfficer, mode: 'solo' };
 
@@ -204,10 +223,28 @@ describe('buildFaltProgram — partier, speech and vibration', () => {
   });
 
   it('drops the words from ELD UPPHÖR in whistle mode, keeping its time', () => {
-    const cue = buildFaltProgram({ ...solo, whistle: true }).commands.find(
-      (c) => c.kind === 'eldUpphor',
-    );
-    expect(cue).toMatchObject({ atSeconds: 5, speech: undefined, speechRate: undefined });
+    const cue = buildFaltProgram({
+      ...solo,
+      cues: withCue(DEFAULT_FALT_CUES, 'eldUpphor', { sound: 'whistle', vibrate: true }),
+    }).commands.find((c) => c.kind === 'eldUpphor')!;
+    expect(cue.atSeconds).toBe(5);
+    expect(cue.speech).toBeUndefined();
+    expect(cue.speechRate).toBeUndefined();
+  });
+
+  it('gives a command set to beep no words to speak, only its sound', () => {
+    const program = buildFaltProgram({
+      ...solo,
+      cues: withCue(DEFAULT_FALT_CUES, 'eld', { sound: 'beep', vibrate: true }),
+    });
+    const eld = program.commands.find((c) => c.kind === 'eld')!;
+    expect(eld.sound).toBe('beep');
+    expect(eld.speech).toBeUndefined();
+    // The other commands keep their voice.
+    expect(program.commands.find((c) => c.kind === 'fardiga')).toMatchObject({
+      sound: 'voice',
+      speech: 'Färdiga!',
+    });
   });
 
   it('vibrates at ELD, at every parti and when the time is up — and nowhere else', () => {
@@ -220,18 +257,208 @@ describe('buildFaltProgram — partier, speech and vibration', () => {
     ]);
   });
 
-  it('vibrates nowhere when the setting is off', () => {
-    const program = buildFaltProgram({ ...solo, partiSeconds: [4], vibration: false });
+  it('vibrates nowhere when every command has vibration off', () => {
+    const program = buildFaltProgram({
+      ...solo,
+      partiSeconds: [4],
+      cues: allCues({ vibrate: false }),
+    });
     expect(program.cues.some((cue) => cue.vibrate)).toBe(false);
   });
 
-  it('defaults to range-officer mode, an 8 s shooting time and vibration on', () => {
+  it('vibrates at whichever commands ask for it', () => {
+    const cues = withCue(allCues({ vibrate: false }), 'fardiga', { sound: 'voice', vibrate: true });
+    const program = buildFaltProgram({ ...solo, cues });
+    expect(program.cues.filter((cue) => cue.vibrate).map((cue) => cue.kind)).toEqual(['fardiga']);
+  });
+
+  it("puts ELD UPPHÖR's buzz where the time is up, not where the call starts", () => {
+    const program = buildFaltProgram({
+      ...solo,
+      cues: withCue(allCues({ vibrate: false }), 'eldUpphor', { sound: 'voice', vibrate: true }),
+    });
+    expect(program.commands.find((c) => c.kind === 'eldUpphor')?.vibrate).toBe(false);
+    expect(program.cues.find((c) => c.kind === 'timeUp')).toMatchObject({
+      atSeconds: 8,
+      vibrate: true,
+      sound: 'beep',
+    });
+  });
+
+  it('marks the time up with a tone whatever ELD UPPHÖR sounds like, silently only when it is haptic-only', () => {
+    const timeUpFor = (cue: FaltCues['eldUpphor']) =>
+      buildFaltProgram({ ...solo, cues: withCue(DEFAULT_FALT_CUES, 'eldUpphor', cue) }).cues.find(
+        (c) => c.kind === 'timeUp',
+      )!;
+    expect(timeUpFor({ sound: 'voice', vibrate: false }).sound).toBe('beep');
+    expect(timeUpFor({ sound: 'whistle', vibrate: false }).sound).toBe('beep');
+    expect(timeUpFor({ sound: 'beep', vibrate: false }).sound).toBe('beep');
+    expect(timeUpFor({ sound: null, vibrate: true })).toMatchObject({ sound: null, vibrate: true });
+  });
+
+  it('lets a parti be haptic-only', () => {
+    const program = buildFaltProgram({
+      ...solo,
+      partiSeconds: [4],
+      cues: withCue(DEFAULT_FALT_CUES, 'parti', { sound: null, vibrate: true }),
+    });
+    const parti = program.cues.find((c) => c.kind === 'parti')!;
+    expect(parti).toMatchObject({ sound: null, vibrate: true });
+    expect(parti.speech).toBeUndefined();
+  });
+
+  it('defaults to range-officer mode, an 8 s shooting time and the default cues', () => {
     expect(DEFAULT_FALT_SETTINGS).toMatchObject({
       mode: 'rangeOfficer',
       shootingSeconds: 8,
-      vibration: true,
+      cues: DEFAULT_FALT_CUES,
     });
     expect(buildFaltProgram(DEFAULT_FALT_SETTINGS).startSeconds).toBe(-10);
+  });
+});
+
+describe('the default cues', () => {
+  it('speak every command, beep the partier, and buzz at ELD, each parti and the time up', () => {
+    for (const kind of FALT_COMMAND_KINDS) {
+      expect(DEFAULT_FALT_CUES[kind].sound).toBe(kind === 'parti' ? 'beep' : 'voice');
+      expect(DEFAULT_FALT_CUES[kind].vibrate).toBe(
+        kind === 'eld' || kind === 'parti' || kind === 'eldUpphor',
+      );
+    }
+  });
+
+  it('are each a sound the command may make', () => {
+    for (const kind of FALT_COMMAND_KINDS) {
+      expect(FALT_CUE_SOUNDS[kind]).toContain(DEFAULT_FALT_CUES[kind].sound);
+    }
+  });
+
+  it('cover every command, in the order the commands are given', () => {
+    expect(FALT_COMMAND_KINDS).toEqual([
+      'ladda',
+      'allaKlara',
+      'tenSeconds',
+      'fardiga',
+      'eld',
+      'parti',
+      'eldUpphor',
+      'patronUr',
+      'visitation',
+    ]);
+    expect(Object.keys(DEFAULT_FALT_CUES).sort()).toEqual([...FALT_COMMAND_KINDS].sort());
+  });
+
+  it('offer the whistle for ELD UPPHÖR only, and no words for a parti', () => {
+    for (const kind of FALT_COMMAND_KINDS) {
+      expect(FALT_CUE_SOUNDS[kind].includes('whistle')).toBe(kind === 'eldUpphor');
+      expect(FALT_CUE_SOUNDS[kind].includes('voice')).toBe(kind !== 'parti');
+    }
+  });
+});
+
+describe('normalizeFaltCues', () => {
+  it('keeps a valid stored blob', () => {
+    const stored = withCue(
+      withCue(DEFAULT_FALT_CUES, 'eldUpphor', { sound: 'whistle', vibrate: false }),
+      'ladda',
+      { sound: null, vibrate: true },
+    );
+    expect(normalizeFaltCues(stored)).toEqual(stored);
+  });
+
+  it.each([null, undefined, 'voice', 3, []])('is the defaults for %p', (input) => {
+    expect(normalizeFaltCues(input)).toEqual(DEFAULT_FALT_CUES);
+  });
+
+  it('replaces only the broken command, keeping the rest', () => {
+    const result = normalizeFaltCues({
+      ...withCue(DEFAULT_FALT_CUES, 'patronUr', { sound: 'beep', vibrate: true }),
+      eld: { sound: 'siren', vibrate: true },
+      fardiga: 'loud',
+    });
+    expect(result.patronUr).toEqual({ sound: 'beep', vibrate: true });
+    expect(result.eld).toEqual(DEFAULT_FALT_CUES.eld);
+    expect(result.fardiga).toEqual(DEFAULT_FALT_CUES.fardiga);
+  });
+
+  it('refuses a whistle on any command but ELD UPPHÖR, and words on a parti', () => {
+    const result = normalizeFaltCues({
+      eld: { sound: 'whistle', vibrate: true },
+      parti: { sound: 'voice', vibrate: true },
+      eldUpphor: { sound: 'whistle', vibrate: true },
+    });
+    expect(result.eld).toEqual(DEFAULT_FALT_CUES.eld);
+    expect(result.parti).toEqual(DEFAULT_FALT_CUES.parti);
+    expect(result.eldUpphor).toEqual({ sound: 'whistle', vibrate: true });
+  });
+
+  it('refuses an unperceivable cue', () => {
+    expect(normalizeFaltCues({ ladda: { sound: null, vibrate: false } }).ladda).toEqual(
+      DEFAULT_FALT_CUES.ladda,
+    );
+  });
+
+  it('drops commands that do not exist', () => {
+    const result = normalizeFaltCues({ markera: { sound: 'voice', vibrate: true } });
+    expect(Object.keys(result).sort()).toEqual([...FALT_COMMAND_KINDS].sort());
+  });
+
+  it('runs inside normalizeFaltSettings, so a program is never built from a bad cue', () => {
+    const settings = {
+      ...solo,
+      cues: { ...DEFAULT_FALT_CUES, eld: { sound: 'whistle', vibrate: true } } as FaltCues,
+    };
+    expect(normalizeFaltSettings(settings).cues.eld).toEqual(DEFAULT_FALT_CUES.eld);
+    expect(buildFaltProgram(settings).commands.find((c) => c.kind === 'eld')?.sound).toBe('voice');
+  });
+});
+
+describe('faltCuesFromLegacy — the three toggles older builds stored', () => {
+  it('is the defaults when the toggles were at their defaults', () => {
+    expect(faltCuesFromLegacy({ whistle: false, vibration: true, spokenPrompts: true })).toEqual(
+      DEFAULT_FALT_CUES,
+    );
+    expect(faltCuesFromLegacy({})).toEqual(DEFAULT_FALT_CUES);
+  });
+
+  it('keeps a whistle on ELD UPPHÖR', () => {
+    const cues = faltCuesFromLegacy({ whistle: true });
+    expect(cues.eldUpphor).toEqual({ sound: 'whistle', vibrate: true });
+    expect(cues.eld).toEqual(DEFAULT_FALT_CUES.eld);
+  });
+
+  it('keeps vibration off everywhere', () => {
+    const cues = faltCuesFromLegacy({ vibration: false });
+    for (const kind of FALT_COMMAND_KINDS) expect(cues[kind].vibrate).toBe(false);
+    expect(cues.eld.sound).toBe('voice');
+  });
+
+  it('turns spoken prompts off into a beep on every command', () => {
+    const cues = faltCuesFromLegacy({ spokenPrompts: false });
+    for (const kind of FALT_COMMAND_KINDS) expect(cues[kind].sound).toBe('beep');
+  });
+
+  it('still whistles ELD UPPHÖR when spoken prompts were off — the whistle was never speech', () => {
+    expect(faltCuesFromLegacy({ whistle: true, spokenPrompts: false }).eldUpphor.sound).toBe(
+      'whistle',
+    );
+  });
+
+  it('treats anything but a boolean as that toggle at its default', () => {
+    expect(faltCuesFromLegacy({ whistle: 'yes', vibration: 0, spokenPrompts: null })).toEqual(
+      DEFAULT_FALT_CUES,
+    );
+  });
+
+  it('always yields cues normalizeFaltCues accepts as they are', () => {
+    for (const whistle of [true, false]) {
+      for (const vibration of [true, false]) {
+        for (const spokenPrompts of [true, false]) {
+          const cues = faltCuesFromLegacy({ whistle, vibration, spokenPrompts });
+          expect(normalizeFaltCues(cues)).toEqual(cues);
+        }
+      }
+    }
   });
 });
 
@@ -495,17 +722,23 @@ describe('FaltTimerEngine — lifecycle', () => {
 });
 
 describe('ELD UPPHÖR whistle', () => {
-  const settings = (whistle: boolean) => ({ ...DEFAULT_FALT_SETTINGS, whistle });
+  const settings = (whistle: boolean): FaltTimerSettings => ({
+    ...DEFAULT_FALT_SETTINGS,
+    cues: withCue(DEFAULT_FALT_CUES, 'eldUpphor', {
+      sound: whistle ? 'whistle' : 'voice',
+      vibrate: true,
+    }),
+  });
 
   it('asks for the drawn-out blast instead of the words in whistle mode', () => {
     const cue = buildFaltProgram(settings(true)).commands.find((c) => c.kind === 'eldUpphor')!;
-    expect(cue.tone).toBe('whistle');
+    expect(cue.sound).toBe('whistle');
     expect(cue.speech).toBeUndefined();
   });
 
-  it('leaves the tone to the host in spoken mode, so the blast cannot talk over the words', () => {
+  it('speaks the words in spoken mode, so the blast cannot talk over them', () => {
     const cue = buildFaltProgram(settings(false)).commands.find((c) => c.kind === 'eldUpphor')!;
-    expect(cue.tone).toBeUndefined();
+    expect(cue.sound).toBe('voice');
     expect(cue.speech).toBe('Eld upphör!');
   });
 

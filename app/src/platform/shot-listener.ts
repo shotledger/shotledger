@@ -15,6 +15,8 @@ import { AudioModule, RecordingPresets, setAudioModeAsync } from 'expo-audio';
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 
+import { TIMER_AUDIO_MODE } from './timer-cues';
+
 /** How often the recorder's metering is polled. ~60 ms is well inside the 80 ms shot debounce. */
 const POLL_INTERVAL_MS = 60;
 
@@ -138,7 +140,9 @@ async function openRecorder(onLevel: (db: number) => void): Promise<ShotListener
     const uri = recorder.uri;
     try {
       await recorder.stop();
-      await setAudioModeAsync({ allowsRecording: false });
+      // Hand the session back to the cues' silent-mode-respecting mode,
+      // which recording on iOS cannot share (timer-cues.ts).
+      await setAudioModeAsync({ ...TIMER_AUDIO_MODE, allowsRecording: false });
     } finally {
       deleteRecording(uri);
       try {

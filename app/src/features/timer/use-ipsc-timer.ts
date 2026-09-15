@@ -5,10 +5,12 @@
 // independently tested — the same precedent as use-timer.ts.
 import {
   IpscTimerEngine,
+  ipscCueDelivery,
   type DetectedShot,
   type IpscCueKind,
   type IpscPhase,
   type IpscTimerConfig,
+  type IpscTimerSettings,
   type ShotRunSummary,
 } from '@shotledger/shared';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -29,11 +31,7 @@ const KEEP_AWAKE_TAG = 'ipsc-shot-timer';
 
 const IDLE_PHASE: IpscPhase = { kind: 'idle', remainingMs: 0, runElapsedMs: 0 };
 
-/**
- * Cue → existing timer sound. Played under the spoken prompt, and on its own
- * when spoken prompts are off or the platform's TTS refuses — the tone stays
- * the guarantee, speech is the addition.
- */
+/** Cue → existing timer sound: what a beep plays, and the fallback when a spoken prompt's TTS refuses. */
 const CUE_SOUND: Record<IpscCueKind, TimerCueKind> = {
   ready: 'ready',
   standby: 'ready',
@@ -59,7 +57,7 @@ export interface UseIpscTimerResult {
 /**
  * The two prompts to speak, in the app's current language (unlike the
  * fälttimer's SPSF-regulated Swedish commands, these are ordinary UI text).
- * Null turns spoken prompts off, leaving the tones.
+ * Whether they are spoken at all is the settings' `spokenPrompts`.
  */
 export interface IpscSpokenPrompts {
   language: string;
@@ -69,7 +67,8 @@ export interface IpscSpokenPrompts {
 
 export function useIpscTimer(
   config: IpscTimerConfig,
-  spokenPrompts: IpscSpokenPrompts | null = null,
+  cues: Pick<IpscTimerSettings, 'cueMode' | 'spokenPrompts'>,
+  prompts: IpscSpokenPrompts,
 ): UseIpscTimerResult {
   const [phase, setPhase] = useState<IpscPhase>(IDLE_PHASE);
   const [shots, setShots] = useState<readonly DetectedShot[]>([]);
@@ -81,30 +80,26 @@ export function useIpscTimer(
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTickRef = useRef(0);
 
+  // `ipscCueDelivery` decides what each cue does (only ready and standby can
+  // be spoken); this turns it into calls, with the tone as the fallback when
+  // TTS refuses.
   const playCues = useCallback(
-    (cues: readonly IpscCueKind[]) => {
-      for (const cue of cues) {
-        const text =
-          spokenPrompts === null
-            ? null
-            : cue === 'ready'
-              ? spokenPrompts.ready
-              : cue === 'standby'
-                ? spokenPrompts.standby
-                : null;
-        // The start beep and the stop tone stay tones — a spoken word would
-        // arrive late and blur the moment the clock actually starts.
-        const spoke =
-          text !== null &&
-          speak(text, {
-            language: spokenPrompts?.language,
+    (due: readonly IpscCueKind[]) => {
+      for (const cue of due) {
+        const { sound, vibrate } = ipscCueDelivery(cues, cue);
+        if (sound === 'voice') {
+          const spoke = speak(cue === 'ready' ? prompts.ready : prompts.standby, {
+            language: prompts.language,
             onError: () => playTimerCueSound(CUE_SOUND[cue]),
           });
-        if (!spoke) playTimerCueSound(CUE_SOUND[cue]);
-        if (cue === 'start') vibrateForTimerCue();
+          if (!spoke) playTimerCueSound(CUE_SOUND[cue]);
+        } else if (sound !== null) {
+          playTimerCueSound(CUE_SOUND[cue]);
+        }
+        if (vibrate) vibrateForTimerCue();
       }
     },
-    [spokenPrompts],
+    [cues, prompts],
   );
 
   /** Tears down the interval, the microphone and keep-awake. Idempotent. */

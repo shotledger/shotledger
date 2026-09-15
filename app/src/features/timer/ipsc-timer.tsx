@@ -8,11 +8,13 @@ import {
   MAX_TRIGGER_DB,
   MIN_TRIGGER_DB,
   SENSITIVITY_THRESHOLD_DB,
+  TIMER_CUE_MODES,
   TRIGGER_DB_STEP,
   ipscConfigFromSettings,
   type IpscPhaseKind,
   type IpscTimerSettings,
   type ShotSensitivity,
+  type TimerCueMode,
 } from '@shotledger/shared';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +27,7 @@ import { InfoButton } from '@/components/info-button';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { RangeSlider } from '@/components/range-slider';
+import { SegmentedControl } from '@/components/segmented-control';
 import { Slider } from '@/components/slider';
 import { StatTile } from '@/components/stat-tile';
 import { TextField } from '@/components/text-field';
@@ -33,10 +36,13 @@ import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { useIpscTimer, type IpscSpokenPrompts } from '@/features/timer/use-ipsc-timer';
 import { useLevelMeter } from '@/features/timer/use-level-meter';
 import { TimerMenu } from '@/features/timer/timer-menu';
-import { useIpscSettings, useSpokenPrompts } from '@/features/timer/use-timer-settings';
+import { useIpscSettings } from '@/features/timer/use-timer-settings';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 const SENSITIVITIES: readonly ShotSensitivity[] = ['low', 'medium', 'high'];
+
+/** Copied to a plain array so the JSX map is not typed as `readonly`. */
+const CUE_MODE_OPTIONS: TimerCueMode[] = [...TIMER_CUE_MODES];
 
 const PHASE_COLOR: Record<IpscPhaseKind, ThemeColor> = {
   idle: 'textSecondary',
@@ -67,7 +73,6 @@ export interface IpscTimerProps {
 
 export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const { t, i18n } = useTranslation();
-  const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
   const [settings, setSettings] = useIpscSettings();
   const { thresholdDb, delayMinSeconds, delayMaxSeconds } = settings;
 
@@ -95,20 +100,18 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
 
   // Spoken in the app's current language — these are ordinary UI prompts,
   // not the fälttimer's SPSF-regulated Swedish commands.
-  const prompts = useMemo<IpscSpokenPrompts | null>(
-    () =>
-      spokenPrompts
-        ? {
-            language: i18n.language.startsWith('sv') ? 'sv-SE' : 'en-US',
-            ready: t('ipscTimer.state.ready'),
-            standby: t('ipscTimer.state.standby'),
-          }
-        : null,
-    [spokenPrompts, i18n.language, t],
+  const prompts = useMemo<IpscSpokenPrompts>(
+    () => ({
+      language: i18n.language.startsWith('sv') ? 'sv-SE' : 'en-US',
+      ready: t('ipscTimer.state.ready'),
+      standby: t('ipscTimer.state.standby'),
+    }),
+    [i18n.language, t],
   );
 
   const { phase, shots, summary, error, available, start, stop, reset } = useIpscTimer(
     config,
+    settings,
     prompts,
   );
 
@@ -289,16 +292,34 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
             testID="ipsc-auto-stop"
           />
 
-          <View style={styles.switchRow}>
-            <ThemedText type="small" style={styles.flex}>
-              {t('timer.spokenPrompts')}
-            </ThemedText>
-            <Switch
-              value={spokenPrompts}
-              onValueChange={setSpokenPrompts}
-              testID="ipsc-spoken-prompts"
-            />
-          </View>
+          <ThemedText type="smallBold">{t('timer.cuesTitle')}</ThemedText>
+          <SegmentedControl<TimerCueMode>
+            options={CUE_MODE_OPTIONS.map((mode) => ({
+              value: mode,
+              label: t(`timer.cueMode.${mode}` as const),
+            }))}
+            value={settings.cueMode}
+            onChange={(cueMode) => update({ cueMode })}
+            testID="ipsc-cue-mode"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('ipscTimer.cuesHint')}
+          </ThemedText>
+          {/* Spoken prompts are a kind of sound, so the switch has nothing to
+              do while the cues are vibration only — hidden rather than shown
+              doing nothing. */}
+          {settings.cueMode !== 'vibrate' && (
+            <View style={styles.switchRow}>
+              <ThemedText type="small" style={styles.flex}>
+                {t('timer.spokenPrompts')}
+              </ThemedText>
+              <Switch
+                value={settings.spokenPrompts}
+                onValueChange={(spokenPrompts) => update({ spokenPrompts })}
+                testID="ipsc-spoken-prompts"
+              />
+            </View>
+          )}
         </Card>
 
         <ThemedText type="small" themeColor="textSecondary" testID="ipsc-privacy-note">

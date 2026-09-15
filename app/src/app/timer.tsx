@@ -23,7 +23,7 @@ import {
   type TimerCueMode,
   type TimerPhaseKind,
 } from '@shotledger/shared';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -38,6 +38,7 @@ import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
 import { useTimerCueMode } from '@/features/timer/use-timer-settings';
 import { useTimer } from '@/features/timer/use-timer';
+import { respectSilentMode } from '@/platform/timer-cues';
 import { Spacing, type ThemeColor } from '@/theme/tokens';
 
 /** Copied to a plain array so the JSX map is not typed as `readonly`. */
@@ -62,6 +63,11 @@ export default function TimersScreen() {
   // All three modes live on this route, so one lock covers them — and it
   // holds between runs, not only during one.
   useKeepAwakeOnScreen('timer-screen');
+  // Likewise one audio session for all three: the phone's silent switch
+  // mutes the cues (platform/timer-cues.ts).
+  useEffect(() => {
+    void respectSilentMode();
+  }, []);
 
   const [mode, setMode] = useState<TimerMode>('regular');
 
