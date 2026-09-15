@@ -20,7 +20,10 @@ mer än du hade behövt markera.
 2. **Sätt hörnen.** Dra de fyra hörnhandtagen till tavelansiktets hörn. Det är
    det som låter appen räkna bort vinkeln du fotograferade ur.
 3. **Markera hålen.** Tryck på varje hål. En lupp följer ditt finger så att
-   fingertoppen inte döljer det du siktar på.
+   fingertoppen inte döljer det du siktar på, och en tryckning som hamnar inom
+   någon millimeter från ett hål lägger sig på hålet — det räcker att träffa
+   nära. Där appen inte ser något hål under fingret ligger markeringen kvar
+   exakt där du satte den, och du kan fortfarande justera den.
 4. **Kontrollera poängen**, och spara den sedan till serien.
 
 ## Att få ett bra foto

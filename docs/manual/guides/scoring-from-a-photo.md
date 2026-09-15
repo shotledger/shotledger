@@ -20,7 +20,10 @@ correcting more than you would have marked.
 2. **Set the corners.** Drag the four corner handles onto the target face's
    corners. This is what lets the app undo the angle you photographed from.
 3. **Mark the holes.** Tap each hole. A loupe follows your finger so your
-   fingertip is not hiding the thing you are aiming at.
+   fingertip is not hiding the thing you are aiming at, and a tap that lands
+   within a few millimetres of a hole settles onto it — so a tap close enough
+   is good enough. Where the app cannot see a hole under your finger it leaves
+   the mark exactly where you put it, and you can still nudge it.
 4. **Check the score**, then save it to the series.
 
 ## Getting a good photograph

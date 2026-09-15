@@ -48,6 +48,7 @@ import {
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
 import { runGeometry } from '@/features/photo-scoring/opencv';
+import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
   fromProjective,
@@ -123,6 +124,9 @@ export default function ScanScreen() {
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [geometryImage, setGeometryImage] = useState<GeometryImage | null>(null);
   const [transform, setTransform] = useState<TargetTransform | null>(null);
+  // Held only while marking, and dropped on retake: a few megabytes of
+  // rectified grey pixels that tap-snap searches.
+  const [canvas, setCanvas] = useState<RectifiedCanvas | null>(null);
   const [reasons, setReasons] = useState<readonly ValidityReason[]>([]);
   const [corners, setCorners] = useState<readonly Point[]>([]);
   const [caliberKey, setCaliberKey] = useState<CaliberKey>(initialCaliber.key);
@@ -174,6 +178,7 @@ export default function ScanScreen() {
         return;
       }
       setTransform(fromRectification(result.transform));
+      setCanvas(result.canvas);
       setPhase('marking');
     } catch {
       // A pipeline throw ("no dark region found") is the same product
@@ -227,6 +232,7 @@ export default function ScanScreen() {
     setPhoto(null);
     setGeometryImage(null);
     setTransform(null);
+    setCanvas(null);
     setReasons([]);
     setCornerRing(null);
     dispatch({ type: 'clear' });
@@ -240,7 +246,16 @@ export default function ScanScreen() {
       return;
     }
     setNotice(null);
-    dispatch({ type: 'tap', id: uuidv7(), xMm: mm.x, yMm: mm.y });
+
+    // The finger covers the hole it is aiming at, so the tap carries the
+    // shooter's intent and not their precision. `snapToHole` refines it onto
+    // the hole when it can see one, and returns null when it cannot — in
+    // which case the tap stands exactly as placed.
+    const snapped = canvas
+      ? snapToHole(canvas, { xMm: mm.x, yMm: mm.y }, { caliberMm: markState.caliberMm })
+      : null;
+    const point = snapped ?? { xMm: mm.x, yMm: mm.y };
+    dispatch({ type: 'tap', id: uuidv7(), xMm: point.xMm, yMm: point.yMm });
   }
 
   function onSave(next: boolean) {
