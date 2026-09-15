@@ -47,7 +47,7 @@ comment syntax), so this file is the citation record for
 
 ## Federation-scoped weapon groups (§6.4a)
 
-ISSF has **events, not vapengrupper**. All five ISSF disciplines below
+ISSF has **events, not vapengrupper**. All six ISSF disciplines below
 ship `"weaponGroups": []` — `weaponGroupsForDiscipline()` resolves that
 to an empty list rather than throwing, and `shooterClassesForDiscipline()`
 already returns `GENERIC_SHOOTER_CLASSES` (`[]`) for any
@@ -65,14 +65,14 @@ Olympic programme, `WCH` a mandatory World Championship event.
 Transcribed from EVENTS FOR MEN AND MEN JUNIOR (p. 182) and EVENTS FOR WOMEN
 AND WOMEN JUNIOR (p. 183), pistol rows only:
 
-| Event                  | Men's table   | Women's table | Encoded as               |
-| ---------------------- | ------------- | ------------- | ------------------------ |
-| 10m Air Pistol         | APM `M, MJ`   | APW `W, WJ`   | `issf-air-pistol`        |
-| 25m Rapid-Fire Pistol  | RFPM `M, MJ`  | —             | `issf-rapid-fire-pistol` |
-| 25m Standard Pistol    | STPM `M, MJ`  | STPW `W, WJ`  | `issf-standard-pistol`   |
-| 25m Pistol             | SPM `MJ only` | SPW `W, WJ`   | `issf-sport-pistol`      |
-| 25m Centre Fire Pistol | CFPM `M only` | CFPW `W`      | not encoded (deferred)   |
-| 50m Pistol             | FPM `M, MJ`   | FPW `W, WJ`   | `issf-free-pistol`       |
+| Event                  | Men's table   | Women's table | Encoded as                |
+| ---------------------- | ------------- | ------------- | ------------------------- |
+| 10m Air Pistol         | APM `M, MJ`   | APW `W, WJ`   | `issf-air-pistol`         |
+| 25m Rapid-Fire Pistol  | RFPM `M, MJ`  | —             | `issf-rapid-fire-pistol`  |
+| 25m Standard Pistol    | STPM `M, MJ`  | STPW `W, WJ`  | `issf-standard-pistol`    |
+| 25m Pistol             | SPM `MJ only` | SPW `W, WJ`   | `issf-sport-pistol`       |
+| 25m Centre Fire Pistol | CFPM `M only` | CFPW `W`      | `issf-centre-fire-pistol` |
+| 50m Pistol             | FPM `M, MJ`   | FPW `W, WJ`   | `issf-free-pistol`        |
 
 Three things this settles that were previously unread or guessed:
 
@@ -84,7 +84,8 @@ Three things this settles that were previously unread or guessed:
   four categories. Neither is Olympic; both are WCH. So SvSF needs no
   definition of its own for either — see ADR 0011.
 - **25m Centre Fire Pistol has no junior categories at all** (`M only`, `W`).
-  Recorded for when that discipline is encoded; nothing ships for it yet.
+  Encoded as `issf-centre-fire-pistol` since 2026-09-16 (#228) — SvSF's
+  _Grovpistol_, see [SvSF](svsf-rules.md#grovpistol--issf-25-m-centre-fire-pistol).
 
 `shared/src/disciplines/entries.ts` carries this as `ISSF_RULE_33`, one row per
 discipline with the status letters verbatim, so it diffs against the table
@@ -170,6 +171,31 @@ per-program `targetFace` override.
 **Scoring**: integer in qualification (GTR 6.3.3.2); `allowsDecimal:
 false`. Finals for this event use hit/miss hit-zones, not decimal rings
 (GTR 6.3.3.3 exception) — moot since `supportsFinal: false`.
+
+## 25m Centre Fire Pistol (Grovpistol)
+
+Pistol Rules Rule 8.7.6.4 is titled "Specific Rules for 25m Pistol and 25m
+Centre Fire Pistol" and opens: "The programme for each event is 60 MATCH
+shots divided into two (2) stages of 30 shots each" — the Precision Stage,
+six series of five shots at 240 seconds per series, and the Rapid-fire Stage,
+six series of five shots; 8.7.6.4.a allows one 5-shot sighting series before
+each stage. The 8.11 qualification table's "25m Centre Fire Pistol" row (Men &
+Women, 60 shots, 10 shots per target, 1 sighting series of 5 in each stage,
+240 s precision series, rapid-fire stage "in rapid-fire programme", 3 minutes
+preparation per stage) shares every cell with the 25m Pistol row. What
+differs is the gun: Rule 8.4.3.3 admits "any centre fire pistol or revolver,
+except a single shot pistol, of calibre 7.62mm to 9.65mm (.30" - .38")",
+which the app records on the firearm, not the discipline.
+
+So `programs/issf-centre-fire-pistol.json` is structurally identical to
+`issf-sport-pistol.json`, and a test asserts it stays so. Same
+`issf-25m-precision` representative target and the same two-target caveat as
+25m Pistol; integer scoring (GTR 6.3.3.2), `allowsDecimal: false`.
+
+Rule 3.3: `CFPM M only`, `CFPW W` — no junior event in either table. SvSF
+runs it at SM as one open senior class (Tävlings-PM 15.1 "Grovpistol —
+Senior (öppen)"), which is the one SvSF-only category on it; see
+[SvSF](svsf-rules.md#grovpistol--issf-25-m-centre-fire-pistol).
 
 ## 25m Standard Pistol (Standardpistol)
 
@@ -257,9 +283,6 @@ false`.
 - **10m Air Pistol Mixed Team** (Rule 8.11: 2×30 shots) — a team event,
   not an individual program; out of scope for this per-shooter data
   model.
-- **25m Centre Fire Pistol** — same structure family as 25m Sport
-  Pistol (precision + rapid stages) but a distinct event with its own
-  qualification table row; not requested, not encoded.
 - **Finals of any event** — decimal or hit-zone scoring, eliminations;
   a different scoring world per the implementation plan's framing.
   `supportsFinal: false` on every program above.
