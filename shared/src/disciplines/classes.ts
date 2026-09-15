@@ -29,7 +29,18 @@ export function formatShooterClass(code?: string | null): string {
   return match ? `${match[1]} ${match[2]}` : code;
 }
 
-/** Combined display, e.g. 'C 2'. Omits whichever half is missing. */
+/**
+ * Combined display, e.g. 'C2'. Omits whichever half is missing.
+ *
+ * Run together without a space when both halves are single words (maintainer,
+ * 2026-09-15: the session line read "Training · A 3 · <firearm>" and should
+ * read "A3"). A multi-word half keeps the space, because 'A Opt' + '3' and
+ * 'C' + 'Dam 1' cannot be concatenated without becoming unreadable.
+ */
 export function formatGroupAndClass(groupId?: string | null, classCode?: string | null): string {
-  return [weaponGroupLabel(groupId), formatShooterClass(classCode)].filter(Boolean).join(' ');
+  const group = weaponGroupLabel(groupId);
+  const klass = formatShooterClass(classCode);
+  if (!group || !klass) return group || klass;
+  const compact = !group.includes(' ') && !klass.includes(' ');
+  return compact ? `${group}${klass}` : `${group} ${klass}`;
 }

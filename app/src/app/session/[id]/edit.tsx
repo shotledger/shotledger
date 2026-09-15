@@ -1,8 +1,10 @@
 // Edit-session metadata (§4 fix batch, 2026-09-03): the fields the new-session
 // form (session/new.tsx) collects up front but the detail screen never let
 // the shooter revisit afterwards — name, date, location, notes, competition
-// details, weapon group/class, firearm, ammo lot, tags — plus the Share
-// action that used to sit on the detail screen's body. Discipline/program
+// details, weapon group/class, firearm, ammo lot, tags. Share is NOT here:
+// beside Save it read as "save and share" on a form with unsaved changes
+// (maintainer, 2026-09-15), and the session ⋮ menu already owns it.
+// Discipline/program
 // and type are not editable here (they drive the series skeleton and are
 // excluded from `UpdateSessionInput` on purpose).
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -315,12 +317,6 @@ export default function EditSessionScreen() {
           <PrimaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
         </View>
       </Card>
-
-      <PrimaryButton
-        label={t('share.share')}
-        onPress={() => router.push(`/session/${id}/share`)}
-        testID="edit-share"
-      />
 
       <PrimaryButton label={t('session.saveChanges')} onPress={onSave} testID="save-session" />
     </Screen>

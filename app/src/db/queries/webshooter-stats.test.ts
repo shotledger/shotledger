@@ -80,7 +80,7 @@ describe('listCompetitionResultsForStats', () => {
   it('feeds a real official PB (7-series eligible, §B.1) through the shared stats module', () => {
     sevenSeriesSession();
     const pbMap = personalBests(listCompetitionResultsForStats(db));
-    const group = pbMap.get('spsf-precision:spsf:C2');
+    const group = pbMap.get('spsf-precision:spsf:C');
     expect(group?.allTime?.beforeFinalTenths).toBe(3150);
   });
 });
