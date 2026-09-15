@@ -2,9 +2,17 @@
 // screen so the values that come back out of the settings table are validated
 // before they reach the engine, the same way the fälttimer's are.
 import {
+  DEFAULT_TIMER_CUE_MODE,
+  normalizeTimerCueMode,
+  resolveTimerCue,
+  type TimerCueDelivery,
+  type TimerCueMode,
+} from './cue-settings';
+import {
   MAX_TRIGGER_DB,
   MIN_TRIGGER_DB,
   SENSITIVITY_THRESHOLD_DB,
+  type IpscCueKind,
   type IpscTimerConfig,
 } from './shot-detector';
 
@@ -21,6 +29,10 @@ export interface IpscTimerSettings {
   parSeconds: number;
   /** Auto-stop after this much silence; 0 = manual stop only (see IpscTimerConfig). */
   autoStopSeconds: number;
+  /** How every cue is delivered — one choice for all four, as on the Time Limit timer. */
+  cueMode: TimerCueMode;
+  /** Speak the ready and standby prompts instead of beeping them. */
+  spokenPrompts: boolean;
 }
 
 export const DEFAULT_IPSC_SETTINGS: IpscTimerSettings = {
@@ -29,6 +41,8 @@ export const DEFAULT_IPSC_SETTINGS: IpscTimerSettings = {
   delayMaxSeconds: 4,
   parSeconds: 0,
   autoStopSeconds: 10,
+  cueMode: DEFAULT_TIMER_CUE_MODE,
+  spokenPrompts: true,
 };
 
 function number(value: unknown, min: number, max: number, fallback: number): number {
@@ -81,7 +95,25 @@ export function normalizeIpscSettings(value: unknown): IpscTimerSettings {
       Number.MAX_SAFE_INTEGER,
       DEFAULT_IPSC_SETTINGS.autoStopSeconds,
     ),
+    cueMode: normalizeTimerCueMode(stored.cueMode),
+    spokenPrompts:
+      typeof stored.spokenPrompts === 'boolean'
+        ? stored.spokenPrompts
+        : DEFAULT_IPSC_SETTINGS.spokenPrompts,
   };
+}
+
+/**
+ * How one cue is delivered. Only the ready and standby prompts can be spoken:
+ * the start beep and the stop tone stay tones, because a spoken word arrives
+ * late and blurs the moment the clock actually starts.
+ */
+export function ipscCueDelivery(
+  settings: Pick<IpscTimerSettings, 'cueMode' | 'spokenPrompts'>,
+  cue: IpscCueKind,
+): TimerCueDelivery {
+  const spoken = settings.spokenPrompts && (cue === 'ready' || cue === 'standby');
+  return resolveTimerCue(settings.cueMode, spoken ? 'voice' : 'beep');
 }
 
 /** The engine config these settings describe. */

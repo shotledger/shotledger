@@ -5,6 +5,7 @@
 import {
   DEFAULT_IPSC_SETTINGS,
   DEFAULT_TIMER_CUE_MODE,
+  faltCuesFromLegacy,
   normalizeFaltSettings,
   normalizeIpscSettings,
   normalizeTimerCueMode,
@@ -17,36 +18,31 @@ import { useCallback, useState } from 'react';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 
-/** Spoken prompts (both timers). On by default — the fälttimer is a spoken command sequence. */
-export function useSpokenPrompts(): [boolean, (next: boolean) => void] {
-  const [spoken, setSpoken] = useState<boolean>(() =>
-    db ? getSetting<boolean>(db, SETTINGS_KEYS.spokenPrompts, true) : true,
-  );
-
-  const update = useCallback((next: boolean) => {
-    if (db) setSetting(db, SETTINGS_KEYS.spokenPrompts, next);
-    setSpoken(next);
-  }, []);
-
-  return [spoken, update];
-}
-
 /**
  * The fälttimer's settings. A stored blob is validated through
  * `normalizeFaltSettings` before use, so an older or hand-edited row cannot
- * hand the engine an out-of-range shooting time.
+ * hand the engine an out-of-range shooting time or a cue it cannot deliver.
  */
 export function useFaltSettings(
   defaults: FaltTimerSettings,
 ): [FaltTimerSettings, (next: FaltTimerSettings) => void] {
   const [settings, setSettings] = useState<FaltTimerSettings>(() => {
     if (!db) return defaults;
-    const stored = getSetting<FaltTimerSettings | null>(db, SETTINGS_KEYS.faltTimer, null);
+    const stored = getSetting<Record<string, unknown> | null>(db, SETTINGS_KEYS.faltTimer, null);
     // A row written before the 2026-09-09 rework carries the old
     // competition/training modes; the mode check drops it back to defaults.
     if (!stored || (stored.mode !== 'rangeOfficer' && stored.mode !== 'solo')) return defaults;
+    // A row from before the per-command cues stored three toggles instead,
+    // spoken prompts among them in its own row; keep what they meant.
+    const cues =
+      stored.cues ??
+      faltCuesFromLegacy({
+        whistle: stored.whistle,
+        vibration: stored.vibration,
+        spokenPrompts: getSetting<unknown>(db, SETTINGS_KEYS.spokenPrompts, true),
+      });
     try {
-      return normalizeFaltSettings({ ...defaults, ...stored });
+      return normalizeFaltSettings({ ...defaults, ...stored, cues } as FaltTimerSettings);
     } catch {
       return defaults;
     }
@@ -63,14 +59,19 @@ export function useFaltSettings(
 /**
  * The IPSC timer's settings. Validated on the way out of storage, so a row
  * from an older build cannot hand the engine a trigger level or delay range
- * it rejects.
+ * it rejects, nor the cues a mode they cannot deliver.
  */
 export function useIpscSettings(): [IpscTimerSettings, (next: IpscTimerSettings) => void] {
-  const [settings, setSettings] = useState<IpscTimerSettings>(() =>
-    db
-      ? normalizeIpscSettings(getSetting<unknown>(db, SETTINGS_KEYS.ipscTimer, null))
-      : DEFAULT_IPSC_SETTINGS,
-  );
+  const [settings, setSettings] = useState<IpscTimerSettings>(() => {
+    if (!db) return DEFAULT_IPSC_SETTINGS;
+    const stored = getSetting<unknown>(db, SETTINGS_KEYS.ipscTimer, null);
+    // Spoken prompts lived in their own row before they joined this blob.
+    const spokenPrompts = getSetting<unknown>(db, SETTINGS_KEYS.spokenPrompts, true);
+    return normalizeIpscSettings({
+      spokenPrompts,
+      ...(typeof stored === 'object' && stored !== null ? stored : {}),
+    });
+  });
 
   const update = useCallback((next: IpscTimerSettings) => {
     if (db) setSetting(db, SETTINGS_KEYS.ipscTimer, next);

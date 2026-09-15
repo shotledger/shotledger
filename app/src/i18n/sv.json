@@ -777,6 +777,12 @@
       "vibrate": "Vibration",
       "both": "Båda"
     },
+    "cueSound": {
+      "voice": "Röst",
+      "beep": "Pip",
+      "whistle": "Visselsignal"
+    },
+    "cueVibrate": "Vibrera",
     "seriesProgress": "Serie {{current}} / {{total}}",
     "modes": {
       "regular": "Skjuttid",
@@ -805,6 +811,7 @@
     "parSeconds": "Skjuttid (s)",
     "parPlaceholder": "Valfritt",
     "autoStopSeconds": "Stoppa automatiskt efter tystnad (s)",
+    "cuesHint": "Gäller Är du redo?, Färdiga, startpipet och stoppsignalen. Ljud spelas även i ljudlöst läge medan mikrofonen lyssnar.",
     "privacyNote": "Mikrofonen analyseras direkt i telefonen för att hitta skotten. Inspelningen sparas aldrig, spelas aldrig upp och skickas ingenstans – den skrivs till en tillfällig fil som appen bara mäter ljudnivån i, och raderas så fort passet avslutas.",
     "webUnavailable": "Skottimern kräver en app-byggd version – mikrofonen är inte tillgänglig i den här webbförhandsvisningen.",
     "errors": {
@@ -890,9 +897,9 @@
     "increaseParti": "Flytta partigränsen framåt",
     "addParti": "Lägg till parti",
     "removeParti": "Ta bort sista partiet",
-    "whistle": "Visselsignal i stället för talat eld upphör",
-    "vibration": "Vibrera vid eld, varje parti och när tiden är ute",
-    "spokenPrompts": "Talade kommandon",
+    "cues": "Signaler per kommando",
+    "cuesHint": "Tryck för att välja hur varje kommando når dig: röst eller pip, vibration, eller båda. Eld upphör kan också vara en visselsignal, som reglerna tillåter. Minst en förblir på.",
+    "partiCueLabel": "Partigränser",
     "commandsTitle": "Kommandon",
     "sourceNote": "Kommandoord och tider enligt SHB 2026 D.6.2 s. 88, på en tidslinje med noll vid eld. Eld upphör utdrages under de sista 3 sekunderna och slutar exakt när skjuttiden går ut.",
     "pressHint": "Tryck när alla är klara.",

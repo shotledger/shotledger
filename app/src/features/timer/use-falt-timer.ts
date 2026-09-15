@@ -16,7 +16,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { vibrate } from '@/platform/haptics';
 import { speak, stopSpeaking } from '@/platform/speech';
-import { playTimerCueSound, releaseTimerCuePlayers } from '@/platform/timer-cues';
+import {
+  playTimerCueSound,
+  releaseTimerCuePlayers,
+  respectSilentMode,
+} from '@/platform/timer-cues';
 
 const TICK_MS = 100;
 const KEEP_AWAKE_TAG = 'falt-timer';
@@ -31,24 +35,25 @@ const IDLE_PHASE: FaltPhase = {
 };
 
 /**
- * Tone per cue — played alongside the spoken command, and on its own when
- * spoken prompts are off or the platform's TTS refuses. The regular timer's
- * ELD UPPHÖR in whistle mode has its own 3 s asset: the call is drawn out
- * ("utdraget", maintainer 2026-09-11), and the 0.39 s stop tone it used to
- * borrow read as a beep rather than a blast. Spoken mode still gets the short
- * tone beside the words.
+ * The beep for each cue — what a command set to `beep` plays, and the
+ * fallback when a spoken one's TTS refuses. ELD and the end of the shooting
+ * time borrow the Time Limit timer's start/complete tones so the moments
+ * that matter sound like they do there; the rest share the short ready tone.
+ * A whistle is never mapped here: it is its own 3 s asset (the call is drawn
+ * out — "utdraget", maintainer 2026-09-11 — and the 0.39 s stop tone it used
+ * to borrow read as a beep rather than a blast).
  */
-const CUE_SOUND: Record<FaltCueKind, TimerCueKind | null> = {
-  ladda: null,
-  allaKlara: null,
-  tenSeconds: null,
-  fardiga: null,
+const CUE_BEEP: Record<FaltCueKind, TimerCueKind> = {
+  ladda: 'ready',
+  allaKlara: 'ready',
+  tenSeconds: 'ready',
+  fardiga: 'ready',
   eld: 'start',
+  parti: 'ready',
   eldUpphor: 'stop',
   timeUp: 'complete',
-  patronUr: null,
-  visitation: null,
-  parti: 'ready',
+  patronUr: 'ready',
+  visitation: 'ready',
 };
 
 export interface UseFaltTimerResult {
@@ -73,10 +78,7 @@ export interface UseFaltTimerResult {
   restart: () => void;
 }
 
-export function useFaltTimer(
-  settings: FaltTimerSettings,
-  spokenPrompts: boolean,
-): UseFaltTimerResult {
+export function useFaltTimer(settings: FaltTimerSettings): UseFaltTimerResult {
   const [phase, setPhase] = useState<FaltPhase>(IDLE_PHASE);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -102,29 +104,39 @@ export function useFaltTimer(
     }
   }, []);
 
-  const playCues = useCallback(
-    (cues: readonly FaltCue[]) => {
-      for (const cue of cues) {
-        // A cue may name its own sound: ELD UPPHÖR in whistle mode wants the
-        // 3 s blast instead of the short stop tone.
-        const tone = cue.tone ?? CUE_SOUND[cue.kind];
-        // The Swedish command wording is SPSF-regulated (SHB D.6.2) and is
-        // always spoken in sv-SE, whatever the app's UI language is.
-        const spoke =
-          spokenPrompts && cue.speech !== undefined
-            ? speak(cue.speech, {
-                language: COMMAND_LANGUAGE,
-                rate: cue.speechRate,
-                onError: () => playTimerCueSound(tone ?? 'ready'),
-              })
-            : false;
-        if (tone !== null || !spoke) playTimerCueSound(tone ?? 'ready');
-        if (cue.vibrate) vibrate();
-        if (cue.number !== null) setCurrentNumber(cue.number);
+  // Each cue arrives already resolved against the per-command setting
+  // (shared/src/timer/falt.ts); this only turns it into calls.
+  const playCues = useCallback((cues: readonly FaltCue[]) => {
+    for (const cue of cues) {
+      const beep = CUE_BEEP[cue.kind];
+      switch (cue.sound) {
+        case 'voice': {
+          // The Swedish command wording is SPSF-regulated (SHB D.6.2) and is
+          // always spoken in sv-SE, whatever the app's UI language is. The
+          // beep is the fallback when TTS refuses, never a companion.
+          const spoke =
+            cue.speech !== undefined &&
+            speak(cue.speech, {
+              language: COMMAND_LANGUAGE,
+              rate: cue.speechRate,
+              onError: () => playTimerCueSound(beep),
+            });
+          if (!spoke) playTimerCueSound(beep);
+          break;
+        }
+        case 'whistle':
+          playTimerCueSound('whistle');
+          break;
+        case 'beep':
+          playTimerCueSound(beep);
+          break;
+        case null:
+          break;
       }
-    },
-    [spokenPrompts],
-  );
+      if (cue.vibrate) vibrate();
+      if (cue.number !== null) setCurrentNumber(cue.number);
+    }
+  }, []);
 
   const teardown = useCallback(() => {
     stopInterval();
@@ -172,6 +184,9 @@ export function useFaltTimer(
     const engine = new FaltTimerEngine(settings);
     engineRef.current = engine;
     setCurrentNumber(null);
+    // Re-asserted at every start: the shot timer's microphone takes the
+    // session over while it is open (platform/timer-cues.ts).
+    void respectSilentMode();
     playCues(engine.start());
     syncFrom(engine);
     void activateKeepAwakeAsync(KEEP_AWAKE_TAG);

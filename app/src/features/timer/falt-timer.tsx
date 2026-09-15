@@ -11,6 +11,9 @@
 // catalogues; the chrome around them is translated as usual.
 import {
   DEFAULT_FALT_SETTINGS,
+  FALT_COMMAND_KINDS,
+  FALT_COMMAND_TEXT,
+  FALT_CUE_SOUNDS,
   MAX_LADDA_SECONDS,
   MAX_SHOOTING_SECONDS,
   MAX_SHOOTING_SLIDER_SECONDS,
@@ -19,16 +22,21 @@ import {
   SHOOTING_TIME_PRESETS,
   buildFaltProgram,
   faltCommandText,
+  withTimerCueSound,
+  withTimerCueVibrate,
+  type FaltCommandKind,
   type FaltMode,
   type FaltProgram,
   type FaltTimerSettings,
+  type TimerCueDelivery,
 } from '@shotledger/shared';
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { InfoButton } from '@/components/info-button';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -37,7 +45,7 @@ import { Slider } from '@/components/slider';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimeline } from '@/features/timer/falt-timeline';
 import { useFaltTimer } from '@/features/timer/use-falt-timer';
-import { useFaltSettings, useSpokenPrompts } from '@/features/timer/use-timer-settings';
+import { useFaltSettings } from '@/features/timer/use-timer-settings';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -103,7 +111,9 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
   const theme = useTheme();
 
   const [settings, setSettings] = useFaltSettings(DEFAULT_FALT_SETTINGS);
-  const [spokenPrompts, setSpokenPrompts] = useSpokenPrompts();
+  // Collapsed by default, like the shot timer's detection options: nine
+  // rows of cue chips would push the timeline off the screen on every visit.
+  const [cuesOpen, setCuesOpen] = useState(false);
   const {
     phase,
     currentNumber,
@@ -117,7 +127,7 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
     isPaused,
     reset,
     restart,
-  } = useFaltTimer(settings, spokenPrompts);
+  } = useFaltTimer(settings);
   const program = useMemo(() => buildFaltProgram(settings), [settings]);
 
   const stepButton = useCallback(
@@ -241,36 +251,29 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
             )}
           </View>
 
-          <View style={styles.labelRow}>
-            <ThemedText type="small" style={styles.flex}>
-              {t('faltTimer.whistle')}
-            </ThemedText>
-            <Switch
-              value={settings.whistle}
-              onValueChange={(whistle) => setSettings({ ...settings, whistle })}
-              testID="falt-whistle"
-            />
-          </View>
-          <View style={styles.labelRow}>
-            <ThemedText type="small" style={styles.flex}>
-              {t('faltTimer.vibration')}
-            </ThemedText>
-            <Switch
-              value={settings.vibration}
-              onValueChange={(vibration) => setSettings({ ...settings, vibration })}
-              testID="falt-vibration"
-            />
-          </View>
-          <View style={styles.labelRow}>
-            <ThemedText type="small" style={styles.flex}>
-              {t('faltTimer.spokenPrompts')}
-            </ThemedText>
-            <Switch
-              value={spokenPrompts}
-              onValueChange={setSpokenPrompts}
-              testID="falt-spoken-prompts"
-            />
-          </View>
+          <DrillDownRow
+            title={t('faltTimer.cues')}
+            expanded={cuesOpen}
+            onPress={() => setCuesOpen((open) => !open)}
+            testID="falt-cues-row"
+          />
+          {cuesOpen && (
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('faltTimer.cuesHint')}
+              </ThemedText>
+              {FALT_COMMAND_KINDS.map((kind) => (
+                <FaltCueRow
+                  key={kind}
+                  kind={kind}
+                  cue={settings.cues[kind]}
+                  onChange={(cue) =>
+                    setSettings({ ...settings, cues: { ...settings.cues, [kind]: cue } })
+                  }
+                />
+              ))}
+            </>
+          )}
         </Card>
 
         <View style={styles.labelRow}>
@@ -373,6 +376,54 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
   );
 }
 
+/**
+ * One command's cue as toggle chips: the sounds it may make (one at a time,
+ * tap the lit one to turn sound off) and the buzz. The model refuses to
+ * leave a command with nothing, so a tap that would is simply ignored.
+ */
+function FaltCueRow({
+  kind,
+  cue,
+  onChange,
+}: {
+  kind: FaltCommandKind;
+  cue: TimerCueDelivery;
+  onChange: (cue: TimerCueDelivery) => void;
+}) {
+  const { t } = useTranslation();
+  const label = kind === 'parti' ? t('faltTimer.partiCueLabel') : FALT_COMMAND_TEXT[kind];
+
+  return (
+    <View style={styles.cueRow} testID={`falt-cue-${kind}`}>
+      <ThemedText type="small">{label}</ThemedText>
+      <View style={styles.cueChips}>
+        {FALT_CUE_SOUNDS[kind].map((sound) => (
+          <Pressable
+            key={sound}
+            accessibilityRole="button"
+            accessibilityState={{ selected: cue.sound === sound }}
+            onPress={() => onChange(withTimerCueSound(cue, sound))}
+            testID={`falt-cue-${kind}-${sound}`}
+          >
+            <Chip
+              label={t(`timer.cueSound.${sound}` as const)}
+              tone={cue.sound === sound ? 'primary' : 'neutral'}
+            />
+          </Pressable>
+        ))}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: cue.vibrate }}
+          onPress={() => onChange(withTimerCueVibrate(cue, !cue.vibrate))}
+          testID={`falt-cue-${kind}-vibrate`}
+        >
+          <Chip label={t('timer.cueVibrate')} tone={cue.vibrate ? 'primary' : 'neutral'} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 /** The numbered command list — the numbers are what the timeline marks. */
 function CommandList({
   program,
@@ -464,6 +515,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cueRow: {
+    gap: Spacing.one,
+  },
+  cueChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
   },
   commandList: {
     gap: Spacing.one,

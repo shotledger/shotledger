@@ -18,6 +18,7 @@ import type { TimerConfig, TimerCueMode, TimerPhase } from '@shotledger/shared';
 import {
   playTimerCueSound,
   releaseTimerCuePlayers,
+  respectSilentMode,
   vibrateForTimerCue,
 } from '@/platform/timer-cues';
 
@@ -76,6 +77,9 @@ export function useTimer(config: TimerConfig, cueMode?: TimerCueMode): UseTimerR
   }, []);
 
   const start = useCallback(() => {
+    // Re-asserted at every start: the shot timer's microphone takes the
+    // session over while it is open (platform/timer-cues.ts).
+    void respectSilentMode();
     setPhase(activeController.start(Date.now()));
     void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
     stopInterval();

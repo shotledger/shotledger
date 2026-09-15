@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_TIMER_CUE_MODE } from './cue-settings';
 import {
   DEFAULT_IPSC_SETTINGS,
   IPSC_DELAY_MAX_SECONDS,
   ipscConfigFromSettings,
+  ipscCueDelivery,
   normalizeIpscSettings,
 } from './ipsc-settings';
-import { MAX_TRIGGER_DB, MIN_TRIGGER_DB } from './shot-detector';
+import { MAX_TRIGGER_DB, MIN_TRIGGER_DB, type IpscCueKind } from './shot-detector';
 
 describe('normalizeIpscSettings', () => {
   it('keeps a valid stored blob as it is', () => {
@@ -16,8 +18,31 @@ describe('normalizeIpscSettings', () => {
       delayMaxSeconds: 5.5,
       parSeconds: 3,
       autoStopSeconds: 4,
+      cueMode: 'vibrate',
+      spokenPrompts: false,
     };
     expect(normalizeIpscSettings(stored)).toEqual(stored);
+  });
+
+  it('gives a row from before the cue settings the default cue mode and spoken prompts', () => {
+    const result = normalizeIpscSettings({ thresholdDb: -30, parSeconds: 3 });
+    expect(result).toMatchObject({
+      thresholdDb: -30,
+      parSeconds: 3,
+      cueMode: DEFAULT_TIMER_CUE_MODE,
+      spokenPrompts: true,
+    });
+  });
+
+  it('replaces a cue mode it cannot deliver and a malformed spoken-prompts flag', () => {
+    expect(normalizeIpscSettings({ cueMode: 'silent', spokenPrompts: 'yes' })).toMatchObject({
+      cueMode: DEFAULT_TIMER_CUE_MODE,
+      spokenPrompts: true,
+    });
+    expect(normalizeIpscSettings({ cueMode: 'beep', spokenPrompts: false })).toMatchObject({
+      cueMode: 'beep',
+      spokenPrompts: false,
+    });
   });
 
   it('falls back to defaults for a missing, null or non-object row', () => {
@@ -93,6 +118,8 @@ describe('ipscConfigFromSettings', () => {
           delayMaxSeconds: 4,
           parSeconds: 2.5,
           autoStopSeconds: 10,
+          cueMode: 'both',
+          spokenPrompts: true,
         },
         1_500,
       ),
@@ -117,5 +144,58 @@ describe('ipscConfigFromSettings', () => {
       1_500,
     );
     expect(config.randomDelay).toEqual({ minMs: 6_000, maxMs: 6_000 });
+  });
+});
+
+describe('ipscCueDelivery', () => {
+  const ALL: readonly IpscCueKind[] = ['ready', 'standby', 'start', 'stop'];
+
+  it('speaks ready and standby and beeps start and stop, buzzing all four, by default', () => {
+    expect(ipscCueDelivery(DEFAULT_IPSC_SETTINGS, 'ready')).toEqual({
+      sound: 'voice',
+      vibrate: true,
+    });
+    expect(ipscCueDelivery(DEFAULT_IPSC_SETTINGS, 'standby')).toEqual({
+      sound: 'voice',
+      vibrate: true,
+    });
+    expect(ipscCueDelivery(DEFAULT_IPSC_SETTINGS, 'start')).toEqual({
+      sound: 'beep',
+      vibrate: true,
+    });
+    expect(ipscCueDelivery(DEFAULT_IPSC_SETTINGS, 'stop')).toEqual({
+      sound: 'beep',
+      vibrate: true,
+    });
+  });
+
+  it('beeps the prompts too with spoken prompts off', () => {
+    for (const cue of ALL) {
+      expect(ipscCueDelivery({ cueMode: 'both', spokenPrompts: false }, cue).sound).toBe('beep');
+    }
+  });
+
+  it("'beep' drops the buzz and keeps the voice; 'vibrate' drops every sound, the voice included", () => {
+    expect(ipscCueDelivery({ cueMode: 'beep', spokenPrompts: true }, 'ready')).toEqual({
+      sound: 'voice',
+      vibrate: false,
+    });
+    for (const cue of ALL) {
+      expect(ipscCueDelivery({ cueMode: 'vibrate', spokenPrompts: true }, cue)).toEqual({
+        sound: null,
+        vibrate: true,
+      });
+    }
+  });
+
+  it('never yields a cue nobody can perceive', () => {
+    for (const cueMode of ['beep', 'vibrate', 'both'] as const) {
+      for (const spokenPrompts of [true, false]) {
+        for (const cue of ALL) {
+          const delivery = ipscCueDelivery({ cueMode, spokenPrompts }, cue);
+          expect(delivery.sound !== null || delivery.vibrate).toBe(true);
+        }
+      }
+    }
   });
 });

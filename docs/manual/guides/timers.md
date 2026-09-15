@@ -12,7 +12,9 @@ Time limit, ready delay, repetitions and rest are all sliders, with the value
 you have dialled in shown above each one. Rest appears only when you ask for
 more than one repetition — there is nothing to rest between otherwise.
 
-Each event can have its own cue — a sound, a vibration, or both.
+**Cues** is one choice for all three events (Get Ready, GO, Done): beep,
+vibrate, or both. There is no "neither" — a timer you cannot perceive is not
+a timer. To silence it, use the phone's silent switch (see below).
 
 ## Shot Timer
 
@@ -32,6 +34,12 @@ listening for your shots to record splits.
 
     The timer is usable as a timer. Treat the shot detection as experimental.
 
+The same **Cues** choice as the Time Limit timer — beep, vibrate, or both —
+applies to all four of its events: Are You Ready?, Standby, the start beep and
+the stop tone. With sound on, **Spoken Prompts** speaks the first two in the
+app's language instead of beeping them; the start and stop stay tones, because
+a spoken word arrives late and blurs the moment the clock starts.
+
 The **Shot Detection Diagnostics** screen, behind the ⋮ menu on the Shot Timer,
 records what the microphone actually hears so the detection can be worked on
 against real range data rather than guesses.
@@ -41,9 +49,33 @@ against real range data rather than guesses.
 The SPSF field-shooting command sequence, spoken aloud: the standard commands
 in order, with their real timings.
 
-Each command can be a spoken prompt, a whistle, a vibration, or silent. You can
-scrub the sequence while it is paused and tap a command to jump to it, which is
-what makes it usable for practice rather than only for a live string.
+**Cues per Command**, collapsed under the settings, lets you choose how each
+command reaches you. Every command can be the spoken **Voice** or a **Beep**;
+tapping the lit one turns the sound off. **Vibrate** can be added to any of
+them, or stand alone. Eld upphör can also be a **Whistle** — the drawn-out
+blast the rules allow in place of the spoken command — and its vibration lands
+when the time is up, at the end of the call. Parti boundaries have no words, so
+they beep or buzz. At least one of sound and vibration always stays on for
+every command.
+
+Out of the box, every command is spoken, the partier beep, and the phone buzzes
+at Eld, at each parti and when the time is up.
+
+You can scrub the sequence while it is paused and tap a command to jump to it,
+which is what makes it usable for practice rather than only for a live string.
+
+## Silent mode
+
+The Time Limit timer and the fälttimer play their cues in the phone's ambient
+audio session, so the silent switch on an iPhone and the ringer mode on an
+Android phone mute them. On iOS that covers the beeps, the whistle and the
+spoken commands alike. On Android it covers the beeps and the whistle; the
+spoken commands still play, because Android's text-to-speech has no silent-mode
+gate. Vibration is never muted by silent mode — that is the point of it.
+
+The Shot Timer is the exception: while the microphone is listening, sounds
+play even on silent. Recording and silent-mode respect cannot share one audio
+session on iOS.
 
 ## The screen stays awake
 
