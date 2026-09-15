@@ -893,6 +893,7 @@
     "whistle": "Whistle Signal Instead of a Spoken Eld upphör",
     "vibration": "Vibrate at Eld, Each Parti and When Time Is Up",
     "spokenPrompts": "Spoken Prompts",
+    "commandsTitle": "Commands",
     "sourceNote": "Commands and timings per SHB 2026 D.6.2 p. 88, on a timeline anchored at Eld (t = 0). Eld upphör is drawn out over the last 3 s so it ends exactly when the shooting time runs out.",
     "pressHint": "Press when everyone is ready.",
     "allaKlaraButton": "Alla klara?",

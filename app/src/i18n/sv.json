@@ -893,6 +893,7 @@
     "whistle": "Visselsignal i stället för talat eld upphör",
     "vibration": "Vibrera vid eld, varje parti och när tiden är ute",
     "spokenPrompts": "Talade kommandon",
+    "commandsTitle": "Kommandon",
     "sourceNote": "Kommandoord och tider enligt SHB 2026 D.6.2 s. 88, på en tidslinje med noll vid eld. Eld upphör utdrages under de sista 3 sekunderna och slutar exakt när skjuttiden går ut.",
     "pressHint": "Tryck när alla är klara.",
     "allaKlaraButton": "Alla klara?",

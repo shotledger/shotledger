@@ -21,6 +21,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DrillDownRow } from '@/components/drill-down-row';
+import { InfoButton } from '@/components/info-button';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { RangeSlider } from '@/components/range-slider';
@@ -172,6 +173,16 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
           />
           {detectionOpen && (
             <>
+              <View style={styles.labelRow}>
+                <ThemedText type="smallBold" style={styles.flex}>
+                  {t('ipscTimer.triggerLevel')}
+                </ThemedText>
+                <InfoButton
+                  title={t('ipscTimer.triggerLevel')}
+                  body={t('ipscTimer.sensitivityHint')}
+                  testID="ipsc-sensitivity-info"
+                />
+              </View>
               {/* The slider runs in sensitivity, not dBFS: the detector fires on
               `db >= threshold`, so a threshold near 0 demands a louder sound
               and is the LEAST sensitive end. Negating keeps "right is more
@@ -210,9 +221,6 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
                   </Pressable>
                 ))}
               </View>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('ipscTimer.sensitivityHint')}
-              </ThemedText>
 
               {available ? (
                 <>

@@ -22,6 +22,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { DistributionBarChart } from '@/components/distribution-bar-chart';
 import { EmptyState } from '@/components/empty-state';
+import { InfoButton } from '@/components/info-button';
 import { GroupPlot } from '@/components/group-plot';
 import { ShotHeatmap } from '@/components/shot-heatmap';
 import { PrimaryButton } from '@/components/primary-button';
@@ -477,7 +478,16 @@ export default function SessionDetailScreen() {
 
       {isRoundsSession && (
         <Card>
-          <ThemedText type="smallBold">{t('session.extraRounds')}</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('session.extraRounds')}
+            </ThemedText>
+            <InfoButton
+              title={t('session.extraRounds')}
+              body={t('session.extraRoundsHint')}
+              testID="extra-rounds-info"
+            />
+          </View>
           <TextField
             value={extraRounds}
             onChangeText={setExtraRounds}
@@ -488,9 +498,6 @@ export default function SessionDetailScreen() {
             placeholder="0"
             testID="extra-rounds"
           />
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('session.extraRoundsHint')}
-          </ThemedText>
         </Card>
       )}
 
@@ -816,6 +823,15 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  headerLabel: {
+    flexShrink: 1,
+  },
   groupPlot: {
     alignItems: 'center',
   },

@@ -87,6 +87,12 @@ scores against official results.
     "Competitions" is one word with nowhere to break, so once it does not fit,
     wrapping has to split it mid-word. It is a fix in a handful of shared
     components every screen inherits, not a per-screen design burden.
+- **Inline help** (2026-09-09, narrowed 2026-09-15 on #138): a warning, or
+  anything that changes what the user is about to do — data leaving the
+  device, an irreversible or retroactive choice, what an off-by-default
+  switch costs — stays visible beside its control. Explanation, background
+  and rationale go behind the `[i]` (`InfoButton`), however short. Length is
+  not the test; #128's "under ~90 characters stays" threshold was wrong.
 
 ## Brand Commitments
 

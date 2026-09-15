@@ -121,11 +121,16 @@ export default function PersonalSettingsScreen() {
           searchPlaceholder={t('settings.birthYearSearchPlaceholder')}
           emptyLabel={t('settings.birthYearNoMatch')}
           keyboardType="number-pad"
+          labelTrailing={
+            <InfoButton
+              title={t('settings.birthYear')}
+              body={t('settings.birthYearHelp')}
+              testID="birth-year-info"
+            />
+          }
           testID="birth-year"
         />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('settings.birthYearHelp')}
-        </ThemedText>
+        {/* Retroactive, so it stays beside the field rather than behind the [i]. */}
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.birthYearRetroactive')}
         </ThemedText>

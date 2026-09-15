@@ -339,11 +339,17 @@ export default function NewSessionScreen() {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">{t('session.name')}</ThemedText>
+        <View style={styles.headerRow}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('session.name')}
+          </ThemedText>
+          <InfoButton
+            title={t('session.name')}
+            body={t('session.nameHint')}
+            testID="session-name-info"
+          />
+        </View>
         <TextField value={name} onChangeText={setNameOverride} testID="session-name" />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.nameHint')}
-        </ThemedText>
       </Card>
 
       <Card>
@@ -431,16 +437,22 @@ export default function NewSessionScreen() {
               testID="championship-toggle"
             />
           </View>
-          <ThemedText type="smallBold">{t('session.competitionName')}</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('session.competitionName')}
+            </ThemedText>
+            <InfoButton
+              title={t('session.competitionName')}
+              body={t('session.competitionNameHint')}
+              testID="competition-name-info"
+            />
+          </View>
           <TextField
             value={competitionName}
             onChangeText={setCompetitionName}
             placeholder={t('session.competitionNamePlaceholder')}
             testID="competition-name"
           />
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('session.competitionNameHint')}
-          </ThemedText>
         </Card>
       )}
 
@@ -530,7 +542,16 @@ export default function NewSessionScreen() {
 
       {kind === 'rounds' && (
         <Card>
-          <ThemedText type="smallBold">{t('session.roundsFired')}</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText type="smallBold" style={styles.headerLabel}>
+              {t('session.roundsFired')}
+            </ThemedText>
+            <InfoButton
+              title={t('session.roundsFired')}
+              body={t('session.roundsFiredHint')}
+              testID="rounds-fired-info"
+            />
+          </View>
           <TextField
             value={roundsFired}
             onChangeText={setRoundsFired}
@@ -539,9 +560,6 @@ export default function NewSessionScreen() {
             placeholder="0"
             testID="rounds-fired"
           />
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('session.roundsFiredHint')}
-          </ThemedText>
         </Card>
       )}
 
@@ -555,8 +573,8 @@ export default function NewSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  // The picker's own `label` is dropped for Program, so the heading and its
-  // [i] can share a row (see OptionPicker's `label` note).
+  // A heading and its [i] share a row. The picker's own `label` is dropped
+  // for Program so it can too (see OptionPicker's `label` note).
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
