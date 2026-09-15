@@ -15,10 +15,12 @@ import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
   categoryKey,
   eventsForDiscipline,
+  findEvent,
   formatShooterClass,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
 } from '@shotledger/shared';
+import { effectiveRegulationIds } from '@shotledger/shared/src/regulations/registry';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -31,6 +33,7 @@ import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { listFirearms } from '@/db/queries/firearms';
 import { getSession, updateSession } from '@/db/queries/sessions';
@@ -96,7 +99,18 @@ export default function EditSessionScreen() {
   const classes = shooterClassesForDiscipline(session.disciplineId);
   // Unranked here, unlike the new-session screen: the discipline is fixed and
   // the shooter is correcting a past session, not being offered a default.
-  const events = eventsForDiscipline(session.disciplineId);
+  // Narrowed to the regelverk in play today, plus whatever the session
+  // already holds — an SvSF class logged before SvSF was switched off must
+  // stay selectable, by the same one-way rule as the pickers above.
+  const offered = eventsForDiscipline(
+    session.disciplineId,
+    effectiveRegulationIds(enabledRegulationIds()),
+  );
+  const stored =
+    session.eventId !== null && !offered.some((event) => event.id === session.eventId)
+      ? findEvent(session.eventId)
+      : undefined;
+  const events = stored === undefined ? offered : [...offered, stored];
   const showGroupPicker = groups.length > 0 && (isCompetition || weaponGroup !== null);
   const showClassPicker = classes.length > 0 && (isCompetition || shooterClass !== null);
   const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);

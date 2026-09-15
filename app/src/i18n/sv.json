@@ -1157,7 +1157,7 @@
     "intro": "De regelverk du tävlar under. Slår du på ett läggs dess grenar och vapengrupper till när du skapar ett pass; redan loggade pass påverkas inte.",
     "adopts": "Tävlar under {{adopted}}-regler",
     "impliedBy": "Gäller redan — ett annat påslaget reglemente tillämpar det",
-    "footnote": "Svenska Skyttesportförbundet använder ISSF:s reglemente för sina grenar, så när du slår på det följer ISSF-grenarna med.",
+    "footnote": "Svenska Skyttesportförbundet använder ISSF:s reglemente för sina grenar, så när du slår på det följer ISSF-grenarna med — och förbundets egna nationella läggs till: snabbluftpistol samt de öppna klasser, juniorklasser och herrklasser som skjuts vid SM och DM.",
     "settingsRowTitle": "Reglementen",
     "settingsRowNone": "Inga — endast träningspass"
   }

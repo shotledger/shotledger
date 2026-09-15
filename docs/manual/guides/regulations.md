@@ -3,8 +3,8 @@
 **Settings → Regulations.** Which rule sets you compete under.
 
 Swedish pistol shooters are not all under one federation, and plenty are under
-two at once. What you turn on here decides which disciplines and weapon groups
-you are offered when you create a session.
+two at once. What you turn on here decides which disciplines, weapon groups
+and events you are offered when you create a session.
 
 Turn on more than one and the new-session form asks which one you are shooting
 under before it asks for a discipline — a club's precision evening and an SvSF
@@ -15,11 +15,11 @@ regulation you pick.
 
 ## What is available
 
-| Regulation                                         | What it covers                                                                                |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, and the vapengrupper A/B/C/R. On by default.                   |
-| **ISSF** — International Shooting Sport Federation | The international events: air pistol, free pistol, sport pistol, standard pistol, rapid fire. |
-| **SvSF** — Svenska Skyttesportförbundet            | Swedish national competition, shot under ISSF's rulebook.                                     |
+| Regulation                                         | What it covers                                                                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, and the vapengrupper A/B/C/R. On by default.                                                               |
+| **ISSF** — International Shooting Sport Federation | The international events: air pistol, free pistol, sport pistol, standard pistol, rapid fire, centre fire.                                |
+| **SvSF** — Svenska Skyttesportförbundet            | Swedish national competition: ISSF's events, plus SvSF's own — snabbluftpistol, and the open, junior and men's classes shot at SM and DM. |
 
 ## SvSF brings ISSF with it
 
@@ -37,24 +37,54 @@ They are not the same thing, which is why both exist:
   governs **international** ones.
 - SvSF adds things ISSF has no concept of — its own general rules, its
   approved SM and DM event list, its own skyttemärken.
-- SvSF keeps events **ISSF has dropped**, such as 25 m standardpistol and
-  50 m pistol.
+- SvSF runs championship classes that ISSF's event list does not have: an
+  open class where ISSF splits men and women, a common junior class, and a
+  men's sportpistol class.
 
-!!! note "SvSF's own events are not in the app yet"
+## What SvSF adds
 
-    Today, enabling SvSF means "ISSF's events, under Swedish membership". The
-    national events SvSF keeps — 25 m standardpistol, 50 m pistol — are not
-    defined yet. The app is built to hold them; the rules have not been
-    entered, and the project does not guess at regulatory detail.
+On top of ISSF's disciplines and events, turning SvSF on gives you:
+
+- **Grovpistol**, under its ISSF name **25 m Centre Fire Pistol**. It is the
+  same course of fire as sportpistol shot with a centre-fire gun, so it lives
+  in the ISSF list rather than being defined twice.
+- **Snabbluftpistol**, SvSF's own 10 m discipline: 60 shots in two rounds of
+  2 × 10 s, 2 × 8 s and 2 × 6 s five-shot series, on its own 10 m target.
+- **Championship classes** shot at SM and DM, as extra choices in the Event
+  picker of a competition:
+
+| Discipline           | SvSF adds                       |
+| -------------------- | ------------------------------- |
+| 25 m Sport Pistol    | Men                             |
+| 25 m Standard Pistol | Junior (men and women together) |
+| 25 m Rapid Fire      | Open, Junior                    |
+| 50 m Pistol          | Open, Junior                    |
+| Centre Fire Pistol   | Open                            |
+| Snabbluftpistol      | Open, Junior                    |
+
+Air pistol gets nothing extra: its men's, women's and junior events are
+ISSF's already. A junior in these classes is anyone up to and including the
+year they turn 21 on the ISSF disciplines, and 20 in snabbluftpistol — the
+app preselects with whichever applies.
+
+!!! note "Still not in the app"
+
+    Falling target (scored hit or miss, which the app's ring scoring does not
+    cover), finals, mixed teams and other team events, the veteran, youth and
+    stödhand classes, and SvSF's skyttemärken. The app is built to hold them;
+    the rules have not been entered, and the project does not guess at
+    regulatory detail.
 
 ## What changes when you turn one on
 
-Only what you are **offered** when creating a session: its disciplines, and
-the vapengrupper those disciplines allow. There is no separate "which
-regulation?" step — the discipline you pick implies it.
+Only what you are **offered** when creating a session: its disciplines, the
+vapengrupper those disciplines allow, and — for ISSF and SvSF — the events.
+With more than one regulation on, the form asks which one first (see above);
+with one, the discipline you pick implies it.
 
 Sessions you have already logged are untouched. Turning a regulation off does
-not hide or alter anything you shot under it.
+not hide or alter anything you shot under it — a session logged in an SvSF
+class keeps that class, and can still be edited, after SvSF is switched off.
 
 ## With everything off
 

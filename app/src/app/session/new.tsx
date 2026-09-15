@@ -25,6 +25,7 @@ import {
   defaultShooterClass,
   rankEventsForShooter,
   spsfEligibleClasses,
+  type EventDefinition,
   type ShooterProfile,
   type SkillClass,
 } from '@shotledger/shared';
@@ -38,7 +39,11 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
-import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
+import {
+  effectiveRegulationIds,
+  findRegulation,
+  type Regulation,
+} from '@shotledger/shared/src/regulations/registry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
@@ -62,15 +67,16 @@ import { Spacing } from '@/theme/tokens';
 const NO_PROGRAM = 'none';
 
 /**
- * The discipline to land on when a regelverk is picked: the first one that is
- * actually ITS own, not merely reachable through it. Generic disciplines
- * survive every filter and sort first, so without this a shooter choosing
- * SvSF would land on free training against a ring target.
+ * The discipline to land on when a regelverk is picked: the first that
+ * belongs to a federation at all. Generic disciplines survive every filter
+ * and sort first, so without this a shooter choosing SvSF would land on free
+ * training against a ring target. Not "the regelverk's OWN federation":
+ * SvSF's own discipline is snabbluftpistol, and the shooter who enabled SvSF
+ * is far more likely shooting luftpistol — an ISSF definition, listed first.
  */
 function firstDisciplineFor(regulationId: string): string | undefined {
   const available = disciplinesForRegulations([regulationId]);
-  const federation = findRegulation(regulationId)?.federation;
-  return (available.find((d) => d.federation === federation) ?? available[0])?.id;
+  return (available.find((d) => d.federation !== 'generic') ?? available[0])?.id;
 }
 
 /**
@@ -96,11 +102,33 @@ function derivedWeaponGroup(firearmId: string | null): string | null {
 }
 
 /**
+ * The events a discipline offers under the regelverk being logged: ISSF's
+ * own, or ISSF's plus SvSF's national classes when SvSF is picked. Ranked,
+ * not filtered by eligibility (see rankEventsForShooter).
+ */
+function eventsUnder(
+  regulationId: string,
+  disciplineId: string,
+  profile: ShooterProfile,
+): readonly EventDefinition[] {
+  return rankEventsForShooter(
+    profile,
+    disciplineId,
+    new Date().getFullYear(),
+    effectiveRegulationIds([regulationId]),
+  );
+}
+
+/**
  * The event to preselect: the first one the shooter is eligible for, or null
  * for a discipline that has no events (every SPSF and generic one).
  */
-function preferredEventId(disciplineId: string, profile: ShooterProfile): string | null {
-  return rankEventsForShooter(profile, disciplineId, new Date().getFullYear())[0]?.id ?? null;
+function preferredEventId(
+  regulationId: string,
+  disciplineId: string,
+  profile: ShooterProfile,
+): string | null {
+  return eventsUnder(regulationId, disciplineId, profile)[0]?.id ?? null;
 }
 
 export default function NewSessionScreen() {
@@ -152,7 +180,7 @@ export default function NewSessionScreen() {
   // ISSF puts the category on the EVENT, where SPSF puts it on the klass, so
   // a session carries one or the other and never both.
   const [eventId, setEventId] = useState<string | null>(() =>
-    preferredEventId(disciplineIdInitial, shooterProfile),
+    preferredEventId(regulationId, disciplineIdInitial, shooterProfile),
   );
   const [firearmId, setFirearmId] = useState<string | null>(null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
@@ -174,7 +202,7 @@ export default function NewSessionScreen() {
   // Ranked, not filtered: a club evening can put anyone in any event, exactly
   // as it can in any klass. Empty for an SPSF or generic discipline, which is
   // what hides the picker rather than showing an empty one.
-  const events = rankEventsForShooter(shooterProfile, disciplineId, new Date().getFullYear());
+  const events = eventsUnder(regulationId, disciplineId, shooterProfile);
   const allClasses = shooterClassesForDiscipline(disciplineId);
   // The chosen gun narrows it: Jun/Dam/Vet exist only in vapengrupp C.
   const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear(), weaponGroup);
@@ -215,11 +243,11 @@ export default function NewSessionScreen() {
   });
   const name = nameOverride ?? defaultName;
 
-  function onSelectDiscipline(nextId: string) {
+  function onSelectDiscipline(nextId: string, underRegulationId: string = regulationId) {
     setDisciplineId(nextId);
     setProgramId(NO_PROGRAM);
     setWeaponGroup(null);
-    setEventId(preferredEventId(nextId, shooterProfile));
+    setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
     setDecimalScoring(false);
   }
 
@@ -227,9 +255,10 @@ export default function NewSessionScreen() {
     setRegulationId(nextId);
     // The discipline the form was on may not exist under the new regelverk,
     // and every field below it is discipline-shaped, so this cascades exactly
-    // as picking a discipline by hand does.
+    // as picking a discipline by hand does — including the event, whose list
+    // differs between ISSF and SvSF for the same discipline.
     const first = firstDisciplineFor(nextId);
-    if (first !== undefined) onSelectDiscipline(first);
+    if (first !== undefined) onSelectDiscipline(first, nextId);
   }
 
   function onSelectKind(nextKind: SessionKind) {

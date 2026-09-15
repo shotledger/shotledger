@@ -20,9 +20,13 @@ Category
 : Kategorin i en ISSF-gren — Men, Women, Junior. Motsvarar inte klass: en
 svensk klass är skjuteskicklighet, en ISSF-kategori är kön och ålder.
 
-Air Pistol / Free Pistol / Sport Pistol / Standard Pistol / Rapid Fire Pistol
-: Luftpistol, fripistol, sportpistol, standardpistol och snabbpistol — ISSF:s
-fem pistolgrenar.
+Air Pistol / Free Pistol / Sport Pistol / Standard Pistol / Rapid Fire Pistol / Centre Fire Pistol
+: Luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och
+grovpistol — ISSF:s sex pistolgrenar.
+
+Rapid Fire Air Pistol
+: Snabbluftpistol — SvSF:s egen 10 m-gren, ingen ISSF-gren. Appen visar den
+under sitt engelska namn i grenlistan, som de andra grenarna.
 
 Sighter
 : Provserie. Appen visar dess resultat som **N/A** i stället för en siffra,

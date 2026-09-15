@@ -1157,7 +1157,7 @@
     "intro": "The rule sets you compete under. Turning one on adds its disciplines and weapon groups when you create a session; sessions already logged are untouched.",
     "adopts": "Competes under {{adopted}} rules",
     "impliedBy": "Already in effect — another regulation you enabled adopts it",
-    "footnote": "Svenska Skyttesportförbundet uses the ISSF rulebook for its events, so enabling it brings the ISSF disciplines with it.",
+    "footnote": "Svenska Skyttesportförbundet uses the ISSF rulebook for its events, so enabling it brings the ISSF disciplines with it — and adds its own national ones on top: snabbluftpistol, and the open, junior and men's classes shot at SM and DM.",
     "settingsRowTitle": "Regulations",
     "settingsRowNone": "None — only practice sessions"
   }
