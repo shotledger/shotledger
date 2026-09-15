@@ -9,8 +9,17 @@
 // active, in its setup view only — switching mid-run would strand a recorder
 // or an interval.
 import {
+  DEFAULT_TIME_LIMIT_SETUP,
+  MAX_READY_DELAY_SECONDS,
+  MAX_REPETITIONS,
+  MAX_REST_SECONDS,
+  MAX_TIME_LIMIT_SECONDS,
+  MIN_REPETITIONS,
+  MIN_TIME_LIMIT_SECONDS,
   TIMER_CUE_MODES,
-  type TimerConfig,
+  TIME_LIMIT_STEP_SECONDS,
+  buildTimeLimitConfig,
+  type TimeLimitSetup,
   type TimerCueMode,
   type TimerPhaseKind,
 } from '@shotledger/shared';
@@ -23,7 +32,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useKeepAwakeOnScreen } from '@/features/timer/use-keep-awake-on-screen';
-import { TextField } from '@/components/text-field';
+import { Slider } from '@/components/slider';
 import { ThemedText } from '@/components/themed-text';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { IpscTimer } from '@/features/timer/ipsc-timer';
@@ -41,32 +50,6 @@ const PHASE_COLOR: Record<TimerPhaseKind, ThemeColor> = {
   rest: 'textSecondary',
   done: 'primary',
 };
-
-function secondsInput(value: string): number {
-  const n = Number(value.replace(',', '.'));
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
-
-function buildConfig(
-  parSeconds: string,
-  readyDelaySeconds: string,
-  reps: string,
-  restSeconds: string,
-): TimerConfig {
-  const par = Math.max(0.1, secondsInput(parSeconds) || 3);
-  const ready = Math.max(0, secondsInput(readyDelaySeconds));
-  const repCount = Math.max(1, Math.round(secondsInput(reps) || 1));
-  const rest = Math.max(0, secondsInput(restSeconds));
-
-  return {
-    readyDelayMs: Math.round(ready * 1_000),
-    series: Array.from({ length: repCount }, (_, index) => ({
-      index,
-      durationMs: Math.round(par * 1_000),
-    })),
-    restMs: Math.round(rest * 1_000),
-  };
-}
 
 function formatSeconds(ms: number): string {
   return (ms / 1_000).toFixed(1);
@@ -100,19 +83,57 @@ export default function TimersScreen() {
   return <TimeLimitTimer modeSelector={modeSelector} />;
 }
 
+/** Label, current value and the slider that sets it — the fälttimer's layout. */
+function SliderField({
+  label,
+  value,
+  display,
+  min,
+  max,
+  step,
+  onChange,
+  testID,
+}: {
+  label: string;
+  value: number;
+  /** The value as the user reads it, unit included. */
+  display: string;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (value: number) => void;
+  testID: string;
+}) {
+  return (
+    <View style={styles.field}>
+      <View style={styles.labelRow}>
+        <ThemedText type="smallBold" style={styles.label}>
+          {label}
+        </ThemedText>
+        <ThemedText type="smallBold" testID={`${testID}-value`}>
+          {display}
+        </ThemedText>
+      </View>
+      <Slider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={onChange}
+        accessibilityLabel={label}
+        testID={`${testID}-slider`}
+      />
+    </View>
+  );
+}
+
 function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
   const { t } = useTranslation();
 
-  const [parSeconds, setParSeconds] = useState('3');
-  const [readyDelaySeconds, setReadyDelaySeconds] = useState('3');
-  const [reps, setReps] = useState('1');
-  const [restSeconds, setRestSeconds] = useState('0');
+  const [setup, setSetup] = useState<TimeLimitSetup>(DEFAULT_TIME_LIMIT_SETUP);
   const [cueMode, setCueMode] = useTimerCueMode();
 
-  const config = useMemo<TimerConfig>(
-    () => buildConfig(parSeconds, readyDelaySeconds, reps, restSeconds),
-    [parSeconds, readyDelaySeconds, reps, restSeconds],
-  );
+  const config = useMemo(() => buildTimeLimitConfig(setup), [setup]);
 
   const { phase, start, reset } = useTimer(config, cueMode);
   const totalSeries = config.series.length;
@@ -122,34 +143,51 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
       <Screen>
         {modeSelector}
         <Card style={styles.setupForm} testID="timer-setup-form">
-          <ThemedText type="smallBold">{t('timer.fields.parSeconds')}</ThemedText>
-          <TextField
-            value={parSeconds}
-            onChangeText={setParSeconds}
-            keyboardType="decimal-pad"
+          {/* Sliders, not text fields: the maintainer could not tell what
+              "Time Limit (s)" wanted typed into it (#138). The unit lives in
+              the value on the right, so the labels drop the "(s)". */}
+          <SliderField
+            label={t('timer.fields.timeLimit')}
+            value={setup.timeLimitSeconds}
+            display={t('timer.seconds', { value: setup.timeLimitSeconds })}
+            min={MIN_TIME_LIMIT_SECONDS}
+            max={MAX_TIME_LIMIT_SECONDS}
+            step={TIME_LIMIT_STEP_SECONDS}
+            onChange={(timeLimitSeconds) => setSetup({ ...setup, timeLimitSeconds })}
             testID="timer-par"
           />
-          <ThemedText type="smallBold">{t('timer.fields.readyDelaySeconds')}</ThemedText>
-          <TextField
-            value={readyDelaySeconds}
-            onChangeText={setReadyDelaySeconds}
-            keyboardType="decimal-pad"
+          <SliderField
+            label={t('timer.fields.readyDelay')}
+            value={setup.readyDelaySeconds}
+            display={t('timer.seconds', { value: setup.readyDelaySeconds })}
+            min={0}
+            max={MAX_READY_DELAY_SECONDS}
+            step={TIME_LIMIT_STEP_SECONDS}
+            onChange={(readyDelaySeconds) => setSetup({ ...setup, readyDelaySeconds })}
             testID="timer-ready"
           />
-          <ThemedText type="smallBold">{t('timer.fields.reps')}</ThemedText>
-          <TextField
-            value={reps}
-            onChangeText={setReps}
-            keyboardType="number-pad"
+          <SliderField
+            label={t('timer.fields.reps')}
+            value={setup.repetitions}
+            display={String(setup.repetitions)}
+            min={MIN_REPETITIONS}
+            max={MAX_REPETITIONS}
+            onChange={(repetitions) => setSetup({ ...setup, repetitions })}
             testID="timer-reps"
           />
-          <ThemedText type="smallBold">{t('timer.fields.restSeconds')}</ThemedText>
-          <TextField
-            value={restSeconds}
-            onChangeText={setRestSeconds}
-            keyboardType="decimal-pad"
-            testID="timer-rest"
-          />
+          {/* Rest only exists between repetitions, so it is meaningless for a
+              single one — hidden rather than shown doing nothing. */}
+          {setup.repetitions > 1 && (
+            <SliderField
+              label={t('timer.fields.rest')}
+              value={setup.restSeconds}
+              display={t('timer.seconds', { value: setup.restSeconds })}
+              min={0}
+              max={MAX_REST_SECONDS}
+              onChange={(restSeconds) => setSetup({ ...setup, restSeconds })}
+              testID="timer-rest"
+            />
+          )}
         </Card>
 
         <Card style={styles.setupForm} testID="timer-cues">
@@ -214,6 +252,17 @@ function TimeLimitTimer({ modeSelector }: { modeSelector: ReactNode }) {
 const styles = StyleSheet.create({
   setupForm: {
     gap: Spacing.two,
+  },
+  field: {
+    gap: Spacing.half,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  label: {
+    flex: 1,
   },
   runningScreen: {
     justifyContent: 'space-between',

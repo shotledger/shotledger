@@ -748,11 +748,12 @@
   "timer": {
     "title": "Timers",
     "fields": {
-      "parSeconds": "Time Limit (s)",
-      "readyDelaySeconds": "Ready Delay (s)",
+      "timeLimit": "Time Limit",
+      "readyDelay": "Ready Delay",
       "reps": "Repetitions",
-      "restSeconds": "Rest Between Reps (s)"
+      "rest": "Rest Between Reps"
     },
+    "seconds": "{{value}} s",
     "start": "Start",
     "stop": "Stop",
     "reset": "Reset",

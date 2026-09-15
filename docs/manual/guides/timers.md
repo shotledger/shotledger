@@ -8,6 +8,10 @@ A countdown with an optional ready delay, repeated for as many series as you
 want, with rest between them. This is the one for practising a shot program's
 timing without a match to shoot.
 
+Time limit, ready delay, repetitions and rest are all sliders, with the value
+you have dialled in shown above each one. Rest appears only when you ask for
+more than one repetition — there is nothing to rest between otherwise.
+
 Each event can have its own cue — a sound, a vibration, or both.
 
 ## Shot Timer

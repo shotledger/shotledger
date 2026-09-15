@@ -8,6 +8,10 @@ En nedräkning med valfri klarförberedelse, upprepad för så många serier du
 vill, med vila emellan. Det här är läget för att öva ett skjutprograms tidsförlopp
 utan att ha en tävling att skjuta.
 
+Skjuttid, klarförberedelse, repetitioner och vila ställs alla in med reglage,
+med det inställda värdet ovanför varje reglage. Vila visas bara när du valt mer
+än en repetition — annars finns det inget att vila mellan.
+
 Varje händelse kan ha sin egen signal — ett ljud, en vibration eller båda.
 
 ## Skottimer

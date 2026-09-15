@@ -6,3 +6,4 @@ export * from './shot-detector';
 export * from './mic-diagnostics';
 export * from './falt';
 export * from './ipsc-settings';
+export * from './time-limit';
