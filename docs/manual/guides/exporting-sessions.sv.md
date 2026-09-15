@@ -109,7 +109,7 @@ Ett pass, en räknande serie om tre skott:
 | `valueTenths` | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat. |
 | `isInnerTen`  | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                       |
 | `isSighter`   | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                 |
-| `weaponGroup` | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/vapengrupp-and-klass.md).                          |
+| `weaponGroup` | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                        |
 | `eventId`     | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                |
 | `firearm`     | Vapnets fabrikat och modell som en enda sträng, eller `null`. En export namnger utrustning; den bär inte med sig din vapenlista.      |
 
