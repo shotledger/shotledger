@@ -5,7 +5,8 @@ startlistor och officiella resultat. ShotLedger kan läsa dina egna uppgifter
 därifrån.
 
 **Inställningar → Externa webbplatser → Webshooter.** Slå på det, och anslut
-sedan.
+sedan. Den dyker upp under Verktyg när den är påslagen, och om du inte har
+loggat in än länkar den skärmen tillbaka hit.
 
 ## Att ansluta
 

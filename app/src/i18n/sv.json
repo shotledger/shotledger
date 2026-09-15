@@ -1125,7 +1125,6 @@
     "settingsHint": "Webbplatser du kan logga in på för resultat och starttider. Slå på en för att ansluta den; den visas sedan under Verktyg.",
     "enableSubtitle": "Använd {{site}} i ShotLedger",
     "rowSubtitle": "Resultat, starttider och import",
-    "noneEnabled": "Inga externa webbplatser än. Slå på en under Inställningar.",
     "notConnected": "Inte inloggad på {{site}} — anslut den under Inställningar först.",
     "unknownTitle": "Okänd webbplats",
     "unknownBody": "Den här webbplatsen finns inte i den här versionen av appen.",
@@ -1142,7 +1141,9 @@
         "title": "Statistik",
         "subtitle": "Statistik som webbplatsen räknar fram"
       }
-    }
+    },
+    "connectTitle": "Anslut den här sajten",
+    "connectSubtitle": "Logga in under Inställningar → Externa webbplatser"
   },
   "regulations": {
     "title": "Reglementen",

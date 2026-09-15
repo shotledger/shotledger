@@ -1125,7 +1125,6 @@
     "settingsHint": "Sites you can sign in to for results and start times. Turn one on to connect it; it then appears under Tools.",
     "enableSubtitle": "Use {{site}} in ShotLedger",
     "rowSubtitle": "Results, start times and imports",
-    "noneEnabled": "No external sites yet. Turn one on in Settings.",
     "notConnected": "Not signed in to {{site}} — connect it in Settings first.",
     "unknownTitle": "Unknown Site",
     "unknownBody": "This site is not available in this version of the app.",
@@ -1142,7 +1141,9 @@
         "title": "Statistics",
         "subtitle": "Statistics the site computes"
       }
-    }
+    },
+    "connectTitle": "Connect This Site",
+    "connectSubtitle": "Sign in under Settings → External Sites"
   },
   "regulations": {
     "title": "Regulations",

@@ -44,11 +44,21 @@ export default function ExternalSiteScreen() {
           it is rather than relying on the nav bar alone. */}
       <ScreenTitle>{provider.displayName}</ScreenTitle>
 
+      {/* The one screen where ADR 0010's two halves have to meet: the site is
+          enabled here, but signing in happens in Settings. Saying "not
+          connected" without a way there left the user to know, unaided, that
+          the fix lives in another tab. */}
       {!connection.connected && (
         <Card>
           <ThemedText type="small" themeColor="textSecondary" testID="provider-not-connected">
             {t('providers.notConnected', { site: provider.displayName })}
           </ThemedText>
+          <DrillDownRow
+            title={t('providers.connectTitle')}
+            subtitle={t('providers.connectSubtitle')}
+            onPress={() => router.push('/settings/external-sites')}
+            testID="provider-connect-link"
+          />
         </Card>
       )}
 
