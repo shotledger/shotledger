@@ -43,6 +43,7 @@ import {
   ThresholdTypes,
 } from 'react-native-fast-opencv';
 
+import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
 import type { GeometryMetrics } from './validity';
 
 /** Rectified working canvas resolution, as in the spike. Fixing it makes
@@ -138,6 +139,14 @@ function annulusMean(
 }
 
 /**
+ * Smallest share of the frame a contour must cover to be considered the face
+ * at all. The printed black zone fills a good part of any usable photo; this
+ * only keeps `fitEllipse` away from specks, where a fitted ellipse says
+ * nothing and the call can fail outright on too few points.
+ */
+const MIN_CANDIDATE_AREA_FRACTION = 0.005;
+
+/**
  * OpenCV reports a RotatedRect's size as (width, height) with the angle
  * measured against that axis order. `buildRectification` requires the axes
  * pre-sorted (math spec GB5); rotating by 90° when they swap keeps the angle
@@ -192,16 +201,26 @@ function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; g
     ContourApproximationModes.CHAIN_APPROX_NONE,
   );
 
-  let best = -1;
-  let bestArea = 0;
+  // Shape, not just size: see face-candidate.ts. A contour has to be large
+  // enough for fitEllipse to mean anything before it is worth describing, so
+  // tiny specks are skipped rather than fitted.
+  const minCandidateArea = MIN_CANDIDATE_AREA_FRACTION * grey.rows * grey.cols;
+  const candidates: FaceCandidate[] = [];
   for (let i = 0; i < contours.length; i += 1) {
     const area = OpenCV.contourArea(contours.get(i)).value;
-    if (area > bestArea) {
-      bestArea = area;
-      best = i;
-    }
+    if (area < minCandidateArea) continue;
+    const fit = toEllipseFit(OpenCV.fitEllipse(contours.get(i)));
+    candidates.push({
+      index: i,
+      area,
+      majorAxis: fit.majorAxis,
+      minorAxis: fit.minorAxis,
+    });
   }
-  if (best < 0) throw new Error('no dark region found');
+
+  const picked = pickFaceCandidate(candidates);
+  if (!picked) throw new Error('no dark region found');
+  const best = picked.index;
 
   const rect = arena.keep(OpenCV.fitEllipse(contours.get(best)));
 
