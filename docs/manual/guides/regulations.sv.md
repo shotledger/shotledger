@@ -21,6 +21,25 @@ reglemente du väljer.
 | **ISSF** — International Shooting Sport Federation | De internationella grenarna: luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och grovpistol.                                               |
 | **SvSF** — Svenska Skyttesportförbundet            | Svensk nationell tävling: ISSF:s grenar, plus SvSF:s egna — snabbluftpistol samt de öppna klasser, juniorklasser och herrklasser som skjuts vid SM och DM. |
 
+### Grenar per reglemente
+
+Vad grenväljaren erbjuder för varje brytare, med de namn appen använder. En
+gren som står under SvSF men definieras av ISSF är samma definition, nådd via
+SvSF — den läggs aldrig in två gånger.
+
+| Gren                | SPSF | ISSF | SvSF | Definieras av | Klassväljare                                   |
+| ------------------- | ---- | ---- | ---- | ------------- | ---------------------------------------------- |
+| Precision           | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
+| Militär snabbmatch  | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
+| Luftpistol          |      | ✓    | ✓    | ISSF          | Tävlingsklass                                  |
+| Sportpistol         |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Herr)          |
+| Standardpistol      |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Junior)        |
+| Snabbpistol         |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Öppen, Junior) |
+| Grovpistol          |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Öppen)         |
+| Fripistol           |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Öppen, Junior) |
+| Snabbluftpistol     |      |      | ✓    | SvSF          | Tävlingsklass (Öppen, Junior)                  |
+| Träning (ringtavla) | ✓    | ✓    | ✓    | ingen         | ingen — även med allt avslaget                 |
+
 ## SvSF tar med sig ISSF
 
 SvSF tävlar enligt **ISSF:s regelbok** — förbundet ger ut svenska översättningar

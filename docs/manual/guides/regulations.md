@@ -21,6 +21,25 @@ regulation you pick.
 | **ISSF** — International Shooting Sport Federation | The international events: air pistol, free pistol, sport pistol, standard pistol, rapid fire, centre fire.                                |
 | **SvSF** — Svenska Skyttesportförbundet            | Swedish national competition: ISSF's events, plus SvSF's own — snabbluftpistol, and the open, junior and men's classes shot at SM and DM. |
 
+### Disciplines by regulation
+
+What the discipline picker offers for each switch, by the names the app
+uses. A discipline listed under SvSF but defined by ISSF is the same
+definition, reached through SvSF — it is never entered twice.
+
+| Discipline                                  | SPSF | ISSF | SvSF | Defined by | Category picker                 |
+| ------------------------------------------- | ---- | ---- | ---- | ---------- | ------------------------------- |
+| Precision                                   | ✓    |      |      | SPSF       | Weapon group and class          |
+| Military Rapid Fire                         | ✓    |      |      | SPSF       | Weapon group and class          |
+| 10m Air Pistol                              |      | ✓    | ✓    | ISSF       | Event                           |
+| 25m Sport Pistol                            |      | ✓    | ✓    | ISSF       | Event (SvSF adds Men)           |
+| 25m Standard Pistol                         |      | ✓    | ✓    | ISSF       | Event (SvSF adds Junior)        |
+| 25m Rapid Fire Pistol                       |      | ✓    | ✓    | ISSF       | Event (SvSF adds Open, Junior)  |
+| 25m Centre Fire Pistol (Grovpistol)         |      | ✓    | ✓    | ISSF       | Event (SvSF adds Open)          |
+| 50m Pistol (Fripistol)                      |      | ✓    | ✓    | ISSF       | Event (SvSF adds Open, Junior)  |
+| 10m Rapid Fire Air Pistol (Snabbluftpistol) |      |      | ✓    | SvSF       | Event (Open, Junior)            |
+| Practice (Ring Target)                      | ✓    | ✓    | ✓    | none       | none — also with everything off |
+
 ## SvSF brings ISSF with it
 
 SvSF competes under **ISSF's rulebook** — it publishes Swedish translations of
