@@ -17,6 +17,7 @@
 // it. One eligibility rule then serves both: a shooter is eligible for a
 // CATEGORY, and the federation decides whether that lands on a class or on an
 // event.
+import { ISSF_REGULATION_ID, SVSF_REGULATION_ID } from '../regulations/registry';
 import type { ShooterClass } from './classes';
 import type { SkillClass } from './eligibility';
 
@@ -80,11 +81,23 @@ export interface ShooterClassDefinition {
 export interface EventDefinition {
   /** Stable id, `<disciplineId>:<gender>:<age>`. */
   id: string;
-  /** The regelverk that defines it (ADR 0011), so a second one can add its own. */
+  /** The regelverk that defines it (ADR 0011) — a registry id, so a second one can add its own. */
   regulationId: string;
   disciplineId: string;
   category: EntryCategory;
+  /**
+   * The last age a junior may reach during the year, which the defining
+   * regelverk sets per gren: ISSF's 21 applies to SvSF's events on ISSF
+   * grenar too (allmänna bestämmelser 1.5.1), but not to snabbluftpistol
+   * (1.5.2). Carried on the event so eligibility never has to know which.
+   */
+  juniorMaxAge: number;
 }
+
+/** ISSF: junior until 31 December of the year they turn 21 (Rule 3.7.4.12). */
+export const ISSF_JUNIOR_MAX_AGE = 21;
+/** SvSF, grenar that are not ISSF's: "fyller högst 20 år" (allmänna bestämmelser 1.5.2). */
+export const SVSF_NATIONAL_JUNIOR_MAX_AGE = 20;
 
 export function eventId(disciplineId: string, category: EntryCategory): string {
   return `${disciplineId}:${category.gender}:${category.age}`;
@@ -172,6 +185,8 @@ const ISSF_RULE_33: readonly { disciplineId: string; status: readonly Rule33Stat
   { disciplineId: 'issf-rapid-fire-pistol', status: ['M', 'MJ'] },
   { disciplineId: 'issf-standard-pistol', status: ['M', 'MJ', 'W', 'WJ'] },
   { disciplineId: 'issf-sport-pistol', status: ['MJ', 'W', 'WJ'] },
+  // CFPM "M only", CFPW "W": no junior event in either table.
+  { disciplineId: 'issf-centre-fire-pistol', status: ['M', 'W'] },
   { disciplineId: 'issf-free-pistol', status: ['M', 'MJ', 'W', 'WJ'] },
 ];
 
@@ -179,9 +194,99 @@ export const ISSF_EVENTS: readonly EventDefinition[] = ISSF_RULE_33.flatMap(
   ({ disciplineId, status }) =>
     status.map((code) => {
       const category = RULE_33_CATEGORY[code];
-      return { id: eventId(disciplineId, category), regulationId: 'ISSF', disciplineId, category };
+      return {
+        id: eventId(disciplineId, category),
+        regulationId: ISSF_REGULATION_ID,
+        disciplineId,
+        category,
+        juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+      };
     }),
 );
+
+const OPEN_SENIOR: EntryCategory = OPEN_CATEGORY;
+const OPEN_JUNIOR: EntryCategory = { gender: 'open', age: 'junior' };
+
+/**
+ * SvSF's national championship categories, transcribed from Tävlings-PM
+ * Pistol table 15.1 "Mästerskapsklasser" (Idrottskommittén Pistol, gällande
+ * 2025-01-01, rev. 2025-01-29), which agrees row for row with the
+ * RF-godkända SM- och DM-grenar list (2023-03-30). Both are in
+ * docs/reference/svsf-rules.md.
+ *
+ * ONLY the rows ISSF Rule 3.3 has no event for. Every other 15.1 row —
+ * luftpistol herr/dam/herrjunior/damjunior, sportpistol dam/damjunior/
+ * herrjunior, standardpistol herr/dam, and so on — is an ISSF event already
+ * and arrives through adoption, never duplicated here (ADR 0011; maintainer,
+ * 2026-09-12: "Do not duplicate events. ISSF has prio"). A test asserts no
+ * id below collides with an ISSF one.
+ */
+const SVSF_PM_15_1: readonly {
+  disciplineId: string;
+  category: EntryCategory;
+  juniorMaxAge: number;
+}[] = [
+  // 15.1 "Sportpistol — Herr"; SM list "Sportpistol 25m 60skott", Herr column.
+  // ISSF has 25 m Pistol as "MJ only" for men, so the senior men's is SvSF's.
+  {
+    disciplineId: 'issf-sport-pistol',
+    category: { gender: 'men', age: 'open' },
+    juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+  },
+  // 15.1 "Standardpistol — Junior, Gemensam HJ o DJ"; SM list, Öppna column.
+  {
+    disciplineId: 'issf-standard-pistol',
+    category: OPEN_JUNIOR,
+    juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+  },
+  // 15.1 "Snabbpistol — Senior (öppen)" / "Junior (öppen)"; SM list, Öppna column.
+  {
+    disciplineId: 'issf-rapid-fire-pistol',
+    category: OPEN_SENIOR,
+    juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+  },
+  {
+    disciplineId: 'issf-rapid-fire-pistol',
+    category: OPEN_JUNIOR,
+    juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+  },
+  // 15.1 "Fripistol — Senior (öppen)" / "Junior (öppen)"; SM list, Öppna column.
+  { disciplineId: 'issf-free-pistol', category: OPEN_SENIOR, juniorMaxAge: ISSF_JUNIOR_MAX_AGE },
+  { disciplineId: 'issf-free-pistol', category: OPEN_JUNIOR, juniorMaxAge: ISSF_JUNIOR_MAX_AGE },
+  // 15.1 "Grovpistol — Senior (öppen)"; SM list, Öppna column. Grovpistol is
+  // ISSF's 25 m Centre Fire Pistol, which Rule 3.3 has as M and W only.
+  {
+    disciplineId: 'issf-centre-fire-pistol',
+    category: OPEN_SENIOR,
+    juniorMaxAge: ISSF_JUNIOR_MAX_AGE,
+  },
+  // 15.1 "Snabbluftpistol — Senior (öppen)" / "Junior (öppen)"; SM list, Öppna
+  // column. Not an ISSF gren (its reglemente §1: "ett svenskt
+  // specialreglemente"), so 1.5.2's junior age, not 1.5.1's.
+  {
+    disciplineId: 'svsf-snabbluftpistol',
+    category: OPEN_SENIOR,
+    juniorMaxAge: SVSF_NATIONAL_JUNIOR_MAX_AGE,
+  },
+  {
+    disciplineId: 'svsf-snabbluftpistol',
+    category: OPEN_JUNIOR,
+    juniorMaxAge: SVSF_NATIONAL_JUNIOR_MAX_AGE,
+  },
+];
+
+export const SVSF_EVENTS: readonly EventDefinition[] = SVSF_PM_15_1.map(
+  ({ disciplineId, category, juniorMaxAge }) => ({
+    id: eventId(disciplineId, category),
+    regulationId: SVSF_REGULATION_ID,
+    disciplineId,
+    category,
+    juniorMaxAge,
+  }),
+);
+
+/** Every event of every regelverk, ISSF's first. */
+export const EVENTS: readonly EventDefinition[] = [...ISSF_EVENTS, ...SVSF_EVENTS];
 
 /**
  * The events a discipline offers, or an empty list when none are defined.
@@ -190,13 +295,25 @@ export const ISSF_EVENTS: readonly EventDefinition[] = ISSF_RULE_33.flatMap(
  * one — NOT "it has one open event". A synthetic `:open:open` event would be
  * the same unknown-as-open conflation this file warns about for gender, and
  * would mint an id that dangles on a stored session.
+ *
+ * `regulationIds` narrows to the regelverk in play (`effectiveRegulationIds`):
+ * a shooter under ISSF alone is not offered SvSF's open snabbpistol class.
+ * Omitted, every regelverk's events are returned.
  */
-export function eventsForDiscipline(disciplineId: string): readonly EventDefinition[] {
-  return ISSF_EVENTS.filter((event) => event.disciplineId === disciplineId);
+export function eventsForDiscipline(
+  disciplineId: string,
+  regulationIds?: readonly string[],
+): readonly EventDefinition[] {
+  return EVENTS.filter(
+    (event) =>
+      event.disciplineId === disciplineId &&
+      (regulationIds === undefined || regulationIds.includes(event.regulationId)),
+  );
 }
 
 /**
- * The i18n leaf naming a category: `men`, `menJunior`, `women`, `womenJunior`.
+ * The i18n leaf naming a category: `men`, `menJunior`, `women`, `womenJunior`,
+ * and for SvSF's open classes `open` and `openJunior`.
  *
  * A category is two axes, but its NAME is one word in both languages — SvSF
  * prints exactly these (herrar, herrjunior, damer, damjunior; allmänna
@@ -207,7 +324,11 @@ export function categoryKey(category: EntryCategory): string {
   return `${category.gender}${category.age[0]!.toUpperCase()}${category.age.slice(1)}`;
 }
 
-/** One event by id, or `undefined` — a stored id may predate a definition change. */
+/**
+ * One event by id, or `undefined` — a stored id may predate a definition
+ * change. Searches every regelverk: a session keeps its event after the
+ * shooter switches the regelverk off.
+ */
 export function findEvent(id: string): EventDefinition | undefined {
-  return ISSF_EVENTS.find((event) => event.id === id);
+  return EVENTS.find((event) => event.id === id);
 }

@@ -1,0 +1,13 @@
+{
+  "id": "svsf-snabbluftpistol",
+  "federation": "SvSF",
+  "name": {
+    "sv": "Snabbluftpistol",
+    "en": "10m Rapid Fire Air Pistol"
+  },
+  "targetFace": "svsf-10m-snabbluftpistol",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": []
+}

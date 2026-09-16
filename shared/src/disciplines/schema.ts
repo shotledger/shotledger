@@ -9,7 +9,7 @@ const localizedName = z.strictObject({
   en: z.string().min(1),
 });
 
-export const federationSchema = z.enum(['SPSF', 'ISSF', 'generic']);
+export const federationSchema = z.enum(['SPSF', 'ISSF', 'SvSF', 'generic']);
 export type Federation = z.infer<typeof federationSchema>;
 
 /** §6.2 disciplineSchema. */

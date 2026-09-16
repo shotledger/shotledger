@@ -69,13 +69,29 @@ andra, aldrig båda.
 | 25 m snabbpistol    | Herrar, herrjunior                   |
 | 25 m standardpistol | Herrar, herrjunior, damer, damjunior |
 | 25 m sportpistol    | Herrjunior, damer, damjunior         |
+| 25 m grovpistol     | Herrar, damer                        |
 | 50 m pistol         | Herrar, herrjunior, damer, damjunior |
 
 **25 m sportpistol har ingen seniorgren för herrar.** Det är ingen glömska:
-ISSF erkänner den bara för damer, damjuniorer och herrjuniorer.
+ISSF erkänner den bara för damer, damjuniorer och herrjuniorer. Det svenska
+förbundet skjuter däremot en — se nästa tabell.
+
+**SvSF lägger till egna klasser** när det är påslaget: de som skjuts vid SM
+och DM och som ISSF inte har någon gren för. De dyker upp i samma grenväljare,
+efter ISSF:s.
+
+| Gren                | SvSF lägger till                    |
+| ------------------- | ----------------------------------- |
+| 25 m sportpistol    | Herrar                              |
+| 25 m standardpistol | Junior (herrar och damer gemensamt) |
+| 25 m snabbpistol    | Öppen, junior                       |
+| 25 m grovpistol     | Öppen                               |
+| 50 m pistol         | Öppen, junior                       |
+| Snabbluftpistol     | Öppen, junior                       |
 
 En **junior** är för ISSF den som är upp till och med det år hen fyller 21 — ett
-år senare än SPSF:s juniorklass, som slutar det år man fyller 20. Appen använder
+år senare än SPSF:s juniorklass, som slutar det år man fyller 20. SvSF använder
+ISSF:s 21 i ISSF-grenarna och 20 i sin egen snabbluftpistol. Appen använder
 den som gäller för grenen du valt.
 
 Juniorer är inte inlåsta i juniorgrenar. Att starta i seniorgrenen är normalt
@@ -90,7 +106,7 @@ rangordna-men-spärra-inte-regel som för klasser.
 | ----------------------- | -------------------------------------- |
 | SPSF precision          | A, AM, AP, AG, A-opt, B, C             |
 | SPSF militär snabbmatch | A, A-opt, B, C, R                      |
-| ISSF-grenar             | inga — ISSF använder inte vapengrupper |
+| ISSF- och SvSF-grenar   | inga — ingendera använder vapengrupper |
 | Träning (ringad tavla)  | inga — se nedan                        |
 
 ## Bara tävlingar frågar dig

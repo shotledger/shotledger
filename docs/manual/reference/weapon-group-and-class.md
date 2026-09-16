@@ -72,13 +72,29 @@ both.
 | 25 m Rapid Fire      | Men, Men Junior                      |
 | 25 m Standard Pistol | Men, Men Junior, Women, Women Junior |
 | 25 m Sport Pistol    | Men Junior, Women, Women Junior      |
+| 25 m Centre Fire     | Men, Women                           |
 | 50 m Pistol          | Men, Men Junior, Women, Women Junior |
 
 **25 m Sport Pistol has no senior men's event.** That is not an omission: the
-ISSF recognizes it for women, women juniors and men juniors only.
+ISSF recognizes it for women, women juniors and men juniors only. The
+Swedish federation does run one — see the next table.
+
+**SvSF adds classes of its own** when it is turned on: the ones shot at SM
+and DM that ISSF has no event for. They appear in the same Event picker,
+after ISSF's.
+
+| Discipline           | SvSF adds                       |
+| -------------------- | ------------------------------- |
+| 25 m Sport Pistol    | Men                             |
+| 25 m Standard Pistol | Junior (men and women together) |
+| 25 m Rapid Fire      | Open, Junior                    |
+| 25 m Centre Fire     | Open                            |
+| 50 m Pistol          | Open, Junior                    |
+| Snabbluftpistol      | Open, Junior                    |
 
 A **junior** to the ISSF is anyone up to and including the year they turn 21
 — a year later than SPSF's juniorklass, which stops at the year you turn 20.
+SvSF uses ISSF's 21 on ISSF disciplines and 20 in its own snabbluftpistol.
 The app uses whichever applies to the discipline you picked.
 
 Juniors are not confined to junior events. Entering the senior event is normal
@@ -89,12 +105,12 @@ rank-don't-gate rule as for classes.
 
 ## Which groups each discipline allows
 
-| Discipline              | Groups                                 |
-| ----------------------- | -------------------------------------- |
-| SPSF precision          | A, AM, AP, AG, A-opt, B, C             |
-| SPSF militär snabbmatch | A, A-opt, B, C, R                      |
-| ISSF events             | none — ISSF does not use weapon groups |
-| Practice (Ring Target)  | none — see below                       |
+| Discipline              | Groups                            |
+| ----------------------- | --------------------------------- |
+| SPSF precision          | A, AM, AP, AG, A-opt, B, C        |
+| SPSF militär snabbmatch | A, A-opt, B, C, R                 |
+| ISSF and SvSF events    | none — neither uses weapon groups |
+| Practice (Ring Target)  | none — see below                  |
 
 ## Only competitions ask you
 

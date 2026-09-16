@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { ISSF_JUNIOR_MAX_AGE } from './entries';
 import {
-  ISSF_JUNIOR_MAX_AGE,
   defaultShooterClass,
   isJunior,
   spsfEligibleClasses,

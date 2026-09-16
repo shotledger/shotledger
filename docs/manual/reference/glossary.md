@@ -18,6 +18,10 @@ Gren (event)
 10 m Air Pistol Women. ISSF puts the category on the event; SPSF puts it on
 the class. See [Weapon group and class](weapon-group-and-class.md).
 
+Grovpistol
+: Centre fire pistol — ISSF's 25 m Centre Fire Pistol, the sport pistol
+course shot with a 7.62–9.65 mm gun. SvSF runs it at SM as one open class.
+
 Klass
 : Your competition class as a shooter — the app calls it **Class**. See
 [Weapon group and class](weapon-group-and-class.md).
@@ -45,6 +49,10 @@ militär snabbmatch.
 Skjutlag
 : Squad, or patrol. The group you shoot with, and the unit start times are
 assigned to.
+
+Snabbluftpistol
+: Rapid fire air pistol — SvSF's own 10 m event, shot like 25 m rapid fire
+but with 10, 8 and 6 second series. Not an ISSF event.
 
 Standardmedalj
 : A standard medal, awarded for reaching a score threshold in a competition.

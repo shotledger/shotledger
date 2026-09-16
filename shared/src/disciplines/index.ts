@@ -3,23 +3,27 @@
 // so a malformed data file fails at startup rather than at scoring time.
 import genericRings from './definitions/generic-rings.json';
 import { activeFederations } from '../regulations/registry';
-// ISSF ships events, not vapengrupper (§6.4a) — every definition below has
-// weaponGroups: [] rather than a new "issf group" concept; see
-// docs/reference/issf-rules.md.
+// ISSF and SvSF ship events, not vapengrupper (§6.4a) — every definition
+// below has weaponGroups: [] rather than a new "issf group" concept; see
+// docs/reference/issf-rules.md and svsf-rules.md.
 import issfAirPistolDiscipline from './definitions/issf-air-pistol.json';
+import issfCentreFirePistolDiscipline from './definitions/issf-centre-fire-pistol.json';
 import issfFreePistolDiscipline from './definitions/issf-free-pistol.json';
 import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.json';
 import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
 import issfStandardPistolDiscipline from './definitions/issf-standard-pistol.json';
 import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
+import svsfSnabbluftpistolDiscipline from './definitions/svsf-snabbluftpistol.json';
 import issfAirPistolProgram from './programs/issf-air-pistol.json';
+import issfCentreFirePistolProgram from './programs/issf-centre-fire-pistol.json';
 import issfFreePistolProgram from './programs/issf-free-pistol.json';
 import issfRapidFirePistolProgram from './programs/issf-rapid-fire-pistol.json';
 import issfSportPistolProgram from './programs/issf-sport-pistol.json';
 import issfStandardPistolProgram from './programs/issf-standard-pistol.json';
 import spsfMilsnabbProgram from './programs/spsf-milsnabb.json';
 import spsfPrecisionProgram from './programs/spsf-precision.json';
+import svsfSnabbluftpistolProgram from './programs/svsf-snabbluftpistol.json';
 import { GENERIC_SHOOTER_CLASSES, SPSF_SHOOTER_CLASSES, type ShooterClass } from './classes';
 import { GENERIC_WEAPON_GROUPS, findWeaponGroup, type WeaponGroup } from './groups';
 import { disciplineSchema, programSchema, type Discipline, type Program } from './schema';
@@ -39,6 +43,10 @@ export const DISCIPLINES: readonly Discipline[] = [
   issfStandardPistolDiscipline,
   issfRapidFirePistolDiscipline,
   issfFreePistolDiscipline,
+  issfCentreFirePistolDiscipline,
+  // SvSF's own, after ISSF's: the new-session form lands on the first
+  // non-generic discipline, and for an SvSF shooter that should be luftpistol.
+  svsfSnabbluftpistolDiscipline,
 ].map((raw) => disciplineSchema.parse(raw));
 
 export const PROGRAMS: readonly Program[] = [
@@ -49,6 +57,8 @@ export const PROGRAMS: readonly Program[] = [
   issfStandardPistolProgram,
   issfRapidFirePistolProgram,
   issfFreePistolProgram,
+  issfCentreFirePistolProgram,
+  svsfSnabbluftpistolProgram,
 ].map((raw) => programSchema.parse(raw));
 
 /** One series the UI should pre-create for a fixed-format program (§6.3). */

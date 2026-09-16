@@ -8,9 +8,10 @@
 // The subtlety this file exists for: **SvSF adopts ISSF's rulebook** — the
 // Swedish translations of chapters 6, 7 and 8 — rather than inventing its own
 // technical rules. So SvSF does NOT redefine air pistol; it takes ISSF's, and
-// adds only what ISSF does not have: the national events, including ones ISSF
-// has dropped (25 m standardpistol, 50 m pistol, kept as *icke officiella
-// grenar*).
+// adds only what ISSF does not have: one pistol discipline of its own
+// (snabbluftpistol) and the national championship categories ISSF's event
+// list has no row for — open and junior classes at SM/DM, a men's
+// sportpistol (docs/reference/svsf-rules.md, "What ISSF Rule 3.3 lacks").
 //
 // Hence `adopts`. ISSF owns the international disciplines and its definitions
 // win; a regulation that adopts it inherits them rather than duplicating them
@@ -68,10 +69,11 @@ export const REGULATIONS: readonly Regulation[] = [
     displayName: 'Svenska Skyttesportförbundet',
     shortName: 'SvSF',
     // The whole point: enabling SvSF gives you ISSF's disciplines, because
-    // that is what SvSF competes under nationally. Its own additions arrive
-    // as SvSF-federation definitions when they are added.
+    // that is what SvSF competes under nationally. Its own additions —
+    // snabbluftpistol, and the SM/DM categories in disciplines/entries.ts —
+    // are the SvSF-federation definitions.
     adopts: [ISSF_REGULATION_ID],
-    federation: 'ISSF',
+    federation: 'SvSF',
     defaultEnabled: false,
   },
 ];
@@ -101,6 +103,11 @@ export function effectiveRegulations(enabledIds: readonly string[]): readonly Re
   for (const id of enabledIds) visit(id);
   // Registry order, not the order the shooter happened to toggle them.
   return REGULATIONS.filter((regulation) => resolved.has(regulation.id));
+}
+
+/** The ids of `effectiveRegulations`, for filtering events by regelverk. */
+export function effectiveRegulationIds(enabledIds: readonly string[]): readonly string[] {
+  return effectiveRegulations(enabledIds).map((regulation) => regulation.id);
 }
 
 /**

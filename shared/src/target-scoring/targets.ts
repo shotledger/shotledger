@@ -142,12 +142,39 @@ export const ISSF_25M_RAPID_FIRE: TargetFaceDefinition = {
   referenceIsSolidBlack: false,
 };
 
+// SvSF face, transcribed from docs/reference/svsf-rules.md (Reglemente för
+// 10 m Snabbluftpistol, utgåva januari 2026, §3). `id` matches the
+// `targetFace` in shared/src/disciplines/definitions/svsf-snabbluftpistol.json.
+
+/**
+ * Snabbluftpistol §3: 10 ring 22.0 mm down to 5 ring 154.5 mm, inner ten
+ * 11 mm. The value rings and aiming lines are printed white (§3), so the
+ * black runs out to the 5 ring's edge — the 25 m rapid fire layout at 10 m —
+ * and it takes that face's `referenceIsSolidBlack: false` for the same
+ * reason: the CV reference is the black's outer edge, not a filled disc.
+ */
+export const SVSF_10M_SNABBLUFTPISTOL: TargetFaceDefinition = {
+  id: 'svsf-10m-snabbluftpistol',
+  rings: [
+    ring('X', 10, 11, true),
+    ring('10', 10, 22),
+    ring('9', 9, 48.5),
+    ring('8', 8, 75),
+    ring('7', 7, 101.5),
+    ring('6', 6, 128),
+    ring('5', 5, 154.5),
+  ],
+  referenceDiameterMm: 154.5,
+  referenceIsSolidBlack: false,
+};
+
 const TARGET_FACES: Readonly<Record<string, TargetFaceDefinition>> = {
   [SPSF_PISTOL_25M_PRECISION.id]: SPSF_PISTOL_25M_PRECISION,
   [SPSF_SNABBSKJUTNING_25M.id]: SPSF_SNABBSKJUTNING_25M,
   [ISSF_10M_AIR_PISTOL.id]: ISSF_10M_AIR_PISTOL,
   [ISSF_25M_PRECISION.id]: ISSF_25M_PRECISION,
   [ISSF_25M_RAPID_FIRE.id]: ISSF_25M_RAPID_FIRE,
+  [SVSF_10M_SNABBLUFTPISTOL.id]: SVSF_10M_SNABBLUFTPISTOL,
 };
 
 export function getTargetFace(id: string): TargetFaceDefinition | undefined {
