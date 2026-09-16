@@ -482,7 +482,21 @@
     "settingsTitle": "Efterlevnad",
     "profileNone": "Ingen",
     "profileSe": "Sverige (FAP 551-3)",
-    "unverifiedHint": "Aktivitetskraven är obekräftade platshållarvärden, i väntan på bekräftelse mot FAP 551-3 eller ett verkligt föreningsintyg.",
+    "unverifiedHint": "Aktivitetskraven för den här profilen är overifierade standardvärden — kontrollera dem med din förening eller polisen innan du förlitar dig på dem.",
+    "caseTitle": "Aktivitetskrav",
+    "caseBody": "Vilket krav som gäller beror på dig, inte på appen, så välj det som stämmer. Appen ändrar det aldrig åt dig.",
+    "case": {
+      "firstHandgun": "Första enhandsvapnet",
+      "existingHandgun": "Har redan enhandsvapen"
+    },
+    "caseHint": {
+      "firstHandgun": "FAP 551-3 5 §, för den som inte tidigare har enhandsvapen för målskjutning: sammantaget i genomsnitt minst två gånger per månad under de senaste sex månaderna — 12 totalt.",
+      "existingHandgun": "FAP 551-3 6 §, för den som sedan tidigare innehar enhandsvapen för målskjutning: sammantaget i genomsnitt minst en gång per månad under de senaste sex månaderna — 6 totalt."
+    },
+    "sourceCitation": "Källa: Polismyndighetens blankett PM 551.24 Föreningsintyg, sidan 3 (FAP 551-3, 5 kap 5–6 §§).",
+    "notModelled": "Räknas inte här: de särskilda reglerna för ytterligare enhandsvapen och för förnyelse av tidsbegränsat tillstånd. Kontrollera dem själv.",
+    "barometerDetail": "{{done}} av {{required}} aktiviteter de senaste {{months}} månaderna",
+    "barometerCaseLine": "Mäts mot {{case}}.",
     "barometerTitle": "Aktivitetsbarometer (vapenlicens)",
     "barometerGreen": "I fas",
     "barometerAmber": "Halkar efter",

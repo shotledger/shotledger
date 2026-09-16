@@ -14,6 +14,10 @@ export const SETTINGS_KEYS = {
   // choice yet — the Settings screen applies the locale-based default
   // (se when device locale is sv, else none) rather than writing a row.
   complianceProfile: 'complianceProfile',
+  // Which case within that profile applies to this shooter — for 'se', FAP
+  // 551-3 5 § (no handgun yet) vs 6 § (already holds one). Not derivable from
+  // app data, so the shooter picks it; unset = the profile's own default.
+  complianceProfileVariant: 'complianceProfileVariant',
   // Timers. `spokenPrompts` is legacy — read once to seed the per-timer cue
   // settings that replaced it, never written. The fälttimer's own blob
   // (mode, prep/shooting time, parti boundaries, a cue per command).

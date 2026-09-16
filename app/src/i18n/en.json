@@ -482,7 +482,21 @@
     "settingsTitle": "Compliance",
     "profileNone": "None",
     "profileSe": "Sweden (FAP 551-3)",
-    "unverifiedHint": "Activity requirements are unverified placeholders, pending confirmation against FAP 551-3 or a real föreningsintyg.",
+    "unverifiedHint": "Activity requirements for this profile are unverified defaults — check them with your club or the police before relying on them.",
+    "caseTitle": "Activity Requirement",
+    "caseBody": "Which requirement applies depends on you, not on the app, so pick the one that fits. The app never changes it for you.",
+    "case": {
+      "firstHandgun": "First Handgun",
+      "existingHandgun": "Already Have One"
+    },
+    "caseHint": {
+      "firstHandgun": "FAP 551-3 5 §, for someone who does not yet hold a handgun for target shooting: at least two activities a month on average over the last six months — 12 in all.",
+      "existingHandgun": "FAP 551-3 6 §, for someone who already holds a handgun for target shooting: at least one activity a month on average over the last six months — 6 in all."
+    },
+    "sourceCitation": "Source: Polismyndigheten’s form PM 551.24 Föreningsintyg, page 3 (FAP 551-3, 5 kap 5–6 §§).",
+    "notModelled": "Not counted here: the separate rules for an additional handgun and for renewing a time-limited permit. Check those yourself.",
+    "barometerDetail": "{{done}} of {{required}} activities in the last {{months}} months",
+    "barometerCaseLine": "Measured against {{case}}.",
     "barometerTitle": "Activity Barometer (vapenlicens)",
     "barometerGreen": "On Track",
     "barometerAmber": "Falling Behind",

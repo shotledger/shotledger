@@ -478,6 +478,27 @@ export default function FirearmDetailScreen() {
               />
             ))}
           </View>
+          {detail.barometers.map((b) => (
+            <ThemedText
+              key={`detail-${b.weaponGroups.join(',')}`}
+              type="small"
+              themeColor="textSecondary"
+              testID={`firearm-barometer-detail-${b.weaponGroups[0]}`}
+            >
+              {t('compliance.barometerDetail', {
+                done: b.activityCount,
+                required: b.requiredActivities,
+                months: b.windowMonths,
+              })}
+            </ThemedText>
+          ))}
+          {/* Which case is in effect is never silently applied — it is on
+              screen wherever the number it produced is. */}
+          <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
+            {t('compliance.barometerCaseLine', {
+              case: t(`compliance.case.${profile.variantId}`),
+            })}
+          </ThemedText>
           {!profile.verified && (
             <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">
               {t('compliance.unverifiedHint')}

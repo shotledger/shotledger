@@ -1,5 +1,6 @@
 // Settings → Compliance. Which licence-activity profile the barometer and the
-// föreningsintyg PDF are worked out under.
+// föreningsintyg PDF are worked out under, and which case within it applies to
+// this shooter (for `se`: FAP 551-3 5 § vs 6 §, which the app cannot derive).
 import type { ProfileSelection } from '@shotledger/shared';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +14,8 @@ import { useComplianceProfile } from '@/features/compliance/use-compliance-profi
 
 export default function ComplianceSettingsScreen() {
   const { t } = useTranslation();
-  const { selection, profile, setSelection } = useComplianceProfile();
+  const { selection, profile, setSelection, variantIds, variantId, setVariantId } =
+    useComplianceProfile();
 
   return (
     <Screen>
@@ -36,6 +38,31 @@ export default function ComplianceSettingsScreen() {
           </ThemedText>
         )}
       </Card>
+
+      {/* Only profiles that actually offer a choice get a picker. */}
+      {profile && variantId && variantIds.length > 1 && (
+        <Card>
+          <ThemedText type="smallBold">{t('compliance.caseTitle')}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('compliance.caseBody')}
+          </ThemedText>
+          <SegmentedControl
+            options={variantIds.map((id) => ({ value: id, label: t(`compliance.case.${id}`) }))}
+            value={variantId}
+            onChange={setVariantId}
+            testID="compliance-case-picker"
+          />
+          <ThemedText type="small" themeColor="textSecondary" testID="compliance-case-hint">
+            {t(`compliance.caseHint.${variantId}`)}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('compliance.notModelled')}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" testID="compliance-source">
+            {t('compliance.sourceCitation')}
+          </ThemedText>
+        </Card>
+      )}
     </Screen>
   );
 }
