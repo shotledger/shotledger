@@ -123,6 +123,22 @@ handles beta distribution (builds expire after 90 days). A real iPhone is
 still needed for camera testing — but no Mac is needed anywhere in the
 pipeline.
 
+## Supported Android versions and architectures
+
+- **Android 7.0 (API level 24) and newer.** `minSdkVersion` 24 and
+  `targetSdkVersion` 36 are the Expo SDK 57 template defaults, applied by
+  `expo prebuild`; nothing in `app.json` overrides them. Raising the floor
+  is a deliberate `expo-build-properties` change, not something a dependency
+  bump should do silently — check `android/build.gradle` after a major Expo
+  upgrade.
+- **arm64-v8a and armeabi-v7a.** The Play AAB carries both ARM ABIs and Play
+  serves the right one; x86/x86_64 exist only for the emulator. The direct
+  APK on GitHub Releases is built arm64-v8a only
+  (`-PreactNativeArchitectures=arm64-v8a`, 90 MB instead of 295 MB), so a
+  32-bit phone must install from Play.
+
+The same statement, in user words, is in `docs/store-listing.md`.
+
 ## Distribution channels
 
 - **Android:** Google Play (main channel) + a direct APK via GitHub

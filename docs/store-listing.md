@@ -61,6 +61,9 @@ unlocks nothing (paid features do not exist in this app).
 Currently supports SPSF disciplines (precision and militär snabbmatch)
 plus free-form training. Android only for now.
 
+Requires Android 7.0 (API level 24) or newer, on a 64-bit (arm64-v8a) or
+32-bit (armeabi-v7a) ARM device.
+
 ---
 
 ## Svenska
@@ -104,6 +107,9 @@ inte låser upp något (appen har inga betalfunktioner).
 
 Stödjer för närvarande SPSF-grenar (precision och militär snabbmatch)
 samt fri träning. Endast Android tills vidare.
+
+Kräver Android 7.0 (API-nivå 24) eller senare, på en 64-bitars (arm64-v8a)
+eller 32-bitars (armeabi-v7a) ARM-enhet.
 
 ---
 
