@@ -76,8 +76,46 @@ def load(path: str, long_side: int = 2048) -> np.ndarray:
     return img
 
 
-def find_face(img: np.ndarray) -> tuple[tuple, bool, np.ndarray]:
-    """Largest dark blob = the printed black zone. Returns (ellipse, partial, mask).
+# --- face prior: kept in lock-step with app/src/features/photo-scoring/
+# face-candidate.ts (the reference is the TypeScript; this mirrors it).
+MAX_FACE_ASPECT = 2.0
+MIN_FACE_FILL = 0.6
+MIN_CANDIDATE_AREA_FRACTION = 0.005
+
+
+def is_disc_like(area: float, major: float, minor: float) -> bool:
+    """A target face is a disc: the fitted ellipse is not far off circular and
+    the contour actually fills it. A post fails the first test, an L-shaped
+    shadow joining two dark areas fails the second."""
+    if minor <= 0:
+        return False
+    ellipse_area = math.pi / 4 * major * minor
+    if ellipse_area <= 0:
+        return False
+    return major / minor <= MAX_FACE_ASPECT and area / ellipse_area >= MIN_FACE_FILL
+
+
+def pick_face_candidate(cands: list[tuple[int, float, float, float]]) -> int | None:
+    """`cands` = (index, area, major, minor). The largest disc-like candidate;
+    the largest of any shape when none is disc-like, so this is never worse
+    than picking by area alone."""
+    best = fallback = None
+    for idx, area, major, minor in cands:
+        if area <= 0:
+            continue
+        if fallback is None or area > fallback[1]:
+            fallback = (idx, area)
+        if not is_disc_like(area, major, minor):
+            continue
+        if best is None or area > best[1]:
+            best = (idx, area)
+    return (best or fallback or (None,))[0]
+
+
+def find_face(img: np.ndarray, prior: bool = True) -> tuple[tuple, bool, np.ndarray]:
+    """The printed black zone: the largest *disc-like* dark blob (`prior`),
+    or the largest dark blob of any shape (`prior=False`, the pre-#266 rule).
+    Returns (ellipse, partial, mask).
 
     Fitting the ellipse to the blob's *outer* contour handles the milsnabb
     target, whose black zone is an annulus around a lighter middle.
@@ -94,7 +132,19 @@ def find_face(img: np.ndarray) -> tuple[tuple, bool, np.ndarray]:
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if not cnts:
         raise SystemExit("no dark region found")
-    c = max(cnts, key=cv2.contourArea)
+    if prior:
+        min_area = MIN_CANDIDATE_AREA_FRACTION * mask.shape[0] * mask.shape[1]
+        cands = []
+        for i, cnt in enumerate(cnts):
+            area = cv2.contourArea(cnt)
+            if area < min_area or len(cnt) < 5:
+                continue
+            (_, _), (d1, d2), _ = cv2.fitEllipse(cnt)
+            cands.append((i, area, max(d1, d2), min(d1, d2)))
+        picked = pick_face_candidate(cands)
+        c = cnts[picked] if picked is not None else max(cnts, key=cv2.contourArea)
+    else:
+        c = max(cnts, key=cv2.contourArea)
 
     h, w = mask.shape
     pts = c.reshape(-1, 2).astype(np.float32)
@@ -268,6 +318,62 @@ def ring_residuals(rect, geom: Geometry, kind: str, win_mm=3.0):
         peak = lo + int(np.argmax(prof[lo:hi]))
         out.append((label, (peak - r) / geom.px_per_mm))
     return out
+
+
+# ---------------------------------------------------------------- gate
+# Mirrors app/src/features/photo-scoring/validity.ts (the reference) and
+# runGeometry's metric computation in opencv.ts, so a corpus run answers
+# "would the app have accepted this" rather than "did the pipeline produce
+# a fit".
+
+GEOMETRY_THRESHOLDS = dict(max_axis_ratio=2.0, min_zone_fraction=0.1,
+                           max_zone_fraction=0.95, min_zone_contrast=50.0,
+                           min_profile_score=20.0)
+
+
+def gate_metrics(img, ellipse, rect, geom: Geometry, kind: str) -> dict:
+    h, w = img.shape[:2]
+    (cx, cy), (d1, d2), _ = ellipse
+    lo, hi = min(d1, d2), max(d1, d2)
+    g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    r = lo / 2
+    inner = _disc_mean(g, cx, cy, 0.70 * r)
+    outer = _annulus_mean(g, cx, cy, 1.15 * r, 1.40 * r)
+
+    radii = [d / 2 for _, d in TARGETS[kind]["rings"]]
+    gr = cv2.cvtColor(rect, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    prof = _radial_profile(gr, geom.center[0], geom.center[1],
+                           int(radii[-1] * 1.05 * geom.px_per_mm))
+    mad = float(np.median(np.abs(prof - np.median(prof)))) if len(prof) >= 8 else 0.0
+    vals = []
+    for rm in radii:
+        rr = int(rm * geom.px_per_mm)
+        a, b = max(0, rr - 2), rr + 3
+        if b < len(prof):
+            vals.append(float(prof[a:b].max()))
+    profile = float(np.mean(vals)) / mad if (vals and mad > 1e-6) else 0.0
+    return dict(axis_ratio=hi / lo if lo else float("inf"),
+                zone_fraction=hi / max(h, w),
+                center_in=bool(0 <= cx < w and 0 <= cy < h),
+                zone_contrast=float(outer - inner),
+                profile_score=profile)
+
+
+def check_geometry_validity(m: dict) -> list[str]:
+    """Failing reasons, in validity.ts's declared order; empty = valid."""
+    t = GEOMETRY_THRESHOLDS
+    reasons = []
+    if not (m["axis_ratio"] <= t["max_axis_ratio"]):
+        reasons.append("axisRatio")
+    if not (t["min_zone_fraction"] <= m["zone_fraction"] <= t["max_zone_fraction"]):
+        reasons.append("zoneFraction")
+    if not m["center_in"]:
+        reasons.append("centerInFrame")
+    if not (m["zone_contrast"] >= t["min_zone_contrast"]):
+        reasons.append("zoneContrast")
+    if not (m["profile_score"] >= t["min_profile_score"]):
+        reasons.append("profileScore")
+    return reasons
 
 
 # ---------------------------------------------------------------- stage 4
