@@ -71,9 +71,12 @@ decodes that many bytes: the first firearm row (276 bytes) became
 `Unterminated string in JSON at position 20`. Migrations passed only because
 `run` results are tiny. The async path uses `postMessage` and is unaffected,
 but Drizzle's driver is sync-only. The line is unchanged on expo/expo `main`
-as of today. With the one-line fix
-(`new Uint32Array(resultBuffer, 0, 1)[0] = length`) applied to the installed
-copy for the spike only, everything downstream worked.
+as of today; the fix exists as expo/expo#44148 (open since 2026-03-23,
+unmerged), which writes and reads the length prefix through a `DataView`
+and rejects an out-of-bounds length. The maintainer chose to carry that fix
+as `patches/expo-sqlite@57.0.3.patch` (registered in `pnpm-workspace.yaml`),
+to be dropped once a release carries it. With it applied, everything
+downstream worked.
 
 With those four in place: migrations ran in the browser (database file
 4 KB → 188 KB), the `/dev` seed wrote 30 sessions, and a full page reload
@@ -99,9 +102,9 @@ The spike passes: the phone app's own SQLite layer runs in a browser, so
 architecture A — web as a third sync device, every feature one more route —
 is viable, and B is not needed for any database reason. Before A is built:
 
-- The expo-sqlite length bug must be fixed upstream or carried as a pnpm
-  patch. Adding a patch is a hard-rule-2 decision for the maintainer; the
-  spike did not add one.
+- The expo-sqlite length bug is carried as a pnpm patch mirroring
+  expo/expo#44148 (a hard-rule-2 decision, taken 2026-09-16). It goes when
+  a release includes the fix.
 - The host must send `Cross-Origin-Opener-Policy: same-origin` and
   `Cross-Origin-Embedder-Policy: credentialless`. The Metro dev server cannot
   in this SDK, so the web preview loop needs the proxy or an Expo CLI that
@@ -110,7 +113,7 @@ is viable, and B is not needed for any database reason. Before A is built:
   OpenCV beyond the stub) are still the 5–10 days it estimates.
 
 Kept in the tree: `web.output: "single"`, the metro config, the web client
-and gate, the OpenCV stub. Not kept: the node_modules fix and the proxy.
+and gate, the OpenCV stub, the expo-sqlite patch. Not kept: the proxy.
 
 ## Consequences
 

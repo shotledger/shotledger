@@ -57,6 +57,11 @@ patchedDependencies:
   # stryker-mutator/stryker-js#6210. Drop this when a release carries the fix.
   '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch
   eslint-plugin-react-native@5.0.0: patches/eslint-plugin-react-native@5.0.0.patch
+  # The web sync channel writes its result length through Uint8Array#set,
+  # keeping only `length % 256`, so any sync result over 255 bytes is
+  # truncated. Mirrors upstream expo/expo#44148 (ADR 0012); drop this when a
+  # release carries the fix.
+  expo-sqlite@57.0.3: patches/expo-sqlite@57.0.3.patch
 overrides:
   qs: 6.16.0
   decode-uri-component: 0.5.0
