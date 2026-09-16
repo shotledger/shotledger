@@ -10,7 +10,7 @@ Bilaga 8 indicators) stands unchanged and is not restated here.
 
 **Spec approval: not obtained (autonomous run).** The maintainer's 2026-09-16
 decisions (source document, which paragraphs to model, which to transcribe
-only) are *inputs* to this spec, not approval of it. This document is the
+only) are _inputs_ to this spec, not approval of it. This document is the
 artifact for review after the fact, per the old-coder skill's autonomous-mode
 provision.
 
@@ -80,13 +80,13 @@ sessions.
 **Transcribed but not modelled**, by the maintainer's decision of 2026-09-16,
 same treatment as the SvSF klass layer in #138:
 
-- **Ytterligare enhandsvapen** (≥2 activities in six months *with each
-  previously held handgun*). Not modelled: it is a per-firearm requirement
+- **Ytterligare enhandsvapen** (≥2 activities in six months _with each
+  previously held handgun_). Not modelled: it is a per-firearm requirement
   keyed to which handguns the applicant already holds — a licence-holding fact
   the app does not record, and it applies only to a specific application type,
   not to a shooter's standing activity level.
 - **Förnyelse av tidsbegränsat tillstånd** (≥4 activities per year over the
-  last two years *with the applied-for firearm*). Not modelled: it is keyed to
+  last two years _with the applied-for firearm_). Not modelled: it is keyed to
   a permit's time-limited status, which the app does not record either.
 - **Särskilda skäl** (illness, pregnancy, service abroad). Not modelled, and
   deliberately so: the form says the exception is granted by Polismyndigheten
@@ -107,7 +107,7 @@ last six months", and they differ at the edges:
 - **(b) per calendar month** — at least `N` in every one of the six months.
 - **(c) trailing average per month** — some rolling per-month average.
 
-**Binding: reading (a).** The form says *"sammantaget i genomsnitt"* —
+**Binding: reading (a).** The form says _"sammantaget i genomsnitt"_ —
 "in total, on average". "Sammantaget" is what rules out (b): a month-by-month
 requirement is the opposite of taking the months together, and the word would
 be meaningless under it. "I genomsnitt" over a stated window of six months is
@@ -121,14 +121,14 @@ actual application; the app counts.
 
 ## Constants (`constants-se.ts`)
 
-| Constant                                  | Value | Derivation                                          |
-| ----------------------------------------- | ----- | --------------------------------------------------- |
-| `SE_WINDOW_MONTHS`                        | `6`   | "under de senaste sex månaderna" (both §§)          |
-| `SE_FIRST_HANDGUN_PER_MONTH`              | `2`   | 5 §: "minst två gånger per månad"                   |
-| `SE_EXISTING_HANDGUN_PER_MONTH`           | `1`   | 6 §: "minst en gång per månad"                      |
-| `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`    | `12`  | `SE_FIRST_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`     |
-| `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES` | `6`   | `SE_EXISTING_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`  |
-| `SE_VERIFIED`                             | `true`| both modelled numbers now trace to the cited source |
+| Constant                                  | Value  | Derivation                                          |
+| ----------------------------------------- | ------ | --------------------------------------------------- |
+| `SE_WINDOW_MONTHS`                        | `6`    | "under de senaste sex månaderna" (both §§)          |
+| `SE_FIRST_HANDGUN_PER_MONTH`              | `2`    | 5 §: "minst två gånger per månad"                   |
+| `SE_EXISTING_HANDGUN_PER_MONTH`           | `1`    | 6 §: "minst en gång per månad"                      |
+| `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`    | `12`   | `SE_FIRST_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`     |
+| `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES` | `6`    | `SE_EXISTING_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`  |
+| `SE_VERIFIED`                             | `true` | both modelled numbers now trace to the cited source |
 
 The two required-activity counts are **computed from** the per-month rate and
 the window, not written as literals — the average reading is then visible in
@@ -185,43 +185,43 @@ maintainer review** — a UX default, not a regulatory fact.
 
 ### `constants-se.ts` — `C`
 
-| #   | Scenario                                                             | Expected                                              |
-| --- | -------------------------------------------------------------------- | ----------------------------------------------------- |
-| C1  | `SE_WINDOW_MONTHS`                                                    | `6`                                                   |
-| C2  | `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`                                | `12`, and `=== SE_FIRST_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS` |
-| C3  | `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES`                             | `6`, and `=== SE_EXISTING_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS` |
-| C4  | `SE_VERIFIED`                                                         | `true`                                                |
-| C5  | `SE_SOURCE_CITATION`                                                  | names PM 551.24 and FAP 551-3 5 kap 5–6 §§, and carries no "VERIFY"/"placeholder" wording |
+| #   | Scenario                                  | Expected                                                                                  |
+| --- | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| C1  | `SE_WINDOW_MONTHS`                        | `6`                                                                                       |
+| C2  | `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`    | `12`, and `=== SE_FIRST_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS`                             |
+| C3  | `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES` | `6`, and `=== SE_EXISTING_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS`                           |
+| C4  | `SE_VERIFIED`                             | `true`                                                                                    |
+| C5  | `SE_SOURCE_CITATION`                      | names PM 551.24 and FAP 551-3 5 kap 5–6 §§, and carries no "VERIFY"/"placeholder" wording |
 
 ### `profile-registry.ts` / `profiles/se.ts` — `P`
 
-| #   | Scenario                                                                    | Expected                                                              |
-| --- | --------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| P1  | `getProfile('se')` with no variant                                          | the SE profile, `verified: true`, `variantId: 'firstHandgun'` (default)|
-| P2  | `getProfile('none')`, any variant argument                                  | `null`                                                                |
-| P3  | every v1 weapon group (SPSF + generic) under either variant                 | resolves to exactly one rule                                          |
-| P4  | rules trace to `constants-se.ts`, no duplicated literals                    | `windowMonths === SE_WINDOW_MONTHS` for every rule of both variants   |
-| P5  | `getProfile('se', 'firstHandgun')`                                          | every rule `requiredActivities === 12`                                |
-| P6  | `getProfile('se', 'existingHandgun')`                                       | every rule `requiredActivities === 6`                                 |
-| P7  | `getProfile('se', 'not-a-variant')`                                         | falls back to the default variant — never `null`, never throws, never a fabricated rule set |
-| P8  | `getProfileDefinition('se')`                                                | two variants, `defaultVariantId` names one of them                    |
-| P9  | `getProfileDefinition('none')`                                              | `null`                                                                |
-| P10 | both variants' `countsAs`                                                   | `{ training: 1, competition: 1 }`                                     |
+| #   | Scenario                                                    | Expected                                                                                    |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| P1  | `getProfile('se')` with no variant                          | the SE profile, `verified: true`, `variantId: 'firstHandgun'` (default)                     |
+| P2  | `getProfile('none')`, any variant argument                  | `null`                                                                                      |
+| P3  | every v1 weapon group (SPSF + generic) under either variant | resolves to exactly one rule                                                                |
+| P4  | rules trace to `constants-se.ts`, no duplicated literals    | `windowMonths === SE_WINDOW_MONTHS` for every rule of both variants                         |
+| P5  | `getProfile('se', 'firstHandgun')`                          | every rule `requiredActivities === 12`                                                      |
+| P6  | `getProfile('se', 'existingHandgun')`                       | every rule `requiredActivities === 6`                                                       |
+| P7  | `getProfile('se', 'not-a-variant')`                         | falls back to the default variant — never `null`, never throws, never a fabricated rule set |
+| P8  | `getProfileDefinition('se')`                                | two variants, `defaultVariantId` names one of them                                          |
+| P9  | `getProfileDefinition('none')`                              | `null`                                                                                      |
+| P10 | both variants' `countsAs`                                   | `{ training: 1, competition: 1 }`                                                           |
 
 ### Barometer under the real numbers — `R`
 
 Boundary cases of the chosen reading (a), through the unchanged
 `computeRuleBarometer`:
 
-| #   | Scenario (window = 6 months, `now` fixed)                          | Expected                        |
-| --- | ------------------------------------------------------------------ | ------------------------------- |
-| R1  | 12 sessions in the window, `firstHandgun`                          | `green` (count === required)    |
-| R2  | 11 sessions in the window, `firstHandgun`                          | `amber` (≥ ceil(12/2) = 6)      |
-| R3  | 5 sessions in the window, `firstHandgun`                           | `red` (< 6)                     |
-| R4  | 6 sessions in the window, `existingHandgun`                        | `green`                         |
+| #   | Scenario (window = 6 months, `now` fixed)                          | Expected                                                                               |
+| --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| R1  | 12 sessions in the window, `firstHandgun`                          | `green` (count === required)                                                           |
+| R2  | 11 sessions in the window, `firstHandgun`                          | `amber` (≥ ceil(12/2) = 6)                                                             |
+| R3  | 5 sessions in the window, `firstHandgun`                           | `red` (< 6)                                                                            |
+| R4  | 6 sessions in the window, `existingHandgun`                        | `green`                                                                                |
 | R5  | the same 6 sessions under `firstHandgun`                           | `amber` — the case changes the verdict, and only the shooter's choice changes the case |
-| R6  | 12 sessions all inside one week of the window, `firstHandgun`      | `green` — the total-over-window reading (a), stated above, made executable |
-| R7  | 12 sessions spread as 2/month, one of them a day before the window | `amber` — 11 counted; the window is what bounds it |
+| R6  | 12 sessions all inside one week of the window, `firstHandgun`      | `green` — the total-over-window reading (a), stated above, made executable             |
+| R7  | 12 sessions spread as 2/month, one of them a day before the window | `amber` — 11 counted; the window is what bounds it                                     |
 
 ### Negative constraints
 
