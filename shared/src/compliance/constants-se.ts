@@ -1,22 +1,27 @@
-// VERIFY — Swedish (FAP 551-3) activity-frequency numbers.
-//
-// FAP 551-3 is the source for club föreningsintyg's numeric activity
-// requirements, but no numeric text from it is available anywhere in this
-// repository: docs/reference/spsf-shb-2026.md ("Licens/intyg") states
-// explicitly that SHB itself does not reference FAP 551-3's counts, and
-// nothing else in the tree transcribes the regulation. The maintainer
-// reviews föreningsintyg professionally (see CLAUDE.md — "the maintainer
-// does not read shared/compliance line by line") and is the authority to
-// confirm these against the actual FAP 551-3 text or a real intyg example.
-//
-// Until then these are PLACEHOLDER numbers only — a plausible "roughly
-// every-other-month" guess, not a regulatory fact. `SE_VERIFIED` gates the
-// barometer UI's "unverified defaults" hint; do not flip it without the
-// maintainer's explicit confirmation (implementation-plan.md §0 rule 4).
-export const SE_VERIFIED = false;
+// Swedish activity-frequency requirements, from Polismyndigheten's form
+// PM 551.24 "Föreningsintyg", page 3 ("Förklaringar och anvisningar vid
+// utfärdande av föreningsintyg"), which transcribes PMFS 2016:4 /
+// RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§. Source text, the reading of
+// "sammantaget i genomsnitt", and what is deliberately not modelled:
+// docs/specs/compliance-fap551-spec.md.
 
-export const SE_DEFAULT_WINDOW_MONTHS = 6;
-export const SE_DEFAULT_REQUIRED_ACTIVITIES = 4;
+export const SE_VERIFIED = true;
+
+/** Both paragraphs: "under de senaste sex månaderna". */
+export const SE_WINDOW_MONTHS = 6;
+
+/** 5 § (no handgun for target shooting yet): "minst två gånger per månad". */
+export const SE_FIRST_HANDGUN_PER_MONTH = 2;
+
+/** 6 § (already holds one): "minst en gång per månad". */
+export const SE_EXISTING_HANDGUN_PER_MONTH = 1;
+
+// "Sammantaget i genomsnitt minst N gånger per månad" over a six-month
+// window is a total over the window, not a per-calendar-month floor — hence
+// the multiplication rather than a literal (spec, "The reading").
+export const SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES = SE_FIRST_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS;
+export const SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES =
+  SE_EXISTING_HANDGUN_PER_MONTH * SE_WINDOW_MONTHS;
 
 export const SE_SOURCE_CITATION =
-  'FAP 551-3 (numeric activity counts) — VERIFY: unconfirmed placeholder, no source text in this repo';
+  'PM 551.24 Föreningsintyg s. 3 — PMFS 2016:4 / RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§';

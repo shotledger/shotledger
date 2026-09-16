@@ -32,7 +32,14 @@ function session(overrides: Partial<ComplianceSession>): ComplianceSession {
 }
 
 function profile(rules: WeaponGroupComplianceRule[]): JurisdictionProfile {
-  return { id: 'se', name: { sv: 'x', en: 'x' }, rules, source: 'test', verified: false };
+  return {
+    id: 'se',
+    name: { sv: 'x', en: 'x' },
+    variantId: 'test',
+    rules,
+    source: 'test',
+    verified: false,
+  };
 }
 
 describe('computeRuleBarometer', () => {
