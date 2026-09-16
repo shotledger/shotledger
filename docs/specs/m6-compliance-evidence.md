@@ -145,4 +145,7 @@ Stryker, tsc, eslint), which the old-coder skill treats as pre-trusted.
 - The FAP 551-3 numeric constants (`SE_DEFAULT_WINDOW_MONTHS`,
   `SE_DEFAULT_REQUIRED_ACTIVITIES`) are unverified placeholders,
   `SE_VERIFIED = false`, gating a UI hint — see `constants-se.ts` and the M6
-  task report.
+  task report. **Settled since (2026-09-16):** both constants were replaced
+  by the cited PM 551.24 numbers and no longer exist under those names — see
+  `compliance-fap551-evidence.md`. The rest of this report still describes
+  the code as it stands.
