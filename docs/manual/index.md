@@ -26,7 +26,8 @@ nothing.
 Target shooting only. Not hunting, not tactical.
 
 Sweden is the first market rather than the boundary: federation rules —
-disciplines, programs, vapengrupper, shooter classes — live in data files, and
+disciplines, programs, weapon groups (sv _vapengrupper_), shooter classes —
+live in data files, and
 compliance features hide themselves where no profile applies.
 
 ## Where to start

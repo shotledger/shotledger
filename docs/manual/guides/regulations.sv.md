@@ -17,7 +17,7 @@ reglemente du väljer.
 
 | Reglemente                                         | Vad det omfattar                                                                                                                                           |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch och vapengrupperna A/B/C/R. På som standard.                                                                                 |
+| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch och vapengrupperna (en _weapon groups_) A/B/C/R. På som standard.                                                            |
 | **ISSF** — International Shooting Sport Federation | De internationella grenarna: luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och grovpistol.                                               |
 | **SvSF** — Svenska Skyttesportförbundet            | Svensk nationell tävling: ISSF:s grenar, plus SvSF:s egna — snabbluftpistol samt de öppna klasser, juniorklasser och herrklasser som skjuts vid SM och DM. |
 

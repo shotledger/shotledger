@@ -12,7 +12,7 @@ first.
 3. That is it. It is saved as you go.
 
 Then, when you have five quiet minutes, do the rest below — it is what turns a
-list of scores into a logbook that knows which klass you shot in.
+list of scores into a logbook that knows which class (sv _klass_) you shot in.
 
 And whenever you get round to it, make a backup. Everything lives on your phone
 by default: no account, no server, nothing to leak — and a lost phone is a lost
@@ -30,8 +30,9 @@ This is the order you would do things at the range, on your first visit.
 
 A session does not require a firearm — leave it as **None** and the session
 still logs, scores and counts normally. What naming the firearm buys you is its
-**vapengrupp** — whether this is your A-gun, your C-gun, and so on — which is
-what lets the app offer the right klasser, apply the right märke thresholds,
+**weapon group** (sv _vapengrupp_) — whether this is your A-gun, your C-gun,
+and so on — which is what lets the app offer the right classes, apply the
+right märke thresholds,
 and keep a round count per gun.
 
 If you handload, you can add ammunition later; nothing here blocks you from
@@ -49,7 +50,7 @@ shooting.
 - **Your class** — 1, 2 or 3. Nobody can derive an earned class.
 - **Women's classes and events** — if you compete in them.
 
-From those three the app works out every klass you are eligible for, preselects
+From those three the app works out every class you are eligible for, preselects
 your own, and stops asking you every session. You can always override it.
 
 ### 3. Start a session
@@ -71,10 +72,10 @@ your own, and stops asking you every session. You can always override it.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
   Both are optional.
 
-For a **competition** you are also asked for your **vapengrupp** and **klass**,
-because that is what you are entered under. Training does not ask: the app takes
-the vapengrupp from the gun you picked, so your pistolskyttemärke still counts
-practice series, and it records no klass at all.
+For a **competition** you are also asked for your **weapon group** and
+**class**, because that is what you are entered under. Training does not ask:
+the app takes the weapon group from the gun you picked, so your
+pistolskyttemärke still counts practice series, and it records no class at all.
 
 A session created from a fixed program arrives with its series already laid
 out, so you are not building the scaffolding while the line is waiting.
