@@ -12,7 +12,7 @@ ställas in först.
 3. Det var det. Allt sparas medan du håller på.
 
 Sedan, när du har fem lugna minuter, gör du resten nedan — det är det som gör
-en lista med poäng till en loggbok som vet vilken klass du sköt i.
+en lista med poäng till en loggbok som vet vilken klass (en _class_) du sköt i.
 
 Och när du ändå kommer dig för det: gör en säkerhetskopia. Allt ligger i
 telefonen som standard — inget konto, ingen server, ingenting att läcka — och en
@@ -31,7 +31,8 @@ besök.
 
 Ett pass kräver inget vapen — lämna det som **Inget** så loggas, räknas och
 summeras passet ändå som vanligt. Det du vinner på att namnge vapnet är dess
-**vapengrupp** — om det här är ditt A-vapen, ditt C-vapen och så vidare — och
+**vapengrupp** (en _weapon group_) — om det här är ditt A-vapen, ditt C-vapen
+och så vidare — och
 det är den som låter appen erbjuda rätt klasser, tillämpa rätt märkesgränser
 och hålla ett skottantal per vapen.
 

@@ -25,7 +25,8 @@ upp något.
 Endast målskytte. Inte jakt, inte taktiskt.
 
 Sverige är första marknaden snarare än gränsen: förbundens regler — grenar,
-program, vapengrupper och skytteklasser — ligger i datafiler, och
+program, vapengrupper (en _weapon groups_) och skytteklasser — ligger i
+datafiler, och
 efterlevnadsfunktioner döljer sig där ingen profil gäller.
 
 ## Var du börjar

@@ -17,7 +17,7 @@ regulation you pick.
 
 | Regulation                                         | What it covers                                                                                                                            |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, and the vapengrupper A/B/C/R. On by default.                                                               |
+| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, and the weapon groups (sv _vapengrupper_) A/B/C/R. On by default.                                          |
 | **ISSF** — International Shooting Sport Federation | The international events: air pistol, free pistol, sport pistol, standard pistol, rapid fire, centre fire.                                |
 | **SvSF** — Svenska Skyttesportförbundet            | Swedish national competition: ISSF's events, plus SvSF's own — snabbluftpistol, and the open, junior and men's classes shot at SM and DM. |
 
@@ -97,7 +97,7 @@ app preselects with whichever applies.
 ## What changes when you turn one on
 
 Only what you are **offered** when creating a session: its disciplines, the
-vapengrupper those disciplines allow, and — for ISSF and SvSF — the events.
+weapon groups those disciplines allow, and — for ISSF and SvSF — the events.
 With more than one regulation on, the form asks which one first (see above);
 with one, the discipline you pick implies it.
 
