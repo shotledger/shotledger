@@ -19,13 +19,14 @@ shared/src/sync/
   index.ts        barrel
 
 backend/src/
-  auth.ts             Authenticator interface + devBearerAuthenticator stub
+  auth.ts             Authenticator interface, betterAuthAuthenticator and the
+                       devBearerAuthenticator stub the sync tests mount
   db/schema.ts        drizzle table defs (sync_rows, sync_sequence,
                        sync_idempotency) — generic per-table row storage
   db/migrations.ts     D1 migration DDL (mirrored in backend/migrations/)
   db/queries.ts        pull/push query + merge/idempotency logic
   routes/sync.ts        POST /sync/pull, POST /sync/push (Hono)
-  index.ts               mounts /sync/* behind the auth stub
+  index.ts               mounts /sync/* behind real better-auth
 
 backend/migrations/0000_sync_init.sql   canonical DDL for `wrangler d1
                                          migrations apply` at deploy time
@@ -69,13 +70,14 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   (tombstone-wins + LWW) and for pull cursor pagination. See spec §2a for
   why this reads as a deviation from one ADR 0003 bullet and why it is the
   position taken.
-- **`/sync` still uses the dev auth stub.** `backend/src/auth.ts`'s
-  `devBearerAuthenticator` (bearer token = user id verbatim) remains
-  `createSyncRoutes()`'s default so the existing sync test suite is
-  untouched. `/photos`, `/account`, and `/api/auth/*` all use real
-  better-auth (`betterAuthAuthenticator`) from day one — cutting `/sync`
-  over is a separate, flagged maintainer decision (see
-  `docs/specs/backend-auth-photos-spec.md` §2).
+- **`/sync` runs behind real better-auth.** `backend/src/index.ts` mounts
+  it with `betterAuthAuthenticator`, like `/photos`, `/account` and
+  `/api/auth/*` (cut over in `feat/sync-app`, `docs/specs/sync-app-spec.md`
+  §8). `backend/src/auth.ts`'s `devBearerAuthenticator` (bearer token = user
+  id verbatim) survives only as `createSyncRoutes()`'s default, which is
+  what `backend/test/sync.spec.ts` mounts for its bare-token fixtures —
+  nothing reachable from the deployed Worker trusts a bearer string as a
+  user id.
 - **`settings` and `session_tags`** are excluded from the syncable table
   set — they don't carry the `id`/`updated_at`/`deleted_at` convention the
   rest of the schema does. Flagged as `VERIFY` in spec §1.
