@@ -78,6 +78,7 @@ export function useReportExport(t: TFunction, locale: string) {
               disciplineId: input.filter.disciplineId,
               shotsPerSeries: input.filter.shotsPerSeries,
               tags: input.filter.tagIds.map((id) => tagNames.get(id) ?? id),
+              includeSighters: input.filter.includeSighters,
             },
             totals: input.totals,
             records: input.records,

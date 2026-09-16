@@ -51,6 +51,7 @@ const input: AnalyticsReportJsonInput = {
     disciplineId: 'spsf-precision',
     shotsPerSeries: 5,
     tags: ['Training'],
+    includeSighters: true,
   },
   totals: {
     sessionCount: 3,
@@ -86,6 +87,17 @@ describe('buildAnalyticsReport', () => {
 
   it('echoes the filter unchanged', () => {
     expect(buildAnalyticsReport(input).filter).toEqual(input.filter);
+  });
+
+  it('SS-21/SS-22: the echo says which sighter scope produced the numbers', () => {
+    expect(buildAnalyticsReport(input).filter.includeSighters).toBe(true);
+
+    const excluded = buildAnalyticsReport({
+      ...input,
+      filter: { ...input.filter, includeSighters: false },
+    });
+    expect(excluded.filter.includeSighters).toBe(false);
+    expect({ ...excluded.filter, includeSighters: true }).toEqual(input.filter);
   });
 
   it('reports scores in points, never tenths', () => {

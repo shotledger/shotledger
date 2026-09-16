@@ -47,6 +47,13 @@ export interface AnalyticsFilterState {
   disciplineId: string | null;
   shotsPerSeries: number | null;
   tagIds: string[];
+  /**
+   * Outside a session a sighter is an ordinary series (maintainer,
+   * 2026-09-16), so this defaults to `true`; switching it off restores the
+   * in-session rule. *Shots fired* counts sighters either way — see
+   * docs/specs/sighters-in-statistics-spec.md §2.1.
+   */
+  includeSighters: boolean;
 }
 
 export const DEFAULT_ANALYTICS_FILTER: AnalyticsFilterState = {
@@ -57,6 +64,7 @@ export const DEFAULT_ANALYTICS_FILTER: AnalyticsFilterState = {
   disciplineId: null,
   shotsPerSeries: null,
   tagIds: [],
+  includeSighters: true,
 };
 
 export interface DistributionBucket {
@@ -256,9 +264,12 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
   const all = listAllAnalyticsSeries(db);
   const matched = filterAnalyticsSeries(all, toAnalyticsFilter(state));
   const sessionIds = [...new Set(matched.map((series) => series.sessionId))];
-  const points = analyticsSessionPoints(matched);
+  // The sighter scope is a scoring question, not a membership one, so it
+  // rides on the aggregations rather than on filterAnalyticsSeries.
+  const scope = { includeSighters: state.includeSighters };
+  const points = analyticsSessionPoints(matched, scope);
   const records: AnalyticsRecords = analyticsRecords(points);
-  const shots = scoredShots(matched);
+  const shots = scoredShots(matched, scope);
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
 
   const nameById = new Map(listSessions(db).map((session) => [session.id, session.name] as const));
@@ -267,7 +278,7 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
       ? null
       : { ...record, sessionName: nameById.get(record.sessionId) ?? record.sessionId };
 
-  const totals = analyticsTotals(matched);
+  const totals = analyticsTotals(matched, scope);
 
   return {
     hasAnyData: all.length > 0,
@@ -280,6 +291,8 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
       volumeShotCount: totals.volumeShotCount + sumExtraRounds(db, sessionIds),
     },
     sdTenths: sampleStandardDeviationTenths(shots),
+    // No sighter scope: award eligibility, not a descriptive statistic
+    // (spec §2.3).
     guldserieCount: guldserieCount(matched, { birthYear }),
     records,
     bestSessionScore: named(records.bestSessionTotalTenths),

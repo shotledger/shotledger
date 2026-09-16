@@ -18,6 +18,9 @@ Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot
 passets total. Resultatet visas ändå, med en asterisk — **45\*** — eftersom en
 provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
 
+Så är regeln inuti ett pass. Mellan pass gäller något annat — se
+[Statistik](statistics.md#provserier-raknas-har-om-du-inte-sager-annat).
+
 ## Att ändra ordning
 
 Serier går att dra till en annan ordning. Håll ned en serie och dra: raden

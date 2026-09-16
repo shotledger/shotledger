@@ -53,7 +53,11 @@ or serializer with round-trip/idempotence invariants).
 ## Domain facts (from `.claude/skills/spsf-domain/SKILL.md` and §6.5/§6.5b)
 
 1. Sighter (`isSighter`) series are excluded from every score statistic but
-   **included** in volume metrics (total shots, rounds fired).
+   **included** in volume metrics (total shots, rounds fired). **Amended**
+   by `docs/specs/sighters-in-statistics-spec.md` (2026-09-16): that is the
+   in-session rule. `scoredSeries`/`scoredShots` still default to it — so
+   B18-B31 below are unchanged — but now take an optional `SighterScope`
+   that the Statistics tab passes to count sighters as ordinary series.
 2. Standardmedalj evaluates **beforeFinal** (the grundomgång, i.e. the
    non-final scored series) when a session has a final — never the
    after-final total.

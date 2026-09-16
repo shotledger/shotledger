@@ -60,7 +60,13 @@ From `.claude/skills/spsf-domain/SKILL.md`, §6.3/§6.5 and the M5 spec, all
 already encoded in `stats.ts` and reused here rather than re-derived:
 
 1. Sighter series (`isSighter`) are excluded from every score statistic but
-   **included** in volume metrics.
+   **included** in volume metrics. **Amended** by
+   `docs/specs/sighters-in-statistics-spec.md` (2026-09-16): that exclusion
+   is the in-session rule and is now the report's **opt-out**, not its
+   default — `analyticsSessionPoints` and `analyticsTotals` take a
+   `SighterScope`, and A-P1 / A-T3 / A-T4 below describe the sighter-free
+   scope the argument selects. `volumeShotCount` (A-T2) is unchanged in both
+   scopes.
 2. `value_tenths` is the single integer storage for both scoring modes;
    division by 10 happens only at display time.
 3. A Webshooter-imported series (Amendment WS1) has no shot rows — only

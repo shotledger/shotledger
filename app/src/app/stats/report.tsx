@@ -112,6 +112,9 @@ export default function StatsReportScreen() {
           {'\n'}
           {t('stats.sectionTags')}:{' '}
           {data.tagNames.length === 0 ? t('stats.tagsNone') : data.tagNames.join(', ')}
+          {'\n'}
+          {t('stats.sectionSighters')}:{' '}
+          {filter.includeSighters ? t('stats.sightersInclude') : t('stats.sightersExclude')}
         </ThemedText>
         <ThemedText type="default" testID="report-match-count">
           {t('stats.matchCount', { count: data.totals.sessionCount })}

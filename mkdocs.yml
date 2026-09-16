@@ -104,6 +104,7 @@ plugins:
             Guides: Guider
             Regulations: Reglementen
             Logging a session: Logga ett pass
+            Statistics: Statistik
             Scoring from a photo: Räkna från foto
             Timers: Timers
             Firearms and ammunition: Vapen och ammunition
@@ -128,6 +129,7 @@ nav:
   - Guides:
       - Regulations: guides/regulations.md
       - Logging a session: guides/logging-a-session.md
+      - Statistics: guides/statistics.md
       - Scoring from a photo: guides/scoring-from-a-photo.md
       - Timers: guides/timers.md
       - Firearms and ammunition: guides/firearms-and-ammunition.md

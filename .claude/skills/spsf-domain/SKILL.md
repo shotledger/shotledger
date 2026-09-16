@@ -16,8 +16,12 @@ Hard rules that implementations must never violate:
    Only fixed-format programs (milsnabb) pre-create a skeleton.
 2. **Max ONE sighter (provskott) series per section** — one in the main
    round, one in the final. Sighters are excluded from every score and
-   score statistic, but count in volume metrics (shots logged, firearm
-   round counter, ammo usage).
+   from every **in-session** score statistic, but count in volume metrics
+   (shots logged, firearm round counter, ammo usage). **Outside a session**
+   (the Statistics tab's report) a sighter is an ordinary series unless the
+   user filters it out — maintainer, 2026-09-16, see
+   `docs/specs/sighters-in-statistics-spec.md`. The guldserie count is the
+   exception: award eligibility, so it never counts a sighter.
 3. When a final exists, three derived results: beforeFinal, finalScore,
    total = sum. Standardmedalj evaluates **beforeFinal** (the
    grundomgång), not the total.

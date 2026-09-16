@@ -29,6 +29,13 @@ export interface AnalyticsReportJsonFilter {
   shotsPerSeries: number | null;
   /** Tag **names**, not ids — the ids are meaningless outside the device. */
   tags: string[];
+  /**
+   * Whether sighter series were counted as ordinary series in `summary` and
+   * `records` (docs/specs/sighters-in-statistics-spec.md). Required, not
+   * optional: without it the summary cannot be interpreted. `shotsFired` is
+   * unaffected — it always counts them. Additive within format version 1.
+   */
+  includeSighters: boolean;
 }
 
 export interface AnalyticsReportJsonRecord {

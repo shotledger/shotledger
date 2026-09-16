@@ -5,7 +5,9 @@
 //
 // Sighter series are excluded from every score statistic but included in
 // volume metrics (spsf-domain rule 2) — every function below documents
-// which side of that line it's on.
+// which side of that line it's on. Rule 2 is scoped to a *session*: outside
+// one a sighter is an ordinary series, which callers ask for with
+// `SighterScope` (docs/specs/sighters-in-statistics-spec.md).
 
 import { guldserieThreshold } from './marke';
 import { tenthsToScore } from './totals';
@@ -86,14 +88,30 @@ export function xRate(shots: readonly StatsShot[]): number | null {
 
 // --- Sighter split ---------------------------------------------------------
 
-/** Non-sighter series only — the input to every score statistic. */
-export function scoredSeries(seriesList: readonly StatsSeries[]): StatsSeries[] {
-  return seriesList.filter((series) => !series.isSighter);
+export interface SighterScope {
+  /**
+   * The cross-session scope: a sighter is an ordinary series (maintainer,
+   * 2026-09-16 — "in the global statistics sighters and normal series are
+   * the same"). Defaults to `false`, the in-session scope, so an
+   * unqualified call keeps spsf-domain rule 2.
+   */
+  includeSighters?: boolean;
 }
 
-/** All non-sighter shots, pooled — the input to session/period score means. */
-export function scoredShots(seriesList: readonly StatsSeries[]): StatsShot[] {
-  return scoredSeries(seriesList).flatMap((series) => series.shots);
+/** The series a score statistic is computed over, per `scope`. */
+export function scoredSeries(
+  seriesList: readonly StatsSeries[],
+  scope: SighterScope = {},
+): StatsSeries[] {
+  return scope.includeSighters ? [...seriesList] : seriesList.filter((series) => !series.isSighter);
+}
+
+/** The pooled shots of `scoredSeries` — the input to session/period score means. */
+export function scoredShots(
+  seriesList: readonly StatsSeries[],
+  scope: SighterScope = {},
+): StatsShot[] {
+  return scoredSeries(seriesList, scope).flatMap((series) => series.shots);
 }
 
 /**
@@ -293,6 +311,11 @@ export interface GuldserieCountOptions {
  * mapped vapengrupp — never re-implemented here). Each series' calendar
  * year is taken from its own `startedAt` so age reduction is correct
  * across a multi-year period filter.
+ *
+ * Takes no `SighterScope`: this is an award-eligibility count, not a
+ * descriptive statistic, and a provserie is not a counting series — so a
+ * sighter is excluded here even where the Statistics tab counts it
+ * elsewhere (spec §2.3).
  */
 export function guldserieCount(
   seriesList: readonly StatsSeries[],

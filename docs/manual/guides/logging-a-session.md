@@ -19,6 +19,9 @@ towards the session total. Its score is still shown, with an asterisk —
 **45\*** — because a sighter is deliberately unscored rather than missing a
 score, and what you shot is still worth seeing.
 
+That is the rule inside a session. Across sessions it changes — see
+[Statistics](statistics.md#sighters-count-here-unless-you-say-otherwise).
+
 ## Reordering
 
 Series can be dragged into a different order. Press and hold a series, then
