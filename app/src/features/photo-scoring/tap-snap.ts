@@ -14,16 +14,23 @@
 // null and keep the raw tap. The shooter's finger is the fallback, and a
 // snap that jumps to the wrong blob is worse than no snap.
 //
-// Known limits, both inherited from working on a small window:
+// Known limits:
 //
-// - A repair patch only slightly larger than a hole can pass the gate, because
-//   the crop that judges it then straddles the patch's own edge and reads the
-//   boundary as variance. Club patches are several times a .22 hole, so this
-//   is mostly theoretical — but it is the failure mode to expect.
 // - A window filled almost entirely by holes has no background left for the
 //   median to find, so nothing looks like a deviation. That is a tight group
 //   at high magnification; the tap survives untouched, which is the right
 //   answer there anyway.
+// - The fitted filter was trained on 96 labelled holes, of which only 4 are
+//   out on the white paper. Its constants are therefore far better evidenced
+//   inside the black zone than outside it.
+
+import {
+  HOLE_CROP_PX,
+  HOLE_PROBABILITY_THRESHOLD,
+  holeFeatures,
+  holeProbability,
+  reflectIndex,
+} from '@shotledger/shared';
 
 /** The rectified grey canvas, as `runGeometry` emits it. */
 export interface RectifiedCanvas {
@@ -41,8 +48,10 @@ export interface SnapResult {
   readonly yMm: number;
   /** How far the snap moved the tap, mm — useful for a "snapped" hint. */
   readonly distanceMm: number;
-  /** The accepted candidate's local std-dev, the hole/patch discriminator. */
+  /** The accepted candidate's local std-dev, the small-crop discriminator. */
   readonly localStdDev: number;
+  /** The fitted filter's verdict on the 12 mm crop, 0..1. */
+  readonly holeProbability: number;
 }
 
 /**
@@ -56,17 +65,23 @@ export const SNAP_WINDOW_MM = 4;
  * **These three are not fitted to the corpus.** They are conservative
  * starting values chosen so that the failure mode is "no snap":
  *
- * - `MIN_LOCAL_STD_DEV` is the hole/patch gate. Local std-dev is the single
- *   best classical discriminator measured — AUC 0.943 in
- *   `docs/specs/cv-corpus-validation-2026-09.md` — because a patch is flat
- *   (uniform fill, manufactured edges) while a hole has a bright torn-paper
- *   rim against dark ink. The AUC is measured; **this threshold is not**, and
- *   fitting it against that doc's 231 labelled holes and 351 non-holes is the
- *   obvious follow-up.
+ * - `MIN_LOCAL_STD_DEV` gates a crop that sits *inside* the blob. That is the
+ *   only view in which a flat blob of hole size reads as flat, so it is what
+ *   catches a patch the same size as the hole it covers.
  * - `DEVIATION_FRACTION` and `MIN_CONTRAST` decide which pixels form a blob
  *   at all, and whether the window has any contrast worth searching.
  * - `AREA_TOLERANCE` bounds a candidate's area against the area a hole of the
  *   current calibre would have.
+ *
+ * A candidate must ALSO clear `holeProbability` on a `HOLE_CROP_PX` crop —
+ * a second gate in series, whose constants *are* fitted
+ * (`docs/specs/cv-assisted-detection-spec.md`). The two are kept separate
+ * because they see different things: the 12 mm crop takes in the
+ * surroundings, which is how a real repair patch (dark on dark, so flat *and*
+ * low-contrast) and a printed digit are caught, and is exactly the view in
+ * which a hole-sized flat blob reads as variance instead. A conjunction can
+ * only refuse more than either alone, never accept more, so the worst it can
+ * do is decline to help and leave the shooter's own tap standing.
  */
 export const MIN_LOCAL_STD_DEV = 12;
 /**
@@ -141,7 +156,7 @@ function windowStats(
 /**
  * Local std-dev over a hole-sized crop centred on a point.
  *
- * This is the classifier, and it is deliberately *not* the variance of the
+ * Deliberately *not* the variance of the
  * pixels a blob is made of: those were selected for deviating together, so
  * their own variance tends to zero — a hole's bright rim measured 0.0 that
  * way. Measured over the crop instead, a hole is high (bright torn rim, darker
@@ -245,6 +260,33 @@ function findBlobs(
   return blobs;
 }
 
+/**
+ * The `HOLE_CROP_PX`-square grey crop the fitted filter expects, always
+ * centred on (xPx, yPx), with anything past the canvas rim mirrored back in.
+ *
+ * Reflected, not shifted inward. Two of the six features — the centre-window
+ * deviation above all — are defined relative to the middle of the crop, so a
+ * crop slid sideways to fit reads a hole as off-centre texture and the filter
+ * refuses it. Reflection keeps the candidate in the middle, and it is the same
+ * `BORDER_REFLECT_101` every convolution inside `holeFeatures` already uses at
+ * its own edges. Returns null only when the canvas is smaller than one crop,
+ * where there is nothing to reflect from.
+ */
+function holeCropAt(canvas: RectifiedCanvas, xPx: number, yPx: number): Uint8Array | null {
+  const n = HOLE_CROP_PX;
+  if (canvas.size < n) return null;
+  const x0 = Math.round(xPx) - n / 2;
+  const y0 = Math.round(yPx) - n / 2;
+  const out = new Uint8Array(n * n);
+  for (let y = 0; y < n; y += 1) {
+    const row = reflectIndex(y0 + y, canvas.size) * canvas.size;
+    for (let x = 0; x < n; x += 1) {
+      out[y * n + x] = canvas.data[row + reflectIndex(x0 + x, canvas.size)] ?? 0;
+    }
+  }
+  return out;
+}
+
 export interface SnapOptions {
   /** Hole diameter to expect, mm — the calibre the shooter selected. */
   readonly caliberMm: number;
@@ -288,7 +330,12 @@ export function snapToHole(
   // anything hole-sized, and then even a flat patch reads as variance —
   // measured at 27 against a gate of 12 while getting this wrong.
   const cropRadiusPx = (options.caliberMm * canvas.pxPerMm * 0.8) / 2;
-  let best: { blob: Blob; distancePx: number; localStdDev: number } | null = null;
+  let best: {
+    blob: Blob;
+    distancePx: number;
+    localStdDev: number;
+    probability: number;
+  } | null = null;
   for (const blob of findBlobs(canvas, win, background, maxDeviation)) {
     if (blob.areaPx < expectedAreaPx * AREA_TOLERANCE.min) continue;
     if (blob.areaPx > expectedAreaPx * AREA_TOLERANCE.max) continue;
@@ -301,7 +348,15 @@ export function snapToHole(
     const localStdDev = localStdDevAt(canvas, blob.xPx, blob.yPx, cropRadiusPx);
     if (localStdDev < MIN_LOCAL_STD_DEV) continue;
 
-    if (!best || distancePx < best.distancePx) best = { blob, distancePx, localStdDev };
+    // Second gate: the fitted filter on the wider crop. See MIN_LOCAL_STD_DEV.
+    const crop = holeCropAt(canvas, blob.xPx, blob.yPx);
+    if (!crop) continue;
+    const probability = holeProbability(holeFeatures({ data: crop, size: HOLE_CROP_PX }));
+    if (probability < HOLE_PROBABILITY_THRESHOLD) continue;
+
+    if (!best || distancePx < best.distancePx) {
+      best = { blob, distancePx, localStdDev, probability };
+    }
   }
 
   if (!best) return null;
@@ -310,5 +365,6 @@ export function snapToHole(
     yMm: (best.blob.yPx - canvas.centreYPx) / canvas.pxPerMm,
     distanceMm: best.distancePx / canvas.pxPerMm,
     localStdDev: best.localStdDev,
+    holeProbability: best.probability,
   };
 }

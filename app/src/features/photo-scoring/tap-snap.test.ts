@@ -1,3 +1,5 @@
+import { HOLE_PROBABILITY_THRESHOLD } from '@shotledger/shared';
+
 import { MIN_LOCAL_STD_DEV, SNAP_WINDOW_MM, snapToHole, type RectifiedCanvas } from './tap-snap';
 
 const PX_PER_MM = 4;
@@ -149,5 +151,54 @@ describe('snapToHole', () => {
     const result = snapToHole(canvas, { xMm: 1, yMm: 0 }, { caliberMm: 5.6 });
     expect(result).not.toBeNull();
     expect(result!.localStdDev).toBeGreaterThanOrEqual(MIN_LOCAL_STD_DEV);
+  });
+
+  it('reports a hole probability at or above the fitted threshold too', () => {
+    const { data, canvas } = canvasOf(30);
+    paintHole(data, 0, 0, 5.6, 210, 60);
+
+    const result = snapToHole(canvas, { xMm: 1, yMm: 0 }, { caliberMm: 5.6 });
+    expect(result).not.toBeNull();
+    expect(result!.holeProbability).toBeGreaterThanOrEqual(HOLE_PROBABILITY_THRESHOLD);
+  });
+
+  it('refuses a real repair patch — flat AND the same tone as the ink', () => {
+    // The club patch that the small inner crop cannot see: a dark square on
+    // the dark aiming zone. It deviates enough to become a blob, and it is
+    // the wider crop that says it is not a hole.
+    const { data, canvas } = canvasOf(30);
+    paintPatch(data, 0, 0, 5.6, 48);
+
+    expect(snapToHole(canvas, { xMm: 0.5, yMm: 0 }, { caliberMm: 5.6 })).toBeNull();
+  });
+
+  it('still snaps within a crop-width of the canvas edge', () => {
+    // The 12 mm crop cannot be centred here, so it is shifted inward. A
+    // candidate this close to the rim is outside the scoring rings, but it
+    // must not crash or silently stop snapping.
+    const { data, canvas } = canvasOf(30);
+    // 14 px from the rim: the whole hole fits, but the 48 px crop cannot be
+    // centred on it, so holeCropAt has to shift the window inward.
+    const edgeMm = -(CENTRE - 14) / PX_PER_MM;
+    paintHole(data, edgeMm, edgeMm, 5.6, 210, 60);
+
+    const result = snapToHole(canvas, { xMm: edgeMm + 1, yMm: edgeMm }, { caliberMm: 5.6 });
+    expect(result).not.toBeNull();
+    expect(result!.xMm).toBeCloseTo(edgeMm, 0);
+  });
+
+  it('refuses rather than guessing when the canvas is narrower than a crop', () => {
+    const small = new Uint8Array(32 * 32).fill(30);
+    const canvas: RectifiedCanvas = {
+      data: small,
+      size: 32,
+      centreXPx: 16,
+      centreYPx: 16,
+      pxPerMm: PX_PER_MM,
+    };
+    for (let y = 10; y < 22; y += 1) {
+      for (let x = 10; x < 22; x += 1) small[y * 32 + x] = 210;
+    }
+    expect(snapToHole(canvas, { xMm: 0, yMm: 0 }, { caliberMm: 5.6 })).toBeNull();
   });
 });
