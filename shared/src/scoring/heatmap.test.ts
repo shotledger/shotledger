@@ -62,6 +62,17 @@ describe('buildHeatmap', () => {
     );
   });
 
+  it('breaks a same-row tie by column, not by the order shots arrived', () => {
+    // Two equally hot cells on the same row: the row tiebreak cannot separate
+    // them, so column has to. Feeding the right-hand cell first means a
+    // comparator that stopped at `row` would leave it first.
+    const map = buildHeatmap([p(45, 0), p(-45, 0)], 100, 10)!;
+    expect(map.cells.map((c) => [c.row, c.column])).toEqual([
+      [5, 0],
+      [5, 9],
+    ]);
+  });
+
   it('rejects a nonsensical grid rather than guessing', () => {
     expect(() => buildHeatmap([p(0, 0)], 0)).toThrow(RangeError);
     expect(() => buildHeatmap([p(0, 0)], -1)).toThrow(RangeError);

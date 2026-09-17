@@ -269,12 +269,15 @@ export function createSpaLoginClient(
   return {
     async login(request: WebshooterSpaLoginRequest): Promise<WebshooterSpaLoginResult> {
       const discovered = await discoverPublishedClientSecret(fetchImpl, options.siteUrl);
-      const clientSecret = discovered.secret ?? options.fallback?.clientSecret;
-      if (!clientSecret)
-        throw new WebshooterSpaLoginUnconfiguredError(
-          discovered.secret === null ? discovered.failure : 'absent',
-          discovered.secret === null ? discovered.detail : '',
-        );
+      let clientSecret: string;
+      if (discovered.secret !== null) {
+        clientSecret = discovered.secret;
+      } else {
+        const configured = options.fallback?.clientSecret;
+        if (!configured)
+          throw new WebshooterSpaLoginUnconfiguredError(discovered.failure, discovered.detail);
+        clientSecret = configured;
+      }
 
       return createWebshooterSpaLoginClient(fetchImpl, options.baseUrl, {
         clientId: options.fallback?.clientId || WEBSHOOTER_WEB_CLIENT_ID,

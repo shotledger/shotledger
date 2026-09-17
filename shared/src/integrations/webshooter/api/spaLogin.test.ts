@@ -208,6 +208,49 @@ describe('discoverPublishedClientSecret', () => {
       detail: 'network down',
     });
   });
+
+  it('keeps a reason even when what was thrown is not an Error', async () => {
+    // React Native's fetch is not the only thing that can reject here, and a
+    // rejection carrying a bare string must still produce a readable detail
+    // rather than "[object Object]" or an empty string.
+    const fetchImpl = vi.fn(() => Promise.reject('offline')) as unknown as typeof fetch;
+
+    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'unreachable',
+      detail: 'offline',
+    });
+  });
+
+  it('treats a body that cannot be read as unreachable, with the reason', async () => {
+    // The response arrived and was ok; the stream died mid-read. That is the
+    // user's network, not a page redesign, so it must not report 'absent'.
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.reject(new Error('stream closed')),
+      }),
+    ) as unknown as typeof fetch;
+
+    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'unreachable',
+      detail: 'stream closed',
+    });
+  });
+
+  it('keeps a non-Error body-read rejection readable too', async () => {
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({ ok: true, status: 200, text: () => Promise.reject('aborted') }),
+    ) as unknown as typeof fetch;
+
+    await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toEqual({
+      secret: null,
+      failure: 'unreachable',
+      detail: 'aborted',
+    });
+  });
 });
 
 describe('createSpaLoginClient', () => {

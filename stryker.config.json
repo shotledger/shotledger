@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Mutation-testing gauntlet layer for the M3 shared scoring modules (docs/specs/m3-scoring-spec.md). Run: pnpm mutation",
+  "_comment": "Mutation-testing gauntlet layer for the M3 shared scoring modules (docs/specs/m3-scoring-spec.md). Run: pnpm mutation. `mutate` is order-sensitive: every negation goes LAST, because a positive pattern after one re-adds what it removed — that is how the json-export test files came to be mutated.",
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "vitest": {
@@ -29,10 +29,10 @@
     "shared/src/backup/vault-payload.ts",
     "shared/src/backup/vault-crypt.ts",
     "shared/src/target-scoring/*.ts",
+    "shared/src/json-export/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
-    "!shared/src/shotlog/fixtures.ts",
-    "shared/src/json-export/*.ts"
+    "!shared/src/shotlog/fixtures.ts"
   ],
   "thresholds": {
     "high": 100,

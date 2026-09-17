@@ -232,6 +232,33 @@ describe('analyseMark', () => {
     expect(analyseMark(samples, { index: 0, atMs: 2_100 }).samplesAboveFloor).toBe(1);
   });
 
+  it('counts the loud samples before the peak as well as after it', () => {
+    // The event fades in as well as out. Counting only forwards from the peak
+    // would undercount every shot whose rise the meter caught.
+    const rising = [
+      { atMs: 0, db: -50, noiseFloorDb: -50 },
+      { atMs: 100, db: -30, noiseFloorDb: -50 },
+      { atMs: 160, db: -5, noiseFloorDb: -50 },
+      { atMs: 220, db: -25, noiseFloorDb: -50 },
+      { atMs: 280, db: -49, noiseFloorDb: -50 },
+    ];
+    const analysis = analyseMark(rising, { index: 0, atMs: 300 });
+    expect(analysis.peakDb).toBe(-5);
+    expect(analysis.samplesAboveFloor).toBe(3);
+  });
+
+  it('stops at the first quiet sample before the peak', () => {
+    // Contiguous means contiguous: an earlier loud sample separated by a
+    // quiet one belongs to a different event and must not be counted.
+    const twoEvents = [
+      { atMs: 0, db: -20, noiseFloorDb: -50 },
+      { atMs: 100, db: -49, noiseFloorDb: -50 },
+      { atMs: 160, db: -30, noiseFloorDb: -50 },
+      { atMs: 220, db: -5, noiseFloorDb: -50 },
+    ];
+    expect(analyseMark(twoEvents, { index: 0, atMs: 240 }).samplesAboveFloor).toBe(2);
+  });
+
   it('honours a custom window', () => {
     expect(
       analyseMark(samples, { index: 0, atMs: 1_000 }, { lookbackMs: 20, lookaheadMs: 20 }).peakDb,
