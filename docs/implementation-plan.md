@@ -294,7 +294,8 @@ expo-router/entry`); running `expo prebuild` itself is deferred
   (`Worker chunk not found for: .../expo-sqlite/web/worker.ts`); shipped
   native-first with a `client.web.ts`/`migration-gate.web.tsx` fallback (`db`
   is `null` on web) so `expo start --web` keeps booting — see M1 report for
-  detail. The `/dev` route itself isn't reachable in the web preview yet: the
+  detail. Revisited in ADR 0012 (`web.output: "single"`, OPFS-backed
+  connection on web). The `/dev` route itself isn't reachable in the web preview yet: the
   M0 root layout renders only `NativeTabs` (index/explore triggers), which
   has no host for non-tab routes — pre-existing scaffold gap, not new to M1;
   tracked for M2 (navigation shell).

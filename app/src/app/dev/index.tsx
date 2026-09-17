@@ -43,8 +43,6 @@ export default function DevScreen() {
     <Screen scroll={false}>
       <ScreenTitle>{t('dev.title')}</ScreenTitle>
 
-      {!db && <ThemedText type="small">{t('dev.webUnavailable')}</ThemedText>}
-
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push('/dev/components')}

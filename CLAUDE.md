@@ -146,9 +146,9 @@ screencap -p > shot.png`, kill with `adb emu kill`. Dev build: `cd app
 - Seed/wipe demo data: `/dev` route (`app/src/app/dev/index.tsx`), "Load
   demo data" / "Wipe data" buttons — reachable from a dev build via the
   deep link `app://dev` (scheme is `app`, per `app/app.json`; there is
-  no `shotledger://` scheme). Native only for now — expo-sqlite's web
-  build doesn't bundle under this Expo SDK's static web export (`db` is
-  `null` on web, see `app/src/db/client.web.ts`). `/dev` and
+  no `shotledger://` scheme). On web it needs the page cross-origin
+  isolated — the Metro dev server cannot send the COOP/COEP headers, so
+  put a header-adding proxy in front (ADR 0012). `/dev` and
   `/dev/components` (component gallery) redirect to `/` outside dev
   builds (`app/src/app/dev/_layout.tsx`, `__DEV__` check). In a Maestro
   flow, `openLink` right after `launchApp` can race the JS bundle's

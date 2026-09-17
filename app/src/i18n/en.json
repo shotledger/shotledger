@@ -648,7 +648,6 @@
   "dev": {
     "title": "Dev",
     "componentsTitle": "Components",
-    "webUnavailable": "expo-sqlite's web driver isn't wired up in this Expo SDK (M1 deviation) — use a native build to load and browse demo data.",
     "sessionsCount": "{{count}} sessions"
   },
   "competitionLevel": {

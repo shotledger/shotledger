@@ -648,7 +648,6 @@
   "dev": {
     "title": "Dev",
     "componentsTitle": "Komponenter",
-    "webUnavailable": "expo-sqlites webbdrivrutin är inte kopplad i denna Expo SDK (M1-avvikelse) — använd en nativ build för att ladda och bläddra i demodata.",
     "sessionsCount": "{{count}} pass"
   },
   "competitionLevel": {
