@@ -1,13 +1,22 @@
 // Filter + aggregation engine behind the Statistics tab's generated report
 // (filter form -> report, replacing M5's always-live view). Pure functions
 // over plain arrays; the app assembles the input from SQLite.
-// Executable spec: docs/specs/analytics-report-spec.md.
+// Executable spec: docs/specs/analytics-report-spec.md, amended by
+// docs/specs/sighters-in-statistics-spec.md — the two aggregations take a
+// `SighterScope`, since outside a session a sighter is an ordinary series
+// unless the user filters it out. Volume is scope-free either way.
 //
 // Deliberately federation-agnostic: every filter dimension is a plain
 // column the DB already stores, so the report works for any discipline or
 // federation, not only SPSF.
 
-import { meanTenths, scoredSeries, volumeShotCount, type StatsSeries } from './stats';
+import {
+  meanTenths,
+  scoredSeries,
+  volumeShotCount,
+  type SighterScope,
+  type StatsSeries,
+} from './stats';
 
 /**
  * A ten is any shot worth 10.0 or more. Integer scoring stores exactly 100;
@@ -55,9 +64,12 @@ function firedShotCount(series: StatsSeries): number {
   return series.totalOverride?.shotCount ?? series.shots.length;
 }
 
-/** A non-sighter series that carries a score (override total or real shots). */
-function isScoredSeries(series: StatsSeries): boolean {
-  return !series.isSighter && (series.totalOverride != null || series.shots.length > 0);
+/** A series that carries a score (override total or real shots), per `scope`. */
+function isScoredSeries(series: StatsSeries, scope: SighterScope): boolean {
+  return (
+    (scope.includeSighters === true || !series.isSighter) &&
+    (series.totalOverride != null || series.shots.length > 0)
+  );
 }
 
 function seriesTotalTenths(series: StatsSeries): number {
@@ -112,7 +124,10 @@ export interface AnalyticsSessionPoint {
  * One point per session, chronological. Ties on `startedAt` are broken by
  * `sessionId` so the ordering is total and the charts are deterministic.
  */
-export function analyticsSessionPoints(list: readonly AnalyticsSeries[]): AnalyticsSessionPoint[] {
+export function analyticsSessionPoints(
+  list: readonly AnalyticsSeries[],
+  scope: SighterScope = {},
+): AnalyticsSessionPoint[] {
   const bySession = new Map<string, AnalyticsSeries[]>();
   for (const series of list) {
     const bucket = bySession.get(series.sessionId) ?? [];
@@ -122,8 +137,8 @@ export function analyticsSessionPoints(list: readonly AnalyticsSeries[]): Analyt
 
   const points: AnalyticsSessionPoint[] = [];
   for (const [sessionId, sessionSeries] of bySession) {
-    const scored = sessionSeries.filter(isScoredSeries);
-    const shots = scoredSeries(sessionSeries).flatMap((series) => series.shots);
+    const scored = sessionSeries.filter((series) => isScoredSeries(series, scope));
+    const shots = scoredSeries(sessionSeries, scope).flatMap((series) => series.shots);
     const sessionTotalTenths = scored.reduce((sum, s) => sum + seriesTotalTenths(s), 0);
 
     points.push({
@@ -206,9 +221,12 @@ export interface AnalyticsTotals {
 }
 
 /** Aggregate over the whole filtered set — both the sums and the per-shot means. */
-export function analyticsTotals(list: readonly AnalyticsSeries[]): AnalyticsTotals {
-  const scored = list.filter(isScoredSeries);
-  const shots = scoredSeries(list).flatMap((series) => series.shots);
+export function analyticsTotals(
+  list: readonly AnalyticsSeries[],
+  scope: SighterScope = {},
+): AnalyticsTotals {
+  const scored = list.filter((series) => isScoredSeries(series, scope));
+  const shots = scoredSeries(list, scope).flatMap((series) => series.shots);
   const sumTenths = scored.reduce((sum, series) => sum + seriesTotalTenths(series), 0);
 
   return {

@@ -488,7 +488,8 @@ already is the sighter can un-set itself.)
 
 All math in `shared/scoring/stats.ts` (vitest): sighter series are
 excluded from every score metric but included in volume metrics (total
-shots, rounds fired). Series mean, session mean
+shots, rounds fired) — amended 2026-09-16, see the sighter-semantics note
+below: the Statistics tab counts them unless the user filters them out. Series mean, session mean
 per shot, standard deviation (sample), best/worst series, X counts
 (= innertior, `is_inner_ten`; labelled "X" / sv "innertior"),
 rolling trend (per-session mean over time), comparison of last N series
@@ -753,8 +754,16 @@ series, three results are tracked and displayed, all derived:
 Sessions without final series just show the one total.
 
 **Sighter (provskott) semantics — maintainer-confirmed:** excluded from
-all scores above and from every score statistic, but **counting toward
-volume**: shots-logged totals, firearm round counter, ammo-lot usage.
+all scores above and from every **in-session** score statistic, but
+**counting toward volume**: shots-logged totals, firearm round counter,
+ammo-lot usage.
+
+**Amended 2026-09-16 (`feat/sighters-in-statistics`, issue #138):** outside
+a session — the Statistics tab's generated report — a sighter is an
+ordinary series, and the report's Sighters filter lets the user exclude
+them again. Volume still counts them in both positions, and — maintainer,
+2026-09-17 — **a sighter always counts towards a guldserie**, in every
+scope and filter position. See `docs/specs/sighters-in-statistics-spec.md`.
 
 v1 predefined programs (defaults marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):

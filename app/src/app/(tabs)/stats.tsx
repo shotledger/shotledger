@@ -34,6 +34,7 @@ import { Spacing } from '@/theme/tokens';
 
 const ALL = 'all-values';
 type TypeChoice = typeof ALL | 'training' | 'competition';
+type SighterChoice = 'include' | 'exclude';
 
 function toDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -182,6 +183,18 @@ export default function StatsScreen() {
           onChange={(value) =>
             setFilter((f) => ({ ...f, sessionType: value === ALL ? null : value }))
           }
+        />
+      </FilterCard>
+
+      <FilterCard title={t('stats.sectionSighters')} hint={t('stats.sectionSightersHint')}>
+        <SegmentedControl
+          testID="stats-sighters"
+          options={[
+            { value: 'include' as SighterChoice, label: t('stats.sightersInclude') },
+            { value: 'exclude' as SighterChoice, label: t('stats.sightersExclude') },
+          ]}
+          value={filter.includeSighters ? 'include' : 'exclude'}
+          onChange={(choice) => setFilter((f) => ({ ...f, includeSighters: choice === 'include' }))}
         />
       </FilterCard>
 
