@@ -3,6 +3,14 @@
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md). Routine
 UI/PDF work around it uses normal tests, not this gauntlet.
 
+**Partly superseded (2026-09-16) by `compliance-fap551-spec.md`**, which
+settles the FAP 551-3 numbers this document could only ship as VERIFY
+placeholders, and adds the shooter-chosen 5 §/6 § profile variant. Where the
+two differ on the `se` numbers, `JurisdictionProfile`'s shape, or the
+"unverified defaults" hint, that spec wins. Everything else here — the
+activity definition, the rolling window, the green/amber/red banding, the
+Bilaga 8 indicators — still stands.
+
 **Spec approval: not obtained (autonomous run, per implementation-plan.md
 §0 rule and the M6 task brief).** This document is the artifact for the
 maintainer to review after the fact, per the old-coder skill's autonomous-mode
@@ -23,7 +31,8 @@ new directory (both existing gauntlet layers, not a new tool).
 Two authoritative sources, kept separate per the implementation plan:
 
 - **FAP 551-3** numeric activity-frequency requirements: **not available** in
-  any source in this repo. `docs/reference/spsf-shb-2026.md` states SHB itself
+  any source in this repo _at the time of this spec_ — settled since, see
+  `compliance-fap551-spec.md`; the paragraph below records the M6 state. `docs/reference/spsf-shb-2026.md` states SHB itself
   does not reference FAP 551-3's numeric counts. The maintainer reviews
   föreningsintyg professionally and will supply real numbers; until then the
   `se` profile ships **VERIFY placeholder** numbers only, clearly marked, and

@@ -551,9 +551,10 @@ and per-ammo-lot aggregates.
 Logic in `shared/compliance/` driven by a config object, not hard-coded:
 `{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
 Two authoritative sources, kept separate in the config: (a) **FAP 551-3**
-numeric activity requirements — `VERIFY:` with the maintainer, who
-reviews föreningsintyg professionally; the Skjuthandbok contains no
-numeric counts. (b) **SHB Bilaga 8** (p. 484, verified) club-intyg rules
+numeric activity requirements — **settled 2026-09-16** against PM 551.24
+page 3 (5 kap 5–6 §§); see `docs/specs/compliance-fap551-spec.md` and the
+checklist item below. The Skjuthandbok itself contains no numeric counts.
+(b) **SHB Bilaga 8** (p. 484, verified) club-intyg rules
 worth surfacing as indicators: ≥6 months active membership before first
 intyg (first weapon .22), grovkaliber earliest after 12 months,
 pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
@@ -584,6 +585,22 @@ from §6.5 automatically).
       with a generated `.pdf` file. The layout has **not** been checked
       against a real föreningsintyg attachment — the module doc-comment and
       this checklist both carry the VERIFY.
+- [x] FAP 551-3 activity numbers settled and the two cases modelled
+      (branch `fix/compliance-fap551-numbers`) — window 6 months;
+      **12** activities for FAP 551-3 5 § (no handgun for target shooting
+      yet), **6** for 6 § (already holds one), both derived from the
+      per-month rate × the window, reading "sammantaget i genomsnitt" as a
+      total over the window. Source: PM 551.24 page 3. Which case applies is
+      a new shooter-chosen profile variant (`settings.complianceProfileVariant`,
+      Settings → Compliance → Activity Requirement, defaulting to the stricter
+      5 § case — **flagged for maintainer review**, a UX default). The
+      "ytterligare enhandsvapen" and "förnyelse av tidsbegränsat tillstånd"
+      rules are transcribed in the spec and the user manual but deliberately
+      **not modelled** (both key off licence facts the app does not record),
+      as are "särskilda skäl" (decided by the police, not the shooter).
+      `SE_VERIFIED = true` now covers the modelled numbers only; the Bilaga 8
+      märke-guld proxy keeps its own `ruleVerified: false`. Spec/evidence:
+      `docs/specs/compliance-fap551-{spec,evidence}.md`.
 - **Done when:** barometer states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
@@ -596,12 +613,13 @@ from §6.5 automatically).
   provably redundant given the functions' final clamps/comparisons). Total
   suite: 357 vitest tests (up from 343), including
   `shared/src/export/pdf-log.test.ts` (HTML string snapshots, escaping,
-  empty-period case). **VERIFY placeholders shipped, clearly marked:** the
-  `se` profile's `windowMonths`/`requiredActivities` numbers
-  (`shared/src/compliance/constants-se.ts`, `SE_VERIFIED = false` — no
-  FAP 551-3 numeric source text exists anywhere in this repo, see the file's
-  doc-comment); the barometer UI renders an explicit "unverified defaults"
-  hint (`compliance.unverifiedHint`) wherever `profile.verified === false`.
+  empty-period case). **VERIFY placeholders shipped at M6, since settled:**
+  the `se` profile's `windowMonths`/`requiredActivities` numbers shipped as
+  placeholders with `SE_VERIFIED = false`, because no FAP 551-3 numeric source
+  text existed in the repo; the checklist item above replaced them with the
+  cited PM 551.24 numbers. The barometer UI still renders the
+  `compliance.unverifiedHint` line wherever `profile.verified === false` — the
+  general mechanism for any future profile, now unreachable for `se`.
   The Bilaga 8 indicator helpers (`monthsOfLoggedActivity`,
   `pistolskyttemarkeGuldFulfillment`) are implemented and unit-tested in
   `shared/src/compliance/indicators.ts` but have **no UI surface yet** — out

@@ -1,33 +1,53 @@
-// Swedish jurisdiction profile. Numbers are VERIFY placeholders — see
-// constants-se.ts. Spec: m6-compliance-spec.md "profiles/se.ts".
+// Swedish jurisdiction profile: FAP 551-3 5 kap 5–6 §§ as transcribed on
+// page 3 of PM 551.24. Numbers and their reading: ../constants-se.ts and
+// docs/specs/compliance-fap551-spec.md.
 import { GENERIC_WEAPON_GROUPS, SPSF_WEAPON_GROUPS } from '../../disciplines/groups';
 import {
-  SE_DEFAULT_REQUIRED_ACTIVITIES,
-  SE_DEFAULT_WINDOW_MONTHS,
+  SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES,
+  SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES,
   SE_SOURCE_CITATION,
   SE_VERIFIED,
+  SE_WINDOW_MONTHS,
 } from '../constants-se';
-import type { JurisdictionProfile } from '../types';
+import type { JurisdictionProfileDefinition } from '../types';
 
-// One rule shared by every weapon group in v1 — the placeholder has no
-// per-group differentiation to VERIFY yet (the real FAP 551-3 text may turn
-// out to differentiate by group; that's for the maintainer's review).
+/** 5 § — "för den som inte tidigare har enhandsvapen för målskjutning". */
+export const SE_FIRST_HANDGUN_VARIANT = 'firstHandgun';
+
+/** 6 § — "för den som sedan tidigare innehar enhandsvapen för målskjutning". */
+export const SE_EXISTING_HANDGUN_VARIANT = 'existingHandgun';
+
+// One rule across every weapon group: 5–6 §§ set a single activity level for
+// the shooter, with no per-vapengrupp differentiation. (The per-firearm
+// "ytterligare enhandsvapen" rule does differentiate, and is deliberately not
+// modelled — see the spec.)
 const ALL_WEAPON_GROUP_IDS = [
   ...SPSF_WEAPON_GROUPS.map((g) => g.id),
   ...GENERIC_WEAPON_GROUPS.map((g) => g.id),
 ];
 
-export const SE_PROFILE: JurisdictionProfile = {
+function seRule(requiredActivities: number) {
+  return {
+    weaponGroups: ALL_WEAPON_GROUP_IDS,
+    windowMonths: SE_WINDOW_MONTHS,
+    requiredActivities,
+    // The form pools "föreningens skjutningar (träning eller tävling)" with
+    // external competitions representing the club — no weighting between them.
+    countsAs: { training: 1, competition: 1 },
+  };
+}
+
+export const SE_PROFILE: JurisdictionProfileDefinition = {
   id: 'se',
   name: { sv: 'Sverige (FAP 551-3)', en: 'Sweden (FAP 551-3)' },
-  rules: [
-    {
-      weaponGroups: ALL_WEAPON_GROUP_IDS,
-      windowMonths: SE_DEFAULT_WINDOW_MONTHS,
-      requiredActivities: SE_DEFAULT_REQUIRED_ACTIVITIES,
-      countsAs: { training: 1, competition: 1 },
-    },
+  variants: [
+    { id: SE_FIRST_HANDGUN_VARIANT, rules: [seRule(SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES)] },
+    { id: SE_EXISTING_HANDGUN_VARIANT, rules: [seRule(SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES)] },
   ],
+  // The stricter case by default: it can under-report a 6 § shooter, which
+  // sends them to the setting; the lax one would over-report a 5 § shooter,
+  // which does not. A UX choice, not a regulatory fact.
+  defaultVariantId: SE_FIRST_HANDGUN_VARIANT,
   source: SE_SOURCE_CITATION,
   verified: SE_VERIFIED,
 };
