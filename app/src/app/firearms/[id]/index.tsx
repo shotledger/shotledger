@@ -495,9 +495,7 @@ export default function FirearmDetailScreen() {
           {/* Which case is in effect is never silently applied — it is on
               screen wherever the number it produced is. */}
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
-            {t('compliance.barometerCaseLine', {
-              case: t(`compliance.case.${profile.variantId}`),
-            })}
+            {t(`compliance.barometerCase.${profile.variantId}`)}
           </ThemedText>
           {!profile.verified && (
             <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">

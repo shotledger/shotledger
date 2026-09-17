@@ -95,7 +95,7 @@
     "sectionType": "Typ av pass",
     "sectionTypeHint": "Träning, tävling eller båda.",
     "sectionSighters": "Provserier",
-    "sectionSightersHint": "Utanför ett pass är en provserie en vanlig serie. Skjutna skott räknar alltid med dem.",
+    "sectionSightersHint": "Utanför ett pass är en provserie en vanlig serie. Loggade skott räknas alltid med.",
     "sightersInclude": "Räkna med",
     "sightersExclude": "Räkna inte med",
     "sectionDisciplineHint": "Begränsa rapporten till en gren.",
@@ -491,7 +491,7 @@
     "caseBody": "Vilket krav som gäller beror på dig, inte på appen, så välj det som stämmer. Appen ändrar det aldrig åt dig.",
     "case": {
       "firstHandgun": "Första enhandsvapnet",
-      "existingHandgun": "Har redan enhandsvapen"
+      "existingHandgun": "Har enhandsvapen"
     },
     "caseHint": {
       "firstHandgun": "FAP 551-3 5 §, för den som inte tidigare har enhandsvapen för målskjutning: sammantaget i genomsnitt minst två gånger per månad under de senaste sex månaderna — 12 totalt.",
@@ -499,8 +499,11 @@
     },
     "sourceCitation": "Källa: Polismyndighetens blankett PM 551.24 Föreningsintyg, sidan 3 (FAP 551-3, 5 kap 5–6 §§).",
     "notModelled": "Räknas inte här: de särskilda reglerna för ytterligare enhandsvapen och för förnyelse av tidsbegränsat tillstånd. Kontrollera dem själv.",
-    "barometerDetail": "{{done}} av {{required}} aktiviteter de senaste {{months}} månaderna",
-    "barometerCaseLine": "Mäts mot {{case}}.",
+    "barometerDetail": "{{done}} aktiviteter de senaste {{months}} månaderna — {{required}} krävs",
+    "barometerCase": {
+      "firstHandgun": "Mäts mot kravet för det första enhandsvapnet.",
+      "existingHandgun": "Mäts mot kravet för den som redan har enhandsvapen."
+    },
     "barometerTitle": "Aktivitetsbarometer (vapenlicens)",
     "barometerGreen": "I fas",
     "barometerAmber": "Halkar efter",

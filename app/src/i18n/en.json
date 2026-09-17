@@ -95,7 +95,7 @@
     "sectionType": "Session Type",
     "sectionTypeHint": "Training, competition, or both.",
     "sectionSighters": "Sighters",
-    "sectionSightersHint": "Outside a session a sighter is an ordinary series. Shots fired always counts them.",
+    "sectionSightersHint": "Outside a session a sighter is an ordinary series. Shots Logged always includes them.",
     "sightersInclude": "Include",
     "sightersExclude": "Exclude",
     "sectionDisciplineHint": "Limit the report to one discipline.",
@@ -499,8 +499,11 @@
     },
     "sourceCitation": "Source: Polismyndigheten’s form PM 551.24 Föreningsintyg, page 3 (FAP 551-3, 5 kap 5–6 §§).",
     "notModelled": "Not counted here: the separate rules for an additional handgun and for renewing a time-limited permit. Check those yourself.",
-    "barometerDetail": "{{done}} of {{required}} activities in the last {{months}} months",
-    "barometerCaseLine": "Measured against {{case}}.",
+    "barometerDetail": "{{done}} activities in the last {{months}} months — {{required}} required",
+    "barometerCase": {
+      "firstHandgun": "Measured against the rule for a first handgun.",
+      "existingHandgun": "Measured against the rule for someone who already holds a handgun."
+    },
     "barometerTitle": "Activity Barometer (vapenlicens)",
     "barometerGreen": "On Track",
     "barometerAmber": "Falling Behind",
