@@ -32,7 +32,12 @@ landed within 1 mm of a ring line ("edge calls"), whether the black zone was
 clipped by the frame, and wall time.
 
 `eval_corpus.py` is what produced the Corpus v2 numbers. Same arguments, plus
-`--variant v1|v2` and `--tag`; it writes a `<name>_panel<tag>.jpg` per photo
+`--variant v1|v2`, `--tag`, `--only <file>` (a list of photo names to restrict
+to) and `--prior on|off` (`off` restores pre-#266 "largest dark blob" face
+finding, so a run can be compared against the disc-like prior — see the
+2026-09-16 section of `docs/specs/contributed-corpus-2026-09-15.md`). Each row
+carries the production validity gate's verdict in a `gate` column, so a run
+answers "would the app have accepted this photo". It writes a `<name>_panel<tag>.jpg` per photo
 (plain rectified canvas beside the annotated one — the visual hole ground
 truth was counted from these) and a `corpus_<long-side><tag>.csv` carrying the
 fitted-ellipse aspect, the `partial` flag, px/mm and the per-ring residuals.
@@ -47,7 +52,7 @@ fitted-ellipse aspect, the `partial` flag, px/mm and the per-ring residuals.
 
 | Stage            | What it does                                                                                                                                                                                                                                       |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `find_face`      | Otsu on a heavily blurred grey copy → largest dark blob = the printed black zone; `fitEllipseDirect` on the contour, then `_refit_rays` re-fits from ray casts that ignore rays leaving the frame                                                  |
+| `find_face`      | Otsu on a heavily blurred grey copy → the largest **disc-like** dark blob is the printed black zone; `fitEllipseDirect` on the contour, then `_refit_rays` re-fits from ray casts that ignore rays leaving the frame                               |
 | `guess_kind`     | solid black disc → 25 m precision target (black = 200 mm); black annulus round a lighter middle → milsnabb (black = 500 mm)                                                                                                                        |
 | `build_geom`     | maps the fitted ellipse back to a circle (rotation + anisotropic scale — weak perspective, _not_ a full homography: one conic does not determine one) and warps to a fixed 4 px/mm canvas                                                          |
 | `refine_geom`    | coarse-to-fine grid search over (dx, dy, scale) maximising a radial edge profile against the known ring radii — this is what rescues geometry when the black zone was clipped                                                                      |
