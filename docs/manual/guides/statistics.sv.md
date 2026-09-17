@@ -38,9 +38,9 @@ Två saker ändrar sig inte:
 - **Skjutna skott** räknar alltid med provserier, i båda lägena. Du sköt de
   skotten oavsett vad serien kallades, och siffran måste stämma med vapnets
   skotträknare och din ammunitionsåtgång.
-- Antalet **guldserier** räknar aldrig med en provserie, i något läge. Det är en
-  fråga om vad du kan hävda för ett märke, inte om hur du skjuter, och en
-  provserie är inte en räknande serie.
+- Antalet **guldserier** räknar alltid med en provserie, i båda lägena. En
+  femtia på en provserie ger märket precis som vilken annan serie som helst, så
+  filtret har inget att säga till om där.
 
 !!! note "Rekord kan komma från en provserie"
 

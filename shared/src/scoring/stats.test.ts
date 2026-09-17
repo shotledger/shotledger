@@ -476,7 +476,9 @@ describe('compareRecentSeries', () => {
 });
 
 describe('guldserieCount', () => {
-  it('B28: sighters excluded, only totals meeting the C threshold (46) count', () => {
+  // Amended 2026-09-17 (maintainer: "a sighter always counts towards
+  // guldserie"): the sighter below qualifies, so the count is 3, not 2.
+  it('B28: sighters included, only totals meeting the C threshold (46) count', () => {
     const make = (id: string, perShot: number, isSighter = false) =>
       series({ id, isSighter, shots: Array(5).fill(shot(perShot * 10)) });
 
@@ -486,7 +488,7 @@ describe('guldserieCount', () => {
     const s40 = make('s40', 40 / 5);
     const sighter50 = make('sighter50', 50 / 5, true);
 
-    expect(guldserieCount([s44, s46, s47, s40, sighter50], { birthYear: null })).toBe(2);
+    expect(guldserieCount([s44, s46, s47, s40, sighter50], { birthYear: null })).toBe(3);
   });
 
   it('counts every qualifying series, not a coincidental match to the total', () => {

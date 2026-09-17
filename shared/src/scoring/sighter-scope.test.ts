@@ -83,14 +83,14 @@ describe('stats.ts — SighterScope', () => {
     expect(volumeShotCount(fixture())).toBe(10);
   });
 
-  it('SS-8: guldserieCount never counts a sighter, in either scope', () => {
+  it('SS-8: guldserieCount always counts a sighter, in either scope', () => {
     const qualifying = shots(100);
     const list = [
       series({ isSighter: true, shots: qualifying }),
       series({ shots: qualifying }),
       series({ shots: shots(80) }),
     ];
-    expect(guldserieCount(list, { birthYear: null })).toBe(1);
+    expect(guldserieCount(list, { birthYear: null })).toBe(2);
   });
 
   it('SS-9: the cross-session scope returns a copy, not the caller’s array', () => {

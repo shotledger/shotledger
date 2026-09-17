@@ -63,7 +63,7 @@ from period means as well as from session totals.
 > in the global statistics sighters and normal series are the same. however the
 > user shall be able to exclude sighters"
 
-## 2. Reading the decision — and the three places it is ambiguous
+## 2. Reading the decision — and the three places it did not settle
 
 The decision draws a **scope** line, not a metric line:
 
@@ -72,15 +72,18 @@ The decision draws a **scope** line, not a metric line:
 | inside a session (session total, result card, Stats tab)  | never counted in a score figure (spsf-domain rule 2) |
 | outside a session (the Statistics tab's generated report) | an ordinary series, unless the user excludes it      |
 
-That is a **narrowing of spsf-domain rule 2**, which today reads "excluded from
-every score statistic". Rule 2 is restated in
-`.claude/skills/spsf-domain/SKILL.md` and is amended by this spec to say
-_in-session_ score statistics; the underlying SHB fact (a provserie does not
+That is a **narrowing of spsf-domain rule 2**, which read "excluded from every
+score and score statistic". Rule 2 in `.claude/skills/spsf-domain/SKILL.md` was
+wrong twice over — about the cross-session scope and about guldserie (§2.3) —
+and is **rewritten** in this PR to state the in-session, cross-session, volume
+and guldserie cases separately. The underlying SHB fact (a provserie does not
 count towards a **result**) is untouched, because a cross-session mean is not a
 result.
 
-Three readings the maintainer may want to overrule. Each is implemented as
-stated rather than quietly chosen:
+Three questions the sentence above does not answer. §2.1 and §2.2 were this
+agent's readings, stated rather than quietly chosen, and the maintainer
+**confirmed both on 2026-09-17**. §2.3 was read wrongly and he corrected it the
+same day; it now records his ruling.
 
 ### 2.1 Volume always counts sighters, even with the toggle off — **stated reading**
 
@@ -124,19 +127,32 @@ inconsistency to explain.
 scope. The spec records this as the alternative rather than the loser of a
 silent decision.
 
-### 2.3 The guldserie count never counts sighters — **stated reading, the one carve-out**
+### 2.3 The guldserie count always counts sighters — **maintainer's ruling, 2026-09-17**
 
-`guldserieCount` is **not** a descriptive statistic. It answers "how many series
-qualify for the guld märke", which is an **award-eligibility** claim under SPSF
-rules, and a provserie is not a counting series. Telling a shooter he has a
-guldserie he cannot claim is a different class of wrong from a slightly
-different mean.
+> "I sighter always counts towards guldserie. I told you this before."
 
-So `guldserieCount` keeps its existing sighter-free behaviour in both toggle
-positions, and the report's guldserie tile is unaffected by this change.
-Per spsf-domain rule 8 (never guess a regulatory value) this is flagged for the
-maintainer rather than presented as verified: it is a **policy** choice made on
-the conservative side, not a value read out of Skjuthandboken.
+A 50 on a provserie earns the märke exactly like any other series. This is not
+scope-dependent and not filter-dependent: `guldserieCount` counts sighters
+unconditionally, in a session and out of one, with the Sighters filter set
+either way.
+
+**This replaces a wrong reading in the first draft of this spec**, which had
+`guldserieCount` skipping sighters as a conservative "award eligibility"
+carve-out. The ruling above is the maintainer's, not an inference, and it is
+recorded here rather than the reading it corrects. `scoredSeries` is therefore
+not used inside `guldserieCount` at all any more — it iterates the list
+directly, so there is no sighter predicate left to get wrong.
+
+Existing behaviour that changes as a result: `stats.test.ts` B28
+(`m5-stats-spec.md`) asserted that a qualifying sighter did **not** count; that
+assertion is corrected to `3` rather than `2`, and the M5 spec's B28 amended
+with it. Per-firearm and per-ammo-lot buckets carry the same `guldserieCount`,
+so they inherit the correction.
+
+The root cause was `.claude/skills/spsf-domain/SKILL.md` rule 2, which said
+sighters are "excluded from every score and score statistic" — wrong about the
+cross-session scope and wrong about guldserie. Rule 2 is rewritten in this PR
+to state all four cases distinctly.
 
 ### 2.4 Scope: the Statistics tab only
 
@@ -170,7 +186,8 @@ export interface SighterScope {
   `includeSighters` is true, else the non-sighter series (today's behaviour).
 - `scoredShots(list, scope?)` — the shots of whatever `scoredSeries` returns.
 - `volumeShotCount(list)` — **unchanged signature and behaviour** (§2.1).
-- `guldserieCount(list, options)` — **unchanged** (§2.3).
+- `guldserieCount(list, options)` — no scope parameter; **stops filtering
+  sighters out** and iterates the list directly (§2.3).
 - `sessionTrend`, `compareRecentSeries`, `aggregateBy*` — **unchanged** (§2.4).
 
 ```ts
@@ -186,17 +203,17 @@ either — it inherits the scope through its input (§2.2).
 
 ### Behaviors — `stats.ts`
 
-| id   | Given                                                                         | Then                                                                             |
-| ---- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| SS-1 | `scoredSeries([sighter, normal])` with no scope argument                      | `[normal]` — the default is unchanged, every existing caller keeps its behaviour |
-| SS-2 | `scoredSeries([sighter, normal], { includeSighters: false })`                 | `[normal]` — an explicit `false` is the same as omitting it                      |
-| SS-3 | `scoredSeries([sighter, normal], { includeSighters: true })`                  | `[sighter, normal]` — same members, **input order preserved**                    |
-| SS-4 | `scoredSeries([], { includeSighters: true })`                                 | `[]`                                                                             |
-| SS-5 | `scoredShots([sighter(5 shots), normal(5 shots)], { includeSighters: true })` | all 10 shots, sighter's first (series order, then shot order)                    |
-| SS-6 | `scoredShots([sighter, normal])`                                              | the 5 non-sighter shots — unchanged default                                      |
-| SS-7 | `volumeShotCount` called on any of the above                                  | identical in both scopes — it has no scope argument (§2.1)                       |
-| SS-8 | `guldserieCount([qualifying sighter, qualifying normal], {})`                 | `1` — the sighter never counts, in either scope (§2.3)                           |
-| SS-9 | `scoredSeries` with `includeSighters: true` returns a **copy**                | mutating the result does not mutate the caller's array                           |
+| id   | Given                                                                                | Then                                                                             |
+| ---- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| SS-1 | `scoredSeries([sighter, normal])` with no scope argument                             | `[normal]` — the default is unchanged, every existing caller keeps its behaviour |
+| SS-2 | `scoredSeries([sighter, normal], { includeSighters: false })`                        | `[normal]` — an explicit `false` is the same as omitting it                      |
+| SS-3 | `scoredSeries([sighter, normal], { includeSighters: true })`                         | `[sighter, normal]` — same members, **input order preserved**                    |
+| SS-4 | `scoredSeries([], { includeSighters: true })`                                        | `[]`                                                                             |
+| SS-5 | `scoredShots([sighter(5 shots), normal(5 shots)], { includeSighters: true })`        | all 10 shots, sighter's first (series order, then shot order)                    |
+| SS-6 | `scoredShots([sighter, normal])`                                                     | the 5 non-sighter shots — unchanged default                                      |
+| SS-7 | `volumeShotCount` called on any of the above                                         | identical in both scopes — it has no scope argument (§2.1)                       |
+| SS-8 | `guldserieCount([qualifying sighter, qualifying normal, non-qualifying normal], {})` | `2` — the sighter always counts, in either scope (§2.3)                          |
+| SS-9 | `scoredSeries` with `includeSighters: true` returns a **copy**                       | mutating the result does not mutate the caller's array                           |
 
 ### Behaviors — `analytics.ts`
 
@@ -242,16 +259,16 @@ that fails to say which scope it used.
 
 ### Invariants that must survive (negative constraints)
 
-| id    | Invariant                                                                                                                                                                                                  |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| INV-1 | Every existing `stats.test.ts` / `analytics.test.ts` / `json-log.test.ts` assertion passes **unedited** — the default scope is today's behaviour                                                           |
-| INV-2 | No in-session figure changes. `use-session-stats.ts`, `totals.ts`, `marke.ts`, `standardmedalj.ts` are not touched                                                                                         |
-| INV-3 | No exported signature is narrowed. Every new parameter is optional with a default (`json-log`'s filter field is the one deliberate exception, §SS-21, and its only producer is updated in the same commit) |
-| INV-4 | `volumeShotCount` and `guldserieCount` behave identically before and after, in both scopes                                                                                                                 |
-| INV-5 | `pnpm coverage` stays at 100% statements/branches/functions/lines for `shared/src/scoring/stats.ts` and `analytics.ts`                                                                                     |
-| INV-6 | `pnpm mutation` adds no survivor to `stats.ts` / `analytics.ts` / `json-log.ts` beyond the `origin/main` baseline recorded in EVIDENCE                                                                     |
-| INV-7 | No new dependency, no schema change, no migration                                                                                                                                                          |
-| INV-8 | `decodeAnalyticsFilter` of a filter string written before this change still parses, and defaults `includeSighters` to `true`                                                                               |
+| id    | Invariant                                                                                                                                                                                                      |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| INV-1 | Every existing `stats.test.ts` / `analytics.test.ts` / `json-log.test.ts` assertion passes **unedited** — the default scope is today's behaviour                                                               |
+| INV-2 | No in-session figure changes. `use-session-stats.ts`, `totals.ts`, `marke.ts`, `standardmedalj.ts` are not touched                                                                                             |
+| INV-3 | No exported signature is narrowed. Every new parameter is optional with a default (`json-log`'s filter field is the one deliberate exception, §SS-21, and its only producer is updated in the same commit)     |
+| INV-4 | `volumeShotCount` behaves identically before and after, in both scopes. `guldserieCount` likewise takes no scope — its **one** change (§2.3) is unconditional, so it too is identical in both filter positions |
+| INV-5 | `pnpm coverage` stays at 100% statements/branches/functions/lines for `shared/src/scoring/stats.ts` and `analytics.ts`                                                                                         |
+| INV-6 | `pnpm mutation` adds no survivor to `stats.ts` / `analytics.ts` / `json-log.ts` beyond the `origin/main` baseline recorded in EVIDENCE                                                                         |
+| INV-7 | No new dependency, no schema change, no migration                                                                                                                                                              |
+| INV-8 | `decodeAnalyticsFilter` of a filter string written before this change still parses, and defaults `includeSighters` to `true`                                                                                   |
 
 ## 4. Defaults
 
@@ -264,13 +281,13 @@ the Statistics tab do" vs "what does an unqualified call mean").
 
 ## 5. UI changes (normal-tests scope, listed so the spec is the whole contract)
 
-| id   | Change                                                                                                                                                                                                                                                              |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UI-1 | `app/src/app/(tabs)/stats.tsx` gains a `FilterCard` titled **Sighters**, holding a two-option `SegmentedControl` (Include / Exclude), `testID="stats-sighters"`. Placed after the session-type card, before Discipline — beside the other "which shots" dimensions. |
-| UI-2 | `AnalyticsFilterState` gains `includeSighters: boolean`, default `true`; it round-trips through `encodeAnalyticsFilter`/`decodeAnalyticsFilter` like every other field (INV-8).                                                                                     |
-| UI-3 | `use-stats-data.ts` passes the scope to `analyticsSessionPoints`, `analyticsTotals` and `scoredShots` (the latter drives the SD tile and the shot-distribution chart, which must match the mean above them). `guldserieCount` is **not** passed it (§2.3).          |
-| UI-4 | `app/src/app/stats/report.tsx` adds one line to the filter-echo card: `Sighters: Included / Excluded`. A report whose numbers depend on a setting must say which setting produced them.                                                                             |
-| UI-5 | The JSON export's filter echo carries the same flag (SS-21), wired in `use-report-export.ts`.                                                                                                                                                                       |
+| id   | Change                                                                                                                                                                                                                                                                                          |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI-1 | `app/src/app/(tabs)/stats.tsx` gains a `FilterCard` titled **Sighters**, holding a two-option `SegmentedControl` (Include / Exclude), `testID="stats-sighters"`. Placed after the session-type card, before Discipline — beside the other "which shots" dimensions.                             |
+| UI-2 | `AnalyticsFilterState` gains `includeSighters: boolean`, default `true`; it round-trips through `encodeAnalyticsFilter`/`decodeAnalyticsFilter` like every other field (INV-8).                                                                                                                 |
+| UI-3 | `use-stats-data.ts` passes the scope to `analyticsSessionPoints`, `analyticsTotals` and `scoredShots` (the latter drives the SD tile and the shot-distribution chart, which must match the mean above them). `guldserieCount` is **not** passed it — it counts sighters unconditionally (§2.3). |
+| UI-4 | `app/src/app/stats/report.tsx` adds one line to the filter-echo card: `Sighters: Included / Excluded`. A report whose numbers depend on a setting must say which setting produced them.                                                                                                         |
+| UI-5 | The JSON export's filter echo carries the same flag (SS-21), wired in `use-report-export.ts`.                                                                                                                                                                                                   |
 
 New i18n keys (en: Title Case for the section title and the control's labels,
 sentence case for the hint; sv sentence case throughout):

@@ -761,8 +761,9 @@ ammo-lot usage.
 **Amended 2026-09-16 (`feat/sighters-in-statistics`, issue #138):** outside
 a session — the Statistics tab's generated report — a sighter is an
 ordinary series, and the report's Sighters filter lets the user exclude
-them again. Volume still counts them in both positions, and the guldserie
-count still never does. See `docs/specs/sighters-in-statistics-spec.md`.
+them again. Volume still counts them in both positions, and — maintainer,
+2026-09-17 — **a sighter always counts towards a guldserie**, in every
+scope and filter position. See `docs/specs/sighters-in-statistics-spec.md`.
 
 v1 predefined programs (defaults marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):

@@ -306,23 +306,23 @@ export interface GuldserieCountOptions {
 }
 
 /**
- * Count of non-sighter series meeting the guld märke requirement, reusing
+ * Count of series meeting the guld märke requirement, reusing
  * marke.ts (which already restricts to spsf-precision 5-shot series with a
  * mapped vapengrupp — never re-implemented here). Each series' calendar
  * year is taken from its own `startedAt` so age reduction is correct
  * across a multi-year period filter.
  *
- * Takes no `SighterScope`: this is an award-eligibility count, not a
- * descriptive statistic, and a provserie is not a counting series — so a
- * sighter is excluded here even where the Statistics tab counts it
- * elsewhere (spec §2.3).
+ * Takes no `SighterScope` because a **sighter always counts towards a
+ * guldserie** (maintainer, 2026-09-17): a 50 on a provserie earns the märke
+ * like any other series, in or out of a session, whatever the Statistics
+ * tab's filter says.
  */
 export function guldserieCount(
   seriesList: readonly StatsSeries[],
   options: GuldserieCountOptions = {},
 ): number {
   let count = 0;
-  for (const series of scoredSeries(seriesList)) {
+  for (const series of seriesList) {
     const year = new Date(series.startedAt).getUTCFullYear();
     const threshold = guldserieThreshold({
       weaponGroup: series.weaponGroup,

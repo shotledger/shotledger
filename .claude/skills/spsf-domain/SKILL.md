@@ -15,13 +15,17 @@ Hard rules that implementations must never violate:
 1. **Series counts are never fixed** for freeform programs (precision).
    Only fixed-format programs (milsnabb) pre-create a skeleton.
 2. **Max ONE sighter (provskott) series per section** — one in the main
-   round, one in the final. Sighters are excluded from every score and
-   from every **in-session** score statistic, but count in volume metrics
-   (shots logged, firearm round counter, ammo usage). **Outside a session**
-   (the Statistics tab's report) a sighter is an ordinary series unless the
-   user filters it out — maintainer, 2026-09-16, see
-   `docs/specs/sighters-in-statistics-spec.md`. The guldserie count is the
-   exception: award eligibility, so it never counts a sighter.
+   round, one in the final. What a sighter counts towards depends on where
+   you are asking (maintainer, 2026-09-16 and 2026-09-17; see
+   `docs/specs/sighters-in-statistics-spec.md`):
+   - **Inside a session** it is excluded from the result and from every
+     score statistic — session total, series average, in-session stats.
+   - **Across sessions** (the Statistics tab's report) it is an ordinary
+     series, counted unless the user's Sighters filter excludes it.
+   - **Volume metrics always count it**: shots logged, firearm round
+     counter, ammo usage — in every scope, filter included.
+   - **Guldserie always counts it.** A 50 on a provserie earns the märke
+     like any other series; this is not scope- or filter-dependent.
 3. When a final exists, three derived results: beforeFinal, finalScore,
    total = sum. Standardmedalj evaluates **beforeFinal** (the
    grundomgång), not the total.

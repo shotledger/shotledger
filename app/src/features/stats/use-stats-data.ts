@@ -291,8 +291,8 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
       volumeShotCount: totals.volumeShotCount + sumExtraRounds(db, sessionIds),
     },
     sdTenths: sampleStandardDeviationTenths(shots),
-    // No sighter scope: award eligibility, not a descriptive statistic
-    // (spec §2.3).
+    // No sighter scope: a sighter always counts towards a guldserie
+    // (maintainer, 2026-09-17; spec §2.3).
     guldserieCount: guldserieCount(matched, { birthYear }),
     records,
     bestSessionScore: named(records.bestSessionTotalTenths),

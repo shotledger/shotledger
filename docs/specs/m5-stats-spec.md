@@ -292,13 +292,17 @@ Calling without the third argument uses `n=100`
 result on a 5-series fixture (n≥count in both cases, so both degenerate to
 "use everything, no previous window").
 
-### B28. `guldserieCount` — reuses `marke.ts`, sighters excluded
+### B28. `guldserieCount` — reuses `marke.ts`, sighters **included**
 
 Four `spsf-precision`, `spsf:C`, 5-shot non-sighter series with points
 totals `44, 46, 47, 40` (birthYear null, so no age reduction; C guld
-threshold = 46). Guldserie = totals ≥ 46 → 2 series (46, 47) qualify. A
-fifth series, a sighter, totals 50 (would qualify but must be excluded).
-`guldserieCount(series, { birthYear: null })` → `2`.
+threshold = 46). Guldserie = totals ≥ 46 → 2 of those (46, 47) qualify. A
+fifth series, a sighter, totals 50 and qualifies too.
+`guldserieCount(series, { birthYear: null })` → `3`.
+
+**Amended 2026-09-17** (maintainer: "a sighter always counts towards
+guldserie"). This behaviour previously excluded the sighter and returned
+`2`; see `docs/specs/sighters-in-statistics-spec.md` §2.3.
 
 ### B29. `guldserieCount` — non-precision or wrong series length never counts
 

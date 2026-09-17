@@ -9,18 +9,19 @@
 > were authored by the same agent in one session, so the correlation-breaking
 > review did not happen. Confidence is claimed accordingly: the gauntlet shows
 > the code does what the spec says, not that the spec says the right thing.
-> Spec §2 lists the three readings that need the maintainer's judgement.
+> Spec §2 records the three questions the maintainer's sentence did not settle;
+> he confirmed §2.1 and §2.2 and corrected §2.3 on 2026-09-17.
 
 ## Source state
 
-|                          |                                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
-| Baseline (`origin/main`) | `cfeecb2` — `fix(npm): update dependency zod to v4.6.4 (#271)`                                    |
-| Branch                   | `feat/sighters-in-statistics`                                                                     |
-| Tree                     | this agent's git worktree, `pnpm i` run at the start (a fresh worktree carries no `node_modules`) |
-| Node                     | 24.12.0 · pnpm 12.4.1                                                                             |
-| vitest                   | 5.0.0 · `@vitest/coverage-v8` 5.0.0 · fast-check 4.10.0                                           |
-| Stryker                  | `@stryker-mutator/core` 10.0.0 + `@stryker-mutator/vitest-runner` 10.0.0                          |
+|                          |                                                                                                                                                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Baseline (`origin/main`) | `cfeecb2` — `fix(npm): update dependency zod to v4.6.4 (#271)`. The branch was later rebased onto `da1181f` (two Renovate bumps) and every number below re-measured there; the baseline figures are the ones from `cfeecb2` |
+| Branch                   | `feat/sighters-in-statistics`                                                                                                                                                                                               |
+| Tree                     | this agent's git worktree, `pnpm i` run at the start (a fresh worktree carries no `node_modules`)                                                                                                                           |
+| Node                     | 24.12.0 · pnpm 12.4.1                                                                                                                                                                                                       |
+| vitest                   | 5.0.0 · `@vitest/coverage-v8` 5.0.0 · fast-check 4.10.0                                                                                                                                                                     |
+| Stryker                  | `@stryker-mutator/core` 10.0.0 + `@stryker-mutator/vitest-runner` 10.0.0                                                                                                                                                    |
 
 Every command below exists in the repo (`package.json` scripts,
 `stryker.config.json`, `scripts/`); nothing was run from a scratch directory.
@@ -96,7 +97,7 @@ the `SS-n` tag.
 | SS-5         | `SS-5: scoredShots pools the sighter shots in the cross-session scope`                                     |
 | SS-6         | `SS-6: scoredShots defaults to the non-sighter shots`                                                      |
 | SS-7         | `SS-7: volumeShotCount has no scope argument — it always counts sighters`                                  |
-| SS-8         | `SS-8: guldserieCount never counts a sighter, in either scope`                                             |
+| SS-8         | `SS-8: guldserieCount always counts a sighter, in either scope`                                            |
 | SS-9         | `SS-9: the cross-session scope returns a copy, not the caller’s array`                                     |
 | SS-10        | `analytics.ts — SighterScope > SS-10: analyticsSessionPoints without a scope is unchanged`                 |
 | SS-11        | `SS-11: analyticsSessionPoints in the cross-session scope counts the sighter`                              |
@@ -115,16 +116,16 @@ the `SS-n` tag.
 
 ### Negative constraints
 
-| id    | how it is discharged                                                                                                                                                                                                                                               |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| INV-1 | `stats.test.ts`, `analytics.test.ts` and every other existing suite were **not edited** except for one additive fixture field in `json-log.test.ts` (`includeSighters: true`, required by the new type). All 2041 baseline tests still pass, assertions untouched. |
-| INV-2 | `git diff --stat` touches no in-session file: `use-session-stats.ts`, `totals.ts`, `marke.ts`, `standardmedalj.ts` are unchanged. The `pnpm check` jest run (361 app tests) covers the session screens.                                                            |
-| INV-3 | `pnpm typecheck` + `pnpm typecheck:app` both clean. Every new parameter is `scope: SighterScope = {}`; the one required field (`AnalyticsReportJsonFilter.includeSighters`) has its only producer updated in the same commit, which is why the typecheck passes.   |
-| INV-4 | SS-7, SS-8, SS-16, SS-P2. `volumeShotCount` and `guldserieCount` have no scope parameter at all — the invariant holds by construction, and the tests pin it.                                                                                                       |
-| INV-5 | Coverage run below: `stats.ts` and `analytics.ts` are 100/100/100/100.                                                                                                                                                                                             |
-| INV-6 | Mutation run below: same two survivors as the baseline, zero new.                                                                                                                                                                                                  |
-| INV-7 | `package.json`/`pnpm-lock.yaml` unchanged; no `drizzle` migration added; `pnpm licenses:check` passes unchanged.                                                                                                                                                   |
-| INV-8 | `decodeAnalyticsFilter` spreads `DEFAULT_ANALYTICS_FILTER` before the parsed object, so a param string written before this change gets `includeSighters: true`. Exercised by every existing report-route test and by the app's own decode tests.                   |
+| id    | how it is discharged                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| INV-1 | **Partially superseded by the 2026-09-17 ruling.** `analytics.test.ts` and every other existing suite are untouched; `json-log.test.ts` gained one additive fixture field (`includeSighters: true`, required by the new type). The one existing **assertion** edited is `stats.test.ts` B28, `2` → `3`, because the maintainer's guldserie ruling changed the contract it encodes (§2.3) — declared here rather than hidden, and the spec and `m5-stats-spec.md` B28 were amended in the same commit. Every other baseline assertion passes unedited. |
+| INV-2 | `git diff --stat` touches no in-session file: `use-session-stats.ts`, `totals.ts`, `marke.ts`, `standardmedalj.ts` are unchanged. The `pnpm check` jest run (361 app tests) covers the session screens.                                                                                                                                                                                                                                                                                                                                               |
+| INV-3 | `pnpm typecheck` + `pnpm typecheck:app` both clean. Every new parameter is `scope: SighterScope = {}`; the one required field (`AnalyticsReportJsonFilter.includeSighters`) has its only producer updated in the same commit, which is why the typecheck passes.                                                                                                                                                                                                                                                                                      |
+| INV-4 | SS-7, SS-8, SS-16, SS-P2. `volumeShotCount` is unchanged; `guldserieCount` has one unconditional change (§2.3) and, like volume, no scope parameter at all — so neither can vary with the filter, by construction, and the tests pin both positions.                                                                                                                                                                                                                                                                                                  |
+| INV-5 | Coverage run below: `stats.ts` and `analytics.ts` are 100/100/100/100.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| INV-6 | Mutation run below: same two survivors as the baseline, zero new.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| INV-7 | `package.json`/`pnpm-lock.yaml` unchanged; no `drizzle` migration added; `pnpm licenses:check` passes unchanged.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| INV-8 | `decodeAnalyticsFilter` spreads `DEFAULT_ANALYTICS_FILTER` before the parsed object, so a param string written before this change gets `includeSighters: true`. Exercised by every existing report-route test and by the app's own decode tests.                                                                                                                                                                                                                                                                                                      |
 
 ## Gauntlet — all numbers from one fresh run after the last edit
 
@@ -171,21 +172,43 @@ same proof a throwaway mutant would give for each.
   typecheck. Changed to `'include' | 'exclude'` mapped to the boolean at the
   edge. Caught by `pnpm typecheck:app`, not by review.
 
+- **A domain fact was read wrong and the maintainer corrected it (2026-09-17),
+  after the first push.** `guldserieCount` had been left excluding sighters on
+  a carve-out argument; his ruling is that a sighter always counts towards a
+  guldserie. Fixed in `stats.ts` (it no longer calls `scoredSeries` at all),
+  with SS-8 and the existing B28 assertion corrected, the spec's §2.3 rewritten
+  to record the ruling in place of the reading, the manual corrected in both
+  languages, and — the actual root cause — spsf-domain rule 2 rewritten. The
+  gauntlet did not catch this and could not: the tests agreed with the spec,
+  and the spec was wrong. It is what spec approval exists for.
+
 Nothing was weakened to reach green: no test edited to pass, no assertion
-broadened, no threshold moved, no skip added.
+broadened, no threshold moved, no skip added. The one existing assertion
+changed (B28, `2` → `3`) was changed **because the contract changed**, on the
+maintainer's ruling, with the spec amended in the same commit — and it is a
+tighter assertion, not a looser one.
 
 ## Known limits
 
 1. **No UI has been seen.** See the skipped layer above.
-2. **The spec was not independently approved**, so the boundaries in spec §2 —
-   records following the toggle (§2.2), volume never following it (§2.1), the
-   guldserie carve-out (§2.3) — are this agent's readings of one sentence from
-   the maintainer. Each is stated in the spec with its rationale and its
-   alternative, which is the intended place for him to overrule it.
-3. **The guldserie carve-out is a policy choice, not a verified regulatory
-   value** (spsf-domain rule 8). It is deliberately the conservative side: the
-   app never claims an award a provserie cannot earn. If Skjuthandboken turns
-   out to say otherwise, it is a one-line change plus a test.
+2. **The spec was not independently approved**, so the two remaining
+   boundaries in spec §2 — volume never following the toggle (§2.1) and
+   records following it (§2.2) — were this agent's readings of one sentence
+   from the maintainer. He **confirmed both on 2026-09-17**, the
+   session-screen mismatch in §2.2 explicitly accepted with the filter as the
+   escape hatch. The third reading was wrong and has been corrected; see the
+   next item.
+3. **The guldserie carve-out was wrong and is gone.** The first draft had
+   `guldserieCount` skipping sighters as a conservative award-eligibility
+   carve-out. Maintainer, 2026-09-17: _"I sighter always counts towards
+   guldserie. I told you this before."_ `guldserieCount` now counts sighters
+   unconditionally — no scope, no filter dependence. The root cause was
+   `.claude/skills/spsf-domain/SKILL.md` rule 2 ("excluded from every score
+   and score statistic"), which is rewritten in this PR to state the
+   in-session, cross-session, volume and guldserie cases separately. Existing
+   assertion `stats.test.ts` B28 changed from `2` to `3` as a direct
+   consequence of the ruling — a corrected contract, not a weakened test, and
+   `m5-stats-spec.md` B28 is amended with it.
 4. **`compareRecentSeries`, `sessionTrend`, `aggregateByFirearm` and
    `aggregateByAmmoLot` still exclude sighters** and gained no toggle (spec
    §2.4). The last three have no app caller today; `compareRecentSeries` is
