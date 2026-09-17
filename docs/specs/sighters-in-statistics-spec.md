@@ -292,12 +292,12 @@ the Statistics tab do" vs "what does an unqualified call mean").
 New i18n keys (en: Title Case for the section title and the control's labels,
 sentence case for the hint; sv sentence case throughout):
 
-| key                         | en                                                                                   | sv                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `stats.sectionSighters`     | `Sighters`                                                                           | `Provserier`                                                                             |
-| `stats.sectionSightersHint` | `Outside a session a sighter is an ordinary series. Shots fired always counts them.` | `Utanför ett pass är en provserie en vanlig serie. Skjutna skott räknar alltid med dem.` |
-| `stats.sightersInclude`     | `Include`                                                                            | `Räkna med`                                                                              |
-| `stats.sightersExclude`     | `Exclude`                                                                            | `Räkna inte med`                                                                         |
+| key                         | en                                                                                      | sv                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `stats.sectionSighters`     | `Sighters`                                                                              | `Provserier`                                                                         |
+| `stats.sectionSightersHint` | `Outside a session a sighter is an ordinary series. Shots Logged always includes them.` | `Utanför ett pass är en provserie en vanlig serie. Loggade skott räknas alltid med.` |
+| `stats.sightersInclude`     | `Include`                                                                               | `Räkna med`                                                                          |
+| `stats.sightersExclude`     | `Exclude`                                                                               | `Räkna inte med`                                                                     |
 
 ## 6. User manual (ships in this PR, per CLAUDE.md)
 
@@ -306,7 +306,7 @@ nav (`Statistics` → `Statistik`) between _Logging a session_ and _Scoring from
 photo_. It covers what the Statistics tab is (a filter form that generates a
 report), what each filter does, and — the point of this PR — **what counts
 where**: sighters excluded inside a session, ordinary outside one, the toggle,
-and the fact that _Shots fired_ always counts them.
+and the fact that _Shots Logged_ always includes them.
 
 `docs/manual/guides/logging-a-session.md` + `.sv.md` gain one sentence under
 _Sighters_ pointing at the new page, so the reader who meets the concept first

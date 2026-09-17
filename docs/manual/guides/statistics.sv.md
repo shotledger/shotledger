@@ -35,7 +35,7 @@ varje siffra med det varje pass visar på sin egen sida.
 
 Två saker ändrar sig inte:
 
-- **Skjutna skott** räknar alltid med provserier, i båda lägena. Du sköt de
+- **Loggade skott** räknas alltid med provserier, i båda lägena. Du sköt de
   skotten oavsett vad serien kallades, och siffran måste stämma med vapnets
   skotträknare och din ammunitionsåtgång.
 - Antalet **guldserier** räknar alltid med en provserie, i båda lägena. En

@@ -35,7 +35,7 @@ makes every figure agree with what each session screen shows.
 
 Two things do not move:
 
-- **Shots fired** always counts sighters, in both positions. You fired those
+- **Shots Logged** always includes sighters, in both positions. You fired those
   rounds whatever you called the series, and the figure has to match your
   firearm's round counter and your ammunition use.
 - The **guldserie** count always counts a sighter, in either position. A 50 on a
