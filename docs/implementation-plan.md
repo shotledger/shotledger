@@ -939,6 +939,19 @@ restates §0 rules 1–6 verbatim.
 > `react-native-fast-opencv` and `expo-image-manipulator` (§2). Phase 2 — the
 > learned hole detector and the score-analysis heatmap — remains deferred.
 >
+> **Tap-to-mark now runs a fitted hole/patch filter** as a second gate, on
+> `feat/cv-hole-patch-filter`: six texture descriptors of the 12 mm crop and a
+> logistic regression over them (`shared/src/target-scoring/hole-features.ts`,
+> constants fitted in `spike/cv/`). Measured behind the existing proposal
+> stage it cuts false positives ~15x, 4.65 to 0.32 per photo, at 90%
+> precision. No new dependency — eight constants and no runtime. Spec and
+> evidence: `docs/specs/cv-assisted-detection-{spec,evidence}.md`; the
+> measurement is `docs/specs/cv-corpus-validation-2026-09.md` §5. The same
+> measurement **rejected** loosening the proposal stage behind the filter
+> (#264's step 3): it finds fewer holes, not more. Phase 2 is unaffected — this
+> is the assisted path getting better, not detection becoming automatic, and
+> "Auto Score" stays reserved.
+>
 > **The milsnabb face now scores too**, via manual corners only (auto-geometry
 > is still never attempted for it), on `feat/milsnabb-photo-corners` — amends
 > §10 of the phase 1 spec/evidence. No new dependency, no schema change; the

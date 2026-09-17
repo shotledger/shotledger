@@ -4,8 +4,12 @@ Throwaway Python/OpenCV prototype used to answer whether ShotLedger can
 score a photographed Swedish 25 m pistol target on-device. Findings are in
 [`docs/specs/cv-spike-report.md`](../../docs/specs/cv-spike-report.md).
 
-**This is spike code.** It is not wired into the app, is not tested, and is
-not the design for the production pipeline — read the report first.
+**This is spike code.** None of it runs in the app and none of it is tested —
+read the report first. Two things have since been ported _from_ it and are the
+exception to "not the design for the production pipeline": the geometry stage
+(`app/src/features/photo-scoring/opencv.ts`) and the hole/patch filter's
+arithmetic and constants (see the last section). Both are kept in lock-step
+deliberately; the rest is throwaway.
 
 ## Photos are not in the repo
 
@@ -62,3 +66,39 @@ fitted-ellipse aspect, the `partial` flag, px/mm and the per-ring residuals.
 
 Ring diameters come from `docs/reference/spsf-shb-2026.md` (F.7.1 p. 182,
 J.7.1 p. 297) and are the only domain constants in the file.
+
+## Hole/patch filter (`hole_filter.py`)
+
+The texture filter that tells a bullet hole from a repair patch or a printed
+digit, and the loosened proposal stage that was measured against it and
+**rejected**. Numbers: [`docs/specs/cv-corpus-validation-2026-09.md`](../../docs/specs/cv-corpus-validation-2026-09.md)
+§5; the port and its contract:
+[`docs/specs/cv-assisted-detection-spec.md`](../../docs/specs/cv-assisted-detection-spec.md).
+
+This file is the **reference** for the feature arithmetic. The app runs
+`shared/src/target-scoring/hole-features.ts`, which re-implements it without
+OpenCV; `hole-features.fixtures.json` (written by
+`gen_hole_feature_fixtures.py`, synthetic crops only) pins the two together.
+Change one and you change both.
+
+The measurement pipeline, end to end — photos, grids and marks all stay
+outside the working tree:
+
+```bash
+# 1. render coordinate grids and read the hole centres off them by eye
+python mark_holes.py --in <photos> --out <grids> --only names.txt
+
+# 2. score every proposal stage against those marks, dumping features
+python score_stages.py --marks marks.txt --in <photos> --out candidates.csv
+
+# 3. fit the filter, cross-validated by photo; --test corpora are never fitted on
+python fit_hole_filter.py pooled.csv --stage tight
+python fit_hole_filter.py corpusA.csv --test corpusB.csv --stage tight
+
+# 4. regenerate the TypeScript lock-step fixture after any change to step 3
+python gen_hole_feature_fixtures.py > \
+    ../../shared/src/target-scoring/hole-features.fixtures.json
+```
+
+Ground truth is **hole centres, not candidate labels**: labelling the
+candidates a detector proposes cannot measure the holes it misses.

@@ -158,3 +158,132 @@ series.
 - **No end-to-end score was verified** against a known result. Several
   photos carry a handwritten total, which would validate a detector for
   free; that was not done.
+
+---
+
+## 5. The filter, re-fitted and measured end to end (2026-09-16)
+
+§2 fitted the seven-feature filter on candidates the detector proposed and
+reported it at 84% / 84%. §3 said plainly what that did not answer: those are
+recall and precision **of candidates**, not of holes, and "the cheapest
+untested lever" — loosening the proposal stage behind the filter — was
+untested. #264 asked for both, on both corpora.
+
+Both questions are now answered, and they answer opposite ways: **the filter
+is a large win, the loosened stage is not.**
+
+### Method — the ground truth changed
+
+§2 labelled candidates. That cannot measure recall: a hole no detector
+proposed never becomes a row. This round labels **holes** instead. Every photo
+is rectified exactly as the pipeline does it, rendered under a coordinate grid
+(`spike/cv/mark_holes.py`), and the hole centres are read off by eye. A
+candidate is a true positive when it lands within 0.9 hole diameters of an
+unclaimed mark (`spike/cv/score_stages.py`). Recall is then against holes.
+
+31 photos, all passing the production geometry gate with the face prior on:
+**20 contributed** (drawn at random from the 66 that pass) and **11 of the
+maintainer's**. 147 marked holes. On the contributed subset the marks can be
+checked against the independent by-eye counts behind §"Measured" of
+`contributed-corpus-2026-09-15.md`: 94 marked against 99 counted — the five
+missing are on the darkest, most heavily pasted cards, so this recall is if
+anything **flattered** by about 5%.
+
+### The proposal stages
+
+`tight` is the shipped phase-1 stage. `loose` is the tuned loosening; `open`
+is the same idea with every brake off (no printed-glyph suppression, threshold
+6 MADs instead of 12, cap 200 instead of 40).
+
+| Stage   | Candidates/photo |    Recall | Precision | FP/photo | Exact series |
+| ------- | ---------------: | --------: | --------: | -------: | -----------: |
+| `tight` |              7.7 | **65.3%** | **40.0%** | **4.65** |            1 |
+| `loose` |             27.3 |     40.1% |      7.0% |    25.35 |            0 |
+| `open`  |             55.1 |     82.3% |      7.1% |    51.16 |            0 |
+
+Split by corpus, the picture is the same on both — contributed 67.0% / 34.0% /
+85.1% recall, maintainer 62.3% / 50.9% / 77.4%.
+
+**The tuned `loose` stage is worse than the stage it replaces**, on both
+corpora, by a wide margin. The cause is visible in the rendered panels: its
+printed-glyph suppression keys on a structure longer than 2.6 hole diameters,
+and a printed digit on the 25 m face measures 37–40 px against a hole's 23 —
+so the digits survive, saturate the 40-candidate cap ranked by response
+strength, and **push real holes out of the list**. It proposes three times as
+much and finds fewer holes.
+
+`open` does what loosening was supposed to do — recall 65% → 82% — and asks
+53 false positives per photo for it.
+
+### The filter behind each stage
+
+Six features, not seven: the seventh was colour std-dev and the production
+canvas is grey-only. Centre darkness is now a **magnitude** — see
+`cv-assisted-detection-spec.md` §1 for why, and it is not a detail: fitted
+signed, the filter rejects holes on white paper outright.
+
+Logistic regression, 5-fold cross-validation **split by photo**, pooled over
+all 31:
+
+| Behind  | Threshold |    Recall | Precision | FP/photo | Exact series |
+| ------- | --------: | --------: | --------: | -------: | -----------: |
+| —       |         — |     65.3% |     40.0% |     4.65 |            1 |
+| `tight` |       0.3 |     59.9% |     87.1% | **0.42** |        **4** |
+| `tight` |   **0.5** | **59.2%** | **89.7%** | **0.32** |        **3** |
+| `open`  |       0.3 |     64.6% |     73.6% |     1.10 |            1 |
+| `open`  |       0.5 |     51.7% |     85.4% |     0.42 |            1 |
+
+Cross-validated AUC: **0.942** behind `tight`, 0.948 behind `open`.
+
+Two readings, both load-bearing:
+
+- **Behind the existing stage the filter cuts false positives roughly 15×**,
+  from 4.65 to 0.32 per photo, for 6 points of recall. Precision goes 40% →
+  90%. And for the first time in any of these measurements, **photos come out
+  exactly right**: 3 of 31 at threshold 0.5, 4 at 0.3, against **zero in 251
+  photos** across the three earlier rounds.
+- **Behind the loosened stage it does not pay.** At a matched 0.42 FP/photo,
+  `open` reaches 57.8% recall where `tight` reaches 59.9%, with one exact
+  series against four. `open`'s higher AUC is real and irrelevant: the filter
+  has to be run so hard to control 51 false positives per photo that it
+  discards holes faster than the loosened stage finds them.
+
+**So the loosened proposal stage is not shipped.** It stays in
+`spike/cv/hole_filter.py` as a measured negative result.
+
+### Does the filter generalise across shooters?
+
+The question `contributed-corpus-2026-09-15.md` posed. Fitted on one corpus,
+applied to the other, never having seen it:
+
+| Fitted on        | Tested on        |   AUC | Recall | Precision | FP/photo |
+| ---------------- | ---------------- | ----: | -----: | --------: | -------: |
+| contributed (20) | maintainer (11)  | 0.898 |  45.3% |     92.3% | **0.18** |
+| maintainer (11)  | contributed (20) | 0.875 |  63.8% |     56.6% |     2.30 |
+
+**The discrimination generalises; the threshold does not transfer from a
+small fit.** AUC holds at 0.875–0.898 across shooters, phones and clubs — the
+texture difference between a hole and a patch is not one club's paper. But the
+11-photo fit puts its decision boundary in the wrong place for the other
+corpus: precision falls to 57%. That is a calibration problem from 33 positive
+examples, not a failure of the features, and it is the direct argument for
+fitting on both corpora — which the shipped constants are.
+
+### Limits
+
+- **31 photos, 147 holes, marked by eye by the author**, who knew what the
+  experiment expected. The same limitation §2 and the spike both carry.
+- **The marks undercount** on the most heavily pasted cards (94 against 99 on
+  the contributed subset), so every recall figure here is slightly optimistic.
+- **4 of 96 labelled holes are outside the black zone.** Everything this filter
+  claims about white-zone holes rests on four examples. The polarity fix means
+  it is no longer _structurally_ biased against them; it is still barely
+  evidenced there.
+- **Zero centrefire holes, one calibre, two phones, two clubs.** Unchanged.
+- **The cross-validated numbers are in-sample in one sense**: the feature set
+  and the centre-deviation change were chosen while looking at this data. The
+  held-out table above is the honest generalisation estimate, not the pooled
+  one.
+- Still the Python twin for the measurement. The TypeScript the app runs is
+  pinned to it by a committed fixture, not by having been measured itself —
+  see `cv-assisted-detection-evidence.md`.

@@ -4,3 +4,4 @@ export * from './geometry';
 export * from './targets';
 export * from './score';
 export * from './session';
+export * from './hole-features';
