@@ -132,14 +132,17 @@ export function weaponGroupsForDiscipline(disciplineId: string): readonly Weapon
 export function selectableWeaponGroups(): readonly WeaponGroup[] {
   const seen = new Set<string>();
   const groups: WeaponGroup[] = [];
+  const add = (group: WeaponGroup): void => {
+    if (seen.has(group.id)) return;
+    seen.add(group.id);
+    groups.push(group);
+  };
   for (const discipline of DISCIPLINES) {
     for (const group of resolveWeaponGroupIds(
       discipline.weaponGroups,
       `Discipline ${discipline.id}`,
     )) {
-      if (seen.has(group.id)) continue;
-      seen.add(group.id);
-      groups.push(group);
+      add(group);
     }
   }
   // Explicitly, not via a discipline. The generic groups belong to the firearm
@@ -148,9 +151,7 @@ export function selectableWeaponGroups(): readonly WeaponGroup[] {
   // discipline stopped declaring it — taking the firearms already assigned to
   // it with it.
   for (const group of GENERIC_WEAPON_GROUPS) {
-    if (seen.has(group.id)) continue;
-    seen.add(group.id);
-    groups.push(group);
+    add(group);
   }
   return groups;
 }

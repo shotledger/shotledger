@@ -249,3 +249,34 @@ describe('createHttpClient', () => {
     expect(sleep.mock.calls).toEqual([[10]]);
   });
 });
+
+describe('WebshooterSchemaError', () => {
+  it('counts the issues it did not print', () => {
+    const error = new WebshooterSchemaError('/thing', {
+      issues: [
+        { path: ['data', 0, 'score'], message: 'expected number' },
+        { path: ['data', 1, 'score'], message: 'expected number' },
+        { path: ['data', 2, 'score'], message: 'expected number' },
+      ],
+    });
+
+    expect(error.message).toBe('/thing: data.0.score — expected number (+2 more)');
+    expect(error.path).toBe('/thing');
+  });
+
+  it('prints a single issue without a count', () => {
+    const error = new WebshooterSchemaError('/thing', {
+      issues: [{ path: ['ok'], message: 'expected boolean' }],
+    });
+
+    expect(error.message).toBe('/thing: ok — expected boolean');
+  });
+
+  it('still names the endpoint when the issue list is empty', () => {
+    // A validator that rejects without saying why must not produce a message
+    // with a hole in it — the endpoint is the one thing a bug report needs.
+    const error = new WebshooterSchemaError('/thing', { issues: [] });
+
+    expect(error.message).toBe('/thing: (root) — did not match');
+  });
+});
