@@ -37,7 +37,7 @@ export function listFirearmGroups(db: Database, firearmId: string) {
     .all();
 }
 
-/** Distinct weapon-group ids the shooter holds across every firearm (M6 barometer overview). */
+/** Distinct weapon-group ids the shooter holds across every firearm (M6 licence-activity overview). */
 export function listAllFirearmGroupIds(db: Database): string[] {
   const rows = db
     .select({ groupId: firearmGroups.groupId })

@@ -87,7 +87,7 @@ type ScanState =
   | { status: 'error'; reason: 'denied' | 'failed' | 'unsupported' | 'nothing' }
   | { status: 'done'; count: number; parsed: ParsedLicenseCard };
 
-const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+const LICENCE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
   amber: 'primary',
   red: 'primary',
@@ -462,30 +462,30 @@ export default function FirearmDetailScreen() {
       </Card>
 
       {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'. */}
-      {profile && detail.barometers.length > 0 && (
+      {profile && detail.licenceActivities.length > 0 && (
         <Card>
-          <ThemedText type="smallBold">{t('compliance.barometerTitle')}</ThemedText>
+          <ThemedText type="smallBold">{t('compliance.licenceActivityTitle')}</ThemedText>
           <View style={styles.chipsRow}>
-            {detail.barometers.map((b) => (
+            {detail.licenceActivities.map((b) => (
               <Chip
                 key={b.weaponGroups.join(',')}
                 testID={`firearm-barometer-${b.weaponGroups[0]}`}
-                label={t(`compliance.barometer${capitalize(b.status)}`, {
+                label={t(`compliance.licenceActivity${capitalize(b.status)}`, {
                   count: b.activityCount,
                   required: b.requiredActivities,
                 })}
-                tone={BAROMETER_TONE[b.status]}
+                tone={LICENCE_ACTIVITY_TONE[b.status]}
               />
             ))}
           </View>
-          {detail.barometers.map((b) => (
+          {detail.licenceActivities.map((b) => (
             <ThemedText
               key={`detail-${b.weaponGroups.join(',')}`}
               type="small"
               themeColor="textSecondary"
               testID={`firearm-barometer-detail-${b.weaponGroups[0]}`}
             >
-              {t('compliance.barometerDetail', {
+              {t('compliance.licenceActivityDetail', {
                 done: b.activityCount,
                 required: b.requiredActivities,
                 months: b.windowMonths,
@@ -495,7 +495,7 @@ export default function FirearmDetailScreen() {
           {/* Which case is in effect is never silently applied — it is on
               screen wherever the number it produced is. */}
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
-            {t(`compliance.barometerCase.${profile.variantId}`)}
+            {t(`compliance.licenceActivityCase.${profile.variantId}`)}
           </ThemedText>
           {!profile.verified && (
             <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">

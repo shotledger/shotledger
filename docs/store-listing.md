@@ -48,7 +48,7 @@ best/worst series, and how your last sessions compare to your history.
 Nothing is saved as a stale document; it is always computed fresh from
 what matches right now.
 
-**Built for Swedish shooters.** A rolling activity barometer tracks your
+**Built for Swedish shooters.** A rolling Licence Activity view tracks your
 logged sessions against the FAP 551-3 licensing requirement, and exports
 a PDF formatted for license applications and föreningsintyg.
 
@@ -95,7 +95,7 @@ serie, och hur dina senaste pass står sig mot historiken. Inget sparas
 som ett inaktuellt dokument; allt räknas fram på nytt utifrån det som
 matchar just nu.
 
-**Byggd för svenska skyttar.** En rullande aktivitetsbarometer följer
+**Byggd för svenska skyttar.** En rullande licensaktivitet följer
 dina loggade pass mot FAP 551-3:s aktivitetskrav och exporterar en PDF
 formaterad för licensansökningar och föreningsintyg.
 

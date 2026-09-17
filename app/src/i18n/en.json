@@ -499,15 +499,15 @@
     },
     "sourceCitation": "Source: Polismyndigheten’s form PM 551.24 Föreningsintyg, page 3 (FAP 551-3, 5 kap 5–6 §§).",
     "notModelled": "Not counted here: the separate rules for an additional handgun and for renewing a time-limited permit. Check those yourself.",
-    "barometerDetail": "{{done}} activities in the last {{months}} months — {{required}} required",
-    "barometerCase": {
+    "licenceActivityDetail": "{{done}} activities in the last {{months}} months — {{required}} required",
+    "licenceActivityCase": {
       "firstHandgun": "Measured against the rule for a first handgun.",
       "existingHandgun": "Measured against the rule for someone who already holds a handgun."
     },
-    "barometerTitle": "Activity Barometer (vapenlicens)",
-    "barometerGreen": "On Track",
-    "barometerAmber": "Falling Behind",
-    "barometerRed": "Inactive",
+    "licenceActivityTitle": "Licence Activity",
+    "licenceActivityGreen": "On Track",
+    "licenceActivityAmber": "Falling Behind",
+    "licenceActivityRed": "Inactive",
     "exportPdf": "Export PDF",
     "pdfTitle": "Shooting Log (föreningsintyg)",
     "pdfPeriodLabel": "{{from}} – {{to}}",

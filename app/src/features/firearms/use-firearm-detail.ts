@@ -4,14 +4,14 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  computeFirearmBarometer,
+  computeFirearmLicenceActivity,
   licenseStatus,
   maintenanceProgress,
   maintenanceStatus,
   type JurisdictionProfile,
   type LicenseStatus,
   type MaintenanceStatus,
-  type WeaponGroupBarometer,
+  type WeaponGroupLicenceActivity,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -32,7 +32,7 @@ export interface FirearmDetail {
   maintenanceStatus: MaintenanceStatus;
   maintenanceProgress: number | null;
   /** M6: one entry per applicable compliance rule; empty when profile is 'none'. */
-  barometers: WeaponGroupBarometer[];
+  licenceActivities: WeaponGroupLicenceActivity[];
 }
 
 const EMPTY: FirearmDetail = {
@@ -44,7 +44,7 @@ const EMPTY: FirearmDetail = {
   licenseStatus: 'none',
   maintenanceStatus: 'unknown',
   maintenanceProgress: null,
-  barometers: [],
+  licenceActivities: [],
 };
 
 export function loadFirearmDetail(
@@ -57,8 +57,8 @@ export function loadFirearmDetail(
 
   const licenses = listLicenses(db, firearmId);
   const groups = listFirearmGroups(db, firearmId);
-  const barometers = profile
-    ? computeFirearmBarometer(
+  const licenceActivities = profile
+    ? computeFirearmLicenceActivity(
         listComplianceSessions(db),
         profile,
         groups.map((g) => g.groupId),
@@ -79,7 +79,7 @@ export function loadFirearmDetail(
       firearm.roundsSinceMaintenance,
       firearm.maintenanceIntervalRounds,
     ),
-    barometers,
+    licenceActivities,
   };
 }
 

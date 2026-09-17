@@ -7,7 +7,7 @@ already logging.
 **Settings → Compliance → Sweden (FAP 551-3)** turns it on. Left at **None**,
 none of this appears — which is the right state outside Sweden.
 
-## The barometer
+## Licence Activity
 
 Once on, the app counts the sessions you logged in the last **six months** and
 compares that total with the requirement for your case.
@@ -31,9 +31,9 @@ two applies to you. The app cannot work it out: it does not know what you
 already hold a licence for.
 
 New installs start on **First Handgun**, the stricter of the two. If you
-already hold a handgun for target shooting, switch it — otherwise the
-barometer asks twice as much of you as the rule does. The app never changes
-this for you, and the case it is using is shown next to the barometer.
+already hold a handgun for target shooting, switch it — otherwise
+Licence Activity asks twice as much of you as the rule does. The app never
+changes this for you, and the case it is using is shown next to the status.
 
 ## "On average", precisely
 
@@ -61,14 +61,14 @@ to you, work it out yourself:
 
 ## What counts, and what this is not
 
-The barometer counts what you logged. A range visit you did not log is not in
-it, and a session logged twice counts twice.
+Licence Activity counts what you logged. A range visit you did not log is
+not in it, and a session logged twice counts twice.
 
 !!! warning "Your club and the police decide, not this app"
 
     The app counts sessions against a published requirement. It does not issue
     the intyg, and it has no view on whether your club will sign one or whether
-    the police will grant the licence. Treat a green barometer as "the counting
+    the police will grant the licence. Treat a green status as "the counting
     looks right", not as an approval.
 
 ## Getting it out

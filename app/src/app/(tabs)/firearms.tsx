@@ -30,7 +30,7 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
   red: 'primary',
 };
 
-const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+const LICENCE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
   amber: 'primary',
   red: 'primary',
@@ -88,11 +88,13 @@ export default function FirearmsScreen() {
                         tone={MAINTENANCE_TONE[row.maintenanceStatus]}
                       />
                     )}
-                    {row.barometerStatus && (
+                    {row.licenceActivityStatus && (
                       <Chip
                         testID={`firearm-barometer-${row.id}`}
-                        label={t(`compliance.barometer${capitalize(row.barometerStatus)}`)}
-                        tone={BAROMETER_TONE[row.barometerStatus]}
+                        label={t(
+                          `compliance.licenceActivity${capitalize(row.licenceActivityStatus)}`,
+                        )}
+                        tone={LICENCE_ACTIVITY_TONE[row.licenceActivityStatus]}
                       />
                     )}
                   </View>
