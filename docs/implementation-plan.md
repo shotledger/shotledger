@@ -53,7 +53,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 │   └── src/
 │       ├── scoring/      series math, guldserie, statistics (§6.4)
 │       ├── disciplines/  discipline definitions + JSON schema (§6.2)
-│       ├── compliance/   FAP 551-3 barometer logic (§6.6)
+│       ├── compliance/   FAP 551-3 licence-activity logic (§6.6)
 │       └── csv/          export/import (§6.8)
 ├── docs/             this file, ADRs (docs/adr/NNN-title.md)
 └── .github/workflows/ci.yml
@@ -548,7 +548,7 @@ and per-ammo-lot aggregates.
   race noted in the M2 report, which otherwise made the flow's `app://dev`
   step flaky on this sandboxed emulator.
 
-### M6 — FAP 551-3 barometer + PDF (branch `feat/m6-compliance`)
+### M6 — FAP 551-3 licence activity + PDF (branch `feat/m6-compliance`)
 
 Logic in `shared/compliance/` driven by a config object, not hard-coded:
 `{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
@@ -563,9 +563,9 @@ pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
 the last two years — fulfilled (the app can compute märke fulfillment
 from §6.5 automatically).
 
-- [x] Barometer UI on Home + per firearm: activities in rolling window vs
+- [x] Licence Activity UI on Home + per firearm: activities in rolling window vs
       required, green/amber/red
-      — Home shows one overall chip (`compliance.barometer{Green,Amber,Red}`,
+      — Home shows one overall chip (`compliance.licenceActivity{Green,Amber,Red}`,
       worst-of across every weapon group the shooter's firearms hold);
       Firearms tab and firearm detail show per-firearm chip(s), worst-of
       across the firearm's own weapon groups. All hidden when the resolved
@@ -603,7 +603,7 @@ from §6.5 automatically).
       `SE_VERIFIED = true` now covers the modelled numbers only; the Bilaga 8
       märke-guld proxy keeps its own `ruleVerified: false`. Spec/evidence:
       `docs/specs/compliance-fap551-{spec,evidence}.md`.
-- **Done when:** barometer states unit-tested (boundary dates, tombstoned
+- **Done when:** licence-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
   (CLAUDE.md mandates it): executable spec in
@@ -619,7 +619,7 @@ from §6.5 automatically).
   the `se` profile's `windowMonths`/`requiredActivities` numbers shipped as
   placeholders with `SE_VERIFIED = false`, because no FAP 551-3 numeric source
   text existed in the repo; the checklist item above replaced them with the
-  cited PM 551.24 numbers. The barometer UI still renders the
+  cited PM 551.24 numbers. The licence-activity UI still renders the
   `compliance.unverifiedHint` line wherever `profile.verified === false` — the
   general mechanism for any future profile, now unreachable for `se`.
   The Bilaga 8 indicator helpers (`monthsOfLoggedActivity`,
@@ -629,8 +629,8 @@ from §6.5 automatically).
   further VERIFY (≥1 guldserie in 24 months is a placeholder proxy, not a
   confirmed märke-earning rule). Maestro: `app/e2e/m6-compliance.yaml` on
   the `shotledger` AVD dev build — seeds demo data, selects the `se`
-  compliance profile in Settings, asserts the Home barometer chip, the
-  firearm-detail barometer card, then exercises the Stats Custom period
+  compliance profile in Settings, asserts the Home licence-activity chip, the
+  firearm-detail licence-activity card, then exercises the Stats Custom period
   (native Android date picker, tapped via its own visible "OK" button) and
   asserts the applied-range label. See the M6 task report for the run
   outcome and screenshot paths.
@@ -674,25 +674,25 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
-| `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
+| `/` Home                                   | totals card, latest sessions, licence-activity summary, FAB                               | empty / seeded     |
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
 | `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
-| `/firearms`                                | list + barometer chips                                                                    | empty              |
+| `/firearms`                                | list + licence-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
 | `/settings`                                | language, theme, data, support, about                                                     |                    |
 | `/dev/components`                          | component gallery (dev only)                                                              |                    |
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
-| `/` Home                                   | totals card, latest sessions, barometer summary, FAB                                      | empty / seeded     |
+| `/` Home                                   | totals card, latest sessions, licence-activity summary, FAB                               | empty / seeded     |
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filters + tiles + charts                                                                  | no data for filter |
-| `/firearms`                                | list + barometer chips                                                                    | empty              |
+| `/firearms`                                | list + licence-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
 | `/tools`                                   | timers, vault, Webshooter — the non-settings hub                                          | disconnected       |

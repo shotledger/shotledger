@@ -65,13 +65,13 @@ export interface JurisdictionProfile {
   verified: boolean;
 }
 
-export type BarometerStatus = 'green' | 'amber' | 'red';
+export type LicenceActivityStatus = 'green' | 'amber' | 'red';
 
-export interface WeaponGroupBarometer {
+export interface WeaponGroupLicenceActivity {
   weaponGroups: string[];
   windowMonths: number;
   requiredActivities: number;
   activityCount: number;
-  status: BarometerStatus;
+  status: LicenceActivityStatus;
   windowStartIso: string;
 }

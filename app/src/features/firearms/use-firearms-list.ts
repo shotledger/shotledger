@@ -6,7 +6,7 @@ import { useFocusEffect } from 'expo-router';
 import {
   licenseStatus,
   maintenanceStatus,
-  type BarometerStatus,
+  type LicenceActivityStatus,
   type JurisdictionProfile,
   type LicenseStatus,
   type MaintenanceStatus,
@@ -15,7 +15,7 @@ import {
 import { db } from '@/db/client';
 import { latestLicense } from '@/db/queries/licenses';
 import { listFirearms } from '@/db/queries/firearms';
-import { loadFirearmBarometerStatus } from '@/features/compliance/use-barometer';
+import { loadFirearmLicenceActivityStatus } from '@/features/compliance/use-licence-activity';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 
 export interface FirearmListRow {
@@ -26,7 +26,7 @@ export interface FirearmListRow {
   licenseStatus: LicenseStatus;
   maintenanceStatus: MaintenanceStatus;
   /** M6: null when compliance profile is 'none' or the firearm has no weapon groups. */
-  barometerStatus: BarometerStatus | null;
+  licenceActivityStatus: LicenceActivityStatus | null;
 }
 
 export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
@@ -43,7 +43,7 @@ export function loadFirearmsList(profile: JurisdictionProfile | null = null): Fi
         firearm.roundsSinceMaintenance,
         firearm.maintenanceIntervalRounds,
       ),
-      barometerStatus: loadFirearmBarometerStatus(profile, firearm.id),
+      licenceActivityStatus: loadFirearmLicenceActivityStatus(profile, firearm.id),
     };
   });
 }

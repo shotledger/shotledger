@@ -91,7 +91,7 @@ same treatment as the SvSF klass layer in #138:
 - **Särskilda skäl** (illness, pregnancy, service abroad). Not modelled, and
   deliberately so: the form says the exception is granted by Polismyndigheten
   on a separate attachment, not asserted by the shooter or their club. An app
-  that let a shooter switch off their own barometer on these grounds would be
+  that let a shooter switch off their own licence activity on these grounds would be
   modelling a decision that is not theirs to make.
 
 All three are stated in the user manual, so a shooter reading it learns the
@@ -168,7 +168,7 @@ interface JurisdictionProfileDefinition {
 
 `getProfile(selection, variantId?)` resolves a definition to the existing
 `JurisdictionProfile` shape (now carrying `variantId`) whose `rules` are the
-selected variant's. `barometer.ts` is unchanged: it still consumes
+selected variant's. `licence-activity.ts` is unchanged: it still consumes
 `profile.rules` and knows nothing about variants or Sweden.
 
 SE variant ids: `'firstHandgun'` (5 §) and `'existingHandgun'` (6 §).
@@ -177,7 +177,7 @@ SE variant ids: `'firstHandgun'` (5 §) and `'existingHandgun'` (6 §).
 requirement can show red to someone who is in fact compliant under 6 §, which
 sends them to look; the lax one would show green to someone who is not
 compliant under 5 §, which does not. The chosen case is written to
-`settings.complianceProfileVariant` and shown on the barometer card, so the
+`settings.complianceProfileVariant` and shown on the licence-activity card, so the
 app never silently applies a case the shooter did not see. **Flagged for
 maintainer review** — a UX default, not a regulatory fact.
 
@@ -208,10 +208,10 @@ maintainer review** — a UX default, not a regulatory fact.
 | P9  | `getProfileDefinition('none')`                              | `null`                                                                                      |
 | P10 | both variants' `countsAs`                                   | `{ training: 1, competition: 1 }`                                                           |
 
-### Barometer under the real numbers — `R`
+### Licence activity under the real numbers — `R`
 
 Boundary cases of the chosen reading (a), through the unchanged
-`computeRuleBarometer`:
+`computeRuleLicenceActivity`:
 
 | #   | Scenario (window = 6 months, `now` fixed)                          | Expected                                                                               |
 | --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
@@ -226,7 +226,7 @@ Boundary cases of the chosen reading (a), through the unchanged
 ### Negative constraints
 
 - N1: `shared/compliance` never imports from `app/` (unchanged).
-- N2: `barometer.ts`, `months.ts` and `indicators.ts` are not modified by this
+- N2: `licence-activity.ts`, `months.ts` and `indicators.ts` are not modified by this
   change — the variant mechanism must not leak Swedish rules into shared
   machinery other profiles use. Verified by `git diff --stat`, recorded in
   EVIDENCE.
@@ -259,5 +259,5 @@ Boundary cases of the chosen reading (a), through the unchanged
 ## Out of scope
 
 The PDF export's layout VERIFY, the Bilaga 8 märke-guld VERIFY, the
-locale-based profile default, and the barometer's green/amber/red banding.
+locale-based profile default, and licence activity's green/amber/red banding.
 All unchanged, all still carrying their own flags.

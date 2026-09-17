@@ -6,7 +6,7 @@ banan. Appen håller det underlaget utifrån de pass du ändå loggar.
 **Inställningar → Efterlevnad → Sverige (FAP 551-3)** slår på det. Lämnat på
 **Ingen** syns ingenting av detta — vilket är rätt läge utanför Sverige.
 
-## Barometern
+## Licensaktivitet
 
 När funktionen är på räknar appen de pass du loggat de senaste **sex
 månaderna** och jämför summan med kravet för ditt fall.
@@ -30,8 +30,8 @@ licens för.
 
 Nya installationer börjar på **Första enhandsvapnet**, det strängare av de två.
 Om du sedan tidigare innehar enhandsvapen för målskjutning bör du byta —
-annars kräver barometern dubbelt så mycket som regeln gör. Appen ändrar det
-aldrig åt dig, och vilket fall som används visas intill barometern.
+annars kräver Licensaktivitet dubbelt så mycket som regeln gör. Appen ändrar
+det aldrig åt dig, och vilket fall som används visas intill statusen.
 
 ## ”I genomsnitt”, närmare bestämt
 
@@ -58,14 +58,14 @@ dig får du räkna på den själv:
 
 ## Vad som räknas, och vad det här inte är
 
-Barometern räknar det du loggat. Ett banbesök du inte loggade finns inte med,
-och ett pass som loggats två gånger räknas två gånger.
+Licensaktivitet räknar det du loggat. Ett banbesök du inte loggade finns inte
+med, och ett pass som loggats två gånger räknas två gånger.
 
 !!! warning "Din förening och polisen avgör, inte appen"
 
     Appen räknar pass mot ett publicerat krav. Den utfärdar inte intyget och
     har ingen uppfattning om huruvida föreningen skriver under eller om polisen
-    beviljar licensen. Betrakta en grön barometer som ”räkningen ser rätt ut”,
+    beviljar licensen. Betrakta en grön status som ”räkningen ser rätt ut”,
     inte som ett godkännande.
 
 ## Att få ut det

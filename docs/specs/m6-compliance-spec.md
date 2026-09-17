@@ -36,7 +36,7 @@ Two authoritative sources, kept separate per the implementation plan:
   does not reference FAP 551-3's numeric counts. The maintainer reviews
   föreningsintyg professionally and will supply real numbers; until then the
   `se` profile ships **VERIFY placeholder** numbers only, clearly marked, and
-  the barometer UI must show an "unverified defaults" hint whenever they are
+  the licence-activity UI must show an "unverified defaults" hint whenever they are
   in effect.
 - **SHB Bilaga 8** club-intyg indicators (verified, p. 484): ≥6 months active
   membership before first intyg (first weapon .22); grovkaliber earliest after
@@ -66,7 +66,7 @@ interface JurisdictionProfile {
   name: { sv: string; en: string };
   rules: WeaponGroupComplianceRule[];
   source: string; // citation string, shown in UI
-  verified: boolean; // false => barometer UI must show "unverified defaults"
+  verified: boolean; // false => licence-activity UI must show "unverified defaults"
 }
 ```
 
@@ -85,7 +85,7 @@ like `shared/scoring/stats.ts` trusts its `StatsSeries[]` input.
 **Rolling window:** `[now - windowMonths, now]`, inclusive of `now`,
 exclusive of the lower bound computed via calendar-month subtraction (not a
 fixed day count) — reuses the same "subtract N months" primitive across both
-the barometer and the SE constants, tested at a month-length boundary
+licence activity and the SE constants, tested at a month-length boundary
 (31-day vs 28-day month) so DST/day-count edge cases don't silently pass.
 
 **Status thresholds (binding, since SHB gives no threshold banding — this is
@@ -98,29 +98,29 @@ item):** given `count` = weighted activity count in the window and
 - `red` otherwise (includes `required <= 0`, which is always green instead —
   see behavior table)
 
-## Behaviors — `barometer.ts`
+## Behaviors — `licence-activity.ts`
 
-| #   | Scenario                                                                                                                                                                                                 | Expected                                                                                                                         |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| B1  | No sessions, any profile rule                                                                                                                                                                            | `activityCount: 0`, `status: 'red'` (unless `requiredActivities <= 0`)                                                           |
-| B2  | `requiredActivities <= 0`                                                                                                                                                                                | `status: 'green'` always, regardless of count                                                                                    |
-| B3  | Sessions inside window, type in `countsAs` with weight 1                                                                                                                                                 | each counts 1 toward `activityCount`                                                                                             |
-| B4  | Session outside window (before `windowStart`)                                                                                                                                                            | excluded                                                                                                                         |
-| B5  | Session exactly at `now`                                                                                                                                                                                 | included (inclusive upper bound)                                                                                                 |
-| B6  | Session exactly at `windowStart` boundary                                                                                                                                                                | included (inclusive lower bound)                                                                                                 |
-| B7  | Session one instant before `windowStart`                                                                                                                                                                 | excluded                                                                                                                         |
-| B8  | Session type with weight 0 in `countsAs` (e.g. `{training: 1, competition: 0}`)                                                                                                                          | competition sessions don't count                                                                                                 |
-| B9  | Two sessions same day, same weapon group                                                                                                                                                                 | both count (activity = session, not day)                                                                                         |
-| B10 | `count === required`                                                                                                                                                                                     | `status: 'green'`                                                                                                                |
-| B11 | `count === ceil(required/2)`, `< required`                                                                                                                                                               | `status: 'amber'`                                                                                                                |
-| B12 | `count === ceil(required/2) - 1`                                                                                                                                                                         | `status: 'red'`                                                                                                                  |
-| B13 | `computeBarometerForWeaponGroup` — session's `weaponGroup` not in the rule's `weaponGroups` list                                                                                                         | excluded from that rule's count                                                                                                  |
-| B14 | `computeBarometerForWeaponGroup` — no rule matches the requested weapon group                                                                                                                            | returns `null` (not a fabricated zero-required green)                                                                            |
-| B15 | `computeFirearmBarometer` — sessions matched by `session.weaponGroup` membership in the firearm's assigned weapon-group list (not by `session.firearm_id`), per §6.6 "per firearm via its weapon groups" | a session naming a weapon group the firearm holds counts, even if `firearm_id` differs or is null                                |
-| B16 | `computeFirearmBarometer` with a firearm holding two weapon groups covered by two different rules                                                                                                        | returns one status per rule; caller (UI) picks worst for a single chip, per §"Overall aggregation" below                         |
-| B17 | `computeOverallBarometer` — multiple weapon groups present, mixed statuses                                                                                                                               | overall = worst of (`red` &lt; `amber` &lt; `green`) across all rules that have ≥1 matching session or ≥1 requested weapon group |
-| B18 | `computeOverallBarometer` — no weapon groups requested/present at all                                                                                                                                    | returns `{ statuses: [], overall: null }` — never fabricates a status from nothing                                               |
-| B19 | 31-day vs 28-day month subtraction at a `windowMonths` boundary (Jan 31 − 1 month)                                                                                                                       | uses calendar month subtraction (clamped to the shorter month, JS `Date` default behavior), documented not "exactly 30 days"     |
+| #   | Scenario                                                                                                                                                                                                       | Expected                                                                                                                         |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | No sessions, any profile rule                                                                                                                                                                                  | `activityCount: 0`, `status: 'red'` (unless `requiredActivities <= 0`)                                                           |
+| B2  | `requiredActivities <= 0`                                                                                                                                                                                      | `status: 'green'` always, regardless of count                                                                                    |
+| B3  | Sessions inside window, type in `countsAs` with weight 1                                                                                                                                                       | each counts 1 toward `activityCount`                                                                                             |
+| B4  | Session outside window (before `windowStart`)                                                                                                                                                                  | excluded                                                                                                                         |
+| B5  | Session exactly at `now`                                                                                                                                                                                       | included (inclusive upper bound)                                                                                                 |
+| B6  | Session exactly at `windowStart` boundary                                                                                                                                                                      | included (inclusive lower bound)                                                                                                 |
+| B7  | Session one instant before `windowStart`                                                                                                                                                                       | excluded                                                                                                                         |
+| B8  | Session type with weight 0 in `countsAs` (e.g. `{training: 1, competition: 0}`)                                                                                                                                | competition sessions don't count                                                                                                 |
+| B9  | Two sessions same day, same weapon group                                                                                                                                                                       | both count (activity = session, not day)                                                                                         |
+| B10 | `count === required`                                                                                                                                                                                           | `status: 'green'`                                                                                                                |
+| B11 | `count === ceil(required/2)`, `< required`                                                                                                                                                                     | `status: 'amber'`                                                                                                                |
+| B12 | `count === ceil(required/2) - 1`                                                                                                                                                                               | `status: 'red'`                                                                                                                  |
+| B13 | `computeLicenceActivityForWeaponGroup` — session's `weaponGroup` not in the rule's `weaponGroups` list                                                                                                         | excluded from that rule's count                                                                                                  |
+| B14 | `computeLicenceActivityForWeaponGroup` — no rule matches the requested weapon group                                                                                                                            | returns `null` (not a fabricated zero-required green)                                                                            |
+| B15 | `computeFirearmLicenceActivity` — sessions matched by `session.weaponGroup` membership in the firearm's assigned weapon-group list (not by `session.firearm_id`), per §6.6 "per firearm via its weapon groups" | a session naming a weapon group the firearm holds counts, even if `firearm_id` differs or is null                                |
+| B16 | `computeFirearmLicenceActivity` with a firearm holding two weapon groups covered by two different rules                                                                                                        | returns one status per rule; caller (UI) picks worst for a single chip, per §"Overall aggregation" below                         |
+| B17 | `computeOverallLicenceActivity` — multiple weapon groups present, mixed statuses                                                                                                                               | overall = worst of (`red` &lt; `amber` &lt; `green`) across all rules that have ≥1 matching session or ≥1 requested weapon group |
+| B18 | `computeOverallLicenceActivity` — no weapon groups requested/present at all                                                                                                                                    | returns `{ statuses: [], overall: null }` — never fabricates a status from nothing                                               |
+| B19 | 31-day vs 28-day month subtraction at a `windowMonths` boundary (Jan 31 − 1 month)                                                                                                                             | uses calendar month subtraction (clamped to the shorter month, JS `Date` default behavior), documented not "exactly 30 days"     |
 
 ## Behaviors — `indicators.ts` (Bilaga 8)
 
@@ -178,7 +178,7 @@ result, not a confirmed pass/fail.
 
 ## Out of scope for this spec
 
-PDF export, barometer UI, Settings profile picker, custom Stats period,
+PDF export, licence-activity UI, Settings profile picker, custom Stats period,
 Maestro flow, i18n strings. Those are routine app-layer work per CLAUDE.md
 and get ordinary tests, documented in the M6 evidence/report instead of this
 spec.

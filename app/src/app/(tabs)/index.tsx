@@ -16,7 +16,7 @@ import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
-import { useOverallBarometer } from '@/features/compliance/use-barometer';
+import { useOverallLicenceActivity } from '@/features/compliance/use-licence-activity';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { formatSessionDate } from '@/features/home/format-session-date';
 import {
@@ -30,7 +30,7 @@ import { useHomeData } from '@/features/home/use-home-data';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
-const BAROMETER_TONE: Record<string, 'neutral' | 'primary'> = {
+const LICENCE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
   amber: 'primary',
   red: 'primary',
@@ -47,7 +47,7 @@ export default function HomeScreen() {
   const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
     useHomeData();
   const { profile } = useComplianceProfile();
-  const { overall } = useOverallBarometer(profile);
+  const { overall } = useOverallLicenceActivity(profile);
   const [shapeFilter, setShapeFilter] = useState<SessionShapeFilter>('all');
 
   const onNewSession = () => router.push('/session/new');
@@ -105,8 +105,8 @@ export default function HomeScreen() {
       {profile && overall && (
         <Chip
           testID="home-barometer"
-          label={t(`compliance.barometer${capitalize(overall)}`)}
-          tone={BAROMETER_TONE[overall]}
+          label={t(`compliance.licenceActivity${capitalize(overall)}`)}
+          tone={LICENCE_ACTIVITY_TONE[overall]}
         />
       )}
 

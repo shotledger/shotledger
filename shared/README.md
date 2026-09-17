@@ -16,7 +16,7 @@ citation next to each value. Nothing is guessed.
 | `disciplines/`                                                          | Discipline and program definitions as JSON data validated by zod, weapon groups, shooter classes, ISSF/SvSF events and eligibility. |
 | `regulations/`                                                          | The regelverk registry (SPSF, ISSF, SvSF) and adoption between them (ADR 0011).                                                     |
 | `scoring/`                                                              | Series and session scores, märke and standardmedalj thresholds, statistics.                                                         |
-| `compliance/`                                                           | The license-activity barometer (FAP 551-3 profile).                                                                                 |
+| `compliance/`                                                           | Licence activity (FAP 551-3 profile).                                                                                               |
 | `target-scoring/`                                                       | Target-face geometry and the maths behind photo scoring.                                                                            |
 | `export/`, `json-export/`, `csv/`                                       | PDF club log, the sessions-export file format (its JSON Schema is generated from here) and CSV.                                     |
 | `backup/`, `vault/`                                                     | Encrypted backup container and the document vault envelope.                                                                         |

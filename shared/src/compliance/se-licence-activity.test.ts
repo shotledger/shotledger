@@ -1,9 +1,9 @@
-// The FAP 551-3 numbers driven through the (unchanged) barometer, so the
+// The FAP 551-3 numbers driven through the (unchanged) licence-activity computation, so the
 // reading of "sammantaget i genomsnitt" is executable rather than only
 // written down. Spec: docs/specs/compliance-fap551-spec.md, behaviors R1–R7.
 import { describe, expect, it } from 'vitest';
 
-import { computeBarometerForWeaponGroup } from './barometer';
+import { computeLicenceActivityForWeaponGroup } from './licence-activity';
 import { getProfile } from './profile-registry';
 import { SE_EXISTING_HANDGUN_VARIANT, SE_FIRST_HANDGUN_VARIANT } from './profiles/se';
 import type { ComplianceSession } from './types';
@@ -22,10 +22,10 @@ function sessions(count: number, endDaysAgo = 0): ComplianceSession[] {
 }
 
 function statusFor(list: ComplianceSession[], variant: string) {
-  return computeBarometerForWeaponGroup(list, getProfile('se', variant)!, GROUP, NOW);
+  return computeLicenceActivityForWeaponGroup(list, getProfile('se', variant)!, GROUP, NOW);
 }
 
-describe('the SE profile through the barometer', () => {
+describe('the SE profile through licence activity', () => {
   it('R1: 5 § — twelve activities in the window is on track', () => {
     const result = statusFor(sessions(12), SE_FIRST_HANDGUN_VARIANT);
     expect(result?.activityCount).toBe(12);

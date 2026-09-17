@@ -1,4 +1,4 @@
-// Settings → Compliance. Which licence-activity profile the barometer and the
+// Settings → Compliance. Which licence-activity profile the activity status and the
 // föreningsintyg PDF are worked out under, and which case within it applies to
 // this shooter (for `se`: FAP 551-3 5 § vs 6 §, which the app cannot derive).
 import type { ProfileSelection } from '@shotledger/shared';
