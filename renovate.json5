@@ -9,6 +9,11 @@
 
   addLabels: ['dependencies'],
 
+  // Default 'auto' rebases every open branch each time main moves, and each
+  // rebase costs a full CI run: 43% of this repo's Actions minutes, one branch
+  // alone paying for 39. Revisit when the repo is public and minutes are free.
+  rebaseWhen: 'conflicted',
+
   packageRules: [
     {
       // Expo SDK, React Native, and React versions are tightly coupled;
