@@ -20,8 +20,8 @@ Det är standardläget och det sätt appen är tänkt att användas på.
 
 - **Tavelfoton**, om du inte tar med dem i en säkerhetskopia som du själv
   flyttar, eller slår på synk.
-- **Valvet** — licenskort och medlemskort. Utesluts ur säkerhetskopior som
-  standard, och synkas aldrig.
+- **Foton av licenskort.** När du skannar ett fylls licensfälten i och fotot
+  raderas sedan — appen har ingenstans att spara det.
 - **Träningsmarkeringar**, om du väljer att spara dem. De stannar på enheten
   för att träna en framtida håldetektor, och du kan radera dem.
 

@@ -70,7 +70,7 @@ export function SettingsTabIcon({ color, size = DEFAULT_SIZE }: TabIconProps) {
   );
 }
 
-// Wrench — the Tools tab is a hub of utilities (timers, vault, Webshooter),
+// Wrench — the Tools tab is a hub of utilities (timers, photos, Webshooter),
 // so a tool glyph rather than another target/gear.
 export function ToolsTabIcon({ color, size = DEFAULT_SIZE }: TabIconProps) {
   return (

@@ -1,6 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -9,6 +9,7 @@ import { MigrationGate } from '@/db/migration-gate';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
+import { purgeRemovedVaultStorage } from '@/platform/vault-purge';
 import { AppSettingsProvider } from '@/state/app-settings';
 
 SplashScreen.preventAutoHideAsync();
@@ -84,18 +85,6 @@ function RootStack() {
       <Stack.Screen
         name="account"
         options={{ presentation: 'modal', headerShown: true, title: t('account.title') }}
-      />
-      <Stack.Screen
-        name="vault/index"
-        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
-      />
-      <Stack.Screen
-        name="vault/add"
-        options={{ presentation: 'modal', headerShown: true, title: t('vault.addTitle') }}
-      />
-      <Stack.Screen
-        name="vault/[id]"
-        options={{ presentation: 'modal', headerShown: true, title: t('vault.title') }}
       />
       <Stack.Screen
         name="settings/personal"
@@ -185,6 +174,11 @@ function ThemedApp() {
 }
 
 export default function RootLayout() {
+  // Deletes what the removed Vault left behind (issue #276).
+  useEffect(() => {
+    void purgeRemovedVaultStorage();
+  }, []);
+
   return (
     // Required by react-native-gesture-handler (Swipeable et al. — first
     // used by the session detail series list's swipe-to-delete); expo-router

@@ -12,8 +12,6 @@ export interface AddLicenseInput {
   validUntil?: string | null;
   conditions?: string | null;
   authority?: string | null;
-  /** Id of the vault document holding the scanned original, if any (§ licence-card-image). */
-  vaultDocumentId?: string | null;
 }
 
 /**
@@ -35,18 +33,9 @@ export function addLicense(db: Database, input: AddLicenseInput) {
     validUntil: input.validUntil ?? null,
     conditions: input.conditions ?? null,
     authority: input.authority ?? null,
-    vaultDocumentId: input.vaultDocumentId ?? null,
   };
   db.insert(licenses).values(row).run();
   return row;
-}
-
-/** Links (or clears) the vault document holding the scanned original card. */
-export function setLicenseVaultDocument(db: Database, id: string, vaultDocumentId: string | null) {
-  db.update(licenses)
-    .set({ vaultDocumentId, updatedAt: nowIso() })
-    .where(eq(licenses.id, id))
-    .run();
 }
 
 export function listLicenses(db: Database, firearmId: string) {

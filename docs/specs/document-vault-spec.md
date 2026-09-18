@@ -1,5 +1,9 @@
 # Document vault crypto envelope — executable spec
 
+> **Superseded (2026-09-16, issue #276).** The document Vault was removed:
+> every module this document describes is deleted. Kept as the record of what
+> was built and how it was verified; nothing here describes the app today.
+
 Scope: `shared/src/vault/**` (old-coder mandatory — this is a new addition to
 the CLAUDE.md list of paths requiring the loop; the crypto envelope for the
 v2 encrypted document vault is exactly the kind of code the maintainer will

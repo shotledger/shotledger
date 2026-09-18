@@ -1,12 +1,12 @@
-// Camera-or-library photo pick for a new vault document. Mirrors
+// Camera-or-library photo pick for the licence-card scan. Mirrors
 // app/src/features/session/pick-photo.ts's shape (permission dance isolated
-// from the screen), extended with a camera source per the task brief ("add
-// (camera or library via existing expo-image-picker)").
+// from the screen), with a camera source as well as the library. The picked
+// image is read by the OCR engine and then deleted — nothing keeps it.
 import * as ImagePicker from 'expo-image-picker';
 
-export type PickVaultPhotoResult = string | null | 'denied';
+export type PickCardPhotoResult = string | null | 'denied';
 
-export async function pickVaultPhotoFromLibrary(): Promise<PickVaultPhotoResult> {
+export async function pickCardPhotoFromLibrary(): Promise<PickCardPhotoResult> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return 'denied';
 
@@ -18,7 +18,7 @@ export async function pickVaultPhotoFromLibrary(): Promise<PickVaultPhotoResult>
   return result.assets[0]?.uri ?? null;
 }
 
-export async function pickVaultPhotoFromCamera(): Promise<PickVaultPhotoResult> {
+export async function pickCardPhotoFromCamera(): Promise<PickCardPhotoResult> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) return 'denied';
 

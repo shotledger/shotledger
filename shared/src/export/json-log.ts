@@ -8,9 +8,6 @@
 // points (never tenths, which are an internal storage detail), and the
 // session bodies reuse the CSV exporter's `SessionExport` shape so both
 // exports describe the same data the same way.
-//
-// The document vault is never part of this — it is out of the export
-// boundary by design (see shared/src/vault).
 
 import type { AnalyticsRecord, AnalyticsRecords, AnalyticsTotals } from '../scoring/analytics';
 import type { SessionExport } from '../json-export/types';

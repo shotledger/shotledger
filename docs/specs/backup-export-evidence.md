@@ -1,5 +1,12 @@
 # Backup export scope and the vault opt-in — evidence report
 
+> **Partly superseded (2026-09-16, issue #276).** The Vault was removed, so
+> the vault opt-in, its passphrase re-wrap and the `vault/payload.enc` entry
+> are gone. Everything else here — the container, the scope audit, the
+> sync-photo namespace, restore's full-replace semantics — still holds, and a
+> bundle written by a build that had the Vault restores with its vault section
+> ignored.
+
 Companion to `docs/specs/backup-export-spec.md`. Branch
 `feat/export-scope-vault-optin`, off `origin/main` at `4404b47`.
 

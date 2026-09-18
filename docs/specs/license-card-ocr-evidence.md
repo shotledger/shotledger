@@ -1,5 +1,10 @@
 # Licence-card scan (on-device OCR) — evidence report
 
+> **Amended (2026-09-16, issue #276).** The Vault was removed, and with it the
+> "keep the scanned original" half of this spec: the scan now fills the licence
+> fields and the image is deleted on every path. The recognition, parsing and
+> form-prefill behaviours below are unchanged.
+
 Companion to `docs/specs/license-card-ocr-spec.md`. Routine app-layer work
 per CLAUDE.md (a pure parser plus UI/platform glue) — ordinary vitest/jest
 tests, no old-coder gauntlet.

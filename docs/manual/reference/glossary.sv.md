@@ -74,10 +74,6 @@ Reglemente
 : Vilket förbunds regelverk ett pass skjuts under — SPSF, ISSF eller SvSF. Se
 [Reglementen](../guides/regulations.md).
 
-Valvet
-: Det krypterade utrymmet för licenskort och medlemskort. Utesluts ur
-säkerhetskopior som standard. På engelska _the Vault_.
-
 Säkerhetskopia
 : Hela appen i en fil — vapen, ammunition, licenser, inställningar, foton. Inte
 samma sak som en passexport, som bara innehåller skjutandet.

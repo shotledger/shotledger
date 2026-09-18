@@ -116,6 +116,6 @@ One session, one scored series of three shots:
 
 !!! note "What an export is not"
 
-    It carries no photographs, no firearms or ammunition records, no licences
-    and nothing from the Vault. Importing one into a fresh install gives you
-    the shooting, not the equipment behind it — for that, restore a backup.
+    It carries no photographs, and no firearms, ammunition or licence records.
+    Importing one into a fresh install gives you the shooting, not the
+    equipment behind it — for that, restore a backup.

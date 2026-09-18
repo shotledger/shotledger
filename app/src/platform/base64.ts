@@ -1,7 +1,7 @@
 // Plain base64 encode/decode (not encryption — no cipher, no secret material
-// derived here). Encoding turns decrypted vault bytes into a `data:` URI so
-// <Image> can render them without ever writing plaintext to disk; decoding
-// turns a share card's rasterized `Svg.toDataURL()` output back into bytes
+// derived here). Encoding is what `save-to-folder.ts` hands the Storage
+// Access Framework; decoding turns a share card's rasterized
+// `Svg.toDataURL()` output back into bytes
 // for `File.write()` (app/src/platform/share-card.ts). Hermes has no global
 // `btoa`/`atob`/`Buffer`; this is the standard RFC 4648 alphabet.
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

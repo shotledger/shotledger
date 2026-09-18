@@ -1,6 +1,10 @@
 # ADR 0007: Vault export uses passphrase re-wrap, not a raw ciphertext copy
 
-Status: accepted (2026-09-03)
+Status: superseded (2026-09-16) by the removal of the Vault itself
+(issue #276). The Vault, its export path and every module named below are
+gone; `.shotledger` bundles no longer carry a vault section, and one written
+by a build that did is restored with that section ignored. Kept for the
+record — nothing here is current.
 
 ## Context
 

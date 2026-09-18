@@ -1,5 +1,12 @@
 # Backup export scope and the vault opt-in — executable spec
 
+> **Partly superseded (2026-09-16, issue #276).** The Vault was removed, so
+> the vault opt-in, its passphrase re-wrap and the `vault/payload.enc` entry
+> are gone. Everything else here — the container, the scope audit, the
+> sync-photo namespace, restore's full-replace semantics — still holds, and a
+> bundle written by a build that had the Vault restores with its vault section
+> ignored.
+
 Scope: `shared/src/backup/**` and the app glue that feeds it
 (`app/src/db/backup/*`, `app/src/features/backup/*`,
 `app/src/platform/backup-fs.ts`). Old-coder mandatory: this is data-loss- and

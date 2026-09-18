@@ -2,7 +2,7 @@ import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { firearms, sessions, syncControl, syncOutbox } from '../schema';
+import { firearms, licenses, sessions, syncControl, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, softDeleteFirearm, updateFirearm } from './firearms';
@@ -223,6 +223,32 @@ describe('applyChanges', () => {
 
     const rows = db.select().from(firearms).all();
     expect(rows.map((r) => r.id)).toEqual(['remote-2']);
+  });
+
+  it('applies a licence row from a device that still has vault_document_id', async () => {
+    // Issue #276 dropped `licenses.vault_document_id`. A device on an older
+    // build still puts it in the payload; the row must land anyway, with the
+    // column silently dropped.
+    const firearmId = createFirearm(db, { make: 'Pardini', model: 'SP' }).id;
+    await store.applyChanges([
+      change({
+        tableName: 'licenses',
+        rowId: 'lic-1',
+        payload: {
+          id: 'lic-1',
+          created_at: '2026-09-01T00:00:00.000Z',
+          updated_at: '2026-09-01T00:00:00.000Z',
+          deleted_at: null,
+          firearm_id: firearmId,
+          license_number: 'A000.000/2026-01',
+          vault_document_id: 'doc-from-an-older-build',
+        },
+      }),
+    ]);
+
+    const row = db.select().from(licenses).where(eq(licenses.id, 'lic-1')).get();
+    expect(row?.licenseNumber).toBe('A000.000/2026-01');
+    expect('vaultDocumentId' in (row ?? {})).toBe(false);
   });
 
   it('does nothing for an empty change list', async () => {

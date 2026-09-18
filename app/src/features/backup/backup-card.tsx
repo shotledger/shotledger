@@ -2,9 +2,8 @@
 // unchanged in behaviour except for what this branch adds, so that the
 // backup feature owns its own UI and Settings keeps only two rows.
 //
-// Backup scope: everything the app stores except the Vault. The Vault goes in
-// only when the user turns it on for one export and supplies a passphrase —
-// see backup-options-dialog.tsx and docs/specs/backup-export-spec.md.
+// Backup scope: everything the app stores — see
+// docs/specs/backup-export-spec.md.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -15,16 +14,8 @@ import { ListRow } from '@/components/list-row';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
-import type { RestorePreview } from '@/db/backup/restore-bundle';
-
 import { BackupOptionsDialog } from './backup-options-dialog';
-import { RestorePassphraseDialog } from './restore-passphrase-dialog';
 import { useBackupExportImport, type BackupExportOptions } from './use-backup-export-import';
-
-interface PendingRestore {
-  preview: RestorePreview;
-  bytes: Uint8Array;
-}
 
 export function BackupCard() {
   const { t } = useTranslation();
@@ -43,8 +34,6 @@ export function BackupCard() {
   } = useBackupExportImport();
 
   const [optionsVisible, setOptionsVisible] = useState(false);
-  const [pending, setPending] = useState<PendingRestore | null>(null);
-  const [wrongPassphrase, setWrongPassphrase] = useState(false);
 
   function onConfirmOptions(options: BackupExportOptions) {
     setOptionsVisible(false);
@@ -57,28 +46,19 @@ export function BackupCard() {
     ]);
   }
 
-  async function runRestore(plan: PendingRestore, passphrase: string | null) {
-    const outcome = await confirmRestore(plan.bytes, passphrase);
-    if (outcome.kind === 'wrong-passphrase') {
-      setWrongPassphrase(true);
-      return;
-    }
-    setPending(null);
-    setWrongPassphrase(false);
+  async function runRestore(bytes: Uint8Array) {
+    const outcome = await confirmRestore(bytes);
     if (outcome.kind === 'ok') restoreDoneAlert();
   }
 
   async function onRestore() {
     const planned = await planRestore();
     if (!planned) return;
-    const { manifest, hasVault } = planned.preview;
+    const { manifest } = planned.preview;
     const photosNote =
       manifest.kind === 'database+photos'
         ? t('backup.restorePreviewPhotosNote', { count: manifest.counts.photos })
         : '';
-    const vaultNote = hasVault
-      ? t('backup.restorePreviewVaultNote', { count: manifest.vault?.documents ?? 0 })
-      : t('backup.restorePreviewNoVaultNote');
 
     Alert.alert(
       t('backup.restorePreviewTitle'),
@@ -89,21 +69,13 @@ export function BackupCard() {
         shots: manifest.counts.shots,
         firearms: manifest.counts.firearms,
         photosNote,
-        vaultNote,
       }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('backup.restoreConfirmAction'),
           style: 'destructive',
-          onPress: () => {
-            const plan = { preview: planned.preview, bytes: planned.bytes };
-            setPending(plan);
-            setWrongPassphrase(false);
-            // A bundle with a Vault needs the passphrase before anything is
-            // written; one without goes straight through.
-            if (!hasVault) void runRestore(plan, null);
-          },
+          onPress: () => void runRestore(planned.bytes),
         },
       ],
     );
@@ -117,7 +89,7 @@ export function BackupCard() {
         </ThemedText>
         <InfoButton
           title={t('backup.sectionTitle')}
-          body={t('backup.vaultInfo')}
+          body={t('backup.scopeInfo')}
           testID="backup-info"
         />
       </View>
@@ -147,7 +119,7 @@ export function BackupCard() {
           : t('backup.neverBackedUp')}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        {t('backup.vaultNote')}
+        {t('backup.scopeNote')}
       </ThemedText>
       {statusText ? (
         <ThemedText type="small" themeColor="textSecondary" testID="backup-status">
@@ -174,22 +146,6 @@ export function BackupCard() {
         hasFolder={folderUri !== null}
         onCancel={() => setOptionsVisible(false)}
         onConfirm={onConfirmOptions}
-      />
-      <RestorePassphraseDialog
-        visible={pending !== null && pending.preview.hasVault}
-        busy={busy}
-        documents={pending?.preview.manifest.vault?.documents ?? 0}
-        wrongPassphrase={wrongPassphrase}
-        onCancel={() => {
-          setPending(null);
-          setWrongPassphrase(false);
-        }}
-        onSkipVault={() => {
-          if (pending) void runRestore(pending, null);
-        }}
-        onSubmit={(passphrase) => {
-          if (pending) void runRestore(pending, passphrase);
-        }}
       />
     </Card>
   );

@@ -1,5 +1,9 @@
 # Document vault — evidence report
 
+> **Superseded (2026-09-16, issue #276).** The document Vault was removed:
+> every module this document describes is deleted. Kept as the record of what
+> was built and how it was verified; nothing here describes the app today.
+
 Companion to `docs/specs/document-vault-spec.md`. Covers `shared/src/vault/**`
 (old-coder gauntlet) and summarizes the routine app-layer work around it
 (ordinary tests, no gauntlet).

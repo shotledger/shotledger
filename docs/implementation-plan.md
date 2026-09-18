@@ -113,12 +113,10 @@ licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
                 valid_until TEXT,              -- giltighetstid t.o.m.;
                                                -- NULL = tills vidare
                 conditions TEXT,               -- villkor (often empty)
-                authority TEXT,                -- e.g. 'Polismyndigheten'
-                vault_document_id TEXT         -- opaque pointer into the
-                                               -- on-device vault index
-                                               -- (migration 0005); NULL when
-                                               -- no scanned original was kept
+                authority TEXT                 -- e.g. 'Polismyndigheten'
                 -- expiry reminders (M4) key off the latest row per firearm
+                -- vault_document_id was dropped by migration 0001 with the
+                -- Vault itself (issue #276)
 
 firearm_groups  firearm_id FK, group_id TEXT,  -- federation-scoped id, e.g.
                                                -- 'spsf:C' (§6.4a)
@@ -695,9 +693,8 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | `/firearms`                                | list + licence-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
-| `/tools`                                   | timers, vault, Webshooter — the non-settings hub                                          | disconnected       |
+| `/tools`                                   | timers, photos, Webshooter — the non-settings hub                                         | disconnected       |
 | `/timer`                                   | PAR / IPSC / fält timer (segmented control)                                               | idle vs running    |
-| `/vault`                                   | encrypted licences, cards, codes                                                          | locked / empty     |
 | `/webshooter/import`, `/webshooter/starts` | Webshooter competitions and signups                                                       | not connected      |
 | `/settings`                                | language, theme, birth year, compliance, account & sync, backup/restore, CSV, about, wipe |                    |
 | `/dev/components`                          | component gallery (dev only)                                                              |                    |
@@ -1028,6 +1025,8 @@ restates §0 rules 1–6 verbatim.
 > (differentially verified against OpenSSL) because expo-crypto's only hashing
 > is a per-call native `digest()`. Spec and evidence:
 > `docs/specs/backup-export-spec.md`, `docs/specs/backup-export-evidence.md`.
+> The vault opt-in half of this is gone with the Vault (issue #276, below); a
+> bundle carrying a vault section still restores, section ignored.
 
 > **Cloud sync + accounts has since shipped** across three branches:
 > `feat/sync-backend` (protocol + D1 changelog),
@@ -1106,6 +1105,18 @@ restates §0 rules 1–6 verbatim.
 > same scan, and can create a licence record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
 
+> **The Vault has since been removed** (issue #276, maintainer 2026-09-16:
+> licences are going digital, and a licence picture — if it is ever needed
+> again — belongs next to the firearm, not in a separate encrypted store).
+> That withdraws the "we want the original picture as well" requirement the
+> paragraph above records, so the scan now keeps only the recognised fields
+> and deletes the image. Gone with it: the `/vault` screens, the vault store,
+> the AES-GCM envelope, the passphrase re-wrap of ADR 0007, the Android
+> backup-exclusion config plugin, `licenses.vault_document_id` (migration
+> `0001`), and the `expo-crypto`, `expo-local-authentication` and
+> `@noble/hashes` dependencies. A bundle written by a build that still had
+> the Vault restores unchanged, with its vault section ignored.
+
 > **Sight settings have since shipped** on `feat/sight-settings` (issue #114,
 > replacing a phone note the maintainer kept per firearm). A `sight_settings`
 > row is a shooter-named profile — free-text label, signed elevation/windage
@@ -1121,7 +1132,7 @@ restates §0 rules 1–6 verbatim.
 > rows arriving active from a last-write-wins sync. No new dependency, no
 > backend change — `sync_rows` is table-agnostic.
 
-Photo target scoring; Webshooter import; document vault; iOS release.
+Photo target scoring; Webshooter import; iOS release.
 
 Design notes for these live in plan.md and need maintainer + Fable-level
 sessions before implementation.

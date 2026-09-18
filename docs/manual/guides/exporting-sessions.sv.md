@@ -115,7 +115,6 @@ Ett pass, en räknande serie om tre skott:
 
 !!! note "Vad en export inte är"
 
-    Den bär inga foton, inga vapen- eller ammunitionsposter, inga licenser och
-    ingenting från Valvet. Att importera en i en ny installation ger dig
-    skjutandet, inte utrustningen bakom det — för det återställer du en
-    säkerhetskopia.
+    Den bär inga foton och inga vapen-, ammunitions- eller licensposter. Att
+    importera en i en ny installation ger dig skjutandet, inte utrustningen
+    bakom det — för det återställer du en säkerhetskopia.
