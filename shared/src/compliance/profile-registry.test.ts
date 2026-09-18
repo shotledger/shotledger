@@ -121,9 +121,7 @@ describe('resolveDefaultVariantId', () => {
       deriveDefaultVariantId: undefined,
       defaultVariantId: SE_EXISTING_HANDGUN_VARIANT,
     };
-    expect(resolveDefaultVariantIdFor(definition, [ownedPistol])).toBe(
-      SE_EXISTING_HANDGUN_VARIANT,
-    );
+    expect(resolveDefaultVariantIdFor(definition, [ownedPistol])).toBe(SE_EXISTING_HANDGUN_VARIANT);
     expect(resolveDefaultVariantIdFor(definition, [])).toBe(SE_EXISTING_HANDGUN_VARIANT);
   });
 

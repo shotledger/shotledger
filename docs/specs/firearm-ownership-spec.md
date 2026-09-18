@@ -30,8 +30,8 @@ FAP 551-3 5 kap, as transcribed on page 3 of PM 551.24:
 - **6 §** — "för den som sedan tidigare **innehar enhandsvapen** för
   målskjutning": ≥1/month (6 in the window).
 
-The distinguishing fact is therefore: *does the shooter already hold a
-**handgun** for target shooting?* Two consequences the issue already names:
+The distinguishing fact is therefore: _does the shooter already hold a
+**handgun** for target shooting?_ Two consequences the issue already names:
 
 - The derivation must read the weapon **type**. An owned rifle is not an
   enhandsvapen and does not make the shooter a 6 § case.
@@ -42,7 +42,7 @@ The distinguishing fact is therefore: *does the shooter already hold a
 
 `pistol` and `revolver` only. `rifle` is not a handgun. `airgun` is a separate
 `weapon_type` in this app covering air pistols and air rifles alike, and a
-Swedish air pistol below the licensing threshold is not a *held* enhandsvapen
+Swedish air pistol below the licensing threshold is not a _held_ enhandsvapen
 in the sense 6 § uses; the app cannot tell the two apart from what it records.
 Excluding `airgun` therefore keeps a shooter on the **stricter** 5 § default,
 which is the fail-safe direction (see #281's spec). This is a deliberately
@@ -55,7 +55,7 @@ person's, **`NULL` not stated**.
 
 The migration leaves every existing row `NULL`. Defaulting existing rows to
 "own" would invent a fact about the user's firearms, and it would invent it in
-the one direction that *relaxes* the requirement — an installed shooter with a
+the one direction that _relaxes_ the requirement — an installed shooter with a
 pistol on file would silently drop from 12 required activities to 6 without
 ever having been asked. `NULL` derives to 5 §, the stricter case, exactly as
 today. Nothing about an existing install changes until the shooter says so.
@@ -109,50 +109,50 @@ No new dependencies. No new tooling. Files touched, by path:
 
 ### SE derivation — `D` (`shared/src/compliance/profiles/se.test.ts`)
 
-| #   | Facts                                                     | Expected           |
-| --- | --------------------------------------------------------- | ------------------ |
-| D1  | no firearms at all                                        | `firstHandgun`     |
-| D2  | owned `pistol`                                            | `existingHandgun`  |
-| D3  | owned `revolver`                                          | `existingHandgun`  |
-| D4  | owned `rifle` only                                        | `firstHandgun`     |
-| D5  | owned `airgun` only                                       | `firstHandgun`     |
-| D6  | `pistol` with `isOwn: false`                              | `firstHandgun`     |
-| D7  | `pistol` with `isOwn: null` (not stated)                  | `firstHandgun`     |
-| D8  | owned firearm with `weaponType: null`                     | `firstHandgun`     |
-| D9  | borrowed pistol + owned rifle + owned pistol              | `existingHandgun`  |
-| D10 | borrowed pistol + owned rifle, no owned handgun           | `firstHandgun`     |
+| #   | Facts                                           | Expected          |
+| --- | ----------------------------------------------- | ----------------- |
+| D1  | no firearms at all                              | `firstHandgun`    |
+| D2  | owned `pistol`                                  | `existingHandgun` |
+| D3  | owned `revolver`                                | `existingHandgun` |
+| D4  | owned `rifle` only                              | `firstHandgun`    |
+| D5  | owned `airgun` only                             | `firstHandgun`    |
+| D6  | `pistol` with `isOwn: false`                    | `firstHandgun`    |
+| D7  | `pistol` with `isOwn: null` (not stated)        | `firstHandgun`    |
+| D8  | owned firearm with `weaponType: null`           | `firstHandgun`    |
+| D9  | borrowed pistol + owned rifle + owned pistol    | `existingHandgun` |
+| D10 | borrowed pistol + owned rifle, no owned handgun | `firstHandgun`    |
 
 ### Registry — `V` (`shared/src/compliance/profile-registry.test.ts`)
 
-| #  | Scenario                                                      | Expected                                            |
-| -- | ------------------------------------------------------------- | --------------------------------------------------- |
-| V1 | `resolveDefaultVariantId('none', anything)`                   | `null`                                              |
-| V2 | `resolveDefaultVariantId('se', [])`                           | `firstHandgun`                                      |
-| V3 | `resolveDefaultVariantId('se', [owned pistol])`               | `existingHandgun`                                   |
-| V4 | `resolveDefaultVariantId('se')` — facts omitted               | `firstHandgun` (no facts is not "owns a handgun")   |
-| V5 | a definition without `deriveDefaultVariantId`                 | falls back to `defaultVariantId`                    |
-| V6 | `getProfile('se', resolveDefaultVariantId('se', [owned pistol]))` | rules require 6 activities                      |
-| V7 | `getProfile`/`getProfileDefinition` behaviour                 | unchanged — P1–P10 of the #281 spec still pass      |
+| #   | Scenario                                                          | Expected                                          |
+| --- | ----------------------------------------------------------------- | ------------------------------------------------- |
+| V1  | `resolveDefaultVariantId('none', anything)`                       | `null`                                            |
+| V2  | `resolveDefaultVariantId('se', [])`                               | `firstHandgun`                                    |
+| V3  | `resolveDefaultVariantId('se', [owned pistol])`                   | `existingHandgun`                                 |
+| V4  | `resolveDefaultVariantId('se')` — facts omitted                   | `firstHandgun` (no facts is not "owns a handgun") |
+| V5  | a definition without `deriveDefaultVariantId`                     | falls back to `defaultVariantId`                  |
+| V6  | `getProfile('se', resolveDefaultVariantId('se', [owned pistol]))` | rules require 6 activities                        |
+| V7  | `getProfile`/`getProfileDefinition` behaviour                     | unchanged — P1–P10 of the #281 spec still pass    |
 
 ### Query layer — `Q` (`app/src/db/queries/firearms.test.ts`)
 
-| #  | Scenario                                                             | Expected                                       |
-| -- | -------------------------------------------------------------------- | ---------------------------------------------- |
-| Q1 | `createFirearm` with no `isOwn`                                      | row has `isOwn: null` — never a fabricated `true` |
-| Q2 | `createFirearm({ isOwn: true })` / `false`                           | round-trips as `true` / `false`                 |
-| Q3 | `updateFirearm(id, { isOwn: false })`                                | persists; other columns untouched               |
-| Q4 | `listFirearmOwnershipFacts`                                          | one `{ weaponType, isOwn }` per non-deleted firearm |
-| Q5 | a soft-deleted firearm                                               | absent from the facts                           |
+| #   | Scenario                                   | Expected                                            |
+| --- | ------------------------------------------ | --------------------------------------------------- |
+| Q1  | `createFirearm` with no `isOwn`            | row has `isOwn: null` — never a fabricated `true`   |
+| Q2  | `createFirearm({ isOwn: true })` / `false` | round-trips as `true` / `false`                     |
+| Q3  | `updateFirearm(id, { isOwn: false })`      | persists; other columns untouched                   |
+| Q4  | `listFirearmOwnershipFacts`                | one `{ weaponType, isOwn }` per non-deleted firearm |
+| Q5  | a soft-deleted firearm                     | absent from the facts                               |
 
 ### App case resolution — `C` (`app/src/features/compliance/resolve-case.test.ts`)
 
-| #  | Stored choice / firearms                        | Expected                                  |
-| -- | ----------------------------------------------- | ----------------------------------------- |
-| C1 | profile `none`, owned pistol                    | no case, not explicit                     |
-| C2 | none stored, borrowed pistol                    | `firstHandgun`, not explicit              |
-| C3 | none stored, owned pistol                       | `existingHandgun`, not explicit           |
-| C4 | `firstHandgun` stored + owned pistol; and `existingHandgun` stored + no firearms | the stored one, explicit |
-| C5 | a stored id the profile no longer offers        | falls through to the derivation           |
+| #   | Stored choice / firearms                                                         | Expected                        |
+| --- | -------------------------------------------------------------------------------- | ------------------------------- |
+| C1  | profile `none`, owned pistol                                                     | no case, not explicit           |
+| C2  | none stored, borrowed pistol                                                     | `firstHandgun`, not explicit    |
+| C3  | none stored, owned pistol                                                        | `existingHandgun`, not explicit |
+| C4  | `firstHandgun` stored + owned pistol; and `existingHandgun` stored + no firearms | the stored one, explicit        |
+| C5  | a stored id the profile no longer offers                                         | falls through to the derivation |
 
 **Revision, during implementation.** C5 was first written as "an unknown
 stored id resolves to `firstHandgun`" — the profile's declared
