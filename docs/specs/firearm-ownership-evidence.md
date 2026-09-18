@@ -8,12 +8,17 @@ review the loop relies on did not happen before the code was written; the spec
 is the artifact to review after the fact, and the confidence claimed here is
 correspondingly lower.
 
-- Source state: branch `feat/firearm-own-flag`, commit
-  `c80dc85798add0d23b7efe4a44f3a68897c0e9c6`, worktree
+- Source state: branch `feat/firearm-own-flag`, commit `c149520`, worktree
   `/home/jimisola/tmp/shotledger-wt-ownflag` off `origin/main` at `b4331b1`.
 - Toolchain: node v24.12.0, tsc 7.0.2, vitest 5.0.0, jest 30.5.1 (app),
   Stryker per `stryker.config.json`, prettier 3.9.6, eslint 10.10.0.
-- Every number below is from one fresh run after the last code edit.
+- Every number below is from one fresh run after the last code edit, against
+  a clean working tree. **The first run of these layers was not**: it was green
+  at `c80dc85` against a working tree holding two prettier reformats that had
+  never been staged, and CI's `prettier --check` failed on the commit while the
+  local one passed on the tree. `git status` is part of the layer now — a
+  number measured on a tree that differs from the commit is not a number about
+  the commit. The layers were rerun in full after `c149520` staged them.
 - Entry point: `pnpm gauntlet` runs every layer; the individual commands are
   quoted per layer.
 
