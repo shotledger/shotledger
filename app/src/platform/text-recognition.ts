@@ -75,8 +75,7 @@ export async function recognizeText(imageUri: string): Promise<RecognizeTextResu
 /**
  * Removes the picker's cached copy of the scanned image. The card is the most
  * sensitive thing the app ever sees, so it does not linger in the cache after
- * the text has been read — unless the user asked for it in the vault, where
- * it is stored encrypted instead.
+ * the text has been read: the recognised fields are kept, the image never is.
  */
 export async function deleteScannedImage(imageUri: string): Promise<void> {
   try {

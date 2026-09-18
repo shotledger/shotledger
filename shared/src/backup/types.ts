@@ -37,21 +37,8 @@ export const BackupCountsSchema = z.object({
   sightSettings: z.number().int().nonnegative().optional(),
   /** Series photos whose source file could no longer be read at export time. */
   photosUnreadable: z.number().int().nonnegative().optional(),
-  /** Vault documents in the bundle's vault section, when one is present. */
-  vaultDocuments: z.number().int().nonnegative().optional(),
 });
 export type BackupCounts = z.infer<typeof BackupCountsSchema>;
-
-/** Present only when the user explicitly opted the vault into this bundle.
- * Records how to re-derive the key from their passphrase — never the
- * passphrase, and never the device's own vault key. */
-export const BackupVaultSectionSchema = z.object({
-  kdf: z.literal('pbkdf2-hmac-sha256'),
-  saltHex: z.string().regex(/^[0-9a-f]+$/),
-  iterations: z.number().int().positive(),
-  documents: z.number().int().nonnegative(),
-});
-export type BackupVaultSection = z.infer<typeof BackupVaultSectionSchema>;
 
 export const BackupManifestSchema = z.object({
   containerFormatVersion: z.literal(BACKUP_CONTAINER_FORMAT_VERSION),
@@ -65,8 +52,8 @@ export const BackupManifestSchema = z.object({
   kind: BackupKindSchema,
   createdAt: z.string(),
   counts: BackupCountsSchema,
-  // Optional so bundles written before the vault opt-in still validate, and
-  // so a build without this field simply ignores the section it can't use.
-  vault: BackupVaultSectionSchema.optional(),
+  // Zod strips unknown keys, which is what keeps a bundle written by a build
+  // that still had the Vault (issue #276) restorable: its `vault` manifest
+  // section and `vault/payload.enc` entry are simply ignored.
 });
 export type BackupManifest = z.infer<typeof BackupManifestSchema>;

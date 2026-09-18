@@ -311,7 +311,7 @@ export default function StatsReportScreen() {
             <Card testID="stats-export-formats">
               <ThemedText type="smallBold">{t('stats.exportFormatTitle')}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.exportVaultNote')}
+                {t('stats.exportScopeNote')}
               </ThemedText>
               {EXPORT_FORMATS.map((format) => (
                 <DrillDownRow

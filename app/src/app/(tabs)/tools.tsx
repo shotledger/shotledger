@@ -1,5 +1,5 @@
-// Tools tab — the utilities that are not app settings: timers, the
-// encrypted vault, and the external sites the shooter has enabled.
+// Tools tab — the utilities that are not app settings: timers, photos and
+// the external sites the shooter has enabled.
 //
 // External sites are one row each, and only when enabled (ADR 0010).
 // Connecting to them is back in Settings: the login form had turned a
@@ -65,17 +65,6 @@ export default function ToolsScreen() {
           subtitle={t('tools.photosSubtitle')}
           onPress={() => router.push('/photos')}
           testID="tools-open-photos"
-        />
-      </Card>
-
-      <Card>
-        {/* `vault.settingsRow*` keys keep their names so the vault rename
-            landing in parallel does not conflict with this move. */}
-        <DrillDownRow
-          title={t('vault.settingsRowTitle')}
-          subtitle={t('vault.settingsRowSubtitle')}
-          onPress={() => router.push('/vault')}
-          testID="tools-open-vault"
         />
       </Card>
 

@@ -18,7 +18,6 @@ export * from './calibers';
 export * from './compliance';
 export * from './export/pdf-log';
 export * from './export/json-log';
-export * from './vault';
 export * from './json-export';
 export * from './shotlog';
 export * from './sync';

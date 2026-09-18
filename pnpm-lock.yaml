@@ -258,9 +258,6 @@ importers:
       expo-constants:
         specifier: ~57.0.16
         version: 57.0.18(expo@57.0.22)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(supports-color@10.2.2)
-      expo-crypto:
-        specifier: ~57.0.2
-        version: 57.0.3(expo@57.0.22)
       expo-device:
         specifier: ~57.0.1
         version: 57.0.2(expo@57.0.22)
@@ -291,9 +288,6 @@ importers:
       expo-linking:
         specifier: ~57.0.8
         version: 57.0.10(expo@57.0.22)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)
-      expo-local-authentication:
-        specifier: ~57.0.2
-        version: 57.0.3(expo@57.0.22)
       expo-localization:
         specifier: ~57.0.1
         version: 57.0.2(expo@57.0.22)(react@19.2.3)
@@ -449,9 +443,6 @@ importers:
 
   shared:
     dependencies:
-      '@noble/hashes':
-        specifier: 2.4.0
-        version: 2.4.0
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -4243,11 +4234,6 @@ packages:
       expo: '*'
       react-native: '*'
 
-  expo-crypto@57.0.3:
-    resolution: {integrity: sha512-SAWqEfF37nc8ot7bXsVmu9AFYwQdC2kGvH/eNAHiR3bmlcf1Vv8wu9AnGKT+a90r3T8YfwMpZP4QAYlo4vCn9w==}
-    peerDependencies:
-      expo: '*'
-
   expo-device@57.0.2:
     resolution: {integrity: sha512-1A0/FICR3CgrH43FeiDQP3l5eHDmiMoh4EjXfhfoHHkMgdBQdyD0kwDWskiGZlQ3E0Nd0LHkCFH6vJ1ofm/jow==}
     peerDependencies:
@@ -4315,11 +4301,6 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
-
-  expo-local-authentication@57.0.3:
-    resolution: {integrity: sha512-1oQCBKz8JOpai+Zp+Z2RkBFIi2CHHWLSJk/pjvT9VEyf8nPFslo4kt1ZlQvtJ4rupbKNCmxqKfYr8Mlo8nJEug==}
-    peerDependencies:
-      expo: '*'
 
   expo-localization@57.0.2:
     resolution: {integrity: sha512-sIKYH3Ivddoge568WY6j+Kp2MAAZzWWqEnY2bokLkJFwX366tGL1mEnoY2WUi/qHatFFPop2yqDdurzbhnnimQ==}
@@ -11013,10 +10994,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  expo-crypto@57.0.3(expo@57.0.22):
-    dependencies:
-      expo: 57.0.22(e05597bc8dc229569b394a95bd2db28c)
-
   expo-device@57.0.2(expo@57.0.22):
     dependencies:
       expo: 57.0.22(e05597bc8dc229569b394a95bd2db28c)
@@ -11081,11 +11058,6 @@ snapshots:
     transitivePeerDependencies:
       - expo
       - supports-color
-
-  expo-local-authentication@57.0.3(expo@57.0.22):
-    dependencies:
-      expo: 57.0.22(e05597bc8dc229569b394a95bd2db28c)
-      invariant: 2.2.4
 
   expo-localization@57.0.2(expo@57.0.22)(react@19.2.3):
     dependencies:

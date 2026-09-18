@@ -3,13 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createFirearm } from './firearms';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
-import {
-  addLicense,
-  latestLicense,
-  listLicenses,
-  setLicenseVaultDocument,
-  softDeleteLicense,
-} from './licenses';
+import { addLicense, latestLicense, listLicenses, softDeleteLicense } from './licenses';
 
 let db: Database;
 let firearmId: string;
@@ -48,30 +42,5 @@ describe('addLicense / latestLicense', () => {
     addLicense(db, { firearmId: other, licenseNumber: 'X' });
     const mine = addLicense(db, { firearmId, licenseNumber: 'A1' });
     expect(latestLicense(db, firearmId)?.id).toBe(mine.id);
-  });
-
-  it('defaults vaultDocumentId to null when not given', () => {
-    const license = addLicense(db, { firearmId, licenseNumber: 'A1' });
-    expect(license.vaultDocumentId).toBeNull();
-  });
-
-  it('accepts a vaultDocumentId at creation', () => {
-    const license = addLicense(db, { firearmId, licenseNumber: 'A1', vaultDocumentId: 'doc-1' });
-    expect(license.vaultDocumentId).toBe('doc-1');
-    expect(latestLicense(db, firearmId)?.vaultDocumentId).toBe('doc-1');
-  });
-});
-
-describe('setLicenseVaultDocument', () => {
-  it('links a vault document to an existing license', () => {
-    const license = addLicense(db, { firearmId, licenseNumber: 'A1' });
-    setLicenseVaultDocument(db, license.id, 'doc-2');
-    expect(latestLicense(db, firearmId)?.vaultDocumentId).toBe('doc-2');
-  });
-
-  it('can clear the link', () => {
-    const license = addLicense(db, { firearmId, licenseNumber: 'A1', vaultDocumentId: 'doc-1' });
-    setLicenseVaultDocument(db, license.id, null);
-    expect(latestLicense(db, firearmId)?.vaultDocumentId).toBeNull();
   });
 });

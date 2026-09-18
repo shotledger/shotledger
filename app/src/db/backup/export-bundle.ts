@@ -1,14 +1,11 @@
 // Glue layer (mirrors db/csv/build-export.ts): assembles a backup bundle
-// (manifest.json + database.sqlite3 + optional photos/, sync-photos/ and an
-// opt-in sealed vault section) from the live DB. Uses a VACUUM INTO'd copy
-// throughout — never the live file: the copy is what gets its
-// photo_uri columns rewritten to relative bundle paths, counted for the
-// manifest, and serialized into the bundle.
+// (manifest.json + database.sqlite3 + optional photos/ and sync-photos/)
+// from the live DB. Uses a VACUUM INTO'd copy throughout — never the live
+// file: the copy is what gets its photo_uri columns rewritten to relative
+// bundle paths, counted for the manifest, and serialized into the bundle.
 //
-// Export scope is "everything except the vault, unless the user opted it in"
-// — see docs/specs/backup-export-spec.md for what is deliberately left out
-// (caches, pre-restore bundles, keystore secrets) and why. This module holds
-// no crypto: the caller hands it an already-sealed vault section.
+// See docs/specs/backup-export-spec.md for what is deliberately left out
+// (caches, pre-restore bundles, keystore secrets) and why.
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { eq, isNull, sql } from 'drizzle-orm';
 import Constants from 'expo-constants';
@@ -17,7 +14,6 @@ import {
   type BackupCounts,
   type BackupKind,
   type BackupManifest,
-  type BackupVaultSection,
   BACKUP_CONTAINER_FORMAT_VERSION,
   type ContainerEntry,
   DATABASE_ENTRY_NAME,
@@ -27,7 +23,6 @@ import {
   parseSyncPhotoUri,
   photoEntryName,
   syncPhotoEntryName,
-  VAULT_ENTRY_NAME,
 } from '@shotledger/shared';
 
 import { readPhotoBytes, readSyncPhotoBytes, vacuumIntoTempCopy } from '@/platform/backup-fs';
@@ -35,15 +30,8 @@ import { readPhotoBytes, readSyncPhotoBytes, vacuumIntoTempCopy } from '@/platfo
 import journalMeta from '../migrations/meta/_journal.json';
 import * as schema from '../schema';
 
-/** A vault section produced by `features/backup/vault-transfer.ts` and sealed
- * under the user's export passphrase. Absent unless the user opted in. */
-export interface SealedVaultSectionForBundle extends BackupVaultSection {
-  sealed: Uint8Array;
-}
-
 export interface BuildBundleOptions {
   kind: BackupKind;
-  vault?: SealedVaultSectionForBundle;
 }
 
 type CountableTable =
@@ -66,11 +54,7 @@ function countRows(copyDb: ReturnType<typeof drizzle>, table: CountableTable): n
   return row?.c ?? 0;
 }
 
-function buildManifest(
-  kind: BackupKind,
-  counts: BackupCounts,
-  vault: BackupVaultSection | undefined,
-): BackupManifest {
+function buildManifest(kind: BackupKind, counts: BackupCounts): BackupManifest {
   const entries = journalMeta.entries;
   const lastEntry = entries[entries.length - 1];
   return {
@@ -82,7 +66,6 @@ function buildManifest(
     kind,
     createdAt: new Date().toISOString(),
     counts,
-    ...(vault ? { vault } : {}),
   };
 }
 
@@ -156,14 +139,12 @@ async function collectPhotos(copyDb: ReturnType<typeof drizzle>): Promise<PhotoC
 
 /** Builds a `.shotledger` bundle (packed container bytes) from the live DB.
  * `kind: 'database'` includes only the VACUUM'd DB copy + manifest;
- * `'database+photos'` also copies every series photo (local and synced).
- * `options.vault` is included only when the user explicitly opted in and
- * supplied an export passphrase — see features/backup/vault-transfer.ts. */
+ * `'database+photos'` also copies every series photo (local and synced). */
 export async function buildBackupBundle(
   liveDb: SQLiteDatabase,
   options: BuildBundleOptions,
 ): Promise<Uint8Array> {
-  const { kind, vault } = options;
+  const { kind } = options;
   const { copy, cleanup } = await vacuumIntoTempCopy(liveDb);
   try {
     const copyDb = drizzle(copy, { schema });
@@ -186,21 +167,9 @@ export async function buildBackupBundle(
       photos: photos.entries.length,
       syncPhotos: photos.syncPhotos,
       photosUnreadable: photos.unreadable,
-      ...(vault ? { vaultDocuments: vault.documents } : {}),
     };
 
-    const manifest = buildManifest(
-      kind,
-      counts,
-      vault
-        ? {
-            kdf: vault.kdf,
-            saltHex: vault.saltHex,
-            iterations: vault.iterations,
-            documents: vault.documents,
-          }
-        : undefined,
-    );
+    const manifest = buildManifest(kind, counts);
     const dbBytes = await copy.serializeAsync();
     const encoder = new TextEncoder();
 
@@ -208,7 +177,6 @@ export async function buildBackupBundle(
       { name: MANIFEST_ENTRY_NAME, data: encoder.encode(JSON.stringify(manifest, null, 2)) },
       { name: DATABASE_ENTRY_NAME, data: dbBytes },
       ...photos.entries,
-      ...(vault ? [{ name: VAULT_ENTRY_NAME, data: vault.sealed }] : []),
     ]);
   } finally {
     cleanup();

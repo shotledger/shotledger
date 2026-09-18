@@ -19,7 +19,7 @@ citation next to each value. Nothing is guessed.
 | `compliance/`                                                           | Licence activity (FAP 551-3 profile).                                                                                               |
 | `target-scoring/`                                                       | Target-face geometry and the maths behind photo scoring.                                                                            |
 | `export/`, `json-export/`, `csv/`                                       | PDF club log, the sessions-export file format (its JSON Schema is generated from here) and CSV.                                     |
-| `backup/`, `vault/`                                                     | Encrypted backup container and the document vault envelope.                                                                         |
+| `backup/`                                                               | Backup bundle container and manifest.                                                                                               |
 | `sync/`, `sync-client/`                                                 | The changelog sync wire protocol, merge rules and the client-side sync cycle (ADR 0003).                                            |
 | `integrations/`, `shotlog/`                                             | WebShooter API client and statistics; ShotLog import.                                                                               |
 | `timer/`                                                                | Shot-timer and time-limit engines.                                                                                                  |

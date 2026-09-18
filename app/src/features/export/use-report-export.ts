@@ -8,7 +8,6 @@
 //   JSON — shared/src/export/json-log.ts, over the same SessionExport[]
 //          the CSV exporter assembles.
 //   CSV  — shared/src/csv/export.ts, over that same SessionExport[].
-// The document vault is not part of any of them.
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import {

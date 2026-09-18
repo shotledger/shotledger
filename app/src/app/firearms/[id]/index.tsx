@@ -62,12 +62,10 @@ import {
   countRecognizedFields,
   licenseFormValues,
   scanLicenseCard,
-  settleScannedLicenseImage,
   type ScanSource,
 } from '@/features/licenses/scan-license-card';
 import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
-import { requestVaultAccess } from '@/platform/vault-auth';
 import { Spacing } from '@/theme/tokens';
 
 /** Only groups a session can actually be logged under — see
@@ -121,11 +119,6 @@ export default function FirearmDetailScreen() {
   const [scan, setScan] = useState<ScanState>({ status: 'idle' });
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [applyFirearmDetails, setApplyFirearmDetails] = useState(false);
-  // Kept by default — a gun shop needs to see the actual card. This is the
-  // opt-OUT switch.
-  const [storeScanInVault, setStoreScanInVault] = useState(true);
-  const [vaultDenied, setVaultDenied] = useState(false);
-  const [cardViewDenied, setCardViewDenied] = useState(false);
 
   const [showLogEvent, setShowLogEvent] = useState(false);
   const [eventKind, setEventKind] = useState('');
@@ -197,7 +190,6 @@ export default function FirearmDetailScreen() {
    */
   async function onScanCard(source: ScanSource) {
     setScan({ status: 'busy' });
-    setVaultDenied(false);
     const previous = scannedImageUri;
     const result = await scanLicenseCard(source);
     if (previous) void deleteScannedImage(previous);
@@ -234,24 +226,14 @@ export default function FirearmDetailScreen() {
     setScan({ status: 'idle' });
     setScannedImageUri(null);
     setApplyFirearmDetails(false);
-    setStoreScanInVault(true);
   }
 
   async function onAddLicense() {
     if (!db) return;
-    // Settle the scanned original's fate before the license row is created,
-    // so a kept image can be linked to it in a single insert. Kept by
-    // default, encrypted in the vault — a shop must be able to see it.
+    // The scan only ever fed the form; the image itself is not kept.
     const uri = scannedImageUri;
-    let vaultDocumentId: string | null = null;
     if (uri) {
-      const result = await settleScannedLicenseImage(uri, {
-        store: storeScanInVault,
-        label: licenseNumber.trim() || t('firearms.licenseTitle'),
-        promptMessage: t('vault.gateTitle'),
-      });
-      if (result.status === 'stored') vaultDocumentId = result.documentId;
-      if (result.status === 'vaultDenied') setVaultDenied(true);
+      void deleteScannedImage(uri);
       setScannedImageUri(null);
     }
 
@@ -263,7 +245,6 @@ export default function FirearmDetailScreen() {
       validUntil: validUntil.trim() || null,
       conditions: conditions.trim() || null,
       authority: authority.trim() || null,
-      vaultDocumentId,
     });
     const notifications = licenseExpiryNotifications(license.validUntil);
     void scheduleLicenseExpiryNotifications(
@@ -296,16 +277,6 @@ export default function FirearmDetailScreen() {
     setShowAddLicense(false);
     resetScan();
     refresh();
-  }
-
-  /** Re-authenticates against the vault gate, then opens the licence's
-   *  stored original full-screen. A licence with no stored image has no
-   *  `vaultDocumentId` and never gets this action offered. */
-  async function onShowLicenseCard(vaultDocumentId: string) {
-    setCardViewDenied(false);
-    const access = await requestVaultAccess(t('vault.gateTitle'));
-    if (!access.granted) return setCardViewDenied(true);
-    router.push(`/vault/${vaultDocumentId}`);
   }
 
   function onLogEvent() {
@@ -752,25 +723,10 @@ export default function FirearmDetailScreen() {
               key={license.id}
               title={license.licenseNumber ?? t('firearms.licenseTitle')}
               subtitle={license.validUntil ?? t('firearms.tillsVidare')}
-              trailing={
-                license.vaultDocumentId ? (
-                  <ThemedText type="small">{t('firearms.showLicenseCard')}</ThemedText>
-                ) : undefined
-              }
-              onPress={
-                license.vaultDocumentId
-                  ? () => void onShowLicenseCard(license.vaultDocumentId!)
-                  : undefined
-              }
               testID={`license-${license.id}`}
             />
           ))
         )}
-        {cardViewDenied ? (
-          <ThemedText type="small" themeColor="danger" testID="show-license-card-denied">
-            {t('firearms.showLicenseCardDenied')}
-          </ThemedText>
-        ) : null}
         {showAddLicense ? (
           <>
             {SCAN_SUPPORTED ? (
@@ -823,23 +779,7 @@ export default function FirearmDetailScreen() {
                         />
                       </View>
                     ) : null}
-                    <View style={styles.switchRow}>
-                      <ThemedText type="small">{t('firearms.scanStoreInVault')}</ThemedText>
-                      <Switch
-                        value={storeScanInVault}
-                        onValueChange={setStoreScanInVault}
-                        testID="scan-store-in-vault"
-                      />
-                    </View>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('firearms.scanStoreInVaultHint')}
-                    </ThemedText>
                   </>
-                ) : null}
-                {vaultDenied ? (
-                  <ThemedText type="small" themeColor="danger" testID="scan-vault-denied">
-                    {t('firearms.scanVaultDenied')}
-                  </ThemedText>
                 ) : null}
               </>
             ) : null}

@@ -18,7 +18,6 @@ import {
   type SchemaCompatibility,
   syncPhotoEntryId,
   unpackContainer,
-  VAULT_ENTRY_NAME,
 } from '@shotledger/shared';
 
 import {
@@ -37,9 +36,6 @@ import { buildBackupBundle } from './export-bundle';
 export interface RestorePreview {
   manifest: BackupManifest;
   compatibility: SchemaCompatibility;
-  /** True when the bundle carries a passphrase-sealed vault section, so the
-   * caller must collect a passphrase before restoring. */
-  hasVault: boolean;
 }
 
 /** Parses and validates a picked bundle's manifest without touching the DB.
@@ -67,26 +63,7 @@ export function inspectBundle(bytes: Uint8Array): RestorePreview | null {
     result.data.schemaMigrationIdx,
     journalMeta.entries.length,
   );
-  return {
-    manifest: result.data,
-    compatibility,
-    hasVault: result.data.vault !== undefined && readVaultSection(entries) !== null,
-  };
-}
-
-function readVaultSection(entries: readonly { name: string; data: Uint8Array }[]) {
-  return entries.find((e) => e.name === VAULT_ENTRY_NAME)?.data ?? null;
-}
-
-/** The sealed vault bytes from a bundle, or `null` when it has none. The
- * caller decrypts them with the user's passphrase (`openVaultSection`) — this
- * module never sees a key. */
-export function readBundleVaultSection(bytes: Uint8Array): Uint8Array | null {
-  try {
-    return readVaultSection(unpackContainer(bytes));
-  } catch {
-    return null;
-  }
+  return { manifest: result.data, compatibility };
 }
 
 function preRestoreBackupFilename(): string {
