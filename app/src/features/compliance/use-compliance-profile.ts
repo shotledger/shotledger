@@ -1,28 +1,34 @@
 // M6 (§6.6): the shooter's chosen jurisdiction profile. 'none' hides all
 // compliance UI — see Settings, Home, Firearms consumers. The variant is the
-// case within that profile (for 'se': FAP 551-3 5 § vs 6 §), which the app
-// cannot derive and so must be told.
+// case within that profile (for 'se': FAP 551-3 5 § vs 6 §): the shooter's
+// explicit choice if they made one, otherwise derived from their firearms
+// (issue #286).
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   getProfile,
   getProfileDefinition,
+  type FirearmOwnershipFact,
   type JurisdictionProfile,
   type ProfileSelection,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
+import { listFirearmOwnershipFacts } from '@/db/queries/firearms';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { resolveDefaultProfileSelection } from './profile';
+import { resolveComplianceCase } from './resolve-case';
 
 export interface ComplianceProfileState {
   selection: ProfileSelection;
   profile: JurisdictionProfile | null;
   /** The cases this profile offers, in display order; empty for 'none'. */
   variantIds: string[];
-  /** Resolved case — the stored choice, else the profile's default. */
+  /** Resolved case — the stored choice, else the derived default. */
   variantId: string | null;
+  /** False when the case above was derived rather than chosen in Settings. */
+  isVariantExplicit: boolean;
   setSelection: (next: ProfileSelection) => void;
   setVariantId: (next: string) => void;
 }
@@ -38,6 +44,11 @@ function loadVariantId(): string | null {
   return getSetting<string | null>(db, SETTINGS_KEYS.complianceProfileVariant, null);
 }
 
+function loadOwnershipFacts(): FirearmOwnershipFact[] {
+  if (!db) return [];
+  return listFirearmOwnershipFacts(db);
+}
+
 /**
  * Refetches on focus (like every other M2+ data hook) rather than only on
  * mount — Settings writes the choice to the same DB row a screen mounted
@@ -49,11 +60,15 @@ export function useComplianceProfile(): ComplianceProfileState {
     loadSelection(i18n.language),
   );
   const [storedVariantId, setStoredVariantId] = useState<string | null>(loadVariantId);
+  const [facts, setFacts] = useState<FirearmOwnershipFact[]>(loadOwnershipFacts);
 
   useFocusEffect(
     useCallback(() => {
       setSelectionState(loadSelection(i18n.language));
       setStoredVariantId(loadVariantId());
+      // On focus too: marking a firearm as one's own moves the derived
+      // default, and this screen may have been mounted before that edit.
+      setFacts(loadOwnershipFacts());
     }, [i18n.language]),
   );
 
@@ -67,9 +82,10 @@ export function useComplianceProfile(): ComplianceProfileState {
     if (db) setSetting<string>(db, SETTINGS_KEYS.complianceProfileVariant, next);
   }, []);
 
-  // An unknown or unset stored id resolves to the profile's default rather
-  // than to "no requirement" — see getProfile.
-  const profile = getProfile(selection, storedVariantId ?? undefined);
+  // An unknown or unset stored id resolves to the derived default rather than
+  // to "no requirement" — see resolveComplianceCase.
+  const { variantId, isExplicit } = resolveComplianceCase(selection, storedVariantId, facts);
+  const profile = getProfile(selection, variantId ?? undefined);
 
   return {
     selection,
@@ -77,6 +93,7 @@ export function useComplianceProfile(): ComplianceProfileState {
     profile,
     variantIds: getProfileDefinition(selection)?.variants.map((v) => v.id) ?? [],
     variantId: profile?.variantId ?? null,
+    isVariantExplicit: isExplicit,
     setVariantId,
   };
 }

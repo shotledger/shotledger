@@ -1,6 +1,7 @@
 // Settings → Compliance. Which licence-activity profile the activity status and the
 // föreningsintyg PDF are worked out under, and which case within it applies to
-// this shooter (for `se`: FAP 551-3 5 § vs 6 §, which the app cannot derive).
+// this shooter (for `se`: FAP 551-3 5 § vs 6 §). The app proposes a case from
+// the firearms; picking one here overrides that for good (issue #286).
 import type { ProfileSelection } from '@shotledger/shared';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ import { useComplianceProfile } from '@/features/compliance/use-compliance-profi
 
 export default function ComplianceSettingsScreen() {
   const { t } = useTranslation();
-  const { selection, profile, setSelection, variantIds, variantId, setVariantId } =
+  const { selection, profile, setSelection, variantIds, variantId, isVariantExplicit, setVariantId } =
     useComplianceProfile();
 
   return (
@@ -54,6 +55,9 @@ export default function ComplianceSettingsScreen() {
           />
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-case-hint">
             {t(`compliance.caseHint.${variantId}`)}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" testID="compliance-case-origin">
+            {t(isVariantExplicit ? 'compliance.caseExplicit' : 'compliance.caseDerived')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t('compliance.notModelled')}
