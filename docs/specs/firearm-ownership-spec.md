@@ -144,6 +144,25 @@ No new dependencies. No new tooling. Files touched, by path:
 | Q4 | `listFirearmOwnershipFacts`                                          | one `{ weaponType, isOwn }` per non-deleted firearm |
 | Q5 | a soft-deleted firearm                                               | absent from the facts                           |
 
+### App case resolution — `C` (`app/src/features/compliance/resolve-case.test.ts`)
+
+| #  | Stored choice / firearms                        | Expected                                  |
+| -- | ----------------------------------------------- | ----------------------------------------- |
+| C1 | profile `none`, owned pistol                    | no case, not explicit                     |
+| C2 | none stored, borrowed pistol                    | `firstHandgun`, not explicit              |
+| C3 | none stored, owned pistol                       | `existingHandgun`, not explicit           |
+| C4 | `firstHandgun` stored + owned pistol; and `existingHandgun` stored + no firearms | the stored one, explicit |
+| C5 | a stored id the profile no longer offers        | falls through to the derivation           |
+
+**Revision, during implementation.** C5 was first written as "an unknown
+stored id resolves to `firstHandgun`" — the profile's declared
+`defaultVariantId`, which is what `getProfile` does with an unknown variant.
+That is wrong once a derivation exists: the rule is "no usable choice ⇒ the
+**default**", and the default is now the derived one. C5 asserts the
+derivation, and `resolveComplianceCase` resolves the definition itself rather
+than laundering an unknown id through `getProfile`. `getProfile`'s own
+unknown-id behaviour (P7) is unchanged.
+
 ### Negative constraints
 
 - N1: `shared/compliance` still imports nothing from `app/`.

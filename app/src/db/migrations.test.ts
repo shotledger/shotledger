@@ -55,8 +55,31 @@ function freshDatabase(): Database.Database {
 }
 
 describe('the migration chain is the whole schema', () => {
-  it('starts from the regenerated baseline', () => {
-    expect(journalTags()[0]).toBe('0000_baseline');
+  it('is the baseline plus exactly the migrations appended since', () => {
+    // Exact, not a prefix: an unexpected migration is as much a defect as a
+    // missing one.
+    expect(journalTags()).toEqual([
+      '0000_baseline',
+      '0001_drop_vault_document_id',
+      '0002_firearm_is_own',
+    ]);
+  });
+
+  it('N3: adds firearms.is_own without inventing a value for existing rows', () => {
+    const sqlite = new Database(':memory:');
+    sqlite.pragma('foreign_keys = ON');
+    applyMigration(sqlite, '0000_baseline');
+    sqlite
+      .prepare(
+        `INSERT INTO firearms (id, created_at, updated_at, make, model, weapon_type)
+         VALUES ('f1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'A', '1', 'pistol')`,
+      )
+      .run();
+    applyMigration(sqlite, '0002_firearm_is_own');
+
+    expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f1')).toEqual({
+      is_own: null,
+    });
   });
 
   it('creates every column schema.ts declares, on every table', () => {
