@@ -70,9 +70,10 @@ scores against official results.
   automatically, hole detection is not (a CV spike measured 24% recall / 24%
   precision from classical detection, and repair patches are indistinguishable
   from holes), so shots are tap-marked. Automation needs a learned detector.
-- An encrypted on-device **Vault** holds licences, membership cards and door
-  codes; it is never synced, and is excluded from exports unless the user
-  explicitly opts in with a passphrase.
+- **No document store.** Scanning a licence card fills in the licence fields
+  and the photo is then deleted; the app keeps no images of documents
+  (issue #276). If a licence picture is ever needed again it belongs next to
+  the firearm, behind a PIN/biometric gate — not in a separate encrypted store.
 - **The Webshooter integration does not currently work** (password login
   unusable); deferred, not abandoned.
 - Every UI string is i18n'd in Swedish and English from the first screen.

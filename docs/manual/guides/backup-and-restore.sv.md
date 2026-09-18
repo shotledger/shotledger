@@ -15,7 +15,6 @@ telefon är en förlorad loggbok om du inte har en kopia**.
 - **Foton** — valfritt, och skälet till att en säkerhetskopia kan bli stor.
   Omfattar tavelfoton som hämtats via synk, inte bara de som tagits med den
   här telefonen.
-- **Valvet** — avstängt som standard. Se [Valvet](vault.md).
 
 Du kan dela filen via den vanliga delningsrutan, eller skriva den direkt till
 en mapp du väljer, vilket går snabbare när du säkerhetskopierar regelbundet.
@@ -31,6 +30,10 @@ att ta sig ur.
 Appen visar vad filen innehåller — datum, pass, serier, skott, vapen, foton —
 innan du bekräftar. Läs det; det är där du hinner upptäcka att du valde förra
 årets fil.
+
+En fil som gjorts av en äldre version som fortfarande hade valvet återställs
+som vanligt. Valvdelen hoppas över: funktionen finns inte längre, och inget i
+appen kan öppna den.
 
 Stäng därefter ShotLedger helt och öppna appen igen.
 

@@ -14,7 +14,6 @@ a lost logbook unless you have a copy**.
   licences, tags, maintenance and settings.
 - **Photos** — optional, and the reason a backup can be large. Includes target
   photos downloaded by sync, not only ones taken on this phone.
-- **The Vault** — off by default. See [The Vault](vault.md).
 
 You can share the file through the usual share sheet, or write it straight into
 a folder you pick, which is quicker when you back up regularly.
@@ -30,6 +29,10 @@ recoverable.
 The app shows what the file contains — date, sessions, series, shots, firearms,
 photos — before you confirm. Read it; that is the moment to notice you picked
 last year's file.
+
+A file made by an older version that still had the Vault restores normally.
+The Vault part of it is ignored: that feature is gone, and nothing in the app
+can open it any more.
 
 Afterwards, close ShotLedger completely and reopen it.
 

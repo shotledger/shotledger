@@ -1,5 +1,10 @@
 # Licence-card scan (on-device OCR) — spec
 
+> **Amended (2026-09-16, issue #276).** The Vault was removed, and with it the
+> "keep the scanned original" half of this spec: the scan now fills the licence
+> fields and the image is deleted on every path. The recognition, parsing and
+> form-prefill behaviours below are unchanged.
+
 Scope: "Scan a physical license card", amended 2026-09-03
 (`feat/licence-card-image`) to keep the scanned original by default and link
 it to the licence it was scanned for — see "Storing and linking the original

@@ -65,17 +65,15 @@ utterance errors.
 
 **`expo-crypto`, `expo-secure-store`, `expo-local-authentication`** —
 2026-09-01, three dependencies approved together for the document
-Vault, all Expo-maintained and SDK-pinned. `expo-crypto`'s built-in
-AES-256-GCM (`aesEncryptAsync`/`aesDecryptAsync`) was chosen over
-`react-native-quick-crypto`, a Web Crypto polyfill, or a hand-rolled
-cipher. `expo-secure-store` holds the Vault key in the hardware-backed
-keystore/keychain; `expo-local-authentication` gates the Vault behind
-biometrics/passcode. `expo-file-system` was promoted from a transitive
-to a direct dependency in the same change. Android auto-backup excludes
-the vault directory via a local config plugin (no new dependency); the
-iOS equivalent (`NSURLIsExcludedFromBackupKey`) was not implemented —
-no Expo module exposes the flag without a small custom native module,
-tracked as a follow-up.
+Vault, all Expo-maintained and SDK-pinned. **`expo-crypto` and
+`expo-local-authentication` were removed on 2026-09-16** with the Vault
+itself (issue #276): nothing else imported them, and the local Android
+backup-exclusion config plugin went with them — `expo-secure-store`'s own
+plugin now supplies the SecureStore exclusion it had folded in.
+`expo-secure-store` **stays**: it holds the sync session token and the
+Webshooter token, which have nothing to do with the Vault.
+`expo-file-system` was promoted from a transitive to a direct dependency
+in the same 2026-09-01 change and also stays.
 
 **`@react-native-community/datetimepicker`** — 2026-09-01, ships with
 Expo SDK 57. Used for the Statistics "Custom" period picker; flagged for
@@ -83,7 +81,12 @@ review since it wasn't in M2's original design-system component
 inventory, and accepted as the standard native date picker rather than
 building one.
 
-**`@noble/hashes` 2.4.0** — 2026-09-04, maintainer-approved, replacing
+**`@noble/hashes` 2.4.0** — approved 2026-09-04, **removed 2026-09-16**
+with the Vault (issue #276): its only users were the bundle passphrase
+KDF and the hex codec built on it, both deleted, so `app/jest.config.js`
+no longer needs its ESM transform exception either. History below.
+
+Approved 2026-09-04, maintainer-approved, replacing
 the hand-written SHA-256/HMAC-SHA256/PBKDF2 from ADR 0007. That
 hand-written code existed only because no hashing library was then a
 direct dependency; `@noble/hashes` was already present transitively

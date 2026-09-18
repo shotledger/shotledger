@@ -5,7 +5,8 @@ Status: accepted (2026-09-02)
 ## Context
 
 `.shotledger` backup bundles need to hold a database file, optional
-photos, and an optional sealed Vault section as one exportable file. The
+photos, and (at the time, see ADR 0007 — since superseded) an optional
+sealed Vault section as one exportable file. The
 obvious shape is a zip. No zip library exists in the lockfile — `fflate`,
 `jszip` and `adm-zip` were checked, zero matches — and hard rule 2
 forbids adding a dependency without asking.
@@ -34,9 +35,7 @@ prompt rather than a live reload.
 Schema compatibility refuses a bundle whose `schemaMigrationIdx` is
 newer than the running build's own migrations
 (`shared/src/backup/compat.ts`); an older bundle is silently brought up
-to date by the existing migration gate on next launch. The Vault is
-excluded from this container by design (see ADR 0007 for its separate,
-opt-in export path).
+to date by the existing migration gate on next launch.
 
 `expo-document-picker` was **not** added for restore — it mirrors
 `csv-import.ts`'s existing use of `expo-file-system`'s

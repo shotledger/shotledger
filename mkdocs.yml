@@ -111,7 +111,6 @@ plugins:
             Licence activity: Skjutaktivitet
             External sites: Externa webbplatser
             Webshooter: Webshooter
-            The Vault: Valvet
             Exporting sessions: Exportera pass
             Backup and restore: Säkerhetskopiering
             Reference: Referens
@@ -136,7 +135,6 @@ nav:
       - Licence activity: guides/licence-activity.md
       - External sites:
           - Webshooter: guides/webshooter.md
-      - The Vault: guides/vault.md
       - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
   - Reference:

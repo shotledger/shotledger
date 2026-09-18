@@ -20,8 +20,8 @@ That is the default and the intended way to use the app.
 
 - **Target photographs**, unless you include them in a backup you move
   yourself, or turn on sync.
-- **The Vault** — licence cards and membership cards. Excluded from backups by
-  default, and never synced.
+- **Photographs of a licence card.** Scanning one fills in the licence fields
+  and the photo is then deleted — the app has nowhere to keep it.
 - **Training marks**, if you opt in to keeping them. They stay on the device to
   train a future hole detector, and you can delete them.
 
