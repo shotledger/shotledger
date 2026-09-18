@@ -5,11 +5,17 @@ Issue [#286](https://github.com/jimisola/shotledger/issues/286). Follow-up to
 unchanged except the sentence "which the app cannot derive" — this change
 derives the **default**, and nothing else.
 
-**Spec approval: not obtained (autonomous run).** The maintainer's wording in
-#286 ("if we add a boolean to all firearms whether this is the shooters own
-firearm or not then we could actually choose default") is an _input_ to this
-spec, not approval of it. This document is the artifact for review after the
-fact, per the old-coder skill's autonomous-mode provision.
+**Revised 2026-09-18 on a maintainer decision.** Asked about the tri-state
+this spec originally argued for, the maintainer ruled: _"the ownership should
+default to yes/true"_, and, asked whether the "Not Specified" state goes away
+entirely, _"yes, drop it. Plain boolean."_ That decision replaces the
+"Why the column is nullable" section below; the consequence it carries is
+stated there.
+
+**Spec approval: not obtained (autonomous run).** The maintainer's wordings in
+#286 and above are _inputs_ to this spec, not approval of it. This document is
+the artifact for review after the fact, per the old-coder skill's
+autonomous-mode provision.
 
 **Tier 2** (normal feature). No money, auth, concurrency. The two real risks
 are (1) misstating a regulation and (2) silently relaxing a requirement under
@@ -48,21 +54,31 @@ Excluding `airgun` therefore keeps a shooter on the **stricter** 5 § default,
 which is the fail-safe direction (see #281's spec). This is a deliberately
 conservative app-level choice, **not** a claim about what the police count.
 
-## Why the column is nullable, and why a migration must not fill it in
+## Why the column is a plain boolean defaulting to true
 
-`firearms.is_own` is tri-state: `1` own, `0` borrowed / club-owned / another
-person's, **`NULL` not stated**.
+`firearms.is_own` is `NOT NULL DEFAULT 1` — `1` own, `0` borrowed /
+club-owned / another person's. There is no "not stated" state. Maintainer's
+decision, 2026-09-18, quoted above.
 
-The migration leaves every existing row `NULL`. Defaulting existing rows to
-"own" would invent a fact about the user's firearms, and it would invent it in
-the one direction that _relaxes_ the requirement — an installed shooter with a
-pistol on file would silently drop from 12 required activities to 6 without
-ever having been asked. `NULL` derives to 5 §, the stricter case, exactly as
-today. Nothing about an existing install changes until the shooter says so.
+An earlier draft of this spec argued for a third `NULL` state so that the
+migration would not invent a fact about an existing firearm. That argument is
+withdrawn, not merely overruled: the maintainer is the one shooter whose
+firearms these are, owning is the overwhelmingly common case, and a state
+whose only purpose is "the app has not asked yet" buys a third segment on the
+form and a conditional on the detail screen for a distinction nobody makes.
 
-New firearms are created with `is_own = 1` preselected in the form: it is the
-common case, it is visible and changeable on screen before saving, and it is
-the shooter stating it rather than a migration guessing it.
+**The consequence, stated plainly.** The migration backfills every existing
+row to `1`, so the app now assumes a shooter owns a handgun on file unless
+they say otherwise, and the derived **default** for such a shooter becomes
+**6 §** — the _lighter_ requirement (6 activities in the window rather than
+12). That is the opposite direction from #281's fail-safe default, and it is
+deliberate. What does not change: the explicit Settings → Compliance choice
+still wins, is still never written on the shooter's behalf, and is still never
+overwritten by a firearm edit. A shooter whose handgun is not their own sets
+that firearm to **Borrowed** and returns to 5 §.
+
+New firearms are created with **My Own** preselected in the form — visible and
+changeable on screen before saving.
 
 ## Derivation, and what it may never do
 
@@ -76,7 +92,8 @@ effective case = explicit Settings choice
   derivation is consulted only when that row is absent.
 - The derivation returns `existingHandgun` (6 §) iff at least one non-deleted
   firearm has `is_own = 1` **and** a handgun weapon type; otherwise
-  `firstHandgun` (5 §).
+  `firstHandgun` (5 §). Since `is_own` defaults to `1`, any handgun on file
+  derives 6 § until the shooter marks it borrowed.
 - Nothing writes `complianceProfileVariant` on the shooter's behalf. The
   derived value is a default resolved at read time, so a later firearm edit
   moves it — which is the point — while a shooter who has chosen is untouched.
@@ -85,7 +102,7 @@ effective case = explicit Settings choice
 
 No new dependencies. No new tooling. Files touched, by path:
 
-- `app/src/db/schema.ts` — `firearms.isOwn`
+- `app/src/db/schema.ts` — `firearms.isOwn` (`.notNull().default(true)`)
 - `app/src/db/migrations/0002_firearm_is_own.sql`, `meta/0002_snapshot.json`,
   `meta/_journal.json`, `migrations.js` (numbered **0002**: PR #296 already
   claims `0001_drop_vault_document_id` on an open branch)
@@ -117,10 +134,9 @@ No new dependencies. No new tooling. Files touched, by path:
 | D4  | owned `rifle` only                              | `firstHandgun`    |
 | D5  | owned `airgun` only                             | `firstHandgun`    |
 | D6  | `pistol` with `isOwn: false`                    | `firstHandgun`    |
-| D7  | `pistol` with `isOwn: null` (not stated)        | `firstHandgun`    |
-| D8  | owned firearm with `weaponType: null`           | `firstHandgun`    |
-| D9  | borrowed pistol + owned rifle + owned pistol    | `existingHandgun` |
-| D10 | borrowed pistol + owned rifle, no owned handgun | `firstHandgun`    |
+| D7  | owned firearm with `weaponType: null`           | `firstHandgun`    |
+| D8  | borrowed pistol + owned rifle + owned pistol    | `existingHandgun` |
+| D9  | borrowed pistol + owned rifle, no owned handgun | `firstHandgun`    |
 
 ### Registry — `V` (`shared/src/compliance/profile-registry.test.ts`)
 
@@ -138,7 +154,7 @@ No new dependencies. No new tooling. Files touched, by path:
 
 | #   | Scenario                                   | Expected                                            |
 | --- | ------------------------------------------ | --------------------------------------------------- |
-| Q1  | `createFirearm` with no `isOwn`            | row has `isOwn: null` — never a fabricated `true`   |
+| Q1  | `createFirearm` with no `isOwn`            | row has `isOwn: true` — the column's default        |
 | Q2  | `createFirearm({ isOwn: true })` / `false` | round-trips as `true` / `false`                     |
 | Q3  | `updateFirearm(id, { isOwn: false })`      | persists; other columns untouched                   |
 | Q4  | `listFirearmOwnershipFacts`                | one `{ weaponType, isOwn }` per non-deleted firearm |
@@ -169,8 +185,9 @@ unknown-id behaviour (P7) is unchanged.
 - N2: `licence-activity.ts`, `months.ts`, `indicators.ts`, `constants-se.ts`
   are **not modified** — no regulatory number changes in this PR. Verified by
   `git diff --stat`, recorded in EVIDENCE.
-- N3: no migration writes a value into `is_own` for an existing row. Verified
-  by reading the generated SQL and by a migration-chain test.
+- N3: the migration backfills every pre-existing `firearms` row to `is_own = 1`
+  (N3b: and a later insert that states nothing gets `1` too). Verified by
+  reading the generated SQL and by a migration-chain test.
 - N4: nothing in the app writes `settings.complianceProfileVariant` except the
   Settings picker's `onChange`. Verified by `grep` over `app/src`, recorded.
 - N5: an explicit stored variant still wins over the derivation.

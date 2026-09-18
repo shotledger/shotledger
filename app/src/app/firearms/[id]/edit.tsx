@@ -8,12 +8,7 @@ import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { LoadSystemPicker } from '@/components/load-system-picker';
-import {
-  isOwnToOwnership,
-  OwnershipPicker,
-  ownershipToIsOwn,
-  type OwnershipChoice,
-} from '@/components/ownership-picker';
+import { OwnershipPicker } from '@/components/ownership-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -36,7 +31,7 @@ export default function EditFirearmScreen() {
   const [weaponType, setWeaponType] = useState<WeaponType>(
     (firearm?.weaponType as WeaponType) ?? 'pistol',
   );
-  const [ownership, setOwnership] = useState<OwnershipChoice>(isOwnToOwnership(firearm?.isOwn));
+  const [isOwn, setIsOwn] = useState(firearm?.isOwn ?? true);
   const [serialNumber, setSerialNumber] = useState(firearm?.serialNumber ?? '');
   const [vapenId, setVapenId] = useState(firearm?.vapenId ?? '');
   const [loadSystem, setLoadSystem] = useState<string | null>(firearm?.loadSystem ?? null);
@@ -57,7 +52,7 @@ export default function EditFirearmScreen() {
       model: model.trim(),
       caliber,
       weaponType,
-      isOwn: ownershipToIsOwn(ownership),
+      isOwn,
       serialNumber: serialNumber.trim() || null,
       vapenId: vapenId.trim() || null,
       loadSystem,
@@ -86,7 +81,7 @@ export default function EditFirearmScreen() {
           value={weaponType}
           onChange={setWeaponType}
         />
-        <OwnershipPicker value={ownership} onChange={setOwnership} />
+        <OwnershipPicker value={isOwn} onChange={setIsOwn} />
       </Card>
 
       <Card>

@@ -37,8 +37,8 @@ export type JurisdictionProfileId = 'se';
  */
 export interface FirearmOwnershipFact {
   weaponType: string | null;
-  /** `true` the shooter's own, `false` borrowed/club/another's, `null` not stated. */
-  isOwn: boolean | null;
+  /** `true` the shooter's own, `false` borrowed / club-owned / another's. */
+  isOwn: boolean;
 }
 
 /**

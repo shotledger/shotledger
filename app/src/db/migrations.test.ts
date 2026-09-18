@@ -65,7 +65,7 @@ describe('the migration chain is the whole schema', () => {
     ]);
   });
 
-  it('N3: adds firearms.is_own without inventing a value for existing rows', () => {
+  it('N3: adds firearms.is_own and backfills every existing row to own', () => {
     const sqlite = new Database(':memory:');
     sqlite.pragma('foreign_keys = ON');
     applyMigration(sqlite, '0000_baseline');
@@ -77,8 +77,23 @@ describe('the migration chain is the whole schema', () => {
       .run();
     applyMigration(sqlite, '0002_firearm_is_own');
 
+    // Maintainer's call, 2026-09-18: ownership is a plain boolean defaulting
+    // to true, so an existing firearm is taken to be the shooter's own.
     expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f1')).toEqual({
-      is_own: null,
+      is_own: 1,
+    });
+  });
+
+  it('N3b: a row inserted without is_own after the migration is own too', () => {
+    const sqlite = freshDatabase();
+    sqlite
+      .prepare(
+        `INSERT INTO firearms (id, created_at, updated_at, make, model)
+         VALUES ('f2', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'B', '2')`,
+      )
+      .run();
+    expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f2')).toEqual({
+      is_own: 1,
     });
   });
 

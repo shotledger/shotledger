@@ -1,30 +1,17 @@
-// The firearm-ownership field (issue #286). Three states, not two: "not
-// specified" is the state every firearm recorded before the column existed is
-// in, and it has to be reachable so a shooter can take a statement back.
+// The firearm-ownership field (issue #286). A plain boolean, "My Own"
+// preselected (maintainer, 2026-09-18) — the app assumes a firearm on file is
+// the shooter's own until they say otherwise.
 import { useTranslation } from 'react-i18next';
 
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
 
-export type OwnershipChoice = 'own' | 'borrowed' | 'unstated';
-
-export function ownershipToIsOwn(choice: OwnershipChoice): boolean | null {
-  if (choice === 'own') return true;
-  if (choice === 'borrowed') return false;
-  return null;
-}
-
-export function isOwnToOwnership(isOwn: boolean | null | undefined): OwnershipChoice {
-  if (isOwn === true) return 'own';
-  if (isOwn === false) return 'borrowed';
-  return 'unstated';
-}
-
-const CHOICES: OwnershipChoice[] = ['own', 'borrowed', 'unstated'];
+const OWN = 'own';
+const BORROWED = 'borrowed';
 
 export interface OwnershipPickerProps {
-  value: OwnershipChoice;
-  onChange: (value: OwnershipChoice) => void;
+  value: boolean;
+  onChange: (value: boolean) => void;
 }
 
 export function OwnershipPicker({ value, onChange }: OwnershipPickerProps) {
@@ -33,16 +20,12 @@ export function OwnershipPicker({ value, onChange }: OwnershipPickerProps) {
     <>
       <ThemedText type="smallBold">{t('firearms.ownership')}</ThemedText>
       <SegmentedControl
-        options={CHOICES.map((choice) => ({
-          value: choice,
-          label: t(`firearms.ownership${choice.charAt(0).toUpperCase()}${choice.slice(1)}`),
-        }))}
-        value={value}
-        onChange={onChange}
-        // Content-width rather than equal thirds: "Not Specified" and "Ej
-        // angivet" do not fit a third of a phone screen, and the control
-        // truncates to one line rather than wrapping.
-        scrollable
+        options={[
+          { value: OWN, label: t('firearms.ownershipOwn') },
+          { value: BORROWED, label: t('firearms.ownershipBorrowed') },
+        ]}
+        value={value ? OWN : BORROWED}
+        onChange={(next) => onChange(next === OWN)}
         testID="firearm-ownership"
       />
       <ThemedText type="small" themeColor="textSecondary">

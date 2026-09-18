@@ -175,8 +175,7 @@
     "ownership": "Ownership",
     "ownershipOwn": "My Own",
     "ownershipBorrowed": "Borrowed",
-    "ownershipUnstated": "Not Specified",
-    "ownershipHelp": "Borrowed covers a club firearm and anyone else's. Owning a handgun is what decides which licence-activity requirement the app measures you against.",
+    "ownershipHelp": "A firearm you add is taken to be your own. Borrowed covers a club firearm and anyone else's. Owning a handgun is what decides which licence-activity requirement the app measures you against.",
     "serialNumber": "Serial Number",
     "vapenId": "National Register ID",
     "loadSystem": "Load System",
@@ -468,7 +467,7 @@
     "unverifiedHint": "Activity requirements for this profile are unverified defaults — check them with your club or the police before relying on them.",
     "caseTitle": "Activity Requirement",
     "caseBody": "Which requirement applies depends on what you already hold. The app proposes one from your firearms; your own choice always wins over it.",
-    "caseDerived": "Worked out from your firearms. Marking a handgun as your own switches this; choosing here fixes it instead.",
+    "caseDerived": "Worked out from your firearms — a handgun recorded as your own gives the lighter requirement. Choosing here fixes it instead.",
     "caseExplicit": "Your own choice. The app will not change it, whatever you add to your firearms.",
     "case": {
       "firstHandgun": "First Handgun",

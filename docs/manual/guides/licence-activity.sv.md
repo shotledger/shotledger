@@ -36,8 +36,11 @@ själv har angett — vapentypen och
 - En luftpistol räknas inte heller. Appen för luftpistoler och luftgevär under
   samma vapentyp och kan inte skilja ett licenspliktigt vapen från övriga, så
   den låter dig stå kvar på det strängare fallet.
-- Ett vapen där ägandet fortfarande är **ej angivet** — vilket gäller allt du
-  registrerade innan fältet fanns — räknas som inte ditt. Ange de som är dina.
+- Ägandet står på **eget** från början på alla vapen, även de du registrerade
+  innan fältet fanns. Appen utgår alltså från att du äger dina enhandsvapen om
+  du inte säger något annat, och fallet den föreslår för en vapenägare blir
+  därför 6 §, det lindrigare av de två. Anger du **lånat** på ett vapen slutar
+  det räknas.
 
 **Inställningar → Efterlevnad → Aktivitetskrav** är där du tar över beslutet.
 När du väl har valt ett fall där står valet fast: att lägga till, ändra eller

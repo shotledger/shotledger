@@ -38,9 +38,11 @@ you told it — the weapon type and the
 - An air pistol does not count either. The app files air pistols and air
   rifles under one weapon type and cannot tell a licensed one from the rest,
   so it leaves you on the stricter case.
-- A firearm whose ownership is still **Not Specified** — which is every
-  firearm you recorded before the field existed — counts as not yours. Mark
-  the ones that are.
+- Ownership starts at **My Own** on every firearm, including the ones you
+  recorded before the field existed. So the app assumes you own your handguns
+  unless you say otherwise, and the case it proposes for a handgun owner is
+  therefore 6 §, the lighter of the two. Set a firearm to **Borrowed** and it
+  stops counting.
 
 **Settings → Compliance → Activity Requirement** is where you overrule it.
 Once you pick a case there it stays picked: adding, editing or deleting a

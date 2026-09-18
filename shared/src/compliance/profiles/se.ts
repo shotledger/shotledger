@@ -29,16 +29,14 @@ export const SE_HANDGUN_WEAPON_TYPES: readonly string[] = ['pistol', 'revolver']
 
 /**
  * 6 § applies to someone who "sedan tidigare innehar enhandsvapen för
- * målskjutning" — so a handgun, and one the shooter holds themselves. An
- * ownership the shooter has not stated is not an affirmative holding, and
- * resolves to the stricter 5 §.
+ * målskjutning" — so a handgun, and one the shooter holds themselves.
+ * Ownership is a plain boolean defaulting to true, so a shooter with a
+ * handgun on file is taken to hold it unless they say otherwise.
  */
 export function deriveSeVariantId(facts: readonly FirearmOwnershipFact[]): string {
   const ownsHandgun = facts.some(
     (fact) =>
-      fact.isOwn === true &&
-      fact.weaponType !== null &&
-      SE_HANDGUN_WEAPON_TYPES.includes(fact.weaponType),
+      fact.isOwn && fact.weaponType !== null && SE_HANDGUN_WEAPON_TYPES.includes(fact.weaponType),
   );
   return ownsHandgun ? SE_EXISTING_HANDGUN_VARIANT : SE_FIRST_HANDGUN_VARIANT;
 }

@@ -602,13 +602,15 @@ from §6.5 automatically).
       märke-guld proxy keeps its own `ruleVerified: false`. Spec/evidence:
       `docs/specs/compliance-fap551-{spec,evidence}.md`.
 - [x] The case's **default** derived from the firearms (issue #286, branch
-      `feat/firearm-own-flag`) — `firearms.is_own` is tri-state (own /
-      borrowed or club-owned / **not stated**, migration `0002`), and an
-      owned **handgun** (`pistol` or `revolver`; not rifle, not airgun) makes
-      the shooter a 6 § case. An explicit Settings choice still wins, and the
-      derivation is resolved at read time, never written back — so a case a
-      shooter has chosen never moves under them, and one they have not stays
-      at the stricter 5 § until they say otherwise. Spec/evidence:
+      `feat/firearm-own-flag`) — `firearms.is_own` is a plain boolean
+      defaulting to **true** (maintainer, 2026-09-18; migration `0002`
+      backfills every existing row), and an owned **handgun** (`pistol` or
+      `revolver`; not rifle, not airgun) makes the shooter a 6 § case. Since
+      ownership defaults to true, a handgun on file derives 6 § — the
+      _lighter_ requirement — unless the shooter marks it borrowed. An
+      explicit Settings choice still wins, and the derivation is resolved at
+      read time, never written back, so a case a shooter has chosen never
+      moves under them. Spec/evidence:
       `docs/specs/firearm-ownership-{spec,evidence}.md`.
 - **Done when:** licence-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.

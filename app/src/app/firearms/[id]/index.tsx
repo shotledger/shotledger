@@ -393,11 +393,7 @@ export default function FirearmDetailScreen() {
           {firearm.weaponType && (
             <Chip label={t(`firearms.weaponType${capitalize(firearm.weaponType)}`)} />
           )}
-          {firearm.isOwn !== null && (
-            <Chip
-              label={t(firearm.isOwn ? 'firearms.ownershipOwn' : 'firearms.ownershipBorrowed')}
-            />
-          )}
+          <Chip label={t(firearm.isOwn ? 'firearms.ownershipOwn' : 'firearms.ownershipBorrowed')} />
           {firearm.caliber && <Chip label={firearm.caliber} />}
           {firearm.vapenId && <Chip label={firearm.vapenId} />}
         </View>

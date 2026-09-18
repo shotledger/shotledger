@@ -12,8 +12,8 @@ export interface CreateFirearmInput {
   model: string;
   caliber?: string | null;
   weaponType?: WeaponType | null;
-  /** true own, false borrowed/club/another's, null not stated (§286). */
-  isOwn?: boolean | null;
+  /** true own, false borrowed/club/another's; defaults to own (#286). */
+  isOwn?: boolean;
   serialNumber?: string | null;
   vapenId?: string | null;
   loadSystem?: string | null;
@@ -34,7 +34,7 @@ export function createFirearm(db: Database, input: CreateFirearmInput) {
     model: input.model,
     caliber: input.caliber ?? null,
     weaponType: input.weaponType ?? null,
-    isOwn: input.isOwn ?? null,
+    isOwn: input.isOwn ?? true,
     serialNumber: input.serialNumber ?? null,
     vapenId: input.vapenId ?? null,
     loadSystem: input.loadSystem ?? null,
@@ -81,7 +81,7 @@ export function listFirearmOwnershipFacts(db: Database): FirearmOwnershipFact[] 
     .from(firearms)
     .where(isNull(firearms.deletedAt))
     .all()
-    .map((row) => ({ weaponType: row.weaponType ?? null, isOwn: row.isOwn ?? null }));
+    .map((row) => ({ weaponType: row.weaponType ?? null, isOwn: row.isOwn }));
 }
 
 export function softDeleteFirearm(db: Database, id: string) {

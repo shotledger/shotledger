@@ -46,10 +46,10 @@ describe('updateFirearm', () => {
 });
 
 describe('isOwn (FAP 551-3 input, issue #286)', () => {
-  it('Q1: is null until the shooter states it — never a fabricated true', () => {
+  it('Q1: defaults to own when the caller states nothing', () => {
     const f = createFirearm(db, { make: 'Pardini', model: 'K22' });
-    expect(f.isOwn).toBeNull();
-    expect(getFirearm(db, f.id)?.isOwn).toBeNull();
+    expect(f.isOwn).toBe(true);
+    expect(getFirearm(db, f.id)?.isOwn).toBe(true);
   });
 
   it('Q2: round-trips true and false', () => {
@@ -78,7 +78,7 @@ describe('listFirearmOwnershipFacts', () => {
       expect.arrayContaining([
         { weaponType: 'pistol', isOwn: true },
         { weaponType: 'rifle', isOwn: false },
-        { weaponType: null, isOwn: null },
+        { weaponType: null, isOwn: true },
       ]),
     );
     expect(listFirearmOwnershipFacts(db)).toHaveLength(3);

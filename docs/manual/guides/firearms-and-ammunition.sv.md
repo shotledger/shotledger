@@ -7,11 +7,11 @@
 [Vapengrupp och klass](../reference/weapon-group-and-class.md).
 
 **Ägande** anger om vapnet är ditt eget eller lånat — både klubbens vapen och
-någon annans räknas som lånat. För ett vapen du lägger till står det på
-**eget**, och på **ej angivet** för allt du registrerade innan fältet fanns.
-Det är det enda på den här skärmen som ändrar vad appen kräver av dig på annat
-håll: att du äger ett enhandsvapen är det som avgör vilket krav på
-[licensaktivitet](licence-activity.sv.md) du mäts mot.
+någon annans räknas som lånat. Det står på **eget** både för ett vapen du
+lägger till och för allt du registrerade innan fältet fanns, så ange **lånat**
+på de vapen som inte är dina. Det är det enda på den här skärmen som ändrar vad
+appen kräver av dig på annat håll: att du äger ett enhandsvapen är det som
+avgör vilket krav på [licensaktivitet](licence-activity.sv.md) du mäts mot.
 
 Till ett vapen samlas:
 

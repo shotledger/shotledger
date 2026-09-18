@@ -13,8 +13,6 @@ const borrowed = (weaponType: string | null): FirearmOwnershipFact => ({
   weaponType,
   isOwn: false,
 });
-const unstated = (weaponType: string | null): FirearmOwnershipFact => ({ weaponType, isOwn: null });
-
 describe('deriveSeVariantId', () => {
   it('D1: no firearms at all is the 5 § case', () => {
     expect(deriveSeVariantId([])).toBe(SE_FIRST_HANDGUN_VARIANT);
@@ -40,22 +38,18 @@ describe('deriveSeVariantId', () => {
     expect(deriveSeVariantId([borrowed('pistol')])).toBe(SE_FIRST_HANDGUN_VARIANT);
   });
 
-  it('D7: a pistol whose ownership is not stated keeps the stricter case', () => {
-    expect(deriveSeVariantId([unstated('pistol')])).toBe(SE_FIRST_HANDGUN_VARIANT);
-  });
-
-  it('D8: an owned firearm with no weapon type recorded keeps the stricter case', () => {
+  it('D7: an owned firearm with no weapon type recorded keeps the stricter case', () => {
     expect(deriveSeVariantId([own(null)])).toBe(SE_FIRST_HANDGUN_VARIANT);
   });
 
-  it('D9: one owned handgun among borrowed and non-handgun firearms is enough', () => {
+  it('D8: one owned handgun among borrowed and non-handgun firearms is enough', () => {
     expect(deriveSeVariantId([borrowed('pistol'), own('rifle'), own('pistol')])).toBe(
       SE_EXISTING_HANDGUN_VARIANT,
     );
   });
 
-  it('D10: no owned handgun among them stays the 5 § case', () => {
-    expect(deriveSeVariantId([borrowed('pistol'), own('rifle'), unstated('revolver')])).toBe(
+  it('D9: no owned handgun among them stays the 5 § case', () => {
+    expect(deriveSeVariantId([borrowed('pistol'), own('rifle'), borrowed('revolver')])).toBe(
       SE_FIRST_HANDGUN_VARIANT,
     );
   });
