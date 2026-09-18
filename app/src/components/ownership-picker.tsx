@@ -39,6 +39,10 @@ export function OwnershipPicker({ value, onChange }: OwnershipPickerProps) {
         }))}
         value={value}
         onChange={onChange}
+        // Content-width rather than equal thirds: "Not Specified" and "Ej
+        // angivet" do not fit a third of a phone screen, and the control
+        // truncates to one line rather than wrapping.
+        scrollable
         testID="firearm-ownership"
       />
       <ThemedText type="small" themeColor="textSecondary">

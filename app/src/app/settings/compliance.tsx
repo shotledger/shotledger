@@ -15,8 +15,15 @@ import { useComplianceProfile } from '@/features/compliance/use-compliance-profi
 
 export default function ComplianceSettingsScreen() {
   const { t } = useTranslation();
-  const { selection, profile, setSelection, variantIds, variantId, isVariantExplicit, setVariantId } =
-    useComplianceProfile();
+  const {
+    selection,
+    profile,
+    setSelection,
+    variantIds,
+    variantId,
+    isVariantExplicit,
+    setVariantId,
+  } = useComplianceProfile();
 
   return (
     <Screen>
