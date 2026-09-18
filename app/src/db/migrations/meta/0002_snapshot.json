@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3c2cb052-92e5-450a-a107-b3d48ff691cb",
-  "prevId": "a112819c-ca98-4d7b-a658-a95caeeb1c3d",
+  "id": "854b8e14-7fc5-479b-8bf3-e5f3b552d096",
+  "prevId": "b3b4d89d-d7ac-4f7b-830c-264186c12b86",
   "tables": {
     "ammo_lots": {
       "name": "ammo_lots",
@@ -446,13 +446,6 @@
         },
         "authority": {
           "name": "authority",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "vault_document_id": {
-          "name": "vault_document_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
