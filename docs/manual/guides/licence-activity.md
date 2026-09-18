@@ -24,16 +24,31 @@ Training and competition count the same, as does representing your club at an
 external competition. An activity is one logged session — not one series, and
 not one day.
 
-## Choosing your case
+## Your case, and where it comes from
 
-**Settings → Compliance → Activity Requirement** is where you say which of the
-two applies to you. The app cannot work it out: it does not know what you
-already hold a licence for.
+The app proposes one of the two from your firearms: if any firearm is a
+**pistol or revolver** you have marked as **My Own**, it applies 6 §.
+Otherwise it applies 5 §, the stricter case.
 
-New installs start on **First Handgun**, the stricter of the two. If you
-already hold a handgun for target shooting, switch it — otherwise
-Licence Activity asks twice as much of you as the rule does. The app never
-changes this for you, and the case it is using is shown next to the status.
+That is a proposal, not a judgement about your licences. It reads two things
+you told it — the weapon type and the
+[ownership](firearms-and-ammunition.md) — and nothing else:
+
+- A rifle you own is not an enhandsvapen, so it changes nothing.
+- An air pistol does not count either. The app files air pistols and air
+  rifles under one weapon type and cannot tell a licensed one from the rest,
+  so it leaves you on the stricter case.
+- Ownership starts at **My Own** on every firearm, including the ones you
+  recorded before the field existed. So the app assumes you own your handguns
+  unless you say otherwise, and the case it proposes for a handgun owner is
+  therefore 6 §, the lighter of the two. Set a firearm to **Borrowed** and it
+  stops counting.
+
+**Settings → Compliance → Activity Requirement** is where you overrule it.
+Once you pick a case there it stays picked: adding, editing or deleting a
+firearm will not move it again. Until then the setting follows your firearms,
+and the screen says which of the two it is doing. The case in force is also
+shown next to the status.
 
 ## "On average", precisely
 

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { GENERIC_WEAPON_GROUPS, SPSF_WEAPON_GROUPS } from '../disciplines/groups';
-import { getProfile, getProfileDefinition } from './profile-registry';
+import {
+  getProfile,
+  getProfileDefinition,
+  resolveDefaultVariantId,
+  resolveDefaultVariantIdFor,
+} from './profile-registry';
 import {
   SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES,
   SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES,
@@ -86,6 +91,53 @@ describe('getProfile', () => {
       for (const rule of getProfile('se', variant)!.rules) {
         expect(rule.countsAs).toEqual({ training: 1, competition: 1 });
       }
+    }
+  });
+});
+
+describe('resolveDefaultVariantId', () => {
+  const ownedPistol = { weaponType: 'pistol', isOwn: true };
+
+  it('V1: none has no default case at all', () => {
+    expect(resolveDefaultVariantId('none', [])).toBeNull();
+    expect(resolveDefaultVariantId('none', [ownedPistol])).toBeNull();
+  });
+
+  it('V2: se with no firearms defaults to the stricter 5 § case', () => {
+    expect(resolveDefaultVariantId('se', [])).toBe(SE_FIRST_HANDGUN_VARIANT);
+  });
+
+  it('V3: se with an owned handgun defaults to the 6 § case', () => {
+    expect(resolveDefaultVariantId('se', [ownedPistol])).toBe(SE_EXISTING_HANDGUN_VARIANT);
+  });
+
+  it('V4: omitting the facts entirely is not "owns a handgun"', () => {
+    expect(resolveDefaultVariantId('se')).toBe(SE_FIRST_HANDGUN_VARIANT);
+  });
+
+  it('V5: a profile that declares no derivation falls back to its defaultVariantId', () => {
+    const definition = {
+      ...getProfileDefinition('se')!,
+      deriveDefaultVariantId: undefined,
+      defaultVariantId: SE_EXISTING_HANDGUN_VARIANT,
+    };
+    expect(resolveDefaultVariantIdFor(definition, [ownedPistol])).toBe(SE_EXISTING_HANDGUN_VARIANT);
+    expect(resolveDefaultVariantIdFor(definition, [])).toBe(SE_EXISTING_HANDGUN_VARIANT);
+  });
+
+  it('V6: the derived case feeds getProfile and lands on the 6 § numbers', () => {
+    const profile = getProfile('se', resolveDefaultVariantId('se', [ownedPistol]) ?? undefined)!;
+    expect(profile.variantId).toBe(SE_EXISTING_HANDGUN_VARIANT);
+    for (const rule of profile.rules) {
+      expect(rule.requiredActivities).toBe(SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES);
+    }
+  });
+
+  it('V7: an explicit variant id is unaffected by the facts — getProfile never sees them', () => {
+    const profile = getProfile('se', SE_FIRST_HANDGUN_VARIANT)!;
+    expect(profile.variantId).toBe(SE_FIRST_HANDGUN_VARIANT);
+    for (const rule of profile.rules) {
+      expect(rule.requiredActivities).toBe(SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES);
     }
   });
 });

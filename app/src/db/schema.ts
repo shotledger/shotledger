@@ -21,6 +21,10 @@ export const firearms = sqliteTable('firearms', {
   weaponType: text('weapon_type', {
     enum: ['pistol', 'revolver', 'rifle', 'airgun'],
   }),
+  // Whether the shooter owns this firearm themselves (issue #286). A plain
+  // boolean defaulting to true (maintainer, 2026-09-18): owning is the common
+  // case, so existing rows are backfilled to it rather than left unstated.
+  isOwn: integer('is_own', { mode: 'boolean' }).notNull().default(true),
   serialNumber: text('serial_number'), // optional, sensitive
   vapenId: text('vapen_id'), // national register id ("SE…" on license card back)
   loadSystem: text('load_system'), // laddsystem, e.g. halvautomat

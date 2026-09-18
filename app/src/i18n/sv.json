@@ -172,6 +172,10 @@
     "weaponTypeRevolver": "Revolver",
     "weaponTypeRifle": "Gevär",
     "weaponTypeAirgun": "Luftvapen",
+    "ownership": "Ägande",
+    "ownershipOwn": "Eget",
+    "ownershipBorrowed": "Lånat",
+    "ownershipHelp": "Ett vapen du lägger in räknas som eget. Lånat omfattar klubbens vapen och någon annans. Att du äger ett enhandsvapen är det som avgör vilket aktivitetskrav appen mäter dig mot.",
     "serialNumber": "Serienummer",
     "vapenId": "Vapenregister-id",
     "loadSystem": "Laddsystem",
@@ -462,7 +466,9 @@
     "profileSe": "Sverige (FAP 551-3)",
     "unverifiedHint": "Aktivitetskraven för den här profilen är overifierade standardvärden — kontrollera dem med din förening eller polisen innan du förlitar dig på dem.",
     "caseTitle": "Aktivitetskrav",
-    "caseBody": "Vilket krav som gäller beror på dig, inte på appen, så välj det som stämmer. Appen ändrar det aldrig åt dig.",
+    "caseBody": "Vilket krav som gäller beror på vad du redan har. Appen föreslår ett utifrån dina vapen; ditt eget val går alltid före förslaget.",
+    "caseDerived": "Härlett från dina vapen — ett enhandsvapen som är ditt eget ger det lättare kravet. Väljer du själv står valet fast.",
+    "caseExplicit": "Ditt eget val. Appen ändrar det inte, vad du än lägger till bland dina vapen.",
     "case": {
       "firstHandgun": "Första enhandsvapnet",
       "existingHandgun": "Har enhandsvapen"

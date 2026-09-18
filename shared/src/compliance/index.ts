@@ -3,7 +3,13 @@ export * from './months';
 export * from './licence-activity';
 export * from './indicators';
 export * from './profile-registry';
-export { SE_PROFILE, SE_FIRST_HANDGUN_VARIANT, SE_EXISTING_HANDGUN_VARIANT } from './profiles/se';
+export {
+  SE_PROFILE,
+  SE_FIRST_HANDGUN_VARIANT,
+  SE_EXISTING_HANDGUN_VARIANT,
+  SE_HANDGUN_WEAPON_TYPES,
+  deriveSeVariantId,
+} from './profiles/se';
 export {
   SE_VERIFIED,
   SE_WINDOW_MONTHS,

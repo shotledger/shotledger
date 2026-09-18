@@ -1,4 +1,5 @@
 import { and, eq, isNull } from 'drizzle-orm';
+import type { FirearmOwnershipFact } from '@shotledger/shared';
 
 import { firearms } from '../schema';
 import type { Database } from '../types';
@@ -11,6 +12,8 @@ export interface CreateFirearmInput {
   model: string;
   caliber?: string | null;
   weaponType?: WeaponType | null;
+  /** true own, false borrowed/club/another's; defaults to own (#286). */
+  isOwn?: boolean;
   serialNumber?: string | null;
   vapenId?: string | null;
   loadSystem?: string | null;
@@ -31,6 +34,7 @@ export function createFirearm(db: Database, input: CreateFirearmInput) {
     model: input.model,
     caliber: input.caliber ?? null,
     weaponType: input.weaponType ?? null,
+    isOwn: input.isOwn ?? true,
     serialNumber: input.serialNumber ?? null,
     vapenId: input.vapenId ?? null,
     loadSystem: input.loadSystem ?? null,
@@ -64,6 +68,20 @@ export function updateFirearm(db: Database, id: string, patch: UpdateFirearmInpu
     .where(and(eq(firearms.id, id), isNull(firearms.deletedAt)))
     .run();
   return getFirearm(db, id);
+}
+
+/**
+ * What the compliance profile reads to pick a default case (issue #286): the
+ * weapon type and ownership of every firearm the shooter still has. A
+ * tombstoned firearm is no longer a fact about them, so it is excluded.
+ */
+export function listFirearmOwnershipFacts(db: Database): FirearmOwnershipFact[] {
+  return db
+    .select({ weaponType: firearms.weaponType, isOwn: firearms.isOwn })
+    .from(firearms)
+    .where(isNull(firearms.deletedAt))
+    .all()
+    .map((row) => ({ weaponType: row.weaponType ?? null, isOwn: row.isOwn }));
 }
 
 export function softDeleteFirearm(db: Database, id: string) {

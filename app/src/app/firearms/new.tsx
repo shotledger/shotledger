@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { LoadSystemPicker } from '@/components/load-system-picker';
+import { OwnershipPicker } from '@/components/ownership-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -26,6 +27,9 @@ export default function NewFirearmScreen() {
   const [model, setModel] = useState('');
   const [caliber, setCaliber] = useState<string | null>(null);
   const [weaponType, setWeaponType] = useState<WeaponType>('pistol');
+  // A new firearm is overwhelmingly the shooter's own, and this is on screen
+  // before they save — unlike an existing row, which no migration may guess at.
+  const [isOwn, setIsOwn] = useState(true);
   const [serialNumber, setSerialNumber] = useState('');
   const [vapenId, setVapenId] = useState('');
   const [loadSystem, setLoadSystem] = useState<string | null>(null);
@@ -42,6 +46,7 @@ export default function NewFirearmScreen() {
       model: model.trim(),
       caliber,
       weaponType,
+      isOwn,
       serialNumber: serialNumber.trim() || null,
       vapenId: vapenId.trim() || null,
       loadSystem,
@@ -72,6 +77,7 @@ export default function NewFirearmScreen() {
           value={weaponType}
           onChange={setWeaponType}
         />
+        <OwnershipPicker value={isOwn} onChange={setIsOwn} />
       </Card>
 
       <Card>

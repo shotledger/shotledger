@@ -55,8 +55,46 @@ function freshDatabase(): Database.Database {
 }
 
 describe('the migration chain is the whole schema', () => {
-  it('starts from the regenerated baseline', () => {
-    expect(journalTags()[0]).toBe('0000_baseline');
+  it('is the baseline plus exactly the migrations appended since', () => {
+    // Exact, not a prefix: an unexpected migration is as much a defect as a
+    // missing one.
+    expect(journalTags()).toEqual([
+      '0000_baseline',
+      '0001_drop_vault_document_id',
+      '0002_firearm_is_own',
+    ]);
+  });
+
+  it('N3: adds firearms.is_own and backfills every existing row to own', () => {
+    const sqlite = new Database(':memory:');
+    sqlite.pragma('foreign_keys = ON');
+    applyMigration(sqlite, '0000_baseline');
+    sqlite
+      .prepare(
+        `INSERT INTO firearms (id, created_at, updated_at, make, model, weapon_type)
+         VALUES ('f1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'A', '1', 'pistol')`,
+      )
+      .run();
+    applyMigration(sqlite, '0002_firearm_is_own');
+
+    // Maintainer's call, 2026-09-18: ownership is a plain boolean defaulting
+    // to true, so an existing firearm is taken to be the shooter's own.
+    expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f1')).toEqual({
+      is_own: 1,
+    });
+  });
+
+  it('N3b: a row inserted without is_own after the migration is own too', () => {
+    const sqlite = freshDatabase();
+    sqlite
+      .prepare(
+        `INSERT INTO firearms (id, created_at, updated_at, make, model)
+         VALUES ('f2', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'B', '2')`,
+      )
+      .run();
+    expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f2')).toEqual({
+      is_own: 1,
+    });
   });
 
   it('creates every column schema.ts declares, on every table', () => {
