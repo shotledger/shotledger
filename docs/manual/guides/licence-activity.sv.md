@@ -22,16 +22,28 @@ anger två nivåer:
 Träning och tävling räknas lika, liksom att representera föreningen i externa
 tävlingar. En aktivitet är ett loggat pass — inte en serie, och inte en dag.
 
-## Välja ditt fall
+## Ditt fall, och var det kommer ifrån
 
-**Inställningar → Efterlevnad → Aktivitetskrav** är där du anger vilket av de
-två som gäller dig. Appen kan inte räkna ut det: den vet inte vad du redan har
-licens för.
+Appen föreslår ett av de två utifrån dina vapen: finns det en **pistol eller
+revolver** som du har angett som **eget**, tillämpas 6 §. Annars tillämpas
+5 §, det strängare fallet.
 
-Nya installationer börjar på **Första enhandsvapnet**, det strängare av de två.
-Om du sedan tidigare innehar enhandsvapen för målskjutning bör du byta —
-annars kräver Licensaktivitet dubbelt så mycket som regeln gör. Appen ändrar
-det aldrig åt dig, och vilket fall som används visas intill statusen.
+Det är ett förslag, inte en bedömning av dina licenser. Det läser två saker du
+själv har angett — vapentypen och
+[ägandet](firearms-and-ammunition.sv.md) — och inget annat:
+
+- Ett gevär du äger är inget enhandsvapen och ändrar därför ingenting.
+- En luftpistol räknas inte heller. Appen för luftpistoler och luftgevär under
+  samma vapentyp och kan inte skilja ett licenspliktigt vapen från övriga, så
+  den låter dig stå kvar på det strängare fallet.
+- Ett vapen där ägandet fortfarande är **ej angivet** — vilket gäller allt du
+  registrerade innan fältet fanns — räknas som inte ditt. Ange de som är dina.
+
+**Inställningar → Efterlevnad → Aktivitetskrav** är där du tar över beslutet.
+När du väl har valt ett fall där står valet fast: att lägga till, ändra eller
+radera ett vapen flyttar det inte igen. Fram till dess följer inställningen
+dina vapen, och skärmen säger vilket av de två den gör. Vilket fall som
+används visas också intill statusen.
 
 ## ”I genomsnitt”, närmare bestämt
 

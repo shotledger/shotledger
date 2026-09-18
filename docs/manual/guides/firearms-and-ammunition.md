@@ -6,6 +6,13 @@
 _vapengrupp_) is what connects it to the rest of the app — see
 [Weapon group and class](../reference/weapon-group-and-class.md).
 
+**Ownership** says whether the firearm is your own or borrowed — a club
+firearm and anyone else's both count as borrowed. It starts at **My Own** for
+a firearm you add, and at **Not Specified** for anything you recorded before
+the field existed. It is the only thing on this screen that changes what the
+app asks of you elsewhere: owning a handgun is what decides which
+[licence activity](licence-activity.md) requirement you are measured against.
+
 A firearm accumulates:
 
 - **Round count**, from the sessions you log against it. Deleting a session

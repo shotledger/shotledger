@@ -6,6 +6,13 @@
 **vapengruppen** som kopplar det till resten av appen — se
 [Vapengrupp och klass](../reference/weapon-group-and-class.md).
 
+**Ägande** anger om vapnet är ditt eget eller lånat — både klubbens vapen och
+någon annans räknas som lånat. För ett vapen du lägger till står det på
+**eget**, och på **ej angivet** för allt du registrerade innan fältet fanns.
+Det är det enda på den här skärmen som ändrar vad appen kräver av dig på annat
+håll: att du äger ett enhandsvapen är det som avgör vilket krav på
+[licensaktivitet](licence-activity.sv.md) du mäts mot.
+
 Till ett vapen samlas:
 
 - **Skottantal**, från de pass du loggar på det. Raderar du ett pass räknas
