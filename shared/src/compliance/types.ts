@@ -30,11 +30,23 @@ export interface WeaponGroupComplianceRule {
 export type JurisdictionProfileId = 'se';
 
 /**
- * A case within a profile that the shooter picks, because the app cannot
- * derive it (for `se`: whether they already hold a handgun for target
- * shooting, which decides between FAP 551-3 5 § and 6 §). The id is opaque
- * here — the app maps it to an i18n label, so no jurisdiction's wording
- * leaks into shared machinery.
+ * What a profile may read off the shooter's firearms to pick a default case.
+ * `weaponType` is the app's own id ('pistol' | 'revolver' | 'rifle' |
+ * 'airgun'), left as a string so no app enum leaks in here; `null` where the
+ * shooter recorded none.
+ */
+export interface FirearmOwnershipFact {
+  weaponType: string | null;
+  /** `true` the shooter's own, `false` borrowed/club/another's, `null` not stated. */
+  isOwn: boolean | null;
+}
+
+/**
+ * A case within a profile. The shooter picks it in Settings; absent a choice,
+ * the profile's `deriveDefaultVariantId` may propose one from their firearms
+ * (for `se`: whether they already own a handgun, which decides between FAP
+ * 551-3 5 § and 6 §). The id is opaque here — the app maps it to an i18n
+ * label, so no jurisdiction's wording leaks into shared machinery.
  */
 export interface ComplianceProfileVariant {
   id: string;
@@ -48,6 +60,12 @@ export interface JurisdictionProfileDefinition {
   variants: ComplianceProfileVariant[];
   /** Applied when the shooter has not chosen, or chose an unknown id. */
   defaultVariantId: string;
+  /**
+   * Optional: a better default than `defaultVariantId`, worked out from the
+   * shooter's firearms. Only ever moves the DEFAULT — an explicit choice is
+   * resolved before this is consulted. Must return one of `variants`.
+   */
+  deriveDefaultVariantId?: (facts: readonly FirearmOwnershipFact[]) => string;
   source: string;
   verified: boolean;
 }
