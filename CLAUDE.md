@@ -83,6 +83,18 @@ sync. Android first — **all code must stay iOS-compatible**.
    working tree (e.g. `~/tmp/`, `~/agents/shotledger/`); read them to
    learn the shape, then write **synthetic** fixtures. A screenshot taken
    with real data is not committable — use the `/dev` demo data.
+8. **Pre-1.0.0, a version number buys nothing — change the format in
+   place.** The app is unreleased and the maintainer is its only user, so
+   no published format, schema or protocol earns a compatibility branch:
+   `shotledger.sessions` stays `formatVersion: 1`, the sync protocol stays
+   at its version, and a migration may rewrite existing rows rather than
+   tolerate an older shape. Do not add a v2, a shim, or a "read both
+   shapes" path for data only this machine has produced — it is dead code
+   guarding a case that cannot occur, and it outlives the reason it was
+   written. This governs **new** compatibility work; it is not a licence
+   to rip out tolerance that already ships. The rule ends at the first
+   released build with users other than the maintainer, and whatever ADR
+   declares that says so explicitly.
 
 ## Definition of done
 
