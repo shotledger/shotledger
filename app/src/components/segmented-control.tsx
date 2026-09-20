@@ -53,6 +53,15 @@ export function SegmentedControl<T extends string>({
         style={scrolls ? undefined : styles.segmentPressable}
       >
         <View
+          // Remounted on every selection change, which is the whole point of
+          // the key: on Android a view that gains a background colour after
+          // it has been laid out keeps its old, square drawable, so a segment
+          // selected by tapping rendered with square corners while the one
+          // selected at mount was correctly rounded (#349, reported against
+          // the period control's "Max"). Setting the colour unconditionally
+          // and only changing its value does not help — the view has to be
+          // built again.
+          key={selected ? 'selected' : 'unselected'}
           style={[
             styles.segment,
             scrolls && styles.segmentAuto,

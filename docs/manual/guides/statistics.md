@@ -19,6 +19,10 @@ as you like.
 The report repeats every filter at the top, so a report you exported or came
 back to still says what it is about.
 
+The filters stay as you left them. Leave the tab and come back and the form is
+still the one you built — it scrolls back to the top so you can see that, with
+any open picker closed.
+
 ## The report
 
 - **Records** inside the filtered set: best session score, most inner tens, most
