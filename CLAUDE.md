@@ -35,11 +35,13 @@ sync. Android first — **all code must stay iOS-compatible**.
   approved spec and evidence report are the review. Routine UI work uses
   normal tests instead.
 - **Issue [#138](https://github.com/jimisola/shotledger/issues/138)** —
-  maintainer UI/UX feedback and everything else outstanding, tracked to
-  completion (`gh issue view 138`). It replaced `docs/feedback-backlog.md`.
-  Check it before starting UI work, and tick the items your change closes
-  (`gh issue edit 138 --body-file …`) in the same branch — noting anything
-  you decided or could not resolve as a comment (`gh issue comment 138`).
+  the index of everything outstanding, and what replaced
+  `docs/feedback-backlog.md`. Since 2026-09-20 it holds no items of its own:
+  they live in ten grouped sub-issues, #346–#355, one per topic. Open #138
+  (`gh issue view 138`) to find the group, then work in that child — tick its
+  checkboxes in the same branch (`gh issue edit <n> --body-file …`) and note
+  anything you decided or could not resolve as a comment on it. The
+  closed-items log stays on #138.
 - `docs/manual/` — the **user** manual, published with MkDocs. Written for
   shooters, not for contributors, and gated by `mkdocs build --strict`.
   See the documentation rule under Definition of done.
