@@ -1,7 +1,6 @@
 // Swedish jurisdiction profile: FAP 551-3 5 kap 5–6 §§ as transcribed on
 // page 3 of PM 551.24. Numbers and their reading: ../constants-se.ts and
 // docs/specs/compliance-fap551-spec.md.
-import { GENERIC_WEAPON_GROUPS, SPSF_WEAPON_GROUPS } from '../../disciplines/groups';
 import {
   SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES,
   SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES,
@@ -9,7 +8,11 @@ import {
   SE_VERIFIED,
   SE_WINDOW_MONTHS,
 } from '../constants-se';
-import type { FirearmOwnershipFact, JurisdictionProfileDefinition } from '../types';
+import type {
+  FirearmOwnershipFact,
+  JurisdictionProfileDefinition,
+  ShooterComplianceRule,
+} from '../types';
 
 /** 5 § — "för den som inte tidigare har enhandsvapen för målskjutning". */
 export const SE_FIRST_HANDGUN_VARIANT = 'firstHandgun';
@@ -41,18 +44,20 @@ export function deriveSeVariantId(facts: readonly FirearmOwnershipFact[]): strin
   return ownsHandgun ? SE_EXISTING_HANDGUN_VARIANT : SE_FIRST_HANDGUN_VARIANT;
 }
 
-// One rule across every weapon group: 5–6 §§ set a single activity level for
-// the shooter, with no per-vapengrupp differentiation. (The per-firearm
-// "ytterligare enhandsvapen" rule does differentiate, and is deliberately not
-// modeled — see the spec.)
-const ALL_WEAPON_GROUP_IDS = [
-  ...SPSF_WEAPON_GROUPS.map((g) => g.id),
-  ...GENERIC_WEAPON_GROUPS.map((g) => g.id),
-];
-
-function seRule(requiredActivities: number) {
+// 5–6 §§ are requirements on the SHOOTER, not on a vapengrupp: "deltagit i
+// föreningens skjutningar (träning eller tävling) och/eller representerat
+// skytteföreningen i externa tävlingar" names no weapon group, so every
+// session in the window counts whatever gun it was shot with. Expressing that
+// as a rule listing every known group looked equivalent and was not — a
+// session with no vapengrupp recorded matched none of them and vanished from
+// the count (#319), which in real imported data is the majority of sessions.
+//
+// (The two per-firearm criteria on the same form — "ytterligare
+// enhandsvapen" and "förnyelse av tidsbegränsat tillstånd" — do differentiate,
+// and remain unmodeled; see the spec and #329.)
+function seRule(requiredActivities: number): ShooterComplianceRule {
   return {
-    weaponGroups: ALL_WEAPON_GROUP_IDS,
+    scope: 'shooter',
     windowMonths: SE_WINDOW_MONTHS,
     requiredActivities,
     // The form pools "föreningens skjutningar (träning eller tävling)" with

@@ -11,7 +11,7 @@ import {
   type JurisdictionProfile,
   type LicenseStatus,
   type MaintenanceStatus,
-  type WeaponGroupLicenseActivity,
+  type LicenseActivity,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -32,7 +32,7 @@ export interface FirearmDetail {
   maintenanceStatus: MaintenanceStatus;
   maintenanceProgress: number | null;
   /** M6: one entry per applicable compliance rule; empty when profile is 'none'. */
-  licenseActivities: WeaponGroupLicenseActivity[];
+  licenseActivities: LicenseActivity[];
 }
 
 const EMPTY: FirearmDetail = {

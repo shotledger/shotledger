@@ -7,13 +7,31 @@ import {
   computeRuleLicenseActivity,
   worstStatus,
 } from './license-activity';
-import type { ComplianceSession, JurisdictionProfile, WeaponGroupComplianceRule } from './types';
+import type {
+  ComplianceRule,
+  ComplianceSession,
+  JurisdictionProfile,
+  ShooterComplianceRule,
+  WeaponGroupComplianceRule,
+} from './types';
 
 const NOW = new Date('2026-09-01T00:00:00Z');
 
 function rule(overrides: Partial<WeaponGroupComplianceRule> = {}): WeaponGroupComplianceRule {
   return {
+    scope: 'weaponGroups',
     weaponGroups: ['spsf:C'],
+    windowMonths: 6,
+    requiredActivities: 4,
+    countsAs: { training: 1, competition: 1 },
+    ...overrides,
+  };
+}
+
+/** A FAP 551-3 5–6 §§-shaped rule: on the shooter, not on a vapengrupp. */
+function shooterRule(overrides: Partial<ShooterComplianceRule> = {}): ShooterComplianceRule {
+  return {
+    scope: 'shooter',
     windowMonths: 6,
     requiredActivities: 4,
     countsAs: { training: 1, competition: 1 },
@@ -31,7 +49,7 @@ function session(overrides: Partial<ComplianceSession>): ComplianceSession {
   };
 }
 
-function profile(rules: WeaponGroupComplianceRule[]): JurisdictionProfile {
+function profile(rules: ComplianceRule[]): JurisdictionProfile {
   return {
     id: 'se',
     name: { sv: 'x', en: 'x' },
@@ -234,5 +252,87 @@ describe('worstStatus', () => {
     expect(worstStatus(['green', 'amber'])).toBe('amber');
     expect(worstStatus(['green', 'red', 'amber'])).toBe('red');
     expect(worstStatus(['green', 'green'])).toBe('green');
+  });
+});
+
+// #319: found by importing 267 real sessions, 142 of them with no vapengrupp.
+// A shooter-scope rule is the fix; these pin the behavior that was wrong.
+describe('shooter-scope rules (FAP 551-3 5–6 §§)', () => {
+  it('S1: counts a session with no weaponGroup at all', () => {
+    const result = computeRuleLicenseActivity([session({ weaponGroup: null })], shooterRule(), NOW);
+    expect(result.activityCount).toBe(1);
+    expect(result.countedSessionCount).toBe(1);
+    expect(result.skippedSessionCount).toBe(0);
+  });
+
+  it('S2: counts sessions of every weaponGroup alike', () => {
+    const sessions = [
+      session({ id: 'a', weaponGroup: 'spsf:A' }),
+      session({ id: 'b', weaponGroup: 'spsf:C' }),
+      session({ id: 'c', weaponGroup: undefined }),
+    ];
+    const result = computeRuleLicenseActivity(sessions, shooterRule(), NOW);
+    expect(result.activityCount).toBe(3);
+  });
+
+  it('S3: never reports skipped sessions — by construction it skips none', () => {
+    const sessions = [session({ id: 'a', weaponGroup: null }), session({ id: 'b' })];
+    const result = computeRuleLicenseActivity(sessions, shooterRule(), NOW);
+    expect(result.skippedSessionCount).toBe(0);
+    expect(result.scope).toBe('shooter');
+    expect(result.weaponGroups).toEqual([]);
+  });
+
+  it('S4: still respects the window', () => {
+    const sessions = [
+      session({ id: 'old', startedAt: '2025-01-01T00:00:00Z' }),
+      session({ id: 'in' }),
+    ];
+    const result = computeRuleLicenseActivity(sessions, shooterRule(), NOW);
+    expect(result.activityCount).toBe(1);
+  });
+
+  it('S5: applies with no weapon groups on file — the post-import case', () => {
+    const sessions = [session({ weaponGroup: null })];
+    const result = computeOverallLicenseActivity(sessions, profile([shooterRule()]), [], NOW);
+    expect(result.statuses).toHaveLength(1);
+    expect(result.statuses[0]?.activityCount).toBe(1);
+    expect(result.overall).not.toBeNull();
+  });
+
+  it('S6: a firearm with no weapon groups still gets the shooter-level status', () => {
+    const result = computeFirearmLicenseActivity(
+      [session({ weaponGroup: null })],
+      profile([shooterRule()]),
+      [],
+      NOW,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]?.scope).toBe('shooter');
+  });
+});
+
+describe('skippedSessionCount (the honesty figure)', () => {
+  it('S7: a weaponGroups rule reports what it left out, inside the window only', () => {
+    const sessions = [
+      session({ id: 'counted', weaponGroup: 'spsf:C' }),
+      session({ id: 'other-group', weaponGroup: 'spsf:B' }),
+      session({ id: 'no-group', weaponGroup: null }),
+      session({ id: 'out-of-window', weaponGroup: 'spsf:B', startedAt: '2025-01-01T00:00:00Z' }),
+    ];
+    const result = computeRuleLicenseActivity(sessions, rule(), NOW);
+    expect(result.countedSessionCount).toBe(1);
+    expect(result.skippedSessionCount).toBe(2);
+  });
+
+  it('S8: countedSessionCount is unweighted where activityCount is weighted', () => {
+    const sessions = [session({ id: 'a', type: 'competition' })];
+    const result = computeRuleLicenseActivity(
+      sessions,
+      rule({ countsAs: { training: 1, competition: 2 } }),
+      NOW,
+    );
+    expect(result.activityCount).toBe(2);
+    expect(result.countedSessionCount).toBe(1);
   });
 });

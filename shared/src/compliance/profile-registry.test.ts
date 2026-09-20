@@ -7,6 +7,7 @@ import {
   resolveDefaultVariantId,
   resolveDefaultVariantIdFor,
 } from './profile-registry';
+import { computeRuleLicenseActivity } from './license-activity';
 import {
   SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES,
   SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES,
@@ -29,15 +30,30 @@ describe('getProfile', () => {
     expect(getProfile('none', SE_EXISTING_HANDGUN_VARIANT)).toBeNull();
   });
 
-  it('P3: every v1 weapon group resolves to exactly one rule, under either variant', () => {
-    const allIds = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS].map((g) => g.id);
+  // Was "every weapon group resolves to exactly one rule". 5–6 §§ are
+  // requirements on the shooter, so the invariant is now stronger: one rule
+  // that covers every group AND a session carrying none (#319).
+  it('P3: each variant is a single shooter-scope rule, under either variant', () => {
     for (const variant of [SE_FIRST_HANDGUN_VARIANT, SE_EXISTING_HANDGUN_VARIANT]) {
       const profile = getProfile('se', variant)!;
-      for (const id of allIds) {
-        const matches = profile.rules.filter((rule) => rule.weaponGroups.includes(id));
-        expect(matches).toHaveLength(1);
-      }
+      expect(profile.rules).toHaveLength(1);
+      expect(profile.rules[0]!.scope).toBe('shooter');
     }
+  });
+
+  it('P3b: that rule counts a session of any weapon group, and one with none', () => {
+    const profile = getProfile('se', SE_EXISTING_HANDGUN_VARIANT)!;
+    const allIds = [...SPSF_WEAPON_GROUPS, ...GENERIC_WEAPON_GROUPS].map((g) => g.id);
+    const now = new Date('2026-09-01T00:00:00Z');
+    const sessions = [...allIds, null].map((weaponGroup, i) => ({
+      id: `s${i}`,
+      startedAt: '2026-08-01T00:00:00Z',
+      type: 'training' as const,
+      weaponGroup,
+    }));
+    const result = computeRuleLicenseActivity(sessions, profile.rules[0]!, now);
+    expect(result.activityCount).toBe(sessions.length);
+    expect(result.skippedSessionCount).toBe(0);
   });
 
   it('P4: the window traces to constants-se.ts (no duplicated literals)', () => {
