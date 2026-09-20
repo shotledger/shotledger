@@ -19,6 +19,7 @@ import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
 import { formatAmmoRecipe } from '@/features/ammo/format-ammo-recipe';
+import { requiresLicense } from '@/features/firearms/completeness';
 import { useFirearmsList } from '@/features/firearms/use-firearms-list';
 import { Spacing } from '@/theme/tokens';
 
@@ -85,10 +86,15 @@ export default function FirearmsScreen() {
                         thing twice and squeezed the name into one-word-per-line
                         wrapping (seen on the emulator with six imported
                         firearms). Incomplete already means a licence is among
-                        the missing details, and the detail screen names them. */}
-                    {!(row.isIncomplete && row.licenseStatus === 'none') && (
-                      <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
-                    )}
+                        the missing details, and the detail screen names them.
+
+                        A firearm that needs no licence shows no licence chip at
+                        all: "No License" on an air pistol reads as a gap, and
+                        there is none to fill (#365). */}
+                    {requiresLicense(row.weaponType) &&
+                      !(row.isIncomplete && row.licenseStatus === 'none') && (
+                        <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
+                      )}
                     {row.maintenanceStatus !== 'unknown' && (
                       <Chip
                         label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
