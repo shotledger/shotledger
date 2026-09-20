@@ -31,7 +31,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
-import { missingFirearmFields } from '@/features/firearms/completeness';
+import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
 import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -170,6 +170,7 @@ export default function FirearmDetailScreen() {
 
   // A firearm that isn't the shooter's own needs no license of theirs, so a
   // missing one is not a gap to prompt about.
+  const licenseExempt = !requiresLicense(firearm.weaponType) && detail.licenses.length === 0;
   const missingFields = missingFirearmFields({
     weaponType: firearm.weaponType,
     caliber: firearm.caliber,
@@ -899,14 +900,22 @@ export default function FirearmDetailScreen() {
       <Card>
         <View style={styles.sectionHeader}>
           <ThemedText type="smallBold">{t('firearms.licenseTitle')}</ThemedText>
+          {/* An air weapon that is effektbegränsat needs no licence, so
+              "No License" would name a gap that does not exist (#365). The
+              card stays, because a powerful air rifle above the limit does
+              need one and the app cannot tell them apart. */}
           <Chip
             testID="license-status"
-            label={t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)}
+            label={
+              licenseExempt
+                ? t('firearms.licenseNotRequired')
+                : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
+            }
           />
         </View>
         {detail.licenses.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
-            {t('firearms.noLicenses')}
+            {licenseExempt ? t('firearms.licenseNotRequiredBody') : t('firearms.noLicenses')}
           </ThemedText>
         ) : (
           detail.licenses.map((license) => (

@@ -13,6 +13,22 @@ på de vapen som inte är dina. Det är det enda på den här skärmen som ändr
 appen kräver av dig på annat håll: att du äger ett enhandsvapen är det som
 avgör vilket krav på [licensaktivitet](license-activity.sv.md) du mäts mot.
 
+### Ofullständig
+
+Ett vapen visar **Ofullständig** så länge något appen behöver saknas: vapentyp,
+kammare eller licens. Importerade vapen kommer oftast in så, eftersom en import
+sällan bär mer än fabrikat och modell.
+
+Ett **luftvapen frågas aldrig efter licens**. Ett effektbegränsat luftvapen
+kräver ingen i Sverige, och en 10 m-luftpistol ligger med god marginal under
+gränsen — det räknas alltså som fullständigt utan licens. Appen går på
+vapentypen, som den känner till, inte på mynningsenergin, som den inte gör: äger
+du ett luftgevär som är kraftigt nog att kräva licens påminner appen dig inte om
+det.
+
+Ett lånat vapen frågas inte heller efter licens. Den pappersexercisen är inte
+din.
+
 ### Kammare, och vad vapnet mer skjuter
 
 Ett vapen har en **kammare** — vad det är byggt för, och det din licens anger.

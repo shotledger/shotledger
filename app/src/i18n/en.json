@@ -305,7 +305,9 @@
     "eventDate": "Date",
     "sightWindageRange": "Range ±{{value}}",
     "sightWindageDecrease": "Decrease Windage",
-    "sightWindageIncrease": "Increase Windage"
+    "sightWindageIncrease": "Increase Windage",
+    "licenseNotRequired": "Not required",
+    "licenseNotRequiredBody": "An air weapon below the Swedish energy limit needs no licence. Add one anyway if yours does."
   },
   "ammo": {
     "newLot": "New Ammo Lot",

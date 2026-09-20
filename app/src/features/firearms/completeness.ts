@@ -22,6 +22,24 @@ export interface FirearmCompletenessInput {
 }
 
 /**
+ * Whether a missing licence is a gap worth prompting about, by weapon type.
+ *
+ * An air weapon that is *effektbegränsat* needs no licence in Sweden, so a 10 m
+ * match air pistol with no licence row is complete, not half-filled — and the
+ * app flagged it forever with nothing the shooter could do to clear it (#365).
+ *
+ * An app-level heuristic, not a claim about the law: `airgun` covers air
+ * pistols and air rifles alike here, and a powerful air rifle above the energy
+ * limit does need one. Erring this way costs an unprompted licence on a rare
+ * firearm; erring the other way nags every air-pistol shooter permanently.
+ * `SE_HANDGUN_WEAPON_TYPES` excludes `airgun` on the same reasoning, and the
+ * two should move together if the app ever learns muzzle energy.
+ */
+export function requiresLicense(weaponType: string | null): boolean {
+  return weaponType !== 'airgun';
+}
+
+/**
  * The missing fields, or an empty array when nothing is.
  *
  * Deliberately NOT included:
@@ -40,7 +58,7 @@ export function missingFirearmFields(
   const missing: FirearmCompletenessField[] = [];
   if (!firearm.weaponType) missing.push('weaponType');
   if (!firearm.caliber?.trim()) missing.push('caliber');
-  if (!firearm.hasLicense) missing.push('license');
+  if (!firearm.hasLicense && requiresLicense(firearm.weaponType)) missing.push('license');
   return missing;
 }
 
@@ -49,7 +67,8 @@ export function missingFirearmFields(
  *
  * A firearm the shooter does not own needs no license of theirs, so a missing
  * license is not a gap — flagging it would tell a shooter to add paperwork for
- * a club gun.
+ * a club gun. A licence-free weapon type is handled in `missingFirearmFields`
+ * rather than here, because it is not a gap for anyone, owner or not.
  */
 export function isFirearmIncomplete(
   firearm: FirearmCompletenessInput & { isOwn: boolean },

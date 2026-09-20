@@ -14,6 +14,21 @@ this screen that changes what the app asks of you elsewhere: owning a handgun
 is what decides which [license activity](license-activity.md) requirement you
 are measured against.
 
+### Incomplete
+
+A firearm shows **Incomplete** while something the app needs is missing: the
+weapon type, the chambering, or a licence. Imported firearms usually arrive
+that way, because an import carries little more than a make and a model.
+
+An **air weapon is never asked for a licence**. One that is _effektbegränsat_
+needs none in Sweden, and a 10 m match air pistol is well inside that — so it
+counts as complete without one. The app goes by the weapon type, which it does
+know, rather than by muzzle energy, which it does not: if you own an air rifle
+powerful enough to need a licence, the app will not remind you about it.
+
+A borrowed firearm is not asked for a licence either. That paperwork is not
+yours to hold.
+
 ### Chambering, and what else it shoots
 
 A firearm has one **chambering** — what it is built for, and what your licence
