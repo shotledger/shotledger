@@ -23,9 +23,10 @@ exports[`buildShootingLogHtml > matches the snapshot with a firearm filter 1`] =
   <h1>Shooting log</h1>
   <div class="summary">
     <div>Personal shooting log for: ______</div>
+    <div>Personal ID number: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     <div>AW93 .22 LR</div>
-    <div>2 · 20</div>
+    <div>Sessions: 2 · Shots: 20</div>
     <div>Generated 2026-09-01</div>
   </div>
   <table>
@@ -76,9 +77,10 @@ exports[`buildShootingLogHtml > matches the snapshot with entries 1`] = `
   <h1>Shooting log</h1>
   <div class="summary">
     <div>Personal shooting log for: ______</div>
+    <div>Personal ID number: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     
-    <div>2 · 20</div>
+    <div>Sessions: 2 · Shots: 20</div>
     <div>Generated 2026-09-01</div>
   </div>
   <table>
@@ -129,9 +131,10 @@ exports[`buildShootingLogHtml > matches the snapshot with no entries 1`] = `
   <h1>Shooting log</h1>
   <div class="summary">
     <div>Personal shooting log for: ______</div>
+    <div>Personal ID number: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     
-    <div>0 · 0</div>
+    <div>Sessions: 0 · Shots: 0</div>
     <div>Generated 2026-09-01</div>
   </div>
   <p class="empty">No sessions in this period.</p>

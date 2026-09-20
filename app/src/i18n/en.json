@@ -564,7 +564,10 @@
     "pdfAttestationNote": "The “Attested by” column is left blank on purpose: on a club log a row counts as evidence once someone has signed it, and only a person can do that.",
     "pdfColDate": "Date",
     "pdfColLocation": "Location",
-    "pdfEmpty": "No sessions in this period."
+    "pdfEmpty": "No sessions in this period.",
+    "pdfTotals": "Sessions: {{sessions}} · Shots: {{shots}}",
+    "pdfPersonalIdBlank": "Personal ID number: ______________________________",
+    "pdfNoLocation": "Not recorded"
   },
   "session": {
     "newTitle": "New Session",
