@@ -8,7 +8,10 @@
 // a "Records" entry on the Stats tab itself (not done here — kept as a
 // standalone route per the task's "your call, note it").
 import { getDiscipline, tenthsToScore, weaponGroupLabel } from '@shotledger/shared';
-import { parseStatsGroupKey } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
+import {
+  parseStatsGroupKey,
+  type PbCoverage,
+} from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -24,6 +27,26 @@ function fmt(tenths: number | null): string {
   return tenths === null ? '–' : tenthsToScore(tenths).toFixed(1);
 }
 
+/**
+ * The line under a section heading saying what its figures are the best OF.
+ * Always rendered when the section is: a personal best presented without its
+ * basis is the defect this screen was filed over (#318).
+ */
+function CoverageLine({ coverage, testID }: { coverage: PbCoverage; testID: string }) {
+  const { t } = useTranslation();
+  return (
+    <ThemedText type="small" themeColor="textSecondary" testID={testID}>
+      {t('webshooter.coverage', {
+        counted: coverage.counted,
+        considered: coverage.considered,
+      })}
+      {coverage.ungrouped > 0
+        ? ` ${t('webshooter.coverageUngrouped', { count: coverage.ungrouped })}`
+        : ''}
+    </ThemedText>
+  );
+}
+
 export default function WebshooterRecordsScreen() {
   const { t } = useTranslation();
 
@@ -36,10 +59,15 @@ export default function WebshooterRecordsScreen() {
     const name = discipline ? t(`discipline.${disciplineId}` as const) : disciplineId;
     const federation =
       discipline && discipline.federation !== 'generic' ? `${discipline.federation} ` : '';
-    const group = weaponGroupLabel(weaponGroupId);
+    // No vapengrupp recorded is its own bucket, and says so — the alternative
+    // is a record card labelled with the discipline alone, indistinguishable
+    // from one where the group happens to be unknown (#318).
+    const group = weaponGroupId ? weaponGroupLabel(weaponGroupId) : t('webshooter.ungrouped');
     return group ? `${federation}${name} · ${group}` : `${federation}${name}`;
   }
-  const { officialPbs, freeformPbs, yearOverYear } = useWebshooterRecords();
+
+  const { officialPbs, freeformPbs, yearOverYear, officialCoverage, freeformCoverage } =
+    useWebshooterRecords();
 
   const empty = officialPbs.length === 0 && freeformPbs.length === 0 && yearOverYear.length === 0;
 
@@ -54,6 +82,7 @@ export default function WebshooterRecordsScreen() {
       {officialPbs.length > 0 && (
         <View style={styles.section}>
           <ThemedText type="smallBold">{t('webshooter.officialPbTitle')}</ThemedText>
+          <CoverageLine coverage={officialCoverage} testID="records-coverage-official" />
           {officialPbs.map((row) => (
             <Card key={row.groupKey}>
               <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
@@ -68,6 +97,7 @@ export default function WebshooterRecordsScreen() {
       {freeformPbs.length > 0 && (
         <View style={styles.section}>
           <ThemedText type="smallBold">{t('webshooter.freeformPbTitle')}</ThemedText>
+          <CoverageLine coverage={freeformCoverage} testID="records-coverage-freeform" />
           {freeformPbs.map((row) => (
             <Card key={row.groupKey}>
               <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>

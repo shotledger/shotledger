@@ -37,7 +37,6 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
   const results: CompetitionResultForStats[] = [];
   for (const session of sessionRows) {
     if (!OFFICIAL_COMPETITION_TYPES.has(session.disciplineId)) continue;
-    if (!session.weaponGroup || !session.shooterClass) continue;
 
     const seriesRows = db
       .select()
@@ -82,8 +81,8 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
     results.push({
       sessionId: session.id,
       competitionType: session.disciplineId,
-      weaponGroup: session.weaponGroup,
-      shooterClass: session.shooterClass,
+      weaponGroup: session.weaponGroup ?? null,
+      shooterClass: session.shooterClass ?? null,
       date: session.startedAt,
       beforeFinalTenths: scored.beforeFinalTenths,
       beforeFinalSeriesCount,
@@ -99,8 +98,8 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
 export interface FreeformSessionRow {
   sessionId: string;
   disciplineId: string;
-  weaponGroup: string;
-  shooterClass: string;
+  weaponGroup: string | null;
+  shooterClass: string | null;
   date: string;
   seriesTenths: number[];
 }
@@ -116,7 +115,6 @@ export function listFreeformSessionsForPb(db: Database): FreeformSessionRow[] {
 
   const results: FreeformSessionRow[] = [];
   for (const session of sessionRows) {
-    if (!session.weaponGroup || !session.shooterClass) continue;
     const seriesRows = db
       .select()
       .from(series)
@@ -144,11 +142,20 @@ export function listFreeformSessionsForPb(db: Database): FreeformSessionRow[] {
     results.push({
       sessionId: session.id,
       disciplineId: session.disciplineId,
-      weaponGroup: session.weaponGroup,
-      shooterClass: session.shooterClass,
+      weaponGroup: session.weaponGroup ?? null,
+      shooterClass: session.shooterClass ?? null,
       date: session.startedAt,
       seriesTenths,
     });
   }
   return results;
+}
+
+/**
+ * Every live session, for the Records coverage line: the denominator a
+ * shooter recognizes ("from 41 of 267 sessions"). Counted rather than
+ * re-listed — the rows themselves are never needed.
+ */
+export function countAllSessions(db: Database): number {
+  return db.select().from(sessions).where(isNull(sessions.deletedAt)).all().length;
 }
