@@ -58,7 +58,7 @@ describe('pistolskyttemarkeGuldFulfillment', () => {
       now: NOW,
     });
     expect(result.fulfilled).toBe(true);
-    expect(result.guldserieCountLast24Months).toBe(1);
+    expect(result.goldSeriesCountLast24Months).toBe(1);
     expect(result.ruleVerified).toBe(false);
   });
 
@@ -67,7 +67,7 @@ describe('pistolskyttemarkeGuldFulfillment', () => {
       seriesList: [guldSeries({ startedAt: '2024-09-01T00:00:00.000Z' })], // NOW - 24mo exactly
       now: NOW,
     });
-    expect(result.guldserieCountLast24Months).toBe(1);
+    expect(result.goldSeriesCountLast24Months).toBe(1);
   });
 
   it('a series exactly at `now` is included (inclusive upper bound)', () => {
@@ -75,7 +75,7 @@ describe('pistolskyttemarkeGuldFulfillment', () => {
       seriesList: [guldSeries({ startedAt: NOW.toISOString() })],
       now: NOW,
     });
-    expect(result.guldserieCountLast24Months).toBe(1);
+    expect(result.goldSeriesCountLast24Months).toBe(1);
   });
 
   it('a series after `now` (future) is excluded', () => {
@@ -83,7 +83,7 @@ describe('pistolskyttemarkeGuldFulfillment', () => {
       seriesList: [guldSeries({ startedAt: '2026-09-15T00:00:00Z' })],
       now: NOW,
     });
-    expect(result.guldserieCountLast24Months).toBe(0);
+    expect(result.goldSeriesCountLast24Months).toBe(0);
   });
 
   it('I6: guldserie 25 months ago -> not fulfilled', () => {
@@ -92,18 +92,18 @@ describe('pistolskyttemarkeGuldFulfillment', () => {
       now: NOW,
     });
     expect(result.fulfilled).toBe(false);
-    expect(result.guldserieCountLast24Months).toBe(0);
+    expect(result.goldSeriesCountLast24Months).toBe(0);
   });
 
   it('defaults `now` to the current date when omitted', () => {
     const result = pistolskyttemarkeGuldFulfillment({ seriesList: [] });
-    expect(result.guldserieCountLast24Months).toBe(0);
+    expect(result.goldSeriesCountLast24Months).toBe(0);
   });
 
   it('I7: no series at all', () => {
     const result = pistolskyttemarkeGuldFulfillment({ seriesList: [], now: NOW });
     expect(result.fulfilled).toBe(false);
-    expect(result.guldserieCountLast24Months).toBe(0);
+    expect(result.goldSeriesCountLast24Months).toBe(0);
   });
 
   it('I8: series below guld threshold not counted', () => {

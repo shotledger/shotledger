@@ -14,7 +14,7 @@ export interface WebshooterSessionBadgeProps {
   session: {
     externalSource: string | null;
     officialPlacement: number | null;
-    officialStandardmedalj: 'none' | 'brons' | 'silver' | 'guld' | null;
+    officialStandardMedal: 'none' | 'brons' | 'silver' | 'guld' | null;
   };
 }
 
@@ -42,10 +42,10 @@ export function WebshooterSessionBadge({ session }: WebshooterSessionBadgeProps)
           {t('webshooter.officialPlacement', { placement: session.officialPlacement })}
         </ThemedText>
       )}
-      {session.officialStandardmedalj && session.officialStandardmedalj !== 'none' && (
+      {session.officialStandardMedal && session.officialStandardMedal !== 'none' && (
         <ThemedText type="small" themeColor="textSecondary">
           {t('webshooter.officialMedal', {
-            medal: t(`webshooter.medal.${session.officialStandardmedalj}`),
+            medal: t(`webshooter.medal.${session.officialStandardMedal}`),
           })}
         </ThemedText>
       )}

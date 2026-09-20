@@ -17,7 +17,7 @@ import {
   analyticsTotals,
   compareRecentSeries,
   filterAnalyticsSeries,
-  guldserieCount,
+  goldSeriesCount,
   sampleStandardDeviationTenths,
   scoredShots,
   tenthsToScore,
@@ -216,7 +216,7 @@ export interface AnalyticsReportData {
    * only shows the tile when it is non-zero — an ISSF or NRA user never
    * sees a metric that does not apply to them.
    */
-  guldserieCount: number;
+  goldSeriesCount: number;
   /** The raw records, as the JSON export wants them. */
   records: AnalyticsRecords;
   bestSessionScore: NamedRecord | null;
@@ -247,7 +247,7 @@ const EMPTY_REPORT: AnalyticsReportData = {
   hasMatches: false,
   totals: EMPTY_TOTALS,
   sdTenths: null,
-  guldserieCount: 0,
+  goldSeriesCount: 0,
   records: { bestSessionTotalTenths: null, mostInnerTens: null, mostTens: null },
   bestSessionScore: null,
   mostInnerTens: null,
@@ -293,7 +293,7 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
     sdTenths: sampleStandardDeviationTenths(shots),
     // No sighter scope: a sighter always counts towards a guldserie
     // (maintainer, 2026-09-17; spec §2.3).
-    guldserieCount: guldserieCount(matched, { birthYear }),
+    goldSeriesCount: goldSeriesCount(matched, { birthYear }),
     records,
     bestSessionScore: named(records.bestSessionTotalTenths),
     mostInnerTens: named(records.mostInnerTens),

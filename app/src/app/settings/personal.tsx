@@ -6,10 +6,10 @@
 // (Personal or similar)"). The märke table stays on the same page as the
 // birth year it reads, which is the earlier request it has to honor.
 import {
-  allMarkeThresholds,
+  allBadgeThresholds,
   ageReduction,
-  type MarkeGroup,
-  type MarkeValor,
+  type BadgeGroup,
+  type BadgeGrade,
 } from '@shotledger/shared';
 import type { SkillClass } from '@shotledger/shared/src/disciplines/eligibility';
 import { Stack } from 'expo-router';
@@ -89,7 +89,7 @@ export default function PersonalSettingsScreen() {
   }, [currentYear]);
 
   const markeThresholds = useMemo(
-    () => allMarkeThresholds({ birthYear, year: currentYear }),
+    () => allBadgeThresholds({ birthYear, year: currentYear }),
     [birthYear, currentYear],
   );
   const markeReduction = useMemo(
@@ -103,8 +103,8 @@ export default function PersonalSettingsScreen() {
     birthYear === null || markeReduction === 0
       ? null
       : birthYear + (markeReduction === 2 ? 66 : 56);
-  const markeGroups: MarkeGroup[] = ['A', 'B', 'C'];
-  const markeValors: MarkeValor[] = ['brons', 'silver', 'guld'];
+  const markeGroups: BadgeGroup[] = ['A', 'B', 'C'];
+  const markeValors: BadgeGrade[] = ['brons', 'silver', 'guld'];
 
   return (
     <Screen>
@@ -156,15 +156,15 @@ export default function PersonalSettingsScreen() {
           }
         />
 
-        <View style={styles.markeTable} testID="marke-requirement">
+        <View style={styles.badgeTable} testID="badge-requirement">
           <View style={styles.headerRow}>
             <ThemedText type="smallBold" style={styles.headerLabel}>
-              {t('settings.markeTitle')}
+              {t('settings.badgeTitle')}
             </ThemedText>
             <InfoButton
-              title={t('settings.markeTitle')}
-              body={t('settings.markeInfo')}
-              testID="marke-info"
+              title={t('settings.badgeTitle')}
+              body={t('settings.badgeInfo')}
+              testID="badge-info"
             />
           </View>
           <View style={styles.markeRow}>
@@ -175,27 +175,27 @@ export default function PersonalSettingsScreen() {
               </ThemedText>
             ))}
           </View>
-          {markeValors.map((valor) => (
-            <View key={valor} style={styles.markeRow}>
+          {markeValors.map((grade) => (
+            <View key={grade} style={styles.markeRow}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.markeCellLabel}>
-                {t(`webshooter.medal.${valor}`)}
+                {t(`webshooter.medal.${grade}`)}
               </ThemedText>
               {markeGroups.map((group) => (
                 <ThemedText key={group} type="default" style={styles.markeCell}>
-                  {markeThresholds[group][valor]}
+                  {markeThresholds[group][grade]}
                 </ThemedText>
               ))}
             </View>
           ))}
           <ThemedText type="small" themeColor="textSecondary">
             {birthYear === null
-              ? t('settings.markeNoYearNote')
+              ? t('settings.badgeNoYearNote')
               : markeReductionSinceYear !== null
-                ? t('settings.markeReductionNote', {
+                ? t('settings.badgeReductionNote', {
                     points: markeReduction,
                     sinceYear: markeReductionSinceYear,
                   })
-                : t('settings.markeReductionNoneNote')}
+                : t('settings.badgeReductionNoneNote')}
           </ThemedText>
         </View>
       </Card>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   headerLabel: {
     flexShrink: 1,
   },
-  markeTable: {
+  badgeTable: {
     gap: Spacing.one,
   },
   markeRow: {

@@ -6,7 +6,7 @@ import {
   aggregateByFirearm,
   bestWorstSeries,
   compareRecentSeries,
-  guldserieCount,
+  goldSeriesCount,
   meanTenths,
   sampleStandardDeviationTenths,
   scoredSeriesTotalsTenths,
@@ -475,7 +475,7 @@ describe('compareRecentSeries', () => {
   });
 });
 
-describe('guldserieCount', () => {
+describe('goldSeriesCount', () => {
   // Amended 2026-09-17 (maintainer: "a sighter always counts towards
   // guldserie"): the sighter below qualifies, so the count is 3, not 2.
   it('B28: sighters included, only totals meeting the C threshold (46) count', () => {
@@ -488,7 +488,7 @@ describe('guldserieCount', () => {
     const s40 = make('s40', 40 / 5);
     const sighter50 = make('sighter50', 50 / 5, true);
 
-    expect(guldserieCount([s44, s46, s47, s40, sighter50], { birthYear: null })).toBe(3);
+    expect(goldSeriesCount([s44, s46, s47, s40, sighter50], { birthYear: null })).toBe(3);
   });
 
   it('counts every qualifying series, not a coincidental match to the total', () => {
@@ -497,7 +497,7 @@ describe('guldserieCount', () => {
     // cannot: an equal split above/below the line produces the same count
     // either way the comparison is flipped.
     const make = (id: string) => series({ id, shots: Array(5).fill(shot(100)) }); // 50 pts each
-    expect(guldserieCount([make('a'), make('b'), make('c')], { birthYear: null })).toBe(3);
+    expect(goldSeriesCount([make('a'), make('b'), make('c')], { birthYear: null })).toBe(3);
   });
 
   it('B29: non-precision discipline never counts, regardless of points', () => {
@@ -506,7 +506,7 @@ describe('guldserieCount', () => {
       disciplineId: 'spsf-milsnabb',
       shots: Array(5).fill(shot(100)),
     });
-    expect(guldserieCount([milsnabb50], { birthYear: null })).toBe(0);
+    expect(goldSeriesCount([milsnabb50], { birthYear: null })).toBe(0);
   });
 });
 

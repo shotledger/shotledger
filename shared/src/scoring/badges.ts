@@ -4,10 +4,10 @@
 // docs/reference/spsf-shb-2026.md. Values are POINTS (not tenths) per
 // 5-shot precision series.
 
-export type MarkeValor = 'brons' | 'silver' | 'guld';
-export type MarkeGroup = 'A' | 'B' | 'C';
+export type BadgeGrade = 'brons' | 'silver' | 'guld';
+export type BadgeGroup = 'A' | 'B' | 'C';
 
-const THRESHOLDS: Record<MarkeValor, Record<MarkeGroup, number>> = {
+const THRESHOLDS: Record<BadgeGrade, Record<BadgeGroup, number>> = {
   brons: { A: 32, B: 33, C: 34 },
   silver: { A: 38, B: 39, C: 40 },
   guld: { A: 43, B: 45, C: 46 },
@@ -19,7 +19,7 @@ const MARKE_DISCIPLINES = new Set(['spsf-precision']);
 
 // Sub-groups AM/AP/AG and A-opt are variants of vapengrupp A (SHB F.4.1,
 // F.4.5) and share its märke row — see spec §4 M10 (VERIFY V3).
-const WEAPON_GROUP_TO_MARKE_GROUP: Record<string, MarkeGroup> = {
+const WEAPON_GROUP_TO_MARKE_GROUP: Record<string, BadgeGroup> = {
   'spsf:A': 'A',
   'spsf:AM': 'A',
   'spsf:AP': 'A',
@@ -31,9 +31,9 @@ const WEAPON_GROUP_TO_MARKE_GROUP: Record<string, MarkeGroup> = {
 
 const EARLIEST_BIRTH_YEAR = 1900;
 
-export interface MarkeThresholdInput {
-  valor: MarkeValor;
-  markeGroup: MarkeGroup;
+export interface BadgeThresholdInput {
+  grade: BadgeGrade;
+  badgeGroup: BadgeGroup;
   birthYear?: number | null;
   year: number;
 }
@@ -47,7 +47,7 @@ export interface SeriesThresholdInput {
 }
 
 /** Maps a federation-scoped vapengrupp id to its märke row, or null. */
-export function markeGroupForWeaponGroup(weaponGroup?: string | null): MarkeGroup | null {
+export function badgeGroupForWeaponGroup(weaponGroup?: string | null): BadgeGroup | null {
   if (!weaponGroup) return null;
   return WEAPON_GROUP_TO_MARKE_GROUP[weaponGroup] ?? null;
 }
@@ -68,8 +68,8 @@ export function ageReduction(birthYear: number | null | undefined, year: number)
 }
 
 /** Age-adjusted märke threshold in points for one 5-shot precision series. */
-export function markeThreshold(input: MarkeThresholdInput): number {
-  const base = THRESHOLDS[input.valor][input.markeGroup];
+export function badgeThreshold(input: BadgeThresholdInput): number {
+  const base = THRESHOLDS[input.grade][input.badgeGroup];
   return base - ageReduction(input.birthYear, input.year);
 }
 
@@ -78,31 +78,31 @@ export function markeThreshold(input: MarkeThresholdInput): number {
  * märke requirement does not apply — a weapon group with no row (R, magnum,
  * airgun), a non-precision discipline, or a series that is not 5 shots.
  */
-export function guldserieThreshold(input: SeriesThresholdInput): number | null {
+export function goldSeriesThreshold(input: SeriesThresholdInput): number | null {
   if (input.seriesLength !== MARKE_SERIES_LENGTH) return null;
   if (!MARKE_DISCIPLINES.has(input.disciplineId)) return null;
-  const markeGroup = markeGroupForWeaponGroup(input.weaponGroup);
-  if (markeGroup === null) return null;
-  return markeThreshold({
-    valor: 'guld',
-    markeGroup,
+  const badgeGroup = badgeGroupForWeaponGroup(input.weaponGroup);
+  if (badgeGroup === null) return null;
+  return badgeThreshold({
+    grade: 'guld',
+    badgeGroup,
     birthYear: input.birthYear,
     year: input.year,
   });
 }
 
 /** True when a series score (in points) meets the guld requirement. */
-export function isGuldserie(points: number, input: SeriesThresholdInput): boolean {
-  const threshold = guldserieThreshold(input);
+export function isGoldSeries(points: number, input: SeriesThresholdInput): boolean {
+  const threshold = goldSeriesThreshold(input);
   return threshold !== null && points >= threshold;
 }
 
-const MARKE_VALORS: readonly MarkeValor[] = ['brons', 'silver', 'guld'];
-const MARKE_GROUPS: readonly MarkeGroup[] = ['A', 'B', 'C'];
+const MARKE_VALORS: readonly BadgeGrade[] = ['brons', 'silver', 'guld'];
+const MARKE_GROUPS: readonly BadgeGroup[] = ['A', 'B', 'C'];
 
-export type MarkeThresholdTable = Record<MarkeGroup, Record<MarkeValor, number>>;
+export type BadgeThresholdTable = Record<BadgeGroup, Record<BadgeGrade, number>>;
 
-export interface MarkeThresholdTableInput {
+export interface BadgeThresholdTableInput {
   birthYear?: number | null;
   year: number;
 }
@@ -110,21 +110,21 @@ export interface MarkeThresholdTableInput {
 /**
  * Every brons/silver/guld × A/B/C threshold for one birth year and year, age
  * reduction applied — for UI that shows the whole table (e.g. a settings
- * screen) rather than a single cell via {@link markeThreshold}.
+ * screen) rather than a single cell via {@link badgeThreshold}.
  */
-export function allMarkeThresholds(input: MarkeThresholdTableInput): MarkeThresholdTable {
-  const table = {} as MarkeThresholdTable;
-  for (const markeGroup of MARKE_GROUPS) {
-    const row = {} as Record<MarkeValor, number>;
-    for (const valor of MARKE_VALORS) {
-      row[valor] = markeThreshold({
-        valor,
-        markeGroup,
+export function allBadgeThresholds(input: BadgeThresholdTableInput): BadgeThresholdTable {
+  const table = {} as BadgeThresholdTable;
+  for (const badgeGroup of MARKE_GROUPS) {
+    const row = {} as Record<BadgeGrade, number>;
+    for (const grade of MARKE_VALORS) {
+      row[grade] = badgeThreshold({
+        grade,
+        badgeGroup,
         birthYear: input.birthYear,
         year: input.year,
       });
     }
-    table[markeGroup] = row;
+    table[badgeGroup] = row;
   }
   return table;
 }

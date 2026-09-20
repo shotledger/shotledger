@@ -84,7 +84,7 @@ function firstDisciplineFor(regulationId: string): string | undefined {
  * it (maintainer, 2026-09-13: "the weapon group and class are not relevant for
  * practise. only relevant when competing").
  *
- * Derived, never nulled: `guldserieThreshold` reads the weapon group, and
+ * Derived, never nulled: `goldSeriesThreshold` reads the weapon group, and
  * practice series count towards the märkesprov, so a training session that
  * stopped carrying one would silently stop counting.
  *

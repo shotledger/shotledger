@@ -1,6 +1,6 @@
 // Session detail Stats toggle (§4 M5): totals, mean, SD, X count, mini
 // distribution, comparison vs the user's last 100 series of the same
-// discipline/class, and a standardmedalj line when a threshold is met.
+// discipline/class, and a standardMedal line when a threshold is met.
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -11,11 +11,11 @@ import {
   seriesInnerTenAverage,
   seriesMeanTenths,
   seriesSdTenths,
-  standardmedaljForSession,
+  standardMedalForSession,
   sumValueTenths,
   xCount,
   type CompareRecentSeriesResult,
-  type StandardmedaljResult,
+  type StandardMedalResult,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -52,7 +52,7 @@ export interface SessionStats {
   shotCount: number;
   distribution: DistributionBucket[];
   comparison: CompareRecentSeriesResult | null;
-  standardmedalj: StandardmedaljResult | null;
+  standardMedal: StandardMedalResult | null;
 }
 
 const EMPTY: SessionStats = {
@@ -67,7 +67,7 @@ const EMPTY: SessionStats = {
   shotCount: 0,
   distribution: [],
   comparison: null,
-  standardmedalj: null,
+  standardMedal: null,
 };
 
 function loadSessionStats(sessionId: string): SessionStats {
@@ -90,7 +90,7 @@ function loadSessionStats(sessionId: string): SessionStats {
   const finalTenths = scoredFinal.reduce((sum, s) => sum + seriesTotalTenths(s), 0);
 
   const first = sessionSeries[0]!;
-  const standardmedalj = standardmedaljForSession({
+  const standardMedal = standardMedalForSession({
     disciplineId: first.disciplineId,
     weaponGroup: first.weaponGroup,
     hasFinal,
@@ -117,7 +117,7 @@ function loadSessionStats(sessionId: string): SessionStats {
     shotCount: shots.length,
     distribution: buildDistribution(shots),
     comparison,
-    standardmedalj: standardmedalj.valor ? standardmedalj : null,
+    standardMedal: standardMedal.grade ? standardMedal : null,
   };
 }
 

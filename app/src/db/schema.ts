@@ -191,9 +191,12 @@ export const sessions = sqliteTable('sessions', {
   externalSyncedAt: text('external_synced_at'), // last successful re-import merge
   webshooterCompetitionId: text('webshooter_competition_id'), // for re-fetch on refresh
   officialPlacement: integer('official_placement'), // authoritative, from Webshooter
-  // authoritative, from Webshooter; the app's own computed standardmedalj
+  // authoritative, from Webshooter; the app's own computed standardMedal
   // indicator (§6.5b) stays a separate, always-computed value — never merged
-  officialStandardmedalj: text('official_standardmedalj', {
+  // The property is English (#321 part 2); the COLUMN keeps its name, because
+  // renaming a column is a data migration and the wire format both devices
+  // agree on uses column names (#321 part 3).
+  officialStandardMedal: text('official_standardmedalj', {
     enum: ['none', 'brons', 'silver', 'guld'],
   }),
 });

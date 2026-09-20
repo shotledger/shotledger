@@ -9,7 +9,7 @@
 // one a sighter is an ordinary series, which callers ask for with
 // `SighterScope` (docs/specs/sighters-in-statistics-spec.md).
 
-import { guldserieThreshold } from './marke';
+import { goldSeriesThreshold } from './badges';
 import { tenthsToScore } from './totals';
 
 export interface StatsShot {
@@ -301,7 +301,7 @@ export function compareRecentSeries(
 
 // --- Guldserie count ---------------------------------------------------------
 
-export interface GuldserieCountOptions {
+export interface GoldSeriesCountOptions {
   birthYear?: number | null;
 }
 
@@ -317,14 +317,14 @@ export interface GuldserieCountOptions {
  * like any other series, in or out of a session, whatever the Statistics
  * tab's filter says.
  */
-export function guldserieCount(
+export function goldSeriesCount(
   seriesList: readonly StatsSeries[],
-  options: GuldserieCountOptions = {},
+  options: GoldSeriesCountOptions = {},
 ): number {
   let count = 0;
   for (const series of seriesList) {
     const year = new Date(series.startedAt).getUTCFullYear();
-    const threshold = guldserieThreshold({
+    const threshold = goldSeriesThreshold({
       weaponGroup: series.weaponGroup,
       disciplineId: series.disciplineId,
       seriesLength: series.shots.length,
@@ -349,13 +349,13 @@ export interface StatsAggregateBucket {
   xCount: number;
   xRate: number | null;
   sessionCount: number;
-  guldserieCount: number;
+  goldSeriesCount: number;
 }
 
 function aggregateBy(
   seriesList: readonly StatsSeries[],
   keyFn: (series: StatsSeries) => string | null | undefined,
-  options: GuldserieCountOptions,
+  options: GoldSeriesCountOptions,
 ): StatsAggregateBucket[] {
   const byKey = new Map<string, StatsSeries[]>();
   for (const series of seriesList) {
@@ -377,7 +377,7 @@ function aggregateBy(
       xCount: xCount(shots),
       xRate: xRate(shots),
       sessionCount: new Set(bucketSeries.map((series) => series.sessionId)).size,
-      guldserieCount: guldserieCount(bucketSeries, options),
+      goldSeriesCount: goldSeriesCount(bucketSeries, options),
     };
   });
 }
@@ -385,7 +385,7 @@ function aggregateBy(
 /** Per-firearm aggregate. Series with `firearmId` unset are excluded. */
 export function aggregateByFirearm(
   seriesList: readonly StatsSeries[],
-  options: GuldserieCountOptions = {},
+  options: GoldSeriesCountOptions = {},
 ): StatsAggregateBucket[] {
   return aggregateBy(seriesList, (series) => series.firearmId, options);
 }
@@ -393,7 +393,7 @@ export function aggregateByFirearm(
 /** Per-ammo-lot aggregate. Series with `ammoLotId` unset are excluded. */
 export function aggregateByAmmoLot(
   seriesList: readonly StatsSeries[],
-  options: GuldserieCountOptions = {},
+  options: GoldSeriesCountOptions = {},
 ): StatsAggregateBucket[] {
   return aggregateBy(seriesList, (series) => series.ammoLotId, options);
 }

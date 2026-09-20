@@ -1,7 +1,7 @@
 // Bilaga 8 club-intyg indicators computable from app data (SHB p. 484, see
 // docs/reference/spsf-shb-2026.md "Licens/intyg"). Spec:
 // m6-compliance-spec.md "Behaviors — indicators.ts".
-import { guldserieCount, type StatsSeries } from '../scoring/stats';
+import { goldSeriesCount, type StatsSeries } from '../scoring/stats';
 import { subtractMonthsUtc, wholeMonthsBetween } from './months';
 
 export interface MonthsOfActivityResult {
@@ -36,7 +36,7 @@ export interface MarkeGuldFulfillmentResult {
    * match format earns the badge itself. Not a confirmed pass/fail.
    */
   fulfilled: boolean;
-  guldserieCountLast24Months: number;
+  goldSeriesCountLast24Months: number;
   windowStartIso: string;
   ruleVerified: false;
 }
@@ -49,7 +49,7 @@ export interface MarkeGuldFulfillmentInput {
 
 /**
  * Pistolskyttemärke guld fulfillment over the last two years, delegating the
- * per-series threshold to shared/scoring/marke.ts via guldserieCount —
+ * per-series threshold to shared/scoring/marke.ts via goldSeriesCount —
  * never re-implements the threshold table.
  */
 export function pistolskyttemarkeGuldFulfillment(
@@ -63,11 +63,11 @@ export function pistolskyttemarkeGuldFulfillment(
   const inWindow = input.seriesList.filter(
     (series) => series.startedAt >= windowStartIso && series.startedAt <= nowIso,
   );
-  const count = guldserieCount(inWindow, { birthYear: input.birthYear });
+  const count = goldSeriesCount(inWindow, { birthYear: input.birthYear });
 
   return {
     fulfilled: count >= 1,
-    guldserieCountLast24Months: count,
+    goldSeriesCountLast24Months: count,
     windowStartIso,
     ruleVerified: false,
   };

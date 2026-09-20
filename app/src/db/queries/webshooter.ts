@@ -233,7 +233,7 @@ export function importResultRow(
     const { merged } = mergeSessionFields(
       {
         officialPlacement: linkTarget.officialPlacement,
-        officialStandardmedalj: linkTarget.officialStandardmedalj,
+        officialStandardMedal: linkTarget.officialStandardMedal,
         competitionName: linkTarget.competitionName,
         firearmId: linkTarget.firearmId,
         ammoLotId: linkTarget.ammoLotId,
@@ -241,7 +241,7 @@ export function importResultRow(
       },
       {
         officialPlacement: official.officialPlacement,
-        officialStandardmedalj: official.officialStandardmedalj,
+        officialStandardMedal: official.officialStandardMedal,
         competitionName: competition.name,
       },
     );
@@ -251,7 +251,7 @@ export function importResultRow(
       externalSyncedAt: new Date().toISOString(),
       webshooterCompetitionId: String(row.competitions_id),
       officialPlacement: merged.officialPlacement as number | null,
-      officialStandardmedalj: merged.officialStandardmedalj as
+      officialStandardMedal: merged.officialStandardMedal as
         'none' | 'brons' | 'silver' | 'guld' | null,
       competitionName: merged.competitionName as string,
       // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
@@ -280,7 +280,7 @@ export function importResultRow(
       externalSyncedAt: new Date().toISOString(),
       webshooterCompetitionId: String(row.competitions_id),
       officialPlacement: official.officialPlacement,
-      officialStandardmedalj: official.officialStandardmedalj,
+      officialStandardMedal: official.officialStandardMedal,
     });
     sessionId = createdSession.id;
     created = true;

@@ -337,7 +337,7 @@ export default function SessionDetailScreen() {
                 <PhotoIcon color={theme.primary} size={20} />
               </Pressable>
             )}
-            {row.isGuldserie && <Chip label={t('session.guldserie')} tone="primary" />}
+            {row.isGoldSeries && <Chip label={t('session.goldSeries')} tone="primary" />}
             <ThemedText type="smallBold">
               {/* A sighter's score is shown with a marker rather than hidden:
                   it is deliberately unscored, not unknown, and the row already
@@ -707,12 +707,12 @@ export default function SessionDetailScreen() {
             )}
           </View>
 
-          {stats.standardmedalj && (
-            <ThemedText type="small" themeColor="textSecondary" testID="standardmedalj-line">
+          {stats.standardMedal && (
+            <ThemedText type="small" themeColor="textSecondary" testID="standard-medal-line">
               {t(
-                stats.standardmedalj.valor === 'silver'
-                  ? 'stats.standardmedaljSilver'
-                  : 'stats.standardmedaljBrons',
+                stats.standardMedal.grade === 'silver'
+                  ? 'stats.standardMedalSilver'
+                  : 'stats.standardMedalBronze',
               )}
             </ThemedText>
           )}

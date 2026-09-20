@@ -161,7 +161,7 @@ describe('classifyMergeField', () => {
   it.each([
     ['seriesOverrides', 'score'],
     ['officialPlacement', 'score'],
-    ['officialStandardmedalj', 'score'],
+    ['officialStandardMedal', 'score'],
     ['competitionName', 'score'],
     ['competitionDate', 'score'],
     ['firearmId', 'enrichment'],
@@ -216,20 +216,20 @@ describe('mergeSessionFields', () => {
   it('a full re-import: score changes, enrichment (firearm/notes/photo) stays', () => {
     const existing = {
       officialPlacement: 3,
-      officialStandardmedalj: 'brons',
+      officialStandardMedal: 'brons',
       firearmId: 'my-glock',
       notes: 'good day',
       seriesPhotoUri: 'file://photo.jpg',
     };
     const { merged } = mergeSessionFields(existing, {
       officialPlacement: 1,
-      officialStandardmedalj: 'silver',
+      officialStandardMedal: 'silver',
       firearmId: 'ignored',
       notes: 'ignored',
       seriesPhotoUri: 'ignored',
     });
     expect(merged.officialPlacement).toBe(1);
-    expect(merged.officialStandardmedalj).toBe('silver');
+    expect(merged.officialStandardMedal).toBe('silver');
     expect(merged.firearmId).toBe('my-glock');
     expect(merged.notes).toBe('good day');
     expect(merged.seriesPhotoUri).toBe('file://photo.jpg');

@@ -101,14 +101,31 @@ sync. Android first — **all code must stay iOS-compatible**.
    declares that says so explicitly.
 9. **English (US)** for identifiers, filenames, i18n keys and English
    strings and comments (`license`, `caliber`, `center`, `recognized`).
-   Two carve-outs: Swedish federation terms of art (guldserie, milsnabb,
-   vapengrupp, …) stay Swedish, and proper nouns — a federation's own
-   official name (ISSF's "25m Centre Fire Pistol"), a document's field
-   label (`vapenId`, from `VapenID` on the licence card), and stored ids
-   (`issf-centre-fire-pistol`) — keep the spelling of the thing they
-   name, so the app never contradicts the rule book it cites. Swedish
-   strings are unaffected.
-   Issue #321 parts 2 and 3 await the maintainer's ruling.
+   Swedish strings in `sv.json` are unaffected, and so is Swedish prose in
+   `docs/reference/` — a Swedish federation's rules are documented in
+   Swedish.
+
+   **Swedish descriptive terms are translated** (maintainer's ruling on
+   #321 part 2, 2026-09-20): `guldserie` → `goldSeries`, `standardmedalj`
+   → `standardMedal`, `märke` → `badge`, `valör` → `grade`, `vapengrupp`
+   → `weaponGroup`. The earlier proposal to keep them Swedish as "terms of
+   art" was **rejected** — do not reintroduce it.
+
+   **One carve-out stands** (#321 part 3): a name keeps the spelling of
+   the thing it names, so the app never contradicts the document or rule
+   book it cites.
+   - a federation's own official name for a discipline — `milsnabb`,
+     `falt`/fältskjutning, ISSF's "25m Centre Fire Pistol". These have no
+     English equivalent, and inventing one would misname the event (SPSF
+     milsnabb is not ISSF Rapid Fire Pistol).
+   - a document's field label: `vapenId`, from `VapenID` on the licence
+     card.
+   - **stored ids and column names** — `spsf-milsnabb`,
+     `issf-centre-fire-pistol`, `official_standardmedalj`. Renaming these
+     is a data migration, and the sync wire format is the column names, so
+     both devices would have to agree. A Drizzle _property_ may be English
+     over a Swedish _column_ — `officialStandardMedal` on
+     `official_standardmedalj` is the intended shape, not an oversight.
 
 ## Definition of done
 

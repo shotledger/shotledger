@@ -57,7 +57,7 @@ appId: app.shotledger
 - assertVisible:
     id: 'stat-x-percent'
 - assertVisible:
-    id: 'stat-guldserie-count'
+    id: 'stat-gold-series-count'
 - assertVisible:
     id: 'trend-chart'
 
