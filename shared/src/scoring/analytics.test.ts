@@ -265,6 +265,15 @@ describe('analyticsSessionPoints', () => {
   it('A-P9: an empty input gives no points', () => {
     expect(analyticsSessionPoints([])).toEqual([]);
   });
+
+  // #349: a chart cannot draw one line per discipline without knowing which
+  // discipline a point belongs to.
+  it('AP-1: a point carries its session\u2019s discipline', () => {
+    const [point] = analyticsSessionPoints([
+      series({ sessionId: 'a', disciplineId: 'spsf-milsnabb', values: [90] }),
+    ]);
+    expect(point!.disciplineId).toBe('spsf-milsnabb');
+  });
 });
 
 describe('analyticsRecords', () => {

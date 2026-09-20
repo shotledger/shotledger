@@ -34,5 +34,13 @@ any open picker closed.
 - **Totals**, both as sums (all the points, all the shots) and as averages per
   shot and per series.
 - **Charts** over time, one point per session, plus the shot distribution.
+  Each discipline gets **its own line**, named in the legend below the chart. A
+  precision session is out of 350 and a militär snabbmatch session out of 600,
+  so drawing them as one line produced a saw-tooth that said nothing about
+  either. The horizontal axis is real time, not one step per session — sessions
+  that share a date sit on top of each other, which is the truth about them —
+  and the labels name the year whenever the range crosses one. Past eight
+  disciplines the chart says how many it left out rather than giving two of
+  them the same colour.
 - **Export** as PDF or JSON. The JSON carries the filter — sighter setting
   included — alongside the numbers.

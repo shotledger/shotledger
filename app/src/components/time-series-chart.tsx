@@ -5,28 +5,38 @@
 //
 // Responsive by viewBox: width="100%" with a fixed coordinate space, so the
 // same chart fits any screen without measuring.
+//
+// Takes LINES, not one series: a precision session (max 350) and a milsnabb
+// session (max 600) on one axis make a saw-tooth that means nothing, so each
+// discipline gets its own (#349). The geometry lives in
+// time-series-chart-math.ts so it can be tested without rendering.
+import React from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
 import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
+import {
+  axisNeedsYear,
+  MAX_DOTS,
+  timeExtent,
+  timeScale,
+  type TimeSeriesLine,
+  type TimeSeriesPoint,
+} from '@/components/time-series-chart-math';
 
-export interface TimeSeriesPoint {
-  /** Chart-space key, e.g. the session id. */
-  key: string;
-  /** ISO timestamp — only used for the x-axis labels. */
-  startedAt: string;
-  value: number;
-}
+export type { TimeSeriesLine, TimeSeriesPoint };
 
 export interface TimeSeriesChartProps extends ViewProps {
-  points: readonly TimeSeriesPoint[];
+  lines: readonly TimeSeriesLine[];
   /** Formats a y-axis gridline label. */
   formatValue: (value: number) => string;
-  /** Formats an x-axis date label. */
-  formatDate: (iso: string) => string;
+  /** Formats an x-axis date label. `withYear` when the range crosses one. */
+  formatDate: (iso: string, withYear: boolean) => string;
   emptyLabel: string;
+  /** Rendered under the legend when the palette could not cover everything. */
+  omittedLabel?: string | null;
 }
 
 const VIEW_WIDTH = 320;
@@ -50,16 +60,18 @@ function axisRange(values: readonly number[]): { min: number; max: number } {
 }
 
 export function TimeSeriesChart({
-  points,
+  lines,
   formatValue,
   formatDate,
   emptyLabel,
+  omittedLabel,
   style,
   ...rest
 }: TimeSeriesChartProps) {
   const theme = useTheme();
+  const allPoints = lines.flatMap((line) => line.points);
 
-  if (points.length === 0) {
+  if (allPoints.length === 0) {
     return (
       <View style={styles.empty}>
         <ThemedText type="small" themeColor="textSecondary">
@@ -69,31 +81,25 @@ export function TimeSeriesChart({
     );
   }
 
-  const { min, max } = axisRange(points.map((point) => point.value));
+  const { min, max } = axisRange(allPoints.map((point) => point.value));
   const span = max - min;
+  const extent = timeExtent(allPoints);
+  const withYear = axisNeedsYear(allPoints);
 
-  const x = (index: number) =>
-    points.length === 1
-      ? PAD_LEFT + PLOT_WIDTH / 2
-      : PAD_LEFT + (index / (points.length - 1)) * PLOT_WIDTH;
+  const x = (iso: string) => timeScale(iso, extent, PAD_LEFT, PLOT_WIDTH);
   const y = (value: number) => PAD_TOP + PLOT_HEIGHT - ((value - min) / span) * PLOT_HEIGHT;
-
-  const coords = points.map((point, index) => ({ x: x(index), y: y(point.value) }));
-  const line = coords.map((c) => `${c.x},${c.y}`).join(' ');
-  const area = `${PAD_LEFT},${PAD_TOP + PLOT_HEIGHT} ${line} ${coords.at(-1)!.x},${PAD_TOP + PLOT_HEIGHT}`;
 
   const gridValues = Array.from(
     { length: GRID_LINES + 1 },
     (_, index) => min + (span * index) / GRID_LINES,
   );
 
-  // First, last, and — with enough points to be worth it — the middle one.
+  // Three labels off the TIME range, not off three array positions — the
+  // middle tick is the midpoint of the period, which is the whole point.
   const dateTicks =
-    points.length === 1
-      ? [0]
-      : points.length < 4
-        ? [0, points.length - 1]
-        : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    extent.maxMs === extent.minMs
+      ? [extent.minMs]
+      : [extent.minMs, (extent.minMs + extent.maxMs) / 2, extent.maxMs];
 
   return (
     <View style={[styles.container, style]} {...rest} testID="time-series-chart">
@@ -123,11 +129,38 @@ export function TimeSeriesChart({
           </SvgText>
         ))}
 
-        <Polygon points={area} fill={theme.primary} opacity={0.15} />
-        <Polyline points={line} fill="none" stroke={theme.primary} strokeWidth={2} />
-        {coords.map((c, index) => (
-          <Circle key={points[index]!.key} cx={c.x} cy={c.y} r={2.5} fill={theme.primary} />
-        ))}
+        {lines.map((line) => {
+          const coords = line.points.map((point) => ({
+            x: x(point.startedAt),
+            y: y(point.value),
+          }));
+          const path = coords.map((c) => `${c.x},${c.y}`).join(' ');
+          // The area fill only makes sense under a single line; under two it
+          // is two translucent washes that say nothing about either.
+          const area =
+            lines.length === 1
+              ? `${coords[0]!.x},${PAD_TOP + PLOT_HEIGHT} ${path} ${coords.at(-1)!.x},${PAD_TOP + PLOT_HEIGHT}`
+              : null;
+          return (
+            <React.Fragment key={line.key}>
+              {area ? <Polygon points={area} fill={line.color} opacity={0.15} /> : null}
+              <Polyline points={path} fill="none" stroke={line.color} strokeWidth={2} />
+              {/* Past a few dozen points the markers merge into a band, so a
+                  dense line is drawn as a line. */}
+              {line.points.length <= MAX_DOTS
+                ? coords.map((c, index) => (
+                    <Circle
+                      key={line.points[index]!.key}
+                      cx={c.x}
+                      cy={c.y}
+                      r={2.5}
+                      fill={line.color}
+                    />
+                  ))
+                : null}
+            </React.Fragment>
+          );
+        })}
 
         <Line
           x1={PAD_LEFT}
@@ -137,19 +170,40 @@ export function TimeSeriesChart({
           stroke={theme.border}
           strokeWidth={1}
         />
-        {dateTicks.map((index, tick) => (
+        {dateTicks.map((ms, tick) => (
           <SvgText
-            key={`date-${points[index]!.key}`}
-            x={x(index)}
+            key={`date-${ms}`}
+            x={timeScale(new Date(ms).toISOString(), extent, PAD_LEFT, PLOT_WIDTH)}
             y={VIEW_HEIGHT - 8}
             fontSize={9}
             fill={theme.textSecondary}
             textAnchor={tick === 0 ? 'start' : tick === dateTicks.length - 1 ? 'end' : 'middle'}
           >
-            {formatDate(points[index]!.startedAt)}
+            {formatDate(new Date(ms).toISOString(), withYear)}
           </SvgText>
         ))}
       </Svg>
+
+      {/* Always present for two or more lines: the palette's light-mode
+          contrast relief is exactly this — the name in text ink beside a
+          colour, so identity is never carried by colour alone. */}
+      {lines.length > 1 ? (
+        <View style={styles.legend} testID="time-series-legend">
+          {lines.map((line) => (
+            <View key={line.key} style={styles.legendItem}>
+              <View style={[styles.swatch, { backgroundColor: line.color }]} />
+              <ThemedText type="small" themeColor="textSecondary">
+                {line.label}
+              </ThemedText>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      {omittedLabel ? (
+        <ThemedText type="small" themeColor="textSecondary" testID="time-series-omitted">
+          {omittedLabel}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
@@ -161,5 +215,21 @@ const styles = StyleSheet.create({
   empty: {
     paddingVertical: Spacing.four,
     alignItems: 'center',
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
+  },
+  swatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });

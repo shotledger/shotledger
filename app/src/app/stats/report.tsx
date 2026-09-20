@@ -2,6 +2,7 @@
 // records inside the filtered set, both the sum and the per-shot totals,
 // and three hand-drawn charts over time. Generated on the fly from the
 // filter the /stats form pushed in as a route param — nothing is stored.
+import type { TFunction } from 'i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,9 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
-import { TimeSeriesChart, type TimeSeriesPoint } from '@/components/time-series-chart';
+import { TimeSeriesChart } from '@/components/time-series-chart';
+import { CHART_LINE_COLORS, groupByDiscipline } from '@/components/time-series-chart-math';
+import { useResolvedThemeName } from '@/hooks/use-theme';
 import {
   EXPORT_FORMATS,
   useReportExport,
@@ -37,6 +40,36 @@ import { Spacing } from '@/theme/tokens';
 
 const DASH = '–';
 
+/**
+ * One chart plus the "and N more disciplines" line. Separate so the three
+ * charts cannot drift in how they report what the palette could not cover.
+ */
+function ChartBody({
+  grouped,
+  formatValue,
+  formatDate,
+  t,
+}: {
+  grouped: ReturnType<typeof groupByDiscipline>;
+  formatValue: (value: number) => string;
+  formatDate: (iso: string, withYear: boolean) => string;
+  t: TFunction;
+}) {
+  return (
+    <TimeSeriesChart
+      lines={grouped.lines}
+      formatValue={formatValue}
+      formatDate={formatDate}
+      emptyLabel={t('stats.trendEmpty')}
+      omittedLabel={
+        grouped.omittedCount === 0
+          ? null
+          : t('stats.chartDisciplinesOmitted', { count: grouped.omittedCount })
+      }
+    />
+  );
+}
+
 function score(tenths: number | null): string {
   return tenths === null ? DASH : tenthsToScore(tenths).toFixed(1);
 }
@@ -49,13 +82,19 @@ export default function StatsReportScreen() {
   const data: AnalyticsReportData = useAnalyticsReport(filter);
   const [pickingFormat, setPickingFormat] = useState(false);
   const { exportAs, statusText } = useReportExport(t, i18n.language);
+  const themeName = useResolvedThemeName();
 
   const formatDate = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(iso));
-  const formatShortDate = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' }).format(
-      new Date(iso),
-    );
+  // The year is named whenever the range crosses one. Without it a
+  // three-year log read "Dec 30 … Jun 23 … Sep 15" and no label said which
+  // year any of it was (#349).
+  const formatShortDate = (iso: string, withYear: boolean) =>
+    new Intl.DateTimeFormat(i18n.language, {
+      month: 'short',
+      day: 'numeric',
+      ...(withYear ? { year: 'numeric' } : {}),
+    }).format(new Date(iso));
 
   const range = periodRange(filter);
   // Cross-session group: every photo-scored mark in the period, pooled.
@@ -68,14 +107,20 @@ export default function StatsReportScreen() {
     pdf: t('compliance.exportPdf'),
     json: t('stats.exportJson'),
   };
+  // One line per discipline: a precision session (max 350) and a milsnabb
+  // session (max 600) on one axis produce a saw-tooth that says nothing about
+  // either (#349).
   const chart = (pick: (point: AnalyticsReportData['points'][number]) => number | null) =>
-    data.points
-      .filter((point) => pick(point) !== null)
-      .map<TimeSeriesPoint>((point) => ({
-        key: point.sessionId,
-        startedAt: point.startedAt,
-        value: pick(point) as number,
-      }));
+    groupByDiscipline(
+      data.points,
+      pick as (point: {
+        sessionId: string;
+        startedAt: string;
+        disciplineId: string;
+      }) => number | null,
+      (disciplineId) => disciplineLabel(t, disciplineId),
+      CHART_LINE_COLORS[themeName],
+    );
 
   const recordRow = (label: string, record: NamedRecord | null, value: string) =>
     record === null ? (
@@ -266,33 +311,33 @@ export default function StatsReportScreen() {
 
           <Card>
             <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>
-            <TimeSeriesChart
-              points={chart((point) => point.meanSeriesTotalTenths)}
+            <ChartBody
+              grouped={chart((point) => point.meanSeriesTotalTenths)}
               formatValue={(value) => tenthsToScore(value).toFixed(0)}
               formatDate={formatShortDate}
-              emptyLabel={t('stats.trendEmpty')}
+              t={t}
             />
           </Card>
 
           <Card>
             <ThemedText type="smallBold">{t('stats.chartShotMean')}</ThemedText>
-            <TimeSeriesChart
-              points={chart((point) => point.meanShotTenths)}
+            <ChartBody
+              grouped={chart((point) => point.meanShotTenths)}
               formatValue={(value) => tenthsToScore(value).toFixed(1)}
               formatDate={formatShortDate}
-              emptyLabel={t('stats.trendEmpty')}
+              t={t}
             />
           </Card>
 
           <Card>
             <ThemedText type="smallBold">{t('stats.chartSessionScore')}</ThemedText>
-            <TimeSeriesChart
-              points={chart((point) =>
+            <ChartBody
+              grouped={chart((point) =>
                 point.scoredSeriesCount === 0 ? null : point.sessionTotalTenths,
               )}
               formatValue={(value) => tenthsToScore(value).toFixed(0)}
               formatDate={formatShortDate}
-              emptyLabel={t('stats.trendEmpty')}
+              t={t}
             />
           </Card>
 
