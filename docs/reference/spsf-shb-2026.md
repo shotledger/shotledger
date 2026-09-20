@@ -22,6 +22,12 @@ disagree, SHB wins — fix this file. Known erratum in the book: `F.6.1.1`
 cross-references "C.6.1.1", which does not exist; the intended section is
 `C.3.6.1.1`.
 
+**Hitting a `VERIFY:`? Fetch the book first.** The PDF above is public and
+downloadable at any time, so an unsourced value is a lookup before it is a
+question for the maintainer — `curl -o /tmp/shb.pdf <the SHB link above>`,
+then `pdftotext -layout -f <page> -l <page>`. Ask only about what the book
+genuinely does not say. Keep the PDF outside the working tree.
+
 ## Precisionsskjutning
 
 - Ordinary competition: **minst 6 serier om 5 skott** (F.6.1 p. 174;
@@ -600,10 +606,26 @@ A/B (F.6.3.3), and in A/B/R in milsnabb (J.6.3.3). Display convention:
 
 ## Tävlingsnivåer
 
-C.3.1 p. 52 — five levels: **Rikstävling**, **Nationell tävling**,
-**Landsdelstävling**, **Kretstävling**, **Föreningstävling**.
-**Mästerskap is a flag on a level**, not a level ("Mästerskapstävling
-kan ingå i ovan angivna tävlingar") — KM = förening + mästerskap,
+C.3.1 p. 52 — five levels. What separates them is **who sanctions the
+competition and which shooters may enter**, not its size:
+
+| Nivå                  | Sanction                                                                                      | Who may take part                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rikstävling**       | Förbundet itself, or a krets/förening **på uppdrag av Förbundsstyrelsen**                     | deltagare **från hela riket** — as a tävling på hemortens banor or at one place (C.3.1.1)                                               |
+| **Nationell tävling** | a krets or förening, **med Förbundets medgivande**                                            | shooters from **samtliga till Förbundet anslutna föreningar** (C.3.1.2)                                                                 |
+| **Landsdelstävling**  | a krets/förening **på uppdrag av eller efter godkännande av Förbundsstyrelsen**               | shooters from **samtliga kretsar inom landsdelen** (C.3.1.3)                                                                            |
+| **Kretstävling**      | a krets/förening within the krets, **på uppdrag av eller efter medgivande av kretsstyrelsen** | shooters from **samtliga föreningar inom kretsen**; föreningar from angränsande kretsar too if the kretsstyrelse so decides (C.3.1.4)   |
+| **Föreningstävling**  | an affiliated förening                                                                        | its **egna medlemmar**, optionally also shooters from **annan förening (vissa andra föreningar)** in its own or another krets (C.3.1.5) |
+
+All five at C.3.1–C.3.1.5 p. 52. The line between a föreningstävling and a
+nationell tävling is therefore the sanction plus the invited set, not the
+entry count: an open invitation still needs Förbundets medgivande to be
+nationell, and a föreningstävling may invite named other clubs and remain a
+föreningstävling — which is why the föreningstävling restrictions on
+standardmedalj (C.5.1 p. 69) bite where they do.
+
+**Mästerskap is a flag on a level**, not a level: "Mästerskapstävling kan
+ingå i ovan angivna tävlingar" (C.3.1 p. 52) — KM = förening + mästerskap,
 SM = riks + mästerskap.
 
 ## Targets
