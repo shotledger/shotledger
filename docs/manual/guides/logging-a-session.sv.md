@@ -19,7 +19,7 @@ passets total. Resultatet visas ändå, med en asterisk — **45\*** — efterso
 provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
 
 Så är regeln inuti ett pass. Mellan pass gäller något annat — se
-[Statistik](statistics.md#provserier-raknas-har-om-du-inte-sager-annat).
+[Hur provserier räknas](../explanation/how-sighters-count.md).
 
 ## Att ändra ordning
 
