@@ -3,15 +3,9 @@
 Fotografera tavlan, tala om för appen var hålen sitter, så räknar den fram
 poängen ur tavelansiktets verkliga mått.
 
-## Vad det är, ärligt talat
-
-Det här är **assisterad** räkning, inte automatisk. Du markerar hålen; appen
-sköter geometrin, ringgränserna och räknandet.
-
-Den hittar inte hålen åt dig. Det är ett genuint svårt problem på pappstavlor —
-lappar på en lagad tavla ser mycket ut som färska hål — och en automatisk
-detektor som har fel är sämre än ingen detektor alls, eftersom du då får rätta
-mer än du hade behövt markera.
+Det här är **assisterad** räkning — du markerar hålen, appen sköter geometrin.
+[Vad fotoräkningen gör, och inte gör](../explanation/photo-scoring.sv.md)
+förklarar varför den fungerar så.
 
 ## Så gör du
 
@@ -50,12 +44,3 @@ Utöver själva poängen:
 
 Uppdelningen mellan läge och spridning är den användbara: den skiljer ett
 siktesproblem från ett teknikproblem, och de kräver olika arbete.
-
-## Att hjälpa den bli bättre
-
-**Inställningar → Förbättra automatisk poängräkning → Spara mina markeringar som träningsdata** är avstängt som
-standard. Slår du på det sparas dina markeringar — även de du rättade — i
-telefonen, så att en håldetektor så småningom kan tränas på verkliga tavlor.
-
-Ingenting skickas någonstans. Markeringarna stannar på din enhet, och du kan
-radera dem.

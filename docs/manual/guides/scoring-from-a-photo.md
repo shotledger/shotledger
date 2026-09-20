@@ -3,15 +3,9 @@
 Photograph the target, tell the app where the holes are, and it works out the
 score from the target face's real dimensions.
 
-## What it is, honestly
-
-This is **assisted** scoring, not automatic scoring. You mark the holes; the
-app does the geometry, the ring boundaries and the arithmetic.
-
-It does not find the holes for you. That is a genuinely hard problem on paper
-targets — a repaired target's patches look very much like fresh holes — and an
-automatic detector that is wrong is worse than no detector, because you end up
-correcting more than you would have marked.
+This is **assisted** scoring — you mark the holes, the app does the geometry.
+[What photo scoring does, and does not, do](../explanation/photo-scoring.md)
+explains why it works that way.
 
 ## How to do it
 
@@ -50,12 +44,3 @@ Beyond the score itself:
 
 The split between position and size is the useful one: it separates a sight
 problem from a technique problem, and they need different work.
-
-## Helping it get better
-
-**Settings → Improve Automatic Scoring → Keep My Marks as Training Data** is off by default. Turning it on
-stores your marks — including the ones you corrected — on the phone, so that a
-hole detector can eventually be trained on real targets.
-
-Nothing is sent anywhere. The marks stay on your device, and you can delete
-them.
