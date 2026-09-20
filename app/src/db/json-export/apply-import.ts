@@ -22,6 +22,7 @@ import { softDeleteSeries } from '../queries/series';
 import { listSeriesForSession } from '../queries/series';
 import { softDeleteShot, listShotsForSeries } from '../queries/shots';
 import { addSessionTag, getOrCreateTag } from '../queries/tags';
+import { applyRoundCountDelta } from '../queries/round-count';
 import { newId, nowIso } from '../util';
 
 export interface ImportDryRun {
@@ -131,6 +132,17 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * id in the file, still match on exact name or are created. Round counters on
  * a firearm that already exists here are left alone — a file is a record of
  * shooting, not the authority on how many rounds this device has counted.
+ *
+ * The sessions it creates do move those counters, though (#350). Logging a
+ * session in the app adds its shots to the linked firearm's counters, and an
+ * import that skipped that step left Rounds Fired and every maintenance
+ * interval reading zero for the shooter with the most history — 11,615
+ * attributed shots on the real-data pass. A session contributes its real shot
+ * rows plus its unscored extra rounds; re-importing the same file moves the
+ * counter by the difference rather than by the whole session again, so the
+ * operation stays idempotent. A total-override series (Webshooter/ShotLog)
+ * has no shot rows and still contributes nothing — the same convention
+ * `deleteSeriesAndShots` already backs out on.
  */
 export function applyImport(
   db: Database,
@@ -304,6 +316,12 @@ export function applyImport(
       return tag.id;
     };
 
+    /** Net round-counter movement per firearm, applied once at the end. */
+    const roundDeltaByFirearm = new Map<string, number>();
+    const addRounds = (firearmId: string, delta: number) => {
+      roundDeltaByFirearm.set(firearmId, (roundDeltaByFirearm.get(firearmId) ?? 0) + delta);
+    };
+
     for (const group of groups) {
       // The id is the precise reference; the name is the fallback for a file
       // whose firearms array does not carry it (or has none at all).
@@ -317,11 +335,34 @@ export function applyImport(
       // taken in this DB, so it's an update (and revives a tombstoned row)
       // rather than a fresh insert, which would violate the PK.
       const existing = tx
-        .select({ id: sessions.id })
+        .select({
+          id: sessions.id,
+          deletedAt: sessions.deletedAt,
+          firearmId: sessions.firearmId,
+          extraRounds: sessions.extraRounds,
+        })
         .from(sessions)
         .where(eq(sessions.id, group.sessionId))
         .get();
       const isUpdate = existing != null;
+
+      // What this session already contributes to a firearm's counters, so the
+      // import moves them by the difference. A tombstoned row contributes
+      // nothing: `deleteSessionAndSeries` backed it out when it was deleted.
+      if (existing != null && existing.deletedAt === null && existing.firearmId) {
+        const before = listSeriesForSession(tx, group.sessionId).reduce(
+          (sum, row) => sum + listShotsForSeries(tx, row.id).length,
+          existing.extraRounds ?? 0,
+        );
+        addRounds(existing.firearmId, -before);
+      }
+      if (firearmId) {
+        const after = group.series.reduce(
+          (sum, row) => sum + row.shots.length,
+          group.extraRounds ?? 0,
+        );
+        addRounds(firearmId, after);
+      }
 
       const sessionValues = {
         name: group.name,
@@ -394,6 +435,10 @@ export function applyImport(
       for (const tagName of group.tags) {
         addSessionTag(tx, group.sessionId, resolveTagId(tagName));
       }
+    }
+
+    for (const [firearmId, delta] of roundDeltaByFirearm) {
+      if (delta !== 0) applyRoundCountDelta(tx, firearmId, delta);
     }
   });
 }

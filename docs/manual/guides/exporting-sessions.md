@@ -37,6 +37,12 @@ Round counts are the one thing an import will not overwrite on a firearm you
 already have. The file is a record of shooting, not the authority on how many
 rounds this device has counted through that firearm.
 
+The sessions it brings in do count, though. Each imported session adds its
+shots, and its unscored extra rounds, to the counters of the firearm it names —
+the same as if you had logged it here. Importing the same file twice does not
+count it twice: the second import moves the counters by the difference, and
+usually by nothing at all.
+
 The app refuses a file whose `formatVersion` is **higher** than it
 understands, rather than importing the parts it recognises. A partial import
 that looks successful is worse than a refusal, because you would not know what
