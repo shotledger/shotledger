@@ -32,6 +32,27 @@ usually points at a missing detail on a firearm rather than at the case itself.
 Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
 on the Firearms tab, and filling those in may move the proposal on its own.
 
+## Checking a firearm's own criteria
+
+Two of the form's boxes are about one gun rather than about you: applying for
+an **additional handgun**, and **renewing a time-limited permit**. Those live
+on the firearm, not on Home.
+
+1. **Firearms → the firearm**.
+2. Scroll to **Föreningsintyg criteria**.
+
+Each criterion shows whether it is met, and the count behind it — one line per
+year for the renewal criterion, because it is checked year by year. Only
+sessions you logged **with that firearm** count, so if the numbers look low,
+check that your sessions record which gun you shot.
+
+A criterion you expected and cannot see is not being hidden: the app only shows
+the additional-handgun box for a pistol or revolver marked **My Own**, and the
+renewal box for a firearm whose most recent licence has an end date. [Which
+firearms each one is shown
+for](../explanation/license-activity.md#which-firearms-each-one-is-shown-for)
+says what to fix.
+
 ## Getting it out
 
 **Settings → Backup & Data** exports everything. A club-log **PDF export** is

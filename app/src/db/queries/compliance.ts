@@ -15,6 +15,9 @@ export function listComplianceSessions(db: Database): ComplianceSession[] {
       startedAt: sessions.startedAt,
       type: sessions.type,
       weaponGroup: sessions.weaponGroup,
+      // Read only by the per-firearm criteria (#329); no shooter-level rule
+      // has ever matched on it.
+      firearmId: sessions.firearmId,
     })
     .from(sessions)
     .where(isNull(sessions.deletedAt))

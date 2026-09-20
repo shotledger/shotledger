@@ -1,5 +1,7 @@
 export * from './types';
 export * from './months';
+export * from './status';
+export * from './firearm-criteria';
 export * from './license-activity';
 export * from './indicators';
 export * from './profile-registry';
@@ -11,6 +13,8 @@ export {
   SE_REASON_OWNS_HANDGUN,
   SE_REASON_NO_HANDGUN_ON_FILE,
   SE_REASON_NO_FIREARMS,
+  SE_CRITERION_ADDITIONAL_HANDGUN,
+  SE_CRITERION_RENEWAL,
   deriveSeVariantId,
 } from './profiles/se';
 export {
@@ -21,4 +25,9 @@ export {
   SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES,
   SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES,
   SE_SOURCE_CITATION,
+  SE_ADDITIONAL_HANDGUN_WINDOW_MONTHS,
+  SE_ADDITIONAL_HANDGUN_REQUIRED,
+  SE_RENEWAL_WINDOW_MONTHS,
+  SE_RENEWAL_WINDOW_COUNT,
+  SE_RENEWAL_REQUIRED_PER_WINDOW,
 } from './constants-se';

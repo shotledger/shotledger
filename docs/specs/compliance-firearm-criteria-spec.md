@@ -24,6 +24,8 @@ touched by path:
 - `shared/src/compliance/types.ts` — `ComplianceSession.firearmId`,
   `FirearmComplianceRule`, `FirearmFact`, `FirearmCriterionActivity`
 - `shared/src/compliance/firearm-criteria.ts` (new) + its test
+- `shared/src/compliance/status.ts` (new) — the banding lifted out of
+  `license-activity.ts` so both paths share one copy
 - `shared/src/compliance/constants-se.ts`, `profiles/se.ts`,
   `profile-registry.ts`, `index.ts`
 - `app/src/db/queries/compliance.ts` — select `firearm_id`
@@ -80,7 +82,8 @@ single-window model would say they did.
 
 So a firearm rule carries a `windowCount`. The windows are consecutive and
 tile backwards from `now`: window 1 is `[now − 12 months, now]`, window 2 is
-`[now − 24 months, now − 12 months)`, using the same `subtractMonthsUtc`
+`[now − 24 months, now − 12 months)` — half-open at the end, so an instant on
+the boundary is counted once, by the newer window — using the same `subtractMonthsUtc`
 calendar arithmetic the six-month window already uses. The criterion is met
 only when **every** window reaches `requiredActivities`.
 
@@ -178,22 +181,22 @@ is the two years, and the spec does not also store a `24`.
 one firearm. Sessions count when `session.firearmId === firearm.id` and the
 instant falls in the window — never on weapon group, never on the shooter.
 
-| #   | Scenario                                                            | Expected                                                                                 |
-| --- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| F1  | 2 sessions with this firearm in six months, additional-handgun rule | `met: true`, `status: 'green'`, one period                                               |
-| F2  | 1 session with this firearm, additional-handgun rule                | `met: false`, `status: 'amber'` (≥ ceil(2/2))                                            |
-| F3  | 0 sessions with this firearm, additional-handgun rule               | `met: false`, `status: 'red'`                                                            |
-| F4  | 5 sessions in the window, all with a **different** firearm          | `met: false`, `activityCount: 0`, `otherFirearmSessionCount: 5`                          |
-| F5  | sessions with `firearmId: null` (not attributed)                    | never counted; reported in `unattributedSessionCount`                                    |
-| F6  | a session one day before the window opens                           | not counted                                                                              |
-| F7  | a session dated after `now`                                         | not counted                                                                              |
-| F8  | renewal rule, 4 in each of the two twelve-month windows             | `met: true`, two periods, both met                                                       |
-| F9  | renewal rule, 8 in the most recent window and 0 in the older one    | `met: false` — the decisive case; a 24-month total would say `true`                      |
-| F10 | renewal rule, 4 in the older window and 0 in the recent one         | `met: false`                                                                             |
-| F11 | renewal rule, periods                                               | most recent first; `activityCount` is the **worst** window's                             |
-| F12 | windows tile without gap or overlap                                 | period 1's `startIso` === period 2's `endIso`                                            |
-| F13 | `countsAs` weighting `{training: 1, competition: 0}`                | a competition session contributes 0 to `activityCount`, 1 to `countedSessionCount` never |
-| F14 | `requiredActivities: 0`                                             | `met: true`, `status: 'green'` with no sessions at all                                   |
+| #   | Scenario                                                            | Expected                                                                                                         |
+| --- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| F1  | 2 sessions with this firearm in six months, additional-handgun rule | `met: true`, `status: 'green'`, one period                                                                       |
+| F2  | 1 session with this firearm, additional-handgun rule                | `met: false`, `status: 'amber'` (≥ ceil(2/2))                                                                    |
+| F3  | 0 sessions with this firearm, additional-handgun rule               | `met: false`, `status: 'red'`                                                                                    |
+| F4  | 5 sessions in the window, all with a **different** firearm          | `met: false`, `activityCount: 0`, `otherFirearmSessionCount: 5`                                                  |
+| F5  | sessions with `firearmId: null` (not attributed)                    | never counted; reported in `unattributedSessionCount`                                                            |
+| F6  | a session one day before the window opens                           | not counted                                                                                                      |
+| F7  | a session dated after `now`                                         | not counted                                                                                                      |
+| F8  | renewal rule, 4 in each of the two twelve-month windows             | `met: true`, two periods, both met                                                                               |
+| F9  | renewal rule, 8 in the most recent window and 0 in the older one    | `met: false` — the decisive case; a 24-month total would say `true`                                              |
+| F10 | renewal rule, 4 in the older window and 0 in the recent one         | `met: false`                                                                                                     |
+| F11 | renewal rule, periods                                               | most recent first; `activityCount` is the **worst** window's                                                     |
+| F12 | windows tile without gap or overlap                                 | period 1's `startIso` === period 2's `endIso`; a session exactly on that instant counts in the newer window only |
+| F13 | `countsAs` weighting `{training: 1, competition: 0}`                | a competition session adds 0 to `activityCount` but 1 to `countedSessionCount`                                   |
+| F14 | `requiredActivities: 0`                                             | `met: true`, `status: 'green'` with no sessions at all                                                           |
 
 `computeFirearmCriteria(sessions, profile, firearm, now)` filters by
 `appliesTo`:
@@ -223,8 +226,12 @@ instant falls in the window — never on weapon group, never on the shooter.
 ### Negative constraints
 
 - N1: `shared/compliance` never imports from `app/`.
-- N2: `license-activity.ts`, `months.ts` and `indicators.ts` are unmodified.
-  Verified by `git diff --stat`, recorded in EVIDENCE.
+- N2: `months.ts` and `indicators.ts` are unmodified, and `license-activity.ts`
+  changes only by importing the green/amber/red banding it used to hold
+  privately. The banding moves to `status.ts` rather than being copied, so the
+  two paths cannot drift — a copy is the one way the criteria chip and the
+  license-activity chip could ever disagree about the same numbers. Verified by
+  `git diff --stat`, recorded in EVIDENCE.
 - N3: `LicenseActivity` gains no field. The 5 §/6 § screen is byte-identical
   in behaviour.
 - N4: adding `firearmId` to `ComplianceSession` must not change any existing

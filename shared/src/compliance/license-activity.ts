@@ -3,19 +3,13 @@
 // "Behaviors — license-activity.ts", amended by
 // compliance-shooter-level-activity-spec.md.
 import { subtractMonthsUtc } from './months';
+import { statusFor } from './status';
 import type {
   ComplianceRule,
   ComplianceSession,
   JurisdictionProfile,
   LicenseActivity,
 } from './types';
-
-function statusFor(count: number, required: number): 'green' | 'amber' | 'red' {
-  if (required <= 0) return 'green';
-  if (count >= required) return 'green';
-  if (count >= Math.ceil(required / 2)) return 'amber';
-  return 'red';
-}
 
 function weightFor(rule: ComplianceRule, session: ComplianceSession): number {
   return session.type === 'training' ? rule.countsAs.training : rule.countsAs.competition;

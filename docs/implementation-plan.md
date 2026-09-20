@@ -595,12 +595,26 @@ from §6.5 automatically).
       Settings → Compliance → Activity Requirement, defaulting to the stricter
       5 § case — **flagged for maintainer review**, a UX default). The
       "ytterligare enhandsvapen" and "förnyelse av tidsbegränsat tillstånd"
-      rules are transcribed in the spec and the user manual but deliberately
-      **not modeled** (both key off license facts the app does not record),
-      as are "särskilda skäl" (decided by the police, not the shooter).
+      rules were transcribed but not modeled here; they landed separately
+      (see below). "Särskilda skäl" stay unmodeled — decided by the police,
+      not the shooter.
       `SE_VERIFIED = true` now covers the modeled numbers only; the Bilaga 8
       märke-guld proxy keeps its own `ruleVerified: false`. Spec/evidence:
       `docs/specs/compliance-fap551-{spec,evidence}.md`.
+- [x] The two **per-firearm** criteria under PM 551.24's _Intyget avser_
+      (issue #329, branch `feat/compliance-firearm-criteria`) — "ytterligare
+      enhandsvapen" (≥2 activities in six months with each handgun already
+      held) and "förnyelse av tidsbegränsat tillstånd" (≥4 **in each of** the
+      last two twelve-month windows, not 8 across twenty-four months). Modeled
+      as `JurisdictionProfileDefinition.firearmCriteria`, separate from the
+      5 §/6 § `ComplianceRule`s, counting only sessions carrying that
+      `firearm_id`. The licence facts they turn on were the reason they were
+      deferred, and both are already recorded: `firearms.is_own` +
+      `weapon_type` for the first, a non-null `licenses.valid_until` — which is
+      exactly what "tidsbegränsat" means — for the second. Both proxies are
+      named on screen and in the manual, and the card says the app counted
+      those sessions, never that anyone attested them (#308).
+      Spec/evidence: `docs/specs/compliance-firearm-criteria-{spec,evidence}.md`.
 - [x] The case's **default** derived from the firearms (issue #286, branch
       `feat/firearm-own-flag`) — `firearms.is_own` is a plain boolean
       defaulting to **true** (maintainer, 2026-09-18; migration `0002`

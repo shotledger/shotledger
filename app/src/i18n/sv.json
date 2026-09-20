@@ -532,6 +532,21 @@
     "licenseActivityScopeGroups_zero": "Räknar bara pass i den här vapengruppen.",
     "licenseActivityScopeGroups_one": "Räknar bara pass i den här vapengruppen – {{count}} pass i perioden räknas inte.",
     "licenseActivityScopeGroups_other": "Räknar bara pass i den här vapengruppen – {{count}} pass i perioden räknas inte.",
+    "firearmCriteriaTitle": "Kriterier för föreningsintyg",
+    "criterion": {
+      "additionalHandgun": "Ytterligare enhandsvapen",
+      "renewal": "Förnyelse av tidsbegränsat tillstånd"
+    },
+    "criterionMet": "{{name}} — uppfyllt",
+    "criterionNotMet": "{{name}} — inte uppfyllt",
+    "criterionPeriod": "{{done}} av {{required}} aktiviteter med det här vapnet, {{from}} till {{to}}",
+    "criterionHint": {
+      "additionalHandgun": "Vid ansökan om ytterligare enhandsvapen frågas om du tränat eller tävlat minst två gånger de senaste sex månaderna med respektive enhandsvapen du redan innehar. Räknas här eftersom vapnet är en pistol eller revolver som du markerat som din egen.",
+      "renewal": "Vid förnyelse av ett tidsbegränsat tillstånd krävs minst fyra aktiviteter under vart och ett av de två senaste åren — inte åtta sammanlagt. Räknas här eftersom vapnets senaste licens har ett slutdatum."
+    },
+    "criterionUnattributed_one": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
+    "criterionUnattributed_other": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
+    "criterionNotAttested": "Appen har räknat passen, men kan inte styrka dem. I en klubblogg blir en rad ett underlag först när någon har signerat den.",
     "exportPdf": "Exportera PDF",
     "pdfTitle": "Skjutlogg (föreningsintyg)",
     "pdfPeriodLabel": "{{from}} – {{to}}",

@@ -55,6 +55,7 @@ function profile(rules: ComplianceRule[]): JurisdictionProfile {
     name: { sv: 'x', en: 'x' },
     variantId: 'test',
     rules,
+    firearmCriteria: [],
     source: 'test',
     verified: false,
   };

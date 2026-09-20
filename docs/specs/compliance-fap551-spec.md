@@ -78,7 +78,10 @@ window), and they map onto exactly what the app already knows — logged
 sessions.
 
 **Transcribed but not modeled**, by the maintainer's decision of 2026-09-16,
-same treatment as the SvSF klass layer in #138:
+same treatment as the SvSF klass layer in #138. The first two were modeled
+later, under #329 — see
+[`compliance-firearm-criteria-spec.md`](compliance-firearm-criteria-spec.md),
+which supersedes the two bullets below; the third stands:
 
 - **Ytterligare enhandsvapen** (≥2 activities in six months _with each
   previously held handgun_). Not modeled: it is a per-firearm requirement
@@ -94,8 +97,9 @@ same treatment as the SvSF klass layer in #138:
   that let a shooter switch off their own license activity on these grounds would be
   modeling a decision that is not theirs to make.
 
-All three are stated in the user manual, so a shooter reading it learns the
-rule exists and that this app does not track it.
+All three were stated in the user manual, so a shooter reading it learned the
+rule existed and that this app did not track it. Two of them now are tracked;
+särskilda skäl still is not, and the manual still says so.
 
 ## The reading of "sammantaget i genomsnitt minst N gånger per månad"
 

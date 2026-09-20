@@ -532,6 +532,21 @@
     "licenseActivityScopeGroups_zero": "Counts only sessions in this weapon group.",
     "licenseActivityScopeGroups_one": "Counts only sessions in this weapon group — {{count}} session in the window is not counted.",
     "licenseActivityScopeGroups_other": "Counts only sessions in this weapon group — {{count}} sessions in the window are not counted.",
+    "firearmCriteriaTitle": "Föreningsintyg Criteria",
+    "criterion": {
+      "additionalHandgun": "Additional Handgun",
+      "renewal": "Renewing a Time-Limited Permit"
+    },
+    "criterionMet": "{{name}} — met",
+    "criterionNotMet": "{{name}} — not met",
+    "criterionPeriod": "{{done}} of {{required}} activities with this firearm, {{from}} to {{to}}",
+    "criterionHint": {
+      "additionalHandgun": "Applying for another handgun asks whether you trained or competed at least twice in the last six months with each handgun you already hold. Counted here because this firearm is a pistol or revolver marked as your own.",
+      "renewal": "Renewing a time-limited permit asks for at least four activities in each of the last two years — not eight across the two. Counted here because this firearm’s most recent licence has an end date."
+    },
+    "criterionUnattributed_one": "{{count}} session in the period records no firearm, so it counts towards neither.",
+    "criterionUnattributed_other": "{{count}} sessions in the period record no firearm, so they count towards neither.",
+    "criterionNotAttested": "The app counted these sessions; it cannot attest them. On a club log a row becomes evidence once someone signs it.",
     "exportPdf": "Export PDF",
     "pdfTitle": "Shooting Log (föreningsintyg)",
     "pdfPeriodLabel": "{{from}} – {{to}}",
