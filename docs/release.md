@@ -7,7 +7,7 @@ below is one-time setup the maintainer has to do before the first upload.
 ## (a) One-time setup (maintainer only)
 
 - [ ] **Google Play developer account.** VERIFY which account type
-      (tracked in issue [#138](https://github.com/jimisola/shotledger/issues/138), not yet decided):
+      (tracked in issue [#354](https://github.com/jimisola/shotledger/issues/354), not yet decided):
   - _Personal account_: $25 one-time fee. Play Console requires
     **12 testers opted into closed testing for 14 continuous days**
     before an app can go to production — this gate has to be planned
@@ -149,7 +149,7 @@ The same statement, in user words, is in `docs/store-listing.md`.
   configured funding link in the external browser; unlocks nothing, no
   purchase language. Also linked from the store listing and README. The
   rail itself is under reconsideration — see `app/PRODUCT.md`'s Brand
-  Commitments and issue #138.
+  Commitments and issue #353.
 
 ## Repo configuration
 
