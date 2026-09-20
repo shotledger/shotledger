@@ -13,6 +13,21 @@ på de vapen som inte är dina. Det är det enda på den här skärmen som ändr
 appen kräver av dig på annat håll: att du äger ett enhandsvapen är det som
 avgör vilket krav på [licensaktivitet](license-activity.sv.md) du mäts mot.
 
+### Kammare, och vad vapnet mer skjuter
+
+Ett vapen har en **kammare** — vad det är byggt för, och det din licens anger.
+Under den kan du lista andra patroner du faktiskt skjuter med det.
+
+En .357 Magnum-revolver matad med .38 Special är det vanliga fallet i
+precisionsskytte, inte ett udda, och ett svenskt föreningsintyg kan ange båda
+på samma rad. Tidigare hade appen ett enda kaliberfält, vilket tvingade fram
+ett val mellan att registrera kammaren och att registrera vad du skjuter — och
+båda svaren var till hälften fel.
+
+Att lista en patron begränsar ingenting. När du väljer ammunitionssats till ett
+pass hindrar appen dig inte från att välja en som vapnet inte listar: du kan ha
+goda skäl, och appen känner dem inte.
+
 Till ett vapen samlas:
 
 - **Skottantal**, från de pass du loggar på det. Raderar du ett pass räknas

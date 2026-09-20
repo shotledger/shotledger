@@ -26,6 +26,7 @@ export const SYNC_TABLE_NAMES = [
   'firearms',
   'licenses',
   'firearm_groups',
+  'firearm_calibers',
   'ammo_lots',
   'sessions',
   'series',

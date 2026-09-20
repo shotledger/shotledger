@@ -16,6 +16,7 @@ import {
 
 import { db } from '@/db/client';
 import { listComplianceSessions } from '@/db/queries/compliance';
+import { listFirearmCalibers } from '@/db/queries/firearm-calibers';
 import { listFirearmGroups } from '@/db/queries/firearm-groups';
 import { getFirearm } from '@/db/queries/firearms';
 import { listLicenses } from '@/db/queries/licenses';
@@ -25,6 +26,7 @@ import { listSightSettings } from '@/db/queries/sight-settings';
 export interface FirearmDetail {
   firearm: NonNullable<ReturnType<typeof getFirearm>> | null;
   groups: ReturnType<typeof listFirearmGroups>;
+  calibers: ReturnType<typeof listFirearmCalibers>;
   licenses: ReturnType<typeof listLicenses>;
   maintenanceEvents: ReturnType<typeof listMaintenanceEvents>;
   sightSettings: ReturnType<typeof listSightSettings>;
@@ -38,6 +40,7 @@ export interface FirearmDetail {
 const EMPTY: FirearmDetail = {
   firearm: null,
   groups: [],
+  calibers: [],
   licenses: [],
   maintenanceEvents: [],
   sightSettings: [],
@@ -57,6 +60,7 @@ export function loadFirearmDetail(
 
   const licenses = listLicenses(db, firearmId);
   const groups = listFirearmGroups(db, firearmId);
+  const calibers = listFirearmCalibers(db, firearmId);
   const licenseActivities = profile
     ? computeFirearmLicenseActivity(
         listComplianceSessions(db),
@@ -67,6 +71,7 @@ export function loadFirearmDetail(
   return {
     firearm,
     groups,
+    calibers,
     licenses,
     maintenanceEvents: listMaintenanceEvents(db, firearmId),
     sightSettings: listSightSettings(db, firearmId),

@@ -21,6 +21,7 @@ const migrationsDir = path.join(dirname, 'migrations');
 /** Every table the sync engine captures; each needs an insert and an update trigger. */
 const SYNCED_TABLES = [
   'ammo_lots',
+  'firearm_calibers',
   'firearm_groups',
   'firearms',
   'licenses',
@@ -62,6 +63,7 @@ describe('the migration chain is the whole schema', () => {
       '0000_baseline',
       '0001_drop_vault_document_id',
       '0002_firearm_is_own',
+      '0003_firearm_calibers',
     ]);
   });
 

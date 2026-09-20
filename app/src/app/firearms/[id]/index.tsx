@@ -21,6 +21,7 @@ import {
 } from '@shotledger/shared';
 
 import { ScreenTitle } from '@/components/screen-title';
+import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { InfoButton } from '@/components/info-button';
@@ -36,6 +37,7 @@ import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
+import { addFirearmCaliber, softDeleteFirearmCaliber } from '@/db/queries/firearm-calibers';
 import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-groups';
 import { updateFirearm } from '@/db/queries/firearms';
 import { addLicense } from '@/db/queries/licenses';
@@ -110,6 +112,9 @@ export default function FirearmDetailScreen() {
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
   const [newGroupDefault, setNewGroupDefault] = useState(false);
 
+  const [showAddCaliber, setShowAddCaliber] = useState(false);
+  const [newCaliber, setNewCaliber] = useState<string | null>(null);
+
   const [showAddLicense, setShowAddLicense] = useState(false);
   const [licenseNumber, setLicenseNumber] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -173,6 +178,20 @@ export default function FirearmDetailScreen() {
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
     editingSightId != null && currentSightSetting?.id === editingSightId;
+
+  function onAddCaliber() {
+    if (!db || !newCaliber) return;
+    addFirearmCaliber(db, { firearmId: firearm!.id, caliber: newCaliber });
+    setNewCaliber(null);
+    setShowAddCaliber(false);
+    refresh();
+  }
+
+  function onRemoveCaliber(id: string) {
+    if (!db) return;
+    softDeleteFirearmCaliber(db, id);
+    refresh();
+  }
 
   function onAddGroup() {
     if (!db || !newGroupId) return;
@@ -517,6 +536,65 @@ export default function FirearmDetailScreen() {
           )}
         </Card>
       )}
+
+      {/* Calibers (#312). The chambering lives on the firearm; this is what
+          else it may be fed — a .357 Magnum revolver shot with .38 Special is
+          the ordinary case, not an exotic one. */}
+      <Card>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('firearms.calibersTitle')}
+          </ThemedText>
+          <InfoButton
+            title={t('firearms.calibersTitle')}
+            body={t('firearms.calibersHint')}
+            testID="calibers-info"
+          />
+        </View>
+        <ListRow
+          title={firearm.caliber ?? t('firearms.noChambering')}
+          subtitle={t('firearms.chambering')}
+          testID="firearm-chambering"
+        />
+        {detail.calibers.map((row) => (
+          <ListRow
+            key={row.id}
+            title={row.caliber}
+            subtitle={t('firearms.alsoShoots')}
+            testID={`firearm-caliber-${row.caliber}`}
+            trailing={
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => onRemoveCaliber(row.id)}
+                testID={`remove-caliber-${row.caliber}`}
+              >
+                <ThemedText type="small">{t('common.remove')}</ThemedText>
+              </Pressable>
+            }
+          />
+        ))}
+        {showAddCaliber ? (
+          <>
+            <CaliberPicker
+              label={t('firearms.caliber')}
+              value={newCaliber}
+              onChange={setNewCaliber}
+            />
+            <PrimaryButton
+              label={t('firearms.addCaliber')}
+              onPress={onAddCaliber}
+              disabled={!newCaliber}
+              testID="save-caliber"
+            />
+          </>
+        ) : (
+          <PrimaryButton
+            label={t('firearms.addCaliber')}
+            onPress={() => setShowAddCaliber(true)}
+            testID="add-caliber"
+          />
+        )}
+      </Card>
 
       {/* Weapon groups */}
       <Card>

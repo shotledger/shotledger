@@ -15,6 +15,7 @@ export const APPLY_ORDER: readonly SyncTableName[] = [
   'tags',
   'licenses',
   'firearm_groups',
+  'firearm_calibers',
   'maintenance_events',
   'sight_settings',
   'sessions',
