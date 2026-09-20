@@ -3,6 +3,20 @@
 // home-session-row.ts.
 import type { SessionListRow } from './session-list-row';
 
+/**
+ * The date range, in the same vocabulary the Statistics tab uses — one set of
+ * words for "when" across the app, so the two screens cannot drift apart.
+ */
+export const SESSION_PERIODS = ['all', '30d', '6m', '12m', 'custom'] as const;
+export type SessionPeriod = (typeof SESSION_PERIODS)[number];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PERIOD_DAYS: Record<Exclude<SessionPeriod, 'all' | 'custom'>, number> = {
+  '30d': 30,
+  '6m': 182,
+  '12m': 365,
+};
+
 export interface SessionListFilter {
   /** Free text, matched against the session name. Case- and accent-insensitive. */
   query: string;
@@ -13,6 +27,36 @@ export interface SessionListFilter {
   tag: string;
   /** Firearm id, `'all'`, or `'none'` for sessions with no firearm recorded. */
   firearmId: string;
+  /** Date range. `'all'` is no bound; `'custom'` uses the two dates below. */
+  period: SessionPeriod;
+  /** 'YYYY-MM-DD', only meaningful when `period === 'custom'`. */
+  customFrom: string | null;
+  customTo: string | null;
+}
+
+/**
+ * The [from, to] bounds a period resolves to; `null` is unbounded.
+ *
+ * A custom range with only one end set bounds only that end, rather than
+ * matching nothing — half a range is a range, and a screen that silently
+ * showed zero rows while the user was still picking the second date would
+ * look broken.
+ */
+export function sessionPeriodRange(
+  filter: Pick<SessionListFilter, 'period' | 'customFrom' | 'customTo'>,
+  now: Date = new Date(),
+): { fromIso: string | null; toIso: string | null } {
+  if (filter.period === 'all') return { fromIso: null, toIso: null };
+  if (filter.period === 'custom') {
+    return {
+      fromIso: filter.customFrom ? `${filter.customFrom}T00:00:00.000Z` : null,
+      toIso: filter.customTo ? `${filter.customTo}T23:59:59.999Z` : null,
+    };
+  }
+  return {
+    fromIso: new Date(now.getTime() - PERIOD_DAYS[filter.period] * DAY_MS).toISOString(),
+    toIso: null,
+  };
 }
 
 export const EMPTY_SESSION_FILTER: SessionListFilter = {
@@ -21,6 +65,9 @@ export const EMPTY_SESSION_FILTER: SessionListFilter = {
   disciplineId: 'all',
   tag: 'all',
   firearmId: 'all',
+  period: 'all',
+  customFrom: null,
+  customTo: null,
 };
 
 /**
@@ -38,10 +85,14 @@ function fold(value: string): string {
 export function filterSessionRows(
   rows: readonly SessionListRow[],
   filter: SessionListFilter,
+  now: Date = new Date(),
 ): SessionListRow[] {
   const needle = fold(filter.query.trim());
+  const { fromIso, toIso } = sessionPeriodRange(filter, now);
 
   return rows.filter((row) => {
+    if (fromIso !== null && row.startedAt < fromIso) return false;
+    if (toIso !== null && row.startedAt > toIso) return false;
     if (needle && !fold(row.name).includes(needle)) return false;
     if (filter.type !== 'all' && row.type !== filter.type) return false;
     if (filter.disciplineId !== 'all' && row.disciplineId !== filter.disciplineId) return false;
@@ -62,6 +113,7 @@ export function isFilterActive(filter: SessionListFilter): boolean {
     filter.type !== 'all' ||
     filter.disciplineId !== 'all' ||
     filter.tag !== 'all' ||
-    filter.firearmId !== 'all'
+    filter.firearmId !== 'all' ||
+    filter.period !== 'all'
   );
 }

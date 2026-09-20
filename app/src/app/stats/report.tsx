@@ -98,9 +98,9 @@ export default function StatsReportScreen() {
       <Card>
         <ThemedText type="smallBold">{t('stats.filterEchoTitle')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {t('stats.customFrom')}: {range.fromIso ? formatDate(range.fromIso) : t('stats.all')}
+          {t('period.from')}: {range.fromIso ? formatDate(range.fromIso) : t('stats.all')}
           {'\n'}
-          {t('stats.customTo')}: {range.toIso ? formatDate(range.toIso) : t('compliance.pdfNow')}
+          {t('period.to')}: {range.toIso ? formatDate(range.toIso) : t('compliance.pdfNow')}
           {'\n'}
           {t('stats.sectionShotsPerSeries')}: {filter.shotsPerSeries ?? t('stats.all')}
           {'\n'}

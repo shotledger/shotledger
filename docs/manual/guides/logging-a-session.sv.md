@@ -80,13 +80,23 @@ kan filtrera på gren, vapen och vapengrupp.
 
 ## Att hitta ett pass igen
 
-Startsidan visar dina tio senaste pass. **Visa alla** intill den listan öppnar
-hela loggboken — varje pass du någonsin loggat, nyast först.
+Startsidan visar dina tio senaste pass. **Visa alla**, sist i den listan, öppnar
+hela loggboken — varje pass du någonsin loggat, nyast först. Den ligger längst
+ned för att det är där du är när de tio senaste inte innehöll det du letade
+efter.
 
-Filtrera den på valfri kombination av:
+Loggboken öppnas på själva passen. Sökrutan ligger ovanför dem; allt annat är
+hopfällt bakom en enda **Filter**-rad, som visar vad som just nu smalnar av
+listan — så att ett filter aldrig arbetar på dig i det dolda, och du aldrig
+rullar förbi sex reglage för att nå en tävling för några veckor sedan.
+
+Filtrera på valfri kombination av:
 
 - **namn** — fritext som bortser från versaler och accenter, så _traning_
   hittar _Träning_
+- **när** — senaste 30 dagarna, 6 eller 12 månader, allt, eller två egna datum.
+  Samma val som fliken [Statistik](statistics.sv.md) erbjuder, för det är samma
+  fråga
 - **träning eller tävling**
 - **gren**
 - **etikett**

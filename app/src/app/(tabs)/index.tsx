@@ -121,17 +121,6 @@ export default function HomeScreen() {
         <View style={styles.list}>
           <View style={styles.listHeader}>
             <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
-            {/* Home shows ten. Before this link the other 257 were reachable
-                only by deep link (#317). */}
-            <Pressable
-              accessibilityRole="button"
-              testID="home-see-all-sessions"
-              onPress={() => router.push('/sessions')}
-            >
-              <ThemedText type="linkPrimary">
-                {t('home.seeAllSessions', { count: sessionCount })}
-              </ThemedText>
-            </Pressable>
           </View>
           <SegmentedControl
             testID="home-shape-filter"
@@ -194,6 +183,20 @@ export default function HomeScreen() {
               </Swipeable>
             ))
           )}
+          {/* Home shows ten; the other 257 were once reachable only by deep
+              link (#317). At the END of the list, not in its header: the
+              moment you want it is after reading the ten latest and not
+              finding what you were after (maintainer, 2026-09-20). */}
+          <Pressable
+            accessibilityRole="button"
+            testID="home-see-all-sessions"
+            onPress={() => router.push('/sessions')}
+            style={({ pressed }) => [styles.seeAll, pressed && styles.seeAllPressed]}
+          >
+            <ThemedText type="linkPrimary">
+              {t('home.seeAllSessions', { count: sessionCount })}
+            </ThemedText>
+          </Pressable>
         </View>
       )}
     </Screen>
@@ -202,6 +205,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   listHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  seeAll: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.medium,
+  },
+  seeAllPressed: { opacity: 0.6 },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,

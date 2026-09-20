@@ -55,6 +55,16 @@
     "shapeRounds": "Skott",
     "shareSession": "Dela pass"
   },
+  "period": {
+    "last30Days": "30 dgr",
+    "last6Months": "6 mån",
+    "last12Months": "12 mån",
+    "max": "Max",
+    "custom": "Anpassa",
+    "from": "Från",
+    "to": "Till",
+    "rangeIncomplete": "Välj ett start- och slutdatum"
+  },
   "sessions": {
     "title": "Pass",
     "searchLabel": "Sök pass",
@@ -71,7 +81,9 @@
     "emptyTitle": "Inga pass än",
     "emptyBody": "Pass du loggar dyker upp här, med allt du kan filtrera dem på.",
     "noMatchTitle": "Inget matchar",
-    "noMatchBody": "Inget pass matchar alla filter du satt. Vidga ett, eller rensa alla."
+    "noMatchBody": "Inget pass matchar alla filter du satt. Vidga ett, eller rensa alla.",
+    "filtersTitle": "Filter",
+    "filtersNone": "Inga"
   },
   "stats": {
     "title": "Statistik",
@@ -79,14 +91,6 @@
     "emptyBody": "Statistik visas när du har loggat pass.",
     "emptyFilteredTitle": "Ingen data för filtret",
     "emptyFilteredBody": "Prova en längre period eller rensa ett filter.",
-    "period30d": "30 dgr",
-    "period6m": "6 mån",
-    "period12m": "12 mån",
-    "periodAll": "Max",
-    "periodCustom": "Anpassa",
-    "customFrom": "Från",
-    "customTo": "Till",
-    "customRangeIncomplete": "Välj ett start- och slutdatum",
     "all": "Alla",
     "totalShots": "Loggade skott",
     "sessions": "Pass",
