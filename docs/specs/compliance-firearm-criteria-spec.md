@@ -158,6 +158,18 @@ which is UX, not regulation.
   every firearm the proxy covers, and the shooter reads off the one they are
   applying for.
 
+## The screen has to explain its own number
+
+`otherFirearmSessionCount` and `unattributedSessionCount` are not diagnostics;
+they are what makes the figure believable. A shooter who logged 54 sessions in
+the window and reads "0 of 2 activities with this firearm" will read it as a
+bug unless the screen says where the other 54 went. Both counts are therefore
+rendered whenever they are non-zero, not merely computed.
+
+Found by driving the app, not by a test: the engine produced both from the
+start and the card rendered only the unattributed one — which on real data is
+the case that never fires.
+
 ## Constants (`constants-se.ts`)
 
 | Constant                              | Value | Derivation                                              |

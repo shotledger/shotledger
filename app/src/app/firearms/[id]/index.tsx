@@ -576,6 +576,17 @@ export default function FirearmDetailScreen() {
               </ThemedText>
               {/* A criterion counting 2 where the shooter logged 40 has to say
                   why, or the number reads as a bug. */}
+              {criterion.otherFirearmSessionCount > 0 && (
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-criterion-other-${criterion.criterionId}`}
+                >
+                  {t('compliance.criterionOtherFirearm', {
+                    count: criterion.otherFirearmSessionCount,
+                  })}
+                </ThemedText>
+              )}
               {criterion.unattributedSessionCount > 0 && (
                 <ThemedText
                   type="small"

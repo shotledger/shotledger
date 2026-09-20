@@ -94,9 +94,12 @@ than about you:
 | **Renewing a time-limited permit** (_förnyelse av tidsbegränsat tillstånd_) | at least **four** activities **in each of the last two years** with the gun applied for   |
 
 Both appear on a firearm's own page, under _Föreningsintyg criteria_, and both
-count **only the sessions you logged with that firearm**. A session with no
-firearm recorded counts towards neither, and the app says how many of those
-there were rather than quietly leaving them out.
+count **only the sessions you logged with that firearm**. A session logged with
+a different gun counts towards that one instead, and a session with no firearm
+recorded counts towards neither. The app prints both figures under the
+criterion rather than quietly leaving them out — so "0 of 2 activities with
+this firearm" sits next to "54 sessions in the period were logged with a
+different firearm", and the number is readable instead of alarming.
 
 **Four a year for two years is not eight over two years.** The app checks each
 twelve-month window separately, so eight activities last year and none the year

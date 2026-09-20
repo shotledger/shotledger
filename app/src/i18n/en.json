@@ -540,6 +540,8 @@
     "criterionMet": "{{name}} — met",
     "criterionNotMet": "{{name}} — not met",
     "criterionPeriod": "{{done}} of {{required}} activities with this firearm, {{from}} to {{to}}",
+    "criterionOtherFirearm_one": "{{count}} session in the period was logged with a different firearm, so it counts towards that one instead.",
+    "criterionOtherFirearm_other": "{{count}} sessions in the period were logged with a different firearm, so they count towards those instead.",
     "criterionHint": {
       "additionalHandgun": "Applying for another handgun asks whether you trained or competed at least twice in the last six months with each handgun you already hold. Counted here because this firearm is a pistol or revolver marked as your own.",
       "renewal": "Renewing a time-limited permit asks for at least four activities in each of the last two years — not eight across the two. Counted here because this firearm’s most recent licence has an end date."

@@ -91,9 +91,12 @@ _Intyget avser_, och båda handlar om ett **visst vapen** i stället för om dig
 | **Förnyelse av tidsbegränsat tillstånd** | minst **fyra** aktiviteter **under vart och ett av de två senaste åren** med sökt vapen             |
 
 Båda visas på vapnets egen sida, under _Kriterier för föreningsintyg_, och båda
-räknar **bara de pass du loggat med det vapnet**. Ett pass utan vapen räknas
-till inget av dem, och appen skriver ut hur många sådana det fanns i stället
-för att tyst utelämna dem.
+räknar **bara de pass du loggat med det vapnet**. Ett pass loggat med ett annat
+vapen räknas till det i stället, och ett pass utan vapen räknas till inget av
+dem. Appen skriver ut båda siffrorna under kriteriet i stället för att tyst
+utelämna dem — så ”0 av 2 aktiviteter med det här vapnet” står bredvid ”54 pass
+under perioden loggades med andra vapen”, och siffran går att läsa i stället
+för att skrämmas.
 
 **Fyra per år i två år är inte åtta på två år.** Appen kontrollerar varje
 tolvmånadersperiod för sig, så åtta aktiviteter i fjol och inga året dessförinnan

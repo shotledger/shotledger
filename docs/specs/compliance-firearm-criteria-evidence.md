@@ -108,8 +108,36 @@ spec asserted but no test pinned:
 
 ## Real-execution layer
 
-Verified in the running app rather than from the source, per CLAUDE.md. See
-the section below.
+Driven on the `shotledger` emulator against a real 267-session dataset (11,615
+shots, six firearms, all but one imported without a weapon type) rather than
+demo data, which the maintainer chose to preserve. No screenshot from that run
+is committed: hard rule 7 forbids it, and the firearm names are real.
+
+What the run confirmed, on the `Pardini SP` — the one firearm with a weapon
+type on file:
+
+- The **Föreningsintyg Criteria** card appears under License Activity, showing
+  `Additional Handgun — not met`, `0 of 2 activities with this firearm,
+2026-03-20 to 2026-09-20` (the six-month window, correct for the date), the
+  criterion's explanation, and the attestation note.
+- **Only** the additional-handgun criterion appears. The firearm is a pistol
+  marked _My Own_ with no licence recorded, so `hasTimeLimitedPermit` is false
+  and the renewal criterion is correctly absent — behavior `F15`, on real data.
+- The 5 §/6 § card beside it is unchanged: `54 activities in the last 6 months
+— 12 required`, `On Track`. `N3` holds where it matters.
+
+**It also found a defect no test could.** The card showed `0 of 2 activities
+with this firearm` with nothing to explain it, while the card directly above
+said 54. `otherFirearmSessionCount` was computed and never rendered — the
+unattributed count was, and on this dataset it is always 0, so the gap was
+invisible to every unit test. Fixed in the same branch; the card now reads
+`54 sessions in the period were logged with a different firearm, so they count
+towards those instead`, and 54 matches the License Activity figure exactly.
+
+Two environment findings from the run are recorded in CLAUDE.md rather than
+here, since they are not about this change: `expo run:android` builds an
+ABI-restricted APK matching the connected device, and Fast Refresh does not
+reload the i18n resources.
 
 ## What this report does not show
 
