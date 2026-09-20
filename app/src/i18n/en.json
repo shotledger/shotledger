@@ -177,7 +177,9 @@
       "tightenGroup": "Mostly consistency: the group is near the center but spread out.",
       "balanced": "Position and spread cost about the same — both would have to improve.",
       "onTarget": "Centered and tight. Little left to take here."
-    }
+    },
+    "chartDisciplinesOmitted_one": "One more discipline is not shown — narrow the discipline filter to see it.",
+    "chartDisciplinesOmitted_other": "{{count}} more disciplines are not shown — narrow the discipline filter to see them."
   },
   "firearms": {
     "title": "Firearms & Ammo",

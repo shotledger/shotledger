@@ -177,7 +177,9 @@
       "tightenGroup": "Mest jämnhet: gruppen ligger nära mitten men är spridd.",
       "balanced": "Läge och spridning kostar ungefär lika mycket — båda behöver bli bättre.",
       "onTarget": "Centrerad och tät. Lite kvar att hämta här."
-    }
+    },
+    "chartDisciplinesOmitted_one": "En gren till visas inte — smalna av grenfiltret för att se den.",
+    "chartDisciplinesOmitted_other": "{{count}} grenar till visas inte — smalna av grenfiltret för att se dem."
   },
   "firearms": {
     "title": "Vapen & ammo",

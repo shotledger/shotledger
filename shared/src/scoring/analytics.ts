@@ -181,6 +181,14 @@ export function analyticsReportSessions(
 export interface AnalyticsSessionPoint {
   sessionId: string;
   startedAt: string;
+  /**
+   * The session's discipline, so a chart can draw one line per discipline
+   * instead of plotting a max-350 precision session and a max-600 milsnabb
+   * session on one axis (#349). Every series of a session carries the
+   * session's discipline, so this is well defined for any session that has
+   * one — and a session with none produces no point at all.
+   */
+  disciplineId: string;
   scoredSeriesCount: number;
   scoredShotCount: number;
   sessionTotalTenths: number;
@@ -216,6 +224,7 @@ export function analyticsSessionPoints(
     points.push({
       sessionId,
       startedAt: sessionSeries[0]!.startedAt,
+      disciplineId: sessionSeries[0]!.disciplineId,
       scoredSeriesCount: scored.length,
       scoredShotCount: shots.length,
       sessionTotalTenths,
