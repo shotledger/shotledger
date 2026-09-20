@@ -255,13 +255,22 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
   `check` also runs `pnpm typecheck:app` (`cd app && pnpm exec tsc
 --noEmit -p tsconfig.json`) as a separate step (wired up in
   `feat/polish-1`, after fixing the two remaining M0/M1-vintage errors).
-- **The two docs gates are NOT in `pnpm check`** — CI's _Build (strict)_ job
+- **The three docs gates are NOT in `pnpm check`** — CI's _Build (strict)_ job
   runs them, so a docs change that passes `check` can still fail CI (it did, on
-  #258). Run both before pushing one: `mkdocs build --strict` (links and nav)
-  and `node scripts/docs-translation-check.mjs`, which fails when a `.sv.md`
-  page's last commit is older than its English source. An English-only edit
-  with no Swedish counterpart to make therefore cannot pass it — that is a
-  decision to take, not a gate to loosen.
+  #258). Run all three before pushing one:
+  - `mkdocs build --strict` — links and nav.
+  - `node scripts/docs-translation-check.mjs` — fails when a `.sv.md` page's
+    last commit is older than its English source. An English-only edit with no
+    Swedish counterpart to make therefore cannot pass it — that is a decision to
+    take, not a gate to loosen.
+  - `node scripts/docs-anchor-check.mjs` (`pnpm docs:anchors`) — fails on a link
+    to a heading that no longer exists. `--strict` logs that at INFO and exits
+    0, so it is invisible to the build (#343).
+
+  They stay out of `pnpm check` because they need the Python toolchain
+  (`pip install -r docs/requirements.txt`), which a code-only contributor has
+  no reason to install.
+
 - Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
   `pnpm coverage` (vitest + v8, 100% threshold on
   `shared/src/{scoring,disciplines}`, exits nonzero when missed),
