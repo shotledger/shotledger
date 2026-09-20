@@ -11,14 +11,18 @@ exports[`buildShootingLogHtml > matches the snapshot with a firearm filter 1`] =
   .summary { font-size: 12px; color: #444; margin-bottom: 16px; }
   .summary div { margin-bottom: 2px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+  th, td { border: 1px solid #333; padding: 6px; text-align: left; vertical-align: top; }
   th { background: #f2f2f2; }
+  /* Ruled and empty: signed by hand, never by the app. */
+  td.sign { min-width: 28%; height: 22px; }
+  .note { font-size: 10px; color: #444; margin-top: 8px; }
   .empty { font-style: italic; color: #666; }
 </style>
 </head>
 <body>
   <h1>Shooting log</h1>
   <div class="summary">
+    <div>Personal shooting log for: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     <div>AW93 .22 LR</div>
     <div>2 · 20</div>
@@ -26,26 +30,25 @@ exports[`buildShootingLogHtml > matches the snapshot with a firearm filter 1`] =
   </div>
   <table>
     <thead>
-      <tr><th>Date</th><th>Discipline</th><th>Type</th><th>Series</th><th>Score</th><th>Location</th></tr>
+      <tr><th>Date</th><th>Place</th><th>Shooting activity</th><th>Firearm used</th><th>Attested by</th></tr>
     </thead>
     <tbody>
         <tr>
           <td>2026-08-01</td>
-          <td>Precision</td>
-          <td>Training</td>
-          <td>6</td>
-          <td>270</td>
           <td>Malmö Skyttegille</td>
+          <td>Precision · Training</td>
+          <td>Feinwerkbau AW93</td>
+          <td class="sign"></td>
         </tr>
         <tr>
           <td>2026-08-15</td>
-          <td>Precision</td>
-          <td>Competition</td>
-          <td>10</td>
-          <td>460</td>
           <td>Malmö Skyttegille</td>
+          <td>Precision · Competition</td>
+          <td>CZ Shadow 2</td>
+          <td class="sign"></td>
         </tr></tbody>
   </table>
+  <p class="note">The “Attested by” column is left blank on purpose.</p>
 </body>
 </html>"
 `;
@@ -61,14 +64,18 @@ exports[`buildShootingLogHtml > matches the snapshot with entries 1`] = `
   .summary { font-size: 12px; color: #444; margin-bottom: 16px; }
   .summary div { margin-bottom: 2px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+  th, td { border: 1px solid #333; padding: 6px; text-align: left; vertical-align: top; }
   th { background: #f2f2f2; }
+  /* Ruled and empty: signed by hand, never by the app. */
+  td.sign { min-width: 28%; height: 22px; }
+  .note { font-size: 10px; color: #444; margin-top: 8px; }
   .empty { font-style: italic; color: #666; }
 </style>
 </head>
 <body>
   <h1>Shooting log</h1>
   <div class="summary">
+    <div>Personal shooting log for: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     
     <div>2 · 20</div>
@@ -76,26 +83,25 @@ exports[`buildShootingLogHtml > matches the snapshot with entries 1`] = `
   </div>
   <table>
     <thead>
-      <tr><th>Date</th><th>Discipline</th><th>Type</th><th>Series</th><th>Score</th><th>Location</th></tr>
+      <tr><th>Date</th><th>Place</th><th>Shooting activity</th><th>Firearm used</th><th>Attested by</th></tr>
     </thead>
     <tbody>
         <tr>
           <td>2026-08-01</td>
-          <td>Precision</td>
-          <td>Training</td>
-          <td>6</td>
-          <td>270</td>
           <td>Malmö Skyttegille</td>
+          <td>Precision · Training</td>
+          <td>Feinwerkbau AW93</td>
+          <td class="sign"></td>
         </tr>
         <tr>
           <td>2026-08-15</td>
-          <td>Precision</td>
-          <td>Competition</td>
-          <td>10</td>
-          <td>460</td>
           <td>Malmö Skyttegille</td>
+          <td>Precision · Competition</td>
+          <td>CZ Shadow 2</td>
+          <td class="sign"></td>
         </tr></tbody>
   </table>
+  <p class="note">The “Attested by” column is left blank on purpose.</p>
 </body>
 </html>"
 `;
@@ -111,14 +117,18 @@ exports[`buildShootingLogHtml > matches the snapshot with no entries 1`] = `
   .summary { font-size: 12px; color: #444; margin-bottom: 16px; }
   .summary div { margin-bottom: 2px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+  th, td { border: 1px solid #333; padding: 6px; text-align: left; vertical-align: top; }
   th { background: #f2f2f2; }
+  /* Ruled and empty: signed by hand, never by the app. */
+  td.sign { min-width: 28%; height: 22px; }
+  .note { font-size: 10px; color: #444; margin-top: 8px; }
   .empty { font-style: italic; color: #666; }
 </style>
 </head>
 <body>
   <h1>Shooting log</h1>
   <div class="summary">
+    <div>Personal shooting log for: ______</div>
     <div>2026-03-01 – 2026-09-01</div>
     
     <div>0 · 0</div>

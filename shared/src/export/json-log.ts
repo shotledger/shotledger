@@ -10,7 +10,7 @@
 // exports describe the same data the same way.
 
 import type { AnalyticsRecord, AnalyticsRecords, AnalyticsTotals } from '../scoring/analytics';
-import type { SessionExport } from '../json-export/types';
+import type { FirearmExport, SessionExport } from '../json-export/types';
 import { tenthsToScore } from '../scoring/totals';
 
 export const ANALYTICS_REPORT_FORMAT = 'shotledger.analytics-report';
@@ -68,6 +68,17 @@ export interface AnalyticsReportJson {
     mostTens: AnalyticsReportJsonRecord | null;
   };
   sessions: SessionExport[];
+  /**
+   * The firearms the sessions reference, so a consumer can resolve
+   * `session.firearmId` to a firearm — and read `isOwn` (#308).
+   *
+   * Naming the firearm is what demonstrates activity with one's own guns.
+   * `isOwn` travels with it rather than an "Own: yes" column being rendered
+   * anywhere: in a file it is data a consumer may use, while on a printed log
+   * it would be an unverifiable self-assertion baked into a document someone
+   * else is asked to sign.
+   */
+  firearms: FirearmExport[];
 }
 
 export interface AnalyticsReportJsonInput {
@@ -77,6 +88,8 @@ export interface AnalyticsReportJsonInput {
   records: AnalyticsRecords;
   /** The filtered sessions, assembled by the same code the CSV export uses. */
   sessions: readonly SessionExport[];
+  /** The firearms those sessions reference; assembled the same way. */
+  firearms: readonly FirearmExport[];
 }
 
 /**
@@ -130,6 +143,7 @@ export function buildAnalyticsReport(input: AnalyticsReportJsonInput): Analytics
       mostTens: toCountRecord(input.records.mostTens),
     },
     sessions: [...input.sessions],
+    firearms: [...input.firearms],
   };
 }
 

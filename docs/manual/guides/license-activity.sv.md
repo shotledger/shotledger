@@ -33,11 +33,35 @@ vapenfliken, och att fylla i dem kan flytta förslaget av sig självt.
 
 ## Att få ut det
 
-**Inställningar → Säkerhetskopiering och data** exporterar allt. Det finns även
-en PDF-export av föreningsloggen för den sammanställning en förening kan be om.
+**Inställningar → Säkerhetskopiering och data** exporterar allt. **PDF-exporten**
+av föreningsloggen är den du lämnar till föreningen, och **JSON-exporten** bär
+samma pass som data.
+
+PDF:en följer den förtryckta personliga skytteloggen en förening delar ut,
+kolumn för kolumn:
+
+| Kolumn           | Vad den innehåller                         |
+| ---------------- | ------------------------------------------ |
+| Datum            | när du sköt                                |
+| Plats            | banan                                      |
+| Skytteaktivitet  | gren, och om det var träning eller tävling |
+| Använt vapen     | vapnet på passet, eller _Ej angivet_       |
+| Uppg. styrkta av | **lämnas tom, skrivs under för hand**      |
+
+Två av dem är värda en förklaring.
+
+**Använt vapen** finns där för att det är vapnets namn som visar aktivitet
+_med ett visst vapen_ — vilket är det kraven för ytterligare enhandsvapen och
+för förnyelse vilar på. Ett pass utan angivet vapen står som _Ej angivet_ i
+stället för att falla bort: en sexmånadersperiod som tyst tappar rader tappar
+pass som faktiskt räknades.
+
+**Uppg. styrkta av** är medvetet tom. I en föreningslogg blir en rad ett bevis
+när någon skriver under den, och det kan bara en människa göra. Appen skriver
+ut den linjerade kolumnen och lämnar den i fred.
 
 !!! note
 
-    PDF-layouten har inte stämts av mot ett verkligt föreningsintyg. Den byggdes
-    efter specifikationen snarare än mot ett exemplar, så kontrollera att den
-    duger innan du förlitar dig på den vid en ansökan.
+    Appen känner inte till ditt namn — den har ingen anledning att spara det —
+    så loggen skriver ut en tom rad att fylla i för hand, precis som
+    signaturkolumnen.

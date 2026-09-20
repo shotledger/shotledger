@@ -21,7 +21,7 @@ const session: SessionExport = {
   weaponGroup: 'spsf:C',
   shooterClass: '2',
   eventId: null,
-  firearmId: null,
+  firearmId: 'firearm-1',
   firearm: 'Pardini SP',
   ammoLot: 'Lot 42',
   startedAt: '2026-05-01T10:00:00.000Z',
@@ -41,6 +41,25 @@ const session: SessionExport = {
       ],
     },
   ],
+};
+
+// #308: naming the firearm is what demonstrates activity with one's own guns,
+// so the report has to carry the firearm a session references — and `isOwn`
+// with it.
+const firearm = {
+  id: 'firearm-1',
+  make: 'Pardini',
+  model: 'SP',
+  caliber: '.22 LR',
+  weaponType: 'pistol' as const,
+  isOwn: true,
+  serialNumber: null,
+  vapenId: null,
+  loadSystem: null,
+  notes: null,
+  roundCount: 0,
+  maintenanceIntervalRounds: null,
+  roundsSinceMaintenance: 0,
 };
 
 const input: AnalyticsReportJsonInput = {
@@ -75,6 +94,7 @@ const input: AnalyticsReportJsonInput = {
     mostTens: { sessionId: 'session-2', startedAt: '2026-06-01T10:00:00.000Z', value: 12 },
   },
   sessions: [session],
+  firearms: [firearm],
 };
 
 describe('buildAnalyticsReport', () => {
@@ -153,6 +173,7 @@ describe('buildAnalyticsReport', () => {
       },
       records: { bestSessionTotalTenths: null, mostInnerTens: null, mostTens: null },
       sessions: [],
+      firearms: [],
     });
     expect(report.summary.meanScorePerShot).toBeNull();
     expect(report.summary.meanScorePerSeries).toBeNull();
@@ -181,5 +202,24 @@ describe('buildAnalyticsReportJson', () => {
 
   it('is byte-stable for the same input', () => {
     expect(buildAnalyticsReportJson(input)).toBe(buildAnalyticsReportJson(input));
+  });
+
+  it('L6: carries the firearms the sessions reference, with isOwn (#308)', () => {
+    const report = buildAnalyticsReport(input);
+    expect(report.firearms).toHaveLength(1);
+    expect(report.firearms[0]?.id).toBe('firearm-1');
+    expect(report.firearms[0]?.isOwn).toBe(true);
+  });
+
+  it('L7: a session resolves to a firearm in the same document', () => {
+    const report = buildAnalyticsReport(input);
+    const referenced = report.sessions[0]?.firearmId;
+    expect(report.firearms.some((f) => f.id === referenced)).toBe(true);
+  });
+
+  it('L8: firearms is a copy, not the caller\u2019s array', () => {
+    const report = buildAnalyticsReport(input);
+    expect(report.firearms).not.toBe(input.firearms);
+    expect(report.firearms).toEqual([...input.firearms]);
   });
 });

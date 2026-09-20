@@ -34,11 +34,35 @@ on the Firearms tab, and filling those in may move the proposal on its own.
 
 ## Getting it out
 
-**Settings → Backup & Data** exports everything. A club-log PDF export also
-exists for the summary a förening might ask for.
+**Settings → Backup & Data** exports everything. A club-log **PDF export** is
+what you hand to the förening, and a **JSON export** carries the same sessions
+as data.
+
+The PDF follows the preprinted personal shooting log a club issues, column for
+column:
+
+| Column            | What it holds                                         |
+| ----------------- | ----------------------------------------------------- |
+| Date              | when you shot                                         |
+| Place             | the range                                             |
+| Shooting activity | discipline and whether it was training or competition |
+| Firearm used      | the firearm on the session, or _Not recorded_         |
+| Attested by       | **left blank, to be signed by hand**                  |
+
+Two of those are worth explaining.
+
+**Firearm used** is there because naming the firearm is what shows activity
+_with a particular gun_ — which is what the additional-handgun and renewal
+criteria turn on. A session with no firearm recorded says _Not recorded_
+rather than being dropped: a six-month window that quietly loses rows loses
+sessions that did count.
+
+**Attested by** is deliberately empty. On a club log a row becomes evidence
+when someone signs it, and only a person can do that. The app prints the ruled
+column and leaves it alone.
 
 !!! note
 
-    The PDF layout has not been checked against a real föreningsintyg. It was
-    built to the specification rather than against a sample, so confirm it is
-    acceptable before relying on it for a submission.
+    The app does not know your name — it has no reason to store it — so the
+    log prints a blank line for you to write it on, the same as the signature
+    column.
