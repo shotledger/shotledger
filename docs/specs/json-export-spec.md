@@ -97,6 +97,38 @@ path references `exportSessionsToCsv`.
 
 ---
 
+## 1.4 Revision 4 — firearms and licenses join the envelope (issue #314)
+
+The format was narrower than the database: a session named its firearm as free
+text and nothing carried a license at all, so no external source could bring
+either in and a shooter recovering from a dead phone through the sessions
+export lost their equipment.
+
+The envelope gains two arrays, `firearms` and `licenses`, and a session gains
+`firearmId` beside the existing `firearm` name. **`formatVersion` stays 1**
+(maintainer, 2026-09-19; now CLAUDE.md hard rule 8): the fields are optional and
+additive, every file in existence was written by this machine, and a version
+gate would guard a case that cannot occur and then have to be carried forever.
+
+- The name field stays because it is _useful_ — a session whose firearm the
+  file does not carry still says what was shot with — not as a compatibility
+  shim.
+- A license names its firearm by `firearmId`; one naming a firearm the file
+  does not carry is dropped on import, since `licenses.firearm_id` is a NOT
+  NULL foreign key and a guessed target would be worse than no row.
+- Firearms reconcile on id first, then on `"{make} {model}"` — the key the
+  name-only path already used, so the two cannot produce two rows for one
+  firearm. Round counters on a firearm that already exists here are left alone.
+- Issue #312 (more than one caliber per firearm) is underneath this and
+  unchanged by it: the envelope carries whatever the firearms table holds.
+
+New criteria, each a named test: a firearm and its license round-trip whole
+(added to P21); a file with neither array, and a session with no `firearmId`,
+still import; one bad firearm or license is skipped on its own like a bad
+session, reported as `invalid-firearm` / `invalid-license`.
+
+---
+
 ## 2. The file format
 
 ```json

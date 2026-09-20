@@ -1,8 +1,13 @@
 import type { SessionImportGroup } from './import';
+import type { FirearmExport, LicenseExport } from './types';
 
 export interface ExistingIndex {
   /** ids of non-deleted sessions already in the target DB. */
   sessionIds: ReadonlySet<string>;
+  /** ids of firearms already in the target DB, for the file's `firearms`. */
+  firearmIds: ReadonlySet<string>;
+  /** ids of licenses already in the target DB. */
+  licenseIds: ReadonlySet<string>;
   /** `"{make} {model}"` of non-deleted firearms already in the target DB. */
   firearmNames: ReadonlySet<string>;
   /** `label` of non-deleted ammo lots already in the target DB. */
@@ -28,8 +33,22 @@ export interface NamedPlanItem {
 export interface DryRunPlan {
   sessions: SessionPlanItem[];
   firearms: NamedPlanItem[];
+  licenses: NamedPlanItem[];
   ammoLots: NamedPlanItem[];
   tags: NamedPlanItem[];
+}
+
+/** The file's firearm and license arrays, which a session references by id.
+ *  Optional: a file written before they existed carries neither. */
+export interface ImportRecords {
+  firearms?: readonly FirearmExport[];
+  licenses?: readonly LicenseExport[];
+}
+
+/** The one spelling of a firearm's name, shared by the exporter, the plan and
+ *  the name-matching import path — they must agree or a firearm duplicates. */
+export function firearmDisplayName(firearm: { make: string; model: string }): string {
+  return `${firearm.make} ${firearm.model}`;
 }
 
 /** Pure reconciliation: what import will do, given the file's parsed
@@ -38,11 +57,27 @@ export interface DryRunPlan {
 export function buildDryRunPlan(
   groups: readonly SessionImportGroup[],
   index: ExistingIndex,
+  records: ImportRecords = {},
 ): DryRunPlan {
   const firearmNames = new Map<string, PlanAction>();
+  const licenseNames = new Map<string, PlanAction>();
   const ammoLotNames = new Map<string, PlanAction>();
   const tagNames = new Map<string, PlanAction>();
   const sessions: SessionPlanItem[] = [];
+
+  // The file's own firearms first: they carry an id, so they reconcile on it
+  // and only fall back to the name a session would have matched on.
+  for (const firearm of records.firearms ?? []) {
+    const name = firearmDisplayName(firearm);
+    if (firearmNames.has(name)) continue;
+    const exists = index.firearmIds.has(firearm.id) || index.firearmNames.has(name);
+    firearmNames.set(name, exists ? 'reuse' : 'create');
+  }
+  for (const license of records.licenses ?? []) {
+    const name = license.licenseNumber ?? license.id;
+    if (licenseNames.has(name)) continue;
+    licenseNames.set(name, index.licenseIds.has(license.id) ? 'reuse' : 'create');
+  }
 
   for (const group of groups) {
     sessions.push({
@@ -71,6 +106,7 @@ export function buildDryRunPlan(
   return {
     sessions,
     firearms: toItems(firearmNames),
+    licenses: toItems(licenseNames),
     ammoLots: toItems(ammoLotNames),
     tags: toItems(tagNames),
   };

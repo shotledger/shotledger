@@ -5,14 +5,18 @@
 import { eq, isNull } from 'drizzle-orm';
 import {
   buildDryRunPlan,
+  firearmDisplayName,
   importSessionsFromJson,
   toImportGroups,
   type DryRunPlan,
+  type FirearmExport,
   type ImportError,
+  type ImportRecords,
+  type LicenseExport,
   type SessionImportGroup,
 } from '@shotledger/shared';
 
-import { ammoLots, firearms, series, sessions, shots, tags } from '../schema';
+import { ammoLots, firearms, licenses, series, sessions, shots, tags } from '../schema';
 import type { Database } from '../types';
 import { softDeleteSeries } from '../queries/series';
 import { listSeriesForSession } from '../queries/series';
@@ -24,6 +28,8 @@ export interface ImportDryRun {
   plan: DryRunPlan;
   errors: ImportError[];
   groups: SessionImportGroup[];
+  /** The file's firearms and licenses, to be applied alongside the groups. */
+  records: ImportRecords;
 }
 
 /** Parses + validates + plans, without touching the DB. */
@@ -33,13 +39,15 @@ export function dryRunImport(db: Database, jsonText: string): ImportDryRun {
   // unlike a bad session, which is skipped with the rest still importable.
   if ('code' in parsed) {
     return {
-      plan: { sessions: [], firearms: [], ammoLots: [], tags: [] },
+      plan: { sessions: [], firearms: [], licenses: [], ammoLots: [], tags: [] },
       errors: [parsed],
       groups: [],
+      records: {},
     };
   }
   const groups = toImportGroups(parsed.sessions);
   const errors = parsed.errors;
+  const records: ImportRecords = { firearms: parsed.firearms, licenses: parsed.licenses };
 
   const sessionIds = new Set(
     db
@@ -49,13 +57,20 @@ export function dryRunImport(db: Database, jsonText: string): ImportDryRun {
       .all()
       .map((r) => r.id),
   );
-  const firearmNames = new Set(
+  const firearmRows = db
+    .select({ id: firearms.id, make: firearms.make, model: firearms.model })
+    .from(firearms)
+    .where(isNull(firearms.deletedAt))
+    .all();
+  const firearmNames = new Set(firearmRows.map(firearmDisplayName));
+  const firearmIds = new Set(firearmRows.map((f) => f.id));
+  const licenseIds = new Set(
     db
-      .select({ make: firearms.make, model: firearms.model })
-      .from(firearms)
-      .where(isNull(firearms.deletedAt))
+      .select({ id: licenses.id })
+      .from(licenses)
+      .where(isNull(licenses.deletedAt))
       .all()
-      .map((f) => `${f.make} ${f.model}`),
+      .map((l) => l.id),
   );
   const ammoLotNames = new Set(
     db
@@ -74,8 +89,12 @@ export function dryRunImport(db: Database, jsonText: string): ImportDryRun {
       .map((t) => t.name),
   );
 
-  const plan = buildDryRunPlan(groups, { sessionIds, firearmNames, ammoLotNames, tagNames });
-  return { plan, errors, groups };
+  const plan = buildDryRunPlan(
+    groups,
+    { sessionIds, firearmIds, licenseIds, firearmNames, ammoLotNames, tagNames },
+    records,
+  );
+  return { plan, errors, groups, records };
 }
 
 type CompetitionLevel = 'forening' | 'krets' | 'landsdel' | 'national' | 'riks';
@@ -105,16 +124,121 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * Applies a dry run's groups to the DB inside one transaction. Sessions
  * whose id already exists (non-deleted) are updated in place and their
  * series/shots resynced (old rows tombstoned, new ones created) — see
- * docs/specs/m7-csv-spec.md "Session id handling". Firearms/ammo lots/tags
- * are matched by exact name or created. Does not touch firearm round
- * counters (known limitation — CSV import is a data-recovery/merge path,
- * not score entry).
+ * docs/specs/m7-csv-spec.md "Session id handling".
+ *
+ * The file's own firearms and licenses (issue #314) reconcile on their id and
+ * fall back to the firearm's display name; ammo lots and tags, which have no
+ * id in the file, still match on exact name or are created. Round counters on
+ * a firearm that already exists here are left alone — a file is a record of
+ * shooting, not the authority on how many rounds this device has counted.
  */
-export function applyImport(db: Database, groups: readonly SessionImportGroup[]): void {
+export function applyImport(
+  db: Database,
+  groups: readonly SessionImportGroup[],
+  records: ImportRecords = {},
+): void {
   db.transaction((tx) => {
     const firearmIdByName = new Map<string, string>();
+    const firearmIdByFileId = new Map<string, string>();
     const ammoLotIdByName = new Map<string, string>();
     const tagIdByName = new Map<string, string>();
+
+    /** A firearm the file carries: its id wins, then its display name, then
+     *  it is inserted keeping the file's id so a re-import is idempotent. */
+    const upsertFirearm = (firearm: FirearmExport): string => {
+      const name = firearmDisplayName(firearm);
+      const now = nowIso();
+      const descriptive = {
+        make: firearm.make,
+        model: firearm.model,
+        caliber: firearm.caliber,
+        weaponType: firearm.weaponType,
+        isOwn: firearm.isOwn,
+        serialNumber: firearm.serialNumber,
+        vapenId: firearm.vapenId,
+        loadSystem: firearm.loadSystem,
+        notes: firearm.notes,
+        maintenanceIntervalRounds: firearm.maintenanceIntervalRounds,
+      };
+
+      // Any row with this id — tombstoned or not — means the id is taken, so
+      // this is an update (reviving it) rather than an insert that would
+      // violate the primary key. Same rule as a session.
+      const byId = tx
+        .select({ id: firearms.id })
+        .from(firearms)
+        .where(eq(firearms.id, firearm.id))
+        .get();
+      if (byId) {
+        tx.update(firearms)
+          .set({ ...descriptive, deletedAt: null, updatedAt: now })
+          .where(eq(firearms.id, firearm.id))
+          .run();
+        return firearm.id;
+      }
+
+      const byName = tx
+        .select({ id: firearms.id, make: firearms.make, model: firearms.model })
+        .from(firearms)
+        .where(isNull(firearms.deletedAt))
+        .all()
+        .find((f) => firearmDisplayName(f) === name);
+      if (byName) return byName.id;
+
+      tx.insert(firearms)
+        .values({
+          id: firearm.id,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          ...descriptive,
+          roundCount: firearm.roundCount,
+          roundsSinceMaintenance: firearm.roundsSinceMaintenance,
+        })
+        .run();
+      return firearm.id;
+    };
+
+    /** A license names its firearm; one naming a firearm the file does not
+     *  carry has no row to hang off and is dropped rather than guessed at. */
+    const upsertLicense = (license: LicenseExport): void => {
+      const firearmId = firearmIdByFileId.get(license.firearmId);
+      if (!firearmId) return;
+      const now = nowIso();
+      const values = {
+        firearmId,
+        licenseNumber: license.licenseNumber,
+        purpose: license.purpose,
+        decidedOn: license.decidedOn,
+        validUntil: license.validUntil,
+        conditions: license.conditions,
+        authority: license.authority,
+      };
+      const existing = tx
+        .select({ id: licenses.id })
+        .from(licenses)
+        .where(eq(licenses.id, license.id))
+        .get();
+      if (existing) {
+        tx.update(licenses)
+          .set({ ...values, deletedAt: null, updatedAt: now })
+          .where(eq(licenses.id, license.id))
+          .run();
+        return;
+      }
+      tx.insert(licenses)
+        .values({ id: license.id, createdAt: now, updatedAt: now, deletedAt: null, ...values })
+        .run();
+    };
+
+    for (const firearm of records.firearms ?? []) {
+      const localId = upsertFirearm(firearm);
+      firearmIdByFileId.set(firearm.id, localId);
+      // So a session that names this firearm as free text resolves to the
+      // same row instead of creating a second one beside it.
+      firearmIdByName.set(firearmDisplayName(firearm), localId);
+    }
+    for (const license of records.licenses ?? []) upsertLicense(license);
 
     const resolveFirearmId = (name: string | null): string | null => {
       if (!name) return null;
@@ -181,7 +305,11 @@ export function applyImport(db: Database, groups: readonly SessionImportGroup[])
     };
 
     for (const group of groups) {
-      const firearmId = resolveFirearmId(group.firearm);
+      // The id is the precise reference; the name is the fallback for a file
+      // whose firearms array does not carry it (or has none at all).
+      const firearmId =
+        (group.firearmId ? firearmIdByFileId.get(group.firearmId) : undefined) ??
+        resolveFirearmId(group.firearm);
       const ammoLotId = resolveAmmoLotId(group.ammoLot);
       const now = nowIso();
 

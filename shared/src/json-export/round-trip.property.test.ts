@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, type ImportResult } from './import';
-import type { SessionExport } from './types';
+import type { FirearmExport, LicenseExport, SessionExport } from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
@@ -47,6 +47,7 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   weaponGroup: nullableText,
   shooterClass: nullableText,
   eventId: nullableText,
+  firearmId: nullableText,
   firearm: nullableText,
   ammoLot: nullableText,
   startedAt: fc.constant('2026-01-01T00:00:00.000Z'),
@@ -56,6 +57,36 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),
   tags: fc.array(textArb, { maxLength: 3 }),
   series: fc.array(seriesArb, { maxLength: 4 }),
+});
+
+const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({
+  id: fc.string({ minLength: 1, maxLength: 8 }),
+  make: fc.string({ minLength: 1, maxLength: 10 }),
+  model: textArb,
+  caliber: nullableText,
+  weaponType: fc.option(
+    fc.constantFrom('pistol' as const, 'revolver' as const, 'rifle' as const, 'airgun' as const),
+    { nil: null },
+  ),
+  isOwn: fc.boolean(),
+  serialNumber: nullableText,
+  vapenId: nullableText,
+  loadSystem: nullableText,
+  notes: nullableText,
+  roundCount: fc.integer({ min: 0, max: 100_000 }),
+  maintenanceIntervalRounds: fc.option(fc.integer({ min: 0, max: 5000 }), { nil: null }),
+  roundsSinceMaintenance: fc.integer({ min: 0, max: 5000 }),
+});
+
+const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
+  id: fc.string({ minLength: 1, maxLength: 8 }),
+  firearmId: fc.string({ minLength: 1, maxLength: 8 }),
+  licenseNumber: nullableText,
+  purpose: nullableText,
+  decidedOn: nullableText,
+  validUntil: nullableText,
+  conditions: nullableText,
+  authority: nullableText,
 });
 
 describe('JSON export properties', () => {
@@ -69,6 +100,25 @@ describe('JSON export properties', () => {
         expect(imported.sessions).toEqual(sessions);
       }),
       { numRuns: 300 },
+    );
+  });
+
+  it('P21: a firearm and its license survive the round trip whole (#314)', () => {
+    fc.assert(
+      fc.property(
+        fc.array(firearmArb, { maxLength: 4 }),
+        fc.array(licenseArb, { maxLength: 4 }),
+        (firearms, licenses) => {
+          const result = importSessionsFromJson(
+            exportSessionsToJson([], { ...OPTIONS, firearms, licenses }),
+          );
+          const imported = result as ImportResult;
+          expect(imported.errors).toEqual([]);
+          expect(imported.firearms).toEqual(firearms);
+          expect(imported.licenses).toEqual(licenses);
+        },
+      ),
+      { numRuns: 200 },
     );
   });
 

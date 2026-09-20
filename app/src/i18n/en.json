@@ -411,7 +411,7 @@
     "importErrorsTitle": "Import Has Errors",
     "importErrors": "{{count}} session(s) could not be read and will be skipped.",
     "importConfirmTitle": "Import This File?",
-    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{ammoLots}} new ammo lot(s)",
+    "importSummary": "{{created}} session(s) to create, {{updated}} to update, {{firearms}} new firearm(s), {{licenses}} new license(s), {{ammoLots}} new ammo lot(s)",
     "importConfirmAction": "Import",
     "importSuccess": "Imported {{count}} session(s)"
   },

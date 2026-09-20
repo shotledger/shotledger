@@ -3,15 +3,17 @@
 // SessionExport[] shape shared/json-export expects, and calls the pure
 // exporter.
 import { isNull } from 'drizzle-orm';
-import { exportSessionsToJson, type SessionExport } from '@shotledger/shared';
+import {
+  exportSessionsToJson,
+  firearmDisplayName,
+  type FirearmExport,
+  type LicenseExport,
+  type SessionExport,
+} from '@shotledger/shared';
 
-import { ammoLots, firearms, series, sessions, shots } from '../schema';
+import { ammoLots, firearms, licenses, series, sessions, shots } from '../schema';
 import type { Database } from '../types';
 import { listTagsForSession } from '../queries/tags';
-
-function firearmDisplayName(f: { make: string; model: string }): string {
-  return `${f.make} ${f.model}`;
-}
 
 /** Assembles every non-deleted session (with its series/shots/tags) into
  * the shape `exportSessionsToJson` expects. */
@@ -59,6 +61,7 @@ export function buildSessionExports(db: Database): SessionExport[] {
         weaponGroup: session.weaponGroup,
         shooterClass: session.shooterClass,
         eventId: session.eventId,
+        firearmId: firearm ? firearm.id : null,
         firearm: firearm ? firearmDisplayName(firearm) : null,
         ammoLot: ammoLot ? ammoLot.label : null,
         startedAt: session.startedAt,
@@ -84,7 +87,54 @@ export function buildSessionExports(db: Database): SessionExport[] {
     });
 }
 
-/** Builds the full CSV text for every non-deleted session in the DB. */
+/** Every non-deleted firearm, in the envelope's shape. */
+export function buildFirearmExports(db: Database): FirearmExport[] {
+  return db
+    .select()
+    .from(firearms)
+    .where(isNull(firearms.deletedAt))
+    .all()
+    .map((f) => ({
+      id: f.id,
+      make: f.make,
+      model: f.model,
+      caliber: f.caliber,
+      weaponType: f.weaponType,
+      isOwn: f.isOwn,
+      serialNumber: f.serialNumber,
+      vapenId: f.vapenId,
+      loadSystem: f.loadSystem,
+      notes: f.notes,
+      roundCount: f.roundCount,
+      maintenanceIntervalRounds: f.maintenanceIntervalRounds,
+      roundsSinceMaintenance: f.roundsSinceMaintenance,
+    }));
+}
+
+/** Every non-deleted license, in the envelope's shape. */
+export function buildLicenseExports(db: Database): LicenseExport[] {
+  return db
+    .select()
+    .from(licenses)
+    .where(isNull(licenses.deletedAt))
+    .all()
+    .map((l) => ({
+      id: l.id,
+      firearmId: l.firearmId,
+      licenseNumber: l.licenseNumber,
+      purpose: l.purpose,
+      decidedOn: l.decidedOn,
+      validUntil: l.validUntil,
+      conditions: l.conditions,
+      authority: l.authority,
+    }));
+}
+
+/** Builds the full export text for every non-deleted session in the DB. */
 export function buildExportJson(db: Database, appVersion: string): string {
-  return exportSessionsToJson(buildSessionExports(db), { appVersion });
+  return exportSessionsToJson(buildSessionExports(db), {
+    appVersion,
+    firearms: buildFirearmExports(db),
+    licenses: buildLicenseExports(db),
+  });
 }

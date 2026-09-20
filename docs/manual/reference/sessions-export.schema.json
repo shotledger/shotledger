@@ -116,8 +116,16 @@
               "null"
             ]
           },
+          "firearmId": {
+            "default": null,
+            "description": "Id of an entry in the envelope's `firearms`, or null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "firearm": {
-            "description": "`\"{make} {model}\"`, or null if the session has no firearm.",
+            "description": "`\"{make} {model}\"`, or null if the session has no firearm. The fallback when `firearmId` names no firearm the file carries.",
             "type": [
               "string",
               "null"
@@ -248,6 +256,7 @@
           "weaponGroup",
           "shooterClass",
           "eventId",
+          "firearmId",
           "firearm",
           "ammoLot",
           "startedAt",
@@ -262,6 +271,217 @@
         "title": "Session"
       },
       "description": "The exported sessions. Typed loosely by the parser on purpose, so one bad session is rejected on its own rather than failing the whole file; the real shape is documented here."
+    },
+    "firearms": {
+      "default": [],
+      "description": "The firearms the sessions reference, so a file can be imported into an empty install without retyping the equipment. Loosely typed by the parser for the same reason as `sessions`.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable id of the firearm. A session references it as `firearmId`."
+          },
+          "make": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Manufacturer, e.g. `Pardini`."
+          },
+          "model": {
+            "type": "string",
+            "description": "Model, e.g. `SP`. May be empty when only a make is known."
+          },
+          "caliber": {
+            "description": "Caliber, e.g. `.22 LR`. One per firearm today.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "weaponType": {
+            "default": null,
+            "description": "Vapentyp, or null when unstated.",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "pistol",
+                  "revolver",
+                  "rifle",
+                  "airgun"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isOwn": {
+            "default": true,
+            "description": "Whether the shooter owns it, as opposed to a borrowed or club firearm.",
+            "type": "boolean"
+          },
+          "serialNumber": {
+            "default": null,
+            "description": "Serial number, or null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vapenId": {
+            "default": null,
+            "description": "National register id (`SE…` on the back of a Swedish license card), or null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loadSystem": {
+            "default": null,
+            "description": "Laddsystem, e.g. `halvautomat`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "default": null,
+            "description": "The firearm's notes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "roundCount": {
+            "default": 0,
+            "description": "Rounds fired through it in total.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maintenanceIntervalRounds": {
+            "default": null,
+            "description": "Rounds between cleanings, or null for no reminder.",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roundsSinceMaintenance": {
+            "default": 0,
+            "description": "Rounds fired since the last maintenance event.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "make",
+          "model",
+          "caliber",
+          "weaponType",
+          "isOwn",
+          "serialNumber",
+          "vapenId",
+          "loadSystem",
+          "notes",
+          "roundCount",
+          "maintenanceIntervalRounds",
+          "roundsSinceMaintenance"
+        ],
+        "additionalProperties": false,
+        "title": "Firearm"
+      }
+    },
+    "licenses": {
+      "default": [],
+      "description": "Weapon licenses, one entry per issued license, each naming its firearm. Loosely typed by the parser for the same reason as `sessions`.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable id of the license row."
+          },
+          "firearmId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The firearm this license is for. An import drops a license naming no firearm."
+          },
+          "licenseNumber": {
+            "default": null,
+            "description": "License number, e.g. `A123.456`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purpose": {
+            "default": null,
+            "description": "Ändamål, e.g. `Målskjutning`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedOn": {
+            "default": null,
+            "description": "Date of decision, `YYYY-MM-DD`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "validUntil": {
+            "default": null,
+            "description": "Valid through, `YYYY-MM-DD`; null means tills vidare (no expiry).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditions": {
+            "default": null,
+            "description": "Villkor, often empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "authority": {
+            "default": null,
+            "description": "Issuing authority.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "firearmId",
+          "licenseNumber",
+          "purpose",
+          "decidedOn",
+          "validUntil",
+          "conditions",
+          "authority"
+        ],
+        "additionalProperties": false,
+        "title": "License"
+      }
     }
   },
   "required": [
@@ -269,7 +489,9 @@
     "formatVersion",
     "generatedAt",
     "app",
-    "sessions"
+    "sessions",
+    "firearms",
+    "licenses"
   ],
   "additionalProperties": false,
   "examples": [
@@ -294,6 +516,7 @@
           "weaponGroup": "spsf:C",
           "shooterClass": null,
           "eventId": null,
+          "firearmId": "arm_4Kd9",
           "firearm": "Pardini SP",
           "ammoLot": null,
           "startedAt": "2026-09-13T08:00:00.000Z",
@@ -318,6 +541,35 @@
               ]
             }
           ]
+        }
+      ],
+      "firearms": [
+        {
+          "id": "arm_4Kd9",
+          "make": "Pardini",
+          "model": "SP",
+          "caliber": ".22 LR",
+          "weaponType": "pistol",
+          "isOwn": true,
+          "serialNumber": null,
+          "vapenId": null,
+          "loadSystem": null,
+          "notes": null,
+          "roundCount": 1200,
+          "maintenanceIntervalRounds": 500,
+          "roundsSinceMaintenance": 120
+        }
+      ],
+      "licenses": [
+        {
+          "id": "lic_2Bf1",
+          "firearmId": "arm_4Kd9",
+          "licenseNumber": "A123.456/2026-01",
+          "purpose": "Målskjutning",
+          "decidedOn": "2026-01-15",
+          "validUntil": null,
+          "conditions": null,
+          "authority": "Polismyndigheten"
         }
       ]
     }
