@@ -1,12 +1,26 @@
-// M6 PDF export (§4 M6): pure HTML builder for the shooting-log export
-// (expo-print turns this into a PDF on the app side — no RN import here, so
-// it's snapshot-testable with plain vitest per the M6 "Done when" clause).
+// M6 (§4 M6): pure HTML builder for the shooting-log export (expo-print turns
+// this into a PDF on the app side — no RN import here, so it's
+// snapshot-testable with plain vitest per the M6 "Done when" clause).
 //
-// VERIFY: this layout has NOT been checked against a real föreningsintyg
-// attachment example. It is a sensible club-log table (date, discipline,
-// type, series count, score, location) plus a summary header, per
-// implementation-plan.md §4 M6 — the maintainer should compare it to an
-// actual example before this is relied on for an intyg submission.
+// The layout matches the preprinted "Personlig skyttelogg" book a Swedish club
+// issues, verified against real completed examples the maintainer supplied
+// (2024 and 2026 licence applications, kept outside the working tree). Its
+// columns are:
+//
+//   Datum | Plats | Skytteaktivitet | Använt vapen | Uppg. styrkta av
+//
+// Two of those the app had no equivalent of before (#308):
+//
+//   - "Använt vapen" is what demonstrates activity WITH a given firearm, which
+//     the additional-handgun and renewal criteria on PM 551.24 both turn on.
+//   - "Uppg. styrkta av" is a signature column, and on a paper log a row only
+//     counts as evidence once it is signed. The app cannot sign anything, so
+//     the column is rendered EMPTY and ruled, to be signed by hand. Filling it
+//     in with anything the app knows would be manufacturing an attestation.
+//
+// Score and series count are deliberately not columns: they are not on the
+// form, a föreningsintyg does not ask for them, and "Skytteaktivitet" is where
+// what you did goes.
 
 function escapeHtml(value: string): string {
   return value
@@ -19,30 +33,38 @@ function escapeHtml(value: string): string {
 
 export interface PdfLogEntry {
   date: string;
-  discipline: string;
-  type: string;
-  seriesCount: number;
-  score: string;
   location: string;
+  /** What was shot — discipline and session type, as one phrase. */
+  activity: string;
+  /**
+   * The firearm used. Never blank: a session with none recorded renders the
+   * caller's "not recorded" label, because a six-month window that silently
+   * drops rows loses sessions that did count (#308).
+   */
+  firearm: string;
 }
 
 export interface PdfLogColumnLabels {
   date: string;
-  discipline: string;
-  type: string;
-  seriesCount: string;
-  score: string;
   location: string;
+  activity: string;
+  firearm: string;
+  /** Heading for the hand-signed column; its cells are always empty. */
+  attestedBy: string;
   empty: string;
 }
 
 export interface PdfLogSummary {
   title: string;
+  /** "Personlig skyttelogg för: <name>" — blank when no name is recorded. */
+  shooterLabel: string | null;
   periodLabel: string;
   firearmLabel: string | null;
   totalSessions: number;
   totalShots: number;
   generatedAtLabel: string;
+  /** Printed under the table: what the empty signature column is for. */
+  attestationNote: string;
   columns: PdfLogColumnLabels;
 }
 
@@ -56,11 +78,10 @@ export function buildShootingLogHtml(
       (entry) => `
         <tr>
           <td>${escapeHtml(entry.date)}</td>
-          <td>${escapeHtml(entry.discipline)}</td>
-          <td>${escapeHtml(entry.type)}</td>
-          <td>${entry.seriesCount}</td>
-          <td>${escapeHtml(entry.score)}</td>
           <td>${escapeHtml(entry.location)}</td>
+          <td>${escapeHtml(entry.activity)}</td>
+          <td>${escapeHtml(entry.firearm)}</td>
+          <td class="sign"></td>
         </tr>`,
     )
     .join('');
@@ -75,14 +96,18 @@ export function buildShootingLogHtml(
   .summary { font-size: 12px; color: #444; margin-bottom: 16px; }
   .summary div { margin-bottom: 2px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+  th, td { border: 1px solid #333; padding: 6px; text-align: left; vertical-align: top; }
   th { background: #f2f2f2; }
+  /* Ruled and empty: signed by hand, never by the app. */
+  td.sign { min-width: 28%; height: 22px; }
+  .note { font-size: 10px; color: #444; margin-top: 8px; }
   .empty { font-style: italic; color: #666; }
 </style>
 </head>
 <body>
   <h1>${escapeHtml(summary.title)}</h1>
   <div class="summary">
+    ${summary.shooterLabel ? `<div>${escapeHtml(summary.shooterLabel)}</div>` : ''}
     <div>${escapeHtml(summary.periodLabel)}</div>
     ${summary.firearmLabel ? `<div>${escapeHtml(summary.firearmLabel)}</div>` : ''}
     <div>${summary.totalSessions} · ${summary.totalShots}</div>
@@ -93,10 +118,11 @@ export function buildShootingLogHtml(
       ? `<p class="empty">${escapeHtml(summary.columns.empty)}</p>`
       : `<table>
     <thead>
-      <tr><th>${escapeHtml(summary.columns.date)}</th><th>${escapeHtml(summary.columns.discipline)}</th><th>${escapeHtml(summary.columns.type)}</th><th>${escapeHtml(summary.columns.seriesCount)}</th><th>${escapeHtml(summary.columns.score)}</th><th>${escapeHtml(summary.columns.location)}</th></tr>
+      <tr><th>${escapeHtml(summary.columns.date)}</th><th>${escapeHtml(summary.columns.location)}</th><th>${escapeHtml(summary.columns.activity)}</th><th>${escapeHtml(summary.columns.firearm)}</th><th>${escapeHtml(summary.columns.attestedBy)}</th></tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table>`
+  </table>
+  <p class="note">${escapeHtml(summary.attestationNote)}</p>`
   }
 </body>
 </html>`;

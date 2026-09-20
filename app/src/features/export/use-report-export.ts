@@ -19,6 +19,7 @@ import {
 import { db } from '@/db/client';
 import { buildSessionExports } from '@/db/json-export/build-export';
 import { listTags } from '@/db/queries/tags';
+import { buildFirearmExports } from '@/db/json-export/build-export';
 import { buildShootingLogHtmlForFilters } from '@/features/export/use-pdf-export';
 import type { AnalyticsFilterState, PeriodRange } from '@/features/stats/use-stats-data';
 import { shareJson } from '@/platform/export-file';
@@ -82,6 +83,11 @@ export function useReportExport(t: TFunction, locale: string) {
             totals: input.totals,
             records: input.records,
             sessions,
+            // Only the firearms the filtered sessions actually reference —
+            // a six-month report should not carry the whole cabinet.
+            firearms: buildFirearmExports(db).filter((firearm) =>
+              sessions.some((session) => session.firearmId === firearm.id),
+            ),
           }),
           `shotledger-report-${stamp()}.json`,
         );

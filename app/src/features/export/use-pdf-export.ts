@@ -3,16 +3,10 @@
 // shared/src/export/pdf-log.ts; this file's job is turning DB rows +
 // i18n labels into that function's plain-data input.
 import type { TFunction } from 'i18next';
-import {
-  buildShootingLogHtml,
-  sumValueTenths,
-  tenthsToScore,
-  type PdfLogEntry,
-} from '@shotledger/shared';
+import { buildShootingLogHtml, type PdfLogEntry } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
-import { listSeriesForSession } from '@/db/queries/series';
 import { listSessions } from '@/db/queries/sessions';
 import { listScoredShotsForSession } from '@/db/queries/shots';
 import { disciplineLabel } from '@/features/session/labels';
@@ -50,18 +44,29 @@ export function buildShootingLogHtmlForFilters(
     .filter((session) => !filters.firearmId || session.firearmId === filters.firearmId)
     .filter((session) => allowed === null || allowed.has(session.id));
 
-  const entries: PdfLogEntry[] = sessions.map((session) => {
-    const nonSighterSeries = listSeriesForSession(db, session.id).filter((s) => s.isSighter === 0);
-    const totalTenths = sumValueTenths(listScoredShotsForSession(db, session.id));
-    return {
-      date: formatDate(session.startedAt, locale),
-      discipline: disciplineLabel(t, session.disciplineId),
-      type: t(`sessionType.${session.type}`),
-      seriesCount: nonSighterSeries.length,
-      score: tenthsToScore(totalTenths).toFixed(1),
-      location: session.location ?? '',
-    };
-  });
+  // Firearm names are resolved once: a six-month log is hundreds of rows and
+  // most of them share a handful of firearms.
+  const firearmNames = new Map<string, string>();
+  function firearmName(firearmId: string | null): string {
+    // Never blank. A row with no firearm says so, because dropping it would
+    // lose a session that did count towards the requirement (#308).
+    if (!firearmId) return t('compliance.pdfNoFirearm');
+    const cached = firearmNames.get(firearmId);
+    if (cached !== undefined) return cached;
+    const firearm = getFirearm(db!, firearmId);
+    const name = firearm ? `${firearm.make} ${firearm.model}` : t('compliance.pdfNoFirearm');
+    firearmNames.set(firearmId, name);
+    return name;
+  }
+
+  const entries: PdfLogEntry[] = sessions.map((session) => ({
+    date: formatDate(session.startedAt, locale),
+    location: session.location ?? '',
+    // "Skytteaktivitet" on the paper form is a phrase, not a pair of columns:
+    // real entries read "Träning MSG", "KM Milsnabb", "P3".
+    activity: `${disciplineLabel(t, session.disciplineId)} · ${t(`sessionType.${session.type}`)}`,
+    firearm: firearmName(session.firearmId),
+  }));
 
   const firearm = filters.firearmId ? getFirearm(db, filters.firearmId) : null;
   const totalShots = entries.reduce(
@@ -78,19 +83,23 @@ export function buildShootingLogHtmlForFilters(
           ? formatDate(filters.startedToIso, locale)
           : t('compliance.pdfNow'),
       }),
+      // The app stores no shooter name — it is PII it has no reason to hold —
+      // so the export carries the paper form's blank line instead, to be
+      // written in by hand like the signature column.
+      shooterLabel: t('compliance.pdfShooterBlank'),
       firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
       totalSessions: entries.length,
       totalShots,
       generatedAtLabel: t('compliance.pdfGeneratedAt', {
         date: formatDate(new Date().toISOString(), locale),
       }),
+      attestationNote: t('compliance.pdfAttestationNote'),
       columns: {
         date: t('compliance.pdfColDate'),
-        discipline: t('compliance.pdfColDiscipline'),
-        type: t('compliance.pdfColType'),
-        seriesCount: t('compliance.pdfColSeries'),
-        score: t('compliance.pdfColScore'),
         location: t('compliance.pdfColLocation'),
+        activity: t('compliance.pdfColActivity'),
+        firearm: t('compliance.pdfColFirearm'),
+        attestedBy: t('compliance.pdfColAttestedBy'),
         empty: t('compliance.pdfEmpty'),
       },
     },
