@@ -7,7 +7,7 @@ import {
   buildProgramSkeleton,
   getDiscipline,
   getProgram,
-  guldserieThreshold,
+  goldSeriesThreshold,
   seriesAverageTenths,
   seriesInnerTenAverage,
   sessionInnerTenCount,
@@ -36,7 +36,7 @@ export interface SeriesRow {
   totalTenths: number;
   /** Guld threshold in points, or null when the märke rule does not apply. */
   guldThreshold: number | null;
-  isGuldserie: boolean;
+  isGoldSeries: boolean;
   timeLimitSeconds: number | null;
   /** Webshooter series-level-total granularity (spec Amendment WS1) — no shots exist for this row. */
   isTotalOverride: boolean;
@@ -58,7 +58,7 @@ export interface SessionDetail {
   seriesLength: number;
   /**
    * Guld threshold in points for this session's series, or null when the
-   * märke rule does not apply. Session-level: `guldserieThreshold` reads
+   * märke rule does not apply. Session-level: `goldSeriesThreshold` reads
    * only session data plus the series length, so every series of a session
    * shares one value — the series entry screen uses it for a series that
    * does not exist in the database yet.
@@ -108,7 +108,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   const year = new Date(session.startedAt).getFullYear();
   const skeleton = program ? buildProgramSkeleton(program).map((e) => e.timeLimitSeconds) : [];
-  const guldThreshold = guldserieThreshold({
+  const guldThreshold = goldSeriesThreshold({
     weaponGroup: session.weaponGroup,
     disciplineId: session.disciplineId,
     seriesLength,
@@ -139,9 +139,9 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       totalTenths,
       guldThreshold,
       // Never awarded locally for an override series — no per-shot data to
-      // stand behind it; the official standardmedalj badge (§A.5) is the
+      // stand behind it; the official standardMedal badge (§A.5) is the
       // authoritative medal for such a session, shown separately.
-      isGuldserie:
+      isGoldSeries:
         !isTotalOverride &&
         guldThreshold !== null &&
         !isSighter &&

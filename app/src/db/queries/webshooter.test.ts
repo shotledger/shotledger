@@ -161,7 +161,7 @@ describe('importResultRow — fresh import', () => {
     expect(session?.externalSource).toBe('webshooter');
     expect(session?.externalRef).toBe('webshooter:42:555');
     expect(session?.officialPlacement).toBe(3);
-    expect(session?.officialStandardmedalj).toBe('silver');
+    expect(session?.officialStandardMedal).toBe('silver');
     expect(session?.weaponGroup).toBe('spsf:C');
     expect(session?.shooterClass).toBe('2');
 
@@ -287,7 +287,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
     expect(sessionId).toBe(first.sessionId);
     const session = getSession(db, sessionId);
     expect(session?.officialPlacement).toBe(1);
-    expect(session?.officialStandardmedalj).toBe('none');
+    expect(session?.officialStandardMedal).toBe('none');
     // Enrichment fields untouched.
     expect(session?.firearmId).toBe(firearm.id);
     expect(session?.notes).toBe('My notes');

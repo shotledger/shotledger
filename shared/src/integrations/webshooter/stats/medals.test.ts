@@ -26,7 +26,7 @@ function result(overrides: Partial<CompetitionResultForStats> = {}): Competition
 }
 
 describe('fixedThresholdMedal', () => {
-  it('reuses standardmedaljForSession for a precision 7-series result meeting silver (330)', () => {
+  it('reuses standardMedalForSession for a precision 7-series result meeting silver (330)', () => {
     expect(fixedThresholdMedal(result({ beforeFinalTenths: 3300, totalTenths: 3300 }))).toBe(
       'silver',
     );
@@ -118,26 +118,26 @@ describe('MEDAL_RANK / betterMedal', () => {
 
 describe('dualPathMedal', () => {
   it('picks fixed when it is better', () => {
-    expect(dualPathMedal('silver', 'brons')).toEqual({ valor: 'silver', source: 'fixed' });
+    expect(dualPathMedal('silver', 'brons')).toEqual({ grade: 'silver', source: 'fixed' });
   });
 
   it('picks relative when it is better', () => {
-    expect(dualPathMedal('brons', 'silver')).toEqual({ valor: 'silver', source: 'relative' });
+    expect(dualPathMedal('brons', 'silver')).toEqual({ grade: 'silver', source: 'relative' });
   });
 
-  it('is a tie when both agree on the same non-none valor', () => {
-    expect(dualPathMedal('silver', 'silver')).toEqual({ valor: 'silver', source: 'tie' });
+  it('is a tie when both agree on the same non-none grade', () => {
+    expect(dualPathMedal('silver', 'silver')).toEqual({ grade: 'silver', source: 'tie' });
   });
 
   it('is null/tie when both paths are null', () => {
-    expect(dualPathMedal(null, null)).toEqual({ valor: null, source: 'tie' });
+    expect(dualPathMedal(null, null)).toEqual({ grade: null, source: 'tie' });
   });
 
   it('picks the relative path when the fixed path is null', () => {
-    expect(dualPathMedal(null, 'brons')).toEqual({ valor: 'brons', source: 'relative' });
+    expect(dualPathMedal(null, 'brons')).toEqual({ grade: 'brons', source: 'relative' });
   });
 
   it('picks the fixed path when the relative path is null', () => {
-    expect(dualPathMedal('brons', null)).toEqual({ valor: 'brons', source: 'fixed' });
+    expect(dualPathMedal('brons', null)).toEqual({ grade: 'brons', source: 'fixed' });
   });
 });

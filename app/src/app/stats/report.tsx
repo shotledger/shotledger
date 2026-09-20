@@ -253,12 +253,12 @@ export default function StatsReportScreen() {
                 }
               />
             </View>
-            {data.guldserieCount > 0 && (
+            {data.goldSeriesCount > 0 && (
               <View style={styles.gridRow}>
                 <StatTile
-                  testID="stat-guldserie-count"
-                  label={t('stats.guldserieCount')}
-                  value={String(data.guldserieCount)}
+                  testID="stat-gold-series-count"
+                  label={t('stats.goldSeriesCount')}
+                  value={String(data.goldSeriesCount)}
                 />
               </View>
             )}

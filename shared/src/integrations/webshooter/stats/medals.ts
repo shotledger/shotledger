@@ -1,16 +1,13 @@
 // Dual-path medal counting — the better of a fixed-threshold and a
 // relative-placement path wins (spec §6.5, v2 spec §B.3). Reuses
-// shared/src/scoring/standardmedalj.ts for the fixed-threshold path — no new
+// shared/src/scoring/standardMedal.ts for the fixed-threshold path — no new
 // threshold table.
-import {
-  standardmedaljForSession,
-  type StandardmedaljValor,
-} from '../../../scoring/standardmedalj';
+import { standardMedalForSession, type StandardMedalGrade } from '../../../scoring/standard-medal';
 import type { CompetitionResultForStats } from './pb';
 
-export function fixedThresholdMedal(result: CompetitionResultForStats): StandardmedaljValor | null {
+export function fixedThresholdMedal(result: CompetitionResultForStats): StandardMedalGrade | null {
   const hasFinal = result.totalSeriesCount !== result.beforeFinalSeriesCount;
-  const { valor } = standardmedaljForSession({
+  const { grade } = standardMedalForSession({
     disciplineId: result.competitionType,
     weaponGroup: result.weaponGroup,
     hasFinal,
@@ -19,7 +16,7 @@ export function fixedThresholdMedal(result: CompetitionResultForStats): Standard
     totalSeriesCount: result.totalSeriesCount,
     totalTenths: result.totalTenths,
   });
-  return valor;
+  return grade;
 }
 
 export interface RelativePlacementInput {
@@ -43,26 +40,26 @@ export function relativePlacementMedal(input: RelativePlacementInput): 'silver' 
   return null;
 }
 
-export type MedalValor = 'guld' | 'silver' | 'brons' | 'none';
+export type MedalGrade = 'guld' | 'silver' | 'brons' | 'none';
 
-export const MEDAL_RANK: Record<MedalValor, number> = {
+export const MEDAL_RANK: Record<MedalGrade, number> = {
   guld: 3,
   silver: 2,
   brons: 1,
   none: 0,
 };
 
-function toMedalValor(valor: StandardmedaljValor | 'silver' | 'brons' | null): MedalValor {
-  return valor ?? 'none';
+function toMedalGrade(grade: StandardMedalGrade | 'silver' | 'brons' | null): MedalGrade {
+  return grade ?? 'none';
 }
 
 /** Higher-ranked medal wins; equal non-none ranks are a tie. */
-export function betterMedal(a: MedalValor, b: MedalValor): MedalValor {
+export function betterMedal(a: MedalGrade, b: MedalGrade): MedalGrade {
   return MEDAL_RANK[a] >= MEDAL_RANK[b] ? a : b;
 }
 
 export interface DualPathMedalResult {
-  valor: 'brons' | 'silver' | null;
+  grade: 'brons' | 'silver' | null;
   source: 'fixed' | 'relative' | 'tie';
 }
 
@@ -72,23 +69,23 @@ export interface DualPathMedalResult {
  * ("...(poänggräns)" vs "...(placering)", v2 spec §B.3).
  */
 export function dualPathMedal(
-  fixedResult: StandardmedaljValor | null,
+  fixedResult: StandardMedalGrade | null,
   relativeResult: 'silver' | 'brons' | null,
 ): DualPathMedalResult {
-  const fixedValor = toMedalValor(fixedResult);
-  const relativeValor = toMedalValor(relativeResult);
+  const fixedGrade = toMedalGrade(fixedResult);
+  const relativeGrade = toMedalGrade(relativeResult);
 
-  // MEDAL_RANK is a bijection valor<->rank, so equal rank means equal valor
+  // MEDAL_RANK is a bijection grade<->rank, so equal rank means equal grade
   // (including the both-none case, where fixedResult/relativeResult are both
   // null and `??` naturally yields null — no separate both-none branch needed).
-  if (MEDAL_RANK[fixedValor] === MEDAL_RANK[relativeValor]) {
-    return { valor: fixedResult ?? relativeResult, source: 'tie' };
+  if (MEDAL_RANK[fixedGrade] === MEDAL_RANK[relativeGrade]) {
+    return { grade: fixedResult ?? relativeResult, source: 'tie' };
   }
   // Ranks differ here (the equal-rank case, including both-none, already
   // returned above), so the winner is always non-none.
-  const winner = betterMedal(fixedValor, relativeValor) as 'brons' | 'silver';
+  const winner = betterMedal(fixedGrade, relativeGrade) as 'brons' | 'silver';
   return {
-    valor: winner,
-    source: winner === fixedValor ? 'fixed' : 'relative',
+    grade: winner,
+    source: winner === fixedGrade ? 'fixed' : 'relative',
   };
 }

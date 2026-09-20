@@ -46,7 +46,7 @@ export interface CreateSessionInput {
   externalSyncedAt?: string | null;
   webshooterCompetitionId?: string | null;
   officialPlacement?: number | null;
-  officialStandardmedalj?: 'none' | 'brons' | 'silver' | 'guld' | null;
+  officialStandardMedal?: 'none' | 'brons' | 'silver' | 'guld' | null;
 }
 
 export function createSession(db: Database, input: CreateSessionInput) {
@@ -80,7 +80,7 @@ export function createSession(db: Database, input: CreateSessionInput) {
     externalSyncedAt: input.externalSyncedAt ?? null,
     webshooterCompetitionId: input.webshooterCompetitionId ?? null,
     officialPlacement: input.officialPlacement ?? null,
-    officialStandardmedalj: input.officialStandardmedalj ?? null,
+    officialStandardMedal: input.officialStandardMedal ?? null,
   };
   db.insert(sessions).values(row).run();
   return row;

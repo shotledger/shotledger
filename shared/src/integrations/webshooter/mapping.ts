@@ -135,14 +135,14 @@ export function mapStationResultsToSeries(
 
 // --- §4.3 official placement/medal -------------------------------------------
 
-export type OfficialStandardmedalj = 'none' | 'brons' | 'silver';
+export type OfficialStandardMedal = 'none' | 'brons' | 'silver';
 
 export interface MappedOfficialResult {
   officialPlacement: number;
-  officialStandardmedalj: OfficialStandardmedalj;
+  officialStandardMedal: OfficialStandardMedal;
 }
 
-const STD_MEDAL_CODE_TO_VALOR: Record<'B' | 'S', OfficialStandardmedalj> = {
+const STD_MEDAL_CODE_TO_VALOR: Record<'B' | 'S', OfficialStandardMedal> = {
   B: 'brons',
   S: 'silver',
 };
@@ -150,8 +150,7 @@ const STD_MEDAL_CODE_TO_VALOR: Record<'B' | 'S', OfficialStandardmedalj> = {
 export function mapOfficialResult(row: ResultRow): MappedOfficialResult {
   return {
     officialPlacement: row.placement,
-    officialStandardmedalj:
-      row.std_medal === null ? 'none' : STD_MEDAL_CODE_TO_VALOR[row.std_medal],
+    officialStandardMedal: row.std_medal === null ? 'none' : STD_MEDAL_CODE_TO_VALOR[row.std_medal],
   };
 }
 

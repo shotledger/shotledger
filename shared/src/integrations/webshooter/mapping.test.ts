@@ -139,7 +139,7 @@ describe('mapOfficialResult', () => {
     const row = fixtureResultRow({ placement: 5, std_medal: null });
     expect(mapOfficialResult(row)).toEqual({
       officialPlacement: 5,
-      officialStandardmedalj: 'none',
+      officialStandardMedal: 'none',
     });
   });
 
@@ -147,7 +147,7 @@ describe('mapOfficialResult', () => {
     const row = fixtureResultRow({ placement: 3, std_medal: 'B' });
     expect(mapOfficialResult(row)).toEqual({
       officialPlacement: 3,
-      officialStandardmedalj: 'brons',
+      officialStandardMedal: 'brons',
     });
   });
 
@@ -155,7 +155,7 @@ describe('mapOfficialResult', () => {
     const row = fixtureResultRow({ placement: 1, std_medal: 'S' });
     expect(mapOfficialResult(row)).toEqual({
       officialPlacement: 1,
-      officialStandardmedalj: 'silver',
+      officialStandardMedal: 'silver',
     });
   });
 });

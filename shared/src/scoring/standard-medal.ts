@@ -1,13 +1,13 @@
 // Standardmedalj point thresholds — §6.5b, SHB 2026 C.5.1.2.3 (precision,
 // verified table) and C.5.1.2.5 (militär snabbmatch, verified fixed table).
-// Executable spec: docs/specs/m5-stats-spec.md §"Behaviors — standardmedalj.ts".
+// Executable spec: docs/specs/m5-stats-spec.md §"Behaviors — standardMedal.ts".
 // Standardmedalj i guld is 50 accumulated medal points across sessions
 // (v2+, not computed here) — this module only evaluates one session's
 // brons/silver band.
 
-export type StandardmedaljValor = 'brons' | 'silver';
-export type StandardmedaljPrecisionGroup = 'A' | 'B' | 'C';
-export type StandardmedaljMilsnabbGroup = 'A' | 'B' | 'C' | 'R';
+export type StandardMedalGrade = 'brons' | 'silver';
+export type StandardMedalPrecisionGroup = 'A' | 'B' | 'C';
+export type StandardMedalMilsnabbGroup = 'A' | 'B' | 'C' | 'R';
 
 interface Thresholds {
   silver: number;
@@ -15,7 +15,7 @@ interface Thresholds {
 }
 
 // Precision table (C.5.1.2.3 p. 71). A-opt shares A's row, same as marke.ts.
-const PRECISION_THRESHOLDS: Record<number, Record<StandardmedaljPrecisionGroup, Thresholds>> = {
+const PRECISION_THRESHOLDS: Record<number, Record<StandardMedalPrecisionGroup, Thresholds>> = {
   6: {
     A: { silver: 277, brons: 267 },
     B: { silver: 282, brons: 273 },
@@ -37,14 +37,14 @@ const PRECISION_TABULATED_SERIES_COUNTS = [6, 7, 10] as const;
 
 // Militär snabbmatch: fixed 12-series program only (C.5.1.2.5 p. 71).
 const MILSNABB_SERIES_COUNT = 12;
-const MILSNABB_THRESHOLDS: Record<StandardmedaljMilsnabbGroup, Thresholds> = {
+const MILSNABB_THRESHOLDS: Record<StandardMedalMilsnabbGroup, Thresholds> = {
   A: { silver: 540, brons: 516 },
   R: { silver: 552, brons: 528 },
   B: { silver: 561, brons: 537 },
   C: { silver: 564, brons: 540 },
 };
 
-const PRECISION_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardmedaljPrecisionGroup> = {
+const PRECISION_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalPrecisionGroup> = {
   'spsf:A': 'A',
   'spsf:AM': 'A',
   'spsf:AP': 'A',
@@ -54,14 +54,14 @@ const PRECISION_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardmedaljPrecisio
   'spsf:C': 'C',
 };
 
-const MILSNABB_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardmedaljMilsnabbGroup> = {
+const MILSNABB_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalMilsnabbGroup> = {
   'spsf:A': 'A',
   'spsf:B': 'B',
   'spsf:C': 'C',
   'spsf:R': 'R',
 };
 
-export interface StandardmedaljPointsInput {
+export interface StandardMedalPointsInput {
   disciplineId: string;
   weaponGroup?: string | null;
   /** Count of scored (non-sighter) series in the evaluated section. */
@@ -70,15 +70,15 @@ export interface StandardmedaljPointsInput {
   totalPoints: number;
 }
 
-export interface StandardmedaljResult {
+export interface StandardMedalResult {
   /** Highest band met, or null when the score is below brons (or undefined). */
-  valor: StandardmedaljValor | null;
+  grade: StandardMedalGrade | null;
   silverThreshold: number | null;
   bronsThreshold: number | null;
 }
 
-const NO_RESULT: StandardmedaljResult = {
-  valor: null,
+const NO_RESULT: StandardMedalResult = {
+  grade: null,
   silverThreshold: null,
   bronsThreshold: null,
 };
@@ -90,7 +90,7 @@ const NO_RESULT: StandardmedaljResult = {
  * facts" item 4), not a guessed regulatory value.
  */
 function scalePrecisionThresholds(
-  group: StandardmedaljPrecisionGroup,
+  group: StandardMedalPrecisionGroup,
   seriesCount: number,
 ): Thresholds {
   // Row 10 always exists (fixed table literal below) — noUncheckedIndexedAccess
@@ -102,7 +102,7 @@ function scalePrecisionThresholds(
   };
 }
 
-function thresholdsFor(input: StandardmedaljPointsInput): Thresholds | null {
+function thresholdsFor(input: StandardMedalPointsInput): Thresholds | null {
   if (input.disciplineId === 'spsf-precision') {
     const group = PRECISION_WEAPON_GROUP_TO_STD_GROUP[input.weaponGroup ?? ''];
     if (!group) return null;
@@ -122,19 +122,19 @@ function thresholdsFor(input: StandardmedaljPointsInput): Thresholds | null {
 }
 
 /** The brons/silver band a session/section's point total meets, if any. */
-export function standardmedaljPoints(input: StandardmedaljPointsInput): StandardmedaljResult {
+export function standardMedalPoints(input: StandardMedalPointsInput): StandardMedalResult {
   const thresholds = thresholdsFor(input);
   if (!thresholds) return NO_RESULT;
-  const valor: StandardmedaljValor | null =
+  const grade: StandardMedalGrade | null =
     input.totalPoints >= thresholds.silver
       ? 'silver'
       : input.totalPoints >= thresholds.brons
         ? 'brons'
         : null;
-  return { valor, silverThreshold: thresholds.silver, bronsThreshold: thresholds.brons };
+  return { grade, silverThreshold: thresholds.silver, bronsThreshold: thresholds.brons };
 }
 
-export interface StandardmedaljSessionInput {
+export interface StandardMedalSessionInput {
   disciplineId: string;
   weaponGroup?: string | null;
   hasFinal: boolean;
@@ -147,14 +147,14 @@ export interface StandardmedaljSessionInput {
 }
 
 /**
- * Session-level standardmedalj evaluator (spsf-domain rule 3): when the
+ * Session-level standardMedal evaluator (spsf-domain rule 3): when the
  * session has a final, the medal always evaluates the grundomgång
  * (beforeFinal), never the after-final total.
  */
-export function standardmedaljForSession(input: StandardmedaljSessionInput): StandardmedaljResult {
+export function standardMedalForSession(input: StandardMedalSessionInput): StandardMedalResult {
   const seriesCount = input.hasFinal ? input.beforeFinalSeriesCount : input.totalSeriesCount;
   const tenths = input.hasFinal ? input.beforeFinalTenths : input.totalTenths;
-  return standardmedaljPoints({
+  return standardMedalPoints({
     disciplineId: input.disciplineId,
     weaponGroup: input.weaponGroup,
     seriesCount,

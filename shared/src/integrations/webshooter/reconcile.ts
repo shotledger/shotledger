@@ -118,7 +118,7 @@ export function findHeuristicCandidates<T extends HeuristicSessionInput>(
 export const SCORE_BEARING_FIELDS = [
   'seriesOverrides',
   'officialPlacement',
-  'officialStandardmedalj',
+  'officialStandardMedal',
   'competitionName',
   'competitionDate',
 ] as const;
