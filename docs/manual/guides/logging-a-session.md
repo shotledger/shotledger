@@ -82,13 +82,23 @@ where you can filter by discipline, firearm and weapon group.
 
 ## Finding a session again
 
-Home shows your ten most recent sessions. **See all** next to that list opens
-the full logbook — every session you have ever logged, newest first.
+Home shows your ten most recent sessions. **See all**, at the end of that list,
+opens the full logbook — every session you have ever logged, newest first. It
+sits at the bottom because that is where you are when the ten latest did not
+have what you were looking for.
 
-Filter it by any combination of:
+The logbook opens on the sessions themselves. Search is above them; everything
+else is folded behind one **Filters** row, which shows what is currently
+narrowing the list — so a filter is never working on you invisibly, and you are
+never scrolling past six controls to reach a competition from a few weeks ago.
+
+Filter by any combination of:
 
 - **name** — free text, which ignores case and accents, so _traning_ finds
   _Träning_
+- **when** — last 30 days, 6 or 12 months, all of it, or your own two dates.
+  The same choices the [Statistics](statistics.md) tab offers, because it is the
+  same question
 - **training or competition**
 - **discipline**
 - **tag**

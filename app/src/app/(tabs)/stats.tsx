@@ -85,11 +85,11 @@ export default function StatsScreen() {
 
   const periodOptions = useMemo(
     () => [
-      { value: '30d' as const, label: t('stats.period30d') },
-      { value: '6m' as const, label: t('stats.period6m') },
-      { value: '12m' as const, label: t('stats.period12m') },
-      { value: 'all' as const, label: t('stats.periodAll') },
-      { value: 'custom' as const, label: t('stats.periodCustom') },
+      { value: '30d' as const, label: t('period.last30Days') },
+      { value: '6m' as const, label: t('period.last6Months') },
+      { value: '12m' as const, label: t('period.last12Months') },
+      { value: 'all' as const, label: t('period.max') },
+      { value: 'custom' as const, label: t('period.custom') },
     ],
     [t],
   );
@@ -145,20 +145,20 @@ export default function StatsScreen() {
         {filter.period === 'custom' && (
           <View style={styles.dateRows}>
             <DrillDownRow
-              title={t('stats.customFrom')}
+              title={t('period.from')}
               value={filter.customFrom ? formatDay(filter.customFrom) : '—'}
               onPress={() => setPickerOpen('from')}
               testID="stats-custom-from"
             />
             <DrillDownRow
-              title={t('stats.customTo')}
+              title={t('period.to')}
               value={filter.customTo ? formatDay(filter.customTo) : '—'}
               onPress={() => setPickerOpen('to')}
               testID="stats-custom-to"
             />
             {(!filter.customFrom || !filter.customTo) && (
               <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.customRangeIncomplete')}
+                {t('period.rangeIncomplete')}
               </ThemedText>
             )}
           </View>

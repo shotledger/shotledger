@@ -10,9 +10,11 @@ import { getDiscipline } from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { Chip } from '@/components/chip';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
@@ -28,6 +30,7 @@ import {
   EMPTY_SESSION_FILTER,
   filterSessionRows,
   isFilterActive,
+  type SessionPeriod,
   type SessionListFilter,
 } from '@/features/sessions/session-filters';
 import { useSessionsList } from '@/features/sessions/use-sessions-list';
@@ -47,7 +50,28 @@ export default function SessionsListScreen() {
     tag: tagParam ?? 'all',
   }));
 
+  // Collapsed by default. The rows are what this screen is for, and reaching a
+  // competition from a few weeks ago used to mean scrolling past six controls
+  // first (#348). Search stays out here because it is the one people use most;
+  // everything else is one tap away, summarised so its state is never hidden.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
+
   const visible = useMemo(() => filterSessionRows(rows, filter), [rows, filter]);
+
+  const periodOptions = useMemo(
+    () => [
+      { value: 'all' as const, label: t('period.max') },
+      { value: '30d' as const, label: t('period.last30Days') },
+      { value: '6m' as const, label: t('period.last6Months') },
+      { value: '12m' as const, label: t('period.last12Months') },
+      { value: 'custom' as const, label: t('period.custom') },
+    ],
+    [t],
+  );
+
+  const formatDay = (day: string) =>
+    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(day));
 
   function set<K extends keyof SessionListFilter>(key: K, value: SessionListFilter[K]) {
     setFilter((current) => ({ ...current, [key]: value }));
@@ -72,6 +96,19 @@ export default function SessionsListScreen() {
     { value: 'none', label: t('sessions.filterNoFirearm') },
   ];
 
+  /** What the collapsed row shows, so a filter is never active but invisible. */
+  const activeSummary = [
+    filter.period === 'all' ? null : periodOptions.find((o) => o.value === filter.period)?.label,
+    filter.type === 'all' ? null : t(`sessionType.${filter.type}`),
+    filter.disciplineId === 'all'
+      ? null
+      : disciplineOptions.find((o) => o.value === filter.disciplineId)?.label,
+    filter.tag === 'all' ? null : filter.tag,
+    filter.firearmId === 'all'
+      ? null
+      : firearmOptions.find((o) => o.value === filter.firearmId)?.label,
+  ].filter(Boolean);
+
   const header = (
     <View style={styles.filters}>
       <TextField
@@ -81,39 +118,95 @@ export default function SessionsListScreen() {
         value={filter.query}
         onChangeText={(value) => set('query', value)}
       />
-      <SegmentedControl
-        testID="sessions-type-filter"
-        options={[
-          { value: 'all' as const, label: t('sessions.filterAll') },
-          { value: 'training' as const, label: t('sessionType.training') },
-          { value: 'competition' as const, label: t('sessionType.competition') },
-        ]}
-        value={filter.type}
-        onChange={(value) => set('type', value)}
+      <DrillDownRow
+        testID="sessions-filters-row"
+        title={t('sessions.filtersTitle')}
+        value={activeSummary.length === 0 ? t('sessions.filtersNone') : activeSummary.join(' · ')}
+        expanded={filtersOpen}
+        onPress={() => setFiltersOpen((open) => !open)}
       />
-      {disciplineIds.length > 1 && (
-        <OptionPicker
-          label={t('sessions.filterDiscipline')}
-          options={disciplineOptions}
-          value={filter.disciplineId}
-          onChange={(value) => set('disciplineId', value)}
-        />
-      )}
-      {tagNames.length > 0 && (
-        <OptionPicker
-          label={t('sessions.filterTag')}
-          options={tagOptions}
-          value={filter.tag}
-          onChange={(value) => set('tag', value)}
-        />
-      )}
-      {firearms.length > 0 && (
-        <OptionPicker
-          label={t('sessions.filterFirearm')}
-          options={firearmOptions}
-          value={filter.firearmId}
-          onChange={(value) => set('firearmId', value)}
-        />
+      {filtersOpen && (
+        <>
+          <SegmentedControl
+            testID="sessions-period-filter"
+            options={periodOptions}
+            value={filter.period}
+            onChange={(value: SessionPeriod) => set('period', value)}
+          />
+          {filter.period === 'custom' && (
+            <View style={styles.dateRows}>
+              <DrillDownRow
+                title={t('period.from')}
+                value={filter.customFrom ? formatDay(filter.customFrom) : '—'}
+                onPress={() => setPickerOpen('from')}
+                testID="sessions-custom-from"
+              />
+              <DrillDownRow
+                title={t('period.to')}
+                value={filter.customTo ? formatDay(filter.customTo) : '—'}
+                onPress={() => setPickerOpen('to')}
+                testID="sessions-custom-to"
+              />
+            </View>
+          )}
+          {pickerOpen && (
+            <DateTimePicker
+              testID="sessions-custom-date-picker"
+              value={
+                new Date(
+                  (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
+                    new Date().toISOString().slice(0, 10),
+                )
+              }
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_event, selected) => {
+                setPickerOpen(null);
+                if (!selected) return;
+                const value = selected.toISOString().slice(0, 10);
+                setFilter((current) =>
+                  pickerOpen === 'from'
+                    ? { ...current, customFrom: value }
+                    : { ...current, customTo: value },
+                );
+              }}
+            />
+          )}
+          <SegmentedControl
+            testID="sessions-type-filter"
+            options={[
+              { value: 'all' as const, label: t('sessions.filterAll') },
+              { value: 'training' as const, label: t('sessionType.training') },
+              { value: 'competition' as const, label: t('sessionType.competition') },
+            ]}
+            value={filter.type}
+            onChange={(value) => set('type', value)}
+          />
+          {disciplineIds.length > 1 && (
+            <OptionPicker
+              label={t('sessions.filterDiscipline')}
+              options={disciplineOptions}
+              value={filter.disciplineId}
+              onChange={(value) => set('disciplineId', value)}
+            />
+          )}
+          {tagNames.length > 0 && (
+            <OptionPicker
+              label={t('sessions.filterTag')}
+              options={tagOptions}
+              value={filter.tag}
+              onChange={(value) => set('tag', value)}
+            />
+          )}
+          {firearms.length > 0 && (
+            <OptionPicker
+              label={t('sessions.filterFirearm')}
+              options={firearmOptions}
+              value={filter.firearmId}
+              onChange={(value) => set('firearmId', value)}
+            />
+          )}
+        </>
       )}
       {/* The count is the point of the screen as much as the rows are: it is
           how a shooter sees that a filter matched 36 sessions, not 3. */}
@@ -171,4 +264,5 @@ export default function SessionsListScreen() {
 const styles = StyleSheet.create({
   content: { gap: Spacing.two, paddingBottom: Spacing.four },
   filters: { gap: Spacing.two, marginBottom: Spacing.two },
+  dateRows: { gap: Spacing.one },
 });

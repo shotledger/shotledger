@@ -2,6 +2,7 @@ import {
   EMPTY_SESSION_FILTER,
   filterSessionRows,
   isFilterActive,
+  sessionPeriodRange,
   type SessionListFilter,
 } from './session-filters';
 import type { SessionListRow } from './session-list-row';
@@ -119,5 +120,74 @@ describe('isFilterActive', () => {
 
   it('F13: a whitespace-only query is not an active filter', () => {
     expect(isFilterActive(filter({ query: '  ' }))).toBe(false);
+  });
+});
+
+// #348: the list had every filter except the one a shooter actually reaches
+// for — "when". Same vocabulary as the Statistics tab, so the two screens
+// cannot drift apart.
+describe('the date filter', () => {
+  const NOW = new Date('2026-09-20T12:00:00.000Z');
+  const filter = (over: Partial<SessionListFilter> = {}): SessionListFilter => ({
+    ...EMPTY_SESSION_FILTER,
+    ...over,
+  });
+  const rows = [
+    row({ id: 'yesterday', startedAt: '2026-09-19T10:00:00.000Z' }),
+    row({ id: 'twoMonths', startedAt: '2026-07-20T10:00:00.000Z' }),
+    row({ id: 'lastYear', startedAt: '2025-09-20T10:00:00.000Z' }),
+    row({ id: 'longAgo', startedAt: '2023-12-30T10:00:00.000Z' }),
+  ];
+  const kept = (f: SessionListFilter) => filterSessionRows(rows, f, NOW).map((r) => r.id);
+
+  it('P1: "all" keeps every session', () => {
+    expect(kept(filter())).toEqual(['yesterday', 'twoMonths', 'lastYear', 'longAgo']);
+  });
+
+  it('P2: each preset keeps only what falls inside it', () => {
+    expect(kept(filter({ period: '30d' }))).toEqual(['yesterday']);
+    expect(kept(filter({ period: '6m' }))).toEqual(['yesterday', 'twoMonths']);
+    expect(kept(filter({ period: '12m' }))).toEqual(['yesterday', 'twoMonths']);
+  });
+
+  it('P3: a custom range bounds both ends, inclusively', () => {
+    expect(
+      kept(filter({ period: 'custom', customFrom: '2026-07-20', customTo: '2026-07-20' })),
+    ).toEqual(['twoMonths']);
+  });
+
+  it('P4: a half-set custom range bounds only the end that is set', () => {
+    expect(kept(filter({ period: 'custom', customFrom: '2026-07-01' }))).toEqual([
+      'yesterday',
+      'twoMonths',
+    ]);
+    expect(kept(filter({ period: 'custom', customTo: '2024-01-01' }))).toEqual(['longAgo']);
+  });
+
+  it('P5: a custom period with neither date set keeps everything', () => {
+    expect(kept(filter({ period: 'custom' }))).toHaveLength(4);
+  });
+
+  it('P6: the date filter composes with the others', () => {
+    expect(kept(filter({ period: '6m', type: 'competition' }))).toEqual([]);
+    const withCompetition = filterSessionRows(
+      [
+        ...rows,
+        row({ id: 'recentComp', type: 'competition', startedAt: '2026-09-18T10:00:00.000Z' }),
+      ],
+      filter({ period: '30d', type: 'competition' }),
+      NOW,
+    );
+    expect(withCompetition.map((r) => r.id)).toEqual(['recentComp']);
+  });
+
+  it('P7: a period other than "all" counts as an active filter', () => {
+    expect(isFilterActive(filter({ period: '30d' }))).toBe(true);
+    expect(isFilterActive(filter({ period: 'custom' }))).toBe(true);
+    expect(isFilterActive(filter())).toBe(false);
+  });
+
+  it('P8: sessionPeriodRange is unbounded for "all"', () => {
+    expect(sessionPeriodRange(filter(), NOW)).toEqual({ fromIso: null, toIso: null });
   });
 });
