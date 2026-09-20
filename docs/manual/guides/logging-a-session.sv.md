@@ -64,3 +64,22 @@ ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
 
 Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där du
 kan filtrera på gren, vapen och vapengrupp.
+
+## Att hitta ett pass igen
+
+Startsidan visar dina tio senaste pass. **Visa alla** intill den listan öppnar
+hela loggboken — varje pass du någonsin loggat, nyast först.
+
+Filtrera den på valfri kombination av:
+
+- **namn** — fritext som bortser från versaler och accenter, så _traning_
+  hittar _Träning_
+- **träning eller tävling**
+- **gren**
+- **etikett**
+- **vapen**, inklusive _Inget vapen angivet_ för pass där inget angetts
+
+Filtren smalnar av tillsammans, de vidgar inte: sätter du både _Tävling_ och
+_Milsnabb_ visas de pass som är bådadera. Antalet ovanför listan säger alltid
+hur många av dina totalt du tittar på, så ett filter som knappt matchar något
+syns som just det i stället för att se ut som en tom loggbok.

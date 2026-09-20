@@ -119,7 +119,20 @@ export default function HomeScreen() {
         />
       ) : (
         <View style={styles.list}>
-          <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
+          <View style={styles.listHeader}>
+            <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
+            {/* Home shows ten. Before this link the other 257 were reachable
+                only by deep link (#317). */}
+            <Pressable
+              accessibilityRole="button"
+              testID="home-see-all-sessions"
+              onPress={() => router.push('/sessions')}
+            >
+              <ThemedText type="linkPrimary">
+                {t('home.seeAllSessions', { count: sessionCount })}
+              </ThemedText>
+            </Pressable>
+          </View>
           <SegmentedControl
             testID="home-shape-filter"
             options={shapeFilterOptions}
@@ -188,6 +201,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  listHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,

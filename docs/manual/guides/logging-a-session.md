@@ -65,3 +65,22 @@ from it — see [Scoring from a photo](scoring-from-a-photo.md).
 
 Every photo you take also appears in the gallery under **Tools → Photos**,
 where you can filter by discipline, firearm and weapon group.
+
+## Finding a session again
+
+Home shows your ten most recent sessions. **See all** next to that list opens
+the full logbook — every session you have ever logged, newest first.
+
+Filter it by any combination of:
+
+- **name** — free text, which ignores case and accents, so _traning_ finds
+  _Träning_
+- **training or competition**
+- **discipline**
+- **tag**
+- **firearm**, including _No firearm recorded_ for sessions where none was set
+
+Filters narrow together rather than widen: setting both _Competition_ and
+_Milsnabb_ shows the sessions that are both. The count above the list always
+says how many of your total you are looking at, so a filter that matches almost
+nothing is visible as such rather than looking like an empty logbook.

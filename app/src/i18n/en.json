@@ -43,6 +43,7 @@
     "sessionsTotal": "Sessions",
     "competitionsTotal": "Competitions",
     "latestSessions": "Latest Sessions",
+    "seeAllSessions": "See all {{count}}",
     "newSession": "New Session",
     "emptyTitle": "No Sessions Yet",
     "emptyBody": "Log your first training or competition session to see it here.",
@@ -52,6 +53,24 @@
     "shapeSeries": "Series",
     "shapeRounds": "Rounds",
     "shareSession": "Share Session"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "searchLabel": "Search sessions",
+    "searchPlaceholder": "Search by name",
+    "filterAll": "All",
+    "filterDiscipline": "Discipline",
+    "filterTag": "Tag",
+    "filterFirearm": "Firearm",
+    "filterNoFirearm": "No firearm recorded",
+    "count_one": "{{count}} session",
+    "count_other": "{{count}} sessions",
+    "countFiltered": "Showing {{shown}} of {{total}} sessions",
+    "clearFilters": "Clear filters",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Sessions you log appear here, oldest to newest, with everything you can filter them by.",
+    "noMatchTitle": "Nothing matches",
+    "noMatchBody": "No session matches every filter you have set. Widen one, or clear them all."
   },
   "stats": {
     "title": "Statistics",
