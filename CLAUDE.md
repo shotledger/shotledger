@@ -126,6 +126,20 @@ This covers `docs/manual/` — the user's manual. Contributor material
 (`docs/adr/`, `docs/specs/`, `docs/implementation-plan.md`) keeps its own
 existing rules above.
 
+**Where a new paragraph goes** (the manual follows [Diátaxis](https://diataxis.fr/);
+the directories are the quadrants, the nav deliberately does not name them):
+
+| It answers                                                 | Directory            |
+| ---------------------------------------------------------- | -------------------- |
+| "walk me through my first session"                         | `getting-started.md` |
+| "how do I do X" — steps, in order                          | `guides/`            |
+| "what is X" — a lookup, values and tables                  | `reference/`         |
+| "why is it like this" — a model, a limitation, a trade-off | `explanation/`       |
+
+A page doing two of these is two pages. Explanation leaking into `guides/` is
+the failure mode this exists to stop — see issue #309 for the migration, still
+in progress.
+
 ## Agentic loop (verified at M0 scaffold — keep this section updated)
 
 - Install: `pnpm i` (repo root; pnpm workspace covers `app/`, `shared/`,

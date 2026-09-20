@@ -72,7 +72,7 @@ vilka reglementen du slagit på.
 
 Reglemente
 : Vilket förbunds regelverk ett pass skjuts under — SPSF, ISSF eller SvSF. Se
-[Reglementen](../guides/regulations.md).
+[Reglementen](../explanation/regulations.md).
 
 Säkerhetskopia
 : Hela appen i en fil — vapen, ammunition, licenser, inställningar, foton. Inte

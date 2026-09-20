@@ -190,5 +190,5 @@ federation-scoped — `spsf:C` rather than a bare `C`. A second federation can
 define its own `C` without colliding with this one.
 
 Which of them you are offered depends on the regulations you have enabled; see
-[Regulations](../guides/regulations.md). ISSF ships events rather than weapon
+[Regulations](../explanation/regulations.md). ISSF ships events rather than weapon
 groups, so an ISSF or SvSF session has no weapon group to choose.
