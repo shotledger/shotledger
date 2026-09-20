@@ -1,5 +1,13 @@
-import { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type ViewProps } from 'react-native';
+import { ReactNode, useRef, useState } from 'react';
+import {
+  Animated,
+  ScrollView,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ViewProps,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FabClearance } from '@/components/fab';
@@ -35,8 +43,35 @@ export interface ScreenProps extends ViewProps {
   safeBottom?: boolean;
 }
 
+/**
+ * How far a finger must travel before the FAB reacts, so a list that jitters
+ * by a pixel does not make the button flicker.
+ */
+const FabHideThreshold = 8;
+
 /** Standard screen shell: safe area, max content width, bottom tab-bar clearance. */
 export function Screen({ children, scroll = true, fab, safeBottom, style, ...rest }: ScreenProps) {
+  // A FAB sits in the bottom-right corridor of every row it floats over, and
+  // on Home that is where the session-type chip is — so whichever card the
+  // button happens to land on loses it (#348). Sliding the button out while
+  // the user scrolls down gives the list the whole width back, and scrolling
+  // up (or reaching the top) brings it straight back.
+  const [fabOffset] = useState(() => new Animated.Value(0));
+  const lastOffsetY = useRef(0);
+
+  function onScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const y = event.nativeEvent.contentOffset.y;
+    const delta = y - lastOffsetY.current;
+    lastOffsetY.current = y;
+    if (Math.abs(delta) < FabHideThreshold) return;
+    const hide = y > FabHideThreshold && delta > 0;
+    Animated.timing(fabOffset, {
+      toValue: hide ? FabClearance : 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  }
+
   const inner = (
     <View style={[styles.inner, !scroll && styles.innerFlex, style]} {...rest}>
       {children}
@@ -56,15 +91,24 @@ export function Screen({ children, scroll = true, fab, safeBottom, style, ...res
         }
       >
         {scroll ? (
-          <ScrollView contentContainerStyle={contentStyle}>{inner}</ScrollView>
+          <ScrollView
+            contentContainerStyle={contentStyle}
+            onScroll={fab ? onScroll : undefined}
+            scrollEventThrottle={16}
+          >
+            {inner}
+          </ScrollView>
         ) : (
           <View style={contentStyle}>{inner}</View>
         )}
         {fab ? (
           <View pointerEvents="box-none" style={styles.fabLayer}>
-            <View pointerEvents="box-none" style={styles.fabLayerInner}>
+            <Animated.View
+              pointerEvents="box-none"
+              style={[styles.fabLayerInner, { transform: [{ translateY: fabOffset }] }]}
+            >
               {fab}
-            </View>
+            </Animated.View>
           </View>
         ) : null}
       </SafeAreaView>

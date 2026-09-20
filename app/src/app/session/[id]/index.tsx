@@ -39,6 +39,7 @@ import {
 } from '@/features/session/series-entry-choice';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { formatSessionDate } from '@/features/home/format-session-date';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { setSeriesPositions } from '@/db/queries/series';
@@ -56,7 +57,7 @@ import { Radius, Spacing } from '@/theme/tokens';
 type DetailView = 'series' | 'stats' | 'group';
 
 export default function SessionDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -412,6 +413,7 @@ export default function SessionDetailScreen() {
         <ScreenTitle>{session.name}</ScreenTitle>
         <ThemedText type="small" themeColor="textSecondary">
           {[
+            formatSessionDate(session.startedAt, i18n.language),
             t(`sessionType.${session.type}`),
             formatGroupAndClass(session.weaponGroup, session.shooterClass),
             eventCategoryLabel,
@@ -421,7 +423,12 @@ export default function SessionDetailScreen() {
             .filter(Boolean)
             .join(' · ')}
         </ThemedText>
-        <TagChips names={tags} testID="session-tags" />
+        <TagChips names={tags} includeMachine testID="session-tags" />
+        {session.notes ? (
+          <ThemedText type="small" style={styles.notes} testID="session-notes">
+            {session.notes}
+          </ThemedText>
+        ) : null}
       </View>
 
       <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />
@@ -831,6 +838,9 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
+  },
+  notes: {
+    marginTop: Spacing.one,
   },
   groupPlot: {
     alignItems: 'center',
