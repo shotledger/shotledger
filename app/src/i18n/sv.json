@@ -562,7 +562,8 @@
     "pdfAttestationNote": "Kolumnen ”Uppg. styrkta av” lämnas tom med flit: i en föreningslogg räknas en rad som bevis först när någon skrivit under den, och det kan bara en människa göra.",
     "pdfColDate": "Datum",
     "pdfColLocation": "Plats",
-    "pdfEmpty": "Inga pass under perioden."
+    "pdfEmpty": "Inga pass under perioden.",
+    "pdfTotals": "Pass: {{sessions}} · Skott: {{shots}}"
   },
   "session": {
     "newTitle": "Nytt pass",

@@ -88,8 +88,7 @@ export function buildShootingLogHtmlForFilters(
       // written in by hand like the signature column.
       shooterLabel: t('compliance.pdfShooterBlank'),
       firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
-      totalSessions: entries.length,
-      totalShots,
+      totalsLabel: t('compliance.pdfTotals', { sessions: entries.length, shots: totalShots }),
       generatedAtLabel: t('compliance.pdfGeneratedAt', {
         date: formatDate(new Date().toISOString(), locale),
       }),

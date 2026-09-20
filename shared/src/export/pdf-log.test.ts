@@ -19,8 +19,7 @@ function summary(overrides: Partial<PdfLogSummary> = {}): PdfLogSummary {
     shooterLabel: 'Personal shooting log for: ______',
     periodLabel: '2026-03-01 – 2026-09-01',
     firearmLabel: null,
-    totalSessions: 2,
-    totalShots: 20,
+    totalsLabel: 'Sessions: 2 · Shots: 20',
     generatedAtLabel: 'Generated 2026-09-01',
     attestationNote: 'The “Attested by” column is left blank on purpose.',
     columns,
@@ -56,7 +55,7 @@ describe('buildShootingLogHtml', () => {
 
   it('matches the snapshot with no entries', () => {
     expect(
-      buildShootingLogHtml(summary({ totalSessions: 0, totalShots: 0 }), []),
+      buildShootingLogHtml(summary({ totalsLabel: 'Sessions: 0 · Shots: 0' }), []),
     ).toMatchSnapshot();
   });
 
@@ -76,7 +75,7 @@ describe('buildShootingLogHtml', () => {
   });
 
   it('L3: a session with no firearm still gets a row, with the caller’s label', () => {
-    const html = buildShootingLogHtml(summary({ totalSessions: 1 }), [
+    const html = buildShootingLogHtml(summary({ totalsLabel: 'Sessions: 1 · Shots: 10' }), [
       {
         date: '2026-08-01',
         location: 'Malmö Skyttegille',
@@ -90,9 +89,9 @@ describe('buildShootingLogHtml', () => {
 
   it('L4: carries the attestation note under the table, but not when empty', () => {
     expect(buildShootingLogHtml(summary(), entries)).toContain('left blank on purpose');
-    expect(buildShootingLogHtml(summary({ totalSessions: 0 }), [])).not.toContain(
-      'left blank on purpose',
-    );
+    expect(
+      buildShootingLogHtml(summary({ totalsLabel: 'Sessions: 0 · Shots: 0' }), []),
+    ).not.toContain('left blank on purpose');
   });
 
   it('L5: omits the shooter line when the caller has none', () => {

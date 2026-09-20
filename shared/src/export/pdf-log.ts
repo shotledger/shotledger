@@ -60,8 +60,15 @@ export interface PdfLogSummary {
   shooterLabel: string | null;
   periodLabel: string;
   firearmLabel: string | null;
-  totalSessions: number;
-  totalShots: number;
+  /**
+   * Session and shot counts, already worded by the caller — "Pass: 12 ·
+   * Skott: 480". It used to be the two numbers, rendered as `12 · 480` with
+   * no words at all, so the one line of the summary a förening actually
+   * reads for volume did not say what either number was (#350). Shared does
+   * no i18n, so the wording belongs to the caller, like every other label
+   * here.
+   */
+  totalsLabel: string;
   generatedAtLabel: string;
   /** Printed under the table: what the empty signature column is for. */
   attestationNote: string;
@@ -110,7 +117,7 @@ export function buildShootingLogHtml(
     ${summary.shooterLabel ? `<div>${escapeHtml(summary.shooterLabel)}</div>` : ''}
     <div>${escapeHtml(summary.periodLabel)}</div>
     ${summary.firearmLabel ? `<div>${escapeHtml(summary.firearmLabel)}</div>` : ''}
-    <div>${summary.totalSessions} · ${summary.totalShots}</div>
+    <div>${escapeHtml(summary.totalsLabel)}</div>
     <div>${escapeHtml(summary.generatedAtLabel)}</div>
   </div>
   ${

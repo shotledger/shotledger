@@ -70,6 +70,11 @@ column:
 | Firearm used      | the firearm on the session, or _Not recorded_         |
 | Attested by       | **left blank, to be signed by hand**                  |
 
+Above the table is a short summary: a blank line for your name, the period the
+log covers, the firearm if you exported for one, how many sessions and how many
+shots, and the date it was generated. Every figure there is labelled, so a
+reader who was not with you at the range can tell what each number is.
+
 Two of those are worth explaining.
 
 **Firearm used** is there because naming the firearm is what shows activity

@@ -69,6 +69,11 @@ kolumn för kolumn:
 | Använt vapen     | vapnet på passet, eller _Ej angivet_       |
 | Uppg. styrkta av | **lämnas tom, skrivs under för hand**      |
 
+Ovanför tabellen står en kort sammanfattning: en tom rad för ditt namn, perioden
+loggen omfattar, vapnet om du exporterat för ett, hur många pass och hur många
+skott, och datumet den skapades. Varje siffra där är märkt, så att den som läser
+loggen utan att ha varit med på banan ser vad varje tal betyder.
+
 Två av dem är värda en förklaring.
 
 **Använt vapen** finns där för att det är vapnets namn som visar aktivitet
