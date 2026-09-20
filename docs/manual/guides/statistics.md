@@ -19,6 +19,10 @@ as you like.
 The report repeats every filter at the top, so a report you exported or came
 back to still says what it is about.
 
+The count above the report is every session the filter matched, including a
+session you logged as a round count with no series in it — those shots are in
+the totals too. It therefore agrees with the session count on Home.
+
 The filters stay as you left them. Leave the tab and come back and the form is
 still the one you built — it scrolls back to the top so you can see that, with
 any open picker closed.
