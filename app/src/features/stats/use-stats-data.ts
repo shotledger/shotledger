@@ -13,10 +13,9 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   analyticsRecords,
+  analyticsReportSet,
   analyticsSessionPoints,
-  analyticsTotals,
   compareRecentSeries,
-  filterAnalyticsSeries,
   goldSeriesCount,
   sampleStandardDeviationTenths,
   scoredShots,
@@ -29,9 +28,13 @@ import {
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
-import { listAllAnalyticsSeries, listAllStatsSeries } from '@/db/queries/stats';
+import {
+  listAllAnalyticsSeries,
+  listAllStatsSeries,
+  listAnalyticsSessions,
+} from '@/db/queries/stats';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
-import { listSessions, sumExtraRounds } from '@/db/queries/sessions';
+import { listSessions } from '@/db/queries/sessions';
 import { listTags } from '@/db/queries/tags';
 
 export const STATS_PERIODS = ['30d', '6m', '12m', 'all', 'custom'] as const;
@@ -262,11 +265,17 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
   if (!db) return EMPTY_REPORT;
 
   const all = listAllAnalyticsSeries(db);
-  const matched = filterAnalyticsSeries(all, toAnalyticsFilter(state));
-  const sessionIds = [...new Set(matched.map((series) => series.sessionId))];
   // The sighter scope is a scoring question, not a membership one, so it
-  // rides on the aggregations rather than on filterAnalyticsSeries.
+  // rides on the aggregations rather than on the filter.
   const scope = { includeSighters: state.includeSighters };
+  // The session set is not "the sessions of the matched series": a session
+  // with no series at all is invisible to that, which is what made the report
+  // count one fewer than Home and drop a rounds-only session's extra rounds
+  // from the volume (#349). The composition lives in shared so this file has
+  // no wiring of its own to drift.
+  const set = analyticsReportSet(all, listAnalyticsSessions(db), toAnalyticsFilter(state), scope);
+  const matched = set.matchedSeries;
+  const sessionIds = set.sessions.map((session) => session.id);
   const points = analyticsSessionPoints(matched, scope);
   const records: AnalyticsRecords = analyticsRecords(points);
   const shots = scoredShots(matched, scope);
@@ -278,18 +287,16 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
       ? null
       : { ...record, sessionName: nameById.get(record.sessionId) ?? record.sessionId };
 
-  const totals = analyticsTotals(matched, scope);
-
   return {
     hasAnyData: all.length > 0,
-    hasMatches: matched.length > 0,
-    totals: {
-      ...totals,
-      // Volume so unscored extra rounds count too (spec A1 §A1.3 A-X3);
-      // every score statistic above is computed from shots/series and so
-      // cannot see them (A-X4).
-      volumeShotCount: totals.volumeShotCount + sumExtraRounds(db, sessionIds),
-    },
+    // The session set, not the series: a filter whose only match is a
+    // rounds-only session would otherwise count 1 and then render the empty
+    // state (spec revision, #349).
+    hasMatches: set.hasMatches,
+    // Unscored extra rounds ride on the session (spec A1 §A1.3 A-X3), so they
+    // come from the session set rather than from a second query; every score
+    // statistic is computed from shots/series and cannot see them (A-X4).
+    totals: set.totals,
     sdTenths: sampleStandardDeviationTenths(shots),
     // No sighter scope: a sighter always counts towards a guldserie
     // (maintainer, 2026-09-17; spec §2.3).

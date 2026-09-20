@@ -2,7 +2,7 @@
 // non-deleted session/series/shot once and joins in JS (three flat scans
 // instead of an N+1 per-series query), matching StatsSeries exactly.
 import { isNull } from 'drizzle-orm';
-import type { AnalyticsSeries, StatsSeries, StatsShot } from '@shotledger/shared';
+import type { AnalyticsSeries, AnalyticsSession, StatsSeries, StatsShot } from '@shotledger/shared';
 
 import { series, sessionTags, sessions, shots } from '../schema';
 import type { Database } from '../types';
@@ -69,4 +69,30 @@ export function listAllStatsSeries(db: Database): StatsSeries[] {
  */
 export function listAllAnalyticsSeries(db: Database): AnalyticsSeries[] {
   return loadAnalyticsSeries(db);
+}
+
+/**
+ * Every non-deleted session as the report sees it — including the ones with no
+ * series, which is the whole point: the series scan above cannot see them, so
+ * the report counted 266 where Home counted 267 (#349).
+ */
+export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
+  const sessionRows = db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
+  const sessionTagRows = db.select().from(sessionTags).all();
+
+  const tagIdsBySession = new Map<string, string[]>();
+  for (const row of sessionTagRows) {
+    const bucket = tagIdsBySession.get(row.sessionId) ?? [];
+    bucket.push(row.tagId);
+    tagIdsBySession.set(row.sessionId, bucket);
+  }
+
+  return sessionRows.map((row) => ({
+    id: row.id,
+    startedAt: row.startedAt,
+    sessionType: row.type,
+    disciplineId: row.disciplineId,
+    tagIds: tagIdsBySession.get(row.id) ?? [],
+    extraRounds: row.extraRounds ?? 0,
+  }));
 }
