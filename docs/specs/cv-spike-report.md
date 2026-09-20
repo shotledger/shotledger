@@ -9,7 +9,7 @@ phone photo, deskew it, and find the bullet holes well enough to score a
 series — with drag-to-correct as the safety net?
 
 **Answer:** geometry yes, holes no. Target location and ring geometry came
-out better than the bar (sub-millimetre ring alignment on both usable
+out better than the bar (sub-millimeter ring alignment on both usable
 precision photos). Hole detection did not: **5 of 21 visible holes found,
 with 16 false positives**, and classical CV kept confusing a printed ring
 digit with a bullet hole. A small learned hole detector is the missing
@@ -39,14 +39,14 @@ and turned out to matter:
 | `20251025_105532.jpg` | 25 m precision (F.7.1) | whole card, slight tilt, indoor       |
 | `20260816_114337.jpg` | 25 m precision (F.7.1) | close crop, black zone cut left+right |
 | `20260726_145316.jpg` | milsnabb (J.7.1)       | whole face, outdoors, heavily pasted  |
-| `20260726_150229.jpg` | milsnabb (J.7.1)       | extreme close crop, centre off-frame  |
+| `20260726_150229.jpg` | milsnabb (J.7.1)       | extreme close crop, center off-frame  |
 | `20260726_153751.jpg` | milsnabb (J.7.1)       | whole face, outdoors, heavily pasted  |
 
 Two things about this corpus are worth stating up front, because they set a
 ceiling on what the numbers below can mean:
 
 - **Only two photos are of the target this feature is for.** Three are the
-  milsnabb face, shot with large calibre, and all three are club targets
+  milsnabb face, shot with large caliber, and all three are club targets
   carrying _hundreds_ of repair patches. Those patches are the dominant
   visual feature and are individually the size and shape of a hole.
 - **Most shots on the precision photos are already pasted over**, so
@@ -64,7 +64,7 @@ personal and are deliberately not in the repo.
 Python + OpenCV, five separable stages so a failure can be attributed to
 one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md).
 
-1. **Find the face.** Otsu on a heavily blurred grey copy; largest dark blob
+1. **Find the face.** Otsu on a heavily blurred gray copy; largest dark blob
    is the printed black zone. `fitEllipseDirect` on its contour (much better
    than `fitEllipse` on partial arcs), then an iterative re-fit from ray
    casts that discard any ray leaving the frame — so a cropped card does not
@@ -76,12 +76,12 @@ one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md
    anisotropic scale only — weak perspective. Output is a fixed 4 px/mm
    canvas, i.e. the working resolution is decoupled from the input photo.
 4. **Refine geometry.** Coarse-to-fine grid search over (dx, dy, scale)
-   maximising a radial edge profile against the known ring radii. This is
-   the load-bearing stage: it is what produces the sub-millimetre result,
+   maximizing a radial edge profile against the known ring radii. This is
+   the load-bearing stage: it is what produces the sub-millimeter result,
    and it rescues geometry when stage 1 was clipped.
 5. **Find and score holes.** Over-sized top-hat for bright tears on black,
    black-hat for dark holes on paper, then a filter cascade. Scoring applies
-   SHB F.6.10.1 by comparing the hole's _inner_ edge (centre radius minus
+   SHB F.6.10.1 by comparing the hole's _inner_ edge (center radius minus
    2.8 mm) to each ring, so a hole tangenting a ring takes the higher value.
 
 ---
@@ -104,7 +104,7 @@ At the planned 2048 px input downscale, auto target-type detection:
 - No photo produced a correct series score. The best case
   (`20251025_105532`) found 3 of 5 holes and mis-scored one of them.
 - Runtime is ~0.9–1.7 s per photo on a laptop, dominated by stage 4's grid
-  search. Not optimised; not a concern at this stage.
+  search. Not optimized; not a concern at this stage.
 
 ### Geometry, measured separately
 
@@ -139,7 +139,7 @@ Two caveats, stated because they are easy to over-read:
 
 **Printed ring digits are the single worst false-positive source.** On the
 precision face the ring numbers are knocked out of the black in the card's
-own paper colour, ~12–15 mm tall against a 5.6 mm hole. Everything obvious
+own paper color, ~12–15 mm tall against a 5.6 mm hole. Everything obvious
 failed:
 
 - _Size_: only ~2.2× a hole. Too close to separate reliably.
@@ -151,8 +151,8 @@ failed:
 - _Dark-core test_ ("a hole is a pit, a glyph is solid"): also backwards on
   these photos — the holes show bright backing board, no dark core at all.
 
-What finally worked was **colour**: a knocked-out digit is exactly the
-card's own paper colour (measured chroma R−B ≈ +15, saturation 24–31),
+What finally worked was **color**: a knocked-out digit is exactly the
+card's own paper color (measured chroma R−B ≈ +15, saturation 24–31),
 whereas a hole shows whatever is behind the card (here neutral white,
 R−B ≈ 0, saturation 7). That is a real signal but it is **contingent on the
 backing** — a target stapled to a cream board would break it, and I have no
@@ -160,13 +160,13 @@ photo to test that against. It is a fragile rule to ship.
 
 Other confirmed failure modes:
 
-- **Overlapping holes are counted as one.** The centre cluster on
+- **Overlapping holes are counted as one.** The center cluster on
   `20251025_105532` is five shots in a ~30 mm group with tears running into
   each other; the detector returns three blobs. This is why its score came
   out `X X X` = 30 against a visual 50.
 - **Holes clipping a ring line** merged with the line. Switching the size
   test from bounding box to largest-inscribed-disc (distance transform)
-  fixed most of it, but a hole sitting _on_ a line is still recentred
+  fixed most of it, but a hole sitting _on_ a line is still recentered
   approximately — exactly the case where the edge-touch rule matters.
 - **Repair patches are indistinguishable from holes** by any classical
   feature I tried. This alone sinks the three milsnabb photos: 14 of the 16
@@ -177,8 +177,8 @@ Other confirmed failure modes:
 - **Target-type detection is unreliable on cropped photos** — two of the
   three milsnabb photos were typed as `precision`, which makes the entire
   ring scale 2.5× wrong. Every hole then scores wrong even if found.
-- **Extreme crops fail outright.** On `20260726_150229` the centre is off
-  frame and stage 1 has only one short arc; the fit put the centre outside
+- **Extreme crops fail outright.** On `20260726_150229` the center is off
+  frame and stage 1 has only one short arc; the fit put the center outside
   the target.
 - **Holes in the light zone** were barely exercised (all fresh holes in the
   corpus are in the black). The black-hat path is effectively untested and
@@ -241,31 +241,31 @@ by hand with extra steps.
 In priority order: overlapping holes in a tight group (the normal case for a
 good shooter, and the case where scoring matters most); printed ring digits;
 repair patches; target-type identification on cropped photos; extreme crops
-where the centre is off-frame. Section 3 has the detail.
+where the center is off-frame. Section 3 has the detail.
 
 ### 4.3 Classical CV, or a learned detector?
 
 **Split the pipeline.** Classical CV is the right tool for stages 1–4 and
 should be kept — locating the face, identifying it, deskewing, and locking
-ring geometry to sub-millimetre all worked, on the harder-than-expected
+ring geometry to sub-millimeter all worked, on the harder-than-expected
 photos, with no training data. That is the part I expected to be hard and it
 is essentially solved.
 
 **Stage 5 needs a learned detector.** The evidence is not "classical CV
 scored poorly"; it is _why_ it scored poorly. Every classical discriminator
 I tried was either too weak (size), actively inverted (solidity, dark core)
-or contingent on something outside the target (backing colour). A bullet
-hole is defined by texture — torn fibres, a raised lip, a shadow — which is
+or contingent on something outside the target (backing color). A bullet
+hole is defined by texture — torn fibers, a raised lip, a shadow — which is
 what a small CNN learns easily and what morphology cannot express. The
 distinction that must be learned is _hole vs. repair patch vs. printed
-glyph_, and all three are the same size, shape class and often colour.
+glyph_, and all three are the same size, shape class and often color.
 
-Scope: a single-class detector on 64–96 px crops, or a small heatmap/centre
+Scope: a single-class detector on 64–96 px crops, or a small heatmap/center
 regressor over the rectified canvas (which is why the fixed 4 px/mm canvas
 is worth keeping — the model then sees holes at a _constant_ pixel size,
 removing scale as a variable). Overlapping holes argue for a heatmap +
 peak-finding formulation over box detection, since the useful output is a
-count and centres, not boxes.
+count and centers, not boxes.
 
 Training data is the real cost, and it is cheap here: a session's targets
 photograph 20+ holes each, and the app can collect labelled examples from
@@ -288,20 +288,20 @@ object scale.
 Not meaningfully measurable from this spike, and I would rather say that
 than quote a number. The rule (F.6.10.1) turns on whether a 5.6 mm hole
 tangents a 0.2–0.5 mm ring line, so the error budget is roughly
-**hole-centre error + ring-radius error < ~0.5 mm**.
+**hole-center error + ring-radius error < ~0.5 mm**.
 
 What can be said:
 
-- The **rule itself is implemented correctly.** Fed synthetic centres, the
-  scorer flips exactly at the tangent: a hole centre at 15.30 mm (inner edge
+- The **rule itself is implemented correctly.** Fed synthetic centers, the
+  scorer flips exactly at the tangent: a hole center at 15.30 mm (inner edge
   exactly on the 12.5 mm X-ring) scores X, at 15.31 mm it scores 10; same at
   every ring boundary out to ring 1. That logic is ~10 lines and belongs in
   `shared/` as pure TypeScript regardless of what happens to the CV.
 - The **ring-radius half** of that budget is met: ±0.6 mm on inner rings,
   inside the card's own print tolerance, and stable across resolutions.
-- The **hole-centre half** is unmeasured, because with 5 true positives
+- The **hole-center half** is unmeasured, because with 5 true positives
   across 5 photos there is no sample. Centroids of merged or line-clipped
-  blobs were visibly off by several millimetres, so the current detector is
+  blobs were visibly off by several millimeters, so the current detector is
   certainly outside budget.
 - The pipeline already flags holes within 1 mm of the scoring ring as "edge
   calls" (one on `20251025_105532`). That flag is the right product
@@ -324,7 +324,7 @@ What can be said:
 3. **Learned hole stage** on the rectified canvas, trained on corrections
    collected from users who opt in.
 4. **Scoring** in `shared/` as pure TypeScript over (x_mm, y_mm) hole
-   centres — no CV dependency, unit-testable, and subject to the
+   centers — no CV dependency, unit-testable, and subject to the
    `old-coder` evidence loop like the rest of `shared/scoring/`.
 5. **Drag-to-correct over every hole**, with edge-call holes visually
    flagged. The scoring stage never silently resolves a tangent case.
@@ -386,7 +386,7 @@ Two integration facts that change the design:
 **Verdict:** `react-native-fast-opencv` is the right vehicle for stages 1–4.
 Writing our own native module would be rebuilding this library for one
 missing `case` statement; the only argument for it is a slimmed custom
-OpenCV build to cut binary size, which is a later optimisation.
+OpenCV build to cut binary size, which is a later optimization.
 
 #### For the learned hole stage
 
@@ -399,12 +399,12 @@ Microsoft-maintained, heavier, less polished RN ergonomics.
 
 Sizing, for the record (not measured here): a YOLO-nano-class detector is
 ~6 MB fp16 / ~3.2 MB int8 TFLite, ~20–50 ms per inference at 320 px with a
-GPU/NNAPI delegate. Full-integer quantisation is known to hurt box-coordinate
+GPU/NNAPI delegate. Full-integer quantization is known to hurt box-coordinate
 precision — which is precisely what we need — so **plan on fp16**. NMS and
 box decoding are ours to write in JS either way.
 
 But per §4.3 our detector should probably not be a box detector at all: on a
-fixed 4 px/mm canvas the holes are a constant size, so a small centre-heatmap
+fixed 4 px/mm canvas the holes are a constant size, so a small center-heatmap
 model with peak-finding is a better fit for overlapping shots, smaller than a
 YOLO, and avoids the NMS-merges-two-holes-into-one failure that caused the
 worst error in this spike.
@@ -450,7 +450,7 @@ below re-runs the _unchanged_ pipeline over the full corpus, adds one
 improvement round, and asks whether §5 still holds.
 
 **It does, and more firmly.** Geometry got _better_ on the bigger sample —
-sub-millimetre on every photo it locks, and it locks on two thirds of
+sub-millimeter on every photo it locks, and it locks on two thirds of
 precision-face photos. Hole detection did not: 36 % recall / 43 % precision
 overall, and one focused round of classical improvement moved recall by
 exactly zero.
@@ -478,7 +478,7 @@ fitted black-zone ellipse's axis ratio):
 | **Excluded: extreme perspective** | **2** | —               | —       | 2      |
 
 The two excluded photos are `20250906_135537` (card receding almost
-edge-on, plus a hand and marking rod across the centre) and
+edge-on, plus a hand and marking rod across the center) and
 `20250918_181552` (near-grazing angle, face occupying a small part of the
 frame, mounted on a stand). They are excluded from the hole metrics only —
 they stay in this table so the report says what the app will and will not
@@ -545,7 +545,7 @@ cause, and none of them is perspective:
 
 | Photo             | Cause                                                                           |
 | ----------------- | ------------------------------------------------------------------------------- |
-| `20250831_125338` | Centre off-frame; one short arc of the black zone                               |
+| `20250831_125338` | Center off-frame; one short arc of the black zone                               |
 | `20260609_181957` | Black zone fills the whole frame — Otsu has no paper/black boundary to find     |
 | `20250906_104730` | Dark treeline + gravel outweigh the target; largest dark blob is the background |
 | `20250906_150442` | Same, gravel bank                                                               |
@@ -586,8 +586,8 @@ Failure-mode tally (counted by eye; a photo can appear in several rows):
 | Overlapping / touching holes                               | ~8                   | Unchanged: merged into one blob                                                      |
 | Occlusion (hand, marking rod, pencil)                      | 3                    | Two are false positives on the rod's own tip                                         |
 | Large dark background winning Otsu                         | 3                    | Outdoor photos only                                                                  |
-| Centre off-frame / black zone filling the frame            | 3                    | Geometry fails outright                                                              |
-| Printed ring digits                                        | all precision photos | The colour cue from §3 held up; it remains contingent on the backing                 |
+| Center off-frame / black zone filling the frame            | 3                    | Geometry fails outright                                                              |
+| Printed ring digits                                        | all precision photos | The color cue from §3 held up; it remains contingent on the backing                  |
 | Target types beyond precision/milsnabb                     | 0                    | The corpus is entirely F.7.1 and J.7.1                                               |
 
 Two things the bigger corpus settles that §3 could only guess at:
@@ -595,7 +595,7 @@ Two things the bigger corpus settles that §3 could only guess at:
 - **Holes in the light zone are still untested.** Every fresh hole in all 38
   photos is in or on the edge of the black. The black-hat-on-paper path has
   now gone 38 photos without a single true positive.
-- **The backing is not reliably bright.** §3's colour discriminator assumed
+- **The backing is not reliably bright.** §3's color discriminator assumed
   a hole shows neutral-white board behind the card. On this corpus the
   backing is white on some photos, orange on one, and _nothing_ on several —
   the hole is a dark tear. A rule contingent on the backing is now measured
@@ -611,7 +611,7 @@ no code path. Three coupled changes (`variant="v2"` in `find_holes`):
 
 1. A **dark-on-black channel** — black-hat inside the black zone, with the
    low-threshold structure gate made relative to that zone's own robust
-   spread. The fixed ±35 grey offset lands below every pixel in a zone whose
+   spread. The fixed ±35 gray offset lands below every pixel in a zone whose
    level is ~65 with a floor near 50, which is why the channel returns
    nothing without this.
 2. A **local-contrast gate**, without which the new channel returns paper
@@ -639,7 +639,7 @@ recorded because it is the kind of change that looks obviously right and
 measures wrong.
 
 Why it failed is more useful than that it failed. Measured on the photos
-this was aimed at: a dark .22 hole in the black zone sits about **16 grey
+this was aimed at: a dark .22 hole in the black zone sits about **16 gray
 levels** below a zone whose own median absolute deviation is **4–8** levels.
 The signal is real and it is roughly 2–3 MAD — nowhere near enough margin
 for a threshold. A spot check at 4000 px input recovered one hole on

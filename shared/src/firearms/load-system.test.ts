@@ -65,7 +65,7 @@ describe('loadSystemFromLegacy', () => {
     }
   });
 
-  it('leaves an unrecognised value for the caller to preserve', () => {
+  it('leaves an unrecognized value for the caller to preserve', () => {
     expect(loadSystemFromLegacy('Gas-operated bullpup')).toBeNull();
   });
 });

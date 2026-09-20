@@ -38,7 +38,7 @@ reconstructed by grouping rows on import, and why a series with no shots is
 awkward to represent.
 
 The shape, already settled by the maintainer: **one self-contained JSON export**,
-with Backup remaining the exact relational copy. A normalised, foreign-key JSON
+with Backup remaining the exact relational copy. A normalized, foreign-key JSON
 export would duplicate `database.sqlite3` at lower fidelity.
 
 **The Vault is never exported.** No opt-in here.
@@ -71,7 +71,7 @@ out here so approval covers it explicitly, and it is asserted in §3.3.
 `shared/src/csv/plan.ts` (`ExistingIndex`, `PlanAction`, `DryRunPlan`,
 `buildDryRunPlan`) is **not CSV-specific** — it is reconciliation between "what
 the file contains" and "what the database already has". It moves to the JSON
-module with its tests intact, and its behaviour must not change (§3.3).
+module with its tests intact, and its behavior must not change (§3.3).
 
 ## 1.3 Revision 3 — two things implementation found that revision 2 missed
 
@@ -157,7 +157,7 @@ Each becomes a named test.
 11. Malformed JSON → named error, not a crash.
 12. A structurally valid file with a bad session (shot value out of range,
     colliding series positions) rejects **that session** and still imports the
-    rest, reporting which failed — the behaviour CSV had per row.
+    rest, reporting which failed — the behavior CSV had per row.
 13. Import writes in **one transaction**: a failure part-way leaves the database
     exactly as it was.
 
@@ -225,7 +225,7 @@ Each becomes a named test.
 
 **Importing a session id that already exists.** CSV's plan called that `update`
 (overwrite in place). This spec keeps that, because the dry run shows it before
-anything is written and it is the behaviour the plan tests already encode.
+anything is written and it is the behavior the plan tests already encode.
 
 The alternative — always import as a new session — would duplicate a session
 whenever a file is imported twice, so it is not obviously safer.

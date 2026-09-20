@@ -38,7 +38,7 @@ Both the coordinate lookup and the existing keystroke lookup sit behind
 the one `onlineLocationLookup` setting, off by default.
 
 **`@react-native-ml-kit/text-recognition@2.0.0`** (MIT) — 2026-09-02,
-the maintainer-approved dependency for licence-card OCR (v2 "Scan a
+the maintainer-approved dependency for license-card OCR (v2 "Scan a
 physical license card"). Google ML Kit text recognition v2 on both
 platforms; the Latin model is bundled in the app binary and inference
 runs on-device with no network call, which is the requirement that

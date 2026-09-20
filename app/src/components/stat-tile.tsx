@@ -8,7 +8,7 @@ export interface StatTileProps extends ViewProps {
   label: string;
   value: string;
   /**
-   * `center` centres both lines. Home asked for it (#138) because its three
+   * `center` centers both lines. Home asked for it (#138) because its three
    * labels differ so much in width that left-aligned numbers read as ragged;
    * the default stays `start` so the other screens' tiles are untouched.
    */

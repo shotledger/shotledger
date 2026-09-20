@@ -29,7 +29,7 @@ export function getProfileDefinition(
  *
  * An unknown `variantId` resolves to the definition's default rather than
  * `null` or an empty rule set: a stale stored choice must not silently turn
- * licence activity into "no requirement at all".
+ * license activity into "no requirement at all".
  */
 export function getProfile(
   selection: ProfileSelection,

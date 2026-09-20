@@ -304,9 +304,9 @@
   ],
   "narrative": {
     "northStar": "The Precision Logbook",
-    "overview": "ShotLedger is the notebook a shooter keeps at the range, built to the tolerances of a measuring instrument. A paper logbook is unadorned because its job is to hold numbers accurately and be readable in whatever light the range has; a scoring gauge is exact because a tenth of a millimetre decides a ring. This system answers to both. Every surface exists to report a value, and anything that does not help a number read is removed.\n\nThe app is dark by default and near-monochrome by discipline. The ground is a deep ink purple (#16101F), not black, and every neutral above it is purple-tinted rather than grey. Depth comes from tone, not from shadow: surfaces separate by getting lighter, and the only shadow in the entire application belongs to the floating action button. A single lavender accent carries every interactive affordance, and its scarcity is what makes it readable at a glance between series.\n\nRestraint here is functional, not stylistic. The app is used outdoors in bright sunlight, where glare eats low-contrast detail, and it is used in the seconds between shooting one series and starting the next. Contrast is asserted in tests, not eyeballed. Ornament would cost legibility and buy nothing.",
+    "overview": "ShotLedger is the notebook a shooter keeps at the range, built to the tolerances of a measuring instrument. A paper logbook is unadorned because its job is to hold numbers accurately and be readable in whatever light the range has; a scoring gauge is exact because a tenth of a millimeter decides a ring. This system answers to both. Every surface exists to report a value, and anything that does not help a number read is removed.\n\nThe app is dark by default and near-monochrome by discipline. The ground is a deep ink purple (#16101F), not black, and every neutral above it is purple-tinted rather than gray. Depth comes from tone, not from shadow: surfaces separate by getting lighter, and the only shadow in the entire application belongs to the floating action button. A single lavender accent carries every interactive affordance, and its scarcity is what makes it readable at a glance between series.\n\nRestraint here is functional, not stylistic. The app is used outdoors in bright sunlight, where glare eats low-contrast detail, and it is used in the seconds between shooting one series and starting the next. Contrast is asserted in tests, not eyeballed. Ornament would cost legibility and buy nothing.",
     "keyCharacteristics": [
-      "Dark ground, purple-tinted neutrals, never grey",
+      "Dark ground, purple-tinted neutrals, never gray",
       "Depth by tonal layering; exactly one shadow in the system",
       "One accent, used sparingly, carrying all interaction",
       "A four-step radius scale and a seven-step spacing scale \u2014 no ad-hoc values",
@@ -316,7 +316,7 @@
     "rules": [
       {
         "name": "The Purple-Tinted Neutral Rule",
-        "body": "There is no grey in the dark theme. Text, secondary text, borders, and every surface carry purple. A neutral grey introduced anywhere reads instantly as foreign and is a defect, not a variation.",
+        "body": "There is no gray in the dark theme. Text, secondary text, borders, and every surface carry purple. A neutral gray introduced anywhere reads instantly as foreign and is a defect, not a variation.",
         "section": "colors"
       },
       {
@@ -356,11 +356,11 @@
       "Do keep Signal Lavender scarce; one interactive accent per screen region.",
       "Do assert contrast in app/src/theme/tokens.test.ts when adding or changing a color \u2014 sunlight legibility is a tested invariant here, not a judgement call.",
       "Do keep control labels on one line, shrinking or scrolling instead of wrapping.",
-      "Do use weight, not size, to emphasise at 14px."
+      "Do use weight, not size, to emphasize at 14px."
     ],
     "donts": [
       "Don't add a shadow to anything but the floating action button.",
-      "Don't introduce a neutral grey into the dark theme; every neutral is purple-tinted.",
+      "Don't introduce a neutral gray into the dark theme; every neutral is purple-tinted.",
       "Don't assign PURPLE_RAIN_GOLD_ACCENT_REJECTED (#E8B84B) to primary or any interactive token \u2014 it is retained for its contrast work only.",
       "Don't put more than one Primary Button on a screen.",
       "Don't invent a radius or spacing value outside the scales.",

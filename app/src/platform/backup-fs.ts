@@ -103,7 +103,7 @@ export async function shareBundle(bytes: Uint8Array, filename: string): Promise<
 }
 
 /** Opens the file picker and returns the picked file's bytes, or `null` if
- * cancelled, unavailable (web), or unreadable. No expo-document-picker
+ * canceled, unavailable (web), or unreadable. No expo-document-picker
  * dependency needed — see csv-import.ts. */
 export async function pickBundleBytes(): Promise<{ name: string; bytes: Uint8Array } | null> {
   if (Platform.OS === 'web') return null;

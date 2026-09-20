@@ -56,14 +56,14 @@ export interface GeometryPipelineResult {
   readonly ellipse: EllipseFit;
   readonly metrics: GeometryMetrics;
   /**
-   * The rectified grey canvas, copied out before the native Mats are
+   * The rectified gray canvas, copied out before the native Mats are
    * released, so tap-snap can run on a typed array with no OpenCV call per
    * tap (see tap-snap.ts). One copy per photo — a few megabytes that the
    * caller drops when it leaves the marking phase.
    *
-   * `centre*Px` and `pxPerMm` describe the mapping the refinement settled on,
+   * `center*Px` and `pxPerMm` describe the mapping the refinement settled on,
    * taken from the same numbers the refinement was scored with rather than
-   * re-derived: the profile search centres on `canvasSize / 2 + dxMm *
+   * re-derived: the profile search centers on `canvasSize / 2 + dxMm *
    * CANVAS_PX_PER_MM` and scores ring radii at `CANVAS_PX_PER_MM * scale`.
    */
   readonly canvas: RectifiedCanvas;
@@ -108,33 +108,33 @@ class Arena {
   }
 }
 
-function discMean(arena: Arena, grey: Mat, cx: number, cy: number, r: number): number {
-  const mask = arena.mask(grey.rows, grey.cols);
-  const centre = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
+function discMean(arena: Arena, gray: Mat, cx: number, cy: number, r: number): number {
+  const mask = arena.mask(gray.rows, gray.cols);
+  const center = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
   OpenCV.circle(
     mask,
-    centre,
+    center,
     Math.max(2, Math.round(r)),
     arena.keep(Scalar.create(255, 255, 255)),
     -1,
     LineTypes.LINE_8,
   );
-  return OpenCV.mean(grey, mask).a;
+  return OpenCV.mean(gray, mask).a;
 }
 
 function annulusMean(
   arena: Arena,
-  grey: Mat,
+  gray: Mat,
   cx: number,
   cy: number,
   r0: number,
   r1: number,
 ): number {
-  const mask = arena.mask(grey.rows, grey.cols);
-  const centre = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
+  const mask = arena.mask(gray.rows, gray.cols);
+  const center = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
   OpenCV.circle(
     mask,
-    centre,
+    center,
     Math.max(2, Math.round(r1)),
     arena.keep(Scalar.create(255, 255, 255)),
     -1,
@@ -142,13 +142,13 @@ function annulusMean(
   );
   OpenCV.circle(
     mask,
-    centre,
+    center,
     Math.max(1, Math.round(r0)),
     arena.keep(Scalar.create(0, 0, 0)),
     -1,
     LineTypes.LINE_8,
   );
-  return OpenCV.mean(grey, mask).a;
+  return OpenCV.mean(gray, mask).a;
 }
 
 /**
@@ -184,12 +184,12 @@ function toEllipseFit(rect: RotatedRect): EllipseFit {
  * rescues a poor fit, and the validity gate catches the cases where it does
  * not.
  */
-function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; grey: Mat } {
-  const grey = arena.dst();
-  OpenCV.cvtColor(src, grey, ColorConversionCodes.COLOR_BGR2GRAY);
+function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; gray: Mat } {
+  const gray = arena.dst();
+  OpenCV.cvtColor(src, gray, ColorConversionCodes.COLOR_BGR2GRAY);
 
   const blurred = arena.dst();
-  OpenCV.GaussianBlur(grey, blurred, arena.keep(Size.create(31, 31)), 0);
+  OpenCV.GaussianBlur(gray, blurred, arena.keep(Size.create(31, 31)), 0);
 
   const binary = arena.dst();
   OpenCV.threshold(
@@ -217,7 +217,7 @@ function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; g
   // Shape, not just size: see face-candidate.ts. A contour has to be large
   // enough for fitEllipse to mean anything before it is worth describing, so
   // tiny specks are skipped rather than fitted.
-  const minCandidateArea = MIN_CANDIDATE_AREA_FRACTION * grey.rows * grey.cols;
+  const minCandidateArea = MIN_CANDIDATE_AREA_FRACTION * gray.rows * gray.cols;
   const candidates: FaceCandidate[] = [];
   for (let i = 0; i < contours.length; i += 1) {
     const area = OpenCV.contourArea(contours.get(i)).value;
@@ -237,7 +237,7 @@ function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; g
 
   const rect = arena.keep(OpenCV.fitEllipse(contours.get(best)));
 
-  const filled = arena.mask(grey.rows, grey.cols);
+  const filled = arena.mask(gray.rows, gray.cols);
   OpenCV.drawContours(
     filled,
     contours,
@@ -247,7 +247,7 @@ function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; g
     LineTypes.LINE_8,
   );
 
-  return { ellipse: toEllipseFit(rect), filled, grey };
+  return { ellipse: toEllipseFit(rect), filled, gray };
 }
 
 /**
@@ -311,7 +311,7 @@ function refitRays(
 /**
  * The 3x3 image->canvas matrix, derived from the shared rectification so the
  * canvas is exactly `buildRectification` scaled to CANVAS_PX_PER_MM and
- * centred. One source of truth for the linear map is what makes a mark land
+ * centered. One source of truth for the linear map is what makes a mark land
  * in the same target-mm the scorer uses.
  */
 function canvasHomography(arena: Arena, t: RectificationTransform, canvasSize: number): Mat {
@@ -331,7 +331,7 @@ function canvasHomography(arena: Arena, t: RectificationTransform, canvasSize: n
 }
 
 /**
- * The radial edge profile at a candidate centre. `warpPolar` turns the radial
+ * The radial edge profile at a candidate center. `warpPolar` turns the radial
  * problem into a row reduction — it is the primitive the spike wished for,
  * since `remap` is missing upstream and this is the better tool anyway
  * (spike §4.6).
@@ -378,7 +378,7 @@ function radialProfile(
   return out;
 }
 
-/** Median absolute deviation — the normaliser that turns the profile score
+/** Median absolute deviation — the normalizer that turns the profile score
  *  into an absolute threshold instead of a proxy for the photo's contrast. */
 function medianAbsoluteDeviation(values: Float64Array): number {
   const sorted = Array.from(values).sort((x, y) => x - y);
@@ -407,7 +407,7 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
   const arena = new Arena();
   try {
     const src = arena.keep(MatClass.createFromBase64(options.base64));
-    const { ellipse: initial, filled, grey } = findFace(arena, src);
+    const { ellipse: initial, filled, gray } = findFace(arena, src);
     const ellipse = refitRays(arena, filled, initial);
 
     const base = buildRectification(ellipse, options.referenceDiameterMm);
@@ -416,7 +416,7 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
 
     const canvas = arena.dst();
     OpenCV.warpPerspective(
-      grey,
+      gray,
       canvas,
       canvasHomography(arena, base, canvasSize),
       arena.keep(Size.create(canvasSize, canvasSize)),
@@ -426,9 +426,9 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
     );
 
     // The profile depends only on (dx, dy) — `scale` merely rescales the
-    // radius lookup — so it is memoised per centre, exactly as the spike's
+    // radius lookup — so it is memoised per center, exactly as the spike's
     // loop nesting does. Without this the search would warpPolar once per
-    // (dx, dy, scale) triple rather than once per centre: ~150 calls instead
+    // (dx, dy, scale) triple rather than once per center: ~150 calls instead
     // of a few thousand.
     const cache = new Map<string, Float64Array>();
     const radiusPx = outerRadiusMm * CANVAS_PX_PER_MM;
@@ -456,8 +456,8 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
     // Gate metrics, measured on the same pixels the geometry used.
     const mad = medianAbsoluteDeviation(profileAt(refined.dxMm, refined.dyMm));
     const r = ellipse.minorAxis / 2;
-    const inner = discMean(arena, grey, ellipse.center.x, ellipse.center.y, 0.7 * r);
-    const outer = annulusMean(arena, grey, ellipse.center.x, ellipse.center.y, 1.15 * r, 1.4 * r);
+    const inner = discMean(arena, gray, ellipse.center.x, ellipse.center.y, 0.7 * r);
+    const outer = annulusMean(arena, gray, ellipse.center.x, ellipse.center.y, 1.15 * r, 1.4 * r);
 
     const metrics: GeometryMetrics = {
       axisRatio: ellipse.majorAxis / ellipse.minorAxis,
@@ -467,7 +467,7 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
         ellipse.center.x < options.width &&
         ellipse.center.y >= 0 &&
         ellipse.center.y < options.height,
-      zoneContrastGrey: outer - inner,
+      zoneContrastGray: outer - inner,
       profileScore: mad > 1e-6 ? refined.score / mad : 0,
     };
 
@@ -482,8 +482,8 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
         // Copied: the view points at native memory that releaseAll frees.
         data: Uint8Array.from(bytes),
         size: canvasSize,
-        centreXPx: canvasSize / 2 + refined.dxMm * CANVAS_PX_PER_MM,
-        centreYPx: canvasSize / 2 + refined.dyMm * CANVAS_PX_PER_MM,
+        centerXPx: canvasSize / 2 + refined.dxMm * CANVAS_PX_PER_MM,
+        centerYPx: canvasSize / 2 + refined.dyMm * CANVAS_PX_PER_MM,
         pxPerMm: CANVAS_PX_PER_MM * refined.scale,
       },
     };

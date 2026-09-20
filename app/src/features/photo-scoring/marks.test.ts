@@ -118,14 +118,14 @@ const mark = (patch: Partial<Mark>): Mark => ({
 });
 
 describe('scoreMarks', () => {
-  it('scores a centred hole as the X ring', () => {
+  it('scores a centered hole as the X ring', () => {
     const [score] = scoreMarks([mark({})], TARGET);
     expect(score?.computed.ringLabel).toBe('X');
     expect(score?.effective.value).toBe(10);
   });
 
   it('flags an edge call and offers the two rings in dispute, higher first', () => {
-    // X ring radius 12.5mm; near edge = r - 2.8. A centre at 15.3mm puts the
+    // X ring radius 12.5mm; near edge = r - 2.8. A center at 15.3mm puts the
     // near edge exactly on the X ring, so it scores X with a 0mm margin.
     const [score] = scoreMarks([mark({ xMm: 15.3 })], TARGET);
     expect(score?.computed.edgeCall).toBe(true);
@@ -139,7 +139,7 @@ describe('scoreMarks', () => {
     expect(score?.candidates).toEqual([]);
   });
 
-  it("honours the user's call over the computed value", () => {
+  it("honors the user's call over the computed value", () => {
     const [score] = scoreMarks([mark({ xMm: 15.3, calledRingLabel: '10' })], TARGET);
     expect(score?.called).toBe(true);
     expect(score?.effective.label).toBe('10');
@@ -178,7 +178,7 @@ describe('seriesScoreLine', () => {
   it('counts X only where the shooter called it, never from the tap', () => {
     const marks = [
       mark({ id: 'a', xMm: 0, isInnerTen: true }),
-      // dead centre, but not called — a tap cannot know centrumtia
+      // dead center, but not called — a tap cannot know centrumtia
       mark({ id: 'b', xMm: 0 }),
     ];
     const line = seriesScoreLine(marks, scoreMarks(marks, TARGET));

@@ -157,7 +157,7 @@ SS-11, SS-12, SS-15..SS-18 and the two properties collapsed into their
 assertions) — each observed failing on an assertion, not on an import error,
 because both modules already existed. The 14 that passed on the first run are
 the **default-scope** assertions (SS-1, SS-2, SS-4, SS-6..SS-10, SS-13, SS-14,
-SS-19, SS-20): they are pre-existing behaviour kept deliberately as regression
+SS-19, SS-20): they are pre-existing behavior kept deliberately as regression
 armour for INV-1, and they are not vacuous — the mutation run kills 166 mutants
 in `stats.ts` and 159 in `analytics.ts`, including the new branch, which is the
 same proof a throwaway mutant would give for each.

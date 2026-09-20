@@ -44,7 +44,7 @@ export function deriveSeVariantId(facts: readonly FirearmOwnershipFact[]): strin
 // One rule across every weapon group: 5–6 §§ set a single activity level for
 // the shooter, with no per-vapengrupp differentiation. (The per-firearm
 // "ytterligare enhandsvapen" rule does differentiate, and is deliberately not
-// modelled — see the spec.)
+// modeled — see the spec.)
 const ALL_WEAPON_GROUP_IDS = [
   ...SPSF_WEAPON_GROUPS.map((g) => g.id),
   ...GENERIC_WEAPON_GROUPS.map((g) => g.id),

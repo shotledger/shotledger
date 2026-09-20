@@ -1,4 +1,4 @@
-// Settings → Compliance. Which licence-activity profile the activity status and the
+// Settings → Compliance. Which license-activity profile the activity status and the
 // föreningsintyg PDF are worked out under, and which case within it applies to
 // this shooter (for `se`: FAP 551-3 5 § vs 6 §). The app proposes a case from
 // the firearms; picking one here overrides that for good (issue #286).
@@ -67,7 +67,7 @@ export default function ComplianceSettingsScreen() {
             {t(isVariantExplicit ? 'compliance.caseExplicit' : 'compliance.caseDerived')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {t('compliance.notModelled')}
+            {t('compliance.notModeled')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-source">
             {t('compliance.sourceCitation')}

@@ -53,7 +53,7 @@ function matchWeaponGroupCode(key: string): string | null {
 }
 
 /**
- * The generic guess for one tag. Everything unrecognised is guessed as a
+ * The generic guess for one tag. Everything unrecognized is guessed as a
  * firearm name, because that is the only field ShotLog has no column for at
  * all — the user demotes it to `ignore` on the import screen when it is not.
  */

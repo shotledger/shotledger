@@ -7,7 +7,7 @@ import { activeFederations } from '../regulations/registry';
 // below has weaponGroups: [] rather than a new "issf group" concept; see
 // docs/reference/issf-rules.md and svsf-rules.md.
 import issfAirPistolDiscipline from './definitions/issf-air-pistol.json';
-import issfCentreFirePistolDiscipline from './definitions/issf-centre-fire-pistol.json';
+import issfCenterFirePistolDiscipline from './definitions/issf-centre-fire-pistol.json';
 import issfFreePistolDiscipline from './definitions/issf-free-pistol.json';
 import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.json';
 import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
@@ -16,7 +16,7 @@ import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
 import svsfSnabbluftpistolDiscipline from './definitions/svsf-snabbluftpistol.json';
 import issfAirPistolProgram from './programs/issf-air-pistol.json';
-import issfCentreFirePistolProgram from './programs/issf-centre-fire-pistol.json';
+import issfCenterFirePistolProgram from './programs/issf-centre-fire-pistol.json';
 import issfFreePistolProgram from './programs/issf-free-pistol.json';
 import issfRapidFirePistolProgram from './programs/issf-rapid-fire-pistol.json';
 import issfSportPistolProgram from './programs/issf-sport-pistol.json';
@@ -43,7 +43,7 @@ export const DISCIPLINES: readonly Discipline[] = [
   issfStandardPistolDiscipline,
   issfRapidFirePistolDiscipline,
   issfFreePistolDiscipline,
-  issfCentreFirePistolDiscipline,
+  issfCenterFirePistolDiscipline,
   // SvSF's own, after ISSF's: the new-session form lands on the first
   // non-generic discipline, and for an SvSF shooter that should be luftpistol.
   svsfSnabbluftpistolDiscipline,
@@ -57,7 +57,7 @@ export const PROGRAMS: readonly Program[] = [
   issfStandardPistolProgram,
   issfRapidFirePistolProgram,
   issfFreePistolProgram,
-  issfCentreFirePistolProgram,
+  issfCenterFirePistolProgram,
   svsfSnabbluftpistolProgram,
 ].map((raw) => programSchema.parse(raw));
 

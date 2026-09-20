@@ -48,7 +48,7 @@ best/worst series, and how your last sessions compare to your history.
 Nothing is saved as a stale document; it is always computed fresh from
 what matches right now.
 
-**Built for Swedish shooters.** A rolling Licence Activity view tracks your
+**Built for Swedish shooters.** A rolling License Activity view tracks your
 logged sessions against the FAP 551-3 licensing requirement, and exports
 a PDF formatted for license applications and föreningsintyg.
 

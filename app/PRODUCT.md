@@ -26,11 +26,11 @@ Scope is **target shooting only** — never hunting, never tactical.
 A free, donation-funded target-shooting logbook. It records training and
 competition sessions down to individual shots, scores paper targets from a
 photograph, tracks firearms and ammunition, and keeps the activity log Swedish
-shooters need when renewing a firearm licence (FAP 551-3).
+shooters need when renewing a firearm license (FAP 551-3).
 
 Success is a shooter who logs a session in seconds at the range without fighting
 the app, and who can later answer "am I improving?" and "can I document enough
-range activity for my licence?" without exporting anything to a spreadsheet.
+range activity for my license?" without exporting anything to a spreadsheet.
 
 ## Positioning
 
@@ -41,7 +41,7 @@ free, offline-first operation with no forced account.
 
 Incumbents each cover one slice: ShotLog (logging; paywalls basics its own users
 resent), TargetScan (photo scoring; no logbook), Shotlytic (Swedish compliance;
-iOS-only, no scoring), LoggaSkott (licence barometer; no scoring), Skytteappen
+iOS-only, no scoring), LoggaSkott (license barometer; no scoring), Skytteappen
 (club ecosystem).
 
 ## Operating Context
@@ -70,9 +70,9 @@ scores against official results.
   automatically, hole detection is not (a CV spike measured 24% recall / 24%
   precision from classical detection, and repair patches are indistinguishable
   from holes), so shots are tap-marked. Automation needs a learned detector.
-- **No document store.** Scanning a licence card fills in the licence fields
+- **No document store.** Scanning a license card fills in the license fields
   and the photo is then deleted; the app keeps no images of documents
-  (issue #276). If a licence picture is ever needed again it belongs next to
+  (issue #276). If a license picture is ever needed again it belongs next to
   the firearm, behind a PIN/biometric gate — not in a separate encrypted store.
 - **The Webshooter integration does not currently work** (password login
   unusable); deferred, not abandoned.

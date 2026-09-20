@@ -260,11 +260,11 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
 
   it('issf-centre-fire-pistol: the same course as 25m Pistol (8.7.6.4 governs both)', () => {
     // Rule 8.7.6.4 is "Specific Rules for 25m Pistol and 25m Centre Fire
-    // Pistol"; the calibre lives on the firearm, so the programs are one shape.
-    const centreFire = getProgram('issf-centre-fire-pistol');
+    // Pistol"; the caliber lives on the firearm, so the programs are one shape.
+    const centerFire = getProgram('issf-centre-fire-pistol');
     const sportPistol = getProgram('issf-sport-pistol');
-    expect(centreFire?.structure).toEqual(sportPistol?.structure);
-    expect(centreFire?.shotsPerSeries).toBe(sportPistol?.shotsPerSeries);
+    expect(centerFire?.structure).toEqual(sportPistol?.structure);
+    expect(centerFire?.shotsPerSeries).toBe(sportPistol?.shotsPerSeries);
     expect(getDiscipline('issf-centre-fire-pistol')?.targetFace).toBe(
       getDiscipline('issf-sport-pistol')?.targetFace,
     );

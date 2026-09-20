@@ -1,16 +1,16 @@
-# Licence-card scan (on-device OCR) — spec
+# License-card scan (on-device OCR) — spec
 
 > **Amended (2026-09-16, issue #276).** The Vault was removed, and with it the
-> "keep the scanned original" half of this spec: the scan now fills the licence
+> "keep the scanned original" half of this spec: the scan now fills the license
 > fields and the image is deleted on every path. The recognition, parsing and
-> form-prefill behaviours below are unchanged.
+> form-prefill behaviors below are unchanged.
 
 Scope: "Scan a physical license card", amended 2026-09-03
-(`feat/licence-card-image`) to keep the scanned original by default and link
-it to the licence it was scanned for — see "Storing and linking the original
-photo" below. When adding a licence or a renewal to a firearm, the user can
+(`feat/license-card-image`) to keep the scanned original by default and link
+it to the license it was scanned for — see "Storing and linking the original
+photo" below. When adding a license or a renewal to a firearm, the user can
 photograph the physical Swedish `vapenlicens` card; the app reads it **on the
-device** and pre-fills the licence form for the user to confirm field by
+device** and pre-fills the license form for the user to confirm field by
 field. The Vault's own "add document" screen offers the same scan for the
 Weapon license kind.
 
@@ -22,12 +22,12 @@ vitest/jest tests rather than the old-coder gauntlet. Evidence:
 
 | Module                                           | Responsibility                                                                                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `shared/src/licenses/card-parser.ts`             | Pure: recognised text → candidate field values                                                                      |
+| `shared/src/licenses/card-parser.ts`             | Pure: recognized text → candidate field values                                                                      |
 | `app/src/platform/text-recognition.ts`           | ML Kit wrapper + deletion of the scanned image                                                                      |
 | `app/src/platform/text-recognition.web.ts`       | Web stub — reports `unsupported`                                                                                    |
-| `app/src/features/licenses/scan-license-card.ts` | Pick → recognise → parse, plus `settleScannedLicenseImage` (keep/discard the original), every dependency injectable |
-| `app/src/app/firearms/[id]/index.tsx`            | The licence form: scan actions, pre-fill, confirmation, "Show License Card"                                         |
-| `app/src/app/vault/add.tsx`                      | The Vault's own Weapon-license + Photo scan, optional licence-record creation                                       |
+| `app/src/features/licenses/scan-license-card.ts` | Pick → recognize → parse, plus `settleScannedLicenseImage` (keep/discard the original), every dependency injectable |
+| `app/src/app/firearms/[id]/index.tsx`            | The license form: scan actions, pre-fill, confirmation, "Show License Card"                                         |
+| `app/src/app/vault/add.tsx`                      | The Vault's own Weapon-license + Photo scan, optional license-record creation                                       |
 | `app/src/app/vault/[id].tsx`                     | The reused document viewer, now with a "document not found" state                                                   |
 
 ## Dependency
@@ -45,14 +45,14 @@ _candidate_: the user sees it in an editable input and presses Save.
 
 | `licenses` column (§3) | Card label(s)                                         | Rule                                                         |
 | ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| `license_number`       | Tillståndsnummer / Tillståndsnr / Licensnummer        | `A123.456/2024-01` shape, normalised; year must be 19xx/20xx |
+| `license_number`       | Tillståndsnummer / Tillståndsnr / Licensnummer        | `A123.456/2024-01` shape, normalized; year must be 19xx/20xx |
 | `purpose`              | Ändamål                                               | verbatim                                                     |
 | `decided_on`           | Beslutsdatum / Datum för beslut                       | → ISO `YYYY-MM-DD`                                           |
 | `valid_until`          | Giltigt t.o.m. / Giltighetstid                        | → ISO, or NULL when the card says "tills vidare"             |
 | `conditions`           | Villkor                                               | verbatim, wrapped lines joined                               |
 | `authority`            | Myndighet / Beslutande myndighet, else a keyword scan | labelled value wins; otherwise `Polismyndigheten`            |
 
-Also read off the same card, for the firearm row rather than the licence:
+Also read off the same card, for the firearm row rather than the license:
 `make`/`model` (from `Fabrikat`/`Modell`, or split from a single `Vapen:`
 line), `caliber` (`Kaliber`, else a shape scan for `.22 LR` / `9x19` /
 `6,5x55`) and `vapen_id` (`SE` + 5–15 digits). These are applied only if the
@@ -70,7 +70,7 @@ user turns on the separate "also update the firearm" switch.
   that next line is not itself a label. `Villkor` keeps taking lines (it
   wraps); every other field takes at most one.
 - **Digit lookalikes** (`O`→0, `I`/`l`/`|`→1, `S`→5, `B`→8) are repaired
-  inside otherwise-numeric runs only: the licence number, the register id and
+  inside otherwise-numeric runs only: the license number, the register id and
   dates.
 - **Dates** accept `YYYY-MM-DD` and `DD.MM.YYYY` with `-`, `.`, `/` or a
   space; the four-digit group is the year wherever it sits, so no locale
@@ -87,7 +87,7 @@ user turns on the separate "also update the firearm" switch.
 ## Privacy boundary
 
 - **The image never leaves the device.** ML Kit's bundled model runs locally;
-  the app makes no network call anywhere in this flow, and the recognised
+  the app makes no network call anywhere in this flow, and the recognized
   text is held in component state only.
 - **The photo is deleted as soon as its fate is known.** Recognition failure,
   an unsupported platform, or a parse that found nothing → deleted
@@ -103,7 +103,7 @@ user turns on the separate "also update the firearm" switch.
   vault screen (`requestVaultAccess`) before the vault write runs. Turning
   the switch off skips the vault entirely — no gate prompt, straight
   deletion. The vault is never synced (see `document-vault-spec.md`); the
-  `licenses.vault_document_id` pointer that links a licence to its document
+  `licenses.vault_document_id` pointer that links a license to its document
   is an opaque UUID with no meaning off-device, so syncing that pointer
   leaks nothing.
 - **Nothing is written to the database without confirmation.** The scan only
@@ -124,31 +124,31 @@ design above:
    photo in the Vault"), not an opt-in. The gate, the encryption, and the
    final `deleteImage` of the picker's cache copy are unchanged from before;
    only the default flipped.
-2. **Linked to the licence.** A nullable `licenses.vault_document_id` column
+2. **Linked to the license.** A nullable `licenses.vault_document_id` column
    (migration 0005) holds the id of the vault document created for that
-   licence's scan, set at the same insert that creates the licence row (no
+   license's scan, set at the same insert that creates the license row (no
    separate update). **Why a DB column and not a field inside the vault's own
    encrypted index** (`VaultDocumentMeta`): the alternative — a
    `linkedLicenseId` on the vault document, found by decrypting and
    searching the whole index — would mean decrypting every document's
    metadata (including unrelated door-code/membership-card labels) just to
-   answer "does this licence have a card", without the user ever asking to
+   answer "does this license have a card", without the user ever asking to
    open the vault. A plain nullable text column on the already-decrypted,
    already-synced `licenses` row answers that instantly, with zero vault
-   access, so the firearm screen can decide whether to offer "Show licence
+   access, so the firearm screen can decide whether to offer "Show license
    card" at all before ever calling `requestVaultAccess`. The id itself is
    opaque and — being local-vault-only — meaningless on a device that pulls
-   the licence row via sync but lacks the matching vault document; that
+   the license row via sync but lacks the matching vault document; that
    device simply doesn't offer the action (see "must show nothing broken"
    below).
-3. **"Show License Card"** appears on a licence row only when
+3. **"Show License Card"** appears on a license row only when
    `vaultDocumentId` is set. Pressing it calls `requestVaultAccess` (the same
    gate as the Vault screen) and, once granted, pushes the existing
    `/vault/[id]` document viewer — reused, not a new screen, but hardened
    with a "document not found" state (instead of hanging on its loading
    ellipsis) for the case a linked document is missing on this device — see
    "Surviving a backup/restore" below. A denied gate shows an inline message
-   and does not navigate. A licence with no stored image (every licence
+   and does not navigate. A license with no stored image (every license
    created before this change, or one whose user opted out) simply has no
    action offered — nothing broken, nothing to explain.
 4. **The Vault's own "add document" screen** (`app/src/app/vault/add.tsx`)
@@ -156,9 +156,9 @@ design above:
    Scanning is strictly **additive** to the plain "Take photo"/"Choose from
    library" buttons already there: a failed, unsupported, or empty-parse scan
    never removes the ability to just store the photo (it only means no
-   licence-record option is offered for that attempt). On a successful parse,
+   license-record option is offered for that attempt). On a successful parse,
    an opt-in switch plus a firearm picker (hidden when the user has no
-   firearms yet) lets the user additionally create a licence record —
+   firearms yet) lets the user additionally create a license record —
    `addLicense` with `vaultDocumentId` set to the just-created vault
    document's id, in the same call shape as the firearm screen. Reuses
    `scanLicenseCard`/`card-parser.ts` unchanged — no second parser.
@@ -168,7 +168,7 @@ design above:
 `vaultDocumentId` is an ordinary `licenses` column, so it round-trips through
 the app's own backup bundles exactly like every other field on that row
 (`shared/src/backup/container.ts`). A same-device restore therefore keeps a
-licence pointed at the right document, and the Vault directory itself is
+license pointed at the right document, and the Vault directory itself is
 untouched by a restore — it is excluded from every backup bundle by design
 (`docs/specs/document-vault-spec.md`), so it never needed restoring in the
 first place. The only way "Show License Card" ever finds nothing is a fresh

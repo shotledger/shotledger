@@ -65,12 +65,12 @@ describe('analyzeGroup', () => {
     expect(result?.extremeSpreadMm).not.toBeCloseTo(50 / 3, 6);
   });
 
-  it('GR6: elevation is positive above the centre (input y increases downward)', () => {
+  it('GR6: elevation is positive above the center (input y increases downward)', () => {
     expect(analyzeGroup([{ xMm: 0, yMm: -5 }])?.elevationMm).toBe(5);
     expect(analyzeGroup([{ xMm: 0, yMm: 5 }])?.elevationMm).toBe(-5);
   });
 
-  it('GR7: windage is positive to the right of the centre', () => {
+  it('GR7: windage is positive to the right of the center', () => {
     expect(analyzeGroup([{ xMm: 7, yMm: 0 }])?.windageMm).toBe(7);
     expect(analyzeGroup([{ xMm: -7, yMm: 0 }])?.windageMm).toBe(-7);
   });

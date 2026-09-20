@@ -23,7 +23,7 @@ export type PhotoFacet = 'location' | 'disciplineId' | 'firearmId' | 'weaponGrou
 /** What one facet is currently narrowed to; null is "all". */
 export type PhotoFacetSelection = Partial<Record<PhotoFacet, string | null>>;
 
-/** Trimmed, inner whitespace collapsed, case-folded — the same normalisation the location recents use. */
+/** Trimmed, inner whitespace collapsed, case-folded — the same normalization the location recents use. */
 function fold(value: string): string {
   return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 }

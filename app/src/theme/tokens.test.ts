@@ -57,7 +57,7 @@ describe('theme tokens', () => {
     expect(hue(Colors.light.primary)).toBeCloseTo(SIGNAL_LAVENDER_HUE, 0);
   });
 
-  // Neutrals carry the accent hue rather than being neutral grey. `text` in
+  // Neutrals carry the accent hue rather than being neutral gray. `text` in
   // dark is the deliberate exception: a warm cream, chosen to sit against the
   // cool ground rather than disappear into it.
   it.each([

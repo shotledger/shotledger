@@ -124,7 +124,7 @@ describe('buildShotlogImportPlan — suggestions', () => {
 
   it('records sighter / final / DNF as tags and never alters the total', () => {
     // 'Club night' is mapped to `ignore` so it stays an ordinary tag; the
-    // default role for an unrecognised tag is `firearm`, which is consumed.
+    // default role for an unrecognized tag is `firearm`, which is consumed.
     const result = plan([{ ...row, tags: 'Precision|Warmup|Final|DNF|Club night' }], {
       tagMapping: {
         precision: { kind: 'discipline', disciplineId: 'spsf-precision' },

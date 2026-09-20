@@ -83,13 +83,13 @@ export interface JurisdictionProfile {
   verified: boolean;
 }
 
-export type LicenceActivityStatus = 'green' | 'amber' | 'red';
+export type LicenseActivityStatus = 'green' | 'amber' | 'red';
 
-export interface WeaponGroupLicenceActivity {
+export interface WeaponGroupLicenseActivity {
   weaponGroups: string[];
   windowMonths: number;
   requiredActivities: number;
   activityCount: number;
-  status: LicenceActivityStatus;
+  status: LicenseActivityStatus;
   windowStartIso: string;
 }

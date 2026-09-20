@@ -10,7 +10,7 @@ import {
   holeProbability,
   isHoleLike,
   reflectIndex,
-  type GreyCrop,
+  type GrayCrop,
   type HoleFeatures,
 } from './hole-features';
 
@@ -19,7 +19,7 @@ const FEATURE_KEYS = [
   'hfEnergy',
   'laplacianVar',
   'gradMean',
-  'centreDeviation',
+  'centerDeviation',
   'stdDev',
 ] as const satisfies readonly (keyof HoleFeatures)[];
 
@@ -29,11 +29,11 @@ const PYTHON_KEY: Record<(typeof FEATURE_KEYS)[number], string> = {
   hfEnergy: 'hf_energy',
   laplacianVar: 'laplacian_var',
   gradMean: 'grad_mean',
-  centreDeviation: 'centre_deviation',
+  centerDeviation: 'center_deviation',
   stdDev: 'std',
 };
 
-function crop(size: number, fill: (x: number, y: number) => number): GreyCrop {
+function crop(size: number, fill: (x: number, y: number) => number): GrayCrop {
   const data = new Uint8Array(size * size);
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) data[y * size + x] = fill(x, y);
@@ -44,7 +44,7 @@ function crop(size: number, fill: (x: number, y: number) => number): GreyCrop {
 /**
  * OpenCV and numpy run this pipeline in float32, the TypeScript in float64, so
  * the two agree to about 1e-7 relative and no closer. See the spec's revision
- * note on behaviour 7: this bound is still orders of magnitude tighter than
+ * note on behavior 7: this bound is still orders of magnitude tighter than
  * either porting bug the fixture actually caught.
  */
 const LOCKSTEP_RELATIVE_TOLERANCE = 1e-4;
@@ -117,11 +117,11 @@ describe('holeFeatures', () => {
     expect(edge.orientEntropy).toBeLessThan(noise.orientEntropy);
   });
 
-  it('measures the centre window as a magnitude, so polarity does not matter', () => {
+  it('measures the center window as a magnitude, so polarity does not matter', () => {
     const bright = crop(30, (x, y) => (Math.abs(x - 15) < 5 && Math.abs(y - 15) < 5 ? 220 : 40));
     const dark = crop(30, (x, y) => (Math.abs(x - 15) < 5 && Math.abs(y - 15) < 5 ? 40 : 220));
-    expect(holeFeatures(bright).centreDeviation).toBeGreaterThan(0.1);
-    expect(holeFeatures(dark).centreDeviation).toBeCloseTo(holeFeatures(bright).centreDeviation, 9);
+    expect(holeFeatures(bright).centerDeviation).toBeGreaterThan(0.1);
+    expect(holeFeatures(dark).centerDeviation).toBeCloseTo(holeFeatures(bright).centerDeviation, 9);
   });
 
   it('returns zeros rather than reading past the end of a short buffer', () => {
@@ -150,7 +150,7 @@ describe('holeFeatures', () => {
     });
     expect(features.stdDev).toBeGreaterThan(0);
     expect(features.gradMean).toBeGreaterThan(0);
-    expect(features.centreDeviation).toBeGreaterThan(0);
+    expect(features.centerDeviation).toBeGreaterThan(0);
   });
 });
 
@@ -161,7 +161,7 @@ describe('holeProbability', () => {
       hfEnergy: 3,
       laplacianVar: 50,
       gradMean: 0.2,
-      centreDeviation: 0.3,
+      centerDeviation: 0.3,
       stdDev: 0.2,
     };
     const w = HOLE_FILTER_WEIGHTS;
@@ -171,7 +171,7 @@ describe('holeProbability', () => {
       w.hfEnergy * 3 +
       w.laplacianVar * 50 +
       w.gradMean * 0.2 +
-      w.centreDeviation * 0.3 +
+      w.centerDeviation * 0.3 +
       w.stdDev * 0.2;
     expect(holeProbability(features)).toBeCloseTo(1 / (1 + Math.exp(-z)), 12);
   });
@@ -196,7 +196,7 @@ describe('holeProbability', () => {
       hfEnergy: 0,
       laplacianVar: 0,
       gradMean: 0,
-      centreDeviation: 0,
+      centerDeviation: 0,
       stdDev: 0,
     };
     expect(holeProbability(zeroZ)).toBeCloseTo(0.5, 12);

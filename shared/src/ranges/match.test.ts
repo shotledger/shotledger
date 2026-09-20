@@ -138,7 +138,7 @@ describe('bestMatch', () => {
 
 describe('collapseToFacilities', () => {
   // The real shape from Malmö Skyttegille: a club node with its lanes mapped
-  // as separate features a few hundred metres away.
+  // as separate features a few hundred meters away.
   const club = range('node/1', 'Malmö Skyttegille', 55.6317, 13.0509);
   const lane = range('way/2', 'A1 - 200 meter', 55.6338, 13.0488, false);
   const otherLane = range('way/3', 'Älgen', 55.6345, 13.0494, false);
@@ -158,8 +158,8 @@ describe('collapseToFacilities', () => {
   });
 
   it('keeps two clubs sharing a site', () => {
-    const neighbour = range('node/5', 'Malmö Jaktskyttecenter', 55.6318, 13.0509);
-    expect(collapseToFacilities([club, neighbour])).toHaveLength(2);
+    const neighbor = range('node/5', 'Malmö Jaktskyttecenter', 55.6318, 13.0509);
+    expect(collapseToFacilities([club, neighbor])).toHaveLength(2);
   });
 
   it('is empty for an empty list', () => {

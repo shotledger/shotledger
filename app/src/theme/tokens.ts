@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   // Light is the same world in a higher key: neutrals carry the lavender hue
-  // rather than being neutral grey, and `primary` is Signal Lavender darkened
+  // rather than being neutral gray, and `primary` is Signal Lavender darkened
   // until white text clears AA on it. The previous stock blue (#208AEF) and
   // green (#2E9E5B) both failed AA against the ground they were drawn on.
   light: {
@@ -59,7 +59,7 @@ export const PURPLE_RAIN_LAVENDER_ACCENT = {
 /**
  * REJECTED FOR BUTTONS (maintainer, 2026-09-01: "do not use yellow for
  * buttons"). Kept only so the contrast work is not lost; do not assign it to
- * `primary` or any other interactive token. Semantic colours
+ * `primary` or any other interactive token. Semantic colors
  * (success/warning/danger) are unaffected by that ruling.
  */
 export const PURPLE_RAIN_GOLD_ACCENT_REJECTED = {

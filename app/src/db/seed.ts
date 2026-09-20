@@ -81,8 +81,8 @@ export function seedDemoData(db: Database) {
 
   // --- Firearms -----------------------------------------------------
   // Vapengrupper follow SHB 2026 F.4 pp. 169-172 (precision) and D.4.4 p. 86 /
-  // J.4 (R, fält and milsnabb only). Every licence number, serial and vapen-id
-  // below is a DEMO- placeholder — nothing here may resemble a real licence.
+  // J.4 (R, fält and milsnabb only). Every license number, serial and vapen-id
+  // below is a DEMO- placeholder — nothing here may resemble a real license.
 
   // Sportpistol i .22 LR: vapengrupp C is ".22 LR only" (F.4 pp. 169-172).
   const sportPistol22 = createFirearm(db, {

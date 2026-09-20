@@ -1,4 +1,4 @@
-// Calendar-month arithmetic shared by the licence-activity's rolling window and
+// Calendar-month arithmetic shared by the license-activity's rolling window and
 // the Bilaga 8 "months of activity" indicator. Spec: m6-compliance-spec.md
 // "Rolling window".
 

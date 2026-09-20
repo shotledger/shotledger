@@ -54,7 +54,7 @@ tree only in gitignored build state (`node_modules`, `.stryker-tmp`,
 
 RED was observed before any implementation: with `seriesInnerTenAverage` a
 throwing stub, `npx vitest run shared/src/scoring/totals.test.ts` reported
-**11 failed | 29 passed (40)** — every new test failing on behaviour
+**11 failed | 29 passed (40)** — every new test failing on behavior
 (`Error: not implemented`), not on import. After GREEN the same command reported
 40 passed.
 
@@ -85,7 +85,7 @@ plural keys go red, so the new rule — and not some unrelated leniency — is w
 makes them pass.
 
 **What this buys, precisely:** four known-bad inputs reach the gate's failure
-path. It does not prove the gate recognises every possible i18n defect; it never
+path. It does not prove the gate recognizes every possible i18n defect; it never
 did (it checks key-set parity and literal reference, not translation quality or
 interpolation arity).
 

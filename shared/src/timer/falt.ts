@@ -100,7 +100,7 @@ export type FaltCommandKind =
 export type FaltCueKind = FaltCommandKind | 'timeUp';
 
 /**
- * **Do not translate these, and do not move them into the i18n catalogues.**
+ * **Do not translate these, and do not move them into the i18n catalogs.**
  * Decided with the maintainer 2026-09-09: the commands stay Swedish in both
  * app languages, spoken and on screen, because they are what is actually
  * called on the line at a Swedish match — an English "Load!" would be wrong,

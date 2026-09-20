@@ -6,7 +6,7 @@ const final = (id: string, position: number): MovableSeries => ({ id, position, 
 describe('seriesSwapTarget', () => {
   const rows = [main('a', 1), main('b', 2), main('c', 3)];
 
-  it('swaps with the neighbour above or below', () => {
+  it('swaps with the neighbor above or below', () => {
     expect(seriesSwapTarget(rows, 'b', 'up')?.id).toBe('a');
     expect(seriesSwapTarget(rows, 'b', 'down')?.id).toBe('c');
   });

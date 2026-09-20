@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  analyseMark,
+  analyzeMark,
   buildMicDiagnosticsJson,
   DEFAULT_NOISE_FLOOR_OPTIONS,
   EVENT_EXCESS_DB,
@@ -130,7 +130,7 @@ describe('MicDiagnosticsRecorder', () => {
     expect(new MicDiagnosticsRecorder().getLiveStats().currentDb).toBeNull();
   });
 
-  it('numbers marks in order and analyses the newest one', () => {
+  it('numbers marks in order and analyzes the newest one', () => {
     const recorder = new MicDiagnosticsRecorder();
     recorder.push(0, -50);
     recorder.push(60, -4);
@@ -174,7 +174,7 @@ describe('MicDiagnosticsRecorder', () => {
   });
 });
 
-describe('analyseMark', () => {
+describe('analyzeMark', () => {
   const samples = [
     { atMs: 0, db: -50, noiseFloorDb: -50 },
     { atMs: 900, db: -50, noiseFloorDb: -50 },
@@ -185,7 +185,7 @@ describe('analyseMark', () => {
   ];
 
   it('finds the peak and its excess over the floor within the window', () => {
-    const analysis = analyseMark(samples, { index: 0, atMs: 1_100 });
+    const analysis = analyzeMark(samples, { index: 0, atMs: 1_100 });
     expect(analysis.peakDb).toBe(-8);
     expect(analysis.noiseFloorDb).toBe(-50);
     expect(analysis.excessDb).toBe(42);
@@ -193,13 +193,13 @@ describe('analyseMark', () => {
 
   it('counts the samples the event spans, not every sample in the window', () => {
     // -8 and -20 clear floor + 10 dB; -50 and -48 do not.
-    expect(analyseMark(samples, { index: 0, atMs: 1_100 }).samplesAboveFloor).toBe(2);
+    expect(analyzeMark(samples, { index: 0, atMs: 1_100 }).samplesAboveFloor).toBe(2);
   });
 
   it('ignores a louder event outside the window', () => {
     // 2_000 is beyond a tight custom window, though inside the 6 s default.
     expect(
-      analyseMark(samples, { index: 0, atMs: 1_100 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
+      analyzeMark(samples, { index: 0, atMs: 1_100 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
     ).not.toBe(-2);
   });
 
@@ -213,7 +213,7 @@ describe('analyseMark', () => {
   it('reports how late the mark was, so the window can be narrowed from evidence', () => {
     // The loudest thing in the window is -2 at 2_000; the mark is at 4_960,
     // so the shot was pressed for just under three seconds after the fact.
-    const analysis = analyseMark(samples, { index: 0, atMs: 4_960 });
+    const analysis = analyzeMark(samples, { index: 0, atMs: 4_960 });
     expect(analysis.peakDb).toBe(-2);
     expect(analysis.peakOffsetMs).toBe(2_960);
   });
@@ -221,15 +221,15 @@ describe('analyseMark', () => {
   it('still finds a shot marked four seconds late', () => {
     // The old 600 ms window found nothing this far out; that is the bug.
     expect(
-      analyseMark(samples, { index: 0, atMs: 4_960 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
+      analyzeMark(samples, { index: 0, atMs: 4_960 }, { lookbackMs: 600, lookaheadMs: 200 }).peakDb,
     ).toBeNull();
-    expect(analyseMark(samples, { index: 0, atMs: 4_960 }).peakDb).not.toBeNull();
+    expect(analyzeMark(samples, { index: 0, atMs: 4_960 }).peakDb).not.toBeNull();
   });
 
   it('measures the contiguous event, not every loud sample in six seconds', () => {
     // Two separate loud events sit in the default window: -8/-20 around 960,
     // and -2 alone at 2_000. Only the run containing the peak is the event.
-    expect(analyseMark(samples, { index: 0, atMs: 2_100 }).samplesAboveFloor).toBe(1);
+    expect(analyzeMark(samples, { index: 0, atMs: 2_100 }).samplesAboveFloor).toBe(1);
   });
 
   it('counts the loud samples before the peak as well as after it', () => {
@@ -242,7 +242,7 @@ describe('analyseMark', () => {
       { atMs: 220, db: -25, noiseFloorDb: -50 },
       { atMs: 280, db: -49, noiseFloorDb: -50 },
     ];
-    const analysis = analyseMark(rising, { index: 0, atMs: 300 });
+    const analysis = analyzeMark(rising, { index: 0, atMs: 300 });
     expect(analysis.peakDb).toBe(-5);
     expect(analysis.samplesAboveFloor).toBe(3);
   });
@@ -256,17 +256,17 @@ describe('analyseMark', () => {
       { atMs: 160, db: -30, noiseFloorDb: -50 },
       { atMs: 220, db: -5, noiseFloorDb: -50 },
     ];
-    expect(analyseMark(twoEvents, { index: 0, atMs: 240 }).samplesAboveFloor).toBe(2);
+    expect(analyzeMark(twoEvents, { index: 0, atMs: 240 }).samplesAboveFloor).toBe(2);
   });
 
-  it('honours a custom window', () => {
+  it('honors a custom window', () => {
     expect(
-      analyseMark(samples, { index: 0, atMs: 1_000 }, { lookbackMs: 20, lookaheadMs: 20 }).peakDb,
+      analyzeMark(samples, { index: 0, atMs: 1_000 }, { lookbackMs: 20, lookaheadMs: 20 }).peakDb,
     ).toBe(-20);
   });
 
   it('reports nulls when no sample fell in the window', () => {
-    const analysis = analyseMark(samples, { index: 3, atMs: 60_000 });
+    const analysis = analyzeMark(samples, { index: 3, atMs: 60_000 });
     expect(analysis).toEqual({
       index: 3,
       atMs: 60_000,
@@ -304,7 +304,7 @@ describe('buildMicDiagnosticsJson', () => {
     expect(json.summary.maxDb).toBe(-6);
   });
 
-  it('analyses each mark in the document', () => {
+  it('analyzes each mark in the document', () => {
     const json = buildMicDiagnosticsJson(recorded().getSnapshot(), META);
     expect(json.summary.markCount).toBe(1);
     expect(json.marks).toHaveLength(1);
@@ -320,7 +320,7 @@ describe('buildMicDiagnosticsJson', () => {
     expect(json.sampleIntervalMs).toBe(60);
   });
 
-  it('normalises optional metadata to nulls', () => {
+  it('normalizes optional metadata to nulls', () => {
     const json = buildMicDiagnosticsJson(new MicDiagnosticsRecorder().getSnapshot(), {
       generatedAt: META.generatedAt,
       appVersion: META.appVersion,
@@ -339,7 +339,7 @@ describe('buildMicDiagnosticsJson', () => {
     expect(json.note).toBe('.22 LR');
   });
 
-  it('serialises to JSON without losing anything', () => {
+  it('serializes to JSON without losing anything', () => {
     const json = buildMicDiagnosticsJson(recorded().getSnapshot(), META);
     expect(JSON.parse(JSON.stringify(json))).toEqual(json);
   });

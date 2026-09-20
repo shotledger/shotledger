@@ -30,7 +30,7 @@ export type AnalyticsSessionType = 'training' | 'competition';
 /** A `StatsSeries` plus the two session-level fields the report filters on. */
 export interface AnalyticsSeries extends StatsSeries {
   sessionType: AnalyticsSessionType;
-  /** Tag ids of the owning session, denormalised onto each of its series. */
+  /** Tag ids of the owning session, denormalized onto each of its series. */
   tagIds: readonly string[];
 }
 

@@ -16,7 +16,7 @@ describe('stepperNext', () => {
     expect(stepperNext(-1, 1, MIN, MAX)).toBe(0);
   });
 
-  it('honours a step larger than one', () => {
+  it('honors a step larger than one', () => {
     expect(stepperNext(0, 1, MIN, MAX, 5)).toBe(5);
     expect(stepperNext(0, -1, MIN, MAX, 5)).toBe(-5);
   });

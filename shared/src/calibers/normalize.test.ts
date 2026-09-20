@@ -45,7 +45,7 @@ describe('preset vocabulary', () => {
     }
   });
 
-  it('spells aliases as already-normalised keys, and each resolves to its own preset', () => {
+  it('spells aliases as already-normalized keys, and each resolves to its own preset', () => {
     for (const preset of CALIBER_PRESETS) {
       for (const alias of preset.aliases ?? []) {
         expect(caliberKey(alias)).toBe(alias);

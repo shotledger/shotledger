@@ -65,7 +65,7 @@ describe('parsePhotonResponse', () => {
     ]);
   });
 
-  it('honours the limit', () => {
+  it('honors the limit', () => {
     expect(parsePhotonResponse(body, 1)).toEqual(['Skjutbanan, Malmö, Sverige']);
   });
 

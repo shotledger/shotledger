@@ -37,7 +37,7 @@ import { listTags } from '@/db/queries/tags';
 export const STATS_PERIODS = ['30d', '6m', '12m', 'all', 'custom'] as const;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
 
-/** The filter form's state. Serialised into the report route's params. */
+/** The filter form's state. Serialized into the report route's params. */
 export interface AnalyticsFilterState {
   period: StatsPeriod;
   /** 'YYYY-MM-DD', only meaningful when period === 'custom'. */

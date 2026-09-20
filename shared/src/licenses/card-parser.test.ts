@@ -10,7 +10,7 @@ import {
 } from './card-parser';
 
 // Every sample below is SYNTHETIC (hard rule 7): invented holder, an
-// impossible licence number series, and a made-up make/model. No real card's
+// impossible license number series, and a made-up make/model. No real card's
 // data appears in this repository.
 const CLEAN_CARD = `
 POLISMYNDIGHETEN
@@ -27,7 +27,7 @@ Villkor: Får förvaras i säkerhetsskåp
 `;
 
 describe('parseLicenseCard', () => {
-  it('reads every field off a cleanly recognised card', () => {
+  it('reads every field off a cleanly recognized card', () => {
     expect(parseLicenseCard(CLEAN_CARD)).toEqual({
       licenseNumber: 'A000.000/2026-01',
       purpose: 'Målskjutning',
@@ -95,7 +95,7 @@ describe('parseLicenseCard', () => {
   });
 
   it('reads a label and value separated only by column whitespace', () => {
-    // What the card's two columns look like once the recogniser's lines are
+    // What the card's two columns look like once the recognizer's lines are
     // put back into visual reading order (platform/text-recognition.ts).
     const parsed = parseLicenseCard(`
       Tillståndsnummer   A000.000/2026-01
@@ -123,7 +123,7 @@ describe('parseLicenseCard', () => {
     });
   });
 
-  it('does not read a caliber out of the licence number', () => {
+  it('does not read a caliber out of the license number', () => {
     expect(parseLicenseCard('Tillståndsnummer: A000.000/2026-01').caliber).toBeNull();
   });
 
@@ -194,25 +194,25 @@ describe('parseLicenseCard', () => {
     expect(parsed.model).toBe('Testmodel');
   });
 
-  it('finds the licence number without its label', () => {
+  it('finds the license number without its label', () => {
     expect(parseLicenseCard('något brus A000.000/2026-01 mer brus').licenseNumber).toBe(
       'A000.000/2026-01',
     );
   });
 
-  it('repairs digit lookalikes inside the licence number', () => {
+  it('repairs digit lookalikes inside the license number', () => {
     expect(parseLicenseCard('Tillståndsnummer: AOOO.OOO/2O26-O1').licenseNumber).toBe(
       'A000.000/2026-01',
     );
   });
 
-  it('accepts a comma separator and stray spaces in the licence number', () => {
+  it('accepts a comma separator and stray spaces in the license number', () => {
     expect(parseLicenseCard('Tillstandsnr : A 000 , 000 / 2026 - 01').licenseNumber).toBe(
       'A000.000/2026-01',
     );
   });
 
-  it('rejects a licence-number shape whose year is not a year', () => {
+  it('rejects a license-number shape whose year is not a year', () => {
     expect(parseLicenseCard('A000.000/9999-01').licenseNumber).toBeNull();
   });
 

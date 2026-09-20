@@ -11,7 +11,7 @@
 //  - metric bore only (air): `<bore> mm`.
 //
 // Scope: target-shooting chamberings plus the range-shot hunting rifle
-// cartridges a European or North American shooter is likely to hold a licence
+// cartridges a European or North American shooter is likely to hold a license
 // for. No shotgun gauges (`weapon_type` has no shotgun), no dangerous-game or
 // wildcat tail, no muzzleloaders.
 
@@ -23,7 +23,7 @@ export interface CaliberPreset {
   readonly name: string;
   readonly family: CaliberFamily;
   /**
-   * Spellings seen in the wild that mean this caliber, as already-normalised
+   * Spellings seen in the wild that mean this caliber, as already-normalized
    * keys (see `caliberKey`). The canonical name's own key is added
    * automatically and is not repeated here.
    */
@@ -42,7 +42,7 @@ export const CALIBER_PRESETS: readonly CaliberPreset[] = [
   { name: '.22 WMR', family: 'rimfire', aliases: ['22mag', '22magnum', '22wmrf', '22winmag'] },
   { name: '.17 HMR', family: 'rimfire', aliases: ['17hornadymagnumrimfire'] },
 
-  // --- Centrefire handgun ------------------------------------------------
+  // --- Centerfire handgun ------------------------------------------------
   { name: '.25 ACP', family: 'handgun', aliases: ['25auto', '6.35browning', '6.35x16'] },
   { name: '.32 ACP', family: 'handgun', aliases: ['32auto', '7.65browning', '7.65x17'] },
   { name: '.32 S&W Long', family: 'handgun', aliases: ['32swlong', '32smith&wessonlong'] },
@@ -90,7 +90,7 @@ export const CALIBER_PRESETS: readonly CaliberPreset[] = [
   { name: '.454 Casull', family: 'handgun' },
   { name: '.500 S&W Magnum', family: 'handgun', aliases: ['500sw', '500swmag'] },
 
-  // --- Centrefire rifle --------------------------------------------------
+  // --- Centerfire rifle --------------------------------------------------
   { name: '.22 Hornet', family: 'rifle', aliases: ['5.6x35r'] },
   { name: '.204 Ruger', family: 'rifle', aliases: ['204'] },
   { name: '.222 Remington', family: 'rifle', aliases: ['222rem', '222'] },

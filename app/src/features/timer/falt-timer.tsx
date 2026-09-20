@@ -8,7 +8,7 @@
 // The commands themselves stay Swedish in both app languages — "Ladda",
 // "Alla klara", "Tio sekunder kvar" are what is called on the line at a
 // Swedish match, so they come from `faltCommandText`, not the i18n
-// catalogues; the chrome around them is translated as usual.
+// catalogs; the chrome around them is translated as usual.
 import {
   DEFAULT_FALT_SETTINGS,
   FALT_COMMAND_KINDS,

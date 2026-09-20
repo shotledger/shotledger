@@ -84,9 +84,9 @@ regulation's own default.
 The Context above said SvSF keeps 25 m standardpistol and 50 m pistol because
 **ISSF dropped them**. Reading the actual rule book showed that is wrong:
 Rule 3.3 still recognizes both in all four categories (STPM/STPW, FPM/FPW,
-all `WCH`). What they were dropped from is the **Olympic programme**, which
+all `WCH`). What they were dropped from is the **Olympic program**, which
 is a different list. SvSF calling them _icke officiella_ is about its own
-national championship programme, not about whether ISSF defines them.
+national championship program, not about whether ISSF defines them.
 
 So the consequence stands but for a better reason: SvSF needs no discipline
 definitions of its own for these two, because adopting ISSF already brings

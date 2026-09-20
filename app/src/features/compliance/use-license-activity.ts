@@ -1,44 +1,44 @@
-// M6 (§6.6): licence-activity data for Home (overall) and Firearms (per firearm),
+// M6 (§6.6): license-activity data for Home (overall) and Firearms (per firearm),
 // built on shared/compliance + listComplianceSessions. Refetches on focus,
 // same pattern as every other M2+ data hook.
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  computeFirearmLicenceActivity,
-  computeOverallLicenceActivity,
-  type LicenceActivityStatus,
+  computeFirearmLicenseActivity,
+  computeOverallLicenseActivity,
+  type LicenseActivityStatus,
   type JurisdictionProfile,
-  type WeaponGroupLicenceActivity,
+  type WeaponGroupLicenseActivity,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { listComplianceSessions } from '@/db/queries/compliance';
 import { listAllFirearmGroupIds, listFirearmGroups } from '@/db/queries/firearm-groups';
 
-export interface OverallLicenceActivityData {
-  overall: LicenceActivityStatus | null;
-  statuses: WeaponGroupLicenceActivity[];
+export interface OverallLicenseActivityData {
+  overall: LicenseActivityStatus | null;
+  statuses: WeaponGroupLicenseActivity[];
 }
 
-function loadOverallLicenceActivity(
+function loadOverallLicenseActivity(
   profile: JurisdictionProfile | null,
-): OverallLicenceActivityData {
+): OverallLicenseActivityData {
   if (!db || !profile) return { overall: null, statuses: [] };
   const sessions = listComplianceSessions(db);
   const groupIds = listAllFirearmGroupIds(db);
-  return computeOverallLicenceActivity(sessions, profile, groupIds);
+  return computeOverallLicenseActivity(sessions, profile, groupIds);
 }
 
-export function useOverallLicenceActivity(
+export function useOverallLicenseActivity(
   profile: JurisdictionProfile | null,
-): OverallLicenceActivityData {
-  const [data, setData] = useState<OverallLicenceActivityData>(() =>
-    loadOverallLicenceActivity(profile),
+): OverallLicenseActivityData {
+  const [data, setData] = useState<OverallLicenseActivityData>(() =>
+    loadOverallLicenseActivity(profile),
   );
 
   useFocusEffect(
     useCallback(() => {
-      setData(loadOverallLicenceActivity(profile));
+      setData(loadOverallLicenseActivity(profile));
     }, [profile]),
   );
 
@@ -46,19 +46,19 @@ export function useOverallLicenceActivity(
 }
 
 /** Worst-of statuses for a single firearm — one chip per firearm on lists. */
-export function loadFirearmLicenceActivityStatus(
+export function loadFirearmLicenseActivityStatus(
   profile: JurisdictionProfile | null,
   firearmId: string,
-): LicenceActivityStatus | null {
+): LicenseActivityStatus | null {
   if (!db || !profile) return null;
   const groups = listFirearmGroups(db, firearmId).map((g) => g.groupId);
   if (groups.length === 0) return null;
   const sessions = listComplianceSessions(db);
-  const statuses = computeFirearmLicenceActivity(sessions, profile, groups);
+  const statuses = computeFirearmLicenseActivity(sessions, profile, groups);
   if (statuses.length === 0) return null;
-  const rank: Record<LicenceActivityStatus, number> = { red: 0, amber: 1, green: 2 };
+  const rank: Record<LicenseActivityStatus, number> = { red: 0, amber: 1, green: 2 };
   return statuses.reduce(
     (worst, s) => (rank[s.status] < rank[worst] ? s.status : worst),
-    'green' as LicenceActivityStatus,
+    'green' as LicenseActivityStatus,
   );
 }

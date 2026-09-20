@@ -13,7 +13,7 @@ import type { SessionExport } from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
-/** Unicode and empty strings included: both are where serialisation breaks. */
+/** Unicode and empty strings included: both are where serialization breaks. */
 const textArb = fc.oneof(
   fc.string({ minLength: 1, maxLength: 12 }),
   fc.constantFrom('Träning', 'å ä ö', 'skjutbanan — 25 m', 'КМ', '日本'),

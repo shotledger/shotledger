@@ -13,7 +13,7 @@ Keystore / iOS Keychain) and cannot leave the device. A backup bundle
 that simply copied Vault ciphertext into the export would produce a
 section no other device — and not even the same device after a
 reinstall — could ever decrypt. Since #71 the Vault also holds
-photographs of weapon licence cards, raising the stakes on getting this
+photographs of weapon license cards, raising the stakes on getting this
 right.
 
 Three options were considered: (a) re-wrap under a passphrase chosen at

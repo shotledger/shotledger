@@ -69,11 +69,11 @@ function ringPoints(transform: TargetTransform, radiusMm: number, scale: number)
 function markRadiusPx(
   transform: TargetTransform,
   mark: Mark,
-  centre: Point,
+  center: Point,
   scale: number,
 ): number {
   const edge = transform.toImage({ x: mark.xMm + mark.caliberMm / 2, y: mark.yMm });
-  return Math.max(4, Math.hypot(edge.x - centre.x, edge.y - centre.y) * scale);
+  return Math.max(4, Math.hypot(edge.x - center.x, edge.y - center.y) * scale);
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -162,10 +162,10 @@ export function MarkOverlay({
     // otherwise a series would be unmarkable once the shots are close.
     for (let i = marks.length - 1; i >= 0; i -= 1) {
       const mark = marks[i] as Mark;
-      const centre = transform.toImage({ x: mark.xMm, y: mark.yMm });
-      const cx = centre.x * scale;
-      const cy = centre.y * scale;
-      const hitRadius = Math.max(22, markRadiusPx(transform, mark, centre, scale) * 1.6);
+      const center = transform.toImage({ x: mark.xMm, y: mark.yMm });
+      const cx = center.x * scale;
+      const cy = center.y * scale;
+      const hitRadius = Math.max(22, markRadiusPx(transform, mark, center, scale) * 1.6);
       if (Math.hypot(x - cx, y - cy) <= hitRadius) {
         onTapMark(mark.id);
         return;
@@ -212,19 +212,19 @@ export function MarkOverlay({
                   ))}
 
                   {marks.map((mark, index) => {
-                    const centre = transform.toImage({ x: mark.xMm, y: mark.yMm });
+                    const center = transform.toImage({ x: mark.xMm, y: mark.yMm });
                     const score = scores[index];
                     const isSelected = mark.id === selectedId;
                     const isEdgeCall = score?.computed.edgeCall ?? false;
                     return (
                       <Circle
                         key={mark.id}
-                        cx={centre.x * scale}
-                        cy={centre.y * scale}
-                        r={markRadiusPx(transform, mark, centre, scale)}
+                        cx={center.x * scale}
+                        cy={center.y * scale}
+                        r={markRadiusPx(transform, mark, center, scale)}
                         fill={isSelected ? MARK_SELECTED : MARK_COLOR}
                         fillOpacity={0.55}
-                        // An edge call is ringed, not recoloured: the fill still
+                        // An edge call is ringed, not recolored: the fill still
                         // says selected/not, and the ring says "this one needs
                         // your call" without the two states competing.
                         stroke={isEdgeCall ? EDGE_CALL_COLOR : '#ffffff'}

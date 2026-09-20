@@ -124,9 +124,9 @@ export default function ShotlogImportScreen() {
           onPress={() => void planImport()}
           testID="shotlog-pick-file"
         />
-        {status.kind === 'cancelled' && (
+        {status.kind === 'canceled' && (
           <ThemedText type="small" themeColor="textSecondary" testID="shotlog-status">
-            {t('shotlog.cancelled')}
+            {t('shotlog.canceled')}
           </ThemedText>
         )}
         {status.kind === 'unavailable' && (

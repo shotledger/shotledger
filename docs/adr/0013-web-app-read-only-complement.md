@@ -109,7 +109,7 @@ Consequences.
 **3. A makes the browser a data-bearing surface for no gain here.** Under
 A the full logbook is copied into OPFS on every machine the shooter signs
 in from — possibly a shared or family PC — where it is per-origin,
-best-effort and evictable (ADR 0012). Target photos and licence records
+best-effort and evictable (ADR 0012). Target photos and license records
 are personal data under hard rule 7, and the manual's privacy table rests
 on "nothing is uploaded unless you deliberately turn something on". A
 read-through viewer that keeps nothing is the strictly smaller data

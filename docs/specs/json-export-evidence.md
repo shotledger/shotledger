@@ -58,7 +58,7 @@ Nothing in the spec is unmapped.
 | Lint             | `eslint .`                         | 0 errors                                                                                                               |
 | Format           | `prettier --check .`               | clean                                                                                                                  |
 | i18n parity      | `pnpm i18n:check`                  | 839 keys each, 0 issues                                                                                                |
-| Licences         | `pnpm licenses:check`              | 98 packages, invariants hold — unchanged, as criterion 18 requires                                                     |
+| Licenses         | `pnpm licenses:check`              | 98 packages, invariants hold — unchanged, as criterion 18 requires                                                     |
 | Coverage (gated) | `pnpm coverage`                    | **100% statements (2028/2028), branches (1138/1138), functions (483/483), lines (1752/1752)**; exits nonzero below 100 |
 | Mutation         | `node scripts/manual-mutation.mjs` | **8/8 killed**                                                                                                         |
 | Property-based   | included in the suite              | P21 300 runs, P22 1000 runs                                                                                            |

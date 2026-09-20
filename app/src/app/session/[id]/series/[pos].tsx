@@ -1,5 +1,5 @@
 // Series entry (§4 M3): the ScoreKeypad bound to one series. All keypad
-// behaviour lives in shared/scoring/entry.ts; this screen seeds the state
+// behavior lives in shared/scoring/entry.ts; this screen seeds the state
 // from the stored shots, persists on save, and offers the per-series photo.
 //
 // A series reached via "Add Series" (`?new=1`) does not exist in the database

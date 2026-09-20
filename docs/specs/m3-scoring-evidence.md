@@ -72,7 +72,7 @@ Every scenario id in the spec appears verbatim in a test name, so
 | §3.7 C1–C6  | same                                   | construction guards, seeding, immutability                                                                 |
 | §3.8 P1–P5  | same (`describe('properties')`)        | fast-check over arbitrary key sequences in both modes                                                      |
 | §4 M1–M13   | `shared/src/scoring/marke.test.ts`     | full SHB threshold table, age reductions, group mapping, applicability, bad birth years                    |
-| §5 T1–T9    | `shared/src/scoring/totals.test.ts`    | existing behaviour kept, X counts, beforeFinal/final/total, sighter exclusion, volume                      |
+| §5 T1–T9    | `shared/src/scoring/totals.test.ts`    | existing behavior kept, X counts, beforeFinal/final/total, sighter exclusion, volume                       |
 | §6 G1–G18   | `shared/src/disciplines/index.test.ts` | zod validation + negative control, discipline/program set, skeleton, groups/classes, naming, decimal rules |
 
 Negative constraints:
@@ -111,7 +111,7 @@ All numbers below come from one fresh run after the last code edit, on
 
 ### Surviving mutants, classified
 
-Stryker cannot kill these because they do not change behaviour. None is
+Stryker cannot kill these because they do not change behavior. None is
 covered by adding a test that asserts nothing (anti-gaming rule 4).
 
 | Location                 | Mutant                                          | Why it is equivalent                                                                                                                                                                  |
@@ -142,7 +142,7 @@ Home-grown gates get a negative control, per the old-coder checker rule.
 | `scripts/mutate-schema.mjs` | Real survivors found and fixed twice (see §5)                              | Proves the runner reports survivors rather than always printing "killed"                                |
 | New coverage-closing tests  | Throwaway mutants (`?? null` → `?? 0`; deleted the unknown-group `throw`)  | Both tests went red; mutants reverted                                                                   |
 
-What the controls do **not** prove: that each gate recognises every violation
+What the controls do **not** prove: that each gate recognizes every violation
 of the rule it stands for. A negative control shows one known-bad input
 reaches the failure path, nothing more.
 
@@ -178,7 +178,7 @@ reaches the failure path, nothing more.
    that it matched; one mutant never applied and was reported as "SURVIVED".
    That is exactly the fail-open failure the old-coder checker rule warns about.
    The persisted runner now **throws** when a mutant's search text is not found,
-   and that behaviour has its own negative control (above).
+   and that behavior has its own negative control (above).
 8. **Two genuine survivors in the schema runner** (`programSchema` and its
    `structure` accepting unknown keys) were real test gaps, closed by adding
    those cases to G3b — not by deleting the mutants.
@@ -215,7 +215,7 @@ Scratchpad directory
 - **V1 — what `(X)` actually means.** The implementation plan itself marks
   `is_inner_ten_decimal` as VERIFY. It is implemented behind
   `innerTenDecimalEnabled`, **default `false`**, and **no UI path enables it**,
-  so M3 writes no data with that flag. The state machine's behaviour for it is
+  so M3 writes no data with that flag. The state machine's behavior for it is
   specified and tested (D6, D7, D8, D11) so that turning it on later is a
   one-line change, not a redesign.
 - **V2 — which key types "10" in decimal mode.** §4 M3 writes the example as
@@ -370,7 +370,7 @@ Every one is listed individually.
 
 Everything else in the 273-test baseline is untouched and still passing.
 
-## A.4 New behaviours, mapped to their tests
+## A.4 New behaviors, mapped to their tests
 
 | Spec                                         | Test                                                                                                           |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -393,13 +393,13 @@ Everything else in the 273-test baseline is untouched and still passing.
 
 ## A.5 RED evidence
 
-| Step                 | Observed                                                                                                                                                                                                                          |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1 keypad semantics  | 21 failed / 26 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                                                                                                                                                  |
-| A1 header stats      | 8 failed / 16 passed in `totals.test.ts` before implementing; 24/24 after                                                                                                                                                         |
-| A1 extra rounds      | 14 failed in `extra-rounds.test.ts` (`setSessionExtraRounds is not a function`, plus the RangeError guard) before implementing; all green after                                                                                   |
-| A2 keypad relabel    | 10 failed / 37 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                                                                                                                                                  |
-| Seed inner-ten tests | passed immediately (pre-existing behaviour). Proved non-vacuous with a throwaway mutant — `isInnerTen = rng() < 0.3` (dropping the `value === 10` condition) made the test fail; reverted, green again. Kept as regression armor. |
+| Step                 | Observed                                                                                                                                                                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1 keypad semantics  | 21 failed / 26 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                                                                                                                                                 |
+| A1 header stats      | 8 failed / 16 passed in `totals.test.ts` before implementing; 24/24 after                                                                                                                                                        |
+| A1 extra rounds      | 14 failed in `extra-rounds.test.ts` (`setSessionExtraRounds is not a function`, plus the RangeError guard) before implementing; all green after                                                                                  |
+| A2 keypad relabel    | 10 failed / 37 passed in `entry.test.ts` before touching `entry.ts`; 47/47 after                                                                                                                                                 |
+| Seed inner-ten tests | passed immediately (pre-existing behavior). Proved non-vacuous with a throwaway mutant — `isInnerTen = rng() < 0.3` (dropping the `value === 10` condition) made the test fail; reverted, green again. Kept as regression armor. |
 
 Test edits and implementation edits were always separate steps (anti-gaming
 rule 2): the test file was edited and run to red, then the implementation.

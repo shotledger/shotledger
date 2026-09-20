@@ -30,7 +30,7 @@ export function loadSessionGroup(sessionId: string): SessionGroup | null {
   const target = getTargetFace(faceId);
   // A mark can only have been made against a known face, but a discipline's
   // targetFace could be edited in a later data file — better to hide the view
-  // than to plot millimetres against the wrong ring scale.
+  // than to plot millimeters against the wrong ring scale.
   if (!target) return null;
 
   const analysis = analyzeGroup(marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })));

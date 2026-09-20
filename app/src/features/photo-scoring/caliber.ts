@@ -41,10 +41,10 @@ const PATTERNS: readonly (readonly [RegExp, CaliberKey])[] = [
 ];
 
 function matchKey(text: string): CaliberKey | null {
-  const normalised = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (!normalised) return null;
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!normalized) return null;
   for (const [pattern, key] of PATTERNS) {
-    if (pattern.test(normalised)) return key;
+    if (pattern.test(normalized)) return key;
   }
   return null;
 }

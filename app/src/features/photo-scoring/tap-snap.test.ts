@@ -4,7 +4,7 @@ import { MIN_LOCAL_STD_DEV, SNAP_WINDOW_MM, snapToHole, type RectifiedCanvas } f
 
 const PX_PER_MM = 4;
 const SIZE = 200;
-const CENTRE = SIZE / 2;
+const CENTER = SIZE / 2;
 
 function canvasOf(fill: number): { data: Uint8Array; canvas: RectifiedCanvas } {
   const data = new Uint8Array(SIZE * SIZE).fill(fill);
@@ -13,8 +13,8 @@ function canvasOf(fill: number): { data: Uint8Array; canvas: RectifiedCanvas } {
     canvas: {
       data,
       size: SIZE,
-      centreXPx: CENTRE,
-      centreYPx: CENTRE,
+      centerXPx: CENTER,
+      centerYPx: CENTER,
       pxPerMm: PX_PER_MM,
     },
   };
@@ -22,10 +22,10 @@ function canvasOf(fill: number): { data: Uint8Array; canvas: RectifiedCanvas } {
 
 /**
  * Paints a hole as it actually looks: a bright torn-paper rim around a darker
- * centre. That structure is what gives a hole its local variance, and it is
+ * center. That structure is what gives a hole its local variance, and it is
  * what separates it from a patch — see cv-corpus-validation-2026-09.md.
  *
- * `rim` and `core` are grey values, so the same helper paints a hole in the
+ * `rim` and `core` are gray values, so the same helper paints a hole in the
  * black zone (bright rim, mid core, dark ink around) and on white paper
  * (dark rim and core against bright paper).
  */
@@ -37,8 +37,8 @@ function paintHole(
   rim: number,
   core: number,
 ) {
-  const cx = CENTRE + xMm * PX_PER_MM;
-  const cy = CENTRE + yMm * PX_PER_MM;
+  const cx = CENTER + xMm * PX_PER_MM;
+  const cy = CENTER + yMm * PX_PER_MM;
   const r = (diameterMm * PX_PER_MM) / 2;
   for (let y = Math.floor(cy - r - 1); y <= Math.ceil(cy + r + 1); y += 1) {
     for (let x = Math.floor(cx - r - 1); x <= Math.ceil(cx + r + 1); x += 1) {
@@ -106,7 +106,7 @@ describe('snapToHole', () => {
 
   it('prefers the nearer of two holes rather than the bigger', () => {
     const { data, canvas } = canvasOf(30);
-    paintHole(data, 0, 0, 9, 210, 60); // centrefire, bigger, 7 mm from the tap
+    paintHole(data, 0, 0, 9, 210, 60); // centerfire, bigger, 7 mm from the tap
     paintHole(data, 10, 0, 5.6, 210, 60); // .22, 3 mm from the tap
 
     // Spaced so the two do not touch — 5.6 mm holes 5 mm apart overlap, and
@@ -118,7 +118,7 @@ describe('snapToHole', () => {
     expect(result!.xMm).toBeCloseTo(10, 0);
   });
 
-  it('rejects a blob far too large for the calibre', () => {
+  it('rejects a blob far too large for the caliber', () => {
     // A shadow edge or the ring line itself, not a hole.
     const { data, canvas } = canvasOf(30);
     paintHole(data, 0, 0, 30, 210, 60);
@@ -173,13 +173,13 @@ describe('snapToHole', () => {
   });
 
   it('still snaps within a crop-width of the canvas edge', () => {
-    // The 12 mm crop cannot be centred here, so it is shifted inward. A
+    // The 12 mm crop cannot be centered here, so it is shifted inward. A
     // candidate this close to the rim is outside the scoring rings, but it
     // must not crash or silently stop snapping.
     const { data, canvas } = canvasOf(30);
     // 14 px from the rim: the whole hole fits, but the 48 px crop cannot be
-    // centred on it, so holeCropAt has to shift the window inward.
-    const edgeMm = -(CENTRE - 14) / PX_PER_MM;
+    // centered on it, so holeCropAt has to shift the window inward.
+    const edgeMm = -(CENTER - 14) / PX_PER_MM;
     paintHole(data, edgeMm, edgeMm, 5.6, 210, 60);
 
     const result = snapToHole(canvas, { xMm: edgeMm + 1, yMm: edgeMm }, { caliberMm: 5.6 });
@@ -192,8 +192,8 @@ describe('snapToHole', () => {
     const canvas: RectifiedCanvas = {
       data: small,
       size: 32,
-      centreXPx: 16,
-      centreYPx: 16,
+      centerXPx: 16,
+      centerYPx: 16,
       pxPerMm: PX_PER_MM,
     };
     for (let y = 10; y < 22; y += 1) {

@@ -3,14 +3,14 @@
 // docs/specs/photo-scoring-phase1-spec.md §3 and §9.
 //
 // Input is target-mm in the same convention as `imageToTargetMm` and
-// `scoreHole` (origin at the target centre, y increasing DOWNWARD).
-// `elevationMm` negates y so that positive reads as "above centre", which is
+// `scoreHole` (origin at the target center, y increasing DOWNWARD).
+// `elevationMm` negates y so that positive reads as "above center", which is
 // what a shooter means by elevation; `windageMm` passes x through.
 
 import { scoreHole } from '../target-scoring/score';
 import type { TargetFaceDefinition } from '../target-scoring/targets';
 
-/** A shot position in target millimetres. y increases downward. */
+/** A shot position in target millimeters. y increases downward. */
 export interface GroupPoint {
   readonly xMm: number;
   readonly yMm: number;
@@ -20,9 +20,9 @@ export interface GroupAnalysis {
   readonly shotCount: number;
   /** Mean point of impact, in the input's own (y-down) convention. */
   readonly mpiMm: GroupPoint;
-  /** MPI x. Positive = right of centre. */
+  /** MPI x. Positive = right of center. */
   readonly windageMm: number;
-  /** Negated MPI y. Positive = above centre. */
+  /** Negated MPI y. Positive = above center. */
   readonly elevationMm: number;
   /** Mean distance from the MPI. */
   readonly meanRadiusMm: number;

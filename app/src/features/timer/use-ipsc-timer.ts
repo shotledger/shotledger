@@ -1,5 +1,5 @@
 // React wrapper around the pure `IpscTimerEngine` (shared/src/timer/
-// shot-detector.ts, unit-tested there). Same division of labour as
+// shot-detector.ts, unit-tested there). Same division of labor as
 // use-timer.ts: the engine owns the logic, this hook owns the interval, the
 // microphone handle, keep-awake and the cue → sound mapping. Not
 // independently tested — the same precedent as use-timer.ts.

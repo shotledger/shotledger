@@ -26,7 +26,7 @@ export type MatchConfidence = 'here' | 'nearby';
 
 export interface RangeMatch {
   range: ShootingRange;
-  /** Great-circle metres from the fix to the range's OSM point. */
+  /** Great-circle meters from the fix to the range's OSM point. */
   distanceMeters: number;
   confidence: MatchConfidence;
   /** What to put in the Location field. */
@@ -56,7 +56,7 @@ function toRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }
 
-/** Great-circle distance in metres. */
+/** Great-circle distance in meters. */
 export function haversineMeters(a: PositionFix, b: PositionFix): number {
   const lat1 = toRadians(a.latitude);
   const lat2 = toRadians(b.latitude);
@@ -71,7 +71,7 @@ export function haversineMeters(a: PositionFix, b: PositionFix): number {
 /**
  * Drops the individual firing lanes of a club whose site is itself in the list.
  *
- * Surveyed Swedish ranges map the club as `leisure=sports_centre` and each
+ * Surveyed Swedish ranges map the club as `leisure=sports_center` and each
  * lane as a separate `leisure=pitch`/`range` inside it. Offering those raw
  * would bury "Malmö Skyttegille" under "A1 - 200 meter", "B3 - 75 neter" and
  * "Älgen" — none of which is a place a shooter would write in a logbook.

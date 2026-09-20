@@ -188,18 +188,18 @@ export default function SessionDetailScreen() {
       .sort((a, b) => a.position - b.position);
   }
 
-  /** How many places the drag has travelled, from the heights it crossed. */
+  /** How many places the drag has traveled, from the heights it crossed. */
   function indexDelta(section: SeriesRow[], fromIndex: number, offset: number): number {
     const step = offset > 0 ? 1 : -1;
-    let travelled = 0;
+    let traveled = 0;
     let moved = 0;
     for (let i = fromIndex + step; i >= 0 && i < section.length; i += step) {
       const height = rowHeights[(section[i] as SeriesRow).id] ?? 0;
       // Half a row: the swap happens as the dragged row passes the midpoint
-      // of its neighbour, which is where it looks like it has taken its place.
-      travelled += height / 2;
-      if (Math.abs(offset) < travelled) break;
-      travelled += height / 2;
+      // of its neighbor, which is where it looks like it has taken its place.
+      traveled += height / 2;
+      if (Math.abs(offset) < traveled) break;
+      traveled += height / 2;
       moved += step;
     }
     return moved;
@@ -348,7 +348,7 @@ export default function SessionDetailScreen() {
             </ThemedText>
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
-                already taken by delete, and the two must not be neighbours. */}
+                already taken by delete, and the two must not be neighbors. */}
           </View>
         </View>
         <ShotChips
@@ -554,14 +554,14 @@ export default function SessionDetailScreen() {
             <StatTile
               testID="group-stat-windage"
               label={t('photoScoring.windage')}
-              value={t('photoScoring.millimetres', {
+              value={t('photoScoring.millimeters', {
                 value: group.analysis.windageMm.toFixed(1),
               })}
             />
             <StatTile
               testID="group-stat-elevation"
               label={t('photoScoring.elevation')}
-              value={t('photoScoring.millimetres', {
+              value={t('photoScoring.millimeters', {
                 value: group.analysis.elevationMm.toFixed(1),
               })}
             />
@@ -570,14 +570,14 @@ export default function SessionDetailScreen() {
             <StatTile
               testID="group-stat-mean-radius"
               label={t('photoScoring.meanRadius')}
-              value={t('photoScoring.millimetres', {
+              value={t('photoScoring.millimeters', {
                 value: group.analysis.meanRadiusMm.toFixed(1),
               })}
             />
             <StatTile
               testID="group-stat-max-spread"
               label={t('photoScoring.maxSpread')}
-              value={t('photoScoring.millimetres', {
+              value={t('photoScoring.millimeters', {
                 value: group.analysis.extremeSpreadMm.toFixed(1),
               })}
             />
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
   /**
    * The held row. `seriesRow` carries no background of its own — the card
    * behind it is the ground — so a dragged row was see-through and the list
-   * beneath showed through it. The colour is set inline from the theme; what
+   * beneath showed through it. The color is set inline from the theme; what
    * is fixed here is the shape that makes it read as picked up.
    */
   lifted: {

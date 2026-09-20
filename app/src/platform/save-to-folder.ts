@@ -12,7 +12,7 @@ import { bytesToBase64 } from './base64';
 export const isFolderSaveSupported = true;
 
 /** Opens the SAF folder picker. Returns the granted folder's SAF URI, or
- * `null` if the user cancelled or denied access. */
+ * `null` if the user canceled or denied access. */
 export async function pickFolder(): Promise<string | null> {
   try {
     const result = await StorageAccessFramework.requestDirectoryPermissionsAsync();

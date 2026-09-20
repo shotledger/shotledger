@@ -1,9 +1,9 @@
-# Licence-card scan (on-device OCR) — evidence report
+# License-card scan (on-device OCR) — evidence report
 
 > **Amended (2026-09-16, issue #276).** The Vault was removed, and with it the
-> "keep the scanned original" half of this spec: the scan now fills the licence
+> "keep the scanned original" half of this spec: the scan now fills the license
 > fields and the image is deleted on every path. The recognition, parsing and
-> form-prefill behaviours below are unchanged.
+> form-prefill behaviors below are unchanged.
 
 Companion to `docs/specs/license-card-ocr-spec.md`. Routine app-layer work
 per CLAUDE.md (a pure parser plus UI/platform glue) — ordinary vitest/jest
@@ -28,7 +28,7 @@ New dependency: `@react-native-ml-kit/text-recognition@2.0.0` (MIT), see the
 | `app/src/platform/text-recognition.ts`           | `app/src/platform/text-recognition.test.ts`           | 5     |
 | `app/src/features/licenses/scan-license-card.ts` | `app/src/features/licenses/scan-license-card.test.ts` | 12    |
 
-`card-parser.ts` is a pure function (recognised text → candidate field
+`card-parser.ts` is a pure function (recognized text → candidate field
 values); it is exhaustively tested with synthetic OCR text covering every
 field, every label variant, diacritics/case noise, digit-lookalike repair,
 date formats, "tills vidare", and the two bugs fixed on this branch:
@@ -41,12 +41,12 @@ date formats, "tills vidare", and the two bugs fixed on this branch:
   label and value separated only by column whitespace" test, a 9-field
   synthetic card asserted field-by-field.
 - **Caliber false positive**: the original `CALIBER_RE` matched the
-  `.000` inside a licence number like `A000.000/2026-01` as a caliber
+  `.000` inside a license number like `A000.000/2026-01` as a caliber
   reading (`.\s?\d{2,3}` with no boundary). Fixed by adding
   `(?<![\w.])` before the dot and `(?![\d./])` after the digits, so the
   dotted form only matches when it isn't preceded by a word/dot character
   or followed by more digits, a dot, or a slash. Covered by "does not read
-  a caliber out of the licence number", asserting `caliber` is `null` for
+  a caliber out of the license number", asserting `caliber` is `null` for
   `Tillståndsnummer: A000.000/2026-01` (no other caliber-shaped text in the
   card).
 
@@ -56,9 +56,9 @@ fixtures covering the two-column pairing, top-to-bottom ordering
 independent of input order, non-overlapping rows, and the two fallback
 paths (a line missing a frame, no lines at all).
 
-`scan-license-card.ts` (pick → recognise → parse orchestration, every
+`scan-license-card.ts` (pick → recognize → parse orchestration, every
 dependency injected) is tested with faked `pickFromCamera`/`pickFromLibrary`/
-`recognize`/`deleteImage` for: cancelled, denied, unsupported, failed engine,
+`recognize`/`deleteImage` for: canceled, denied, unsupported, failed engine,
 a parse that found nothing (image deleted, `nothing` status), and a
 successful scan (image kept, `scanned` result) — plus `countRecognizedFields`
 and `licenseFormValues`'s current-value-preserving merge and the
@@ -98,7 +98,7 @@ a `MEDIA_SCANNER_SCAN_FILE` broadcast.
 "Choose a photo of the card" → system photo picker → the synthetic card →
 recognition runs ("Reading the card…") → form pre-filled.
 
-**Result: all 10 fields recognised** ("Recognised fields: 10." notice):
+**Result: all 10 fields recognized** ("Recognized fields: 10." notice):
 
 | Field                       | Card value                                  | Form value after scan                                                                         |
 | --------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -108,23 +108,23 @@ recognition runs ("Reading the card…") → form pre-filled.
 | Valid until                 | `Tills vidare`                              | _(empty — indefinite, per spec)_                                                              |
 | Conditions                  | `Förvaras i säkerhetsskåp`                  | `Förvaras i säkerhetsskåp`                                                                    |
 | Authority                   | `Polismyndigheten`                          | `Polismyndigheten`                                                                            |
-| Make/model/caliber/vapen-id | `Testmake Testmodel`, `.22 LR`, `SE1234567` | summarised in the "Also update the firearm" line: `Testmake · Testmodel · .22 LR · SE1234567` |
+| Make/model/caliber/vapen-id | `Testmake Testmodel`, `.22 LR`, `SE1234567` | summarized in the "Also update the firearm" line: `Testmake · Testmodel · .22 LR · SE1234567` |
 
 The "Also update the firearm" opt-in switch and "Also store the photo in
 the document vault" switch both rendered correctly (both off by default, as
 specced). Nothing was saved — the flow was verified up to the pre-filled,
 editable form; Save was not pressed (would have written a real, if
-synthetic, licence row, which is not needed to prove the scan/parse/pre-fill
+synthetic, license row, which is not needed to prove the scan/parse/pre-fill
 path).
 
 No app-code bugs found during this pass — the reading-order fix, the two
 parser fixes, and the field mapping all worked correctly on the first
 end-to-end attempt.
 
-## 4a. 2026-09-03 amendment: original kept by default, linked to the licence
+## 4a. 2026-09-03 amendment: original kept by default, linked to the license
 
 Companion to the spec's "Storing and linking the original photo" section
-(`feat/licence-card-image`). Routine app-layer work; ordinary vitest/jest
+(`feat/license-card-image`). Routine app-layer work; ordinary vitest/jest
 tests.
 
 ### Unit tests
@@ -139,7 +139,7 @@ tests.
 `addPhotoDocument`/`deleteImage`, covering: the default-keep path (gates,
 encrypts, then clears the picker's cache copy), the opt-out path (`store:
 false` never calls the gate, just deletes), and a refused gate (deletes,
-reports `vaultDenied`, no plaintext left behind). The licence queries test
+reports `vaultDenied`, no plaintext left behind). The license queries test
 `vaultDocumentId` defaulting to `null`, being set at `addLicense` time, and
 `setLicenseVaultDocument` setting/clearing it on an existing row.
 
@@ -161,18 +161,18 @@ unmodified, confirming 0005 applies cleanly on top of a populated database.
 
 AVD `shotledger4` (`emulator-5556` this run), Metro on port 8084, dev build
 installed via `expo run:android --port 8084` + `adb install -r`. Demo data
-loaded from `/dev` (`Load demo data`) for realistic firearms/licences;
+loaded from `/dev` (`Load demo data`) for realistic firearms/licenses;
 synthetic card pushed to `/sdcard/Pictures/` as in §4 above.
 
-**Flow 1 — firearm licence renewal, default-keep:** Firearms & Ammo → Pardini
-K22 (had an existing 2024 licence) → Add renewal → Choose a photo of the card
-→ synthetic card → 10 fields recognised. **"Keep the original card photo in
+**Flow 1 — firearm license renewal, default-keep:** Firearms & Ammo → Pardini
+K22 (had an existing 2024 license) → Add renewal → Choose a photo of the card
+→ synthetic card → 10 fields recognized. **"Keep the original card photo in
 the Vault" was ON by default** with the hint "A gun shop needs to see the
 actual card. Turn this off if you don't want the photo kept." → Save. The
 device had no screen lock configured, so the vault gate's `deviceUnsecured`
 path granted access without a biometric prompt (expected — see
-`document-vault-spec.md`'s gate design). Result: the licence list now shows
-**two** rows — the untouched 2024 licence (no action offered) and the new
+`document-vault-spec.md`'s gate design). Result: the license list now shows
+**two** rows — the untouched 2024 license (no action offered) and the new
 2026 renewal with a **"Show License Card"** action, present only on the row
 that has a stored image.
 
@@ -186,19 +186,19 @@ byte-for-byte (same fields, same "SYNTETISKT TESTKORT" banner).
 plain "Take photo"/"Choose from library" buttons and a new, separate "Scan
 Card" section (with its own "Take a Photo of the Card"/"Choose a Photo of the
 Card" buttons) rendered together, confirming scanning is additive rather than
-replacing the baseline picker. Scanning the synthetic card recognised 10
+replacing the baseline picker. Scanning the synthetic card recognized 10
 fields; toggling "Also create a license record from this scan" revealed a
 firearm picker (Pardini K22 / Steyr LP10, the two demo firearms). Selecting
-Steyr LP10 (which had no licence) and saving: the vault now listed both
+Steyr LP10 (which had no license) and saving: the vault now listed both
 documents ("Test vapenlicens" plus the earlier renewal's), and **Firearms &
 Ammo now showed Steyr LP10 as "Valid"** instead of "No license" — its new
-licence row carries the scanned fields (`A000.000/2026-01`, `Tills vidare`,
+license row carries the scanned fields (`A000.000/2026-01`, `Tills vidare`,
 etc.) and its own "Show License Card" action, proving `vaultDocumentId` was
 set correctly from this path too.
 
 **Flow 4 — a missing linked document (the "document not found" hardening):**
-deleted the vault document backing Steyr LP10's licence directly from the
-vault list (Delete → confirm). Returning to Steyr LP10's licence and pressing
+deleted the vault document backing Steyr LP10's license directly from the
+vault list (Delete → confirm). Returning to Steyr LP10's license and pressing
 "Show License Card" (the action is unconditional — offered whenever
 `vaultDocumentId` is set, not gated on the document's continued existence)
 re-authenticated, then showed **"This document is no longer in the Vault on

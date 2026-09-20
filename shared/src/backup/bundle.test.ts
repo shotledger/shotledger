@@ -1,4 +1,4 @@
-// End-to-end evidence for the bundle format itself (spec behaviours B1-B8):
+// End-to-end evidence for the bundle format itself (spec behaviors B1-B8):
 // a bundle is assembled exactly as app/src/db/backup/export-bundle.ts
 // assembles one, then read back exactly as restore-bundle.ts reads one. The
 // app-side glue is thin IO around these bytes, so the failure cases that

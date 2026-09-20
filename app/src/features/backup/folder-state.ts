@@ -6,7 +6,7 @@
 // table, the same way lastBackupAt is persisted.
 export type FolderEvent =
   | { type: 'pick-succeeded'; folderUri: string }
-  | { type: 'pick-cancelled' }
+  | { type: 'pick-canceled' }
   | { type: 'write-succeeded' }
   | { type: 'write-failed' }
   | { type: 'forget' };
@@ -19,7 +19,7 @@ export function reduceFolderState(current: string | null, event: FolderEvent): s
   switch (event.type) {
     case 'pick-succeeded':
       return event.folderUri;
-    case 'pick-cancelled':
+    case 'pick-canceled':
     case 'write-succeeded':
       return current;
     case 'write-failed':

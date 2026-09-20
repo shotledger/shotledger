@@ -10,7 +10,7 @@ export type TextFieldProps = TextInputProps;
  * The app's single text input. Before this existed the same nine style
  * declarations were copied into nineteen screens, the radius was written three
  * different ways, and twelve of them left `placeholderTextColor` unset — so
- * placeholders fell back to the platform grey on the Purple Rain ground.
+ * placeholders fell back to the platform gray on the Purple Rain ground.
  *
  * The border carries focus, which the copies had no affordance for at all.
  */

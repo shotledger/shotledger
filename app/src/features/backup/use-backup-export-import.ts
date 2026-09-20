@@ -38,14 +38,14 @@ export type BackupStatus =
   | { kind: 'idle' }
   | { kind: 'export-success' }
   | { kind: 'export-failed' }
-  | { kind: 'restore-cancelled' }
+  | { kind: 'restore-canceled' }
   | { kind: 'restore-invalid' }
   | { kind: 'restore-newer-schema' }
   | { kind: 'restore-success' }
   | { kind: 'restore-failed' }
   | { kind: 'folder-save-success' }
   | { kind: 'folder-save-ios-fallback' }
-  | { kind: 'folder-save-cancelled' }
+  | { kind: 'folder-save-canceled' }
   | { kind: 'folder-save-failed' };
 
 export type RestoreOutcome = { kind: 'ok' } | { kind: 'failed' };
@@ -94,8 +94,8 @@ export function useBackupExportImport() {
       const filename = bundleFilename({ includePhotos: options.includePhotos });
 
       const delivered = await deliver(bytes, filename, options.destination);
-      if (delivered === 'cancelled') {
-        setStatus({ kind: 'folder-save-cancelled' });
+      if (delivered === 'canceled') {
+        setStatus({ kind: 'folder-save-canceled' });
         return;
       }
       if (delivered === 'failed') {
@@ -124,7 +124,7 @@ export function useBackupExportImport() {
     }
   }
 
-  type Delivery = 'ok' | 'ios-fallback' | 'cancelled' | 'failed';
+  type Delivery = 'ok' | 'ios-fallback' | 'canceled' | 'failed';
 
   async function deliver(
     bytes: Uint8Array,
@@ -142,7 +142,7 @@ export function useBackupExportImport() {
     let target = folderUri;
     if (!target) {
       const picked = await pickFolder();
-      if (!picked) return 'cancelled';
+      if (!picked) return 'canceled';
       persistFolder(reduceFolderState(target, { type: 'pick-succeeded', folderUri: picked }));
       target = picked;
     }
@@ -167,11 +167,11 @@ export function useBackupExportImport() {
   }
 
   /** Picks a bundle and validates it, without touching the DB. Returns
-   * `null` if the user cancelled the picker. */
+   * `null` if the user canceled the picker. */
   async function planRestore(): Promise<{ preview: RestorePreview; bytes: Uint8Array } | null> {
     const picked = await pickBundleBytes();
     if (!picked) {
-      setStatus({ kind: 'restore-cancelled' });
+      setStatus({ kind: 'restore-canceled' });
       return null;
     }
     const preview = inspectBundle(picked.bytes);
@@ -224,8 +224,8 @@ export function useBackupExportImport() {
         return t('backup.exportSuccess');
       case 'export-failed':
         return t('backup.exportFailed');
-      case 'restore-cancelled':
-        return t('backup.restoreCancelled');
+      case 'restore-canceled':
+        return t('backup.restoreCanceled');
       case 'restore-invalid':
         return t('backup.restoreInvalid');
       case 'restore-newer-schema':
@@ -238,8 +238,8 @@ export function useBackupExportImport() {
         return t('backup.folderSaveSuccess');
       case 'folder-save-ios-fallback':
         return t('backup.folderSaveIosFallback');
-      case 'folder-save-cancelled':
-        return t('backup.folderSaveCancelled');
+      case 'folder-save-canceled':
+        return t('backup.folderSaveCanceled');
       case 'folder-save-failed':
         return t('backup.folderSaveFailed');
     }

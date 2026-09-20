@@ -18,7 +18,7 @@ describe('sync photo markers', () => {
     expect(parseSyncPhotoUri('shotledger-photo:')).toBeNull();
   });
 
-  it('recognises a not-yet-uploaded local path', () => {
+  it('recognizes a not-yet-uploaded local path', () => {
     expect(isLocalPhotoUri('file:///data/photo.jpg')).toBe(true);
     expect(isLocalPhotoUri(toSyncPhotoUri('abc'))).toBe(false);
     expect(isLocalPhotoUri(null)).toBe(false);

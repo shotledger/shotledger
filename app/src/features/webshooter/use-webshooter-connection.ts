@@ -66,12 +66,12 @@ export function useWebshooterConnection(): WebshooterConnectionState {
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     loadTokenCache().then((token) => {
-      if (!cancelled) setConnected(token !== null);
+      if (!canceled) setConnected(token !== null);
     });
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, []);
 

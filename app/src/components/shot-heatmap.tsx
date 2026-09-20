@@ -26,7 +26,7 @@ const DEFAULT_RESOLUTION = 12;
  * A single hue at varying opacity rather than a rainbow scale: the rings and
  * their numbers have to stay readable underneath, and a viridis-style ramp
  * over a black target face fails that immediately. Opacity also degrades
- * honestly in greyscale and for colour-blind readers, which a hue ramp does
+ * honestly in grayscale and for color-blind readers, which a hue ramp does
  * not.
  */
 const CELL_COLOR = '#f97316';

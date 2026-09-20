@@ -6,7 +6,7 @@
     "hf_energy": -1.123,
     "laplacian_var": 0.118,
     "grad_mean": 27.5267,
-    "centre_deviation": 31.6067,
+    "center_deviation": 31.6067,
     "std": -47.831
   },
   "bias": -85.0118,
@@ -21,7 +21,7 @@
         "hf_energy": 0.0,
         "laplacian_var": 0.0,
         "grad_mean": 0.0,
-        "centre_deviation": 0.0,
+        "center_deviation": 0.0,
         "std": 0.0
       },
       "probability": 1.2018336603199333e-37
@@ -35,7 +35,7 @@
         "hf_energy": 0.0,
         "laplacian_var": 0.0,
         "grad_mean": 0.0,
-        "centre_deviation": 0.0,
+        "center_deviation": 0.0,
         "std": 0.0
       },
       "probability": 1.2018336603199333e-37
@@ -49,7 +49,7 @@
         "hf_energy": 0.0,
         "laplacian_var": 0.0,
         "grad_mean": 0.0,
-        "centre_deviation": 0.0,
+        "center_deviation": 0.0,
         "std": 0.0
       },
       "probability": 1.2018336603199333e-37
@@ -63,7 +63,7 @@
         "hf_energy": 0.011758021079003811,
         "laplacian_var": 0.0906638577580452,
         "grad_mean": 0.1630719006061554,
-        "centre_deviation": 8.168816566467285e-5,
+        "center_deviation": 8.168816566467285e-5,
         "std": 0.2948645353317261
       },
       "probability": 8.020618780701067e-42
@@ -77,7 +77,7 @@
         "hf_energy": 0.01175802480429411,
         "laplacian_var": 0.0906638503074646,
         "grad_mean": 0.1630719006061554,
-        "centre_deviation": 8.168816566467285e-5,
+        "center_deviation": 8.168816566467285e-5,
         "std": 0.2948645353317261
       },
       "probability": 8.02061874009529e-42
@@ -91,7 +91,7 @@
         "hf_energy": 0.02432694286108017,
         "laplacian_var": 0.46856993436813354,
         "grad_mean": 0.014366146177053452,
-        "centre_deviation": 0.048968538641929626,
+        "center_deviation": 0.048968538641929626,
         "std": 0.02176106534898281
       },
       "probability": 0.0046314170628726035
@@ -105,7 +105,7 @@
         "hf_energy": 3.503080368041992,
         "laplacian_var": 67.47404479980469,
         "grad_mean": 0.17239373922348022,
-        "centre_deviation": 0.5876224040985107,
+        "center_deviation": 0.5876224040985107,
         "std": 0.26113277673721313
       },
       "probability": 0.9998075374839085
@@ -119,7 +119,7 @@
         "hf_energy": 4.277505874633789,
         "laplacian_var": 82.26803588867188,
         "grad_mean": 0.22813017666339874,
-        "centre_deviation": 0.42240262031555176,
+        "center_deviation": 0.42240262031555176,
         "std": 0.2293374389410019
       },
       "probability": 0.9992612881209847
@@ -133,7 +133,7 @@
         "hf_energy": 4.277505397796631,
         "laplacian_var": 82.26803588867188,
         "grad_mean": 0.22813017666339874,
-        "centre_deviation": 0.42240265011787415,
+        "center_deviation": 0.42240265011787415,
         "std": 0.2293374389410019
       },
       "probability": 0.9992612892115811
@@ -147,7 +147,7 @@
         "hf_energy": 4.039374828338623,
         "laplacian_var": 41.62461471557617,
         "grad_mean": 0.20177270472049713,
-        "centre_deviation": 0.26021242141723633,
+        "center_deviation": 0.26021242141723633,
         "std": 0.2265518605709076
       },
       "probability": 8.345443412648422e-19
@@ -161,7 +161,7 @@
         "hf_energy": 68.25725555419922,
         "laplacian_var": 1733.8994140625,
         "grad_mean": 1.2861170768737793,
-        "centre_deviation": 0.006358981132507324,
+        "center_deviation": 0.006358981132507324,
         "std": 0.29242661595344543
       },
       "probability": 1.0
@@ -175,7 +175,7 @@
         "hf_energy": 1.0998374223709106,
         "laplacian_var": 10.829166412353516,
         "grad_mean": 0.08496732264757156,
-        "centre_deviation": 5.960464477539063e-8,
+        "center_deviation": 5.960464477539063e-8,
         "std": 0.2549019455909729
       },
       "probability": 6.593966351581595e-42
@@ -189,7 +189,7 @@
         "hf_energy": 2.856052875518799,
         "laplacian_var": 57.10332107543945,
         "grad_mean": 0.2757267653942108,
-        "centre_deviation": 0.0032271146774291992,
+        "center_deviation": 0.0032271146774291992,
         "std": 0.259885311126709
       },
       "probability": 3.3828851729237583e-6
@@ -203,7 +203,7 @@
         "hf_energy": 2.6185591220855713,
         "laplacian_var": 50.17301940917969,
         "grad_mean": 0.1250562071800232,
-        "centre_deviation": 0.060355380177497864,
+        "center_deviation": 0.060355380177497864,
         "std": 0.1973855048418045
       },
       "probability": 0.0012656360294924797

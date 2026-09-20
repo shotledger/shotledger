@@ -2,10 +2,10 @@
 //
 // A tap is blind: the fingertip covers the hole it is aiming at, so the
 // placement carries the shooter's intent but not their precision. The hole is
-// usually within a millimetre or two of where they touched, and the rectified
+// usually within a millimeter or two of where they touched, and the rectified
 // canvas already knows where it is.
 //
-// Pure JS on purpose. `runGeometry` hands out the rectified grey canvas once
+// Pure JS on purpose. `runGeometry` hands out the rectified gray canvas once
 // (`RectifiedCanvas`), so this runs on a typed array with no OpenCV call at
 // tap time — which also means the rule is unit-testable off-device, where
 // react-native-fast-opencv cannot run at all.
@@ -32,14 +32,14 @@ import {
   reflectIndex,
 } from '@shotledger/shared';
 
-/** The rectified grey canvas, as `runGeometry` emits it. */
+/** The rectified gray canvas, as `runGeometry` emits it. */
 export interface RectifiedCanvas {
-  /** Row-major grey bytes, `size * size` of them. */
+  /** Row-major gray bytes, `size * size` of them. */
   readonly data: Uint8Array;
   readonly size: number;
   /** Where target-mm (0, 0) sits on this canvas. */
-  readonly centreXPx: number;
-  readonly centreYPx: number;
+  readonly centerXPx: number;
+  readonly centerYPx: number;
   readonly pxPerMm: number;
 }
 
@@ -71,7 +71,7 @@ export const SNAP_WINDOW_MM = 4;
  * - `DEVIATION_FRACTION` and `MIN_CONTRAST` decide which pixels form a blob
  *   at all, and whether the window has any contrast worth searching.
  * - `AREA_TOLERANCE` bounds a candidate's area against the area a hole of the
- *   current calibre would have.
+ *   current caliber would have.
  *
  * A candidate must ALSO clear `holeProbability` on a `HOLE_CROP_PX` crop —
  * a second gate in series, whose constants *are* fitted
@@ -154,7 +154,7 @@ function windowStats(
 }
 
 /**
- * Local std-dev over a hole-sized crop centred on a point.
+ * Local std-dev over a hole-sized crop centered on a point.
  *
  * Deliberately *not* the variance of the
  * pixels a blob is made of: those were selected for deviating together, so
@@ -235,15 +235,15 @@ function findBlobs(
       sumX += lx;
       sumY += ly;
 
-      // 4-neighbourhood: a diagonal-only link is more likely two blobs
+      // 4-neighborhood: a diagonal-only link is more likely two blobs
       // touching at a corner than one hole.
-      const neighbours = [
+      const neighbors = [
         lx > 0 ? index - 1 : -1,
         lx < win.width - 1 ? index + 1 : -1,
         ly > 0 ? index - win.width : -1,
         ly < win.height - 1 ? index + win.width : -1,
       ];
-      for (const n of neighbours) {
+      for (const n of neighbors) {
         if (n < 0 || seen[n] || !deviant[n]) continue;
         seen[n] = 1;
         stack.push(n);
@@ -261,12 +261,12 @@ function findBlobs(
 }
 
 /**
- * The `HOLE_CROP_PX`-square grey crop the fitted filter expects, always
- * centred on (xPx, yPx), with anything past the canvas rim mirrored back in.
+ * The `HOLE_CROP_PX`-square gray crop the fitted filter expects, always
+ * centered on (xPx, yPx), with anything past the canvas rim mirrored back in.
  *
- * Reflected, not shifted inward. Two of the six features — the centre-window
+ * Reflected, not shifted inward. Two of the six features — the center-window
  * deviation above all — are defined relative to the middle of the crop, so a
- * crop slid sideways to fit reads a hole as off-centre texture and the filter
+ * crop slid sideways to fit reads a hole as off-center texture and the filter
  * refuses it. Reflection keeps the candidate in the middle, and it is the same
  * `BORDER_REFLECT_101` every convolution inside `holeFeatures` already uses at
  * its own edges. Returns null only when the canvas is smaller than one crop,
@@ -288,7 +288,7 @@ function holeCropAt(canvas: RectifiedCanvas, xPx: number, yPx: number): Uint8Arr
 }
 
 export interface SnapOptions {
-  /** Hole diameter to expect, mm — the calibre the shooter selected. */
+  /** Hole diameter to expect, mm — the caliber the shooter selected. */
   readonly caliberMm: number;
   readonly windowMm?: number;
 }
@@ -310,8 +310,8 @@ export function snapToHole(
   if (canvas.data.length < canvas.size * canvas.size) return null;
 
   const windowMm = options.windowMm ?? SNAP_WINDOW_MM;
-  const tapXPx = canvas.centreXPx + tap.xMm * canvas.pxPerMm;
-  const tapYPx = canvas.centreYPx + tap.yMm * canvas.pxPerMm;
+  const tapXPx = canvas.centerXPx + tap.xMm * canvas.pxPerMm;
+  const tapYPx = canvas.centerYPx + tap.yMm * canvas.pxPerMm;
   const radiusPx = windowMm * canvas.pxPerMm;
 
   const win = windowAround(canvas, tapXPx, tapYPx, radiusPx);
@@ -361,8 +361,8 @@ export function snapToHole(
 
   if (!best) return null;
   return {
-    xMm: (best.blob.xPx - canvas.centreXPx) / canvas.pxPerMm,
-    yMm: (best.blob.yPx - canvas.centreYPx) / canvas.pxPerMm,
+    xMm: (best.blob.xPx - canvas.centerXPx) / canvas.pxPerMm,
+    yMm: (best.blob.yPx - canvas.centerYPx) / canvas.pxPerMm,
     distanceMm: best.distancePx / canvas.pxPerMm,
     localStdDev: best.localStdDev,
     holeProbability: best.probability,

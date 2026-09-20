@@ -140,7 +140,7 @@ const outputs = [
 
 let stale = false;
 for (const output of outputs) {
-  const serialised = `${JSON.stringify(output.body, null, 2)}\n`;
+  const serialized = `${JSON.stringify(output.body, null, 2)}\n`;
   if (process.argv.includes('--check')) {
     let current;
     try {
@@ -150,13 +150,13 @@ for (const output of outputs) {
       stale = true;
       continue;
     }
-    if (current !== serialised) {
+    if (current !== serialized) {
       console.error(`export-schema: ${output.label} is stale`);
       stale = true;
     }
   } else {
     mkdirSync(dirname(output.path), { recursive: true });
-    writeFileSync(output.path, serialised);
+    writeFileSync(output.path, serialized);
     console.log(`export-schema: wrote ${output.label}`);
   }
 }

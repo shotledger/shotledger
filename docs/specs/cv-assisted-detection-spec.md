@@ -20,7 +20,7 @@ assist stops helping", not "the score is wrong".
 the runtime.** `spike/cv/hole_filter.py` defines the feature arithmetic and
 `spike/cv/fit_hole_filter.py` fitted the weights, both against OpenCV. The
 TypeScript re-implements that arithmetic without OpenCV, and a committed
-fixture pins the two together (behaviour 7). Neither may change without the
+fixture pins the two together (behavior 7). Neither may change without the
 other.
 
 ## 1. What is being ported, and what is not
@@ -33,16 +33,16 @@ It was measured on both corpora and it loses. It stays in the spike as a
 negative result — see the evidence report and the measurement doc.
 
 Six features, not the seven of `cv-corpus-validation-2026-09.md` §2. The
-seventh was **colour** std-dev, and the production canvas
-(`RectifiedCanvas`) is grey-only, so it cannot be computed where the filter has
+seventh was **color** std-dev, and the production canvas
+(`RectifiedCanvas`) is gray-only, so it cannot be computed where the filter has
 to run.
 
 One feature changed shape during this work, and the reason is a measured
-finding rather than taste: centre darkness is used as a **magnitude**,
-`|mean(centre) - mean(crop)|`, not a signed value. Signed, it fits "bright
+finding rather than taste: center darkness is used as a **magnitude**,
+`|mean(center) - mean(crop)|`, not a signed value. Signed, it fits "bright
 middle", because 92 of the 96 labelled holes are in the black zone where a hole
 shows as a bright torn rim; it then rejects a hole on white paper, where the
-same hole reads dark (measured: all 4 white-zone holes sit at centre
+same hole reads dark (measured: all 4 white-zone holes sit at center
 deviation ≈ −0.22, every black-zone hole at ≥ 0). `snapToHole` is deliberately
 polarity-agnostic and must stay so.
 
@@ -50,23 +50,23 @@ polarity-agnostic and must stay so.
 
 ### `shared/src/target-scoring/hole-features.ts` (new, pure)
 
-1. **`holeFeatures` computes six descriptors of a square grey crop.**
+1. **`holeFeatures` computes six descriptors of a square gray crop.**
    Given `{data: Uint8Array, size: n}` it returns
-   `{orientEntropy, hfEnergy, laplacianVar, gradMean, centreDeviation, stdDev}`,
+   `{orientEntropy, hfEnergy, laplacianVar, gradMean, centerDeviation, stdDev}`,
    all computed on `data/255`.
    - `gradMean` = mean Sobel-3 gradient magnitude.
    - `orientEntropy` = Shannon entropy of an 18-bin histogram of gradient
      direction over `[-π, π]`, weighted by magnitude.
    - `hfEnergy` = `mean((g - gaussianBlur5(g))²) × 1000`.
    - `laplacianVar` = `variance(laplacian3(g)) × 1000`.
-   - `centreDeviation` = `|mean(middle third × middle third) - mean(g)|`.
+   - `centerDeviation` = `|mean(middle third × middle third) - mean(g)|`.
    - `stdDev` = population standard deviation of `g`.
 2. **A uniform crop has zero texture.** Every feature except `orientEntropy`
    is `0` for a constant-valued crop (`orientEntropy` is `0` too, because an
    all-zero magnitude histogram carries no orientation).
 3. **Features are scale-free in brightness offset where they claim to be.**
    Adding a constant to every pixel (without clipping) leaves `gradMean`,
-   `hfEnergy`, `laplacianVar`, `stdDev` and `centreDeviation` unchanged.
+   `hfEnergy`, `laplacianVar`, `stdDev` and `centerDeviation` unchanged.
 4. **A crop smaller than 3×3, or one whose `data` is shorter than `size²`,
    returns all-zero features** rather than reading out of bounds.
 5. **`holeProbability` is the logistic of the fitted linear combination**:
@@ -98,7 +98,7 @@ polarity-agnostic and must stay so.
 8. **The filter is an additional gate, not a replacement.** A candidate is
    accepted only if it passes **both** the existing `MIN_LOCAL_STD_DEV` gate on
    the small inner crop **and** `isHoleLike` on a `HOLE_CROP_PX`-square crop
-   centred on it. The conjunction can only refuse more than today, never
+   centered on it. The conjunction can only refuse more than today, never
    accept more.
    _Why not a replacement:_ the 12 mm crop straddles the boundary of anything
    hole-sized, so a flat blob of hole size reads as variance to it — the
@@ -109,16 +109,16 @@ polarity-agnostic and must stay so.
 10. **A real repair patch is refused**: a flat dark blob on the black zone
     scores below the threshold and the tap is kept.
 11. **The crop is reflected at the canvas rim, never read out of bounds.** The
-    crop stays centred on the candidate and anything past the edge is mirrored
+    crop stays centered on the candidate and anything past the edge is mirrored
     back in (`BORDER_REFLECT_101`, the same rule every convolution inside
     `holeFeatures` uses); a canvas smaller than `HOLE_CROP_PX` refuses the snap.
 
     > **Spec revised during implementation (2026-09-16).** This first said the
     > window _shifts inward_ to fit. Implemented that way it silently stopped
     > snapping within 24 px of the rim, and the test written for the criterion
-    > caught it: `centreDeviation` is defined against the middle of the crop,
-    > so a crop slid sideways reads a real hole as off-centre texture and the
-    > filter refuses it. Reflection keeps the candidate centred, which is what
+    > caught it: `centerDeviation` is defined against the middle of the crop,
+    > so a crop slid sideways reads a real hole as off-center texture and the
+    > filter refuses it. Reflection keeps the candidate centered, which is what
     > the feature's definition requires.
 
 12. **`SnapResult` reports the probability** as `holeProbability`, alongside
@@ -147,7 +147,7 @@ maintainer's. Raw feature scale.
 | `hfEnergy`        | −1.1230  |
 | `laplacianVar`    | +0.1180  |
 | `gradMean`        | +27.5267 |
-| `centreDeviation` | +31.6067 |
+| `centerDeviation` | +31.6067 |
 | `stdDev`          | −47.8310 |
 | bias              | −85.0118 |
 

@@ -38,7 +38,7 @@ Letar du efter något särskilt tar guiderna upp
 [att logga ett pass](guides/logging-a-session.md),
 [att räkna från foto](guides/scoring-from-a-photo.md),
 [timrarna](guides/timers.md) och
-[skjutaktivitet](guides/licence-activity.md).
+[skjutaktivitet](guides/license-activity.md).
 
 !!! note "Den här manualen beskriver det aktuella bygget"
 

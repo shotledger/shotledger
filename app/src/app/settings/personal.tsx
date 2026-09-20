@@ -4,7 +4,7 @@
 // Its own page because no setting is set directly under Settings any more
 // (maintainer, #138: "birthday, class etc should be under a subsettings page
 // (Personal or similar)"). The märke table stays on the same page as the
-// birth year it reads, which is the earlier request it has to honour.
+// birth year it reads, which is the earlier request it has to honor.
 import {
   allMarkeThresholds,
   ageReduction,

@@ -5,13 +5,13 @@
 //
 // ML Kit's text recognition runs entirely on the device: the bundled Latin
 // model ships inside the APK/IPA and the image never leaves the phone. That
-// is the privacy boundary the licence-card feature needs — see
+// is the privacy boundary the license-card feature needs — see
 // docs/specs/license-card-ocr-spec.md.
 import { File } from 'expo-file-system';
 import TextRecognition, { type TextLine } from '@react-native-ml-kit/text-recognition';
 
 export type RecognizeTextResult =
-  /** `text` is the raw recognised text, blocks joined by newlines. */
+  /** `text` is the raw recognized text, blocks joined by newlines. */
   | { status: 'ok'; text: string }
   /** No OCR engine on this platform (web). */
   | { status: 'unsupported' }
@@ -26,7 +26,7 @@ export type RecognizeTextResult =
  * flat text is every label, then every value, and no parser can pair them.
  * Grouping lines by vertical overlap and sorting each group left-to-right
  * puts "Ändamål  Målskjutning" back on one line, which is what the parser
- * reads. (Verified on the emulator: 4 fields recognised before this,
+ * reads. (Verified on the emulator: 4 fields recognized before this,
  * 10 after — see docs/specs/license-card-ocr-evidence.md.)
  */
 export function linesInReadingOrder(lines: readonly TextLine[], fallback: string): string {
@@ -75,7 +75,7 @@ export async function recognizeText(imageUri: string): Promise<RecognizeTextResu
 /**
  * Removes the picker's cached copy of the scanned image. The card is the most
  * sensitive thing the app ever sees, so it does not linger in the cache after
- * the text has been read: the recognised fields are kept, the image never is.
+ * the text has been read: the recognized fields are kept, the image never is.
  */
 export async function deleteScannedImage(imageUri: string): Promise<void> {
   try {

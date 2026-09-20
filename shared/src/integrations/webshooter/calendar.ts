@@ -13,7 +13,7 @@ export interface CalendarEventInput {
   lane: number;
   /**
    * 'YYYY-MM-DD HH:mm:ss', Stockholm-naive — same format as the API. Null
-   * until the organiser publishes patrol times, which is the normal state
+   * until the organizer publishes patrol times, which is the normal state
    * of a signup for weeks after entering.
    */
   startLocal: string | null;

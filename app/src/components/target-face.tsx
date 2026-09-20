@@ -21,7 +21,7 @@ export interface TargetFaceProps extends ViewProps {
 
 const DEFAULT_SIZE = 300;
 
-// A printed target is a physical object: it keeps its own paper/ink colours
+// A printed target is a physical object: it keeps its own paper/ink colors
 // rather than following the app theme.
 const PAPER = '#f4f0e8';
 const INK = '#1c1c1e';
@@ -40,7 +40,7 @@ export function targetExtentMm(target: TargetFaceDefinition): number {
 /**
  * The definition carries only the black zone's OUTER diameter. For an annulus
  * face the inner edge is approximated by the innermost (X) ring, which keeps a
- * light aiming centre without inventing a second dimension.
+ * light aiming center without inventing a second dimension.
  */
 function blackInnerRadiusMm(target: TargetFaceDefinition): number {
   if (target.referenceIsSolidBlack) return 0;
@@ -65,7 +65,7 @@ export function TargetFace({
   const blackOuter = showBlackZone ? target.referenceDiameterMm / 2 : 0;
   const blackInner = showBlackZone ? blackInnerRadiusMm(target) : 0;
   // Strictly outside the inner edge: a line drawn exactly on it borders the
-  // paper centre and has to stay dark to be visible.
+  // paper center and has to stay dark to be visible.
   const onBlack = (radiusMm: number): boolean =>
     showBlackZone && radiusMm <= blackOuter && radiusMm > blackInner;
 
@@ -107,7 +107,7 @@ export function TargetFace({
               <SvgText
                 key={`label-${ring.label}-${x}`}
                 x={x}
-                // Nudge the baseline so the digit sits centred on the axis.
+                // Nudge the baseline so the digit sits centered on the axis.
                 y={fontSizeMm * 0.35}
                 fontSize={fontSizeMm}
                 fill={fill}

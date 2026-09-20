@@ -5,7 +5,7 @@ import { fromProjective, fromRectification, scaleTransform } from './transform';
 
 const p = (x: number, y: number) => ({ x, y });
 
-// A frontal, unrotated fit: 200mm black zone spanning 800px, centred at
+// A frontal, unrotated fit: 200mm black zone spanning 800px, centered at
 // (500, 500) — so 1mm is 4px.
 const rectification = buildRectification(
   { center: p(500, 500), majorAxis: 800, minorAxis: 800, rotationDeg: 0 },
@@ -13,7 +13,7 @@ const rectification = buildRectification(
 );
 
 describe('fromRectification', () => {
-  it('maps the ellipse centre to the target centre', () => {
+  it('maps the ellipse center to the target center', () => {
     const t = fromRectification(rectification);
     expect(t.toMm(p(500, 500))).toEqual({ x: 0, y: 0 });
     expect(t.source).toBe('auto');

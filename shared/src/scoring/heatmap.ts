@@ -7,7 +7,7 @@
 // an unreadable smear. A 60-shot precision session is exactly that.
 //
 // Input is target-mm in the same convention as everything else here (origin
-// at the target centre, y increasing DOWNWARD), so the grid can be drawn
+// at the target center, y increasing DOWNWARD), so the grid can be drawn
 // straight over the ring overlay.
 
 import type { GroupPoint } from './group';
@@ -16,7 +16,7 @@ export interface HeatmapCell {
   /** Grid column and row, 0-based from the top-left of the covered square. */
   readonly column: number;
   readonly row: number;
-  /** Centre of the cell, in target-mm. */
+  /** Center of the cell, in target-mm. */
   readonly xMm: number;
   readonly yMm: number;
   /** Shots in this cell. */
@@ -34,7 +34,7 @@ export interface Heatmap {
   /** Cells with at least one shot, hottest first. Empty cells are omitted. */
   readonly cells: readonly HeatmapCell[];
   readonly resolution: number;
-  /** Side of the square the grid covers, in mm, centred on the target. */
+  /** Side of the square the grid covers, in mm, centered on the target. */
   readonly extentMm: number;
   readonly cellSizeMm: number;
   readonly shotCount: number;
@@ -44,13 +44,13 @@ export interface Heatmap {
 
 /**
  * Below this the picture is noise: with six shots every occupied cell is
- * either 1 or 2 and the colour scale says nothing a scatter plot did not.
+ * either 1 or 2 and the color scale says nothing a scatter plot did not.
  */
 export const MIN_SHOTS_FOR_HEATMAP = 20;
 
 /**
  * Bins `points` into a `resolution` x `resolution` grid covering a square of
- * `extentMm` centred on the target.
+ * `extentMm` centered on the target.
  *
  * A shot outside the square is clamped into the edge cell rather than
  * dropped — a flier is information, and silently losing it would make the

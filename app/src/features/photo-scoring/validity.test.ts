@@ -6,7 +6,7 @@ const good: GeometryMetrics = {
   axisRatio: 1.006,
   zoneFraction: 0.349,
   centerInFrame: true,
-  zoneContrastGrey: 156.1,
+  zoneContrastGray: 156.1,
   profileScore: 232.25,
 };
 
@@ -32,14 +32,14 @@ describe('checkGeometryValidity', () => {
     );
   });
 
-  it('V4: rejects a fit whose centre landed outside the frame', () => {
+  it('V4: rejects a fit whose center landed outside the frame', () => {
     expect(checkGeometryValidity(withMetric({ centerInFrame: false })).reasons).toContain(
       'centerInFrame',
     );
   });
 
   it('V5: rejects a black zone with no contrast step against the card', () => {
-    expect(checkGeometryValidity(withMetric({ zoneContrastGrey: 49.9 })).reasons).toContain(
+    expect(checkGeometryValidity(withMetric({ zoneContrastGray: 49.9 })).reasons).toContain(
       'zoneContrast',
     );
   });
@@ -55,7 +55,7 @@ describe('checkGeometryValidity', () => {
       axisRatio: 9,
       zoneFraction: 0.005,
       centerInFrame: false,
-      zoneContrastGrey: -100,
+      zoneContrastGray: -100,
       profileScore: 1,
     });
     expect(result.valid).toBe(false);
@@ -75,7 +75,7 @@ describe('checkGeometryValidity', () => {
         axisRatio: t.maxAxisRatio,
         zoneFraction: t.minZoneFraction,
         centerInFrame: true,
-        zoneContrastGrey: t.minZoneContrastGrey,
+        zoneContrastGray: t.minZoneContrastGray,
         profileScore: t.minProfileScore,
       }).valid,
     ).toBe(true);
@@ -89,7 +89,7 @@ describe('checkGeometryValidity', () => {
     expect(checkGeometryValidity(withMetric({ zoneFraction: Number.NaN })).reasons).toContain(
       'zoneFraction',
     );
-    expect(checkGeometryValidity(withMetric({ zoneContrastGrey: Number.NaN })).reasons).toContain(
+    expect(checkGeometryValidity(withMetric({ zoneContrastGray: Number.NaN })).reasons).toContain(
       'zoneContrast',
     );
     expect(checkGeometryValidity(withMetric({ profileScore: Number.NaN })).reasons).toContain(
@@ -106,7 +106,7 @@ describe('the corpus photos the gate exists for', () => {
       axisRatio: 2.349,
       zoneFraction: 0.005,
       centerInFrame: true,
-      zoneContrastGrey: -111.5,
+      zoneContrastGray: -111.5,
       profileScore: 7.05,
     });
     expect(result.valid).toBe(false);
@@ -119,7 +119,7 @@ describe('the corpus photos the gate exists for', () => {
       axisRatio: 6.389,
       zoneFraction: 0.049,
       centerInFrame: true,
-      zoneContrastGrey: -5.6,
+      zoneContrastGray: -5.6,
       profileScore: 9.21,
     });
     expect(result.valid).toBe(false);
@@ -133,7 +133,7 @@ describe('the corpus photos the gate exists for', () => {
       axisRatio: 1.477,
       zoneFraction: 0.897,
       centerInFrame: true,
-      zoneContrastGrey: -57.7,
+      zoneContrastGray: -57.7,
       profileScore: 121.99,
     });
     expect(result.valid).toBe(false);
@@ -145,7 +145,7 @@ describe('the corpus photos the gate exists for', () => {
       axisRatio: 1.964,
       zoneFraction: 1.015,
       centerInFrame: true,
-      zoneContrastGrey: -21.0,
+      zoneContrastGray: -21.0,
       profileScore: 320.45,
     });
     expect(result.valid).toBe(false);
@@ -158,7 +158,7 @@ describe('the corpus photos the gate exists for', () => {
         axisRatio: 1.284,
         zoneFraction: 0.703,
         centerInFrame: true,
-        zoneContrastGrey: 84.2,
+        zoneContrastGray: 84.2,
         profileScore: 33.84,
       }).valid,
     ).toBe(true);

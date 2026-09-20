@@ -40,7 +40,7 @@ Everything else was already covered, because it lives in the SQLite file that
 | `firearms`, `firearm_groups`, `ammo_lots`, `licenses`, `maintenance_events`                                                                                 | in the DB file — included                                                                              |
 | `shot_marks` (photo-scoring marks)                                                                                                                          | in the DB file — included                                                                              |
 | `sync_outbox`, `sync_state`, `sync_control`, `photo_queue`                                                                                                  | in the DB file — included **deliberately** (rationale in the spec)                                     |
-| Local series/target photos                                                                                                                                  | included (unchanged behaviour, path rewritten)                                                         |
+| Local series/target photos                                                                                                                                  | included (unchanged behavior, path rewritten)                                                          |
 | `Paths.document/backup-photos/` (photos restored by an earlier restore)                                                                                     | reachable through `series.photo_uri` as an absolute file URI — read and re-included                    |
 | `Paths.document/vault/`                                                                                                                                     | excluded by default; opt-in (Part 2)                                                                   |
 | `Paths.document/pre-restore-backups/`                                                                                                                       | excluded on purpose — bundles of bundles                                                               |
@@ -68,11 +68,11 @@ in the bundle.
   independent implementation) across:
   - every input length from 0 to 200 bytes — which walks the 55/56/64-byte
     padding and block boundaries where a hand-written hash goes wrong;
-  - 200 randomised inputs up to 1000 bytes, and a 2 000 003-byte input (the
+  - 200 randomized inputs up to 1000 bytes, and a 2 000 003-byte input (the
     64-bit length field beyond 16 bits);
   - HMAC over key lengths {0, 1, 32, 63, 64, 65, 100, 200} × message lengths
     {0, 1, 55, 56, 64, 65, 300} — the key-longer-than-block path included;
-  - PBKDF2 over 40 randomised (password, salt, iteration count, key length)
+  - PBKDF2 over 40 randomized (password, salt, iteration count, key length)
     tuples, derived keys spanning one, two and three output blocks, and the
     exact parameters the app ships.
 
@@ -140,7 +140,7 @@ in the bundle.
   loop of its own, it keeps `InvalidHexError` (a public export of
   `@shotledger/shared`, and the type `hex.test.ts` asserts on), and it makes a
   malformed `saltHex` fail the same way on every platform. The manifest schema
-  already gates `saltHex` on `/^[0-9a-f]+$/`, so this is defence in depth, not
+  already gates `saltHex` on `/^[0-9a-f]+$/`, so this is defense in depth, not
   the primary check.
 
 ## Routine app-layer work (ordinary tests, no gauntlet)
@@ -168,7 +168,7 @@ in the bundle.
 ## Device verification
 
 Emulator `shotledger4` (`emulator-5560`), Metro port 8084, dev build from this
-branch. **Synthetic vault documents only** — no real licence data at any point
+branch. **Synthetic vault documents only** — no real license data at any point
 (hard rule 7). Sequence exercised:
 
 1. Export with the Vault switch off (default) — photos on.
@@ -189,7 +189,7 @@ re-validated, and the vault section actually decrypted.
 `shotledger-backup-with-photos-2026-09-03.shotledger`; entries `manifest.json`
 (481 B) and `database.sqlite3` (569 344 B) — **no `vault/payload.enc`, and no
 `vault` field in the manifest**. Counts: 30 sessions, 216 series, 1080 shots,
-2 firearms, 1 licence, 2 ammo lots, 3 tags, 1 maintenance event, `photos: 0`,
+2 firearms, 1 license, 2 ammo lots, 3 tags, 1 maintenance event, `photos: 0`,
 `syncPhotos: 0`, `photosUnreadable: 0`. Elapsed from tapping Back Up to the
 share sheet: **2 s**.
 
@@ -204,7 +204,7 @@ iterations, 2 documents. Offline against the bundle:
 
 - the wrong passphrase was rejected;
 - the right passphrase produced both synthetic documents, ids and labels intact
-  (`SynthLicenceA` → `SYNTH-DOC-A-0000`, `SynthDoorB` → `SYNTH-CODE-B-1111`);
+  (`SynthLicenseA` → `SYNTH-DOC-A-0000`, `SynthDoorB` → `SYNTH-CODE-B-1111`);
 - searching the **whole bundle** for `SynthDoorB` and `SYNTH-CODE-B-1111`
   found nothing — no vault plaintext anywhere in the file.
 
@@ -217,7 +217,7 @@ already records as markedly slower than real hardware. The count is a manifest
 field, so it can be raised later without invalidating any existing bundle.
 
 **Restore, no vault in the bundle, vault present on the device.** The preview
-read "The Vault is not in this backup, so licence card images stay as they are
+read "The Vault is not in this backup, so license card images stay as they are
 on this device". After restoring, `files/vault/` still held the same three
 files with their **original timestamps** — untouched, as specified.
 
@@ -232,7 +232,7 @@ written.
 re-created (fresh timestamps) and the index rewritten; a second pre-restore
 backup appeared, so the destructive path ran exactly once. Status: "Restore
 complete and the Vault merged — close and reopen the app". After a full app
-restart, the Vault screen listed **SynthDoorB** and **SynthLicenceA**, both
+restart, the Vault screen listed **SynthDoorB** and **SynthLicenseA**, both
 decryptable with the device key.
 
 ### Not exercised on device
@@ -258,7 +258,7 @@ rather than ignored, but nothing in this branch's code path is implicated.
 ## Known limitations
 
 - The vault payload is assembled and sealed **in memory**, so an opt-in export
-  of a very large vault is bounded by available heap. The vault holds licence
+  of a very large vault is bounded by available heap. The vault holds license
   and membership cards — a handful of photos — so this is not a practical
   limit today; it is recorded because it would become one if the vault ever
   stored many large files.

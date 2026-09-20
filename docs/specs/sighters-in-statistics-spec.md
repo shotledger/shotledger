@@ -47,7 +47,7 @@ is the whole contract.
   `docs/specs/analytics-report-spec.md`,
   `docs/manual/guides/logging-a-session{,.sv}.md`.
 - **No schema change, no migration, no new native module, no stored state.**
-  The toggle is filter-form state, serialised into the report route's params
+  The toggle is filter-form state, serialized into the report route's params
   exactly like every other filter dimension.
 
 ## 1. The request
@@ -89,11 +89,11 @@ same day; it now records his ruling.
 
 "Exclude sighters" removes them from the **score** figures, not from _Shots
 fired_. A round fired at a target was fired whether or not it was a sighter, and
-the firearm round counter, ammo usage and licence activity all rest on that.
+the firearm round counter, ammo usage and license activity all rest on that.
 
 The consequence is a property worth stating plainly, because it is what makes
 the feature explainable: **with the filter off, the Statistics report reproduces
-exactly today's behaviour** — the same numbers, from the same code paths. The
+exactly today's behavior** — the same numbers, from the same code paths. The
 toggle only ever adds sighters to the score side.
 
 The alternative (treating the toggle as "which series is this report about", so
@@ -143,7 +143,7 @@ recorded here rather than the reading it corrects. `scoredSeries` is therefore
 not used inside `guldserieCount` at all any more — it iterates the list
 directly, so there is no sighter predicate left to get wrong.
 
-Existing behaviour that changes as a result: `stats.test.ts` B28
+Existing behavior that changes as a result: `stats.test.ts` B28
 (`m5-stats-spec.md`) asserted that a qualifying sighter did **not** count; that
 assertion is corrected to `3` rather than `2`, and the M5 spec's B28 amended
 with it. Per-firearm and per-ammo-lot buckets carry the same `guldserieCount`,
@@ -167,9 +167,9 @@ here.
 
 ## 3. The mechanism
 
-One optional scope argument, defaulting to today's behaviour, threaded from the
+One optional scope argument, defaulting to today's behavior, threaded from the
 Statistics tab's filter form down to the two aggregation entry points. No
-behaviour changes anywhere the argument is not passed.
+behavior changes anywhere the argument is not passed.
 
 ```ts
 // shared/src/scoring/stats.ts
@@ -183,9 +183,9 @@ export interface SighterScope {
 ```
 
 - `scoredSeries(list, scope?)` — returns the list unfiltered when
-  `includeSighters` is true, else the non-sighter series (today's behaviour).
+  `includeSighters` is true, else the non-sighter series (today's behavior).
 - `scoredShots(list, scope?)` — the shots of whatever `scoredSeries` returns.
-- `volumeShotCount(list)` — **unchanged signature and behaviour** (§2.1).
+- `volumeShotCount(list)` — **unchanged signature and behavior** (§2.1).
 - `guldserieCount(list, options)` — no scope parameter; **stops filtering
   sighters out** and iterates the list directly (§2.3).
 - `sessionTrend`, `compareRecentSeries`, `aggregateBy*` — **unchanged** (§2.4).
@@ -203,17 +203,17 @@ either — it inherits the scope through its input (§2.2).
 
 ### Behaviors — `stats.ts`
 
-| id   | Given                                                                                | Then                                                                             |
-| ---- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| SS-1 | `scoredSeries([sighter, normal])` with no scope argument                             | `[normal]` — the default is unchanged, every existing caller keeps its behaviour |
-| SS-2 | `scoredSeries([sighter, normal], { includeSighters: false })`                        | `[normal]` — an explicit `false` is the same as omitting it                      |
-| SS-3 | `scoredSeries([sighter, normal], { includeSighters: true })`                         | `[sighter, normal]` — same members, **input order preserved**                    |
-| SS-4 | `scoredSeries([], { includeSighters: true })`                                        | `[]`                                                                             |
-| SS-5 | `scoredShots([sighter(5 shots), normal(5 shots)], { includeSighters: true })`        | all 10 shots, sighter's first (series order, then shot order)                    |
-| SS-6 | `scoredShots([sighter, normal])`                                                     | the 5 non-sighter shots — unchanged default                                      |
-| SS-7 | `volumeShotCount` called on any of the above                                         | identical in both scopes — it has no scope argument (§2.1)                       |
-| SS-8 | `guldserieCount([qualifying sighter, qualifying normal, non-qualifying normal], {})` | `2` — the sighter always counts, in either scope (§2.3)                          |
-| SS-9 | `scoredSeries` with `includeSighters: true` returns a **copy**                       | mutating the result does not mutate the caller's array                           |
+| id   | Given                                                                                | Then                                                                            |
+| ---- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| SS-1 | `scoredSeries([sighter, normal])` with no scope argument                             | `[normal]` — the default is unchanged, every existing caller keeps its behavior |
+| SS-2 | `scoredSeries([sighter, normal], { includeSighters: false })`                        | `[normal]` — an explicit `false` is the same as omitting it                     |
+| SS-3 | `scoredSeries([sighter, normal], { includeSighters: true })`                         | `[sighter, normal]` — same members, **input order preserved**                   |
+| SS-4 | `scoredSeries([], { includeSighters: true })`                                        | `[]`                                                                            |
+| SS-5 | `scoredShots([sighter(5 shots), normal(5 shots)], { includeSighters: true })`        | all 10 shots, sighter's first (series order, then shot order)                   |
+| SS-6 | `scoredShots([sighter, normal])`                                                     | the 5 non-sighter shots — unchanged default                                     |
+| SS-7 | `volumeShotCount` called on any of the above                                         | identical in both scopes — it has no scope argument (§2.1)                      |
+| SS-8 | `guldserieCount([qualifying sighter, qualifying normal, non-qualifying normal], {})` | `2` — the sighter always counts, in either scope (§2.3)                         |
+| SS-9 | `scoredSeries` with `includeSighters: true` returns a **copy**                       | mutating the result does not mutate the caller's array                          |
 
 ### Behaviors — `analytics.ts`
 
@@ -261,7 +261,7 @@ that fails to say which scope it used.
 
 | id    | Invariant                                                                                                                                                                                                      |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| INV-1 | Every existing `stats.test.ts` / `analytics.test.ts` / `json-log.test.ts` assertion passes **unedited** — the default scope is today's behaviour                                                               |
+| INV-1 | Every existing `stats.test.ts` / `analytics.test.ts` / `json-log.test.ts` assertion passes **unedited** — the default scope is today's behavior                                                                |
 | INV-2 | No in-session figure changes. `use-session-stats.ts`, `totals.ts`, `marke.ts`, `standardmedalj.ts` are not touched                                                                                             |
 | INV-3 | No exported signature is narrowed. Every new parameter is optional with a default (`json-log`'s filter field is the one deliberate exception, §SS-21, and its only producer is updated in the same commit)     |
 | INV-4 | `volumeShotCount` behaves identically before and after, in both scopes. `guldserieCount` likewise takes no scope — its **one** change (§2.3) is unconditional, so it too is identical in both filter positions |

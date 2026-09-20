@@ -39,7 +39,7 @@ describe('findLostDateTimestamps', () => {
     expect(findLostDateTimestamps(rows).size).toBe(0);
   });
 
-  it('honours a custom group size', () => {
+  it('honors a custom group size', () => {
     const rows = [1, 2].map((line) => row({ line, name: `Club Cup ${line}` }));
     expect([...findLostDateTimestamps(rows, 2)]).toEqual(['2026-05-04T09:00:00Z']);
   });

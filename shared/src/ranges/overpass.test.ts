@@ -82,9 +82,9 @@ describe('parseOverpassRanges', () => {
     expect(parseOverpassRanges({ elements: [badCenter] })).toEqual([]);
   });
 
-  it('flags a sports_centre as the club site rather than one of its lanes', () => {
-    const centre = { ...node, tags: { ...node.tags, leisure: 'sports_centre' } };
-    expect(parseOverpassRanges({ elements: [centre] })[0]!.isFacility).toBe(true);
+  it('flags a sports_center as the club site rather than one of its lanes', () => {
+    const center = { ...node, tags: { ...node.tags, leisure: 'sports_center' } };
+    expect(parseOverpassRanges({ elements: [center] })[0]!.isFacility).toBe(true);
     const pitch = { ...node, tags: { ...node.tags, leisure: 'pitch' } };
     expect(parseOverpassRanges({ elements: [pitch] })[0]!.isFacility).toBe(false);
   });
@@ -93,7 +93,7 @@ describe('parseOverpassRanges', () => {
     expect(parseOverpassRanges({ elements: [node, node] })).toHaveLength(1);
   });
 
-  it('honours the limit', () => {
+  it('honors the limit', () => {
     const many = [1, 2, 3].map((id) => ({ ...node, id }));
     expect(parseOverpassRanges({ elements: many }, 2)).toHaveLength(2);
   });

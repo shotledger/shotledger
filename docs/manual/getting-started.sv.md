@@ -94,4 +94,4 @@ den. Allt sparas medan du håller på — det finns ingen "spara"-knapp att glö
 
 Om din licensförnyelse kräver dokumenterad skjutaktivitet slår du på den svenska
 efterlevnadsprofilen i Inställningar och läser
-[Skjutaktivitet](guides/licence-activity.md).
+[Skjutaktivitet](guides/license-activity.md).

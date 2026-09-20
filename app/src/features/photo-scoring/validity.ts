@@ -17,11 +17,11 @@ export interface GeometryMetrics {
   readonly axisRatio: number;
   /** Ellipse majorAxis / max(imageWidth, imageHeight). */
   readonly zoneFraction: number;
-  /** Whether the fitted ellipse centre lies inside the image. */
+  /** Whether the fitted ellipse center lies inside the image. */
   readonly centerInFrame: boolean;
-  /** Mean grey of the annulus at 1.15-1.40r minus the disc at 0.70r. */
-  readonly zoneContrastGrey: number;
-  /** Stage-3 objective normalised by the radial profile's own MAD. */
+  /** Mean gray of the annulus at 1.15-1.40r minus the disc at 0.70r. */
+  readonly zoneContrastGray: number;
+  /** Stage-3 objective normalized by the radial profile's own MAD. */
   readonly profileScore: number;
 }
 
@@ -45,8 +45,8 @@ export const GEOMETRY_THRESHOLDS = {
   /** The decisive one: a precision face is a solid black disc on light card.
    *  Gravel, sky and a milsnabb annulus have no such step. The corpus
    *  separates with an empty gap from 17.7 to 84.2; 50 sits inside it. */
-  minZoneContrastGrey: 50,
-  /** A flat, structureless radial profile. Normalised, so this is an
+  minZoneContrastGray: 50,
+  /** A flat, structureless radial profile. Normalized, so this is an
    *  absolute threshold rather than a proxy for photo contrast. */
   minProfileScore: 20,
 } as const;
@@ -65,7 +65,7 @@ export function checkGeometryValidity(metrics: GeometryMetrics): ValidityResult 
     reasons.push('zoneFraction');
   }
   if (!metrics.centerInFrame) reasons.push('centerInFrame');
-  if (!(metrics.zoneContrastGrey >= t.minZoneContrastGrey)) reasons.push('zoneContrast');
+  if (!(metrics.zoneContrastGray >= t.minZoneContrastGray)) reasons.push('zoneContrast');
   if (!(metrics.profileScore >= t.minProfileScore)) reasons.push('profileScore');
 
   return { valid: reasons.length === 0, reasons };

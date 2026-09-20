@@ -9,20 +9,20 @@ describe('buildHeatmap', () => {
     expect(buildHeatmap([], 100)).toBeNull();
   });
 
-  it('puts a centre shot in the middle cell', () => {
+  it('puts a center shot in the middle cell', () => {
     const map = buildHeatmap([p(0, 0)], 100, 10)!;
     expect(map.cells).toHaveLength(1);
     expect(map.cells[0]).toMatchObject({ column: 5, row: 5, count: 1, intensity: 1 });
   });
 
   it('bins y downward, matching the rest of the scoring convention', () => {
-    // A shot below centre must land in a LOWER row (larger index), not upper.
+    // A shot below center must land in a LOWER row (larger index), not upper.
     const map = buildHeatmap([p(0, 40)], 100, 10)!;
     expect(map.cells[0]!.row).toBeGreaterThan(5);
     expect(buildHeatmap([p(0, -40)], 100, 10)!.cells[0]!.row).toBeLessThan(5);
   });
 
-  it('reports a cell centre that round-trips back to its own cell', () => {
+  it('reports a cell center that round-trips back to its own cell', () => {
     const map = buildHeatmap([p(23, -11)], 100, 10)!;
     const cell = map.cells[0]!;
     const again = buildHeatmap([p(cell.xMm, cell.yMm)], 100, 10)!;
