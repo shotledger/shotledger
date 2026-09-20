@@ -1,4 +1,4 @@
-// Serialising sessions to the export envelope. Spec §2, criteria C1–C7.
+// Serializing sessions to the export envelope. Spec §2, criteria C1–C7.
 import { JSON_EXPORT_FORMAT, JSON_EXPORT_VERSION, type SessionExport } from './types';
 
 export interface ExportOptions {

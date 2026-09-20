@@ -103,7 +103,7 @@ new verification); C1–C5 failed 5/5 against a stub that throws; Q1–Q5 failed
 | #   | How verified                                                                                                        | Result                                                                                                                       |
 | --- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | N1  | `grep -rn "from '@/\|app/src" shared/src/compliance/`                                                               | 0 hits                                                                                                                       |
-| N2  | `git diff --stat origin/main -- shared/src/compliance/`                                                             | `licence-activity.ts`, `months.ts`, `indicators.ts`, `constants-se.ts` all absent from the diff — no regulatory number moved |
+| N2  | `git diff --stat origin/main -- shared/src/compliance/`                                                             | `license-activity.ts`, `months.ts`, `indicators.ts`, `constants-se.ts` all absent from the diff — no regulatory number moved |
 | N3  | tests `N3: adds firearms.is_own and backfills every existing row to own` and `N3b`, plus a negative control (below) | green                                                                                                                        |
 | N4  | `grep -rn "complianceProfileVariant\|setVariantId" app/src`                                                         | one writer, `setVariantId` in the hook, one call site: the Settings picker's `onChange`                                      |
 | N5  | C4, V7                                                                                                              | green                                                                                                                        |
@@ -150,7 +150,7 @@ shared/src/compliance/profile-registry.ts:78:44   ArrayDeclaration
 +   facts: readonly FirearmOwnershipFact[] = ["Stryker was here"],
 ```
 
-Equivalent in observable behaviour. Any default whose elements are not facts
+Equivalent in observable behavior. Any default whose elements are not facts
 with `isOwn === true` and a handgun type derives the same `firstHandgun`, so
 no test can separate the mutant from the original through the public API. The
 default itself is asserted by V4.

@@ -32,7 +32,7 @@ function accessibilityLabel(key: KeypadKey, t: (k: string) => string): string {
 }
 
 /**
- * The score keypad. All behaviour lives in `shared/scoring/entry.ts`
+ * The score keypad. All behavior lives in `shared/scoring/entry.ts`
  * (docs/specs/m3-scoring-spec.md §3); this component only renders the state
  * and forwards key presses, so the state machine stays unit-testable.
  */

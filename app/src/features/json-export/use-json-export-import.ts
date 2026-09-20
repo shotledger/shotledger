@@ -19,7 +19,7 @@ export type JsonExportStatus =
   | { kind: 'export-success' }
   | { kind: 'export-failed' }
   | { kind: 'import-success'; sessionCount: number }
-  | { kind: 'import-cancelled' }
+  | { kind: 'import-canceled' }
   | { kind: 'import-failed' };
 
 export interface ImportDryRunResult {
@@ -47,7 +47,7 @@ export function useJsonExportImport(appVersion: string) {
   }
 
   /** Picks a file and runs the dry-run plan, without touching the DB.
-   * Returns `null` if the user cancelled the picker or there's no DB. */
+   * Returns `null` if the user canceled the picker or there's no DB. */
   async function planImport(): Promise<ImportDryRunResult | null> {
     if (!db) {
       setStatus({ kind: 'import-failed' });
@@ -55,7 +55,7 @@ export function useJsonExportImport(appVersion: string) {
     }
     const text = await pickJsonText();
     if (text === null) {
-      setStatus({ kind: 'import-cancelled' });
+      setStatus({ kind: 'import-canceled' });
       return null;
     }
     return dryRunImport(db, text);
@@ -82,8 +82,8 @@ export function useJsonExportImport(appVersion: string) {
         return t('jsonExport.exportFailed');
       case 'import-success':
         return t('jsonExport.importSuccess', { count: status.sessionCount });
-      case 'import-cancelled':
-        return t('jsonExport.importCancelled');
+      case 'import-canceled':
+        return t('jsonExport.importCanceled');
       case 'import-failed':
         return t('jsonExport.importFailed');
     }

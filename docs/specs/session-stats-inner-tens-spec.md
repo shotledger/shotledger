@@ -95,12 +95,12 @@ still type-checks unchanged.
 
 ### Invariants that must survive (negative constraints)
 
-| id    | Invariant                                                                                                                                        |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| INV-1 | `seriesAverageTenths` behaviour is unchanged by the extracted predicate — its existing tests A-S1..A-S6 and both WS1 cases still pass, untouched |
-| INV-2 | No existing exported signature changes. `FlaggedSeriesForResults` only gains an **optional** field                                               |
-| INV-3 | `pnpm coverage` stays at 100% statements/branches/functions/lines for `shared/src/{scoring,disciplines}`                                         |
-| INV-4 | No new dependency; no schema change                                                                                                              |
+| id    | Invariant                                                                                                                                       |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| INV-1 | `seriesAverageTenths` behavior is unchanged by the extracted predicate — its existing tests A-S1..A-S6 and both WS1 cases still pass, untouched |
+| INV-2 | No existing exported signature changes. `FlaggedSeriesForResults` only gains an **optional** field                                              |
+| INV-3 | `pnpm coverage` stays at 100% statements/branches/functions/lines for `shared/src/{scoring,disciplines}`                                        |
+| INV-4 | No new dependency; no schema change                                                                                                             |
 
 ## 4. UI changes (normal-tests scope, listed so the spec is the whole contract)
 
@@ -109,7 +109,7 @@ still type-checks unchanged.
 | UI-1 | The Stats tab's "Whole Session" block loses its **Total Points** tile (`session-stat-total-points`). It duplicated the result card's `session-total` — the same number by two code paths. Total Shots stays; the card above the tabs stays.                    |
 | UI-2 | The **Per Series** block gains a 4th tile, `session-stat-series-inner-tens`, showing `seriesInnerTenAverage` to one decimal, `–` when `null`.                                                                                                                  |
 | UI-3 | The result card above the tab selector gains a 4th tile, `session-inner-ten-average`, so the row reads Total · Avg/Series · X (Inner Tens) · Avg X/Series. Backlog §1 asks this card to get _smaller_, so it must not grow taller: four tiles on one line.     |
-| UI-4 | The "Shot Distribution" header on the session Stats tab becomes `Shot Distribution (30 shots)` / `Fördelning (30 skott)` via i18next pluralisation — interpolated, never concatenated. The Statistics-report screen keeps the plain `stats.distributionTitle`. |
+| UI-4 | The "Shot Distribution" header on the session Stats tab becomes `Shot Distribution (30 shots)` / `Fördelning (30 skott)` via i18next pluralization — interpolated, never concatenated. The Statistics-report screen keeps the plain `stats.distributionTitle`. |
 
 **Revision (during implementation, recorded rather than silently drifted):** the
 first draft of this paragraph put the screen+card chrome at ~48 dp. Measured, it

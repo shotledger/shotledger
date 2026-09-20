@@ -13,9 +13,9 @@ import type { ProjectiveTransform } from './corners';
 import { applyHomography } from './corners';
 
 export interface TargetTransform {
-  /** Image pixel -> target millimetres (origin at the centre, y down). */
+  /** Image pixel -> target millimeters (origin at the center, y down). */
   readonly toMm: (p: Point) => Point;
-  /** Target millimetres -> image pixel. */
+  /** Target millimeters -> image pixel. */
   readonly toImage: (p: Point) => Point;
   /** How the transform was obtained — surfaced in the UI, since a manually
    *  adjusted target deserves a different level of trust than a locked one. */

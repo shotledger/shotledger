@@ -26,7 +26,7 @@ export type ScanSource = 'camera' | 'library';
 export type ScanLicenseCardResult =
   | { status: 'scanned'; imageUri: string; text: string; parsed: ParsedLicenseCard }
   /** The user backed out of the picker. */
-  | { status: 'cancelled' }
+  | { status: 'canceled' }
   /** Camera or media-library permission was refused. */
   | { status: 'denied' }
   /** No OCR engine on this platform. */
@@ -56,7 +56,7 @@ export async function scanLicenseCard(
 ): Promise<ScanLicenseCardResult> {
   const picked = source === 'camera' ? await deps.pickFromCamera() : await deps.pickFromLibrary();
   if (picked === 'denied') return { status: 'denied' };
-  if (picked === null) return { status: 'cancelled' };
+  if (picked === null) return { status: 'canceled' };
 
   const recognized = await deps.recognize(picked);
   if (recognized.status !== 'ok') {
@@ -69,7 +69,7 @@ export async function scanLicenseCard(
 }
 
 /** How many of the card's fields the parse produced a value for — the number
- *  the "n fields recognised, check them" notice reports. */
+ *  the "n fields recognized, check them" notice reports. */
 export function countRecognizedFields(parsed: ParsedLicenseCard): number {
   const values = [
     parsed.licenseNumber,
@@ -86,7 +86,7 @@ export function countRecognizedFields(parsed: ParsedLicenseCard): number {
   return values.filter((v) => v !== null).length + (parsed.validUntilIndefinite ? 1 : 0);
 }
 
-/** The licence form's text-input values for a parse. A field the parse missed
+/** The license form's text-input values for a parse. A field the parse missed
  *  keeps whatever the user had already typed rather than being blanked. */
 export function licenseFormValues(
   parsed: ParsedLicenseCard,

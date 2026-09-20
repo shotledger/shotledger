@@ -28,8 +28,8 @@ three pure app modules where a silent error would be invisible
 | GR3 symmetric MPI = 0   | "a group symmetric about the origin has a zero MPI"                     | pass                        |
 | GR4 mean radius         | "mean radius is the mean distance from the MPI"                         | pass                        |
 | GR5 spread is pairwise  | "extreme spread is the max PAIRWISE distance, not the max from the MPI" | pass                        |
-| GR6 elevation sign      | "elevation is positive above the centre (input y increases downward)"   | pass                        |
-| GR7 windage sign        | "windage is positive to the right of the centre"                        | pass                        |
+| GR6 elevation sign      | "elevation is positive above the center (input y increases downward)"   | pass                        |
+| GR7 windage sign        | "windage is positive to the right of the center"                        | pass                        |
 | GR8 degenerate group    | "a degenerate group of identical shots is legal, not an error"          | pass                        |
 | GR9 shotCount           | "shotCount is the input length"                                         | pass                        |
 | GR10 non-finite throws  | "a non-finite coordinate throws rather than poisoning every statistic"  | pass                        |
@@ -51,11 +51,11 @@ opportunity to quietly exclude it.
 ### RED was observed
 
 The stub (`throw new Error('not implemented')`) made **all 15 tests fail on
-behaviour, not on import**, before any implementation existed.
+behavior, not on import**, before any implementation existed.
 
 ### One real defect the loop caught
 
-GR3 failed on the first GREEN run: `elevationMm` was `-0` for a centred
+GR3 failed on the first GREEN run: `elevationMm` was `-0` for a centered
 group, which would render as `-0.0 mm`. Fixed in the **implementation**
 (`0 - y` rather than `-y`), not by relaxing the test.
 
@@ -115,7 +115,7 @@ python validity_gate.py --in ~/tmp/shotledger-cv-spike/targets --out gate_2048.c
 
 ### 4.1 The corpus separates cleanly
 
-`zoneContrastGrey` — the decisive metric — separates the corpus with an
+`zoneContrastGray` — the decisive metric — separates the corpus with an
 **empty gap from 17.7 to 84.2**. The shipped threshold of 50 sits inside it,
 so it is not perched on the edge of either class.
 
@@ -150,7 +150,7 @@ axisRatio 1.284) — still well clear of both thresholds.
 ### 4.4 Honest limits of the gate
 
 - **One known false accept.** `20250831_125338` (contrast 132.3, profile
-  171.0) passes, but the spike names it a geometry failure — "centre
+  171.0) passes, but the spike names it a geometry failure — "center
   off-frame; one short arc of the black zone". The measured metrics do not
   distinguish it. The backstop is that the user **sees the ring overlay drawn
   on their own photo** before marking anything, and can fall back to manual
@@ -163,7 +163,7 @@ axisRatio 1.284) — still well clear of both thresholds.
   fallback rather than a wrong lock.
 - The thresholds are fitted to **38 photos from one shooter, one club, two
   target faces**. They are a starting point, not a validated operating curve.
-- `profileScore` is normalised by the profile's MAD in `opencv.ts`; the Python
+- `profileScore` is normalized by the profile's MAD in `opencv.ts`; the Python
   harness computes the same quantity the same way, but the two implementations
   are **separate code**, so the calibration transfers only as far as that
   correspondence holds. This is the weakest link in the calibration chain and
@@ -272,7 +272,7 @@ Both of these were real gaps in the tests, found by mutants that **survived**:
    explicitly phase 2, so it was left out rather than half-done.
 5. **`app/tsconfig.json` gained `"types": ["jest"]`.** Without it, the first
    non-`src/db` app test files produced ~100 `Cannot find name 'describe'`
-   errors in the by-hand app typecheck. This is config, not behaviour.
+   errors in the by-hand app typecheck. This is config, not behavior.
 
 ## 9. Emulator verification — real corpus photos, end to end
 
@@ -301,8 +301,8 @@ Chosen deliberately: two the gate accepts (`20250921_130706`,
 | --- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | `24-relocked.png`                      | **Geometry lock on a real photo.** The cyan ring overlay sits on the printed ring lines across the whole card, X ring through ring 1. This is the whole feature working: OpenCV on-device, `buildRectification` + `coarseToFineRefine` from `shared/`, overlay drawn through `targetMmToImage`. |
 | 2   | `10-marked.png`                        | Tap-to-mark: caliber-sized discs, selected one blue, others red. Taps near an existing mark selected it instead of stacking a new one.                                                                                                                                                          |
-| 3   | `11-score-line.png`                    | Score line `29-0x` with per-shot values `10 10 9` sorted descending; Move / Delete / X (centre ten); caliber picker with `.22` preselected from the session's firearm.                                                                                                                          |
-| 4   | `12-loupe.png`                         | **The loupe, and the reason it exists.** A full-resolution crop showing an actual .22 hole with torn fibres, the printed ring line and the "9" digit under the crosshair. At the 2048 px geometry resolution this detail is not there.                                                          |
+| 3   | `11-score-line.png`                    | Score line `29-0x` with per-shot values `10 10 9` sorted descending; Move / Delete / X (center ten); caliber picker with `.22` preselected from the session's firearm.                                                                                                                          |
+| 4   | `12-loupe.png`                         | **The loupe, and the reason it exists.** A full-resolution crop showing an actual .22 hole with torn fibers, the printed ring line and the "9" digit under the crosshair. At the 2048 px geometry resolution this detail is not there.                                                          |
 | 5   | `21-rejected.png`                      | **The validity gate rejecting the gravel-bank photo**, with Retake and "Place corners myself".                                                                                                                                                                                                  |
 | 6   | `22-corners.png`, `23-corner-drag.png` | Manual 4-point fallback: four numbered handles over the photo (sky and gravel plainly visible), guide quad, drag working.                                                                                                                                                                       |
 | 7   | `17-group.png`, `18-group-stats.png`   | Group view: clean vector target, shots, MPI cross, red mean-radius circle; Windage 1.2 mm / Elevation 15.5 mm / Mean radius 23.1 mm / Max spread 46.8 mm; "3 marked shots"; the reused M5 per-ring histogram.                                                                                   |
@@ -345,8 +345,8 @@ to 8), and this sandbox's software-rendered emulator does not place drags
 reliably at that scale. A final attempt to reach it by cycling calibers lost
 the screen state instead.
 
-The behaviour underneath it **is** tested: `marks.test.ts` asserts that a
-centre at 15.30 mm flags `edgeCall`, that the candidates are exactly
+The behavior underneath it **is** tested: `marks.test.ts` asserts that a
+center at 15.30 mm flags `edgeCall`, that the candidates are exactly
 `['X', '10']` higher-first, that the user's call overrides the computed value,
 that a call for a non-candidate ring is ignored, that a miss offers no
 candidates, and that moving a mark clears the call. What is unverified is
@@ -383,7 +383,7 @@ the 38-photo corpus by visual inspection:
 contact sheet of all 38 thumbnails was generated locally (not committed) to
 sanity-check for a 4th; one candidate (`20260809_104014.jpg`) looked
 plausible at thumbnail size but turned out, at full resolution, to be a
-precision face (solid black through to near-centre, no lighter annulus
+precision face (solid black through to near-center, no lighter annulus
 middle) — a reminder of exactly the `guess_kind` misclassification risk
 §0/§10.1 of the spec describe. The original 3 stand.
 
@@ -409,7 +409,7 @@ crops (~4000×1848 px) where the physical top and bottom of ring 5 (500 mm
 diameter) fall outside the frame — confirmed by direct measurement, not
 assumption: at the measured px/mm scale for each photo (see below), ring
 5's pixel radius exceeds the available vertical margin from the target
-centre to the frame edge in all 3 cases. Ring 9 (180 mm diameter) is the
+center to the frame edge in all 3 cases. Ring 9 (180 mm diameter) is the
 largest ring confirmed fully inside frame on all 3. This is a real product
 finding, not just a test-methodology footnote — see spec §10.5.
 
@@ -439,7 +439,7 @@ which is a defect in `corners.ts` itself:
    off a static grid overlay by visual estimate, not placed by a finger
    with a live zoom loupe (which the shipped UI has — §10.3 of the spec —
    and this script does not). A few pixels of read error at this photo's
-   scale (roughly 5-6 px/mm) is a fraction of a millimetre; tens of pixels,
+   scale (roughly 5-6 px/mm) is a fraction of a millimeter; tens of pixels,
    which is plausible for a "top" point near a frame edge, is several mm.
    `ring8-top` on `20260726_153751.jpg` (25.98 mm, the worst residual) is
    exactly that case — the point hardest to read precisely, closest to
@@ -454,15 +454,15 @@ which is a defect in `corners.ts` itself:
    resolving from only 4 points, not a math error.
 3. **Concentric rings are not concentric in the image.** Under true
    perspective projection, circles that are concentric in the real world
-   do not share a common centre point in the photo. Measured directly:
-   ring 8's apparent centre on photo 1 sits ~115 px away from ring 9's
-   apparent centre. A homography built from ring 9 alone cannot know
-   ring 8's independent centre offset — it is not underfit, it is fitting
+   do not share a common center point in the photo. Measured directly:
+   ring 8's apparent center on photo 1 sits ~115 px away from ring 9's
+   apparent center. A homography built from ring 9 alone cannot know
+   ring 8's independent center offset — it is not underfit, it is fitting
    the only 4 points it was given, correctly.
 
 None of this contradicts the spec's approach; if anything it reinforces
 §10.1's reasoning for going manual-only rather than trusting a fitted
-ellipse (which assumes a single shared centre and cannot represent this
+ellipse (which assumes a single shared center and cannot represent this
 kind of distortion at all).
 
 ### 10.2 What this does and does not verify

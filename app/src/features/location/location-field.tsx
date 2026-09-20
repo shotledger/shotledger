@@ -12,7 +12,7 @@ import { useRangeMatch } from '@/features/location/use-range-match';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
-/** Metres under a kilometre, kilometres above it — nobody reads "4812 m". */
+/** Meters under a kilometer, kilometers above it — nobody reads "4812 m". */
 function formatDistance(meters: number): string {
   return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
 }

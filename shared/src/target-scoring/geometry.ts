@@ -180,7 +180,7 @@ function grid(center: number, halfWidth: number, step: number): number[] {
 
 /**
  * Ports the coarse-to-fine grid search driver in refine_geom
- * (target_cv.py:206-231), generalised over a caller-supplied `evaluate`
+ * (target_cv.py:206-231), generalized over a caller-supplied `evaluate`
  * callback so the native layer can drive the same search with its own image
  * sampling (spec §2.6).
  */

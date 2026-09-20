@@ -1,4 +1,4 @@
-// M6 (§6.6): the single query feeding shared/src/compliance's licence activity —
+// M6 (§6.6): the single query feeding shared/src/compliance's license activity —
 // tombstoned sessions excluded by the same isNull(deletedAt) filter every
 // other query uses. extra_rounds never create activities: this reads only
 // session identity/type/weaponGroup, never touches the extra_rounds column.

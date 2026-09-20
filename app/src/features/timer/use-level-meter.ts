@@ -33,19 +33,19 @@ export function useLevelMeter(enabled: boolean): LevelMeterResult {
   useEffect(() => {
     if (!enabled || !isShotListeningAvailable()) return;
 
-    let cancelled = false;
+    let canceled = false;
 
     void (async () => {
       const permission = await getMicPermission();
-      if (cancelled || permission !== 'granted') return;
+      if (canceled || permission !== 'granted') return;
 
       try {
         const listener = await startShotListening((db) => {
-          if (cancelled) return;
+          if (canceled) return;
           setCurrentDb(db);
           setPeakDb((prev) => (prev === null || db > prev ? db : prev));
         });
-        if (cancelled) {
+        if (canceled) {
           void listener.stop();
           return;
         }
@@ -56,7 +56,7 @@ export function useLevelMeter(enabled: boolean): LevelMeterResult {
     })();
 
     return () => {
-      cancelled = true;
+      canceled = true;
       const listener = listenerRef.current;
       listenerRef.current = null;
       void listener?.stop();

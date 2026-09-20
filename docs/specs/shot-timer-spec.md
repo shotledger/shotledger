@@ -58,7 +58,7 @@ CLAUDE.md and gets normal tests, not this loop.
   confirming the generator has nothing to invent.
 - SHB J.6.2 p. 290: **"FÄRDIGA" (ready) is called 60 s after "LADDA" (load)",
   then targets appear for the series' time limit.** This is a once-per-omgång
-  range-command cadence in a real match, not a per-series pause. Modelling
+  range-command cadence in a real match, not a per-series pause. Modeling
   it before all 13 series (the engine's ready delay precedes _every_ series
   — see §3) would make a solo drill ~13 minutes of standing still, so
   `MILSNABB_PRACTICE_READY_DELAY_MS` (5 s) is the practice default; the

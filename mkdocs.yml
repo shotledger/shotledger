@@ -17,7 +17,7 @@ site_name: ShotLedger
 site_description: >-
   A free target-shooting logbook for SPSF pistol shooters — log sessions shot by
   shot, score paper targets from a photograph, and keep the range activity your
-  licence renewal needs.
+  license renewal needs.
 site_url: https://jimisola.github.io/shotledger/
 repo_url: https://github.com/jimisola/shotledger
 repo_name: jimisola/shotledger
@@ -108,7 +108,7 @@ plugins:
             Scoring from a photo: Räkna från foto
             Timers: Timers
             Firearms and ammunition: Vapen och ammunition
-            Licence activity: Skjutaktivitet
+            License activity: Skjutaktivitet
             External sites: Externa webbplatser
             Webshooter: Webshooter
             Exporting sessions: Exportera pass
@@ -132,7 +132,7 @@ nav:
       - Scoring from a photo: guides/scoring-from-a-photo.md
       - Timers: guides/timers.md
       - Firearms and ammunition: guides/firearms-and-ammunition.md
-      - Licence activity: guides/licence-activity.md
+      - License activity: guides/license-activity.md
       - External sites:
           - Webshooter: guides/webshooter.md
       - Exporting sessions: guides/exporting-sessions.md

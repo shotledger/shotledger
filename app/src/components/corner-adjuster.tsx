@@ -58,16 +58,16 @@ function CornerLoupe({
   const [cropUri, setCropUri] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     cropLoupe(photo, center.x, center.y, scaleToOriginal, 220)
       .then((crop) => {
-        if (!cancelled) setCropUri(crop.uri);
+        if (!canceled) setCropUri(crop.uri);
       })
       .catch(() => {
-        if (!cancelled) setCropUri(null);
+        if (!canceled) setCropUri(null);
       });
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, [photo, center.x, center.y, scaleToOriginal]);
 

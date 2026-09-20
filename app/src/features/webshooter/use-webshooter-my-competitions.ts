@@ -60,7 +60,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
 
     runId.current += 1;
     const thisRun = runId.current;
-    let cancelled = false;
+    let canceled = false;
 
     async function scan() {
       const skippedIds: number[] = [];
@@ -76,10 +76,10 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
         const client = getWebshooterClient();
 
         for (const competition of candidates) {
-          if (cancelled || runId.current !== thisRun) return;
+          if (canceled || runId.current !== thisRun) return;
           try {
             const results = await client.getResults(competition.id);
-            if (cancelled || runId.current !== thisRun) return;
+            if (canceled || runId.current !== thisRun) return;
             if (hasResultForCard(results, cardNumber)) {
               setMine((previous) => [...previous, competition]);
             }
@@ -95,7 +95,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
           setChecked((n) => n + 1);
         }
       } catch (err) {
-        if (cancelled || runId.current !== thisRun) return;
+        if (canceled || runId.current !== thisRun) return;
         console.error('[webshooter] scanning for my results failed', err);
         setError('fetchFailed');
         setErrorDetail(err instanceof Error ? err.message : String(err));
@@ -105,13 +105,13 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
             `[webshooter] skipped ${skippedIds.length} competition(s) while scanning: ${skippedIds.join(', ')} — last reason: ${lastSkipReason}`,
           );
         }
-        if (!cancelled && runId.current === thisRun) setScanning(false);
+        if (!canceled && runId.current === thisRun) setScanning(false);
       }
     }
 
     void scan();
     return () => {
-      cancelled = true;
+      canceled = true;
       runId.current += 1;
     };
     // `key` stands in for the candidate list: a new array with the same ids

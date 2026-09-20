@@ -110,13 +110,13 @@ describe('ISSF events', () => {
     ]);
   });
 
-  it('recognizes 25 m centre fire pistol for seniors only', () => {
+  it('recognizes 25 m center fire pistol for seniors only', () => {
     // CFPM "M only", CFPW "W" — no junior row in either table.
     expect(categories('issf-centre-fire-pistol', ISSF)).toEqual(['men:open', 'women:open']);
   });
 
   it('still recognizes 25 m standard pistol and 50 m pistol', () => {
-    // Both are absent from the Olympic programme, which is not the same as
+    // Both are absent from the Olympic program, which is not the same as
     // being dropped: STPM/STPW and FPM/FPW are WCH events in the 2026 book.
     // So SvSF needs no definition of its own for either (ADR 0011).
     for (const disciplineId of ['issf-standard-pistol', 'issf-free-pistol']) {

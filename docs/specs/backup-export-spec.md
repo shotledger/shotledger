@@ -11,7 +11,7 @@ Scope: `shared/src/backup/**` and the app glue that feeds it
 (`app/src/db/backup/*`, `app/src/features/backup/*`,
 `app/src/platform/backup-fs.ts`). Old-coder mandatory: this is data-loss- and
 security-sensitive code — a wrong answer either silently drops user data from a
-"backup" or writes photographs of weapon licences into a file that leaves the
+"backup" or writes photographs of weapon licenses into a file that leaves the
 device.
 
 **Spec approval: not obtained (autonomous run, per implementation-plan.md §0
@@ -42,7 +42,7 @@ restorable.
 
 | Source                                                                                                                                                                             | How                                                                                                                                        |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Every SQLite table — sessions, series, shots, shot marks, firearms, firearm groups, ammo lots, licences, maintenance events, tags, session tags, **settings**, and the sync tables | `VACUUM INTO` a temp copy, `serializeAsync()` into `database.sqlite3`. One file, one entry — a table added later is included automatically |
+| Every SQLite table — sessions, series, shots, shot marks, firearms, firearm groups, ammo lots, licenses, maintenance events, tags, session tags, **settings**, and the sync tables | `VACUUM INTO` a temp copy, `serializeAsync()` into `database.sqlite3`. One file, one entry — a table added later is included automatically |
 | Series/target photos stored as local files                                                                                                                                         | `photos/<seriesId>.<ext>`, with the DB copy's `photo_uri` rewritten to that relative name so restore is location-independent               |
 | Series/target photos stored as `shotledger-photo:<id>` sync markers                                                                                                                | `sync-photos/<photoId>.jpg`, **marker left alone** — see below                                                                             |
 
@@ -90,10 +90,10 @@ local file is missing simply fails its upload attempt and is skipped. Restore is
 a same-account disaster-recovery replace, which is exactly the situation those
 rows are written for.
 
-### Licence card images (PR #71)
+### License card images (PR #71)
 
 `licenses.vault_document_id` points at a vault document holding the photograph
-of a licence card. Because the default bundle has no vault section, a restored
+of a license card. Because the default bundle has no vault section, a restored
 `licenses` row can carry an id for a document that is not present. That is a
 dangling reference by design, not corruption: nothing validates the column, and
 the viewer already renders a "document not found" state. The restore preview
@@ -157,7 +157,7 @@ dependency afterwards and the hand-written `sha256.ts`/`pbkdf2.ts` were
 deleted. The swap is like-for-like — same KDF, iteration count, salt handling,
 manifest fields and envelope — and `kdf-compat.test.ts` holds golden vectors
 captured from the deleted implementation, so bundles written before it still
-restore (behaviours C1–C2).
+restore (behaviors C1–C2).
 
 Parameters (`vault-crypt.ts`, all recorded per bundle so they can be raised
 later without breaking existing bundles):
@@ -170,17 +170,17 @@ later without breaking existing bundles):
 | Derived key        | 32 bytes → AES-256                                                                               |
 | Minimum passphrase | 10 characters, enforced in the UI                                                                |
 
-Passphrases are trimmed of surrounding whitespace and NFC-normalised where the
+Passphrases are trimmed of surrounding whitespace and NFC-normalized where the
 runtime supports it, so the same passphrase typed on iOS and Android derives
 the same key. A runtime without `String.prototype.normalize` skips
-normalisation rather than throwing.
+normalization rather than throwing.
 
 ### The warning (binding)
 
 - The vault switch is **off** on every export; there is no remembered
   preference and no "always include" setting.
 - Turning it on reveals a warning **on screen, in the dialog** — not in help
-  text — naming what actually goes in: photographs of weapon licence cards,
+  text — naming what actually goes in: photographs of weapon license cards,
   membership cards, door codes.
 - The user must tick an acknowledgement before the passphrase fields become
   editable, and confirm the passphrase twice before the export button enables.
@@ -203,7 +203,7 @@ normalisation rather than throwing.
 
 **Merge, not replace, and only for the vault.** The database restore stays a
 full replace. The vault is the exception because a document that exists only on
-this device — a licence card photographed here and nowhere else — would be
+this device — a license card photographed here and nowhere else — would be
 destroyed unrecoverably by a replace. Documents are keyed by their uuidv7 id, so
 an id already present is the same document and is overwritten (restoring the
 same bundle twice is idempotent); every other id is added.
@@ -222,7 +222,7 @@ New manifest counts (`syncPhotos`, `photosUnreadable`, `vaultDocuments`) are
 optional for the same reason — a required field would have made every existing
 bundle fail validation and report as "not a ShotLedger backup".
 
-## Behaviours
+## Behaviors
 
 ### Hashing and KDF — `noble-hashes.test.ts`, `pbkdf2.ts`, `kdf-compat.test.ts`
 
@@ -236,12 +236,12 @@ counterpart in a library call.)
 | --- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
 | H1  | FIPS 180-4 published vectors (`abc`, empty, 448-bit)                     | exact match                                                           |
 | H2  | Every input length 0–200 bytes, against OpenSSL                          | exact match at every length (block and padding boundaries)            |
-| H3  | 200 randomised inputs up to 1000 bytes, against OpenSSL                  | exact match                                                           |
+| H3  | 200 randomized inputs up to 1000 bytes, against OpenSSL                  | exact match                                                           |
 | H5  | 2 MB input (64-bit length field exercised beyond 16 bits)                | exact match                                                           |
 | H6  | RFC 4231 HMAC vectors 1, 2 and 6 (including a 131-byte key)              | exact match                                                           |
 | H7  | HMAC across key lengths 0–200 × message lengths 0–300, against OpenSSL   | exact match                                                           |
 | K1  | RFC 7914 §11 PBKDF2-HMAC-SHA256 vectors (c=1 and c=80000)                | exact match                                                           |
-| K2  | 40 randomised (password, salt, count, length) tuples, against OpenSSL    | exact match                                                           |
+| K2  | 40 randomized (password, salt, count, length) tuples, against OpenSSL    | exact match                                                           |
 | K3  | Derived keys of 31/32/33/64/65/96 bytes (block boundaries)               | exact match                                                           |
 | K4  | The exact parameters the app ships                                       | exact match                                                           |
 | K5  | Zero, negative or fractional iterations; zero or negative key length     | `RangeError` naming the offending parameter — never weak key material |

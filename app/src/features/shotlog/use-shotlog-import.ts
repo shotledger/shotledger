@@ -28,7 +28,7 @@ import { pickCsvText } from '@/platform/import-file';
 
 export type ShotlogImportStatus =
   | { kind: 'idle' }
-  | { kind: 'cancelled' }
+  | { kind: 'canceled' }
   | { kind: 'unavailable' }
   | { kind: 'planned' }
   | { kind: 'imported'; created: number; skipped: number };
@@ -66,7 +66,7 @@ export function useShotlogImport() {
     }
     const picked = await pickCsvText();
     if (picked === null) {
-      setStatus({ kind: 'cancelled' });
+      setStatus({ kind: 'canceled' });
       return;
     }
     // Parsed once here purely to seed the mapping screen; `buildPlan` parses

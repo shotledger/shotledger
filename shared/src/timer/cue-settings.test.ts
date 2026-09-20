@@ -104,7 +104,7 @@ describe('withTimerCueVibrate', () => {
 });
 
 describe('normalizeTimerCueMode', () => {
-  it('keeps every recognised mode', () => {
+  it('keeps every recognized mode', () => {
     for (const mode of TIMER_CUE_MODES) {
       expect(normalizeTimerCueMode(mode)).toBe(mode);
     }

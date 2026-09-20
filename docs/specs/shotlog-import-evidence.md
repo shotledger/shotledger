@@ -137,17 +137,17 @@ a lost date. **One follow-up remains open** — see §7.
 
 1. **Does `Number of X` mean tens, and `(X)` inner tens?** 41 of 277 real
    rows have `(X)` > `Number of X`, which a strict subset reading forbids.
-   Current behaviour: `(X)` is carried as the inner-ten count, `Number of
+   Current behavior: `(X)` is carried as the inner-ten count, `Number of
 X` is recorded in the session note only, and the discrepancy raises a
    per-row warning. Neither number is written to a scored column.
 2. **Does `Warmup` mean the session total includes a sighter series?**
-   Current behaviour: recorded as the tag `shotlog:includes-sighter` and a
+   Current behavior: recorded as the tag `shotlog:includes-sighter` and a
    note line; the total is never adjusted and no sighter series is invented.
 3. **Is `A Opt` a real class?** Read as weapon group A with optics and
    _suggested_ as `spsf:A-opt`, never applied without the user selecting
    the row.
 4. **The lost dates.** 119 of 277 rows share one bulk-import timestamp.
-   Current behaviour: imported at that timestamp (nothing better exists),
+   Current behavior: imported at that timestamp (nothing better exists),
    tagged `shotlog:date-unknown`, noted, and flagged in the preview.
    Known limitation, recorded rather than silently handled:
    date-sensitive statistics do not exclude these sessions, because no

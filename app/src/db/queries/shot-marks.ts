@@ -1,4 +1,4 @@
-// Photo-scoring marks: where the user tapped, in target millimetres.
+// Photo-scoring marks: where the user tapped, in target millimeters.
 // Spec: docs/specs/photo-scoring-phase1-spec.md §4.
 //
 // Shots are still written through the existing entry model
@@ -15,7 +15,7 @@ import { saveSeriesShots } from './round-count';
 import { listShotsForSeries } from './shots';
 
 export interface ShotMarkInput {
-  /** Target-mm, origin at the target centre, y increasing DOWNWARD. */
+  /** Target-mm, origin at the target center, y increasing DOWNWARD. */
   xMm: number;
   yMm: number;
   /** The disc diameter the mark was scored with. */

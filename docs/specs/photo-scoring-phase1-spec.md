@@ -77,7 +77,7 @@ spike/cv/validity_gate.py                       (gate calibration harness)
 Modified: `app/src/db/schema.ts` (one new table), `app/src/app/_layout.tsx`
 (one `Stack.Screen`), `app/src/app/session/[id]/index.tsx` (Group view +
 Scan entry point), `app/src/i18n/{en,sv}.json` (new `photoScoring`
-namespace, appended at end of file to minimise collision with the vault
+namespace, appended at end of file to minimize collision with the vault
 agent's concurrent edit), `app/package.json`, `app/app.json`,
 `docs/implementation-plan.md`.
 
@@ -91,7 +91,7 @@ pushed, **no PR opened**, `main` never touched. Photos are personal and are
 
 ### 2.1 Why a gate, and what it is not
 
-Stage 3's refinement objective maximises a radial edge profile against the
+Stage 3's refinement objective maximizes a radial edge profile against the
 known ring radii. It finds _some_ edge near each nominal radius on almost any
 textured surface, so a high objective value is not evidence that the rings
 were found — this is exactly how `20250906_104730` came to draw a target on a
@@ -108,9 +108,9 @@ OpenCV):
 | ------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `axisRatio`        | fitted black-zone ellipse `majorAxis / minorAxis`                                     | a "black zone" that is a treeline or a frame-edge sliver, and perspective beyond what weak-perspective rectification can undo                                   |
 | `zoneFraction`     | ellipse `majorAxis / max(imageWidth, imageHeight)`                                    | a blob far too small to be the subject, and a black zone filling the frame (Otsu then had no paper/black boundary — spike §6.3 failure 2)                       |
-| `centerInFrame`    | ellipse centre inside the image bounds                                                | extreme crops where the fit put the centre outside the target                                                                                                   |
-| `zoneContrastGrey` | mean grey of the **annulus at 1.15–1.40 r** minus mean grey of the **disc at 0.70 r** | the decisive one. A precision face is a solid black disc on light card, so this is a large positive step. Gravel, sky and a milsnabb annulus have no such step. |
-| `profileScore`     | stage-3 objective **normalised by the profile's own median absolute deviation**       | a flat, structureless radial profile. Normalisation matters: the raw objective tracks photo contrast and is useless as an absolute threshold.                   |
+| `centerInFrame`    | ellipse center inside the image bounds                                                | extreme crops where the fit put the center outside the target                                                                                                   |
+| `zoneContrastGray` | mean gray of the **annulus at 1.15–1.40 r** minus mean gray of the **disc at 0.70 r** | the decisive one. A precision face is a solid black disc on light card, so this is a large positive step. Gravel, sky and a milsnabb annulus have no such step. |
+| `profileScore`     | stage-3 objective **normalized by the profile's own median absolute deviation**       | a flat, structureless radial profile. Normalization matters: the raw objective tracks photo contrast and is useless as an absolute threshold.                   |
 
 ### 2.3 Thresholds, and where they come from
 
@@ -118,14 +118,14 @@ OpenCV):
 axisRatio      <= 2.0
 0.10 <= zoneFraction <= 0.95
 centerInFrame == true
-zoneContrastGrey >= 50
+zoneContrastGray >= 50
 profileScore     >= 20
 ```
 
 These are **measured, not chosen by taste**. `spike/cv/validity_gate.py`
 computes all five on the real 38-photo corpus at the shipped 2048 px input;
 the numbers and the resulting accept/reject split are in the evidence report.
-`zoneContrastGrey` separates the corpus with a wide empty gap (17.7 → 84.2),
+`zoneContrastGray` separates the corpus with a wide empty gap (17.7 → 84.2),
 and 50 sits inside it.
 
 ### 2.4 Acceptance criteria
@@ -136,7 +136,7 @@ and 50 sits inside it.
 | V2  | `axisRatio` 2.01                                      | invalid, reasons include `'axisRatio'`                                                                                                                                |
 | V3  | `zoneFraction` 0.09, and separately 0.96              | invalid, reasons include `'zoneFraction'` (both ends of the band are enforced)                                                                                        |
 | V4  | `centerInFrame` false                                 | invalid, reasons include `'centerInFrame'`                                                                                                                            |
-| V5  | `zoneContrastGrey` 49.9                               | invalid, reasons include `'zoneContrast'`                                                                                                                             |
+| V5  | `zoneContrastGray` 49.9                               | invalid, reasons include `'zoneContrast'`                                                                                                                             |
 | V6  | `profileScore` 19.9                                   | invalid, reasons include `'profileScore'`                                                                                                                             |
 | V7  | several metrics out of range at once                  | `reasons` lists **every** failing metric, in a stable declared order — the UI explains what went wrong, so a gate that stops at the first failure would hide the rest |
 | V8  | exactly-on-threshold values (2.0, 0.10, 0.95, 50, 20) | valid — thresholds are inclusive bounds                                                                                                                               |
@@ -173,8 +173,8 @@ interface GroupPoint {
 interface GroupAnalysis {
   readonly shotCount: number;
   readonly mpiMm: GroupPoint; // mean point of impact, input convention
-  readonly windageMm: number; // mpi.x; positive = right of centre
-  readonly elevationMm: number; // -mpi.y; positive = above centre
+  readonly windageMm: number; // mpi.x; positive = right of center
+  readonly elevationMm: number; // -mpi.y; positive = above center
   readonly meanRadiusMm: number; // mean distance from the MPI
   readonly extremeSpreadMm: number; // largest distance between any two shots
 }
@@ -183,9 +183,9 @@ function analyzeGroup(points: readonly GroupPoint[]): GroupAnalysis | null;
 ```
 
 **Coordinate convention.** Input is target-mm in the same convention as
-`imageToTargetMm` and `scoreHole`: origin at the target centre, **y
+`imageToTargetMm` and `scoreHole`: origin at the target center, **y
 increasing downward** (image convention). `windageMm` passes `x` through;
-`elevationMm` **negates `y`** so that positive means "above centre", which is
+`elevationMm` **negates `y`** so that positive means "above center", which is
 what the shooter reads as elevation. This sign flip is the one trap in the
 module and is asserted directly (GR6).
 
@@ -198,7 +198,7 @@ module and is asserted directly (GR6).
 | GR3  | four shots symmetric about the origin                 | `mpi = (0,0)`, `windage = 0`, `elevation = 0`                                                                            |
 | GR4  | four shots at distance 10 on the axes from the origin | `meanRadius = 10`, `extremeSpread = 20`                                                                                  |
 | GR5  | three collinear shots at x = 0, 10, 30                | `extremeSpread = 30` (max **pairwise**, not max-from-MPI); `mpi.x = 40/3`; `meanRadius = (40/3 + 10/3 + 50/3)/3 = 100/9` |
-| GR6  | one shot at `(0, -5)` (above centre in y-down)        | `elevationMm = +5` — the sign flip, asserted alone                                                                       |
+| GR6  | one shot at `(0, -5)` (above center in y-down)        | `elevationMm = +5` — the sign flip, asserted alone                                                                       |
 | GR7  | one shot at `(7, 0)`                                  | `windageMm = +7`                                                                                                         |
 | GR8  | five identical shots                                  | `meanRadius = 0`, `extremeSpread = 0`, `shotCount = 5` (degenerate group is legal, not an error)                         |
 | GR9  | any input                                             | `shotCount === points.length`                                                                                            |
@@ -232,7 +232,7 @@ not the score — re-scoring an existing photo must never need the photo again.
 
 ```
 shot_marks   shot_id TEXT NOT NULL,      -- FK shots.id, one mark per shot
-             x_mm REAL NOT NULL,         -- target-mm, origin = target centre
+             x_mm REAL NOT NULL,         -- target-mm, origin = target center
              y_mm REAL NOT NULL,         -- y increases DOWNWARD (image convention)
              caliber_mm REAL NOT NULL    -- the disc diameter used to score it
              + the standard id / created_at / updated_at / deleted_at columns
@@ -241,7 +241,7 @@ shot_marks   shot_id TEXT NOT NULL,      -- FK shots.id, one mark per shot
 - Migration `0002_*.sql`, generated by drizzle-kit. **Prior migrations are
   never edited**; `meta/_journal.json` and `migrations.js` gain one entry each.
 - Soft-delete like every other table; all reads filter `deleted_at IS NULL`.
-- `caliber_mm` is denormalised on purpose: the firearm's caliber can be edited
+- `caliber_mm` is denormalized on purpose: the firearm's caliber can be edited
   later, and that must not silently re-score a shot recorded months ago.
 - **Shots are still written through the existing entry model** —
   `saveSeriesShots` from `app/src/db/queries/round-count.ts`, so the firearm
@@ -276,7 +276,7 @@ Camera (`react-native-vision-camera`) or library (the existing
 | Stage           | Ops                                                                                                                                                                                                                                  | Where                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | 1 Find the face | `cvtColor` → `GaussianBlur(7)` → `GaussianBlur(31)` → `threshold(OTSU\|BINARY_INV)` → `morphologyEx` OPEN+CLOSE (9×9) → `findContours` → largest by `contourArea` → `fitEllipse`                                                     | native                                                                 |
-| 1b Ray re-fit   | 360 rays from the fitted centre over the filled mask, dropping any ray that leaves the frame; re-`fitEllipse` on the surviving boundary points                                                                                       | mask pulled once via `toBuffer()`, ray walk in JS, `fitEllipse` native |
+| 1b Ray re-fit   | 360 rays from the fitted center over the filled mask, dropping any ray that leaves the frame; re-`fitEllipse` on the surviving boundary points                                                                                       | mask pulled once via `toBuffer()`, ray walk in JS, `fitEllipse` native |
 | 2 Rectify       | `buildRectification(ellipse, 200)` from `shared/target-scoring`, composed with the 4 px/mm canvas offset into a 3×3 `H`; `warpPerspective` to a ~1040 px canvas                                                                      | shared math + native warp                                              |
 | 3 Refine        | `coarseToFineRefine` drives the search; each `(dx, dy)` gets one `warpPolar` on the **small rectified canvas**, reduced to a 1-D profile and high-passed in JS; `scoreRadialProfile(profile, 4 * scale, ringRadii)` is the objective | shared math driving native sampling                                    |
 | 4 Gate          | §2                                                                                                                                                                                                                                   | pure TS                                                                |
@@ -480,7 +480,7 @@ grounds: `guess_kind` mistypes the face on 8/10 photos (CV spike §6.2), and
 a misdetection makes the ring scale **2.5x wrong** — not a marginal miss,
 a different target. Attempting the auto pipeline and relying on the
 validity gate (§2) to catch the failure was considered and rejected: the
-gate's `zoneContrastGrey` metric assumes a solid black disc against light
+gate's `zoneContrastGray` metric assumes a solid black disc against light
 card (precision's `referenceIsSolidBlack: true`); milsnabb's black zone is
 an annulus around a lighter middle (`referenceIsSolidBlack: false`,
 `targets.ts`), which the gate was never calibrated against (§2.3's
@@ -550,7 +550,7 @@ code:
   overlay already gives the same yes/no signal more cheaply.
 - **i18n**: `photoScoring.milsnabbCornersHint` added to both `en.json` and
   `sv.json`, appended after the existing `adjustCornersHint` key (matching
-  §1's "appended at end… to minimise collision" convention, applied at key
+  §1's "appended at end… to minimize collision" convention, applied at key
   granularity here since the block already exists).
 
 ### 10.4 Edge-touch rule for milsnabb — resolved 2026-09-02

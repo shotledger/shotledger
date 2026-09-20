@@ -16,7 +16,7 @@
 /** One card, as far as it could be read. Every field is independent: a
  *  garbled line loses its own field and nothing else. */
 export interface ParsedLicenseCard {
-  /** Normalised to `A123.456/2024-01`. */
+  /** Normalized to `A123.456/2024-01`. */
   licenseNumber: string | null;
   /** Ändamål, e.g. 'Målskjutning'. */
   purpose: string | null;
@@ -63,8 +63,8 @@ type LabelledField =
   | 'caliber'
   | 'vapenId';
 
-/** Label spellings seen on the card, normalised (lowercase, diacritics and
- *  punctuation stripped) — the same normalisation the reader applies, so
+/** Label spellings seen on the card, normalized (lowercase, diacritics and
+ *  punctuation stripped) — the same normalization the reader applies, so
  *  "Ändamål", "ANDAMAL" and "Ã¤ndamÃ¥l" all land on the same key. */
 const LABELS: ReadonlyArray<readonly [string, LabelledField]> = [
   ['tillstandsnummer', 'licenseNumber'],
@@ -303,7 +303,7 @@ function splitWeapon(value: string): { make: string; model: string | null } {
 
 /** `.22 LR`, `9x19`, `6,5x55`, `.357 Magnum` — used only as a fallback when
  *  the card has no `Kaliber:` label the reader could find. The guards around
- *  the dotted form keep it off the licence number's `.000/2026` run. */
+ *  the dotted form keep it off the license number's `.000/2026` run. */
 const CALIBER_RE =
   /((?<![\w.])\.\s?\d{2,3}(?![\d./])\s*(?:LR|WMR|S&W|SW|ACP|Magnum|Mag|Special|Spl|Win|Rem)?|\b\d{1,2}[.,]?\d?\s*[xX×]\s*\d{2,3}(?:\s*R)?\b)/;
 
@@ -328,9 +328,9 @@ function findAuthority(lines: readonly string[]): string | null {
 }
 
 /**
- * Reads a licence card's OCR output.
+ * Reads a license card's OCR output.
  *
- * @param text raw recognised text; line breaks are significant (labels and
+ * @param text raw recognized text; line breaks are significant (labels and
  *   values are matched per line) but blank lines and stray whitespace are not.
  */
 export function parseLicenseCard(text: string): ParsedLicenseCard {
@@ -374,7 +374,7 @@ export function parseLicenseCard(text: string): ParsedLicenseCard {
 }
 
 /** True when nothing at all could be read — the screen shows a "no fields
- *  recognised" notice rather than an unchanged, apparently-broken form. */
+ *  recognized" notice rather than an unchanged, apparently-broken form. */
 export function isEmptyParse(parsed: ParsedLicenseCard): boolean {
   return (
     parsed.licenseNumber === null &&

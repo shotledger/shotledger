@@ -301,7 +301,7 @@ fifth series, a sighter, totals 50 and qualifies too.
 `guldserieCount(series, { birthYear: null })` → `3`.
 
 **Amended 2026-09-17** (maintainer: "a sighter always counts towards
-guldserie"). This behaviour previously excluded the sighter and returned
+guldserie"). This behavior previously excluded the sighter and returned
 `2`; see `docs/specs/sighters-in-statistics-spec.md` §2.3.
 
 ### B29. `guldserieCount` — non-precision or wrong series length never counts

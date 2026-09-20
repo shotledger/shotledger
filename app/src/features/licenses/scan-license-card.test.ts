@@ -44,7 +44,7 @@ const EMPTY_PARSE: ParsedLicenseCard = {
 };
 
 describe('scanLicenseCard', () => {
-  it('recognises a card from the camera and hands the image back to the caller', async () => {
+  it('recognizes a card from the camera and hands the image back to the caller', async () => {
     const { deps: d, deleted } = deps();
     const result = await scanLicenseCard('camera', d);
 
@@ -60,17 +60,17 @@ describe('scanLicenseCard', () => {
     expect(result).toMatchObject({ imageUri: 'file:///cache/picked.jpg' });
   });
 
-  it('reports a cancelled pick without touching the recogniser', async () => {
-    let recognised = false;
+  it('reports a canceled pick without touching the recognizer', async () => {
+    let recognized = false;
     const { deps: d } = deps({
       pickFromCamera: async () => null,
       recognize: async () => {
-        recognised = true;
+        recognized = true;
         return { status: 'ok', text: '' };
       },
     });
-    expect(await scanLicenseCard('camera', d)).toEqual({ status: 'cancelled' });
-    expect(recognised).toBe(false);
+    expect(await scanLicenseCard('camera', d)).toEqual({ status: 'canceled' });
+    expect(recognized).toBe(false);
   });
 
   it('reports a denied permission', async () => {
@@ -96,7 +96,7 @@ describe('countRecognizedFields', () => {
     expect(countRecognizedFields(EMPTY_PARSE)).toBe(0);
   });
 
-  it('counts "tills vidare" as a recognised valid-until', () => {
+  it('counts "tills vidare" as a recognized valid-until', () => {
     expect(countRecognizedFields({ ...EMPTY_PARSE, validUntilIndefinite: true })).toBe(1);
   });
 
@@ -132,7 +132,7 @@ describe('licenseFormValues', () => {
     expect(licenseFormValues(EMPTY_PARSE, current)).toEqual(current);
   });
 
-  it('overwrites with recognised values', () => {
+  it('overwrites with recognized values', () => {
     expect(
       licenseFormValues(
         { ...EMPTY_PARSE, licenseNumber: 'A000.000/2026-01', validUntil: '2031-01-15' },

@@ -1,4 +1,4 @@
-// Camera-or-library photo pick for the licence-card scan. Mirrors
+// Camera-or-library photo pick for the license-card scan. Mirrors
 // app/src/features/session/pick-photo.ts's shape (permission dance isolated
 // from the screen), with a camera source as well as the library. The picked
 // image is read by the OCR engine and then deleted — nothing keeps it.

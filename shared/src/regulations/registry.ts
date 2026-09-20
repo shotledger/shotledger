@@ -23,7 +23,7 @@ import type { Federation } from '../disciplines/schema';
 export interface Regulation {
   /** Stable id. Used in settings keys, so it never changes. */
   id: string;
-  /** The federation's own name, untranslated — a federation is not localised. */
+  /** The federation's own name, untranslated — a federation is not localized. */
   displayName: string;
   /** What fits in a chip or a filter row. */
   shortName: string;

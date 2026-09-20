@@ -1,7 +1,7 @@
 // Turning a scored group into something worth saying.
 //
 // The advice is deliberately narrow. Two things are visible in the numbers
-// and nothing else is: whether the group sits off-centre, and how wide it is.
+// and nothing else is: whether the group sits off-center, and how wide it is.
 // `analyzePointsLost` already separates exactly those — the points a
 // corrected point of aim would recover (position) from the points the
 // group's own spread costs whatever you do (size) — so the hints read that
@@ -28,7 +28,7 @@ export type CoachingHintKind =
   | 'tightenGroup'
   /** Neither dominates — both would have to improve. */
   | 'balanced'
-  /** The group is centred and tight; the shortfall is small. */
+  /** The group is centered and tight; the shortfall is small. */
   | 'onTarget';
 
 export interface CoachingHint {
@@ -44,7 +44,7 @@ export interface CoachingHint {
 
 /**
  * Below this a group is noise: with a handful of shots the mean point of
- * impact moves several millimetres on one flier, and advice built on it
+ * impact moves several millimeters on one flier, and advice built on it
  * would change from series to series.
  */
 export const MIN_SHOTS_FOR_COACHING = 10;

@@ -5,7 +5,7 @@
 // final, §6.3), and a series must not cross that boundary — a main series
 // dragged into the final would silently change what it counts towards.
 //
-// `position` is not just a label. For a fixed-format programme it indexes the
+// `position` is not just a label. For a fixed-format program it indexes the
 // per-series time limits, so swapping positions is exactly right for the case
 // this exists for (maintainer: a series entered late, moved up into the place
 // it was actually shot) — the series lands in the slot it belongs to and
@@ -18,7 +18,7 @@ export interface MovableSeries {
 }
 
 /**
- * The neighbour to swap with, or `null` when the press is a no-op — the
+ * The neighbor to swap with, or `null` when the press is a no-op — the
  * series is already at the end of its section, or is not in the list.
  */
 export function seriesSwapTarget(
@@ -34,8 +34,8 @@ export function seriesSwapTarget(
     .sort((a, b) => a.position - b.position);
 
   const index = section.findIndex((row) => row.id === id);
-  const neighbour = section[direction === 'up' ? index - 1 : index + 1];
-  return neighbour ?? null;
+  const neighbor = section[direction === 'up' ? index - 1 : index + 1];
+  return neighbor ?? null;
 }
 
 /** True when the button should be enabled — i.e. the press would do something. */
@@ -60,7 +60,7 @@ export interface SeriesPosition {
  *
  * The section keeps its own set of position values and merely redistributes
  * them in the new order — same reasoning as `seriesSwapTarget`: for a
- * fixed-format programme those values index the per-series time limits, so a
+ * fixed-format program those values index the per-series time limits, so a
  * series must take its new slot's limit rather than carry its old one along.
  *
  * `toIndex` is clamped, so a drag past either end parks at that end rather

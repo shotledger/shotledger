@@ -16,7 +16,7 @@ export interface PhotoRow {
   location: string | null;
   disciplineId: string | null;
   firearmId: string | null;
-  /** Denormalised for the filter chips, as make + model. */
+  /** Denormalized for the filter chips, as make + model. */
   firearmMake: string | null;
   firearmModel: string | null;
   weaponGroup: string | null;

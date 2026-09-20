@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  computeLicenceActivityForWeaponGroup,
-  computeFirearmLicenceActivity,
-  computeOverallLicenceActivity,
-  computeRuleLicenceActivity,
+  computeLicenseActivityForWeaponGroup,
+  computeFirearmLicenseActivity,
+  computeOverallLicenseActivity,
+  computeRuleLicenseActivity,
   worstStatus,
-} from './licence-activity';
+} from './license-activity';
 import type { ComplianceSession, JurisdictionProfile, WeaponGroupComplianceRule } from './types';
 
 const NOW = new Date('2026-09-01T00:00:00Z');
@@ -42,26 +42,26 @@ function profile(rules: WeaponGroupComplianceRule[]): JurisdictionProfile {
   };
 }
 
-describe('computeRuleLicenceActivity', () => {
+describe('computeRuleLicenseActivity', () => {
   it('B1: no sessions -> red', () => {
-    const result = computeRuleLicenceActivity([], rule(), NOW);
+    const result = computeRuleLicenseActivity([], rule(), NOW);
     expect(result.activityCount).toBe(0);
     expect(result.status).toBe('red');
   });
 
   it('B2: requiredActivities <= 0 -> always green', () => {
-    const result = computeRuleLicenceActivity([], rule({ requiredActivities: 0 }), NOW);
+    const result = computeRuleLicenseActivity([], rule({ requiredActivities: 0 }), NOW);
     expect(result.status).toBe('green');
   });
 
   it('B3: sessions in window with weight 1 each count', () => {
     const sessions = [session({ id: 'a' }), session({ id: 'b' })];
-    const result = computeRuleLicenceActivity(sessions, rule(), NOW);
+    const result = computeRuleLicenseActivity(sessions, rule(), NOW);
     expect(result.activityCount).toBe(2);
   });
 
   it('B4: session before window excluded', () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ startedAt: '2026-01-01T00:00:00Z' })],
       rule(),
       NOW,
@@ -70,7 +70,7 @@ describe('computeRuleLicenceActivity', () => {
   });
 
   it('B5: session exactly at now included', () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ startedAt: NOW.toISOString() })],
       rule(),
       NOW,
@@ -79,7 +79,7 @@ describe('computeRuleLicenceActivity', () => {
   });
 
   it('B6: session exactly at windowStart included', () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ startedAt: '2026-03-01T00:00:00Z' })],
       rule(),
       NOW,
@@ -89,7 +89,7 @@ describe('computeRuleLicenceActivity', () => {
   });
 
   it('B7: session one instant before windowStart excluded', () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ startedAt: '2026-02-28T23:59:59.999Z' })],
       rule(),
       NOW,
@@ -99,7 +99,7 @@ describe('computeRuleLicenceActivity', () => {
 
   it('distinguishes training weight from competition weight by session.type', () => {
     const trainingSession = session({ type: 'training' });
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [trainingSession],
       rule({ countsAs: { training: 1, competition: 0 } }),
       NOW,
@@ -109,7 +109,7 @@ describe('computeRuleLicenceActivity', () => {
 
   it('B8: weight 0 excludes that session type', () => {
     const sessions = [session({ type: 'competition' })];
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       sessions,
       rule({ countsAs: { training: 1, competition: 0 } }),
       NOW,
@@ -118,7 +118,7 @@ describe('computeRuleLicenceActivity', () => {
   });
 
   it('a session after `now` (future) is excluded', () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ startedAt: '2026-09-15T00:00:00Z' })],
       rule(),
       NOW,
@@ -131,7 +131,7 @@ describe('computeRuleLicenceActivity', () => {
       session({ id: 'a', startedAt: '2026-08-01T08:00:00Z' }),
       session({ id: 'b', startedAt: '2026-08-01T18:00:00Z' }),
     ];
-    const result = computeRuleLicenceActivity(sessions, rule(), NOW);
+    const result = computeRuleLicenseActivity(sessions, rule(), NOW);
     expect(result.activityCount).toBe(2);
   });
 
@@ -141,14 +141,14 @@ describe('computeRuleLicenceActivity', () => {
     [1, 'red'],
   ] as const)('B10-B12: count=%i -> %s (required=4)', (count, expected) => {
     const sessions = Array.from({ length: count }, (_, i) => session({ id: `s${i}` }));
-    const result = computeRuleLicenceActivity(sessions, rule(), NOW);
+    const result = computeRuleLicenseActivity(sessions, rule(), NOW);
     expect(result.status).toBe(expected);
   });
 });
 
-describe('computeLicenceActivityForWeaponGroup', () => {
+describe('computeLicenseActivityForWeaponGroup', () => {
   it('B13: session with a weapon group outside the rule excluded', () => {
-    const result = computeLicenceActivityForWeaponGroup(
+    const result = computeLicenseActivityForWeaponGroup(
       [session({ weaponGroup: 'spsf:B' })],
       profile([rule()]),
       'spsf:C',
@@ -158,15 +158,15 @@ describe('computeLicenceActivityForWeaponGroup', () => {
   });
 
   it('B14: no matching rule returns null', () => {
-    const result = computeLicenceActivityForWeaponGroup([], profile([rule()]), 'spsf:Z', NOW);
+    const result = computeLicenseActivityForWeaponGroup([], profile([rule()]), 'spsf:Z', NOW);
     expect(result).toBeNull();
   });
 });
 
-describe('computeFirearmLicenceActivity', () => {
+describe('computeFirearmLicenseActivity', () => {
   it('B15: matched by weaponGroup membership, not firearm_id', () => {
     const sessions = [session({ weaponGroup: 'spsf:C' })];
-    const result = computeFirearmLicenceActivity(sessions, profile([rule()]), ['spsf:C'], NOW);
+    const result = computeFirearmLicenseActivity(sessions, profile([rule()]), ['spsf:C'], NOW);
     expect(result).toHaveLength(1);
     expect(result[0]?.activityCount).toBe(1);
   });
@@ -176,47 +176,47 @@ describe('computeFirearmLicenceActivity', () => {
       rule({ weaponGroups: ['spsf:C'] }),
       rule({ weaponGroups: ['spsf:B'], requiredActivities: 2 }),
     ]);
-    const result = computeFirearmLicenceActivity([], p, ['spsf:C', 'spsf:B'], NOW);
+    const result = computeFirearmLicenseActivity([], p, ['spsf:C', 'spsf:B'], NOW);
     expect(result).toHaveLength(2);
   });
 
   it('does not double-count a group covered twice by the same rule', () => {
     const p = profile([rule({ weaponGroups: ['spsf:C', 'spsf:B'] })]);
-    const result = computeFirearmLicenceActivity([], p, ['spsf:C', 'spsf:B'], NOW);
+    const result = computeFirearmLicenseActivity([], p, ['spsf:C', 'spsf:B'], NOW);
     expect(result).toHaveLength(1);
   });
 });
 
-describe('computeOverallLicenceActivity', () => {
+describe('computeOverallLicenseActivity', () => {
   it('B17: overall is worst of the matched rules', () => {
     const p = profile([
       rule({ weaponGroups: ['spsf:C'], requiredActivities: 1 }),
       rule({ weaponGroups: ['spsf:B'], requiredActivities: 10 }),
     ]);
     const sessions = [session({ weaponGroup: 'spsf:C' })];
-    const result = computeOverallLicenceActivity(sessions, p, ['spsf:C', 'spsf:B'], NOW);
+    const result = computeOverallLicenseActivity(sessions, p, ['spsf:C', 'spsf:B'], NOW);
     expect(result.overall).toBe('red'); // spsf:B has 0/10 -> red
   });
 
   it('B18: no weapon groups requested returns empty, no fabricated status', () => {
-    const result = computeOverallLicenceActivity([], profile([rule()]), [], NOW);
+    const result = computeOverallLicenseActivity([], profile([rule()]), [], NOW);
     expect(result).toEqual({ statuses: [], overall: null });
   });
 
   it('does not double-count a weapon group requested twice', () => {
-    const result = computeOverallLicenceActivity([], profile([rule()]), ['spsf:C', 'spsf:C'], NOW);
+    const result = computeOverallLicenseActivity([], profile([rule()]), ['spsf:C', 'spsf:C'], NOW);
     expect(result.statuses).toHaveLength(1);
   });
 });
 
-describe('computeRuleLicenceActivity weaponGroup fallback', () => {
+describe('computeRuleLicenseActivity weaponGroup fallback', () => {
   it('a session with no weaponGroup never matches a rule requiring a real group', () => {
-    const result = computeRuleLicenceActivity([session({ weaponGroup: undefined })], rule(), NOW);
+    const result = computeRuleLicenseActivity([session({ weaponGroup: undefined })], rule(), NOW);
     expect(result.activityCount).toBe(0);
   });
 
   it("falls back to '' for a missing weaponGroup, matching a rule that lists ''", () => {
-    const result = computeRuleLicenceActivity(
+    const result = computeRuleLicenseActivity(
       [session({ weaponGroup: undefined })],
       rule({ weaponGroups: [''] }),
       NOW,

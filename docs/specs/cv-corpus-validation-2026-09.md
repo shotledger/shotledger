@@ -63,7 +63,7 @@ claimed** — 147 photos were not labelled by type.
 
 **This is not true of classical features in general.** It is true of the
 features the spike tested, which were all _shape_ descriptors — size,
-solidity, dark core, backing colour — and which it correctly found to be
+solidity, dark core, backing color — and which it correctly found to be
 weak or actively inverted. The report then reasons that the real cue is
 texture and that texture must be learned. Texture is expressible
 classically, and those descriptors were not tried.
@@ -80,9 +80,9 @@ printed ring digits, 121 blur / card-edge / background.
 | feature                      |       AUC |
 | ---------------------------- | --------: |
 | local std-dev                | **0.943** |
-| colour std-dev               | **0.942** |
+| color std-dev                | **0.942** |
 | mean gradient                |     0.916 |
-| centre darkness              |     0.876 |
+| center darkness              |     0.876 |
 | high-frequency energy        |     0.838 |
 | gradient-orientation entropy |     0.780 |
 
@@ -149,10 +149,10 @@ series.
   and were made knowing what the experiment expected to find.
 - **Python spike, not the shipped port.** Indicative of the algorithm, not
   a test of `app/src/features/photo-scoring/opencv.ts`.
-- **Nothing here measures hole-centre accuracy**, which is what the SHB
+- **Nothing here measures hole-center accuracy**, which is what the SHB
   edge-touch rule actually needs. The spike's budget is ~0.5 mm and remains
-  unmeasured — §2 says which candidates are holes, not where their centres
-  are to a fraction of a millimetre.
+  unmeasured — §2 says which candidates are holes, not where their centers
+  are to a fraction of a millimeter.
 - **The production validity gate was not applied.** "Produced a fit" is not
   "would pass `checkGeometryValidity` and be shown to the user".
 - **No end-to-end score was verified** against a known result. Several
@@ -177,7 +177,7 @@ is a large win, the loosened stage is not.**
 §2 labelled candidates. That cannot measure recall: a hole no detector
 proposed never becomes a row. This round labels **holes** instead. Every photo
 is rectified exactly as the pipeline does it, rendered under a coordinate grid
-(`spike/cv/mark_holes.py`), and the hole centres are read off by eye. A
+(`spike/cv/mark_holes.py`), and the hole centers are read off by eye. A
 candidate is a true positive when it lands within 0.9 hole diameters of an
 unclaimed mark (`spike/cv/score_stages.py`). Recall is then against holes.
 
@@ -217,8 +217,8 @@ much and finds fewer holes.
 
 ### The filter behind each stage
 
-Six features, not seven: the seventh was colour std-dev and the production
-canvas is grey-only. Centre darkness is now a **magnitude** — see
+Six features, not seven: the seventh was color std-dev and the production
+canvas is gray-only. Center darkness is now a **magnitude** — see
 `cv-assisted-detection-spec.md` §1 for why, and it is not a detail: fitted
 signed, the filter rejects holes on white paper outright.
 
@@ -251,7 +251,7 @@ Two readings, both load-bearing:
 **So the loosened proposal stage is not shipped.** It stays in
 `spike/cv/hole_filter.py` as a measured negative result.
 
-### Does the filter generalise across shooters?
+### Does the filter generalize across shooters?
 
 The question `contributed-corpus-2026-09-15.md` posed. Fitted on one corpus,
 applied to the other, never having seen it:
@@ -261,7 +261,7 @@ applied to the other, never having seen it:
 | contributed (20) | maintainer (11)  | 0.898 |  45.3% |     92.3% | **0.18** |
 | maintainer (11)  | contributed (20) | 0.875 |  63.8% |     56.6% |     2.30 |
 
-**The discrimination generalises; the threshold does not transfer from a
+**The discrimination generalizes; the threshold does not transfer from a
 small fit.** AUC holds at 0.875–0.898 across shooters, phones and clubs — the
 texture difference between a hole and a patch is not one club's paper. But the
 11-photo fit puts its decision boundary in the wrong place for the other
@@ -279,10 +279,10 @@ fitting on both corpora — which the shipped constants are.
   claims about white-zone holes rests on four examples. The polarity fix means
   it is no longer _structurally_ biased against them; it is still barely
   evidenced there.
-- **Zero centrefire holes, one calibre, two phones, two clubs.** Unchanged.
+- **Zero centerfire holes, one caliber, two phones, two clubs.** Unchanged.
 - **The cross-validated numbers are in-sample in one sense**: the feature set
-  and the centre-deviation change were chosen while looking at this data. The
-  held-out table above is the honest generalisation estimate, not the pooled
+  and the center-deviation change were chosen while looking at this data. The
+  held-out table above is the honest generalization estimate, not the pooled
   one.
 - Still the Python twin for the measurement. The TypeScript the app runs is
   pinned to it by a committed fixture, not by having been measured itself —

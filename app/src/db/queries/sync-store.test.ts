@@ -225,7 +225,7 @@ describe('applyChanges', () => {
     expect(rows.map((r) => r.id)).toEqual(['remote-2']);
   });
 
-  it('applies a licence row from a device that still has vault_document_id', async () => {
+  it('applies a license row from a device that still has vault_document_id', async () => {
     // Issue #276 dropped `licenses.vault_document_id`. A device on an older
     // build still puts it in the payload; the row must land anyway, with the
     // column silently dropped.

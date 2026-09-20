@@ -34,7 +34,7 @@ sweep up documents mixed in among the targets. Triage before processing.
 | Class                                                                 | Count  |
 | --------------------------------------------------------------------- | ------ |
 | 25 m precision face (F.7.1), usable                                   | **68** |
-| Other faces (6 grey military-type, 3 pasted black faces on cardboard) | 9      |
+| Other faces (6 gray military-type, 3 pasted black faces on cardboard) | 9      |
 | Milsnabb (J.7.1)                                                      | **0**  |
 
 Conditions in the 68: one phone, one club, **all outdoors**, 13 with a hard
@@ -76,7 +76,7 @@ each with false positives.
   on the maintainer's corpus (84% recall / 84% precision at threshold 0.5; 51%
   / 95% at 0.8) and has **not** been re-fitted or re-measured here. Doing so on
   a second shooter's photos is the obvious next measurement, and the one that
-  would tell us whether the filter generalises or was tuned to one club's
+  would tell us whether the filter generalizes or was tuned to one club's
   paper.
 - **It names the single highest-value fix**: the face-finding prior. Replacing
   "largest dark blob" with one that requires a disc-like ellipse is one

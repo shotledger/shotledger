@@ -60,7 +60,7 @@ Everything downstream of that — rectification math, the coarse-to-fine search
 _driver_, and SHB scoring — is pure TypeScript in `shared/src/target-scoring/`,
 callable from a worklet or the JS thread with no OpenCV dependency, matching
 spike report §4.6 point 4 ("Scoring in `shared/` as pure TypeScript over
-(x_mm, y_mm) hole centres — no CV dependency").
+(x_mm, y_mm) hole centers — no CV dependency").
 
 ## 2. `geometry.ts` — ellipse → target-mm rectification
 
@@ -91,7 +91,7 @@ interface RectificationTransform {
 Ports `build_geom` (target_cv.py:167-188), dropping the fixed pixel canvas —
 the spike rectifies into a _second image_ at 4 px/mm and then does ring math
 in that image's pixels; this port rectifies directly into **target
-millimetres**, which is the representation `score.ts` and the app need and
+millimeters**, which is the representation `score.ts` and the app need and
 removes a redundant unit conversion. The linear-algebra content is identical:
 
 ```
@@ -461,7 +461,7 @@ function seriesNeedsReview(results: readonly ScoreResult[]): boolean; // any edg
 
 - **Ported (derivable from SHB, not photo-dependent):** all ring diameters
   (§3), the exact SHB citation text and page numbers, the edge-touch
-  worked example from cv-spike-report.md §4.5 ("hole centre at 15.30mm scores
+  worked example from cv-spike-report.md §4.5 ("hole center at 15.30mm scores
   X, at 15.31mm scores 10" — used verbatim as SC2/SC3), the 1.0mm edge-call
   threshold, the `BULLET_MM = 5.6` caliber constant.
 - **Not extractable:** the spike's raw `EllipseFit` parameters (pixel

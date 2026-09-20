@@ -21,7 +21,7 @@ describe('nextBackoffMs', () => {
     expect(nextBackoffMs(-3)).toBe(BACKOFF_BASE_MS);
   });
 
-  it('honours overridden bounds', () => {
+  it('honors overridden bounds', () => {
     expect(nextBackoffMs(2, { baseMs: 10, maxMs: 25 })).toBe(25);
     expect(nextBackoffMs(1, { baseMs: 10, maxMs: 100 })).toBe(20);
   });

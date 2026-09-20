@@ -11,15 +11,15 @@ run) — this report and the spec are the after-the-fact review artifacts.
 
 | Spec ID                                                       | Test                                                                                                                                                                                                                              |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1–B12, B19, weight/fallback/future-exclusion additions       | `shared/src/compliance/licence-activity.test.ts` (`computeRuleLicenceActivity` describe block)                                                                                                                                    |
-| B13, B14                                                      | `licence-activity.test.ts` `computeLicenceActivityForWeaponGroup`                                                                                                                                                                 |
-| B15, B16                                                      | `licence-activity.test.ts` `computeFirearmLicenceActivity`                                                                                                                                                                        |
-| B17, B18                                                      | `licence-activity.test.ts` `computeOverallLicenceActivity`                                                                                                                                                                        |
+| B1–B12, B19, weight/fallback/future-exclusion additions       | `shared/src/compliance/license-activity.test.ts` (`computeRuleLicenseActivity` describe block)                                                                                                                                    |
+| B13, B14                                                      | `license-activity.test.ts` `computeLicenseActivityForWeaponGroup`                                                                                                                                                                 |
+| B15, B16                                                      | `license-activity.test.ts` `computeFirearmLicenseActivity`                                                                                                                                                                        |
+| B17, B18                                                      | `license-activity.test.ts` `computeOverallLicenseActivity`                                                                                                                                                                        |
 | I1–I9 + boundary/future additions                             | `shared/src/compliance/indicators.test.ts`                                                                                                                                                                                        |
 | P1–P4                                                         | `shared/src/compliance/profile-registry.test.ts`                                                                                                                                                                                  |
 | Rolling-window month math (B19)                               | `shared/src/compliance/months.test.ts`                                                                                                                                                                                            |
 | N1 (no `app/` import)                                         | structural: `shared/src/compliance/**` has zero imports outside `shared/`, verified by `pnpm typecheck` building `shared` as an isolated project and by manual grep (`grep -rn "from '@/" shared/src/compliance` → no matches)    |
-| N2 (session-level only, no series input to activity counting) | structural: `ComplianceSession`/`computeRuleLicenceActivity` types take no series-shaped input; `indicators.ts`'s märke helper explicitly takes `StatsSeries[]` only for the märke indicator, never for licence-activity counting |
+| N2 (session-level only, no series input to activity counting) | structural: `ComplianceSession`/`computeRuleLicenseActivity` types take no series-shaped input; `indicators.ts`'s märke helper explicitly takes `StatsSeries[]` only for the märke indicator, never for license-activity counting |
 | N3 (existing suites untouched)                                | see full-suite run below — 343 pre-existing tests unaffected, all still pass                                                                                                                                                      |
 
 ## Gauntlet layers
@@ -33,7 +33,7 @@ Test Files  30 passed (30)
 
 (343 pre-existing + a new `shared/src/index.test.ts`-adjacent count — the
 compliance suite alone is 50 tests across 4 files: `months.test.ts` 7,
-`licence-activity.test.ts` 26, `indicators.test.ts` 13, `profile-registry.test.ts` 4.)
+`license-activity.test.ts` 26, `indicators.test.ts` 13, `profile-registry.test.ts` 4.)
 
 **2. Static types** — `pnpm typecheck` (`tsc -b`): clean, zero errors.
 
@@ -59,7 +59,7 @@ the glob extension is the only change.
 
 ```
 compliance           |  95.49 |   95.49 |      127 |         0 |          6 |        0 |        0 |
-  licence-activity.ts        |  96.10 |   96.10 |       74 |         0 |          3 |        0 |        0 |
+  license-activity.ts        |  96.10 |   96.10 |       74 |         0 |          3 |        0 |        0 |
   indicators.ts       |  96.88 |   96.88 |       31 |         0 |          1 |        0 |        0 |
   months.ts           |  89.47 |   89.47 |       17 |         0 |          2 |        0 |        0 |
   profile-registry.ts | 100.00 |  100.00 |        5 |         0 |          0 |        0 |        0 |
@@ -74,13 +74,13 @@ this task did not touch — out of scope, left as found.
 
 ### Survivor classification (compliance only)
 
-1. **`licence-activity.ts:13` `required <= 0` → `false`** and **`required <= 0` →
+1. **`license-activity.ts:13` `required <= 0` → `false`** and **`required <= 0` →
    `required < 0`** (2 survivors). `statusFor`'s next line is
    `if (count >= required) return 'green'`. Since `count` (an activity
    count) is never negative, `count >= required` is already true for every
    `required <= 0` — the early-return is behaviorally redundant. Equivalent:
    no observable output differs whether the early return fires or not.
-2. **`licence-activity.ts:101` reduce `<` → `<=`** in `worstStatus`. The reduce
+2. **`license-activity.ts:101` reduce `<` → `<=`** in `worstStatus`. The reduce
    compares `STATUS_RANK[s] < STATUS_RANK[worst]`; on a tie
    (`STATUS_RANK[s] === STATUS_RANK[worst]`) both operators produce the same
    _value_ (`s`'s status string equals `worst`'s status string when ranks
@@ -111,11 +111,11 @@ window-boundary additions in `indicators.test.ts`) covers the edges a
 property test would target, per the spec's stated plan.
 
 **7. Complexity budget** — every new function is single-purpose and under
-20 lines; the largest (`computeOverallLicenceActivity`) is a 10-line loop plus one
+20 lines; the largest (`computeOverallLicenseActivity`) is a 10-line loop plus one
 reduce call.
 
 **8. Real execution** — exercised indirectly through the app-layer UI (Home
-licence-activity chip, Firearms/firearm-detail indicators, Settings profile picker)
+license-activity chip, Firearms/firearm-detail indicators, Settings profile picker)
 built on top of this module and manually verified on the Android emulator
 (see the M6 task report's Maestro section) — not a substitute for this
 module's own unit suite, but confirms the exported functions integrate.

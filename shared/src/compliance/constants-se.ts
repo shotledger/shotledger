@@ -2,7 +2,7 @@
 // PM 551.24 "Föreningsintyg", page 3 ("Förklaringar och anvisningar vid
 // utfärdande av föreningsintyg"), which transcribes PMFS 2016:4 /
 // RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§. Source text, the reading of
-// "sammantaget i genomsnitt", and what is deliberately not modelled:
+// "sammantaget i genomsnitt", and what is deliberately not modeled:
 // docs/specs/compliance-fap551-spec.md.
 
 export const SE_VERIFIED = true;

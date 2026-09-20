@@ -156,7 +156,7 @@ describe('isGuldserie (spec M8)', () => {
     expect(isGuldserie(50, precision({ seriesLength: 10 }))).toBe(false);
   });
 
-  it('honours the age reduction', () => {
+  it('honors the age reduction', () => {
     expect(isGuldserie(44, precision({ birthYear: 1960 }))).toBe(true);
     expect(isGuldserie(44, precision())).toBe(false);
   });

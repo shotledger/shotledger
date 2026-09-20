@@ -48,7 +48,7 @@ const MUTANTS = [
     replace: 'formatVersion: JSON_EXPORT_VERSION + 1,',
   },
   {
-    name: 'stamps an unrecognisable format id',
+    name: 'stamps an unrecognizable format id',
     file: 'shared/src/json-export/export.ts',
     find: 'format: JSON_EXPORT_FORMAT,',
     replace: "format: 'shotledger.something-else',",

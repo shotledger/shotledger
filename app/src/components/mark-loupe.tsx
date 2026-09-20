@@ -6,7 +6,7 @@
 // is ~20 px across, which is not enough to nudge a mark against.
 //
 // Dragging here moves the mark at reduced gain, so a fingertip that covers
-// several millimetres of target can still place a mark to a fraction of one.
+// several millimeters of target can still place a mark to a fraction of one.
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -29,7 +29,7 @@ const CROSSHAIR_COLOR = '#38bdf8';
 
 export interface MarkLoupeProps extends ViewProps {
   photo: CapturedPhoto;
-  /** Mark centre in geometry-image px. */
+  /** Mark center in geometry-image px. */
   center: Point;
   scaleToOriginal: number;
   /** Reports a delta in geometry-image px. */
@@ -54,18 +54,18 @@ export function MarkLoupe({
   }, [onNudge]);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     cropLoupe(photo, center.x, center.y, scaleToOriginal)
       .then((crop) => {
         // The crop is async and the mark can move again before it lands, so a
         // stale result must not overwrite a newer one.
-        if (!cancelled) setCropUri(crop.uri);
+        if (!canceled) setCropUri(crop.uri);
       })
       .catch(() => {
-        if (!cancelled) setCropUri(null);
+        if (!canceled) setCropUri(null);
       });
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, [photo, center.x, center.y, scaleToOriginal]);
 

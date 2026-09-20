@@ -1,8 +1,8 @@
 # M6 flow (§4 M6 "Done when"): seeds demo data, sets the compliance profile
 # to Sweden (the emulator's default system locale is English, so the
 # locale-based default is 'none' — the flow selects 'se' explicitly in
-# Settings to exercise licence activity), then asserts the Home Licence Activity
-# chip, the per-firearm Licence Activity card on the firearm detail screen,
+# Settings to exercise license activity), then asserts the Home License Activity
+# chip, the per-firearm License Activity card on the firearm detail screen,
 # and the Stats Custom period range being applied. No inputText (CLAUDE.md
 # Maestro gotchas note) — navigation, taps on fixed labels/testIDs, and the
 # native Android date-picker's own OK button (tapped by visible text) only.
@@ -61,24 +61,24 @@ appId: app.shotledger
       id: 'settings-open-compliance'
     timeout: 15000
 
-# --- Home: overall Licence Activity chip visible --------------------------------
+# --- Home: overall License Activity chip visible --------------------------------
 - tapOn: 'Home'
 - extendedWaitUntil:
     visible:
       id: 'home-barometer'
     timeout: 15000
-- takeScreenshot: m6-02-home-licence-activity
+- takeScreenshot: m6-02-home-license-activity
 
-# --- Firearms tab / firearm detail: per-firearm Licence Activity --------
+# --- Firearms tab / firearm detail: per-firearm License Activity --------
 - tapOn: 'Firearms'
 - extendedWaitUntil:
     visible: 'CZ Tactical Sport 2 Orange'
     timeout: 15000
 - tapOn: 'CZ Tactical Sport 2 Orange'
 - extendedWaitUntil:
-    visible: 'Licence Activity'
+    visible: 'License Activity'
     timeout: 15000
-- takeScreenshot: m6-03-firearm-detail-licence-activity
+- takeScreenshot: m6-03-firearm-detail-license-activity
 - pressKey: Back
 - extendedWaitUntil:
     visible: 'Firearms'

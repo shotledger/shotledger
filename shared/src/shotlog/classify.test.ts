@@ -67,7 +67,7 @@ describe('classifyTags', () => {
     ]);
   });
 
-  it('honours a mapping the user changed away from the default', () => {
+  it('honors a mapping the user changed away from the default', () => {
     const result = classifyTags(['Precision'], { precision: { kind: 'competition' } });
     expect(result.sessionType).toBe('competition');
     expect(result.disciplineId).toBeNull();
@@ -162,7 +162,7 @@ describe('classifyTags', () => {
     expect(classifyTags([' Club night ']).passthroughTags).toEqual(['Club night']);
   });
 
-  it('gives an unrecognised tag the firearm role by default', () => {
+  it('gives an unrecognized tag the firearm role by default', () => {
     expect(defaultTagRole('Club night')).toEqual({ kind: 'firearm', label: 'Club night' });
   });
 });

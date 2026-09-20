@@ -1,7 +1,7 @@
 // Web stub for on-device OCR (see text-recognition.ts): ML Kit is a native
-// module, and a WASM recogniser would be a second engine to maintain for a
+// module, and a WASM recognizer would be a second engine to maintain for a
 // surface that has no camera flow anyway — same boundary as
-// shot-listener.web.ts. The licence form hides its scan action when this
+// shot-listener.web.ts. The license form hides its scan action when this
 // reports `unsupported`.
 import type { RecognizeTextResult } from './text-recognition';
 

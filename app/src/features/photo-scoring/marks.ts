@@ -10,7 +10,7 @@ import { scoreHole } from '@shotledger/shared';
 
 export interface Mark {
   readonly id: string;
-  /** Target-mm, origin at the target centre, y increasing DOWNWARD. */
+  /** Target-mm, origin at the target center, y increasing DOWNWARD. */
   readonly xMm: number;
   readonly yMm: number;
   readonly caliberMm: number;
@@ -90,7 +90,7 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
         moved: false,
       };
       // A new mark is selected, so Move/Delete is one tap away — the
-      // benchmark's behaviour.
+      // benchmark's behavior.
       return { ...state, marks: [...state.marks, mark], selectedId: mark.id };
     }
     case 'select':

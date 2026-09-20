@@ -1,7 +1,7 @@
 // The project's slider. A thin wrapper over `@react-native-community/slider`
 // (added 2026-09-11 with the maintainer's approval, lifting the rule 2 block
 // that made this a hand-rolled `PanResponder`), so the thumb, track and
-// accessibility behaviour are the platform's rather than ours.
+// accessibility behavior are the platform's rather than ours.
 //
 // The props are unchanged from the hand-rolled version — `min`/`max`/`step`
 // and an `onChange` that fires with snapped values — so callers did not have

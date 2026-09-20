@@ -91,10 +91,20 @@ sync. Android first — **all code must stay iOS-compatible**.
    tolerate an older shape. Do not add a v2, a shim, or a "read both
    shapes" path for data only this machine has produced — it is dead code
    guarding a case that cannot occur, and it outlives the reason it was
-   written. This governs **new** compatibility work; it is not a licence
+   written. This governs **new** compatibility work; it is not a license
    to rip out tolerance that already ships. The rule ends at the first
    released build with users other than the maintainer, and whatever ADR
    declares that says so explicitly.
+9. **English (US)** for identifiers, filenames, i18n keys and English
+   strings and comments (`license`, `caliber`, `center`, `recognized`).
+   Two carve-outs: Swedish federation terms of art (guldserie, milsnabb,
+   vapengrupp, …) stay Swedish, and proper nouns — a federation's own
+   official name (ISSF's "25m Centre Fire Pistol"), a document's field
+   label (`vapenId`, from `VapenID` on the licence card), and stored ids
+   (`issf-centre-fire-pistol`) — keep the spelling of the thing they
+   name, so the app never contradicts the rule book it cites. Swedish
+   strings are unaffected.
+   Issue #321 parts 2 and 3 await the maintainer's ruling.
 
 ## Definition of done
 

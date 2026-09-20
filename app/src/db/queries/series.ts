@@ -190,7 +190,7 @@ export function swapSeriesPositions(db: Database, aId: string, bId: string) {
 
 /**
  * Applies a whole reordering at once — the drag-and-drop equivalent of
- * `swapSeriesPositions`, which only ever exchanged two neighbours.
+ * `swapSeriesPositions`, which only ever exchanged two neighbors.
  *
  * Every row is parked outside the used range before any final value is
  * written. A swap could get away with parking one row; an arbitrary

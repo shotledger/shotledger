@@ -41,7 +41,7 @@ const KILOGRAMS_PER_GRAIN = 0.00006479891;
  *
  * E = ½mv². Unlike `powerFactor`, nothing here is truncated to satisfy a
  * rule — one decimal is kept because the useful range spans three orders of
- * magnitude: a centrefire pistol load is several hundred joules, an air
+ * magnitude: a centerfire pistol load is several hundred joules, an air
  * pistol is single digits, and rounding to whole joules would erase the
  * difference between 7.4 and 7.5 exactly where it matters most.
  *

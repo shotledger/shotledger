@@ -125,7 +125,7 @@ export default function ScanScreen() {
   const [geometryImage, setGeometryImage] = useState<GeometryImage | null>(null);
   const [transform, setTransform] = useState<TargetTransform | null>(null);
   // Held only while marking, and dropped on retake: a few megabytes of
-  // rectified grey pixels that tap-snap searches.
+  // rectified gray pixels that tap-snap searches.
   const [canvas, setCanvas] = useState<RectifiedCanvas | null>(null);
   const [reasons, setReasons] = useState<readonly ValidityReason[]>([]);
   const [corners, setCorners] = useState<readonly Point[]>([]);

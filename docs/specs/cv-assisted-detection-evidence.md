@@ -26,11 +26,11 @@ place the shooter did not touch.
 | Dependencies added  | **none**, in any package                                                                            |
 | Environment changes | none — no installs, no system-level changes                                                         |
 
-## Spec behaviour → test
+## Spec behavior → test
 
-|   # | Behaviour                                       | Verified by                                                                                                                                                                                                                                                  |
+|   # | Behavior                                        | Verified by                                                                                                                                                                                                                                                  |
 | --: | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-|   1 | six descriptors of a grey crop                  | `hole-features.test.ts` — the 14 `reproduces OpenCV feature values for …` cases, which assert all six against the Python reference                                                                                                                           |
+|   1 | six descriptors of a gray crop                  | `hole-features.test.ts` — the 14 `reproduces OpenCV feature values for …` cases, which assert all six against the Python reference                                                                                                                           |
 |   2 | uniform crop has zero texture                   | `reports no texture at all for a uniform crop`, plus fixtures `uniform_mid`/`uniform_black`/`uniform_white`                                                                                                                                                  |
 |   3 | blind to a constant brightness offset           | `is blind to a constant brightness offset`                                                                                                                                                                                                                   |
 |   4 | too-small or short buffer → zeros               | `returns zeros rather than reading past the end of a short buffer`, `returns zeros for a crop too small to convolve`, `does measure the smallest crop a 3x3 kernel fits on` (the 3-versus-2 boundary)                                                        |
@@ -56,7 +56,7 @@ place the shooter did not touch.
 | Lint                    | `pnpm lint` (in `check`)                                                                                                                                          | 0 warnings                                                                                                        |
 | Format                  | `pnpm format` (in `check`)                                                                                                                                        | "All matched files use Prettier code style!"                                                                      |
 | i18n                    | `pnpm i18n:check` (in `check`)                                                                                                                                    | 1032/1032 keys, 0 issues                                                                                          |
-| Licences                | `pnpm licenses:check` (in `check`)                                                                                                                                | 100 packages, invariants hold                                                                                     |
+| Licenses                | `pnpm licenses:check` (in `check`)                                                                                                                                | 100 packages, invariants hold                                                                                     |
 | Coverage, changed lines | `vitest run --coverage --coverage.include='shared/src/target-scoring/hole-features.ts'`                                                                           | **100% statements (117/117), 100% branches (20/20), 100% functions (11/11), 100% lines (92/92)**                  |
 | Mutation, new module    | `stryker run --mutate 'shared/src/target-scoring/hole-features.ts'`                                                                                               | **93.02%** — 171 killed, 29 timed out, **15 survived**, 0 errors                                                  |
 | Mutation, project       | `pnpm mutation`                                                                                                                                                   | **92.52%** aggregate, exit 1 against the config's `break: 95`. **Pre-existing failure — see the baseline below.** |
@@ -87,7 +87,7 @@ not silently improved.
 groups:
 
 1. **Loop bounds `i < n` → `i <= n`** (7 mutants, in `toFloat`, `separable`,
-   `convolve3`, the histogram and the centre window). One extra iteration
+   `convolve3`, the histogram and the center window). One extra iteration
    writes past the end of a `Float64Array`, which JavaScript silently drops,
    and reads through `reflectIndex`, which folds any index back in range. The
    output is bit-identical. Not killable without adding a bounds assertion
@@ -139,17 +139,17 @@ Nothing was quietly fixed. Three things went red:
      `sigma <= 0`, OpenCV returns a hardcoded binomial kernel ([1,4,6,4,1]/16),
      not a sampled Gaussian at the sigma it would otherwise derive. Computing
      the Gaussian put `hfEnergy` **2.5%** out.
-2. **A spec criterion was unachievable and was revised, visibly.** Behaviour 7
+2. **A spec criterion was unachievable and was revised, visibly.** Behavior 7
    asked for 1e-6 absolute agreement with Python. OpenCV and numpy compute
    this pipeline in float32 and the TypeScript in float64, so they agree to
    about 1e-7 relative and no closer. The criterion is now a 1e-4 **relative**
    tolerance — still 250× tighter than the smaller of the two real bugs above.
-3. **A spec criterion was wrong about behaviour and was revised, visibly.**
-   Behaviour 11 said the crop _shifts inward_ near the canvas rim. Built that
+3. **A spec criterion was wrong about behavior and was revised, visibly.**
+   Behavior 11 said the crop _shifts inward_ near the canvas rim. Built that
    way, `snapToHole` silently stopped snapping within 24 px of the edge, and
-   the test written for the criterion caught it: `centreDeviation` is defined
+   the test written for the criterion caught it: `centerDeviation` is defined
    against the middle of the crop, so a crop slid sideways reads a real hole as
-   off-centre texture. The crop now **reflects** at the rim and stays centred.
+   off-center texture. The crop now **reflects** at the rim and stays centered.
 
 ## What this evidence does not cover
 
@@ -160,7 +160,7 @@ Nothing was quietly fixed. Three things went red:
   TypeScript is pinned to that reference by a fixture, and the fixture's crops
   are **synthetic** — so what is proven here is _the port is faithful_, not
   _the filter performs on photos_. The latter rests on the Python run.
-- **`snapToHole`'s own behaviour on real photos is unmeasured.** The corpus
+- **`snapToHole`'s own behavior on real photos is unmeasured.** The corpus
   measurement is of the filter behind the spike's proposal stage; the app
   runs it behind `snapToHole`'s blob finder, as a second gate. The
   conjunction cannot accept more than before, so the change is one-directional

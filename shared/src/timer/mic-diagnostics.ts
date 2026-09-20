@@ -87,7 +87,7 @@ export const MAX_DIAGNOSTIC_SAMPLES = 20_000;
 /**
  * Window around a mark searched for the shot's peak. Asymmetric because a
  * human taps *after* firing: the blast is behind the tap by a reaction time,
- * not centred on it.
+ * not centered on it.
  */
 /**
  * How far back a mark looks for its shot.
@@ -99,7 +99,7 @@ export const MAX_DIAGNOSTIC_SAMPLES = 20_000;
  * over the worst observed case.
  *
  * A window this wide cannot be scanned for "how much was loud" — most of six
- * seconds is room. `analyseMark` therefore locates the loudest moment and
+ * seconds is room. `analyzeMark` therefore locates the loudest moment and
  * measures the contiguous event around it, which is the thing a detector
  * would have to trigger on anyway.
  */
@@ -230,7 +230,7 @@ export class MicDiagnosticsRecorder {
   }
 
   /**
-   * Records a "that was a real shot" mark and analyses it immediately.
+   * Records a "that was a real shot" mark and analyzes it immediately.
    * Ignores a negative time. The analysis only sees samples already in the
    * buffer, so the caller marks after firing — which is what the button is.
    */
@@ -238,7 +238,7 @@ export class MicDiagnosticsRecorder {
     if (!Number.isFinite(atMs) || atMs < 0) return null;
     const mark: ShotMark = { index: this.marks.length, atMs };
     this.marks.push(mark);
-    this.lastMark = analyseMark(this.retainedSamples(), mark);
+    this.lastMark = analyzeMark(this.retainedSamples(), mark);
     return mark;
   }
 
@@ -315,7 +315,7 @@ export class MicDiagnosticsRecorder {
 }
 
 /** What the metering data shows around one mark. See MarkAnalysis. */
-export function analyseMark(
+export function analyzeMark(
   samples: readonly DiagnosticSample[],
   mark: ShotMark,
   window: MarkWindow = DEFAULT_MARK_WINDOW,
@@ -449,7 +449,7 @@ export function buildMicDiagnosticsJson(
       finalNoiseFloorDb: snapshot.noiseFloorDb,
       markCount: snapshot.marks.length,
     },
-    marks: snapshot.marks.map((mark) => analyseMark(snapshot.samples, mark)),
+    marks: snapshot.marks.map((mark) => analyzeMark(snapshot.samples, mark)),
     samples: [...snapshot.samples],
   };
 }

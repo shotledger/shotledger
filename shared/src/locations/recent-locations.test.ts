@@ -89,7 +89,7 @@ describe('rankRecentLocations', () => {
     expect(rankRecentLocations(rows, 'Skjutbanan Söder')).toEqual([]);
   });
 
-  it('honours the limit', () => {
+  it('honors the limit', () => {
     expect(rankRecentLocations(rows, '', 2)).toEqual(['Skjutbanan Söder', 'Skjutbanan Norr']);
     expect(rankRecentLocations(rows, '', 0)).toEqual([]);
   });

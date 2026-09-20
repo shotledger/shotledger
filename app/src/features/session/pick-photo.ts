@@ -7,7 +7,7 @@ export type PickPhotoResult = string | null | 'denied';
 
 /**
  * Opens the photo library and returns the picked local file URI.
- * `null` = the user cancelled; `'denied'` = permission was refused.
+ * `null` = the user canceled; `'denied'` = permission was refused.
  */
 export async function pickSeriesPhoto(): Promise<PickPhotoResult> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();

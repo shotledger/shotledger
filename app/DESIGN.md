@@ -118,13 +118,13 @@ components:
 ShotLedger is the notebook a shooter keeps at the range, built to the tolerances
 of a measuring instrument. A paper logbook is unadorned because its job is to
 hold numbers accurately and be readable in whatever light the range has; a
-scoring gauge is exact because a tenth of a millimetre decides a ring. This
+scoring gauge is exact because a tenth of a millimeter decides a ring. This
 system answers to both. Every surface exists to report a value, and anything
 that does not help a number read is removed.
 
 The app is dark by default and near-monochrome by discipline. The ground is a
 deep ink purple (`#16101F`), not black, and every neutral above it is
-purple-tinted rather than grey — the theme's own source comment makes that a
+purple-tinted rather than gray — the theme's own source comment makes that a
 rule, not a preference. Depth comes from tone, not from shadow: surfaces
 separate by getting lighter, and the only shadow in the entire application
 belongs to the floating action button. A single lavender accent carries every
@@ -138,7 +138,7 @@ tests, not eyeballed. Ornament would cost legibility and buy nothing.
 
 **Key Characteristics:**
 
-- Dark ground, purple-tinted neutrals, never grey
+- Dark ground, purple-tinted neutrals, never gray
 - Depth by tonal layering; exactly one shadow in the system
 - One accent, used sparingly, carrying all interaction
 - A four-step radius scale and a seven-step spacing scale — no ad-hoc values
@@ -178,13 +178,13 @@ outcome.
   in sunlight, purple enough to never read as a default dark mode.
 - **Surface Purple** (`#221934`): cards, tiles, list groups, segmented-control
   tracks — the standard raised surface.
-- **Raised Surface Purple** (`#2E2246`): the selected or emphasised state of a
+- **Raised Surface Purple** (`#2E2246`): the selected or emphasized state of a
   surface — the chosen segment, a neutral chip. One step further from the
   ground, the entire mechanism for "this one is active".
 - **Bone White** (`#F6EEE4`): primary text. Warm rather than pure white, which
   keeps it from vibrating against the purple ground.
 - **Muted Lilac** (`#C9B9DC`): secondary text — subtitles, hints, metadata,
-  units. Still purple, never grey.
+  units. Still purple, never gray.
 - **Border Violet** (`#7360B0`): borders and dividers, used sparingly since most
   separation is tonal.
 
@@ -196,10 +196,10 @@ outcome.
 
 ### Named Rules
 
-**The Purple-Tinted Neutral Rule.** There is no grey in either theme. Text,
-secondary text, borders, and every surface carry the accent hue. A neutral grey
+**The Purple-Tinted Neutral Rule.** There is no gray in either theme. Text,
+secondary text, borders, and every surface carry the accent hue. A neutral gray
 introduced anywhere reads instantly as foreign and is a defect, not a variation.
-`tokens.test.ts` asserts the hue on both palettes, so a grey cannot re-enter
+`tokens.test.ts` asserts the hue on both palettes, so a gray cannot re-enter
 unnoticed. Bone White is the one deliberate exception: dark's primary text is
 warm on purpose, to keep it from vibrating against the cool ground.
 
@@ -252,7 +252,7 @@ segmented control scrolls horizontally instead of squeezing every label.
 
 ## Layout
 
-A single-column, vertically stacked layout inside a centred column capped at
+A single-column, vertically stacked layout inside a centered column capped at
 **800px** (`MaxContentWidth`), so the design holds on a tablet without stretching
 list rows to unreadable widths.
 
@@ -318,7 +318,7 @@ ornament, and state changes that are unmistakable but never loud.
 
 - **Shape:** softly rounded (12px, `Radius.medium`)
 - **Primary:** Signal Lavender ground with Deep Aubergine Label Strong text,
-  16px vertical / 24px horizontal padding, centred, full width. One per screen.
+  16px vertical / 24px horizontal padding, centered, full width. One per screen.
 - **Pressed:** the whole control drops to **85% opacity**. There is no separate
   hover state — this is a touch platform.
 - **The One Primary Action Rule.** `PrimaryButton` is the single most important
@@ -384,7 +384,7 @@ an 2px gap. The number is the content; the caption is the annotation.
 
 ### Empty State
 
-Never a bare "no results" line. A centred block with 64px vertical breathing
+Never a bare "no results" line. A centered block with 64px vertical breathing
 room: Headline title, Body text in Muted Lilac, and an optional Primary Button
 offering the action that would fill the screen.
 
@@ -402,12 +402,12 @@ offering the action that would fill the screen.
   judgement call.
 - **Do** keep control labels on one line, shrinking or scrolling instead of
   wrapping.
-- **Do** use weight, not size, to emphasise at 14px.
+- **Do** use weight, not size, to emphasize at 14px.
 
 ### Don't:
 
 - **Don't** add a shadow to anything but the floating action button.
-- **Don't** introduce a neutral grey into the dark theme; every neutral is
+- **Don't** introduce a neutral gray into the dark theme; every neutral is
   purple-tinted.
 - **Don't** assign `PURPLE_RAIN_GOLD_ACCENT_REJECTED` (`#E8B84B`) to `primary`
   or any interactive token — it is retained for its contrast work only.

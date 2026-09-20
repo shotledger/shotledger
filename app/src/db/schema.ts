@@ -217,7 +217,7 @@ export const shots = sqliteTable('shots', {
 });
 
 // Photo scoring phase 1 (docs/specs/photo-scoring-phase1-spec.md §4): where
-// the user tapped, in target millimetres. The score derived from a mark
+// the user tapped, in target millimeters. The score derived from a mark
 // already lives in shots.value_tenths — this table stores the geometry, so
 // re-scoring never needs the photo again.
 export const shotMarks = sqliteTable('shot_marks', {
@@ -225,11 +225,11 @@ export const shotMarks = sqliteTable('shot_marks', {
   shotId: text('shot_id')
     .notNull()
     .references(() => shots.id),
-  // Origin at the target centre; y increases DOWNWARD, matching
+  // Origin at the target center; y increases DOWNWARD, matching
   // imageToTargetMm/scoreHole in shared/src/target-scoring.
   xMm: real('x_mm').notNull(),
   yMm: real('y_mm').notNull(),
-  // Denormalised on purpose: the firearm's caliber can be edited later, and
+  // Denormalized on purpose: the firearm's caliber can be edited later, and
   // that must not silently re-score a shot recorded months ago.
   caliberMm: real('caliber_mm').notNull(),
 });

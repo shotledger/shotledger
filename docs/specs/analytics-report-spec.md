@@ -94,7 +94,7 @@ Naming: `A-<n>` behaviors are asserted one-to-one by
 ```ts
 interface AnalyticsSeries extends StatsSeries {
   sessionType: 'training' | 'competition';
-  /** Tag ids of the OWNING SESSION, denormalised onto each of its series. */
+  /** Tag ids of the OWNING SESSION, denormalized onto each of its series. */
   tagIds: readonly string[];
 }
 
@@ -189,7 +189,7 @@ interface AnalyticsRecords {
   has zero inner tens still yields a record of value 0 — that is a real record
   ("best so far is none"), and the UI shows it as `0`.
 - **A-R3** Ties keep the **earliest** session (the first in the points'
-  chronological order) — documented, not undefined behaviour.
+  chronological order) — documented, not undefined behavior.
 - **A-R4** An empty input gives all three as `null`.
 
 ### `analyticsTotals(list)`
@@ -225,7 +225,7 @@ interface AnalyticsTotals {
 - **A-T6** `analyticsTotals` and `analyticsSessionPoints` agree: the sum of
   the points' `sessionTotalTenths` equals `sumTenths`, and likewise for
   `innerTenCount` / `tenCount` / `scoredShotCount` / `scoredSeriesCount`.
-  (Consistency test, not a separate behaviour.)
+  (Consistency test, not a separate behavior.)
 
 ## Non-goals
 

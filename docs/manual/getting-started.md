@@ -92,5 +92,5 @@ Everything is saved as you go — there is no "save" button to forget.
 
 **Statistics** shows how you are trending. **Home** shows your recent sessions.
 
-If your licence renewal needs documented range activity, turn on the Swedish
-compliance profile in Settings and see [Licence activity](guides/licence-activity.md).
+If your license renewal needs documented range activity, turn on the Swedish
+compliance profile in Settings and see [License activity](guides/license-activity.md).

@@ -5,12 +5,12 @@ Companion to `docs/specs/analytics-report-spec.md`. Branch
 
 ## What was built
 
-| Path                                   | Role                                                       |
-| -------------------------------------- | ---------------------------------------------------------- |
-| `shared/src/scoring/analytics.ts`      | The gauntleted module — filter + aggregation engine        |
-| `shared/src/scoring/analytics.test.ts` | 29 behaviour-tagged tests (`A-F*`, `A-P*`, `A-R*`, `A-T*`) |
-| `shared/src/export/json-log.ts`        | JSON report shaping (ordinary vitest, not the gauntlet)    |
-| `shared/src/export/json-log.test.ts`   | 8 tests                                                    |
+| Path                                   | Role                                                      |
+| -------------------------------------- | --------------------------------------------------------- |
+| `shared/src/scoring/analytics.ts`      | The gauntleted module — filter + aggregation engine       |
+| `shared/src/scoring/analytics.test.ts` | 29 behavior-tagged tests (`A-F*`, `A-P*`, `A-R*`, `A-T*`) |
+| `shared/src/export/json-log.ts`        | JSON report shaping (ordinary vitest, not the gauntlet)   |
+| `shared/src/export/json-log.test.ts`   | 8 tests                                                   |
 
 `shared/src/scoring/stats.ts` was **not** modified — `AnalyticsSeries`
 extends `StatsSeries`, so the M5 engine and its evidence stand unchanged.
@@ -87,7 +87,7 @@ survived because the fixture happened to have as many tens as non-tens.
 Test `A-T4: tenCount takes only shots at 10.0 and above` (values
 `[100, 105, 99]`) makes the two counts differ.
 
-## Behaviour coverage map
+## Behavior coverage map
 
 Every `A-` tag in the spec appears in at least one test name:
 

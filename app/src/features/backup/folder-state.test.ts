@@ -7,12 +7,12 @@ describe('reduceFolderState', () => {
     );
   });
 
-  it('leaves the folder unset when a pick is cancelled', () => {
-    expect(reduceFolderState(null, { type: 'pick-cancelled' })).toBeNull();
+  it('leaves the folder unset when a pick is canceled', () => {
+    expect(reduceFolderState(null, { type: 'pick-canceled' })).toBeNull();
   });
 
-  it('keeps an already-remembered folder when a later pick is cancelled', () => {
-    expect(reduceFolderState('content://a', { type: 'pick-cancelled' })).toBe('content://a');
+  it('keeps an already-remembered folder when a later pick is canceled', () => {
+    expect(reduceFolderState('content://a', { type: 'pick-canceled' })).toBe('content://a');
   });
 
   it('keeps the remembered folder after a successful write', () => {

@@ -53,7 +53,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 │   └── src/
 │       ├── scoring/      series math, guldserie, statistics (§6.4)
 │       ├── disciplines/  discipline definitions + JSON schema (§6.2)
-│       ├── compliance/   FAP 551-3 licence-activity logic (§6.6)
+│       ├── compliance/   FAP 551-3 license-activity logic (§6.6)
 │       └── csv/          export/import (§6.8)
 ├── docs/             this file, ADRs (docs/adr/NNN-title.md)
 └── .github/workflows/ci.yml
@@ -225,7 +225,7 @@ sight_settings  firearm_id FK NOT NULL,
                 label TEXT NOT NULL,           -- free text; the same aiming
                                                -- method recurs per discipline
                                                -- with different clicks, and not
-                                               -- every discipline is modelled,
+                                               -- every discipline is modeled,
                                                -- so no discipline FK (#114)
                 elevation_clicks INTEGER,      -- signed, + = up; NULL = not set
                 windage_clicks INTEGER,        -- signed, + = right
@@ -546,7 +546,7 @@ and per-ammo-lot aggregates.
   race noted in the M2 report, which otherwise made the flow's `app://dev`
   step flaky on this sandboxed emulator.
 
-### M6 — FAP 551-3 licence activity + PDF (branch `feat/m6-compliance`)
+### M6 — FAP 551-3 license activity + PDF (branch `feat/m6-compliance`)
 
 Logic in `shared/compliance/` driven by a config object, not hard-coded:
 `{windowMonths: 6, requiredActivities: N, countsAs: …}` per weapon group.
@@ -561,9 +561,9 @@ pistolskyttekort held, and pistolskyttemärke guld — or årtalsmärke within
 the last two years — fulfilled (the app can compute märke fulfillment
 from §6.5 automatically).
 
-- [x] Licence Activity UI on Home + per firearm: activities in rolling window vs
+- [x] License Activity UI on Home + per firearm: activities in rolling window vs
       required, green/amber/red
-      — Home shows one overall chip (`compliance.licenceActivity{Green,Amber,Red}`,
+      — Home shows one overall chip (`compliance.licenseActivity{Green,Amber,Red}`,
       worst-of across every weapon group the shooter's firearms hold);
       Firearms tab and firearm detail show per-firearm chip(s), worst-of
       across the firearm's own weapon groups. All hidden when the resolved
@@ -585,7 +585,7 @@ from §6.5 automatically).
       with a generated `.pdf` file. The layout has **not** been checked
       against a real föreningsintyg attachment — the module doc-comment and
       this checklist both carry the VERIFY.
-- [x] FAP 551-3 activity numbers settled and the two cases modelled
+- [x] FAP 551-3 activity numbers settled and the two cases modeled
       (branch `fix/compliance-fap551-numbers`) — window 6 months;
       **12** activities for FAP 551-3 5 § (no handgun for target shooting
       yet), **6** for 6 § (already holds one), both derived from the
@@ -596,9 +596,9 @@ from §6.5 automatically).
       5 § case — **flagged for maintainer review**, a UX default). The
       "ytterligare enhandsvapen" and "förnyelse av tidsbegränsat tillstånd"
       rules are transcribed in the spec and the user manual but deliberately
-      **not modelled** (both key off licence facts the app does not record),
+      **not modeled** (both key off license facts the app does not record),
       as are "särskilda skäl" (decided by the police, not the shooter).
-      `SE_VERIFIED = true` now covers the modelled numbers only; the Bilaga 8
+      `SE_VERIFIED = true` now covers the modeled numbers only; the Bilaga 8
       märke-guld proxy keeps its own `ruleVerified: false`. Spec/evidence:
       `docs/specs/compliance-fap551-{spec,evidence}.md`.
 - [x] The case's **default** derived from the firearms (issue #286, branch
@@ -612,7 +612,7 @@ from §6.5 automatically).
       read time, never written back, so a case a shooter has chosen never
       moves under them. Spec/evidence:
       `docs/specs/firearm-ownership-{spec,evidence}.md`.
-- **Done when:** licence-activity states unit-tested (boundary dates, tombstoned
+- **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
   (CLAUDE.md mandates it): executable spec in
@@ -628,7 +628,7 @@ from §6.5 automatically).
   the `se` profile's `windowMonths`/`requiredActivities` numbers shipped as
   placeholders with `SE_VERIFIED = false`, because no FAP 551-3 numeric source
   text existed in the repo; the checklist item above replaced them with the
-  cited PM 551.24 numbers. The licence-activity UI still renders the
+  cited PM 551.24 numbers. The license-activity UI still renders the
   `compliance.unverifiedHint` line wherever `profile.verified === false` — the
   general mechanism for any future profile, now unreachable for `se`.
   The Bilaga 8 indicator helpers (`monthsOfLoggedActivity`,
@@ -638,8 +638,8 @@ from §6.5 automatically).
   further VERIFY (≥1 guldserie in 24 months is a placeholder proxy, not a
   confirmed märke-earning rule). Maestro: `app/e2e/m6-compliance.yaml` on
   the `shotledger` AVD dev build — seeds demo data, selects the `se`
-  compliance profile in Settings, asserts the Home licence-activity chip, the
-  firearm-detail licence-activity card, then exercises the Stats Custom period
+  compliance profile in Settings, asserts the Home license-activity chip, the
+  firearm-detail license-activity card, then exercises the Stats Custom period
   (native Android date picker, tapped via its own visible "OK" button) and
   asserts the applied-range label. See the M6 task report for the run
   outcome and screenshot paths.
@@ -683,25 +683,25 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
-| `/` Home                                   | totals card, latest sessions, licence-activity summary, FAB                               | empty / seeded     |
+| `/` Home                                   | totals card, latest sessions, license-activity summary, FAB                               | empty / seeded     |
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
 | `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
-| `/firearms`                                | list + licence-activity chips                                                             | empty              |
+| `/firearms`                                | list + license-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
 | `/settings`                                | language, theme, data, support, about                                                     |                    |
 | `/dev/components`                          | component gallery (dev only)                                                              |                    |
 | Route                                      | Purpose                                                                                   | Key states         |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------ |
-| `/` Home                                   | totals card, latest sessions, licence-activity summary, FAB                               | empty / seeded     |
+| `/` Home                                   | totals card, latest sessions, license-activity summary, FAB                               | empty / seeded     |
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
 | `/stats`                                   | filters + tiles + charts                                                                  | no data for filter |
-| `/firearms`                                | list + licence-activity chips                                                             | empty              |
+| `/firearms`                                | list + license-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
 | `/tools`                                   | timers, photos, Webshooter — the non-settings hub                                         | disconnected       |
@@ -1085,7 +1085,7 @@ restates §0 rules 1–6 verbatim.
 > decisions-log entry.
 
 > **Scan a physical license card has since shipped** on
-> `feat/license-card-ocr`: the firearm detail screen's licence form gained
+> `feat/license-card-ocr`: the firearm detail screen's license form gained
 > "Scan card" actions that photograph (or pick) a Polisen vapenlicens card
 > and pre-fill it via on-device ML Kit text recognition, the one new
 > dependency (`@react-native-ml-kit/text-recognition`, see the 2026-09-02
@@ -1106,21 +1106,21 @@ restates §0 rules 1–6 verbatim.
 > same filtered `SessionExport[]`) — the vault in none of them. Charts are
 > hand-drawn `react-native-svg`; §2's chart row has been corrected to say
 > so. See the 2026-09-03 plan.md decisions-log entries.
-> **The scanned original is now kept by default** (`feat/licence-card-image`,
+> **The scanned original is now kept by default** (`feat/license-card-image`,
 > maintainer report: "we want the original picture as well — shooting stores
-> need to see that"). The vault-store switch defaults to `true`; the licence
+> need to see that"). The vault-store switch defaults to `true`; the license
 > row gets a nullable `licenses.vault_document_id` column (migration 0005)
-> pointing at the vault document, and a "Show licence card" action on the
-> licence row opens it full-screen behind the vault's biometric gate. The
+> pointing at the vault document, and a "Show license card" action on the
+> license row opens it full-screen behind the vault's biometric gate. The
 > vault's own "Add to vault" screen (Weapon license + Photo) also offers the
-> same scan, and can create a licence record from it. See the updated
+> same scan, and can create a license record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
 
 > **The Vault has since been removed** (issue #276, maintainer 2026-09-16:
-> licences are going digital, and a licence picture — if it is ever needed
+> licenses are going digital, and a license picture — if it is ever needed
 > again — belongs next to the firearm, not in a separate encrypted store).
 > That withdraws the "we want the original picture as well" requirement the
-> paragraph above records, so the scan now keeps only the recognised fields
+> paragraph above records, so the scan now keeps only the recognized fields
 > and deletes the image. Gone with it: the `/vault` screens, the vault store,
 > the AES-GCM envelope, the passphrase re-wrap of ADR 0007, the Android
 > backup-exclusion config plugin, `licenses.vault_document_id` (migration

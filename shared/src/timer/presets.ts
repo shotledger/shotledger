@@ -9,7 +9,7 @@ import type { SeriesSpec, TimerConfig } from './types';
  * SHB J.6.2 p. 290: "FÄRDIGA" (ready) is called 60 s after "LADDA" (load),
  * then targets appear for the series' time limit. That 60 s LADDA→FÄRDIGA
  * wait is a once-per-omgång range-command cadence, not a per-series pause —
- * modelling it before every one of the 13 series here would make a solo
+ * modeling it before every one of the 13 series here would make a solo
  * practice drill ~13 minutes of standing-and-waiting. `MILSNABB_PRACTICE_READY_DELAY_MS`
  * is a practical default for unsupervised practice; `MILSNABB_OFFICIAL_READY_DELAY_MS`
  * is kept for a shooter who wants the authentic cadence (selectable in the

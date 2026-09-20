@@ -52,11 +52,11 @@ export function useAccount(): AccountState {
   const [error, setError] = useState<AccountErrorKey | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     void (async () => {
       const token = await loadSessionTokenCache();
       if (token === null) {
-        if (!cancelled) setLoading(false);
+        if (!canceled) setLoading(false);
         return;
       }
       // A stored token can have been revoked (sign-out elsewhere, account
@@ -64,7 +64,7 @@ export function useAccount(): AccountState {
       const user = await getAccountApi()
         .currentUser()
         .catch(() => null);
-      if (cancelled) return;
+      if (canceled) return;
       if (user === null) {
         setSessionTokenCache(null);
         await clearSessionToken();
@@ -76,7 +76,7 @@ export function useAccount(): AccountState {
       void refreshPendingCount();
     })();
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, []);
 

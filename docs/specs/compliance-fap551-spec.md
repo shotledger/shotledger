@@ -17,7 +17,7 @@ provision.
 **Tier 2** (normal feature). No money, auth, concurrency or data loss. The
 one real risk is misstating a regulation, which no gauntlet layer can catch —
 it is addressed by transcribing the source verbatim below, citing it at every
-place a number appears, and modelling only what the source actually states.
+place a number appears, and modeling only what the source actually states.
 
 **Isolation:** the agent's own git worktree, branch
 `fix/compliance-fap551-numbers`.
@@ -33,7 +33,7 @@ place a number appears, and modelling only what the source actually states.
 - `app/src/features/compliance/{profile.ts,use-compliance-profile.ts}`
 - `app/src/app/settings/compliance.tsx`, `app/src/app/firearms/[id]/index.tsx`
 - `app/src/i18n/{en,sv}.json`
-- `docs/manual/guides/licence-activity{,.sv}.md`,
+- `docs/manual/guides/license-activity{,.sv}.md`,
   `docs/implementation-plan.md`, `docs/specs/m6-compliance-spec.md`
 
 ## The source
@@ -70,29 +70,29 @@ tidigare är aktiv medlem om det finns särskilda skäl så som t.ex. sjukdom,
 graviditet, eller utlandstjänstgöring. Särskilda skäl ska redovisas i bilaga."
 and "Det är alltid Polismyndigheten som avgör…".
 
-## What is modelled, and what is not
+## What is modeled, and what is not
 
-**Modelled: 5 § and 6 § only.** They are the two general "aktiv medlem"
+**Modeled: 5 § and 6 § only.** They are the two general "aktiv medlem"
 requirements, they share one shape (a count of activities over a six-month
 window), and they map onto exactly what the app already knows — logged
 sessions.
 
-**Transcribed but not modelled**, by the maintainer's decision of 2026-09-16,
+**Transcribed but not modeled**, by the maintainer's decision of 2026-09-16,
 same treatment as the SvSF klass layer in #138:
 
 - **Ytterligare enhandsvapen** (≥2 activities in six months _with each
-  previously held handgun_). Not modelled: it is a per-firearm requirement
-  keyed to which handguns the applicant already holds — a licence-holding fact
+  previously held handgun_). Not modeled: it is a per-firearm requirement
+  keyed to which handguns the applicant already holds — a license-holding fact
   the app does not record, and it applies only to a specific application type,
   not to a shooter's standing activity level.
 - **Förnyelse av tidsbegränsat tillstånd** (≥4 activities per year over the
-  last two years _with the applied-for firearm_). Not modelled: it is keyed to
+  last two years _with the applied-for firearm_). Not modeled: it is keyed to
   a permit's time-limited status, which the app does not record either.
-- **Särskilda skäl** (illness, pregnancy, service abroad). Not modelled, and
+- **Särskilda skäl** (illness, pregnancy, service abroad). Not modeled, and
   deliberately so: the form says the exception is granted by Polismyndigheten
   on a separate attachment, not asserted by the shooter or their club. An app
-  that let a shooter switch off their own licence activity on these grounds would be
-  modelling a decision that is not theirs to make.
+  that let a shooter switch off their own license activity on these grounds would be
+  modeling a decision that is not theirs to make.
 
 All three are stated in the user manual, so a shooter reading it learns the
 rule exists and that this app does not track it.
@@ -116,19 +116,19 @@ distribution constraint, and this spec does not invent one.
 
 Consequence, stated plainly because it is the edge the reading decides:
 **twelve activities in one week and none for five months satisfies 5 § as
-modelled here.** That is what the form's words say. The police decide the
+modeled here.** That is what the form's words say. The police decide the
 actual application; the app counts.
 
 ## Constants (`constants-se.ts`)
 
-| Constant                                  | Value  | Derivation                                          |
-| ----------------------------------------- | ------ | --------------------------------------------------- |
-| `SE_WINDOW_MONTHS`                        | `6`    | "under de senaste sex månaderna" (both §§)          |
-| `SE_FIRST_HANDGUN_PER_MONTH`              | `2`    | 5 §: "minst två gånger per månad"                   |
-| `SE_EXISTING_HANDGUN_PER_MONTH`           | `1`    | 6 §: "minst en gång per månad"                      |
-| `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`    | `12`   | `SE_FIRST_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`     |
-| `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES` | `6`    | `SE_EXISTING_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`  |
-| `SE_VERIFIED`                             | `true` | both modelled numbers now trace to the cited source |
+| Constant                                  | Value  | Derivation                                         |
+| ----------------------------------------- | ------ | -------------------------------------------------- |
+| `SE_WINDOW_MONTHS`                        | `6`    | "under de senaste sex månaderna" (both §§)         |
+| `SE_FIRST_HANDGUN_PER_MONTH`              | `2`    | 5 §: "minst två gånger per månad"                  |
+| `SE_EXISTING_HANDGUN_PER_MONTH`           | `1`    | 6 §: "minst en gång per månad"                     |
+| `SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES`    | `12`   | `SE_FIRST_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS`    |
+| `SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES` | `6`    | `SE_EXISTING_HANDGUN_PER_MONTH × SE_WINDOW_MONTHS` |
+| `SE_VERIFIED`                             | `true` | both modeled numbers now trace to the cited source |
 
 The two required-activity counts are **computed from** the per-month rate and
 the window, not written as literals — the average reading is then visible in
@@ -168,7 +168,7 @@ interface JurisdictionProfileDefinition {
 
 `getProfile(selection, variantId?)` resolves a definition to the existing
 `JurisdictionProfile` shape (now carrying `variantId`) whose `rules` are the
-selected variant's. `licence-activity.ts` is unchanged: it still consumes
+selected variant's. `license-activity.ts` is unchanged: it still consumes
 `profile.rules` and knows nothing about variants or Sweden.
 
 SE variant ids: `'firstHandgun'` (5 §) and `'existingHandgun'` (6 §).
@@ -177,7 +177,7 @@ SE variant ids: `'firstHandgun'` (5 §) and `'existingHandgun'` (6 §).
 requirement can show red to someone who is in fact compliant under 6 §, which
 sends them to look; the lax one would show green to someone who is not
 compliant under 5 §, which does not. The chosen case is written to
-`settings.complianceProfileVariant` and shown on the licence-activity card, so the
+`settings.complianceProfileVariant` and shown on the license-activity card, so the
 app never silently applies a case the shooter did not see. **Flagged for
 maintainer review** — a UX default, not a regulatory fact.
 
@@ -208,10 +208,10 @@ maintainer review** — a UX default, not a regulatory fact.
 | P9  | `getProfileDefinition('none')`                              | `null`                                                                                      |
 | P10 | both variants' `countsAs`                                   | `{ training: 1, competition: 1 }`                                                           |
 
-### Licence activity under the real numbers — `R`
+### License activity under the real numbers — `R`
 
 Boundary cases of the chosen reading (a), through the unchanged
-`computeRuleLicenceActivity`:
+`computeRuleLicenseActivity`:
 
 | #   | Scenario (window = 6 months, `now` fixed)                          | Expected                                                                               |
 | --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
@@ -226,7 +226,7 @@ Boundary cases of the chosen reading (a), through the unchanged
 ### Negative constraints
 
 - N1: `shared/compliance` never imports from `app/` (unchanged).
-- N2: `licence-activity.ts`, `months.ts` and `indicators.ts` are not modified by this
+- N2: `license-activity.ts`, `months.ts` and `indicators.ts` are not modified by this
   change — the variant mechanism must not leak Swedish rules into shared
   machinery other profiles use. Verified by `git diff --stat`, recorded in
   EVIDENCE.
@@ -259,5 +259,5 @@ Boundary cases of the chosen reading (a), through the unchanged
 ## Out of scope
 
 The PDF export's layout VERIFY, the Bilaga 8 märke-guld VERIFY, the
-locale-based profile default, and licence activity's green/amber/red banding.
+locale-based profile default, and license activity's green/amber/red banding.
 All unchanged, all still carrying their own flags.

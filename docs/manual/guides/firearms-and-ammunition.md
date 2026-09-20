@@ -11,7 +11,7 @@ firearm and anyone else's both count as borrowed. It starts at **My Own**, for
 a firearm you add and for anything you recorded before the field existed, so
 set it to **Borrowed** on the ones that are not yours. It is the only thing on
 this screen that changes what the app asks of you elsewhere: owning a handgun
-is what decides which [licence activity](licence-activity.md) requirement you
+is what decides which [license activity](license-activity.md) requirement you
 are measured against.
 
 A firearm accumulates:

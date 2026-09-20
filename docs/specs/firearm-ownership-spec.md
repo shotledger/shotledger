@@ -27,7 +27,7 @@ branch `feat/firearm-own-flag` off `origin/main` — the repo's own working tree
 is checked out on another session's `feat/remove-vault`. `pnpm i` was run
 there; every gate below runs in that worktree.
 
-## The rule being modelled
+## The rule being modeled
 
 FAP 551-3 5 kap, as transcribed on page 3 of PM 551.24:
 
@@ -119,7 +119,7 @@ No new dependencies. No new tooling. Files touched, by path:
 - `app/src/app/firearms/new.tsx`, `[id]/edit.tsx`, `[id]/index.tsx` — the field
 - `app/src/i18n/{en,sv}.json`
 - `docs/manual/guides/firearms-and-ammunition{,.sv}.md`,
-  `docs/manual/guides/licence-activity{,.sv}.md`
+  `docs/manual/guides/license-activity{,.sv}.md`
 - `docs/implementation-plan.md`, new tests alongside the files above
 
 ## Behaviors
@@ -148,7 +148,7 @@ No new dependencies. No new tooling. Files touched, by path:
 | V4  | `resolveDefaultVariantId('se')` — facts omitted                   | `firstHandgun` (no facts is not "owns a handgun") |
 | V5  | a definition without `deriveDefaultVariantId`                     | falls back to `defaultVariantId`                  |
 | V6  | `getProfile('se', resolveDefaultVariantId('se', [owned pistol]))` | rules require 6 activities                        |
-| V7  | `getProfile`/`getProfileDefinition` behaviour                     | unchanged — P1–P10 of the #281 spec still pass    |
+| V7  | `getProfile`/`getProfileDefinition` behavior                      | unchanged — P1–P10 of the #281 spec still pass    |
 
 ### Query layer — `Q` (`app/src/db/queries/firearms.test.ts`)
 
@@ -177,12 +177,12 @@ That is wrong once a derivation exists: the rule is "no usable choice ⇒ the
 **default**", and the default is now the derived one. C5 asserts the
 derivation, and `resolveComplianceCase` resolves the definition itself rather
 than laundering an unknown id through `getProfile`. `getProfile`'s own
-unknown-id behaviour (P7) is unchanged.
+unknown-id behavior (P7) is unchanged.
 
 ### Negative constraints
 
 - N1: `shared/compliance` still imports nothing from `app/`.
-- N2: `licence-activity.ts`, `months.ts`, `indicators.ts`, `constants-se.ts`
+- N2: `license-activity.ts`, `months.ts`, `indicators.ts`, `constants-se.ts`
   are **not modified** — no regulatory number changes in this PR. Verified by
   `git diff --stat`, recorded in EVIDENCE.
 - N3: the migration backfills every pre-existing `firearms` row to `is_own = 1`

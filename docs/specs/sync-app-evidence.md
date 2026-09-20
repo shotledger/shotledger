@@ -162,7 +162,7 @@ running in parallel, and its debug build of `app.shotledger` was overwritten.
 Everything after that point was done with explicit
 `adb -s emulator-5560 install` and `adb -s emulator-5560 shell` commands. The
 lesson for the agentic loop: on a shared machine, `expo run:android` does not
-honour `ANDROID_SERIAL` — build with it, but install and launch by hand.
+honor `ANDROID_SERIAL` — build with it, but install and launch by hand.
 
 ## 6. The bug the loop caught
 

@@ -1,5 +1,5 @@
 // React wrapper around the pure `FaltTimerEngine` (shared/src/timer/falt.ts,
-// unit-tested there). Same division of labour as use-timer.ts/use-ipsc-timer.ts:
+// unit-tested there). Same division of labor as use-timer.ts/use-ipsc-timer.ts:
 // the engine owns the sequence, this hook owns the interval, keep-awake and
 // the cue → speech/tone/vibration mapping. Not independently tested — the
 // same precedent as those two.

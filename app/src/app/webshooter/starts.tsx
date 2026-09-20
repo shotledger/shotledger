@@ -38,7 +38,7 @@ export default function WebshooterStartsScreen() {
   );
 
   // Shown on the card itself rather than in Alert.alert: a system dialog
-  // arrives in OS chrome — system grey, system type scale, an accent that
+  // arrives in OS chrome — system gray, system type scale, an accent that
   // is Android's and not the app's — and demands a tap to dismiss a message
   // that is only a confirmation (maintainer, 2026-09-11).
   const [feedback, setFeedback] = useState<{

@@ -46,7 +46,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analysed live and never stored."
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analyzed live and never stored."
         }
       ],
       [

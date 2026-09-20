@@ -132,7 +132,7 @@ export default function StatsReportScreen() {
             })}
           </ThemedText>
 
-          <View style={styles.centred}>
+          <View style={styles.centered}>
             <ShotHeatmap
               target={crossSession.target}
               shots={crossSession.marks}
@@ -353,7 +353,7 @@ export default function StatsReportScreen() {
 }
 
 const styles = StyleSheet.create({
-  centred: {
+  centered: {
     alignItems: 'center',
   },
   gridRow: {

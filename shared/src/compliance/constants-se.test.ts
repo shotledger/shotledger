@@ -32,7 +32,7 @@ describe('FAP 551-3 constants', () => {
     );
   });
 
-  it('C4: the modelled numbers are verified against a cited source', () => {
+  it('C4: the modeled numbers are verified against a cited source', () => {
     expect(SE_VERIFIED).toBe(true);
   });
 

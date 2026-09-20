@@ -2,7 +2,7 @@
 // the cross-session heatmap and the coaching hint behind it (#138).
 //
 // Pooling is only meaningful within one target face: a mark is in target
-// millimetres, and 50 mm on the precision face is a different ring from
+// millimeters, and 50 mm on the precision face is a different ring from
 // 50 mm on the milsnabb one. So the pool is per discipline, and the caller
 // gets told which discipline it picked rather than being handed a silent mix.
 import {

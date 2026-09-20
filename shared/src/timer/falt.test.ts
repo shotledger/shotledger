@@ -153,7 +153,7 @@ describe('buildFaltProgram — solo mode', () => {
     expect(program.startSeconds).toBe(-45);
   });
 
-  it('honours the LADDA → ALLA KLARA setting, which only this mode has', () => {
+  it('honors the LADDA → ALLA KLARA setting, which only this mode has', () => {
     const program = buildFaltProgram({ ...solo, laddaSeconds: 10 });
     expect(program.commands[0]).toMatchObject({ kind: 'ladda', atSeconds: -25 });
     expect(program.startSeconds).toBe(-25);
@@ -823,7 +823,7 @@ describe('FaltTimerEngine.seek', () => {
     expect(cues).toEqual([]);
   });
 
-  it('clamps to the programme rather than running off either end', () => {
+  it('clamps to the program rather than running off either end', () => {
     const engine = run();
     engine.pause();
     engine.seek(-9_999_999);

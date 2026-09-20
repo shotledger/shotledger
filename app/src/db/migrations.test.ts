@@ -187,7 +187,7 @@ describe('the migration chain is the whole schema', () => {
  * The rehearsals above cannot catch it: they use better-sqlite3's `exec()`,
  * which swallows a comment-only string happily. Only the prepare-per-chunk
  * path that expo-sqlite uses is affected, so this asserts on the file shape
- * instead of on behaviour. The carried-over triggers arrive with their own
+ * instead of on behavior. The carried-over triggers arrive with their own
  * comment blocks attached, which is exactly the shape that could trip it.
  */
 describe('migration statement chunks', () => {

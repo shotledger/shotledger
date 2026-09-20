@@ -1,13 +1,13 @@
-# Licence activity
+# License activity
 
-Swedish firearm licence applications ask your club to certify that you have
+Swedish firearm license applications ask your club to certify that you have
 been active on the range. The app keeps that record from the sessions you are
 already logging.
 
 **Settings → Compliance → Sweden (FAP 551-3)** turns it on. Left at **None**,
 none of this appears — which is the right state outside Sweden.
 
-## Licence Activity
+## License Activity
 
 Once on, the app counts the sessions you logged in the last **six months** and
 compares that total with the requirement for your case.
@@ -30,7 +30,7 @@ The app proposes one of the two from your firearms: if any firearm is a
 **pistol or revolver** you have marked as **My Own**, it applies 6 §.
 Otherwise it applies 5 §, the stricter case.
 
-That is a proposal, not a judgement about your licences. It reads two things
+That is a proposal, not a judgement about your licenses. It reads two things
 you told it — the weapon type and the
 [ownership](firearms-and-ammunition.md) — and nothing else:
 
@@ -59,12 +59,12 @@ not. It does not require a fixed number in every calendar month.
 
 ## What the app does not track
 
-Three rules on the same form are **not** modelled here. If any of them applies
+Three rules on the same form are **not** modeled here. If any of them applies
 to you, work it out yourself:
 
 - **An additional handgun** (_ytterligare enhandsvapen_): trained or competed
   at least twice in the last six months **with each handgun you already hold**.
-  The app does not know which of your firearms you hold a licence for.
+  The app does not know which of your firearms you hold a license for.
 - **Renewing a time-limited permit** (_förnyelse av tidsbegränsat tillstånd_):
   trained or competed with the firearm in question at least four times a year
   over the last two years. The app does not record that a permit is
@@ -76,14 +76,14 @@ to you, work it out yourself:
 
 ## What counts, and what this is not
 
-Licence Activity counts what you logged. A range visit you did not log is
+License Activity counts what you logged. A range visit you did not log is
 not in it, and a session logged twice counts twice.
 
 !!! warning "Your club and the police decide, not this app"
 
     The app counts sessions against a published requirement. It does not issue
     the intyg, and it has no view on whether your club will sign one or whether
-    the police will grant the licence. Treat a green status as "the counting
+    the police will grant the license. Treat a green status as "the counting
     looks right", not as an approval.
 
 ## Getting it out

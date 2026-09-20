@@ -54,7 +54,7 @@ export function isCaliberPreset(name: string): boolean {
  *
  * Deliberately unmapped because they are genuinely ambiguous, not because
  * they are unknown: bare `.22` (.22 LR, a 5.5 mm air rifle, or a .22
- * centrefire), `.45` (.45 ACP, .45 Colt, or 4.5 mm air), `.38`, `.32`, `.30`
+ * centerfire), `.45` (.45 ACP, .45 Colt, or 4.5 mm air), `.38`, `.32`, `.30`
  * and bare `7.62`. Guessing one of those would rewrite a user's row into
  * something they did not say.
  */

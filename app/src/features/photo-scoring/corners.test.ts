@@ -112,12 +112,12 @@ describe('homographyFromQuad', () => {
 describe('transformFromCorners, on a ring other than the outermost', () => {
   // The failure this exists to prevent: corners placed on the 7 ring while the
   // code assumes the 1 ring scales every measurement by 500/200 = 2.5x, so a
-  // hole 50mm from centre reads as 125mm — an X scored as a 6.
+  // hole 50mm from center reads as 125mm — an X scored as a 6.
   const corners = [p(100, 0), p(200, 100), p(100, 200), p(0, 100)];
 
   it('reads the scale from the ring the user says they used', () => {
     const onSeven = transformFromCorners(corners, TARGET, '7')!;
-    // The quad is 100px from centre to edge and the 7 ring is 100mm to edge.
+    // The quad is 100px from center to edge and the 7 ring is 100mm to edge.
     expect(applyHomography(onSeven.toMm, p(150, 50)).y).toBeCloseTo(-50, 6);
   });
 
@@ -144,12 +144,12 @@ describe('transformFromCorners', () => {
     }
   });
 
-  it('puts the centre of a symmetric quad at the target centre', () => {
+  it('puts the center of a symmetric quad at the target center', () => {
     const corners = [p(500, 60), p(940, 500), p(500, 940), p(60, 500)];
     const transform = transformFromCorners(corners, TARGET)!;
-    const centre = applyHomography(transform.toMm, p(500, 500));
-    expect(centre.x).toBeCloseTo(0, 6);
-    expect(centre.y).toBeCloseTo(0, 6);
+    const center = applyHomography(transform.toMm, p(500, 500));
+    expect(center.x).toBeCloseTo(0, 6);
+    expect(center.y).toBeCloseTo(0, 6);
   });
 
   it('returns null on a degenerate quad', () => {

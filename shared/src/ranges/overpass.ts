@@ -25,8 +25,8 @@ export interface ShootingRange {
   /** Town or municipality, when OSM carries one. Shown to disambiguate. */
   locality?: string;
   /**
-   * `leisure=sports_centre`, i.e. the whole club site rather than one of its
-   * firing lanes. Surveyed Swedish ranges map the club as a sports_centre and
+   * `leisure=sports_center`, i.e. the whole club site rather than one of its
+   * firing lanes. Surveyed Swedish ranges map the club as a sports_center and
    * each lane as a `leisure=pitch`/`range` inside it — Malmö Skyttegille has
    * eleven of the latter, named "A1 - 200 meter", "Älgen" and so on. See
    * collapseToFacilities in match.ts, which is what this flag exists for.
@@ -144,7 +144,7 @@ export function parseOverpassRanges(body: unknown, limit = 60): ShootingRange[] 
       name,
       ...position,
       ...(locality ? { locality } : {}),
-      isFacility: str(tags.leisure) === 'sports_centre',
+      isFacility: str(tags.leisure) === 'sports_center',
     });
   }
 

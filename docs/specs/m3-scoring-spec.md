@@ -71,7 +71,7 @@ skipped-with-reason line.
 - **N6** When final series exist: `total = beforeFinal + finalScore`.
 - **N7** All 62 pre-existing vitest tests and the 1 jest test keep passing;
   no existing public signature in `shared/src/index.ts` changes meaning
-  (`sumValueTenths`, `tenthsToScore` keep their exact behaviour).
+  (`sumValueTenths`, `tenthsToScore` keep their exact behavior).
 - **N8** No hard-coded UI strings: every string added under `app/src/` goes
   through i18n with real Swedish and English.
 - **N9** `shared/` stays free of React Native imports.
@@ -127,19 +127,19 @@ interface KeypadState {
 
 Decimal entry is **two taps**: a ring tap, then a tenth tap.
 
-| #   | Given                   | When                | Then                                                          |
-| --- | ----------------------- | ------------------- | ------------------------------------------------------------- |
-| D1  | empty 10-shot series    | `1` then `0`        | shots[0].valueTenths = 10 (1.0); cursor 1                     |
-| D2  | empty series            | `9` then `7`        | 97 (9.7)                                                      |
-| D3  | empty series            | `0` then `0`        | 0 (a miss)                                                    |
-| D4  | empty series            | `X` then `9`        | 109, isInnerTen true (the plan's "X ⇒ 10.9 + is_inner_ten")   |
-| D5  | empty series            | `X` then `3`        | 103, isInnerTen true (user's choice is honoured, not clamped) |
-| D6  | flag on, empty series   | `(X)` then `9`      | 109, isInnerTenDecimal true                                   |
-| D7  | flag off                | press `(X)`         | state unchanged; `(X)` not in `visibleKeys`                   |
-| D8  | pending ring set        | press `X`/`(X)`     | ignored — the second tap must be a digit                      |
-| D9  | pending ring set        | `backspace`         | pending cleared; no shot written; cursor unchanged            |
-| D10 | mid-entry (pending set) | `seriesTotalTenths` | counts only completed shots — a half-entered shot adds 0      |
-| D11 | any state, flag on      | `visibleKeys`       | `1..9,0,X,(X),backspace`                                      |
+| #   | Given                   | When                | Then                                                         |
+| --- | ----------------------- | ------------------- | ------------------------------------------------------------ |
+| D1  | empty 10-shot series    | `1` then `0`        | shots[0].valueTenths = 10 (1.0); cursor 1                    |
+| D2  | empty series            | `9` then `7`        | 97 (9.7)                                                     |
+| D3  | empty series            | `0` then `0`        | 0 (a miss)                                                   |
+| D4  | empty series            | `X` then `9`        | 109, isInnerTen true (the plan's "X ⇒ 10.9 + is_inner_ten")  |
+| D5  | empty series            | `X` then `3`        | 103, isInnerTen true (user's choice is honored, not clamped) |
+| D6  | flag on, empty series   | `(X)` then `9`      | 109, isInnerTenDecimal true                                  |
+| D7  | flag off                | press `(X)`         | state unchanged; `(X)` not in `visibleKeys`                  |
+| D8  | pending ring set        | press `X`/`(X)`     | ignored — the second tap must be a digit                     |
+| D9  | pending ring set        | `backspace`         | pending cleared; no shot written; cursor unchanged           |
+| D10 | mid-entry (pending set) | `seriesTotalTenths` | counts only completed shots — a half-entered shot adds 0     |
+| D11 | any state, flag on      | `visibleKeys`       | `1..9,0,X,(X),backspace`                                     |
 
 **Ring semantics (decimal):** `0`–`9` are rings 0–9; `X` is ring 10 and marks
 `isInnerTen`; `(X)` is ring 10 and marks `isInnerTenDecimal`. `value_tenths =
@@ -234,7 +234,7 @@ to integer precision scoring only, so tenths ÷ 10 is exact.
 
 | #   | Given                                      | Then                                                                      |
 | --- | ------------------------------------------ | ------------------------------------------------------------------------- |
-| T1  | `sumValueTenths` / `tenthsToScore`         | unchanged behaviour (N7 — existing tests keep passing)                    |
+| T1  | `sumValueTenths` / `tenthsToScore`         | unchanged behavior (N7 — existing tests keep passing)                     |
 | T2  | `countInnerTens(shots)`                    | counts `isInnerTen` only (not `isInnerTenDecimal`)                        |
 | T3  | `sessionResults([])`                       | `{beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false}` |
 | T4  | series: 3 scored main                      | beforeFinal = sum; final 0; total = beforeFinal; hasFinal false           |

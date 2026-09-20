@@ -1,6 +1,6 @@
 export * from './types';
 export * from './months';
-export * from './licence-activity';
+export * from './license-activity';
 export * from './indicators';
 export * from './profile-registry';
 export {

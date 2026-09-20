@@ -76,7 +76,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
   const factor = config.retry?.factor ?? DEFAULT_FACTOR;
 
   async function requestJson<T>(path: string, schema: ZodType<T>): Promise<T> {
-    // Both halves normalised. `baseUrl` and the call sites disagreed about
+    // Both halves normalized. `baseUrl` and the call sites disagreed about
     // the slash — '/competitions' against 'authenticate/user' — which
     // concatenation turned into `…/apiauthenticate/user`. webshooter.se
     // answers an unrouted path with its SPA's index.html and a 200, so the

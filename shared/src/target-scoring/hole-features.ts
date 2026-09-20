@@ -5,18 +5,18 @@
 // docs/specs/cv-corpus-validation-2026-09.md §5.
 //
 // A patch is flat — uniform fill, manufactured edges. A hole has a torn rim
-// against the ink or the paper. Six texture descriptors over a 12 mm grey crop
+// against the ink or the paper. Six texture descriptors over a 12 mm gray crop
 // separate the two, and a logistic regression over them is eight constants and
 // no runtime.
 //
 // The arithmetic mirrors `spike/cv/hole_filter.py`, which is the reference:
 // that file runs against OpenCV and produced the fitted weights. This one runs
-// where the app does, on the grey `RectifiedCanvas` and without OpenCV — so
+// where the app does, on the gray `RectifiedCanvas` and without OpenCV — so
 // every convolution below has to reproduce OpenCV's own, border handling
 // included. `hole-features.fixtures.json` pins the two together.
 
-/** A square, row-major, 8-bit grey crop. */
-export interface GreyCrop {
+/** A square, row-major, 8-bit gray crop. */
+export interface GrayCrop {
   readonly data: Uint8Array | readonly number[];
   readonly size: number;
 }
@@ -31,7 +31,7 @@ export interface HoleFeatures {
   /** Mean Sobel-3 gradient magnitude. */
   readonly gradMean: number;
   /** |mean(middle third) − mean(crop)|. A magnitude: see the spec, §1. */
-  readonly centreDeviation: number;
+  readonly centerDeviation: number;
   /** Population standard deviation. */
   readonly stdDev: number;
 }
@@ -49,14 +49,14 @@ const ORIENT_BINS = 18;
 /**
  * Fitted on 208 candidates from 31 hand-marked photos across both corpora —
  * `spike/cv/fit_hole_filter.py`. Raw feature scale, so they apply to the
- * numbers `holeFeatures` returns with no standardisation step.
+ * numbers `holeFeatures` returns with no standardization step.
  */
 export const HOLE_FILTER_WEIGHTS: HoleFeatures = {
   orientEntropy: 28.0314,
   hfEnergy: -1.123,
   laplacianVar: 0.118,
   gradMean: 27.5267,
-  centreDeviation: 31.6067,
+  centerDeviation: 31.6067,
   stdDev: -47.831,
 };
 
@@ -73,7 +73,7 @@ const ZERO_FEATURES: HoleFeatures = {
   hfEnergy: 0,
   laplacianVar: 0,
   gradMean: 0,
-  centreDeviation: 0,
+  centerDeviation: 0,
   stdDev: 0,
 };
 
@@ -95,8 +95,8 @@ export function reflectIndex(index: number, size: number): number {
   return i;
 }
 
-/** Normalised grey, 0..1, or null when the crop cannot be read. */
-function toFloat(crop: GreyCrop): Float64Array | null {
+/** Normalized gray, 0..1, or null when the crop cannot be read. */
+function toFloat(crop: GrayCrop): Float64Array | null {
   const n = crop.size;
   if (!Number.isInteger(n) || n < 3) return null;
   if (crop.data.length < n * n) return null;
@@ -110,7 +110,7 @@ function toFloat(crop: GreyCrop): Float64Array | null {
  * `BORDER_REFLECT_101` — the order `cv2.sepFilter2D` uses, and the reason
  * `cv2.Sobel` is reproduced this way rather than as one 3×3 kernel.
  *
- * Separability is not an optimisation here, it is correctness. Applied as a
+ * Separability is not an optimization here, it is correctness. Applied as a
  * single 3×3 kernel, the y-derivative of an image whose rows are identical
  * leaves a rounding residue of ~1e-16 instead of zero, and the sign of that
  * residue then decides which orientation bin a pixel lands in. Done
@@ -177,7 +177,7 @@ function blur5(src: Float64Array, n: number): Float64Array {
 
 // `mean` and `variance` take no empty-array guard: `toFloat` has already
 // refused anything under 3x3, so every array reaching them has length >= 9,
-// and the centre window of a 3x3 crop is 1x1.
+// and the center window of a 3x3 crop is 1x1.
 function mean(values: Float64Array): number {
   let sum = 0;
   for (let i = 0; i < values.length; i += 1) sum += values[i] as number;
@@ -194,8 +194,8 @@ function variance(values: Float64Array): number {
   return sum / values.length;
 }
 
-/** Six texture descriptors of one hole-sized grey crop. */
-export function holeFeatures(crop: GreyCrop): HoleFeatures {
+/** Six texture descriptors of one hole-sized gray crop. */
+export function holeFeatures(crop: GrayCrop): HoleFeatures {
   const g = toFloat(crop);
   if (!g) return ZERO_FEATURES;
   const n = crop.size;
@@ -242,11 +242,11 @@ export function holeFeatures(crop: GreyCrop): HoleFeatures {
   // The middle third, by floor division, exactly as the reference slices it.
   const lo = Math.floor(n / 3);
   const hi = Math.floor((2 * n) / 3);
-  const centreSide = hi - lo;
-  const centre = new Float64Array(centreSide * centreSide);
+  const centerSide = hi - lo;
+  const center = new Float64Array(centerSide * centerSide);
   let c = 0;
   for (let y = lo; y < hi; y += 1) {
-    for (let x = lo; x < hi; x += 1) centre[c++] = g[y * n + x] as number;
+    for (let x = lo; x < hi; x += 1) center[c++] = g[y * n + x] as number;
   }
 
   return {
@@ -254,7 +254,7 @@ export function holeFeatures(crop: GreyCrop): HoleFeatures {
     hfEnergy: (hfSum / g.length) * 1e3,
     laplacianVar: variance(laplacian) * 1e3,
     gradMean: gradTotal / g.length,
-    centreDeviation: Math.abs(mean(centre) - mean(g)),
+    centerDeviation: Math.abs(mean(center) - mean(g)),
     stdDev: Math.sqrt(variance(g)),
   };
 }
@@ -268,7 +268,7 @@ export function holeProbability(features: HoleFeatures): number {
     w.hfEnergy * features.hfEnergy +
     w.laplacianVar * features.laplacianVar +
     w.gradMean * features.gradMean +
-    w.centreDeviation * features.centreDeviation +
+    w.centerDeviation * features.centerDeviation +
     w.stdDev * features.stdDev;
   return 1 / (1 + Math.exp(-z));
 }

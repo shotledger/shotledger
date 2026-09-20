@@ -374,7 +374,7 @@ spec's declared limit.
   `status: 'partial'`.
 - E10 a pulled change for a row with a queued local edit is dropped
   (`shadowed`), the cursor still advances, and a `tombstoned` rejection
-  writes the local tombstone (§5a). A rejection with an unrecognised reason
+  writes the local tombstone (§5a). A rejection with an unrecognized reason
   writes nothing.
 - **Property (fast-check):** for any generated set of changes,
   `filterShadowedChanges` returns an order-preserving subset containing no

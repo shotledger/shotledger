@@ -1,5 +1,5 @@
 // The Settings → Backup card. Moved out of app/src/app/(tabs)/settings.tsx
-// unchanged in behaviour except for what this branch adds, so that the
+// unchanged in behavior except for what this branch adds, so that the
 // backup feature owns its own UI and Settings keeps only two rows.
 //
 // Backup scope: everything the app stores — see

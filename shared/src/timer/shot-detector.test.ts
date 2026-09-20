@@ -102,7 +102,7 @@ describe('ShotDetector', () => {
     expect(() => new ShotDetector({ thresholdDb: MAX_TRIGGER_DB })).not.toThrow();
   });
 
-  it('summarises a string: first shot, splits, total and slowest split', () => {
+  it('summarizes a string: first shot, splits, total and slowest split', () => {
     const detector = armed();
     for (const atMs of [1_200, 1_500, 2_100]) detector.push({ atMs, db: LOUD });
 
@@ -116,7 +116,7 @@ describe('ShotDetector', () => {
     });
   });
 
-  it('summarises an empty run', () => {
+  it('summarizes an empty run', () => {
     expect(armed().getSummary()).toEqual({
       shotCount: 0,
       firstShotMs: undefined,
@@ -221,7 +221,7 @@ describe('IpscTimerEngine', () => {
     expect(engine.pushLevel(0)).toBeNull(); // done
   });
 
-  it('times shots from the start beep and summarises the string', () => {
+  it('times shots from the start beep and summarizes the string', () => {
     const engine = startedRun();
     engine.advance(4_000); // through ready + standby, beep fires
 

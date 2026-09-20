@@ -77,7 +77,7 @@ const ALL_GROUPS: readonly WeaponGroup[] = selectableWeaponGroups();
  *  the web preview shows the manual form only. */
 const SCAN_SUPPORTED = Platform.OS !== 'web';
 
-/** Card-scan progress for the licence form. `error.reason` maps 1:1 to a
+/** Card-scan progress for the license form. `error.reason` maps 1:1 to a
  *  `firearms.scan*` string, so the screen never composes a message. */
 type ScanState =
   | { status: 'idle' }
@@ -85,7 +85,7 @@ type ScanState =
   | { status: 'error'; reason: 'denied' | 'failed' | 'unsupported' | 'nothing' }
   | { status: 'done'; count: number; parsed: ParsedLicenseCard };
 
-const LICENCE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
+const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
   amber: 'primary',
   red: 'primary',
@@ -184,7 +184,7 @@ export default function FirearmDetailScreen() {
   }
 
   /**
-   * Pick, recognise, parse — then pre-fill. Nothing reaches the database
+   * Pick, recognize, parse — then pre-fill. Nothing reaches the database
    * here: the parse only fills the form's inputs, which the user edits and
    * confirms with the existing Save button.
    */
@@ -195,7 +195,7 @@ export default function FirearmDetailScreen() {
     if (previous) void deleteScannedImage(previous);
     setScannedImageUri(null);
 
-    if (result.status === 'cancelled') return setScan({ status: 'idle' });
+    if (result.status === 'canceled') return setScan({ status: 'idle' });
     if (result.status !== 'scanned') return setScan({ status: 'error', reason: result.status });
 
     const count = countRecognizedFields(result.parsed);
@@ -434,30 +434,30 @@ export default function FirearmDetailScreen() {
       </Card>
 
       {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'. */}
-      {profile && detail.licenceActivities.length > 0 && (
+      {profile && detail.licenseActivities.length > 0 && (
         <Card>
-          <ThemedText type="smallBold">{t('compliance.licenceActivityTitle')}</ThemedText>
+          <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
           <View style={styles.chipsRow}>
-            {detail.licenceActivities.map((b) => (
+            {detail.licenseActivities.map((b) => (
               <Chip
                 key={b.weaponGroups.join(',')}
                 testID={`firearm-barometer-${b.weaponGroups[0]}`}
-                label={t(`compliance.licenceActivity${capitalize(b.status)}`, {
+                label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
                   count: b.activityCount,
                   required: b.requiredActivities,
                 })}
-                tone={LICENCE_ACTIVITY_TONE[b.status]}
+                tone={LICENSE_ACTIVITY_TONE[b.status]}
               />
             ))}
           </View>
-          {detail.licenceActivities.map((b) => (
+          {detail.licenseActivities.map((b) => (
             <ThemedText
               key={`detail-${b.weaponGroups.join(',')}`}
               type="small"
               themeColor="textSecondary"
               testID={`firearm-barometer-detail-${b.weaponGroups[0]}`}
             >
-              {t('compliance.licenceActivityDetail', {
+              {t('compliance.licenseActivityDetail', {
                 done: b.activityCount,
                 required: b.requiredActivities,
                 months: b.windowMonths,
@@ -467,7 +467,7 @@ export default function FirearmDetailScreen() {
           {/* Which case is in effect is never silently applied — it is on
               screen wherever the number it produced is. */}
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-barometer-case">
-            {t(`compliance.licenceActivityCase.${profile.variantId}`)}
+            {t(`compliance.licenseActivityCase.${profile.variantId}`)}
           </ThemedText>
           {!profile.verified && (
             <ThemedText type="small" themeColor="textSecondary" testID="compliance-unverified-hint">

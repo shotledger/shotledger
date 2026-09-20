@@ -17,7 +17,7 @@ nothing.
 - **Tracks firearms and ammunition**, including handloads, round counts and
   maintenance.
 - **Keeps the activity record** a Swedish shooter needs when renewing a firearm
-  licence.
+  license.
 - **Times your shooting** — a time-limit timer, an IPSC-style shot timer, and
   the SPSF fälttimer with its spoken commands.
 
@@ -39,7 +39,7 @@ If you are looking for one specific thing, the guides cover
 [logging a session](guides/logging-a-session.md),
 [scoring from a photo](guides/scoring-from-a-photo.md),
 [the timers](guides/timers.md), and
-[licence activity](guides/licence-activity.md).
+[license activity](guides/license-activity.md).
 
 !!! note "This manual describes the current build"
 

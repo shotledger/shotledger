@@ -41,7 +41,7 @@ describe('linesInReadingOrder', () => {
     expect(linesInReadingOrder(lines, 'flat text')).toBe('flat text');
   });
 
-  it('falls back when nothing was recognised', () => {
+  it('falls back when nothing was recognized', () => {
     expect(linesInReadingOrder([], 'flat text')).toBe('flat text');
   });
 });

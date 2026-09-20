@@ -3,7 +3,7 @@
 //
 // PrimaryButton is documented as "the one primary action per screen", so a
 // pair of side-by-side tools — the session's stopwatch and sights — cannot
-// both be one without the screen losing its centre of gravity. Outlined
+// both be one without the screen losing its center of gravity. Outlined
 // rather than filled: present, tappable, and plainly not the main event.
 import {
   Pressable,
