@@ -67,15 +67,20 @@ scores against official results.
 - Sessions are **either series-logged or a fixed round count** (`sessions.kind`),
   chosen at creation — never both.
 - Photo scoring is **assisted, not automatic**: geometry is solved
-  automatically, hole detection is not (a CV spike measured 24% recall / 24%
-  precision from classical detection, and repair patches are indistinguishable
-  from holes), so shots are tap-marked. Automation needs a learned detector.
+  automatically, hole detection is not, so shots are tap-marked. Classical
+  detection reaches ~59% recall at 89.7% precision and 0.32 false positives
+  per photo once the fitted hole/patch filter is applied; the bar for calling
+  anything "Auto Score" is ≥95% recall at ≤1 false positive per target.
+  Automation needs a learned detector, and what it is needed **for** is
+  recall — telling a hole from a repair patch was solved classically on
+  2026-09-11 (`docs/specs/cv-corpus-validation-2026-09.md` §2–3).
 - **No document store.** Scanning a license card fills in the license fields
   and the photo is then deleted; the app keeps no images of documents
   (issue #276). If a license picture is ever needed again it belongs next to
   the firearm, behind a PIN/biometric gate — not in a separate encrypted store.
-- **The Webshooter integration does not currently work** (password login
-  unusable); deferred, not abandoned.
+- **The Webshooter integration works on the password path** — verified
+  against the live service 2026-09-20; competitions and upcoming starts both
+  return. The manual-token path is still unverified end to end (#352).
 - Every UI string is i18n'd in Swedish and English from the first screen.
 - **Large system font scales are explicitly not a binding design constraint**
   (maintainer, 2026-09-03). Layout bugs at increased font scale are fixed as
