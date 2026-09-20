@@ -176,6 +176,14 @@
   },
   "firearms": {
     "title": "Vapen & ammo",
+    "incomplete": "Ofullständig",
+    "incompleteTitle": "Några uppgifter saknas",
+    "incompleteBody": "Det här vapnet saknar {{fields}}. Regelstödet läser vapentyp och dina licenser för att avgöra vilket aktivitetskrav som gäller dig, så att fylla i detta kan ändra vad appen kräver. Vapen som skapats vid en import kommer oftast in så här.",
+    "missing": {
+      "weaponType": "vapentyp",
+      "caliber": "kaliber",
+      "license": "licens"
+    },
     "tabFirearms": "Vapen",
     "tabAmmo": "Ammunition",
     "emptyTitle": "Inga vapen än",
@@ -487,6 +495,12 @@
     "caseTitle": "Aktivitetskrav",
     "caseBody": "Vilket krav som gäller beror på vad du redan har. Appen föreslår ett utifrån dina vapen; ditt eget val går alltid före förslaget.",
     "caseDerived": "Härlett från dina vapen — ett enhandsvapen som är ditt eget ger det lättare kravet. Väljer du själv står valet fast.",
+    "caseReason": {
+      "ownsHandgun": "Eftersom du har en pistol eller revolver registrerad som din egen.",
+      "noHandgunOnFile": "Eftersom inget registrerat vapen är en pistol eller revolver som du äger. Har du ändå en, fyll i vapentyp och licens – importerade vapen saknar ofta båda.",
+      "noFirearms": "Eftersom du inte lagt till några vapen än.",
+      "declaredDefault": "Den här profilen tillämpar ett fall för alla."
+    },
     "caseExplicit": "Ditt eget val. Appen ändrar det inte, vad du än lägger till bland dina vapen.",
     "case": {
       "firstHandgun": "Första enhandsvapnet",

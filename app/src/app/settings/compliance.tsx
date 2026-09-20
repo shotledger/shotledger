@@ -22,6 +22,7 @@ export default function ComplianceSettingsScreen() {
     variantIds,
     variantId,
     isVariantExplicit,
+    variantReasonId,
     setVariantId,
   } = useComplianceProfile();
 
@@ -66,6 +67,13 @@ export default function ComplianceSettingsScreen() {
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-case-origin">
             {t(isVariantExplicit ? 'compliance.caseExplicit' : 'compliance.caseDerived')}
           </ThemedText>
+          {/* A derived default that explains itself is correctable by the
+              shooter; one that does not is just wrong at them (#320). */}
+          {!isVariantExplicit && variantReasonId && (
+            <ThemedText type="small" themeColor="textSecondary" testID="compliance-case-reason">
+              {t(`compliance.caseReason.${variantReasonId}`)}
+            </ThemedText>
+          )}
           <ThemedText type="small" themeColor="textSecondary">
             {t('compliance.notModeled')}
           </ThemedText>

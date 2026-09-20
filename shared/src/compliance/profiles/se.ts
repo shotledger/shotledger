@@ -9,6 +9,7 @@ import {
   SE_WINDOW_MONTHS,
 } from '../constants-se';
 import type {
+  DerivedVariant,
   FirearmOwnershipFact,
   JurisdictionProfileDefinition,
   ShooterComplianceRule,
@@ -36,12 +37,26 @@ export const SE_HANDGUN_WEAPON_TYPES: readonly string[] = ['pistol', 'revolver']
  * Ownership is a plain boolean defaulting to true, so a shooter with a
  * handgun on file is taken to hold it unless they say otherwise.
  */
-export function deriveSeVariantId(facts: readonly FirearmOwnershipFact[]): string {
+export const SE_REASON_OWNS_HANDGUN = 'ownsHandgun';
+export const SE_REASON_NO_HANDGUN_ON_FILE = 'noHandgunOnFile';
+export const SE_REASON_NO_FIREARMS = 'noFirearms';
+
+export function deriveSeVariantId(facts: readonly FirearmOwnershipFact[]): DerivedVariant {
   const ownsHandgun = facts.some(
     (fact) =>
       fact.isOwn && fact.weaponType !== null && SE_HANDGUN_WEAPON_TYPES.includes(fact.weaponType),
   );
-  return ownsHandgun ? SE_EXISTING_HANDGUN_VARIANT : SE_FIRST_HANDGUN_VARIANT;
+  if (ownsHandgun) {
+    return { variantId: SE_EXISTING_HANDGUN_VARIANT, reasonId: SE_REASON_OWNS_HANDGUN };
+  }
+  // "No firearms at all" and "firearms, but none of them a handgun you own"
+  // reach the same stricter case by different routes, and the difference is
+  // the whole of what a shooter needs to act on: the second is what an import
+  // that lost weapon types and licenses produces (#320).
+  return {
+    variantId: SE_FIRST_HANDGUN_VARIANT,
+    reasonId: facts.length === 0 ? SE_REASON_NO_FIREARMS : SE_REASON_NO_HANDGUN_ON_FILE,
+  };
 }
 
 // 5–6 §§ are requirements on the SHOOTER, not on a vapengrupp: "deltagit i

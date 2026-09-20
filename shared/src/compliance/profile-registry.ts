@@ -1,10 +1,14 @@
 import { SE_PROFILE } from './profiles/se';
 import type {
+  DerivedVariant,
   FirearmOwnershipFact,
   JurisdictionProfile,
   JurisdictionProfileDefinition,
   JurisdictionProfileId,
 } from './types';
+
+/** A profile with no derivation of its own: the default is simply declared. */
+export const DECLARED_DEFAULT_REASON = 'declaredDefault';
 
 export type ProfileSelection = 'none' | JurisdictionProfileId;
 
@@ -57,10 +61,10 @@ export function getProfile(
 export function resolveDefaultVariantIdFor(
   definition: JurisdictionProfileDefinition,
   facts: readonly FirearmOwnershipFact[],
-): string {
+): DerivedVariant {
   return definition.deriveDefaultVariantId
     ? definition.deriveDefaultVariantId(facts)
-    : definition.defaultVariantId;
+    : { variantId: definition.defaultVariantId, reasonId: DECLARED_DEFAULT_REASON };
 }
 
 /**
@@ -76,7 +80,7 @@ export function resolveDefaultVariantIdFor(
 export function resolveDefaultVariantId(
   selection: ProfileSelection,
   facts: readonly FirearmOwnershipFact[] = [],
-): string | null {
+): DerivedVariant | null {
   const definition = getProfileDefinition(selection);
   if (!definition) return null;
   return resolveDefaultVariantIdFor(definition, facts);

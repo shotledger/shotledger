@@ -81,11 +81,28 @@ export default function FirearmsScreen() {
                 onPress={() => router.push(`/firearms/${row.id}`)}
                 trailing={
                   <View style={{ flexDirection: 'row', gap: Spacing.two }}>
-                    <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
+                    {/* "No License" and "Incomplete" together said the same
+                        thing twice and squeezed the name into one-word-per-line
+                        wrapping (seen on the emulator with six imported
+                        firearms). Incomplete already means a licence is among
+                        the missing details, and the detail screen names them. */}
+                    {!(row.isIncomplete && row.licenseStatus === 'none') && (
+                      <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
+                    )}
                     {row.maintenanceStatus !== 'unknown' && (
                       <Chip
                         label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
                         tone={MAINTENANCE_TONE[row.maintenanceStatus]}
+                      />
+                    )}
+                    {/* An imported firearm shows "No License" because nothing
+                        on file says otherwise — which reads as a fact about
+                        the shooter rather than a gap in the data (#320). */}
+                    {row.isIncomplete && (
+                      <Chip
+                        testID={`firearm-incomplete-${row.id}`}
+                        label={t('firearms.incomplete')}
+                        tone="primary"
                       />
                     )}
                     {row.licenseActivityStatus && (

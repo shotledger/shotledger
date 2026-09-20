@@ -120,15 +120,17 @@ describe('resolveDefaultVariantId', () => {
   });
 
   it('V2: se with no firearms defaults to the stricter 5 § case', () => {
-    expect(resolveDefaultVariantId('se', [])).toBe(SE_FIRST_HANDGUN_VARIANT);
+    expect(resolveDefaultVariantId('se', [])?.variantId).toBe(SE_FIRST_HANDGUN_VARIANT);
   });
 
   it('V3: se with an owned handgun defaults to the 6 § case', () => {
-    expect(resolveDefaultVariantId('se', [ownedPistol])).toBe(SE_EXISTING_HANDGUN_VARIANT);
+    expect(resolveDefaultVariantId('se', [ownedPistol])?.variantId).toBe(
+      SE_EXISTING_HANDGUN_VARIANT,
+    );
   });
 
   it('V4: omitting the facts entirely is not "owns a handgun"', () => {
-    expect(resolveDefaultVariantId('se')).toBe(SE_FIRST_HANDGUN_VARIANT);
+    expect(resolveDefaultVariantId('se')?.variantId).toBe(SE_FIRST_HANDGUN_VARIANT);
   });
 
   it('V5: a profile that declares no derivation falls back to its defaultVariantId', () => {
@@ -137,12 +139,14 @@ describe('resolveDefaultVariantId', () => {
       deriveDefaultVariantId: undefined,
       defaultVariantId: SE_EXISTING_HANDGUN_VARIANT,
     };
-    expect(resolveDefaultVariantIdFor(definition, [ownedPistol])).toBe(SE_EXISTING_HANDGUN_VARIANT);
-    expect(resolveDefaultVariantIdFor(definition, [])).toBe(SE_EXISTING_HANDGUN_VARIANT);
+    expect(resolveDefaultVariantIdFor(definition, [ownedPistol]).variantId).toBe(
+      SE_EXISTING_HANDGUN_VARIANT,
+    );
+    expect(resolveDefaultVariantIdFor(definition, []).variantId).toBe(SE_EXISTING_HANDGUN_VARIANT);
   });
 
   it('V6: the derived case feeds getProfile and lands on the 6 § numbers', () => {
-    const profile = getProfile('se', resolveDefaultVariantId('se', [ownedPistol]) ?? undefined)!;
+    const profile = getProfile('se', resolveDefaultVariantId('se', [ownedPistol])?.variantId)!;
     expect(profile.variantId).toBe(SE_EXISTING_HANDGUN_VARIANT);
     for (const rule of profile.rules) {
       expect(rule.requiredActivities).toBe(SE_EXISTING_HANDGUN_REQUIRED_ACTIVITIES);
