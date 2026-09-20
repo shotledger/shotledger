@@ -27,23 +27,24 @@ The four tests beyond the spec's tables were added to kill surviving mutants
 
 ## Gauntlet
 
-| Layer                      | Command                                             | Result                                               |
-| -------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
-| typecheck (shared/backend) | `pnpm typecheck`                                    | clean                                                |
-| typecheck (app)            | `pnpm typecheck:app`                                | clean                                                |
-| schema / i18n / licenses   | part of `pnpm check`                                | `1034 keys, 0 issues`; schema and licenses unchanged |
-| lint + format              | `pnpm lint`, `pnpm format`                          | clean                                                |
-| unit + integration         | `pnpm check`                                        | **2183** vitest, **360** jest, 0 failures            |
-| coverage                   | `pnpm coverage`                                     | **100%** statements / branches / functions / lines   |
-| mutation (whole config)    | `pnpm mutation`                                     | **95.72**, at or above the break threshold of 95     |
-| docs — links and nav       | `mkdocs build --strict`                             | exit 0                                               |
-| docs — translations        | `node scripts/docs-translation-check.mjs`           | 18 pages current, 0 untranslated                     |
-| docs — dangling anchors    | `mkdocs build \| grep "does not contain an anchor"` | 0 matches                                            |
+| Layer                      | Command                                   | Result                                               |
+| -------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| typecheck (shared/backend) | `pnpm typecheck`                          | clean                                                |
+| typecheck (app)            | `pnpm typecheck:app`                      | clean                                                |
+| schema / i18n / licenses   | part of `pnpm check`                      | `1034 keys, 0 issues`; schema and licenses unchanged |
+| lint + format              | `pnpm lint`, `pnpm format`                | clean                                                |
+| unit + integration         | `pnpm check`                              | **2183** vitest, **360** jest, 0 failures            |
+| coverage                   | `pnpm coverage`                           | **100%** statements / branches / functions / lines   |
+| mutation (whole config)    | `pnpm mutation`                           | **95.72**, at or above the break threshold of 95     |
+| docs — links and nav       | `mkdocs build --strict`                   | exit 0                                               |
+| docs — translations        | `node scripts/docs-translation-check.mjs` | 18 pages current, 0 untranslated                     |
+| docs — dangling anchors    | `node scripts/docs-anchor-check.mjs`      | no dangling anchors                                  |
 
-The anchor gate is `scripts/docs-anchor-check.mjs`, which lands on a separate
-branch (#343, PR #344); until it merges the grep above is the same check run by
-hand. The four manual pages this change edits cross-link by anchor, which is
-exactly the failure it exists to catch.
+The anchor gate landed in #343 (PR #344) while this branch was open, so the
+last rebase is the first run of this change against it; the earlier runs used
+the same `mkdocs build | grep "does not contain an anchor"` by hand. The four
+manual pages this change edits cross-link by anchor, which is exactly the
+failure it exists to catch.
 
 ### Mutation, measured against a baseline
 
