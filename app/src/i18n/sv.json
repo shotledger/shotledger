@@ -43,6 +43,7 @@
     "sessionsTotal": "Pass",
     "competitionsTotal": "Tävlingar",
     "latestSessions": "Senaste passen",
+    "seeAllSessions": "Visa alla {{count}}",
     "newSession": "Nytt pass",
     "emptyTitle": "Inga pass än",
     "emptyBody": "Logga ditt första tränings- eller tävlingspass för att se det här.",
@@ -52,6 +53,24 @@
     "shapeSeries": "Serier",
     "shapeRounds": "Skott",
     "shareSession": "Dela pass"
+  },
+  "sessions": {
+    "title": "Pass",
+    "searchLabel": "Sök pass",
+    "searchPlaceholder": "Sök på namn",
+    "filterAll": "Alla",
+    "filterDiscipline": "Gren",
+    "filterTag": "Etikett",
+    "filterFirearm": "Vapen",
+    "filterNoFirearm": "Inget vapen angivet",
+    "count_one": "{{count}} pass",
+    "count_other": "{{count}} pass",
+    "countFiltered": "Visar {{shown}} av {{total}} pass",
+    "clearFilters": "Rensa filter",
+    "emptyTitle": "Inga pass än",
+    "emptyBody": "Pass du loggar dyker upp här, med allt du kan filtrera dem på.",
+    "noMatchTitle": "Inget matchar",
+    "noMatchBody": "Inget pass matchar alla filter du satt. Vidga ett, eller rensa alla."
   },
   "stats": {
     "title": "Statistik",

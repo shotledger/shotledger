@@ -35,6 +35,10 @@ function RootStack() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
+        name="sessions/index"
+        options={{ headerShown: true, title: t('sessions.title') }}
+      />
+      <Stack.Screen
         name="session/new"
         options={{ presentation: 'modal', headerShown: true, title: t('session.newTitle') }}
       />
