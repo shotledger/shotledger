@@ -19,6 +19,10 @@ ofta du vill.
 Rapporten upprepar alla filter högst upp, så en rapport du exporterat eller
 återvänt till säger fortfarande vad den handlar om.
 
+Antalet ovanför rapporten är varje pass filtret träffade, även ett pass du
+loggat som antal skott utan serier — de skotten finns med i totalerna också.
+Det stämmer därför med antalet pass på startsidan.
+
 Filtren ligger kvar som du lämnade dem. Lämna fliken och kom tillbaka, så är
 formuläret fortfarande det du byggde — det rullar upp till toppen så att du ser
 det, med eventuell öppen väljare stängd.
