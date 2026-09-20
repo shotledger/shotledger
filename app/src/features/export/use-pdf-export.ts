@@ -3,7 +3,7 @@
 // shared/src/export/pdf-log.ts; this file's job is turning DB rows +
 // i18n labels into that function's plain-data input.
 import type { TFunction } from 'i18next';
-import { buildShootingLogHtml, type PdfLogEntry } from '@shotledger/shared';
+import { buildShootingLogHtml, formatGroupAndClass, type PdfLogEntry } from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
@@ -61,10 +61,23 @@ export function buildShootingLogHtmlForFilters(
 
   const entries: PdfLogEntry[] = sessions.map((session) => ({
     date: formatDate(session.startedAt, locale),
-    location: session.location ?? '',
-    // "Skytteaktivitet" on the paper form is a phrase, not a pair of columns:
-    // real entries read "Träning MSG", "KM Milsnabb", "P3".
-    activity: `${disciplineLabel(t, session.disciplineId)} · ${t(`sessionType.${session.type}`)}`,
+    // Never blank, for the same reason the firearm column is not: every row in
+    // a real completed log carries a place, and an empty cell in a document
+    // offered as evidence reads as a row nobody could vouch for (#350).
+    location: session.location?.trim() || t('compliance.pdfNoLocation'),
+    // "Skytteaktivitet" on the paper form is a phrase, not a pair of columns.
+    // Real completed rows read "Pistol-SM Fält C", "KM Milsnabb",
+    // "Tävling precision A", "Träning MSG" — so what identifies a row is the
+    // COMPETITION and the weapon group, not the word "competition". The old
+    // "Precision · Tävling" threw away both, though the session carries them
+    // (verified against a real accepted attachment, 2026-09-20).
+    activity: [
+      session.competitionName?.trim() || t(`sessionType.${session.type}`),
+      disciplineLabel(t, session.disciplineId),
+      formatGroupAndClass(session.weaponGroup, session.shooterClass),
+    ]
+      .filter(Boolean)
+      .join(' · '),
     firearm: firearmName(session.firearmId),
   }));
 
@@ -87,6 +100,10 @@ export function buildShootingLogHtmlForFilters(
       // so the export carries the paper form's blank line instead, to be
       // written in by hand like the signature column.
       shooterLabel: t('compliance.pdfShooterBlank'),
+      // The paper form asks for a personnummer beside the name. The app stores
+      // neither — both are PII it has no reason to hold — so both are printed
+      // as the form's own blank line, to be written in by hand (#350).
+      personalIdLabel: t('compliance.pdfPersonalIdBlank'),
       firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
       totalsLabel: t('compliance.pdfTotals', { sessions: entries.length, shots: totalShots }),
       generatedAtLabel: t('compliance.pdfGeneratedAt', {

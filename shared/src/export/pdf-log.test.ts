@@ -17,6 +17,7 @@ function summary(overrides: Partial<PdfLogSummary> = {}): PdfLogSummary {
   return {
     title: 'Shooting log',
     shooterLabel: 'Personal shooting log for: ______',
+    personalIdLabel: 'Personal ID number: ______',
     periodLabel: '2026-03-01 – 2026-09-01',
     firearmLabel: null,
     totalsLabel: 'Sessions: 2 · Shots: 20',
@@ -118,5 +119,19 @@ describe('buildShootingLogHtml', () => {
     const html = buildShootingLogHtml(summary(), entries);
     expect(html.trim().startsWith('<!doctype html>')).toBe(true);
     expect(html.trim().endsWith('</html>')).toBe(true);
+  });
+});
+
+// #350, against a real accepted attachment (2026-09-20): the paper form asks
+// for a personnummer beside the name, and the app has no business storing one.
+describe('the personnummer line', () => {
+  it('prints the caller\u2019s blank when one is given', () => {
+    expect(buildShootingLogHtml(summary(), entries)).toContain('Personal ID number: ______');
+  });
+
+  it('is omitted entirely when null, like the name line', () => {
+    expect(buildShootingLogHtml(summary({ personalIdLabel: null }), entries)).not.toContain(
+      'Personal ID number',
+    );
   });
 });

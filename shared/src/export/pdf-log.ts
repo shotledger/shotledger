@@ -58,6 +58,12 @@ export interface PdfLogSummary {
   title: string;
   /** "Personlig skyttelogg för: <name>" — blank when no name is recorded. */
   shooterLabel: string | null;
+  /**
+   * "Personnummer: ______" — the field the paper form puts beside the name.
+   * Null omits the line. The app stores no personnummer, so in practice this
+   * is the form's blank, written in by hand like the signature column.
+   */
+  personalIdLabel: string | null;
   periodLabel: string;
   firearmLabel: string | null;
   /**
@@ -115,6 +121,7 @@ export function buildShootingLogHtml(
   <h1>${escapeHtml(summary.title)}</h1>
   <div class="summary">
     ${summary.shooterLabel ? `<div>${escapeHtml(summary.shooterLabel)}</div>` : ''}
+    ${summary.personalIdLabel ? `<div>${escapeHtml(summary.personalIdLabel)}</div>` : ''}
     <div>${escapeHtml(summary.periodLabel)}</div>
     ${summary.firearmLabel ? `<div>${escapeHtml(summary.firearmLabel)}</div>` : ''}
     <div>${escapeHtml(summary.totalsLabel)}</div>

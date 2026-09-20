@@ -70,10 +70,17 @@ column:
 | Firearm used      | the firearm on the session, or _Not recorded_         |
 | Attested by       | **left blank, to be signed by hand**                  |
 
-Above the table is a short summary: a blank line for your name, the period the
-log covers, the firearm if you exported for one, how many sessions and how many
-shots, and the date it was generated. Every figure there is labelled, so a
-reader who was not with you at the range can tell what each number is.
+Above the table is a short summary: blank lines for your name and personal ID
+number, the period the log covers, the firearm if you exported for one, how many
+sessions and how many shots, and the date it was generated. The two blanks are
+the paper form's own, to be written in by hand — the app stores neither, because
+neither is data it needs. Every figure there is labelled, so a reader who was not
+with you at the range can tell what each number is.
+
+**Shooting activity** names the competition when the session had one, then the
+discipline, then your weapon group and class — "Pistol-SM · Fält · C" rather
+than just "Fält". That is how rows read in a completed paper log, and it is what
+lets whoever signs the row recognise the day.
 
 Two of those are worth explaining.
 

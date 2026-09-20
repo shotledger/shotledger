@@ -563,7 +563,9 @@
     "pdfColDate": "Datum",
     "pdfColLocation": "Plats",
     "pdfEmpty": "Inga pass under perioden.",
-    "pdfTotals": "Pass: {{sessions}} · Skott: {{shots}}"
+    "pdfTotals": "Pass: {{sessions}} · Skott: {{shots}}",
+    "pdfPersonalIdBlank": "Personnummer: ______________________________",
+    "pdfNoLocation": "Ej angiven"
   },
   "session": {
     "newTitle": "Nytt pass",

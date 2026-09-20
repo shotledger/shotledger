@@ -69,10 +69,17 @@ kolumn för kolumn:
 | Använt vapen     | vapnet på passet, eller _Ej angivet_       |
 | Uppg. styrkta av | **lämnas tom, skrivs under för hand**      |
 
-Ovanför tabellen står en kort sammanfattning: en tom rad för ditt namn, perioden
-loggen omfattar, vapnet om du exporterat för ett, hur många pass och hur många
-skott, och datumet den skapades. Varje siffra där är märkt, så att den som läser
-loggen utan att ha varit med på banan ser vad varje tal betyder.
+Ovanför tabellen står en kort sammanfattning: tomma rader för ditt namn och
+personnummer, perioden loggen omfattar, vapnet om du exporterat för ett, hur
+många pass och hur många skott, och datumet den skapades. De två tomma raderna är
+pappersblankettens egna, att fylla i för hand — appen lagrar ingendera, för
+ingendera är uppgifter den behöver. Varje siffra där är märkt, så att den som
+läser loggen utan att ha varit med på banan ser vad varje tal betyder.
+
+**Skytteaktivitet** anger tävlingens namn när passet hade ett, sedan grenen och
+sedan din vapengrupp och klass — "Pistol-SM · Fält · C" i stället för bara
+"Fält". Så läser raderna i en ifylld pappersloggbok, och det är det som gör att
+den som signerar raden känner igen dagen.
 
 Två av dem är värda en förklaring.
 

@@ -563,7 +563,9 @@
     "pdfColDate": "Date",
     "pdfColLocation": "Location",
     "pdfEmpty": "No sessions in this period.",
-    "pdfTotals": "Sessions: {{sessions}} · Shots: {{shots}}"
+    "pdfTotals": "Sessions: {{sessions}} · Shots: {{shots}}",
+    "pdfPersonalIdBlank": "Personal ID number: ______________________________",
+    "pdfNoLocation": "Not recorded"
   },
   "session": {
     "newTitle": "New Session",
