@@ -13,7 +13,8 @@ import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../test-db';
 import { addFirearmGroup } from '../queries/firearm-groups';
 import { createAmmoLot } from '../queries/ammo-lots';
-import { createFirearm } from '../queries/firearms';
+import { createFirearm, listFirearms } from '../queries/firearms';
+import { addLicense, listLicenses } from '../queries/licenses';
 import { addSeries } from '../queries/series';
 import { createSession, sumExtraRounds } from '../queries/sessions';
 import { addShot, countVolumeRounds } from '../queries/shots';
@@ -36,8 +37,26 @@ import { buildExportJson } from './build-export';
 import { applyImport, dryRunImport } from './apply-import';
 
 function seed(db: Database) {
-  const firearm = createFirearm(db, { make: 'Pardini', model: 'SP', weaponType: 'pistol' });
+  const firearm = createFirearm(db, {
+    make: 'Pardini',
+    model: 'SP',
+    weaponType: 'pistol',
+    caliber: '.22 LR',
+    serialNumber: 'SN-0001',
+    vapenId: 'SE-TEST-0001',
+    loadSystem: 'halvautomat',
+    isOwn: false,
+    maintenanceIntervalRounds: 500,
+  });
   addFirearmGroup(db, { firearmId: firearm.id, groupId: 'spsf:C' });
+  const license = addLicense(db, {
+    firearmId: firearm.id,
+    licenseNumber: 'TEST-000.000/00-00',
+    purpose: 'Målskjutning',
+    decidedOn: '2026-01-15',
+    validUntil: '2031-01-15',
+    authority: 'Polismyndigheten',
+  });
   const ammo = createAmmoLot(db, { label: 'SK Standard', caliber: '.22 LR' });
 
   // Session A: two scored series + a sighter, tagged, firearm/ammo linked.
@@ -82,7 +101,7 @@ function seed(db: Database) {
   });
   db.update(sessions).set({ extraRounds: 12 }).where(eq(sessions.id, sessionC.id)).run();
 
-  return { firearm, ammo, sessionA, sessionB, sessionC };
+  return { firearm, license, ammo, sessionA, sessionB, sessionC };
 }
 
 /** Id-agnostic fingerprint of a StatsSeries list — ignores series/session
@@ -185,5 +204,90 @@ describe('CSV export -> wipe -> import round trip', () => {
     const sessionCount = db.select().from(sessions).all().length;
     expect(sessionCount).toBe(3);
     expect(snapshot(db)).toEqual(before);
+  });
+});
+
+describe('firearms and licenses cross with the sessions (#314)', () => {
+  it('rebuilds them field for field in an emptied database', () => {
+    const db = createTestDb();
+    const { firearm, license } = seed(db);
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { plan, errors, groups, records } = dryRunImport(db, json);
+    expect(errors).toEqual([]);
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'create' }]);
+    expect(plan.licenses).toEqual([{ name: 'TEST-000.000/00-00', action: 'create' }]);
+    applyImport(db, groups, records);
+
+    const [restored] = listFirearms(db);
+    expect(restored).toMatchObject({
+      id: firearm.id,
+      make: 'Pardini',
+      model: 'SP',
+      caliber: '.22 LR',
+      weaponType: 'pistol',
+      isOwn: false,
+      serialNumber: 'SN-0001',
+      vapenId: 'SE-TEST-0001',
+      loadSystem: 'halvautomat',
+      maintenanceIntervalRounds: 500,
+    });
+    expect(listLicenses(db, firearm.id)).toMatchObject([
+      {
+        id: license.id,
+        licenseNumber: 'TEST-000.000/00-00',
+        purpose: 'Målskjutning',
+        decidedOn: '2026-01-15',
+        validUntil: '2031-01-15',
+        authority: 'Polismyndigheten',
+      },
+    ]);
+  });
+
+  it('links the session to the firearm the file names by id', () => {
+    const db = createTestDb();
+    const { firearm, sessionA } = seed(db);
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    const imported = db.select().from(sessions).where(eq(sessions.id, sessionA.id)).get();
+    expect(imported?.firearmId).toBe(firearm.id);
+  });
+
+  it('re-importing onto itself reuses both rather than duplicating them', () => {
+    const db = createTestDb();
+    const { firearm } = seed(db);
+    const json = buildExportJson(db, '1.0.0');
+
+    const { plan, groups, records } = dryRunImport(db, json);
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'reuse' }]);
+    expect(plan.licenses).toEqual([{ name: 'TEST-000.000/00-00', action: 'reuse' }]);
+    applyImport(db, groups, records);
+
+    expect(listFirearms(db)).toHaveLength(1);
+    expect(listLicenses(db, firearm.id)).toHaveLength(1);
+  });
+
+  it('drops a license whose firearm the file does not carry', () => {
+    // The row has nowhere to hang: licenses.firearm_id is NOT NULL and a
+    // foreign key, so a guessed target would be worse than no row at all.
+    const db = createTestDb();
+    seed(db);
+    const json = buildExportJson(db, '1.0.0');
+    const envelope = JSON.parse(json) as { firearms: unknown[] };
+    envelope.firearms = [];
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, JSON.stringify(envelope));
+    applyImport(db, groups, records);
+
+    expect(db.select().from(licenses).all()).toEqual([]);
+    // The session still finds its firearm by name — the fallback the string
+    // field exists for.
+    expect(listFirearms(db).map((f) => f.make)).toEqual(['Pardini']);
   });
 });

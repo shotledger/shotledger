@@ -21,6 +21,7 @@ const session: SessionExport = {
   weaponGroup: 'spsf:C',
   shooterClass: '2',
   eventId: null,
+  firearmId: null,
   firearm: 'Pardini SP',
   ammoLot: 'Lot 42',
   startedAt: '2026-05-01T10:00:00.000Z',

@@ -42,11 +42,12 @@ export default function DataSettingsScreen() {
         created,
         updated,
         firearms: dryRun.plan.firearms.filter((f) => f.action === 'create').length,
+        licenses: dryRun.plan.licenses.filter((l) => l.action === 'create').length,
         ammoLots: dryRun.plan.ammoLots.filter((a) => a.action === 'create').length,
       }),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('jsonExport.importConfirmAction'), onPress: () => confirmImport(dryRun.groups) },
+        { text: t('jsonExport.importConfirmAction'), onPress: () => confirmImport(dryRun) },
       ],
     );
   }

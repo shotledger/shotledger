@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, toImportGroups, type ImportResult } from './import';
-import { JSON_EXPORT_FORMAT, type ImportError, type SessionExport } from './types';
+import {
+  JSON_EXPORT_FORMAT,
+  type FirearmExport,
+  type ImportError,
+  type LicenseExport,
+  type SessionExport,
+} from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
@@ -19,6 +25,7 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     weaponGroup: null,
     shooterClass: null,
     eventId: null,
+    firearmId: null,
     firearm: null,
     ammoLot: null,
     startedAt: '2026-01-01T00:00:00.000Z',
@@ -184,3 +191,118 @@ describe('importSessionsFromJson — reporting on a session that is not an objec
     expect(result.errors[0]!.message).toBe('session');
   });
 });
+
+describe('importSessionsFromJson — firearms and licenses (#314)', () => {
+  const firearm: FirearmExport = {
+    id: 'f1',
+    make: 'Pardini',
+    model: 'SP',
+    caliber: '.22 LR',
+    weaponType: 'pistol',
+    isOwn: false,
+    serialNumber: null,
+    vapenId: null,
+    loadSystem: null,
+    notes: null,
+    roundCount: 40,
+    maintenanceIntervalRounds: null,
+    roundsSinceMaintenance: 40,
+  };
+  const license: LicenseExport = {
+    id: 'l1',
+    firearmId: 'f1',
+    licenseNumber: 'TEST-000.000/00-00',
+    purpose: 'Målskjutning',
+    decidedOn: '2026-01-15',
+    validUntil: '2031-01-15',
+    conditions: null,
+    authority: 'Polismyndigheten',
+  };
+
+  function envelope(extra: Record<string, unknown>): string {
+    return JSON.stringify({
+      format: JSON_EXPORT_FORMAT,
+      formatVersion: 1,
+      generatedAt: OPTIONS.generatedAt,
+      app: { name: 'ShotLedger', version: '1.0.0' },
+      sessions: [],
+      ...extra,
+    });
+  }
+
+  it('round-trips both arrays', () => {
+    const json = exportSessionsToJson([session({ firearmId: 'f1' })], {
+      ...OPTIONS,
+      firearms: [firearm],
+      licenses: [license],
+    });
+    const result = importSessionsFromJson(json) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.firearms).toEqual([firearm]);
+    expect(result.licenses).toEqual([license]);
+    expect(result.sessions[0]!.firearmId).toBe('f1');
+  });
+
+  it('a file written before the arrays existed still imports', () => {
+    // The whole reason this is additive rather than a formatVersion bump:
+    // absent arrays and an absent firearmId read as "nothing", not as an error.
+    const result = importSessionsFromJson(
+      envelope({ sessions: [omit(session({ firearm: 'Pardini SP' }), 'firearmId')] }),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.firearms).toEqual([]);
+    expect(result.licenses).toEqual([]);
+    expect(result.sessions[0]!.firearmId).toBeNull();
+    expect(result.sessions[0]!.firearm).toBe('Pardini SP');
+  });
+
+  it('a bad firearm is skipped on its own and the good ones still import', () => {
+    const result = importSessionsFromJson(
+      envelope({ firearms: [firearm, { id: 'f2' }] }),
+    ) as ImportResult;
+    expect(result.firearms.map((f) => f.id)).toEqual(['f1']);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({ code: 'invalid-firearm', itemIndex: 1 });
+  });
+
+  it('a bad license is skipped on its own', () => {
+    const result = importSessionsFromJson(
+      envelope({ licenses: [license, { id: 'l2' }] }),
+    ) as ImportResult;
+    expect(result.licenses.map((l) => l.id)).toEqual(['l1']);
+    expect(result.errors[0]).toMatchObject({ code: 'invalid-license', itemIndex: 1 });
+  });
+
+  it('names an entry that is not an object at all rather than saying nothing', () => {
+    const result = importSessionsFromJson(envelope({ firearms: [null] })) as ImportResult;
+    expect(result.firearms).toEqual([]);
+    expect(result.errors[0]!.message).toBe('entry');
+  });
+
+  it('fills in a terse firearm rather than rejecting it', () => {
+    const result = importSessionsFromJson(
+      envelope({ firearms: [{ id: 'f9', make: 'Walther', model: 'GSP', caliber: null }] }),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.firearms[0]).toEqual({
+      id: 'f9',
+      make: 'Walther',
+      model: 'GSP',
+      caliber: null,
+      weaponType: null,
+      isOwn: true,
+      serialNumber: null,
+      vapenId: null,
+      loadSystem: null,
+      notes: null,
+      roundCount: 0,
+      maintenanceIntervalRounds: null,
+      roundsSinceMaintenance: 0,
+    });
+  });
+});
+
+function omit<T extends object>(value: T, key: keyof T): Omit<T, keyof T> {
+  const { [key]: _dropped, ...rest } = value;
+  return rest;
+}

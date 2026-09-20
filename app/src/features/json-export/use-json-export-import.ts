@@ -6,7 +6,12 @@
 // caller already showed the user.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { DryRunPlan, ImportError, SessionImportGroup } from '@shotledger/shared';
+import type {
+  DryRunPlan,
+  ImportError,
+  ImportRecords,
+  SessionImportGroup,
+} from '@shotledger/shared';
 
 import { applyImport, dryRunImport } from '@/db/json-export/apply-import';
 import { buildExportJson } from '@/db/json-export/build-export';
@@ -26,6 +31,7 @@ export interface ImportDryRunResult {
   plan: DryRunPlan;
   errors: readonly ImportError[];
   groups: readonly SessionImportGroup[];
+  records: ImportRecords;
 }
 
 function exportFilename(): string {
@@ -61,15 +67,15 @@ export function useJsonExportImport(appVersion: string) {
     return dryRunImport(db, text);
   }
 
-  /** Applies a plan's groups (from a `planImport` result the caller already
-   * showed the user) to the DB. */
-  function confirmImport(groups: readonly SessionImportGroup[]) {
+  /** Applies a dry run the caller already showed the user — its sessions and
+   * the firearms/licenses that came with them. */
+  function confirmImport(dryRun: ImportDryRunResult) {
     if (!db) {
       setStatus({ kind: 'import-failed' });
       return;
     }
-    applyImport(db, groups);
-    setStatus({ kind: 'import-success', sessionCount: groups.length });
+    applyImport(db, dryRun.groups, dryRun.records);
+    setStatus({ kind: 'import-success', sessionCount: dryRun.groups.length });
   }
 
   const statusText: string | null = (() => {

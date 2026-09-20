@@ -1,11 +1,21 @@
 // Serializing sessions to the export envelope. Spec §2, criteria C1–C7.
-import { JSON_EXPORT_FORMAT, JSON_EXPORT_VERSION, type SessionExport } from './types';
+import {
+  JSON_EXPORT_FORMAT,
+  JSON_EXPORT_VERSION,
+  type FirearmExport,
+  type LicenseExport,
+  type SessionExport,
+} from './types';
 
 export interface ExportOptions {
   /** App version for the envelope header. */
   appVersion: string;
   /** Injectable so the output is deterministic under test. */
   generatedAt?: string;
+  /** The firearms the sessions reference. Optional so a caller with none to
+   *  offer still writes the arrays — they are always present in the file. */
+  firearms?: readonly FirearmExport[];
+  licenses?: readonly LicenseExport[];
 }
 
 /**
@@ -25,6 +35,8 @@ export function exportSessionsToJson(
       generatedAt: options.generatedAt ?? new Date().toISOString(),
       app: { name: 'ShotLedger', version: options.appVersion },
       sessions,
+      firearms: options.firearms ?? [],
+      licenses: options.licenses ?? [],
     },
     null,
     2,

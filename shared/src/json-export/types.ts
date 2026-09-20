@@ -12,6 +12,9 @@ export const JSON_EXPORT_FORMAT = 'shotledger.sessions';
  * Bumped only for a breaking change. Import refuses a HIGHER version rather
  * than dropping fields it does not understand — silently importing a subset
  * of a newer file is the data-loss mode this guards.
+ *
+ * Additive optional fields do not bump it: a reader of the older shape still
+ * reads the newer file correctly (CLAUDE.md hard rule 8, pre-1.0.0).
  */
 export const JSON_EXPORT_VERSION = 1;
 
@@ -42,7 +45,10 @@ export interface SessionExport {
   shooterClass: string | null;
   /** ISSF event id; `null` for a discipline whose category rides on the klass. */
   eventId: string | null;
-  /** `"{make} {model}"`, or `null` if the session has no firearm. */
+  /** Id into the envelope's `firearms`, or `null`. */
+  firearmId: string | null;
+  /** `"{make} {model}"`, or `null` if the session has no firearm. Kept as the
+   *  fallback for a file whose `firearms` array does not hold this one. */
   firearm: string | null;
   /** Ammo lot `label`, or `null`. */
   ammoLot: string | null;
@@ -55,12 +61,45 @@ export interface SessionExport {
   series: SeriesExport[];
 }
 
+/** A firearm, as the envelope carries it. Everything the firearms table holds
+ *  except its row bookkeeping (created/updated/deleted timestamps). */
+export interface FirearmExport {
+  id: string;
+  make: string;
+  model: string;
+  caliber: string | null;
+  weaponType: 'pistol' | 'revolver' | 'rifle' | 'airgun' | null;
+  isOwn: boolean;
+  serialNumber: string | null;
+  vapenId: string | null;
+  loadSystem: string | null;
+  notes: string | null;
+  roundCount: number;
+  maintenanceIntervalRounds: number | null;
+  roundsSinceMaintenance: number;
+}
+
+/** One ISSUED license. A renewal is another row, not an edit of this one, so a
+ *  firearm can carry several and the latest one wins. */
+export interface LicenseExport {
+  id: string;
+  firearmId: string;
+  licenseNumber: string | null;
+  purpose: string | null;
+  decidedOn: string | null;
+  validUntil: string | null;
+  conditions: string | null;
+  authority: string | null;
+}
+
 export interface JsonExportEnvelope {
   format: typeof JSON_EXPORT_FORMAT;
   formatVersion: number;
   generatedAt: string;
   app: { name: string; version: string };
   sessions: SessionExport[];
+  firearms: FirearmExport[];
+  licenses: LicenseExport[];
 }
 
 // Descriptions are not decoration: they are the published schema's only prose,
@@ -148,10 +187,20 @@ export const sessionExportSchema = z.object({
       'ISSF event id, `<disciplineId>:<gender>:<age>`. Null for a discipline whose category ' +
         'rides on the klass instead, and for training sessions.',
     ),
+  // Additive, so it defaults rather than being required: a file written
+  // before the firearms array existed has no firearmId and must still import.
+  firearmId: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("Id of an entry in the envelope's `firearms`, or null."),
   firearm: z
     .string()
     .nullable()
-    .describe('`"{make} {model}"`, or null if the session has no firearm.'),
+    .describe(
+      '`"{make} {model}"`, or null if the session has no firearm. The fallback when ' +
+        '`firearmId` names no firearm the file carries.',
+    ),
   ammoLot: z.string().nullable().describe("The ammunition lot's label, or null."),
   startedAt: z.iso.datetime().describe('When the session started, ISO 8601.'),
   location: z.string().nullable().describe('Where it was shot, as free text.'),
@@ -167,6 +216,65 @@ export const sessionExportSchema = z.object({
     .describe('Rounds fired but never scored — the whole shot count of a rounds-only session.'),
   tags: z.array(z.string()).describe("The session's tags."),
   series: z.array(seriesSchema).describe('The series of this session, in order.'),
+});
+
+export const firearmExportSchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .describe('Stable id of the firearm. A session references it as `firearmId`.'),
+  make: z.string().min(1).describe('Manufacturer, e.g. `Pardini`.'),
+  model: z.string().describe('Model, e.g. `SP`. May be empty when only a make is known.'),
+  caliber: z.string().nullable().describe('Caliber, e.g. `.22 LR`. One per firearm today.'),
+  weaponType: z
+    .enum(['pistol', 'revolver', 'rifle', 'airgun'])
+    .nullable()
+    .default(null)
+    .describe('Vapentyp, or null when unstated.'),
+  isOwn: z
+    .boolean()
+    .default(true)
+    .describe('Whether the shooter owns it, as opposed to a borrowed or club firearm.'),
+  serialNumber: z.string().nullable().default(null).describe('Serial number, or null.'),
+  vapenId: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe('National register id (`SE…` on the back of a Swedish license card), or null.'),
+  loadSystem: z.string().nullable().default(null).describe('Laddsystem, e.g. `halvautomat`.'),
+  notes: z.string().nullable().default(null).describe("The firearm's notes."),
+  roundCount: z.number().int().min(0).default(0).describe('Rounds fired through it in total.'),
+  maintenanceIntervalRounds: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .default(null)
+    .describe('Rounds between cleanings, or null for no reminder.'),
+  roundsSinceMaintenance: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe('Rounds fired since the last maintenance event.'),
+});
+
+export const licenseExportSchema = z.object({
+  id: z.string().min(1).describe('Stable id of the license row.'),
+  firearmId: z
+    .string()
+    .min(1)
+    .describe('The firearm this license is for. An import drops a license naming no firearm.'),
+  licenseNumber: z.string().nullable().default(null).describe('License number, e.g. `A123.456`.'),
+  purpose: z.string().nullable().default(null).describe('Ändamål, e.g. `Målskjutning`.'),
+  decidedOn: z.string().nullable().default(null).describe('Date of decision, `YYYY-MM-DD`.'),
+  validUntil: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe('Valid through, `YYYY-MM-DD`; null means tills vidare (no expiry).'),
+  conditions: z.string().nullable().default(null).describe('Villkor, often empty.'),
+  authority: z.string().nullable().default(null).describe('Issuing authority.'),
 });
 
 /** The envelope, with `sessions` left loose so one bad session can be
@@ -197,15 +305,36 @@ export const envelopeSchema = z.object({
     .describe(
       'The exported sessions. Typed loosely by the parser on purpose, so one bad session is rejected on its own rather than failing the whole file; the real shape is documented here.',
     ),
+  // Loose and defaulted for the same two reasons as `sessions`: one bad entry
+  // is rejected on its own, and a file written before these existed imports.
+  firearms: z
+    .array(z.unknown())
+    .default([])
+    .describe(
+      'The firearms the sessions reference, so a file can be imported into an empty install without retyping the equipment. Loosely typed by the parser for the same reason as `sessions`.',
+    ),
+  licenses: z
+    .array(z.unknown())
+    .default([])
+    .describe(
+      'Weapon licenses, one entry per issued license, each naming its firearm. Loosely typed by the parser for the same reason as `sessions`.',
+    ),
 });
 
 /** Why an import was refused outright, or one session was skipped. */
 export type ImportErrorCode =
-  'malformed-json' | 'not-a-shotledger-file' | 'newer-format-version' | 'invalid-session';
+  | 'malformed-json'
+  | 'not-a-shotledger-file'
+  | 'newer-format-version'
+  | 'invalid-session'
+  | 'invalid-firearm'
+  | 'invalid-license';
 
 export interface ImportError {
   code: ImportErrorCode;
   /** 0-based index into `sessions`, when the failure is one session's. */
   sessionIndex?: number;
+  /** 0-based index into `firearms` or `licenses`, for those two codes. */
+  itemIndex?: number;
   message: string;
 }

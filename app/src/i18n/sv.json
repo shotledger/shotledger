@@ -411,7 +411,7 @@
     "importErrorsTitle": "Importen har fel",
     "importErrors": "{{count}} pass kunde inte läsas och hoppas över.",
     "importConfirmTitle": "Importera den här filen?",
-    "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{ammoLots}} nya ammunitionspartier",
+    "importSummary": "{{created}} pass att skapa, {{updated}} att uppdatera, {{firearms}} nya vapen, {{licenses}} nya licenser, {{ammoLots}} nya ammunitionspartier",
     "importConfirmAction": "Importera",
     "importSuccess": "Importerade {{count}} pass"
   },

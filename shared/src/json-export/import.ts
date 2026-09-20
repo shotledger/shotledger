@@ -9,16 +9,23 @@
 //    row and what a user with a hand-edited file needs.
 import {
   envelopeSchema,
+  firearmExportSchema,
   JSON_EXPORT_VERSION,
+  licenseExportSchema,
   sessionExportSchema,
+  type FirearmExport,
   type ImportError,
+  type ImportErrorCode,
+  type LicenseExport,
   type SeriesExport,
   type SessionExport,
 } from './types';
 
 export interface ImportResult {
   sessions: SessionExport[];
-  /** Sessions that were skipped, with why. Empty on a clean file. */
+  firearms: FirearmExport[];
+  licenses: LicenseExport[];
+  /** Entries that were skipped, with why. Empty on a clean file. */
   errors: ImportError[];
 }
 
@@ -71,8 +78,38 @@ export function importSessionsFromJson(text: string): ImportResult | ImportError
     });
   });
 
-  return { sessions, errors };
+  const firearms = collect(envelope.data.firearms, firearmExportSchema, 'invalid-firearm', errors);
+  const licenses = collect(envelope.data.licenses, licenseExportSchema, 'invalid-license', errors);
+
+  return { sessions, firearms, licenses, errors };
 }
+
+/** One entry at a time, for the same reason a session is parsed one at a time:
+ *  a hand-edited firearm must not cost the rest of the file. */
+function collect<T>(
+  candidates: readonly unknown[],
+  schema: { safeParse: (value: unknown) => SafeParse<T> },
+  code: ImportErrorCode,
+  errors: ImportError[],
+): T[] {
+  const kept: T[] = [];
+  candidates.forEach((candidate, itemIndex) => {
+    const parsed = schema.safeParse(candidate);
+    if (parsed.success) {
+      kept.push(parsed.data);
+      return;
+    }
+    errors.push({
+      code,
+      itemIndex,
+      message: parsed.error.issues.map((issue) => issue.path.join('.') || 'entry').join(', '),
+    });
+  });
+  return kept;
+}
+
+type SafeParse<T> =
+  { success: true; data: T } | { success: false; error: { issues: { path: PropertyKey[] }[] } };
 
 /**
  * The plan layer's view of a session. Identical to `SessionExport` except for

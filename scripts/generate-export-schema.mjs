@@ -23,8 +23,14 @@ const SITE = 'https://jimisola.github.io/shotledger/reference';
 
 const require = createRequire(join(root, 'shared/package.json'));
 const { z } = await import(pathToFileURL(require.resolve('zod')).href);
-const { envelopeSchema, sessionExportSchema, JSON_EXPORT_FORMAT, JSON_EXPORT_VERSION } =
-  await import(pathToFileURL(join(root, 'shared/dist/json-export/types.js')).href);
+const {
+  envelopeSchema,
+  sessionExportSchema,
+  firearmExportSchema,
+  licenseExportSchema,
+  JSON_EXPORT_FORMAT,
+  JSON_EXPORT_VERSION,
+} = await import(pathToFileURL(join(root, 'shared/dist/json-export/types.js')).href);
 
 // `io: 'output'` describes what a file CONTAINS, which is what a reader
 // validating an export needs — not what the parser will accept as input.
@@ -35,13 +41,23 @@ const generated = z.toJSONSchema(envelopeSchema, { io: 'output' });
 // right at runtime and useless in a published schema — it documented a
 // session as `{}`. Splice the real session shape back in for the DOCUMENT
 // only; the parser keeps its loose envelope.
-const sessionSchema = z.toJSONSchema(sessionExportSchema, { io: 'output' });
-// `toJSONSchema` emits `$schema` at the root of whatever it is handed, and
-// this one is not a root: 2020-12 §8.1.1 allows the dialect keyword only on a
-// document root or an embedded resource, and an embedded resource needs an
-// `$id`. Left in, it declares a dialect for a subschema that cannot have one.
-delete sessionSchema.$schema;
+// `firearms` and `licenses` are loose in the parser for the same reason and
+// get the same treatment.
+function subschema(schema, title) {
+  const json = z.toJSONSchema(schema, { io: 'output' });
+  // `toJSONSchema` emits `$schema` at the root of whatever it is handed, and
+  // this one is not a root: 2020-12 §8.1.1 allows the dialect keyword only on
+  // a document root or an embedded resource, and an embedded resource needs an
+  // `$id`. Left in, it declares a dialect for a subschema that cannot have one.
+  delete json.$schema;
+  json.title = title;
+  return json;
+}
+
+const sessionSchema = subschema(sessionExportSchema, 'Session');
 generated.properties.sessions.items = sessionSchema;
+generated.properties.firearms.items = subschema(firearmExportSchema, 'Firearm');
+generated.properties.licenses.items = subschema(licenseExportSchema, 'License');
 
 // The parser accepts any formatVersion >= 1 so it can refuse a higher one with
 // a useful error. A published schema is not a parser: this document describes
@@ -52,8 +68,6 @@ generated.properties.formatVersion = {
 };
 delete generated.properties.formatVersion.minimum;
 delete generated.properties.formatVersion.maximum;
-
-sessionSchema.title = 'Session';
 
 function document(id, description) {
   return {
@@ -84,6 +98,7 @@ function document(id, description) {
             weaponGroup: 'spsf:C',
             shooterClass: null,
             eventId: null,
+            firearmId: 'arm_4Kd9',
             firearm: 'Pardini SP',
             ammoLot: null,
             startedAt: '2026-09-13T08:00:00.000Z',
@@ -100,6 +115,35 @@ function document(id, description) {
                 shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
               },
             ],
+          },
+        ],
+        firearms: [
+          {
+            id: 'arm_4Kd9',
+            make: 'Pardini',
+            model: 'SP',
+            caliber: '.22 LR',
+            weaponType: 'pistol',
+            isOwn: true,
+            serialNumber: null,
+            vapenId: null,
+            loadSystem: null,
+            notes: null,
+            roundCount: 1200,
+            maintenanceIntervalRounds: 500,
+            roundsSinceMaintenance: 120,
+          },
+        ],
+        licenses: [
+          {
+            id: 'lic_2Bf1',
+            firearmId: 'arm_4Kd9',
+            licenseNumber: 'A123.456/2026-01',
+            purpose: 'Målskjutning',
+            decidedOn: '2026-01-15',
+            validUntil: null,
+            conditions: null,
+            authority: 'Polismyndigheten',
           },
         ],
       },

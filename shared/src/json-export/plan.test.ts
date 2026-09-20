@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { SessionImportGroup } from './import';
 import { buildDryRunPlan, type ExistingIndex } from './plan';
+import type { FirearmExport, LicenseExport } from './types';
 
 const emptyIndex: ExistingIndex = {
   sessionIds: new Set(),
+  firearmIds: new Set(),
+  licenseIds: new Set(),
   firearmNames: new Set(),
   ammoLotNames: new Set(),
   tagNames: new Set(),
@@ -23,6 +26,7 @@ function group(overrides: Partial<SessionImportGroup> = {}): SessionImportGroup 
     weaponGroup: null,
     shooterClass: null,
     eventId: null,
+    firearmId: null,
     firearm: null,
     ammoLot: null,
     startedAt: '2026-08-01T18:00:00.000Z',
@@ -107,6 +111,7 @@ describe('buildDryRunPlan shot counts', () => {
           weaponGroup: null,
           shooterClass: null,
           eventId: null,
+          firearmId: null,
           firearm: null,
           ammoLot: null,
           startedAt: '2026-01-01T00:00:00.000Z',
@@ -146,6 +151,8 @@ describe('buildDryRunPlan shot counts', () => {
       ],
       {
         sessionIds: new Set(),
+        firearmIds: new Set(),
+        licenseIds: new Set(),
         firearmNames: new Set(),
         ammoLotNames: new Set(),
         tagNames: new Set(),
@@ -172,6 +179,7 @@ describe('buildDryRunPlan tag reuse', () => {
       weaponGroup: null,
       shooterClass: null,
       eventId: null,
+      firearmId: null,
       firearm: null,
       ammoLot: null,
       startedAt: '2026-01-01T00:00:00.000Z',
@@ -184,6 +192,8 @@ describe('buildDryRunPlan tag reuse', () => {
     };
     const plan = buildDryRunPlan([group], {
       sessionIds: new Set(),
+      firearmIds: new Set(),
+      licenseIds: new Set(),
       firearmNames: new Set(),
       ammoLotNames: new Set(),
       tagNames: new Set(['KM']),
@@ -209,6 +219,7 @@ describe('buildDryRunPlan tag reuse', () => {
       weaponGroup: null,
       shooterClass: null,
       eventId: null,
+      firearmId: null,
       firearm: null,
       ammoLot: null,
       startedAt: '2026-01-01T00:00:00.000Z',
@@ -226,6 +237,8 @@ describe('buildDryRunPlan tag reuse', () => {
       ],
       {
         sessionIds: new Set(),
+        firearmIds: new Set(),
+        licenseIds: new Set(),
         firearmNames: new Set(),
         ammoLotNames: new Set(),
         tagNames: new Set(),
@@ -233,5 +246,85 @@ describe('buildDryRunPlan tag reuse', () => {
     );
 
     expect(plan.tags).toEqual([{ name: 'KM', action: 'create' }]);
+  });
+});
+
+describe('buildDryRunPlan — firearms and licenses the file carries (#314)', () => {
+  const firearm: FirearmExport = {
+    id: 'f1',
+    make: 'Pardini',
+    model: 'SP',
+    caliber: '.22 LR',
+    weaponType: 'pistol',
+    isOwn: true,
+    serialNumber: null,
+    vapenId: null,
+    loadSystem: null,
+    notes: null,
+    roundCount: 0,
+    maintenanceIntervalRounds: null,
+    roundsSinceMaintenance: 0,
+  };
+  const license: LicenseExport = {
+    id: 'l1',
+    firearmId: 'f1',
+    licenseNumber: 'TEST-000.000/00-00',
+    purpose: null,
+    decidedOn: null,
+    validUntil: null,
+    conditions: null,
+    authority: null,
+  };
+
+  it('plans create for a firearm and license the target DB has never seen', () => {
+    const plan = buildDryRunPlan([group()], emptyIndex, {
+      firearms: [firearm],
+      licenses: [license],
+    });
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'create' }]);
+    expect(plan.licenses).toEqual([{ name: 'TEST-000.000/00-00', action: 'create' }]);
+  });
+
+  it('plans reuse when the id is already here, whatever it is called', () => {
+    const index: ExistingIndex = { ...emptyIndex, firearmIds: new Set(['f1']) };
+    const plan = buildDryRunPlan([group()], index, { firearms: [firearm] });
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'reuse' }]);
+  });
+
+  it('plans reuse when only the name matches — the same firearm, entered twice', () => {
+    const index: ExistingIndex = { ...emptyIndex, firearmNames: new Set(['Pardini SP']) };
+    const plan = buildDryRunPlan([group()], index, { firearms: [firearm] });
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'reuse' }]);
+  });
+
+  it('plans reuse for a license id already here', () => {
+    const index: ExistingIndex = { ...emptyIndex, licenseIds: new Set(['l1']) };
+    const plan = buildDryRunPlan([group()], index, { licenses: [license] });
+    expect(plan.licenses).toEqual([{ name: 'TEST-000.000/00-00', action: 'reuse' }]);
+  });
+
+  it('falls back to the license id when it has no number', () => {
+    const plan = buildDryRunPlan([group()], emptyIndex, {
+      licenses: [{ ...license, licenseNumber: null }],
+    });
+    expect(plan.licenses).toEqual([{ name: 'l1', action: 'create' }]);
+  });
+
+  it('counts a firearm once when a session also names it as free text', () => {
+    // Otherwise the confirmation would offer to create two firearms where the
+    // file describes one.
+    const plan = buildDryRunPlan([group({ firearm: 'Pardini SP' })], emptyIndex, {
+      firearms: [firearm],
+    });
+    expect(plan.firearms).toEqual([{ name: 'Pardini SP', action: 'create' }]);
+  });
+
+  it('counts a repeated firearm and license once each', () => {
+    const plan = buildDryRunPlan([group()], emptyIndex, {
+      firearms: [firearm, { ...firearm, id: 'f2' }],
+      licenses: [license, { ...license, id: 'l2' }],
+    });
+    expect(plan.firearms).toHaveLength(1);
+    expect(plan.licenses).toHaveLength(1);
   });
 });
