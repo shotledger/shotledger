@@ -104,6 +104,78 @@ export function filterAnalyticsSeries(
   });
 }
 
+// --- The report's session set ------------------------------------------------
+
+/**
+ * A session as the report sees it, independent of whether it has series.
+ *
+ * The report is otherwise built entirely from series rows, which makes a
+ * session with none invisible to it — not counted, and its `extra_rounds`
+ * missing from the volume. That is not an accident of the data: a
+ * `kind: 'rounds'` session is defined as one that logs its shots in
+ * `extra_rounds` and never gets series (#349).
+ */
+export interface AnalyticsSession {
+  id: string;
+  startedAt: string;
+  sessionType: AnalyticsSessionType;
+  disciplineId: string;
+  tagIds: readonly string[];
+  /** Unscored extra rounds on the session (spec A1 §A1.3); 0 when unset. */
+  extraRounds: number;
+}
+
+/**
+ * The session-level half of the report filter. `shotsPerSeries` is a question
+ * about series and is deliberately not applied here — a session that has no
+ * series cannot answer it, and excluding it on that basis is the variant the
+ * maintainer rejected (#349).
+ */
+export function filterAnalyticsSessions(
+  list: readonly AnalyticsSession[],
+  filter: AnalyticsFilter,
+): AnalyticsSession[] {
+  return list.filter((session) => {
+    if (filter.fromIso !== null && session.startedAt < filter.fromIso) return false;
+    if (filter.toIso !== null && session.startedAt > filter.toIso) return false;
+    if (filter.sessionType !== null && session.sessionType !== filter.sessionType) return false;
+    if (filter.disciplineId !== null && session.disciplineId !== filter.disciplineId) return false;
+    if (filter.tagIds.length > 0 && !filter.tagIds.some((id) => session.tagIds.includes(id))) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * The sessions the report covers: those with at least one matching series,
+ * plus those that have no series at all and pass the session-level filter.
+ *
+ * A session that HAS series answers the series-shaped questions through them,
+ * so one whose every series was filtered out is out of the report too — that
+ * is the pre-#349 behaviour and it was never wrong. What was wrong is that a
+ * session with nothing to filter fell through the same hole.
+ */
+export function analyticsReportSessions(
+  sessions: readonly AnalyticsSession[],
+  allSeries: readonly AnalyticsSeries[],
+  matchedSeries: readonly AnalyticsSeries[],
+  filter: AnalyticsFilter,
+): AnalyticsSession[] {
+  const withAnySeries = new Set(allSeries.map((series) => series.sessionId));
+  const matchedIds = new Set(matchedSeries.map((series) => series.sessionId));
+  const seriesFree = new Set(
+    filterAnalyticsSessions(
+      sessions.filter((session) => !withAnySeries.has(session.id)),
+      filter,
+    ).map((session) => session.id),
+  );
+
+  return sessions
+    .filter((session) => matchedIds.has(session.id) || seriesFree.has(session.id))
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt) || a.id.localeCompare(b.id));
+}
+
 // --- Per-session points (the x-axis of every chart) --------------------------
 
 export interface AnalyticsSessionPoint {
@@ -239,5 +311,59 @@ export function analyticsTotals(
     meanSeriesTenths: scored.length === 0 ? null : sumTenths / scored.length,
     innerTenCount: shots.filter((shot) => shot.isInnerTen).length,
     tenCount: shots.filter((shot) => shot.valueTenths >= TEN_TENTHS).length,
+  };
+}
+
+/**
+ * Everything the report's session set answers, in one call.
+ *
+ * This exists so the app's `loadReport` has no wiring of its own to get wrong:
+ * the composition lives here, where it is testable without a database, and the
+ * app only supplies the rows. Duplicating these four lines app-side is how the
+ * two would quietly drift apart.
+ */
+export interface AnalyticsReportSet {
+  /** The series the filter kept — the input to every score statistic. */
+  matchedSeries: AnalyticsSeries[];
+  /** The sessions the report covers, series-free ones included. */
+  sessions: AnalyticsSession[];
+  totals: AnalyticsTotals;
+  /** Whether anything matched at all. A session counts even with no series. */
+  hasMatches: boolean;
+}
+
+export function analyticsReportSet(
+  allSeries: readonly AnalyticsSeries[],
+  allSessions: readonly AnalyticsSession[],
+  filter: AnalyticsFilter,
+  scope: SighterScope = {},
+): AnalyticsReportSet {
+  const matchedSeries = filterAnalyticsSeries(allSeries, filter);
+  const sessions = analyticsReportSessions(allSessions, allSeries, matchedSeries, filter);
+  return {
+    matchedSeries,
+    sessions,
+    totals: analyticsReportTotals(matchedSeries, sessions, scope),
+    hasMatches: sessions.length > 0,
+  };
+}
+
+/**
+ * `analyticsTotals` seen from the report's session set rather than from the
+ * series alone. Only the two fields that are answers about *sessions* change;
+ * everything else is delegated, so there is one implementation of each.
+ */
+export function analyticsReportTotals(
+  matchedSeries: readonly AnalyticsSeries[],
+  reportSessions: readonly AnalyticsSession[],
+  scope: SighterScope = {},
+): AnalyticsTotals {
+  const totals = analyticsTotals(matchedSeries, scope);
+  return {
+    ...totals,
+    sessionCount: reportSessions.length,
+    volumeShotCount:
+      totals.volumeShotCount +
+      reportSessions.reduce((sum, session) => sum + session.extraRounds, 0),
   };
 }

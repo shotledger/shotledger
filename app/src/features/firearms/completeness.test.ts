@@ -1,6 +1,7 @@
 import {
   isFirearmIncomplete,
   missingFirearmFields,
+  requiresLicense,
   type FirearmCompletenessInput,
 } from './completeness';
 
@@ -52,5 +53,45 @@ describe('isFirearmIncomplete', () => {
 
   it('C9: a complete owned firearm is not flagged', () => {
     expect(isFirearmIncomplete({ ...firearm(), isOwn: true })).toBe(false);
+  });
+});
+
+// #365: an effektbegränsat air weapon needs no licence in Sweden, and the
+// maintainer's own 10 m air pistol sat flagged as incomplete with nothing they
+// could do about it.
+describe('licence-free weapon types', () => {
+  it('C10: an airgun requires no licence; everything else does', () => {
+    expect(requiresLicense('airgun')).toBe(false);
+    for (const type of ['pistol', 'revolver', 'rifle']) {
+      expect(requiresLicense(type)).toBe(true);
+    }
+  });
+
+  it('C11: an unknown weapon type still requires one — the app cannot tell yet', () => {
+    expect(requiresLicense(null)).toBe(true);
+    expect(requiresLicense('')).toBe(true);
+  });
+
+  it('C12: an airgun with no licence is missing nothing', () => {
+    expect(missingFirearmFields(firearm({ weaponType: 'airgun', hasLicense: false }))).toEqual([]);
+  });
+
+  it('C13: an owned airgun with no licence is NOT incomplete', () => {
+    expect(
+      isFirearmIncomplete({ ...firearm({ weaponType: 'airgun', hasLicense: false }), isOwn: true }),
+    ).toBe(false);
+  });
+
+  it('C14: an airgun is still incomplete when the caliber is missing', () => {
+    expect(
+      isFirearmIncomplete({
+        ...firearm({ weaponType: 'airgun', caliber: null, hasLicense: false }),
+        isOwn: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('C15: a cartridge firearm with no licence is unaffected by the exemption', () => {
+    expect(missingFirearmFields(firearm({ hasLicense: false }))).toEqual(['license']);
   });
 });

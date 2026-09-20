@@ -305,7 +305,9 @@
     "eventDate": "Datum",
     "sightWindageRange": "Område ±{{value}}",
     "sightWindageDecrease": "Minska sida",
-    "sightWindageIncrease": "Öka sida"
+    "sightWindageIncrease": "Öka sida",
+    "licenseNotRequired": "Krävs inte",
+    "licenseNotRequiredBody": "Ett effektbegränsat luftvapen kräver ingen licens. Lägg ändå till en om ditt vapen kräver det."
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
