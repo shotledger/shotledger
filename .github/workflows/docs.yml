@@ -49,6 +49,11 @@ jobs:
       - name: Check translations are not stale
         run: node scripts/docs-translation-check.mjs
 
+      # `--strict` does not cover anchors either: a link to a heading that no
+      # longer exists is logged at INFO and the build still exits 0.
+      - name: Check for dangling anchors
+        run: node scripts/docs-anchor-check.mjs
+
       # The same gate contributors run locally. `--strict` fails the build on a
       # broken internal link, so a bad cross-reference never reaches the site —
       # and it runs on pull requests, where it is cheap to fix.

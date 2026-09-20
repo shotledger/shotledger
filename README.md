@@ -61,6 +61,7 @@ gate. `pnpm gauntlet` runs every layer.
 | `generate-export-schema.mjs`                        | `pnpm check` (check), `pnpm schema:generate`   | The published JSON Schema for session exports is derived from the zod schema the app validates against. |
 | `ensure-expo-env.mjs`                               | `pnpm typecheck:app`                           | Writes the gitignored `expo-env.d.ts` on a clean checkout so the app typechecks in CI.                  |
 | `docs-translation-check.mjs`                        | CI docs job                                    | A `.sv.md` manual page whose last commit is older than its English source fails the build.              |
+| `docs-anchor-check.mjs`                             | CI docs job                                    | A manual link pointing at a heading that no longer exists — which `mkdocs build --strict` lets pass.    |
 | `mutate-schema.mjs`, `mutate-webshooter-schema.mjs` | `pnpm gauntlet`                                | On-disk mutation of zod schemas, which Stryker cannot mutate because they run at module load.           |
 | `manual-mutation.mjs`                               | by hand                                        | Manual mutants for `shared/src/json-export`, recorded in its evidence report.                           |
 | `i18n-check-negative-control.mjs`                   | by hand                                        | Proves the i18n gate can still fail (mutates the JSON, expects a nonzero exit, restores it).            |
