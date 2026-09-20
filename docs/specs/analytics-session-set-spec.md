@@ -62,6 +62,9 @@ New functions:
   sessions the report covers, sorted by `startedAt` then `id`.
 - `analyticsReportTotals(matchedSeries, reportSessions, scope)` — delegates to
   the existing `analyticsTotals` and replaces two fields from the session set.
+- `analyticsReportSet(allSeries, allSessions, filter, scope)` — the three above
+  composed, so the app has no wiring of its own. Added during implementation;
+  see the revision note.
 
 Unchanged, deliberately: `filterAnalyticsSeries`, `analyticsTotals`,
 `analyticsRecords` and `analyticsSessionPoints` keep their present signatures
@@ -137,6 +140,43 @@ Ids are the test names.
   reports `sessionCount` 2, and its volume includes the rounds-only session's
   extra rounds. The regression for the reported symptom, one layer above the
   pure functions.
+- **E2E-2** a filter whose only match is a rounds-only session reports
+  `hasMatches: true`. See the revision note below.
+
+### The composed set — `analyticsReportSet`
+
+- **SET-1** `matchedSeries` is `filterAnalyticsSeries` over the same input.
+- **SET-2** `sessions` and `totals` are the two functions above over the same
+  input, and the `scope` reaches the totals.
+- **SET-3** `hasMatches` is true when the session set is non-empty and false
+  when it is empty — including the case where series matched nothing but a
+  series-free session did.
+
+## Revision during implementation (2026-09-20)
+
+Writing the app layer surfaced a gap in the criteria above, recorded here
+rather than absorbed silently.
+
+`AnalyticsReportData.hasMatches` was `matched.length > 0` — a question about
+series — and `report.tsx` renders the empty state from it. With the session set
+fixed but `hasMatches` left alone, a filter whose only match is a rounds-only
+session would report `sessionCount: 1` and then tell the user nothing matched:
+the same class of contradiction this change exists to remove, moved one field
+along.
+
+A second gap came with it. The end-to-end test could only reach the
+composition by restating `loadReport`'s four lines, because `use-stats-data.ts`
+pulls in `@/db/client` and expo-sqlite does not load under node — so the test
+would have asserted against a copy of the wiring rather than the wiring. The
+composition therefore moves into `shared` as `analyticsReportSet`, which both
+the app and the test call. Criteria **SET-1** to **SET-3** cover it.
+
+`hasMatches` therefore becomes `reportSessions.length > 0`. This is entailed by
+the approved ruling — a session that is counted must not be reported as no
+match — but it was not written down, so it is added as **E2E-2** rather than
+left implicit. `hasAnyData` is unchanged: it asks whether the database holds
+any series at all, which is a different question and still the right one for
+the "no data yet" state.
 
 ### Negative constraints (must NOT change)
 

@@ -315,6 +315,40 @@ export function analyticsTotals(
 }
 
 /**
+ * Everything the report's session set answers, in one call.
+ *
+ * This exists so the app's `loadReport` has no wiring of its own to get wrong:
+ * the composition lives here, where it is testable without a database, and the
+ * app only supplies the rows. Duplicating these four lines app-side is how the
+ * two would quietly drift apart.
+ */
+export interface AnalyticsReportSet {
+  /** The series the filter kept — the input to every score statistic. */
+  matchedSeries: AnalyticsSeries[];
+  /** The sessions the report covers, series-free ones included. */
+  sessions: AnalyticsSession[];
+  totals: AnalyticsTotals;
+  /** Whether anything matched at all. A session counts even with no series. */
+  hasMatches: boolean;
+}
+
+export function analyticsReportSet(
+  allSeries: readonly AnalyticsSeries[],
+  allSessions: readonly AnalyticsSession[],
+  filter: AnalyticsFilter,
+  scope: SighterScope = {},
+): AnalyticsReportSet {
+  const matchedSeries = filterAnalyticsSeries(allSeries, filter);
+  const sessions = analyticsReportSessions(allSessions, allSeries, matchedSeries, filter);
+  return {
+    matchedSeries,
+    sessions,
+    totals: analyticsReportTotals(matchedSeries, sessions, scope),
+    hasMatches: sessions.length > 0,
+  };
+}
+
+/**
  * `analyticsTotals` seen from the report's session set rather than from the
  * series alone. Only the two fields that are answers about *sessions* change;
  * everything else is delegated, so there is one implementation of each.

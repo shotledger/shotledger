@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   analyticsReportSessions,
+  analyticsReportSet,
   analyticsReportTotals,
   analyticsTotals,
   ANY_ANALYTICS_FILTER,
@@ -63,13 +64,12 @@ describe('filterAnalyticsSessions', () => {
       session({ id: 'edge', startedAt: '2026-06-01T00:00:00.000Z' }),
       session({ id: 'late', startedAt: '2026-12-01T00:00:00.000Z' }),
     ];
-    expect(ids(filterAnalyticsSessions(list, filter({ fromIso: '2026-06-01T00:00:00.000Z' })))).toEqual(
-      ['edge', 'late'],
-    );
-    expect(ids(filterAnalyticsSessions(list, filter({ toIso: '2026-06-01T00:00:00.000Z' })))).toEqual([
-      'early',
-      'edge',
-    ]);
+    expect(
+      ids(filterAnalyticsSessions(list, filter({ fromIso: '2026-06-01T00:00:00.000Z' }))),
+    ).toEqual(['edge', 'late']);
+    expect(
+      ids(filterAnalyticsSessions(list, filter({ toIso: '2026-06-01T00:00:00.000Z' }))),
+    ).toEqual(['early', 'edge']);
   });
 
   it('FS-3: sessionType keeps only that type', () => {
@@ -165,7 +165,14 @@ describe('analyticsReportSessions', () => {
     const all = [series({ sessionId: 'a', values: [90, 90, 90] })];
     const matched: AnalyticsSeries[] = [];
     expect(
-      ids(analyticsReportSessions([session({ id: 'a' })], all, matched, filter({ shotsPerSeries: 5 }))),
+      ids(
+        analyticsReportSessions(
+          [session({ id: 'a' })],
+          all,
+          matched,
+          filter({ shotsPerSeries: 5 }),
+        ),
+      ),
     ).toEqual([]);
   });
 
@@ -173,9 +180,9 @@ describe('analyticsReportSessions', () => {
     const all = [series({ sessionId: 'a', values: [90, 90, 90] })];
     const matched: AnalyticsSeries[] = [];
     const sessions = [session({ id: 'a' }), session({ id: 'rounds-only' })];
-    expect(ids(analyticsReportSessions(sessions, all, matched, filter({ shotsPerSeries: 5 })))).toEqual(
-      ['rounds-only'],
-    );
+    expect(
+      ids(analyticsReportSessions(sessions, all, matched, filter({ shotsPerSeries: 5 }))),
+    ).toEqual(['rounds-only']);
   });
 
   it('RS-6: a matched series whose session is unknown is dropped, not invented', () => {
@@ -256,5 +263,50 @@ describe('analyticsReportTotals', () => {
     expect(
       analyticsReportTotals(matched, sessions, { includeSighters: true }).scoredSeriesCount,
     ).toBe(1);
+  });
+});
+
+describe('analyticsReportSet', () => {
+  const all = [
+    series({ sessionId: 'a', values: [90, 90] }),
+    series({ sessionId: 'b', values: [90, 90, 90] }),
+  ];
+  const sessions = [
+    session({ id: 'a' }),
+    session({ id: 'b' }),
+    session({ id: 'rounds', extraRounds: 9 }),
+  ];
+
+  it('SET-1: matchedSeries is the filtered series', () => {
+    const set = analyticsReportSet(all, sessions, filter({ shotsPerSeries: 3 }));
+    expect(set.matchedSeries.map((s) => s.sessionId)).toEqual(['b']);
+  });
+
+  it('SET-2: sessions and totals are the same as calling the parts, scope included', () => {
+    const set = analyticsReportSet(all, sessions, ANY_ANALYTICS_FILTER);
+    const expectedSessions = analyticsReportSessions(sessions, all, all, ANY_ANALYTICS_FILTER);
+    expect(set.sessions).toEqual(expectedSessions);
+    expect(set.totals).toEqual(analyticsReportTotals(all, expectedSessions));
+
+    const sighter = [series({ sessionId: 'a', isSighter: true, values: [90, 90] })];
+    expect(
+      analyticsReportSet(sighter, [session({ id: 'a' })], ANY_ANALYTICS_FILTER).totals
+        .scoredSeriesCount,
+    ).toBe(0);
+    expect(
+      analyticsReportSet(sighter, [session({ id: 'a' })], ANY_ANALYTICS_FILTER, {
+        includeSighters: true,
+      }).totals.scoredSeriesCount,
+    ).toBe(1);
+  });
+
+  it('SET-3: hasMatches follows the session set, not the series', () => {
+    expect(analyticsReportSet(all, sessions, ANY_ANALYTICS_FILTER).hasMatches).toBe(true);
+    // No series matches a 99-shot length, but the series-free session still does.
+    const onlySeriesFree = analyticsReportSet(all, sessions, filter({ shotsPerSeries: 99 }));
+    expect(onlySeriesFree.matchedSeries).toEqual([]);
+    expect(onlySeriesFree.sessions.map((s) => s.id)).toEqual(['rounds']);
+    expect(onlySeriesFree.hasMatches).toBe(true);
+    expect(analyticsReportSet([], [], ANY_ANALYTICS_FILTER).hasMatches).toBe(false);
   });
 });
