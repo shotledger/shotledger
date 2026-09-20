@@ -24,6 +24,32 @@ this spec states a number or formula sourced from wscli rather than from
 SHB directly, treat it as `VERIFY:` against wscli's actual source before
 shipping, same as any other unconfirmed fact.
 
+## Verified against the live service
+
+**2026-09-20 — both authentication paths work against `webshooter.se`
+(API v4.1.9), on the maintainer's own account.** Recorded here so the
+question stops being re-raised (#352, and #65 before it).
+
+| Path                                         | Result                                                                                                                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Username + password, in the app              | Connects. Passed competitions and upcoming starts (signups) both returned. Maintainer's own report, 2026-09-20.                                                   |
+| Manual API token, pasted into the app        | Connects, and the app resolves the identity live from the token — the connect screen reads "Ansluten — kortnummer &lt;n&gt;". Driven on the emulator, 2026-09-20. |
+| `GET /authenticate/user` with a bearer token | `200`, account returned. Without the header: `500`.                                                                                                               |
+| `GET /competitions` with a bearer token      | `200`, competitions returned.                                                                                                                                     |
+
+The **token path is kept**, not because password login is unreliable, but
+because password login is not a documented API: `spaLogin.ts` reads
+webshooter.se's own client secret out of their AngularJS client at login
+time (reverse-engineered 2026-09-11). If that front end changes, the token
+is the only way in. Maintainer's decision, 2026-09-20.
+
+The token lives in SecureStore and is never a DB row and never synced —
+see §1 and `app/src/platform/secure-store.ts`. What the app stores is
+unchanged by this verification.
+
+**Still not supported:** fält (`webshooter.fieldNotSupported`). That is a
+scoring-model limitation, unrelated to authentication.
+
 ## 0. Scope
 
 Webshooter (`webshooter.se`, API v4.1.9) is SPSF's competition-management

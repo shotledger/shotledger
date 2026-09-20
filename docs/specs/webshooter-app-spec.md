@@ -105,6 +105,12 @@ three-tier flow)
    interface, not the stub.
 2. **Fallback: manual token paste** — always available, no VERIFY
    dependency, since the user can obtain a token from Webshooter directly.
+   **Verified end to end against the live service on 2026-09-20**: a token
+   pasted into this form connects and the app resolves the identity from it,
+   the connect screen reading "Ansluten — kortnummer &lt;n&gt;". Kept rather
+   than removed now that password login also works, because password login
+   depends on reading webshooter.se's client secret out of their own web
+   client — see the integration spec's "Verified against the live service".
 3. Card number (identity) resolved via
    `shared/src/integrations/webshooter/identity.ts`'s `resolveIdentity`,
    stored in `settings` (not secret) alongside the SecureStore token.
