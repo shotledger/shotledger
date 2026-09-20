@@ -187,5 +187,5 @@ förbundsprefixade — `spsf:C` snarare än ett naket `C`. Ett annat förbund ka
 definiera sitt eget `C` utan att krocka med det här.
 
 Vilka av dem du erbjuds beror på vilka reglementen du slagit på; se
-[Reglementen](../guides/regulations.md). ISSF levererar grenar i stället för
+[Reglementen](../explanation/regulations.md). ISSF levererar grenar i stället för
 vapengrupper, så ett ISSF- eller SvSF-pass har ingen vapengrupp att välja.
