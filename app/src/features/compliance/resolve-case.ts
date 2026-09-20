@@ -13,6 +13,12 @@ export interface ResolvedComplianceCase {
   variantId: string | null;
   /** True only when the shooter chose this case themselves in Settings. */
   isExplicit: boolean;
+  /**
+   * Why the derivation landed here — null when the shooter chose explicitly,
+   * since then there is nothing to explain. A proposed case that cannot say
+   * why it was proposed is not correctable (#320).
+   */
+  reasonId: string | null;
 }
 
 /**
@@ -27,12 +33,12 @@ export function resolveComplianceCase(
   facts: readonly FirearmOwnershipFact[],
 ): ResolvedComplianceCase {
   const definition = getProfileDefinition(selection);
-  if (!definition) return { variantId: null, isExplicit: false };
+  if (!definition) return { variantId: null, isExplicit: false, reasonId: null };
 
   const isExplicit =
     storedVariantId !== null && definition.variants.some((v) => v.id === storedVariantId);
-  return {
-    variantId: isExplicit ? storedVariantId : resolveDefaultVariantIdFor(definition, facts),
-    isExplicit,
-  };
+  if (isExplicit) return { variantId: storedVariantId, isExplicit: true, reasonId: null };
+
+  const derived = resolveDefaultVariantIdFor(definition, facts);
+  return { variantId: derived.variantId, isExplicit: false, reasonId: derived.reasonId };
 }

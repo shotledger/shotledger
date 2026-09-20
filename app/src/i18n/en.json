@@ -176,6 +176,14 @@
   },
   "firearms": {
     "title": "Firearms & Ammo",
+    "incomplete": "Incomplete",
+    "incompleteTitle": "Some details are missing",
+    "incompleteBody": "This firearm has no {{fields}} recorded. Compliance reads the weapon type and your licenses to work out which activity requirement applies to you, so filling these in may change what the app asks of you. Firearms created by an import usually arrive this way.",
+    "missing": {
+      "weaponType": "weapon type",
+      "caliber": "caliber",
+      "license": "license"
+    },
     "tabFirearms": "Firearms",
     "tabAmmo": "Ammunition",
     "emptyTitle": "No Firearms Yet",
@@ -487,6 +495,12 @@
     "caseTitle": "Activity Requirement",
     "caseBody": "Which requirement applies depends on what you already hold. The app proposes one from your firearms; your own choice always wins over it.",
     "caseDerived": "Worked out from your firearms — a handgun recorded as your own gives the lighter requirement. Choosing here fixes it instead.",
+    "caseReason": {
+      "ownsHandgun": "Because you have a pistol or revolver on file marked as your own.",
+      "noHandgunOnFile": "Because no firearm on file is a pistol or revolver you own. If you do hold one, add its weapon type and license — imported firearms often arrive without either.",
+      "noFirearms": "Because you have not added any firearms yet.",
+      "declaredDefault": "This profile applies one case to everyone."
+    },
     "caseExplicit": "Your own choice. The app will not change it, whatever you add to your firearms.",
     "case": {
       "firstHandgun": "First Handgun",

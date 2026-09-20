@@ -68,6 +68,21 @@ export interface FirearmOwnershipFact {
 }
 
 /**
+ * A derived default, with the reason it was derived.
+ *
+ * The reason is what makes a wrong default correctable rather than mysterious:
+ * told "First Handgun — no licensed handgun on file", a shooter with five
+ * handguns knows immediately that the app is missing their licenses, not that
+ * it has judged them (#320). `reasonId` is opaque here, like `variantId` — the
+ * app maps it to an i18n label, so no jurisdiction's wording leaks into shared
+ * machinery.
+ */
+export interface DerivedVariant {
+  variantId: string;
+  reasonId: string;
+}
+
+/**
  * A case within a profile. The shooter picks it in Settings; absent a choice,
  * the profile's `deriveDefaultVariantId` may propose one from their firearms
  * (for `se`: whether they already own a handgun, which decides between FAP
@@ -91,7 +106,7 @@ export interface JurisdictionProfileDefinition {
    * shooter's firearms. Only ever moves the DEFAULT — an explicit choice is
    * resolved before this is consulted. Must return one of `variants`.
    */
-  deriveDefaultVariantId?: (facts: readonly FirearmOwnershipFact[]) => string;
+  deriveDefaultVariantId?: (facts: readonly FirearmOwnershipFact[]) => DerivedVariant;
   source: string;
   verified: boolean;
 }

@@ -42,6 +42,15 @@ själv har angett — vapentypen och
   därför 6 §, det lindrigare av de två. Anger du **lånat** på ett vapen slutar
   det räknas.
 
+Skärmen säger också **varför** den valde som den gjorde – ”eftersom inget
+registrerat vapen är en pistol eller revolver som du äger”, till exempel. Det
+spelar roll efter en import: ett vapen som skapats genom att importera pass
+kommer in utan vapentyp och utan licens, så appen kan se fem enhandsvapen och
+ändå sakna uppgifter som säger att de _är_ enhandsvapen. Förslaget har då rätt
+om uppgifterna och fel om dig, och motiveringsraden är det som gör det synligt
+i stället för gåtfullt. Vapen som saknar dessa uppgifter märks som
+**Ofullständig** på vapenfliken.
+
 **Inställningar → Efterlevnad → Aktivitetskrav** är där du tar över beslutet.
 När du väl har valt ett fall där står valet fast: att lägga till, ändra eller
 radera ett vapen flyttar det inte igen. Fram till dess följer inställningen

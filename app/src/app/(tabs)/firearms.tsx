@@ -88,6 +88,16 @@ export default function FirearmsScreen() {
                         tone={MAINTENANCE_TONE[row.maintenanceStatus]}
                       />
                     )}
+                    {/* An imported firearm shows "No License" because nothing
+                        on file says otherwise — which reads as a fact about
+                        the shooter rather than a gap in the data (#320). */}
+                    {row.isIncomplete && (
+                      <Chip
+                        testID={`firearm-incomplete-${row.id}`}
+                        label={t('firearms.incomplete')}
+                        tone="primary"
+                      />
+                    )}
                     {row.licenseActivityStatus && (
                       <Chip
                         testID={`firearm-barometer-${row.id}`}

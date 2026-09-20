@@ -1,4 +1,10 @@
-import { SE_EXISTING_HANDGUN_VARIANT, SE_FIRST_HANDGUN_VARIANT } from '@shotledger/shared';
+import {
+  SE_EXISTING_HANDGUN_VARIANT,
+  SE_FIRST_HANDGUN_VARIANT,
+  SE_REASON_NO_FIREARMS,
+  SE_REASON_NO_HANDGUN_ON_FILE,
+  SE_REASON_OWNS_HANDGUN,
+} from '@shotledger/shared';
 
 import { resolveComplianceCase } from './resolve-case';
 
@@ -10,6 +16,7 @@ describe('resolveComplianceCase', () => {
     expect(resolveComplianceCase('none', null, [ownedPistol])).toEqual({
       variantId: null,
       isExplicit: false,
+      reasonId: null,
     });
   });
 
@@ -17,6 +24,7 @@ describe('resolveComplianceCase', () => {
     expect(resolveComplianceCase('se', null, [borrowedPistol])).toEqual({
       variantId: SE_FIRST_HANDGUN_VARIANT,
       isExplicit: false,
+      reasonId: SE_REASON_NO_HANDGUN_ON_FILE,
     });
   });
 
@@ -24,6 +32,7 @@ describe('resolveComplianceCase', () => {
     expect(resolveComplianceCase('se', null, [ownedPistol])).toEqual({
       variantId: SE_EXISTING_HANDGUN_VARIANT,
       isExplicit: false,
+      reasonId: SE_REASON_OWNS_HANDGUN,
     });
   });
 
@@ -31,10 +40,13 @@ describe('resolveComplianceCase', () => {
     expect(resolveComplianceCase('se', SE_FIRST_HANDGUN_VARIANT, [ownedPistol])).toEqual({
       variantId: SE_FIRST_HANDGUN_VARIANT,
       isExplicit: true,
+      // An explicit choice has nothing to explain — it was not derived.
+      reasonId: null,
     });
     expect(resolveComplianceCase('se', SE_EXISTING_HANDGUN_VARIANT, [])).toEqual({
       variantId: SE_EXISTING_HANDGUN_VARIANT,
       isExplicit: true,
+      reasonId: null,
     });
   });
 
@@ -42,10 +54,23 @@ describe('resolveComplianceCase', () => {
     expect(resolveComplianceCase('se', 'retiredVariant', [ownedPistol])).toEqual({
       variantId: SE_EXISTING_HANDGUN_VARIANT,
       isExplicit: false,
+      reasonId: SE_REASON_OWNS_HANDGUN,
     });
     expect(resolveComplianceCase('se', 'retiredVariant', [])).toEqual({
       variantId: SE_FIRST_HANDGUN_VARIANT,
       isExplicit: false,
+      reasonId: SE_REASON_NO_FIREARMS,
     });
+  });
+
+  // #320: five imported handguns, none with a weapon type, produced the
+  // first-handgun case with nothing on screen to say why.
+  it('C6: firearms on file but none a handgun reads differently from no firearms', () => {
+    const imported = [
+      { weaponType: null, isOwn: true },
+      { weaponType: null, isOwn: true },
+    ];
+    expect(resolveComplianceCase('se', null, imported).reasonId).toBe(SE_REASON_NO_HANDGUN_ON_FILE);
+    expect(resolveComplianceCase('se', null, []).reasonId).toBe(SE_REASON_NO_FIREARMS);
   });
 });

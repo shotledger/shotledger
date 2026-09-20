@@ -30,6 +30,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
+import { missingFirearmFields } from '@/features/firearms/completeness';
 import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -161,6 +162,14 @@ export default function FirearmDetailScreen() {
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const newGroupLabel = availableGroups.find((g) => g.id === newGroupId)?.label ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
+
+  // A firearm that isn't the shooter's own needs no license of theirs, so a
+  // missing one is not a gap to prompt about.
+  const missingFields = missingFirearmFields({
+    weaponType: firearm.weaponType,
+    caliber: firearm.caliber,
+    hasLicense: detail.licenses.length > 0,
+  }).filter((field) => firearm.isOwn || field !== 'license');
   const currentSightSetting = resolveActiveSightSetting(detail.sightSettings);
   const editingIsCurrentSightSetting =
     editingSightId != null && currentSightSetting?.id === editingSightId;
@@ -405,6 +414,23 @@ export default function FirearmDetailScreen() {
         onPress={() => router.push(`/firearms/${firearm.id}/edit`)}
         testID="edit-firearm"
       />
+
+      {/* An imported firearm arrives as a make and a model and nothing else,
+          then presents identically to one deliberately recorded that way. The
+          difference decides the FAP 551-3 case, so name the gap rather than
+          letting "No License" stand as a fact about the shooter (#320). */}
+      {missingFields.length > 0 && (
+        <Card>
+          <ThemedText type="smallBold" testID="firearm-incomplete-title">
+            {t('firearms.incompleteTitle')}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" testID="firearm-incomplete-body">
+            {t('firearms.incompleteBody', {
+              fields: missingFields.map((field) => t(`firearms.missing.${field}`)).join(', '),
+            })}
+          </ThemedText>
+        </Card>
+      )}
 
       <Card>
         <View style={styles.statsRow}>

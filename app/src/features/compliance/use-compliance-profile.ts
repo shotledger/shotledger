@@ -29,6 +29,8 @@ export interface ComplianceProfileState {
   variantId: string | null;
   /** False when the case above was derived rather than chosen in Settings. */
   isVariantExplicit: boolean;
+  /** Why it was derived; null when the shooter chose it themselves (#320). */
+  variantReasonId: string | null;
   setSelection: (next: ProfileSelection) => void;
   setVariantId: (next: string) => void;
 }
@@ -84,7 +86,11 @@ export function useComplianceProfile(): ComplianceProfileState {
 
   // An unknown or unset stored id resolves to the derived default rather than
   // to "no requirement" — see resolveComplianceCase.
-  const { variantId, isExplicit } = resolveComplianceCase(selection, storedVariantId, facts);
+  const { variantId, isExplicit, reasonId } = resolveComplianceCase(
+    selection,
+    storedVariantId,
+    facts,
+  );
   const profile = getProfile(selection, variantId ?? undefined);
 
   return {
@@ -94,6 +100,7 @@ export function useComplianceProfile(): ComplianceProfileState {
     variantIds: getProfileDefinition(selection)?.variants.map((v) => v.id) ?? [],
     variantId: profile?.variantId ?? null,
     isVariantExplicit: isExplicit,
+    variantReasonId: reasonId,
     setVariantId,
   };
 }

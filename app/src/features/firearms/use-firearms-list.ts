@@ -16,6 +16,7 @@ import { db } from '@/db/client';
 import { latestLicense } from '@/db/queries/licenses';
 import { listFirearms } from '@/db/queries/firearms';
 import { loadFirearmLicenseActivityStatus } from '@/features/compliance/use-license-activity';
+import { isFirearmIncomplete } from './completeness';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 
 export interface FirearmListRow {
@@ -25,8 +26,10 @@ export interface FirearmListRow {
   weaponType: string | null;
   licenseStatus: LicenseStatus;
   maintenanceStatus: MaintenanceStatus;
-  /** M6: null when compliance profile is 'none' or the firearm has no weapon groups. */
+  /** M6: null when the compliance profile is 'none'. */
   licenseActivityStatus: LicenseActivityStatus | null;
+  /** Missing weapon type, caliber or (for an owned firearm) a license (#320). */
+  isIncomplete: boolean;
 }
 
 export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
@@ -44,6 +47,12 @@ export function loadFirearmsList(profile: JurisdictionProfile | null = null): Fi
         firearm.maintenanceIntervalRounds,
       ),
       licenseActivityStatus: loadFirearmLicenseActivityStatus(profile, firearm.id),
+      isIncomplete: isFirearmIncomplete({
+        weaponType: firearm.weaponType,
+        caliber: firearm.caliber,
+        hasLicense: license !== undefined && license !== null,
+        isOwn: firearm.isOwn,
+      }),
     };
   });
 }

@@ -44,6 +44,15 @@ you told it — the weapon type and the
   therefore 6 §, the lighter of the two. Set a firearm to **Borrowed** and it
   stops counting.
 
+The screen also says **why** it chose what it chose — "because no firearm on
+file is a pistol or revolver you own", say. That matters after an import: a
+firearm created by importing sessions arrives with no weapon type and no
+licence, so the app can see five handguns and still have nothing on file
+saying they _are_ handguns. The proposal is then right about the data and
+wrong about you, and the reason line is what makes that visible instead of
+mysterious. Firearms missing those details are flagged as **Incomplete** on
+the Firearms tab.
+
 **Settings → Compliance → Activity Requirement** is where you overrule it.
 Once you pick a case there it stays picked: adding, editing or deleting a
 firearm will not move it again. Until then the setting follows your firearms,
