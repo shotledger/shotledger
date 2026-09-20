@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useRef, useState, type Ref } from 'react';
 import {
   Animated,
   ScrollView,
@@ -41,6 +41,12 @@ export interface ScreenProps extends ViewProps {
    * broken by default.
    */
   safeBottom?: boolean;
+  /**
+   * Ref to the underlying `ScrollView`, for a screen that needs to move it
+   * itself — the Statistics tab scrolls back to the top when it regains
+   * focus. Ignored when `scroll` is false.
+   */
+  scrollRef?: Ref<ScrollView>;
 }
 
 /**
@@ -50,7 +56,15 @@ export interface ScreenProps extends ViewProps {
 const FabHideThreshold = 8;
 
 /** Standard screen shell: safe area, max content width, bottom tab-bar clearance. */
-export function Screen({ children, scroll = true, fab, safeBottom, style, ...rest }: ScreenProps) {
+export function Screen({
+  children,
+  scroll = true,
+  fab,
+  safeBottom,
+  scrollRef,
+  style,
+  ...rest
+}: ScreenProps) {
   // A FAB sits in the bottom-right corridor of every row it floats over, and
   // on Home that is where the session-type chip is — so whichever card the
   // button happens to land on loses it (#348). Sliding the button out while
@@ -92,6 +106,7 @@ export function Screen({ children, scroll = true, fab, safeBottom, style, ...res
       >
         {scroll ? (
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={contentStyle}
             onScroll={fab ? onScroll : undefined}
             scrollEventThrottle={16}

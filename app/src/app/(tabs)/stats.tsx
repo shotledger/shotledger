@@ -7,10 +7,10 @@
 // generated on the fly"). Every filter dimension is a plain stored column,
 // so the report is federation-agnostic.
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -68,6 +68,20 @@ export default function StatsScreen() {
   const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
   const [openSection, setOpenSection] = useState<'discipline' | 'tags' | null>(null);
   const options = useAnalyticsFilterOptions();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // The filter is deliberately sticky — you build it, generate a report, come
+  // back and adjust. What it must not do is come back *invisible*: the tab
+  // kept its scroll offset too, so returning and tapping where a control had
+  // been toggled whatever now sat there, a tag chip in the case that found
+  // this (#349). Returning to the top, with any expanded picker collapsed,
+  // puts the retained filter back in front of the user before the first tap.
+  useFocusEffect(
+    useCallback(() => {
+      setOpenSection(null);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   const periodOptions = useMemo(
     () => [
@@ -104,7 +118,7 @@ export default function StatsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen scrollRef={scrollRef}>
       <ScreenTitle>{t('stats.title')}</ScreenTitle>
 
       <Card>
