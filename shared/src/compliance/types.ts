@@ -19,13 +19,39 @@ export interface ActivityWeighting {
   competition: number;
 }
 
-export interface WeaponGroupComplianceRule {
-  /** Federation-scoped weapon-group ids this rule applies to. */
-  weaponGroups: string[];
+/**
+ * What a rule counts. The distinction is regulatory, not cosmetic:
+ *
+ * - `shooter` — a requirement on the person, so every session in the window
+ *   counts whatever gun it was shot with. FAP 551-3 5–6 §§ are this shape:
+ *   "deltagit i föreningens skjutningar ... sammantaget i genomsnitt minst
+ *   N gånger per månad" names no weapon group.
+ * - `weaponGroups` — a requirement tied to particular vapengrupper, so only
+ *   sessions carrying one of them count.
+ *
+ * Modeling 5–6 §§ as `weaponGroups` over every known group was wrong in a way
+ * that only showed up on real data: a session with no vapengrupp recorded
+ * matched no group and silently failed to count (#319).
+ */
+export type ComplianceRuleScope = 'shooter' | 'weaponGroups';
+
+interface ComplianceRuleBase {
   windowMonths: number;
   requiredActivities: number;
   countsAs: ActivityWeighting;
 }
+
+export interface ShooterComplianceRule extends ComplianceRuleBase {
+  scope: 'shooter';
+}
+
+export interface WeaponGroupComplianceRule extends ComplianceRuleBase {
+  scope: 'weaponGroups';
+  /** Federation-scoped weapon-group ids this rule applies to. */
+  weaponGroups: string[];
+}
+
+export type ComplianceRule = ShooterComplianceRule | WeaponGroupComplianceRule;
 
 export type JurisdictionProfileId = 'se';
 
@@ -50,7 +76,7 @@ export interface FirearmOwnershipFact {
  */
 export interface ComplianceProfileVariant {
   id: string;
-  rules: WeaponGroupComplianceRule[];
+  rules: ComplianceRule[];
 }
 
 /** A profile as declared. `getProfile` resolves one variant of it. */
@@ -76,7 +102,7 @@ export interface JurisdictionProfile {
   name: { sv: string; en: string };
   /** Which variant produced `rules`. */
   variantId: string;
-  rules: WeaponGroupComplianceRule[];
+  rules: ComplianceRule[];
   /** Citation shown in the UI. */
   source: string;
   /** false ⇒ UI must show an "unverified defaults" hint. */
@@ -85,11 +111,29 @@ export interface JurisdictionProfile {
 
 export type LicenseActivityStatus = 'green' | 'amber' | 'red';
 
-export interface WeaponGroupLicenseActivity {
+export interface LicenseActivity {
+  /** Which rule produced this — what the UI must say the count is *of*. */
+  scope: ComplianceRuleScope;
+  /** The groups counted, for a `weaponGroups` rule; empty for `shooter`. */
   weaponGroups: string[];
   windowMonths: number;
   requiredActivities: number;
+  /** Weighted count: what the requirement is measured against. */
   activityCount: number;
+  /**
+   * Sessions in the window that the rule counted, unweighted. Equal to
+   * `activityCount` while every weight is 1, and kept separate so a profile
+   * that ever weights a session type cannot make the screen claim a session
+   * count it does not have.
+   */
+  countedSessionCount: number;
+  /**
+   * Sessions inside the window that the rule did NOT count. Always 0 for a
+   * `shooter` rule, by construction. For a `weaponGroups` rule it is the
+   * honesty figure #319 was filed over: a screen showing a total this rule
+   * derived must be able to say how many sessions it left out.
+   */
+  skippedSessionCount: number;
   status: LicenseActivityStatus;
   windowStartIso: string;
 }

@@ -76,6 +76,18 @@ to you, work it out yourself:
 
 ## What counts, and what this is not
 
+**Every session counts, whatever you shot.** 5 § and 6 § are requirements on
+_you_, not on a particular firearm or weapon group — the form asks whether you
+took part in the club's shooting, and names no vapengrupp. So a session counts
+towards License Activity even if you never recorded a weapon group for it, and
+even if the firearm it was shot with is not in the app. That matters most
+right after importing older history, which is usually where weapon groups are
+thinnest.
+
+The same figure therefore appears on every firearm: it is your activity level,
+shown next to each gun for convenience, not that gun's own tally. The screen
+says so under the number.
+
 License Activity counts what you logged. A range visit you did not log is
 not in it, and a session logged twice counts twice.
 

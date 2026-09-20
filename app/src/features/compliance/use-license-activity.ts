@@ -6,9 +6,9 @@ import { useFocusEffect } from 'expo-router';
 import {
   computeFirearmLicenseActivity,
   computeOverallLicenseActivity,
+  type LicenseActivity,
   type LicenseActivityStatus,
   type JurisdictionProfile,
-  type WeaponGroupLicenseActivity,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -17,7 +17,7 @@ import { listAllFirearmGroupIds, listFirearmGroups } from '@/db/queries/firearm-
 
 export interface OverallLicenseActivityData {
   overall: LicenseActivityStatus | null;
-  statuses: WeaponGroupLicenseActivity[];
+  statuses: LicenseActivity[];
 }
 
 function loadOverallLicenseActivity(
@@ -25,6 +25,10 @@ function loadOverallLicenseActivity(
 ): OverallLicenseActivityData {
   if (!db || !profile) return { overall: null, statuses: [] };
   const sessions = listComplianceSessions(db);
+  // The groups are still passed — a profile may hold weapon-group rules — but
+  // they no longer gate the result: a shooter-scope rule applies with an empty
+  // list, which is what an import that creates no firearm_groups leaves behind
+  // (#319).
   const groupIds = listAllFirearmGroupIds(db);
   return computeOverallLicenseActivity(sessions, profile, groupIds);
 }
@@ -45,14 +49,17 @@ export function useOverallLicenseActivity(
   return data;
 }
 
-/** Worst-of statuses for a single firearm — one chip per firearm on lists. */
+/**
+ * Worst-of statuses for a single firearm — one chip per firearm on lists.
+ * A firearm with no vapengrupp recorded still carries the shooter-level
+ * status: 5–6 §§ apply to the person, so there is a real answer to show.
+ */
 export function loadFirearmLicenseActivityStatus(
   profile: JurisdictionProfile | null,
   firearmId: string,
 ): LicenseActivityStatus | null {
   if (!db || !profile) return null;
   const groups = listFirearmGroups(db, firearmId).map((g) => g.groupId);
-  if (groups.length === 0) return null;
   const sessions = listComplianceSessions(db);
   const statuses = computeFirearmLicenseActivity(sessions, profile, groups);
   if (statuses.length === 0) return null;

@@ -29,6 +29,7 @@ import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
+import { licenseActivityKey } from '@/features/compliance/activity-key';
 import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -440,8 +441,8 @@ export default function FirearmDetailScreen() {
           <View style={styles.chipsRow}>
             {detail.licenseActivities.map((b) => (
               <Chip
-                key={b.weaponGroups.join(',')}
-                testID={`firearm-barometer-${b.weaponGroups[0]}`}
+                key={licenseActivityKey(b)}
+                testID={`firearm-barometer-${licenseActivityKey(b)}`}
                 label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
                   count: b.activityCount,
                   required: b.requiredActivities,
@@ -451,18 +452,32 @@ export default function FirearmDetailScreen() {
             ))}
           </View>
           {detail.licenseActivities.map((b) => (
-            <ThemedText
-              key={`detail-${b.weaponGroups.join(',')}`}
-              type="small"
-              themeColor="textSecondary"
-              testID={`firearm-barometer-detail-${b.weaponGroups[0]}`}
-            >
-              {t('compliance.licenseActivityDetail', {
-                done: b.activityCount,
-                required: b.requiredActivities,
-                months: b.windowMonths,
-              })}
-            </ThemedText>
+            <View key={`detail-${licenseActivityKey(b)}`}>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                testID={`firearm-barometer-detail-${licenseActivityKey(b)}`}
+              >
+                {t('compliance.licenseActivityDetail', {
+                  done: b.activityCount,
+                  required: b.requiredActivities,
+                  months: b.windowMonths,
+                })}
+              </ThemedText>
+              {/* A number on a firearm card that is not about that firearm has
+                  to say so, or it reads as this gun's activity (#319). */}
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                testID={`firearm-barometer-scope-${licenseActivityKey(b)}`}
+              >
+                {b.scope === 'shooter'
+                  ? t('compliance.licenseActivityScopeShooter')
+                  : t('compliance.licenseActivityScopeGroups', {
+                      count: b.skippedSessionCount,
+                    })}
+              </ThemedText>
+            </View>
           ))}
           {/* Which case is in effect is never silently applied — it is on
               screen wherever the number it produced is. */}

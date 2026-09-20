@@ -73,6 +73,18 @@ dig får du räkna på den själv:
 
 ## Vad som räknas, och vad det här inte är
 
+**Alla pass räknas, oavsett vad du sköt med.** 5 § och 6 § är krav på _dig_,
+inte på ett visst vapen eller en viss vapengrupp – blanketten frågar om du
+deltagit i föreningens skjutningar och nämner ingen vapengrupp. Ett pass räknas
+alltså mot licensaktiviteten även om du aldrig angav någon vapengrupp för det,
+och även om vapnet du sköt med inte finns i appen. Det spelar störst roll
+direkt efter en import av äldre historik, där vapengrupperna oftast är
+glesast.
+
+Samma siffra visas därför på varje vapen: det är din aktivitetsnivå, visad
+intill varje vapen för bekvämlighets skull – inte det vapnets egen räkning.
+Skärmen säger det under siffran.
+
 Licensaktivitet räknar det du loggat. Ett banbesök du inte loggade finns inte
 med, och ett pass som loggats två gånger räknas två gånger.
 
