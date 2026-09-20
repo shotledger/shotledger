@@ -3,6 +3,20 @@
 A session is one visit to the range with one firearm. Inside it are series,
 and inside those are shots.
 
+## The session header
+
+The top of a session names it and then, on one line, the date it was shot, its
+type, your weapon group and class, the firearm and the competition. Your notes
+follow underneath. Both matter most for a session you did not type in yourself:
+an import carries its own date and puts its explanation — which firearm, why a
+session is flagged for review — in the notes.
+
+Under that are the session's tags. Tags the app wrote for itself look like
+`shotlog:review` or `shotledger:championship`, with a prefix and a colon; those
+appear here but are left off the Home and logbook lists, where your own tags
+would otherwise be pushed out of sight. You can still filter the logbook by
+them.
+
 ## Series and shots
 
 A **series** is a run of shots scored together — five shots in SPSF precision,

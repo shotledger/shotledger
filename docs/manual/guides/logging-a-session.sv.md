@@ -3,6 +3,19 @@
 Ett pass är ett banbesök med ett vapen. Inuti passet ligger serier, och inuti
 serierna ligger skott.
 
+## Passets huvud
+
+Överst i ett pass står namnet, och därunder på en rad datumet det sköts, typen,
+din vapengrupp och klass, vapnet och tävlingen. Dina anteckningar följer under.
+Bådadera betyder mest för ett pass du inte fyllt i själv: en import bär med sig
+sitt eget datum och lägger sin förklaring — vilket vapen, varför ett pass är
+flaggat för granskning — i anteckningarna.
+
+Under det ligger passets etiketter. Etiketter som appen skrivit åt sig själv ser
+ut som `shotlog:review` eller `shotledger:championship`, med ett prefix och ett
+kolon; de visas här men utelämnas på start- och loggbokslistorna, där dina egna
+etiketter annars trängs undan. Du kan fortfarande filtrera loggboken på dem.
+
 ## Serier och skott
 
 En **serie** är en omgång skott som räknas ihop — fem skott i SPSF:s precision,
