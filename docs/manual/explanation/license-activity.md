@@ -11,7 +11,8 @@ Once the Swedish profile is on, the app counts the sessions you logged in the
 last **six months** and compares that total with the requirement for your case.
 
 The requirement comes from page 3 of Polismyndigheten's föreningsintyg form,
-which sets two levels:
+which sets two levels (the same page's two per-firearm boxes are
+[further down](#the-two-criteria-that-are-about-one-firearm)):
 
 | Your case                                         | Paragraph | Requirement                                    | Over six months |
 | ------------------------------------------------- | --------- | ---------------------------------------------- | --------------- |
@@ -81,26 +82,64 @@ in it, and a session logged twice counts twice.
     the police will grant the license. Treat a green status as "the counting
     looks right", not as an approval.
 
+## The two criteria that are about one firearm
+
+5 § and 6 § are the form's general question. The same page carries two more
+boxes, under _Intyget avser_, and both ask about a **particular gun** rather
+than about you:
+
+| The box                                                                     | What it asks                                                                              |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **An additional handgun** (_ytterligare enhandsvapen_)                      | at least **two** activities in the last **six months** with each handgun you already hold |
+| **Renewing a time-limited permit** (_förnyelse av tidsbegränsat tillstånd_) | at least **four** activities **in each of the last two years** with the gun applied for   |
+
+Both appear on a firearm's own page, under _Föreningsintyg criteria_, and both
+count **only the sessions you logged with that firearm**. A session logged with
+a different gun counts towards that one instead, and a session with no firearm
+recorded counts towards neither. The app prints both figures under the
+criterion rather than quietly leaving them out — so "0 of 2 activities with
+this firearm" sits next to "54 sessions in the period were logged with a
+different firearm", and the number is readable instead of alarming.
+
+**Four a year for two years is not eight over two years.** The app checks each
+twelve-month window separately, so eight activities last year and none the year
+before does not satisfy the renewal criterion — which is what the form says,
+and the difference a single running total would hide.
+
+### Which firearms each one is shown for
+
+The app has no access to your licenses, so it works from what you told it:
+
+- **An additional handgun** is shown for any firearm whose weapon type is
+  **pistol or revolver** and which you marked as **My Own** — the same reading
+  of "handgun you hold" the 5 §/6 § proposal uses.
+- **Renewing a time-limited permit** is shown for any firearm whose most recent
+  licence has an **end date**. A licence with no end date is _tills vidare_ and
+  is not a time-limited permit. Weapon type is not part of it: the form's
+  renewal box names none.
+
+If a criterion is missing from a firearm you expected it on, that is the place
+to look — usually a missing weapon type or a licence recorded without its
+_giltighetstid_.
+
+!!! warning "Counted is not attested"
+
+    On a club log a row becomes evidence when someone signs the _Uppg. styrkta
+    av_ column. The app has no equivalent and does not invent one. "6 of 4
+    activities with this firearm" means the app counted six sessions you
+    logged — not that anyone has attested them.
+
 ## What the app does not track
 
-Three rules on the same form are **not** modeled here. If any of them applies
-to you, work it out yourself:
-
-- **An additional handgun** (_ytterligare enhandsvapen_): trained or competed
-  at least twice in the last six months **with each handgun you already hold**.
-  The app does not know which of your firearms you hold a license for.
-- **Renewing a time-limited permit** (_förnyelse av tidsbegränsat tillstånd_):
-  trained or competed with the firearm in question at least four times a year
-  over the last two years. The app does not record that a permit is
-  time-limited.
-- **Special reasons** (_särskilda skäl_ — illness, pregnancy, service abroad),
-  which can excuse a gap in activity under 6 §. These are decided by the
-  police on a separate attachment, not by you or your club, so the app does not
-  offer to apply them.
+One rule on the same form is **not** modeled here: **special reasons**
+(_särskilda skäl_ — illness, pregnancy, service abroad), which can excuse a gap
+in activity under 6 §. These are decided by the police on a separate
+attachment, not by you or your club, so the app does not offer to apply them.
 
 ## Source
 
 Polismyndigheten's form **PM 551.24 Föreningsintyg**, page 3 ("Förklaringar och
 anvisningar vid utfärdande av föreningsintyg"), which transcribes **PMFS
-2016:4 / RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§**. The form is published at
+2016:4 / RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§**, and carries the two
+per-firearm boxes under _Intyget avser_. The form is published at
 [polisen.se](https://polisen.se/b9596e33879c4925472a5edb9c451ab1/siteassets/blanketter/polisens-blanketter-551-24.pdf).

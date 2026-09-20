@@ -537,6 +537,77 @@ export default function FirearmDetailScreen() {
         </Card>
       )}
 
+      {/* The two "Intyget avser" boxes that cover THIS firearm (#329). Shown
+          separately from License Activity above because they are a different
+          claim: that one counts every session whatever it was shot with, these
+          count only sessions logged with this gun. */}
+      {profile && detail.firearmCriteria.length > 0 && (
+        <Card>
+          <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
+          {detail.firearmCriteria.map((criterion) => (
+            <View key={criterion.criterionId} style={styles.criterionBlock}>
+              <View style={styles.chipsRow}>
+                <Chip
+                  testID={`firearm-criterion-${criterion.criterionId}`}
+                  label={t(
+                    criterion.met ? 'compliance.criterionMet' : 'compliance.criterionNotMet',
+                    { name: t(`compliance.criterion.${criterion.criterionId}`) },
+                  )}
+                  tone={LICENSE_ACTIVITY_TONE[criterion.status]}
+                />
+              </View>
+              {criterion.periods.map((period) => (
+                <ThemedText
+                  key={period.startIso}
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-criterion-period-${criterion.criterionId}-${period.startIso}`}
+                >
+                  {t('compliance.criterionPeriod', {
+                    done: period.activityCount,
+                    required: criterion.requiredActivities,
+                    from: period.startIso.slice(0, 10),
+                    to: period.endIso.slice(0, 10),
+                  })}
+                </ThemedText>
+              ))}
+              <ThemedText type="small" themeColor="textSecondary">
+                {t(`compliance.criterionHint.${criterion.criterionId}`)}
+              </ThemedText>
+              {/* A criterion counting 2 where the shooter logged 40 has to say
+                  why, or the number reads as a bug. */}
+              {criterion.otherFirearmSessionCount > 0 && (
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-criterion-other-${criterion.criterionId}`}
+                >
+                  {t('compliance.criterionOtherFirearm', {
+                    count: criterion.otherFirearmSessionCount,
+                  })}
+                </ThemedText>
+              )}
+              {criterion.unattributedSessionCount > 0 && (
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  testID={`firearm-criterion-unattributed-${criterion.criterionId}`}
+                >
+                  {t('compliance.criterionUnattributed', {
+                    count: criterion.unattributedSessionCount,
+                  })}
+                </ThemedText>
+              )}
+            </View>
+          ))}
+          {/* On a paper log a row is evidence once someone signs it. The app
+              has no equivalent and must not imply one (#308). */}
+          <ThemedText type="small" themeColor="textSecondary" testID="firearm-criteria-attestation">
+            {t('compliance.criterionNotAttested')}
+          </ThemedText>
+        </Card>
+      )}
+
       {/* Calibers (#312). The chambering lives on the firearm; this is what
           else it may be fed — a .357 Magnum revolver shot with .38 Special is
           the ordinary case, not an exotic one. */}
@@ -1050,6 +1121,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  criterionBlock: {
     marginTop: Spacing.two,
   },
   statsRow: {

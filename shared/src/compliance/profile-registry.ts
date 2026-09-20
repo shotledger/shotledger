@@ -49,6 +49,9 @@ export function getProfile(
     name: definition.name,
     variantId: variant.id,
     rules: variant.rules,
+    // Not variant-dependent: the same two boxes are on the form whichever
+    // paragraph the shooter falls under.
+    firearmCriteria: definition.firearmCriteria,
     source: definition.source,
     verified: definition.verified,
   };

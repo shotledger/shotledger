@@ -286,6 +286,11 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
   one-shot retry via `runFlow: {when: {notVisible: '<target>'}, commands:
 [openLink: ...]}`, made `app://dev` reliable across repeated runs. See
   `app/e2e/m5-stats.yaml`.
+- **Fast Refresh does not reload the i18n resources.** Adding an i18n key and
+  saving renders the raw key path on screen (`compliance.criterionOtherFirearm`)
+  even though the JSON is correct — `app/src/i18n` is read once at init. Force
+  a cold start (`adb shell am force-stop` + relaunch) before concluding a new
+  string is broken.
 - **Never edit files in the working tree while a Maestro flow is running**
   against a Metro dev build: Metro hot-reloads, the dev client returns to
   the initial route, and the flow fails on a screen that vanished under
@@ -330,6 +335,14 @@ pnpm exec expo prebuild --platform android --no-install`, then `cd android &&
   with `cd backend && npx vitest run test/sync-client.spec.ts
 --testTimeout=60000`. This is the cheapest way to exercise a sync change
   end to end; prefer it over the emulator.
+- **`expo run:android` builds for the connected device's ABI only.** With a
+  phone attached it produces an `arm64-v8a`-only APK, which installs on the
+  x86_64 emulator and then dies at startup with no Java stack trace — logcat
+  shows only `failed to complete startup`. Check with
+  `unzip -l …/app-debug.apk | grep -oE 'lib/[a-z0-9_-]+/' | sort -u` against
+  `adb -s <serial> shell getprop ro.product.cpu.abi`. Rebuild for the other
+  one with `cd app/android && ./gradlew assembleDebug
+-PreactNativeArchitectures=x86_64` (~11 s incremental) and `adb install -r`.
 - **`expo run:android` ignores `ANDROID_SERIAL`.** With several emulators up
   it picks one of its own choosing and can install over another agent's
   build (observed in `feat/sync-app`: it targeted `shotledger` while

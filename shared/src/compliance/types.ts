@@ -11,6 +11,12 @@ export interface ComplianceSession {
   type: ComplianceSessionType;
   /** The gun: federation-scoped weapon-group id, e.g. 'spsf:C'. */
   weaponGroup?: string | null;
+  /**
+   * The firearm the session was shot with. Read only by the per-firearm
+   * criteria (`firearm-criteria.ts`); no `ComplianceRule` has ever matched on
+   * it, and none does now.
+   */
+  firearmId?: string | null;
 }
 
 /** Per-session-type weight; 0 excludes that type from the count. */
@@ -68,6 +74,88 @@ export interface FirearmOwnershipFact {
 }
 
 /**
+ * One firearm, as much as a per-firearm criterion needs to know about it.
+ *
+ * `hasTimeLimitedPermit` is the app's proxy for a *tidsbegränsat tillstånd*:
+ * a licence row carrying an end date, where NULL means "tills vidare". It is
+ * a proxy, and the UI says so — see compliance-firearm-criteria-spec.md.
+ */
+export interface FirearmFact extends FirearmOwnershipFact {
+  id: string;
+  hasTimeLimitedPermit: boolean;
+}
+
+/**
+ * One of the criteria PM 551.24 puts under **Intyget avser** — a checkbox on
+ * the form, evaluated per firearm.
+ *
+ * Deliberately NOT a `ComplianceRule`. A `ComplianceRule` is *the* activity
+ * requirement, one variant of which applies to the shooter; these are extra
+ * boxes that apply per firearm whichever paragraph the shooter falls under,
+ * they need a per-window result `LicenseActivity` has no field for, and they
+ * need a condition saying which firearms they cover at all. Folding them in
+ * would have put four meaningless optional fields on the 5 §/6 § path.
+ */
+export interface FirearmComplianceRule {
+  /** Opaque here; the app maps it to an i18n label. */
+  criterionId: string;
+  windowMonths: number;
+  /**
+   * How many consecutive windows of `windowMonths` are each checked. "Fyra
+   * gånger per år under de senaste två åren" is 4 in each of two twelve-month
+   * windows, not 8 across twenty-four months — a shooter who fired eight
+   * times last month and none the year before does not satisfy it.
+   *
+   * At least 1.
+   */
+  windowCount: number;
+  /** Required in EACH window. */
+  requiredActivities: number;
+  countsAs: ActivityWeighting;
+  /** Which firearms this criterion covers at all. */
+  appliesTo: (firearm: FirearmFact) => boolean;
+}
+
+/** One window's worth of a criterion. */
+export interface FirearmCriterionPeriod {
+  startIso: string;
+  endIso: string;
+  /** Weighted count — what `requiredActivities` is measured against. */
+  activityCount: number;
+  /** Sessions with this firearm in this window, unweighted. */
+  countedSessionCount: number;
+  met: boolean;
+}
+
+export interface FirearmCriterionActivity {
+  criterionId: string;
+  firearmId: string;
+  windowMonths: number;
+  windowCount: number;
+  requiredActivities: number;
+  /** Most recent window first. */
+  periods: FirearmCriterionPeriod[];
+  /** The worst window's count — the one that decides `met`. */
+  activityCount: number;
+  /** Every window reached `requiredActivities`. The form's checkbox. */
+  met: boolean;
+  /**
+   * The same green/amber/red banding the license-activity chips use, on the
+   * worst window, so the two can sit side by side. `green` and `met` are the
+   * same condition; amber/red split "not ticked" into close and not close,
+   * which is UX rather than regulation.
+   */
+  status: LicenseActivityStatus;
+  /**
+   * Sessions across all the windows that name a DIFFERENT firearm, and
+   * sessions naming none at all. Both are the honesty figures: a criterion
+   * that counts 2 where the shooter logged 40 has to be able to say why.
+   */
+  otherFirearmSessionCount: number;
+  unattributedSessionCount: number;
+}
+
+/**
  * A derived default, with the reason it was derived.
  *
  * The reason is what makes a wrong default correctable rather than mysterious:
@@ -99,6 +187,12 @@ export interface JurisdictionProfileDefinition {
   id: JurisdictionProfileId;
   name: { sv: string; en: string };
   variants: ComplianceProfileVariant[];
+  /**
+   * Criteria evaluated per firearm. On the definition rather than on a
+   * variant: they are not one of the two cases, they apply alongside
+   * whichever one does.
+   */
+  firearmCriteria: FirearmComplianceRule[];
   /** Applied when the shooter has not chosen, or chose an unknown id. */
   defaultVariantId: string;
   /**
@@ -118,6 +212,7 @@ export interface JurisdictionProfile {
   /** Which variant produced `rules`. */
   variantId: string;
   rules: ComplianceRule[];
+  firearmCriteria: FirearmComplianceRule[];
   /** Citation shown in the UI. */
   source: string;
   /** false ⇒ UI must show an "unverified defaults" hint. */

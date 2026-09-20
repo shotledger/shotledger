@@ -10,7 +10,8 @@ När den svenska profilen är på räknar appen de pass du loggat de senaste **s
 månaderna** och jämför summan med kravet för ditt fall.
 
 Kravet kommer från sidan 3 i Polismyndighetens blankett för föreningsintyg, som
-anger två nivåer:
+anger två nivåer (samma sidas två rutor om enskilda vapen finns [längre
+ned](#de-tva-kriterierna-som-galler-ett-enskilt-vapen)):
 
 | Ditt fall                                          | Paragraf | Krav                                             | Under sex månader |
 | -------------------------------------------------- | -------- | ------------------------------------------------ | ----------------- |
@@ -79,25 +80,62 @@ med, och ett pass som loggats två gånger räknas två gånger.
     beviljar licensen. Betrakta en grön status som ”räkningen ser rätt ut”,
     inte som ett godkännande.
 
+## De två kriterierna som gäller ett enskilt vapen
+
+5 § och 6 § är blankettens allmänna fråga. Samma sida har två rutor till, under
+_Intyget avser_, och båda handlar om ett **visst vapen** i stället för om dig:
+
+| Rutan                                    | Vad den frågar                                                                                      |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Ytterligare enhandsvapen**             | minst **två** aktiviteter de senaste **sex månaderna** med respektive enhandsvapen du redan innehar |
+| **Förnyelse av tidsbegränsat tillstånd** | minst **fyra** aktiviteter **under vart och ett av de två senaste åren** med sökt vapen             |
+
+Båda visas på vapnets egen sida, under _Kriterier för föreningsintyg_, och båda
+räknar **bara de pass du loggat med det vapnet**. Ett pass loggat med ett annat
+vapen räknas till det i stället, och ett pass utan vapen räknas till inget av
+dem. Appen skriver ut båda siffrorna under kriteriet i stället för att tyst
+utelämna dem — så ”0 av 2 aktiviteter med det här vapnet” står bredvid ”54 pass
+under perioden loggades med andra vapen”, och siffran går att läsa i stället
+för att skrämmas.
+
+**Fyra per år i två år är inte åtta på två år.** Appen kontrollerar varje
+tolvmånadersperiod för sig, så åtta aktiviteter i fjol och inga året dessförinnan
+uppfyller inte förnyelsekriteriet — vilket är vad blanketten säger, och
+skillnaden som en enda löpande summa hade dolt.
+
+### Vilka vapen de visas för
+
+Appen har ingen tillgång till dina licenser, så den utgår från det du berättat:
+
+- **Ytterligare enhandsvapen** visas för vapen vars vapentyp är **pistol eller
+  revolver** och som du markerat som **Eget** — samma läsning av ”enhandsvapen
+  du innehar” som förslaget för 5 §/6 § använder.
+- **Förnyelse av tidsbegränsat tillstånd** visas för vapen vars senaste licens
+  har ett **slutdatum**. En licens utan slutdatum gäller tills vidare och är
+  inget tidsbegränsat tillstånd. Vapentypen spelar ingen roll: blankettens
+  förnyelseruta nämner ingen.
+
+Saknas ett kriterium på ett vapen där du väntat dig det är det där du ska titta
+— oftast en vapentyp som fattas eller en licens registrerad utan giltighetstid.
+
+!!! warning "Räknat är inte styrkt"
+
+    I en klubblogg blir en rad ett underlag när någon signerat kolumnen _Uppg.
+    styrkta av_. Appen har ingen motsvarighet och hittar inte på någon. ”6 av 4
+    aktiviteter med det här vapnet” betyder att appen räknat sex pass du loggat
+    — inte att någon har styrkt dem.
+
 ## Vad appen inte håller reda på
 
-Tre regler på samma blankett är **inte** modellerade här. Gäller någon av dem
-dig får du räkna på den själv:
-
-- **Ytterligare enhandsvapen**: tränat eller tävlat minst två gånger under de
-  senaste sex månaderna **med respektive tidigare innehavt enhandsvapen**.
-  Appen vet inte vilka av dina vapen du har licens för.
-- **Förnyelse av tidsbegränsat tillstånd**: tränat eller tävlat med sökt vapen
-  minst fyra gånger per år under de senaste två åren. Appen registrerar inte
-  att ett tillstånd är tidsbegränsat.
-- **Särskilda skäl** (sjukdom, graviditet, utlandstjänstgöring), som kan ursäkta
-  ett uppehåll enligt 6 §. Det avgörs av Polismyndigheten utifrån en särskild
-  bilaga, inte av dig eller din förening, så appen erbjuder sig inte att
-  tillämpa dem.
+En regel på samma blankett är **inte** modellerad här: **särskilda skäl**
+(sjukdom, graviditet, utlandstjänstgöring), som kan ursäkta ett uppehåll enligt
+6 §. Det avgörs av Polismyndigheten utifrån en särskild bilaga, inte av dig
+eller din förening, så appen erbjuder sig inte att tillämpa dem.
 
 ## Källa
 
 Polismyndighetens blankett **PM 551.24 Föreningsintyg**, sidan 3 (”Förklaringar
 och anvisningar vid utfärdande av föreningsintyg”), som återger **PMFS 2016:4 /
-RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§**. Blanketten publiceras på
+RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§**, och bär de två rutorna om enskilda
+vapen under _Intyget avser_. Blanketten publiceras på
 [polisen.se](https://polisen.se/b9596e33879c4925472a5edb9c451ab1/siteassets/blanketter/polisens-blanketter-551-24.pdf).
