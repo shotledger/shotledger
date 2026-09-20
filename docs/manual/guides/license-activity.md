@@ -4,108 +4,33 @@ Swedish firearm license applications ask your club to certify that you have
 been active on the range. The app keeps that record from the sessions you are
 already logging.
 
-**Settings → Compliance → Sweden (FAP 551-3)** turns it on. Left at **None**,
-none of this appears — which is the right state outside Sweden.
+For what the requirement actually is, which of the two cases applies to you,
+and what the app deliberately does not track, see
+[How license activity is counted](../explanation/license-activity.md).
 
-## License Activity
+## Turning it on
 
-Once on, the app counts the sessions you logged in the last **six months** and
-compares that total with the requirement for your case.
+**Settings → Compliance → Sweden (FAP 551-3)**. Left at **None**, none of this
+appears — which is the right state outside Sweden.
 
-The requirement comes from page 3 of Polismyndigheten's föreningsintyg form,
-which sets two levels:
+The status then appears on Home and on every firearm: how many activities you
+have logged in the window, and how many you need.
 
-| Your case                                         | Paragraph | Requirement                                    | Over six months |
-| ------------------------------------------------- | --------- | ---------------------------------------------- | --------------- |
-| You do not yet hold a handgun for target shooting | 5 §       | on average at least **two** activities a month | **12**          |
-| You already hold a handgun for target shooting    | 6 §       | on average at least **one** activity a month   | **6**           |
+## Choosing your case
 
-Training and competition count the same, as does representing your club at an
-external competition. An activity is one logged session — not one series, and
-not one day.
+The app proposes one of the two cases from your firearms, and says why it chose
+it. To overrule it:
 
-## Your case, and where it comes from
+1. **Settings → Compliance → Activity Requirement**.
+2. Pick the case that applies to you.
 
-The app proposes one of the two from your firearms: if any firearm is a
-**pistol or revolver** you have marked as **My Own**, it applies 6 §.
-Otherwise it applies 5 §, the stricter case.
+Once you pick one it stays picked — adding, editing or deleting a firearm will
+not move it again. Until then the setting follows your firearms.
 
-That is a proposal, not a judgement about your licenses. It reads two things
-you told it — the weapon type and the
-[ownership](firearms-and-ammunition.md) — and nothing else:
-
-- A rifle you own is not an enhandsvapen, so it changes nothing.
-- An air pistol does not count either. The app files air pistols and air
-  rifles under one weapon type and cannot tell a licensed one from the rest,
-  so it leaves you on the stricter case.
-- Ownership starts at **My Own** on every firearm, including the ones you
-  recorded before the field existed. So the app assumes you own your handguns
-  unless you say otherwise, and the case it proposes for a handgun owner is
-  therefore 6 §, the lighter of the two. Set a firearm to **Borrowed** and it
-  stops counting.
-
-The screen also says **why** it chose what it chose — "because no firearm on
-file is a pistol or revolver you own", say. That matters after an import: a
-firearm created by importing sessions arrives with no weapon type and no
-licence, so the app can see five handguns and still have nothing on file
-saying they _are_ handguns. The proposal is then right about the data and
-wrong about you, and the reason line is what makes that visible instead of
-mysterious. Firearms missing those details are flagged as **Incomplete** on
-the Firearms tab.
-
-**Settings → Compliance → Activity Requirement** is where you overrule it.
-Once you pick a case there it stays picked: adding, editing or deleting a
-firearm will not move it again. Until then the setting follows your firearms,
-and the screen says which of the two it is doing. The case in force is also
-shown next to the status.
-
-## "On average", precisely
-
-The form says _sammantaget i genomsnitt_ — taken together, on average. The app
-reads that as a total across the whole six-month window: twelve activities
-somewhere in the six months satisfies 5 §, whether they were spread evenly or
-not. It does not require a fixed number in every calendar month.
-
-## What the app does not track
-
-Three rules on the same form are **not** modeled here. If any of them applies
-to you, work it out yourself:
-
-- **An additional handgun** (_ytterligare enhandsvapen_): trained or competed
-  at least twice in the last six months **with each handgun you already hold**.
-  The app does not know which of your firearms you hold a license for.
-- **Renewing a time-limited permit** (_förnyelse av tidsbegränsat tillstånd_):
-  trained or competed with the firearm in question at least four times a year
-  over the last two years. The app does not record that a permit is
-  time-limited.
-- **Special reasons** (_särskilda skäl_ — illness, pregnancy, service abroad),
-  which can excuse a gap in activity under 6 §. These are decided by the
-  police on a separate attachment, not by you or your club, so the app does not
-  offer to apply them.
-
-## What counts, and what this is not
-
-**Every session counts, whatever you shot.** 5 § and 6 § are requirements on
-_you_, not on a particular firearm or weapon group — the form asks whether you
-took part in the club's shooting, and names no vapengrupp. So a session counts
-towards License Activity even if you never recorded a weapon group for it, and
-even if the firearm it was shot with is not in the app. That matters most
-right after importing older history, which is usually where weapon groups are
-thinnest.
-
-The same figure therefore appears on every firearm: it is your activity level,
-shown next to each gun for convenience, not that gun's own tally. The screen
-says so under the number.
-
-License Activity counts what you logged. A range visit you did not log is
-not in it, and a session logged twice counts twice.
-
-!!! warning "Your club and the police decide, not this app"
-
-    The app counts sessions against a published requirement. It does not issue
-    the intyg, and it has no view on whether your club will sign one or whether
-    the police will grant the license. Treat a green status as "the counting
-    looks right", not as an approval.
+If the proposed case looks wrong, read the reason line under it first: it
+usually points at a missing detail on a firearm rather than at the case itself.
+Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
+on the Firearms tab, and filling those in may move the proposal on its own.
 
 ## Getting it out
 
@@ -117,10 +42,3 @@ exists for the summary a förening might ask for.
     The PDF layout has not been checked against a real föreningsintyg. It was
     built to the specification rather than against a sample, so confirm it is
     acceptable before relying on it for a submission.
-
-## Source
-
-Polismyndigheten's form **PM 551.24 Föreningsintyg**, page 3 ("Förklaringar och
-anvisningar vid utfärdande av föreningsintyg"), which transcribes **PMFS
-2016:4 / RPSFS 2009:13, FAP 551-3, 5 kap 5–6 §§**. The form is published at
-[polisen.se](https://polisen.se/b9596e33879c4925472a5edb9c451ab1/siteassets/blanketter/polisens-blanketter-551-24.pdf).

@@ -102,7 +102,9 @@ plugins:
             Home: Start
             Getting started: Kom igång
             Guides: Guider
+            Explanation: Förklaringar
             Regulations: Reglementen
+            How license activity is counted: Så räknas skjutaktiviteten
             Logging a session: Logga ett pass
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
@@ -125,7 +127,9 @@ plugins:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
-  - Regulations: explanation/regulations.md
+  - Explanation:
+      - Regulations: explanation/regulations.md
+      - How license activity is counted: explanation/license-activity.md
   - Guides:
       - Logging a session: guides/logging-a-session.md
       - Statistics: guides/statistics.md
