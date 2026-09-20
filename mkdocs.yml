@@ -105,6 +105,7 @@ plugins:
             Explanation: Förklaringar
             Regulations: Reglementen
             How license activity is counted: Så räknas skjutaktiviteten
+            How sighters count: Hur provserier räknas
             Logging a session: Logga ett pass
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
@@ -130,6 +131,7 @@ nav:
   - Explanation:
       - Regulations: explanation/regulations.md
       - How license activity is counted: explanation/license-activity.md
+      - How sighters count: explanation/how-sighters-count.md
   - Guides:
       - Logging a session: guides/logging-a-session.md
       - Statistics: guides/statistics.md

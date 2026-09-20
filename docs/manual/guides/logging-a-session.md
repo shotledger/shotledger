@@ -20,7 +20,7 @@ towards the session total. Its score is still shown, with an asterisk —
 score, and what you shot is still worth seeing.
 
 That is the rule inside a session. Across sessions it changes — see
-[Statistics](statistics.md#sighters-count-here-unless-you-say-otherwise).
+[How sighters count](../explanation/how-sighters-count.md).
 
 ## Reordering
 
