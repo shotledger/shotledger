@@ -37,6 +37,12 @@ Skotträknarna är det enda en import inte skriver över på ett vapen du redan 
 Filen är ett register över skjutande, inte sanningen om hur många skott den här
 enheten har räknat genom vapnet.
 
+Passen den hämtar in räknas däremot. Varje importerat pass lägger sina skott,
+och sina oräknade extraskott, till räknarna för det vapen det anger — precis som
+om du hade loggat passet här. Att importera samma fil två gånger räknar den inte
+två gånger: den andra importen flyttar räknarna med skillnaden, och oftast inte
+alls.
+
 Appen avvisar en fil vars `formatVersion` är **högre** än den förstår, i stället
 för att importera de delar den känner igen. En delvis import som ser lyckad ut
 är sämre än ett avvisande, eftersom du inte skulle veta vad som föll bort.
