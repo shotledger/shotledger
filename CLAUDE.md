@@ -64,7 +64,11 @@ sync. Android first — **all code must stay iOS-compatible**.
 3. Secrets never enter the working tree — they live under
    `~/agents/shotledger/`. Stage explicit paths only; never `git add -A`.
 4. Anything marked `VERIFY:` in the docs is unconfirmed — stop and ask
-   the maintainer; never guess regulatory or scoring values.
+   the maintainer; never guess regulatory or scoring values. Look the
+   value up first: the rule books are public and fetchable any time
+   (SHB 2026: <https://www.pistolskytteforbundet.se/app/uploads/2026/01/SHB_2026_upplaga-21_NY.pdf>,
+   and see the header of `docs/reference/spsf-shb-2026.md`). Ask only
+   about what the book genuinely does not say.
 5. All UI strings via i18n (sv + en) from the first screen. **Casing:**
    English screen titles, section headers, field labels, tab labels and
    button labels are **Title Case** ("Account & Sync", "Birth Year",

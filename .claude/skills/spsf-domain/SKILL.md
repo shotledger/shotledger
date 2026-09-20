@@ -1,6 +1,6 @@
 ---
 name: spsf-domain
-description: SPSF/ISSF target-shooting domain rules for ShotLedger — series/final/sighter structure, märke ("guldserie") and standardmedalj thresholds, vapengrupper and klasser, competition levels, target dimensions, licens/intyg rules. Use whenever implementing or reviewing scoring, session structure, compliance, discipline/program definitions, or any Swedish shooting-sport terminology.
+description: SPSF/ISSF target-shooting domain rules for ShotLedger — ring disciplines (precision, milsnabb) and hit disciplines (fältskjutning, poängfält, magnumfält); series/station/final/sighter structure, märke ("guldserie", fältskyttemärket) and standardmedalj thresholds, vapengrupper and klasser, competition levels, target and figure dimensions, tie-break/särskjutning, licens/intyg rules. Use whenever implementing or reviewing scoring, session structure, compliance, discipline/program definitions, or any Swedish shooting-sport terminology.
 ---
 
 # SPSF domain rules
@@ -41,6 +41,51 @@ Hard rules that implementations must never violate:
 8. Never guess regulatory or scoring values — anything not in the
    reference file is VERIFY-with-maintainer.
 
+## Fältskjutning is a hit discipline, not a ring discipline
+
+SHB Del D governs fält; precision's Del F rules do **not** carry over.
+Facts and citations: the "Fältskjutning" section of
+`docs/reference/spsf-shb-2026.md`. Rules an implementation must respect:
+
+9. **A fält round is stations, not series: 6–10 stations, exactly six
+   shots at each** (D.6.1/D.6.4). The station count is a property of the
+   competition, never of the discipline — no skeleton.
+10. **Nothing is scored per shot.** A station yields hits (0–6), figures
+    hit, and — only where the arrangör set a poängmål — points. Holes are
+    counted per figure after the series; nobody can attribute a hole to a
+    shot number. Model at station level.
+11. **Two result modes over the same two numbers**: vanlig fält = "antal
+    träff i antal figurer" (two numbers, ranked hits → figures → points);
+    poängfält = one sum where **each hit is 1 p and each hit figure is
+    1 p** (D.6.11). It is a result mode per competition, not a second
+    discipline.
+12. **Fält has no provskott at all** (D.6.6) — unlike precision, and
+    unlike magnumfält, whose first station is inskjutning (E.6.1). Do not
+    generalise the sighter rules to fält.
+13. **Fält resolves top ties with särskjutning, never with a final.**
+    Särskjutning stations continue the station numbering (station 11, 12,
+    …) and are mandatory for all medals at SM/landsdels-/kretsmästerskap
+    (D.6.11.2.1.3, D.6.11.3). Whether they enter the recorded score is
+    open — VERIFY.
+14. **Fält vapengrupper are A, A optisk, B, C and R** (D.4, C.5.1.1.2);
+    R exists here and not in precision. **Klass 3 in fält is qualified in
+    fält only** (D.2.2) — a shooter's fält klass and precision klass are
+    independent.
+15. **Standardmedalj in fält is placement-only** — best 1/9 silver, best
+    1/3 brons, rounded down (C.5.1.2/.2.1). There is no fixed-points
+    path; that exists for precision only. Never compute a fält
+    standardmedalj from a threshold table.
+16. **Fältskyttemärket is a separate märke and is per competition, not
+    per series** — three different competitions in one calendar year,
+    thresholds by vapengrupp and station count (Bilaga 1 mom 5.7.1).
+    Do not reuse guldserie logic for it.
+17. **Magnumfältskjutning (Del E) is its own discipline**, with its own
+    omfattning, its own M-vapengrupper and a standardmedalj rule that
+    counts träff, träffade figurer _and_ poäng.
+
 Terminology: provskott/provserie = sighter · särskjutning = tie-break
 (no sighters, out of v1) · guldserie = series meeting märke guld ·
-vapengrupp = gun class · klass = shooter class · KM = klubbmästerskap.
+vapengrupp = gun class · klass = shooter class · KM = klubbmästerskap ·
+station = a fält round's 6-shot unit · figur = one target figure on a
+station · poängmål/ringad figur = a ringed figure that also scores points ·
+omskjutning = re-shoot after an approved vapenfel · tolk = plug gauge.
