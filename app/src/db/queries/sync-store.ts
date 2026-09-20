@@ -16,6 +16,7 @@ import {
 
 import {
   ammoLots,
+  firearmCalibers,
   firearmGroups,
   firearms,
   licenses,
@@ -40,6 +41,7 @@ export const SYNC_TABLES: Record<SyncTableName, SQLiteTable> = {
   firearms,
   licenses,
   firearm_groups: firearmGroups,
+  firearm_calibers: firearmCalibers,
   ammo_lots: ammoLots,
   sessions,
   series,

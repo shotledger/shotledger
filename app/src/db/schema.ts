@@ -16,6 +16,12 @@ export const firearms = sqliteTable('firearms', {
   ...common,
   make: text('make').notNull(),
   model: text('model').notNull(),
+  /**
+   * The **chambering** — what the firearm is built for, and what the licence
+   * card names. Additional cartridges it may be fed live in
+   * `firearm_calibers`: a .357 Magnum revolver shot with .38 Special is the
+   * common case in SPSF precision, and one field could not say both (#312).
+   */
   caliber: text('caliber'),
   // vapentyp
   weaponType: text('weapon_type', {
@@ -57,6 +63,27 @@ export const firearmGroups = sqliteTable('firearm_groups', {
   // federation-scoped id, e.g. 'spsf:C' (§6.4a)
   groupId: text('group_id').notNull(),
   isDefaultForGroup: integer('is_default_for_group').notNull().default(0),
+});
+
+/**
+ * Additional cartridges a firearm may be fed, beyond its chambering.
+ *
+ * Kept out of `firearms.caliber` rather than replacing it: the chambering is a
+ * distinct fact that appears on the licence card, and a föreningsintyg may name
+ * both (".357 Magn (9,1×33R) samt .38 Special (9,1×29R)" on a real one). A
+ * single ordered list would have made "which is the chambering" a convention
+ * the UI has to keep teaching, and a reorder would silently change it.
+ *
+ * `position` orders the list for display only.
+ */
+export const firearmCalibers = sqliteTable('firearm_calibers', {
+  ...common,
+  firearmId: text('firearm_id')
+    .notNull()
+    .references(() => firearms.id),
+  /** Canonical spelling from shared/src/calibers/presets.ts. */
+  caliber: text('caliber').notNull(),
+  position: integer('position').notNull().default(0),
 });
 
 export const ammoLots = sqliteTable('ammo_lots', {

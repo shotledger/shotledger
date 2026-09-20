@@ -14,6 +14,21 @@ this screen that changes what the app asks of you elsewhere: owning a handgun
 is what decides which [license activity](license-activity.md) requirement you
 are measured against.
 
+### Chambering, and what else it shoots
+
+A firearm has one **chambering** — what it is built for, and what your licence
+names. Under it you can list any other cartridge you actually put through it.
+
+A .357 Magnum revolver fed .38 Special is the ordinary case in precision
+shooting, not an exotic one, and a Swedish föreningsintyg may name both on the
+same line. Before this the app had a single caliber field, which forced a
+choice between recording the chambering and recording what you shoot — and
+either answer was half wrong.
+
+Listing a cartridge does not restrict anything. When you pick an ammunition lot
+for a session the app will not stop you choosing one the firearm does not list:
+you may have a good reason, and the app does not know it.
+
 A firearm accumulates:
 
 - **Round count**, from the sessions you log against it. Deleting a session
