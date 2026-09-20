@@ -6,6 +6,9 @@ import {
   personalBests,
   bestNSeries,
   bestSession,
+  officialPbCoverage,
+  freeformPbCoverage,
+  type PbCoverage,
 } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import {
   yearStats,
@@ -17,6 +20,7 @@ import {
 
 import { db } from '@/db/client';
 import {
+  countAllSessions,
   listCompetitionResultsForStats,
   listFreeformSessionsForPb,
 } from '@/db/queries/webshooter-stats';
@@ -45,13 +49,27 @@ export interface WebshooterRecordsData {
   officialPbs: OfficialPbRow[];
   freeformPbs: FreeformPbRow[];
   yearOverYear: YoYGroupRow[];
+  /** What each section was computed from — never optional (#318). */
+  officialCoverage: PbCoverage;
+  freeformCoverage: PbCoverage;
 }
 
+const NO_COVERAGE: PbCoverage = { considered: 0, counted: 0, ungrouped: 0 };
+
 function computeRecords(): WebshooterRecordsData {
-  if (!db) return { officialPbs: [], freeformPbs: [], yearOverYear: [] };
+  if (!db) {
+    return {
+      officialPbs: [],
+      freeformPbs: [],
+      yearOverYear: [],
+      officialCoverage: NO_COVERAGE,
+      freeformCoverage: NO_COVERAGE,
+    };
+  }
 
   const competitionResults = listCompetitionResultsForStats(db);
   const freeformSessions = listFreeformSessionsForPb(db);
+  const totalSessions = countAllSessions(db);
 
   const pbMap = personalBests(competitionResults);
   const officialPbs: OfficialPbRow[] = [...pbMap.entries()].map(([groupKey, group]) => ({
@@ -88,7 +106,13 @@ function computeRecords(): WebshooterRecordsData {
     };
   });
 
-  return { officialPbs, freeformPbs, yearOverYear };
+  return {
+    officialPbs,
+    freeformPbs,
+    yearOverYear,
+    officialCoverage: officialPbCoverage(competitionResults),
+    freeformCoverage: freeformPbCoverage(freeformSessions, totalSessions),
+  };
 }
 
 export function useWebshooterRecords(): WebshooterRecordsData {

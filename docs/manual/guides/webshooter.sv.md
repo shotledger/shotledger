@@ -72,3 +72,33 @@ du ber om nya.
 
 Den återhållsamheten är medveten. Webshooter är någon annans server, och den
 svarar redan på vissa förfrågningar med fel.
+
+## Rekord
+
+**Inställningar → Rekord** visar dina personbästa, beräknade helt från passen
+på den här enheten — importerade såväl som handloggade. Ingenting hämtas för
+att bygga listan.
+
+Det finns två uppsättningar, eftersom de svarar på olika frågor:
+
+- **Officiella bästa** tillämpar tävlingsreglerna: ett precisionsresultat
+  räknas bara med alla sju grundomgångsserier, ett milsnabbresultat bara med
+  alla tolv. Ett träningspass, eller en tävling du loggat delvis, är inte ett
+  officiellt bästa hur bra resultatet än är.
+- **Dina egna bästa** bortser från allt det och tittar på varje pass du loggat
+  — bästa fem serier, bästa tio, bästa hela pass.
+
+Bästaresultat grupperas efter **gren och vapengrupp**. Din skytteklass ingår
+inte: att gå från klass 2 till klass 3 nollställer inte ditt bästa med ett
+vapen.
+
+!!! note "Varje siffra säger vad den beräknats från"
+
+    Under varje rubrik står en rad som *”Beräknat från 41 av dina 267 pass.”*
+    De pass som kvalificerar är en bråkdel av allt du skjuter, och ett bästa
+    som beräknats ur en del av historiken betyder något bara om du kan se hur
+    stor del som användes.
+
+    Pass **utan vapengrupp** redovisas under *Ingen vapengrupp* i stället för
+    att falla bort. Det är vanligt efter import av äldre historik, där källan
+    ofta inte registrerade någon.

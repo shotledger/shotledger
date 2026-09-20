@@ -69,3 +69,32 @@ new data.
 
 That restraint is deliberate. Webshooter is someone else's server, and it
 answers some requests with errors already.
+
+## Records
+
+**Settings → Records** shows your personal bests, computed entirely from the
+sessions on this device — imported and hand-logged alike. Nothing is fetched to
+build it.
+
+There are two sets, because they answer different questions:
+
+- **Official bests** apply the competition rules: a precision result counts
+  only with all seven grundomgång series, a milsnabb result only with all
+  twelve. A training session, or a competition you logged partly, is not an
+  official best however good the score.
+- **Your own bests** ignore all of that and look at every session you logged —
+  best five series, best ten, best whole session.
+
+Bests are grouped by **discipline and weapon group**. Your shooter class is not
+part of it: moving from klass 2 to klass 3 does not reset your best with a gun.
+
+!!! note "Every figure says what it was computed from"
+
+    Under each heading is a line like *"Computed from 41 of your 267
+    sessions."* Records that qualify are a fraction of what you shoot, and a
+    best computed from part of your history is only meaningful if you can see
+    how much of it was used.
+
+    Sessions with **no weapon group** recorded are listed under *No weapon
+    group* rather than dropped. That is common after importing older history,
+    where the source often did not record one.

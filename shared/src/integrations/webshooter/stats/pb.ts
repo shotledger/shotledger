@@ -7,10 +7,18 @@ export interface CompetitionResultForStats {
   sessionId: string;
   /** Discipline id, e.g. 'spsf-precision'. */
   competitionType: string;
-  /** Federation-scoped weapon group id, e.g. 'spsf:C'. */
-  weaponGroup: string;
-  /** Shooter class code, e.g. '2'. */
-  shooterClass: string;
+  /**
+   * Federation-scoped weapon group id, e.g. 'spsf:C'. `null` where the
+   * shooter never recorded one — those results group under `UNGROUPED_KEY`
+   * rather than being dropped (#318).
+   */
+  weaponGroup: string | null;
+  /**
+   * Shooter class code, e.g. '2'. Display only — no function here reads it.
+   * `null` where unknown, which is every session from a source that did not
+   * record a klass (ShotLog, and so most imported history).
+   */
+  shooterClass: string | null;
   /** ISO date of the competition. */
   date: string;
   beforeFinalTenths: number;
@@ -49,6 +57,14 @@ export function officialPbScore(result: CompetitionResultForStats): number {
 }
 
 /**
+ * The weapon-group segment of a group key for a result that has no vapengrupp.
+ * A distinct bucket, never a silent drop: a best computed from sessions whose
+ * group is unknown is still that shooter's best, and 142 of 267 sessions in
+ * the maintainer's real history are this case (#318).
+ */
+export const UNGROUPED_KEY = '';
+
+/**
  * Discipline + vapengrupp, e.g. `'spsf-precision:spsf:C'`.
  *
  * Klass is deliberately NOT part of it (maintainer, 2026-09-15: "We only show
@@ -57,7 +73,7 @@ export function officialPbScore(result: CompetitionResultForStats): number {
  * and the year-over-year key has always grouped this way.
  */
 export function officialPbGroupKey(result: CompetitionResultForStats): string {
-  return `${result.competitionType}:${result.weaponGroup}`;
+  return `${result.competitionType}:${result.weaponGroup ?? UNGROUPED_KEY}`;
 }
 
 export interface PersonalBestGroup {
@@ -116,8 +132,10 @@ export function personalBests(
 export interface FreeformSessionForPb {
   sessionId: string;
   disciplineId: string;
-  weaponGroup: string;
-  shooterClass: string;
+  /** `null` groups under `UNGROUPED_KEY` — see `CompetitionResultForStats`. */
+  weaponGroup: string | null;
+  /** Display only; see `CompetitionResultForStats.shooterClass`. */
+  shooterClass: string | null;
   date: string;
   /** Non-sighter, non-final series totals (tenths), any order. */
   seriesTenths: readonly number[];
@@ -125,7 +143,7 @@ export interface FreeformSessionForPb {
 
 /** Same shape and the same klass-free rule as `officialPbGroupKey`. */
 function freeformGroupKey(session: FreeformSessionForPb): string {
-  return `${session.disciplineId}:${session.weaponGroup}`;
+  return `${session.disciplineId}:${session.weaponGroup ?? UNGROUPED_KEY}`;
 }
 
 export interface BestSeriesResult {
@@ -195,4 +213,48 @@ export function parseStatsGroupKey(key: string): StatsGroup {
   const at = key.indexOf(':');
   if (at < 0) return { disciplineId: key, weaponGroupId: '' };
   return { disciplineId: key.slice(0, at), weaponGroupId: key.slice(at + 1) };
+}
+
+// --- Coverage (#318) ------------------------------------------------------
+
+/**
+ * What a records figure was computed from.
+ *
+ * A personal best is a *claim*. An empty Records screen is honest and
+ * obviously incomplete; a populated one computed from a fraction of the data
+ * is neither, and the shooter has no way to tell. So every figure the screen
+ * shows must be able to say what it is the best *of* — which means the counts
+ * travel with the records rather than being recoverable only by rerunning the
+ * query.
+ */
+export interface PbCoverage {
+  /** Sessions offered to the computation. */
+  considered: number;
+  /** Sessions that could actually produce a record. */
+  counted: number;
+  /** Of `counted`, how many carry no vapengrupp and so land in `UNGROUPED_KEY`. */
+  ungrouped: number;
+}
+
+/** Coverage of the official-PB path: eligibility is series count, not klass. */
+export function officialPbCoverage(results: readonly CompetitionResultForStats[]): PbCoverage {
+  const eligible = results.filter(isOfficialPbEligible);
+  return {
+    considered: results.length,
+    counted: eligible.length,
+    ungrouped: eligible.filter((r) => !r.weaponGroup).length,
+  };
+}
+
+/** Coverage of the freeform path: a session counts if it has a scored series. */
+export function freeformPbCoverage(
+  sessions: readonly FreeformSessionForPb[],
+  consideredSessionCount: number,
+): PbCoverage {
+  const counted = sessions.filter((s) => s.seriesTenths.length > 0);
+  return {
+    considered: consideredSessionCount,
+    counted: counted.length,
+    ungrouped: counted.filter((s) => !s.weaponGroup).length,
+  };
 }

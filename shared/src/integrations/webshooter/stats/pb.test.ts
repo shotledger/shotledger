@@ -6,7 +6,10 @@ import {
   officialPbGroupKey,
   parseStatsGroupKey,
   officialPbScore,
+  officialPbCoverage,
+  freeformPbCoverage,
   personalBests,
+  UNGROUPED_KEY,
   type CompetitionResultForStats,
   type FreeformSessionForPb,
 } from './pb';
@@ -280,7 +283,7 @@ describe('bestNSeries', () => {
     expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
-  it('groups by discipline+weaponGroup+shooterClass independently', () => {
+  it('groups by discipline+weaponGroup independently (klass is not in the key)', () => {
     const result = bestNSeries(
       [freeformSession({ weaponGroup: 'spsf:C' }), freeformSession({ weaponGroup: 'spsf:A' })],
       3,
@@ -344,5 +347,84 @@ describe('bestSession', () => {
       freeformSession({ sessionId: 'second', seriesTenths: [1, 1] }),
     ]);
     expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('first');
+  });
+});
+
+// #318: Records reported confident personal bests from 6 of 267 real sessions
+// because a session needed BOTH a vapengrupp and a klass to be considered.
+// Klass is read by no function here — it was pure gatekeeping.
+describe('klass is display-only (#318)', () => {
+  it('R1: a result with no shooterClass still produces a personal best', () => {
+    const groups = personalBests([precisionResult({ shooterClass: null })]);
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('s1');
+  });
+
+  it('R2: results differing only in klass share one group and one best', () => {
+    const groups = personalBests([
+      precisionResult({ sessionId: 'klass2', shooterClass: '2', beforeFinalTenths: 3230 }),
+      precisionResult({ sessionId: 'klass3', shooterClass: '3', beforeFinalTenths: 4480 }),
+    ]);
+    expect(groups.size).toBe(1);
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('klass3');
+  });
+
+  it('R3: a null klass does not change the group key', () => {
+    expect(officialPbGroupKey(precisionResult({ shooterClass: null }))).toBe(
+      officialPbGroupKey(precisionResult({ shooterClass: '2' })),
+    );
+  });
+});
+
+describe('ungrouped bucket (#318)', () => {
+  it('R4: a result with no weaponGroup groups under UNGROUPED_KEY, not dropped', () => {
+    const groups = personalBests([precisionResult({ weaponGroup: null })]);
+    expect(groups.has(`spsf-precision:${UNGROUPED_KEY}`)).toBe(true);
+  });
+
+  it('R5: ungrouped results do not merge with a real group', () => {
+    const groups = personalBests([
+      precisionResult({ sessionId: 'grouped', weaponGroup: 'spsf:C' }),
+      precisionResult({ sessionId: 'ungrouped', weaponGroup: null, beforeFinalTenths: 4480 }),
+    ]);
+    expect(groups.size).toBe(2);
+    expect(groups.get('spsf-precision:spsf:C')?.allTime?.sessionId).toBe('grouped');
+  });
+
+  it('R6: the freeform path buckets the same way', () => {
+    const result = bestNSeries([freeformSession({ weaponGroup: null })], 3);
+    expect(result.has(`spsf-precision:${UNGROUPED_KEY}`)).toBe(true);
+  });
+});
+
+describe('coverage (#318)', () => {
+  it('R7: official coverage counts eligibility, not klass', () => {
+    const coverage = officialPbCoverage([
+      precisionResult({ sessionId: 'eligible', shooterClass: null }),
+      precisionResult({ sessionId: 'short', beforeFinalSeriesCount: 5 }),
+    ]);
+    expect(coverage).toEqual({ considered: 2, counted: 1, ungrouped: 0 });
+  });
+
+  it('R8: official coverage reports how many counted results are ungrouped', () => {
+    const coverage = officialPbCoverage([
+      precisionResult({ sessionId: 'a', weaponGroup: null }),
+      precisionResult({ sessionId: 'b', weaponGroup: 'spsf:C' }),
+    ]);
+    expect(coverage.counted).toBe(2);
+    expect(coverage.ungrouped).toBe(1);
+  });
+
+  it('R9: freeform coverage takes its denominator from every session, not the eligible ones', () => {
+    const coverage = freeformPbCoverage(
+      [freeformSession(), freeformSession({ sessionId: 'f2' })],
+      267,
+    );
+    expect(coverage).toEqual({ considered: 267, counted: 2, ungrouped: 0 });
+  });
+
+  it('R10: a session with no scored series is considered but not counted', () => {
+    const coverage = freeformPbCoverage([freeformSession({ seriesTenths: [] })], 10);
+    expect(coverage.counted).toBe(0);
+    expect(coverage.considered).toBe(10);
   });
 });
