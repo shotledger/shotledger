@@ -94,7 +94,7 @@ inferred, and no regulatory value is invented.
   - `shared/src/disciplines/definitions/spsf-falt.json`
   - `docs/specs/falt-scoring-spec.md` (this file),
     `docs/specs/falt-scoring-evidence.md`
-  - `docs/adr/0014-falt-hits-scoring-model.md`
+  - `docs/adr/0016-hits-scoring-model-for-falt.md`
 - **Files changed:** `shared/src/disciplines/schema.ts`,
   `shared/src/disciplines/index.ts`, `shared/src/disciplines/index.test.ts`,
   `shared/src/shotlog/tags.ts`, `app/src/app/session/new.tsx`,
@@ -179,7 +179,9 @@ figuresHit: 5, ringedFigurePoints: null }`.
 - **D5** `spsf-falt` parses and is registered: federation SPSF,
   `defaultSeriesLength: 6` (D.6.4), `scoring: 'hits'`, `allowsDecimal: false`,
   weapon groups exactly `A, A-opt, B, C, R` in that order (D.4; C.5.1.1.2),
-  name `{ sv: 'Fältskjutning', en: 'Field Shooting' }`.
+  name `{ sv: 'Fältskjutning', en: 'Fältskjutning' }` — hard rule 9's carve-out
+  names this discipline explicitly: a federation's own name keeps its spelling,
+  because inventing an English one would misname the event.
 - **D6** `spsf-falt` ships **no program**: a program's `shotsPerSeries` /
   `structure` describe a ring course, and the station count is the
   competition's, not the discipline's (§6.3 freeform rule, ADR 0002).
