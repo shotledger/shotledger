@@ -40,19 +40,30 @@ describe('faltResult (spec F1-F5)', () => {
     expect(poangfaltPoints(withRingPoints)).toBe(15);
   });
 
-  it('F5: an impossible station throws rather than scoring', () => {
-    expect(() => faltResult([station(-1, 0)])).toThrow(RangeError);
-    expect(() => faltResult([station(7, 1)])).toThrow(RangeError);
-    expect(() => faltResult([station(3, -1)])).toThrow(RangeError);
-    expect(() => faltResult([station(3, 4)])).toThrow(RangeError);
+  it('F5: an impossible station throws, naming what is wrong with it', () => {
+    // The message matters: these throw at import and at entry time, and
+    // "RangeError" alone does not tell anyone which number to fix.
+    expect(() => faltResult([station(-1, 0)])).toThrow(/: hits must be an integer 0-6, got -1/u);
+    expect(() => faltResult([station(7, 1)])).toThrow(/: hits must be an integer 0-6, got 7/u);
+    expect(() => faltResult([station(2.5, 1)])).toThrow(/: hits must be an integer 0-6, got 2.5/u);
+    expect(() => faltResult([station(3, -1)])).toThrow(
+      /: figuresHit must be an integer 0-3, got -1/u,
+    );
+    expect(() => faltResult([station(3, 4)])).toThrow(/: figuresHit must be an integer 0-3, got 4/u);
+    expect(() => faltResult([station(3, 1.5)])).toThrow(
+      /: figuresHit must be an integer 0-3, got 1.5/u,
+    );
     // Hits without a hit figure: every hit is a hole in some figure's målyta.
-    expect(() => faltResult([station(3, 0)])).toThrow(RangeError);
-    expect(() => faltResult([station(3, 1, -1)])).toThrow(RangeError);
-    expect(() => faltResult([station(2.5, 1)])).toThrow(RangeError);
-    expect(() => faltResult([station(3, 1.5)])).toThrow(RangeError);
-    expect(() => faltResult([station(3, 1, 1.5)])).toThrow(RangeError);
-    // ...and the message names the offending station, 1-based as SHB numbers.
-    expect(() => faltResult([station(6, 2), station(7, 1)])).toThrow(/station 2/u);
+    expect(() => faltResult([station(3, 0)])).toThrow(/: 3 hits cannot be spread over 0 figures/u);
+    expect(() => faltResult([station(3, 1, -1)])).toThrow(
+      /: points must be a non-negative integer or null, got -1/u,
+    );
+    expect(() => faltResult([station(3, 1, 1.5)])).toThrow(
+      /: points must be a non-negative integer or null, got 1.5/u,
+    );
+    // ...and every message names the offending station, 1-based as SHB numbers.
+    expect(() => faltResult([station(6, 2), station(7, 1)])).toThrow(/^station 2: /u);
+    expect(() => faltResult([station(-1, 0)])).toThrow(RangeError);
   });
 
   it('F5: the legal extremes are accepted', () => {
@@ -138,6 +149,26 @@ describe('compareFaltResults, poängfält (D.6.11.2.1.2, spec F11-F15)', () => {
     expect(faltResult(deep)).toMatchObject({ hits: 25, figuresHit: 6 }); // 31 p
     expect(compareFaltResults(deep, wide, 'falt')).toBeLessThan(0);
     expect(compareFaltResults(deep, wide, 'poangfalt')).toBeGreaterThan(0);
+  });
+
+  it('F11: the points sum decides even when the last station says otherwise', () => {
+    // 12 p over two stations against 10 p — but the 10-p round finished with
+    // the stronger station, so a countback alone would invert this.
+    const better = [station(6, 3), station(2, 1)];
+    const worse = [station(3, 1), station(4, 2)];
+    expect(compareFaltResults(better, worse, 'poangfalt')).toBeLessThan(0);
+    expect(compareFaltResults(worse, better, 'poangfalt')).toBeGreaterThan(0);
+  });
+
+  it('F15: the countback reaches the oldest station both rounds shot', () => {
+    // Three stations against two, aligned from the last: the last stations
+    // tie on hits, and the pair before them decides.
+    const three = [station(2, 1), station(4, 2), station(6, 2)];
+    const two = [station(6, 2), station(6, 3)];
+    expect(faltResult(three)).toMatchObject({ hits: 12, figuresHit: 5 });
+    expect(faltResult(two)).toMatchObject({ hits: 12, figuresHit: 5 });
+    expect(compareFaltResults(two, three, 'falt')).toBeLessThan(0);
+    expect(compareFaltResults(three, two, 'falt')).toBeGreaterThan(0);
   });
 
   it('F15: a countback stops where the shorter round runs out', () => {
