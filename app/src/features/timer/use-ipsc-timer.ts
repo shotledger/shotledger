@@ -31,6 +31,16 @@ const KEEP_AWAKE_TAG = 'ipsc-shot-timer';
 
 const IDLE_PHASE: IpscPhase = { kind: 'idle', remainingMs: 0, runElapsedMs: 0 };
 
+/**
+ * Where the audio sample clock stands at wall time `nowMs`, projected from
+ * the last window that arrived. Buffers reach JS in ~100 ms bursts, so the
+ * newest window is always a little behind the present; the wall clock covers
+ * that gap without inheriting the burst's jitter.
+ */
+function streamMsAt(last: { atMs: number; wallMs: number } | null, nowMs: number): number {
+  return last === null ? 0 : last.atMs + (nowMs - last.wallMs);
+}
+
 /** Cue → existing timer sound: what a beep plays, and the fallback when a spoken prompt's TTS refuses. */
 const CUE_SOUND: Record<IpscCueKind, TimerCueKind> = {
   ready: 'ready',
@@ -79,6 +89,11 @@ export function useIpscTimer(
   const listenerRef = useRef<ShotListenerHandle | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTickRef = useRef(0);
+  // The most recent window's position on the audio sample clock, and the
+  // wall time it arrived. Together they place "now" on that clock, which is
+  // what the engine anchors the run to at the beep — a window carries its
+  // own capture time, but the beep only knows the wall clock.
+  const lastWindowRef = useRef<{ atMs: number; wallMs: number } | null>(null);
 
   // `ipscCueDelivery` decides what each cue does (only ready and standby can
   // be spoken); this turns it into calls, with the tone as the fallback when
@@ -110,6 +125,7 @@ export function useIpscTimer(
     }
     const listener = listenerRef.current;
     listenerRef.current = null;
+    lastWindowRef.current = null;
     void listener?.stop();
     stopSpeaking();
     deactivateKeepAwake(KEEP_AWAKE_TAG);
@@ -149,8 +165,9 @@ export function useIpscTimer(
       void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
 
       try {
-        listenerRef.current = await startShotListening((db) => {
-          const shot = engineRef.current?.pushLevel(db);
+        listenerRef.current = await startShotListening((window) => {
+          lastWindowRef.current = { atMs: window.atMs, wallMs: Date.now() };
+          const shot = engineRef.current?.pushWindow(window);
           if (shot) setShots([...(engineRef.current?.getShots() ?? [])]);
         });
       } catch {
@@ -169,7 +186,7 @@ export function useIpscTimer(
         const delta = now - lastTickRef.current;
         lastTickRef.current = now;
 
-        const cues = running.advance(delta);
+        const cues = running.advance(delta, streamMsAt(lastWindowRef.current, now));
         playCues(cues);
         if (cues.includes('stop')) finish();
         else setPhase(running.getPhase());

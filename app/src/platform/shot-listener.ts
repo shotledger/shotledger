@@ -1,36 +1,45 @@
 // Platform wrapper for microphone shot detection (§0 rule 6) — the IPSC shot
 // timer's only native surface. Detection itself is pure and lives in
-// `shared/src/timer/shot-detector.ts`; this module does nothing but hand it a
-// stream of dBFS levels.
+// `shared/src/timer/`; this module does nothing but hand it a stream of level
+// windows.
 //
-// PRIVACY — the reason this file is shaped the way it is: expo-audio has no
-// "meter without recording" mode, so a recording must exist for `metering` to
-// be populated. It is written to the OS cache directory (never the document
-// directory, which is what the backup bundle and any file browser reach),
-// never read back, never shared, never synced, and `stop()` deletes it in a
-// `finally` so an error on the way out still removes it. Nothing but the
-// numeric level ever leaves this module. Do not add a code path that reads,
-// copies, uploads or keeps `recorder.uri`.
-import { AudioModule, RecordingPresets, setAudioModeAsync } from 'expo-audio';
-import { File } from 'expo-file-system';
+// It captures raw PCM through expo-audio's `AudioStream` rather than metering
+// a recording. The metering path could only report one coarse envelope value
+// per poll, which is why detection could never be more than an amplitude
+// threshold (#346) — and it had to keep a recording file alive on disk to get
+// even that. `AudioStream` writes no file at all: nothing but the numeric
+// level ever leaves this module, and there is no longer anything on disk for
+// a later change to accidentally read, copy or sync.
+import { AudioModule, setAudioModeAsync } from 'expo-audio';
+import { PcmWindower, DEFAULT_WINDOW_MS, type LevelWindow } from '@shotledger/shared';
 import { Platform } from 'react-native';
 
 import { TIMER_AUDIO_MODE } from './timer-cues';
 
-/** How often the recorder's metering is polled. ~60 ms is well inside the 80 ms shot debounce. */
-const POLL_INTERVAL_MS = 60;
-
-/** Level reported when the OS has no reading yet — far below every sensitivity threshold. */
-const SILENT_DB = -160;
+/**
+ * What we ask the hardware for. Mono because a shot is in both channels and
+ * the second one is only work; float32 because it is what both platforms
+ * capture natively. The hardware may answer with a different rate, which is
+ * why every buffer carries its own (`PcmWindower` measures against that).
+ */
+const STREAM_OPTIONS = { sampleRate: 48_000, channels: 1, encoding: 'float32' } as const;
 
 export type MicPermission = 'granted' | 'denied' | 'unavailable';
 
+export interface ShotListenerOptions {
+  /**
+   * Length of one level window. The detector wants ~10 ms to measure an
+   * event; a meter wants something slower than it can redraw.
+   */
+  windowMs?: number;
+}
+
 export interface ShotListenerHandle {
-  /** Stops metering and deletes the temporary recording. Safe to call twice. */
+  /** Stops the capture and releases the microphone. Safe to call twice. */
   stop: () => Promise<void>;
 }
 
-/** False on web, where expo-audio has no recording implementation we can meter. */
+/** False on web, where expo-audio's AudioStream is a stub that never streams. */
 export function isShotListeningAvailable(): boolean {
   return Platform.OS !== 'web';
 }
@@ -65,14 +74,11 @@ export async function ensureMicPermission(): Promise<MicPermission> {
 }
 
 /**
- * One recorder at a time. The setup level meter and the run meter the same
+ * One capture at a time. The setup level meter and the run meter the same
  * microphone through this module, and their handles are stopped fire-and-
- * forget from React effect cleanups — so without a queue a new recorder is
- * opened while the previous one is still releasing. Android then holds a
- * recorder expo-audio still counts as recording, and the next time the
- * activity goes to the background (which the permission prompt itself does)
- * expo-audio asks it to pause: `MediaRecorder.pause()` throws
- * `IllegalStateException` on the main thread and the process dies.
+ * forget from React effect cleanups — so without a queue a second capture is
+ * opened while the first is still releasing, and the microphone is held by
+ * an object nothing has a reference to any more.
  */
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -86,70 +92,63 @@ function serialize<T>(task: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Starts metering the microphone, calling `onLevel` with the current peak in
- * dBFS (<= 0) roughly every 60 ms. Rejects when the microphone is
- * unavailable or permission was refused.
+ * Starts capturing, calling `onWindow` with one peak level per `windowMs` of
+ * audio. Rejects when the microphone is unavailable or permission was
+ * refused.
+ *
+ * Windows arrive in bursts: the native side hands over ~100 ms of audio at a
+ * time, so ten 10 ms windows land in one call stack. Their `atMs` is the
+ * audio sample clock, not the arrival time, which is exactly why the burst
+ * does not cost any timing accuracy.
  */
-export function startShotListening(onLevel: (db: number) => void): Promise<ShotListenerHandle> {
+export function startShotListening(
+  onWindow: (window: LevelWindow) => void,
+  options: ShotListenerOptions = {},
+): Promise<ShotListenerHandle> {
   if (!isShotListeningAvailable()) {
     return Promise.reject(new Error('shot listening unavailable on this platform'));
   }
-  return serialize(() => openRecorder(onLevel));
+  return serialize(() => openStream(onWindow, options.windowMs ?? DEFAULT_WINDOW_MS));
 }
 
-async function openRecorder(onLevel: (db: number) => void): Promise<ShotListenerHandle> {
+async function openStream(
+  onWindow: (window: LevelWindow) => void,
+  windowMs: number,
+): Promise<ShotListenerHandle> {
   await active?.stop();
 
-  // Lowest-quality preset on purpose: the audio is never played back, only
-  // metered, so there is no reason to write a larger temporary file.
-  const recorder = new AudioModule.AudioRecorder({
-    ...RecordingPresets.LOW_QUALITY,
-    isMeteringEnabled: true,
-    directory: 'cache',
+  const stream = new AudioModule.AudioStream(STREAM_OPTIONS);
+  const windower = new PcmWindower({ windowMs, encoding: STREAM_OPTIONS.encoding });
+
+  const subscription = stream.addListener('audioStreamBuffer', (buffer) => {
+    for (const window of windower.push(buffer)) onWindow(window);
   });
 
   try {
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-    await recorder.prepareToRecordAsync();
-    recorder.record();
+    await stream.start();
   } catch (error) {
-    // A recorder that never started must not stay registered with expo-audio.
+    subscription.remove();
     try {
-      recorder.release();
+      stream.stop();
     } catch {
       // Best-effort cleanup.
     }
     throw error;
   }
 
-  const interval = setInterval(() => {
-    try {
-      const status = recorder.getStatus();
-      onLevel(status.metering ?? SILENT_DB);
-    } catch {
-      // A transient status read failure must not kill the run.
-    }
-  }, POLL_INTERVAL_MS);
-
   let stopped = false;
   const stopNow = async (): Promise<void> => {
     if (stopped) return;
     stopped = true;
     if (active?.stop === stopNow) active = null;
-    clearInterval(interval);
-    const uri = recorder.uri;
+    subscription.remove();
     try {
-      await recorder.stop();
+      stream.stop();
+    } finally {
       // Hand the session back to the cues' silent-mode-respecting mode,
       // which recording on iOS cannot share (timer-cues.ts).
       await setAudioModeAsync({ ...TIMER_AUDIO_MODE, allowsRecording: false });
-    } finally {
-      deleteRecording(uri);
-      try {
-        recorder.release();
-      } catch {
-        // Best-effort cleanup.
-      }
     }
   };
 
@@ -158,15 +157,4 @@ async function openRecorder(onLevel: (db: number) => void): Promise<ShotListener
   // The handle's stop goes through the queue; `stopNow` is what a following
   // start calls directly, since that already holds the queue.
   return { stop: () => serialize(stopNow) };
-}
-
-/** Deletes the temp recording. Best-effort and synchronous so it also runs from a `finally`. */
-function deleteRecording(uri: string | null): void {
-  if (!uri) return;
-  try {
-    const file = new File(uri);
-    if (file.exists) file.delete();
-  } catch {
-    // The OS clears its own cache directory anyway; never surface this.
-  }
 }

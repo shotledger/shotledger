@@ -22,19 +22,19 @@ uppfatta är ingen timer. Vill du tysta den använder du telefonens ljudlösa l�
 En IPSC-liknande timer: en slumpmässig startfördröjning, en startsignal, och
 mikrofonen som lyssnar efter dina skott för att registrera mellantider.
 
-!!! warning "Skottdetekteringen är ännu inte pålitlig"
+**Skottdetektering**, hopfällt under inställningarna, är där du ställer hur
+långt över banans eget ljud ett ljud måste höja sig för att räknas, med en
+mätare live och en räknare över vad som faktiskt registrerades medan du klappar
+i händerna eller torrsmäller. Låg, Mellan och Hög är utgångspunkter.
 
-    Mikrofonen fångar upp långt mer än skott. En fingerknäpp eller ett
-    tangentbord når full skala på mätaren, vilket betyder att en enkel
-    ljudstyrketröskel inte kan skilja ditt skott från en dörr, en skytt bredvid
-    eller banans eget ljud.
+!!! warning "Den kan inte skilja ett skott från en annan skarp smäll"
 
-    Android lägger dessutom på automatisk förstärkningsreglering på mikrofonen,
-    som lyfter svaga ljud och trycker ihop starka — precis fel form för att
-    känna igen en impuls.
+    En fingerknäpp är kort, tvär och långt över rummet — samma form som ett
+    skott, och räknas som ett vid varje inställning. Detsamma gäller en skytt
+    bredvid. Timern är pålitlig om *när* något hände, inte om vad det var.
 
-    Timern går att använda som timer. Betrakta skottdetekteringen som
-    experimentell.
+    [Hur skottimern hör ett skott](../explanation/shot-detection.sv.md)
+    förklarar vad den mäter och hur du ställer in den för din bana.
 
 Samma val av **Signaler** som i tidsgränstimern — pip, vibration eller båda —
 gäller alla dess fyra händelser: Är du redo?, Färdiga, startpipet och

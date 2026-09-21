@@ -1,58 +1,131 @@
 // IPSC-style shot timer: pure shot detection + run state machine. No
-// RN/audio imports — the app layer feeds
-// microphone metering samples in and maps the emitted cues to sound.
+// RN/audio imports — the app layer feeds windows of microphone level in
+// (see pcm.ts) and maps the emitted cues to sound.
 //
-// Detection is deliberately simple and explainable: a sample counts as a shot
-// when its level crosses the sensitivity threshold AND at least `minGapMs`
-// has passed since the previous shot. A muzzle blast is far above room noise,
-// so a peak threshold plus a debounce covers the realistic case; the gap
-// suppresses the multi-sample tail of one shot being counted twice.
+// WHY THIS IS NOT A THRESHOLD ANY MORE (#346). The detector used to fire on
+// one metering sample crossing a fixed dBFS level. That cannot work indoors:
+// Android applies automatic gain control to the microphone, so a finger snap
+// is lifted to full scale and a shot is squashed toward it — at 0 dBFS, the
+// least sensitive setting the old control offered, a snap still pinned the
+// meter. There is no headroom left to tune into.
+//
+// So the gate is three measurements over a ~10 ms window stream, none of
+// which is an absolute level:
+//
+//   excess    how far the window rose above a tracked noise floor. AGC moves
+//             the floor and the event together, so their distance survives it
+//             where an absolute dBFS number does not.
+//   rise      how abruptly it got there. A muzzle blast reaches its peak
+//             within a window or two; a door swinging, a voice or a car does
+//             not.
+//   duration  how long the event stayed up. This is the discriminator
+//             commercial detectors gate on, and the one a bare threshold has
+//             no way to express.
+//
+// What it does NOT do, and cannot: separate a shot from another impulse of
+// the same shape. A finger snap is a short, abrupt, loud event — by these
+// three measurements it *is* a shot. Telling those apart needs a classifier
+// or a calibration step, and neither is this.
 
-/** Microphone sensitivity. Lower thresholds (high sensitivity) trigger on quieter peaks. */
+import type { LevelWindow } from './pcm';
+
+/** Microphone sensitivity. Higher sensitivity accepts weaker and longer events. */
 export type ShotSensitivity = 'low' | 'medium' | 'high';
 
+/** The three numbers one sensitivity preset sets. See the gate description above. */
+export interface ShotGateSettings {
+  /** dB above the tracked noise floor a window must reach to open an event. */
+  triggerExcessDb: number;
+  /** Longest event still accepted as a shot, in ms. */
+  maxEventMs: number;
+}
+
 /**
- * Trigger level in dBFS (expo-audio's `metering` scale: 0 = full scale,
- * negative = quieter). Starting points for a phone at arm's length on an
- * outdoor range — the user picks; nothing here is a measured constant.
+ * Starting points, not measured constants: the shooter adjusts the excess on
+ * the setup screen with the live meter in front of them.
+ *
+ * `maxEventMs` runs the other way round from the figure quoted in #346's
+ * research ("25–80 ms, shorter = more sensitive"): those units gate on a
+ * *minimum* event length, ours on a maximum, so a wider window is the more
+ * permissive end here.
  */
-export const SENSITIVITY_THRESHOLD_DB: Record<ShotSensitivity, number> = {
-  low: -12,
-  medium: -22,
-  high: -32,
+export const SENSITIVITY_PRESETS: Record<ShotSensitivity, ShotGateSettings> = {
+  low: { triggerExcessDb: 18, maxEventMs: 25 },
+  medium: { triggerExcessDb: 12, maxEventMs: 50 },
+  high: { triggerExcessDb: 8, maxEventMs: 80 },
 };
 
-/** Valid range for a user-set trigger level (expo-audio's metering scale is <= 0 dBFS). */
-export const MIN_TRIGGER_DB = -60;
-export const MAX_TRIGGER_DB = 0;
+/** Valid range for the user-set trigger excess, in dB over the noise floor. */
+export const MIN_TRIGGER_EXCESS_DB = 4;
+export const MAX_TRIGGER_EXCESS_DB = 30;
 
-/** Step size the app's +/- trigger-level control moves by. */
-export const TRIGGER_DB_STEP = 2;
+/** Step size the setup screen's excess slider moves by. */
+export const TRIGGER_EXCESS_STEP_DB = 1;
+
+/** Bounds on the event-length gate the presets pick from. */
+export const MIN_EVENT_MS = 10;
+export const MAX_EVENT_MS = 400;
+
+/**
+ * How far the level must fall back toward the floor before the event is
+ * considered over. Lower than the trigger on purpose: without hysteresis the
+ * ragged decay of one blast closes and reopens the event several times, and
+ * each reopening looks like another shot.
+ */
+export const RELEASE_EXCESS_DB = 4;
+
+/**
+ * Minimum jump between two consecutive windows for the event to count as an
+ * impulse. Measured against the previous window, so at a 10 ms hop this is
+ * "reached 8 dB of its rise in 10 ms" — true of a muzzle blast, false of
+ * anything that swells.
+ */
+export const DEFAULT_MIN_RISE_DB = 8;
 
 /** Default debounce between two shots; below this a second peak is the same shot's tail. */
 export const DEFAULT_MIN_SHOT_GAP_MS = 80;
 
-/** One metering reading from the microphone. `atMs` is relative to the start beep. */
-export interface MeteringSample {
-  atMs: number;
-  /** Level in dBFS (<= 0). */
-  db: number;
+/**
+ * How the noise floor follows the level, per ~10 ms window. Asymmetric: it
+ * rises slowly so a blast barely moves it and falls quickly so it settles
+ * onto a quiet range. These are the mic-diagnostics rates (which are per
+ * 60 ms sample) scaled to the window hop, so a recording made on the
+ * diagnostics screen still describes this detector's floor.
+ */
+export interface NoiseFloorRates {
+  riseRate: number;
+  fallRate: number;
+  initialDb: number;
+}
+
+export const DEFAULT_WINDOW_NOISE_FLOOR: NoiseFloorRates = {
+  riseRate: 0.0007,
+  fallRate: 0.013,
+  initialDb: -60,
+};
+
+export interface ShotDetectorOptions {
+  sensitivity?: ShotSensitivity;
+  /** Overrides the preset's trigger excess when set. */
+  triggerExcessDb?: number;
+  /** Overrides the preset's event-length gate when set. */
+  maxEventMs?: number;
+  minRiseDb?: number;
+  minGapMs?: number;
+  noiseFloor?: Partial<NoiseFloorRates>;
 }
 
 export interface DetectedShot {
   /** 0-based order in the string. */
   index: number;
-  /** ms after the start beep. */
+  /** ms after the start beep, at the event's onset (not where it was confirmed). */
   atMs: number;
   /** ms since the previous shot; equals `atMs` for the first shot. */
   splitMs: number;
-}
-
-export interface ShotDetectorOptions {
-  sensitivity?: ShotSensitivity;
-  /** Overrides the sensitivity preset when set. */
-  thresholdDb?: number;
-  minGapMs?: number;
+  /** How long the accepted impulse lasted, in ms. */
+  durationMs: number;
+  /** How far its peak stood above the noise floor, in dB. */
+  excessDb: number;
 }
 
 export interface ShotRunSummary {
@@ -69,64 +142,230 @@ export interface ShotRunSummary {
   parOverrunMs?: number;
 }
 
+/** An event that opened but was not accepted, and the measurement that rejected it. */
+export type RejectionReason = 'tooLong' | 'tooSlowRise' | 'tooSoon';
+
+/** The event currently being measured. */
+interface OpenEvent {
+  startedAtMs: number;
+  lastAboveMs: number;
+  peakDb: number;
+  peakExcessDb: number;
+  riseDb: number;
+}
+
 /**
- * Detects shots in a stream of metering samples. Samples pushed before
- * `arm()` (i.e. before the start beep) are ignored, so a shooter who fires
- * early does not get a phantom shot 0.
+ * Detects shots in a stream of level windows. Windows pushed before `arm()`
+ * (i.e. before the start beep) still train the noise floor but cannot
+ * produce a shot, so a shooter who fires early does not get a phantom shot 0
+ * and the floor is already settled when the beep comes.
+ *
+ * A shot is reported when its event *closes*, which is up to `maxEventMs`
+ * after it began — but it is timestamped at its onset, so the split is the
+ * moment of the blast and not the moment the gate finished deciding.
  */
 export class ShotDetector {
-  private readonly thresholdDb: number;
+  private readonly triggerExcessDb: number;
+  private readonly maxEventMs: number;
+  private readonly minRiseDb: number;
   private readonly minGapMs: number;
-  private armed = false;
+  private readonly rates: NoiseFloorRates;
+
+  /** Null until the first window seeds it — see `trackFloor`. */
+  private floorDb: number | null = null;
+  private previousDb: number | null = null;
+  /** Stream time of the start beep; null before `arm()`. */
+  private armedAtMs: number | null = null;
+  /** Stream time of the last accepted shot. */
   private lastShotAtMs: number | null = null;
   private shots: DetectedShot[] = [];
+  private open: OpenEvent | null = null;
+  /** Set when an event was closed while still loud — see `push`. */
+  private holdingOff = false;
+  private lastRejection: RejectionReason | null = null;
 
   constructor(options: ShotDetectorOptions = {}) {
-    const preset = SENSITIVITY_THRESHOLD_DB[options.sensitivity ?? 'medium'];
-    const threshold = options.thresholdDb ?? preset;
-    if (!Number.isFinite(threshold) || threshold < MIN_TRIGGER_DB || threshold > MAX_TRIGGER_DB) {
-      throw new Error(`thresholdDb must be between ${MIN_TRIGGER_DB} and ${MAX_TRIGGER_DB}`);
+    const preset = SENSITIVITY_PRESETS[options.sensitivity ?? 'medium'];
+    const excess = options.triggerExcessDb ?? preset.triggerExcessDb;
+    if (
+      !Number.isFinite(excess) ||
+      excess < MIN_TRIGGER_EXCESS_DB ||
+      excess > MAX_TRIGGER_EXCESS_DB
+    ) {
+      throw new Error(
+        `triggerExcessDb must be between ${MIN_TRIGGER_EXCESS_DB} and ${MAX_TRIGGER_EXCESS_DB}`,
+      );
     }
-    this.thresholdDb = threshold;
+    const maxEvent = options.maxEventMs ?? preset.maxEventMs;
+    if (!Number.isFinite(maxEvent) || maxEvent < MIN_EVENT_MS || maxEvent > MAX_EVENT_MS) {
+      throw new Error(`maxEventMs must be between ${MIN_EVENT_MS} and ${MAX_EVENT_MS}`);
+    }
+    const rise = options.minRiseDb ?? DEFAULT_MIN_RISE_DB;
+    if (!Number.isFinite(rise) || rise < 0) throw new Error('minRiseDb must be >= 0');
     const gap = options.minGapMs ?? DEFAULT_MIN_SHOT_GAP_MS;
     if (!Number.isFinite(gap) || gap < 0) throw new Error('minGapMs must be >= 0');
+
+    this.triggerExcessDb = excess;
+    this.maxEventMs = maxEvent;
+    this.minRiseDb = rise;
     this.minGapMs = gap;
+    this.rates = { ...DEFAULT_WINDOW_NOISE_FLOOR, ...options.noiseFloor };
   }
 
-  getThresholdDb(): number {
-    return this.thresholdDb;
+  getTriggerExcessDb(): number {
+    return this.triggerExcessDb;
   }
 
-  /** Starts accepting samples. Called at the start beep. */
-  arm(): void {
-    this.armed = true;
+  getMaxEventMs(): number {
+    return this.maxEventMs;
+  }
+
+  /** The tracked noise floor, in dBFS — what the setup meter draws its trigger line from. */
+  getNoiseFloorDb(): number {
+    return this.floorDb ?? this.rates.initialDb;
+  }
+
+  /** Why the last event that opened was not counted, or null if one was. */
+  getLastRejection(): RejectionReason | null {
+    return this.lastRejection;
+  }
+
+  /**
+   * Starts accepting shots, anchoring the run clock to the start beep.
+   *
+   * `atStreamMs` is the beep's position on the audio sample clock the
+   * windows are timed against, not a run-relative 0 — that is the whole
+   * point of it. Shots are reported relative to this moment.
+   */
+  arm(atStreamMs = 0): void {
+    this.armedAtMs = atStreamMs;
   }
 
   isArmed(): boolean {
-    return this.armed;
+    return this.armedAtMs !== null;
   }
 
-  /** Feeds one sample; returns the shot it triggered, or null. */
-  push(sample: MeteringSample): DetectedShot | null {
-    if (!this.armed) return null;
-    if (!Number.isFinite(sample.db) || sample.db < this.thresholdDb) return null;
-    if (sample.atMs < 0) return null;
-    if (this.lastShotAtMs !== null && sample.atMs - this.lastShotAtMs < this.minGapMs) return null;
+  /**
+   * Feeds one level window; returns the shot it completed, or null. A shot
+   * is returned on the window that *closes* a qualifying event, so it can
+   * arrive a few windows after the blast itself — `atMs` says when the blast
+   * was.
+   */
+  push(window: LevelWindow): DetectedShot | null {
+    const { atMs, db } = window;
+    if (!Number.isFinite(db) || !Number.isFinite(atMs) || atMs < 0) return null;
 
-    const splitMs = this.lastShotAtMs === null ? sample.atMs : sample.atMs - this.lastShotAtMs;
-    const shot: DetectedShot = { index: this.shots.length, atMs: sample.atMs, splitMs };
+    // The first window *sets* the floor rather than being followed toward
+    // it. Rising from the nominal −60 dBFS to a real room at the documented
+    // rate takes some fifteen seconds, and a run that started cold would
+    // spend all of it firing on the room itself.
+    if (this.floorDb === null) this.floorDb = db;
+
+    const excessDb = db - this.floorDb;
+    const previousDb = this.previousDb;
+    this.previousDb = db;
+
+    // The floor is frozen while an event is open: a long loud one would
+    // otherwise drag the floor up under itself and close its own event.
+    if (this.open === null && !this.holdingOff) this.trackFloor(db);
+
+    // A sound that outran the gate is closed the moment that is certain,
+    // while it is still going. Without this it would immediately reopen as a
+    // fresh event and be rejected again every `maxEventMs` for as long as it
+    // lasted; the rejection that matters is the first one.
+    if (this.holdingOff) {
+      if (excessDb < RELEASE_EXCESS_DB) this.holdingOff = false;
+      return null;
+    }
+
+    if (this.open === null) {
+      if (excessDb >= this.triggerExcessDb) {
+        this.open = {
+          startedAtMs: atMs,
+          lastAboveMs: atMs,
+          peakDb: db,
+          peakExcessDb: excessDb,
+          riseDb: previousDb === null ? excessDb : db - previousDb,
+        };
+      }
+      return null;
+    }
+
+    if (db > this.open.peakDb) {
+      this.open.peakDb = db;
+      this.open.peakExcessDb = excessDb;
+    }
+    if (excessDb >= RELEASE_EXCESS_DB) this.open.lastAboveMs = atMs;
+
+    // An event that has already outrun the gate is not a shot however it
+    // ends, so it is closed as soon as that is certain rather than held open
+    // until it falls — the shot after it must not be swallowed by a door
+    // still swinging.
+    const outrun = this.open.lastAboveMs - this.open.startedAtMs > this.maxEventMs;
+    if (!outrun && excessDb >= RELEASE_EXCESS_DB) return null;
+
+    const event = this.open;
+    this.open = null;
+    this.holdingOff = outrun;
+    // The floor missed every window the event covered; hand it the level it
+    // ended on so it is current again rather than stale by the event length.
+    if (!outrun) this.trackFloor(db);
+    return this.closeEvent(event);
+  }
+
+  /** Applies the gate to a finished event and records it when it passes. */
+  private closeEvent(event: OpenEvent): DetectedShot | null {
+    const durationMs = event.lastAboveMs - event.startedAtMs;
+    if (durationMs > this.maxEventMs) {
+      this.lastRejection = 'tooLong';
+      return null;
+    }
+    if (event.riseDb < this.minRiseDb) {
+      this.lastRejection = 'tooSlowRise';
+      return null;
+    }
+    if (this.armedAtMs === null) return null;
+    if (this.lastShotAtMs !== null && event.startedAtMs - this.lastShotAtMs < this.minGapMs) {
+      this.lastRejection = 'tooSoon';
+      return null;
+    }
+
+    const runAtMs = event.startedAtMs - this.armedAtMs;
+    // A shot fired between the beep and the first window after it would land
+    // fractionally before zero; the run cannot start before it starts.
+    const atMs = Math.max(0, runAtMs);
+    const splitMs = this.lastShotAtMs === null ? atMs : event.startedAtMs - this.lastShotAtMs;
+    const shot: DetectedShot = {
+      index: this.shots.length,
+      atMs,
+      splitMs,
+      durationMs,
+      excessDb: event.peakExcessDb,
+    };
     this.shots.push(shot);
-    this.lastShotAtMs = sample.atMs;
+    this.lastShotAtMs = event.startedAtMs;
+    this.lastRejection = null;
     return shot;
+  }
+
+  /** Exponential follower with separate up/down rates — see NoiseFloorRates. */
+  private trackFloor(db: number): void {
+    const floorDb = this.floorDb ?? db;
+    const rate = db > floorDb ? this.rates.riseRate : this.rates.fallRate;
+    this.floorDb = floorDb + rate * (db - floorDb);
   }
 
   getShots(): readonly DetectedShot[] {
     return this.shots;
   }
 
-  /** ms since the last shot (or since the beep with no shots yet) at `nowMs`. */
+  /** ms since the last shot (or since the beep with no shots yet) at run time `nowMs`. */
   silenceMsAt(nowMs: number): number {
-    return nowMs - (this.lastShotAtMs ?? 0);
+    const lastShotRunMs =
+      this.lastShotAtMs === null || this.armedAtMs === null
+        ? 0
+        : this.lastShotAtMs - this.armedAtMs;
+    return nowMs - lastShotRunMs;
   }
 
   getSummary(parMs?: number): ShotRunSummary {
@@ -144,10 +383,16 @@ export class ShotDetector {
     };
   }
 
+  /** Back to pre-beep, keeping nothing — including the learned noise floor. */
   reset(): void {
-    this.armed = false;
+    this.armedAtMs = null;
     this.lastShotAtMs = null;
     this.shots = [];
+    this.open = null;
+    this.holdingOff = false;
+    this.previousDb = null;
+    this.lastRejection = null;
+    this.floorDb = null;
   }
 }
 
@@ -174,8 +419,10 @@ export interface IpscTimerConfig {
   /** Auto-stop after this much silence (from the beep, or the last shot). 0/undefined = manual stop only. */
   autoStopSilenceMs?: number;
   sensitivity?: ShotSensitivity;
-  /** Overrides `sensitivity` with an explicit dBFS trigger level (see MIN/MAX_TRIGGER_DB). */
-  thresholdDb?: number;
+  /** Overrides the preset's trigger excess over the noise floor, in dB. */
+  triggerExcessDb?: number;
+  /** Overrides the preset's event-length gate, in ms. */
+  maxEventMs?: number;
   minGapMs?: number;
 }
 
@@ -215,7 +462,8 @@ export class IpscTimerEngine {
   private newDetector(): ShotDetector {
     return new ShotDetector({
       sensitivity: this.config.sensitivity,
-      thresholdDb: this.config.thresholdDb,
+      triggerExcessDb: this.config.triggerExcessDb,
+      maxEventMs: this.config.maxEventMs,
       minGapMs: this.config.minGapMs,
     });
   }
@@ -232,8 +480,16 @@ export class IpscTimerEngine {
     return ['ready'];
   }
 
-  /** Advances the clock, returning cues crossed in order. */
-  advance(deltaMs: number): readonly IpscCueKind[] {
+  /**
+   * Advances the clock, returning cues crossed in order.
+   *
+   * `streamMs` is where the audio sample clock stands *now*, and is what the
+   * detector anchors the run to when this call crosses into `running`. The
+   * host projects it from the last window it received plus the wall time
+   * since; passing nothing anchors the run at 0, which is only right when
+   * the windows are fed in run time too (the tests).
+   */
+  advance(deltaMs: number, streamMs = 0): readonly IpscCueKind[] {
     if (!Number.isFinite(deltaMs) || deltaMs < 0)
       throw new Error('advance() requires deltaMs >= 0');
     const cues: IpscCueKind[] = [];
@@ -260,13 +516,14 @@ export class IpscTimerEngine {
 
       remaining -= this.remainingMs;
       this.remainingMs = 0;
-      cues.push(...this.enterNextCountdownPhase());
+      cues.push(...this.enterNextCountdownPhase(streamMs - remaining));
     }
 
     return cues;
   }
 
-  private enterNextCountdownPhase(): readonly IpscCueKind[] {
+  /** `beepStreamMs` is where the beep falls on the sample clock (see `advance`). */
+  private enterNextCountdownPhase(beepStreamMs: number): readonly IpscCueKind[] {
     if (this.kind === 'ready') {
       this.kind = 'standby';
       const { minMs, maxMs } = this.config.randomDelay;
@@ -277,14 +534,27 @@ export class IpscTimerEngine {
     this.kind = 'running';
     this.remainingMs = 0;
     this.runElapsedMs = 0;
-    this.detector.arm();
+    this.detector.arm(beepStreamMs);
     return ['start'];
   }
 
-  /** Feeds one microphone level while running. Returns the shot it triggered, or null. */
-  pushLevel(db: number): DetectedShot | null {
-    if (this.kind !== 'running') return null;
-    return this.detector.push({ atMs: this.runElapsedMs, db });
+  /**
+   * Feeds one level window. `atMs` is run-relative (0 = the start beep) and
+   * comes from the audio sample clock, not from `advance()` — the buffer
+   * carrying a window reaches JS up to 100 ms late, while the window itself
+   * knows exactly when it was.
+   *
+   * Windows from before the beep are still fed in: they train the noise
+   * floor, and `arm()` is what stops them becoming shots.
+   */
+  pushWindow(window: LevelWindow): DetectedShot | null {
+    if (this.kind !== 'running' && this.kind !== 'ready' && this.kind !== 'standby') return null;
+    return this.detector.push(window);
+  }
+
+  /** The tracked noise floor, for the setup meter's trigger line. */
+  getNoiseFloorDb(): number {
+    return this.detector.getNoiseFloorDb();
   }
 
   /** Manual (or auto) stop: running → done. No-op in any other phase. */
@@ -332,13 +602,23 @@ function validateIpscConfig(config: IpscTimerConfig): void {
     throw new Error('IpscTimerConfig.parMs must be > 0');
   }
   if (
-    config.thresholdDb !== undefined &&
-    (!Number.isFinite(config.thresholdDb) ||
-      config.thresholdDb < MIN_TRIGGER_DB ||
-      config.thresholdDb > MAX_TRIGGER_DB)
+    config.triggerExcessDb !== undefined &&
+    (!Number.isFinite(config.triggerExcessDb) ||
+      config.triggerExcessDb < MIN_TRIGGER_EXCESS_DB ||
+      config.triggerExcessDb > MAX_TRIGGER_EXCESS_DB)
   ) {
     throw new Error(
-      `IpscTimerConfig.thresholdDb must be between ${MIN_TRIGGER_DB} and ${MAX_TRIGGER_DB}`,
+      `IpscTimerConfig.triggerExcessDb must be between ${MIN_TRIGGER_EXCESS_DB} and ${MAX_TRIGGER_EXCESS_DB}`,
+    );
+  }
+  if (
+    config.maxEventMs !== undefined &&
+    (!Number.isFinite(config.maxEventMs) ||
+      config.maxEventMs < MIN_EVENT_MS ||
+      config.maxEventMs > MAX_EVENT_MS)
+  ) {
+    throw new Error(
+      `IpscTimerConfig.maxEventMs must be between ${MIN_EVENT_MS} and ${MAX_EVENT_MS}`,
     );
   }
 }

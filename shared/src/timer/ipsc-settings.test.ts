@@ -8,12 +8,19 @@ import {
   ipscCueDelivery,
   normalizeIpscSettings,
 } from './ipsc-settings';
-import { MAX_TRIGGER_DB, MIN_TRIGGER_DB, type IpscCueKind } from './shot-detector';
+import {
+  MAX_EVENT_MS,
+  MAX_TRIGGER_EXCESS_DB,
+  MIN_EVENT_MS,
+  MIN_TRIGGER_EXCESS_DB,
+  type IpscCueKind,
+} from './shot-detector';
 
 describe('normalizeIpscSettings', () => {
   it('keeps a valid stored blob as it is', () => {
     const stored = {
-      thresholdDb: -30,
+      triggerExcessDb: 14,
+      maxEventMs: 40,
       delayMinSeconds: 2,
       delayMaxSeconds: 5.5,
       parSeconds: 3,
@@ -25,9 +32,9 @@ describe('normalizeIpscSettings', () => {
   });
 
   it('gives a row from before the cue settings the default cue mode and spoken prompts', () => {
-    const result = normalizeIpscSettings({ thresholdDb: -30, parSeconds: 3 });
+    const result = normalizeIpscSettings({ triggerExcessDb: 14, parSeconds: 3 });
     expect(result).toMatchObject({
-      thresholdDb: -30,
+      triggerExcessDb: 14,
       parSeconds: 3,
       cueMode: DEFAULT_TIMER_CUE_MODE,
       spokenPrompts: true,
@@ -54,28 +61,48 @@ describe('normalizeIpscSettings', () => {
 
   it('replaces only the bad field, keeping the rest of a partly broken blob', () => {
     const result = normalizeIpscSettings({
-      thresholdDb: 'loud',
+      triggerExcessDb: 'loud',
       delayMinSeconds: 2,
       delayMaxSeconds: 6,
       parSeconds: 3,
       autoStopSeconds: 4,
     });
-    expect(result.thresholdDb).toBe(DEFAULT_IPSC_SETTINGS.thresholdDb);
+    expect(result.triggerExcessDb).toBe(DEFAULT_IPSC_SETTINGS.triggerExcessDb);
     expect(result.delayMinSeconds).toBe(2);
     expect(result.delayMaxSeconds).toBe(6);
     expect(result.parSeconds).toBe(3);
     expect(result.autoStopSeconds).toBe(4);
   });
 
-  it('clamps an out-of-range trigger level back to the default', () => {
-    expect(normalizeIpscSettings({ thresholdDb: MIN_TRIGGER_DB - 1 }).thresholdDb).toBe(
-      DEFAULT_IPSC_SETTINGS.thresholdDb,
-    );
-    expect(normalizeIpscSettings({ thresholdDb: MAX_TRIGGER_DB + 1 }).thresholdDb).toBe(
-      DEFAULT_IPSC_SETTINGS.thresholdDb,
-    );
-    expect(normalizeIpscSettings({ thresholdDb: MIN_TRIGGER_DB }).thresholdDb).toBe(MIN_TRIGGER_DB);
-    expect(normalizeIpscSettings({ thresholdDb: MAX_TRIGGER_DB }).thresholdDb).toBe(MAX_TRIGGER_DB);
+  it('clamps an out-of-range trigger excess back to the default', () => {
+    const { triggerExcessDb } = DEFAULT_IPSC_SETTINGS;
+    expect(normalizeIpscSettings({ triggerExcessDb: MIN_TRIGGER_EXCESS_DB - 1 })).toMatchObject({
+      triggerExcessDb,
+    });
+    expect(normalizeIpscSettings({ triggerExcessDb: MAX_TRIGGER_EXCESS_DB + 1 })).toMatchObject({
+      triggerExcessDb,
+    });
+    expect(normalizeIpscSettings({ triggerExcessDb: MIN_TRIGGER_EXCESS_DB })).toMatchObject({
+      triggerExcessDb: MIN_TRIGGER_EXCESS_DB,
+    });
+  });
+
+  it('clamps an out-of-range event length back to the default', () => {
+    const { maxEventMs } = DEFAULT_IPSC_SETTINGS;
+    expect(normalizeIpscSettings({ maxEventMs: MIN_EVENT_MS - 1 })).toMatchObject({ maxEventMs });
+    expect(normalizeIpscSettings({ maxEventMs: MAX_EVENT_MS + 1 })).toMatchObject({ maxEventMs });
+    expect(normalizeIpscSettings({ maxEventMs: MAX_EVENT_MS })).toMatchObject({
+      maxEventMs: MAX_EVENT_MS,
+    });
+  });
+
+  it('falls back to the defaults for a blob from before the detector changed', () => {
+    // The old shape stored an absolute dBFS trigger level, which the gate has
+    // no meaning for (#346). There is nothing to carry over.
+    expect(normalizeIpscSettings({ thresholdDb: -22 })).toMatchObject({
+      triggerExcessDb: DEFAULT_IPSC_SETTINGS.triggerExcessDb,
+      maxEventMs: DEFAULT_IPSC_SETTINGS.maxEventMs,
+    });
   });
 
   it('never lets the high delay thumb end up below the low one', () => {
@@ -113,7 +140,8 @@ describe('ipscConfigFromSettings', () => {
     expect(
       ipscConfigFromSettings(
         {
-          thresholdDb: -30,
+          triggerExcessDb: 14,
+          maxEventMs: 40,
           delayMinSeconds: 1.5,
           delayMaxSeconds: 4,
           parSeconds: 2.5,
@@ -128,7 +156,8 @@ describe('ipscConfigFromSettings', () => {
       randomDelay: { minMs: 1_500, maxMs: 4_000 },
       parMs: 2_500,
       autoStopSilenceMs: 10_000,
-      thresholdDb: -30,
+      triggerExcessDb: 14,
+      maxEventMs: 40,
     });
   });
 
