@@ -63,6 +63,27 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_004
+    title: A fält round is ranked by hits, figures and poäng, in SHB's order
+    significance: shall
+    description: >-
+      For a fältskjutning round the app shall report hits, figures hit and any
+      poängmål points as separate quantities, shall give a poängfält result as
+      one point per hit plus one per hit figure, and shall order two rounds by
+      SHB's särskiljning sequence — in vanlig fält hits, then figures hit, then
+      poängmål points, then a countback from the last station on hits; in
+      poängfält points, then poängmål points, then a countback from the last
+      station on hits plus figures — leaving two rounds it cannot separate
+      sharing a placement.
+    rationale: >-
+      Fält's result is two numbers and its tie-break is a different sequence in
+      each of its two result modes (SHB 2026 D.6.11 p. 95, D.6.11.2.1.1 p. 95,
+      D.6.11.2.1.2 p. 96). Ranking by the wrong term, or folding the poängmål's
+      ring points into the poängfält sum, silently changes who placed where.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall

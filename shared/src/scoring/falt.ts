@@ -112,6 +112,8 @@ function compareCountback(
  *
  * A round with no poängmål compares as 0 points, so it neither gains nor
  * loses against one that shot a designated figure and scored nothing.
+ *
+ * @Requirements SCORE_004
  */
 export function compareFaltResults(
   a: readonly FaltStation[],

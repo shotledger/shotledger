@@ -49,7 +49,9 @@ describe('faltResult (spec F1-F5)', () => {
     expect(() => faltResult([station(3, -1)])).toThrow(
       /: figuresHit must be an integer 0-3, got -1/u,
     );
-    expect(() => faltResult([station(3, 4)])).toThrow(/: figuresHit must be an integer 0-3, got 4/u);
+    expect(() => faltResult([station(3, 4)])).toThrow(
+      /: figuresHit must be an integer 0-3, got 4/u,
+    );
     expect(() => faltResult([station(3, 1.5)])).toThrow(
       /: figuresHit must be an integer 0-3, got 1.5/u,
     );
@@ -215,4 +217,32 @@ describe('sorting and algebra (spec F16-F17)', () => {
       }),
     );
   });
+});
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_004
+ */
+it('ranks a f\u00e4lt round by hits, figures and po\u00e4ng in SHB\u2019s order', () => {
+  const round = [station(6, 2, 8), station(4, 3), station(5, 2)];
+  expect(faltResult(round)).toEqual({
+    stationCount: 3,
+    hits: 15,
+    figuresHit: 7,
+    ringedFigurePoints: 8,
+  });
+  // Po\u00e4ngf\u00e4lt: one point per hit and one per hit figure, and the po\u00e4ngm\u00e5l's
+  // ring points stay out of it (D.6.11 p. 95).
+  expect(poangfaltPoints(faltResult(round))).toBe(22);
+
+  const fewerHits = [station(5, 3), station(4, 3), station(5, 2)]; // 14 hits, 8 figures
+  // Vanlig f\u00e4lt takes hits first; po\u00e4ngf\u00e4lt sums them, and 22 = 22 sends it
+  // to the po\u00e4ngm\u00e5l instead.
+  expect(compareFaltResults(round, fewerHits, 'falt')).toBeLessThan(0);
+  expect(compareFaltResults(round, fewerHits, 'poangfalt')).toBeLessThan(0);
+  expect(compareFaltResults(fewerHits, round, 'poangfalt')).toBeGreaterThan(0);
+  // Nothing left to separate them with: the same placement, not a coin toss.
+  expect(compareFaltResults(round, [...round], 'falt')).toBe(0);
 });
