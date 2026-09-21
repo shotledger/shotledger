@@ -697,6 +697,17 @@ describe('weaponGroupsForRegulations', () => {
   });
 });
 
+/**
+ * The first issue a discipline is refused for — code, path and message, so a
+ * refusal has to name the field the packager must fix, not merely happen.
+ */
+function refusal(raw: unknown): { code: string; path: readonly PropertyKey[]; message: string } {
+  const result = disciplineSchema.safeParse(raw);
+  if (result.success) throw new Error('expected the schema to reject this discipline');
+  const issue = result.error.issues[0]!;
+  return { code: issue.code, path: issue.path, message: issue.message };
+}
+
 describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () => {
   it('D1: the schema accepts scoring: hits, with no targetFace', () => {
     expect(() => disciplineSchema.parse(faltDisciplineJson)).not.toThrow();
@@ -704,20 +715,28 @@ describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () =
 
   it('D2: a rings discipline without a targetFace is rejected', () => {
     const { targetFace: _dropped, ...withoutFace } = precisionDisciplineJson;
-    expect(() => disciplineSchema.parse(withoutFace)).toThrow(/targetFace/u);
+    expect(refusal(withoutFace)).toEqual({
+      code: 'custom',
+      path: ['targetFace'],
+      message: 'a rings discipline must name its targetFace',
+    });
   });
 
   it('D3: a hits discipline WITH a targetFace is rejected', () => {
     // Fält has a figure catalogue (D.7.1 pp. 99-109), not one face.
-    expect(() =>
-      disciplineSchema.parse({ ...faltDisciplineJson, targetFace: 'spsf-falt-c30' }),
-    ).toThrow(/targetFace/u);
+    expect(refusal({ ...faltDisciplineJson, targetFace: 'spsf-falt-c30' })).toEqual({
+      code: 'custom',
+      path: ['targetFace'],
+      message: 'a hits discipline has no single targetFace',
+    });
   });
 
   it('D4: a hits discipline cannot allow decimals', () => {
-    expect(() => disciplineSchema.parse({ ...faltDisciplineJson, allowsDecimal: true })).toThrow(
-      /allowsDecimal/u,
-    );
+    expect(refusal({ ...faltDisciplineJson, allowsDecimal: true })).toEqual({
+      code: 'custom',
+      path: ['allowsDecimal'],
+      message: 'a hits discipline has no ring value to score decimally',
+    });
   });
 
   it('D5: spsf-falt is registered with the SHB Del D shape', () => {
