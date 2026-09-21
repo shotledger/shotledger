@@ -6,12 +6,12 @@
   },
   {
     "name": "@expo-google-fonts/material-symbols",
-    "version": "0.4.47",
+    "version": "0.4.48",
     "license": "MIT AND Apache-2.0"
   },
   {
     "name": "@expo/cli",
-    "version": "57.0.24",
+    "version": "57.0.26",
     "license": "MIT"
   },
   {
@@ -21,12 +21,12 @@
   },
   {
     "name": "@expo/metro-runtime",
-    "version": "57.0.15",
+    "version": "57.0.16",
     "license": "MIT"
   },
   {
     "name": "@expo/ui",
-    "version": "57.0.18",
+    "version": "57.0.19",
     "license": "MIT"
   },
   {
@@ -141,7 +141,7 @@
   },
   {
     "name": "expo",
-    "version": "57.0.22",
+    "version": "57.0.24",
     "license": "MIT"
   },
   {
@@ -151,7 +151,7 @@
   },
   {
     "name": "expo-asset",
-    "version": "57.0.17",
+    "version": "57.0.18",
     "license": "MIT"
   },
   {
@@ -161,12 +161,12 @@
   },
   {
     "name": "expo-calendar",
-    "version": "57.0.3",
+    "version": "57.0.4",
     "license": "MIT"
   },
   {
     "name": "expo-constants",
-    "version": "57.0.18",
+    "version": "57.0.19",
     "license": "MIT"
   },
   {
@@ -201,12 +201,12 @@
   },
   {
     "name": "expo-image-manipulator",
-    "version": "57.0.17",
+    "version": "57.0.19",
     "license": "MIT"
   },
   {
     "name": "expo-image-picker",
-    "version": "57.0.17",
+    "version": "57.0.19",
     "license": "MIT"
   },
   {
@@ -226,7 +226,7 @@
   },
   {
     "name": "expo-location",
-    "version": "57.0.17",
+    "version": "57.0.19",
     "license": "MIT"
   },
   {
@@ -236,7 +236,7 @@
   },
   {
     "name": "expo-notifications",
-    "version": "57.0.18",
+    "version": "57.0.20",
     "license": "MIT"
   },
   {
@@ -246,7 +246,7 @@
   },
   {
     "name": "expo-router",
-    "version": "57.0.21",
+    "version": "57.0.22",
     "license": "MIT"
   },
   {
@@ -256,7 +256,7 @@
   },
   {
     "name": "expo-sharing",
-    "version": "57.0.19",
+    "version": "57.0.21",
     "license": "MIT"
   },
   {

@@ -241,9 +241,14 @@ kill-server && adb start-server` before retrying. This sandbox's
 i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
 && (cd app && pnpm exec jest --passWithNoTests)`), run from the repo root.
   `pnpm licenses:check` (`scripts/generate-licenses.mjs --check`) is a cheap
-  invariant gate on the committed `app/src/constants/licenses.json` (~30 ms:
+  invariant gate on the committed `app/src/constants/licenses.json` (~200 ms:
   parses, non-empty, every entry has name/version/license, sorted, no
-  duplicates, no build tooling). It does **not** regenerate — that is
+  duplicates, no build tooling, and every `name@version` still resolves in
+  `pnpm-lock.yaml` — a direct `app` dependency to exactly that version). So a
+  Renovate or lockfile-maintenance PR that moves a bundled version goes red
+  until someone regenerates on that branch (#385). What it cannot see is a
+  package newly entering the bundle without any listed version moving — that
+  is the residual case hard rule 2 still covers by hand. It does **not** regenerate — that is
   `pnpm licenses:generate`, which runs a real `expo export --source-maps` and
   derives the list from Metro's module graph (~3 s with a warm metro cache,
   ~20 s cold and ~3.5 CPU-minutes, plus ~20 MB of scratch in `$TMPDIR`), so it
