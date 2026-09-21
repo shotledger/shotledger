@@ -238,6 +238,22 @@ describe('standardMedalForSession', () => {
       }),
     ).toEqual({ grade: 'silver', silverThreshold: 330, bronsThreshold: 322 });
   });
+
+  it('N2 (#315): fält never earns a computed standardmedalj, at any score', () => {
+    // Placement only in fält — best 1/9 silver, best 1/3 brons (C.5.1.2 /
+    // C.5.1.2.1 p. 70). The fixed-points table is precision's alone, so the
+    // app records a fält medal and never derives one.
+    for (const totalPoints of [0, 40, 48, 60]) {
+      expect(
+        standardMedalPoints({
+          disciplineId: 'spsf-falt',
+          weaponGroup: 'spsf:C',
+          seriesCount: 8,
+          totalPoints,
+        }),
+      ).toEqual({ grade: null, silverThreshold: null, bronsThreshold: null });
+    }
+  });
 });
 
 /**

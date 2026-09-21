@@ -210,6 +210,16 @@ describe('allBadgeThresholds', () => {
   it('rejects an impossible birth year, same as badgeThreshold', () => {
     expect(() => allBadgeThresholds({ birthYear: 3000, year: 2026 })).toThrow(RangeError);
   });
+
+  it('N3 (#315): fält earns no guldserie — fältskyttemärket is its own märke', () => {
+    // Bilaga 1 mom 5.7.1: fältskyttemärket is per competition, with its own
+    // thresholds by vapengrupp and station count. Nothing about a fält
+    // station maps onto a 5-shot guldserie.
+    const falt = { weaponGroup: 'spsf:C', disciplineId: 'spsf-falt', seriesLength: 6, year: 2026 };
+    expect(goldSeriesThreshold(falt)).toBeNull();
+    expect(isGoldSeries(50, falt)).toBe(false);
+    expect(goldSeriesThreshold({ ...falt, seriesLength: 5 })).toBeNull();
+  });
 });
 
 /**

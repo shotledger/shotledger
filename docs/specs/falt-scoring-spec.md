@@ -38,8 +38,8 @@ inferred, and no regulatory value is invented.
    and — only where the arrangör designated a ringad figur / poängmål — points
    (D.6.10.1–2 p. 93).
 3. **Vanlig fält**: the result is "antal träff i antal figurer" — two numbers.
-   **Poängfält**: one sum, where *every hit gives one point and every hit
-   figure gives one point* (D.6.11 p. 95). The poängmål's ring points are a
+   **Poängfält**: one sum, where _every hit gives one point and every hit
+   figure gives one point_ (D.6.11 p. 95). The poängmål's ring points are a
    separate, tie-break-only quantity; they are **not** part of the poängfält
    sum.
 4. **Särskiljning, vanlig fält** (D.6.11.2.1.1 p. 95), on equal hits:
@@ -112,13 +112,13 @@ inferred, and no regulatory value is invented.
 **Tier 3.** Scoring is the app's high-stakes domain and the maintainer does not
 read this code. Failure model for this specific change:
 
-| Failure mode | Layer that catches it |
-| --- | --- |
-| A wrong tie-break order silently mis-ranks a competition | F6–F17 scenarios, one per SHB step, plus a property that the comparator is a total preorder |
-| Poängfält's sum quietly includes poängmål ring points | F3, F12 (distinct quantities asserted separately) |
-| A hits discipline leaks into a rings code path (ring keypad, ShotLog import, märke, standardmedalj) | N1–N3 regression tests |
-| An invalid station (7 hits, figures > hits) scores rather than failing loudly | F5 — fails closed, throws |
-| Existing rings disciplines change shape | N4 + the whole existing suite |
+| Failure mode                                                                                        | Layer that catches it                                                                       |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| A wrong tie-break order silently mis-ranks a competition                                            | F6–F17 scenarios, one per SHB step, plus a property that the comparator is a total preorder |
+| Poängfält's sum quietly includes poängmål ring points                                               | F3, F12 (distinct quantities asserted separately)                                           |
+| A hits discipline leaks into a rings code path (ring keypad, ShotLog import, märke, standardmedalj) | N1–N3 regression tests                                                                      |
+| An invalid station (7 hits, figures > hits) scores rather than failing loudly                       | F5 — fails closed, throws                                                                   |
+| Existing rings disciplines change shape                                                             | N4 + the whole existing suite                                                               |
 
 ## Behaviors — `shared/src/scoring/falt.ts`
 
@@ -126,10 +126,10 @@ read this code. Failure model for this specific change:
 (null = this station had no poängmål).
 
 - **F1** `faltResult([])` → `{ stationCount: 0, hits: 0, figuresHit: 0,
-  ringedFigurePoints: null }`.
+ringedFigurePoints: null }`.
 - **F2** `faltResult` sums hits, figures and station count:
   `[{6,2,null},{4,3,null},{0,0,null}]` → `{ stationCount: 3, hits: 10,
-  figuresHit: 5, ringedFigurePoints: null }`.
+figuresHit: 5, ringedFigurePoints: null }`.
 - **F3** `ringedFigurePoints` is the sum of the stations that carry points, and
   stays `null` when none does: `[{6,2,13},{4,3,null}]` → `13`.
 - **F4** `poangfaltPoints(result)` = hits + figuresHit (D.6.11 p. 95):

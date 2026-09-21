@@ -14,10 +14,10 @@ import {
   buildProgramSkeleton,
   decimalAllowed,
   defaultSessionName,
-  DISCIPLINES,
   disciplinesForRegulations,
   programsForDiscipline,
   requireDiscipline,
+  ringScoringDisciplines,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
   formatShooterClass,
@@ -75,7 +75,7 @@ const NO_PROGRAM = 'none';
  * is far more likely shooting luftpistol — an ISSF definition, listed first.
  */
 function firstDisciplineFor(regulationId: string): string | undefined {
-  const available = disciplinesForRegulations([regulationId]);
+  const available = ringScoringDisciplines(disciplinesForRegulations([regulationId]));
   return (available.find((d) => d.federation !== 'generic') ?? available[0])?.id;
 }
 
@@ -164,9 +164,11 @@ export default function NewSessionScreen() {
   // Generic disciplines survive every filter (ADR 0011), so free training is
   // reachable whichever regelverk is selected — and with none enabled, the
   // unknown id filters to exactly those.
-  const availableDisciplines = disciplinesForRegulations([regulationId]);
+  // Ring disciplines only: fält is registered but has no station entry UI
+  // yet (#315), so offering it would create a session nobody can score.
+  const availableDisciplines = ringScoringDisciplines(disciplinesForRegulations([regulationId]));
   const disciplineIdInitial =
-    firstDisciplineFor(regulationId) ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
+    firstDisciplineFor(regulationId) ?? ringScoringDisciplines()[0]?.id ?? 'spsf-precision';
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(NO_PROGRAM);
   const [level, setLevel] = useState<CompetitionLevel>('forening');

@@ -2,6 +2,7 @@
 // data layer). Scenario ids (G1…G18) map 1:1 to the spec table.
 import { describe, expect, it } from 'vitest';
 
+import faltDisciplineJson from './definitions/spsf-falt.json';
 import precisionDisciplineJson from './definitions/spsf-precision.json';
 import milsnabbProgramJson from './programs/spsf-milsnabb.json';
 import {
@@ -21,6 +22,7 @@ import {
   programsForDiscipline,
   requireDiscipline,
   resolveWeaponGroupIds,
+  ringScoringDisciplines,
   scoringModeFor,
   selectableWeaponGroups,
   disciplinesForRegulations,
@@ -76,6 +78,7 @@ describe('data validation (spec G1-G4)', () => {
       'issf-rapid-fire-pistol',
       'issf-sport-pistol',
       'issf-standard-pistol',
+      'spsf-falt',
       'spsf-milsnabb',
       'spsf-precision',
       'svsf-snabbluftpistol',
@@ -691,5 +694,79 @@ describe('weaponGroupsForRegulations', () => {
     const ids = weaponGroupsForRegulations(['spsf']).map((g) => g.id);
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () => {
+  it('D1: the schema accepts scoring: hits, with no targetFace', () => {
+    expect(() => disciplineSchema.parse(faltDisciplineJson)).not.toThrow();
+  });
+
+  it('D2: a rings discipline without a targetFace is rejected', () => {
+    const { targetFace: _dropped, ...withoutFace } = precisionDisciplineJson;
+    expect(() => disciplineSchema.parse(withoutFace)).toThrow(/targetFace/u);
+  });
+
+  it('D3: a hits discipline WITH a targetFace is rejected', () => {
+    // Fält has a figure catalogue (D.7.1 pp. 99-109), not one face.
+    expect(() =>
+      disciplineSchema.parse({ ...faltDisciplineJson, targetFace: 'spsf-falt-c30' }),
+    ).toThrow(/targetFace/u);
+  });
+
+  it('D4: a hits discipline cannot allow decimals', () => {
+    expect(() => disciplineSchema.parse({ ...faltDisciplineJson, allowsDecimal: true })).toThrow(
+      /allowsDecimal/u,
+    );
+  });
+
+  it('D5: spsf-falt is registered with the SHB Del D shape', () => {
+    const falt = requireDiscipline('spsf-falt');
+    expect(falt).toMatchObject({
+      federation: 'SPSF',
+      scoring: 'hits',
+      // Six shots at every station (D.6.4 p. 91).
+      defaultSeriesLength: 6,
+      allowsDecimal: false,
+    });
+    expect(falt.targetFace).toBeUndefined();
+    expect(falt.name).toEqual({ sv: 'Fältskjutning', en: 'Field Shooting' });
+    // A, A optisk, B, C, R -- R exists here where precision has none
+    // (D.4 pp. 82-86; C.5.1.1.2 p. 69).
+    expect(weaponGroupsForDiscipline('spsf-falt').map((g) => g.id)).toEqual([
+      'spsf:A',
+      'spsf:A-opt',
+      'spsf:B',
+      'spsf:C',
+      'spsf:R',
+    ]);
+  });
+
+  it('D6: fält ships no program -- the station count belongs to the competition', () => {
+    expect(programsForDiscipline('spsf-falt')).toEqual([]);
+  });
+
+  it('D7: ringScoringDisciplines keeps the rings members, in order', () => {
+    const ids = ringScoringDisciplines().map((d) => d.id);
+    expect(ids).not.toContain('spsf-falt');
+    expect(ids).toEqual(DISCIPLINES.filter((d) => d.scoring === 'rings').map((d) => d.id));
+    expect(ringScoringDisciplines([requireDiscipline('spsf-falt')])).toEqual([]);
+  });
+
+  it('N1: the new-session picker offers exactly what it did before fält', () => {
+    // Registered is not the same as enterable: there is no station entry UI
+    // yet (#315), and a session nobody can score is worse than none.
+    for (const regulation of [[], ['spsf'], ['issf'], ['svsf'], ['spsf', 'svsf']]) {
+      const offered = ringScoringDisciplines(disciplinesForRegulations(regulation)).map(
+        (d) => d.id,
+      );
+      expect(offered).not.toContain('spsf-falt');
+      expect(offered).toEqual(
+        disciplinesForRegulations(regulation)
+          .filter((d) => d.id !== 'spsf-falt')
+          .map((d) => d.id),
+      );
+    }
+    expect(disciplinesForRegulations(['spsf']).map((d) => d.id)).toContain('spsf-falt');
   });
 });
