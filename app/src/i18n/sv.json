@@ -731,11 +731,13 @@
   "discipline": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch",
+    "spsf-magnumprecision": "Magnumprecision",
     "generic-rings": "Träning (ringtavla)"
   },
   "program": {
     "spsf-precision": "Precision",
-    "spsf-milsnabb": "Militär snabbmatch"
+    "spsf-milsnabb": "Militär snabbmatch",
+    "spsf-magnumprecision": "Magnumprecision"
   },
   "webshooter": {
     "sectionTitle": "Webshooter",

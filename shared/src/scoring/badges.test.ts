@@ -142,6 +142,35 @@ describe('goldSeriesThreshold (spec M8-M12)', () => {
     expect(goldSeriesThreshold(precision({ weaponGroup: 'spsf:R' }))).toBeNull();
     expect(goldSeriesThreshold(precision({ weaponGroup: null }))).toBeNull();
   });
+
+  // Magnumprecision — spec docs/specs/magnumprecision-spec.md MP17/MP18.
+  // Regression armor for a regulatory absence rather than new behaviour: the
+  // pistolskyttemärke precision series is 25 m in vapengrupp A/B/C (SHB
+  // Bilaga 1 mom 5.1.1.1 p. 452). There is no M row and no 50 m variant, so
+  // adding the discipline must not start producing a guldserie for it.
+  it('MP17/MP18: magnumprecision earns no guldserie in any magnum group', () => {
+    for (const weaponGroup of [
+      'spsf:M1',
+      'spsf:M2',
+      'spsf:M3',
+      'spsf:M4',
+      'spsf:M5',
+      'spsf:M6',
+      'spsf:M7',
+      'spsf:M8',
+      'spsf:M9',
+    ]) {
+      expect(badgeGroupForWeaponGroup(weaponGroup)).toBeNull();
+      expect(
+        goldSeriesThreshold(precision({ disciplineId: 'spsf-magnumprecision', weaponGroup })),
+      ).toBeNull();
+      expect(
+        goldSeriesThreshold(
+          precision({ disciplineId: 'spsf-magnumprecision', weaponGroup, birthYear: 1950 }),
+        ),
+      ).toBeNull();
+    }
+  });
 });
 
 describe('isGoldSeries (spec M8)', () => {

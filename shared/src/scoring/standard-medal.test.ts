@@ -264,6 +264,115 @@ describe('standardMedalForSession', () => {
   });
 });
 
+// Magnumprecision — executable spec: docs/specs/magnumprecision-spec.md,
+// scenarios MP9-MP16. Thresholds: SHB 2026 C.5.1.2.4 p. 71, which prints one
+// unlabelled pair per vapengrupp; C.5.1 p. 69 fixes the tävlingsomfattning at
+// six 5-shot series, so that is the only series count they are stated for.
+describe('standardMedalPoints — magnumprecision (SHB C.5.1.2.4 p. 71)', () => {
+  const magnum = (weaponGroup: string, totalPoints: number, seriesCount = 6) =>
+    standardMedalPoints({
+      disciplineId: 'spsf-magnumprecision',
+      weaponGroup,
+      seriesCount,
+      totalPoints,
+    });
+
+  const NONE = { grade: null, silverThreshold: null, bronsThreshold: null };
+
+  it('MP9: M1-M4 and M8 — silver 282, brons 274', () => {
+    for (const group of ['spsf:M1', 'spsf:M2', 'spsf:M3', 'spsf:M4', 'spsf:M8']) {
+      expect(magnum(group, 282)).toEqual({
+        grade: 'silver',
+        silverThreshold: 282,
+        bronsThreshold: 274,
+      });
+      expect(magnum(group, 281).grade).toBe('brons');
+      expect(magnum(group, 274).grade).toBe('brons');
+      expect(magnum(group, 273).grade).toBeNull();
+    }
+  });
+
+  it('MP10: M5 (frigrupp) — silver 294, brons 288', () => {
+    expect(magnum('spsf:M5', 294)).toEqual({
+      grade: 'silver',
+      silverThreshold: 294,
+      bronsThreshold: 288,
+    });
+    expect(magnum('spsf:M5', 293).grade).toBe('brons');
+    expect(magnum('spsf:M5', 288).grade).toBe('brons');
+    expect(magnum('spsf:M5', 287).grade).toBeNull();
+  });
+
+  it('MP11: M6, M7 and M9 — silver 270, brons 253', () => {
+    for (const group of ['spsf:M6', 'spsf:M7', 'spsf:M9']) {
+      expect(magnum(group, 270)).toEqual({
+        grade: 'silver',
+        silverThreshold: 270,
+        bronsThreshold: 253,
+      });
+      expect(magnum(group, 269).grade).toBe('brons');
+      expect(magnum(group, 253).grade).toBe('brons');
+      expect(magnum(group, 252).grade).toBeNull();
+    }
+  });
+
+  it('MP12: any series count but six yields no threshold at all', () => {
+    // SHB states the fixed pairs for the six-series omfattning only and gives
+    // magnumprecision no scaling rule (unlike precision's C.5.1.2.3). Nothing
+    // is extrapolated — see the spec's VERIFY on this.
+    for (const seriesCount of [1, 5, 7, 10, 12]) {
+      expect(magnum('spsf:M1', 400, seriesCount)).toEqual(NONE);
+    }
+  });
+
+  it('MP13: a non-magnum weapon group on magnumprecision yields nothing', () => {
+    expect(magnum('spsf:C', 300)).toEqual(NONE);
+    expect(magnum('spsf:A', 300)).toEqual(NONE);
+    expect(
+      standardMedalPoints({
+        disciplineId: 'spsf-magnumprecision',
+        seriesCount: 6,
+        totalPoints: 300,
+      }),
+    ).toEqual(NONE);
+  });
+
+  it('MP14: the magnum table never leaks into another discipline', () => {
+    // 'generic-rings' and the unknown id fall past every branch, so they also
+    // pin that the magnum branch is reached by its discipline check and not
+    // by being last — a mutation survivor before this line existed.
+    for (const disciplineId of [
+      'spsf-precision',
+      'spsf-milsnabb',
+      'generic-rings',
+      'issf-air-pistol',
+    ]) {
+      expect(
+        standardMedalPoints({
+          disciplineId,
+          weaponGroup: 'spsf:M5',
+          seriesCount: 6,
+          totalPoints: 300,
+        }),
+      ).toEqual(NONE);
+    }
+  });
+
+  it('MP15: standardMedalForSession routes magnumprecision through the total', () => {
+    expect(
+      standardMedalForSession({
+        disciplineId: 'spsf-magnumprecision',
+        weaponGroup: 'spsf:M5',
+        hasFinal: false,
+        beforeFinalSeriesCount: 6,
+        beforeFinalTenths: 2940,
+        totalSeriesCount: 6,
+        totalTenths: 2940,
+      }),
+    ).toEqual({ grade: 'silver', silverThreshold: 294, bronsThreshold: 288 });
+  });
+});
+
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see
  * the convention in ADR 0015.

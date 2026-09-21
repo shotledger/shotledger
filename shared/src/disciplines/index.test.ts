@@ -79,6 +79,7 @@ describe('data validation (spec G1-G4)', () => {
       'issf-sport-pistol',
       'issf-standard-pistol',
       'spsf-falt',
+      'spsf-magnumprecision',
       'spsf-milsnabb',
       'spsf-precision',
       'svsf-snabbluftpistol',
@@ -362,14 +363,14 @@ describe('weapon groups and classes (spec G10-G14)', () => {
     ]);
   });
 
-  it('selectableWeaponGroups omits magnum groups no discipline declares', () => {
-    // M1-M9 belong to Magnumprecision (SHB Part G), which this app does not
-    // implement yet. They stay defined in the taxonomy but must not be
-    // offered where a session cannot follow.
+  it('selectableWeaponGroups offers only groups a session can follow', () => {
+    // The rule is "reachable through a shipped discipline", not a hard-coded
+    // list: M1-M9 were excluded until Magnumprecision (SHB Del G) declared
+    // them, and appeared with no change here. See spec MP3.
     const ids = selectableWeaponGroups().map((g) => g.id);
     expect(ids).toContain('spsf:A-opt');
     expect(ids).toContain('generic:airgun');
-    expect(ids.filter((id) => /^spsf:M\d$/.test(id))).toEqual([]);
+    expect(ids.filter((id) => /^spsf:M\d$/.test(id))).toHaveLength(9);
   });
 
   it('selectableWeaponGroups is the union of the disciplines, without duplicates', () => {
@@ -787,5 +788,89 @@ describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () =
       );
     }
     expect(disciplinesForRegulations(['spsf']).map((d) => d.id)).toContain('spsf-falt');
+  });
+});
+
+// Magnumprecision (SHB Del G) — executable spec:
+// docs/specs/magnumprecision-spec.md, scenarios MP1-MP8.
+describe('Magnumprecision (SHB Del G, spec MP1-MP8)', () => {
+  const MAGNUM_GROUP_IDS = [
+    'spsf:M1',
+    'spsf:M2',
+    'spsf:M3',
+    'spsf:M4',
+    'spsf:M5',
+    'spsf:M6',
+    'spsf:M7',
+    'spsf:M8',
+    'spsf:M9',
+  ];
+
+  it('MP1: the discipline is registered with Part G’s own values', () => {
+    const discipline = requireDiscipline('spsf-magnumprecision');
+
+    expect(discipline.federation).toBe('SPSF');
+    // G.7.1 p. 205: "Magnumprecision genomförs mot Pistoltavla 25 m
+    // precision" — the same face as F.7.1, shot at 50 m (G.7.2 p. 206).
+    expect(discipline.targetFace).toBe('spsf-pistol-25m-precision');
+    // G.6.4 p. 200: five shots per series.
+    expect(discipline.defaultSeriesLength).toBe(5);
+    expect(discipline.scoring).toBe('rings');
+    expect(discipline.allowsDecimal).toBe(false);
+  });
+
+  it('MP2: declares exactly the nine magnum vapengrupper (G.4.1 pp. 196-197)', () => {
+    expect(weaponGroupsForDiscipline('spsf-magnumprecision').map((g) => g.id)).toEqual(
+      MAGNUM_GROUP_IDS,
+    );
+  });
+
+  it('MP3: the magnum groups become selectable on the firearm form', () => {
+    // Issue #82's mechanism: selectableWeaponGroups() derives from the
+    // shipped disciplines, so declaring M1-M9 is all that is needed.
+    const ids = selectableWeaponGroups().map((g) => g.id);
+
+    for (const id of MAGNUM_GROUP_IDS) expect(ids).toContain(id);
+  });
+
+  it('MP4: the magnum groups follow the SPSF regulation switch', () => {
+    const spsfIds = weaponGroupsForRegulations(['spsf']).map((g) => g.id);
+    const issfIds = weaponGroupsForRegulations(['issf']).map((g) => g.id);
+
+    for (const id of MAGNUM_GROUP_IDS) {
+      expect(spsfIds).toContain(id);
+      expect(issfIds).not.toContain(id);
+    }
+  });
+
+  it('MP5: the program is freeform — G.6.1 says "minst sex" serier', () => {
+    const programs = programsForDiscipline('spsf-magnumprecision');
+
+    expect(programs).toHaveLength(1);
+    const program = programs[0]!;
+    expect(program.id).toBe('spsf-magnumprecision');
+    expect(program.shotsPerSeries).toBe(5);
+    expect(program.scoring).toBe('integer');
+    // G.1.2 p. 192 "Ej tillämpligt": Part G has no final; a tie goes to
+    // särskjutning (G.6.11.3 p. 204).
+    expect(program.supportsFinal).toBe(false);
+    expect(program.structure).toBeUndefined();
+  });
+
+  it('MP6: a freeform program pre-creates no series', () => {
+    expect(buildProgramSkeleton(programsForDiscipline('spsf-magnumprecision')[0]!)).toEqual([]);
+  });
+
+  it('MP7: magnumprecision has no klassindelning (G.2.1 p. 193)', () => {
+    expect(shooterClassesForDiscipline('spsf-magnumprecision')).toEqual([]);
+    // The other two SPSF disciplines keep theirs — the absence is specific.
+    expect(shooterClassesForDiscipline('spsf-precision').length).toBeGreaterThan(0);
+    expect(shooterClassesForDiscipline('spsf-milsnabb').length).toBeGreaterThan(0);
+  });
+
+  it('MP8: reuses the precision target face rather than adding one', () => {
+    expect(getDiscipline('spsf-magnumprecision')?.targetFace).toBe(
+      getDiscipline('spsf-precision')?.targetFace,
+    );
   });
 });

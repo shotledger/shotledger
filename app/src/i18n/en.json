@@ -731,11 +731,13 @@
   "discipline": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire",
+    "spsf-magnumprecision": "Magnumprecision",
     "generic-rings": "Practice (Ring Target)"
   },
   "program": {
     "spsf-precision": "Precision",
-    "spsf-milsnabb": "Military Rapid Fire"
+    "spsf-milsnabb": "Military Rapid Fire",
+    "spsf-magnumprecision": "Magnumprecision"
   },
   "webshooter": {
     "sectionTitle": "Webshooter",

@@ -17,7 +17,7 @@ reglemente du väljer.
 
 | Reglemente                                         | Vad det omfattar                                                                                                                                           |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch och vapengrupperna (en _weapon groups_) A/B/C/R. På som standard.                                                            |
+| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, magnumprecision och vapengrupperna (en _weapon groups_) A/B/C/R och M1–M9. På som standard.                                 |
 | **ISSF** — International Shooting Sport Federation | De internationella grenarna: luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och grovpistol.                                               |
 | **SvSF** — Svenska Skyttesportförbundet            | Svensk nationell tävling: ISSF:s grenar, plus SvSF:s egna — snabbluftpistol samt de öppna klasser, juniorklasser och herrklasser som skjuts vid SM och DM. |
 
@@ -31,6 +31,7 @@ SvSF — den läggs aldrig in två gånger.
 | ------------------- | ---- | ---- | ---- | ------------- | ---------------------------------------------- |
 | Precision           | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
 | Militär snabbmatch  | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
+| Magnumprecision     | ✓    |      |      | SPSF          | Endast vapengrupp — ingen klass                |
 | Luftpistol          |      | ✓    | ✓    | ISSF          | Tävlingsklass                                  |
 | Sportpistol         |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Herr)          |
 | Standardpistol      |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Junior)        |

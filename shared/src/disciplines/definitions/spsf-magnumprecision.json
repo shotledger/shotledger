@@ -1,0 +1,23 @@
+{
+  "id": "spsf-magnumprecision",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Magnumprecision",
+    "en": "Magnumprecision"
+  },
+  "targetFace": "spsf-pistol-25m-precision",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": [
+    "spsf:M1",
+    "spsf:M2",
+    "spsf:M3",
+    "spsf:M4",
+    "spsf:M5",
+    "spsf:M6",
+    "spsf:M7",
+    "spsf:M8",
+    "spsf:M9"
+  ]
+}

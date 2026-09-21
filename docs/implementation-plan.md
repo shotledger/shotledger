@@ -739,6 +739,14 @@ name: {sv,en}, targetFace?, defaultSeriesLength, scoring:
 ring-scoring for free training. Community adds disciplines via PR once
 public.
 
+**Added 2026-09-21 (issue #83):** SPSF magnumprecision (SHB Del G), which
+shares the precision target face — G.7.1 p. 205 shoots "Pistoltavla 25 m
+precision" at 50 m (G.7.2 p. 206) — and is the discipline that makes the
+already-defined vapengrupper `M1`–`M9` reachable.
+**Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
+25m standard, 50m pistol — defaults need VERIFY then). Community adds
+disciplines via PR once public.
+
 - [x] **`scoring: 'hits'` and the fältskjutning definition** (#315,
       ADR 0016). `targetFace` is rings-only — a fält round is shot
       against Del D's figure catalogue, not one face — and `spsf-falt`
@@ -804,10 +812,11 @@ scope and filter position. See `docs/specs/sighters-in-statistics-spec.md`.
 v1 predefined programs (defaults marked VERIFY must be confirmed by the
 maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 
-| id               | Federation | Name (sv)          | Defaults                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------------- | ---------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `spsf-precision` | SPSF       | Precision          | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
-| `spsf-milsnabb`  | SPSF       | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R                                                                                                                                                                                      |
+| id                     | Federation | Name (sv)          | Defaults                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------- | ---------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `spsf-precision`       | SPSF       | Precision          | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
+| `spsf-milsnabb`        | SPSF       | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R                                                                                                                                                                                      |
+| `spsf-magnumprecision` | SPSF       | Magnumprecision    | 5 shots/series (G.6.4 p. 200), integer, **no final** (G.1.2 p. 192 "Ej tillämpligt"; ties go to särskjutning, G.6.11.3 p. 204), freeform — G.6.1 p. 199 says "i regel minst sex (6) serier". 5 min per series (G.6.5 p. 200), one 5-shot sighter within 5 min (G.6.6.2 p. 200). Vapengrupper M1–M9; **no klassindelning at all** (G.2.1 p. 193)                          |
 
 ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
 pistol) are **v2** — their defaults carry VERIFY items to resolve then.

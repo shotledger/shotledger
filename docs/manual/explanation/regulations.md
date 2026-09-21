@@ -17,7 +17,7 @@ regulation you pick.
 
 | Regulation                                         | What it covers                                                                                                                            |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, and the weapon groups (sv _vapengrupper_) A/B/C/R. On by default.                                          |
+| **SPSF** — Svenska Pistolskytteförbundet           | Precision, militär snabbmatch, Magnumprecision, and the weapon groups (sv _vapengrupper_) A/B/C/R and M1–M9. On by default.               |
 | **ISSF** — International Shooting Sport Federation | The international events: air pistol, free pistol, sport pistol, standard pistol, rapid fire, centre fire.                                |
 | **SvSF** — Svenska Skyttesportförbundet            | Swedish national competition: ISSF's events, plus SvSF's own — snabbluftpistol, and the open, junior and men's classes shot at SM and DM. |
 
@@ -31,6 +31,7 @@ definition, reached through SvSF — it is never entered twice.
 | ------------------------------------------- | ---- | ---- | ---- | ---------- | ------------------------------- |
 | Precision                                   | ✓    |      |      | SPSF       | Weapon group and class          |
 | Military Rapid Fire                         | ✓    |      |      | SPSF       | Weapon group and class          |
+| Magnumprecision                             | ✓    |      |      | SPSF       | Weapon group only — no class    |
 | 10m Air Pistol                              |      | ✓    | ✓    | ISSF       | Event                           |
 | 25m Sport Pistol                            |      | ✓    | ✓    | ISSF       | Event (SvSF adds Men)           |
 | 25m Standard Pistol                         |      | ✓    | ✓    | ISSF       | Event (SvSF adds Junior)        |

@@ -73,8 +73,7 @@ import { deleteScannedImage } from '@/platform/text-recognition';
 import { Spacing } from '@/theme/tokens';
 
 /** Only groups a session can actually be logged under — see
- *  `selectableWeaponGroups`. Offering M1-M9 here would promise a
- *  Magnumprecision session the app cannot create yet. */
+ *  `selectableWeaponGroups`. */
 const ALL_GROUPS: readonly WeaponGroup[] = selectableWeaponGroups();
 
 /** ML Kit is a native module (platform/text-recognition.web.ts is a stub), so
