@@ -5,7 +5,11 @@ export interface QuotaCheckResult {
   reason?: 'quota_exceeded';
 }
 
-/** Boundary is inclusive: an upload that lands exactly at the limit is allowed. */
+/**
+ * Boundary is inclusive: an upload that lands exactly at the limit is allowed.
+ *
+ * @Requirements BACKEND_001
+ */
 export function checkQuota(
   usedBytes: number,
   limitBytes: number,
@@ -15,7 +19,11 @@ export function checkQuota(
   return allowed ? { allowed: true } : { allowed: false, reason: 'quota_exceeded' };
 }
 
-/** Fail-closed floor: usage can never be driven below 0, whatever the delta. */
+/**
+ * Fail-closed floor: usage can never be driven below 0, whatever the delta.
+ *
+ * @Requirements BACKEND_001
+ */
 export function applyQuotaDelta(usedBytes: number, deltaBytes: number): number {
   return Math.max(0, usedBytes + deltaBytes);
 }

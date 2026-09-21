@@ -299,6 +299,8 @@ export const EVENTS: readonly EventDefinition[] = [...ISSF_EVENTS, ...SVSF_EVENT
  * `regulationIds` narrows to the regelverk in play (`effectiveRegulationIds`):
  * a shooter under ISSF alone is not offered SvSF's open snabbpistol class.
  * Omitted, every regelverk's events are returned.
+ *
+ * @Requirements DISC_002
  */
 export function eventsForDiscipline(
   disciplineId: string,
@@ -328,6 +330,8 @@ export function categoryKey(category: EntryCategory): string {
  * One event by id, or `undefined` — a stored id may predate a definition
  * change. Searches every regelverk: a session keeps its event after the
  * shooter switches the regelverk off.
+ *
+ * @Requirements DISC_002
  */
 export function findEvent(id: string): EventDefinition | undefined {
   return EVENTS.find((event) => event.id === id);

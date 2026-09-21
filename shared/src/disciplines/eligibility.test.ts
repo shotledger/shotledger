@@ -132,3 +132,19 @@ describe('spsfEligibleClasses with a vapengrupp', () => {
     expect(spsfEligibleClasses(woman, 2026, null)).toEqual(['2', 'Dam2', 'VetY']);
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_DISC_001
+ */
+it('offers the klasser the shooter holds, and none that vapengrupp C does not allow', () => {
+  const her = profile({ birthYear: 1964, skillClass: '2', competesInWomensClasses: true });
+  // Vapengrupp C: her own klass, plus the dam and veteran ones she may enter.
+  expect(spsfEligibleClasses(her, 2026, 'spsf:C')).toEqual(['2', 'Dam2', 'VetY']);
+  // Dam/Jun/Vet exist in C only (SHB F.2.1 p. 163), so "A Dam 2" is not offered.
+  expect(spsfEligibleClasses(her, 2026, 'spsf:A')).toEqual(['2']);
+  // A klass carrying a skill level is only hers at HER level — never Dam 3.
+  expect(spsfEligibleClasses(her, 2026, 'spsf:C')).not.toContain('Dam3');
+});

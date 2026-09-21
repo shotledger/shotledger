@@ -429,3 +429,22 @@ describe('categoryKey', () => {
     expect(categoryKey({ gender: 'open', age: 'junior' })).toBe('openJunior');
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_DISC_002
+ */
+it('narrows events to the enabled regelverk while a stored event id still resolves', () => {
+  const svsfOpenRapidFire = eventId('issf-rapid-fire-pistol', OPEN_CATEGORY);
+  const issfOnly = eventsForDiscipline('issf-rapid-fire-pistol', [ISSF_REGULATION_ID]);
+  expect(issfOnly.map((event) => event.id)).not.toContain(svsfOpenRapidFire);
+  const withSvsf = eventsForDiscipline('issf-rapid-fire-pistol', [
+    ISSF_REGULATION_ID,
+    SVSF_REGULATION_ID,
+  ]);
+  expect(withSvsf.map((event) => event.id)).toContain(svsfOpenRapidFire);
+  // Switching SvSF off must not blank out a session already logged under it.
+  expect(findEvent(svsfOpenRapidFire)?.regulationId).toBe(SVSF_REGULATION_ID);
+});

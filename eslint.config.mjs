@@ -54,6 +54,8 @@ export default tseslint.config(
     // Node-run tooling scripts and jest mocks (not bundled by Metro).
     files: [
       'scripts/**/*.mjs',
+      // CommonJS because app/jest.config.js has to require it (ADR 0015).
+      'scripts/reqstool-stem.js',
       'app/scripts/**/*.js',
       'app/plugins/**/*.js',
       'app/**/__mocks__/**/*.js',

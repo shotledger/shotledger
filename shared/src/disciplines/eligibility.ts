@@ -171,6 +171,8 @@ export function isJunior(
  * Both veteran classes are offered from 70: F.2.10 defines Vet Y as everyone
  * "som under kalenderåret fyller 60 år eller mer" and Vet Ä as 70 or more, so
  * a 70-year-old is inside both definitions.
+ *
+ * @Requirements DISC_001
  */
 export function spsfEligibleClasses(
   profile: ShooterProfile,

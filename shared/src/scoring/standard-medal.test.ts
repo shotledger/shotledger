@@ -239,3 +239,27 @@ describe('standardMedalForSession', () => {
     ).toEqual({ grade: 'silver', silverThreshold: 330, bronsThreshold: 322 });
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_002
+ */
+it('judges the standardmedalj on the grundomgång, never on the after-final total', () => {
+  // 7 scored series in vapengrupp C: silver 330, brons 322 (C.5.1.2.3).
+  const base = {
+    disciplineId: 'spsf-precision',
+    weaponGroup: 'spsf:C',
+    beforeFinalSeriesCount: 7,
+    beforeFinalTenths: 3230,
+    totalSeriesCount: 7,
+    totalTenths: 3230,
+  };
+  expect(standardMedalForSession({ ...base, hasFinal: false }).grade).toBe('brons');
+  // A final adds points the medal must not see: the grundomgång is still 323.0.
+  expect(
+    standardMedalForSession({ ...base, hasFinal: true, totalSeriesCount: 8, totalTenths: 3330 })
+      .grade,
+  ).toBe('brons');
+});

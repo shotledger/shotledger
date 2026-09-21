@@ -277,6 +277,38 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
   (`pip install -r docs/requirements.txt`), which a code-only contributor has
   no reason to install.
 
+- **A fourth gate outside `pnpm check`: reqstool** (ADR 0015). CI runs
+  `pnpm reqstool:tags` then `pnpm reqstool:status` after `check`, and
+  `--check-all-reqs-met` fails the build on a requirement with no
+  implementation or whose verifying test did not pass. It needs the Python
+  client (`pipx install reqstool`), hence the same exemption as the docs gates.
+  Run it locally with `pnpm check` first — the status command matches against
+  the JUnit files both test runners write into `build/test-results/`, so it
+  reads stale results if the suites have not just run.
+
+  Adding a requirement means `docs/reqstool/requirements.yml` plus an SVC,
+  a `@Requirements` tag on the implementation and an `@SVCs` tag on the test —
+  **in the same branch as the change**, like the manual. Write the tag on the
+  function that actually implements or verifies the requirement, not on the
+  module or the wrapper around it; multiple ids on one tag are
+  **comma**-separated.
+
+  The tagged test keeps an ordinary prose title — both reporters sanitise the
+  JUnit name the way the scanner does — but it **must be top-level**, not
+  inside a `describe`, because the scanner records a nested `it` as
+  `<describe>_<it>` while the reporters emit only the leaf. A nested or
+  digit-initial tagged test fails **loudly** (`automated test missing`, CI
+  non-zero), so this is a rule to follow, not a trap to fear. `pnpm mutation`
+  overwrites the vitest JUnit file, so run `pnpm check` before `reqstool:status`.
+
+  ADR 0015 also sets what belongs in `requirements.yml` versus in
+  `docs/reference/`, `docs/specs/` and an ADR — read it before adding the first
+  requirement to a new area. The repo enables the **reqstool-ai** plugin
+  (`.claude/settings.json`), whose `reqstool-conventions` skill carries the
+  annotation, decomposition and build-config conventions; `.reqstool-ai.yaml`
+  configures it and `.mcp.json` wires the `reqstool mcp` server for querying.
+  Both need the client on PATH (`pipx install reqstool`, Python ≥ 3.13).
+
 - Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
   `pnpm coverage` (vitest + v8, 100% threshold on
   `shared/src/{scoring,disciplines}`, exits nonzero when missed),

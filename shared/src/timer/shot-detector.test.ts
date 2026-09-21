@@ -549,3 +549,26 @@ describe('IpscTimerEngine', () => {
     expect(DEFAULT_IPSC_CONFIG.randomDelay).toEqual({ minMs: 1_000, maxMs: 4_000 });
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_TIMER_001
+ */
+it('rejects a loud event for outlasting the gate or for swelling instead of cracking', () => {
+  // Loud enough to trigger, but it outlasts the gate — a door, not a shot.
+  const long = armed({ maxEventMs: 50 });
+  expect(feed(long, 2_000, [{ atMs: 500, durationMs: 300 }])).toHaveLength(0);
+  expect(long.getLastRejection()).toBe('tooLong');
+
+  // Same peak, reached in steps rather than in one window.
+  const swelling = armed();
+  const ramp: Impulse[] = [-40, -35, -30, -25, -20, -15, -10, BLAST_DB].map((peakDb, step) => ({
+    atMs: 500 + step * 10,
+    peakDb,
+    durationMs: 0,
+  }));
+  expect(feed(swelling, 1_000, ramp)).toHaveLength(0);
+  expect(swelling.getLastRejection()).toBe('tooSlowRise');
+});

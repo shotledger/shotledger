@@ -77,6 +77,8 @@ export function badgeThreshold(input: BadgeThresholdInput): number {
  * The guld ("guldserie") threshold for a given series, or null when the
  * märke requirement does not apply — a weapon group with no row (R, magnum,
  * airgun), a non-precision discipline, or a series that is not 5 shots.
+ *
+ * @Requirements SCORE_001
  */
 export function goldSeriesThreshold(input: SeriesThresholdInput): number | null {
   if (input.seriesLength !== MARKE_SERIES_LENGTH) return null;
@@ -91,7 +93,11 @@ export function goldSeriesThreshold(input: SeriesThresholdInput): number | null 
   });
 }
 
-/** True when a series score (in points) meets the guld requirement. */
+/**
+ * True when a series score (in points) meets the guld requirement.
+ *
+ * @Requirements SCORE_001
+ */
 export function isGoldSeries(points: number, input: SeriesThresholdInput): boolean {
   const threshold = goldSeriesThreshold(input);
   return threshold !== null && points >= threshold;

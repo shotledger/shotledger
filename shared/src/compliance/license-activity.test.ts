@@ -337,3 +337,53 @@ describe('skippedSessionCount (the honesty figure)', () => {
     expect(result.countedSessionCount).toBe(1);
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_COMPL_001
+ */
+it('counts only sessions inside the window, at their training or competition weight', () => {
+  const r: ComplianceRule = {
+    scope: 'shooter',
+    windowMonths: 6,
+    requiredActivities: 12,
+    countsAs: { training: 1, competition: 2 },
+  };
+  const sessions: ComplianceSession[] = [
+    { id: 'inside-training', startedAt: '2026-08-01T00:00:00Z', type: 'training' },
+    { id: 'inside-competition', startedAt: '2026-07-01T00:00:00Z', type: 'competition' },
+    // The boundary itself: 2026-03-01T00:00:00Z is the window start and counts.
+    { id: 'on-the-boundary', startedAt: '2026-03-01T00:00:00Z', type: 'training' },
+    // One millisecond earlier does not.
+    { id: 'just-outside', startedAt: '2026-02-28T23:59:59.999Z', type: 'training' },
+  ];
+  const activity = computeRuleLicenseActivity(sessions, r, NOW);
+  expect(activity.activityCount).toBe(4);
+  expect(activity.countedSessionCount).toBe(3);
+  expect(activity.windowStartIso).toBe('2026-03-01T00:00:00.000Z');
+});
+
+/**
+ * @SVCs SVC_COMPL_002
+ */
+it('applies a shooter-scope rule when no firearm has a vapengrupp', () => {
+  const profile: JurisdictionProfile = {
+    ...({} as JurisdictionProfile),
+    rules: [
+      {
+        scope: 'shooter',
+        windowMonths: 6,
+        requiredActivities: 12,
+        countsAs: { training: 1, competition: 1 },
+      },
+    ],
+  };
+  const sessions: ComplianceSession[] = [
+    { id: 'a', startedAt: '2026-08-01T00:00:00Z', type: 'training' },
+  ];
+  const overall = computeOverallLicenseActivity(sessions, profile, [], NOW);
+  expect(overall.statuses).toHaveLength(1);
+  expect(overall.statuses[0]!.activityCount).toBe(1);
+});

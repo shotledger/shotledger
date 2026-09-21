@@ -163,6 +163,8 @@ interface OpenEvent {
  * A shot is reported when its event *closes*, which is up to `maxEventMs`
  * after it began — but it is timestamped at its onset, so the split is the
  * moment of the blast and not the moment the gate finished deciding.
+ *
+ * @Requirements TIMER_001
  */
 export class ShotDetector {
   private readonly triggerExcessDb: number;

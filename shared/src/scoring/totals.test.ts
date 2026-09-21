@@ -423,3 +423,19 @@ describe('seriesInnerTenAverage (spec docs/specs/session-stats-inner-tens-spec.m
     );
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_003
+ */
+it('excludes a sighter from the scored result and counts its shots in volume', () => {
+  const shots = (n: number) => Array.from({ length: n }, () => ({ valueTenths: 100 }));
+  const series = [
+    { isSighter: true, isFinal: false, shots: shots(5) },
+    { isSighter: false, isFinal: false, shots: shots(5) },
+  ];
+  expect(sessionResults(series).totalTenths).toBe(500);
+  expect(shotVolume(series)).toBe(10);
+});
