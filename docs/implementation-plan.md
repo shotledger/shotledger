@@ -574,17 +574,19 @@ from §6.5 automatically).
       product decision) — a stored `settings.complianceProfile` row always
       overrides the default once set.
 - [x] PDF export (expo-print): shooting log for a chosen period/firearm —
-      layout: club-log style table (date, discipline, type, series count,
-      score, location) + summary header. `VERIFY:` layout against a real
-      föreningsintyg-attachment example from the maintainer.
+      layout: the five columns of the preprinted "Personlig skyttelogg" book
+      (Datum, Plats, Skytteaktivitet, Använt vapen, Uppg. styrkta av) +
+      summary header.
       — `shared/src/export/pdf-log.ts` (pure HTML builder, snapshot-tested) + `app/src/features/export/use-pdf-export.ts` (assembles it from the
       Stats screen's current period/firearm filters) +
       `app/src/platform/pdf-export.ts` (expo-print → expo-sharing share
       sheet). Wired to a new "Export PDF" button on `/stats`; verified on
       the `shotledger` AVD dev build — Android's native share sheet opened
-      with a generated `.pdf` file. The layout has **not** been checked
-      against a real föreningsintyg attachment — the module doc-comment and
-      this checklist both carry the VERIFY.
+      with a generated `.pdf` file. **The `VERIFY:` on the layout is
+      settled** (#308, PR #339, refined by #367): checked against real
+      completed föreningsintyg the maintainer supplied, which stay outside
+      the working tree. Two columns were added and two dropped as a result —
+      the reasoning is in the `pdf-log.ts` doc-comment.
 - [x] FAP 551-3 activity numbers settled and the two cases modeled
       (branch `fix/compliance-fap551-numbers`) — window 6 months;
       **12** activities for FAP 551-3 5 § (no handgun for target shooting
