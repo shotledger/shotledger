@@ -371,6 +371,7 @@ describe('standardMedalPoints — magnumprecision (SHB C.5.1.2.4 p. 71)', () => 
       }),
     ).toEqual({ grade: 'silver', silverThreshold: 294, bronsThreshold: 288 });
   });
+});
 
 /**
  * Top-level, so reqstool can match this testcase back to its annotation — see

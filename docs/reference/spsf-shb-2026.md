@@ -128,7 +128,12 @@ skott" (C.5.1 p. 69); participants are counted **vapengruppsvis**
   and then says to scale from the ten-series row. Since C.5.1 fixes the
   omfattning at six series, the app applies these thresholds at exactly six
   scored series and returns nothing otherwise. Extrapolating precision's ÷10×
-  rule would be a guessed regulatory value.
+  rule would be a guessed regulatory value — and it is not obviously right
+  either, since that rule is written for a table that has a ten-series row to
+  divide. Note G.6.1 p. 199 says "i regel **minst** sex (6) serier", so a
+  competition may legitimately run longer and the book states no poänggräns
+  for it. Maintainer asked and could not answer (2026-09-22); tracked as
+  **#393**, which lists what would settle it.
 
 **No märke.** The pistolskyttemärke precision series is 25 m against
 Pistoltavla 25 m precision under the F.8 rules, with rows for vapengrupp A,

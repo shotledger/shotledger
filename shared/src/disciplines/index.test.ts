@@ -788,6 +788,9 @@ describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () =
       );
     }
     expect(disciplinesForRegulations(['spsf']).map((d) => d.id)).toContain('spsf-falt');
+  });
+});
+
 // Magnumprecision (SHB Del G) — executable spec:
 // docs/specs/magnumprecision-spec.md, scenarios MP1-MP8.
 describe('Magnumprecision (SHB Del G, spec MP1-MP8)', () => {
