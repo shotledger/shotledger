@@ -160,10 +160,14 @@ export function useIpscTimer(
 
       const engine = new IpscTimerEngine(config);
       engineRef.current = engine;
-      playCues(engine.start());
-      setPhase(engine.getPhase());
       void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
 
+      // The microphone opens BEFORE the run does. The beep is anchored to
+      // the audio sample clock, which only exists once a window has arrived
+      // — start the run first and a slow-opening microphone would anchor it
+      // at zero and report every split late by however long it took. It
+      // also means the noise floor is already settling while "Are you
+      // ready?" plays.
       try {
         listenerRef.current = await startShotListening((window) => {
           lastWindowRef.current = { atMs: window.atMs, wallMs: Date.now() };
@@ -173,10 +177,14 @@ export function useIpscTimer(
       } catch {
         teardown();
         engine.reset();
+        engineRef.current = null;
         setPhase(IDLE_PHASE);
         setError('failed');
         return;
       }
+
+      playCues(engine.start());
+      setPhase(engine.getPhase());
 
       lastTickRef.current = Date.now();
       intervalRef.current = setInterval(() => {
