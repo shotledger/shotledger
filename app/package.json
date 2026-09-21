@@ -60,7 +60,7 @@
     "babel-plugin-inline-import": "3.0.0",
     "better-sqlite3": "13.0.3",
     "drizzle-kit": "0.31.10",
-    "jest": "30.5.1",
+    "jest": "30.5.2",
     "jest-expo": "57.0.5",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
