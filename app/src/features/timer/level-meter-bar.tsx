@@ -1,7 +1,8 @@
 // Horizontal level bar for the IPSC setup screen: current mic level, last
-// peak, and the chosen trigger threshold on one scale, so the shooter can
-// clap/dry-fire and drop the threshold just under the peak.
-import { MAX_TRIGGER_DB, MIN_TRIGGER_DB } from '@shotledger/shared';
+// peak, the tracked noise floor and the trigger that sits a chosen distance
+// above it — so the shooter can clap or dry-fire and see where their setting
+// falls relative to the room, which is what the detector actually compares
+// against (#346).
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedView } from '@/components/themed-view';
@@ -11,9 +12,13 @@ import { Radius } from '@/theme/tokens';
 const BAR_HEIGHT = 24;
 const MARKER_WIDTH = 3;
 
+/** Scale ends. −60 dBFS is below any room the phone will be used in. */
+const SCALE_MIN_DB = -60;
+const SCALE_MAX_DB = 0;
+
 function toPercent(db: number): number {
-  const clamped = Math.min(MAX_TRIGGER_DB, Math.max(MIN_TRIGGER_DB, db));
-  return ((clamped - MIN_TRIGGER_DB) / (MAX_TRIGGER_DB - MIN_TRIGGER_DB)) * 100;
+  const clamped = Math.min(SCALE_MAX_DB, Math.max(SCALE_MIN_DB, db));
+  return ((clamped - SCALE_MIN_DB) / (SCALE_MAX_DB - SCALE_MIN_DB)) * 100;
 }
 
 export interface LevelMeterBarProps {
@@ -21,13 +26,21 @@ export interface LevelMeterBarProps {
   currentDb: number | null;
   /** Highest level seen so far, or null when metering isn't running. */
   peakDb: number | null;
-  /** The trigger threshold in dBFS, drawn as a fixed line on the same scale. */
-  thresholdDb: number;
+  /** The tracked noise floor, or null before the first window. */
+  noiseFloorDb: number | null;
+  /** Where the trigger currently sits, in dBFS: the floor plus the chosen excess. */
+  thresholdDb: number | null;
   testID?: string;
 }
 
-/** Bar filled from MIN_TRIGGER_DB to the current level, with peak and threshold markers. */
-export function LevelMeterBar({ currentDb, peakDb, thresholdDb, testID }: LevelMeterBarProps) {
+/** Bar filled to the current level, with peak, noise-floor and trigger markers. */
+export function LevelMeterBar({
+  currentDb,
+  peakDb,
+  noiseFloorDb,
+  thresholdDb,
+  testID,
+}: LevelMeterBarProps) {
   const theme = useTheme();
   const fillPercent = currentDb === null ? 0 : toPercent(currentDb);
 
@@ -40,13 +53,24 @@ export function LevelMeterBar({ currentDb, peakDb, thresholdDb, testID }: LevelM
           testID={testID ? `${testID}-peak` : undefined}
         />
       )}
-      <View
-        style={[
-          styles.marker,
-          { left: `${toPercent(thresholdDb)}%`, backgroundColor: theme.danger },
-        ]}
-        testID={testID ? `${testID}-threshold` : undefined}
-      />
+      {noiseFloorDb !== null && (
+        <View
+          style={[
+            styles.marker,
+            { left: `${toPercent(noiseFloorDb)}%`, backgroundColor: theme.textSecondary },
+          ]}
+          testID={testID ? `${testID}-floor` : undefined}
+        />
+      )}
+      {thresholdDb !== null && (
+        <View
+          style={[
+            styles.marker,
+            { left: `${toPercent(thresholdDb)}%`, backgroundColor: theme.danger },
+          ]}
+          testID={testID ? `${testID}-threshold` : undefined}
+        />
+      )}
     </ThemedView>
   );
 }

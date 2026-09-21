@@ -9,9 +9,11 @@ import {
   type TimerCueMode,
 } from './cue-settings';
 import {
-  MAX_TRIGGER_DB,
-  MIN_TRIGGER_DB,
-  SENSITIVITY_THRESHOLD_DB,
+  MAX_EVENT_MS,
+  MAX_TRIGGER_EXCESS_DB,
+  MIN_EVENT_MS,
+  MIN_TRIGGER_EXCESS_DB,
+  SENSITIVITY_PRESETS,
   type IpscCueKind,
   type IpscTimerConfig,
 } from './shot-detector';
@@ -20,8 +22,10 @@ import {
 export const IPSC_DELAY_MAX_SECONDS = 10;
 
 export interface IpscTimerSettings {
-  /** dBFS trigger level for the shot detector (MIN_TRIGGER_DB … MAX_TRIGGER_DB). */
-  thresholdDb: number;
+  /** How far over the room a sound must rise to be considered (MIN/MAX_TRIGGER_EXCESS_DB). */
+  triggerExcessDb: number;
+  /** Longest event still counted as a shot, in ms (MIN/MAX_EVENT_MS). */
+  maxEventMs: number;
   /** Random start delay, the two ends of the range slider. */
   delayMinSeconds: number;
   delayMaxSeconds: number;
@@ -36,7 +40,8 @@ export interface IpscTimerSettings {
 }
 
 export const DEFAULT_IPSC_SETTINGS: IpscTimerSettings = {
-  thresholdDb: SENSITIVITY_THRESHOLD_DB.medium,
+  triggerExcessDb: SENSITIVITY_PRESETS.medium.triggerExcessDb,
+  maxEventMs: SENSITIVITY_PRESETS.medium.maxEventMs,
   delayMinSeconds: 1,
   delayMaxSeconds: 4,
   parSeconds: 0,
@@ -69,11 +74,17 @@ export function normalizeIpscSettings(value: unknown): IpscTimerSettings {
     DEFAULT_IPSC_SETTINGS.delayMinSeconds,
   );
   return {
-    thresholdDb: number(
-      stored.thresholdDb,
-      MIN_TRIGGER_DB,
-      MAX_TRIGGER_DB,
-      DEFAULT_IPSC_SETTINGS.thresholdDb,
+    triggerExcessDb: number(
+      stored.triggerExcessDb,
+      MIN_TRIGGER_EXCESS_DB,
+      MAX_TRIGGER_EXCESS_DB,
+      DEFAULT_IPSC_SETTINGS.triggerExcessDb,
+    ),
+    maxEventMs: number(
+      stored.maxEventMs,
+      MIN_EVENT_MS,
+      MAX_EVENT_MS,
+      DEFAULT_IPSC_SETTINGS.maxEventMs,
     ),
     delayMinSeconds,
     // The high thumb can never sit below the low one, whatever was stored.
@@ -130,6 +141,7 @@ export function ipscConfigFromSettings(
     },
     parMs: normalized.parSeconds > 0 ? Math.round(normalized.parSeconds * 1_000) : undefined,
     autoStopSilenceMs: Math.round(normalized.autoStopSeconds * 1_000),
-    thresholdDb: normalized.thresholdDb,
+    triggerExcessDb: normalized.triggerExcessDb,
+    maxEventMs: normalized.maxEventMs,
   };
 }

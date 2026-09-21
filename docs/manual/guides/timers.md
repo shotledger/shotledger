@@ -21,18 +21,19 @@ a timer. To silence it, use the phone's silent switch (see below).
 An IPSC-style timer: a random start delay, a start signal, and the microphone
 listening for your shots to record splits.
 
-!!! warning "Shot detection is not reliable yet"
+**Shot Detection**, collapsed under the settings, is where you set how far a
+sound must rise above the range's own noise to be counted, with a live meter
+and a count of what actually registered while you clap or dry-fire. Low, Medium
+and High are starting points.
 
-    The microphone picks up far more than gunshots. A finger snap or a keyboard
-    reaches full scale on the meter, which means a simple loudness threshold
-    cannot separate your shot from a door, a neighbouring shooter, or the
-    range's own noise.
+!!! warning "It cannot tell a shot from another sharp crack"
 
-    Android also applies automatic gain control to the microphone, which lifts
-    quiet sounds and squashes loud ones — exactly the wrong shape for
-    recognising an impulse.
+    A finger snap is brief, abrupt and far above the room — the same shape as a
+    shot, and counted as one at any setting. So is a neighbouring shooter. The
+    timer is reliable about *when* something happened, not about what it was.
 
-    The timer is usable as a timer. Treat the shot detection as experimental.
+    [How the Shot Timer hears a shot](../explanation/shot-detection.md)
+    explains what it measures and how to set it for your range.
 
 The same **Cues** choice as the Time Limit timer — beep, vibrate, or both —
 applies to all four of its events: Are You Ready?, Standby, the start beep and

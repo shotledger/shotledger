@@ -5,11 +5,11 @@ import {
   DEFAULT_IPSC_CONFIG,
   DEFAULT_IPSC_SETTINGS,
   IPSC_DELAY_MAX_SECONDS,
-  MAX_TRIGGER_DB,
-  MIN_TRIGGER_DB,
-  SENSITIVITY_THRESHOLD_DB,
+  MAX_TRIGGER_EXCESS_DB,
+  MIN_TRIGGER_EXCESS_DB,
+  SENSITIVITY_PRESETS,
   TIMER_CUE_MODES,
-  TRIGGER_DB_STEP,
+  TRIGGER_EXCESS_STEP_DB,
   ipscConfigFromSettings,
   type IpscPhaseKind,
   type IpscTimerSettings,
@@ -74,7 +74,7 @@ export interface IpscTimerProps {
 export function IpscTimer({ modeSelector }: IpscTimerProps) {
   const { t, i18n } = useTranslation();
   const [settings, setSettings] = useIpscSettings();
-  const { thresholdDb, delayMinSeconds, delayMaxSeconds } = settings;
+  const { triggerExcessDb, maxEventMs, delayMinSeconds, delayMaxSeconds } = settings;
 
   // The two numeric fields keep their own text, so a half-typed "1." stays on
   // screen while the stored setting holds the parsed seconds.
@@ -130,7 +130,11 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
     start();
   }, [start]);
 
-  const { currentDb, peakDb } = useLevelMeter(phase.kind === 'idle' && !meteringPaused);
+  const gate = useMemo(() => ({ triggerExcessDb, maxEventMs }), [triggerExcessDb, maxEventMs]);
+  const { currentDb, peakDb, noiseFloorDb, detectedCount } = useLevelMeter(
+    phase.kind === 'idle' && !meteringPaused,
+    gate,
+  );
 
   const shotList =
     shots.length === 0 ? (
@@ -169,7 +173,7 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
         <Card style={styles.form} testID="ipsc-settings">
           <DrillDownRow
             title={t('ipscTimer.shotDetection')}
-            value={t('ipscTimer.triggerLevelDb', { value: thresholdDb })}
+            value={t('ipscTimer.triggerExcessDb', { value: triggerExcessDb })}
             expanded={detectionOpen}
             onPress={() => setDetectionOpen((open) => !open)}
             testID="ipsc-detection-row"
@@ -186,16 +190,16 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
                   testID="ipsc-sensitivity-info"
                 />
               </View>
-              {/* The slider runs in sensitivity, not dBFS: the detector fires on
-              `db >= threshold`, so a threshold near 0 demands a louder sound
-              and is the LEAST sensitive end. Negating keeps "right is more
-              sensitive", which is how the maintainer asked for it. */}
+              {/* The slider runs in sensitivity, not in the stored number: a
+              larger excess demands a louder sound over the room and is the
+              LEAST sensitive end. Negating keeps "right is more sensitive",
+              which is how the maintainer asked for it. */}
               <Slider
-                value={-thresholdDb}
-                min={-MAX_TRIGGER_DB}
-                max={-MIN_TRIGGER_DB}
-                step={TRIGGER_DB_STEP}
-                onChange={(sensitivity) => update({ thresholdDb: -sensitivity })}
+                value={-triggerExcessDb}
+                min={-MAX_TRIGGER_EXCESS_DB}
+                max={-MIN_TRIGGER_EXCESS_DB}
+                step={TRIGGER_EXCESS_STEP_DB}
+                onChange={(sensitivity) => update({ triggerExcessDb: -sensitivity })}
                 accessibilityLabel={t('ipscTimer.triggerLevel')}
                 testID="ipsc-level-slider"
               />
@@ -212,13 +216,16 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
                 {SENSITIVITIES.map((preset) => (
                   <Pressable
                     key={preset}
-                    onPress={() => update({ thresholdDb: SENSITIVITY_THRESHOLD_DB[preset] })}
+                    onPress={() => update(SENSITIVITY_PRESETS[preset])}
                     testID={`ipsc-preset-${preset}`}
                   >
                     <Chip
                       label={t(`ipscTimer.sensitivities.${preset}` as const)}
                       tone={
-                        thresholdDb === SENSITIVITY_THRESHOLD_DB[preset] ? 'primary' : 'neutral'
+                        triggerExcessDb === SENSITIVITY_PRESETS[preset].triggerExcessDb &&
+                        maxEventMs === SENSITIVITY_PRESETS[preset].maxEventMs
+                          ? 'primary'
+                          : 'neutral'
                       }
                     />
                   </Pressable>
@@ -231,7 +238,8 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
                   <LevelMeterBar
                     currentDb={currentDb}
                     peakDb={peakDb}
-                    thresholdDb={thresholdDb}
+                    noiseFloorDb={noiseFloorDb}
+                    thresholdDb={noiseFloorDb === null ? null : noiseFloorDb + triggerExcessDb}
                     testID="ipsc-level-meter"
                   />
                   <ThemedText
@@ -243,6 +251,14 @@ export function IpscTimer({ modeSelector }: IpscTimerProps) {
                       ? t('ipscTimer.liveMeterNeedsPermission')
                       : t('ipscTimer.liveMeterHint')}
                   </ThemedText>
+                  {/* The count is the only honest answer to "will it hear my
+                      shot?": the meter shows a level, this shows what the gate
+                      did with it. */}
+                  {currentDb !== null && (
+                    <ThemedText type="smallBold" testID="ipsc-detected-shots">
+                      {t('ipscTimer.detectedShots', { value: detectedCount })}
+                    </ThemedText>
+                  )}
                 </>
               ) : null}
             </>

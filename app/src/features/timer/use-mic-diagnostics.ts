@@ -22,9 +22,13 @@ import {
   type ShotListenerHandle,
 } from '@/platform/shot-listener';
 
-/** Kept in step with shot-listener.ts's POLL_INTERVAL_MS — reported, not enforced. */
-
 const KEEP_AWAKE_TAG = 'mic-diagnostics';
+
+/**
+ * Window length this screen asks the microphone for. Deliberately coarser
+ * than the detector's own ~10 ms: an export is one sample per window, and at
+ * the detector's rate a range session would be a hundred thousand of them.
+ */
 const SAMPLE_INTERVAL_MS = 60;
 
 export type MicDiagnosticsError = 'unavailable' | 'denied' | 'failed';
@@ -81,10 +85,13 @@ export function useMicDiagnostics() {
     // 2.9-second "shots" peaking at 0 dBFS that were four runs stacked.
     if (recorder.isEmpty()) startedAtRef.current = Date.now();
     try {
-      listenerRef.current = await startShotListening((db) => {
-        recorder.push(Date.now() - startedAtRef.current, db);
-        setStats(recorder.getLiveStats());
-      });
+      listenerRef.current = await startShotListening(
+        (window) => {
+          recorder.push(Date.now() - startedAtRef.current, window.db);
+          setStats(recorder.getLiveStats());
+        },
+        { windowMs: SAMPLE_INTERVAL_MS },
+      );
       // The screen locking mid-session stops the metering and loses the run
       // (maintainer, at the range 2026-09-11). Same treatment the fälttimer
       // already gives a running sequence.
