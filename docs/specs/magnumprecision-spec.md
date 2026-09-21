@@ -39,37 +39,37 @@ the full loop runs.
 Nothing below is inferred from the 25 m precision discipline. Each line was
 read out of the PDF (upplaga 21; printed page = PDF page).
 
-| Fact                                    | Value                                                                | Citation           |
-| --------------------------------------- | -------------------------------------------------------------------- | ------------------ |
-| What it is                              | bana, grovkalibriga vapen, pistoltavla, **50 m**                     | G.1.1 p. 192       |
-| Tävlingsformer                          | "Ej tillämpligt" — no round/final format of its own                  | G.1.2 p. 192       |
-| Klassindelning                          | **none** — "I magnumprecision tillämpas ingen klassindelning"        | G.2.1 p. 193       |
-| Who may shoot                           | from the calendar year the shooter turns **18**; Pistolskyttekortet for anything above a föreningstävling | G.2.2 p. 193 |
-| Vapengrupper                            | **M1–M9** (SA/DA .41–.44 Magnum, SA/DA .357, frigrupp, pistol, revolver ≤165 mm, .38 Spl/.45 class, service pistol) | G.4.1–G.4.1.9 pp. 196–197 |
-| SM vapengrupper                         | M1–M7 only                                                            | C.3.6.2.3 p. 56    |
-| Omfattning                              | "i regel **minst sex (6) serier om fem (5) skott** vardera"          | G.6.1 p. 199       |
-| Shots per series                        | **5**                                                                 | G.6.4 p. 200       |
-| Time per series                         | **5 min** (dispensation to 6 min possible at SM/landsdel/krets)      | G.6.5 p. 200, G.7.3 p. 206 |
-| Förberedelsetid                         | 3 min, no loading                                                     | G.6.6.1 p. 200     |
-| Sighter (inskjutning)                   | **one series of 5 provskott within 5 minutes**, before the competition | G.6.6.2 p. 200   |
-| Target face                             | **Pistoltavla 25 m precision** — the same face                        | G.7.1 p. 205       |
-| Ring diameters                          | X 25 · 10 50 · 9 100 · 8 150 · 7 200 · 6 250 · 5 300 · 4 350 · 3 400 · 2 450 · 1 500 mm; black over 7–10 (200 mm); ring line 0.2–0.5 mm; min visible 550×550 mm | G.7.1 p. 205 |
-| Distance                                | **50 m** (the face is the 25 m one, shot at 50 m)                     | G.7.2 p. 206       |
-| Scoring rule                            | higher value as soon as the ring's outer edge is tangented            | G.6.10.1 p. 201    |
-| Ties                                    | countback (X count, then last series backwards), then **särskjutning** — no final | G.6.11.2.1 p. 204, G.6.11.3 p. 204 |
-| Standardmedalj omfattning               | **6 serier om vardera 5 skott**                                       | C.5.1 p. 69        |
-| Standardmedalj grouping                 | "Samtliga deltagare beräknas vapengruppsvis"                          | C.5.1.1.5 p. 70    |
-| Standardmedalj fixed points             | **M1–M4, M8: silver 282 / brons 274 · M5: silver 294 / brons 288 · M6–M7, M9: silver 270 / brons 253** | C.5.1.2.4 p. 71 |
-| Pistolskyttemärket                      | precision series at **25 m**, vapengrupp **A/B/C only** — no M row    | Bilaga 1 mom 5.1.1.1 p. 452 |
+| Fact                        | Value                                                                                                                                                           | Citation                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| What it is                  | bana, grovkalibriga vapen, pistoltavla, **50 m**                                                                                                                | G.1.1 p. 192                       |
+| Tävlingsformer              | "Ej tillämpligt" — no round/final format of its own                                                                                                             | G.1.2 p. 192                       |
+| Klassindelning              | **none** — "I magnumprecision tillämpas ingen klassindelning"                                                                                                   | G.2.1 p. 193                       |
+| Who may shoot               | from the calendar year the shooter turns **18**; Pistolskyttekortet for anything above a föreningstävling                                                       | G.2.2 p. 193                       |
+| Vapengrupper                | **M1–M9** (SA/DA .41–.44 Magnum, SA/DA .357, frigrupp, pistol, revolver ≤165 mm, .38 Spl/.45 class, service pistol)                                             | G.4.1–G.4.1.9 pp. 196–197          |
+| SM vapengrupper             | M1–M7 only                                                                                                                                                      | C.3.6.2.3 p. 56                    |
+| Omfattning                  | "i regel **minst sex (6) serier om fem (5) skott** vardera"                                                                                                     | G.6.1 p. 199                       |
+| Shots per series            | **5**                                                                                                                                                           | G.6.4 p. 200                       |
+| Time per series             | **5 min** (dispensation to 6 min possible at SM/landsdel/krets)                                                                                                 | G.6.5 p. 200, G.7.3 p. 206         |
+| Förberedelsetid             | 3 min, no loading                                                                                                                                               | G.6.6.1 p. 200                     |
+| Sighter (inskjutning)       | **one series of 5 provskott within 5 minutes**, before the competition                                                                                          | G.6.6.2 p. 200                     |
+| Target face                 | **Pistoltavla 25 m precision** — the same face                                                                                                                  | G.7.1 p. 205                       |
+| Ring diameters              | X 25 · 10 50 · 9 100 · 8 150 · 7 200 · 6 250 · 5 300 · 4 350 · 3 400 · 2 450 · 1 500 mm; black over 7–10 (200 mm); ring line 0.2–0.5 mm; min visible 550×550 mm | G.7.1 p. 205                       |
+| Distance                    | **50 m** (the face is the 25 m one, shot at 50 m)                                                                                                               | G.7.2 p. 206                       |
+| Scoring rule                | higher value as soon as the ring's outer edge is tangented                                                                                                      | G.6.10.1 p. 201                    |
+| Ties                        | countback (X count, then last series backwards), then **särskjutning** — no final                                                                               | G.6.11.2.1 p. 204, G.6.11.3 p. 204 |
+| Standardmedalj omfattning   | **6 serier om vardera 5 skott**                                                                                                                                 | C.5.1 p. 69                        |
+| Standardmedalj grouping     | "Samtliga deltagare beräknas vapengruppsvis"                                                                                                                    | C.5.1.1.5 p. 70                    |
+| Standardmedalj fixed points | **M1–M4, M8: silver 282 / brons 274 · M5: silver 294 / brons 288 · M6–M7, M9: silver 270 / brons 253**                                                          | C.5.1.2.4 p. 71                    |
+| Pistolskyttemärket          | precision series at **25 m**, vapengrupp **A/B/C only** — no M row                                                                                              | Bilaga 1 mom 5.1.1.1 p. 452        |
 
-Two consequences that are *derived from an absence*, and are called out here so
+Two consequences that are _derived from an absence_, and are called out here so
 they are reviewable rather than buried:
 
 1. **No märke ("guldserie") for magnumprecision.** Bilaga 1 mom 5.1.1.1 defines
    the märke precision series as 25 m against Pistoltavla 25 m precision under
    the F.8 rules, with rows for A, B and C. There is no M row and no 50 m
    variant, and the only magnum mention in the märke chapter is the
-   *årtalsmärke* substitution (Bilaga 1 mom 5.1.2.4 p. 454), which is a v2+
+   _årtalsmärke_ substitution (Bilaga 1 mom 5.1.2.4 p. 454), which is a v2+
    concern. So `goldSeriesThreshold()` must stay `null` here — which it already
    is, twice over (non-precision discipline, and no badge row for M groups).
    This spec adds the regression test rather than the behaviour.
@@ -109,7 +109,7 @@ Named test list. IDs are used verbatim in the evidence mapping.
   SPSF off it contains none of them.
 - **MP5** `programsForDiscipline('spsf-magnumprecision')` is the one program:
   `shotsPerSeries` 5, `scoring` `integer`, `supportsFinal` false, and **no**
-  `structure` (G.6.1 says *minst* six series — freeform, like precision).
+  `structure` (G.6.1 says _minst_ six series — freeform, like precision).
 - **MP6** `buildProgramSkeleton()` of that program returns `[]`.
 - **MP7** `shooterClassesForDiscipline('spsf-magnumprecision')` is `[]`
   (G.2.1), while `spsf-precision` and `spsf-milsnabb` keep the nine SPSF
@@ -139,7 +139,7 @@ Named test list. IDs are used verbatim in the evidence mapping.
 ### `shared/src/scoring/badges.ts`
 
 - **MP17** `goldSeriesThreshold({ disciplineId: 'spsf-magnumprecision',
-  weaponGroup: 'spsf:M1'…'spsf:M9', seriesLength: 5 })` is `null` for every M
+weaponGroup: 'spsf:M1'…'spsf:M9', seriesLength: 5 })` is `null` for every M
   group, at any age. Pre-existing behaviour, pinned as regression armor
   because the reason it is null is a regulatory fact (no M märke row), not an
   accident of the current discipline allow-list.

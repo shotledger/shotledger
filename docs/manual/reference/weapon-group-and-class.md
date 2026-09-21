@@ -23,11 +23,16 @@ shooting the C-gun?" and "how am I doing in class 2?" independently.
 | **B**                  | Centrefire pistol or revolver, up to 600 J                                    |
 | **C**                  | .22 LR only                                                                   |
 | **R**                  | Large-calibre revolver — fält and militär snabbmatch only, never precision    |
+| **M1**–**M9**          | Magnum — the nine groups Magnumprecision is shot in                           |
 | **airgun**             | Air pistol. Not an SPSF group — you set it on the firearm, never on a session |
 
-Magnum groups M1–M9 exist in the SPSF rules but are not offered, because
-Magnumprecision is not a discipline the app implements yet. They would appear
-as options for a session you could not then create.
+The magnum groups are M1 and M2 (single- and double-action revolver, .41–.44
+Magnum), M3 and M4 (the same two in .357 Magnum), M5 (frigrupp — pistol or
+revolver, 9 mm to .455, and the one group where optical sights are allowed),
+M6 (pistol, 9 mm to .455), M7 (revolver .357–.44 Magnum with a barrel up to
+165 mm), M8 (revolver in .38 Special, .38-40, .44-40, .44 Special, .45 ACP or
+.45 Colt) and M9 (a service-type pistol, 9 mm to .45, barrel up to 153 mm).
+The Swedish championship is shot in M1–M7 only.
 
 ## Classes
 
@@ -109,8 +114,33 @@ rank-don't-gate rule as for classes.
 | ----------------------- | --------------------------------- |
 | SPSF precision          | A, AM, AP, AG, A-opt, B, C        |
 | SPSF militär snabbmatch | A, A-opt, B, C, R                 |
+| SPSF Magnumprecision    | M1–M9, and nothing else           |
 | ISSF and SvSF events    | none — neither uses weapon groups |
 | Practice (Ring Target)  | none — see below                  |
+
+## Magnumprecision asks for no class
+
+Magnumprecision is the one SPSF discipline with **no classes at all**: the
+rules say so outright, and a start is in a weapon group only. So a
+Magnumprecision competition asks you for the weapon group and then stops —
+there is no class picker, and nothing is missing when you do not see one.
+
+It is also the one discipline where the pistolskyttemärke never counts. The
+märke series is shot at 25 metres in weapon group A, B or C; Magnumprecision
+is shot at 50 metres in M1–M9, which the märke has no requirement for. So a
+50 on a Magnumprecision series is a fine series and is not a _guldserie_.
+
+Two more things it does differently, if you are logging one:
+
+- **No final.** A tie at a championship is shot off, not settled by a final
+  round, so the app offers no final section for it.
+- **Its standardmedalj points are its own**, by weapon group, and they are
+  stated for a six-series competition — which is the normal length. Shoot
+  more series than that and the app shows no threshold rather than inventing
+  one, because the rule book states none.
+
+The target is the ordinary 25 m precision face, shot at 50 metres, so photo
+scoring reads it exactly as it reads a precision target.
 
 ## Only competitions ask you
 

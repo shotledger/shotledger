@@ -1,0 +1,12 @@
+{
+  "id": "spsf-magnumprecision",
+  "disciplineId": "spsf-magnumprecision",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Magnumprecision",
+    "en": "Magnumprecision"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false
+}

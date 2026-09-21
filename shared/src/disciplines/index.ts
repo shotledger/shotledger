@@ -13,6 +13,7 @@ import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.
 import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
 import issfStandardPistolDiscipline from './definitions/issf-standard-pistol.json';
 import spsfFaltDiscipline from './definitions/spsf-falt.json';
+import spsfMagnumprecisionDiscipline from './definitions/spsf-magnumprecision.json';
 import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
 import svsfSnabbluftpistolDiscipline from './definitions/svsf-snabbluftpistol.json';
@@ -22,6 +23,7 @@ import issfFreePistolProgram from './programs/issf-free-pistol.json';
 import issfRapidFirePistolProgram from './programs/issf-rapid-fire-pistol.json';
 import issfSportPistolProgram from './programs/issf-sport-pistol.json';
 import issfStandardPistolProgram from './programs/issf-standard-pistol.json';
+import spsfMagnumprecisionProgram from './programs/spsf-magnumprecision.json';
 import spsfMilsnabbProgram from './programs/spsf-milsnabb.json';
 import spsfPrecisionProgram from './programs/spsf-precision.json';
 import svsfSnabbluftpistolProgram from './programs/svsf-snabbluftpistol.json';
@@ -42,6 +44,7 @@ export const DISCIPLINES: readonly Discipline[] = [
   // station entry UI is a follow-up on #315. `ringScoringDisciplines` is what
   // keeps it out of the pickers until then.
   spsfFaltDiscipline,
+  spsfMagnumprecisionDiscipline,
   genericRings,
   issfAirPistolDiscipline,
   issfSportPistolDiscipline,
@@ -57,6 +60,7 @@ export const DISCIPLINES: readonly Discipline[] = [
 export const PROGRAMS: readonly Program[] = [
   spsfPrecisionProgram,
   spsfMilsnabbProgram,
+  spsfMagnumprecisionProgram,
   issfAirPistolProgram,
   issfSportPistolProgram,
   issfStandardPistolProgram,
@@ -141,12 +145,11 @@ export function weaponGroupsForDiscipline(disciplineId: string): readonly Weapon
  * implemented discipline's groups, plus the generic ones, which are appended
  * explicitly because no discipline declares them.
  *
- * `SPSF_WEAPON_GROUPS` is the full SHB taxonomy, which is wider than what v1
- * implements: the magnum groups M1-M9 belong to Magnumprecision (SHB Part G),
- * a discipline this app does not have yet, so offering them on the firearm
- * form promises a session the user cannot then create. Deriving the list from
- * `DISCIPLINES` rather than hard-coding an exclusion means they reappear on
- * their own the moment a discipline declares them — nobody has to remember.
+ * `SPSF_WEAPON_GROUPS` is the full SHB taxonomy, which stays wider than what
+ * the app implements: offering a group on the firearm form promises a session
+ * the user can then create. Deriving the list from `DISCIPLINES` rather than
+ * hard-coding an exclusion is what made the magnum groups M1-M9 reappear on
+ * their own when Magnumprecision (SHB Del G) shipped — nobody had to remember.
  */
 export function selectableWeaponGroups(): readonly WeaponGroup[] {
   const seen = new Set<string>();
@@ -213,10 +216,18 @@ export function weaponGroupsForRegulations(
   return groups;
 }
 
+/**
+ * SPSF disciplines that have no klassindelning at all. Magnumprecision is one:
+ * "I magnumprecision tillämpas ingen klassindelning" (SHB G.2.1 p. 193) — a
+ * start is in a vapengrupp only, which is also why C.5.1.1.5 computes its
+ * standardmedalj vapengruppsvis rather than per klass.
+ */
+const CLASSLESS_DISCIPLINE_IDS: ReadonlySet<string> = new Set(['spsf-magnumprecision']);
+
 export function shooterClassesForDiscipline(disciplineId: string): readonly ShooterClass[] {
-  return requireDiscipline(disciplineId).federation === 'SPSF'
-    ? SPSF_SHOOTER_CLASSES
-    : GENERIC_SHOOTER_CLASSES;
+  const discipline = requireDiscipline(disciplineId);
+  if (CLASSLESS_DISCIPLINE_IDS.has(discipline.id)) return GENERIC_SHOOTER_CLASSES;
+  return discipline.federation === 'SPSF' ? SPSF_SHOOTER_CLASSES : GENERIC_SHOOTER_CLASSES;
 }
 
 /**

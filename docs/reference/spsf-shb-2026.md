@@ -64,6 +64,81 @@ A, B, C, R. Ready position arm 45° lowered (J.6.3.1); max 2 malfunctions
 - Scoring rule identical to precision (J.6.10.1 p. 293): "Kulhål räknas
   till det högre värdet så snart ringens ytterkant är tangerad."
 
+## Magnumprecision
+
+Del G, pp. 191–214. **Its own chapter, not precision at another distance** —
+Part G repeats the whole structure (klasser, vapengrupper, genomförande,
+mål) rather than deferring to Del F, and it differs from precision in three
+places that matter to the app: the distance, the klassindelning and the
+standardmedalj table.
+
+- **What it is** (G.1.1 p. 192): "skjutning på bana med grovkalibriga vapen
+  mot pistoltavla på **50 m** avstånd".
+- **Tävlingsformer** (G.1.2 p. 192): "Ej tillämpligt" — Part G defines no
+  round/final format of its own. A tie is resolved by countback and then
+  **särskjutning** (G.6.11.2.1 p. 204, G.6.11.3 p. 204), never by a final.
+- **No klassindelning** (G.2.1 p. 193): "I magnumprecision tillämpas ingen
+  klassindelning." A start is in a vapengrupp only. This is why
+  `shooterClassesForDiscipline('spsf-magnumprecision')` is empty and the
+  session form shows no klass picker for it.
+- **Who may shoot** (G.2.2 p. 193): not before the calendar year the shooter
+  turns **18**; Pistolskyttekortet is required for anything above a
+  föreningstävling.
+- **Vapengrupper M1–M9** (G.4.1–G.4.1.9 pp. 196–197): M1 SA revolver
+  .41–.44 Magnum · M2 DA revolver .41–.44 Magnum · M3 SA revolver .357
+  Magnum · M4 DA revolver .357 Magnum · M5 frigrupp pistol/revolver 9 mm–.455
+  · M6 pistol 9 mm–.455 · M7 revolver .357–.44 Magnum, pipa ≤165 mm · M8
+  revolver .38 Special/.38-40/.44-40/.44 Special/.45 ACP/.45 Colt · M9
+  tjänstevapenpistol 9 mm–.45, pipa ≤153 mm, i övrigt enligt vapengrupp A.
+  **SM runs M1–M7 only** (C.3.6.2.3 p. 56).
+- **Omfattning** (G.6.1 p. 199): "i regel **minst sex (6) serier om fem (5)
+  skott** vardera" — _minst_, so the series count is freeform exactly as in
+  precision. Five shots per series is restated at G.6.4 p. 200.
+- **Time** (G.6.5 p. 200, restated G.7.3 p. 206): **5 minutes per series**;
+  dispensation to 6 min is possible at SM/landsdels level and, per krets
+  decision, for a single competition. Förberedelsetid 3 min, no loading
+  (G.6.6.1 p. 200).
+- **Sighter** (G.6.6.2 p. 200, "Inskjutning"): **one series of five provskott
+  within five minutes**, before the competition — the same shape as
+  precision's F.6.6.2.
+- **Target** (G.7.1 p. 205): "Magnumprecision genomförs mot **Pistoltavla
+  25 m precision**", and Part G prints the same ring table as F.7.1 — X 25,
+  10 50, 9 100, 8 150, 7 200, 6 250, 5 300, 4 350, 3 400, 2 450, 1 500 mm;
+  black over rings 7–10 (200 mm); ring line 0.2–0.5 mm; min visible
+  550×550 mm; ring 10 unnumbered. Shot at **50 m** (G.7.2 p. 206). The app
+  therefore reuses the `spsf-pistol-25m-precision` face rather than adding a
+  second one — the face is identical, only the firing distance differs.
+- **Scoring rule** (G.6.10.1 p. 201), identical to precision and milsnabb:
+  "Kulhål räknas till det högre värdet så snart ringens ytterkant är
+  tangerad." Tolkning uses the Förbundet's fältskyttetolkar (G.6.10.4 p. 202).
+
+**Standardmedalj.** Omfattning is "Magnumprecision 6 serier om vardera 5
+skott" (C.5.1 p. 69); participants are counted **vapengruppsvis**
+(C.5.1.1.5 p. 70); and the fixed-points path (C.5.1.2.4 p. 71) is:
+
+| Vapengrupp | Silver | Brons |
+| ---------- | ------ | ----- |
+| M1–M4, M8  | 282    | 274   |
+| M5         | 294    | 288   |
+| M6–M7, M9  | 270    | 253   |
+
+- `VERIFY:` **What fixed threshold applies above six series.** C.5.1.2.4
+  prints one unlabelled pair per vapengrupp with no series-count column and
+  states no scaling rule — unlike precision's C.5.1.2.3, which tabulates 6/7/10
+  and then says to scale from the ten-series row. Since C.5.1 fixes the
+  omfattning at six series, the app applies these thresholds at exactly six
+  scored series and returns nothing otherwise. Extrapolating precision's ÷10×
+  rule would be a guessed regulatory value.
+
+**No märke.** The pistolskyttemärke precision series is 25 m against
+Pistoltavla 25 m precision under the F.8 rules, with rows for vapengrupp A,
+B and C only (Bilaga 1 mom 5.1.1.1 p. 452). There is no M row and no 50 m
+variant, so **no magnumprecision series can be a guldserie**. The only magnum
+mention in the märke chapter is the _årtalsmärke_ substitution (Bilaga 1 mom
+5.1.2.4 p. 454: moment 1 shot under the magnumprecision rules but scored to
+vapengrupp A's, or C's with optics), which is a v2+ concern and is not
+implemented.
+
 ## Fältskjutning
 
 Fältskjutning is "skjutning på korta tider mot i terrängen, på varierande
@@ -546,7 +621,10 @@ precision (C.5.1.2.3 p. 71):
 
 More than 10 series: 10-series value ÷ 10 × series count. Milsnabb
 (C.5.1.2.5, 12 series): silver A 540 / R 552 / B 561 / C 564; brons
-A 516 / R 528 / B 537 / C 540. No age adjustment on standardmedalj.
+A 516 / R 528 / B 537 / C 540. Magnumprecision (C.5.1.2.4, 6 series):
+silver M1–M4/M8 282 / M5 294 / M6–M7/M9 270; brons 274 / 288 / 253 — see
+[Magnumprecision](#magnumprecision) for the series-count caveat. No age
+adjustment on standardmedalj.
 Guld standardmedalj = 50 accumulated points (brons=1, silver=2;
 C.5.2.1 p. 73); överstycke med krans at 100…3000 (C.5.2.2).
 Föreningstävling medals: max once per discipline per year and do not
@@ -565,7 +643,8 @@ count toward märkesprov/riksmästarklass/SM qualification (C.5.1).
   Fält's full set is **A, A optisk, B, C, R** and has its own chapter —
   see [Vapengrupper and klasser in fält](#vapengrupper-and-klasser-in-fält).
 - Magnum (G.4.1 pp. 196–197): **M1**–**M9** (SA/DA magnum revolvers,
-  frigrupp, service-pistol variants; SM only M1–M7 per C.3.6.2.3).
+  frigrupp, service-pistol variants; SM only M1–M7 per C.3.6.2.3). They belong
+  to magnumprecision — see [Magnumprecision](#magnumprecision).
 
 ## Klasser (the shooter)
 

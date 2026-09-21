@@ -1,5 +1,6 @@
 // Standardmedalj point thresholds — §6.5b, SHB 2026 C.5.1.2.3 (precision,
-// verified table) and C.5.1.2.5 (militär snabbmatch, verified fixed table).
+// verified table), C.5.1.2.5 (militär snabbmatch, verified fixed table) and
+// C.5.1.2.4 (magnumprecision, verified fixed table).
 // Executable spec: docs/specs/m5-stats-spec.md §"Behaviors — standardMedal.ts".
 // Standardmedalj i guld is 50 accumulated medal points across sessions
 // (v2+, not computed here) — this module only evaluates one session's
@@ -8,6 +9,8 @@
 export type StandardMedalGrade = 'brons' | 'silver';
 export type StandardMedalPrecisionGroup = 'A' | 'B' | 'C';
 export type StandardMedalMilsnabbGroup = 'A' | 'B' | 'C' | 'R';
+/** The three rows C.5.1.2.4 prints, named after the groups they cover. */
+export type StandardMedalMagnumRow = 'M1-M4,M8' | 'M5' | 'M6-M7,M9';
 
 interface Thresholds {
   silver: number;
@@ -52,6 +55,30 @@ const PRECISION_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalPrecision
   'spsf:A-opt': 'A',
   'spsf:B': 'B',
   'spsf:C': 'C',
+};
+
+// Magnumprecision (C.5.1.2.4 p. 71). The table prints one silver/brons pair
+// per vapengrupp with no series-count column and states no scaling rule, so
+// it is read as the six-series omfattning C.5.1 p. 69 fixes — "Magnumprecision
+// 6 serier om vardera 5 skott" — and nothing is extrapolated beyond it. See
+// docs/specs/magnumprecision-spec.md for the open VERIFY on longer matches.
+const MAGNUM_SERIES_COUNT = 6;
+const MAGNUM_THRESHOLDS: Record<StandardMedalMagnumRow, Thresholds> = {
+  'M1-M4,M8': { silver: 282, brons: 274 },
+  M5: { silver: 294, brons: 288 },
+  'M6-M7,M9': { silver: 270, brons: 253 },
+};
+
+const MAGNUM_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalMagnumRow> = {
+  'spsf:M1': 'M1-M4,M8',
+  'spsf:M2': 'M1-M4,M8',
+  'spsf:M3': 'M1-M4,M8',
+  'spsf:M4': 'M1-M4,M8',
+  'spsf:M8': 'M1-M4,M8',
+  'spsf:M5': 'M5',
+  'spsf:M6': 'M6-M7,M9',
+  'spsf:M7': 'M6-M7,M9',
+  'spsf:M9': 'M6-M7,M9',
 };
 
 const MILSNABB_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalMilsnabbGroup> = {
@@ -117,6 +144,11 @@ function thresholdsFor(input: StandardMedalPointsInput): Thresholds | null {
     if (input.seriesCount !== MILSNABB_SERIES_COUNT) return null;
     const group = MILSNABB_WEAPON_GROUP_TO_STD_GROUP[input.weaponGroup ?? ''];
     return group ? MILSNABB_THRESHOLDS[group] : null;
+  }
+  if (input.disciplineId === 'spsf-magnumprecision') {
+    if (input.seriesCount !== MAGNUM_SERIES_COUNT) return null;
+    const row = MAGNUM_WEAPON_GROUP_TO_STD_GROUP[input.weaponGroup ?? ''];
+    return row ? MAGNUM_THRESHOLDS[row] : null;
   }
   return null;
 }

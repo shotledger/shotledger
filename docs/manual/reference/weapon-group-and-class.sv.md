@@ -23,11 +23,16 @@ för sig.
 | **B**                  | Centralantänd pistol eller revolver, upp till 600 J                                     |
 | **C**                  | Endast .22 LR                                                                           |
 | **R**                  | Grovkalibrig revolver — endast fält och militär snabbmatch, aldrig precision            |
+| **M1**–**M9**          | Magnum — de nio grupper magnumprecision skjuts i                                        |
 | **airgun**             | Luftpistol. Ingen SPSF-grupp — du sätter den på vapnet, aldrig på ett pass              |
 
-Magnumgrupperna M1–M9 finns i SPSF:s regler men erbjuds inte, eftersom
-magnumprecision inte är en gren appen har ännu. De skulle dyka upp som
-alternativ till ett pass du sedan inte kunde skapa.
+Magnumgrupperna är M1 och M2 (enkel- och dubbelverkande revolver, .41–.44
+Magnum), M3 och M4 (samma två i .357 Magnum), M5 (frigrupp — pistol eller
+revolver, 9 mm till .455, och den enda grupp där optiska riktmedel är
+tillåtna), M6 (pistol, 9 mm till .455), M7 (revolver .357–.44 Magnum med pipa
+upp till 165 mm), M8 (revolver i .38 Special, .38-40, .44-40, .44 Special,
+.45 ACP eller .45 Colt) och M9 (pistol av tjänstevapenkaraktär, 9 mm till
+.45, pipa upp till 153 mm). SM skjuts bara i M1–M7.
 
 ## Klasser
 
@@ -106,8 +111,33 @@ rangordna-men-spärra-inte-regel som för klasser.
 | ----------------------- | -------------------------------------- |
 | SPSF precision          | A, AM, AP, AG, A-opt, B, C             |
 | SPSF militär snabbmatch | A, A-opt, B, C, R                      |
+| SPSF magnumprecision    | M1–M9, och inget annat                 |
 | ISSF- och SvSF-grenar   | inga — ingendera använder vapengrupper |
 | Träning (ringad tavla)  | inga — se nedan                        |
+
+## Magnumprecision frågar inte efter någon klass
+
+Magnumprecision är den enda SPSF-grenen **helt utan klasser**: reglerna säger
+det rakt ut, och en start sker bara i en vapengrupp. En magnumprecisionstävling
+frågar därför efter vapengruppen och sedan inte mer — det finns ingen
+klassväljare, och inget saknas när du inte ser någon.
+
+Det är också den enda grenen där pistolskyttemärket aldrig räknas.
+Märkesserien skjuts på 25 meter i vapengrupp A, B eller C; magnumprecision
+skjuts på 50 meter i M1–M9, som märket inte har något krav för. En 50:a på en
+magnumprecisionsserie är alltså en fin serie — men ingen guldserie.
+
+Två saker till som skiljer, om du ska logga en:
+
+- **Ingen final.** Lika poäng i ett mästerskap avgörs med särskjutning, inte
+  med en finalomgång, så appen erbjuder ingen finaldel för grenen.
+- **Poänggränserna för standardmedalj är grenens egna**, per vapengrupp, och
+  de är angivna för en tävling om sex serier — vilket är den normala längden.
+  Skjuter du fler serier visar appen ingen gräns i stället för att hitta på
+  en, eftersom regelboken inte anger någon.
+
+Tavlan är den vanliga precisionstavlan för 25 m, skjuten på 50 meter, så
+fotoräkningen läser den precis som den läser en precisionstavla.
 
 ## Bara tävlingar frågar dig
 
