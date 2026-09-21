@@ -1,13 +1,21 @@
 {
+  "enabledPlugins": {
+    "impeccable": true,
+    "reqstool@reqstool-ai": true,
+    "reqstool-openspec@reqstool-ai": true
+  },
   "extraKnownMarketplaces": {
     "impeccable": {
       "source": {
         "source": "github",
         "repo": "pbakaus/impeccable"
       }
+    },
+    "reqstool-ai": {
+      "source": {
+        "source": "github",
+        "repo": "reqstool/reqstool-ai"
+      }
     }
-  },
-  "enabledPlugins": {
-    "impeccable": true
   }
 }

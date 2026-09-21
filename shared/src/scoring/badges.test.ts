@@ -213,12 +213,12 @@ describe('allBadgeThresholds', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_SCORE_001
  */
-it('guld_threshold_per_marke_group_and_age_reduction', () => {
+it('applies the guld threshold per märke group, reduces it for age, and offers none where the märke does not apply', () => {
   const base = { disciplineId: 'spsf-precision', seriesLength: 5, year: 2026 };
   expect(goldSeriesThreshold({ ...base, weaponGroup: 'spsf:A' })).toBe(43);
   expect(goldSeriesThreshold({ ...base, weaponGroup: 'spsf:B' })).toBe(45);
@@ -228,4 +228,12 @@ it('guld_threshold_per_marke_group_and_age_reduction', () => {
   expect(goldSeriesThreshold({ ...base, weaponGroup: 'spsf:C', birthYear: 1960 })).toBe(44);
   expect(isGoldSeries(46, { ...base, weaponGroup: 'spsf:C' })).toBe(true);
   expect(isGoldSeries(45, { ...base, weaponGroup: 'spsf:C' })).toBe(false);
+  // ...and no threshold at all where the märke requirement does not reach:
+  // a weapon group with no row, another discipline, another series length.
+  expect(goldSeriesThreshold({ ...base, weaponGroup: 'spsf:R' })).toBeNull();
+  expect(
+    goldSeriesThreshold({ ...base, weaponGroup: 'spsf:C', disciplineId: 'spsf-milsnabb' }),
+  ).toBeNull();
+  expect(goldSeriesThreshold({ ...base, weaponGroup: 'spsf:C', seriesLength: 10 })).toBeNull();
+  expect(isGoldSeries(50, { ...base, weaponGroup: 'spsf:R' })).toBe(false);
 });

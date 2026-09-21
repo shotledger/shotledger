@@ -36,8 +36,12 @@ jobs:
         with:
           python-version: '3.13'
 
+      # --python is load-bearing: pipx builds its venv with the interpreter pipx
+      # itself was installed with (system 3.12 on ubuntu-latest), not with the
+      # one setup-python put on PATH — and reqstool is Requires-Python >=3.13,
+      # so without this the step fails with "No matching distribution found".
       - name: Install the reqstool client
-        run: pipx install reqstool==0.12.2
+        run: pipx install --python "$pythonLocation/bin/python" reqstool==0.12.2
 
       - name: Collect requirement annotations
         run: pnpm reqstool:tags

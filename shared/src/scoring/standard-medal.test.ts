@@ -241,12 +241,12 @@ describe('standardMedalForSession', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_SCORE_002
  */
-it('standardmedalj_is_judged_on_the_grundomgang', () => {
+it('judges the standardmedalj on the grundomgång, never on the after-final total', () => {
   // 7 scored series in vapengrupp C: silver 330, brons 322 (C.5.1.2.3).
   const base = {
     disciplineId: 'spsf-precision',

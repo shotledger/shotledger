@@ -134,12 +134,12 @@ describe('spsfEligibleClasses with a vapengrupp', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_DISC_001
  */
-it('spsf_klasser_follow_skill_class_category_and_vapengrupp_c', () => {
+it('offers the klasser the shooter holds, and none that vapengrupp C does not allow', () => {
   const her = profile({ birthYear: 1964, skillClass: '2', competesInWomensClasses: true });
   // Vapengrupp C: her own klass, plus the dam and veteran ones she may enter.
   expect(spsfEligibleClasses(her, 2026, 'spsf:C')).toEqual(['2', 'Dam2', 'VetY']);

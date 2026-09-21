@@ -288,13 +288,26 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
 
   Adding a requirement means `docs/reqstool/requirements.yml` plus an SVC,
   a `@Requirements` tag on the implementation and an `@SVCs` tag on the test —
-  **in the same branch as the change**, like the manual. The tagged test must
-  be top-level with a single-identifier title
-  (`guld_threshold_per_marke_group_and_age_reduction`): reqstool matches on the
-  leading identifier of a JUnit testcase name, so a prose title or a test
-  nested in a `describe` silently fails to match. ADR 0015 also sets what
-  belongs in `requirements.yml` versus in `docs/reference/`, `docs/specs/` and
-  an ADR — read it before adding the first requirement to a new area.
+  **in the same branch as the change**, like the manual. Write the tag on the
+  function that actually implements or verifies the requirement, not on the
+  module or the wrapper around it; multiple ids on one tag are
+  **comma**-separated.
+
+  The tagged test keeps an ordinary prose title — both reporters sanitise the
+  JUnit name the way the scanner does — but it **must be top-level**, not
+  inside a `describe`, because the scanner records a nested `it` as
+  `<describe>_<it>` while the reporters emit only the leaf. A nested or
+  digit-initial tagged test fails **loudly** (`automated test missing`, CI
+  non-zero), so this is a rule to follow, not a trap to fear. `pnpm mutation`
+  overwrites the vitest JUnit file, so run `pnpm check` before `reqstool:status`.
+
+  ADR 0015 also sets what belongs in `requirements.yml` versus in
+  `docs/reference/`, `docs/specs/` and an ADR — read it before adding the first
+  requirement to a new area. The repo enables the **reqstool-ai** plugin
+  (`.claude/settings.json`), whose `reqstool-conventions` skill carries the
+  annotation, decomposition and build-config conventions; `.reqstool-ai.yaml`
+  configures it and `.mcp.json` wires the `reqstool mcp` server for querying.
+  Both need the client on PATH (`pipx install reqstool`, Python ≥ 3.13).
 
 - Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
   `pnpm coverage` (vitest + v8, 100% threshold on

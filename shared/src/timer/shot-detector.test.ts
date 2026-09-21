@@ -551,12 +551,12 @@ describe('IpscTimerEngine', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_TIMER_001
  */
-it('a_loud_event_is_rejected_for_being_too_long_or_rising_too_slowly', () => {
+it('rejects a loud event for outlasting the gate or for swelling instead of cracking', () => {
   // Loud enough to trigger, but it outlasts the gate — a door, not a shot.
   const long = armed({ maxEventMs: 50 });
   expect(feed(long, 2_000, [{ atMs: 500, durationMs: 300 }])).toHaveLength(0);

@@ -75,12 +75,12 @@ describe('applyQuotaDelta', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_BACKEND_001
  */
-it('quota_boundary_is_inclusive_and_usage_is_floored_at_zero', () => {
+it('allows an upload exactly at the limit and floors usage at zero', () => {
   expect(checkQuota(800, 1000, 200)).toEqual({ allowed: true });
   expect(checkQuota(800, 1000, 201)).toEqual({ allowed: false, reason: 'quota_exceeded' });
   expect(applyQuotaDelta(100, -1000)).toBe(0);

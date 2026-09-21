@@ -47,21 +47,41 @@ stays out of `pnpm check` for the same reason the three docs gates do — a
 code-only contributor has no reason to install a Python toolchain. CI runs it;
 `pnpm check` does not. That now makes **four** gates outside `check`.
 
-### Two conventions the tooling forces
+### What the tooling forces, and what it does not
 
-Both are consequences of how reqstool matches a JUnit testcase to an
-annotation, found by running it rather than by reading about it:
+reqstool's build-config conventions say the fix for a test-result mapping
+problem belongs in the **runner configuration**, not in the tests — their
+worked example is Gradle's parameterized display names. The same applies here,
+and it is why the tests keep ordinary prose titles:
 
-1. **A test tagged `@SVCs` is top-level and its title is a single identifier
-   token** — `guld_threshold_per_marke_group_and_age_reduction`, not a prose
-   sentence. The client takes the leading identifier of the testcase name, so a
-   prose title matches only its first word, and a test nested in a `describe`
-   matches the describe's name instead. The existing prose-titled suites are
-   untouched; this applies only to the one test that carries the tag.
+- Both reporters pass the testcase name through `reqstoolTestName`, which
+  applies the scanner's own sanitisation (`[^a-zA-Z0-9]+` → `_`). So
+  `it('excludes a sighter from the scored result …')` reaches the JUnit file as
+  `excludes_a_sighter_from_the_scored_result_…` and matches the annotation the
+  scanner recorded for that same test. No test was renamed to suit the tool.
+
+Two constraints remain, and both are real:
+
+1. **A test tagged `@SVCs` must be top-level**, not nested in a `describe`. The
+   scanner records a nested `it` as `<describe>_<it>` while both reporters emit
+   the leaf title alone, and with describes nested deeper there is no template
+   that can agree. There is no template fix for this one, so it stays a rule.
+   **It fails loudly, not silently** — `automated test missing`, and CI exits
+   non-zero. The existing prose-titled, deeply-nested suites are untouched;
+   this applies only to the one test carrying the tag.
 2. **The scan roots are three, and a stem is relative to its own root.** Two
    files at the same relative path under different roots would collide in one
    fully qualified name. Nothing collides today; it is a hazard to know about,
    not a problem to solve in advance.
+
+Two smaller sharp edges, recorded so they are not rediscovered:
+
+- **Multiple ids on one tag are comma-separated** (`@Requirements A, B`).
+  Space-separated silently becomes one malformed id.
+- **A title beginning with a digit cannot be matched.** The client's name regex
+  requires an identifier start, so `it('10 and X differ …')` is skipped with a
+  warning. Harmless on an untagged test; on a tagged one, start the title with
+  a letter.
 
 ## What goes in requirements.yml, and what does not
 
@@ -105,7 +125,17 @@ Rules that follow, so these do not grow into copies of each other:
   disciplines, the shot timer, the backend and the app. That is a floor, not a
   target: the machinery covers the whole repo from day one and the corpus grows
   per change.
-- CI pins the client version. `reqstool status` was verified against 0.11.0 and
-  0.12.2, which behave identically here.
+- CI pins the client version and installs it with
+  `pipx install --python "$pythonLocation/bin/python"`. That flag is
+  load-bearing: pipx builds its venv with the interpreter _pipx_ was installed
+  with (system 3.12 on `ubuntu-latest`), not the one `setup-python` puts on
+  PATH, and reqstool is `Requires-Python >=3.13`. Without it the step fails
+  with "No matching distribution found" and the gate never runs.
+- `reqstool status` was verified against 0.11.x and the pinned 0.12.2, which
+  behave identically here — including the failure cases: an unimplemented
+  requirement, a **failing** tagged test, and a skipped one all exit non-zero.
+- `pnpm mutation` may overwrite `build/test-results/junit-vitest.xml` with a
+  mutant run's results, so run `pnpm check` before `reqstool:status` rather
+  than trusting whatever is on disk. CI goes `check` → `status` directly.
 - If reqstool is ever dropped, the cost is the annotations (harmless JSDoc), the
   dataset directory and two config blocks. Nothing else depends on it.

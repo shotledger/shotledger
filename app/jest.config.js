@@ -1,4 +1,4 @@
-const { jestClassNameTemplate } = require('../scripts/reqstool-stem.js');
+const { jestClassNameTemplate, reqstoolTestName } = require('../scripts/reqstool-stem.js');
 
 /** @type {import('jest').Config} */
 module.exports = {
@@ -17,7 +17,7 @@ module.exports = {
         outputDirectory: '<rootDir>/../build/test-results',
         outputName: 'junit-jest.xml',
         classNameTemplate: jestClassNameTemplate,
-        titleTemplate: '{title}',
+        titleTemplate: ({ title }) => reqstoolTestName(title),
       },
     ],
   ],

@@ -34,4 +34,31 @@ function jestClassNameTemplate({ filepath }) {
   return reqstoolStem(filepath.replace(/^src\//, ''));
 }
 
-module.exports = { reqstoolStem, vitestClassnameTemplate, jestClassNameTemplate };
+/**
+ * A test title as the tag scanner records it: every run of non-alphanumerics
+ * becomes one underscore.
+ *
+ * Applied to the JUnit `name` by both runners so a **top-level** tagged test
+ * can keep an ordinary prose title and still match its annotation. This is the
+ * reporter-side fix reqstool's build-config conventions prescribe — configure
+ * the runner, do not deform the test.
+ *
+ * It does NOT rescue a test nested in a `describe`: the scanner records that
+ * one as `<describe>_<it>` while both reporters emit the leaf title alone, and
+ * with describes nested more than one deep there is no template that agrees.
+ * A nested tagged test therefore fails loudly — `automated test missing`, exit
+ * non-zero — which is the right failure to have.
+ *
+ * Kept in lock-step with `toMethodNameStyle` in
+ * @reqstool/reqstool-typescript-tags.
+ */
+function reqstoolTestName(title) {
+  return title.replace(/[^a-zA-Z0-9]+/g, '_');
+}
+
+module.exports = {
+  reqstoolStem,
+  vitestClassnameTemplate,
+  jestClassNameTemplate,
+  reqstoolTestName,
+};

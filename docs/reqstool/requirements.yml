@@ -67,9 +67,10 @@ requirements:
     title: License activity counts sessions inside the rule's window
     significance: shall
     description: >-
-      The app shall count one activity per session whose start falls inside the
-      rule's window ending now, weighted by whether the session was training or
-      competition, and shall count no session outside that window.
+      The app shall count each session whose start falls inside the rule's window
+      ending now, at the rule's weight for that session's type (a competition
+      may be worth more than a training), and shall count no session outside
+      that window — including one a single day before it starts.
     rationale: >-
       This is the figure a shooter shows a förening when asking for a
       föreningsintyg. An off-by-one on the window is an intyg that should not
@@ -99,9 +100,10 @@ requirements:
     title: SPSF klasser are the shooter's skill class crossed with their category
     significance: shall
     description: >-
-      The app shall offer an SPSF klass only when the shooter's own skill class
-      matches the klass's, when the shooter is eligible for its category that
-      year, and — for Jun, Dam and Vet — when the firearm is in vapengrupp C.
+      The app shall offer an SPSF klass only when the shooter is eligible for its
+      category that year, when any skill class the klass carries is the
+      shooter's own (Jun, Vet Y and Vet Ä carry none), and — for Jun, Dam and
+      Vet — when the firearm is in vapengrupp C.
     rationale: >-
       SHB F.2.1 p. 163 defines Jun/Dam/Vet in vapengrupp C only, so "A Dam 2" is
       not a klass anyone can enter; offering it would invent one. And a klass 2
@@ -159,13 +161,17 @@ requirements:
     title: A firearm needing no licence is not flagged as incomplete
     significance: shall
     description: >-
-      The app shall not count a missing licence as a gap for a weapon type that
-      needs none in Sweden, and shall list the compliance-bearing fields a
-      firearm is genuinely missing.
+      The app shall not prompt for a missing licence on a firearm recorded as an
+      air weapon, and shall list the compliance-bearing fields any other firearm
+      is missing.
     rationale: >-
-      An effektbegränsat air pistol needs no licence, so the app flagged one
-      forever with nothing the shooter could do to clear it (#365). A prompt
-      that cannot be satisfied trains the shooter to ignore prompts.
+      A deliberate app-level heuristic, NOT a claim about the law: an
+      effektbegränsat air pistol needs no Swedish licence, but a powerful air
+      rifle above the energy limit does, and the app does not know muzzle
+      energy. It errs toward not nagging, because the app flagged every air
+      pistol forever with nothing the shooter could do to clear it (#365), and
+      a prompt that cannot be satisfied trains the shooter to ignore prompts.
+      See the doc-comment on `requiresLicense`.
     categories:
       - interaction-capability
     revision: '0.1.0'

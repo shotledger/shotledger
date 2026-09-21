@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-import { vitestClassnameTemplate } from './scripts/reqstool-stem.js';
+import { reqstoolTestName, vitestClassnameTemplate } from './scripts/reqstool-stem.js';
 
 export default defineConfig({
   test: {
@@ -16,6 +16,7 @@ export default defineConfig({
         {
           outputFile: 'build/test-results/junit-vitest.xml',
           classnameTemplate: vitestClassnameTemplate,
+          titleTemplate: ({ title }: { title: string }) => reqstoolTestName(title),
         },
       ],
     ],

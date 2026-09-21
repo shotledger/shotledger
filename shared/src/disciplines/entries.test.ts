@@ -431,12 +431,12 @@ describe('categoryKey', () => {
 });
 
 /**
- * Top-level and identifier-titled so reqstool can match this testcase back to
- * its annotation — see the convention in ADR 0015.
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
  *
  * @SVCs SVC_DISC_002
  */
-it('events_are_narrowed_to_the_enabled_regelverk_but_a_stored_id_still_resolves', () => {
+it('narrows events to the enabled regelverk while a stored event id still resolves', () => {
   const svsfOpenRapidFire = eventId('issf-rapid-fire-pistol', OPEN_CATEGORY);
   const issfOnly = eventsForDiscipline('issf-rapid-fire-pistol', [ISSF_REGULATION_ID]);
   expect(issfOnly.map((event) => event.id)).not.toContain(svsfOpenRapidFire);
