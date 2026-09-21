@@ -1,9 +1,24 @@
 import { defineConfig } from 'vitest/config';
 
+import { vitestClassnameTemplate } from './scripts/reqstool-stem.js';
+
 export default defineConfig({
   test: {
     include: ['shared/**/*.test.ts', 'backend/**/*.test.ts', 'app/src/db/**/*.test.ts'],
     exclude: ['**/node_modules/**'],
+    // JUnit alongside the default reporter so `reqstool status` can see which
+    // @SVCs-tagged test actually ran (ADR 0015). `classnameTemplate` is what
+    // makes a testcase match its annotation.
+    reporters: [
+      'default',
+      [
+        'junit',
+        {
+          outputFile: 'build/test-results/junit-vitest.xml',
+          classnameTemplate: vitestClassnameTemplate,
+        },
+      ],
+    ],
     coverage: {
       provider: 'v8',
       // The old-coder gauntlet layer for M3: the shared scoring/discipline

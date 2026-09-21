@@ -21,7 +21,11 @@ function ruleCountsSession(rule: ComplianceRule, session: ComplianceSession): bo
   return rule.weaponGroups.includes(session.weaponGroup ?? '');
 }
 
-/** Computes one rule's license activity over its own window, ending at `now`. */
+/**
+ * Computes one rule's license activity over its own window, ending at `now`.
+ *
+ * @Requirements COMPL_001
+ */
 export function computeRuleLicenseActivity(
   sessions: readonly ComplianceSession[],
   rule: ComplianceRule,
@@ -129,6 +133,8 @@ export interface OverallLicenseActivity {
  * Aggregate license activity across the shooter: every `shooter`-scope rule,
  * plus every rule tied to a weapon group they hold. Overall = worst status
  * among them; a profile with no applicable rule never fabricates a status.
+ *
+ * @Requirements COMPL_002
  */
 export function computeOverallLicenseActivity(
   sessions: readonly ComplianceSession[],

@@ -95,3 +95,17 @@ describe('licence-free weapon types', () => {
     expect(missingFirearmFields(firearm({ hasLicense: false }))).toEqual(['license']);
   });
 });
+
+/**
+ * Top-level and identifier-titled so reqstool can match this testcase back to
+ * its annotation — see the convention in ADR 0015.
+ *
+ * @SVCs SVC_APP_001
+ */
+it('an_air_weapon_is_not_reported_as_missing_a_licence', () => {
+  expect(requiresLicense('airgun')).toBe(false);
+  expect(missingFirearmFields(firearm({ weaponType: 'airgun', hasLicense: false }))).toEqual([]);
+  expect(missingFirearmFields(firearm({ weaponType: 'pistol', hasLicense: false }))).toEqual([
+    'license',
+  ]);
+});

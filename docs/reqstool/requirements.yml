@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reqstool/reqstool-client/main/src/reqstool/resources/schemas/v1/requirements.schema.json
+
+# The rules ShotLedger implements that a reader could otherwise only verify by
+# reading the code. A requirement earns a place here when getting it wrong
+# would mislead a shooter about a score, a märke, a licence renewal or their
+# own data — not for every function that exists. See ADR 0015.
+#
+# A requirement is added in the same branch as the change that implements it,
+# the way the manual is (Definition of done). `revision` is the requirement's
+# own version, not the app's.
+
+metadata:
+  urn: shotledger
+  variant: microservice
+  title: ShotLedger
+  url: https://github.com/jimisola/shotledger
+
+requirements:
+  - id: SCORE_001
+    title: Guldserie threshold
+    significance: shall
+    description: >-
+      The app shall report a 5-shot SPSF precision series as a guldserie when its
+      score in points meets the guld threshold for the firearm's märke group
+      (A 43, B 45, C 46), reduced by one point from the year after the shooter
+      turns 55 and by two from the year after they turn 65, and shall report no
+      threshold at all for a weapon group, discipline or series length the märke
+      requirement does not cover.
+    rationale: >-
+      The guldserie is what a shooter counts towards a pistolskyttemärke, so a
+      wrong threshold silently miscredits a year of shooting.
+      SHB 2026 Bilaga 1 mom 5.1.1.1 p. 452.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: SCORE_002
+    title: Standardmedalj is judged on the grundomgång
+    significance: shall
+    description: >-
+      When a session has a final, the app shall evaluate its standardmedalj band
+      against the grundomgång — the series before the final — and never against
+      the after-final total.
+    rationale: >-
+      A final adds points that the medal does not count. Judging the total would
+      award a medal the shooter did not earn, in the one place they are most
+      likely to believe the app over their own arithmetic.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: SCORE_003
+    title: Sighters count for volume, never for a result
+    significance: shall
+    description: >-
+      The app shall exclude sighter series from a session's scored results, and
+      shall include their shots in the session's shot volume.
+    rationale: >-
+      A sighter is fired and so is ammunition spent and a shot taken, but it is
+      not part of the result. Counting it either way round is wrong, in opposite
+      directions, and the two uses have to be kept apart deliberately.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: COMPL_001
+    title: License activity counts sessions inside the rule's window
+    significance: shall
+    description: >-
+      The app shall count one activity per session whose start falls inside the
+      rule's window ending now, weighted by whether the session was training or
+      competition, and shall count no session outside that window.
+    rationale: >-
+      This is the figure a shooter shows a förening when asking for a
+      föreningsintyg. An off-by-one on the window is an intyg that should not
+      have been issued, or one that should have been.
+      PM 551.24 p. 3 — FAP 551-3, 5 kap 5–6 §§.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: COMPL_002
+    title: A shooter-scope rule applies with no vapengrupp on file
+    significance: shall
+    description: >-
+      The app shall apply a rule whose scope is the shooter whether or not any
+      firearm has a vapengrupp recorded, and whether or not the shooter holds
+      any firearm at all.
+    rationale: >-
+      A shooter-scope requirement is a requirement on the person. Gating it on
+      firearm data made license activity vanish after an import that created no
+      firearm_groups rows (#319) — the shooter saw nothing where the number they
+      needed should have been.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: DISC_001
+    title: SPSF klasser are the shooter's skill class crossed with their category
+    significance: shall
+    description: >-
+      The app shall offer an SPSF klass only when the shooter's own skill class
+      matches the klass's, when the shooter is eligible for its category that
+      year, and — for Jun, Dam and Vet — when the firearm is in vapengrupp C.
+    rationale: >-
+      SHB F.2.1 p. 163 defines Jun/Dam/Vet in vapengrupp C only, so "A Dam 2" is
+      not a klass anyone can enter; offering it would invent one. And a klass 2
+      shooter is Dam 2, never Dam 3.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: DISC_002
+    title: Only the enabled regelverk's events are offered
+    significance: shall
+    description: >-
+      The app shall offer a discipline's events from the regelverk the shooter
+      has enabled, and shall still resolve a stored event id belonging to a
+      regelverk that is no longer enabled.
+    rationale: >-
+      A shooter under ISSF alone is not offered SvSF's open snabbpistol class
+      (ADR 0011). But switching a regelverk off must not blank out a session
+      already logged under it.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: TIMER_001
+    title: Shot detection gates on duration and rise, not loudness
+    significance: shall
+    description: >-
+      The shot timer shall reject a level event that is longer than the
+      configured maximum event duration, or that rises more slowly than the
+      configured minimum, however loud it is.
+    rationale: >-
+      A fixed dBFS threshold cannot work indoors, where the range's own noise
+      is as loud as the shot. A shot is short and fast; a door, a voice and a
+      neighbouring bay are not (#346).
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: BACKEND_001
+    title: The photo quota boundary is inclusive and never goes negative
+    significance: shall
+    description: >-
+      The backend shall allow an upload whose size brings usage exactly to the
+      limit, reject one that exceeds it, and shall never record a usage figure
+      below zero however large a negative delta is applied.
+    rationale: >-
+      A quota that rejects at exactly the limit is a limit the shooter cannot
+      reach; a usage figure that drifts negative hands out free storage after a
+      delete. Both fail silently.
+    categories:
+      - reliability
+    revision: '0.1.0'
+
+  - id: APP_001
+    title: A firearm needing no licence is not flagged as incomplete
+    significance: shall
+    description: >-
+      The app shall not count a missing licence as a gap for a weapon type that
+      needs none in Sweden, and shall list the compliance-bearing fields a
+      firearm is genuinely missing.
+    rationale: >-
+      An effektbegränsat air pistol needs no licence, so the app flagged one
+      forever with nothing the shooter could do to clear it (#365). A prompt
+      that cannot be satisfied trains the shooter to ignore prompts.
+    categories:
+      - interaction-capability
+    revision: '0.1.0'

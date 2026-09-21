@@ -277,6 +277,25 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
   (`pip install -r docs/requirements.txt`), which a code-only contributor has
   no reason to install.
 
+- **A fourth gate outside `pnpm check`: reqstool** (ADR 0015). CI runs
+  `pnpm reqstool:tags` then `pnpm reqstool:status` after `check`, and
+  `--check-all-reqs-met` fails the build on a requirement with no
+  implementation or whose verifying test did not pass. It needs the Python
+  client (`pipx install reqstool`), hence the same exemption as the docs gates.
+  Run it locally with `pnpm check` first — the status command matches against
+  the JUnit files both test runners write into `build/test-results/`, so it
+  reads stale results if the suites have not just run.
+
+  Adding a requirement means `docs/reqstool/requirements.yml` plus an SVC,
+  a `@Requirements` tag on the implementation and an `@SVCs` tag on the test —
+  **in the same branch as the change**, like the manual. The tagged test must
+  be top-level with a single-identifier title
+  (`guld_threshold_per_marke_group_and_age_reduction`): reqstool matches on the
+  leading identifier of a JUnit testcase name, so a prose title or a test
+  nested in a `describe` silently fails to match. ADR 0015 also sets what
+  belongs in `requirements.yml` versus in `docs/reference/`, `docs/specs/` and
+  an ADR — read it before adding the first requirement to a new area.
+
 - Evidence-first layers (M3 onwards, for `shared/scoring` and friends):
   `pnpm coverage` (vitest + v8, 100% threshold on
   `shared/src/{scoring,disciplines}`, exits nonzero when missed),

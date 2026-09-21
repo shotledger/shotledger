@@ -150,6 +150,8 @@ export interface StandardMedalSessionInput {
  * Session-level standardMedal evaluator (spsf-domain rule 3): when the
  * session has a final, the medal always evaluates the grundomgång
  * (beforeFinal), never the after-final total.
+ *
+ * @Requirements SCORE_002
  */
 export function standardMedalForSession(input: StandardMedalSessionInput): StandardMedalResult {
   const seriesCount = input.hasFinal ? input.beforeFinalSeriesCount : input.totalSeriesCount;

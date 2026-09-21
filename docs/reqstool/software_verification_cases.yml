@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reqstool/reqstool-client/main/src/reqstool/resources/schemas/v1/software_verification_cases.schema.json
+
+# One SVC per requirement, each verified by a test tagged `@SVCs` with this id.
+# That test is top-level and its title is a single identifier token — reqstool
+# matches a JUnit testcase by the leading identifier of its name, so a test
+# nested in a `describe` matches the describe instead. See ADR 0015.
+
+cases:
+  - id: SVC_SCORE_001
+    requirement_ids: ['SCORE_001']
+    title: Verify the guld threshold per märke group, its age reductions, and the cases it does not cover
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_SCORE_002
+    requirement_ids: ['SCORE_002']
+    title: Verify a session with a final is judged on the grundomgång, not the after-final total
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_SCORE_003
+    requirement_ids: ['SCORE_003']
+    title: Verify a sighter series is excluded from the scored result and included in shot volume
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_COMPL_001
+    requirement_ids: ['COMPL_001']
+    title: Verify sessions inside the window are counted at their training/competition weight and those outside are not
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_COMPL_002
+    requirement_ids: ['COMPL_002']
+    title: Verify a shooter-scope rule still applies when no firearm has a vapengrupp
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_DISC_001
+    requirement_ids: ['DISC_001']
+    title: Verify the offered SPSF klasser follow the shooter's skill class, category and vapengrupp C restriction
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_DISC_002
+    requirement_ids: ['DISC_002']
+    title: Verify events are narrowed to the enabled regelverk while a stored event id still resolves
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_TIMER_001
+    requirement_ids: ['TIMER_001']
+    title: Verify a loud event is rejected for being too long or rising too slowly
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_BACKEND_001
+    requirement_ids: ['BACKEND_001']
+    title: Verify the quota boundary is inclusive and usage is floored at zero
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_APP_001
+    requirement_ids: ['APP_001']
+    title: Verify a weapon type needing no licence is not reported as missing one
+    verification: automated-test
+    revision: '0.1.0'

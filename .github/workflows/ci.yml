@@ -27,3 +27,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm check
+
+      # Requirement↔test traceability (ADR 0015). `pnpm check` has already run
+      # both test suites, so the JUnit results reqstool matches against are on
+      # disk by now. Kept out of `pnpm check` itself because the client is
+      # Python, same as the docs gates.
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Install the reqstool client
+        run: pipx install reqstool==0.12.2
+
+      - name: Collect requirement annotations
+        run: pnpm reqstool:tags
+
+      - name: Check every requirement is implemented and verified
+        run: pnpm reqstool:status

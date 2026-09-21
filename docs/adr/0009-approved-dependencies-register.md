@@ -13,6 +13,20 @@ rewritten from scratch.
 
 ## Decision
 
+**`@reqstool/reqstool-typescript-tags@0.3.0`** (MIT) and
+**`jest-junit@17.0.0`** (Apache-2.0) — 2026-09-21, approved together for
+requirement↔test traceability (ADR 0015, issue #355). Both are dev
+dependencies: the first scans JSDoc `@Requirements`/`@SVCs` tags into an
+annotations file, the second gives `app/`'s jest the JUnit output vitest
+already had. Neither is imported by application code and neither reaches the
+bundle, so `app/src/constants/licenses.json` does not change — that list comes
+from Metro's module graph, not from the dependency tree. The Python client
+(`pipx install reqstool`) is CI tooling rather than a dependency, the same
+standing as the MkDocs toolchain.
+
+**Disclosure:** the maintainer authors reqstool, so this is dogfooding. See
+ADR 0015.
+
 **`expo-location@~57.0.16`** (MIT) — 2026-09-11, approved for GPS
 range auto-matching on the session Location field. One-shot
 `getCurrentPositionAsync` only: no background permission is declared, no

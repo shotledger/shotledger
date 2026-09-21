@@ -63,6 +63,8 @@ export function countInnerTens(shotsList: readonly FlaggedShot[]): number {
  * The three derived results of §6.3. Sighter series are excluded from every
  * score; `hasFinal` is true as soon as any series belongs to the final
  * section, so the UI shows the divider even before the final is scored.
+ *
+ * @Requirements SCORE_003
  */
 export function sessionResults(seriesList: readonly SeriesForResults[]): SessionResults {
   let beforeFinalTenths = 0;
@@ -92,6 +94,8 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
  * series (WS1) has no `shots` rows, so it contributes its stored
  * `totalOverride.shotCount` instead — the round count must reflect shots
  * actually fired even though no per-shot detail was imported.
+ *
+ * @Requirements SCORE_003
  */
 export function shotVolume(seriesList: readonly SeriesForResults[]): number {
   return seriesList.reduce(

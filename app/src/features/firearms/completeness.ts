@@ -34,6 +34,8 @@ export interface FirearmCompletenessInput {
  * firearm; erring the other way nags every air-pistol shooter permanently.
  * `SE_HANDGUN_WEAPON_TYPES` excludes `airgun` on the same reasoning, and the
  * two should move together if the app ever learns muzzle energy.
+ *
+ * @Requirements APP_001
  */
 export function requiresLicense(weaponType: string | null): boolean {
   return weaponType !== 'airgun';
@@ -51,6 +53,8 @@ export function requiresLicense(weaponType: string | null): boolean {
  *   "missing", only possibly wrong.
  * - **weapon groups** — they belong to how the shooter competes, not to the
  *   firearm's identity, and no import has ever carried them.
+ *
+ * @Requirements APP_001
  */
 export function missingFirearmFields(
   firearm: FirearmCompletenessInput,

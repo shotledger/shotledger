@@ -337,3 +337,51 @@ describe('skippedSessionCount (the honesty figure)', () => {
     expect(result.countedSessionCount).toBe(1);
   });
 });
+
+/**
+ * Top-level and identifier-titled so reqstool can match this testcase back to
+ * its annotation — see the convention in ADR 0015.
+ *
+ * @SVCs SVC_COMPL_001
+ */
+it('only_sessions_inside_the_window_count_at_their_type_weight', () => {
+  const r: ComplianceRule = {
+    scope: 'shooter',
+    windowMonths: 6,
+    requiredActivities: 12,
+    countsAs: { training: 1, competition: 2 },
+  };
+  const sessions: ComplianceSession[] = [
+    { id: 'inside-training', startedAt: '2026-08-01T00:00:00Z', type: 'training' },
+    { id: 'inside-competition', startedAt: '2026-07-01T00:00:00Z', type: 'competition' },
+    // 2026-03-01 is the window start; a day before it is outside.
+    { id: 'outside', startedAt: '2026-02-28T00:00:00Z', type: 'training' },
+  ];
+  const activity = computeRuleLicenseActivity(sessions, r, NOW);
+  expect(activity.activityCount).toBe(3);
+  expect(activity.countedSessionCount).toBe(2);
+  expect(activity.windowStartIso).toBe('2026-03-01T00:00:00.000Z');
+});
+
+/**
+ * @SVCs SVC_COMPL_002
+ */
+it('a_shooter_scope_rule_applies_with_no_weapon_groups_on_file', () => {
+  const profile: JurisdictionProfile = {
+    ...({} as JurisdictionProfile),
+    rules: [
+      {
+        scope: 'shooter',
+        windowMonths: 6,
+        requiredActivities: 12,
+        countsAs: { training: 1, competition: 1 },
+      },
+    ],
+  };
+  const sessions: ComplianceSession[] = [
+    { id: 'a', startedAt: '2026-08-01T00:00:00Z', type: 'training' },
+  ];
+  const overall = computeOverallLicenseActivity(sessions, profile, [], NOW);
+  expect(overall.statuses).toHaveLength(1);
+  expect(overall.statuses[0]!.activityCount).toBe(1);
+});

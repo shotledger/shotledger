@@ -22,13 +22,17 @@
     "schema:generate": "node scripts/generate-export-schema.mjs",
     "schema:check": "node scripts/generate-export-schema.mjs --check",
     "docs:translations": "node scripts/docs-translation-check.mjs",
-    "docs:anchors": "node scripts/docs-anchor-check.mjs"
+    "docs:anchors": "node scripts/docs-anchor-check.mjs",
+    "reqstool:tags": "reqstool-typescript-tags tags --inputs shared/src,backend/src,app/src --output build/reqstool/annotations.yml",
+    "reqstool:status": "reqstool status --check-all-reqs-met local -p docs/reqstool"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@reqstool/reqstool-typescript-tags": "0.3.0",
     "@stryker-mutator/core": "10.0.0",
     "@stryker-mutator/vitest-runner": "10.0.0",
     "@types/node": "26.6.1",
+    "@typescript/native": "npm:typescript@7.0.2",
     "@vitest/coverage-v8": "5.0.1",
     "eslint": "10.10.0",
     "eslint-config-prettier": "10.1.8",
@@ -37,7 +41,6 @@
     "fast-check": "4.10.1",
     "globals": "17.12.0",
     "prettier": "3.9.8",
-    "@typescript/native": "npm:typescript@7.0.2",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "typescript-eslint": "8.70.0",
     "vitest": "5.0.1"

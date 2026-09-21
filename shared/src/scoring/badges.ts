@@ -91,7 +91,11 @@ export function goldSeriesThreshold(input: SeriesThresholdInput): number | null 
   });
 }
 
-/** True when a series score (in points) meets the guld requirement. */
+/**
+ * True when a series score (in points) meets the guld requirement.
+ *
+ * @Requirements SCORE_001
+ */
 export function isGoldSeries(points: number, input: SeriesThresholdInput): boolean {
   const threshold = goldSeriesThreshold(input);
   return threshold !== null && points >= threshold;
