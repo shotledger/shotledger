@@ -20,7 +20,10 @@
 //
 // Regeneration bundles the app (~20 s cold), so it is manual/CI-only.
 // `pnpm licenses:check`, which `pnpm check` runs, only verifies the committed
-// file's invariants — see checkInvariants below.
+// file's invariants — see checkInvariants below. One of them reads
+// pnpm-lock.yaml: every listed name@version must still be a resolved package,
+// so a dependency bump that moves a bundled version fails the PR that made it
+// instead of drifting silently (#385).
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
@@ -32,6 +35,8 @@ const repoRoot = path.resolve(__dirname, '..');
 const appDir = path.join(repoRoot, 'app');
 const outPath = path.join(repoRoot, 'app/src/constants/licenses.json');
 const relOut = path.relative(repoRoot, outPath);
+const lockPath = path.join(repoRoot, 'pnpm-lock.yaml');
+const relLock = path.relative(repoRoot, lockPath);
 
 // Build tooling that must never reappear in the list. These are the families
 // that `--prod` used to sweep in; a match means the scoping regressed.
@@ -52,6 +57,57 @@ const byNameThenVersion = (a, b) =>
 // check mode — cheap invariants only, no bundling
 // ---------------------------------------------------------------------------
 
+// What pnpm-lock.yaml resolves, read with a line scanner rather than a YAML
+// parser (none is a dependency here, and the two-space indentation pnpm
+// writes is stable). `packages` holds every `name@version` key of every
+// `packages:` block — the lockfile is a multi-document file, and the peer
+// suffixes only appear under `snapshots:`. `appDirect` maps the `app`
+// importer's runtime dependencies to the version they resolve to, so a direct
+// dependency is held to the exact version rather than to "some version is
+// still in the lockfile".
+function lockfileResolution() {
+  let text;
+  try {
+    text = readFileSync(lockPath, 'utf8');
+  } catch (err) {
+    fail(`cannot read ${relLock}: ${err.message}`);
+  }
+  const packages = new Set();
+  const appDirect = new Map();
+  let section = null;
+  let importer = null;
+  let block = null;
+  let dependency = null;
+  for (const line of text.split('\n')) {
+    let m;
+    if ((m = /^(\S+?):/.exec(line))) {
+      section = m[1];
+      importer = null;
+      continue;
+    }
+    if (section === 'packages') {
+      if ((m = /^ {2}'?([^'\s]+)'?:/.exec(line))) packages.add(m[1]);
+    } else if (section === 'importers') {
+      if ((m = /^ {2}(\S+):/.exec(line))) importer = m[1];
+      else if ((m = /^ {4}(\S+):/.exec(line))) block = m[1];
+      else if ((m = /^ {6}'?([^'\s]+)'?:/.exec(line))) dependency = m[1];
+      else if (
+        importer === 'app' &&
+        block === 'dependencies' &&
+        (m = /^ {8}version: ([^(\s]+)/.exec(line))
+      ) {
+        appDirect.set(dependency, m[1]);
+      }
+    }
+  }
+  if (packages.size === 0 || appDirect.size === 0) {
+    fail(
+      `${relLock} has an unexpected shape: ${packages.size} packages, ${appDirect.size} app deps`,
+    );
+  }
+  return { packages, appDirect };
+}
+
 function checkInvariants() {
   let entries;
   try {
@@ -63,6 +119,7 @@ function checkInvariants() {
     fail(`${relOut} is not a non-empty array`);
   }
 
+  const { packages, appDirect } = lockfileResolution();
   const problems = [];
   const seen = new Set();
   let previous = null;
@@ -83,6 +140,14 @@ function checkInvariants() {
     previous = entry;
     if (BUILD_TOOLING.some((re) => re.test(entry.name))) {
       problems.push(`${entry.name}: build tooling, does not ship in the bundle`);
+    }
+    // A transitive package may legitimately resolve to several versions, so
+    // it only has to exist; a direct dependency of `app` has one resolution.
+    const direct = appDirect.get(entry.name);
+    if (direct !== undefined && direct !== entry.version) {
+      problems.push(`${key}: app resolves ${entry.name}@${direct} in ${relLock}`);
+    } else if (!packages.has(key)) {
+      problems.push(`${key}: not in ${relLock}`);
     }
   }
 
