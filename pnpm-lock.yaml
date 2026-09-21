@@ -229,8 +229,8 @@ importers:
   app:
     dependencies:
       '@expo/ui':
-        specifier: 57.0.18
-        version: 57.0.18(6f1cb3970dddc49894208ed4f5190fd3)
+        specifier: 57.0.19
+        version: 57.0.19(6f1cb3970dddc49894208ed4f5190fd3)
       '@react-native-community/datetimepicker':
         specifier: 9.2.1
         version: 9.2.1(expo@57.0.24)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
@@ -1624,23 +1624,6 @@ packages:
 
   '@expo/sudo-prompt@9.3.2':
     resolution: {integrity: sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==}
-
-  '@expo/ui@57.0.18':
-    resolution: {integrity: sha512-9RkA26v0FSyHlkQCyavZrT8EzsALfkNHIFO5uC+IsAxzWzItdOWdy6asjpg1yaCvBEGMYkP17FUZxluhVbeleA==}
-    peerDependencies:
-      '@babel/core': '*'
-      expo: '*'
-      react: '*'
-      react-dom: '*'
-      react-native: '*'
-      react-native-worklets: '*'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      react-dom:
-        optional: true
-      react-native-worklets:
-        optional: true
 
   '@expo/ui@57.0.19':
     resolution: {integrity: sha512-WB95zQPge5nb04zgY3O2NmMtxg6G+qFH3yOAHcBkTUrJXoBReQoyY3cfp/8N5Q/azcfHJcBE3Jy0Rwq9OoRrfA==}
@@ -8418,21 +8401,6 @@ snapshots:
       cross-spawn: 7.0.6
 
   '@expo/sudo-prompt@9.3.2': {}
-
-  '@expo/ui@57.0.18(6f1cb3970dddc49894208ed4f5190fd3)':
-    dependencies:
-      expo: 57.0.24(a71d82f418266372d6fae733ca6710fe)
-      react: 19.2.3
-      react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2)
-      sf-symbols-typescript: 2.2.0
-      vaul: 1.1.2(@types/react@19.3.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-    optionalDependencies:
-      '@babel/core': 7.29.7(supports-color@10.2.2)
-      react-dom: 19.2.3(react@19.2.3)
-      react-native-worklets: 0.10.1(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2)
-    transitivePeerDependencies:
-      - '@types/react'
-      - '@types/react-dom'
 
   '@expo/ui@57.0.19(6f1cb3970dddc49894208ed4f5190fd3)':
     dependencies:
