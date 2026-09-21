@@ -96,8 +96,8 @@ categories", and docs/reference/svsf-rules.md for what SvSF actually publishes
 for the two (national **mixed-team** formats, which the app has no model for).
 
 - Klasser remain federation-derived (`shooterClassesForDiscipline`). Making a
-  shooter's klass per-federation — the second half of the #138 item — is still
-  open.
+  shooter's klass per-federation — the second half of the #138 item — was
+  closed by ADR 0014: SvSF gets no klass layer, so SPSF's stays the only one.
 
 ## Addendum, 2026-09-16 (#228)
 
@@ -119,6 +119,6 @@ allmänna bestämmelser 1.5.1/1.5.2).
 Still unencoded, and why: falling target (hit-or-miss scoring, one point per
 hit, does not fit ring scoring), finals of any gren, Tävlings-PM 14's
 klassindelning (hederspris, junior äldre/yngre, youth, veteran and stödhand
-classes — a class layer for SvSF sessions is a maintainer decision), every
+classes — settled in the negative by ADR 0014), every
 team format (no team model) and skyttemärken SvSF. Nordiska grenar turned out
 not to exist for pistol.
