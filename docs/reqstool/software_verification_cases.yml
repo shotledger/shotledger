@@ -24,6 +24,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_004
+    requirement_ids: ['SCORE_004']
+    title: Verify a fält round's hits/figures/poäng result and both särskiljning orders
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not

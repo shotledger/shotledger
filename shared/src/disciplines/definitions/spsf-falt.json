@@ -1,0 +1,12 @@
+{
+  "id": "spsf-falt",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Fältskjutning",
+    "en": "Fältskjutning"
+  },
+  "defaultSeriesLength": 6,
+  "scoring": "hits",
+  "allowsDecimal": false,
+  "weaponGroups": ["spsf:A", "spsf:A-opt", "spsf:B", "spsf:C", "spsf:R"]
+}

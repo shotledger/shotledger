@@ -120,7 +120,9 @@ describe('getTargetFace / requireTargetFace', () => {
     );
     expect(issfRingsDisciplines.length).toBeGreaterThan(0);
     for (const discipline of issfRingsDisciplines) {
-      expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
+      // `?? ''` rather than a non-null assertion: a rings discipline that
+      // lost its targetFace must fail this test, not skip it.
+      expect(() => requireTargetFace(discipline.targetFace ?? '')).not.toThrow();
     }
   });
 
@@ -130,7 +132,9 @@ describe('getTargetFace / requireTargetFace', () => {
     );
     expect(svsfRingsDisciplines.length).toBeGreaterThan(0);
     for (const discipline of svsfRingsDisciplines) {
-      expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
+      // `?? ''` rather than a non-null assertion: a rings discipline that
+      // lost its targetFace must fail this test, not skip it.
+      expect(() => requireTargetFace(discipline.targetFace ?? '')).not.toThrow();
     }
   });
 
@@ -161,7 +165,9 @@ describe('getTargetFace / requireTargetFace', () => {
     );
     expect(spsfRingsDisciplines.length).toBeGreaterThan(0);
     for (const discipline of spsfRingsDisciplines) {
-      expect(() => requireTargetFace(discipline.targetFace)).not.toThrow();
+      // `?? ''` rather than a non-null assertion: a rings discipline that
+      // lost its targetFace must fail this test, not skip it.
+      expect(() => requireTargetFace(discipline.targetFace ?? '')).not.toThrow();
     }
   });
 

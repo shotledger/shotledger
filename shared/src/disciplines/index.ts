@@ -12,6 +12,7 @@ import issfFreePistolDiscipline from './definitions/issf-free-pistol.json';
 import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.json';
 import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
 import issfStandardPistolDiscipline from './definitions/issf-standard-pistol.json';
+import spsfFaltDiscipline from './definitions/spsf-falt.json';
 import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
 import svsfSnabbluftpistolDiscipline from './definitions/svsf-snabbluftpistol.json';
@@ -37,6 +38,10 @@ export * from './eligibility';
 export const DISCIPLINES: readonly Discipline[] = [
   spsfPrecisionDiscipline,
   spsfMilsnabbDiscipline,
+  // Registered, but not yet enterable: fält scores hits on figures, and the
+  // station entry UI is a follow-up on #315. `ringScoringDisciplines` is what
+  // keeps it out of the pickers until then.
+  spsfFaltDiscipline,
   genericRings,
   issfAirPistolDiscipline,
   issfSportPistolDiscipline,
@@ -74,6 +79,20 @@ export interface SessionNameParts {
   /** Localized session type, e.g. 'Training' / 'Tävling'. */
   typeLabel: string;
   dateLabel: string;
+}
+
+/**
+ * The ring-scored members of a discipline list, in order.
+ *
+ * Every screen that enters or imports a score assumes a ring value per shot.
+ * Fält does not work that way and has no entry UI yet (#315), so the pickers
+ * filter through this rather than the registry — and stop filtering by
+ * deleting the call, once there is something to offer.
+ */
+export function ringScoringDisciplines(
+  list: readonly Discipline[] = DISCIPLINES,
+): readonly Discipline[] {
+  return list.filter((discipline) => discipline.scoring === 'rings');
 }
 
 export function getDiscipline(id: string): Discipline | undefined {

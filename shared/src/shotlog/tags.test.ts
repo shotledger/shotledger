@@ -45,6 +45,15 @@ describe('defaultTagRole', () => {
     });
   });
 
+  it('N4 (#315): a fält tag is not a discipline — ShotLog carries no station data', () => {
+    // The importer can only build ring series, so guessing `spsf-falt` here
+    // would produce a session that cannot hold what it imported.
+    expect(defaultTagRole('Fältskjutning')).toEqual({
+      kind: 'firearm',
+      label: 'Fältskjutning',
+    });
+  });
+
   it.each([
     ['milsnabb', 'spsf-milsnabb'],
     ['Mil', 'spsf-milsnabb'],

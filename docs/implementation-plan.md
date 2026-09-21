@@ -732,14 +732,25 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 
 `shared/disciplines/definitions/*.json`, validated by zod schema
 `disciplineSchema`: `{id, federation: 'SPSF'|'ISSF'|'SvSF'|'generic',
-name: {sv,en}, targetFace, defaultSeriesLength, scoring: 'rings',
-allowsDecimal, weaponGroups}`. **v1 is SPSF-only** (maintainer decision
-2026-09-01): SPSF precision (target: Pistoltavla 25 m precision — §6.5c),
-SPSF militär snabbmatch, plus generic ring-scoring for free training.
-**Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
-25m standard, 50m pistol — defaults need VERIFY then) and fältskytte
-(hit/figure scoring is a different model). Community adds disciplines
-via PR once public.
+name: {sv,en}, targetFace?, defaultSeriesLength, scoring:
+'rings'|'hits', allowsDecimal, weaponGroups}`. **v1 is SPSF-only**
+(maintainer decision 2026-09-01): SPSF precision (target: Pistoltavla
+25 m precision — §6.5c), SPSF militär snabbmatch, plus generic
+ring-scoring for free training. Community adds disciplines via PR once
+public.
+
+- [x] **`scoring: 'hits'` and the fältskjutning definition** (#315,
+      ADR 0016). `targetFace` is rings-only — a fält round is shot
+      against Del D's figure catalogue, not one face — and `spsf-falt`
+      carries SHB's vapengrupper A, A optisk, B, C, R. The result model
+      is `shared/src/scoring/falt.ts` (spec:
+      `docs/specs/falt-scoring-spec.md`). The discipline is registered
+      but not offered: `ringScoringDisciplines()` filters the pickers
+      until a station entry UI exists. Still open on #315 — station
+      persistence and entry UI, WebShooter fält import, statistics and
+      personal bests for hits sessions, and the questions SHB does not
+      answer (särskjutning's effect on the score, a scratched station,
+      poängmål ring values).
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 

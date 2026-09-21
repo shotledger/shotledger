@@ -7,7 +7,7 @@
 // `shared/src/disciplines` wherever a registry exists, and every one of them
 // is only a DEFAULT the user overrides on the import screen before anything
 // is written.
-import { DISCIPLINES, SPSF_WEAPON_GROUPS } from '../disciplines';
+import { ringScoringDisciplines, SPSF_WEAPON_GROUPS } from '../disciplines';
 import type { ShotlogRow, ShotlogTagRole, ShotlogTagMapping, ShotlogTagUsage } from './types';
 
 /** Case- and whitespace-insensitive tag key. */
@@ -32,8 +32,10 @@ const DNF_TAGS = new Set(['dnf', 'ej fullföljt']);
 /** A weapon-group code with an optional trailing shooter class, e.g. `C1`. */
 const GROUP_WITH_CLASS = /^(.+?)\s*([123])$/u;
 
+// Ring disciplines only: a ShotLog row is a list of ring values, so a fält
+// tag has nothing to import into (#315).
 function matchDiscipline(key: string): string | null {
-  for (const discipline of DISCIPLINES) {
+  for (const discipline of ringScoringDisciplines()) {
     if (normalizeTag(discipline.name.sv) === key || normalizeTag(discipline.name.en) === key) {
       return discipline.id;
     }

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 import {
-  DISCIPLINES,
+  ringScoringDisciplines,
   SPSF_WEAPON_GROUPS,
   type ShotlogPlanRow,
   type ShotlogTagRole,
@@ -99,7 +99,7 @@ export default function ShotlogImportScreen() {
       { value: 'sighter', label: t('shotlog.role.sighter') },
       { value: 'final', label: t('shotlog.role.final') },
       { value: 'dnf', label: t('shotlog.role.dnf') },
-      ...DISCIPLINES.map((discipline) => ({
+      ...ringScoringDisciplines().map((discipline) => ({
         value: `discipline|${discipline.id}`,
         label: t('shotlog.role.discipline', { name: disciplineLabel(t, discipline.id) }),
       })),
@@ -259,7 +259,7 @@ export default function ShotlogImportScreen() {
                     <View style={styles.editor} testID={`shotlog-editor-${row.line}`}>
                       <OptionPicker
                         label={t('session.discipline')}
-                        options={DISCIPLINES.map((discipline) => ({
+                        options={ringScoringDisciplines().map((discipline) => ({
                           value: discipline.id,
                           label: disciplineLabel(t, discipline.id),
                         }))}
