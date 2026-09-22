@@ -102,3 +102,39 @@ python gen_hole_feature_fixtures.py > \
 
 Ground truth is **hole centres, not candidate labels**: labelling the
 candidates a detector proposes cannot measure the holes it misses.
+
+## Hole proposals (`hole_proposals.py`)
+
+The "suggested holes" stage: Laplacian-of-Gaussian peaks on a half-resolution
+canvas, thirty features per candidate, a logistic regression, a merge of
+peaks closer than one hole diameter and a centroid refinement. Numbers and
+the decisions behind them:
+[`docs/specs/cv-hole-proposals-2026-09.md`](../../docs/specs/cv-hole-proposals-2026-09.md).
+
+This file is the **reference** for the arithmetic; the app runs
+`app/src/features/photo-scoring/hole-proposals.ts`, a port without OpenCV.
+`synthetic_canvas.py` draws integer-only synthetic canvases that the
+TypeScript twin reproduces pixel for pixel, and
+`gen_hole_proposal_fixtures.py` writes the lock-step fixture from them — no
+pixel from any real photo. Change one side and you change both, then
+regenerate the fixture.
+
+```bash
+# 1. candidates with features, against hand marks (rectifies onto the
+#    app-sized canvas; --cache keeps the canvases between runs)
+python eval_hole_proposals.py --marks marks.txt --in <photos> \
+    --out candidates.csv --cache <dir>
+python eval_hole_proposals.py --marks marks.txt --in <photos> --cache <dir> --report
+
+# 2. fit, cross-validated by photo; paste the constants into hole_proposals.py
+#    and hole-proposals.ts
+python fit_hole_proposals.py candidates.csv --marks marks.txt
+python fit_hole_proposals.py a.csv --test b.csv --marks marks.txt
+
+# 3. regenerate the lock-step fixture after any change to the arithmetic
+python gen_hole_proposal_fixtures.py > \
+    ../../app/src/features/photo-scoring/hole-proposals.fixtures.json
+```
+
+The marks are read off the spike's 1040 px canvas (see `mark_holes.py`);
+`eval_hole_proposals.py` shifts them onto the 2100 px one.
