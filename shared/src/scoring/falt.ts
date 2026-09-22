@@ -169,9 +169,7 @@ export interface FaltStationEntry extends FaltStation {
  *
  * @Requirements SCORE_005
  */
-export function scoringStations(
-  stations: readonly FaltStationEntry[],
-): readonly FaltStation[] {
+export function scoringStations(stations: readonly FaltStationEntry[]): readonly FaltStation[] {
   return stations
     .filter((station) => !station.isScratched && !station.isShootOff)
     .map(({ hits, figuresHit, points }) => ({ hits, figuresHit, points }));

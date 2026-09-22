@@ -16,8 +16,10 @@ import {
   MIN_SHOTS_FOR_HEATMAP,
   programsForDiscipline,
   tenthsToScore,
+  getDiscipline,
 } from '@shotledger/shared';
 
+import { FaltStations } from '@/features/session/falt-stations';
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -173,6 +175,10 @@ export default function SessionDetailScreen() {
   // determined when the session is created"). Gating only — a legacy row's
   // stored extra_rounds and series are left untouched either way.
   const isRoundsSession = session.kind === 'rounds';
+  // Fält is scored in hits on figures: the ring metrics, the series list and
+  // "Add Series" all have nothing to bind to, so the stations card replaces
+  // them wholesale (#315).
+  const isFaltSession = getDiscipline(session.disciplineId)?.scoring === 'hits';
 
   const mainRows = seriesRows.filter((row) => !row.isFinal);
   const finalRows = seriesRows.filter((row) => row.isFinal);
@@ -446,53 +452,62 @@ export default function SessionDetailScreen() {
 
       <WebshooterSessionBadge session={session} />
 
-      <Card style={styles.metricCard}>
-        {metricRows([
-          ...(results.hasFinal
-            ? [
-                {
-                  label: t('session.beforeFinal'),
-                  value: String(tenthsToScore(results.beforeFinalTenths)),
-                  testID: 'result-before-final',
-                },
-                {
-                  label: t('session.final'),
-                  value: String(tenthsToScore(results.finalTenths)),
-                  testID: 'result-final',
-                },
-              ]
-            : []),
-          {
-            label: t('session.total'),
-            value: String(tenthsToScore(results.totalTenths)),
-            testID: 'session-total',
-          },
-          {
-            label: t('session.seriesAverage'),
-            value:
-              detail.seriesAverageTenths === null
-                ? '\u2013'
-                : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
-            testID: 'session-series-average',
-          },
-          {
-            label: t('session.innerTenCount'),
-            value: String(detail.innerTenCount),
-            testID: 'session-inner-ten-count',
-          },
-          {
-            label: t('session.innerTenAverage'),
-            value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
-            testID: 'session-inner-ten-average',
-          },
-        ]).map((row, index) => (
-          <View key={index} style={styles.metricRow}>
-            {row.map((tile) => (
-              <MetricTile key={tile.testID} {...tile} />
-            ))}
-          </View>
-        ))}
-      </Card>
+      {isFaltSession && (
+        <FaltStations
+          sessionId={id}
+          resultMode={session.faltResultMode === 'poangfalt' ? 'poangfalt' : 'falt'}
+        />
+      )}
+
+      {!isFaltSession && (
+        <Card style={styles.metricCard}>
+          {metricRows([
+            ...(results.hasFinal
+              ? [
+                  {
+                    label: t('session.beforeFinal'),
+                    value: String(tenthsToScore(results.beforeFinalTenths)),
+                    testID: 'result-before-final',
+                  },
+                  {
+                    label: t('session.final'),
+                    value: String(tenthsToScore(results.finalTenths)),
+                    testID: 'result-final',
+                  },
+                ]
+              : []),
+            {
+              label: t('session.total'),
+              value: String(tenthsToScore(results.totalTenths)),
+              testID: 'session-total',
+            },
+            {
+              label: t('session.seriesAverage'),
+              value:
+                detail.seriesAverageTenths === null
+                  ? '\u2013'
+                  : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
+              testID: 'session-series-average',
+            },
+            {
+              label: t('session.innerTenCount'),
+              value: String(detail.innerTenCount),
+              testID: 'session-inner-ten-count',
+            },
+            {
+              label: t('session.innerTenAverage'),
+              value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
+              testID: 'session-inner-ten-average',
+            },
+          ]).map((row, index) => (
+            <View key={index} style={styles.metricRow}>
+              {row.map((tile) => (
+                <MetricTile key={tile.testID} {...tile} />
+              ))}
+            </View>
+          ))}
+        </Card>
+      )}
 
       {isRoundsSession && (
         <Card>
@@ -738,7 +753,7 @@ export default function SessionDetailScreen() {
       ) : (
         <>
           {seriesRows.length === 0 ? (
-            isRoundsSession ? null : (
+            isRoundsSession || isFaltSession ? null : (
               <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
             )
           ) : (
@@ -766,7 +781,7 @@ export default function SessionDetailScreen() {
             </ThemedText>
           )}
 
-          {!detail.isFixedFormat && !isRoundsSession && (
+          {!detail.isFixedFormat && !isRoundsSession && !isFaltSession && (
             <Card>
               <PrimaryButton
                 label={t('session.addSeries')}

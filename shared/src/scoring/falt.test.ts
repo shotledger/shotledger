@@ -307,7 +307,10 @@ describe('scoringStations (spec S1-S7)', () => {
   });
 
   it('S5: an all-scratched round scores zero rather than failing', () => {
-    const entered = [entry(6, 2, 8, { isScratched: true }), entry(4, 3, null, { isScratched: true })];
+    const entered = [
+      entry(6, 2, 8, { isScratched: true }),
+      entry(4, 3, null, { isScratched: true }),
+    ];
     expect(scoringStations(entered)).toEqual([]);
     expect(faltResult(scoringStations(entered))).toEqual({
       stationCount: 0,

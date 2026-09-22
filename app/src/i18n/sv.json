@@ -696,7 +696,15 @@
     "scoredFromPhoto": "Poängsatt från foto",
     "scoredManually": "Inmatad manuellt",
     "sighterScore": "{{score}}*",
-    "stopwatchButton": "Tidtagarur"
+    "stopwatchButton": "Tidtagarur",
+    "faltResultMode": "Resultatform",
+    "faltResultModeFalt": "Fält",
+    "faltResultModePoangfalt": "Poängfält",
+    "faltResultModeHelp": "Fältskjutning räknas som träff i figurer. Poängfält lägger ihop dem till en summa: en poäng per träff och en per träffad figur.",
+    "addStation": "Lägg till station",
+    "stations": "Stationer",
+    "faltTotal": "{{hits}} träff i {{figures}} figurer",
+    "poangfaltTotal": "{{points}} poäng"
   },
   "share": {
     "title": "Dela pass",
@@ -1193,5 +1201,20 @@
     "footnote": "Svenska Skyttesportförbundet använder ISSF:s reglemente för sina grenar, så när du slår på det följer ISSF-grenarna med — och förbundets egna nationella läggs till: snabbluftpistol samt de öppna klasser, juniorklasser och herrklasser som skjuts vid SM och DM.",
     "settingsRowTitle": "Reglementen",
     "settingsRowNone": "Inga — endast träningspass"
+  },
+  "station": {
+    "title": "Station {{position}}",
+    "hits": "Träff",
+    "figuresHit": "Träffade figurer",
+    "points": "Poäng",
+    "pointsMax": "Maxpoäng",
+    "pointsTarget": "Ringad figur",
+    "pointsHelp": "Bara där arrangören satt ut en ringad figur. Ringarna skiljer lika resultat, de är aldrig resultatet.",
+    "scratched": "Struken",
+    "scratchedHelp": "Ligger kvar i ronden och visas, men räknas inte — en station som annullerats för regelbrott.",
+    "shootOff": "Särskjutning",
+    "shootOffHelp": "Skjuts för att skilja lika resultat. Den avgör placering, aldrig det noterade resultatet.",
+    "delete": "Ta bort station",
+    "deleteConfirm": "Ta bort den här stationen?"
   }
 }

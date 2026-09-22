@@ -44,19 +44,19 @@ optional parts.
 
 `series` is **unchanged**. New table:
 
-| Column | Type | Meaning |
-| --- | --- | --- |
-| `id`, `created_at`, `updated_at`, `deleted_at` | — | the `common` sync columns, as every other table |
-| `session_id` | text, not null | → `sessions` |
-| `position` | int, not null | 1-based station number |
-| `hits` | int, not null | 0–6 |
-| `figures_hit` | int, not null | 0–`hits` |
-| `points` | int, null | Poängmål points scored; null = the station had none |
-| `points_max` | int, null | What that poängmål could give (ruling 1) |
-| `is_scratched` | int, not null, default 0 | Ruling 4 |
-| `is_shoot_off` | int, not null, default 0 | Särskjutning station (ruling 3) |
-| `photo_uri` | text, null | same shape as a series' photo |
-| `note` | text, null | |
+| Column                                         | Type                     | Meaning                                             |
+| ---------------------------------------------- | ------------------------ | --------------------------------------------------- |
+| `id`, `created_at`, `updated_at`, `deleted_at` | —                        | the `common` sync columns, as every other table     |
+| `session_id`                                   | text, not null           | → `sessions`                                        |
+| `position`                                     | int, not null            | 1-based station number                              |
+| `hits`                                         | int, not null            | 0–6                                                 |
+| `figures_hit`                                  | int, not null            | 0–`hits`                                            |
+| `points`                                       | int, null                | Poängmål points scored; null = the station had none |
+| `points_max`                                   | int, null                | What that poängmål could give (ruling 1)            |
+| `is_scratched`                                 | int, not null, default 0 | Ruling 4                                            |
+| `is_shoot_off`                                 | int, not null, default 0 | Särskjutning station (ruling 3)                     |
+| `photo_uri`                                    | text, null               | same shape as a series' photo                       |
+| `note`                                         | text, null               |                                                     |
 
 `hits` and `figures_hit` are NOT NULL here, where the first draft had them
 nullable — in a table that exists only for stations, "no hits recorded" is 0,
@@ -142,9 +142,7 @@ export interface FaltStationEntry extends FaltStation {
   isScratched: boolean;
   isShootOff: boolean;
 }
-export function scoringStations(
-  stations: readonly FaltStationEntry[],
-): readonly FaltStation[];
+export function scoringStations(stations: readonly FaltStationEntry[]): readonly FaltStation[];
 ```
 
 Everything already there (`faltResult`, `poangfaltPoints`,

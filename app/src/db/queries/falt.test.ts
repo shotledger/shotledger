@@ -140,7 +140,13 @@ describe('stations are volume, even when they are not score (spec P6, P7)', () =
 
     addStation(db, { sessionId: faltSession, position: 1, hits: 5, figuresHit: 3 });
     // Struck out: its rounds were still fired down the barrel.
-    addStation(db, { sessionId: faltSession, position: 2, hits: 6, figuresHit: 0, isScratched: true });
+    addStation(db, {
+      sessionId: faltSession,
+      position: 2,
+      hits: 6,
+      figuresHit: 0,
+      isScratched: true,
+    });
 
     expect(getFirearm(db, firearm.id)!.roundCount).toBe(12);
     expect(getFirearm(db, firearm.id)!.roundsSinceMaintenance).toBe(12);

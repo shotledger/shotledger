@@ -61,8 +61,6 @@ export function getAmmoLotUsage(db: Database, ammoLotId: string): AmmoLotUsage {
   return {
     sessionCount: sessionRow?.count ?? 0,
     shotCount:
-      (shotRow?.count ?? 0) +
-      (stationRow?.count ?? 0) * SHOTS_PER_STATION +
-      (extraRow?.total ?? 0),
+      (shotRow?.count ?? 0) + (stationRow?.count ?? 0) * SHOTS_PER_STATION + (extraRow?.total ?? 0),
   };
 }
