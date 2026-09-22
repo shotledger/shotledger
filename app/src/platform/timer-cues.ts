@@ -18,8 +18,8 @@ import { vibrate } from './haptics';
  * iOS session in the ambient category — which also silences expo-speech,
  * since the synthesizer shares the app's session — and on Android refuses
  * to play while the ringer is not normal. Android's text-to-speech has no
- * such gate, so spoken commands there still play; that needs a native
- * module, i.e. a dependency decision.
+ * such gate of its own, so `platform/speech.ts` applies the ringer mode
+ * itself, through `platform/ringer.ts` (#346).
  *
  * The shot listener records through the same session and, on iOS, recording
  * cannot share a session with silent-mode respect — it sets its own mode

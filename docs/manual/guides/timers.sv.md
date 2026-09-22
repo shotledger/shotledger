@@ -71,11 +71,10 @@ en skarp serie.
 
 Tidsgränstimern och fälttimern spelar sina signaler i telefonens
 omgivningsljudsession, så ljudlös-knappen på en iPhone och ringsignalläget på
-en Androidtelefon tystar dem. På iOS gäller det pipen, visselsignalen och de
-talade kommandona lika. På Android gäller det pipen och visselsignalen; de
-talade kommandona hörs ändå, eftersom Androids talsyntes inte har någon spärr
-för ljudlöst läge. Vibration tystas aldrig av ljudlöst läge — det är hela
-poängen med den.
+en Androidtelefon tystar dem — pipen, visselsignalen och de talade kommandona
+lika. På Android gäller det även ett ringsignalläge som står på vibration,
+precis som telefonen själv behandlar det. Vibration tystas aldrig av ljudlöst
+läge — det är hela poängen med den.
 
 Skottimern är undantaget: medan mikrofonen lyssnar spelas ljud även i ljudlöst
 läge. Inspelning och respekt för ljudlöst läge kan inte dela en ljudsession på
