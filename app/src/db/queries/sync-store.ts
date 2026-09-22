@@ -16,6 +16,7 @@ import {
 
 import {
   ammoLots,
+  faltStations,
   firearmCalibers,
   firearmGroups,
   firearms,
@@ -46,6 +47,7 @@ export const SYNC_TABLES: Record<SyncTableName, SQLiteTable> = {
   sessions,
   series,
   shots,
+  falt_stations: faltStations,
   maintenance_events: maintenanceEvents,
   tags,
   sight_settings: sightSettings,

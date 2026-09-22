@@ -21,6 +21,8 @@ export const APPLY_ORDER: readonly SyncTableName[] = [
   'sessions',
   'series',
   'shots',
+  // A fält station hangs off a session, like a series does.
+  'falt_stations',
 ];
 
 const ORDER_INDEX: ReadonlyMap<SyncTableName, number> = new Map(

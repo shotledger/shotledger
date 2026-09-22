@@ -31,6 +31,7 @@ export const SYNC_TABLE_NAMES = [
   'sessions',
   'series',
   'shots',
+  'falt_stations',
   'maintenance_events',
   'tags',
   'sight_settings',
