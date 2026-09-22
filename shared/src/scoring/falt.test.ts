@@ -1,6 +1,14 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { byFalt, compareFaltResults, faltResult, poangfaltPoints, type FaltStation } from './falt';
+import {
+  byFalt,
+  compareFaltResults,
+  faltResult,
+  poangfaltPoints,
+  scoringStations,
+  type FaltStation,
+  type FaltStationEntry,
+} from './falt';
 
 /** A station, written the way SHB marks one: hits, figures, optional poäng. */
 function station(hits: number, figuresHit: number, points: number | null = null): FaltStation {
@@ -245,4 +253,116 @@ it('ranks a f\u00e4lt round by hits, figures and po\u00e4ng in SHB\u2019s order'
   expect(compareFaltResults(fewerHits, round, 'poangfalt')).toBeGreaterThan(0);
   // Nothing left to separate them with: the same placement, not a coin toss.
   expect(compareFaltResults(round, [...round], 'falt')).toBe(0);
+});
+
+describe('scoringStations (spec S1-S7)', () => {
+  /** An entered station: the recorded numbers plus the two flags that can take it out of the result. */
+  function entry(
+    hits: number,
+    figuresHit: number,
+    points: number | null = null,
+    flags: { isScratched?: boolean; isShootOff?: boolean } = {},
+  ): FaltStationEntry {
+    return {
+      hits,
+      figuresHit,
+      points,
+      isScratched: flags.isScratched ?? false,
+      isShootOff: flags.isShootOff ?? false,
+    };
+  }
+
+  it('S1: keeps plain stations, in order, as scoring stations', () => {
+    const entered = [entry(6, 2, 8), entry(4, 3), entry(0, 0)];
+    expect(scoringStations(entered)).toEqual([
+      { hits: 6, figuresHit: 2, points: 8 },
+      { hits: 4, figuresHit: 3, points: null },
+      { hits: 0, figuresHit: 0, points: null },
+    ]);
+  });
+
+  it('S2: drops a scratched station', () => {
+    const entered = [entry(6, 2), entry(5, 4, null, { isScratched: true }), entry(4, 3)];
+    expect(faltResult(scoringStations(entered))).toEqual({
+      stationCount: 2,
+      hits: 10,
+      figuresHit: 5,
+      ringedFigurePoints: null,
+    });
+  });
+
+  it('S3: drops a särskjutning station — it decides placement, never the score', () => {
+    const entered = [entry(6, 2), entry(4, 3), entry(6, 6, null, { isShootOff: true })];
+    expect(faltResult(scoringStations(entered))).toEqual({
+      stationCount: 2,
+      hits: 10,
+      figuresHit: 5,
+      ringedFigurePoints: null,
+    });
+  });
+
+  it('S4: drops a station that is both, once', () => {
+    const entered = [entry(6, 2), entry(5, 5, 9, { isScratched: true, isShootOff: true })];
+    expect(scoringStations(entered)).toEqual([{ hits: 6, figuresHit: 2, points: null }]);
+  });
+
+  it('S5: an all-scratched round scores zero rather than failing', () => {
+    const entered = [entry(6, 2, 8, { isScratched: true }), entry(4, 3, null, { isScratched: true })];
+    expect(scoringStations(entered)).toEqual([]);
+    expect(faltResult(scoringStations(entered))).toEqual({
+      stationCount: 0,
+      hits: 0,
+      figuresHit: 0,
+      ringedFigurePoints: null,
+    });
+  });
+
+  it('S6: the countback sees the surviving stations — a scratched last station is not the last', () => {
+    // Identical totals over the scoring stations; the rounds differ only on
+    // which station ended them, and on what was struck out.
+    const a = [entry(5, 3), entry(6, 2), entry(0, 0, null, { isScratched: true })];
+    const b = [entry(6, 2), entry(5, 3), entry(6, 6, null, { isScratched: true })];
+    // 11 hits in 5 figures each. a ends 6/2, b ends 5/3, and vanlig fält
+    // counts back on hits from the last SCORING station — so a wins.
+    expect(compareFaltResults(scoringStations(a), scoringStations(b), 'falt')).toBeLessThan(0);
+    // The control: count the scratched stations and the result inverts, because
+    // b's struck-out 6/6 would carry it to 17 hits against a's 11.
+    expect(compareFaltResults(a as FaltStation[], b as FaltStation[], 'falt')).toBeGreaterThan(0);
+  });
+
+  it('S7: a scratched station may hold numbers no valid station could', () => {
+    // Six hits spread over zero figures is what faltResult refuses to score.
+    const impossible = [entry(6, 0, null, { isScratched: true }), entry(4, 3)];
+    expect(() => scoringStations(impossible)).not.toThrow();
+    expect(faltResult(scoringStations(impossible))).toEqual({
+      stationCount: 1,
+      hits: 4,
+      figuresHit: 3,
+      ringedFigurePoints: null,
+    });
+  });
+
+  it('S8: order and membership hold for any combination of flags', () => {
+    const arbitraryEntry = fc.record({
+      hits: fc.integer({ min: 0, max: 6 }),
+      figuresHit: fc.integer({ min: 0, max: 6 }),
+      points: fc.option(fc.integer({ min: 0, max: 50 }), { nil: null }),
+      isScratched: fc.boolean(),
+      isShootOff: fc.boolean(),
+    });
+    fc.assert(
+      fc.property(fc.array(arbitraryEntry, { maxLength: 12 }), (entered) => {
+        const kept = scoringStations(entered);
+        const expected = entered.filter((s) => !s.isScratched && !s.isShootOff);
+        expect(kept).toHaveLength(expected.length);
+        kept.forEach((station, index) => {
+          expect(station).toEqual({
+            hits: expected[index]!.hits,
+            figuresHit: expected[index]!.figuresHit,
+            points: expected[index]!.points,
+          });
+        });
+      }),
+    );
+  });
 });

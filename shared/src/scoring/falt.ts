@@ -145,3 +145,34 @@ export function byFalt(
 ): (a: readonly FaltStation[], b: readonly FaltStation[]) => number {
   return (a, b) => compareFaltResults(a, b, mode);
 }
+
+/**
+ * An entered station: the recorded numbers plus the two flags that can take it
+ * out of the result.
+ */
+export interface FaltStationEntry extends FaltStation {
+  /** Annulled for breaking SHB or SäkB — recorded, shown, never scored. */
+  isScratched: boolean;
+  /** A särskjutning station (D.6.11.3 p. 97): decides placement, never the score. */
+  isShootOff: boolean;
+}
+
+/**
+ * The stations a round's result is computed over: everything entered, minus
+ * the scratched (maintainer ruling 2026-09-22) and the särskjutning ones
+ * (D.6.11.3 p. 97 — they decide placement, not the recorded score).
+ *
+ * Dropping happens before validation, so a scratched station may hold numbers
+ * `faltResult` would refuse: what was struck out never has to be possible.
+ * Order survives, which is what keeps the countback honest — the last
+ * SCORING station, not the last entered one.
+ *
+ * @Requirements SCORE_005
+ */
+export function scoringStations(
+  stations: readonly FaltStationEntry[],
+): readonly FaltStation[] {
+  return stations
+    .filter((station) => !station.isScratched && !station.isShootOff)
+    .map(({ hits, figuresHit, points }) => ({ hits, figuresHit, points }));
+}
