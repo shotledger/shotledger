@@ -103,7 +103,7 @@ export function getSeries(db: Database, id: string) {
 export function updateSeries(
   db: Database,
   id: string,
-  patch: Partial<Pick<AddSeriesInput, 'photoUri'>>,
+  patch: Partial<Pick<AddSeriesInput, 'photoUri'> & { photoGeometry: string | null }>,
 ) {
   const now = nowIso();
   db.update(series)

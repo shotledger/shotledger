@@ -221,6 +221,9 @@ export const series = sqliteTable('series', {
   // flags set)
   isFinal: integer('is_final').notNull().default(0),
   photoUri: text('photo_uri'), // local file URI
+  // JSON: the target-mm -> photo-px homography the photo was scored with, so
+  // the marks can be drawn back over it (transform.ts serializeTransform).
+  photoGeometry: text('photo_geometry'),
   // Webshooter granularity mismatch (spec §1/§A.4): true when this series
   // carries a series/station TOTAL with no per-shot detail. Such series
   // have NO child `shots` rows — every read path summing shots must branch

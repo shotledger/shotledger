@@ -31,6 +31,14 @@ export interface Mark {
    * reads it.
    */
   readonly moved: boolean;
+  /**
+   * Placed by the hole detector, not by a tap. Drawn dashed until the shooter
+   * has had a look; it scores like any other mark, and deleting it is how a
+   * wrong suggestion is rejected. Carried into the training store with
+   * `moved`, where "suggested and kept" and "suggested and nudged" are the
+   * two labels a future detector learns most from.
+   */
+  readonly suggested: boolean;
 }
 
 export interface MarkState {
@@ -40,7 +48,18 @@ export interface MarkState {
   readonly maxMarks: number;
   /** The disc diameter new marks get. */
   readonly caliberMm: number;
+  /** Earlier states for `undo`, oldest first, capped at `UNDO_LIMIT`. */
+  readonly past: readonly MarkSnapshot[];
 }
+
+/** What `undo` restores. Selection is not history: it is restored only as a courtesy. */
+export interface MarkSnapshot {
+  readonly marks: readonly Mark[];
+  readonly caliberMm: number;
+  readonly selectedId: string | null;
+}
+
+export const UNDO_LIMIT = 50;
 
 export function createMarkState(options: {
   maxMarks: number;
@@ -52,6 +71,7 @@ export function createMarkState(options: {
     selectedId: null,
     maxMarks: options.maxMarks,
     caliberMm: options.caliberMm,
+    past: [],
   };
 }
 
@@ -59,24 +79,74 @@ export type MarkAction =
   | { type: 'tap'; id: string; xMm: number; yMm: number }
   | { type: 'select'; id: string }
   | { type: 'deselect' }
-  | { type: 'move'; xMm: number; yMm: number }
+  /** Moves `id` when given (a drag), else the selected mark. */
+  | { type: 'move'; xMm: number; yMm: number; id?: string }
   | { type: 'delete' }
   | { type: 'toggleInnerTen' }
   | { type: 'callRing'; ringLabel: string | null }
   | { type: 'setCaliber'; caliberMm: number }
+  | { type: 'undo' }
+  /** The detector's proposals, in target-mm; see `suggest` in the reducer. */
+  | { type: 'suggest'; marks: readonly { id: string; xMm: number; yMm: number }[] }
   | { type: 'clear' };
 
 export const MARK_LIMIT_REACHED = 'markLimitReached' as const;
 
-function replaceSelected(state: MarkState, patch: (mark: Mark) => Mark): MarkState {
-  if (!state.selectedId) return state;
+function replaceMark(state: MarkState, id: string | null, patch: (mark: Mark) => Mark): MarkState {
+  if (!id || !state.marks.some((m) => m.id === id)) return state;
   return {
     ...state,
-    marks: state.marks.map((m) => (m.id === state.selectedId ? patch(m) : m)),
+    marks: state.marks.map((m) => (m.id === id ? patch(m) : m)),
   };
 }
 
+function replaceSelected(state: MarkState, patch: (mark: Mark) => Mark): MarkState {
+  return replaceMark(state, state.selectedId, patch);
+}
+
+export function canUndo(state: MarkState): boolean {
+  return state.past.length > 0;
+}
+
+/**
+ * The interaction reducer, with undo. Every action that changes the marks or
+ * the caliber pushes the previous state; selection changes do not, so undo
+ * never spends a step on "you selected something".
+ */
 export function markReducer(state: MarkState, action: MarkAction): MarkState {
+  switch (action.type) {
+    case 'undo': {
+      const previous = state.past[state.past.length - 1];
+      if (!previous) return state;
+      return {
+        ...state,
+        marks: previous.marks,
+        caliberMm: previous.caliberMm,
+        selectedId: previous.selectedId,
+        past: state.past.slice(0, -1),
+      };
+    }
+    case 'clear':
+      return { ...state, marks: [], selectedId: null, past: [] };
+    case 'select':
+    case 'deselect':
+      return applyAction(state, action);
+    default: {
+      const next = applyAction(state, action);
+      if (next === state || (next.marks === state.marks && next.caliberMm === state.caliberMm)) {
+        return next;
+      }
+      const snapshot: MarkSnapshot = {
+        marks: state.marks,
+        caliberMm: state.caliberMm,
+        selectedId: state.selectedId,
+      };
+      return { ...next, past: [...state.past, snapshot].slice(-UNDO_LIMIT) };
+    }
+  }
+}
+
+function applyAction(state: MarkState, action: MarkAction): MarkState {
   switch (action.type) {
     case 'tap': {
       if (state.marks.length >= state.maxMarks) return state;
@@ -88,10 +158,35 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
         isInnerTen: false,
         calledRingLabel: null,
         moved: false,
+        suggested: false,
       };
       // A new mark is selected, so Move/Delete is one tap away — the
       // benchmark's behavior.
       return { ...state, marks: [...state.marks, mark], selectedId: mark.id };
+    }
+    case 'suggest': {
+      // The detector runs after the screen is up, so the shooter may already
+      // have tapped: a proposal within one hole diameter of an existing mark
+      // is that mark, not a second hole. Proposals arrive best first, so the
+      // series cap keeps the confident ones. Nothing is selected — a bar
+      // popping up under a mark the shooter did not place would be noise.
+      const marks = [...state.marks];
+      for (const p of action.marks) {
+        if (marks.length >= state.maxMarks) break;
+        const taken = marks.some((m) => Math.hypot(m.xMm - p.xMm, m.yMm - p.yMm) < state.caliberMm);
+        if (taken) continue;
+        marks.push({
+          id: p.id,
+          xMm: p.xMm,
+          yMm: p.yMm,
+          caliberMm: state.caliberMm,
+          isInnerTen: false,
+          calledRingLabel: null,
+          moved: false,
+          suggested: true,
+        });
+      }
+      return marks.length === state.marks.length ? state : { ...state, marks };
     }
     case 'select':
       return state.marks.some((m) => m.id === action.id)
@@ -102,7 +197,7 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
     case 'move':
       // Moving invalidates any edge call: the two candidates were computed
       // for the old position and may not even be the same two rings.
-      return replaceSelected(state, (m) => ({
+      return replaceMark(state, action.id ?? state.selectedId, (m) => ({
         ...m,
         xMm: action.xMm,
         yMm: action.yMm,
@@ -121,6 +216,7 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
     case 'callRing':
       return replaceSelected(state, (m) => ({ ...m, calledRingLabel: action.ringLabel }));
     case 'setCaliber':
+      if (action.caliberMm === state.caliberMm) return state;
       // Changing the caliber re-sizes every existing disc, because the disc
       // is what the edge rule measures from — leaving old marks at the old
       // diameter would silently mix two scoring bases in one series.
@@ -133,8 +229,10 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
           calledRingLabel: null,
         })),
       };
+    case 'undo':
     case 'clear':
-      return { ...state, marks: [], selectedId: null };
+      // Handled by markReducer, which owns the history.
+      return state;
   }
 }
 

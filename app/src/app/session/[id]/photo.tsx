@@ -1,38 +1,44 @@
-// The series photo, full screen. Until now a photo was write-only: stored on
-// the series, synced, included in backups, and shown exactly once — on the
-// marking screen while you scored it. The "Photo attached" chip said it
-// existed and nothing could open it.
+// The series photo, full screen, with its marks and group figures when it was
+// scored from the photo.
 //
 // Route shape mirrors scan.tsx (`?pos=`), so both act on a series without
 // nesting the series route.
-import { tenthsToScore } from '@shotledger/shared';
-import { Image } from 'expo-image';
+import {
+  analyzeGroup,
+  analyzePointsLost,
+  getDiscipline,
+  getTargetFace,
+  tenthsToScore,
+} from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
-import { ShotChips } from '@/components/shot-chips';
+import { GroupStats } from '@/components/group-stats';
+import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { db } from '@/db/client';
-import { listMarksForSeries } from '@/db/queries/shot-marks';
+import { ShotChips } from '@/components/shot-chips';
 import { ThemedText } from '@/components/themed-text';
+import { db } from '@/db/client';
+import { getSeries } from '@/db/queries/series';
+import { listMarksForSeries } from '@/db/queries/shot-marks';
+import type { Mark } from '@/features/photo-scoring/marks';
+import { deserializeTransform } from '@/features/photo-scoring/transform';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Spacing } from '@/theme/tokens';
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 8;
-
-function clamp(value: number, min: number, max: number): number {
-  'worklet';
-  return Math.min(max, Math.max(min, value));
-}
+/**
+ * How far the photo's aspect ratio may differ from the one the geometry was
+ * measured on before the overlay is withheld — a mismatch means the file is
+ * not the one that was scored (or was rotated since), and rings drawn on it
+ * would be confidently wrong.
+ */
+const ASPECT_TOLERANCE = 0.02;
 
 export default function SeriesPhotoScreen() {
   const { t } = useTranslation();
@@ -44,62 +50,49 @@ export default function SeriesPhotoScreen() {
   const row = detail.seriesRows.find((series) => series.position === position);
   const uri = resolveSeriesPhotoUri(row?.photoUri ?? null);
 
+  const target = getTargetFace(getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '');
+
   // Marks exist only where the series was scored by tapping holes on the
   // photo, so their presence is what distinguishes the two ways a score got
   // here — a photo can be attached to a keypad-entered series too.
-  const scoredFromPhoto = useMemo(
-    () => (db && row ? listMarksForSeries(db, row.id).length > 0 : false),
-    [row],
-  );
-  const [box, setBox] = useState({ width: 0, height: 0 });
+  const scored = useMemo(() => {
+    if (!db || !row) return null;
+    const stored = listMarksForSeries(db, row.id);
+    if (stored.length === 0) return null;
+    const marks: Mark[] = stored.map((m) => ({
+      id: m.shotId,
+      xMm: m.xMm,
+      yMm: m.yMm,
+      caliberMm: m.caliberMm,
+      isInnerTen: m.isInnerTen,
+      calledRingLabel: null,
+      moved: false,
+      suggested: false,
+    }));
+    return {
+      marks,
+      analysis: analyzeGroup(marks),
+      pointsLost: target ? analyzePointsLost(marks, target) : null,
+      // Series scored before the geometry was stored have none: stats only.
+      geometry: deserializeTransform(getSeries(db, row.id)?.photoGeometry),
+    };
+  }, [row, target]);
 
-  // Same gesture set as the marking overlay, so the two feel the same: pinch
-  // to zoom, two fingers to pan, double-tap to fit.
-  const zoom = useSharedValue(1);
-  const zoomStart = useSharedValue(1);
-  const panX = useSharedValue(0);
-  const panY = useSharedValue(0);
-  const panStartX = useSharedValue(0);
-  const panStartY = useSharedValue(0);
+  const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
 
-  const pinch = Gesture.Pinch()
-    .onStart(() => {
-      zoomStart.value = zoom.value;
-    })
-    .onUpdate((event) => {
-      zoom.value = clamp(zoomStart.value * event.scale, MIN_ZOOM, MAX_ZOOM);
-    });
-
-  const pan = Gesture.Pan()
-    .minPointers(2)
-    .onStart(() => {
-      panStartX.value = panX.value;
-      panStartY.value = panY.value;
-    })
-    .onUpdate((event) => {
-      panX.value = panStartX.value + event.translationX;
-      panY.value = panStartY.value + event.translationY;
-    });
-
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      const zoomed = zoom.value > MIN_ZOOM;
-      zoom.value = withTiming(zoomed ? MIN_ZOOM : 3);
-      if (zoomed) {
-        panX.value = withTiming(0);
-        panY.value = withTiming(0);
-      }
-    });
-
-  const zoomStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: panX.value }, { translateY: panY.value }, { scale: zoom.value }],
-  }));
-
-  function onLayout(event: LayoutChangeEvent) {
-    const { width, height } = event.nativeEvent.layout;
-    setBox({ width, height });
-  }
+  const geometry = scored?.geometry ?? null;
+  const aspectMatches =
+    geometry !== null &&
+    natural !== null &&
+    Math.abs(
+      natural.width / natural.height - geometry.geometry.imageWidth / geometry.geometry.imageHeight,
+    ) <=
+      ASPECT_TOLERANCE * (geometry.geometry.imageWidth / geometry.geometry.imageHeight);
+  // The original is drawn in a box sized to the geometry image; both have the
+  // same aspect, so geometry px scale onto it with the one fit factor.
+  const overlay = geometry && target && aspectMatches ? geometry : null;
+  const imageWidth = geometry?.geometry.imageWidth ?? natural?.width ?? 1;
+  const imageHeight = geometry?.geometry.imageHeight ?? natural?.height ?? 1;
 
   if (!uri) {
     return (
@@ -118,18 +111,18 @@ export default function SeriesPhotoScreen() {
       <ThemedText type="small" themeColor="textSecondary">
         {t('session.seriesTitle', { position })}
       </ThemedText>
-      <View style={styles.stage} onLayout={onLayout}>
-        <GestureDetector gesture={Gesture.Simultaneous(pinch, pan, doubleTap)}>
-          <Animated.View style={[styles.stage, zoomStyle]}>
-            <Image
-              source={{ uri }}
-              style={{ width: box.width, height: box.height }}
-              contentFit="contain"
-              testID="series-photo"
-            />
-          </Animated.View>
-        </GestureDetector>
-      </View>
+      <MarkCanvas
+        style={styles.stage}
+        testID="series-photo"
+        readOnly
+        photoUri={uri}
+        imageWidth={imageWidth}
+        imageHeight={imageHeight}
+        transform={overlay?.transform}
+        target={overlay ? target : undefined}
+        marks={overlay ? scored?.marks : undefined}
+        onImageSize={(width, height) => setNatural({ width, height })}
+      />
       <ThemedText type="small" themeColor="textSecondary">
         {t('photoScoring.zoomHint')}
       </ThemedText>
@@ -144,11 +137,23 @@ export default function SeriesPhotoScreen() {
               x: row.shots.filter((shot) => shot.isInnerTen).length,
             })}
           </ThemedText>
-          <Chip label={t(scoredFromPhoto ? 'session.scoredFromPhoto' : 'session.scoredManually')} />
+          <Chip label={t(scored ? 'session.scoredFromPhoto' : 'session.scoredManually')} />
         </View>
       )}
       {row && row.shots.length > 0 && (
         <ShotChips shots={row.shots} mode={detail.scoringMode} testIDPrefix="photo-shot" />
+      )}
+      {scored?.analysis && (
+        <GroupStats
+          analysis={scored.analysis}
+          pointsLost={scored.pointsLost}
+          testIDPrefix="photo-stat"
+        />
+      )}
+      {scored && !geometry && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('photoScoring.groupNeedsGeometry')}
+        </ThemedText>
       )}
 
       {/* Re-scoring is the series view's business. From the gallery this is
@@ -174,7 +179,6 @@ const styles = StyleSheet.create({
   },
   stage: {
     flex: 1,
-    overflow: 'hidden',
     marginVertical: Spacing.two,
   },
 });

@@ -24,6 +24,12 @@ export interface TrainingMark {
   moved: boolean;
   /** The ring they called on an edge, or null where they took the geometry's. */
   calledRingLabel: string | null;
+  /**
+   * Placed by the hole detector rather than by a tap. With `moved` this
+   * grades every kept suggestion: right as proposed, or corrected. A rejected
+   * suggestion is deleted before saving and so never reaches this table.
+   */
+  suggested: boolean;
 }
 
 export interface TrainingSampleInput {

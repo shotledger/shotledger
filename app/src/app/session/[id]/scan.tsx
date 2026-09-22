@@ -10,16 +10,18 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { Point } from '@shotledger/shared';
-import { getDiscipline, requireTargetFace } from '@shotledger/shared';
+import { analyzeGroup, getDiscipline, requireTargetFace } from '@shotledger/shared';
 import { uuidv7 } from 'uuidv7';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { CornerAdjuster, defaultCorners } from '@/components/corner-adjuster';
-import { MarkLoupe } from '@/components/mark-loupe';
-import { MarkOverlay } from '@/components/mark-overlay';
+import { GroupStats } from '@/components/group-stats';
+import { MarkActionBar } from '@/components/mark-action-bar';
+import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
@@ -27,12 +29,7 @@ import { updateSeries } from '@/db/queries/series';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { saveSeriesMarks } from '@/db/queries/shot-marks';
 import { recordTrainingSample } from '@/db/queries/training-samples';
-import {
-  CALIBER_KEYS,
-  type CaliberKey,
-  caliberMmFor,
-  resolveCaliber,
-} from '@/features/photo-scoring/caliber';
+import { CALIBER_KEYS, caliberMmFor, resolveCaliber } from '@/features/photo-scoring/caliber';
 import {
   type CapturedPhoto,
   type GeometryImage,
@@ -41,22 +38,25 @@ import {
 } from '@/features/photo-scoring/capture';
 import { transformFromCorners } from '@/features/photo-scoring/corners';
 import {
+  canUndo,
   createMarkState,
   markReducer,
   marksToShotMarkInputs,
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
+import { proposeHoles } from '@/features/photo-scoring/hole-proposals';
 import { runGeometry } from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
   fromProjective,
   fromRectification,
+  serializeTransform,
 } from '@/features/photo-scoring/transform';
 import { type ValidityReason, checkGeometryValidity } from '@/features/photo-scoring/validity';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
-import { Spacing } from '@/theme/tokens';
+import { Radius, Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
 
@@ -129,22 +129,31 @@ export default function ScanScreen() {
   const [canvas, setCanvas] = useState<RectifiedCanvas | null>(null);
   const [reasons, setReasons] = useState<readonly ValidityReason[]>([]);
   const [corners, setCorners] = useState<readonly Point[]>([]);
-  const [caliberKey, setCaliberKey] = useState<CaliberKey>(initialCaliber.key);
   const [notice, setNotice] = useState<string | null>(null);
   // Which ring the four corners are being placed on. The outermost by
   // default; changeable because a landscape crop of the 500 mm milsnabb face
   // routinely cuts the 5 ring off, and placing the corners on a visible ring
   // while the code assumes the outermost scales every measurement.
   const [cornerRing, setCornerRing] = useState<string | null>(null);
-  const [moving, setMoving] = useState(false);
+  // The detector's pass over the canvas: pending, or how many it placed.
+  // Null until a photo has locked; a retake resets it. `proposalRun` lets a
+  // retake disown a pass that was scheduled for the previous photo.
+  const [suggested, setSuggested] = useState<'pending' | number | null>(null);
+  const proposalRun = useRef(0);
 
   const [markState, dispatch] = useReducer(
     markReducer,
     createMarkState({ maxMarks: detail.seriesLength, caliberMm: initialCaliber.caliberMm }),
   );
+  // Derived, not stored, so undoing a caliber change moves the chip back too.
+  const caliberKey = CALIBER_KEYS.find((key) => caliberMmFor(key) === markState.caliberMm);
 
   const scores = target ? scoreMarks(markState.marks, target) : [];
   const line = seriesScoreLine(markState.marks, scores);
+  const group =
+    markState.marks.length >= 2
+      ? analyzeGroup(markState.marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })))
+      : null;
   const selectedIndex = markState.marks.findIndex((m) => m.id === markState.selectedId);
   const selectedScore = selectedIndex >= 0 ? scores[selectedIndex] : undefined;
   const selectedMark = selectedIndex >= 0 ? markState.marks[selectedIndex] : undefined;
@@ -155,11 +164,13 @@ export default function ScanScreen() {
     try {
       const image = await prepareGeometryImage(captured);
       setGeometryImage(image);
+      // Set before the pipeline runs, so a pipeline throw still reaches the
+      // corner screen with four handles to drag.
+      setCorners(defaultCorners(image.width, image.height));
       if (manualOnly) {
         // The auto pipeline is validated for the precision face's solid
         // black disc only (spec §0); the milsnabb annulus goes straight to
         // manual corners rather than risk a confident, wrong lock.
-        setCorners(defaultCorners(image.width, image.height));
         setPhase('corners');
         return;
       }
@@ -173,19 +184,47 @@ export default function ScanScreen() {
       const validity = checkGeometryValidity(result.metrics);
       if (!validity.valid) {
         setReasons(validity.reasons);
-        setCorners(defaultCorners(image.width, image.height));
         setPhase('rejected');
         return;
       }
       setTransform(fromRectification(result.transform));
       setCanvas(result.canvas);
       setPhase('marking');
+      suggestHoles(result.canvas, target);
     } catch {
       // A pipeline throw ("no dark region found") is the same product
       // outcome as a failed gate: we could not lock the target.
       setReasons(['zoneContrast']);
       setPhase('rejected');
     }
+  }
+
+  /**
+   * Runs the hole detector over the rectified canvas and places what it finds
+   * as suggested marks. Deferred a tick so the marking screen paints first:
+   * the stage is a few seconds of synchronous work on a phone, and the
+   * shooter can already tap while it runs — the reducer skips a proposal that
+   * lands on a mark they placed meanwhile. Only the automatic path has a
+   * canvas; corners placed by hand give no rectified pixels to search.
+   */
+  function suggestHoles(rectified: RectifiedCanvas, face: NonNullable<typeof target>) {
+    const run = (proposalRun.current += 1);
+    setSuggested('pending');
+    setTimeout(() => {
+      if (proposalRun.current !== run) return;
+      const proposals = proposeHoles(rectified, {
+        caliberMm: markState.caliberMm,
+        blackRadiusMm: face.referenceDiameterMm / 2,
+        maxRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
+        ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
+      });
+      if (proposalRun.current !== run) return;
+      dispatch({
+        type: 'suggest',
+        marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
+      });
+      setSuggested(proposals.length);
+    }, 50);
   }
 
   async function onCapture(source: 'camera' | 'library') {
@@ -196,7 +235,8 @@ export default function ScanScreen() {
     }
     if (!result) return;
     setPhoto(result);
-    if (db && row) updateSeries(db, row.id, { photoUri: result.originalUri });
+    // The old geometry belongs to the old photo; it is written again on save.
+    if (db && row) updateSeries(db, row.id, { photoUri: result.originalUri, photoGeometry: null });
     await analyze(result);
   }
 
@@ -235,8 +275,10 @@ export default function ScanScreen() {
     setCanvas(null);
     setReasons([]);
     setCornerRing(null);
+    proposalRun.current += 1;
+    setSuggested(null);
     dispatch({ type: 'clear' });
-    setMoving(false);
+    setNotice(null);
     setPhase('capture');
   }
 
@@ -261,6 +303,12 @@ export default function ScanScreen() {
   function onSave(next: boolean) {
     if (db && row) {
       saveSeriesMarks(db, row.id, marksToShotMarkInputs(markState.marks, scores));
+      // Kept with the photo so the series can draw its marks over it later.
+      if (transform && geometryImage) {
+        updateSeries(db, row.id, {
+          photoGeometry: serializeTransform(transform, geometryImage.width, geometryImage.height),
+        });
+      }
 
       // Every tap-to-mark is a labelled example, already in canonical
       // target-mm because the geometry is solved by now. Kept only with the
@@ -279,6 +327,7 @@ export default function ScanScreen() {
             caliberMm: m.caliberMm,
             moved: m.moved,
             calledRingLabel: m.calledRingLabel,
+            suggested: m.suggested,
           })),
         });
       }
@@ -301,6 +350,136 @@ export default function ScanScreen() {
           </ThemedText>
         </Card>
         <PrimaryButton label={t('common.cancel')} onPress={() => router.back()} />
+      </Screen>
+    );
+  }
+
+  if (phase === 'marking' && geometryImage && transform && target) {
+    return (
+      <Screen scroll={false}>
+        <View style={styles.marking}>
+          <View style={styles.toolbar}>
+            <View style={styles.scoreLine}>
+              <ThemedText type="subtitle" testID="scan-score-line">
+                {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
+              </ThemedText>
+              <ThemedText
+                themeColor="textSecondary"
+                testID="scan-shot-values"
+                numberOfLines={1}
+                style={styles.shotValues}
+              >
+                {line.shotValues.join(' ')}
+              </ThemedText>
+            </View>
+            {transform.source === 'manual' && (
+              <Chip label={t('photoScoring.manualGeometry')} style={styles.centered} />
+            )}
+            <SecondaryButton
+              label={t('photoScoring.undo')}
+              onPress={() => dispatch({ type: 'undo' })}
+              disabled={!canUndo(markState)}
+              testID="mark-undo"
+              style={styles.undo}
+            />
+          </View>
+
+          {group && <GroupStats analysis={group} testIDPrefix="scan-stat" />}
+
+          {notice ? (
+            <ThemedText type="small" themeColor="danger">
+              {notice}
+            </ThemedText>
+          ) : suggested === 'pending' ? (
+            <View style={styles.row}>
+              <ActivityIndicator size="small" />
+              <ThemedText type="small" themeColor="textSecondary" testID="scan-suggesting">
+                {t('photoScoring.suggesting')}
+              </ThemedText>
+            </View>
+          ) : typeof suggested === 'number' && markState.marks.some((m) => m.suggested) ? (
+            <ThemedText type="small" themeColor="textSecondary" testID="scan-suggested">
+              {t('photoScoring.suggestedHint', { count: suggested })}
+            </ThemedText>
+          ) : (
+            markState.marks.length === 0 && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {`${suggested === 0 ? t('photoScoring.suggestedNone') : t('photoScoring.markHint')} ${t('photoScoring.zoomHint')}`}
+              </ThemedText>
+            )
+          )}
+
+          <View style={styles.canvasWrap}>
+            <MarkCanvas
+              style={StyleSheet.absoluteFill}
+              photoUri={geometryImage.uri}
+              imageWidth={geometryImage.width}
+              imageHeight={geometryImage.height}
+              transform={transform}
+              target={target}
+              marks={markState.marks}
+              scores={scores}
+              selectedId={markState.selectedId}
+              onTapEmpty={onTapEmpty}
+              onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
+              onMoveMark={(markId, mm) => {
+                setNotice(null);
+                dispatch({ type: 'move', id: markId, xMm: mm.x, yMm: mm.y });
+              }}
+            />
+            {selectedMark && selectedScore && (
+              <MarkActionBar
+                style={styles.actionBar}
+                mark={selectedMark}
+                score={selectedScore}
+                onDelete={() => dispatch({ type: 'delete' })}
+                onToggleInnerTen={() => dispatch({ type: 'toggleInnerTen' })}
+                onCallRing={(ringLabel) => dispatch({ type: 'callRing', ringLabel })}
+                onDeselect={() => dispatch({ type: 'deselect' })}
+              />
+            )}
+          </View>
+
+          <View style={styles.caliberRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {initialCaliber.matched
+                ? t('photoScoring.caliber')
+                : t('photoScoring.caliberGuessed', { caliber: initialCaliber.key })}
+            </ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.row}>
+                {CALIBER_KEYS.map((key) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) })}
+                    testID={`caliber-${key}`}
+                  >
+                    <Chip label={key} tone={key === caliberKey ? 'primary' : 'neutral'} />
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View style={styles.actions}>
+            <SecondaryButton
+              label={t('photoScoring.retake')}
+              onPress={onRetake}
+              style={styles.action}
+            />
+            <SecondaryButton
+              label={t('photoScoring.scanNext')}
+              onPress={() => onSave(true)}
+              testID="scan-next"
+              style={styles.action}
+            />
+          </View>
+          <PrimaryButton
+            label={t('photoScoring.save')}
+            onPress={() => onSave(false)}
+            testID="scan-save"
+          />
+        </View>
       </Screen>
     );
   }
@@ -407,145 +586,6 @@ export default function ScanScreen() {
             <PrimaryButton label={t('photoScoring.retake')} onPress={onRetake} />
           </>
         )}
-
-        {phase === 'marking' && geometryImage && transform && target && (
-          <>
-            <MarkOverlay
-              photoUri={geometryImage.uri}
-              imageWidth={geometryImage.width}
-              imageHeight={geometryImage.height}
-              transform={transform}
-              target={target}
-              marks={markState.marks}
-              scores={scores}
-              selectedId={markState.selectedId}
-              onTapEmpty={onTapEmpty}
-              onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
-            />
-
-            <View style={styles.scoreLine}>
-              <ThemedText type="subtitle" testID="scan-score-line">
-                {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" testID="scan-shot-values">
-                {line.shotValues.join(' ')}
-              </ThemedText>
-              {transform.source === 'manual' && <Chip label={t('photoScoring.manualGeometry')} />}
-            </View>
-
-            {notice && <ThemedText themeColor="danger">{notice}</ThemedText>}
-            {!notice && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('photoScoring.markHint')}
-              </ThemedText>
-            )}
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('photoScoring.zoomHint')}
-            </ThemedText>
-
-            {selectedScore && (
-              <Card>
-                <View style={styles.row}>
-                  <PrimaryButton
-                    label={moving ? t('photoScoring.doneMoving') : t('photoScoring.move')}
-                    onPress={() => setMoving((was) => !was)}
-                    testID="mark-move"
-                  />
-                  <PrimaryButton
-                    label={t('photoScoring.delete')}
-                    onPress={() => {
-                      setMoving(false);
-                      dispatch({ type: 'delete' });
-                    }}
-                    testID="mark-delete"
-                  />
-                  <PrimaryButton
-                    label={t('photoScoring.markInnerTen')}
-                    onPress={() => dispatch({ type: 'toggleInnerTen' })}
-                    testID="mark-inner-ten"
-                  />
-                </View>
-
-                {moving && photo && selectedMark && (
-                  <MarkLoupe
-                    photo={photo}
-                    center={transform.toImage({ x: selectedMark.xMm, y: selectedMark.yMm })}
-                    scaleToOriginal={geometryImage.scaleToOriginal}
-                    onNudge={(dx, dy) => {
-                      // The loupe reports a delta in geometry-image px; the
-                      // mark lives in mm, so it round-trips through the
-                      // transform rather than assuming a fixed mm-per-px.
-                      const here = transform.toImage({ x: selectedMark.xMm, y: selectedMark.yMm });
-                      const next = transform.toMm({ x: here.x + dx, y: here.y + dy });
-                      dispatch({ type: 'move', xMm: next.x, yMm: next.y });
-                    }}
-                  />
-                )}
-
-                {selectedScore.candidates.length > 1 && (
-                  <View style={styles.edgeCall} testID="mark-edge-call">
-                    <ThemedText type="smallBold">{t('photoScoring.edgeCall')}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('photoScoring.edgeCallHint')}
-                    </ThemedText>
-                    <View style={styles.row}>
-                      {selectedScore.candidates.map((candidate) => (
-                        <Pressable
-                          key={candidate.label}
-                          onPress={() => dispatch({ type: 'callRing', ringLabel: candidate.label })}
-                          testID={`edge-call-${candidate.label}`}
-                        >
-                          <Chip
-                            label={candidate.label}
-                            tone={
-                              selectedScore.effective.label === candidate.label
-                                ? 'primary'
-                                : 'neutral'
-                            }
-                          />
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </Card>
-            )}
-
-            <Card>
-              <ThemedText type="small" themeColor="textSecondary">
-                {initialCaliber.matched
-                  ? t('photoScoring.caliber')
-                  : t('photoScoring.caliberGuessed', { caliber: caliberKey })}
-              </ThemedText>
-              <View style={styles.row}>
-                {CALIBER_KEYS.map((key) => (
-                  <Pressable
-                    key={key}
-                    onPress={() => {
-                      setCaliberKey(key);
-                      dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) });
-                    }}
-                    testID={`caliber-${key}`}
-                  >
-                    <Chip label={key} tone={key === caliberKey ? 'primary' : 'neutral'} />
-                  </Pressable>
-                ))}
-              </View>
-            </Card>
-
-            <PrimaryButton
-              label={t('photoScoring.save')}
-              onPress={() => onSave(false)}
-              testID="scan-save"
-            />
-            <PrimaryButton
-              label={t('photoScoring.scanNext')}
-              onPress={() => onSave(true)}
-              testID="scan-next"
-            />
-            <PrimaryButton label={t('photoScoring.retake')} onPress={onRetake} />
-          </>
-        )}
       </ScrollView>
     </Screen>
   );
@@ -556,17 +596,53 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingBottom: Spacing.six,
   },
-  scoreLine: {
-    gap: Spacing.one,
-  },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
     alignItems: 'center',
   },
-  edgeCall: {
+  marking: {
+    flex: 1,
     gap: Spacing.two,
-    marginTop: Spacing.two,
+    paddingBottom: Spacing.two,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  scoreLine: {
+    flex: 1,
+  },
+  shotValues: {
+    flexShrink: 1,
+  },
+  centered: {
+    alignSelf: 'center',
+  },
+  undo: {
+    paddingVertical: Spacing.two,
+  },
+  canvasWrap: {
+    flex: 1,
+    borderRadius: Radius.medium,
+    overflow: 'hidden',
+  },
+  actionBar: {
+    position: 'absolute',
+    left: Spacing.two,
+    right: Spacing.two,
+    bottom: Spacing.two,
+  },
+  caliberRow: {
+    gap: Spacing.one,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  action: {
+    flex: 1,
   },
 });

@@ -6,13 +6,23 @@ stops.
 
 ## Assisted, not automatic
 
-This is **assisted** scoring, not automatic scoring. You mark the holes; the
-app does the geometry, the ring boundaries and the arithmetic.
+This is **assisted** scoring, not automatic scoring. The app does the
+geometry, the ring boundaries and the arithmetic, and it suggests where the
+holes are; you decide which marks stand.
 
-It does not find the holes for you. That is a genuinely hard problem on paper
-targets — a repaired target's patches look very much like fresh holes — and an
-automatic detector that is wrong is worse than no detector, because you end up
+The suggestions are a head start, not a result. On real club targets the app
+finds about three holes in four and is wrong about one suggestion in ten, and
+a series comes out entirely right about one time in three. Those are the
+numbers behind the dashed marks, and they are why every one of them is drawn
+so that you look at it. Finding holes is a genuinely hard problem on paper
+targets: a repaired target's patches, the printed ring digits and the torn
+paper around a double hole all look like holes at first glance, and a detector
+that guesses silently would be worse than none, because you would end up
 correcting more than you would have marked.
+
+The app only looks for holes when it locked onto the target by itself. When
+you placed the corners yourself it has no straightened picture to search, so
+you mark every hole.
 
 ## Helping it get better
 

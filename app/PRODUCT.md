@@ -67,9 +67,10 @@ scores against official results.
 - Sessions are **either series-logged or a fixed round count** (`sessions.kind`),
   chosen at creation — never both.
 - Photo scoring is **assisted, not automatic**: geometry is solved
-  automatically, hole detection is not, so shots are tap-marked. Classical
-  detection reaches ~59% recall at 89.7% precision and 0.32 false positives
-  per photo once the fitted hole/patch filter is applied; the bar for calling
+  automatically, and the app _suggests_ holes that the shooter confirms,
+  corrects or deletes. The classical proposal stage reaches 74% recall at 92%
+  precision and 0.32 false positives per photo, with 10 of 31 series exactly
+  right (`docs/specs/cv-hole-proposals-2026-09.md`); the bar for calling
   anything "Auto Score" is ≥95% recall at ≤1 false positive per target.
   Automation needs a learned detector, and what it is needed **for** is
   recall — telling a hole from a repair patch was solved classically on

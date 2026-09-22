@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8e443647-6fc4-4616-bda8-a4bd4c093ad8",
+  "id": "66286bd8-5172-45fb-b1f1-a8742f347541",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ammo_lots": {
@@ -288,8 +288,12 @@
           "name": "falt_stations_session_id_sessions_id_fk",
           "tableFrom": "falt_stations",
           "tableTo": "sessions",
-          "columnsFrom": ["session_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -358,8 +362,12 @@
           "name": "firearm_calibers_firearm_id_firearms_id_fk",
           "tableFrom": "firearm_calibers",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -428,8 +436,12 @@
           "name": "firearm_groups_firearm_id_firearms_id_fk",
           "tableFrom": "firearm_groups",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -650,8 +662,12 @@
           "name": "licenses_firearm_id_firearms_id_fk",
           "tableFrom": "licenses",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -733,8 +749,12 @@
           "name": "maintenance_events_firearm_id_firearms_id_fk",
           "tableFrom": "maintenance_events",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -871,6 +891,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "photo_geometry": {
+          "name": "photo_geometry",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "is_total_override": {
           "name": "is_total_override",
           "type": "integer",
@@ -907,8 +934,12 @@
           "name": "series_session_id_sessions_id_fk",
           "tableFrom": "series",
           "tableTo": "sessions",
-          "columnsFrom": ["session_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -941,8 +972,12 @@
           "name": "session_tags_session_id_sessions_id_fk",
           "tableFrom": "session_tags",
           "tableTo": "sessions",
-          "columnsFrom": ["session_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -950,15 +985,22 @@
           "name": "session_tags_tag_id_tags_id_fk",
           "tableFrom": "session_tags",
           "tableTo": "tags",
-          "columnsFrom": ["tag_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "session_tags_session_id_tag_id_pk": {
-          "columns": ["session_id", "tag_id"],
+          "columns": [
+            "session_id",
+            "tag_id"
+          ],
           "name": "session_tags_session_id_tag_id_pk"
         }
       },
@@ -1203,8 +1245,12 @@
           "name": "sessions_firearm_id_firearms_id_fk",
           "tableFrom": "sessions",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1212,8 +1258,12 @@
           "name": "sessions_ammo_lot_id_ammo_lots_id_fk",
           "tableFrom": "sessions",
           "tableTo": "ammo_lots",
-          "columnsFrom": ["ammo_lot_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ammo_lot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1312,8 +1362,12 @@
           "name": "shot_marks_shot_id_shots_id_fk",
           "tableFrom": "shot_marks",
           "tableTo": "shots",
-          "columnsFrom": ["shot_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "shot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1397,8 +1451,12 @@
           "name": "shots_series_id_series_id_fk",
           "tableFrom": "shots",
           "tableTo": "series",
-          "columnsFrom": ["series_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "series_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1488,8 +1546,12 @@
           "name": "sight_settings_firearm_id_firearms_id_fk",
           "tableFrom": "sight_settings",
           "tableTo": "firearms",
-          "columnsFrom": ["firearm_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "firearm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1567,7 +1629,10 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "sync_outbox_table_name_row_id_pk": {
-          "columns": ["table_name", "row_id"],
+          "columns": [
+            "table_name",
+            "row_id"
+          ],
           "name": "sync_outbox_table_name_row_id_pk"
         }
       },
@@ -1641,7 +1706,9 @@
       "indexes": {
         "tags_name_unique": {
           "name": "tags_name_unique",
-          "columns": ["name"],
+          "columns": [
+            "name"
+          ],
           "isUnique": true
         }
       },
@@ -1723,8 +1790,12 @@
           "name": "training_samples_series_id_series_id_fk",
           "tableFrom": "training_samples",
           "tableTo": "series",
-          "columnsFrom": ["series_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "series_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

@@ -131,6 +131,7 @@ CREATE TABLE `series` (
 	`is_sighter` integer DEFAULT 0 NOT NULL,
 	`is_final` integer DEFAULT 0 NOT NULL,
 	`photo_uri` text,
+	`photo_geometry` text,
 	`is_total_override` integer DEFAULT 0 NOT NULL,
 	`total_override_tenths` integer,
 	`total_override_shot_count` integer,

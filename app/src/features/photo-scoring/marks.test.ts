@@ -2,7 +2,9 @@ import { SPSF_PISTOL_25M_PRECISION as TARGET } from '@shotledger/shared';
 
 import type { Mark, MarkState } from './marks';
 import {
+  UNDO_LIMIT,
   canAddMark,
+  canUndo,
   createMarkState,
   markReducer,
   marksToShotMarkInputs,
@@ -99,10 +101,162 @@ describe('markReducer', () => {
     expect(tap(state, 'c', 1, 1).marks[2]?.caliberMm).toBe(9);
   });
 
+  it('moves a named mark without it being selected, as a drag does', () => {
+    const state = markReducer(tap(tap(start(), 'a', 0, 0), 'b', 5, 5), {
+      type: 'move',
+      id: 'a',
+      xMm: 7,
+      yMm: 8,
+    });
+    expect(state.marks[0]).toMatchObject({ id: 'a', xMm: 7, yMm: 8, moved: true });
+    expect(state.selectedId).toBe('b');
+    expect(markReducer(state, { type: 'move', id: 'nope', xMm: 1, yMm: 1 })).toBe(state);
+  });
+
+  it('setting the same caliber again changes nothing, and keeps the edge calls', () => {
+    let state = tap(start(), 'a', 15.3, 0);
+    state = markReducer(state, { type: 'callRing', ringLabel: '10' });
+    expect(markReducer(state, { type: 'setCaliber', caliberMm: 5.6 })).toBe(state);
+  });
+
   it('clear removes every mark', () => {
     const state = markReducer(tap(tap(start(), 'a', 0, 0), 'b', 5, 5), { type: 'clear' });
     expect(state.marks).toEqual([]);
     expect(state.selectedId).toBeNull();
+  });
+});
+
+describe('suggest', () => {
+  const suggest = (state: MarkState, marks: { id: string; xMm: number; yMm: number }[]) =>
+    markReducer(state, { type: 'suggest', marks });
+
+  it('places the proposals as dashed, unselected marks at the current caliber', () => {
+    const state = suggest(start(), [
+      { id: 'p1', xMm: 10, yMm: -5 },
+      { id: 'p2', xMm: -20, yMm: 30 },
+    ]);
+    expect(state.marks.map((m) => [m.id, m.suggested, m.caliberMm])).toEqual([
+      ['p1', true, 5.6],
+      ['p2', true, 5.6],
+    ]);
+    expect(state.selectedId).toBeNull();
+  });
+
+  it('skips a proposal within one hole diameter of a mark the shooter placed', () => {
+    const tapped = tap(start(), 'a', 10, -5);
+    const state = suggest(tapped, [
+      { id: 'p1', xMm: 13, yMm: -3 }, // 3.6 mm from 'a': the same hole
+      { id: 'p2', xMm: 16, yMm: -5 }, // 6 mm away: a neighbour
+    ]);
+    expect(state.marks.map((m) => m.id)).toEqual(['a', 'p2']);
+  });
+
+  it('keeps the first proposals when the series cap would be exceeded', () => {
+    const state = suggest(
+      start({ maxMarks: 2 }),
+      [1, 2, 3].map((i) => ({ id: `p${i}`, xMm: i * 20, yMm: 0 })),
+    );
+    expect(state.marks.map((m) => m.id)).toEqual(['p1', 'p2']);
+  });
+
+  it('is one undo step, and a no-op when nothing is added', () => {
+    const state = suggest(start(), [{ id: 'p1', xMm: 10, yMm: 0 }]);
+    expect(markReducer(state, { type: 'undo' }).marks).toEqual([]);
+    const same = suggest(state, [{ id: 'p2', xMm: 11, yMm: 0 }]);
+    expect(same).toBe(state);
+  });
+
+  it('a suggested mark scores like any other and keeps its flag when moved', () => {
+    const state = suggest(start(), [{ id: 'p1', xMm: 0, yMm: 0 }]);
+    expect(scoreMarks(state.marks, TARGET)[0]?.effective.value).toBe(10);
+    const moved = markReducer(state, { type: 'move', id: 'p1', xMm: 40, yMm: 0 });
+    expect(moved.marks[0]).toMatchObject({ suggested: true, moved: true, xMm: 40 });
+  });
+});
+
+describe('undo', () => {
+  const undo = (state: MarkState) => markReducer(state, { type: 'undo' });
+
+  it('does nothing with no history', () => {
+    const state = start();
+    expect(canUndo(state)).toBe(false);
+    expect(undo(state)).toBe(state);
+  });
+
+  it('reverts an add, and the mark it removed is not selected any more', () => {
+    const one = tap(start(), 'a', 0, 0);
+    const two = tap(one, 'b', 5, 5);
+    const back = undo(two);
+    expect(back.marks.map((m) => m.id)).toEqual(['a']);
+    expect(back.selectedId).toBe('a');
+    expect(canUndo(undo(back))).toBe(false);
+    expect(undo(back).marks).toEqual([]);
+  });
+
+  it('reverts a move, restoring position, moved flag and the edge call it cleared', () => {
+    let state = tap(start(), 'a', 15.3, 0);
+    state = markReducer(state, { type: 'callRing', ringLabel: '10' });
+    state = markReducer(state, { type: 'move', xMm: 60, yMm: 0 });
+    state = undo(state);
+    expect(state.marks[0]).toMatchObject({
+      xMm: 15.3,
+      yMm: 0,
+      moved: false,
+      suggested: false,
+      calledRingLabel: '10',
+    });
+  });
+
+  it('reverts a delete', () => {
+    let state = tap(tap(start(), 'a', 0, 0), 'b', 5, 5);
+    state = markReducer(state, { type: 'delete' });
+    expect(state.marks.map((m) => m.id)).toEqual(['a']);
+    state = undo(state);
+    expect(state.marks.map((m) => m.id)).toEqual(['a', 'b']);
+    expect(state.selectedId).toBe('b');
+  });
+
+  it('reverts the X call, the ring call and a caliber change', () => {
+    let state = tap(start(), 'a', 15.3, 0);
+    const placed = state;
+    state = markReducer(state, { type: 'toggleInnerTen' });
+    state = markReducer(state, { type: 'callRing', ringLabel: '10' });
+    state = markReducer(state, { type: 'setCaliber', caliberMm: 9 });
+    state = undo(state);
+    expect(state.caliberMm).toBe(5.6);
+    expect(state.marks[0]).toMatchObject({ caliberMm: 5.6, calledRingLabel: '10' });
+    state = undo(state);
+    expect(state.marks[0]?.calledRingLabel).toBeNull();
+    state = undo(state);
+    expect(state.marks).toEqual(placed.marks);
+  });
+
+  it('does not spend a step on selecting, or on an action that changed nothing', () => {
+    let state = tap(tap(start(), 'a', 0, 0), 'b', 5, 5);
+    const depth = state.past.length;
+    state = markReducer(state, { type: 'select', id: 'a' });
+    state = markReducer(state, { type: 'deselect' });
+    state = markReducer(state, { type: 'delete' });
+    state = markReducer(state, { type: 'setCaliber', caliberMm: 5.6 });
+    expect(state.past).toHaveLength(depth);
+  });
+
+  it('keeps at most UNDO_LIMIT steps, dropping the oldest', () => {
+    let state = start({ maxMarks: 1 });
+    state = tap(state, 'a', 0, 0);
+    for (let i = 0; i < UNDO_LIMIT + 10; i += 1) {
+      state = markReducer(state, { type: 'toggleInnerTen' });
+    }
+    expect(state.past).toHaveLength(UNDO_LIMIT);
+    for (let i = 0; i < UNDO_LIMIT; i += 1) state = undo(state);
+    // The add itself fell off the end, so the mark survives every undo.
+    expect(state.marks).toHaveLength(1);
+    expect(canUndo(state)).toBe(false);
+  });
+
+  it('clear drops the history with the marks', () => {
+    const state = markReducer(tap(start(), 'a', 0, 0), { type: 'clear' });
+    expect(canUndo(state)).toBe(false);
   });
 });
 
@@ -114,6 +268,7 @@ const mark = (patch: Partial<Mark>): Mark => ({
   isInnerTen: false,
   calledRingLabel: null,
   moved: false,
+  suggested: false,
   ...patch,
 });
 

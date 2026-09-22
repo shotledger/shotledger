@@ -13,12 +13,35 @@ förklarar varför den fungerar så.
    du lyckas. Det behöver inte vara helt rakt.
 2. **Sätt hörnen.** Dra de fyra hörnhandtagen till tavelansiktets hörn. Det är
    det som låter appen räkna bort vinkeln du fotograferade ur.
-3. **Markera hålen.** Tryck på varje hål. En lupp följer ditt finger så att
-   fingertoppen inte döljer det du siktar på, och en tryckning som hamnar inom
-   någon millimeter från ett hål lägger sig på hålet — det räcker att träffa
-   nära. Där appen inte ser något hål under fingret ligger markeringen kvar
-   exakt där du satte den, och du kan fortfarande justera den.
-4. **Kontrollera poängen**, och spara den sedan till serien.
+3. **Markera hålen.**
+   - **Kontrollera förslagen.** När appen själv låste på tavlan letar den också
+     efter hålen och sätter en streckad markering på varje hål den är säker på.
+     Den hittar ungefär tre hål av fyra och har fel på ungefär en markering av
+     tio, så se dem som ett försprång, inte ett resultat: ta bort en streckad
+     markering som inte är ett hål, dra en som sitter snett och tryck på de hål
+     den missade. En streckad markering räknas precis som en du satt själv. När
+     du satte hörnen själv finns inga förslag.
+   - **Tryck** på ett hål för att markera det. En tryckning som hamnar inom
+     någon millimeter från ett hål lägger sig på hålet, så det räcker att träffa
+     nära. Där appen inte ser något hål under fingret ligger markeringen kvar
+     exakt där du tryckte.
+   - **Zooma** genom att nypa, eller dubbeltryck för att zooma in på den
+     platsen; dubbeltryck igen för att se hela fotot. Knapparna **+**, **−** och
+     anpassa i hörnet gör samma sak.
+   - **Panorera** med ett finger när du har zoomat in.
+   - **Flytta** en markering genom att dra den. Ett förstoringsglas visas ovanför
+     fingertoppen, så att fingret inte döljer hålet du riktar in dig mot.
+   - **Tryck på en markering** för att välja den. Raden längst ned på fotot tar
+     bort den, gör den till en X (centrumtia) eller — när hålet ligger inom en
+     millimeter från en linje — låter dig välja vilket värde den får.
+   - **Ångra** tar tillbaka den senaste ändringen: en tillagd, flyttad eller
+     borttagen markering, en X, ett val vid en linje eller ett kaliberbyte.
+4. **Kontrollera poängen**, och spara den sedan till serien. När två eller fler
+   hål är markerade visas sidled, höjdled, medelradie och största spridning
+   nedan medan du markerar.
+5. **Titta på den senare.** Markeringarna och träffbildens siffror följer med
+   fotot. Öppna fotot från serien så ser du markeringarna utritade på tavlan,
+   med siffrorna under.
 
 ## Att få ett bra foto
 

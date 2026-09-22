@@ -11,7 +11,7 @@ import { DrillDownRow } from '@/components/drill-down-row';
 import { FAB } from '@/components/fab';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
-import { MarkOverlay } from '@/components/mark-overlay';
+import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
 import { Screen } from '@/components/screen';
@@ -32,7 +32,7 @@ import { Spacing } from '@/theme/tokens';
 
 // Closes the "rendering unverified" gap on the edge-call marker style
 // (photo-scoring-phase1-spec.md §2.5): three synthetic marks, scored by the
-// real `scoreMarks` pipeline, placed to exercise every state MarkOverlay
+// real `scoreMarks` pipeline, placed to exercise every state MarkCanvas
 // draws differently — no photo capture or geometry pipeline required.
 const EDGE_CALL_PREVIEW_CALIBER = CALIBER_MM['.22'] as number;
 const EDGE_CALL_PREVIEW_TARGET = SPSF_PISTOL_25M_PRECISION;
@@ -52,7 +52,7 @@ const EDGE_CALL_PREVIEW_TRANSFORM: TargetTransform = {
   source: 'auto',
 };
 
-// Dark-gray 4x4 placeholder — MarkOverlay always needs a photoUri, but the
+// Dark-gray 4x4 placeholder — MarkCanvas always needs a photoUri, but the
 // rings/marks it draws don't depend on the photo's content.
 const EDGE_CALL_PREVIEW_PHOTO_URI =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR4nGOwsXGAIwbiOAArAwuBhSJKUwAAAABJRU5ErkJggg==';
@@ -66,6 +66,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     isInnerTen: false,
     calledRingLabel: null,
     moved: false,
+    suggested: false,
   },
   {
     id: 'mid-ring',
@@ -75,6 +76,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     isInnerTen: false,
     calledRingLabel: null,
     moved: false,
+    suggested: false,
   },
   // Ring 9's boundary is radius 50mm; near-edge = radius - caliber/2, so
   // 52.3mm out puts the near-edge 0.5mm inside it — under the 1mm
@@ -87,6 +89,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     isInnerTen: false,
     calledRingLabel: null,
     moved: false,
+    suggested: false,
   },
 ];
 
@@ -225,13 +228,14 @@ export default function ComponentsGalleryScreen() {
         <PrimaryButton label="Save" onPress={() => {}} />
       </Section>
 
-      <Section title="MarkOverlay — edge call (dead center, mid-ring, edge call)">
+      <Section title="MarkCanvas — edge call (dead center, mid-ring, edge call)">
         <ThemedText type="small" themeColor="textSecondary">
           The amber-ringed mark is 0.5mm inside ring 9&apos;s boundary — an edge call. The other two
           are not.
         </ThemedText>
-        <MarkOverlay
+        <MarkCanvas
           testID="edge-call-preview"
+          style={styles.canvas}
           photoUri={EDGE_CALL_PREVIEW_PHOTO_URI}
           imageWidth={EDGE_CALL_PREVIEW_IMAGE_SIZE}
           imageHeight={EDGE_CALL_PREVIEW_IMAGE_SIZE}
@@ -240,8 +244,7 @@ export default function ComponentsGalleryScreen() {
           marks={EDGE_CALL_PREVIEW_MARKS}
           scores={scoreMarks(EDGE_CALL_PREVIEW_MARKS, EDGE_CALL_PREVIEW_TARGET)}
           selectedId={null}
-          onTapEmpty={() => {}}
-          onTapMark={() => {}}
+          readOnly
         />
       </Section>
     </Screen>
@@ -249,6 +252,9 @@ export default function ComponentsGalleryScreen() {
 }
 
 const styles = StyleSheet.create({
+  canvas: {
+    height: 360,
+  },
   section: {
     gap: Spacing.two,
   },
