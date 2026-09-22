@@ -3,15 +3,12 @@
 // features/backup/use-backup-export-import.ts). `db` is null on web, where
 // the values simply stay in component state for the session.
 import {
-  DEFAULT_IPSC_SETTINGS,
-  DEFAULT_TIMER_CUE_MODE,
+  DEFAULT_TIMER_SETUP,
   faltCuesFromLegacy,
   normalizeFaltSettings,
-  normalizeIpscSettings,
-  normalizeTimerCueMode,
+  normalizeTimerSetup,
   type FaltTimerSettings,
-  type IpscTimerSettings,
-  type TimerCueMode,
+  type TimerSetup,
 } from '@shotledger/shared';
 import { useCallback, useState } from 'react';
 
@@ -57,46 +54,27 @@ export function useFaltSettings(
 }
 
 /**
- * The IPSC timer's settings. Validated on the way out of storage, so a row
- * from an older build cannot hand the engine a trigger level or delay range
- * it rejects, nor the cues a mode they cannot deliver.
+ * The timer's setup. Validated on the way out of storage, so a row from an
+ * older build cannot hand the engine a trigger level, a delay range or a cue
+ * mode it rejects — `normalizeTimerSetup` pulls each field into range on its
+ * own, and a row that is not a setup at all falls back whole.
  */
-export function useIpscSettings(): [IpscTimerSettings, (next: IpscTimerSettings) => void] {
-  const [settings, setSettings] = useState<IpscTimerSettings>(() => {
-    if (!db) return DEFAULT_IPSC_SETTINGS;
-    const stored = getSetting<unknown>(db, SETTINGS_KEYS.ipscTimer, null);
+export function useTimerSetup(): [TimerSetup, (next: TimerSetup) => void] {
+  const [setup, setSetup] = useState<TimerSetup>(() => {
+    if (!db) return DEFAULT_TIMER_SETUP;
     // Spoken prompts lived in their own row before they joined this blob.
     const spokenPrompts = getSetting<unknown>(db, SETTINGS_KEYS.spokenPrompts, true);
-    return normalizeIpscSettings({
+    const stored = getSetting<unknown>(db, SETTINGS_KEYS.timerSetup, null);
+    return normalizeTimerSetup({
       spokenPrompts,
       ...(typeof stored === 'object' && stored !== null ? stored : {}),
     });
   });
 
-  const update = useCallback((next: IpscTimerSettings) => {
-    if (db) setSetting(db, SETTINGS_KEYS.ipscTimer, next);
-    setSettings(next);
+  const update = useCallback((next: TimerSetup) => {
+    if (db) setSetting(db, SETTINGS_KEYS.timerSetup, next);
+    setSetup(next);
   }, []);
 
-  return [settings, update];
-}
-
-/**
- * How the Time Limit timer's cues are delivered. Validated on the way out of
- * storage, so a row from an older build — including the per-event object this
- * setting briefly used — cannot hand the timer a mode it cannot deliver.
- */
-export function useTimerCueMode(): [TimerCueMode, (next: TimerCueMode) => void] {
-  const [mode, setMode] = useState<TimerCueMode>(() =>
-    db
-      ? normalizeTimerCueMode(getSetting<unknown>(db, SETTINGS_KEYS.timerCues, null))
-      : DEFAULT_TIMER_CUE_MODE,
-  );
-
-  const update = useCallback((next: TimerCueMode) => {
-    if (db) setSetting(db, SETTINGS_KEYS.timerCues, next);
-    setMode(next);
-  }, []);
-
-  return [mode, update];
+  return [setup, update];
 }

@@ -1,4 +1,4 @@
-// Horizontal level bar for the IPSC setup screen: current mic level, last
+// Horizontal level bar for the timer's setup screen: current mic level, last
 // peak, the tracked noise floor and the trigger that sits a chosen distance
 // above it — so the shooter can clap or dry-fire and see where their setting
 // falls relative to the room, which is what the detector actually compares

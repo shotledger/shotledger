@@ -1,4 +1,4 @@
-# How the Shot Timer hears a shot
+# How the timer hears a shot
 
 [Using the timers](../guides/timers.md) is the task. This page is what the
 microphone is actually doing while the clock runs, and — more usefully — what
@@ -51,7 +51,7 @@ happened and honest about _what_ it was.
 
 ## Setting it for your range
 
-Open **Shot Detection** on the Shot Timer and clap or dry-fire near the phone.
+Open **Shot Detection** under Record Shots and clap or dry-fire near the phone.
 
 The bar shows the current level, the loudest one so far, a grey mark where the
 app thinks the room is, and a red mark where your trigger currently sits above

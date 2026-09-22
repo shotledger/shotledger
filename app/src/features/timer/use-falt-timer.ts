@@ -1,5 +1,5 @@
 // React wrapper around the pure `FaltTimerEngine` (shared/src/timer/falt.ts,
-// unit-tested there). Same division of labor as use-timer.ts/use-ipsc-timer.ts:
+// unit-tested there). Same division of labor as use-timer.ts:
 // the engine owns the sequence, this hook owns the interval, keep-awake and
 // the cue → speech/tone/vibration mapping. Not independently tested — the
 // same precedent as those two.
@@ -86,7 +86,7 @@ export function useFaltTimer(settings: FaltTimerSettings): UseFaltTimerResult {
   const [isPaused, setIsPaused] = useState(false);
 
   // Built fresh in `start()`, from whatever `settings` are current then —
-  // mirrors use-ipsc-timer.ts's `engineRef`. A ref (not `useMemo`) because
+  // mirrors use-timer.ts's `controllerRef`. A ref (not `useMemo`) because
   // this is a mutable, stateful instance with imperative lifecycle methods:
   // `useMemo` never guarantees it won't recompute the value on some later
   // render (React may discard a memoized value at any time, and Strict Mode

@@ -18,8 +18,9 @@ nothing.
   maintenance.
 - **Keeps the activity record** a Swedish shooter needs when renewing a firearm
   license.
-- **Times your shooting** — a time-limit timer, an IPSC-style shot timer, and
-  the SPSF fälttimer with its spoken commands.
+- **Times your shooting** — one timer for par times, interval drills and
+  IPSC-style strings, with the microphone recording your splits when you ask
+  it to, plus the SPSF fälttimer with its spoken commands.
 
 ## What it is not
 

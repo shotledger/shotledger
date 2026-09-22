@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PcmWindower, SILENT_DB, amplitudeToDb } from './pcm';
+import { DEFAULT_WINDOW_MS, PcmWindower, SILENT_DB, amplitudeToDb } from './pcm';
 
 const SAMPLE_RATE = 48_000;
 
@@ -132,6 +132,17 @@ describe('PcmWindower', () => {
     const cutShort = { data: new ArrayBuffer(480 * 4 + 3), sampleRate: SAMPLE_RATE, channels: 1 };
     expect(() => windower().push(cutShort)).not.toThrow();
     expect(windower().push(cutShort)).toHaveLength(1);
+  });
+
+  it('defaults to DEFAULT_WINDOW_MS when no length is given', () => {
+    // 100 ms of audio cut into default-length windows.
+    const windows = new PcmWindower().push({
+      data: buffer(4_800, 0.5),
+      sampleRate: SAMPLE_RATE,
+      channels: 1,
+    });
+
+    expect(windows).toHaveLength(100 / DEFAULT_WINDOW_MS);
   });
 
   it('rejects a window length that cannot measure anything', () => {

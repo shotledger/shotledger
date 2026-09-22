@@ -1,4 +1,4 @@
-// Platform wrapper for microphone shot detection (§0 rule 6) — the IPSC shot
+// Platform wrapper for microphone shot detection (§0 rule 6) — the shot
 // timer's only native surface. Detection itself is pure and lives in
 // `shared/src/timer/`; this module does nothing but hand it a stream of level
 // windows.

@@ -6,7 +6,13 @@
 export interface SeriesSpec {
   /** 0-based position in `TimerConfig.series`. */
   index: number;
-  durationMs: number;
+  /**
+   * null runs the series open-ended: it ends when the host calls
+   * `stopSeries()` — a manual stop, or the auto-stop after a stretch of
+   * silence when shot detection is recording. That is the shape an IPSC-style
+   * string has, and it is why this engine can host one (#346).
+   */
+  durationMs: number | null;
   /** Optional label for UI/i18n interpolation, e.g. "1" or "10". Not used by the engine itself. */
   label?: string;
 }
@@ -34,6 +40,8 @@ export type TimerPhaseKind = 'idle' | 'readyDelay' | 'series' | 'rest' | 'done';
 
 export interface TimerPhase {
   kind: TimerPhaseKind;
+  /** True while an open-ended series is running: `remainingMs` means nothing, `elapsedMs` is the clock. */
+  openEnded: boolean;
   /** -1 outside readyDelay/series/rest. */
   seriesIndex: number;
   /** ms remaining in the current phase; 0 for idle/done. */

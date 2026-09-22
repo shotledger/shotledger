@@ -23,11 +23,9 @@ export const SETTINGS_KEYS = {
   // (mode, prep/shooting time, parti boundaries, a cue per command).
   spokenPrompts: 'spokenPrompts',
   faltTimer: 'faltTimer',
-  // The IPSC timer's own blob (trigger level, random delay range, PAR,
-  // auto-stop, cue mode, spoken prompts).
-  ipscTimer: 'ipscTimer',
-  // The Time Limit timer's cue mode.
-  timerCues: 'timerCues',
+  // The timer's own blob (time limit, start delay, repetitions, rest, shot
+  // detection and its gate, cue mode, spoken prompts).
+  timerSetup: 'timerSetup',
   // Opt-in online place lookup for the session Location field (Photon/OSM).
   // OFF by default: with it on, what the user types is sent to a third-party
   // server, which an offline-first app must not do without being asked.

@@ -119,6 +119,7 @@ describe('TimerEngine idle/start', () => {
     const engine = new TimerEngine(singleSeries());
     expect(engine.getPhase()).toEqual({
       kind: 'idle',
+      openEnded: false,
       seriesIndex: -1,
       remainingMs: 0,
       elapsedMs: 0,
@@ -134,7 +135,13 @@ describe('TimerEngine idle/start', () => {
     expect(events[0]).toEqual({
       atMs: 0,
       cue: { kind: 'ready', seriesIndex: 0, vibrate: false },
-      phase: { kind: 'readyDelay', seriesIndex: 0, remainingMs: 1_000, elapsedMs: 0 },
+      phase: {
+        kind: 'readyDelay',
+        openEnded: false,
+        seriesIndex: 0,
+        remainingMs: 1_000,
+        elapsedMs: 0,
+      },
     });
   });
 
@@ -162,6 +169,7 @@ describe('TimerEngine idle/start', () => {
     expect(engine.advance(0)).toEqual([]);
     expect(engine.getPhase()).toEqual({
       kind: 'readyDelay',
+      openEnded: false,
       seriesIndex: 0,
       remainingMs: 1_000,
       elapsedMs: 0,
@@ -177,6 +185,7 @@ describe('TimerEngine single-series PAR drill', () => {
     expect(events).toEqual([]);
     expect(engine.getPhase()).toEqual({
       kind: 'readyDelay',
+      openEnded: false,
       seriesIndex: 0,
       remainingMs: 600,
       elapsedMs: 400,
@@ -192,7 +201,7 @@ describe('TimerEngine single-series PAR drill', () => {
     expect(events[0]).toEqual({
       atMs: 1_000,
       cue: { kind: 'start', seriesIndex: 0, vibrate: true },
-      phase: { kind: 'series', seriesIndex: 0, remainingMs: 2_000, elapsedMs: 0 },
+      phase: { kind: 'series', openEnded: false, seriesIndex: 0, remainingMs: 2_000, elapsedMs: 0 },
     });
   });
 
@@ -204,12 +213,12 @@ describe('TimerEngine single-series PAR drill', () => {
     expect(events[1]).toEqual({
       atMs: 3_000,
       cue: { kind: 'stop', seriesIndex: 0, vibrate: true },
-      phase: { kind: 'series', seriesIndex: 0, remainingMs: 0, elapsedMs: 2_000 },
+      phase: { kind: 'series', openEnded: false, seriesIndex: 0, remainingMs: 0, elapsedMs: 2_000 },
     });
     expect(events[2]).toEqual({
       atMs: 3_000,
       cue: { kind: 'complete', seriesIndex: 0, vibrate: true },
-      phase: { kind: 'done', seriesIndex: -1, remainingMs: 0, elapsedMs: 0 },
+      phase: { kind: 'done', openEnded: false, seriesIndex: -1, remainingMs: 0, elapsedMs: 0 },
     });
     expect(engine.getPhase().kind).toBe('done');
     expect(engine.getElapsedMs()).toBe(3_000);
@@ -251,6 +260,7 @@ describe('TimerEngine single-series PAR drill', () => {
     engine.reset();
     expect(engine.getPhase()).toEqual({
       kind: 'idle',
+      openEnded: false,
       seriesIndex: -1,
       remainingMs: 0,
       elapsedMs: 0,
@@ -282,6 +292,7 @@ describe('TimerEngine multi-series with rest', () => {
     expect(toRest[0]!.cue).toEqual({ kind: 'stop', seriesIndex: 0, vibrate: true });
     expect(engine.getPhase()).toEqual({
       kind: 'rest',
+      openEnded: false,
       seriesIndex: 1,
       remainingMs: 800,
       elapsedMs: 0,
@@ -395,5 +406,96 @@ describe('TimerEngine zero-length phases', () => {
     const config = singleSeries();
     const engine = new TimerEngine(config);
     expect(engine.getConfig()).toBe(config);
+  });
+});
+
+describe('TimerEngine open-ended series', () => {
+  function openEnded(overrides: Partial<TimerConfig> = {}): TimerConfig {
+    return {
+      readyDelayMs: 1_000,
+      series: [{ index: 0, durationMs: null }],
+      restMs: 0,
+      ...overrides,
+    };
+  }
+
+  it('runs on however long it is advanced, ending only on stopSeries()', () => {
+    const engine = new TimerEngine(openEnded());
+    engine.start();
+    engine.advance(1_000);
+
+    expect(engine.getPhase()).toMatchObject({ kind: 'series', openEnded: true });
+    engine.advance(60_000);
+    expect(engine.getPhase()).toMatchObject({
+      kind: 'series',
+      elapsedMs: 60_000,
+      // Nothing to count down: the shooter reads the elapsed time instead.
+      remainingMs: 0,
+    });
+
+    const events = engine.stopSeries();
+    expect(events.map((event) => event.cue.kind)).toEqual(['stop', 'complete']);
+    expect(engine.getPhase()).toMatchObject({ kind: 'done', openEnded: false });
+  });
+
+  it('rests between open-ended repetitions, like a timed one', () => {
+    const engine = new TimerEngine(
+      openEnded({
+        series: [
+          { index: 0, durationMs: null },
+          { index: 1, durationMs: null },
+        ],
+        restMs: 2_000,
+      }),
+    );
+    engine.start();
+    engine.advance(1_000);
+    engine.advance(5_000);
+
+    expect(engine.stopSeries().map((event) => event.cue.kind)).toEqual(['stop']);
+    expect(engine.getPhase()).toMatchObject({ kind: 'rest', seriesIndex: 1, openEnded: false });
+
+    engine.advance(2_000 + 1_000);
+    expect(engine.getPhase()).toMatchObject({ kind: 'series', seriesIndex: 1, openEnded: true });
+  });
+
+  it('accepts a mix of timed and open-ended series', () => {
+    const engine = new TimerEngine(
+      openEnded({
+        series: [
+          { index: 0, durationMs: 2_000 },
+          { index: 1, durationMs: null },
+        ],
+        restMs: 0,
+      }),
+    );
+    engine.start();
+    engine.advance(1_000 + 2_000 + 1_000);
+
+    expect(engine.getPhase()).toMatchObject({ kind: 'series', seriesIndex: 1, openEnded: true });
+  });
+
+  it('ignores stopSeries() outside a series, so a stray tap skips nothing', () => {
+    const engine = new TimerEngine(openEnded());
+
+    expect(engine.stopSeries()).toEqual([]);
+    engine.start();
+    expect(engine.stopSeries()).toEqual([]);
+    expect(engine.getPhase().kind).toBe('readyDelay');
+  });
+
+  it('stops a timed series early, exactly as its own time running out would', () => {
+    const engine = new TimerEngine(singleSeries());
+    engine.start();
+    engine.advance(1_000 + 500);
+
+    expect(engine.stopSeries().map((event) => event.cue.kind)).toEqual(['stop', 'complete']);
+    expect(engine.getPhase().kind).toBe('done');
+  });
+
+  it('rejects a duration that is neither positive nor null', () => {
+    expect(() => new TimerEngine(openEnded({ series: [{ index: 0, durationMs: 0 }] }))).toThrow(
+      /must be > 0 or null/,
+    );
   });
 });

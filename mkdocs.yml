@@ -107,7 +107,7 @@ plugins:
             How license activity is counted: Så räknas skjutaktiviteten
             How sighters count: Hur provserier räknas
             What photo scoring does: Vad fotoräkningen gör
-            How the Shot Timer hears a shot: Hur skottimern hör ett skott
+            How the timer hears a shot: Hur timern hör ett skott
             Logging a session: Logga ett pass
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
@@ -135,7 +135,7 @@ nav:
       - How license activity is counted: explanation/license-activity.md
       - How sighters count: explanation/how-sighters-count.md
       - What photo scoring does: explanation/photo-scoring.md
-      - How the Shot Timer hears a shot: explanation/shot-detection.md
+      - How the timer hears a shot: explanation/shot-detection.md
   - Guides:
       - Logging a session: guides/logging-a-session.md
       - Statistics: guides/statistics.md

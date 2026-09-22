@@ -181,7 +181,7 @@ export default function ComponentsGalleryScreen() {
       <Section title="DrillDownRow">
         <Card>
           <DrillDownRow title="Account & Sync" subtitle="Not signed in" onPress={() => {}} />
-          <DrillDownRow title="Shot Timer" value="IPSC" onPress={() => {}} />
+          <DrillDownRow title="Shot Detection" value="12 dB over the room" onPress={() => {}} />
         </Card>
       </Section>
 

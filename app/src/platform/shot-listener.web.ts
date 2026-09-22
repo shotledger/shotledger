@@ -1,5 +1,5 @@
 // Web stub for the microphone shot listener — expo-audio's web build ships
-// `AudioStream` as a stub that never streams, so the IPSC timer reports
+// `AudioStream` as a stub that never streams, so the timer reports
 // itself as unavailable in the web preview (same precedent as expo-sqlite's
 // db/client.web.ts). Everything else on the screen still renders.
 import type { LevelWindow } from '@shotledger/shared';

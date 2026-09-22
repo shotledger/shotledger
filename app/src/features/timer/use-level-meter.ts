@@ -1,4 +1,4 @@
-// Live microphone preview for the IPSC setup screen. It runs the *same*
+// Live microphone preview for the timer's setup screen. It runs the *same*
 // `ShotDetector` the run will, on the same window stream, so what the
 // shooter sees while tuning is what the timer will do: the tracked noise
 // floor the trigger is measured against, and a count of the events that
