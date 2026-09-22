@@ -1,0 +1,52 @@
+import type { TFunction } from 'i18next';
+import { getProgram, type Program } from '@shotledger/shared';
+
+import { matchFormatHint, matchFormatLabel } from './labels';
+
+// Renders the key plus its interpolated values, so a test can assert on both
+// which string was chosen and what was put into it.
+function program(id: string): Program {
+  const found = getProgram(id);
+  if (!found) throw new Error(`no such program: ${id}`);
+  return found;
+}
+
+const t = ((key: string, options?: Record<string, unknown>) =>
+  options && 'series' in options ? `${key}(${options.series},${options.times})` : key) as TFunction;
+
+describe('matchFormatLabel', () => {
+  it('names the chips for the format, not for the program', () => {
+    expect(matchFormatLabel(t, null, 1)).toBe('session.freeFormat');
+    expect(matchFormatLabel(t, 'spsf-milsnabb', 1)).toBe('session.fullMatch');
+  });
+
+  it('falls back to the program name once a discipline has more than one', () => {
+    expect(matchFormatLabel(t, 'spsf-milsnabb', 2)).toBe('program.spsf-milsnabb');
+  });
+});
+
+describe('matchFormatHint', () => {
+  it('counts the scoring series and lists the distinct time limits in order', () => {
+    expect(matchFormatHint(t, program('spsf-milsnabb'))).toBe(
+      'session.fullMatchHintSighterTimed(12,10/8/6)',
+    );
+  });
+
+  it('names no time when the program mixes timed and untimed groups', () => {
+    expect(matchFormatHint(t, program('issf-sport-pistol'))).toBe(
+      'session.fullMatchHintSighter(12,null)',
+    );
+  });
+
+  it('counts a program with no sighter series as plain series', () => {
+    expect(matchFormatHint(t, program('issf-air-pistol'))).toBe('session.fullMatchHint(6,null)');
+  });
+
+  it('describes the final when that is all the full match adds', () => {
+    expect(matchFormatHint(t, program('spsf-precision'))).toBe('session.fullMatchHintFinal');
+  });
+
+  it('is null for a program that lays out nothing and has no final', () => {
+    expect(matchFormatHint(t, program('spsf-magnumprecision'))).toBeNull();
+  });
+});

@@ -62,13 +62,15 @@ your own, and stops asking you every session. You can always override it.
   SvSF's worlds rather than scrolling one list that mixes them. With a single
   regulation on there is nothing to choose and the row is not shown.
 - **Discipline** — for example SPSF precision or militär snabbmatch.
-- **Program** — the shot program within that discipline. It decides how many
-  shots each series holds, whether the score is whole points or decimals, and
-  whether a final can be added. Choose **Free Format** when you are shooting the
-  discipline without a fixed shot program: the series keep their normal length,
-  and nothing is pre-laid-out for you. The ⓘ beside the heading says the same in
-  the app. A discipline with no programs of its own — Practice (Ring Target) —
-  shows no Program row at all.
+- **Match Format** — whether the session arrives laid out as the full match, or
+  empty for you to fill in. **Full Match** lays the series out for you: militär
+  snabbmatch arrives with a sighter series and twelve scoring series at 10, 8
+  and 6 seconds, and on precision it is the final that the full match adds. The
+  line under the chips says what this format lays out. **Free Format** adds
+  nothing: the series keep their discipline's normal length and you add them as
+  you go. A competition starts on Full Match and training on Free Format; both
+  are yours to change. A discipline with no fixed format of its own — Practice
+  (Ring Target) — shows no Match Format row at all.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
   Both are optional.
 
@@ -77,8 +79,10 @@ For a **competition** you are also asked for your **weapon group** and
 the app takes the weapon group from the gun you picked, so your
 pistolskyttemärke still counts practice series, and it records no class at all.
 
-A session created from a fixed program arrives with its series already laid
-out, so you are not building the scaffolding while the line is waiting.
+A session created as the full match arrives with its series already laid out,
+so you are not building the scaffolding while the line is waiting. The format
+cannot be changed afterwards, so the session's own screen names it under the
+title.
 
 ### 4. Enter shots as you shoot
 

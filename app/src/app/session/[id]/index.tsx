@@ -14,6 +14,7 @@ import {
   findEvent,
   formatGroupAndClass,
   MIN_SHOTS_FOR_HEATMAP,
+  programsForDiscipline,
   tenthsToScore,
 } from '@shotledger/shared';
 
@@ -40,6 +41,7 @@ import {
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { formatSessionDate } from '@/features/home/format-session-date';
+import { matchFormatLabel } from '@/features/session/labels';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { setSeriesPositions } from '@/db/queries/series';
@@ -415,6 +417,15 @@ export default function SessionDetailScreen() {
           {[
             formatSessionDate(session.startedAt, i18n.language),
             t(`sessionType.${session.type}`),
+            // The format is chosen once, on creation, and cannot be edited —
+            // so it has to be readable somewhere afterwards (#348).
+            session.programId
+              ? matchFormatLabel(
+                  t,
+                  session.programId,
+                  programsForDiscipline(session.disciplineId).length,
+                )
+              : null,
             formatGroupAndClass(session.weaponGroup, session.shooterClass),
             eventCategoryLabel,
             firearmName,
