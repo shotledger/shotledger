@@ -17,6 +17,7 @@ function row(overrides: Partial<SessionListRow> = {}): SessionListRow {
     seriesAverage: 44.4,
     innerTenCount: 3,
     tags: [],
+    falt: null,
     shape: 'series',
     disciplineId: 'spsf-precision',
     firearmId: 'f1',

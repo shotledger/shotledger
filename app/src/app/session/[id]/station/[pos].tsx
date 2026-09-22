@@ -186,7 +186,7 @@ export default function StationEntryScreen() {
         </ThemedText>
       </Card>
 
-      <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-station" />
+      <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
       {row && (
         <PrimaryButton label={t('station.delete')} onPress={onDelete} testID="delete-station" />
       )}

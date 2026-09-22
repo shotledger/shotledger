@@ -1215,6 +1215,9 @@
     "shootOff": "Särskjutning",
     "shootOffHelp": "Skjuts för att skilja lika resultat. Den avgör placering, aldrig det noterade resultatet.",
     "delete": "Ta bort station",
-    "deleteConfirm": "Ta bort den här stationen?"
+    "deleteConfirm": "Ta bort den här stationen?",
+    "noStations": "Inga stationer än",
+    "noStationsBody": "Lägg till din första station och notera träffarna.",
+    "save": "Spara station"
   }
 }

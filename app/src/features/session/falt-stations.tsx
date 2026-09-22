@@ -1,7 +1,8 @@
 // The station list and result for a fält session (#315). A ring session's
 // metric tiles have nothing to show here: a fält result is two numbers, or one
 // sum in poängfält, and neither is a point total.
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,6 +14,23 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
 import { Spacing } from '@/theme/tokens';
+
+const EMPTY_RESULT = {
+  stationCount: 0,
+  hits: 0,
+  figuresHit: 0,
+  ringedFigurePoints: null,
+  poangfaltPoints: 0,
+  pointsMax: null,
+};
+
+function load(sessionId: string) {
+  if (!db) return { stations: [], result: EMPTY_RESULT };
+  return {
+    stations: listStationsForSession(db, sessionId),
+    result: faltSessionResult(db, sessionId),
+  };
+}
 
 /** The detail screen's MetricTile is local to that file; this is its twin. */
 function Tile({ label, value, testID }: { label: string; value: string; testID?: string }) {
@@ -38,17 +56,17 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const stations = db ? listStationsForSession(db, sessionId) : [];
-  const result = db
-    ? faltSessionResult(db, sessionId)
-    : {
-        stationCount: 0,
-        hits: 0,
-        figuresHit: 0,
-        ringedFigurePoints: null,
-        poangfaltPoints: 0,
-        pointsMax: null,
-      };
+  // Refetch on focus, like Home and the session detail: returning from the
+  // station screen must show what was just entered. Reading at render time
+  // alone showed a stale list until the app was restarted (found on the
+  // emulator, #315).
+  const [data, setData] = useState(() => load(sessionId));
+  useFocusEffect(
+    useCallback(() => {
+      setData(load(sessionId));
+    }, [sessionId]),
+  );
+  const { stations, result } = data;
 
   const nextPosition = (stations[stations.length - 1]?.position ?? 0) + 1;
 
@@ -85,7 +103,7 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
       </Card>
 
       {stations.length === 0 ? (
-        <EmptyState title={t('session.noSeries')} body={t('session.noSeriesBody')} />
+        <EmptyState title={t('station.noStations')} body={t('station.noStationsBody')} />
       ) : (
         <Card>
           {stations.map((station) => {
