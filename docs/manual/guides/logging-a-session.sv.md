@@ -37,7 +37,9 @@ Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 ## Fältskjutning
 
 Fältskjutning räknas inte i ringar, så den loggas i **stationer** i stället
-för serier. Välj **Fältskjutning** som gren, så ställer passet en extra fråga:
+för serier. Välj **Fältskjutning** som gren — namnet står kvar på svenska även när appen
+körs på engelska, eftersom det är så regelboken kallar grenen — så ställer
+passet en extra fråga:
 om tävlingen skjuts som **fält** eller **poängfält**.
 
 Varje station är sex skott, och du noterar två tal — träffar, och hur många

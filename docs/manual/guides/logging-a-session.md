@@ -39,8 +39,8 @@ That is the rule inside a session. Across sessions it changes — see
 ## Field shooting
 
 Field shooting is not scored in rings, so it is logged in **stations** instead
-of series. Pick **Fältskjutning** as the discipline — the app keeps the Swedish name,
-because that is what the rule book calls the event and the session asks one
+of series. Pick **Fältskjutning** as the discipline — the app keeps the Swedish name in
+English too, because that is what the rule book calls the event and the session asks one
 extra question: whether the competition is run as **field** or **point field**.
 
 Each station is six shots, and you record two numbers — hits, and how many
