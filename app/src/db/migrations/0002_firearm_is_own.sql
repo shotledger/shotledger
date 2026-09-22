@@ -1,1 +1,0 @@
-ALTER TABLE `firearms` ADD `is_own` integer DEFAULT true NOT NULL;

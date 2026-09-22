@@ -175,6 +175,13 @@ export const sessions = sqliteTable('sessions', {
   tenCount: integer('ten_count'),
   innerTenCount: integer('inner_ten_count'),
   decimalScoring: integer('decimal_scoring').notNull().default(0),
+  /**
+   * How a fält competition presents and ranks its result (SHB D.6.11 p. 95):
+   * vanlig fält as "antal träff i antal figurer", poängfält as one sum. The
+   * same event is held either way in consecutive years, so the mode belongs
+   * to the competition — not to the discipline. NULL on every ring session.
+   */
+  faltResultMode: text('falt_result_mode', { enum: ['falt', 'poangfalt'] }),
   // Rounds fired in this session that were never scored (fouling shots,
   // function checks, plinking). Counted toward the firearm round counter,
   // ammo-lot usage and volume metrics; excluded from every score statistic
@@ -244,6 +251,43 @@ export const shots = sqliteTable('shots', {
   // than dropped because a destructive column-drop migration on an existing
   // local-first database is riskier than an unused column.
   isInnerTenDecimal: integer('is_inner_ten_decimal').notNull().default(0),
+});
+
+/**
+ * One skjutstation of a fältskjutning round (docs/specs/falt-stations-spec.md).
+ *
+ * Its own table rather than columns on `series`: a station cannot use
+ * `is_sighter` (fält has no provskott, D.6.6 p. 91) or `is_final` (fält has no
+ * final — a tie is shot off, not finalled), and `series`' total-override
+ * columns are ring concepts. Nothing is stored per shot, because holes are
+ * counted per figure after the series and no hole can be attributed to a shot
+ * number.
+ */
+export const faltStations = sqliteTable('falt_stations', {
+  ...common,
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => sessions.id),
+  position: integer('position').notNull(), // 1-based station number
+  // 0-6: six shots at every station (D.6.4 p. 91).
+  hits: integer('hits').notNull().default(0),
+  // 0-hits: "5/3" is five hits spread over three figures.
+  figuresHit: integer('figures_hit').notNull().default(0),
+  // Poängmål (D.6.10.1 p. 93). NULL = the station carried no ringed figure,
+  // which 0 does not say. There is no fixed ring scheme — the arrangör
+  // chooses, so the shooter records the max alongside what they scored
+  // (maintainer ruling 2026-09-22).
+  points: integer('points'),
+  pointsMax: integer('points_max'),
+  // Annulled for breaking SHB or SäkB: kept and shown, never scored
+  // (maintainer ruling 2026-09-22). Its six rounds were still fired, so they
+  // still count toward volume — the split sighters already have.
+  isScratched: integer('is_scratched').notNull().default(0),
+  // A särskjutning station, numbered on from the round (D.6.11.3 p. 97).
+  // Decides placement only and never enters the recorded score.
+  isShootOff: integer('is_shoot_off').notNull().default(0),
+  photoUri: text('photo_uri'),
+  note: text('note'),
 });
 
 // Photo scoring phase 1 (docs/specs/photo-scoring-phase1-spec.md §4): where

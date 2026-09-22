@@ -100,9 +100,22 @@ What it means in practice:
   `migrations.js` importing only that file.
 - `app/src/db/migrations.test.ts` currently asserts "the baseline plus exactly
   the migrations appended since". It is rewritten to assert the invariants of
-  a single baseline — every table present, every synced table carrying its
-  three outbox triggers — **not** weakened or deleted (invariant N1 still
-  holds; this is a behaviour change to the test's subject, declared here).
+  a single baseline — exactly one `.sql` file, every table present, every
+  synced table carrying its outbox trigger pair — **not** weakened or deleted
+  (invariant N1 still holds; this is a behaviour change to the test's subject,
+  declared here).
+- **One test is removed, and this is the declaration of it.** `N3` applied
+  `0002_firearm_is_own` over the baseline to prove existing rows backfilled to
+  own. That migration no longer exists, so the test has no subject. The
+  invariant it guarded — a firearm recorded without `is_own` is the shooter's
+  own — is asserted by `N3b` against the schema instead. Nothing else about
+  the suite changes.
+- **A regeneration silently drops the hand-carried tail**, and did: the first
+  regenerated baseline came back without the `firearm_calibers` triggers,
+  because those lived in the deleted `0003` rather than in `0000`'s carried
+  section. Caught by the trigger-pair test, which is why that test exists. The
+  carried section's comment now says a new synced table must add its pair
+  there.
 - **Consequence, and it is not reversible by the app:** any existing install
   is now on a history that no longer exists. Drizzle will not migrate it — it
   must be wiped and reinstalled, or its data exported first (Settings →

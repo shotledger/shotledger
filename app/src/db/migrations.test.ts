@@ -1,10 +1,12 @@
-// The chain is a regenerated baseline (2026-09-11, and again 2026-09-12 for
-// `sessions.event_id`; maintainer's call — pre-release, no installed build's
-// data had to survive) plus the migrations appended since.
-// What these assert is that applying the whole chain leaves a database that
-// matches schema.ts. The baseline is not generated in full — `drizzle-kit
-// generate` derives it from schema.ts, which models neither triggers nor seed
-// rows, and both were carried over by hand.
+// There is ONE migration, and there always will be: the baseline is
+// regenerated in place on every schema change rather than appended to
+// (maintainer's call, 2026-09-22 — hard rule 8; pre-release, and a migration
+// chain is a compatibility branch for databases only this machine produced).
+// What these assert is that applying it leaves a database matching schema.ts.
+// The baseline is not generated in full — `drizzle-kit generate` derives it
+// from schema.ts, which models neither triggers nor seed rows, so both are
+// carried over by hand on every regeneration. The firearm_calibers triggers
+// were lost exactly that way once (2026-09-22) and caught here.
 import Database from 'better-sqlite3';
 import { getTableColumns, getTableName, is } from 'drizzle-orm';
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
@@ -21,6 +23,7 @@ const migrationsDir = path.join(dirname, 'migrations');
 /** Every table the sync engine captures; each needs an insert and an update trigger. */
 const SYNCED_TABLES = [
   'ammo_lots',
+  'falt_stations',
   'firearm_calibers',
   'firearm_groups',
   'firearms',
@@ -56,37 +59,22 @@ function freshDatabase(): Database.Database {
 }
 
 describe('the migration chain is the whole schema', () => {
-  it('is the baseline plus exactly the migrations appended since', () => {
-    // Exact, not a prefix: an unexpected migration is as much a defect as a
-    // missing one.
-    expect(journalTags()).toEqual([
-      '0000_baseline',
-      '0001_drop_vault_document_id',
-      '0002_firearm_is_own',
-      '0003_firearm_calibers',
+  it('is exactly one baseline, never a chain', () => {
+    // A second migration here means someone appended instead of regenerating.
+    // That is the defect: this repo has no installed base to migrate, and a
+    // chain that exists gets maintained forever.
+    expect(journalTags()).toEqual(['0000_baseline']);
+    expect(fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'))).toEqual([
+      '0000_baseline.sql',
     ]);
   });
 
-  it('N3: adds firearms.is_own and backfills every existing row to own', () => {
-    const sqlite = new Database(':memory:');
-    sqlite.pragma('foreign_keys = ON');
-    applyMigration(sqlite, '0000_baseline');
-    sqlite
-      .prepare(
-        `INSERT INTO firearms (id, created_at, updated_at, make, model, weapon_type)
-         VALUES ('f1', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'A', '1', 'pistol')`,
-      )
-      .run();
-    applyMigration(sqlite, '0002_firearm_is_own');
-
-    // Maintainer's call, 2026-09-18: ownership is a plain boolean defaulting
-    // to true, so an existing firearm is taken to be the shooter's own.
-    expect(sqlite.prepare('SELECT is_own FROM firearms WHERE id = ?').get('f1')).toEqual({
-      is_own: 1,
-    });
-  });
-
-  it('N3b: a row inserted without is_own after the migration is own too', () => {
+  // N3 stood here and applied 0002_firearm_is_own over the baseline to prove
+  // existing rows were backfilled. The baseline reset deleted that migration,
+  // so the test had no subject left; the invariant it guarded — a firearm
+  // recorded without is_own is the shooter's own (maintainer, 2026-09-18) —
+  // is what N3b asserts, against the schema rather than against a migration.
+  it('N3b: a row inserted without is_own is own', () => {
     const sqlite = freshDatabase();
     sqlite
       .prepare(

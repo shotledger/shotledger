@@ -24,6 +24,35 @@ CREATE TABLE `ammo_lots` (
 	`notes` text
 );
 --> statement-breakpoint
+CREATE TABLE `falt_stations` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	`deleted_at` text,
+	`session_id` text NOT NULL,
+	`position` integer NOT NULL,
+	`hits` integer DEFAULT 0 NOT NULL,
+	`figures_hit` integer DEFAULT 0 NOT NULL,
+	`points` integer,
+	`points_max` integer,
+	`is_scratched` integer DEFAULT 0 NOT NULL,
+	`is_shoot_off` integer DEFAULT 0 NOT NULL,
+	`photo_uri` text,
+	`note` text,
+	FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `firearm_calibers` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	`deleted_at` text,
+	`firearm_id` text NOT NULL,
+	`caliber` text NOT NULL,
+	`position` integer DEFAULT 0 NOT NULL,
+	FOREIGN KEY (`firearm_id`) REFERENCES `firearms`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `firearm_groups` (
 	`id` text PRIMARY KEY NOT NULL,
 	`created_at` text NOT NULL,
@@ -44,6 +73,7 @@ CREATE TABLE `firearms` (
 	`model` text NOT NULL,
 	`caliber` text,
 	`weapon_type` text,
+	`is_own` integer DEFAULT true NOT NULL,
 	`serial_number` text,
 	`vapen_id` text,
 	`load_system` text,
@@ -65,7 +95,6 @@ CREATE TABLE `licenses` (
 	`valid_until` text,
 	`conditions` text,
 	`authority` text,
-	`vault_document_id` text,
 	FOREIGN KEY (`firearm_id`) REFERENCES `firearms`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -142,6 +171,7 @@ CREATE TABLE `sessions` (
 	`ten_count` integer,
 	`inner_ten_count` integer,
 	`decimal_scoring` integer DEFAULT 0 NOT NULL,
+	`falt_result_mode` text,
 	`extra_rounds` integer,
 	`external_source` text,
 	`external_ref` text,
@@ -239,11 +269,13 @@ CREATE TABLE `training_samples` (
 );
 --> statement-breakpoint
 --
--- Carried by hand from the squashed chain, and NOT regenerable: drizzle-kit
--- derives this file from schema.ts, which models neither triggers nor seed
--- rows. Re-running `drizzle-kit generate` over a wiped migrations/ silently
--- drops everything below this line — the outbox then records nothing and
--- sync goes quiet without an error. `migrations.test.ts` fails if it does.
+-- Carried by hand, and NOT regenerable: drizzle-kit derives this file from
+-- schema.ts, which models neither triggers nor seed rows. This repo has ONE
+-- baseline and regenerates it in place on every schema change (hard rule 8,
+-- maintainer 2026-09-22), so every regeneration silently drops everything
+-- below this line unless it is carried across by hand — the outbox then
+-- records nothing and sync goes quiet without an error. `migrations.test.ts`
+-- fails if it does, and a new synced table needs its trigger pair added here.
 --
 INSERT INTO `sync_control` (`id`, `applying`, `last_rev`) VALUES (0, 0, 0);
 --> statement-breakpoint
@@ -450,6 +482,46 @@ BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('sight_settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_falt_stations_insert` AFTER INSERT ON `falt_stations`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('falt_stations', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_falt_stations_update` AFTER UPDATE ON `falt_stations`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('falt_stations', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_firearm_calibers_insert` AFTER INSERT ON `firearm_calibers`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('firearm_calibers', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_firearm_calibers_update` AFTER UPDATE ON `firearm_calibers`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('firearm_calibers', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
       SET `rev` = excluded.`rev`, `client_change_id` = NULL;
 END;

@@ -1,1 +1,0 @@
-ALTER TABLE `licenses` DROP COLUMN `vault_document_id`;
