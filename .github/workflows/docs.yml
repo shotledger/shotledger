@@ -67,7 +67,11 @@ jobs:
   deploy:
     # Only from main. A pull request gets the strict build above as a gate and
     # nothing else — a PR must never be able to replace the published site.
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # GitHub Free covers Pages for public repositories only, so while this repo
+    # is private the deploy can only fail (#386); it returns when it can run.
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      github.event.repository.visibility == 'public'
     name: Publish to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
