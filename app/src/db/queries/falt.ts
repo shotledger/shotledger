@@ -9,9 +9,10 @@ import {
   type FaltStationEntry,
 } from '@shotledger/shared';
 
-import { faltStations } from '../schema';
+import { faltStations, sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
+import { applyRoundCountDelta } from './firearm-counters';
 
 export interface AddStationInput {
   sessionId: string;
@@ -86,7 +87,17 @@ export function addStation(db: Database, input: AddStationInput): StationRow {
     note: input.note ?? null,
   };
   db.insert(faltStations).values(row).run();
+  // Six rounds went down the barrel whatever the marker wrote (D.6.4 p. 91).
+  // A scratched station counts here for the same reason a sighter does: it is
+  // volume, not score (SCORE_003's split).
+  moveRoundCount(db, input.sessionId, SHOTS_PER_STATION);
   return row;
+}
+
+/** Moves the session firearm's counters, if the session has one. */
+function moveRoundCount(db: Database, sessionId: string, delta: number): void {
+  const sessionRow = db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+  if (sessionRow?.firearmId) applyRoundCountDelta(db, sessionRow.firearmId, delta);
 }
 
 export function listStationsForSession(db: Database, sessionId: string): StationRow[] {
@@ -142,11 +153,15 @@ export function updateStation(
 }
 
 export function softDeleteStation(db: Database, id: string): void {
+  const current = getStation(db, id);
+  if (!current) return;
+
   const now = nowIso();
   db.update(faltStations)
     .set({ deletedAt: now, updatedAt: now })
     .where(and(eq(faltStations.id, id), isNull(faltStations.deletedAt)))
     .run();
+  moveRoundCount(db, current.sessionId, -SHOTS_PER_STATION);
 }
 
 export interface FaltSessionResult {

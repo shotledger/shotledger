@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { createAmmoLot } from './ammo-lots';
+import { getAmmoLotUsage } from './ammo-usage';
+import { createFirearm, getFirearm } from './firearms';
+import { deleteSessionAndSeries } from './round-count';
 import { createSession } from './sessions';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
@@ -120,5 +124,74 @@ describe('faltSessionResult (spec P3)', () => {
       poangfaltPoints: 0,
       pointsMax: null,
     });
+  });
+});
+
+describe('stations are volume, even when they are not score (spec P6, P7)', () => {
+  it('P6a: each station adds its six rounds to the firearm counter, scratched included', () => {
+    const firearm = createFirearm(db, { make: 'Pardini', model: 'SP' });
+    const faltSession = createSession(db, {
+      name: 'Fält',
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      startedAt: '2026-02-01T00:00:00.000Z',
+      firearmId: firearm.id,
+    }).id;
+
+    addStation(db, { sessionId: faltSession, position: 1, hits: 5, figuresHit: 3 });
+    // Struck out: its rounds were still fired down the barrel.
+    addStation(db, { sessionId: faltSession, position: 2, hits: 6, figuresHit: 0, isScratched: true });
+
+    expect(getFirearm(db, firearm.id)!.roundCount).toBe(12);
+    expect(getFirearm(db, firearm.id)!.roundsSinceMaintenance).toBe(12);
+  });
+
+  it('P6b: an ammo lot counts a station’s rounds too', () => {
+    const lot = createAmmoLot(db, { label: 'Lot A', caliber: '.22 LR' });
+    const faltSession = createSession(db, {
+      name: 'Fält',
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      startedAt: '2026-02-01T00:00:00.000Z',
+      ammoLotId: lot.id,
+    }).id;
+    addStation(db, { sessionId: faltSession, position: 1, hits: 5, figuresHit: 3 });
+    addStation(db, { sessionId: faltSession, position: 2, hits: 4, figuresHit: 2 });
+
+    expect(getAmmoLotUsage(db, lot.id)).toEqual({ sessionCount: 1, shotCount: 12 });
+  });
+
+  it('P6c: deleting a station backs its rounds out again', () => {
+    const firearm = createFirearm(db, { make: 'Walther', model: 'GSP' });
+    const faltSession = createSession(db, {
+      name: 'Fält',
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      startedAt: '2026-02-01T00:00:00.000Z',
+      firearmId: firearm.id,
+    }).id;
+    const station = addStation(db, { sessionId: faltSession, position: 1, hits: 5, figuresHit: 3 });
+    addStation(db, { sessionId: faltSession, position: 2, hits: 4, figuresHit: 2 });
+
+    softDeleteStation(db, station.id);
+    expect(getFirearm(db, firearm.id)!.roundCount).toBe(6);
+  });
+
+  it('P7: deleting a session takes its stations and their rounds with it', () => {
+    const firearm = createFirearm(db, { make: 'Sig', model: 'P210' });
+    const faltSession = createSession(db, {
+      name: 'Fält',
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      startedAt: '2026-02-01T00:00:00.000Z',
+      firearmId: firearm.id,
+    }).id;
+    addStation(db, { sessionId: faltSession, position: 1, hits: 5, figuresHit: 3 });
+    addStation(db, { sessionId: faltSession, position: 2, hits: 4, figuresHit: 2 });
+
+    deleteSessionAndSeries(db, faltSession);
+
+    expect(listStationsForSession(db, faltSession)).toEqual([]);
+    expect(getFirearm(db, firearm.id)!.roundCount).toBe(0);
   });
 });
