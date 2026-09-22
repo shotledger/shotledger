@@ -108,9 +108,11 @@ What it means in practice:
   must be wiped and reinstalled, or its data exported first (Settings →
   Export, the `db/json-export` bundle) and imported after. That includes the
   maintainer's phone with the 267 imported ShotLog sessions and any emulator
-  install. **Flagged for the maintainer to confirm before the branch is
-  merged, not before it is written** — nothing in this PR touches a live
-  device, and the export/import round-trip is already covered by
+  install. **Confirmed by the maintainer, 2026-09-22:** the phone is wiped and
+  the app reinstalled, then repopulated from the cleaned, improved ShotLog
+  export (`~/agents/shotledger/shotlog-migration/`, outside the tree — real
+  data). They are the only user, so no other install exists and no merge-time
+  decision is left open. The export/import round-trip stays covered by
   `db/json-export/round-trip.test.ts`.
 
 Acceptance criteria P1 is replaced by **P1′**: a database created from the
