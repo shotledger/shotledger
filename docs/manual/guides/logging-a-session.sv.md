@@ -34,6 +34,34 @@ provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
 Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 [Hur provserier räknas](../explanation/how-sighters-count.md).
 
+## Fältskjutning
+
+Fältskjutning räknas inte i ringar, så den loggas i **stationer** i stället
+för serier. Välj **Fältskjutning** som gren, så ställer passet en extra fråga:
+om tävlingen skjuts som **fält** eller **poängfält**.
+
+Varje station är sex skott, och du noterar två tal — träffar, och hur många
+figurer träffarna hamnade i. Fem träff i tre figurer skrivs **5/3**: du
+missade ett skott, eller satte två i samma figur. Passets resultat visar
+"26 träff i 22 figurer", eller en summa i poängfält, där varje träff ger en
+poäng och varje träffad figur ytterligare en.
+
+Där arrangören satt ut en **ringad figur** slår du på _Ringad figur_ och
+noterar poängen du fick och vad figuren var värd. Fältskjutning har inget
+fast ringsystem — arrangören väljer — så appen frågar i stället för att anta.
+Poängen läggs aldrig till resultatet; de skiljer bara två skyttar som annars
+är lika.
+
+Två reglage tar bort en station ur resultatet utan att radera den:
+
+- **Struken** — stationen annullerades, för ett regelbrott eller ett
+  säkerhetsfel. Den ligger kvar i ronden, överstruken, och räknas inte.
+- **Särskjutning** — skjuts för att skilja lika resultat. Den avgör placering,
+  aldrig det resultat du noterat.
+
+Båda räknar ändå de sex skotten mot vapnets skotträknare och din ammunition,
+eftersom du sköt dem.
+
 ## Att ändra ordning
 
 Serier går att dra till en annan ordning. Håll ned en serie och dra: raden
