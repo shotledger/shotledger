@@ -366,3 +366,45 @@ describe('scoringStations (spec S1-S7)', () => {
     );
   });
 });
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_005
+ */
+it('records a scratched or särskjutning station without ever scoring it', () => {
+  const entered: FaltStationEntry[] = [
+    { hits: 6, figuresHit: 2, points: 8, isScratched: false, isShootOff: false },
+    { hits: 5, figuresHit: 4, points: 12, isScratched: true, isShootOff: false },
+    { hits: 4, figuresHit: 3, points: null, isScratched: false, isShootOff: false },
+    { hits: 6, figuresHit: 6, points: null, isScratched: false, isShootOff: true },
+  ];
+
+  // Neither the struck-out station's hits nor the särskjutning's reach the
+  // result, and the poängmål of a scratched station takes its points with it.
+  expect(faltResult(scoringStations(entered))).toEqual({
+    stationCount: 2,
+    hits: 10,
+    figuresHit: 5,
+    ringedFigurePoints: 8,
+  });
+
+  // The recorded numbers survive: excluding a station is not deleting it.
+  expect(entered[1]).toEqual({
+    hits: 5,
+    figuresHit: 4,
+    points: 12,
+    isScratched: true,
+    isShootOff: false,
+  });
+
+  // An all-excluded round is a zero result, not a thrown error.
+  const allOut = entered.map((station) => ({ ...station, isScratched: true }));
+  expect(faltResult(scoringStations(allOut))).toEqual({
+    stationCount: 0,
+    hits: 0,
+    figuresHit: 0,
+    ringedFigurePoints: null,
+  });
+});

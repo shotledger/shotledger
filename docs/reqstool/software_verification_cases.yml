@@ -30,6 +30,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_005
+    requirement_ids: ['SCORE_005']
+    title: Verify scratched and särskjutning stations leave the result, the countback and the numbers behind them
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not

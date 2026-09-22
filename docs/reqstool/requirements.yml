@@ -84,6 +84,25 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_005
+    title: A scratched or särskjutning station is recorded but never scored
+    significance: shall
+    description: >-
+      The app shall exclude a station marked scratched, and a station shot as
+      part of a särskjutning, from a fält round's hits, figures hit and poängmål
+      points and from the countback that separates two rounds, shall keep both
+      the recorded numbers and the station's place in the round, and shall
+      report an all-excluded round as a zero result rather than an error.
+    rationale: >-
+      A scratched station broke SHB or SäkB and a särskjutning decides placement
+      only (SHB 2026 D.6.11.3 p. 97; maintainer ruling 2026-09-22 on #315), so
+      counting either inflates a result that a shooter will compare against an
+      official one. Keeping the numbers matters as much: a station deleted
+      instead of struck out loses the evidence of what happened.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall
