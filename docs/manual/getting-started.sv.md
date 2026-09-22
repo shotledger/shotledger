@@ -63,12 +63,15 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
   stället för att bläddra i en lista som blandar dem. Med ett enda reglemente
   påslaget finns ingenting att välja och raden visas inte.
 - **Gren** — till exempel SPSF:s precision eller militär snabbmatch.
-- **Program** — skjutprogrammet inom den grenen. Det avgör hur många skott varje
-  serie rymmer, om resultatet räknas i hela poäng eller decimaler, och om en
-  final kan läggas till. Välj **Fritt format** när du skjuter grenen utan ett
-  fast skjutprogram: serierna behåller sin normala längd, och ingenting läggs
-  ut i förväg åt dig. ⓘ bredvid rubriken säger detsamma i appen. En gren utan
-  egna program — Träning (ringad tavla) — visar ingen programrad alls.
+- **Matchupplägg** — om passet kommer färdigt upplagt som hela matchen eller
+  tomt så att du fyller i det själv. **Hela matchen** lägger upp serierna åt
+  dig: militär snabbmatch kommer med en provserie och tolv tävlingsserier på
+  10, 8 och 6 sekunder, och i precision är det finalen som hela matchen lägger
+  till. Raden under valen säger vad upplägget lägger ut. **Fritt format**
+  lägger inte till något: serierna behåller grenens vanliga längd och du lägger
+  till dem efter hand. En tävling börjar på hela matchen och ett träningspass
+  på fritt format; båda går att ändra. En gren utan eget fast format — Träning
+  (ringad tavla) — visar ingen rad för matchupplägg alls.
 - **Vapen** och, om du håller reda på det, den **ammunition** du använder. Båda
   är valfria.
 
@@ -77,8 +80,9 @@ eftersom det är det du är anmäld i. Träning frågar inte: appen tar vapengru
 ur vapnet du valde, så att ditt pistolskyttemärke fortfarande räknar
 träningsserier, och den registrerar ingen klass alls.
 
-Ett pass som skapats ur ett fast program kommer med sina serier redan utlagda,
-så att du inte bygger ställningarna medan laget väntar.
+Ett pass som skapats som hela matchen kommer med sina serier redan utlagda, så
+att du inte bygger ställningarna medan laget väntar. Upplägget går inte att
+ändra i efterhand, så passets egen skärm namnger det under rubriken.
 
 ### 4. Fyll i skotten medan du skjuter
 

@@ -58,13 +58,23 @@ import {
   COMPETITION_LEVELS,
   disciplineLabel,
   formatLocalDate,
-  programLabel,
+  matchFormatHint,
+  matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
 import { TagSelect } from '@/features/tags/tag-select';
 import { Spacing } from '@/theme/tokens';
 
 const NO_PROGRAM = 'none';
+
+/**
+ * A competition is the case the fixed format exists for, so it preselects it
+ * (#348); training starts free and fills in as it goes. Both are overridable.
+ */
+function defaultProgramFor(type: SessionType, disciplineId: string): string {
+  if (type !== 'competition') return NO_PROGRAM;
+  return programsForDiscipline(disciplineId)[0]?.id ?? NO_PROGRAM;
+}
 
 /**
  * The discipline to land on when a regelverk is picked: the first that
@@ -170,7 +180,9 @@ export default function NewSessionScreen() {
   const disciplineIdInitial =
     firstDisciplineFor(regulationId) ?? ringScoringDisciplines()[0]?.id ?? 'spsf-precision';
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
-  const [programId, setProgramId] = useState<string>(NO_PROGRAM);
+  const [programId, setProgramId] = useState<string>(() =>
+    defaultProgramFor(type, disciplineIdInitial),
+  );
   const [level, setLevel] = useState<CompetitionLevel>('forening');
   const [isChampionship, setIsChampionship] = useState(false);
   const [competitionName, setCompetitionName] = useState('');
@@ -213,6 +225,9 @@ export default function NewSessionScreen() {
     ...allClasses.filter((klass) => !eligible.includes(klass)),
   ];
   const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
+  // Only under the chosen chip: on Free Format there is nothing laid out to
+  // describe.
+  const programHint = program ? matchFormatHint(t, program) : null;
   // Vapengrupp and klass are competition concepts. A training session still
   // CARRIES a vapengrupp — the märke reads it — but takes it from the gun
   // rather than asking. Klass and event are entry classifications with no
@@ -245,9 +260,14 @@ export default function NewSessionScreen() {
   });
   const name = nameOverride ?? defaultName;
 
+  function onSelectType(nextType: SessionType) {
+    setType(nextType);
+    setProgramId(defaultProgramFor(nextType, disciplineId));
+  }
+
   function onSelectDiscipline(nextId: string, underRegulationId: string = regulationId) {
     setDisciplineId(nextId);
-    setProgramId(NO_PROGRAM);
+    setProgramId(defaultProgramFor(type, nextId));
     setWeaponGroup(null);
     setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
     setDecimalScoring(false);
@@ -350,7 +370,7 @@ export default function NewSessionScreen() {
             { value: 'competition' as SessionType, label: t('sessionType.competition') },
           ]}
           value={type}
-          onChange={setType}
+          onChange={onSelectType}
         />
         <OptionPicker
           label={t('session.kind')}
@@ -423,25 +443,33 @@ export default function NewSessionScreen() {
           <>
             <View style={styles.headerRow}>
               <ThemedText type="smallBold" style={styles.headerLabel}>
-                {t('session.program')}
+                {t('session.matchFormat')}
               </ThemedText>
               <InfoButton
-                title={t('session.program')}
-                body={t('session.programInfo')}
+                title={t('session.matchFormat')}
+                body={t('session.matchFormatInfo')}
                 testID="program-info"
               />
             </View>
             <OptionPicker
               options={toOptions(
                 [
-                  { value: NO_PROGRAM, label: t('session.freeTraining') },
-                  ...programs.map((p) => ({ value: p.id, label: programLabel(t, p.id) })),
+                  { value: NO_PROGRAM, label: t('session.freeFormat') },
+                  ...programs.map((p) => ({
+                    value: p.id,
+                    label: matchFormatLabel(t, p.id, programs.length),
+                  })),
                 ],
                 'program',
               )}
               value={programId}
               onChange={setProgramId}
             />
+            {programHint && (
+              <ThemedText type="small" themeColor="textSecondary" testID="program-hint">
+                {programHint}
+              </ThemedText>
+            )}
           </>
         )}
       </Card>

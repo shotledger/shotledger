@@ -57,14 +57,17 @@ Pass
 : Ett banbesök med ett vapen. Rymmer serier, som i sin tur rymmer skott. På
 engelska _session_.
 
-Program
-: Skjutprogrammet inom en gren — hur många skott en serie rymmer, om
-resultatet räknas i hela poäng eller decimaler, och om en final kan läggas
-till.
+Matchupplägg
+: Om ett pass läggs upp som hela matchen eller som fritt format. Hette
+tidigare _program_.
+
+Hela matchen
+: Valet du gör när du skjuter grenens fasta format. Serierna läggs ut i förväg
+med sina tidsbegränsningar, och i precision kan en final startas.
 
 Fritt format
-: Valet du gör när du skjuter en gren utan fast skjutprogram. Serierna behåller
-sin normala längd, men ingenting läggs ut i förväg.
+: Valet du gör när du skjuter en gren utan fast format. Serierna behåller sin
+normala längd, men ingenting läggs ut i förväg.
 
 Träning (ringad tavla)
 : Fri träning mot ringad tavla, utan förbundstillhörighet. Finns kvar oavsett
