@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'app.shotledger.ringermode'
+version = '0.1.0'
+
+android {
+  namespace "app.shotledger.ringermode"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}

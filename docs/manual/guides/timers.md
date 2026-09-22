@@ -69,10 +69,9 @@ which is what makes it usable for practice rather than only for a live string.
 
 The Time Limit timer and the fälttimer play their cues in the phone's ambient
 audio session, so the silent switch on an iPhone and the ringer mode on an
-Android phone mute them. On iOS that covers the beeps, the whistle and the
-spoken commands alike. On Android it covers the beeps and the whistle; the
-spoken commands still play, because Android's text-to-speech has no silent-mode
-gate. Vibration is never muted by silent mode — that is the point of it.
+Android phone mute them — the beeps, the whistle and the spoken commands alike.
+On Android that includes a ringer set to vibrate, which is how the phone itself
+treats it. Vibration is never muted by silent mode — that is the point of it.
 
 The Shot Timer is the exception: while the microphone is listening, sounds
 play even on silent. Recording and silent-mode respect cannot share one audio

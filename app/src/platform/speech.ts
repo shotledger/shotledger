@@ -4,6 +4,8 @@
 // so the caller can fall back to its tone instead of going silent.
 import * as Speech from 'expo-speech';
 
+import { cuesAreAudible } from './ringer';
+
 export interface SpeakOptions {
   /** BCP-47 tag. The SPSF command wording is always spoken in 'sv-SE'; UI prompts follow the app language. */
   language?: string;
@@ -24,6 +26,10 @@ export function isSpeechAvailable(): boolean {
  * call could not be made at all.
  */
 export function speak(text: string, options: SpeakOptions = {}): boolean {
+  // Muting is a delivery, not a failure: expo-audio would refuse the caller's
+  // fallback tone under the same ringer, so reporting false would only buy a
+  // second silent attempt (#346).
+  if (!cuesAreAudible()) return true;
   try {
     if (__DEV__) console.log(`[speech] ${options.language ?? 'sv-SE'}: ${text}`);
     Speech.speak(text, {
