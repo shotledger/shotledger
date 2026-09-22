@@ -99,10 +99,17 @@ idle --start()--> readyDelay(0) --> series(0) --[more series?]--> rest(1) --> re
 - **D7** `reset()` returns to `idle` from _any_ phase (including `done`) and
   zeroes `getElapsedMs()`; it emits no cue (a UI-driven cancel is not a
   drill event).
-- **D8** Every `SeriesSpec.durationMs` must be `> 0` (validated in the
-  constructor) — this is also what proves `advance()`'s phase-transition
-  loop always terminates: even with `readyDelayMs`/`restMs` at 0, the finite,
-  strictly-positive `series` durations bound the number of phase crossings.
+- **D8** Every `SeriesSpec.durationMs` must be `> 0` or `null` (validated in
+  the constructor) — this is also what proves `advance()`'s phase-transition
+  loop always terminates: even with `readyDelayMs`/`restMs` at 0, the finite
+  `series` durations bound the number of phase crossings, and a `null` one is
+  infinite, so it ends the loop rather than cycling it.
+- **D10** A `null` duration runs the series open-ended: it ends only when the
+  host calls `stopSeries()`, which emits the same `stop` cue and the same
+  rest-or-done transition that its own time running out would (#346, which
+  merged the IPSC-style shot timer into this engine). `stopSeries()` is a
+  no-op in any other phase, so a stray tap cannot skip a ready delay or a
+  rest.
 - **D9** `TimerEngine` never imports from `react-native`/`expo` — the host
   (a React hook driving `setInterval`) owns the clock; the engine only ever
   sees deltas via `advance()`.

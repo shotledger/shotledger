@@ -4,8 +4,11 @@
 // controls the clock entirely — no timers, no RN imports, no side effects.
 //
 // Phase sequence per series i: rest (skipped before series 0) → readyDelay →
-// series. After the last series' stop signal the engine enters `done` and
-// emits an extra `complete` cue. `advance()` can cross several phase
+// series. A series with no duration of its own runs until `stopSeries()` —
+// that is what makes an IPSC-style string one of these drills (#346).
+//
+// After the last series' stop signal the engine enters `done` and emits an
+// extra `complete` cue. `advance()` can cross several phase
 // boundaries in one call (e.g. a test fast-forwarding past a whole drill, or
 // a host tick landing after a zero-length phase) — it loops until the delta
 // is consumed or the drill reaches `done`.
@@ -26,8 +29,11 @@ function validateConfig(config: TimerConfig): void {
   if (config.series.length === 0) throw new Error('TimerConfig.series must not be empty');
   config.series.forEach((series, i) => {
     if (series.index !== i) throw new Error(`TimerConfig.series[${i}].index must equal ${i}`);
-    if (!Number.isFinite(series.durationMs) || series.durationMs <= 0) {
-      throw new Error(`TimerConfig.series[${i}].durationMs must be > 0`);
+    if (
+      series.durationMs !== null &&
+      (!Number.isFinite(series.durationMs) || series.durationMs <= 0)
+    ) {
+      throw new Error(`TimerConfig.series[${i}].durationMs must be > 0 or null`);
     }
   });
   if (!Number.isFinite(config.restMs) || config.restMs < 0) {
@@ -56,6 +62,8 @@ export class TimerEngine {
   private readonly random: () => number;
 
   private phaseKind: TimerPhaseKind = 'idle';
+  /** True while the running series has no duration of its own (see `SeriesSpec.durationMs`). */
+  private openEnded = false;
   private seriesIndex = -1;
   private remainingMs = 0;
   private elapsedInPhaseMs = 0;
@@ -85,9 +93,10 @@ export class TimerEngine {
     let remaining = deltaMs;
 
     // Bounded by construction: each iteration either exits via `break` or
-    // consumes one of the finitely many phases in `config.series` (every
-    // series has durationMs > 0, so the chain cannot loop forever even when
-    // readyDelayMs/restMs are 0) — a `done` phase always ends it.
+    // consumes one of the finitely many phases in `config.series` (a timed
+    // series has durationMs > 0 and an open-ended one is infinite, so the
+    // chain cannot loop forever even when readyDelayMs/restMs are 0) — a
+    // `done` phase always ends it.
     // `isTerminal()` (rather than a direct `this.phaseKind` comparison) is
     // deliberate: it stops TS narrowing `this.phaseKind`'s type from the
     // guard above across mutations made deep inside `transitionFromPhaseEnd()`.
@@ -113,10 +122,23 @@ export class TimerEngine {
   /** Aborts the drill (manual Stop/Reset) and returns to idle. No cue — a UI-driven cancel, not a drill event. */
   reset(): void {
     this.phaseKind = 'idle';
+    this.openEnded = false;
     this.seriesIndex = -1;
     this.remainingMs = 0;
     this.elapsedInPhaseMs = 0;
     this.totalElapsedMs = 0;
+  }
+
+  /**
+   * Ends the running series now, exactly as its own duration expiring would:
+   * the stop cue, then rest or done. This is how an open-ended series ends —
+   * a manual stop, or the auto-stop after silence — and it is a no-op in any
+   * other phase, so a stray tap cannot skip a ready delay or a rest.
+   */
+  stopSeries(): readonly TimerEvent[] {
+    if (this.phaseKind !== 'series') return [];
+    this.remainingMs = 0;
+    return this.transitionFromPhaseEnd();
   }
 
   private isTerminal(): boolean {
@@ -126,8 +148,10 @@ export class TimerEngine {
   getPhase(): TimerPhase {
     return {
       kind: this.phaseKind,
+      openEnded: this.openEnded,
       seriesIndex: this.seriesIndex,
-      remainingMs: Math.max(0, this.remainingMs),
+      // An open-ended series counts up, so there is no remainder to report.
+      remainingMs: this.openEnded ? 0 : Math.max(0, this.remainingMs),
       elapsedMs: this.elapsedInPhaseMs,
     };
   }
@@ -146,6 +170,7 @@ export class TimerEngine {
 
   private enterReadyDelay(seriesIndex: number): readonly TimerEvent[] {
     this.phaseKind = 'readyDelay';
+    this.openEnded = false;
     this.seriesIndex = seriesIndex;
     this.remainingMs = drawReadyDelayMs(this.config, this.random);
     this.elapsedInPhaseMs = 0;
@@ -153,9 +178,13 @@ export class TimerEngine {
   }
 
   private enterSeries(seriesIndex: number): readonly TimerEvent[] {
+    const durationMs = this.config.series[seriesIndex]!.durationMs;
     this.phaseKind = 'series';
     this.seriesIndex = seriesIndex;
-    this.remainingMs = this.config.series[seriesIndex]!.durationMs;
+    this.openEnded = durationMs === null;
+    // Infinity keeps `advance()`'s one comparison honest without a second
+    // branch: nothing is ever larger, so the phase simply never ends by time.
+    this.remainingMs = durationMs ?? Number.POSITIVE_INFINITY;
     this.elapsedInPhaseMs = 0;
     return [this.emit({ kind: 'start', seriesIndex, vibrate: true })];
   }
@@ -163,6 +192,7 @@ export class TimerEngine {
   private enterRest(seriesIndex: number): readonly TimerEvent[] {
     // `seriesIndex` here is the series the rest is waiting to lead into.
     this.phaseKind = 'rest';
+    this.openEnded = false;
     this.seriesIndex = seriesIndex;
     this.remainingMs = this.config.restMs;
     this.elapsedInPhaseMs = 0;
@@ -171,6 +201,7 @@ export class TimerEngine {
 
   private enterDone(finishedSeriesIndex: number): readonly TimerEvent[] {
     this.phaseKind = 'done';
+    this.openEnded = false;
     this.seriesIndex = -1;
     this.remainingMs = 0;
     this.elapsedInPhaseMs = 0;

@@ -14,7 +14,7 @@ describe('screen keep-awake tags', () => {
     // sequence's tag, stopping the sequence would release the screen's hold
     // too, and the phone would lock between strings.
     const screenTags = ['timer-screen', 'shot-diagnostics-screen'];
-    const runTags = ['shot-timer', 'ipsc-shot-timer', 'falt-timer', 'mic-diagnostics'];
+    const runTags = ['shot-timer', 'falt-timer', 'mic-diagnostics'];
     for (const tag of screenTags) expect(runTags).not.toContain(tag);
   });
 

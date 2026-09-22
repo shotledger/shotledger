@@ -1,4 +1,4 @@
-// Regression cover for the two things that made the IPSC shot timer kill the
+// Regression cover for the two things that made the shot timer kill the
 // app on the second Start (fix/shot-timer-crash): a permission re-prompt that
 // backgrounds the activity, and a second capture opened while the first was
 // still releasing. Plus the buffer → window path, which is what the detector

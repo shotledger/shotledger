@@ -844,7 +844,16 @@
       "timeLimit": "Time Limit",
       "readyDelay": "Ready Delay",
       "reps": "Repetitions",
-      "rest": "Rest Between Reps"
+      "rest": "Rest Between Reps",
+      "noLimit": "No limit",
+      "timeLimitHint": "At no limit the series runs until you stop it, or until the microphone has heard nothing for a while.",
+      "randomStart": "Random Start",
+      "startDelay": "Start Delay",
+      "delayRange": "{{from}}–{{to}} s",
+      "delayMin": "Shortest start delay in seconds",
+      "delayMax": "Longest start delay in seconds",
+      "autoStop": "Stop After Silence",
+      "autoStopOff": "Off — stop it by hand"
     },
     "seconds": "{{value}} s",
     "start": "Start",
@@ -857,7 +866,7 @@
       "done": "Done"
     },
     "cuesTitle": "Cues",
-    "cuesHint": "Applies to Get Ready, GO and Done. Set your phone to silent to mute the beeps.",
+    "cuesHint": "Applies to Get Ready, GO and Done. Set your phone to silent to mute the sounds — except while the microphone is listening, when they play anyway.",
     "cueMode": {
       "beep": "Beep",
       "vibrate": "Vibrate",
@@ -871,63 +880,49 @@
     "cueVibrate": "Vibrate",
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
-      "regular": "Time Limit",
-      "ipsc": "Shot",
+      "timer": "Timer",
       "falt": "Field"
     },
-    "spokenPrompts": "Spoken Prompts"
-  },
-  "ipscTimer": {
-    "autoStopSeconds": "Stop Automatically After Silence (s)",
-    "cuesHint": "Applies to Are You Ready?, Standby, the start beep and the stop tone. Sounds play even on silent while the microphone is listening.",
-    "delayRange": "{{from}}–{{to}} s",
-    "detectedShots": "Registered shots: {{value}}",
-    "errors": {
-      "unavailable": "No microphone is available on this device.",
-      "denied": "Microphone permission was denied — allow it in system settings to detect shots.",
-      "failed": "The microphone couldn't be started. Close other apps using it and try again."
-    },
-    "firstShot": "First Shot (s)",
-    "liveMeter": "Live Level",
-    "liveMeterHint": "Clap or dry-fire near the phone. The grey mark is the room, the red one is where the trigger sits above it.",
-    "liveMeterNeedsPermission": "Grant microphone permission (tap Start once) to see the live level here.",
-    "menuDiagnostics": "Shot Detection Diagnostics",
-    "menuLabel": "More",
-    "noShots": "No Shots Detected Yet",
-    "parOverrun": "Time limit exceeded by {{time}} s",
-    "parPlaceholder": "Optional",
-    "parSeconds": "Time Limit (s)",
-    "privacyNote": "The microphone is analyzed live on this device to find the shots. The recording is never stored, played back or sent anywhere — it is written to a temporary file the app can only meter, and deleted the moment the run ends.",
-    "randomDelay": "Random Start Delay — Shortest / Longest (s)",
-    "randomDelayMax": "Longest start delay in seconds",
-    "randomDelayMin": "Shortest start delay in seconds",
-    "reset": "New Run",
-    "resultTitle": "Result",
-    "sensitivities": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High"
-    },
-    "sensitivityHigh": "High",
-    "sensitivityHint": "A shot is counted when it rises this far above the room, does it abruptly, and is over quickly. Higher sensitivity needs less of a rise, so it hears quieter shots and more of everything else. The level it is measured against follows the room, so the setting means the same thing indoors and on a windy range. What it cannot do is tell a shot from another sharp crack — a finger snap counts as a shot at any setting.",
-    "sensitivityLow": "Low",
-    "settingsTitle": "Shot Detection",
-    "shotAt": "{{time}} s",
-    "shotCount": "Shots",
-    "shotDetection": "Shot Detection",
-    "shotNumber": "Shot {{number}}",
-    "split": "+{{time}} s",
-    "start": "Start",
-    "state": {
-      "ready": "Are You Ready?",
-      "standby": "Standby",
-      "running": "GO"
-    },
-    "stop": "Stop",
-    "total": "Total (s)",
-    "triggerExcessDb": "{{value}} dB over the room",
-    "triggerLevel": "Trigger Level",
-    "webUnavailable": "The shot timer needs a native build — the microphone isn't available in this web preview."
+    "spokenPrompts": "Spoken Prompts",
+    "newRun": "New Run",
+    "shots": {
+      "record": "Record Shots",
+      "recordHint": "The microphone listens for your shots and records the time to each one. It runs under any of the settings above, so a repetition drill records splits just as a single string does.",
+      "detection": "Shot Detection",
+      "triggerLevel": "Trigger Level",
+      "triggerExcessDb": "{{value}} dB over the room",
+      "sensitivityHint": "A shot is counted when it rises this far above the room, does it abruptly, and is over quickly. Higher sensitivity needs less of a rise, so it hears quieter shots and more of everything else. The level it is measured against follows the room, so the setting means the same thing indoors and on a windy range. What it cannot do is tell a shot from another sharp crack — a finger snap counts as a shot at any setting.",
+      "sensitivityLow": "Low",
+      "sensitivityHigh": "High",
+      "sensitivities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "liveMeter": "Live Level",
+      "liveMeterHint": "Clap or dry-fire near the phone. The grey mark is the room, the red one is where the trigger sits above it.",
+      "liveMeterNeedsPermission": "Grant microphone permission (tap Start once) to see the live level here.",
+      "detectedShots": "Registered shots: {{value}}",
+      "privacyNote": "The microphone is analyzed live on this device to find the shots. The recording is never stored, played back or sent anywhere — it is written to a temporary file the app can only meter, and deleted the moment the run ends.",
+      "webUnavailable": "The shot timer needs a native build — the microphone isn't available in this web preview.",
+      "errors": {
+        "unavailable": "No microphone is available on this device.",
+        "denied": "Microphone permission was denied — allow it in system settings to detect shots.",
+        "failed": "The microphone couldn't be started. Close other apps using it and try again."
+      },
+      "noShots": "No Shots Detected",
+      "noShotsYet": "No Shots Detected Yet",
+      "shotNumber": "Shot {{number}}",
+      "shotAt": "{{time}} s",
+      "split": "+{{time}} s",
+      "resultTitle": "Result",
+      "seriesTitle": "Repetition {{number}}",
+      "firstShot": "First Shot (s)",
+      "total": "Total (s)",
+      "shotCount": "Shots",
+      "menuLabel": "More",
+      "menuDiagnostics": "Shot Detection Diagnostics"
+    }
   },
   "shotDiagnostics": {
     "title": "Shot Detection Diagnostics",

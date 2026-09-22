@@ -172,7 +172,7 @@ export default function ShotDiagnosticsScreen() {
       </Card>
 
       <ThemedText type="small" themeColor="textSecondary">
-        {t('ipscTimer.privacyNote')}
+        {t('timer.shots.privacyNote')}
       </ThemedText>
     </Screen>
   );

@@ -844,7 +844,16 @@
       "timeLimit": "Skjuttid",
       "readyDelay": "Laddningstid",
       "reps": "Repetitioner",
-      "rest": "Vila mellan repetitioner"
+      "rest": "Vila mellan repetitioner",
+      "noLimit": "Ingen gräns",
+      "timeLimitHint": "Utan gräns går serien tills du stoppar den, eller tills mikrofonen inte hört något på ett tag.",
+      "randomStart": "Slumpad start",
+      "startDelay": "Startfördröjning",
+      "delayRange": "{{from}}–{{to}} s",
+      "delayMin": "Kortaste startfördröjning i sekunder",
+      "delayMax": "Längsta startfördröjning i sekunder",
+      "autoStop": "Stoppa efter tystnad",
+      "autoStopOff": "Av — stoppa för hand"
     },
     "seconds": "{{value}} s",
     "start": "Starta",
@@ -857,7 +866,7 @@
       "done": "Klart"
     },
     "cuesTitle": "Signaler",
-    "cuesHint": "Gäller Gör dig redo, SKJUT och Klart. Ställ telefonen på ljudlöst för att tysta pipen.",
+    "cuesHint": "Gäller Gör dig redo, SKJUT och Klart. Ställ telefonen på ljudlöst för att tysta ljuden — utom medan mikrofonen lyssnar, då de spelas ändå.",
     "cueMode": {
       "beep": "Pip",
       "vibrate": "Vibration",
@@ -871,63 +880,49 @@
     "cueVibrate": "Vibrera",
     "seriesProgress": "Serie {{current}} / {{total}}",
     "modes": {
-      "regular": "Skjuttid",
-      "ipsc": "Skott",
+      "timer": "Timer",
       "falt": "Fält"
     },
-    "spokenPrompts": "Talade kommandon"
-  },
-  "ipscTimer": {
-    "autoStopSeconds": "Stoppa automatiskt efter tystnad (s)",
-    "cuesHint": "Gäller Är du redo?, Färdiga, startpipet och stoppsignalen. Ljud spelas även i ljudlöst läge medan mikrofonen lyssnar.",
-    "delayRange": "{{from}}–{{to}} s",
-    "detectedShots": "Registrerade skott: {{value}}",
-    "errors": {
-      "unavailable": "Ingen mikrofon är tillgänglig på den här enheten.",
-      "denied": "Mikrofonbehörigheten nekades – tillåt den i systeminställningarna för att kunna mäta skott.",
-      "failed": "Mikrofonen kunde inte startas. Stäng andra appar som använder den och försök igen."
-    },
-    "firstShot": "Första skottet (s)",
-    "liveMeter": "Nivå live",
-    "liveMeterHint": "Klappa i händerna eller torrsmäll nära telefonen. Det grå strecket är rummet, det röda är var utlösningen ligger över det.",
-    "liveMeterNeedsPermission": "Ge mikrofonbehörighet (tryck på Starta en gång) för att se nivån live här.",
-    "menuDiagnostics": "Diagnostik för skottdetektering",
-    "menuLabel": "Mer",
-    "noShots": "Inga skott upptäckta än",
-    "parOverrun": "Skjuttiden överskreds med {{time}} s",
-    "parPlaceholder": "Valfritt",
-    "parSeconds": "Skjuttid (s)",
-    "privacyNote": "Mikrofonen analyseras direkt i telefonen för att hitta skotten. Inspelningen sparas aldrig, spelas aldrig upp och skickas ingenstans – den skrivs till en tillfällig fil som appen bara mäter ljudnivån i, och raderas så fort passet avslutas.",
-    "randomDelay": "Slumpad startfördröjning – kortast / längst (s)",
-    "randomDelayMax": "Längsta startfördröjning i sekunder",
-    "randomDelayMin": "Kortaste startfördröjning i sekunder",
-    "reset": "Nytt pass",
-    "resultTitle": "Resultat",
-    "sensitivities": {
-      "low": "Låg",
-      "medium": "Mellan",
-      "high": "Hög"
-    },
-    "sensitivityHigh": "Hög",
-    "sensitivityHint": "Ett skott räknas när det höjer sig så här mycket över rummet, gör det tvärt och är över snabbt. Högre känslighet kräver mindre höjning, så den hör tystare skott och mer av allt annat. Nivån mäts mot rummet och följer det, så inställningen betyder samma sak inomhus som på en blåsig bana. Vad den inte klarar är att skilja ett skott från en annan skarp smäll — en fingerknäpp räknas som ett skott vid varje inställning.",
-    "sensitivityLow": "Låg",
-    "settingsTitle": "Skottdetektering",
-    "shotAt": "{{time}} s",
-    "shotCount": "Skott",
-    "shotDetection": "Skottdetektering",
-    "shotNumber": "Skott {{number}}",
-    "split": "+{{time}} s",
-    "start": "Starta",
-    "state": {
-      "ready": "Är du redo?",
-      "standby": "Färdiga",
-      "running": "SKJUT"
-    },
-    "stop": "Stoppa",
-    "total": "Totalt (s)",
-    "triggerExcessDb": "{{value}} dB över rummet",
-    "triggerLevel": "Utlösningsnivå",
-    "webUnavailable": "Skottimern kräver en app-byggd version – mikrofonen är inte tillgänglig i den här webbförhandsvisningen."
+    "spokenPrompts": "Talade kommandon",
+    "newRun": "Nytt pass",
+    "shots": {
+      "record": "Spela in skott",
+      "recordHint": "Mikrofonen lyssnar efter dina skott och registrerar tiden till varje skott. Den fungerar med vilka inställningar som helst ovan, så ett repetitionspass registrerar mellantider precis som ett enskilt pass.",
+      "detection": "Skottdetektering",
+      "triggerLevel": "Utlösningsnivå",
+      "triggerExcessDb": "{{value}} dB över rummet",
+      "sensitivityHint": "Ett skott räknas när det höjer sig så här mycket över rummet, gör det tvärt och är över snabbt. Högre känslighet kräver mindre höjning, så den hör tystare skott och mer av allt annat. Nivån mäts mot rummet och följer det, så inställningen betyder samma sak inomhus som på en blåsig bana. Vad den inte klarar är att skilja ett skott från en annan skarp smäll — en fingerknäpp räknas som ett skott vid varje inställning.",
+      "sensitivityLow": "Låg",
+      "sensitivityHigh": "Hög",
+      "sensitivities": {
+        "low": "Låg",
+        "medium": "Mellan",
+        "high": "Hög"
+      },
+      "liveMeter": "Nivå live",
+      "liveMeterHint": "Klappa i händerna eller torrsmäll nära telefonen. Det grå strecket är rummet, det röda är var utlösningen ligger över det.",
+      "liveMeterNeedsPermission": "Ge mikrofonbehörighet (tryck på Starta en gång) för att se nivån live här.",
+      "detectedShots": "Registrerade skott: {{value}}",
+      "privacyNote": "Mikrofonen analyseras direkt i telefonen för att hitta skotten. Inspelningen sparas aldrig, spelas aldrig upp och skickas ingenstans – den skrivs till en tillfällig fil som appen bara mäter ljudnivån i, och raderas så fort passet avslutas.",
+      "webUnavailable": "Skottimern kräver en app-byggd version – mikrofonen är inte tillgänglig i den här webbförhandsvisningen.",
+      "errors": {
+        "unavailable": "Ingen mikrofon är tillgänglig på den här enheten.",
+        "denied": "Mikrofonbehörigheten nekades – tillåt den i systeminställningarna för att kunna mäta skott.",
+        "failed": "Mikrofonen kunde inte startas. Stäng andra appar som använder den och försök igen."
+      },
+      "noShots": "Inga skott upptäcktes",
+      "noShotsYet": "Inga skott upptäckta än",
+      "shotNumber": "Skott {{number}}",
+      "shotAt": "{{time}} s",
+      "split": "+{{time}} s",
+      "resultTitle": "Resultat",
+      "seriesTitle": "Repetition {{number}}",
+      "firstShot": "Första skottet (s)",
+      "total": "Totalt (s)",
+      "shotCount": "Skott",
+      "menuLabel": "Mer",
+      "menuDiagnostics": "Diagnostik för skottdetektering"
+    }
   },
   "shotDiagnostics": {
     "title": "Diagnostik för skottdetektering",

@@ -1,4 +1,4 @@
-# Hur skottimern hör ett skott
+# Hur timern hör ett skott
 
 [Att använda timrarna](../guides/timers.sv.md) är uppgiften. Den här sidan
 handlar om vad mikrofonen faktiskt gör medan klockan går — och framför allt vad
@@ -49,7 +49,7 @@ här. Alltså: timern är pålitlig om _när_ något hände och ärlig om _vad_ 
 
 ## Ställa in den för din bana
 
-Öppna **Skottdetektering** på skottimern och klappa i händerna eller torrsmäll
+Öppna **Skottdetektering** under Spela in skott och klappa i händerna eller torrsmäll
 nära telefonen.
 
 Stapeln visar nuvarande nivå, den högsta hittills, ett grått streck där appen

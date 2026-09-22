@@ -1,4 +1,4 @@
-// Overflow menu for the Shot Timer's setup view. Shot-detection diagnostics
+// Overflow menu for the timer's shot-detection settings. Shot-detection diagnostics
 // used to sit in Tools, a screen away from the timer whose detection it
 // measures; it belongs beside the setting it exists to inform (maintainer,
 // 2026-09-11).
@@ -20,7 +20,7 @@ export function TimerMenu() {
   const actions: ActionSheetAction[] = [
     {
       key: 'diagnostics',
-      label: t('ipscTimer.menuDiagnostics'),
+      label: t('timer.shots.menuDiagnostics'),
       onPress: () => router.push('/shot-diagnostics'),
     },
   ];
@@ -29,7 +29,7 @@ export function TimerMenu() {
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t('ipscTimer.menuLabel')}
+        accessibilityLabel={t('timer.shots.menuLabel')}
         testID="timer-menu"
         onPress={() => setOpen(true)}
         style={styles.trigger}
