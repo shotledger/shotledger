@@ -138,3 +138,17 @@ python gen_hole_proposal_fixtures.py > \
 
 The marks are read off the spike's 1040 px canvas (see `mark_holes.py`);
 `eval_hole_proposals.py` shifts them onto the 2100 px one.
+
+## Close-up lock (`closeup_lock.py`)
+
+Locks onto a photo of the 7–10 rings, or only 9–10, where the black disc's
+edge is out of frame. It finds the centre by voting along edge normals, takes
+the 25 mm ring step from the radial profile's period, and fits a homography to
+the ring points. The module docstring has the details. Findings are in
+[`docs/specs/cv-closeup-lock-2026-09.md`](../../docs/specs/cv-closeup-lock-2026-09.md).
+
+```bash
+# close-ups cut from every photo the disc lock handles, plus crops whose
+# centre is out of frame, which the gate must refuse
+python eval_closeup.py --glob '<photos>/*.jpg' --out closeup.csv
+```
