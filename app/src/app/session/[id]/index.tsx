@@ -110,7 +110,7 @@ export default function SessionDetailScreen() {
   function openSeriesEntry(choice: SeriesEntryChoice) {
     const position = nextSeriesPosition();
     if (choice === 'photo') {
-      router.push(`/session/${id}/scan?pos=${position}`);
+      router.push(`/session/${id}/scan?pos=${position}${nextIsFinal ? '&final=1' : ''}`);
       return;
     }
     router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);

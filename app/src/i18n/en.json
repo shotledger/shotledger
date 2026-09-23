@@ -1058,6 +1058,7 @@
     "suggestedHint_one": "{{count}} hole suggested (dashed). Check it: delete it if it is wrong, drag it if it sits off, and tap any hole that was missed.",
     "suggestedHint_other": "{{count}} holes suggested (dashed). Check them: delete a wrong one, drag one that sits off, and tap any hole that was missed.",
     "suggestedNone": "No holes found by the app — tap each hole.",
+    "suggestedUnsure": "The app could not tell the holes apart on this photo, so it suggests none — tap each hole.",
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "zoomFit": "Fit to Screen",

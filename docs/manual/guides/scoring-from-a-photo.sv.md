@@ -20,7 +20,8 @@ förklarar varför den fungerar så.
      tio, så se dem som ett försprång, inte ett resultat: ta bort en streckad
      markering som inte är ett hål, dra en som sitter snett och tryck på de hål
      den missade. En streckad markering räknas precis som en du satt själv. När
-     du satte hörnen själv finns inga förslag.
+     du satte hörnen själv finns inga förslag, och på ett foto som appen inte
+     kan tolka säger den det och föreslår inga.
    - **Tryck** på ett hål för att markera det. En tryckning som hamnar inom
      någon millimeter från ett hål lägger sig på hålet, så det räcker att träffa
      nära. Där appen inte ser något hål under fingret ligger markeringen kvar
@@ -30,7 +31,8 @@ förklarar varför den fungerar så.
      anpassa i hörnet gör samma sak.
    - **Panorera** med ett finger när du har zoomat in.
    - **Flytta** en markering genom att dra den. Ett förstoringsglas visas ovanför
-     fingertoppen, så att fingret inte döljer hålet du riktar in dig mot.
+     fingertoppen — bredvid den nära fotots överkant — så att fingret inte döljer
+     hålet du riktar in dig mot.
    - **Tryck på en markering** för att välja den. Raden längst ned på fotot tar
      bort den, gör den till en X (centrumtia) eller — när hålet ligger inom en
      millimeter från en linje — låter dig välja vilket värde den får.

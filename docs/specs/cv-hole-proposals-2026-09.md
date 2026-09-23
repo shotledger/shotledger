@@ -183,7 +183,24 @@ the per-candidate features run in yielding batches so the marking screen keeps
 painting and taking taps. The pure path remains the reference the lock-step
 fixture pins.
 
-One change to the reference came with it: the LoG maps are normalised by the
+Measured on the emulator after the change: geometry plus suggestions in about
+15 s end to end on the software-rendered AVD, with the marking screen painted
+and animating throughout. An on-device self-test compared each OpenCV
+operation with the pure one on the same image: identical to 3e-13.
+
+**Two guards came out of driving it on the device.** A rendered, grain-free
+test target made the stage propose 585 holes: its fine-scale MAD was ~150x
+below the lowest real photo's, so every printed ring line scored as a
+certain hole. The MADs now have floors just under the corpus minimum (s1
+0.05, s2 0.02, s05 0.08), which changes nothing on the 31 real photos —
+identical recall, precision, false positives and fitted constants — and cut
+that image to 25 proposals. And the screen now suggests nothing when the
+stage proposes more than twice the series length plus two, saying so,
+because a photo the detector does not understand should not be covered in
+marks to delete. Both are about images unlike the corpus; neither was needed
+by any real photo.
+
+Another change to the reference came with it: the LoG maps are normalised by the
 MAD of every 4th pixel in each direction instead of every pixel, which keeps
 the two exact medians affordable. Re-measured and re-fitted: identical at the
 shipped threshold (74.3% / 91.9% / 0.32 / 10 exact), within one hole or one

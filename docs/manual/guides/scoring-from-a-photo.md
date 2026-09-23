@@ -20,7 +20,8 @@ explains why it works that way.
      mark in ten, so treat them as a head start, not a result: delete a dashed
      mark that is not a hole, drag one that sits off, and tap any hole it
      missed. A dashed mark scores exactly like one you placed. When you placed
-     the corners yourself there are no suggestions.
+     the corners yourself there are no suggestions, and on a photo the app
+     cannot make sense of it says so and suggests none.
    - **Tap** a hole to mark it. A tap that lands within a few millimetres of a
      hole settles onto it, so close enough is good enough. Where the app cannot
      see a hole under your finger, the mark stays exactly where you tapped.
@@ -28,8 +29,9 @@ explains why it works that way.
      again to see the whole photo. The **+**, **−** and fit buttons in the
      corner do the same.
    - **Pan** with one finger once you are zoomed in.
-   - **Move** a mark by dragging it. A magnifier appears above your fingertip,
-     so your finger is not hiding the hole you are lining up with.
+   - **Move** a mark by dragging it. A magnifier appears above your fingertip —
+     beside it near the top of the photo — so your finger is not hiding the
+     hole you are lining up with.
    - **Tap a mark** to select it. The bar at the bottom of the photo deletes
      it, calls it an X (inner ten), or — when the hole is within a millimetre of
      a line — lets you pick which value it gets.

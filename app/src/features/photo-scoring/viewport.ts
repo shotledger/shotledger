@@ -198,8 +198,9 @@ export function viewTransform(
 
 /**
  * Center of the drag loupe: above the fingertip so the finger does not cover
- * what it magnifies, below it when there is no room above, and kept inside
- * the view horizontally.
+ * what it magnifies. Near the top of the view there is no room above, and
+ * below is where the hand is, so it moves beside the finger instead — to the
+ * side with more room — kept inside the view both ways.
  */
 export function loupeCenter(
   frame: Frame,
@@ -209,10 +210,17 @@ export function loupeCenter(
   gap: number,
 ): XY {
   'worklet';
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
   const above = fingerY - gap - radius;
-  const y = above - radius >= 0 ? above : fingerY + gap + radius;
-  const x = Math.min(frame.viewWidth - radius, Math.max(radius, fingerX));
-  return { x, y };
+  if (above - radius >= 0) {
+    return { x: clamp(fingerX, radius, frame.viewWidth - radius), y: above };
+  }
+  const offset = gap + radius;
+  const x = fingerX > frame.viewWidth / 2 ? fingerX - offset : fingerX + offset;
+  return {
+    x: clamp(x, radius, frame.viewWidth - radius),
+    y: clamp(fingerY, radius, frame.viewHeight - radius),
+  };
 }
 
 /** A mark's hit disc, in content px. */

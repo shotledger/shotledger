@@ -60,6 +60,12 @@ const STRAIGHT_BINS = 18;
 const GRADIENT_EPSILON = 1e-9;
 /** The LoG maps are normalised by the MAD of every MAD_STRIDE-th pixel. */
 const MAD_STRIDE = 4;
+/**
+ * Floors on those MADs, just under the smallest of the 31 corpus photos. A
+ * grain-free image (a scan, rendered art) otherwise has a fine-scale MAD
+ * ~150x lower, and every printed line then scores as a certain hole.
+ */
+const MAD_FLOOR = { s1: 0.05, s2: 0.02, s05: 0.08 } as const;
 
 export const HOLE_PROPOSAL_FEATURE_NAMES = [
   'orient_entropy',
@@ -564,7 +570,7 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
   for (let y = 0; y < h; y += MAD_STRIDE) {
     for (let x = 0; x < w; x += MAD_STRIDE) if (inzone[y * w + x]) sampled.push(y * w + x);
   }
-  const logOf = (sigma: number): Float64Array => {
+  const logOf = (sigma: number, floor: number): Float64Array => {
     const lap = ops.blurLaplacian(half, sigma);
     const count = sampled.length;
     const z = new Float64Array(count);
@@ -572,11 +578,15 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
     const med = median(z);
     const dev = new Float64Array(count);
     for (let i = 0; i < count; i += 1) dev[i] = Math.abs((z[i] as number) - med);
-    const mad = median(dev) + 1e-3;
+    const mad = Math.max(median(dev), floor) + 1e-3;
     for (let i = 0; i < lap.length; i += 1) lap[i] = (lap[i] as number) / mad;
     return lap;
   };
-  const logs = { s1: logOf(sigma1), s2: logOf(2 * sigma1), s05: logOf(0.5 * sigma1) };
+  const logs = {
+    s1: logOf(sigma1, MAD_FLOOR.s1),
+    s2: logOf(2 * sigma1, MAD_FLOOR.s2),
+    s05: logOf(0.5 * sigma1, MAD_FLOOR.s05),
+  };
 
   // printed-glyph extent map
   // Only the rings within reach of a pixel's whole-millimetre bucket are

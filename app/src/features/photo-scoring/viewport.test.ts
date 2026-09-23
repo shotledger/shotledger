@@ -181,8 +181,14 @@ describe('loupeCenter', () => {
     expect(loupeCenter(frame, 200, 400, 60, 30)).toEqual({ x: 200, y: 310 });
   });
 
-  it('drops below the finger at the top of the view', () => {
-    expect(loupeCenter(frame, 200, 50, 60, 30)).toEqual({ x: 200, y: 140 });
+  it('moves beside the finger, away from the hand, at the top of the view', () => {
+    // Left half: to the right. Right half: to the left. Never below, where the hand is.
+    expect(loupeCenter(frame, 100, 100, 60, 30)).toEqual({ x: 190, y: 100 });
+    expect(loupeCenter(frame, 300, 100, 60, 30)).toEqual({ x: 210, y: 100 });
+  });
+
+  it('stays inside the view vertically when beside the finger', () => {
+    expect(loupeCenter(frame, 100, 20, 60, 30).y).toBe(60);
   });
 
   it('stays inside the view horizontally', () => {

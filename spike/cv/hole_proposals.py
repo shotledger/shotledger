@@ -79,6 +79,10 @@ STRAIGHT_BINS = 18
 GRADIENT_EPSILON = 1e-9
 # The LoG maps are normalised by the MAD of every MAD_STRIDE-th pixel.
 MAD_STRIDE = 4
+# Floors on those MADs, just under the smallest of the 31 corpus photos. A
+# grain-free image (a scan, rendered art) otherwise has a fine-scale MAD
+# ~150x lower, and every printed line then scores as a certain hole.
+MAD_FLOOR = {"s1": 0.05, "s2": 0.02, "s05": 0.08}
 
 FEATURE_NAMES = (
     *HF.FEATURE_NAMES,
@@ -253,7 +257,7 @@ def compute_maps(gray: np.ndarray, face: Face):
         # a 1/16 sample is statistically the same number and keeps the two
         # exact medians affordable where the port runs.
         z = lap[::MAD_STRIDE, ::MAD_STRIDE][inzone[::MAD_STRIDE, ::MAD_STRIDE]]
-        mad = median(np.abs(z - median(z))) + 1e-3
+        mad = max(median(np.abs(z - median(z))), MAD_FLOOR[name]) + 1e-3
         logs[name] = lap / mad
     # printed-glyph extent map
     lines = np.zeros(half.shape, bool)

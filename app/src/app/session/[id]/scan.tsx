@@ -25,7 +25,7 @@ import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
-import { updateSeries } from '@/db/queries/series';
+import { addSeries, updateSeries } from '@/db/queries/series';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { saveSeriesMarks } from '@/db/queries/shot-marks';
 import { recordTrainingSample } from '@/db/queries/training-samples';
@@ -105,7 +105,7 @@ const REASON_KEYS: Record<ValidityReason, string> = {
 export default function ScanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos } = useLocalSearchParams<{ id: string; pos?: string }>();
+  const { id, pos, final } = useLocalSearchParams<{ id: string; pos?: string; final?: string }>();
   const position = Number(pos ?? '1');
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
@@ -136,16 +136,21 @@ export default function ScanScreen() {
   // routinely cuts the 5 ring off, and placing the corners on a visible ring
   // while the code assumes the outermost scales every measurement.
   const [cornerRing, setCornerRing] = useState<string | null>(null);
-  // The detector's pass over the canvas: pending, or how many it placed.
+  // The detector's pass over the canvas: pending, unsure (it proposed far
+  // too many to trust), or how many it proposed.
   // Null until a photo has locked; a retake resets it. `proposalRun` lets a
   // retake disown a pass that was scheduled for the previous photo.
-  const [suggested, setSuggested] = useState<'pending' | number | null>(null);
+  const [suggested, setSuggested] = useState<'pending' | 'unsure' | number | null>(null);
   const proposalRun = useRef(0);
+  // A mark is being dragged: the action bar steps aside for the loupe.
+  const [dragging, setDragging] = useState(false);
 
   const [markState, dispatch] = useReducer(
     markReducer,
     createMarkState({ maxMarks: detail.seriesLength, caliberMm: initialCaliber.caliberMm }),
   );
+  // The suggestions still on the canvas, which is what the hint talks about.
+  const suggestedCount = markState.marks.filter((m) => m.suggested).length;
   // Derived, not stored, so undoing a caliber change moves the chip back too.
   const caliberKey = CALIBER_KEYS.find((key) => caliberMmFor(key) === markState.caliberMm);
 
@@ -223,15 +228,24 @@ export default function ScanScreen() {
     )
       .then((proposals) => {
         if (proposalRun.current !== run) return;
+        // Far more holes than the series holds means the detector does not
+        // understand this photo (measured on real targets it proposes about
+        // one false hole in three photos). Suggesting nothing beats covering
+        // the target in marks to delete.
+        if (proposals.length > 2 * markState.maxMarks + 2) {
+          setSuggested('unsure');
+          return;
+        }
         dispatch({
           type: 'suggest',
           marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
         });
         setSuggested(proposals.length);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         // A detector failure is the same as finding nothing: the shooter
         // marks by hand, as before this stage existed.
+        if (__DEV__) console.warn('hole proposals failed', error);
         if (proposalRun.current === run) setSuggested(0);
       });
   }
@@ -310,11 +324,23 @@ export default function ScanScreen() {
   }
 
   function onSave(next: boolean) {
-    if (db && row) {
-      saveSeriesMarks(db, row.id, marksToShotMarkInputs(markState.marks, scores));
+    // A series added straight into "Score from Photo" has no row yet; it is
+    // written here, as the keypad screen writes its own on save.
+    const seriesId =
+      row?.id ??
+      (db && markState.marks.length > 0
+        ? addSeries(db, {
+            sessionId: id,
+            position,
+            isFinal: final === '1',
+            photoUri: photo?.originalUri ?? null,
+          }).id
+        : null);
+    if (db && seriesId) {
+      saveSeriesMarks(db, seriesId, marksToShotMarkInputs(markState.marks, scores));
       // Kept with the photo so the series can draw its marks over it later.
       if (transform && geometryImage) {
-        updateSeries(db, row.id, {
+        updateSeries(db, seriesId, {
           photoGeometry: serializeTransform(transform, geometryImage.width, geometryImage.height),
         });
       }
@@ -326,7 +352,7 @@ export default function ScanScreen() {
       // call site, rather than hidden inside the write.
       if (transform && getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false)) {
         recordTrainingSample(db, {
-          seriesId: row.id,
+          seriesId,
           targetFaceId: faceId,
           geometrySource: transform.source,
           photoUri: photo?.originalUri ?? null,
@@ -406,14 +432,20 @@ export default function ScanScreen() {
                 {t('photoScoring.suggesting')}
               </ThemedText>
             </View>
-          ) : typeof suggested === 'number' && markState.marks.some((m) => m.suggested) ? (
+          ) : suggestedCount > 0 ? (
             <ThemedText type="small" themeColor="textSecondary" testID="scan-suggested">
-              {t('photoScoring.suggestedHint', { count: suggested })}
+              {t('photoScoring.suggestedHint', { count: suggestedCount })}
             </ThemedText>
           ) : (
             markState.marks.length === 0 && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {`${suggested === 0 ? t('photoScoring.suggestedNone') : t('photoScoring.markHint')} ${t('photoScoring.zoomHint')}`}
+              <ThemedText type="small" themeColor="textSecondary" testID="scan-mark-hint">
+                {`${
+                  suggested === 'unsure'
+                    ? t('photoScoring.suggestedUnsure')
+                    : suggested === 0
+                      ? t('photoScoring.suggestedNone')
+                      : t('photoScoring.markHint')
+                } ${t('photoScoring.zoomHint')}`}
               </ThemedText>
             )
           )}
@@ -431,12 +463,13 @@ export default function ScanScreen() {
               selectedId={markState.selectedId}
               onTapEmpty={onTapEmpty}
               onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
+              onDraggingChange={setDragging}
               onMoveMark={(markId, mm) => {
                 setNotice(null);
                 dispatch({ type: 'move', id: markId, xMm: mm.x, yMm: mm.y });
               }}
             />
-            {selectedMark && selectedScore && (
+            {selectedMark && selectedScore && !dragging && (
               <MarkActionBar
                 style={styles.actionBar}
                 mark={selectedMark}

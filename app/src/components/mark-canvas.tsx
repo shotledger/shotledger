@@ -83,6 +83,8 @@ export interface MarkCanvasProps extends Omit<ViewProps, 'onLayout'> {
   onTapMark?: (markId: string) => void;
   /** Target-mm where a dragged mark was released. */
   onMoveMark?: (markId: string, mm: Point) => void;
+  /** A mark drag started (true) or ended (false) — so overlays can step aside. */
+  onDraggingChange?: (dragging: boolean) => void;
   /** The photo's natural size, once it has loaded. */
   onImageSize?: (width: number, height: number) => void;
 }
@@ -120,6 +122,7 @@ export function MarkCanvas({
   onTapEmpty,
   onTapMark,
   onMoveMark,
+  onDraggingChange,
   onImageSize,
   style,
   ...rest
@@ -206,6 +209,7 @@ export function MarkCanvas({
   function handleDragStart(markId: string) {
     setDraggingId(markId);
     onTapMark?.(markId);
+    onDraggingChange?.(true);
   }
 
   function handleDragEnd(markId: string, x: number, y: number) {
@@ -213,6 +217,12 @@ export function MarkCanvas({
     if (mm) onMoveMark?.(markId, mm);
     setDraggingId(null);
     dragActive.value = false;
+    onDraggingChange?.(false);
+  }
+
+  function handleDragCancel() {
+    setDraggingId(null);
+    onDraggingChange?.(false);
   }
 
   function animateTo(v: { zoom: number; tx: number; ty: number }) {
@@ -301,6 +311,11 @@ export function MarkCanvas({
     })
     .onFinalize(() => {
       dragId.value = '';
+      // A cancelled drag never reaches onEnd; the overlays still come back.
+      if (dragActive.value) {
+        dragActive.value = false;
+        scheduleOnRN(handleDragCancel);
+      }
     });
 
   const tap = Gesture.Tap()

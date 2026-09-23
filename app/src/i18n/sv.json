@@ -1058,6 +1058,7 @@
     "suggestedHint_one": "{{count}} hål föreslaget (streckat). Kontrollera det: ta bort det om det är fel, dra det om det sitter snett och tryck på de hål som saknas.",
     "suggestedHint_other": "{{count}} hål föreslagna (streckade). Kontrollera dem: ta bort ett felaktigt, dra ett som sitter snett och tryck på de hål som saknas.",
     "suggestedNone": "Appen hittade inga hål — tryck på varje hål.",
+    "suggestedUnsure": "Appen kunde inte skilja ut hålen på det här fotot och föreslår därför inga — tryck på varje hål.",
     "zoomIn": "Zooma in",
     "zoomOut": "Zooma ut",
     "zoomFit": "Anpassa till skärmen",
