@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8e443647-6fc4-4616-bda8-a4bd4c093ad8",
+  "id": "66286bd8-5172-45fb-b1f1-a8742f347541",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ammo_lots": {
@@ -866,6 +866,13 @@
         },
         "photo_uri": {
           "name": "photo_uri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "photo_geometry": {
+          "name": "photo_geometry",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

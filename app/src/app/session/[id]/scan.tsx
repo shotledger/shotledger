@@ -10,88 +10,73 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { Point } from '@shotledger/shared';
-import { getDiscipline, requireTargetFace } from '@shotledger/shared';
+import { analyzeGroup, getDiscipline, requireTargetFace } from '@shotledger/shared';
 import { uuidv7 } from 'uuidv7';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { CornerAdjuster, defaultCorners } from '@/components/corner-adjuster';
-import { MarkLoupe } from '@/components/mark-loupe';
-import { MarkOverlay } from '@/components/mark-overlay';
+import { GroupStats } from '@/components/group-stats';
+import { MarkActionBar } from '@/components/mark-action-bar';
+import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
-import { updateSeries } from '@/db/queries/series';
+import { addSeries, updateSeries } from '@/db/queries/series';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { saveSeriesMarks } from '@/db/queries/shot-marks';
 import { recordTrainingSample } from '@/db/queries/training-samples';
-import {
-  CALIBER_KEYS,
-  type CaliberKey,
-  caliberMmFor,
-  resolveCaliber,
-} from '@/features/photo-scoring/caliber';
+import { CALIBER_KEYS, caliberMmFor, resolveCaliber } from '@/features/photo-scoring/caliber';
 import {
   type CapturedPhoto,
   type GeometryImage,
   capturePhoto,
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
-import { transformFromCorners } from '@/features/photo-scoring/corners';
+import { type CloseupLock, chooseLock } from '@/features/photo-scoring/closeup-lock';
+import { type Homography, transformFromCorners } from '@/features/photo-scoring/corners';
 import {
+  isAutoFace,
+  isManualOnlyFace,
+  isPhotoScoringSupported,
+} from '@/features/photo-scoring/faces';
+import {
+  canUndo,
   createMarkState,
   markReducer,
   marksToShotMarkInputs,
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
-import { runGeometry } from '@/features/photo-scoring/opencv';
+import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
+import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
+import {
+  type GeometryPipelineResult,
+  rectifyFromHomography,
+  runCloseupLock,
+  runGeometry,
+} from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
   fromProjective,
   fromRectification,
+  homographyOf,
+  invertHomography,
+  serializeTransform,
 } from '@/features/photo-scoring/transform';
-import { type ValidityReason, checkGeometryValidity } from '@/features/photo-scoring/validity';
+import {
+  type ValidityReason,
+  type ValidityResult,
+  checkGeometryValidity,
+} from '@/features/photo-scoring/validity';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
-import { Spacing } from '@/theme/tokens';
+import { Radius, Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
-
-/**
- * Phase 1 shipped auto-geometry for the precision face only (spec §0, CV
- * spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment)
- * is added here as MANUAL-ONLY: `guess_kind` mistypes it on 8/10 photos and
- * a misdetection makes the ring scale 2.5x wrong, so the auto pipeline is
- * never attempted for it — capture goes straight to the four-corner screen.
- * Any other face still gets the "not supported" message.
- *
- * The ISSF faces join on the same rule, by what the auto pipeline was
- * actually validated against rather than by federation:
- * - `issf-25m-precision` is dimensionally the same sheet as the SPSF
- *   precision face — a 200 mm solid black disc — so it takes the auto path.
- * - `issf-25m-rapid-fire` is the same sheet as milsnabb, so it inherits
- *   milsnabb's manual-only verdict for the same measured reason.
- * - `issf-10m-air-pistol` is manual-only because nothing has measured it:
- *   its black is 59.5 mm against the validated 200 mm, and a scale that far
- *   outside the tested range is exactly where a confident wrong lock comes
- *   from.
- */
-const AUTO_FACE_IDS: ReadonlySet<string> = new Set([
-  'spsf-pistol-25m-precision',
-  'issf-25m-precision',
-]);
-const MANUAL_ONLY_FACE_IDS: ReadonlySet<string> = new Set([
-  'spsf-snabbskjutning-25m',
-  'issf-25m-rapid-fire',
-  'issf-10m-air-pistol',
-]);
-const SUPPORTED_FACE_IDS: ReadonlySet<string> = new Set([
-  ...AUTO_FACE_IDS,
-  ...MANUAL_ONLY_FACE_IDS,
-]);
 
 const REASON_KEYS: Record<ValidityReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
@@ -104,14 +89,14 @@ const REASON_KEYS: Record<ValidityReason, string> = {
 export default function ScanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos } = useLocalSearchParams<{ id: string; pos?: string }>();
+  const { id, pos, final } = useLocalSearchParams<{ id: string; pos?: string; final?: string }>();
   const position = Number(pos ?? '1');
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
   const faceId = getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '';
-  const supported = SUPPORTED_FACE_IDS.has(faceId);
-  const manualOnly = MANUAL_ONLY_FACE_IDS.has(faceId);
+  const supported = isPhotoScoringSupported(faceId);
+  const manualOnly = isManualOnlyFace(faceId);
   const target = supported ? requireTargetFace(faceId) : undefined;
 
   // Caliber comes from the session's firearm; the picker is the fallback when
@@ -129,22 +114,36 @@ export default function ScanScreen() {
   const [canvas, setCanvas] = useState<RectifiedCanvas | null>(null);
   const [reasons, setReasons] = useState<readonly ValidityReason[]>([]);
   const [corners, setCorners] = useState<readonly Point[]>([]);
-  const [caliberKey, setCaliberKey] = useState<CaliberKey>(initialCaliber.key);
   const [notice, setNotice] = useState<string | null>(null);
   // Which ring the four corners are being placed on. The outermost by
   // default; changeable because a landscape crop of the 500 mm milsnabb face
   // routinely cuts the 5 ring off, and placing the corners on a visible ring
   // while the code assumes the outermost scales every measurement.
   const [cornerRing, setCornerRing] = useState<string | null>(null);
-  const [moving, setMoving] = useState(false);
+  // The detector's pass over the canvas: pending, unsure (it proposed far
+  // too many to trust), or how many it proposed.
+  // Null until a photo has locked; a retake resets it. `proposalRun` lets a
+  // retake disown a pass that was scheduled for the previous photo.
+  const [suggested, setSuggested] = useState<'pending' | 'unsure' | number | null>(null);
+  const proposalRun = useRef(0);
+  // A mark is being dragged: the action bar steps aside for the loupe.
+  const [dragging, setDragging] = useState(false);
 
   const [markState, dispatch] = useReducer(
     markReducer,
     createMarkState({ maxMarks: detail.seriesLength, caliberMm: initialCaliber.caliberMm }),
   );
+  // The suggestions still on the canvas, which is what the hint talks about.
+  const suggestedCount = markState.marks.filter((m) => m.suggested).length;
+  // Derived, not stored, so undoing a caliber change moves the chip back too.
+  const caliberKey = CALIBER_KEYS.find((key) => caliberMmFor(key) === markState.caliberMm);
 
   const scores = target ? scoreMarks(markState.marks, target) : [];
   const line = seriesScoreLine(markState.marks, scores);
+  const group =
+    markState.marks.length >= 2
+      ? analyzeGroup(markState.marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })))
+      : null;
   const selectedIndex = markState.marks.findIndex((m) => m.id === markState.selectedId);
   const selectedScore = selectedIndex >= 0 ? scores[selectedIndex] : undefined;
   const selectedMark = selectedIndex >= 0 ? markState.marks[selectedIndex] : undefined;
@@ -155,37 +154,134 @@ export default function ScanScreen() {
     try {
       const image = await prepareGeometryImage(captured);
       setGeometryImage(image);
+      // Set before the pipeline runs, so a pipeline throw still reaches the
+      // corner screen with four handles to drag.
+      setCorners(defaultCorners(image.width, image.height));
       if (manualOnly) {
         // The auto pipeline is validated for the precision face's solid
         // black disc only (spec §0); the milsnabb annulus goes straight to
         // manual corners rather than risk a confident, wrong lock.
-        setCorners(defaultCorners(image.width, image.height));
         setPhase('corners');
         return;
       }
-      const result = runGeometry({
-        base64: image.base64,
-        width: image.width,
-        height: image.height,
-        referenceDiameterMm: target.referenceDiameterMm,
-        ringRadiiMm: target.rings.map((ring) => ring.diameterMm / 2),
-      });
-      const validity = checkGeometryValidity(result.metrics);
-      if (!validity.valid) {
-        setReasons(validity.reasons);
-        setCorners(defaultCorners(image.width, image.height));
-        setPhase('rejected');
+      let disc: { result: GeometryPipelineResult; validity: ValidityResult } | null = null;
+      try {
+        const result = runGeometry({
+          base64: image.base64,
+          width: image.width,
+          height: image.height,
+          referenceDiameterMm: target.referenceDiameterMm,
+          ringRadiiMm: target.rings.map((ring) => ring.diameterMm / 2),
+        });
+        disc = { result, validity: checkGeometryValidity(result.metrics) };
+      } catch {
+        // A pipeline throw ("no dark region found") is the same product
+        // outcome as a failed gate: the disc lock could not lock the target.
+      }
+      const discTransform = disc?.validity.valid ? fromRectification(disc.result.transform) : null;
+
+      // A close-up of the inner rings has no disc edge to lock on, but its
+      // ring lines lock it; when both locks pass, the one that sits closer to
+      // the printed lines wins (docs/specs/cv-closeup-lock-2026-09.md).
+      let closeup: CloseupLock | null = null;
+      let discOffsetMm: number | null = null;
+      if (isAutoFace(faceId)) {
+        try {
+          const run = runCloseupLock({
+            base64: image.base64,
+            discToMm: (discTransform && invertHomography(homographyOf(discTransform))) ?? undefined,
+          });
+          closeup = run.lock;
+          discOffsetMm = run.discRingOffsetMm;
+        } catch (error: unknown) {
+          if (__DEV__) console.warn('close-up lock failed', error);
+        }
+      }
+
+      const choice = chooseLock({ discPasses: discTransform !== null, discOffsetMm, closeup });
+      if (choice === 'disc' && disc && discTransform) {
+        setTransform(discTransform);
+        setCanvas(disc.result.canvas);
+        setPhase('marking');
+        suggestHoles(disc.result.canvas, target);
         return;
       }
-      setTransform(fromRectification(result.transform));
-      setCanvas(result.canvas);
-      setPhase('marking');
+      const toImage = closeup && invertHomography(closeup.toMm);
+      if (choice === 'closeup' && closeup && toImage) {
+        setTransform(fromProjective({ toMm: closeup.toMm, toImage }, 'closeup'));
+        setPhase('marking');
+        straighten(image.base64, closeup.toMm, target);
+        return;
+      }
+      setReasons(disc ? disc.validity.reasons : ['zoneContrast']);
+      setPhase('rejected');
     } catch {
-      // A pipeline throw ("no dark region found") is the same product
-      // outcome as a failed gate: we could not lock the target.
       setReasons(['zoneContrast']);
       setPhase('rejected');
     }
+  }
+
+  /**
+   * The rectified canvas from a projective mm mapping — a close-up lock or
+   * corners placed by hand — so tap-snap and the hole detector help as they
+   * do on a disc lock. Without it the shooter marks by hand.
+   */
+  function straighten(base64: string, toMm: Homography, face: NonNullable<typeof target>) {
+    try {
+      const rectified = rectifyFromHomography({
+        base64,
+        toMm,
+        outerRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
+      });
+      setCanvas(rectified);
+      suggestHoles(rectified, face);
+    } catch (error: unknown) {
+      if (__DEV__) console.warn('rectify from homography failed', error);
+    }
+  }
+
+  /**
+   * Runs the hole detector over the rectified canvas and places what it finds
+   * as suggested marks. The whole-canvas maps go to OpenCV and the rest runs
+   * in yielding batches, so the marking screen paints and takes taps while it
+   * works — the reducer skips a proposal that lands on a mark the shooter
+   * placed meanwhile.
+   */
+  function suggestHoles(rectified: RectifiedCanvas, face: NonNullable<typeof target>) {
+    const run = (proposalRun.current += 1);
+    setSuggested('pending');
+    void proposeHolesAsync(
+      rectified,
+      {
+        caliberMm: markState.caliberMm,
+        blackRadiusMm: face.referenceDiameterMm / 2,
+        maxRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
+        ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
+      },
+      { ops: nativeMapOps ?? undefined },
+    )
+      .then((proposals) => {
+        if (proposalRun.current !== run) return;
+        // Far more holes than the series holds means the detector does not
+        // understand this photo (measured on real targets it proposes about
+        // one false hole in three photos). Suggesting nothing beats covering
+        // the target in marks to delete.
+        if (proposals.length > 2 * markState.maxMarks + 2) {
+          setSuggested('unsure');
+          return;
+        }
+        dispatch({
+          type: 'suggest',
+          marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
+        });
+        setSuggested(proposals.length);
+      })
+      .catch((error: unknown) => {
+        // A detector failure is the same as finding nothing: the shooter
+        // marks by hand, as before this stage existed.
+        if (__DEV__) console.warn('hole proposals failed', error);
+        if (proposalRun.current === run) setSuggested(0);
+      });
   }
 
   async function onCapture(source: 'camera' | 'library') {
@@ -196,7 +292,8 @@ export default function ScanScreen() {
     }
     if (!result) return;
     setPhoto(result);
-    if (db && row) updateSeries(db, row.id, { photoUri: result.originalUri });
+    // The old geometry belongs to the old photo; it is written again on save.
+    if (db && row) updateSeries(db, row.id, { photoUri: result.originalUri, photoGeometry: null });
     await analyze(result);
   }
 
@@ -210,7 +307,9 @@ export default function ScanScreen() {
   // re-render when it flips.
   const cameraAutoOpened = useRef(false);
   useEffect(() => {
-    if (cameraAutoOpened.current) return;
+    // An unsupported face shows its message straight away: a photo taken
+    // first would be thrown away.
+    if (cameraAutoOpened.current || !supported) return;
     cameraAutoOpened.current = true;
     void onCapture('camera');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on arrival
@@ -226,6 +325,12 @@ export default function ScanScreen() {
     setNotice(null);
     setTransform(fromProjective(projective));
     setPhase('marking');
+    // Corners placed by hand still give a mm mapping, so the photo can be
+    // straightened too. Only on the face tap-snap and the detector were
+    // measured on.
+    if (geometryImage && isAutoFace(faceId)) {
+      straighten(geometryImage.base64, projective.toMm, target);
+    }
   }
 
   function onRetake() {
@@ -235,8 +340,10 @@ export default function ScanScreen() {
     setCanvas(null);
     setReasons([]);
     setCornerRing(null);
+    proposalRun.current += 1;
+    setSuggested(null);
     dispatch({ type: 'clear' });
-    setMoving(false);
+    setNotice(null);
     setPhase('capture');
   }
 
@@ -259,8 +366,26 @@ export default function ScanScreen() {
   }
 
   function onSave(next: boolean) {
-    if (db && row) {
-      saveSeriesMarks(db, row.id, marksToShotMarkInputs(markState.marks, scores));
+    // A series added straight into "Score from Photo" has no row yet; it is
+    // written here, as the keypad screen writes its own on save.
+    const seriesId =
+      row?.id ??
+      (db && markState.marks.length > 0
+        ? addSeries(db, {
+            sessionId: id,
+            position,
+            isFinal: final === '1',
+            photoUri: photo?.originalUri ?? null,
+          }).id
+        : null);
+    if (db && seriesId) {
+      saveSeriesMarks(db, seriesId, marksToShotMarkInputs(markState.marks, scores));
+      // Kept with the photo so the series can draw its marks over it later.
+      if (transform && geometryImage) {
+        updateSeries(db, seriesId, {
+          photoGeometry: serializeTransform(transform, geometryImage.width, geometryImage.height),
+        });
+      }
 
       // Every tap-to-mark is a labelled example, already in canonical
       // target-mm because the geometry is solved by now. Kept only with the
@@ -269,7 +394,7 @@ export default function ScanScreen() {
       // call site, rather than hidden inside the write.
       if (transform && getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false)) {
         recordTrainingSample(db, {
-          seriesId: row.id,
+          seriesId,
           targetFaceId: faceId,
           geometrySource: transform.source,
           photoUri: photo?.originalUri ?? null,
@@ -279,6 +404,7 @@ export default function ScanScreen() {
             caliberMm: m.caliberMm,
             moved: m.moved,
             calledRingLabel: m.calledRingLabel,
+            suggested: m.suggested,
           })),
         });
       }
@@ -301,6 +427,139 @@ export default function ScanScreen() {
           </ThemedText>
         </Card>
         <PrimaryButton label={t('common.cancel')} onPress={() => router.back()} />
+      </Screen>
+    );
+  }
+
+  if (phase === 'marking' && geometryImage && transform && target) {
+    return (
+      <Screen scroll={false}>
+        <View style={styles.marking}>
+          <View style={styles.toolbar}>
+            <View style={styles.scoreLine}>
+              <ThemedText type="subtitle" testID="scan-score-line">
+                {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" testID="scan-shot-values">
+                {line.shotValues.join(' ')}
+              </ThemedText>
+            </View>
+            <SecondaryButton
+              label={t('photoScoring.undo')}
+              onPress={() => dispatch({ type: 'undo' })}
+              disabled={!canUndo(markState)}
+              testID="mark-undo"
+              style={styles.undo}
+            />
+          </View>
+          {/* Its own line: beside the score it squeezed the shot values to "10 10 …". */}
+          {transform.source === 'manual' && (
+            <Chip label={t('photoScoring.manualGeometry')} style={styles.manualChip} />
+          )}
+
+          {group && <GroupStats analysis={group} testIDPrefix="scan-stat" />}
+
+          {notice ? (
+            <ThemedText type="small" themeColor="danger">
+              {notice}
+            </ThemedText>
+          ) : suggested === 'pending' ? (
+            <View style={styles.row}>
+              <ActivityIndicator size="small" />
+              <ThemedText type="small" themeColor="textSecondary" testID="scan-suggesting">
+                {t('photoScoring.suggesting')}
+              </ThemedText>
+            </View>
+          ) : suggestedCount > 0 ? (
+            <ThemedText type="small" themeColor="textSecondary" testID="scan-suggested">
+              {t('photoScoring.suggestedHint', { count: suggestedCount })}
+            </ThemedText>
+          ) : (
+            markState.marks.length === 0 && (
+              <ThemedText type="small" themeColor="textSecondary" testID="scan-mark-hint">
+                {`${
+                  suggested === 'unsure'
+                    ? t('photoScoring.suggestedUnsure')
+                    : suggested === 0
+                      ? t('photoScoring.suggestedNone')
+                      : t('photoScoring.markHint')
+                } ${t('photoScoring.zoomHint')}`}
+              </ThemedText>
+            )
+          )}
+
+          <View style={styles.canvasWrap}>
+            <MarkCanvas
+              style={StyleSheet.absoluteFill}
+              photoUri={geometryImage.uri}
+              imageWidth={geometryImage.width}
+              imageHeight={geometryImage.height}
+              transform={transform}
+              target={target}
+              marks={markState.marks}
+              scores={scores}
+              selectedId={markState.selectedId}
+              onTapEmpty={onTapEmpty}
+              onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
+              onDraggingChange={setDragging}
+              onMoveMark={(markId, mm) => {
+                setNotice(null);
+                dispatch({ type: 'move', id: markId, xMm: mm.x, yMm: mm.y });
+              }}
+            />
+            {selectedMark && selectedScore && !dragging && (
+              <MarkActionBar
+                style={styles.actionBar}
+                mark={selectedMark}
+                score={selectedScore}
+                onDelete={() => dispatch({ type: 'delete' })}
+                onToggleInnerTen={() => dispatch({ type: 'toggleInnerTen' })}
+                onCallRing={(ringLabel) => dispatch({ type: 'callRing', ringLabel })}
+                onDeselect={() => dispatch({ type: 'deselect' })}
+              />
+            )}
+          </View>
+
+          <View style={styles.caliberRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {initialCaliber.matched
+                ? t('photoScoring.caliber')
+                : t('photoScoring.caliberGuessed', { caliber: initialCaliber.key })}
+            </ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.row}>
+                {CALIBER_KEYS.map((key) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) })}
+                    testID={`caliber-${key}`}
+                  >
+                    <Chip label={key} tone={key === caliberKey ? 'primary' : 'neutral'} />
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View style={styles.actions}>
+            <SecondaryButton
+              label={t('photoScoring.retake')}
+              onPress={onRetake}
+              style={styles.action}
+            />
+            <SecondaryButton
+              label={t('photoScoring.scanNext')}
+              onPress={() => onSave(true)}
+              testID="scan-next"
+              style={styles.action}
+            />
+          </View>
+          <PrimaryButton
+            label={t('photoScoring.save')}
+            onPress={() => onSave(false)}
+            testID="scan-save"
+          />
+        </View>
       </Screen>
     );
   }
@@ -407,145 +666,6 @@ export default function ScanScreen() {
             <PrimaryButton label={t('photoScoring.retake')} onPress={onRetake} />
           </>
         )}
-
-        {phase === 'marking' && geometryImage && transform && target && (
-          <>
-            <MarkOverlay
-              photoUri={geometryImage.uri}
-              imageWidth={geometryImage.width}
-              imageHeight={geometryImage.height}
-              transform={transform}
-              target={target}
-              marks={markState.marks}
-              scores={scores}
-              selectedId={markState.selectedId}
-              onTapEmpty={onTapEmpty}
-              onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
-            />
-
-            <View style={styles.scoreLine}>
-              <ThemedText type="subtitle" testID="scan-score-line">
-                {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" testID="scan-shot-values">
-                {line.shotValues.join(' ')}
-              </ThemedText>
-              {transform.source === 'manual' && <Chip label={t('photoScoring.manualGeometry')} />}
-            </View>
-
-            {notice && <ThemedText themeColor="danger">{notice}</ThemedText>}
-            {!notice && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('photoScoring.markHint')}
-              </ThemedText>
-            )}
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('photoScoring.zoomHint')}
-            </ThemedText>
-
-            {selectedScore && (
-              <Card>
-                <View style={styles.row}>
-                  <PrimaryButton
-                    label={moving ? t('photoScoring.doneMoving') : t('photoScoring.move')}
-                    onPress={() => setMoving((was) => !was)}
-                    testID="mark-move"
-                  />
-                  <PrimaryButton
-                    label={t('photoScoring.delete')}
-                    onPress={() => {
-                      setMoving(false);
-                      dispatch({ type: 'delete' });
-                    }}
-                    testID="mark-delete"
-                  />
-                  <PrimaryButton
-                    label={t('photoScoring.markInnerTen')}
-                    onPress={() => dispatch({ type: 'toggleInnerTen' })}
-                    testID="mark-inner-ten"
-                  />
-                </View>
-
-                {moving && photo && selectedMark && (
-                  <MarkLoupe
-                    photo={photo}
-                    center={transform.toImage({ x: selectedMark.xMm, y: selectedMark.yMm })}
-                    scaleToOriginal={geometryImage.scaleToOriginal}
-                    onNudge={(dx, dy) => {
-                      // The loupe reports a delta in geometry-image px; the
-                      // mark lives in mm, so it round-trips through the
-                      // transform rather than assuming a fixed mm-per-px.
-                      const here = transform.toImage({ x: selectedMark.xMm, y: selectedMark.yMm });
-                      const next = transform.toMm({ x: here.x + dx, y: here.y + dy });
-                      dispatch({ type: 'move', xMm: next.x, yMm: next.y });
-                    }}
-                  />
-                )}
-
-                {selectedScore.candidates.length > 1 && (
-                  <View style={styles.edgeCall} testID="mark-edge-call">
-                    <ThemedText type="smallBold">{t('photoScoring.edgeCall')}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('photoScoring.edgeCallHint')}
-                    </ThemedText>
-                    <View style={styles.row}>
-                      {selectedScore.candidates.map((candidate) => (
-                        <Pressable
-                          key={candidate.label}
-                          onPress={() => dispatch({ type: 'callRing', ringLabel: candidate.label })}
-                          testID={`edge-call-${candidate.label}`}
-                        >
-                          <Chip
-                            label={candidate.label}
-                            tone={
-                              selectedScore.effective.label === candidate.label
-                                ? 'primary'
-                                : 'neutral'
-                            }
-                          />
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </Card>
-            )}
-
-            <Card>
-              <ThemedText type="small" themeColor="textSecondary">
-                {initialCaliber.matched
-                  ? t('photoScoring.caliber')
-                  : t('photoScoring.caliberGuessed', { caliber: caliberKey })}
-              </ThemedText>
-              <View style={styles.row}>
-                {CALIBER_KEYS.map((key) => (
-                  <Pressable
-                    key={key}
-                    onPress={() => {
-                      setCaliberKey(key);
-                      dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) });
-                    }}
-                    testID={`caliber-${key}`}
-                  >
-                    <Chip label={key} tone={key === caliberKey ? 'primary' : 'neutral'} />
-                  </Pressable>
-                ))}
-              </View>
-            </Card>
-
-            <PrimaryButton
-              label={t('photoScoring.save')}
-              onPress={() => onSave(false)}
-              testID="scan-save"
-            />
-            <PrimaryButton
-              label={t('photoScoring.scanNext')}
-              onPress={() => onSave(true)}
-              testID="scan-next"
-            />
-            <PrimaryButton label={t('photoScoring.retake')} onPress={onRetake} />
-          </>
-        )}
       </ScrollView>
     </Screen>
   );
@@ -556,17 +676,50 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingBottom: Spacing.six,
   },
-  scoreLine: {
-    gap: Spacing.one,
-  },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
     alignItems: 'center',
   },
-  edgeCall: {
+  marking: {
+    flex: 1,
     gap: Spacing.two,
-    marginTop: Spacing.two,
+    paddingBottom: Spacing.two,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  scoreLine: {
+    flex: 1,
+  },
+  manualChip: {
+    alignSelf: 'flex-start',
+  },
+  undo: {
+    paddingVertical: Spacing.two,
+  },
+  canvasWrap: {
+    flex: 1,
+    borderRadius: Radius.medium,
+    overflow: 'hidden',
+  },
+  actionBar: {
+    position: 'absolute',
+    left: Spacing.two,
+    right: Spacing.two,
+    bottom: Spacing.two,
+  },
+  caliberRow: {
+    gap: Spacing.one,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  action: {
+    flex: 1,
   },
 });

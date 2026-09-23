@@ -51,6 +51,7 @@ import target_cv as T
 from target_cv import Hole
 
 CROP = 48  # px at 4 px/mm -> 12 mm box, ~2x a .22 hole
+GRADIENT_EPSILON = 1e-9
 
 # ---------------------------------------------------------------- proposal
 
@@ -158,7 +159,7 @@ def propose_tight(rect, geom, kind):
 # ---------------------------------------------------------------- features
 
 FEATURE_NAMES = ("orient_entropy", "hf_energy", "laplacian_var", "grad_mean",
-                 "centre_deviation", "std")
+                 "center_deviation", "std")
 
 
 def crop_at(gray, x, y, size=CROP):
@@ -182,6 +183,12 @@ def features(gray_crop: np.ndarray) -> dict[str, float]:
     g = gray_crop.astype(np.float32) / 255.0
     gx = cv2.Sobel(g, cv2.CV_32F, 1, 0, ksize=3)
     gy = cv2.Sobel(g, cv2.CV_32F, 0, 1, ksize=3)
+    # A gradient this small is a rounding residue of the convolution, and its
+    # sign would otherwise pick the orientation bin of an edge that is exactly
+    # horizontal or vertical — differently in float32 here and float64 in the
+    # port. Snapped to zero on both sides (2026-09-22).
+    gx[np.abs(gx) < GRADIENT_EPSILON] = 0.0
+    gy[np.abs(gy) < GRADIENT_EPSILON] = 0.0
     mag = np.hypot(gx, gy)
     ang = np.arctan2(gy, gx)
 
@@ -204,7 +211,7 @@ def features(gray_crop: np.ndarray) -> dict[str, float]:
         hf_energy=hf,
         laplacian_var=lap,
         grad_mean=float(mag.mean()),
-        centre_deviation=float(abs(centre.mean() - g.mean())),
+        center_deviation=float(abs(centre.mean() - g.mean())),
         std=float(g.std()),
     )
 
@@ -218,7 +225,7 @@ WEIGHTS = {
     "hf_energy": -1.1230,
     "laplacian_var": 0.1180,
     "grad_mean": 27.5267,
-    "centre_deviation": 31.6067,
+    "center_deviation": 31.6067,
     "std": -47.8310,
 }
 BIAS = -85.0118

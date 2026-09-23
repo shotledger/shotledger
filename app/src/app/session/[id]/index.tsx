@@ -49,6 +49,7 @@ import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-
 import { setSeriesPositions } from '@/db/queries/series';
 import { updateSession } from '@/db/queries/sessions';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
+import { isPhotoScoringSupported } from '@/features/photo-scoring/faces';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
@@ -110,13 +111,20 @@ export default function SessionDetailScreen() {
   function openSeriesEntry(choice: SeriesEntryChoice) {
     const position = nextSeriesPosition();
     if (choice === 'photo') {
-      router.push(`/session/${id}/scan?pos=${position}`);
+      router.push(`/session/${id}/scan?pos=${position}${nextIsFinal ? '&final=1' : ''}`);
       return;
     }
     router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);
   }
 
   function onAddSeries() {
+    // Photo scoring cannot read every face; for one it cannot, the keypad is
+    // the only way in, so neither the choice nor a remembered "photo" applies.
+    const faceId = getDiscipline(session!.disciplineId)?.targetFace ?? '';
+    if (!isPhotoScoringSupported(faceId)) {
+      openSeriesEntry('manual');
+      return;
+    }
     if (session!.seriesEntryMode === 'ask') {
       setEntryChoiceOpen(true);
       return;

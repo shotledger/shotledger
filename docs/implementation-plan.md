@@ -1036,6 +1036,23 @@ restates §0 rules 1–6 verbatim.
 > is the assisted path getting better, not detection becoming automatic, and
 > "Auto Score" stays reserved.
 >
+> **The app now suggests holes** (2026-09-22, #347/#264): a
+> Laplacian-of-Gaussian proposal stage and a 30-feature logistic regression on
+> the rectified canvas, ported line for line from `spike/cv/hole_proposals.py`
+> to `app/src/features/photo-scoring/hole-proposals.ts` and pinned by a
+> synthetic lock-step fixture. Measured on the 31 hand-marked photos with
+> corrected labels: 74% recall, 92% precision, 0.32 false positives per photo,
+> 10 of 31 series exactly right — against 59% / 90% / 0.32 / 3 for the shipped
+> filter. Still assisted: suggestions are dashed marks the shooter checks, and
+> "Auto Score" stays reserved. `docs/specs/cv-hole-proposals-2026-09.md` has the
+> numbers, including the measured negatives (gradient-boosted trees, the
+> before/after diff). The marking screen was rebuilt in the same change (pinch
+> about the fingers, one-finger pan, drag-to-move under a loupe, undo, a
+> floating action bar, live group figures), the px<->mm transform is stored on
+> the series (`series.photo_geometry`) so the photo viewer draws the marks and
+> the group figures for any photo-scored series, and every kept suggestion
+> reaches the opt-in training store flagged `suggested`.
+>
 > **The milsnabb face now scores too**, via manual corners only (auto-geometry
 > is still never attempted for it), on `feat/milsnabb-photo-corners` — amends
 > §10 of the phase 1 spec/evidence. No new dependency, no schema change; the

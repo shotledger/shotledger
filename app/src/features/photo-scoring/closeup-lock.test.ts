@@ -1,0 +1,153 @@
+import fixture from './closeup-lock.fixtures.json';
+import {
+  CLOSEUP_GATE,
+  type CloseupLock,
+  chooseLock,
+  closeupWorkImage,
+  lockCloseupWork,
+  passesCloseupGate,
+  ringOffsetMm,
+} from './closeup-lock';
+import { applyHomography, type Homography } from './corners';
+import { CLOSEUP_DRAWING, syntheticCloseup } from './synthetic-canvas';
+import { invertHomography } from './transform';
+
+/** Against the Python reference, mm (task spec: centre and radii). */
+const TOL_MM = 0.05;
+
+type Scenario = (typeof fixture.scenarios)[number];
+
+function imageOf(s: Scenario) {
+  return {
+    width: s.width,
+    height: s.height,
+    data: syntheticCloseup({
+      seed: s.seed,
+      width: s.width,
+      height: s.height,
+      H: s.H,
+      holes: s.holes.map(([x, y]) => [x as number, y as number] as const),
+    }),
+  };
+}
+
+// The pure lock takes a second or two per 1024 px scene, so each runs once.
+const results = new Map<string, { lock: CloseupLock | null; offsetOfOwn: number | null }>();
+beforeAll(() => {
+  for (const s of fixture.scenarios) {
+    const work = closeupWorkImage(imageOf(s), undefined, fixture.workLongSide);
+    const lock = lockCloseupWork(work);
+    results.set(s.name, { lock, offsetOfOwn: lock ? ringOffsetMm(work, lock.toMm) : null });
+  }
+}, 120_000);
+
+function radiusMm(h: readonly number[], p: { x: number; y: number }): number {
+  const q = applyHomography(h as unknown as Homography, p);
+  return Math.hypot(q.x, q.y);
+}
+
+it('carries the same constants as the Python reference', () => {
+  expect(fixture.gate).toEqual(CLOSEUP_GATE);
+  expect(fixture.blackR).toBe(CLOSEUP_DRAWING.blackR);
+  expect(fixture.rings).toEqual([...CLOSEUP_DRAWING.rings]);
+  expect(fixture.lineHalf).toBe(CLOSEUP_DRAWING.lineHalf);
+  expect(fixture.holeR).toBe(CLOSEUP_DRAWING.holeR);
+});
+
+it('draws the synthetic close-ups pixel for pixel as the reference does', () => {
+  for (const s of fixture.scenarios) {
+    let sum = 0;
+    for (const v of imageOf(s).data) sum += v;
+    expect(sum).toBe(s.checksum);
+  }
+});
+
+it('locks every synthetic close-up where the reference does, to the same centre and rings', () => {
+  for (const s of fixture.scenarios) {
+    const got = results.get(s.name)!.lock;
+    const ref = s.lock;
+    expect([s.name, got === null]).toEqual([s.name, ref === null]);
+    if (!got || !ref) continue;
+    // the lock's centre, measured by the reference's mapping
+    const centreErr = radiusMm(ref.toMm, got.center);
+    if (centreErr > TOL_MM) throw new Error(`${s.name}: centre off by ${centreErr} mm`);
+    // points on the reference's 25/50/75 mm circles, measured by the lock
+    const back = invertHomography(ref.toMm as unknown as Homography)!;
+    for (const R of [25, 50, 75]) {
+      for (let i = 0; i < 36; i += 1) {
+        const a = (i * Math.PI) / 18;
+        const p = applyHomography(back, { x: R * Math.cos(a), y: R * Math.sin(a) });
+        if (p.x < 0 || p.y < 0 || p.x > s.width - 1 || p.y > s.height - 1) continue;
+        const err = Math.abs(radiusMm(got.toMm, p) - R);
+        if (err > TOL_MM)
+          throw new Error(`${s.name}: ${R} mm ring off by ${err} mm at ${i * 10} deg`);
+      }
+    }
+    expect(got.rings).toBe(ref.rings);
+    expect(Math.abs(got.period - ref.period)).toBeLessThanOrEqual(0.25);
+    expect(Math.abs(got.residualMm - ref.residualMm)).toBeLessThanOrEqual(0.01);
+    expect(Math.abs(got.comb - ref.comb)).toBeLessThanOrEqual(0.01 * Math.abs(ref.comb));
+    expect(got.ringOffsetMm).not.toBeNull();
+    expect(Math.abs(got.ringOffsetMm! - ref.ringOffsetMm!)).toBeLessThanOrEqual(0.1 + 1e-9);
+  }
+});
+
+it('reaches the same gate verdict as the reference', () => {
+  for (const s of fixture.scenarios) {
+    expect([s.name, passesCloseupGate(results.get(s.name)!.lock)]).toEqual([s.name, s.passes]);
+  }
+});
+
+it('refuses a close-up whose centre is out of frame', () => {
+  const outer = fixture.scenarios.find((s) => s.name === 'outer')!;
+  const { lock } = results.get('outer')!;
+  expect(outer.passes).toBe(false);
+  expect(passesCloseupGate(lock)).toBe(false);
+});
+
+it('measures a lock with the same yardstick its gate used', () => {
+  for (const s of fixture.scenarios) {
+    const { lock, offsetOfOwn } = results.get(s.name)!;
+    if (lock) expect([s.name, offsetOfOwn]).toEqual([s.name, lock.ringOffsetMm]);
+  }
+});
+
+describe('chooseLock', () => {
+  const lock = (ringOffsetMm: number | null): CloseupLock => ({
+    toMm: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+    center: { x: 0, y: 0 },
+    residualMm: 0.1,
+    comb: 20,
+    ringOffsetMm,
+    rings: 3,
+    support: 1,
+    axisRatio: 1,
+    voteCenter: { x: 0, y: 0 },
+    period: 100,
+  });
+
+  it('keeps the disc lock when only it passes', () => {
+    expect(chooseLock({ discPasses: true, discOffsetMm: 0.3, closeup: null })).toBe('disc');
+    expect(chooseLock({ discPasses: true, discOffsetMm: 0.3, closeup: lock(0.8) })).toBe('disc');
+  });
+
+  it('takes the close-up when only it passes', () => {
+    expect(chooseLock({ discPasses: false, discOffsetMm: null, closeup: lock(0.2) })).toBe(
+      'closeup',
+    );
+  });
+
+  it('keeps whichever sits closer to the printed lines when both pass', () => {
+    expect(chooseLock({ discPasses: true, discOffsetMm: 0.7, closeup: lock(0.1) })).toBe('closeup');
+    expect(chooseLock({ discPasses: true, discOffsetMm: 0.1, closeup: lock(0.3) })).toBe('disc');
+    expect(chooseLock({ discPasses: true, discOffsetMm: 0.2, closeup: lock(0.2) })).toBe('disc');
+    expect(chooseLock({ discPasses: true, discOffsetMm: null, closeup: lock(0.2) })).toBe(
+      'closeup',
+    );
+  });
+
+  it('falls through to the corners when neither passes', () => {
+    expect(chooseLock({ discPasses: false, discOffsetMm: 0.1, closeup: lock(0.9) })).toBeNull();
+    expect(chooseLock({ discPasses: false, discOffsetMm: null, closeup: null })).toBeNull();
+  });
+});

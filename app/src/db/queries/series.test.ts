@@ -11,6 +11,7 @@ import {
   setSeriesSighter,
   softDeleteSeries,
   swapSeriesPositions,
+  updateSeries,
 } from './series';
 
 let db: Database;
@@ -188,5 +189,16 @@ describe('swapSeriesPositions', () => {
 
     expect(() => swapSeriesPositions(db, a.id, 'missing')).not.toThrow();
     expect(listSeriesForSession(db, sessionId)[0]!.position).toBe(1);
+  });
+});
+
+describe('updateSeries', () => {
+  it('stores the photo geometry as the JSON string it was given, and clears it', () => {
+    const s = addSeries(db, { sessionId, position: 1 });
+    expect(getSeries(db, s.id)?.photoGeometry).toBeNull();
+    const json =
+      '{"imageWidth":2048,"imageHeight":1536,"source":"auto","mmToImage":[4,0,1024,0,4,768,0,0,1]}';
+    expect(updateSeries(db, s.id, { photoGeometry: json })?.photoGeometry).toBe(json);
+    expect(updateSeries(db, s.id, { photoGeometry: null })?.photoGeometry).toBeNull();
   });
 });

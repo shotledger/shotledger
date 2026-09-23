@@ -45,6 +45,8 @@ export const HOLE_CROP_PX = 48;
 
 /** Number of gradient-direction bins. */
 const ORIENT_BINS = 18;
+/** Below this a gradient is a rounding residue, not an edge. */
+const GRADIENT_EPSILON = 1e-9;
 
 /**
  * Fitted on 208 candidates from 31 hand-marked photos across both corpora —
@@ -210,8 +212,12 @@ export function holeFeatures(crop: GrayCrop): HoleFeatures {
   let magSum = 0;
   let gradTotal = 0;
   for (let i = 0; i < g.length; i += 1) {
-    const x = gx[i] as number;
-    const y = gy[i] as number;
+    // A gradient this small is a rounding residue of the convolution, and its
+    // sign would otherwise pick the orientation bin of an edge that is exactly
+    // horizontal or vertical — differently in float64 here and float32 in the
+    // reference. Snapped to zero on both sides.
+    const x = Math.abs(gx[i] as number) < GRADIENT_EPSILON ? 0 : (gx[i] as number);
+    const y = Math.abs(gy[i] as number) < GRADIENT_EPSILON ? 0 : (gy[i] as number);
     const magnitude = Math.hypot(x, y);
     gradTotal += magnitude;
     const angle = Math.atan2(y, x);

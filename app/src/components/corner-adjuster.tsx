@@ -39,7 +39,7 @@ export interface CornerAdjusterProps extends Omit<ViewProps, 'onLayout'> {
    * Full-resolution photo, and the geometry-px -> original-px scale — when
    * given, a magnified loupe tracks the corner being dragged, cropped from
    * full resolution (the geometry copy alone is too coarse to place a
-   * corner against fine detail, same rationale as `MarkLoupe`).
+   * corner against fine detail).
    */
   photo?: CapturedPhoto;
   scaleToOriginal?: number;

@@ -43,6 +43,9 @@ import {
   ThresholdTypes,
 } from 'react-native-fast-opencv';
 
+import { type CloseupLock, closeupWorkImage, lockCloseupWork, ringOffsetMm } from './closeup-lock';
+import { nativeCloseupOps } from './closeup-lock-native';
+import type { Homography } from './corners';
 import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
 import type { RectifiedCanvas } from './tap-snap';
 import type { GeometryMetrics } from './validity';
@@ -490,4 +493,97 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
   } finally {
     arena.releaseAll();
   }
+}
+
+/**
+ * The rectified gray canvas for a photo whose image-px -> target-mm mapping is
+ * already known — the hand-placed corners' homography — so tap-snap and the
+ * hole detector get the same 4 px/mm, target-centred canvas the automatic
+ * lock produces. Also what makes a close-up usable: the corners can sit on
+ * any visible ring, and the canvas only holds what the photo shows (the rest
+ * is white padding, which the detector masks out).
+ */
+export function rectifyFromHomography(options: {
+  readonly base64: string;
+  /** Image px -> target mm. */
+  readonly toMm: Homography;
+  /** Radius of the outermost scoring ring, mm. */
+  readonly outerRadiusMm: number;
+}): RectifiedCanvas {
+  const arena = new Arena();
+  try {
+    const src = arena.keep(MatClass.createFromBase64(options.base64));
+    const gray = arena.dst();
+    OpenCV.cvtColor(src, gray, ColorConversionCodes.COLOR_BGR2GRAY);
+
+    const k = CANVAS_PX_PER_MM;
+    const canvasSize = Math.round(2 * options.outerRadiusMm * 1.05 * k);
+    const half = canvasSize / 2;
+    // canvas px = k * mm + half, and mm = toMm(image px).
+    const h = options.toMm;
+    // prettier-ignore
+    const toCanvas = arena.keep(
+      MatClass.create(3, 3, DataTypes.CV_64F, [
+        k * h[0] + half * h[6], k * h[1] + half * h[7], k * h[2] + half * h[8],
+        k * h[3] + half * h[6], k * h[4] + half * h[7], k * h[5] + half * h[8],
+        h[6],                   h[7],                   h[8],
+      ]),
+    );
+    const canvas = arena.dst();
+    OpenCV.warpPerspective(
+      gray,
+      canvas,
+      toCanvas,
+      arena.keep(Size.create(canvasSize, canvasSize)),
+      InterpolationFlags.INTER_CUBIC,
+      BorderTypes.BORDER_CONSTANT,
+      arena.keep(Scalar.create(255, 255, 255)),
+    );
+    const { buffer: bytes } = canvas.toBuffer('uint8');
+    return {
+      // Copied: the view points at native memory that releaseAll frees.
+      data: Uint8Array.from(bytes),
+      size: canvasSize,
+      centerXPx: half,
+      centerYPx: half,
+      pxPerMm: k,
+    };
+  } finally {
+    arena.releaseAll();
+  }
+}
+
+export interface CloseupLockRun {
+  readonly lock: CloseupLock | null;
+  /** `discToMm`'s ring offset, measured on the same work image as the lock's. */
+  readonly discRingOffsetMm: number | null;
+}
+
+/**
+ * The close-up lock (closeup-lock.ts) on the geometry image, with OpenCV doing
+ * its image-wide operations. Given the disc lock's image px -> mm mapping,
+ * also holds that to the same ring-offset yardstick, so the two can be
+ * compared.
+ */
+export function runCloseupLock(options: {
+  readonly base64: string;
+  readonly discToMm?: Homography;
+}): CloseupLockRun {
+  const arena = new Arena();
+  let gray: { data: Uint8Array; width: number; height: number };
+  try {
+    const src = arena.keep(MatClass.createFromBase64(options.base64));
+    const mat = arena.dst();
+    OpenCV.cvtColor(src, mat, ColorConversionCodes.COLOR_BGR2GRAY);
+    const { buffer, rows, cols } = mat.toBuffer('uint8');
+    // Copied: the view points at native memory that releaseAll frees.
+    gray = { data: Uint8Array.from(buffer), width: cols, height: rows };
+  } finally {
+    arena.releaseAll();
+  }
+  const work = closeupWorkImage(gray, nativeCloseupOps);
+  return {
+    lock: lockCloseupWork(work, nativeCloseupOps),
+    discRingOffsetMm: options.discToMm ? ringOffsetMm(work, options.discToMm) : null,
+  };
 }

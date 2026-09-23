@@ -102,3 +102,63 @@ python gen_hole_feature_fixtures.py > \
 
 Ground truth is **hole centres, not candidate labels**: labelling the
 candidates a detector proposes cannot measure the holes it misses.
+
+## Hole proposals (`hole_proposals.py`)
+
+The "suggested holes" stage: Laplacian-of-Gaussian peaks on a half-resolution
+canvas, thirty features per candidate, a logistic regression, a merge of
+peaks closer than one hole diameter and a centroid refinement. Numbers and
+the decisions behind them:
+[`docs/specs/cv-hole-proposals-2026-09.md`](../../docs/specs/cv-hole-proposals-2026-09.md).
+
+This file is the **reference** for the arithmetic; the app runs
+`app/src/features/photo-scoring/hole-proposals.ts`, a port without OpenCV.
+`synthetic_canvas.py` draws integer-only synthetic canvases that the
+TypeScript twin reproduces pixel for pixel, and
+`gen_hole_proposal_fixtures.py` writes the lock-step fixture from them — no
+pixel from any real photo. Change one side and you change both, then
+regenerate the fixture.
+
+```bash
+# 1. candidates with features, against hand marks (rectifies onto the
+#    app-sized canvas; --cache keeps the canvases between runs)
+python eval_hole_proposals.py --marks marks.txt --in <photos> \
+    --out candidates.csv --cache <dir>
+python eval_hole_proposals.py --marks marks.txt --in <photos> --cache <dir> --report
+
+# 2. fit, cross-validated by photo; paste the constants into hole_proposals.py
+#    and hole-proposals.ts
+python fit_hole_proposals.py candidates.csv --marks marks.txt
+python fit_hole_proposals.py a.csv --test b.csv --marks marks.txt
+
+# 3. regenerate the lock-step fixture after any change to the arithmetic
+python gen_hole_proposal_fixtures.py > \
+    ../../app/src/features/photo-scoring/hole-proposals.fixtures.json
+```
+
+The marks are read off the spike's 1040 px canvas (see `mark_holes.py`);
+`eval_hole_proposals.py` shifts them onto the 2100 px one.
+
+## Close-up lock (`closeup_lock.py`)
+
+Locks onto a photo of the 7–10 rings, or only 9–10, where the black disc's
+edge is out of frame. It finds the centre by voting along edge normals, takes
+the 25 mm ring step from the radial profile's period, and fits a homography to
+the ring points. The module docstring has the details. Findings are in
+[`docs/specs/cv-closeup-lock-2026-09.md`](../../docs/specs/cv-closeup-lock-2026-09.md).
+
+It is the reference for `app/src/features/photo-scoring/closeup-lock.ts`, as
+`hole_proposals.py` is for its port: `synthetic_canvas.synthetic_closeup`
+draws integer-only close-ups the TypeScript twin reproduces, and
+`gen_closeup_lock_fixtures.py` writes the lock-step fixture from them.
+
+```bash
+# close-ups cut from every photo the disc lock handles, plus crops whose
+# centre is out of frame, which the gate must refuse
+python eval_closeup.py --glob '<photos>/*.jpg' --out closeup.csv
+
+# regenerate the lock-step fixture after any change to the arithmetic, then
+# run prettier on it
+python gen_closeup_lock_fixtures.py > \
+    ../../app/src/features/photo-scoring/closeup-lock.fixtures.json
+```
