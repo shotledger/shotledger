@@ -77,7 +77,7 @@ Negative constraints (spec §8):
 | N1  | `protocol.ts`/`merge.ts` import only `zod` and each other — verified by file contents; `pnpm lint`/`tsc -b` pass with no RN/Workers types leaking into `shared/`                        |
 | N2  | Full baseline suite (§2) still green: 207 pre-existing shared tests + 2 pre-existing backend tests, unmodified, still passing                                                           |
 | N3  | `git diff --stat main...HEAD -- app` is empty                                                                                                                                           |
-| N4  | `devBearerAuthenticator` reads only the request header; no `~/agents/` path referenced anywhere in the diff (grep confirmed)                                                            |
+| N4  | `devBearerAuthenticator` reads only the request header; no `~/cloud/agents/` path referenced anywhere in the diff (grep confirmed)                                                            |
 | N5  | `backend/package.json`'s `test` script is unchanged (`vitest run`); root `package.json`'s `check` script is unmodified (still `vitest run` at root scope, no `backend` inclusion added) |
 
 ## 4. Gauntlet

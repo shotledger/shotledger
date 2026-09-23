@@ -18,7 +18,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
    produced via the agentic loop (§8) attached to the task summary.
 3. **Never**: add dependencies not listed here without asking; change the
    DB schema without a Drizzle migration; commit secrets (they live under
-   `~/agents/shotledger/`, outside the tree); remove or weaken a test to
+   `~/cloud/agents/shotledger/`, outside the tree); remove or weaken a test to
    make it pass; implement features from later milestones early.
 4. **Anything marked `VERIFY:`** is a fact that must be confirmed with the
    maintainer or an authoritative source before shipping the code that

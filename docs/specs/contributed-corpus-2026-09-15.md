@@ -10,7 +10,7 @@ spike) and [`cv-corpus-validation-2026-09.md`](cv-corpus-validation-2026-09.md)
 that corrected the spike's "no classical feature separates patches" claim).
 
 - **Photos are personal data** (hard rule 7). They live outside the working
-  tree, in `~/agents/shotledger/target-corpus/`, alongside a `CORPUS.md` that
+  tree, in `~/cloud/agents/shotledger/target-corpus/`, alongside a `CORPUS.md` that
   records provenance and consent status. Nothing derived from them — no image,
   no crop, no thumbnail — is in this repository.
 - **Consent for training use was not recorded when this was written.** It is,

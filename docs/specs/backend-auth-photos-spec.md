@@ -87,7 +87,7 @@ expects (field names, indexes, `onDelete` behavior).
   - `secret: env.BETTER_AUTH_SECRET` (dev-only placeholder value in
     `wrangler.jsonc`'s `vars`; **VERIFY**: production secret must be
     provisioned by the maintainer via `wrangler secret put
-BETTER_AUTH_SECRET` — never committed, lives under `~/agents/shotledger/`
+BETTER_AUTH_SECRET` — never committed, lives under `~/cloud/agents/shotledger/`
     per CLAUDE.md).
   - `emailAndPassword: { enabled: true }`.
   - `plugins: [bearer()]` — the sync/photo protocol is a mobile app, not a
