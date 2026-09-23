@@ -465,6 +465,15 @@ app.shotledger` followed by a fresh `adb install` fixed it — something
   your own Metro on it, or rebuild with `-PreactNativeDevServerPort=<port>`.
   `adb reverse` still matters for a USB-connected phone, which uses
   `localhost`.
+- **Regenerating `0000_baseline.sql` needs `expo start --clear`.** The SQL is
+  pasted into `migrations.js` by babel's `inline-import` at transform time, and
+  Metro caches that transform by `migrations.js`'s own content — which a
+  baseline regeneration does not change. Metro then keeps serving the old SQL,
+  a fresh install creates the old schema, and the first write fails with
+  `table … has no column named …`. Restart Metro with `--clear` and clear the
+  app's data (`adb shell pm clear <package>`) after any baseline change. A
+  release build bundles its JS at build time, so one built on a stale cache
+  must be rebuilt, not just reinstalled.
 - **A long-running Metro poisons its own resolution cache across a dependency
   bump.** A Metro left up over a zod upgrade served `Unable to resolve module
 ./schemas.js from .../zod/v4/classic/external.js` for a file that was
