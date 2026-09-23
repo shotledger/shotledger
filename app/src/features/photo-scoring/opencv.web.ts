@@ -7,3 +7,7 @@ export type { GeometryPipelineResult, RunGeometryOptions } from './opencv';
 export function runGeometry(): never {
   throw new Error('Photo scoring needs a native build');
 }
+
+export function rectifyFromHomography(): never {
+  throw new Error('Photo scoring needs a native build');
+}

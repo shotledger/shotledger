@@ -18,14 +18,14 @@ till knappsatsen.
 2. **Sätt hörnen.** Dra de fyra hörnhandtagen till tavelansiktets hörn. Det är
    det som låter appen räkna bort vinkeln du fotograferade ur.
 3. **Markera hålen.**
-   - **Kontrollera förslagen.** När appen själv låste på tavlan letar den också
-     efter hålen och sätter en streckad markering på varje hål den är säker på.
+   - **Kontrollera förslagen.** På 25 m precisionstavlan letar appen också
+     efter hålen — oavsett om den hittade ringarna själv eller du satte de fyra
+     punkterna — och sätter en streckad markering på varje hål den är säker på.
      Den hittar ungefär tre hål av fyra och har fel på ungefär en markering av
      tio, så se dem som ett försprång, inte ett resultat: ta bort en streckad
      markering som inte är ett hål, dra en som sitter snett och tryck på de hål
-     den missade. En streckad markering räknas precis som en du satt själv. När
-     du satte hörnen själv finns inga förslag, och på ett foto som appen inte
-     kan tolka säger den det och föreslår inga.
+     den missade. En streckad markering räknas precis som en du satt själv. På ett
+     foto som appen inte kan tolka säger den det och föreslår inga.
    - **Tryck** på ett hål för att markera det. En tryckning som hamnar inom
      någon millimeter från ett hål lägger sig på hålet, så det räcker att träffa
      nära. Där appen inte ser något hål under fingret ligger markeringen kvar

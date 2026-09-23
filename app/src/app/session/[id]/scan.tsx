@@ -37,7 +37,11 @@ import {
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
 import { transformFromCorners } from '@/features/photo-scoring/corners';
-import { isManualOnlyFace, isPhotoScoringSupported } from '@/features/photo-scoring/faces';
+import {
+  isAutoFace,
+  isManualOnlyFace,
+  isPhotoScoringSupported,
+} from '@/features/photo-scoring/faces';
 import {
   canUndo,
   createMarkState,
@@ -48,7 +52,7 @@ import {
 } from '@/features/photo-scoring/marks';
 import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
-import { runGeometry } from '@/features/photo-scoring/opencv';
+import { rectifyFromHomography, runGeometry } from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
@@ -259,6 +263,24 @@ export default function ScanScreen() {
     setNotice(null);
     setTransform(fromProjective(projective));
     setPhase('marking');
+    // Corners placed by hand still give a mm mapping, so the photo can be
+    // straightened the same way an automatic lock does it — which is what
+    // lets tap-snap and the hole detector help on a close-up too. Only on the
+    // face they were measured on.
+    if (geometryImage && isAutoFace(faceId)) {
+      try {
+        const rectified = rectifyFromHomography({
+          base64: geometryImage.base64,
+          toMm: projective.toMm,
+          outerRadiusMm: Math.max(...target.rings.map((ring) => ring.diameterMm / 2)),
+        });
+        setCanvas(rectified);
+        suggestHoles(rectified, target);
+      } catch (error: unknown) {
+        // Without a canvas the shooter marks by hand, as before.
+        if (__DEV__) console.warn('rectify from corners failed', error);
+      }
+    }
   }
 
   function onRetake() {

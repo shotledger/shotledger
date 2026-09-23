@@ -31,6 +31,15 @@ export function isPhotoScoringSupported(faceId: string): boolean {
   return AUTO_FACE_IDS.has(faceId) || MANUAL_ONLY_FACE_IDS.has(faceId);
 }
 
+/**
+ * The face the hole detector and tap-snap were measured on (a 200 mm solid
+ * black disc), so their help is offered on it — whether the photo locked by
+ * itself or its corners were placed by hand.
+ */
+export function isAutoFace(faceId: string): boolean {
+  return AUTO_FACE_IDS.has(faceId);
+}
+
 /** The face is scored from four hand-placed corners, never auto-locked. */
 export function isManualOnlyFace(faceId: string): boolean {
   return MANUAL_ONLY_FACE_IDS.has(faceId);

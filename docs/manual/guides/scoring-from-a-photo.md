@@ -18,14 +18,14 @@ the keypad.
 2. **Set the corners.** Drag the four corner handles onto the target face's
    corners. This is what lets the app undo the angle you photographed from.
 3. **Mark the holes.**
-   - **Check the suggestions.** When the app locked onto the target by itself,
-     it also looks for the holes and places a dashed mark on each one it is
+   - **Check the suggestions.** On the 25 m precision face the app also looks
+     for the holes — whether it found the rings by itself or you placed the four
+     points — and places a dashed mark on each one it is
      confident about. It finds about three holes in four and is wrong about one
      mark in ten, so treat them as a head start, not a result: delete a dashed
      mark that is not a hole, drag one that sits off, and tap any hole it
-     missed. A dashed mark scores exactly like one you placed. When you placed
-     the corners yourself there are no suggestions, and on a photo the app
-     cannot make sense of it says so and suggests none.
+     missed. A dashed mark scores exactly like one you placed. On a photo the
+     app cannot make sense of, it says so and suggests none.
    - **Tap** a hole to mark it. A tap that lands within a few millimetres of a
      hole settles onto it, so close enough is good enough. Where the app cannot
      see a hole under your finger, the mark stays exactly where you tapped.
