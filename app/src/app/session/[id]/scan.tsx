@@ -368,18 +368,10 @@ export default function ScanScreen() {
               <ThemedText type="subtitle" testID="scan-score-line">
                 {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
               </ThemedText>
-              <ThemedText
-                themeColor="textSecondary"
-                testID="scan-shot-values"
-                numberOfLines={1}
-                style={styles.shotValues}
-              >
+              <ThemedText themeColor="textSecondary" testID="scan-shot-values">
                 {line.shotValues.join(' ')}
               </ThemedText>
             </View>
-            {transform.source === 'manual' && (
-              <Chip label={t('photoScoring.manualGeometry')} style={styles.centered} />
-            )}
             <SecondaryButton
               label={t('photoScoring.undo')}
               onPress={() => dispatch({ type: 'undo' })}
@@ -388,6 +380,10 @@ export default function ScanScreen() {
               style={styles.undo}
             />
           </View>
+          {/* Its own line: beside the score it squeezed the shot values to "10 10 …". */}
+          {transform.source === 'manual' && (
+            <Chip label={t('photoScoring.manualGeometry')} style={styles.manualChip} />
+          )}
 
           {group && <GroupStats analysis={group} testIDPrefix="scan-stat" />}
 
@@ -627,11 +623,8 @@ const styles = StyleSheet.create({
   scoreLine: {
     flex: 1,
   },
-  shotValues: {
-    flexShrink: 1,
-  },
-  centered: {
-    alignSelf: 'center',
+  manualChip: {
+    alignSelf: 'flex-start',
   },
   undo: {
     paddingVertical: Spacing.two,
