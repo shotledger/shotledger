@@ -20,8 +20,10 @@ runt ett dubbelhål ser alla ut som hål vid första anblicken, och en detektor
 som gissade tyst vore sämre än ingen alls, eftersom du då skulle få rätta mer
 än du hade behövt markera.
 
-Appen letar bara efter hål när den själv låste på tavlan. När du satte hörnen
-själv har den ingen uppriktad bild att söka i, så då markerar du varje hål.
+Appen letar efter hål på 25 m precisionstavlan, den tavla detektorn mättes på.
+Det gör den oavsett om den hittade tavlan själv — på svartens kant eller på
+ringlinjerna i en närbild — eller om du satte de fyra punkterna. På alla andra
+tavlor markerar du varje hål.
 
 ## Att hjälpa den bli bättre
 

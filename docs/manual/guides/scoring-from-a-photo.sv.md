@@ -13,14 +13,16 @@ till knappsatsen.
 
 ## Så gör du
 
-1. **Fotografera tavlan.** Få med hela tavelansiktet i bild, så rakt framifrån
-   du lyckas. Det behöver inte vara helt rakt. På 25 m precisionstavlan räcker
+1. **Fotografera tavlan.** Få med tavelansiktet i bild, så rakt framifrån du
+   lyckas. Det behöver inte vara helt rakt. På 25 m precisionstavlan räcker
    en närbild av ringarna du träffade — till exempel nian och tian — så länge
    centrum är med i bild: appen hittar tavlan på ringlinjerna, så svartens
    ytterkant får ligga utanför bild.
-2. **Sätt hörnen, om appen ber om det.** När appen inte hittar tavlan själv
-   drar du de fyra hörnhandtagen till tavelansiktets hörn. Det är det som låter
-   appen räkna bort vinkeln du fotograferade ur.
+2. **Sätt fyra punkter på en ring, om appen ber om det.** När appen inte
+   hittar tavlan själv drar du de fyra handtagen dit en ring du ser korsar
+   upptill, till höger, nedtill och till vänster, och väljer den ringen under
+   **Ring du markerar**. Det är det som låter appen räkna bort vinkeln du
+   fotograferade ur.
 3. **Markera hålen.**
    - **Kontrollera förslagen.** På 25 m precisionstavlan letar appen också
      efter hålen — oavsett om den hittade ringarna själv eller du satte de fyra
@@ -59,7 +61,7 @@ till knappsatsen.
   noggrannhet än ett dunkelt foto gör.
 - Fyll bildrutan med tavlan. En tavla som upptar en fjärdedel av fotot har en
   fjärdedel av detaljerna att arbeta med.
-- Rakt framifrån är idealet men inget krav — hörnjusteringen klarar en måttlig
+- Rakt framifrån är idealet men inget krav — appen räknar bort en måttlig
   vinkel.
 
 ## Vad du får tillbaka

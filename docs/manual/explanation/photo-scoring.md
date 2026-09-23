@@ -20,9 +20,10 @@ paper around a double hole all look like holes at first glance, and a detector
 that guesses silently would be worse than none, because you would end up
 correcting more than you would have marked.
 
-The app only looks for holes when it locked onto the target by itself. When
-you placed the corners yourself it has no straightened picture to search, so
-you mark every hole.
+The app looks for holes on the 25 m precision face, which is the face the
+detector was measured on. It does so whether it found the target by itself —
+from the edge of the black, or from the ring lines of a close-up — or you
+placed the four points. On any other face you mark every hole.
 
 ## Helping it get better
 
