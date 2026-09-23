@@ -147,8 +147,18 @@ the 25 mm ring step from the radial profile's period, and fits a homography to
 the ring points. The module docstring has the details. Findings are in
 [`docs/specs/cv-closeup-lock-2026-09.md`](../../docs/specs/cv-closeup-lock-2026-09.md).
 
+It is the reference for `app/src/features/photo-scoring/closeup-lock.ts`, as
+`hole_proposals.py` is for its port: `synthetic_canvas.synthetic_closeup`
+draws integer-only close-ups the TypeScript twin reproduces, and
+`gen_closeup_lock_fixtures.py` writes the lock-step fixture from them.
+
 ```bash
 # close-ups cut from every photo the disc lock handles, plus crops whose
 # centre is out of frame, which the gate must refuse
 python eval_closeup.py --glob '<photos>/*.jpg' --out closeup.csv
+
+# regenerate the lock-step fixture after any change to the arithmetic, then
+# run prettier on it
+python gen_closeup_lock_fixtures.py > \
+    ../../app/src/features/photo-scoring/closeup-lock.fixtures.json
 ```

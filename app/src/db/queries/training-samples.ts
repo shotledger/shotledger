@@ -35,7 +35,7 @@ export interface TrainingMark {
 export interface TrainingSampleInput {
   seriesId: string;
   targetFaceId: string;
-  geometrySource: 'auto' | 'manual';
+  geometrySource: 'auto' | 'closeup' | 'manual';
   photoUri: string | null;
   marks: readonly TrainingMark[];
 }

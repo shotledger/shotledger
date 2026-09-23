@@ -14,9 +14,13 @@ the keypad.
 ## How to do it
 
 1. **Photograph the target.** Get the whole target face in frame, as square-on
-   as you can manage. It does not need to be perfectly straight.
-2. **Set the corners.** Drag the four corner handles onto the target face's
-   corners. This is what lets the app undo the angle you photographed from.
+   as you can manage. It does not need to be perfectly straight. On the 25 m
+   precision face a close-up of the rings you hit is enough — the 9 and 10, say
+   — as long as the centre is in the photo: the app finds the target from the
+   ring lines, so the edge of the black can be out of frame.
+2. **Set the corners, if asked.** When the app cannot find the target by
+   itself, drag the four corner handles onto the target face's corners. This is
+   what lets the app undo the angle you photographed from.
 3. **Mark the holes.**
    - **Check the suggestions.** On the 25 m precision face the app also looks
      for the holes — whether it found the rings by itself or you placed the four

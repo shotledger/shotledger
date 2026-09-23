@@ -91,3 +91,68 @@ export function syntheticCanvas(o: SyntheticCanvasOptions): Uint8Array {
   }
   return out;
 }
+
+export const CLOSEUP_DRAWING = {
+  /** Target units are 1/8 mm. */
+  blackR: 800,
+  /** The X at 12.5 mm, then every 25 mm to 200 mm. */
+  rings: [100, 200, 400, 600, 800, 1000, 1200, 1400, 1600],
+  lineHalf: 3,
+  holeR: 22,
+} as const;
+
+/**
+ * A photo-like close-up of the precision face's ring lines, the twin of
+ * `synthetic_closeup` in `spike/cv/synthetic_canvas.py`, for the close-up
+ * lock's fixture. `H` maps a quarter-pixel sample (4x+1 or 4x+3) to target
+ * units: (U/W, V/W). Every product stays below 2^53, so the doubles here are
+ * exact integers.
+ */
+export function syntheticCloseup(o: {
+  readonly seed: number;
+  readonly width: number;
+  readonly height: number;
+  readonly H: readonly number[];
+  /** Hole centres, target units. */
+  readonly holes: readonly (readonly [number, number])[];
+}): Uint8Array {
+  const { width, height, seed } = o;
+  const H = Array.from(o.H);
+  const rings = Array.from(CLOSEUP_DRAWING.rings);
+  const holes: number[] = [];
+  for (const hh of o.holes) holes.push(hh[0], hh[1]);
+  const black2 = CLOSEUP_DRAWING.blackR * CLOSEUP_DRAWING.blackR;
+  const hole2 = CLOSEUP_DRAWING.holeR * CLOSEUP_DRAWING.holeR;
+  const offsets = [1, 1, 3, 1, 1, 3, 3, 3];
+  const out = new Uint8Array(width * height);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      let total = 0;
+      for (let s = 0; s < 8; s += 2) {
+        const X = 4 * x + (offsets[s] as number);
+        const Y = 4 * y + (offsets[s + 1] as number);
+        const U = (H[0] as number) * X + (H[1] as number) * Y + (H[2] as number);
+        const V = (H[3] as number) * X + (H[4] as number) * Y + (H[5] as number);
+        const W = (H[6] as number) * X + (H[7] as number) * Y + (H[8] as number);
+        const r2 = U * U + V * V;
+        const w2 = W * W;
+        const inBlack = r2 <= black2 * w2;
+        let v = inBlack ? 40 : 225;
+        for (let i = 0; i < rings.length; i += 1) {
+          const lo = (rings[i] as number) - CLOSEUP_DRAWING.lineHalf;
+          const hi = (rings[i] as number) + CLOSEUP_DRAWING.lineHalf;
+          if (lo * lo * w2 <= r2 && r2 <= hi * hi * w2) v = inBlack ? 200 : 60;
+        }
+        for (let i = 0; i < holes.length; i += 2) {
+          const ex = U - (holes[i] as number) * W;
+          const ey = V - (holes[i + 1] as number) * W;
+          if (ex * ex + ey * ey <= hole2 * w2) v = inBlack ? 180 : 70;
+        }
+        total += v;
+      }
+      const v = Math.floor(total / 4) + (hash32(x, y, seed) % 7) - 3;
+      out[y * width + x] = Math.min(255, Math.max(0, v));
+    }
+  }
+  return out;
+}

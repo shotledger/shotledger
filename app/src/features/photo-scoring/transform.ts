@@ -12,6 +12,14 @@ import { imageToTargetMm, targetMmToImage } from '@shotledger/shared';
 import type { Homography, ProjectiveTransform } from './corners';
 import { applyHomography } from './corners';
 
+/** Which lock produced a transform: the black disc's edge (`auto`), the ring
+ *  lines of a close-up (`closeup`), or four hand-placed points (`manual`). */
+export type GeometrySource = 'auto' | 'closeup' | 'manual';
+
+function isGeometrySource(value: unknown): value is GeometrySource {
+  return value === 'auto' || value === 'closeup' || value === 'manual';
+}
+
 export interface TargetTransform {
   /** Image pixel -> target millimeters (origin at the center, y down). */
   readonly toMm: (p: Point) => Point;
@@ -19,7 +27,7 @@ export interface TargetTransform {
   readonly toImage: (p: Point) => Point;
   /** How the transform was obtained — surfaced in the UI, since a manually
    *  adjusted target deserves a different level of trust than a locked one. */
-  readonly source: 'auto' | 'manual';
+  readonly source: GeometrySource;
   /** The mm -> image-px matrix, when the transform is built from one. */
   readonly mmToImage?: Homography;
 }
@@ -32,11 +40,14 @@ export function fromRectification(t: RectificationTransform): TargetTransform {
   };
 }
 
-export function fromProjective(t: ProjectiveTransform): TargetTransform {
+export function fromProjective(
+  t: ProjectiveTransform,
+  source: 'closeup' | 'manual' = 'manual',
+): TargetTransform {
   return {
     toMm: (p) => applyHomography(t.toMm, p),
     toImage: (p) => applyHomography(t.toImage, p),
-    source: 'manual',
+    source,
     mmToImage: t.toImage,
   };
 }
@@ -80,7 +91,7 @@ export function homographyOf(transform: TargetTransform): Homography {
 export interface PhotoGeometry {
   readonly imageWidth: number;
   readonly imageHeight: number;
-  readonly source: 'auto' | 'manual';
+  readonly source: GeometrySource;
   /** Row-major 3x3, target-mm -> geometry-image px. */
   readonly mmToImage: Homography;
 }
@@ -118,7 +129,7 @@ export function deserializeTransform(
   if (
     !(typeof imageWidth === 'number' && imageWidth > 0) ||
     !(typeof imageHeight === 'number' && imageHeight > 0) ||
-    (source !== 'auto' && source !== 'manual') ||
+    !isGeometrySource(source) ||
     !Array.isArray(mmToImage) ||
     mmToImage.length !== 9 ||
     !mmToImage.every((v) => typeof v === 'number' && Number.isFinite(v))

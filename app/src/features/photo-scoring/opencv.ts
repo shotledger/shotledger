@@ -43,6 +43,8 @@ import {
   ThresholdTypes,
 } from 'react-native-fast-opencv';
 
+import { type CloseupLock, closeupWorkImage, lockCloseupWork, ringOffsetMm } from './closeup-lock';
+import { nativeCloseupOps } from './closeup-lock-native';
 import type { Homography } from './corners';
 import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
 import type { RectifiedCanvas } from './tap-snap';
@@ -549,4 +551,39 @@ export function rectifyFromHomography(options: {
   } finally {
     arena.releaseAll();
   }
+}
+
+export interface CloseupLockRun {
+  readonly lock: CloseupLock | null;
+  /** `discToMm`'s ring offset, measured on the same work image as the lock's. */
+  readonly discRingOffsetMm: number | null;
+}
+
+/**
+ * The close-up lock (closeup-lock.ts) on the geometry image, with OpenCV doing
+ * its image-wide operations. Given the disc lock's image px -> mm mapping,
+ * also holds that to the same ring-offset yardstick, so the two can be
+ * compared.
+ */
+export function runCloseupLock(options: {
+  readonly base64: string;
+  readonly discToMm?: Homography;
+}): CloseupLockRun {
+  const arena = new Arena();
+  let gray: { data: Uint8Array; width: number; height: number };
+  try {
+    const src = arena.keep(MatClass.createFromBase64(options.base64));
+    const mat = arena.dst();
+    OpenCV.cvtColor(src, mat, ColorConversionCodes.COLOR_BGR2GRAY);
+    const { buffer, rows, cols } = mat.toBuffer('uint8');
+    // Copied: the view points at native memory that releaseAll frees.
+    gray = { data: Uint8Array.from(buffer), width: cols, height: rows };
+  } finally {
+    arena.releaseAll();
+  }
+  const work = closeupWorkImage(gray, nativeCloseupOps);
+  return {
+    lock: lockCloseupWork(work, nativeCloseupOps),
+    discRingOffsetMm: options.discToMm ? ringOffsetMm(work, options.discToMm) : null,
+  };
 }

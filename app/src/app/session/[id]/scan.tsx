@@ -36,7 +36,8 @@ import {
   capturePhoto,
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
-import { transformFromCorners } from '@/features/photo-scoring/corners';
+import { type CloseupLock, chooseLock } from '@/features/photo-scoring/closeup-lock';
+import { type Homography, transformFromCorners } from '@/features/photo-scoring/corners';
 import {
   isAutoFace,
   isManualOnlyFace,
@@ -52,15 +53,26 @@ import {
 } from '@/features/photo-scoring/marks';
 import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
-import { rectifyFromHomography, runGeometry } from '@/features/photo-scoring/opencv';
+import {
+  type GeometryPipelineResult,
+  rectifyFromHomography,
+  runCloseupLock,
+  runGeometry,
+} from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
   fromProjective,
   fromRectification,
+  homographyOf,
+  invertHomography,
   serializeTransform,
 } from '@/features/photo-scoring/transform';
-import { type ValidityReason, checkGeometryValidity } from '@/features/photo-scoring/validity';
+import {
+  type ValidityReason,
+  type ValidityResult,
+  checkGeometryValidity,
+} from '@/features/photo-scoring/validity';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -152,28 +164,79 @@ export default function ScanScreen() {
         setPhase('corners');
         return;
       }
-      const result = runGeometry({
-        base64: image.base64,
-        width: image.width,
-        height: image.height,
-        referenceDiameterMm: target.referenceDiameterMm,
-        ringRadiiMm: target.rings.map((ring) => ring.diameterMm / 2),
-      });
-      const validity = checkGeometryValidity(result.metrics);
-      if (!validity.valid) {
-        setReasons(validity.reasons);
-        setPhase('rejected');
+      let disc: { result: GeometryPipelineResult; validity: ValidityResult } | null = null;
+      try {
+        const result = runGeometry({
+          base64: image.base64,
+          width: image.width,
+          height: image.height,
+          referenceDiameterMm: target.referenceDiameterMm,
+          ringRadiiMm: target.rings.map((ring) => ring.diameterMm / 2),
+        });
+        disc = { result, validity: checkGeometryValidity(result.metrics) };
+      } catch {
+        // A pipeline throw ("no dark region found") is the same product
+        // outcome as a failed gate: the disc lock could not lock the target.
+      }
+      const discTransform = disc?.validity.valid ? fromRectification(disc.result.transform) : null;
+
+      // A close-up of the inner rings has no disc edge to lock on, but its
+      // ring lines lock it; when both locks pass, the one that sits closer to
+      // the printed lines wins (docs/specs/cv-closeup-lock-2026-09.md).
+      let closeup: CloseupLock | null = null;
+      let discOffsetMm: number | null = null;
+      if (isAutoFace(faceId)) {
+        try {
+          const run = runCloseupLock({
+            base64: image.base64,
+            discToMm: (discTransform && invertHomography(homographyOf(discTransform))) ?? undefined,
+          });
+          closeup = run.lock;
+          discOffsetMm = run.discRingOffsetMm;
+        } catch (error: unknown) {
+          if (__DEV__) console.warn('close-up lock failed', error);
+        }
+      }
+
+      const choice = chooseLock({ discPasses: discTransform !== null, discOffsetMm, closeup });
+      if (choice === 'disc' && disc && discTransform) {
+        setTransform(discTransform);
+        setCanvas(disc.result.canvas);
+        setPhase('marking');
+        suggestHoles(disc.result.canvas, target);
         return;
       }
-      setTransform(fromRectification(result.transform));
-      setCanvas(result.canvas);
-      setPhase('marking');
-      suggestHoles(result.canvas, target);
+      const toImage = closeup && invertHomography(closeup.toMm);
+      if (choice === 'closeup' && closeup && toImage) {
+        setTransform(fromProjective({ toMm: closeup.toMm, toImage }, 'closeup'));
+        setPhase('marking');
+        straighten(image.base64, closeup.toMm, target);
+        return;
+      }
+      setReasons(disc ? disc.validity.reasons : ['zoneContrast']);
+      setPhase('rejected');
     } catch {
-      // A pipeline throw ("no dark region found") is the same product
-      // outcome as a failed gate: we could not lock the target.
       setReasons(['zoneContrast']);
       setPhase('rejected');
+    }
+  }
+
+  /**
+   * The rectified canvas from a projective mm mapping — a close-up lock or
+   * corners placed by hand — so tap-snap and the hole detector help as they
+   * do on a disc lock. Without it the shooter marks by hand.
+   */
+  function straighten(base64: string, toMm: Homography, face: NonNullable<typeof target>) {
+    try {
+      const rectified = rectifyFromHomography({
+        base64,
+        toMm,
+        outerRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
+      });
+      setCanvas(rectified);
+      suggestHoles(rectified, face);
+    } catch (error: unknown) {
+      if (__DEV__) console.warn('rectify from homography failed', error);
     }
   }
 
@@ -182,8 +245,7 @@ export default function ScanScreen() {
    * as suggested marks. The whole-canvas maps go to OpenCV and the rest runs
    * in yielding batches, so the marking screen paints and takes taps while it
    * works — the reducer skips a proposal that lands on a mark the shooter
-   * placed meanwhile. Only the automatic path has a canvas; corners placed by
-   * hand give no rectified pixels to search.
+   * placed meanwhile.
    */
   function suggestHoles(rectified: RectifiedCanvas, face: NonNullable<typeof target>) {
     const run = (proposalRun.current += 1);
@@ -264,22 +326,10 @@ export default function ScanScreen() {
     setTransform(fromProjective(projective));
     setPhase('marking');
     // Corners placed by hand still give a mm mapping, so the photo can be
-    // straightened the same way an automatic lock does it — which is what
-    // lets tap-snap and the hole detector help on a close-up too. Only on the
-    // face they were measured on.
+    // straightened too. Only on the face tap-snap and the detector were
+    // measured on.
     if (geometryImage && isAutoFace(faceId)) {
-      try {
-        const rectified = rectifyFromHomography({
-          base64: geometryImage.base64,
-          toMm: projective.toMm,
-          outerRadiusMm: Math.max(...target.rings.map((ring) => ring.diameterMm / 2)),
-        });
-        setCanvas(rectified);
-        suggestHoles(rectified, target);
-      } catch (error: unknown) {
-        // Without a canvas the shooter marks by hand, as before.
-        if (__DEV__) console.warn('rectify from corners failed', error);
-      }
+      straighten(geometryImage.base64, projective.toMm, target);
     }
   }
 

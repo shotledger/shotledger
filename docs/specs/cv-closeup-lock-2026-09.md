@@ -71,6 +71,12 @@ inspected were the disc lock's errors:
 
 It runs in about 0.8 s per photo in Python.
 
+The reference was then made portable for the app's port: the centre vote at
+512 px with a full-resolution pass in a window around its peak, and a
+hand-written robust least squares in place of scipy's. Re-run on the 38 photos
+of one corpus, no crop size did worse than before, and the gate still refused
+every crop whose centre was out of frame; about 0.6 s per photo.
+
 The lock is not meant for full photos, and on those it passes its gate on
 only 19 of 99. Where it does pass, it sat closer to the printed lines than the
 disc lock on 17.

@@ -159,6 +159,14 @@ describe('serializeTransform / deserializeTransform', () => {
     expectSameMapping(original, parsed.transform);
   });
 
+  it('round-trips a close-up lock and records it as one', () => {
+    const original = fromProjective(transformFromCorners(tiltedCorners, TARGET)!, 'closeup');
+    const parsed = deserializeTransform(serializeTransform(original, 1000, 1000))!;
+    expect(parsed.geometry.source).toBe('closeup');
+    expect(parsed.transform.source).toBe('closeup');
+    expectSameMapping(original, parsed.transform);
+  });
+
   it('is plain JSON with no version field', () => {
     const json = serializeTransform(fromRectification(tilted), 2048, 1536);
     expect(Object.keys(JSON.parse(json)).sort()).toEqual([

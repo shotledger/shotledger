@@ -338,7 +338,7 @@ export const trainingSamples = sqliteTable('training_samples', {
     .references(() => series.id),
   /** Which face the marks are in the coordinate system of. */
   targetFaceId: text('target_face_id').notNull(),
-  /** 'auto' or 'manual' — a manually cornered photo is a weaker label. */
+  /** 'auto', 'closeup' or 'manual' — a manually cornered photo is a weaker label. */
   geometrySource: text('geometry_source').notNull(),
   photoUri: text('photo_uri'),
   /** JSON array of {xMm, yMm, caliberMm, moved, calledRingLabel}. */
