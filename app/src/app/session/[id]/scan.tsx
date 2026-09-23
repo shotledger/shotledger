@@ -37,6 +37,7 @@ import {
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
 import { transformFromCorners } from '@/features/photo-scoring/corners';
+import { isManualOnlyFace, isPhotoScoringSupported } from '@/features/photo-scoring/faces';
 import {
   canUndo,
   createMarkState,
@@ -61,39 +62,6 @@ import { Radius, Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
 
-/**
- * Phase 1 shipped auto-geometry for the precision face only (spec §0, CV
- * spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment)
- * is added here as MANUAL-ONLY: `guess_kind` mistypes it on 8/10 photos and
- * a misdetection makes the ring scale 2.5x wrong, so the auto pipeline is
- * never attempted for it — capture goes straight to the four-corner screen.
- * Any other face still gets the "not supported" message.
- *
- * The ISSF faces join on the same rule, by what the auto pipeline was
- * actually validated against rather than by federation:
- * - `issf-25m-precision` is dimensionally the same sheet as the SPSF
- *   precision face — a 200 mm solid black disc — so it takes the auto path.
- * - `issf-25m-rapid-fire` is the same sheet as milsnabb, so it inherits
- *   milsnabb's manual-only verdict for the same measured reason.
- * - `issf-10m-air-pistol` is manual-only because nothing has measured it:
- *   its black is 59.5 mm against the validated 200 mm, and a scale that far
- *   outside the tested range is exactly where a confident wrong lock comes
- *   from.
- */
-const AUTO_FACE_IDS: ReadonlySet<string> = new Set([
-  'spsf-pistol-25m-precision',
-  'issf-25m-precision',
-]);
-const MANUAL_ONLY_FACE_IDS: ReadonlySet<string> = new Set([
-  'spsf-snabbskjutning-25m',
-  'issf-25m-rapid-fire',
-  'issf-10m-air-pistol',
-]);
-const SUPPORTED_FACE_IDS: ReadonlySet<string> = new Set([
-  ...AUTO_FACE_IDS,
-  ...MANUAL_ONLY_FACE_IDS,
-]);
-
 const REASON_KEYS: Record<ValidityReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
   zoneFraction: 'photoScoring.reasonZoneFraction',
@@ -111,8 +79,8 @@ export default function ScanScreen() {
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
   const faceId = getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '';
-  const supported = SUPPORTED_FACE_IDS.has(faceId);
-  const manualOnly = MANUAL_ONLY_FACE_IDS.has(faceId);
+  const supported = isPhotoScoringSupported(faceId);
+  const manualOnly = isManualOnlyFace(faceId);
   const target = supported ? requireTargetFace(faceId) : undefined;
 
   // Caliber comes from the session's firearm; the picker is the fallback when
@@ -273,7 +241,9 @@ export default function ScanScreen() {
   // re-render when it flips.
   const cameraAutoOpened = useRef(false);
   useEffect(() => {
-    if (cameraAutoOpened.current) return;
+    // An unsupported face shows its message straight away: a photo taken
+    // first would be thrown away.
+    if (cameraAutoOpened.current || !supported) return;
     cameraAutoOpened.current = true;
     void onCapture('camera');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on arrival

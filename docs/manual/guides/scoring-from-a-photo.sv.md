@@ -7,6 +7,10 @@ Det här är **assisterad** räkning — du markerar hålen, appen sköter geome
 [Vad fotoräkningen gör, och inte gör](../explanation/photo-scoring.sv.md)
 förklarar varför den fungerar så.
 
+Den fungerar på 25 m precisions- och snabbskjutningstavla och ISSF:s 10 m
+luftpistoltavla. För ett pass på någon annan tavla går **Lägg till serie** direkt
+till knappsatsen.
+
 ## Så gör du
 
 1. **Fotografera tavlan.** Få med hela tavelansiktet i bild, så rakt framifrån

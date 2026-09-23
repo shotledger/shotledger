@@ -1010,7 +1010,7 @@
     "permissionDenied": "Permission was refused. Allow camera and photo access to scan a target.",
     "analyzing": "Locking onto the target…",
     "unsupportedTitle": "Not Supported Yet",
-    "unsupportedBody": "Photo scoring currently works on the 25 m precision face only. This session uses {{face}}.",
+    "unsupportedBody": "Photo scoring works on the 25 m precision and rapid-fire faces and the ISSF 10 m air pistol face. This session uses {{face}}.",
     "lockFailedTitle": "Couldn't Lock the Target",
     "lockFailedBody": "The rings could not be placed reliably on this photo. Retake it straight on and well lit, or place the four corners yourself.",
     "reasonAxisRatio": "The target looks too angled or the shape found isn't round.",

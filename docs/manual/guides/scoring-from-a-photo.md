@@ -7,6 +7,10 @@ This is **assisted** scoring — you mark the holes, the app does the geometry.
 [What photo scoring does, and does not, do](../explanation/photo-scoring.md)
 explains why it works that way.
 
+It works on the 25 m precision and rapid-fire faces and the ISSF 10 m air
+pistol face. For a session on any other target, **Add Series** goes straight to
+the keypad.
+
 ## How to do it
 
 1. **Photograph the target.** Get the whole target face in frame, as square-on
