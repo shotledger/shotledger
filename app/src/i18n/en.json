@@ -696,7 +696,15 @@
     "scoredFromPhoto": "Scored from Photo",
     "scoredManually": "Entered Manually",
     "sighterScore": "{{score}}*",
-    "stopwatchButton": "Stopwatch"
+    "stopwatchButton": "Stopwatch",
+    "faltResultMode": "Result Mode",
+    "faltResultModeFalt": "Field",
+    "faltResultModePoangfalt": "Point field",
+    "faltResultModeHelp": "Field shooting is scored as hits in figures. Point field adds them into one sum: one point per hit and one per figure hit.",
+    "addStation": "Add Station",
+    "stations": "Stations",
+    "faltTotal": "{{hits}} hits in {{figures}} figures",
+    "poangfaltTotal": "{{points}} points"
   },
   "share": {
     "title": "Share Session",
@@ -1193,5 +1201,23 @@
     "footnote": "Svenska Skyttesportförbundet uses the ISSF rulebook for its events, so enabling it brings the ISSF disciplines with it — and adds its own national ones on top: snabbluftpistol, and the open, junior and men's classes shot at SM and DM.",
     "settingsRowTitle": "Regulations",
     "settingsRowNone": "None — only practice sessions"
+  },
+  "station": {
+    "title": "Station {{position}}",
+    "hits": "Hits",
+    "figuresHit": "Figures Hit",
+    "points": "Points",
+    "pointsMax": "Max Points",
+    "pointsTarget": "Ringed Figure",
+    "pointsHelp": "Only where the organiser designated a ringed figure. The rings decide a tie, never the result.",
+    "scratched": "Scratched",
+    "scratchedHelp": "Kept in the round and shown, but not counted — a station annulled for breaking the rules.",
+    "shootOff": "Shoot-off",
+    "shootOffHelp": "Shot to separate equal results. It decides placement, never the recorded score.",
+    "delete": "Delete Station",
+    "deleteConfirm": "Delete this station?",
+    "noStations": "No Stations Yet",
+    "noStationsBody": "Add your first station and record the hits.",
+    "save": "Save Station"
   }
 }

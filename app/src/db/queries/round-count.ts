@@ -2,20 +2,13 @@ import { eq } from 'drizzle-orm';
 
 import { series, sessions } from '../schema';
 import type { Database } from '../types';
-import { getFirearm, updateFirearm } from './firearms';
+import { listStationsForSession, softDeleteStation } from './falt';
+// Re-exported: this was defined here before a fält station needed it too.
+export { applyRoundCountDelta } from './firearm-counters';
+import { applyRoundCountDelta } from './firearm-counters';
 import { getSession, softDeleteSession, updateSession } from './sessions';
 import { listSeriesForSession, softDeleteSeries } from './series';
 import { listShotsForSeries, replaceSeriesShots, softDeleteShot, type AddShotInput } from './shots';
-
-/** Adds `delta` rounds to a firearm's lifetime and since-maintenance counters (never below zero). */
-export function applyRoundCountDelta(db: Database, firearmId: string, delta: number) {
-  const firearm = getFirearm(db, firearmId);
-  if (!firearm) return undefined;
-  return updateFirearm(db, firearmId, {
-    roundCount: Math.max(0, firearm.roundCount + delta),
-    roundsSinceMaintenance: Math.max(0, firearm.roundsSinceMaintenance + delta),
-  });
-}
 
 /**
  * Replaces a series' shots (as `replaceSeriesShots`) and keeps the linked
@@ -77,9 +70,10 @@ export function deleteSeriesAndShots(db: Database, seriesId: string) {
  * Deletes a session (swipe-to-delete on the sessions list): soft-deletes
  * every series under it via `deleteSeriesAndShots` — which already tombstones
  * each series' shots and backs the shot count out of the linked firearm's
- * round counters — then backs out the session's own unscored extra rounds
- * (spec A1 §A1.3, never a shot row) the same way, and finally soft-deletes
- * the session row itself (§3: soft-delete everywhere).
+ * round counters — does the same for a fält session's stations, then backs
+ * out the session's own unscored extra rounds (spec A1 §A1.3, never a shot
+ * row) the same way, and finally soft-deletes the session row itself (§3:
+ * soft-delete everywhere).
  */
 export function deleteSessionAndSeries(db: Database, sessionId: string) {
   const sessionRow = getSession(db, sessionId);
@@ -87,6 +81,11 @@ export function deleteSessionAndSeries(db: Database, sessionId: string) {
 
   for (const seriesRow of listSeriesForSession(db, sessionId)) {
     deleteSeriesAndShots(db, seriesRow.id);
+  }
+
+  // A fält session's rounds live on stations, not on shots.
+  for (const station of listStationsForSession(db, sessionId)) {
+    softDeleteStation(db, station.id);
   }
 
   if (sessionRow.firearmId && sessionRow.extraRounds) {

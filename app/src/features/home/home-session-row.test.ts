@@ -160,6 +160,7 @@ describe('filterSessionRowsByShape', () => {
       seriesAverage: null,
       innerTenCount: 0,
       tags: [],
+      falt: null,
       shape: 'series',
     },
     {
@@ -171,6 +172,7 @@ describe('filterSessionRowsByShape', () => {
       seriesAverage: null,
       innerTenCount: 0,
       tags: [],
+      falt: null,
       shape: 'roundsOnly',
     },
     {
@@ -182,6 +184,7 @@ describe('filterSessionRowsByShape', () => {
       seriesAverage: null,
       innerTenCount: 0,
       tags: [],
+      falt: null,
       shape: null,
     },
   ];

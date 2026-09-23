@@ -17,7 +17,7 @@ import {
   disciplinesForRegulations,
   programsForDiscipline,
   requireDiscipline,
-  ringScoringDisciplines,
+  DISCIPLINES,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
   formatShooterClass,
@@ -85,7 +85,7 @@ function defaultProgramFor(type: SessionType, disciplineId: string): string {
  * is far more likely shooting luftpistol — an ISSF definition, listed first.
  */
 function firstDisciplineFor(regulationId: string): string | undefined {
-  const available = ringScoringDisciplines(disciplinesForRegulations([regulationId]));
+  const available = disciplinesForRegulations([regulationId]);
   return (available.find((d) => d.federation !== 'generic') ?? available[0])?.id;
 }
 
@@ -174,11 +174,9 @@ export default function NewSessionScreen() {
   // Generic disciplines survive every filter (ADR 0011), so free training is
   // reachable whichever regelverk is selected — and with none enabled, the
   // unknown id filters to exactly those.
-  // Ring disciplines only: fält is registered but has no station entry UI
-  // yet (#315), so offering it would create a session nobody can score.
-  const availableDisciplines = ringScoringDisciplines(disciplinesForRegulations([regulationId]));
+  const availableDisciplines = disciplinesForRegulations([regulationId]);
   const disciplineIdInitial =
-    firstDisciplineFor(regulationId) ?? ringScoringDisciplines()[0]?.id ?? 'spsf-precision';
+    firstDisciplineFor(regulationId) ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(() =>
     defaultProgramFor(type, disciplineIdInitial),
@@ -199,6 +197,9 @@ export default function NewSessionScreen() {
   const [firearmId, setFirearmId] = useState<string | null>(null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
   const [decimalScoring, setDecimalScoring] = useState(false);
+  // Vanlig fält is the default: poängfält is the rarer form, and SHB
+  // describes both over the same two numbers (D.6.11 p. 95).
+  const [faltResultMode, setFaltResultMode] = useState<'falt' | 'poangfalt'>('falt');
   const [nameOverride, setNameOverride] = useState<string | null>(null);
   const [location, setLocation] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -224,7 +225,10 @@ export default function NewSessionScreen() {
     ...eligible.filter((klass) => allClasses.includes(klass)),
     ...allClasses.filter((klass) => !eligible.includes(klass)),
   ];
-  const showDecimalToggle = kind === 'series' && decimalAllowed(discipline, program);
+  const showDecimalToggle =
+    kind === 'series' && discipline.scoring === 'rings' && decimalAllowed(discipline, program);
+  // Fält is scored in hits on figures, so it is the one place this is asked.
+  const showFaltResultMode = kind === 'series' && discipline.scoring === 'hits';
   // Only under the chosen chip: on Free Format there is nothing laid out to
   // describe.
   const programHint = program ? matchFormatHint(t, program) : null;
@@ -323,6 +327,7 @@ export default function NewSessionScreen() {
       startedAt,
       location: location.trim() === '' ? null : location.trim(),
       decimalScoring: showDecimalToggle && decimalScoring,
+      faltResultMode: showFaltResultMode ? faltResultMode : null,
     });
 
     for (const tagName of selectedTags) {
@@ -599,6 +604,26 @@ export default function NewSessionScreen() {
         </Card>
       )}
 
+      {showFaltResultMode && (
+        <Card>
+          <ThemedText type="smallBold" style={styles.headerLabel}>
+            {t('session.faltResultMode')}
+          </ThemedText>
+          <SegmentedControl
+            options={[
+              { value: 'falt', label: t('session.faltResultModeFalt') },
+              { value: 'poangfalt', label: t('session.faltResultModePoangfalt') },
+            ]}
+            value={faltResultMode}
+            onChange={(value) => setFaltResultMode(value as 'falt' | 'poangfalt')}
+            testID="falt-result-mode"
+          />
+          <ThemedText type="small" style={styles.helpText}>
+            {t('session.faltResultModeHelp')}
+          </ThemedText>
+        </Card>
+      )}
+
       {kind === 'rounds' && (
         <Card>
           <View style={styles.headerRow}>
@@ -642,6 +667,10 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
+  },
+  helpText: {
+    marginTop: Spacing.two,
+    opacity: 0.7,
   },
   switchRow: {
     flexDirection: 'row',

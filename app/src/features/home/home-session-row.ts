@@ -27,6 +27,12 @@ export interface HomeSessionRow {
   type: 'training' | 'competition';
   startedAt: string;
   total: number;
+  /**
+   * A fält session's result, when this is one: hits and figures hit over the
+   * scoring stations. `total` is meaningless there — fält has no points — so
+   * the row prints this instead (#315).
+   */
+  falt: { hits: number; figuresHit: number } | null;
   /** Mean of the session's scored series, in display points. `null` when none. */
   seriesAverage: number | null;
   /** Inner tens (Swedish: innertior) in the session's scored series. */
@@ -72,6 +78,7 @@ export function buildHomeSessionRow(
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],
+  falt: { hits: number; figuresHit: number } | null = null,
 ): HomeSessionRow {
   const average = seriesAverageTenths(sessionSeries);
   return {
@@ -80,6 +87,7 @@ export function buildHomeSessionRow(
     type: session.type,
     startedAt: session.startedAt,
     total: tenthsToScore(sessionResults(sessionSeries).totalTenths),
+    falt,
     seriesAverage: average === null ? null : tenthsToScore(average),
     innerTenCount: sessionInnerTenCount(sessionSeries),
     tags,

@@ -753,12 +753,24 @@ disciplines via PR once public.
       carries SHB's vapengrupper A, A optisk, B, C, R. The result model
       is `shared/src/scoring/falt.ts` (spec:
       `docs/specs/falt-scoring-spec.md`). The discipline is registered
-      but not offered: `ringScoringDisciplines()` filters the pickers
-      until a station entry UI exists. Still open on #315 — station
-      persistence and entry UI, WebShooter fält import, statistics and
-      personal bests for hits sessions, and the questions SHB does not
-      answer (särskjutning's effect on the score, a scratched station,
-      poängmål ring values).
+      and, since the station entry UI landed, offered — the
+      `ringScoringDisciplines()` filter on the pickers is gone.
+
+- [x] **Fält station persistence and entry** (#315 PR 1, spec:
+      `docs/specs/falt-stations-spec.md`). `falt_stations` is its own
+      table: a station cannot use `is_sighter` (no provskott, D.6.6) or
+      `is_final` (no final — a tie is shot off), so nullable columns on
+      `series` would have been dead weight both ways. A station records
+      hits, figures hit, an optional poängmål with its max, and the two
+      flags that take it out of the result — scratched (maintainer:
+      annulled for breaking SHB or SäkB) and särskjutning (placement
+      only). Both still count six rounds towards volume. The migration
+      chain is one regenerated baseline from here on, never appended to.
+      Still open on #315 — WebShooter fält import (#352), statistics and
+      personal bests for hits sessions, CSV/JSON export and the PDF log
+      (PR 2), and the SHB questions that remain unanswered (poängmål ring
+      values are settled: the arrangör chooses, so the app records the max
+      alongside the score).
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 

@@ -32,6 +32,14 @@ Kretsfältskjutning
 Militär snabbmatch
 : Military rapid fire. Series shot against a time limit.
 
+Omskjutning
+: A re-shoot of a station after a faulty target or a weapon malfunction. The
+re-shot result is the one that counts.
+
+Poängmål
+: A ringed figure on a field shooting station. Its points separate equal
+results; they are never part of the result itself.
+
 Precision
 : Precision shooting. Slow, deliberate, scored on ring value.
 
@@ -59,6 +67,10 @@ Standardmedalj
 
 Särskjutning
 : A shoot-off, to separate shooters on equal scores.
+
+Station
+: One firing point on a field shooting course — six shots at one figure, at
+one distance, in one time.
 
 Vapengrupp
 : Which firearm class you are shooting — the app calls it **Weapon Group**. See

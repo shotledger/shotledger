@@ -36,6 +36,35 @@ score, and what you shot is still worth seeing.
 That is the rule inside a session. Across sessions it changes — see
 [How sighters count](../explanation/how-sighters-count.md).
 
+## Field shooting
+
+Field shooting is not scored in rings, so it is logged in **stations** instead
+of series. Pick **Fältskjutning** as the discipline — the app keeps the Swedish name in
+English too, because that is what the rule book calls the event and the session asks one
+extra question: whether the competition is run as **field** or **point field**.
+
+Each station is six shots, and you record two numbers — hits, and how many
+figures those hits landed in. Five hits in three figures reads **5/3**: you
+missed one shot, or put two in the same figure. The session total shows
+"26 hits in 22 figures", or one sum in point field, where every hit is a point
+and every figure hit is another.
+
+Where the organiser put out a **ringed figure**, turn on _Ringed Figure_ and
+record the points you scored and what the figure was worth. There is no fixed
+ring scheme in field shooting — organisers choose — so the app asks rather
+than assumes. Those points never add to your result; they only separate two
+shooters who are otherwise equal.
+
+Two switches take a station out of the result without erasing it:
+
+- **Scratched** — the station was annulled, for a broken rule or a safety
+  breach. It stays in the round, struck through, and counts for nothing.
+- **Shoot-off** — shot to separate equal results. It decides placement, never
+  the score you recorded.
+
+Both still count the six rounds you fired towards your firearm's round counter
+and your ammunition, because you fired them.
+
 ## Reordering
 
 Series can be dragged into a different order. Press and hold a series, then

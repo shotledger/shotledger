@@ -24,9 +24,21 @@ Air Pistol / Free Pistol / Sport Pistol / Standard Pistol / Rapid Fire Pistol / 
 : Luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och
 grovpistol — ISSF:s sex pistolgrenar.
 
+Omskjutning
+: Omskjutning av en station efter måltavelfel eller vapenfel. Det omskjutna
+resultatet är det som gäller.
+
+Poängmål
+: En ringad figur på en fältstation. Poängen skiljer lika resultat; de är
+aldrig en del av resultatet.
+
 Rapid Fire Air Pistol
 : Snabbluftpistol — SvSF:s egen 10 m-gren, ingen ISSF-gren. Appen visar den
 under sitt engelska namn i grenlistan, som de andra grenarna.
+
+Särskjutning
+: Skjutning mellan lika resultat. Den avgör bara placering; resultatet du
+noterat står kvar.
 
 Sighter
 : Provserie. Appen visar dess resultat som **N/A** i stället för en siffra,
@@ -68,6 +80,10 @@ med sina tidsbegränsningar, och i precision kan en final startas.
 Fritt format
 : Valet du gör när du skjuter en gren utan fast format. Serierna behåller sin
 normala längd, men ingenting läggs ut i förväg.
+
+Station
+: En skjutplats på en fältbana — sex skott mot en figur, på ett avstånd, på
+en tid.
 
 Träning (ringad tavla)
 : Fri träning mot ringad tavla, utan förbundstillhörighet. Finns kvar oavsett

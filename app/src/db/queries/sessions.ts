@@ -38,6 +38,8 @@ export interface CreateSessionInput {
   tenCount?: number | null;
   innerTenCount?: number | null;
   decimalScoring?: boolean;
+  /** Vanlig fält or poängfält — how the competition presents the result (D.6.11 p. 95). */
+  faltResultMode?: 'falt' | 'poangfalt' | null;
   // Webshooter (integration spec §1/§A) and ShotLog CSV
   // (docs/specs/shotlog-import-spec.md §7) imports — unset for a locally
   // created session (external_source stays NULL).
@@ -75,6 +77,7 @@ export function createSession(db: Database, input: CreateSessionInput) {
     tenCount: input.tenCount ?? null,
     innerTenCount: input.innerTenCount ?? null,
     decimalScoring: input.decimalScoring ? 1 : 0,
+    faltResultMode: input.faltResultMode ?? null,
     externalSource: input.externalSource ?? null,
     externalRef: input.externalRef ?? null,
     externalSyncedAt: input.externalSyncedAt ?? null,
@@ -113,6 +116,7 @@ export function updateSession(db: Database, id: string, patch: UpdateSessionInpu
   const values: Record<string, unknown> = { ...patch, updatedAt: now };
   if ('isChampionship' in patch) values.isChampionship = patch.isChampionship ? 1 : 0;
   if ('decimalScoring' in patch) values.decimalScoring = patch.decimalScoring ? 1 : 0;
+  if ('faltResultMode' in patch) values.faltResultMode = patch.faltResultMode ?? null;
   db.update(sessions)
     .set(values)
     .where(and(eq(sessions.id, id), isNull(sessions.deletedAt)))

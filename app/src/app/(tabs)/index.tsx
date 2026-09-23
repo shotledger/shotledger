@@ -165,7 +165,12 @@ export default function HomeScreen() {
                   title={session.name}
                   subtitle={[
                     formatSessionDate(session.startedAt, i18n.language),
-                    formatSessionTotal(session.total),
+                    session.falt
+                      ? t('session.faltTotal', {
+                          hits: session.falt.hits,
+                          figures: session.falt.figuresHit,
+                        })
+                      : formatSessionTotal(session.total),
                     // Average and inner-ten count are omitted, never printed
                     // as 0/NaN, when the session has nothing scored yet
                     // (spec B-L2).
