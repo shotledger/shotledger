@@ -8,10 +8,10 @@
 // pins the two together; change one and you change both.
 //
 // Pure JS on the gray `RectifiedCanvas` that `runGeometry` already hands out,
-// like tap-snap: no OpenCV call, so it runs in a unit test and on the web.
-// The global maps run at half resolution (2 px/mm), which is what keeps a
-// 2100 px canvas affordable here; the per-candidate features read the full
-// canvas.
+// like tap-snap, so it runs in a unit test and on the web. On a device the
+// three whole-canvas operations go to OpenCV through `MapOps`
+// (hole-proposals-native.ts); the global maps run at half resolution
+// (2 px/mm), the per-candidate features read the full canvas.
 //
 // The stage:
 //  1. average 2x2 blocks -> a half-resolution canvas for the global maps
@@ -58,6 +58,8 @@ const BLOB_AREA_CLIP = 6;
 const BLOB_ELONG_CLIP = 6;
 const STRAIGHT_BINS = 18;
 const GRADIENT_EPSILON = 1e-9;
+/** The LoG maps are normalised by the MAD of every MAD_STRIDE-th pixel. */
+const MAD_STRIDE = 4;
 
 export const HOLE_PROPOSAL_FEATURE_NAMES = [
   'orient_entropy',
@@ -96,43 +98,43 @@ export type HoleProposalFeatureName = (typeof HOLE_PROPOSAL_FEATURE_NAMES)[numbe
 export type HoleProposalFeatures = Record<HoleProposalFeatureName, number>;
 
 /**
- * Fitted by `spike/cv/fit_hole_proposals.py` on 5158 candidates from the 31
+ * Fitted by `spike/cv/fit_hole_proposals.py` on 5169 candidates from the 31
  * hand-marked photos (152 holes). Raw feature scale. Lock-step with
  * `hole_proposals.WEIGHTS`.
  */
 export const HOLE_PROPOSAL_WEIGHTS: HoleProposalFeatures = {
-  orient_entropy: 4.207431,
-  hf_energy: 0.202714,
-  laplacian_var: 0.005353,
-  grad_mean: 31.630492,
-  center_deviation: 50.675011,
-  std: -100.495838,
-  in_black: 3.121016,
-  ring_dist: -0.161083,
-  r_mm: -0.033769,
-  log1: -0.25658,
-  log2: -0.4789,
-  log05: 0.036367,
-  abslog1: 0.366808,
-  scale_ratio: -0.37516,
-  rb0: -0.046608,
-  rb1: 0.105228,
-  rb2: 0.121656,
-  rb3: -0.13159,
-  rb4: 0.167836,
-  nrb0: 6.383272,
-  nrb1: 1.068962,
-  nrb2: 1.526375,
-  nrb3: 7.937397,
-  nrb4: -16.211359,
-  b_area: -0.260459,
-  b_fill: 2.761083,
-  b_elong: -0.555899,
-  b_touch: 1.138295,
-  straight: -4.06079,
-  glyph: -0.103738,
+  orient_entropy: 4.271673,
+  hf_energy: 0.182486,
+  laplacian_var: 0.006418,
+  grad_mean: 31.640295,
+  center_deviation: 49.970597,
+  std: -100.117709,
+  in_black: 3.142235,
+  ring_dist: -0.173672,
+  r_mm: -0.033935,
+  log1: -0.252405,
+  log2: -0.482507,
+  log05: 0.03612,
+  abslog1: 0.368739,
+  scale_ratio: -0.378987,
+  rb0: -0.046484,
+  rb1: 0.105095,
+  rb2: 0.128372,
+  rb3: -0.133883,
+  rb4: 0.163354,
+  nrb0: 6.324037,
+  nrb1: 1.064415,
+  nrb2: 1.034327,
+  nrb3: 8.184115,
+  nrb4: -15.963946,
+  b_area: -0.267907,
+  b_fill: 2.84421,
+  b_elong: -0.582949,
+  b_touch: 1.178402,
+  straight: -3.97232,
+  glyph: -0.089777,
 };
-export const HOLE_PROPOSAL_BIAS = -25.883165;
+export const HOLE_PROPOSAL_BIAS = -26.046342;
 /**
  * Where to cut. 0.7 measured 74% recall at 92% precision and 0.32 false
  * positives per photo over the pooled corpora, 5-fold by photo.
@@ -498,8 +500,44 @@ function ringDistanceMm(rMm: number, face: ProposalFace): number {
   return best;
 }
 
-function computeMaps(canvas: RectifiedCanvas, face: ProposalFace): Maps {
-  const half = downsample2(canvas);
+/**
+ * The three whole-canvas operations, so a device can hand them to OpenCV.
+ *
+ * Under Hermes the pure versions below cost about two minutes on a 2100 px
+ * canvas (measured on the emulator) — the same arithmetic in OpenCV is well
+ * under a second. Everything else in the stage stays in JS on both paths, so
+ * the native path differs from the reference only by what OpenCV's own
+ * `GaussianBlur`, `Laplacian`, `resize` and `dilate` compute in float64, which
+ * is the arithmetic the Python reference runs to begin with.
+ */
+export interface MapOps {
+  /** 2x2 block means, row-major, `floor(size / 2)` square. */
+  readonly halfResolution: (canvas: RectifiedCanvas) => Img;
+  /** Gaussian blur (`gaussianKernel(sigma)`, BORDER_REFLECT_101) then the
+   *  4-neighbour Laplacian. */
+  readonly blurLaplacian: (img: Img, sigma: number) => Float64Array;
+  /** Square maximum filter of the given half-size, outside the image ignored. */
+  readonly maxFilter: (
+    data: Float64Array,
+    width: number,
+    height: number,
+    radius: number,
+  ) => Float64Array;
+}
+
+/** The reference implementation, pure JS. */
+export const pureMapOps: MapOps = {
+  halfResolution: downsample2,
+  blurLaplacian: (img, sigma) =>
+    laplacian4({ data: blur(img, sigma), width: img.width, height: img.height }),
+  maxFilter,
+};
+
+/** Row-major float image, exported for the native `MapOps`. */
+export type { Img as MapImage };
+
+function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): Maps {
+  const half = ops.halfResolution(canvas);
   const { width: w, height: h } = half;
   const valid = validMask(half);
   const black = new Uint8Array(w * h);
@@ -519,13 +557,18 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace): Maps {
   }
   const dHalf = holeDiameterPx(canvas, face) / HALF;
   const sigma1 = dHalf / (2 * Math.SQRT2);
+  // The MAD over every MAD_STRIDE-th pixel in each direction of the scoring
+  // area: a 1/16 sample is statistically the same number and keeps the two
+  // exact medians affordable under Hermes.
+  const sampled: number[] = [];
+  for (let y = 0; y < h; y += MAD_STRIDE) {
+    for (let x = 0; x < w; x += MAD_STRIDE) if (inzone[y * w + x]) sampled.push(y * w + x);
+  }
   const logOf = (sigma: number): Float64Array => {
-    const lap = laplacian4({ data: blur(half, sigma), width: w, height: h });
-    let count = 0;
-    for (let i = 0; i < inzone.length; i += 1) if (inzone[i]) count += 1;
+    const lap = ops.blurLaplacian(half, sigma);
+    const count = sampled.length;
     const z = new Float64Array(count);
-    let c = 0;
-    for (let i = 0; i < inzone.length; i += 1) if (inzone[i]) z[c++] = lap[i] as number;
+    for (let i = 0; i < count; i += 1) z[i] = lap[sampled[i] as number] as number;
     const med = median(z);
     const dev = new Float64Array(count);
     for (let i = 0; i < count; i += 1) dev[i] = Math.abs((z[i] as number) - med);
@@ -536,13 +579,22 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace): Maps {
   const logs = { s1: logOf(sigma1), s2: logOf(2 * sigma1), s05: logOf(0.5 * sigma1) };
 
   // printed-glyph extent map
+  // Only the rings within reach of a pixel's whole-millimetre bucket are
+  // tested, which is at most two; the test itself is unchanged.
   const lines = new Uint8Array(w * h);
-  const total = w * h;
-  for (let k = 0; k < face.ringRadiiMm.length; k += 1) {
-    const rr = face.ringRadiiMm[k] as number;
-    for (let i = 0; i < total; i += 1) {
-      const r = rmm[i] as number;
-      if (Math.abs(r - rr) <= LINE_HALF_WIDTH_MM) lines[i] = 1;
+  const buckets: number[][] = [];
+  for (let mm = 0; mm <= Math.ceil(face.maxRadiusMm) + 1; mm += 1) {
+    buckets.push(face.ringRadiiMm.filter((rr) => Math.abs(rr - mm) <= LINE_HALF_WIDTH_MM + 1));
+  }
+  for (let i = 0; i < lines.length; i += 1) {
+    const r = rmm[i] as number;
+    const near = buckets[Math.floor(r)];
+    if (!near) continue;
+    for (let k = 0; k < near.length; k += 1) {
+      if (Math.abs(r - (near[k] as number)) <= LINE_HALF_WIDTH_MM) {
+        lines[i] = 1;
+        break;
+      }
     }
   }
   const glyph = new Float64Array(w * h);
@@ -577,17 +629,17 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace): Maps {
       if (v > (glyph[i] as number)) glyph[i] = v;
     }
   }
-  const glyphGrown = maxFilter(glyph, w, h, 1);
+  const glyphGrown = ops.maxFilter(glyph, w, h, 1);
   return { half, inzone, black, logs, glyph: glyphGrown, dHalf };
 }
 
 /** (x, y, |LoG| in MADs) at full-res px for each local maximum, raster order. */
-function findPeaks(maps: Maps): { x: number; y: number; resp: number }[] {
+function findPeaks(maps: Maps, ops: MapOps): { x: number; y: number; resp: number }[] {
   const { width: w, height: h } = maps.half;
   const resp = new Float64Array(w * h);
   for (let i = 0; i < resp.length; i += 1) resp[i] = Math.abs(maps.logs.s1[i] as number);
   const radius = Math.round(NMS_RADIUS_D * maps.dHalf);
-  const mx = maxFilter(resp, w, h, radius);
+  const mx = ops.maxFilter(resp, w, h, radius);
   const out: { x: number; y: number; resp: number }[] = [];
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {
@@ -852,11 +904,15 @@ function refineCenter(
  * Every peak with its features and probability, unfiltered — what the
  * lock-step fixture and the evaluation consume.
  */
-export function holeCandidates(canvas: RectifiedCanvas, face: ProposalFace): HoleCandidate[] {
+export function holeCandidates(
+  canvas: RectifiedCanvas,
+  face: ProposalFace,
+  ops: MapOps = pureMapOps,
+): HoleCandidate[] {
   if (canvas.size < 4 || canvas.pxPerMm <= 0) return [];
   if (canvas.data.length < canvas.size * canvas.size) return [];
-  const maps = computeMaps(canvas, face);
-  return findPeaks(maps).map((peak) => {
+  const maps = computeMaps(canvas, face, ops);
+  return findPeaks(maps, ops).map((peak) => {
     const features = featuresAt(canvas, peak.x, peak.y, maps, face);
     return { ...peak, features, probability: holeProposalProbability(features) };
   });
@@ -873,9 +929,48 @@ export function proposeHoles(
   canvas: RectifiedCanvas,
   face: ProposalFace,
   threshold = HOLE_PROPOSAL_THRESHOLD,
+  ops: MapOps = pureMapOps,
+): HoleProposal[] {
+  return selectProposals(canvas, face, holeCandidates(canvas, face, ops), threshold);
+}
+
+/**
+ * `proposeHoles` for a screen: the maps run in one go (native on a device),
+ * then the per-candidate features in batches with a yield between them, so
+ * the marking screen keeps painting and taking taps while it works.
+ */
+export async function proposeHolesAsync(
+  canvas: RectifiedCanvas,
+  face: ProposalFace,
+  options: { readonly ops?: MapOps; readonly threshold?: number; readonly batch?: number } = {},
+): Promise<HoleProposal[]> {
+  const ops = options.ops ?? pureMapOps;
+  const batch = options.batch ?? 8;
+  if (canvas.size < 4 || canvas.pxPerMm <= 0) return [];
+  if (canvas.data.length < canvas.size * canvas.size) return [];
+  const yieldToScreen = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+  await yieldToScreen();
+  const maps = computeMaps(canvas, face, ops);
+  const peaks = findPeaks(maps, ops);
+  const candidates: HoleCandidate[] = [];
+  for (let i = 0; i < peaks.length; i += batch) {
+    await yieldToScreen();
+    for (const peak of peaks.slice(i, i + batch)) {
+      const features = featuresAt(canvas, peak.x, peak.y, maps, face);
+      candidates.push({ ...peak, features, probability: holeProposalProbability(features) });
+    }
+  }
+  return selectProposals(canvas, face, candidates, options.threshold ?? HOLE_PROPOSAL_THRESHOLD);
+}
+
+function selectProposals(
+  canvas: RectifiedCanvas,
+  face: ProposalFace,
+  candidates: readonly HoleCandidate[],
+  threshold: number,
 ): HoleProposal[] {
   const d = holeDiameterPx(canvas, face);
-  const accepted = holeCandidates(canvas, face)
+  const accepted = candidates
     .filter((c) => c.probability >= threshold)
     .sort((a, b) => b.probability - a.probability);
   const kept: HoleProposal[] = [];

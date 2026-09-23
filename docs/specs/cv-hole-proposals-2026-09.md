@@ -173,12 +173,21 @@ with a `suggested` flag, which is exactly the label a re-fit needs.
 
 ## 7. Cost on the phone
 
-Pure JS on the `RectifiedCanvas` the geometry stage already holds; no native
-call. On a 2100 px canvas in Node: ~1.5 s for the global maps and ~5 ms per
-candidate (~170 on a real photo), so 2–3 s on a desktop and an estimated 5–8 s
-on a phone. It runs after the marking screen is up, behind a "Looking for
-holes…" line, and the shooter can tap meanwhile. Moving the three blurs to
-OpenCV would take most of that away if it matters in practice.
+The stage runs on the `RectifiedCanvas` the geometry stage already holds. In
+Node the pure-JS maps take ~1.5 s on a 2100 px canvas, but under Hermes on the
+emulator they took about **two minutes** — the estimate of 5–8 s was wrong by
+an order of magnitude. So the three whole-canvas operations (the 2x2
+downsample, blur-plus-Laplacian and the box maximum) go to OpenCV on a device
+(`hole-proposals-native.ts`); everything else stays in JS on both paths, and
+the per-candidate features run in yielding batches so the marking screen keeps
+painting and taking taps. The pure path remains the reference the lock-step
+fixture pins.
+
+One change to the reference came with it: the LoG maps are normalised by the
+MAD of every 4th pixel in each direction instead of every pixel, which keeps
+the two exact medians affordable. Re-measured and re-fitted: identical at the
+shipped threshold (74.3% / 91.9% / 0.32 / 10 exact), within one hole or one
+false positive at the others.
 
 ## 8. Limits
 

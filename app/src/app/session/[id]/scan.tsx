@@ -45,7 +45,8 @@ import {
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
-import { proposeHoles } from '@/features/photo-scoring/hole-proposals';
+import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
+import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
 import { runGeometry } from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
@@ -201,30 +202,38 @@ export default function ScanScreen() {
 
   /**
    * Runs the hole detector over the rectified canvas and places what it finds
-   * as suggested marks. Deferred a tick so the marking screen paints first:
-   * the stage is a few seconds of synchronous work on a phone, and the
-   * shooter can already tap while it runs — the reducer skips a proposal that
-   * lands on a mark they placed meanwhile. Only the automatic path has a
-   * canvas; corners placed by hand give no rectified pixels to search.
+   * as suggested marks. The whole-canvas maps go to OpenCV and the rest runs
+   * in yielding batches, so the marking screen paints and takes taps while it
+   * works — the reducer skips a proposal that lands on a mark the shooter
+   * placed meanwhile. Only the automatic path has a canvas; corners placed by
+   * hand give no rectified pixels to search.
    */
   function suggestHoles(rectified: RectifiedCanvas, face: NonNullable<typeof target>) {
     const run = (proposalRun.current += 1);
     setSuggested('pending');
-    setTimeout(() => {
-      if (proposalRun.current !== run) return;
-      const proposals = proposeHoles(rectified, {
+    void proposeHolesAsync(
+      rectified,
+      {
         caliberMm: markState.caliberMm,
         blackRadiusMm: face.referenceDiameterMm / 2,
         maxRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
         ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
+      },
+      { ops: nativeMapOps ?? undefined },
+    )
+      .then((proposals) => {
+        if (proposalRun.current !== run) return;
+        dispatch({
+          type: 'suggest',
+          marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
+        });
+        setSuggested(proposals.length);
+      })
+      .catch(() => {
+        // A detector failure is the same as finding nothing: the shooter
+        // marks by hand, as before this stage existed.
+        if (proposalRun.current === run) setSuggested(0);
       });
-      if (proposalRun.current !== run) return;
-      dispatch({
-        type: 'suggest',
-        marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
-      });
-      setSuggested(proposals.length);
-    }, 50);
   }
 
   async function onCapture(source: 'camera' | 'library') {

@@ -77,6 +77,8 @@ BLOB_AREA_CLIP = 6.0
 BLOB_ELONG_CLIP = 6.0
 STRAIGHT_BINS = 18
 GRADIENT_EPSILON = 1e-9
+# The LoG maps are normalised by the MAD of every MAD_STRIDE-th pixel.
+MAD_STRIDE = 4
 
 FEATURE_NAMES = (
     *HF.FEATURE_NAMES,
@@ -85,42 +87,42 @@ FEATURE_NAMES = (
     "b_area", "b_fill", "b_elong", "b_touch", "straight", "glyph",
 )
 
-# Fitted by fit_hole_proposals.py on 5158 candidates from the 31 hand-marked
+# Fitted by fit_hole_proposals.py on 5169 candidates from the 31 hand-marked
 # photos (152 holes) — see docs/specs/cv-hole-proposals-2026-09.md. Kept in
 # lock-step with HOLE_PROPOSAL_WEIGHTS in the TypeScript port.
 WEIGHTS: dict[str, float] = {
-    "orient_entropy": 4.207431,
-    "hf_energy": 0.202714,
-    "laplacian_var": 0.005353,
-    "grad_mean": 31.630492,
-    "center_deviation": 50.675011,
-    "std": -100.495838,
-    "in_black": 3.121016,
-    "ring_dist": -0.161083,
-    "r_mm": -0.033769,
-    "log1": -0.256580,
-    "log2": -0.478900,
-    "log05": 0.036367,
-    "abslog1": 0.366808,
-    "scale_ratio": -0.375160,
-    "rb0": -0.046608,
-    "rb1": 0.105228,
-    "rb2": 0.121656,
-    "rb3": -0.131590,
-    "rb4": 0.167836,
-    "nrb0": 6.383272,
-    "nrb1": 1.068962,
-    "nrb2": 1.526375,
-    "nrb3": 7.937397,
-    "nrb4": -16.211359,
-    "b_area": -0.260459,
-    "b_fill": 2.761083,
-    "b_elong": -0.555899,
-    "b_touch": 1.138295,
-    "straight": -4.060790,
-    "glyph": -0.103738,
+    "orient_entropy": 4.271673,
+    "hf_energy": 0.182486,
+    "laplacian_var": 0.006418,
+    "grad_mean": 31.640295,
+    "center_deviation": 49.970597,
+    "std": -100.117709,
+    "in_black": 3.142235,
+    "ring_dist": -0.173672,
+    "r_mm": -0.033935,
+    "log1": -0.252405,
+    "log2": -0.482507,
+    "log05": 0.036120,
+    "abslog1": 0.368739,
+    "scale_ratio": -0.378987,
+    "rb0": -0.046484,
+    "rb1": 0.105095,
+    "rb2": 0.128372,
+    "rb3": -0.133883,
+    "rb4": 0.163354,
+    "nrb0": 6.324037,
+    "nrb1": 1.064415,
+    "nrb2": 1.034327,
+    "nrb3": 8.184115,
+    "nrb4": -15.963946,
+    "b_area": -0.267907,
+    "b_fill": 2.844210,
+    "b_elong": -0.582949,
+    "b_touch": 1.178402,
+    "straight": -3.972320,
+    "glyph": -0.089777,
 }
-BIAS = -25.883165
+BIAS = -26.046342
 THRESHOLD = 0.7
 
 
@@ -247,7 +249,10 @@ def compute_maps(gray: np.ndarray, face: Face):
     logs = {}
     for name, s in (("s1", sigma1), ("s2", 2 * sigma1), ("s05", 0.5 * sigma1)):
         lap = laplacian4(blur(half, s))
-        z = lap[inzone]
+        # The MAD over every 4th pixel in each direction of the scoring area:
+        # a 1/16 sample is statistically the same number and keeps the two
+        # exact medians affordable where the port runs.
+        z = lap[::MAD_STRIDE, ::MAD_STRIDE][inzone[::MAD_STRIDE, ::MAD_STRIDE]]
         mad = median(np.abs(z - median(z))) + 1e-3
         logs[name] = lap / mad
     # printed-glyph extent map
