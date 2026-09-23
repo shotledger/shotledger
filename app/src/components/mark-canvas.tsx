@@ -515,26 +515,32 @@ export function MarkCanvas({
         </View>
       </GestureDetector>
 
+      {/* One opaque pill, so the buttons look the same over the photo and
+          over the letterbox bars. */}
       <View style={styles.zoomButtons}>
-        <ZoomButton
-          label="+"
-          accessibilityLabel={t('photoScoring.zoomIn')}
-          onPress={() => zoomBy(ZOOM_STEP)}
-          testID="canvas-zoom-in"
-        />
         <ZoomButton
           label="−"
           accessibilityLabel={t('photoScoring.zoomOut')}
           onPress={() => zoomBy(1 / ZOOM_STEP)}
           testID="canvas-zoom-out"
         />
+        <View style={styles.zoomDivider} />
+        <ZoomButton
+          label="+"
+          accessibilityLabel={t('photoScoring.zoomIn')}
+          onPress={() => zoomBy(ZOOM_STEP)}
+          testID="canvas-zoom-in"
+        />
         {zoomLevel > MIN_ZOOM + 0.01 && (
-          <ZoomButton
-            label="⤢"
-            accessibilityLabel={t('photoScoring.zoomFit')}
-            onPress={() => animateTo(clampView(frame, IDENTITY_VIEW))}
-            testID="canvas-zoom-fit"
-          />
+          <>
+            <View style={styles.zoomDivider} />
+            <ZoomButton
+              label="⤢"
+              accessibilityLabel={t('photoScoring.zoomFit')}
+              onPress={() => animateTo(clampView(frame, IDENTITY_VIEW))}
+              testID="canvas-zoom-fit"
+            />
+          </>
         )}
       </View>
     </View>
@@ -610,20 +616,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: Spacing.two,
     right: Spacing.two,
-    gap: Spacing.two,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.medium,
+    backgroundColor: '#1c1c1e',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    overflow: 'hidden',
   },
   zoomButton: {
-    width: 40,
+    width: 44,
     height: 40,
-    borderRadius: Radius.medium,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   zoomButtonPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: '#3a3a3c',
+  },
+  zoomDivider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   zoomButtonLabel: {
     color: '#ffffff',
