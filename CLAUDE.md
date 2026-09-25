@@ -70,7 +70,7 @@ sync. Android first — **all code must stay iOS-compatible**.
    artifact, a vendored C/C++ library) is invisible to that script —
    hand-edit `app/src/constants/native-licenses.ts` instead.
 3. Secrets never enter the working tree — they live under
-   `~/cloud/agents/notes/shotledger/`. Stage explicit paths only; never `git add -A`.
+   `~/cloud/agents/secrets/shotledger/`. Stage explicit paths only; never `git add -A`.
 4. Anything marked `VERIFY:` in the docs is unconfirmed — stop and ask
    the maintainer; never guess regulatory or scoring values. Look the
    value up first: the rule books are public and fetchable any time
