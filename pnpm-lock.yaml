@@ -444,8 +444,8 @@ importers:
         specifier: 5.0.1
         version: 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.1)(jsdom@20.0.3(supports-color@10.2.2))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
       wrangler:
-        specifier: 4.136.3
-        version: 4.136.3(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)
+        specifier: 4.137.0
+        version: 4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)
 
   shared:
     dependencies:
@@ -6914,6 +6914,16 @@ packages:
 
   wrangler@4.136.3:
     resolution: {integrity: sha512-L1bS8BI9xoEk3RRr5XoZn5q5k1jCRo8+37ZEEab/jsUFzE1Ea2sIBAbmP1CdwSeD6mZYmnUtR6xpi9esHIl6GA==}
+    engines: {node: '>=22.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@cloudflare/workers-types': ^5.20260921.1
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
+  wrangler@4.137.0:
+    resolution: {integrity: sha512-vq2JmxkvwOjnsMUejQwd89/EK6u1d20OMlGUVVmb55gVi2zSBKp2rvmxUiPqrSEntK8NwzpTF3DQ/S2I9/TLsg==}
     engines: {node: '>=22.0.0'}
     hasBin: true
     peerDependencies:
@@ -14330,6 +14340,24 @@ snapshots:
       '@cloudflare/workerd-windows-64': 1.20260921.1
 
   wrangler@4.136.3(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2):
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.5.0
+      '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20260921.1)
+      blake3-wasm: 2.1.5
+      esbuild: 0.28.2
+      miniflare: 5.20260921.0-alpha(@types/node@26.6.2)
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.24
+      workerd: 1.20260921.1
+    optionalDependencies:
+      '@cloudflare/workers-types': 5.20260923.1
+      fsevents: 2.3.3
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - utf-8-validate
+
+  wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20260921.1)
