@@ -10,9 +10,9 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "1.7.5",
+    "@better-auth/drizzle-adapter": "1.7.6",
     "@shotledger/shared": "workspace:*",
-    "better-auth": "1.7.5",
+    "better-auth": "1.7.6",
     "drizzle-orm": "0.45.2",
     "hono": "4.13.9"
   },
