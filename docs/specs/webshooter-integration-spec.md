@@ -278,11 +278,13 @@ omission would under-count rounds fired on the linked firearm.
 
 ### A.9 Scope enforcement
 
-- [ ] Only `spsf-precision` and `spsf-milsnabb` results are importable.
-      Fält results returned by `/results` are **listed in the review UI,
-      marked "Fält — stöds ej"**, and excluded from import — not hidden,
-      so the user understands why a competition's result count doesn't
-      match what got imported.
+- [x] `precision` and `military` import as `spsf-precision`/`spsf-milsnabb`
+      series totals. `field` and `pointfield` import as `spsf-falt` stations
+      (#352), in `falt`/`poangfalt` result mode; `mapStationResultsToFaltStations`
+      in `shared/src/integrations/webshooter/mapping.ts` holds the rules. A row
+      whose station data fails the fält input rules, or a competition with no
+      `results_type`, is **listed in the review UI and marked not importable**
+      — not hidden, so the user understands why a count does not match.
 
 ### A.10 Identity and auth
 

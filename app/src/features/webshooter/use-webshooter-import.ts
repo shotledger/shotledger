@@ -103,14 +103,14 @@ export function useWebshooterReview(competitionId: number) {
       options: { linkToSessionId?: string; applySighterRoundsForFirearmId?: string | null } = {},
     ) => {
       if (!db) return null;
-      const { disciplineId, programId } = item.candidate;
-      if (!disciplineId || !programId) {
-        // classifyResultRow already resolved these for every importable
+      const { disciplineId, programId, faltResultMode } = item.candidate;
+      if (!disciplineId) {
+        // classifyResultRow already resolved this for every importable
         // verdict (new/exact-duplicate/probable-match) — reaching here
         // means the caller tried to import a not-importable candidate.
-        throw new Error('Cannot import a candidate with no resolved discipline/program.');
+        throw new Error('Cannot import a candidate with no resolved discipline.');
       }
-      const program = { disciplineId, programId };
+      const program = { disciplineId, programId, faltResultMode };
       const result = importResultRow(
         db,
         item.row,

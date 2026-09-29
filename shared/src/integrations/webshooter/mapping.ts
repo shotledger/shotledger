@@ -65,20 +65,23 @@ export type WebshooterResultsType = 'precision' | 'field' | 'military' | 'pointf
 
 export interface DisciplineProgramIds {
   disciplineId: string;
-  programId: string;
+  /** Null for fält, which has no fixed program: a round is as many stations as the arrangör lays out. */
+  programId: string | null;
+  /** How a fält competition presents its result (SHB D.6.11 p. 95); null on a ring discipline. */
+  faltResultMode: 'falt' | 'poangfalt' | null;
 }
 
-const RESULTS_TYPE_TO_PROGRAM: Partial<
-  Record<NonNullable<WebshooterResultsType>, DisciplineProgramIds>
-> = {
-  precision: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
-  military: { disciplineId: 'spsf-milsnabb', programId: 'spsf-milsnabb' },
+const RESULTS_TYPE_TO_PROGRAM: Record<NonNullable<WebshooterResultsType>, DisciplineProgramIds> = {
+  precision: { disciplineId: 'spsf-precision', programId: 'spsf-precision', faltResultMode: null },
+  military: { disciplineId: 'spsf-milsnabb', programId: 'spsf-milsnabb', faltResultMode: null },
+  field: { disciplineId: 'spsf-falt', programId: null, faltResultMode: 'falt' },
+  pointfield: { disciplineId: 'spsf-falt', programId: null, faltResultMode: 'poangfalt' },
 };
 
-/** `null` for `field`/`pointfield`/`null` — not importable (spec §A.9). */
+/** `null` only when Webshooter reports no `results_type` at all. */
 export function mapResultsType(resultsType: WebshooterResultsType): DisciplineProgramIds | null {
   if (resultsType === null) return null;
-  return RESULTS_TYPE_TO_PROGRAM[resultsType] ?? null;
+  return RESULTS_TYPE_TO_PROGRAM[resultsType];
 }
 
 // --- §4.3 results -> series-total-without-shots -----------------------------
@@ -131,6 +134,81 @@ export function mapStationResultsToSeries(
     ...mapSection(row.results_distinguish, false, 'särskjutning', shotsPerSeries),
   ];
   return sections.map((section, index) => ({ ...section, position: index + 1 }));
+}
+
+// --- fält: results -> stations (#352) ----------------------------------------
+
+export interface MappedFaltStation {
+  position: number;
+  hits: number;
+  figuresHit: number;
+  /** A poängmål's ring points; null when the station had none. */
+  points: number | null;
+  isShootOff: boolean;
+}
+
+export type FaltStationsMappingResult =
+  { ok: true; stations: MappedFaltStation[] } | { ok: false; reason: string };
+
+const SHOTS_PER_FALT_STATION = 6;
+
+function checkFaltStation(row: StationResult): string | null {
+  const hits = row.hits as number;
+  const figuresHit = row.figure_hits;
+  if (!Number.isInteger(hits) || hits < 0 || hits > SHOTS_PER_FALT_STATION) {
+    return `hits ${hits} is outside 0-${SHOTS_PER_FALT_STATION}`;
+  }
+  if (figuresHit === null) return hits === 0 ? null : `${hits} hits but no figure count`;
+  if (!Number.isInteger(figuresHit) || figuresHit < 0 || figuresHit > hits) {
+    return `figure_hits ${figuresHit} with ${hits} hits`;
+  }
+  if (hits > 0 && figuresHit === 0) return `${hits} hits spread over 0 figures`;
+  if (row.points !== null && (!Number.isInteger(row.points) || row.points < 0)) {
+    return `points ${row.points}`;
+  }
+  return null;
+}
+
+/**
+ * One fält station per Webshooter station row, in `stations_id` order — the
+ * order every captured response already uses; neither `stations_id` nor
+ * `station_id` is a station number. Shoot-off stations follow the round,
+ * numbered on (D.6.11.3 p. 97). A row with null hits was not shot and is
+ * skipped. Any other row a station could not have produced fails the whole
+ * mapping rather than being corrected: the importer never guesses.
+ *
+ * Webshooter's `points` is a poängmål's ring points and reads 0 on a station
+ * without one, so 0 is stored as "no poängmål". A true zero on a poängmål is
+ * indistinguishable in the data, and sums are the same either way.
+ */
+export function mapStationResultsToFaltStations(row: ResultRow): FaltStationsMappingResult {
+  // No captured fält response carries finals; they would be ordinary stations.
+  const sections: { rows: readonly StationResult[]; isShootOff: boolean }[] = [
+    { rows: row.results, isShootOff: false },
+    { rows: row.results_finals, isShootOff: false },
+    { rows: row.results_distinguish, isShootOff: true },
+  ];
+  const stations: MappedFaltStation[] = [];
+  for (const section of sections) {
+    const shot = section.rows
+      .filter((station) => station.hits !== null && station.deleted_at === null)
+      .slice()
+      .sort((a, b) => a.stations_id - b.stations_id);
+    for (const station of shot) {
+      const problem = checkFaltStation(station);
+      if (problem) {
+        return { ok: false, reason: `station ${stations.length + 1}: ${problem}` };
+      }
+      stations.push({
+        position: stations.length + 1,
+        hits: station.hits as number,
+        figuresHit: station.figure_hits ?? 0,
+        points: station.points === null || station.points === 0 ? null : station.points,
+        isShootOff: section.isShootOff,
+      });
+    }
+  }
+  return { ok: true, stations };
 }
 
 // --- §4.3 official placement/medal -------------------------------------------

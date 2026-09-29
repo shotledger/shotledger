@@ -32,9 +32,14 @@ function verdictLabelKey(candidate: ReviewCandidate['candidate']): string {
     case 'probable-match':
       return 'webshooter.verdictProbableMatch';
     case 'not-importable':
-      return candidate.verdict.reason === 'field-not-supported'
-        ? 'webshooter.fieldNotSupported'
-        : 'webshooter.verdictClassMappingUnresolved';
+      switch (candidate.verdict.reason) {
+        case 'results-type-unknown':
+          return 'webshooter.resultsTypeNotSupported';
+        case 'station-data-invalid':
+          return 'webshooter.verdictStationDataInvalid';
+        case 'class-mapping-unresolved':
+          return 'webshooter.verdictClassMappingUnresolved';
+      }
   }
 }
 
