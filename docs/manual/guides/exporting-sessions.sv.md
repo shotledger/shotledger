@@ -99,6 +99,7 @@ Ett pass, en räknande serie om tre skott:
       "location": "Malmö Skyttegille",
       "notes": null,
       "decimalScoring": false,
+      "seriesLength": null,
       "extraRounds": null,
       "tags": ["träning"],
       "series": [
@@ -155,15 +156,16 @@ Ett pass, en räknande serie om tre skott:
 
 ### Att läsa fälten
 
-| Fält          | Betydelse                                                                                                                                                   |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `valueTenths` | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                       |
-| `isInnerTen`  | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                             |
-| `isSighter`   | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                       |
-| `weaponGroup` | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                              |
-| `eventId`     | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                      |
-| `firearmId`   | Vapnet i filens `firearms`-lista som passet sköts med, eller `null`.                                                                                        |
-| `firearm`     | Samma vapens fabrikat och modell som en enda sträng. Behålls bredvid id:t så att en fil vars `firearms`-lista inte rymmer det ändå säger vad som sköts med. |
+| Fält           | Betydelse                                                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `valueTenths`  | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                       |
+| `isInnerTen`   | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                             |
+| `isSighter`    | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                       |
+| `weaponGroup`  | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                              |
+| `eventId`      | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                      |
+| `seriesLength` | Skott per serie som valdes när passet skapades. `null` när hela matchen anger den, och på ett pass som inte skjuts i ringade serier.                        |
+| `firearmId`    | Vapnet i filens `firearms`-lista som passet sköts med, eller `null`.                                                                                        |
+| `firearm`      | Samma vapens fabrikat och modell som en enda sträng. Behålls bredvid id:t så att en fil vars `firearms`-lista inte rymmer det ändå säger vad som sköts med. |
 
 ### Vapen och licenser
 

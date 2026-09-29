@@ -54,6 +54,7 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   location: nullableText,
   notes: nullableText,
   decimalScoring: fc.boolean(),
+  seriesLength: fc.option(fc.integer({ min: 1, max: 10 }), { nil: null }),
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),
   tags: fc.array(textArb, { maxLength: 3 }),
   series: fc.array(seriesArb, { maxLength: 4 }),

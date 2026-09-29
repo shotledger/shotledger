@@ -381,6 +381,7 @@ export function applyImport(
         location: group.location,
         notes: group.notes,
         decimalScoring: group.decimalScoring ? 1 : 0,
+        seriesLength: group.seriesLength,
         extraRounds: group.extraRounds,
         updatedAt: now,
       };

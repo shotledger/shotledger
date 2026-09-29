@@ -25,6 +25,7 @@ import { listShotsForSeries } from '@/db/queries/shots';
 import { getFirearm } from '@/db/queries/firearms';
 import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
+import { resolveSeriesLength } from './series-length';
 
 export interface SeriesRow {
   id: string;
@@ -104,7 +105,11 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   const firearm = session.firearmId ? (getFirearm(db, session.firearmId) ?? null) : null;
   const discipline = getDiscipline(session.disciplineId);
   const program = session.programId ? (getProgram(session.programId) ?? null) : null;
-  const seriesLength = program?.shotsPerSeries ?? discipline?.defaultSeriesLength ?? 5;
+  const seriesLength = resolveSeriesLength(
+    program?.shotsPerSeries,
+    session.seriesLength,
+    discipline?.defaultSeriesLength,
+  );
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   const year = new Date(session.startedAt).getFullYear();
   const skeleton = program ? buildProgramSkeleton(program).map((e) => e.timeLimitSeconds) : [];

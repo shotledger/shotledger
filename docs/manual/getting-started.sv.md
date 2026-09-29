@@ -68,10 +68,14 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
   dig: militär snabbmatch kommer med en provserie och tolv tävlingsserier på
   10, 8 och 6 sekunder, och i precision är det finalen som hela matchen lägger
   till. Raden under valen säger vad upplägget lägger ut. **Fritt format**
-  lägger inte till något: serierna behåller grenens vanliga längd och du lägger
-  till dem efter hand. En tävling börjar på hela matchen och ett träningspass
+  lägger inte till något: du lägger till serierna efter hand, med den längd som
+  nästa rad anger. En tävling börjar på hela matchen och ett träningspass
   på fritt format; båda går att ändra. En gren utan eget fast format — Träning
   (ringad tavla) — visar ingen rad för matchupplägg alls.
+- **Skott per serie** — valfritt antal, med grenens egen längd förvald.
+  Serieinmatningen visar en ruta per skott, så femskottsserier i en gren med
+  tioskottsserier lämnar inte längre fem tomma rutor. Frågas bara på fritt
+  format: hela matchen bestämmer det redan. Det går inte att ändra i efterhand.
 - **Vapen** och, om du håller reda på det, den **ammunition** du använder. Båda
   är valfria.
 

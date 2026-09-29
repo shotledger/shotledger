@@ -28,6 +28,7 @@ const session: SessionExport = {
   location: 'Range',
   notes: null,
   decimalScoring: false,
+  seriesLength: null,
   extraRounds: 5,
   tags: ['Training'],
   series: [

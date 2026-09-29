@@ -31,6 +31,7 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     location: null,
     notes: null,
     decimalScoring: false,
+    seriesLength: null,
     extraRounds: null,
     tags: [],
     series: [],

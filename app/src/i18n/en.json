@@ -704,7 +704,9 @@
     "addStation": "Add Station",
     "stations": "Stations",
     "faltTotal": "{{hits}} hits in {{figures}} figures",
-    "poangfaltTotal": "{{points}} points"
+    "poangfaltTotal": "{{points}} points",
+    "seriesLength": "Shots per Series",
+    "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot."
   },
   "share": {
     "title": "Share Session",

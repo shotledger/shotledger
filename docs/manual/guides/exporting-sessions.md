@@ -101,6 +101,7 @@ One session, one scored series of three shots:
       "location": "Malmö Skyttegille",
       "notes": null,
       "decimalScoring": false,
+      "seriesLength": null,
       "extraRounds": null,
       "tags": ["träning"],
       "series": [
@@ -157,15 +158,16 @@ One session, one scored series of three shots:
 
 ### Reading the fields
 
-| Field         | Meaning                                                                                                                                              |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `valueTenths` | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                      |
-| `isInnerTen`  | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                           |
-| `isSighter`   | A sighting series. It carries no shots here and does not count towards a total.                                                                      |
-| `weaponGroup` | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                       |
-| `eventId`     | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                        |
-| `firearmId`   | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                |
-| `firearm`     | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with. |
+| Field          | Meaning                                                                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `valueTenths`  | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                      |
+| `isInnerTen`   | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                           |
+| `isSighter`    | A sighting series. It carries no shots here and does not count towards a total.                                                                      |
+| `weaponGroup`  | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                       |
+| `eventId`      | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                        |
+| `seriesLength` | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.          |
+| `firearmId`    | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                |
+| `firearm`      | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with. |
 
 ### Firearms and licenses
 

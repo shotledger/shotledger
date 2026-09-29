@@ -162,6 +162,19 @@
             "type": "boolean",
             "description": "Whether scores are decimal. Affects how `valueTenths` reads, never what it stores."
           },
+          "seriesLength": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shots per series chosen when the session was created. Null when a fixed format sets it instead, and on a session not scored in ring series."
+          },
           "extraRounds": {
             "anyOf": [
               {
@@ -263,6 +276,7 @@
           "location",
           "notes",
           "decimalScoring",
+          "seriesLength",
           "extraRounds",
           "tags",
           "series"

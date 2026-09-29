@@ -6,7 +6,7 @@
     "en": "Practice (Ring Target)"
   },
   "targetFace": "generic-rings",
-  "defaultSeriesLength": 10,
+  "defaultSeriesLength": 5,
   "scoring": "rings",
   "allowsDecimal": true,
   "weaponGroups": []

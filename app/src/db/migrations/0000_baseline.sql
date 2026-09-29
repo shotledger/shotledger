@@ -172,6 +172,7 @@ CREATE TABLE `sessions` (
 	`ten_count` integer,
 	`inner_ten_count` integer,
 	`decimal_scoring` integer DEFAULT 0 NOT NULL,
+	`series_length` integer,
 	`falt_result_mode` text,
 	`extra_rounds` integer,
 	`external_source` text,

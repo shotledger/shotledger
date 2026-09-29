@@ -200,6 +200,9 @@ export default function NewSessionScreen() {
   // Vanlig fält is the default: poängfält is the rarer form, and SHB
   // describes both over the same two numbers (D.6.11 p. 95).
   const [faltResultMode, setFaltResultMode] = useState<'falt' | 'poangfalt'>('falt');
+  const [seriesLengthText, setSeriesLengthText] = useState<string>(() =>
+    String(requireDiscipline(disciplineIdInitial).defaultSeriesLength),
+  );
   const [nameOverride, setNameOverride] = useState<string | null>(null);
   const [location, setLocation] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -229,6 +232,12 @@ export default function NewSessionScreen() {
     kind === 'series' && discipline.scoring === 'rings' && decimalAllowed(discipline, program);
   // Fält is scored in hits on figures, so it is the one place this is asked.
   const showFaltResultMode = kind === 'series' && discipline.scoring === 'hits';
+  // A fixed format already says how many shots a series takes (#348).
+  const showSeriesLength = kind === 'series' && discipline.scoring === 'rings' && !program;
+  // Any whole number of shots; blank or invalid falls back to the discipline's.
+  const parsedSeriesLength = Number(seriesLengthText.trim());
+  const seriesLength =
+    Number.isInteger(parsedSeriesLength) && parsedSeriesLength > 0 ? parsedSeriesLength : null;
   // Only under the chosen chip: on Free Format there is nothing laid out to
   // describe.
   const programHint = program ? matchFormatHint(t, program) : null;
@@ -275,6 +284,7 @@ export default function NewSessionScreen() {
     setWeaponGroup(null);
     setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
     setDecimalScoring(false);
+    setSeriesLengthText(String(requireDiscipline(nextId).defaultSeriesLength));
   }
 
   function onSelectRegulation(nextId: string) {
@@ -328,6 +338,7 @@ export default function NewSessionScreen() {
       location: location.trim() === '' ? null : location.trim(),
       decimalScoring: showDecimalToggle && decimalScoring,
       faltResultMode: showFaltResultMode ? faltResultMode : null,
+      seriesLength: showSeriesLength ? seriesLength : null,
     });
 
     for (const tagName of selectedTags) {
@@ -475,6 +486,28 @@ export default function NewSessionScreen() {
                 {programHint}
               </ThemedText>
             )}
+          </>
+        )}
+        {showSeriesLength && (
+          <>
+            <View style={styles.headerRow}>
+              <ThemedText type="smallBold" style={styles.headerLabel}>
+                {t('session.seriesLength')}
+              </ThemedText>
+              <InfoButton
+                title={t('session.seriesLength')}
+                body={t('session.seriesLengthHint')}
+                testID="series-length-info"
+              />
+            </View>
+            <TextField
+              value={seriesLengthText}
+              onChangeText={setSeriesLengthText}
+              keyboardType="number-pad"
+              inputMode="numeric"
+              placeholder={String(discipline.defaultSeriesLength)}
+              testID="series-length"
+            />
           </>
         )}
       </Card>

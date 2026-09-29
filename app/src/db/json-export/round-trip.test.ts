@@ -291,3 +291,28 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
     expect(listFirearms(db).map((f) => f.make)).toEqual(['Pardini']);
   });
 });
+
+it('keeps the shots per series chosen at creation across export and import', () => {
+  const db = createTestDb();
+  createSession(db, {
+    name: 'Fempass',
+    type: 'training',
+    disciplineId: 'generic-rings',
+    startedAt: '2026-09-01T18:00:00.000Z',
+    seriesLength: 5,
+  });
+  const json = buildExportJson(db, '1.0.0');
+
+  wipeEverything(db);
+  const { errors, groups } = dryRunImport(db, json);
+  expect(errors).toEqual([]);
+  applyImport(db, groups);
+
+  expect(
+    db
+      .select()
+      .from(sessions)
+      .all()
+      .map((s) => s.seriesLength),
+  ).toEqual([5]);
+});

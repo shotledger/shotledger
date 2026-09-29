@@ -175,6 +175,9 @@ export const sessions = sqliteTable('sessions', {
   tenCount: integer('ten_count'),
   innerTenCount: integer('inner_ten_count'),
   decimalScoring: integer('decimal_scoring').notNull().default(0),
+  // Shots per series chosen at creation (#348); NULL falls back to the
+  // program's, then the discipline's. Never set on a fixed-format session.
+  seriesLength: integer('series_length'),
   /**
    * How a fält competition presents and ranks its result (SHB D.6.11 p. 95):
    * vanlig fält as "antal träff i antal figurer", poängfält as one sum. The
