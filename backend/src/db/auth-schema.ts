@@ -5,15 +5,9 @@
  * @better-auth/drizzle-adapter's expected field names/indexes/onDelete
  * behavior come from the library, not a guess. Keep in lock-step with
  * `backend/migrations/0001_auth_init.sql`.
- *
- * One field is a manual patch on top of the generated output: `@better-auth/cli`
- * (latest published: 1.4.21) generates schema for an older core than the
- * pinned `better-auth@1.7.2` — the CLI's output omitted `account.issuer`,
- * which 1.7.2's runtime validates against and rejected every request with
- * `BetterAuthError: The field "issuer" does not exist ...` until added here.
  */
 import { relations, sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -55,7 +49,6 @@ export const account = sqliteTable(
   'account',
   {
     id: text('id').primaryKey(),
-    issuer: text('issuer').notNull(),
     accountId: text('account_id').notNull(),
     providerId: text('provider_id').notNull(),
     userId: text('user_id')
@@ -79,10 +72,7 @@ export const account = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [
-    uniqueIndex('account_issuer_accountId_uidx').on(table.issuer, table.accountId),
-    index('account_userId_idx').on(table.userId),
-  ],
+  (table) => [index('account_userId_idx').on(table.userId)],
 );
 
 export const verification = sqliteTable(
