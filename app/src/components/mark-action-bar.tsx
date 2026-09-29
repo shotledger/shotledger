@@ -1,5 +1,5 @@
-// The selected mark's actions, floating over the bottom of the marking canvas
-// so they are where the thumb already is rather than in a card below the fold.
+// The selected mark's actions. They take the place of the marking screen's
+// bottom bar while a mark is selected, where the thumb already is.
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type ViewProps } from 'react-native';
 

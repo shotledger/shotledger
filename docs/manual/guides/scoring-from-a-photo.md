@@ -25,8 +25,8 @@ the keypad.
 3. **Mark the holes.**
    - **Check the suggestions.** On the 25 m precision face the app also looks
      for the holes — whether it found the rings by itself or you placed the four
-     points — and places a dashed mark on each one it is
-     confident about. It finds about three holes in four and is wrong about one
+     points — and places a green, dashed mark on each one it is
+     confident about. A one-line note on the photo says how many. It finds about three holes in four and is wrong about one
      mark in ten, so treat them as a head start, not a result: delete a dashed
      mark that is not a hole, drag one that sits off, and tap any hole it
      missed. A dashed mark scores exactly like one you placed. On a photo the
@@ -35,20 +35,25 @@ the keypad.
      hole settles onto it, so close enough is good enough. Where the app cannot
      see a hole under your finger, the mark stays exactly where you tapped.
    - **Zoom** by pinching, or double-tap to zoom in on that spot; double-tap
-     again to see the whole photo. The **+**, **−** and fit buttons in the
-     corner do the same.
+     again to see the whole photo. The **−**, **+** and fit buttons in the
+     top corner do the same. They never move; fit is greyed out while the whole
+     photo is already in view.
    - **Pan** with one finger once you are zoomed in.
    - **Move** a mark by dragging it. A magnifier appears above your fingertip —
      beside it near the top of the photo — so your finger is not hiding the
      hole you are lining up with.
-   - **Tap a mark** to select it. The bar at the bottom of the photo deletes
-     it, calls it an X (inner ten), or — when the hole is within a millimetre of
-     a line — lets you pick which value it gets.
-   - **Undo** takes back the last change: an added, moved or deleted mark, an X,
-     a call on a line, or a caliber change.
+   - **Tap a mark**, or its value in the row under the score, to select it. The
+     bar at the bottom then deletes it, calls it an X (inner ten), or — when the
+     hole is within a millimetre of a line — lets you pick which value it gets.
+     **Done** puts the ordinary bar back.
+   - **Undo**, at the bottom, takes back the last change: an added, moved or
+     deleted mark, an X, a call on a line, or a caliber change.
+   - **Caliber**: the button beside Undo shows the caliber the marks are drawn
+     for, taken from the session's firearm. Tap it to pick another.
+   - **Retake** is in the **⋮** menu, for starting over with a new photo.
 4. **Check the score**, then save it to the series. Once two or more holes are
-   marked, the windage, elevation, mean radius and max spread below are shown
-   as you go.
+   marked, the windage, elevation, mean radius and max spread are shown under
+   the score as you go.
 5. **Look at it later.** The marks and the group figures stay with the photo.
    Open the photo from the series and you see the marks drawn on the target,
    with the figures below it.

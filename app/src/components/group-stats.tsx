@@ -63,7 +63,8 @@ export function GroupStats({
         <ThemedText type="smallBold" numberOfLines={1} adjustsFontSizeToFit>
           {f.value}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+        {/* Two lines, not one: a quarter of a phone is too narrow for "Mean Radius". */}
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
           {f.label}
         </ThemedText>
       </View>
