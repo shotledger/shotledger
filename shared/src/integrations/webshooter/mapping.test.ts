@@ -5,6 +5,7 @@ import {
   mapClassname,
   mapOfficialResult,
   mapResultsType,
+  mapStationResultsToFaltStations,
   mapStationResultsToSeries,
 } from './mapping';
 
@@ -43,6 +44,7 @@ describe('mapResultsType', () => {
     expect(mapResultsType('precision')).toEqual({
       disciplineId: 'spsf-precision',
       programId: 'spsf-precision',
+      faltResultMode: null,
     });
   });
 
@@ -50,11 +52,152 @@ describe('mapResultsType', () => {
     expect(mapResultsType('military')).toEqual({
       disciplineId: 'spsf-milsnabb',
       programId: 'spsf-milsnabb',
+      faltResultMode: null,
     });
   });
 
-  it.each([['field'], ['pointfield'], [null]])('returns null for out-of-scope type %p', (type) => {
-    expect(mapResultsType(type as never)).toBeNull();
+  it('maps field to spsf-falt in vanlig fält mode, with no program', () => {
+    expect(mapResultsType('field')).toEqual({
+      disciplineId: 'spsf-falt',
+      programId: null,
+      faltResultMode: 'falt',
+    });
+  });
+
+  it('maps pointfield to spsf-falt in poängfält mode, with no program', () => {
+    expect(mapResultsType('pointfield')).toEqual({
+      disciplineId: 'spsf-falt',
+      programId: null,
+      faltResultMode: 'poangfalt',
+    });
+  });
+
+  it('returns null when Webshooter reports no results type', () => {
+    expect(mapResultsType(null)).toBeNull();
+  });
+});
+
+describe('mapStationResultsToFaltStations', () => {
+  const station = (
+    stationsId: number,
+    hits: number | null,
+    figureHits: number | null,
+    points = 0,
+  ) =>
+    fixtureStationResult({
+      id: stationsId,
+      stations_id: stationsId,
+      hits,
+      figure_hits: figureHits,
+      points,
+    });
+
+  it('maps each station row to one station, in stations_id order, numbered from 1', () => {
+    const row = fixtureResultRow({
+      results: [station(12, 4, 2), station(10, 6, 3), station(11, 0, 0)],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    expect(mapStationResultsToFaltStations(row)).toEqual({
+      ok: true,
+      stations: [
+        { position: 1, hits: 6, figuresHit: 3, points: null, isShootOff: false },
+        { position: 2, hits: 0, figuresHit: 0, points: null, isShootOff: false },
+        { position: 3, hits: 4, figuresHit: 2, points: null, isShootOff: false },
+      ],
+    });
+  });
+
+  it("keeps a poängmål's ring points and reads 0 as no poängmål", () => {
+    const row = fixtureResultRow({
+      results: [station(1, 5, 3, 0), station(2, 6, 4, 27)],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    const result = mapStationResultsToFaltStations(row);
+
+    expect(result.ok && result.stations.map((s) => s.points)).toEqual([null, 27]);
+  });
+
+  it('numbers shoot-off stations on after the round and flags them', () => {
+    const row = fixtureResultRow({
+      results: [station(1, 6, 3), station(2, 5, 3)],
+      results_finals: [],
+      results_distinguish: [station(90, 4, 2)],
+    });
+
+    const result = mapStationResultsToFaltStations(row);
+
+    expect(result.ok && result.stations.map((s) => [s.position, s.isShootOff])).toEqual([
+      [1, false],
+      [2, false],
+      [3, true],
+    ]);
+  });
+
+  it('skips a station that was not shot, and a deleted one, closing up the numbering', () => {
+    const row = fixtureResultRow({
+      results: [
+        station(1, 6, 3),
+        station(2, null, null),
+        fixtureStationResult({ id: 3, stations_id: 3, hits: 2, figure_hits: 1, deleted_at: 'x' }),
+        station(4, 3, 2),
+      ],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    const result = mapStationResultsToFaltStations(row);
+
+    expect(result.ok && result.stations.map((s) => [s.position, s.hits])).toEqual([
+      [1, 6],
+      [2, 3],
+    ]);
+  });
+
+  it('accepts a station with no hits and no figure count', () => {
+    const row = fixtureResultRow({
+      results: [station(1, 0, null)],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    expect(mapStationResultsToFaltStations(row)).toEqual({
+      ok: true,
+      stations: [{ position: 1, hits: 0, figuresHit: 0, points: null, isShootOff: false }],
+    });
+  });
+
+  it.each([
+    ['hits above six', station(1, 7, 3), 'station 1: hits 7 is outside 0-6'],
+    ['negative hits', station(1, -1, 0), 'station 1: hits -1 is outside 0-6'],
+    ['more figures than hits', station(1, 2, 3), 'station 1: figure_hits 3 with 2 hits'],
+    ['hits on no figure', station(1, 4, 0), 'station 1: 4 hits spread over 0 figures'],
+    ['hits with no figure count', station(1, 4, null), 'station 1: 4 hits but no figure count'],
+    ['negative points', station(1, 4, 2, -3), 'station 1: points -3'],
+  ])('fails soft on %s rather than correcting it', (_label, bad, reason) => {
+    const row = fixtureResultRow({
+      results: [bad],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    expect(mapStationResultsToFaltStations(row)).toEqual({ ok: false, reason });
+  });
+
+  it('names the station by its position among the shot ones', () => {
+    const row = fixtureResultRow({
+      results: [station(1, 6, 3), station(2, null, null), station(3, 9, 3)],
+      results_finals: [],
+      results_distinguish: [],
+    });
+
+    expect(mapStationResultsToFaltStations(row)).toEqual({
+      ok: false,
+      reason: 'station 2: hits 9 is outside 0-6',
+    });
   });
 });
 

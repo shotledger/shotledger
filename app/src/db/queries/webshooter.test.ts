@@ -8,6 +8,7 @@ import type { ResultRow } from '@shotledger/shared/src/integrations/webshooter';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createSession, getSession, updateSession } from './sessions';
+import { faltSessionResult, listStationsForSession } from './falt';
 import { listSeriesForSession } from './series';
 import { getFirearm, createFirearm } from './firearms';
 import { cacheManualClassMapping, classifyResultRow, importResultRow } from './webshooter';
@@ -19,6 +20,36 @@ beforeEach(() => {
 });
 
 const COMPETITION = { name: 'KM Precision', date: '2026-05-10', resultsType: 'precision' as const };
+const PRECISION = {
+  disciplineId: 'spsf-precision',
+  programId: 'spsf-precision',
+  faltResultMode: null,
+};
+const FALT = { disciplineId: 'spsf-falt', programId: null, faltResultMode: 'falt' as const };
+const FALT_COMPETITION = {
+  name: 'Fältskjutning',
+  date: '2026-05-17',
+  resultsType: 'field' as const,
+};
+
+/** A three-station fält round plus one shoot-off station, all synthetic. */
+function faltRow(overrides: Partial<ResultRow> = {}): ResultRow {
+  return resultRow({
+    figure_hits: 8,
+    hits: 15,
+    points: 27,
+    results: [
+      station({ id: 11, stations_id: 11, hits: 6, figure_hits: 3, points: 0 }),
+      station({ id: 12, stations_id: 12, hits: 5, figure_hits: 3, points: 27 }),
+      station({ id: 13, stations_id: 13, hits: 4, figure_hits: 2, points: 0 }),
+    ],
+    results_finals: [],
+    results_distinguish: [
+      station({ id: 90, stations_id: 90, distinguish: 1, hits: 3, figure_hits: 2, points: 0 }),
+    ],
+    ...overrides,
+  });
+}
 
 function station(
   overrides: Partial<ResultRow['results'][number]> = {},
@@ -122,15 +153,39 @@ describe('classifyResultRow', () => {
     expect(candidate.weaponGroup).toBe('spsf:A-opt');
   });
 
-  it('is not-importable (field-not-supported) for a fält competition (§A.9)', () => {
-    const candidate = classifyResultRow(db, resultRow(), { ...COMPETITION, resultsType: 'field' });
-    expect(candidate.verdict).toEqual({ kind: 'not-importable', reason: 'field-not-supported' });
+  it('is not-importable when Webshooter reports no results type', () => {
+    const candidate = classifyResultRow(db, resultRow(), { ...COMPETITION, resultsType: null });
+    expect(candidate.verdict).toEqual({ kind: 'not-importable', reason: 'results-type-unknown' });
+  });
+
+  it('is new for a fält competition, resolved to spsf-falt with no program (#352)', () => {
+    const candidate = classifyResultRow(db, faltRow(), FALT_COMPETITION);
+    expect(candidate.verdict).toEqual({ kind: 'new' });
+    expect(candidate).toMatchObject({
+      disciplineId: 'spsf-falt',
+      programId: null,
+      faltResultMode: 'falt',
+    });
+  });
+
+  it('resolves a poängfält competition to poängfält mode', () => {
+    const candidate = classifyResultRow(db, faltRow(), {
+      ...FALT_COMPETITION,
+      resultsType: 'pointfield',
+    });
+    expect(candidate.faltResultMode).toBe('poangfalt');
+  });
+
+  it('is not-importable when a fält station could not have happened', () => {
+    const row = faltRow({ results: [station({ hits: 7, figure_hits: 3 })] });
+    const candidate = classifyResultRow(db, row, FALT_COMPETITION);
+    expect(candidate.verdict).toEqual({ kind: 'not-importable', reason: 'station-data-invalid' });
   });
 
   it('is exact-duplicate when a session already carries this external_ref', () => {
     const row = resultRow();
     importResultRow(db, row, COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     const candidate = classifyResultRow(db, row, COMPETITION);
     expect(candidate.verdict.kind).toBe('exact-duplicate');
@@ -153,7 +208,7 @@ describe('classifyResultRow', () => {
 describe('importResultRow — fresh import', () => {
   it('creates a competition session with override series and the official result (§A.4/§A.5)', () => {
     const { sessionId, created } = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     expect(created).toBe(true);
 
@@ -178,7 +233,7 @@ describe('importResultRow — fresh import', () => {
       results_distinguish: [station({ stations_id: 1, distinguish: 1, points: 10 })],
     });
     const { sessionId } = importResultRow(db, row, COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     const seriesRows = listSeriesForSession(db, sessionId);
     const finalSeries = seriesRows.find((s) => s.isFinal === 1);
@@ -190,7 +245,7 @@ describe('importResultRow — fresh import', () => {
   it('does not adjust extra_rounds by default (§A.7 default unchecked)', () => {
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     expect(getSession(db, sessionId)?.extraRounds ?? null).toBeNull();
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(0);
@@ -199,7 +254,7 @@ describe('importResultRow — fresh import', () => {
   it('applies +5 sighter rounds per round when confirmed (§A.7)', () => {
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       applySighterRoundsForFirearmId: firearm.id,
     });
     // No final section -> 1 round -> +5.
@@ -209,7 +264,7 @@ describe('importResultRow — fresh import', () => {
   it('assigns the chosen firearm and moves its round counter (§A.7 — a fresh import has no firearmId yet)', () => {
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       applySighterRoundsForFirearmId: firearm.id,
     });
     expect(getSession(db, sessionId)?.firearmId).toBe(firearm.id);
@@ -220,13 +275,13 @@ describe('importResultRow — fresh import', () => {
     const original = createFirearm(db, { make: 'Original', model: 'Gun' });
     const other = createFirearm(db, { make: 'Other', model: 'Gun' });
     const first = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     // Local enrichment before any sighter-rounds confirmation.
     updateSession(db, first.sessionId, { firearmId: original.id });
 
     importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       linkToSessionId: first.sessionId,
       applySighterRoundsForFirearmId: other.id,
     });
@@ -240,7 +295,7 @@ describe('importResultRow — fresh import', () => {
     const row = resultRow({ results_finals: [station({ stations_id: 1, finals: 1, points: 50 })] });
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, row, COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       applySighterRoundsForFirearmId: firearm.id,
     });
     expect(getSession(db, sessionId)?.extraRounds).toBe(10);
@@ -258,7 +313,7 @@ describe('importResultRow — confirmed heuristic link (§A.2)', () => {
       startedAt: '2026-05-10T08:00:00.000Z',
     });
     const { sessionId, created } = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       linkToSessionId: manual.id,
     });
     expect(created).toBe(false);
@@ -271,7 +326,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
   it('overwrites score fields but never clobbers an existing enrichment value', () => {
     const firearm = createFirearm(db, { make: 'Original', model: 'Firearm' });
     const first = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     // Local enrichment added after import.
     updateSession(db, first.sessionId, { firearmId: firearm.id, notes: 'My notes' });
@@ -279,7 +334,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
     // Upstream correction: placement improves, medal upgrades.
     const corrected = resultRow({ placement: 1, std_medal: null });
     const { sessionId, created } = importResultRow(db, corrected, COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       linkToSessionId: first.sessionId,
     });
 
@@ -299,11 +354,11 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
 
   it('overwrites the competition date on re-import (score-bearing per §A.3)', () => {
     const first = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     const corrected = { ...COMPETITION, date: '2026-05-11' };
     importResultRow(db, resultRow(), corrected, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       linkToSessionId: first.sessionId,
     });
     expect(getSession(db, first.sessionId)?.startedAt.slice(0, 10)).toBe('2026-05-11');
@@ -311,7 +366,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
 
   it('never clobbers enrichment fields that were empty and then locally filled between two re-imports', () => {
     const first = importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
     });
     expect(getSession(db, first.sessionId)?.notes ?? null).toBeNull();
 
@@ -319,9 +374,73 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
     updateSession(db, first.sessionId, { firearmId: firearm.id });
 
     importResultRow(db, resultRow(), COMPETITION, {
-      program: { disciplineId: 'spsf-precision', programId: 'spsf-precision' },
+      program: PRECISION,
       linkToSessionId: first.sessionId,
     });
     expect(getSession(db, first.sessionId)?.firearmId).toBe(firearm.id);
+  });
+});
+
+describe('importResultRow — fält (#352)', () => {
+  it('creates a fält session with one station per Webshooter station and no series', () => {
+    const { sessionId } = importResultRow(db, faltRow(), FALT_COMPETITION, { program: FALT });
+
+    const session = getSession(db, sessionId);
+    expect(session).toMatchObject({
+      disciplineId: 'spsf-falt',
+      programId: null,
+      faltResultMode: 'falt',
+      officialPlacement: 3,
+    });
+    expect(listSeriesForSession(db, sessionId)).toEqual([]);
+    expect(
+      listStationsForSession(db, sessionId).map((s) => [
+        s.position,
+        s.hits,
+        s.figuresHit,
+        s.points,
+        s.isShootOff,
+      ]),
+    ).toEqual([
+      [1, 6, 3, null, 0],
+      [2, 5, 3, 27, 0],
+      [3, 4, 2, null, 0],
+      [4, 3, 2, null, 1],
+    ]);
+  });
+
+  it('gives the same round total Webshooter reports, with the shoot-off left out', () => {
+    const { sessionId } = importResultRow(db, faltRow(), FALT_COMPETITION, { program: FALT });
+
+    expect(faltSessionResult(db, sessionId)).toMatchObject({
+      hits: 15,
+      figuresHit: 8,
+      ringedFigurePoints: 27,
+    });
+  });
+
+  it('rewrites the stations on re-import instead of adding a second set', () => {
+    const first = importResultRow(db, faltRow(), FALT_COMPETITION, { program: FALT });
+    const corrected = faltRow({
+      results: [station({ id: 11, stations_id: 11, hits: 6, figure_hits: 4, points: 0 })],
+      results_distinguish: [],
+    });
+
+    importResultRow(db, corrected, FALT_COMPETITION, {
+      program: FALT,
+      linkToSessionId: first.sessionId,
+    });
+
+    expect(
+      listStationsForSession(db, first.sessionId).map((s) => [s.position, s.figuresHit]),
+    ).toEqual([[1, 4]]);
+  });
+
+  it('refuses to import station data a station could not have produced', () => {
+    const row = faltRow({ results: [station({ hits: 4, figure_hits: 0 })] });
+
+    expect(() => importResultRow(db, row, FALT_COMPETITION, { program: FALT })).toThrow(
+      'Webshooter station data cannot be imported: station 1: 4 hits spread over 0 figures',
+    );
   });
 });

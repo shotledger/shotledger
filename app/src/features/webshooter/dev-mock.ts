@@ -83,15 +83,15 @@ const MOCK_UPCOMING_SIGNUP: Signup = {
   end_time: '2099-01-01 10:00:00',
 };
 
-function mockStation(stationsId: number, points: number) {
+function mockStation(stationsId: number, points: number, hits = 5, figureHits = 5) {
   return {
     id: stationsId,
     signups_id: MOCK_SIGNUP.id,
     finals: 0 as const,
     distinguish: 0 as const,
     stations_id: stationsId,
-    figure_hits: 5,
-    hits: 5,
+    figure_hits: figureHits,
+    hits,
     points,
     station_figure_hits: [1, 1, 1, 1, 1],
     deleted_at: null,
@@ -114,6 +114,30 @@ const MOCK_RESULTS: ResultRow[] = [
     results: [1, 2, 3, 4, 5, 6, 7].map((n) => mockStation(n, 47)),
     results_finals: [],
     results_distinguish: [],
+  },
+];
+
+// A fält round station by station, for competition 9002: six stations, one
+// poängmål (points), and a shoot-off station after the round.
+const MOCK_FALT_RESULTS: ResultRow[] = [
+  {
+    ...MOCK_RESULTS[0]!,
+    id: 2,
+    competitions_id: 9002,
+    placement: 5,
+    std_medal: null,
+    figure_hits: 17,
+    hits: 30,
+    points: 24,
+    results: [
+      mockStation(201, 0, 6, 3),
+      mockStation(202, 0, 5, 3),
+      mockStation(203, 24, 6, 4),
+      mockStation(204, 0, 4, 2),
+      mockStation(205, 0, 3, 2),
+      mockStation(206, 0, 6, 3),
+    ],
+    results_distinguish: [{ ...mockStation(290, 0, 4, 2), distinguish: 1 as const }],
   },
 ];
 
@@ -169,7 +193,8 @@ export function createDevMockHttpClient(): HttpClient {
         return patrolsResponseSchema.parse({ patrols }) as never;
       }
       if (/\/results$/.test(path)) {
-        return resultsResponseSchema.parse({ results: MOCK_RESULTS }) as never;
+        const results = path.includes('9002') ? MOCK_FALT_RESULTS : MOCK_RESULTS;
+        return resultsResponseSchema.parse({ results }) as never;
       }
       if (/\/signups$/.test(path)) {
         return signupsResponseSchema.parse({

@@ -11,13 +11,16 @@ import {
   mapClassname,
   mapOfficialResult,
   mapResultsType,
+  mapStationResultsToFaltStations,
   mapStationResultsToSeries,
   mergeSessionFields,
   type ClassnameMappingResult,
+  type DisciplineProgramIds,
   type ResultRow,
 } from '@shotledger/shared/src/integrations/webshooter';
 
 import type { Database } from '../types';
+import { addStation, listStationsForSession, softDeleteStation } from './falt';
 import { addSeries, listSeriesForSession, softDeleteSeries } from './series';
 import {
   createSession,
@@ -71,7 +74,10 @@ export type ImportVerdict =
   | { kind: 'new' }
   | { kind: 'exact-duplicate'; sessionId: string }
   | { kind: 'probable-match'; candidates: { id: string; eventName: string; date: string }[] }
-  | { kind: 'not-importable'; reason: 'field-not-supported' | 'class-mapping-unresolved' };
+  | {
+      kind: 'not-importable';
+      reason: 'results-type-unknown' | 'class-mapping-unresolved' | 'station-data-invalid';
+    };
 
 export interface ImportCandidate {
   externalRef: string;
@@ -81,6 +87,7 @@ export interface ImportCandidate {
   shooterClass: string | null;
   disciplineId: string | null;
   programId: string | null;
+  faltResultMode: 'falt' | 'poangfalt' | null;
   verdict: ImportVerdict;
 }
 
@@ -112,6 +119,7 @@ export function classifyResultRow(
     shooterClass: classMapping.ok ? classMapping.shooterClass : null,
     disciplineId: program?.disciplineId ?? null,
     programId: program?.programId ?? null,
+    faltResultMode: program?.faltResultMode ?? null,
   };
 
   const exact = findExactMatch(listExternalRefs(db), externalRef);
@@ -119,11 +127,13 @@ export function classifyResultRow(
     return { ...base, verdict: { kind: 'exact-duplicate', sessionId: exact.id } };
   }
 
-  // §A.9: fält is listed, never imported — checked before class mapping so
-  // the review UI can show "Fält — stöds ej" rather than a spurious mapping
-  // prompt for a competition that was never importable to begin with.
+  // Checked before class mapping, so the review UI names the real reason
+  // rather than prompting for a class mapping on a row it cannot import.
   if (!program) {
-    return { ...base, verdict: { kind: 'not-importable', reason: 'field-not-supported' } };
+    return { ...base, verdict: { kind: 'not-importable', reason: 'results-type-unknown' } };
+  }
+  if (program.faltResultMode !== null && !mapStationResultsToFaltStations(row).ok) {
+    return { ...base, verdict: { kind: 'not-importable', reason: 'station-data-invalid' } };
   }
 
   if (!classMapping.ok) {
@@ -149,21 +159,20 @@ export function classifyResultRow(
 }
 
 /**
- * §A.9 scope enforcement: only precision/milsnabb are importable. Takes
- * the competition's `results_type` (from `GET /competitions/{id}`, not on
- * the result row itself) since that is where Webshooter reports it.
+ * What a competition imports as, from its `results_type` (on
+ * `GET /competitions/{id}`, not on the result row itself). Null only when
+ * Webshooter reports no type.
  */
 export function resolveDisciplineForImport(
   resultsType: 'precision' | 'field' | 'military' | 'pointfield' | null,
-): { disciplineId: string; programId: string } | null {
+): DisciplineProgramIds | null {
   return mapResultsType(resultsType);
 }
 
 // --- §A.3/§A.4/§A.5/§A.6/§A.7 write path ---------------------------------------
 
 export interface ImportResultRowOptions {
-  /** From §A.9 — a fält competition is refused, never silently imported. */
-  program: { disciplineId: string; programId: string };
+  program: DisciplineProgramIds;
   /**
    * Set when confirming a heuristic-match link (§A.2): backfills
    * external_ref onto this existing session instead of creating a new one.
@@ -200,6 +209,20 @@ function replaceOverrideSeries(db: Database, sessionId: string, row: ResultRow) 
       totalOverrideShotCount: m.totalOverrideShotCount,
     });
   });
+}
+
+/** A fält session's stations, rewritten wholesale on re-import like override series. */
+function replaceFaltStations(db: Database, sessionId: string, row: ResultRow) {
+  const mapped = mapStationResultsToFaltStations(row);
+  if (!mapped.ok) {
+    throw new Error(`Webshooter station data cannot be imported: ${mapped.reason}`);
+  }
+  for (const existing of listStationsForSession(db, sessionId)) {
+    softDeleteStation(db, existing.id);
+  }
+  for (const station of mapped.stations) {
+    addStation(db, { sessionId, ...station });
+  }
 }
 
 const SIGHTER_ROUNDS_PER_ROUND = 5;
@@ -271,6 +294,7 @@ export function importResultRow(
       type: 'competition',
       disciplineId: options.program.disciplineId,
       programId: options.program.programId,
+      faltResultMode: options.program.faltResultMode,
       competitionName: competition.name,
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
@@ -286,7 +310,11 @@ export function importResultRow(
     created = true;
   }
 
-  replaceOverrideSeries(db, sessionId, row);
+  if (options.program.faltResultMode !== null) {
+    replaceFaltStations(db, sessionId, row);
+  } else {
+    replaceOverrideSeries(db, sessionId, row);
+  }
 
   if (options.applySighterRoundsForFirearmId) {
     const session = getSession(db, sessionId);

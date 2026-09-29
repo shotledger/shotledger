@@ -65,6 +65,14 @@ har ett resultat. Att anmäla sig är inte samma sak som att skjuta: en uteblive
 start eller ett avbrutet lopp lämnar en anmälan och ingenting att importera, så
 de erbjuds inte.
 
+Precision och milsnabb kommer in som en summa per serie; Webshooter sparar inte
+de enskilda skotten. Fältskjutning och poängfält kommer in **station för
+station** — träffar, träffade figurer och eventuella poängmålspoäng, med
+särskjutningsstationer sparade men utanför summan — och visas i den
+resultatform tävlingen använde. Ett fältresultat vars stationssiffror inte kan
+ha hänt, som sju träffar på en station, visas som ej importerbart i stället för
+att rättas.
+
 Att kontrollera det kostar en förfrågan per tävling, så appen söker igenom
 **ett år i taget**, minns vad den hittade, och söker inte om vid varje besök.
 Varje skärm visar när dess uppgifter senast hämtades, och **Uppdatera** är hur

@@ -118,7 +118,7 @@ export default function WebshooterImportBrowseScreen() {
             subtitle={[
               competition.date,
               competition.contact_city,
-              competition.alreadyImportable ? null : t('webshooter.fieldNotSupported'),
+              competition.alreadyImportable ? null : t('webshooter.resultsTypeNotSupported'),
             ]
               .filter(Boolean)
               .join(' · ')}
