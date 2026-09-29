@@ -72,7 +72,7 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
   nästa rad anger. En tävling börjar på hela matchen och ett träningspass
   på fritt format; båda går att ändra. En gren utan eget fast format — Träning
   (ringad tavla) — visar ingen rad för matchupplägg alls.
-- **Skott per serie** — 5 eller 10, med grenens egen längd förvald.
+- **Skott per serie** — valfritt antal, med grenens egen längd förvald.
   Serieinmatningen visar en ruta per skott, så femskottsserier i en gren med
   tioskottsserier lämnar inte längre fem tomma rutor. Frågas bara på fritt
   format: hela matchen bestämmer det redan. Det går inte att ändra i efterhand.

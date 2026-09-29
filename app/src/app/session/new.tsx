@@ -200,8 +200,8 @@ export default function NewSessionScreen() {
   // Vanlig fält is the default: poängfält is the rarer form, and SHB
   // describes both over the same two numbers (D.6.11 p. 95).
   const [faltResultMode, setFaltResultMode] = useState<'falt' | 'poangfalt'>('falt');
-  const [seriesLength, setSeriesLength] = useState<number>(
-    () => requireDiscipline(disciplineIdInitial).defaultSeriesLength,
+  const [seriesLengthText, setSeriesLengthText] = useState<string>(() =>
+    String(requireDiscipline(disciplineIdInitial).defaultSeriesLength),
   );
   const [nameOverride, setNameOverride] = useState<string | null>(null);
   const [location, setLocation] = useState('');
@@ -234,9 +234,10 @@ export default function NewSessionScreen() {
   const showFaltResultMode = kind === 'series' && discipline.scoring === 'hits';
   // A fixed format already says how many shots a series takes (#348).
   const showSeriesLength = kind === 'series' && discipline.scoring === 'rings' && !program;
-  const seriesLengthOptions = [...new Set([5, 10, discipline.defaultSeriesLength])].sort(
-    (a, b) => a - b,
-  );
+  // Any whole number of shots; blank or invalid falls back to the discipline's.
+  const parsedSeriesLength = Number(seriesLengthText.trim());
+  const seriesLength =
+    Number.isInteger(parsedSeriesLength) && parsedSeriesLength > 0 ? parsedSeriesLength : null;
   // Only under the chosen chip: on Free Format there is nothing laid out to
   // describe.
   const programHint = program ? matchFormatHint(t, program) : null;
@@ -283,7 +284,7 @@ export default function NewSessionScreen() {
     setWeaponGroup(null);
     setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
     setDecimalScoring(false);
-    setSeriesLength(requireDiscipline(nextId).defaultSeriesLength);
+    setSeriesLengthText(String(requireDiscipline(nextId).defaultSeriesLength));
   }
 
   function onSelectRegulation(nextId: string) {
@@ -499,13 +500,12 @@ export default function NewSessionScreen() {
                 testID="series-length-info"
               />
             </View>
-            <SegmentedControl
-              options={seriesLengthOptions.map((count) => ({
-                value: String(count),
-                label: String(count),
-              }))}
-              value={String(seriesLength)}
-              onChange={(value) => setSeriesLength(Number.parseInt(value, 10))}
+            <TextField
+              value={seriesLengthText}
+              onChangeText={setSeriesLengthText}
+              keyboardType="number-pad"
+              inputMode="numeric"
+              placeholder={String(discipline.defaultSeriesLength)}
               testID="series-length"
             />
           </>
