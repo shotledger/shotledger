@@ -123,7 +123,7 @@ What it means in practice:
   maintainer's phone with the 267 imported ShotLog sessions and any emulator
   install. **Confirmed by the maintainer, 2026-09-22:** the phone is wiped and
   the app reinstalled, then repopulated from the cleaned, improved ShotLog
-  export (`~/agents/shotledger/shotlog-migration/`, outside the tree — real
+  export (`~/cloud/agents/notes/shotledger/shotlog-migration/`, outside the tree — real
   data). They are the only user, so no other install exists and no merge-time
   decision is left open. The export/import round-trip stays covered by
   `db/json-export/round-trip.test.ts`.

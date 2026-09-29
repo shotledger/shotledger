@@ -70,7 +70,7 @@ sync. Android first — **all code must stay iOS-compatible**.
    artifact, a vendored C/C++ library) is invisible to that script —
    hand-edit `app/src/constants/native-licenses.ts` instead.
 3. Secrets never enter the working tree — they live under
-   `~/agents/shotledger/`. Stage explicit paths only; never `git add -A`.
+   `~/cloud/agents/secrets/shotledger/`. Stage explicit paths only; never `git add -A`.
 4. Anything marked `VERIFY:` in the docs is unconfirmed — stop and ask
    the maintainer; never guess regulatory or scoring values. Look the
    value up first: the rule books are public and fetchable any time
@@ -92,7 +92,7 @@ sync. Android first — **all code must stay iOS-compatible**.
    or ShotLog exports, or any other real person's data — the maintainer's
    or anyone else's — in code, fixtures, tests, docs, screenshots, or
    commit messages. Real samples the maintainer supplies stay outside the
-   working tree (e.g. `~/tmp/`, `~/agents/shotledger/`); read them to
+   working tree (e.g. `~/tmp/`, `~/cloud/agents/notes/shotledger/`); read them to
    learn the shape, then write **synthetic** fixtures. A screenshot taken
    with real data is not committable — use the `/dev` demo data.
 8. **Pre-1.0.0, a version number buys nothing — change the format in

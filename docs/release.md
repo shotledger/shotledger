@@ -55,7 +55,7 @@ deploy` is forbidden to agents; every command below is the maintainer's.
 - [ ] `wrangler secret put BETTER_AUTH_SECRET` — **never** the
       `dev-placeholder-secret-never-use-in-production` value in
       `wrangler.jsonc`'s `vars`, which exists only so the local test suite
-      can run. The real value lives under `~/agents/shotledger/`.
+      can run. The real value lives under `~/cloud/agents/secrets/shotledger/`.
 - [ ] `wrangler deploy`, then point the app at it: set
       `expo.extra.apiBaseUrl` in `app/app.json` (or
       `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to the deployed

@@ -329,7 +329,7 @@ D1 binding) — integration scenarios, one `it` per behavior:
 - N3 `app/` is untouched — verified by `git diff --stat main...HEAD -- app`
   being empty at the end of the task.
 - N4 No secret/credential enters the tree; the dev auth stub never reads
-  from `~/agents/`.
+  from `~/cloud/agents/`.
 - N5 Root `pnpm check` is not modified to include `backend/` tests (task
   instruction #5) — `backend/package.json`'s own `test` script
   (`vitest run`) is the only way to run them, unchanged in shape from the
