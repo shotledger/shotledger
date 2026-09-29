@@ -56,6 +56,8 @@ export interface SessionExport {
   location: string | null;
   notes: string | null;
   decimalScoring: boolean;
+  /** Shots per series chosen at creation; `null` means the program's or discipline's. */
+  seriesLength: number | null;
   extraRounds: number | null;
   tags: string[];
   series: SeriesExport[];
@@ -208,6 +210,15 @@ export const sessionExportSchema = z.object({
   decimalScoring: z
     .boolean()
     .describe('Whether scores are decimal. Affects how `valueTenths` reads, never what it stores.'),
+  seriesLength: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe(
+      'Shots per series chosen when the session was created. Null when a fixed format sets it ' +
+        'instead, and on a session not scored in ring series.',
+    ),
   extraRounds: z
     .number()
     .int()

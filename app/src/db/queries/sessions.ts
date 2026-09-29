@@ -38,6 +38,8 @@ export interface CreateSessionInput {
   tenCount?: number | null;
   innerTenCount?: number | null;
   decimalScoring?: boolean;
+  /** Overrides the discipline's default series length (#348). */
+  seriesLength?: number | null;
   /** Vanlig fält or poängfält — how the competition presents the result (D.6.11 p. 95). */
   faltResultMode?: 'falt' | 'poangfalt' | null;
   // Webshooter (integration spec §1/§A) and ShotLog CSV
@@ -77,6 +79,7 @@ export function createSession(db: Database, input: CreateSessionInput) {
     tenCount: input.tenCount ?? null,
     innerTenCount: input.innerTenCount ?? null,
     decimalScoring: input.decimalScoring ? 1 : 0,
+    seriesLength: input.seriesLength ?? null,
     faltResultMode: input.faltResultMode ?? null,
     externalSource: input.externalSource ?? null,
     externalRef: input.externalRef ?? null,

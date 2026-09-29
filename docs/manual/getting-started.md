@@ -67,10 +67,13 @@ your own, and stops asking you every session. You can always override it.
   snabbmatch arrives with a sighter series and twelve scoring series at 10, 8
   and 6 seconds, and on precision it is the final that the full match adds. The
   line under the chips says what this format lays out. **Free Format** adds
-  nothing: the series keep their discipline's normal length and you add them as
-  you go. A competition starts on Full Match and training on Free Format; both
+  nothing: you add the series as you go, at the length the next row sets. A competition starts on Full Match and training on Free Format; both
   are yours to change. A discipline with no fixed format of its own — Practice
   (Ring Target) — shows no Match Format row at all.
+- **Shots per Series** — 5 or 10, starting at the discipline's own length.
+  Series entry shows one box per shot, so shooting fives on a ten-shot
+  discipline no longer leaves five empty boxes. Only asked on Free Format: a
+  full match already sets it. It cannot be changed afterwards.
 - **Firearm** and, if you are tracking it, the **ammunition** you are using.
   Both are optional.
 

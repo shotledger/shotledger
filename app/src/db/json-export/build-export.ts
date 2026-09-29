@@ -68,6 +68,7 @@ export function buildSessionExports(db: Database): SessionExport[] {
         location: session.location,
         notes: session.notes,
         decimalScoring: session.decimalScoring === 1,
+        seriesLength: session.seriesLength,
         extraRounds: session.extraRounds,
         tags: listTagsForSession(db, session.id).map((t) => t.name),
         series: sessionSeries.map((s) => ({

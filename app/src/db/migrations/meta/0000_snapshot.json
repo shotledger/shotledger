@@ -1147,6 +1147,13 @@
           "autoincrement": false,
           "default": 0
         },
+        "series_length": {
+          "name": "series_length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "falt_result_mode": {
           "name": "falt_result_mode",
           "type": "text",
