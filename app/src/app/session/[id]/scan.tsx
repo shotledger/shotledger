@@ -5,7 +5,7 @@
 // decides is delegated: `runGeometry` measures, `checkGeometryValidity`
 // judges, `markReducer` owns the interaction rules, `scoreHole` owns the SHB
 // edge rule. What is left here is sequencing and presentation.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,10 +13,12 @@ import type { Point } from '@shotledger/shared';
 import { analyzeGroup, getDiscipline, requireTargetFace } from '@shotledger/shared';
 import { uuidv7 } from 'uuidv7';
 
+import { ActionSheet } from '@/components/action-sheet';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { CornerAdjuster, defaultCorners } from '@/components/corner-adjuster';
 import { GroupStats } from '@/components/group-stats';
+import { OverflowIcon } from '@/components/icons';
 import { MarkActionBar } from '@/components/mark-action-bar';
 import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
@@ -74,6 +76,7 @@ import {
   checkGeometryValidity,
 } from '@/features/photo-scoring/validity';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
@@ -89,6 +92,7 @@ const REASON_KEYS: Record<ValidityReason, string> = {
 export default function ScanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const theme = useTheme();
   const { id, pos, final } = useLocalSearchParams<{ id: string; pos?: string; final?: string }>();
   const position = Number(pos ?? '1');
 
@@ -126,8 +130,8 @@ export default function ScanScreen() {
   // retake disown a pass that was scheduled for the previous photo.
   const [suggested, setSuggested] = useState<'pending' | 'unsure' | number | null>(null);
   const proposalRun = useRef(0);
-  // A mark is being dragged: the action bar steps aside for the loupe.
-  const [dragging, setDragging] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [caliberOpen, setCaliberOpen] = useState(false);
 
   const [markState, dispatch] = useReducer(
     markReducer,
@@ -365,7 +369,7 @@ export default function ScanScreen() {
     dispatch({ type: 'tap', id: uuidv7(), xMm: point.xMm, yMm: point.yMm });
   }
 
-  function onSave(next: boolean) {
+  function onSave() {
     // A series added straight into "Score from Photo" has no row yet; it is
     // written here, as the keypad screen writes its own on save.
     const seriesId =
@@ -409,11 +413,6 @@ export default function ScanScreen() {
         });
       }
     }
-    if (next) {
-      onRetake();
-      router.replace(`/session/${id}/scan?pos=${position + 1}`);
-      return;
-    }
     router.back();
   }
 
@@ -432,60 +431,77 @@ export default function ScanScreen() {
   }
 
   if (phase === 'marking' && geometryImage && transform && target) {
+    // Highest first, like the old score line; each tile selects its mark.
+    const tiles = markState.marks
+      .map((mark, index) => ({ mark, value: scores[index]?.effective.value ?? 0 }))
+      .sort((a, b) => b.value - a.value);
+    const hint =
+      suggested === 'pending'
+        ? t('photoScoring.suggesting')
+        : suggestedCount > 0
+          ? t('photoScoring.suggestedHint', { count: suggestedCount })
+          : markState.marks.length > 0
+            ? null
+            : suggested === 'unsure'
+              ? t('photoScoring.suggestedUnsure')
+              : suggested === 0
+                ? t('photoScoring.suggestedNone')
+                : t('photoScoring.markHint');
     return (
       <Screen scroll={false}>
+        <Stack.Screen
+          options={{
+            headerRight: () => (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('photoScoring.menuLabel')}
+                testID="scan-menu"
+                onPress={() => setMenuOpen(true)}
+                style={styles.menuTrigger}
+              >
+                <OverflowIcon color={theme.primary} />
+              </Pressable>
+            ),
+          }}
+        />
         <View style={styles.marking}>
-          <View style={styles.toolbar}>
-            <View style={styles.scoreLine}>
-              <ThemedText type="subtitle" testID="scan-score-line">
-                {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" testID="scan-shot-values">
-                {line.shotValues.join(' ')}
-              </ThemedText>
+          <View>
+            <ThemedText type="subtitle" testID="scan-score-line">
+              {t('photoScoring.scoreLine', { total: line.total, x: line.innerTenCount })}
+            </ThemedText>
+            <View style={styles.tiles} testID="scan-shot-values">
+              {tiles.map(({ mark, value }) => {
+                const selected = mark.id === markState.selectedId;
+                return (
+                  <Pressable
+                    key={mark.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() =>
+                      dispatch(selected ? { type: 'deselect' } : { type: 'select', id: mark.id })
+                    }
+                    testID={`scan-shot-${mark.id}`}
+                    style={[
+                      styles.tile,
+                      { borderColor: theme.border },
+                      selected && { backgroundColor: theme.primary, borderColor: theme.primary },
+                    ]}
+                  >
+                    <ThemedText type="smallBold" themeColor={selected ? 'onPrimary' : 'text'}>
+                      {mark.isInnerTen ? 'X' : String(value)}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
             </View>
-            <SecondaryButton
-              label={t('photoScoring.undo')}
-              onPress={() => dispatch({ type: 'undo' })}
-              disabled={!canUndo(markState)}
-              testID="mark-undo"
-              style={styles.undo}
-            />
           </View>
-          {/* Its own line: beside the score it squeezed the shot values to "10 10 …". */}
-          {transform.source === 'manual' && (
-            <Chip label={t('photoScoring.manualGeometry')} style={styles.manualChip} />
-          )}
 
           {group && <GroupStats analysis={group} testIDPrefix="scan-stat" />}
 
-          {notice ? (
+          {notice && (
             <ThemedText type="small" themeColor="danger">
               {notice}
             </ThemedText>
-          ) : suggested === 'pending' ? (
-            <View style={styles.row}>
-              <ActivityIndicator size="small" />
-              <ThemedText type="small" themeColor="textSecondary" testID="scan-suggesting">
-                {t('photoScoring.suggesting')}
-              </ThemedText>
-            </View>
-          ) : suggestedCount > 0 ? (
-            <ThemedText type="small" themeColor="textSecondary" testID="scan-suggested">
-              {t('photoScoring.suggestedHint', { count: suggestedCount })}
-            </ThemedText>
-          ) : (
-            markState.marks.length === 0 && (
-              <ThemedText type="small" themeColor="textSecondary" testID="scan-mark-hint">
-                {`${
-                  suggested === 'unsure'
-                    ? t('photoScoring.suggestedUnsure')
-                    : suggested === 0
-                      ? t('photoScoring.suggestedNone')
-                      : t('photoScoring.markHint')
-                } ${t('photoScoring.zoomHint')}`}
-              </ThemedText>
-            )
           )}
 
           <View style={styles.canvasWrap}>
@@ -501,65 +517,72 @@ export default function ScanScreen() {
               selectedId={markState.selectedId}
               onTapEmpty={onTapEmpty}
               onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
-              onDraggingChange={setDragging}
               onMoveMark={(markId, mm) => {
                 setNotice(null);
                 dispatch({ type: 'move', id: markId, xMm: mm.x, yMm: mm.y });
               }}
             />
-            {selectedMark && selectedScore && !dragging && (
-              <MarkActionBar
-                style={styles.actionBar}
-                mark={selectedMark}
-                score={selectedScore}
-                onDelete={() => dispatch({ type: 'delete' })}
-                onToggleInnerTen={() => dispatch({ type: 'toggleInnerTen' })}
-                onCallRing={(ringLabel) => dispatch({ type: 'callRing', ringLabel })}
-                onDeselect={() => dispatch({ type: 'deselect' })}
+            {/* Along the bottom of the photo, where the zoom buttons leave the full width. */}
+            <View style={styles.overlayChips} pointerEvents="none">
+              {transform.source === 'manual' && <Chip label={t('photoScoring.manualGeometry')} />}
+              {hint && (
+                <View style={styles.row}>
+                  {suggested === 'pending' && <ActivityIndicator size="small" />}
+                  <Chip label={hint} testID="scan-hint" />
+                </View>
+              )}
+            </View>
+          </View>
+
+          {selectedMark && selectedScore ? (
+            <MarkActionBar
+              mark={selectedMark}
+              score={selectedScore}
+              onDelete={() => dispatch({ type: 'delete' })}
+              onToggleInnerTen={() => dispatch({ type: 'toggleInnerTen' })}
+              onCallRing={(ringLabel) => dispatch({ type: 'callRing', ringLabel })}
+              onDeselect={() => dispatch({ type: 'deselect' })}
+            />
+          ) : (
+            <View style={styles.bottomBar}>
+              <SecondaryButton
+                label={t('photoScoring.undo')}
+                onPress={() => dispatch({ type: 'undo' })}
+                disabled={!canUndo(markState)}
+                testID="mark-undo"
               />
-            )}
-          </View>
-
-          <View style={styles.caliberRow}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {initialCaliber.matched
-                ? t('photoScoring.caliber')
-                : t('photoScoring.caliberGuessed', { caliber: initialCaliber.key })}
-            </ThemedText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.row}>
-                {CALIBER_KEYS.map((key) => (
-                  <Pressable
-                    key={key}
-                    onPress={() => dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) })}
-                    testID={`caliber-${key}`}
-                  >
-                    <Chip label={key} tone={key === caliberKey ? 'primary' : 'neutral'} />
-                  </Pressable>
-                ))}
+              <SecondaryButton
+                label={caliberKey ?? t('photoScoring.caliber')}
+                accessibilityLabel={t('photoScoring.caliber')}
+                onPress={() => setCaliberOpen(true)}
+                testID="scan-caliber"
+              />
+              <View style={styles.save}>
+                <PrimaryButton label={t('photoScoring.save')} onPress={onSave} testID="scan-save" />
               </View>
-            </ScrollView>
-          </View>
-
-          <View style={styles.actions}>
-            <SecondaryButton
-              label={t('photoScoring.retake')}
-              onPress={onRetake}
-              style={styles.action}
-            />
-            <SecondaryButton
-              label={t('photoScoring.scanNext')}
-              onPress={() => onSave(true)}
-              testID="scan-next"
-              style={styles.action}
-            />
-          </View>
-          <PrimaryButton
-            label={t('photoScoring.save')}
-            onPress={() => onSave(false)}
-            testID="scan-save"
-          />
+            </View>
+          )}
         </View>
+        <ActionSheet
+          visible={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          actions={[{ key: 'retake', label: t('photoScoring.retake'), onPress: onRetake }]}
+        />
+        <ActionSheet
+          visible={caliberOpen}
+          onClose={() => setCaliberOpen(false)}
+          title={
+            initialCaliber.matched
+              ? t('photoScoring.caliber')
+              : t('photoScoring.caliberGuessed', { caliber: initialCaliber.key })
+          }
+          actions={CALIBER_KEYS.map((key) => ({
+            key,
+            label: key,
+            selected: key === caliberKey,
+            onPress: () => dispatch({ type: 'setCaliber', caliberMm: caliberMmFor(key) }),
+          }))}
+        />
       </Screen>
     );
   }
@@ -687,39 +710,46 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingBottom: Spacing.two,
   },
-  toolbar: {
-    flexDirection: 'row',
+  menuTrigger: {
+    // Material's 48dp touch-target floor, as SessionMenu's.
+    minWidth: 48,
+    minHeight: 48,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tiles: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
+    marginTop: Spacing.one,
   },
-  scoreLine: {
-    flex: 1,
-  },
-  manualChip: {
-    alignSelf: 'flex-start',
-  },
-  undo: {
-    paddingVertical: Spacing.two,
+  tile: {
+    minWidth: 44,
+    minHeight: 44,
+    borderWidth: 1,
+    borderRadius: Radius.small,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   canvasWrap: {
     flex: 1,
     borderRadius: Radius.medium,
     overflow: 'hidden',
   },
-  actionBar: {
+  overlayChips: {
     position: 'absolute',
+    bottom: Spacing.two,
     left: Spacing.two,
     right: Spacing.two,
-    bottom: Spacing.two,
-  },
-  caliberRow: {
     gap: Spacing.one,
+    alignItems: 'flex-start',
   },
-  actions: {
+  bottomBar: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
   },
-  action: {
+  save: {
     flex: 1,
   },
 });

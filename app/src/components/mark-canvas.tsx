@@ -50,6 +50,8 @@ const RING_COLOR = '#22d3ee';
 const RING_COLOR_OUTER = 'rgba(34, 211, 238, 0.45)';
 const MARK_COLOR = '#f87171';
 const MARK_SELECTED = '#38bdf8';
+// The detector's guesses, until the shooter has looked at them (#347).
+const MARK_SUGGESTED = '#22c55e';
 const EDGE_CALL_COLOR = '#fbbf24';
 const CROSSHAIR_COLOR = '#38bdf8';
 /** A finger is ~10 mm wide; below this, a mark is too small to grab. */
@@ -457,10 +459,12 @@ export function MarkCanvas({
                       cx={center.x * scale}
                       cy={center.y * scale}
                       r={radii[index] as number}
-                      fill={isSelected ? MARK_SELECTED : MARK_COLOR}
-                      // A suggestion is fainter and dashed: it is the
-                      // detector's guess until the shooter has looked at it.
-                      fillOpacity={mark.suggested ? 0.3 : 0.55}
+                      fill={
+                        isSelected ? MARK_SELECTED : mark.suggested ? MARK_SUGGESTED : MARK_COLOR
+                      }
+                      // A suggestion is also dashed, so it still reads as one
+                      // to a shooter who cannot tell green from red.
+                      fillOpacity={0.55}
                       // An edge call is ringed, not recolored: the fill says
                       // selected or not, the ring says "needs your call".
                       stroke={isEdgeCall ? EDGE_CALL_COLOR : '#ffffff'}
@@ -531,17 +535,15 @@ export function MarkCanvas({
           onPress={() => zoomBy(ZOOM_STEP)}
           testID="canvas-zoom-in"
         />
-        {zoomLevel > MIN_ZOOM + 0.01 && (
-          <>
-            <View style={styles.zoomDivider} />
-            <ZoomButton
-              label="⤢"
-              accessibilityLabel={t('photoScoring.zoomFit')}
-              onPress={() => animateTo(clampView(frame, IDENTITY_VIEW))}
-              testID="canvas-zoom-fit"
-            />
-          </>
-        )}
+        {/* Always present, so the buttons never shift under the finger. */}
+        <View style={styles.zoomDivider} />
+        <ZoomButton
+          label="⤢"
+          accessibilityLabel={t('photoScoring.zoomFit')}
+          onPress={() => animateTo(clampView(frame, IDENTITY_VIEW))}
+          disabled={zoomLevel <= MIN_ZOOM + 0.01}
+          testID="canvas-zoom-fit"
+        />
       </View>
     </View>
   );
@@ -551,23 +553,30 @@ function ZoomButton({
   label,
   accessibilityLabel,
   onPress,
+  disabled = false,
   testID,
 }: {
   label: string;
   accessibilityLabel: string;
   onPress: () => void;
+  disabled?: boolean;
   testID: string;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
       onPress={onPress}
+      disabled={disabled}
       testID={testID}
       hitSlop={6}
       style={({ pressed }) => [styles.zoomButton, pressed && styles.zoomButtonPressed]}
     >
-      <ThemedText type="smallBold" style={styles.zoomButtonLabel}>
+      <ThemedText
+        type="smallBold"
+        style={[styles.zoomButtonLabel, disabled && styles.zoomButtonLabelDisabled]}
+      >
         {label}
       </ThemedText>
     </Pressable>
@@ -642,5 +651,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 20,
     lineHeight: 24,
+  },
+  zoomButtonLabelDisabled: {
+    opacity: 0.35,
   },
 });

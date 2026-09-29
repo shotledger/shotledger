@@ -26,7 +26,8 @@ till knappsatsen.
 3. **Markera hålen.**
    - **Kontrollera förslagen.** På 25 m precisionstavlan letar appen också
      efter hålen — oavsett om den hittade ringarna själv eller du satte de fyra
-     punkterna — och sätter en streckad markering på varje hål den är säker på.
+     punkterna — och sätter en grön, streckad markering på varje hål den är säker
+     på. En rad på fotot säger hur många.
      Den hittar ungefär tre hål av fyra och har fel på ungefär en markering av
      tio, så se dem som ett försprång, inte ett resultat: ta bort en streckad
      markering som inte är ett hål, dra en som sitter snett och tryck på de hål
@@ -37,20 +38,27 @@ till knappsatsen.
      nära. Där appen inte ser något hål under fingret ligger markeringen kvar
      exakt där du tryckte.
    - **Zooma** genom att nypa, eller dubbeltryck för att zooma in på den
-     platsen; dubbeltryck igen för att se hela fotot. Knapparna **+**, **−** och
-     anpassa i hörnet gör samma sak.
+     platsen; dubbeltryck igen för att se hela fotot. Knapparna **−**, **+** och
+     anpassa i övre hörnet gör samma sak. De flyttar sig aldrig; anpassa är
+     gråtonad när hela fotot redan syns.
    - **Panorera** med ett finger när du har zoomat in.
    - **Flytta** en markering genom att dra den. Ett förstoringsglas visas ovanför
      fingertoppen — bredvid den nära fotots överkant — så att fingret inte döljer
      hålet du riktar in dig mot.
-   - **Tryck på en markering** för att välja den. Raden längst ned på fotot tar
-     bort den, gör den till en X (centrumtia) eller — när hålet ligger inom en
-     millimeter från en linje — låter dig välja vilket värde den får.
-   - **Ångra** tar tillbaka den senaste ändringen: en tillagd, flyttad eller
-     borttagen markering, en X, ett val vid en linje eller ett kaliberbyte.
+   - **Tryck på en markering**, eller på dess värde i raden under poängen, för
+     att välja den. Raden längst ned tar då bort den, gör den till en X
+     (centrumtia) eller — när hålet ligger inom en millimeter från en linje —
+     låter dig välja vilket värde den får. **Klar** tar tillbaka den vanliga
+     raden.
+   - **Ångra**, längst ned, tar tillbaka den senaste ändringen: en tillagd,
+     flyttad eller borttagen markering, en X, ett val vid en linje eller ett
+     kaliberbyte.
+   - **Kaliber**: knappen bredvid Ångra visar den kaliber markeringarna ritas
+     för, hämtad från passets vapen. Tryck på den för att välja en annan.
+   - **Ta om** finns i menyn **⋮**, för att börja om med ett nytt foto.
 4. **Kontrollera poängen**, och spara den sedan till serien. När två eller fler
    hål är markerade visas sidled, höjdled, medelradie och största spridning
-   nedan medan du markerar.
+   under poängen medan du markerar.
 5. **Titta på den senare.** Markeringarna och träffbildens siffror följer med
    fotot. Öppna fotot från serien så ser du markeringarna utritade på tavlan,
    med siffrorna under.
