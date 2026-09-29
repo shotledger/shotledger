@@ -28,6 +28,10 @@ jobs:
 
       - run: pnpm check
 
+      # Not part of `pnpm check` (see CLAUDE.md, "Backend").
+      - name: Backend tests
+        run: pnpm --filter @shotledger/backend test
+
       # Requirement↔test traceability (ADR 0015). `pnpm check` has already run
       # both test suites, so the JUnit results reqstool matches against are on
       # disk by now. Kept out of `pnpm check` itself because the client is

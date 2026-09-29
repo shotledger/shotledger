@@ -364,7 +364,9 @@ pnpm exec expo prebuild --platform android --no-install`, then `cd android &&
   problem a dev build would only hit once Metro serves.
 - Backend (`backend/`, never deployed by an agent — `wrangler deploy` is
   forbidden): `cd backend && pnpm test` runs its own Cloudflare Workers
-  vitest suite; not wired into the root `pnpm check`. On this sandbox the
+  vitest suite; not wired into the root `pnpm check`, but CI runs it as its
+  own step after `check`. It stays on vitest 4 until
+  `@cloudflare/vitest-plugin` supports 5 (#438). On this sandbox the
   Workers pool is slow enough that `test/sync.spec.ts`'s 205-row pagination
   case can exceed vitest's default 5 s timeout — a sandbox artifact, not a
   regression; re-run with `npx vitest run test/sync.spec.ts

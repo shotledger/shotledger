@@ -35,7 +35,6 @@ export const AUTH_MIGRATIONS: D1Migration[] = [
       `CREATE INDEX session_userId_idx ON session (user_id)`,
       `CREATE TABLE account (
         id TEXT PRIMARY KEY,
-        issuer TEXT NOT NULL,
         account_id TEXT NOT NULL,
         provider_id TEXT NOT NULL,
         user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
@@ -49,7 +48,6 @@ export const AUTH_MIGRATIONS: D1Migration[] = [
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       )`,
-      `CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, account_id)`,
       `CREATE INDEX account_userId_idx ON account (user_id)`,
       `CREATE TABLE verification (
         id TEXT PRIMARY KEY,

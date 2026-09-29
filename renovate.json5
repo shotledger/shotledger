@@ -24,5 +24,12 @@
       matchPackageNames: ['expo{/,}**', 'react-native{/,}**', 'react', 'react-dom'],
       enabled: false,
     },
+    {
+      // @cloudflare/vitest-plugin peers on vitest ^4.1.0; lift when it takes 5 (#438).
+      description: 'backend stays on vitest 4 for the Workers pool',
+      matchFileNames: ['backend/package.json'],
+      matchPackageNames: ['vitest'],
+      allowedVersions: '<5',
+    },
   ],
 }

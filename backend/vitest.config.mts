@@ -1,5 +1,5 @@
 import { cloudflareTest } from '@cloudflare/vitest-plugin';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [
@@ -7,4 +7,8 @@ export default defineConfig({
       wrangler: { configPath: './wrangler.jsonc' },
     }),
   ],
+  test: {
+    // `tsc -b` emits compiled copies of the tests into dist/.
+    exclude: [...configDefaults.exclude, 'dist/**'],
+  },
 });
