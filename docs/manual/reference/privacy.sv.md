@@ -27,7 +27,4 @@ Det är standardläget och det sätt appen är tänkt att användas på.
 
 ## Donationer
 
-Allt appen gör på din telefon är gratis i dag, och donationer låser inte upp
-något — ingen funktion ligger bakom en donation. Tjänster som ShotLedger
-själv driver, till exempel synk mellan enheter, kan komma att kosta pengar i
-framtiden; inget kostar något i dag.
+Donationer låser inte upp något — ingen funktion ligger bakom en donation.

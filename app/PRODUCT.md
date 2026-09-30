@@ -23,7 +23,7 @@ Scope is **target shooting only** — never hunting, never tactical.
 
 ## Product Purpose
 
-A target-shooting logbook that is free on the phone. It records training and
+A free, donation-funded target-shooting logbook. It records training and
 competition sessions down to individual shots, scores paper targets from a
 photograph, tracks firearms and ammunition, and keeps the activity log Swedish
 shooters need when renewing a firearm license (FAP 551-3).
@@ -110,21 +110,8 @@ scores against official results.
 - **Casing**: English screen titles, section headers, field labels, tab and
   button labels are Title Case; English body copy, help text and placeholders
   are sentence case; **Swedish is sentence case throughout**.
-- **Free on the phone today; services may be paid** (ADR 0017, issue #359).
-  Everything the app does on the device — logging, scoring, statistics,
-  license-activity evidence, on-device photo scoring, import, export and
-  backup to a file — is free today, and nothing on the phone is paid.
-  Services ShotLedger itself runs — sync between devices, web access,
-  server-side photo scoring — may cost money. Competitors paywalling the
-  basics is a stated grievance of their own users, and the positioning is
-  built on not doing that; the maintainer keeps the option to move or gate a
-  feature later rather than promising otherwise. No billing exists yet.
-- **Donation-funded.** Donations are an optional gift that unlocks nothing.
-  **The rail is Buy Me a Coffee today; a Stripe Payment Link plus GitHub
-  Sponsors is decided but not set up** (issue #353). Donations continue when
-  the first paid service ships; only how the in-app donation link is framed
-  is revisited then, because store rules treat a donation differently once
-  the app also sells something.
+- Donation-funded; donations unlock nothing. Licensing and business model:
+  ADR 0017. Funding rail: issue #353.
 
 ## Evidence on Hand
 
@@ -142,10 +129,9 @@ scores against official results.
 
 ## Product Principles
 
-1. **The basics are free on the phone.** Series length, session type, firearm
-   linking and statistics are free today — the resentment competitors earned
-   by paywalling them is a positioning asset. What may be paid is a service
-   ShotLedger runs, not a feature of the phone (ADR 0017).
+1. **Don't paywall the basics.** Competitors' users resent paywalled series
+   length, session type, firearm linking and statistics; that resentment is a
+   positioning asset.
 2. **Statistics are computed fresh, never a stored, staleable report.**
    The Statistics tab is filter-first (period, type, discipline, shots per
    series, tags) and generates its report on the fly from whatever matches
@@ -175,5 +161,4 @@ scores against official results.
 | Domains (shotledger.app, optionally .se)           | ~125–225 kr/yr |
 
 Donation target to break even: roughly 30–40 coffees/year, or whatever the
-chosen funding rail's equivalent is (issue #353). A paid service, when one
-ships, is priced by its value to the user, not by the maintainer's cost.
+chosen funding rail's equivalent is (issue #353).

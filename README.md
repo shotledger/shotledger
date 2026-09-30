@@ -1,14 +1,11 @@
 # ShotLedger
 
-Target Shooting Log & Scoring — a free app for target shooters: training
-and competition logging, camera-based target scoring, and Swedish license
-compliance (FAP 551-3). Offline-first; no account required. Android first,
-kept iOS-compatible throughout.
+Target Shooting Log & Scoring — a free, donation-funded app for target
+shooters: training and competition logging, camera-based target scoring,
+and Swedish license compliance (FAP 551-3). Offline-first; no account
+required. Android first, kept iOS-compatible throughout.
 
-Private for now. `app/` and `shared/` are AGPL-3.0-or-later with the
-section 7 permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`;
-`backend/` is Elastic License 2.0. `LICENSE` is the map, `CONTRIBUTING.md`
-and `CLA.md` the inbound terms, ADR 0017 the reasoning.
+Private for now. Licensing: see [`LICENSE`](LICENSE) and ADR 0017.
 
 ## Where things are
 
