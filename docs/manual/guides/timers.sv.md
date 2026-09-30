@@ -1,6 +1,6 @@
 # Timers
 
-**Verktyg → Timers.** Två lägen, båda på samma skärm.
+**Verktyg → Timers.** Tre lägen, alla på samma skärm.
 
 ## Timer
 
@@ -79,6 +79,15 @@ vid eld, vid varje parti och när tiden är ute.
 Du kan spola i sekvensen medan den är pausad och trycka på ett kommando för att
 hoppa dit, och det är det som gör den användbar för träning och inte bara för
 en skarp serie.
+
+## Stoppur
+
+Ett enkelt stoppur som räknar uppåt, med varv — samma som ett pass har, men
+med en egen klocka, så det tar aldrig tid på något pass. **Varv** och
+**Starta**, sedan **Varv** och **Stoppa** medan det går, och **Nollställ** och
+**Återuppta** när det är stoppat; varven listas under knapparna, det senaste
+först. Det fortsätter gå när du byter läge och börjar från noll när appen
+stängs.
 
 ## Ljudlöst läge
 

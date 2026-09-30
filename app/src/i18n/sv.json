@@ -898,7 +898,8 @@
     "seriesProgress": "Serie {{current}} / {{total}}",
     "modes": {
       "timer": "Timer",
-      "falt": "Fält"
+      "falt": "Fält",
+      "stopwatch": "Stoppur"
     },
     "spokenPrompts": "Talade kommandon",
     "newRun": "Nytt pass",

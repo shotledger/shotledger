@@ -3,11 +3,12 @@
 // (features/timer/use-timer.ts) drives the pure `TimerController`/
 // `TimerEngine` (shared/src/timer).
 //
-// One route, two modes: the timer below and the fälttimer. They used to be
+// One route, three modes: the timer below, the fälttimer and a stopwatch. They used to be
 // three, with an IPSC-style shot timer beside this one; #346 merged them,
 // because a random start delay, an open-ended string and a microphone are
 // options on this drill rather than a second machine. The fälttimer stays
 // distinct — it is a fixed SPSF command sequence, not a drill anyone sets up.
+// The stopwatch is the session one on a clock of its own.
 //
 // The mode selector is rendered by whichever mode is active, in its setup
 // view only — switching mid-run would strand a recorder or an interval.
@@ -47,6 +48,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { Slider } from '@/components/slider';
 import { StatTile } from '@/components/stat-tile';
 import { ThemedText } from '@/components/themed-text';
+import { SessionStopwatch } from '@/features/session/session-stopwatch';
 import { FaltTimer } from '@/features/timer/falt-timer';
 import { LevelMeterBar } from '@/features/timer/level-meter-bar';
 import { TimerMenu } from '@/features/timer/timer-menu';
@@ -77,7 +79,10 @@ function formatSplit(ms: number | undefined): string {
   return ms === undefined ? '—' : (ms / 1_000).toFixed(2);
 }
 
-type TimerMode = 'timer' | 'falt';
+type TimerMode = 'timer' | 'falt' | 'stopwatch';
+
+/** The Tools stopwatch's clock key — never a session's, whose ids are UUIDs. */
+const TOOLS_STOPWATCH_ID = 'tools-timers';
 
 export default function TimersScreen() {
   const { t } = useTranslation();
@@ -92,6 +97,7 @@ export default function TimersScreen() {
       options={[
         { value: 'timer', label: t('timer.modes.timer') },
         { value: 'falt', label: t('timer.modes.falt') },
+        { value: 'stopwatch', label: t('timer.modes.stopwatch') },
       ]}
       value={mode}
       onChange={setMode}
@@ -100,6 +106,14 @@ export default function TimersScreen() {
   );
 
   if (mode === 'falt') return <FaltTimer modeSelector={modeSelector} />;
+  if (mode === 'stopwatch') {
+    return (
+      <Screen>
+        {modeSelector}
+        <SessionStopwatch sessionId={TOOLS_STOPWATCH_ID} />
+      </Screen>
+    );
+  }
   return <Timer modeSelector={modeSelector} />;
 }
 

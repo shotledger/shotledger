@@ -898,7 +898,8 @@
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
       "timer": "Timer",
-      "falt": "Field"
+      "falt": "Field",
+      "stopwatch": "Stopwatch"
     },
     "spokenPrompts": "Spoken Prompts",
     "newRun": "New Run",
