@@ -87,11 +87,11 @@ export function timeScale(
   return plotLeft + ((ms - extent.minMs) / span) * plotWidth;
 }
 
-/** Whether the axis labels have to name the year to be unambiguous. */
+/** Whether the axis labels have to name the year — the phone's local year, as the labels show. */
 export function axisNeedsYear(points: readonly TimeSeriesPoint[]): boolean {
   if (points.length < 2) return false;
   const { minMs, maxMs } = timeExtent(points);
-  return new Date(minMs).getUTCFullYear() !== new Date(maxMs).getUTCFullYear();
+  return new Date(minMs).getFullYear() !== new Date(maxMs).getFullYear();
 }
 
 export interface DisciplinePoint {

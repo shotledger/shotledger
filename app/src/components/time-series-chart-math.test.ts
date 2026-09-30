@@ -83,9 +83,21 @@ describe('axisNeedsYear', () => {
   });
 
   it('TC-7: false within one year, including its first and last day', () => {
-    expect(axisNeedsYear([point('2026-01-01T00:00:00Z'), point('2026-12-31T23:00:00Z')])).toBe(
-      false,
-    );
+    expect(
+      axisNeedsYear([
+        point(new Date(2026, 0, 1).toISOString()),
+        point(new Date(2026, 11, 31, 23).toISOString()),
+      ]),
+    ).toBe(false);
+  });
+
+  it('counts a point just after local New Year in the new year', () => {
+    expect(
+      axisNeedsYear([
+        point(new Date(2026, 5, 1).toISOString()),
+        point(new Date(2027, 0, 1, 0, 30).toISOString()),
+      ]),
+    ).toBe(true);
   });
 
   it('TC-8: false for an empty list and for a single point', () => {
