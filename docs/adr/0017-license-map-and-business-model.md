@@ -43,9 +43,10 @@ value to the user, not the maintainer's cost.
 
 No absolute is promised. The commitment says what is free _today_; the
 maintainer keeps the option to move or gate a feature later. No billing exists
-yet; the donation rail (Stripe Payment Link plus GitHub Sponsors, #353) stays
-a gift that unlocks nothing until the first paid service ships, when that
-framing is revisited (#353, #354).
+yet. The app stays donation-funded (Stripe Payment Link plus GitHub Sponsors,
+#353), a gift that unlocks nothing, and donations continue alongside any paid
+service; only the in-app framing of the donation link is revisited when the
+first paid service ships (#353, #354).
 
 ### License map
 

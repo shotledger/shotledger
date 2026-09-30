@@ -119,10 +119,12 @@ scores against official results.
   basics is a stated grievance of their own users, and the positioning is
   built on not doing that; the maintainer keeps the option to move or gate a
   feature later rather than promising otherwise. No billing exists yet.
-- Donations are an optional gift that unlocks nothing today. **The rail is
-  Buy Me a Coffee today; a Stripe Payment Link plus GitHub Sponsors is
-  decided but not set up** (issue #353). That framing is revisited when the
-  first paid service ships.
+- **Donation-funded.** Donations are an optional gift that unlocks nothing.
+  **The rail is Buy Me a Coffee today; a Stripe Payment Link plus GitHub
+  Sponsors is decided but not set up** (issue #353). Donations continue when
+  the first paid service ships; only how the in-app donation link is framed
+  is revisited then, because store rules treat a donation differently once
+  the app also sells something.
 
 ## Evidence on Hand
 
