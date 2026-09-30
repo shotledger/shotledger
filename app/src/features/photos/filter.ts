@@ -1,6 +1,8 @@
 // Searching and grouping the photo gallery. Pure, so the rules are testable
 // without a database or a renderer.
 
+import { localDayOf } from '@/features/dates/local-day';
+
 export interface GalleryPhoto {
   seriesId: string;
   sessionId: string;
@@ -65,7 +67,7 @@ export function filterPhotosByDate(
   to: string | null,
 ): GalleryPhoto[] {
   return photos.filter((photo) => {
-    const day = photo.startedAt.slice(0, 10);
+    const day = localDayOf(photo.startedAt);
     if (from !== null && day < from.slice(0, 10)) return false;
     if (to !== null && day > to.slice(0, 10)) return false;
     return true;
@@ -73,7 +75,7 @@ export function filterPhotosByDate(
 }
 
 export interface PhotoGroup {
-  /** ISO date, `YYYY-MM-DD`. */
+  /** Local calendar day, `YYYY-MM-DD`. */
   day: string;
   photos: GalleryPhoto[];
 }
@@ -86,7 +88,7 @@ export interface PhotoGroup {
 export function groupPhotosByDay(photos: readonly GalleryPhoto[]): PhotoGroup[] {
   const byDay = new Map<string, GalleryPhoto[]>();
   for (const photo of photos) {
-    const day = photo.startedAt.slice(0, 10);
+    const day = localDayOf(photo.startedAt);
     const bucket = byDay.get(day);
     if (bucket) bucket.push(photo);
     else byDay.set(day, [photo]);

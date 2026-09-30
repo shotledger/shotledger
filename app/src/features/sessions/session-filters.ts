@@ -2,6 +2,7 @@
 // jest-unit-testable without the native expo-sqlite client — same rule as
 // home-session-row.ts.
 import type { SessionListRow } from './session-list-row';
+import { localDayEndIso, localDayStartIso } from '@/features/dates/local-day';
 
 /**
  * The date range, in the same vocabulary the Statistics tab uses — one set of
@@ -49,8 +50,8 @@ export function sessionPeriodRange(
   if (filter.period === 'all') return { fromIso: null, toIso: null };
   if (filter.period === 'custom') {
     return {
-      fromIso: filter.customFrom ? `${filter.customFrom}T00:00:00.000Z` : null,
-      toIso: filter.customTo ? `${filter.customTo}T23:59:59.999Z` : null,
+      fromIso: filter.customFrom ? localDayStartIso(filter.customFrom) : null,
+      toIso: filter.customTo ? localDayEndIso(filter.customTo) : null,
     };
   }
   return {

@@ -37,6 +37,7 @@ import {
 import { ShotHeatmap } from '@/components/shot-heatmap';
 import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
 import { Spacing } from '@/theme/tokens';
+import { localDayOf } from '@/features/dates/local-day';
 
 const DASH = '–';
 
@@ -99,8 +100,8 @@ export default function StatsReportScreen() {
   const range = periodRange(filter);
   // Cross-session group: every photo-scored mark in the period, pooled.
   const crossSession = useCrossSessionGroup(
-    range.fromIso?.slice(0, 10) ?? null,
-    range.toIso?.slice(0, 10) ?? null,
+    range.fromIso ? localDayOf(range.fromIso) : null,
+    range.toIso ? localDayOf(range.toIso) : null,
     filter.disciplineId,
   );
   const formatLabel: Record<ExportFormat, string> = {

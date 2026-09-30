@@ -31,13 +31,14 @@ import {
   type StatsPeriod,
 } from '@/features/stats/use-stats-data';
 import { Spacing } from '@/theme/tokens';
+import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
 
 const ALL = 'all-values';
 type TypeChoice = typeof ALL | 'training' | 'competition';
 type SighterChoice = 'include' | 'exclude';
 
 function toDateOnly(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return localDayOf(date.toISOString());
 }
 
 /** One labelled filter section: title, one-line explanation, control. */
@@ -168,8 +169,10 @@ export default function StatsScreen() {
             testID="stats-custom-date-picker"
             value={
               new Date(
-                (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
-                  toDateOnly(new Date()),
+                localDayStartIso(
+                  (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
+                    toDateOnly(new Date()),
+                ),
               )
             }
             mode="date"
