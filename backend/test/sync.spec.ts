@@ -217,6 +217,7 @@ describe('S1/S2 fresh vs incremental pull', () => {
 });
 
 describe('S3 cursor pagination', () => {
+  // 205 rows through the Workers pool routinely outlast vitest's 5 s default on CI.
   it('S3a pull page is capped, hasMore true, and a second pull with the returned cursor reaches the tail', async () => {
     const PAGE_SIZE = 200;
     const TOTAL = 205;
@@ -253,7 +254,7 @@ describe('S3 cursor pagination', () => {
     };
     expect(secondBody.changes).toHaveLength(TOTAL - PAGE_SIZE);
     expect(secondBody.nextCursors[0]!.hasMore).toBe(false);
-  });
+  }, 60_000);
 });
 
 describe('S5 push conflict — tombstone-wins', () => {
