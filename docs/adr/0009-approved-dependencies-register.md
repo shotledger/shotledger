@@ -5,27 +5,15 @@ Status: accepted (running record; entries dated individually)
 ## Context
 
 Hard rule 2 requires the maintainer's explicit approval before adding a
-dependency. Each approval carries real reasoning — why this package,
-what it replaced, what was rejected instead — that has nowhere durable
-to live once `plan.md`'s decisions log is retired. This ADR is that
-durable record, added to as new dependencies are approved rather than
-rewritten from scratch.
+dependency. Each approval carries reasoning — why this package, what was
+rejected instead — that needs one durable place. A removed dependency's
+entry is deleted with it; git keeps the history.
 
 ## Decision
 
 **`@reqstool/reqstool-typescript-tags@0.3.0`** (MIT) and
-**`jest-junit@17.0.0`** (Apache-2.0) — 2026-09-21, approved together for
-requirement↔test traceability (ADR 0015, issue #355). Both are dev
-dependencies: the first scans JSDoc `@Requirements`/`@SVCs` tags into an
-annotations file, the second gives `app/`'s jest the JUnit output vitest
-already had. Neither is imported by application code and neither reaches the
-bundle, so `app/src/constants/licenses.json` does not change — that list comes
-from Metro's module graph, not from the dependency tree. The Python client
-(`pipx install reqstool`) is CI tooling rather than a dependency, the same
-standing as the MkDocs toolchain.
-
-**Disclosure:** the maintainer authors reqstool, so this is dogfooding. See
-ADR 0015.
+**`jest-junit@17.0.0`** (Apache-2.0) — 2026-09-21, dev dependencies for
+requirement↔test traceability; see ADR 0015. Neither reaches the bundle.
 
 **`expo-location@~57.0.16`** (MIT) — 2026-09-11, approved for GPS
 range auto-matching on the session Location field. One-shot
@@ -65,52 +53,20 @@ dropped. Wrapped behind `app/src/platform/text-recognition.ts` (+
 `.web.ts` stub) per hard rule 6. See
 `docs/specs/license-card-ocr-spec.md`.
 
-**`expo-speech` and `expo-haptics`** (`~57.0.2` each) — 2026-09-02, the
-first new dependencies since the timers began. Speech exists for the
-fälttimer's spoken command sequence; the IPSC timer's prompts ride along
-on it. Haptics gives the parti beeps and the Eld cue a real impact
-pulse — it replaced an earlier build on React Native's core `Vibration`,
-behind the same wrapper so the swap touched one file and no call sites.
-Both sit behind platform wrappers per hard rule 6
-(`app/src/platform/speech.ts` + `.web.ts` on the Web Speech API;
-`app/src/platform/haptics.ts` + a no-op `.web.ts`). Every speech call
-falls back to the existing tone when TTS is unavailable or the
-utterance errors.
+**`expo-speech` and `expo-haptics`** (`~57.0.2` each) — 2026-09-02, for
+the timers: speech for the fälttimer's spoken command sequence (and the
+IPSC prompts), haptics for a real impact pulse on the parti beeps and the
+Eld cue. Behind `app/src/platform/speech.ts` (`.web.ts` on the Web Speech
+API) and `haptics.ts` (no-op on web); every speech call falls back to the
+tone when TTS is unavailable.
 
-**`expo-crypto`, `expo-secure-store`, `expo-local-authentication`** —
-2026-09-01, three dependencies approved together for the document
-Vault, all Expo-maintained and SDK-pinned. **`expo-crypto` and
-`expo-local-authentication` were removed on 2026-09-16** with the Vault
-itself (issue #276): nothing else imported them, and the local Android
-backup-exclusion config plugin went with them — `expo-secure-store`'s own
-plugin now supplies the SecureStore exclusion it had folded in.
-`expo-secure-store` **stays**: it holds the sync session token and the
-Webshooter token, which have nothing to do with the Vault.
-`expo-file-system` was promoted from a transitive to a direct dependency
-in the same 2026-09-01 change and also stays.
+**`expo-secure-store`** and **`expo-file-system`** (direct) — 2026-09-01.
+SecureStore holds the sync session token and the WebShooter token; neither
+is ever written to the database.
 
 **`@react-native-community/datetimepicker`** — 2026-09-01, ships with
-Expo SDK 57. Used for the Statistics "Custom" period picker; flagged for
-review since it wasn't in M2's original design-system component
-inventory, and accepted as the standard native date picker rather than
-building one.
-
-**`@noble/hashes` 2.4.0** — approved 2026-09-04, **removed 2026-09-16**
-with the Vault (issue #276): its only users were the bundle passphrase
-KDF and the hex codec built on it, both deleted, so `app/jest.config.js`
-no longer needs its ESM transform exception either. History below.
-
-Approved 2026-09-04, maintainer-approved, replacing
-the hand-written SHA-256/HMAC-SHA256/PBKDF2 from ADR 0007. That
-hand-written code existed only because no hashing library was then a
-direct dependency; `@noble/hashes` was already present transitively
-(via `better-auth` in `backend/`, confirmed one version by `pnpm why`,
-no conflict), so pinning it directly cost nothing new in the dependency
-graph. Verified pure JS with no native module via an actual Metro
-export, and like-for-like against the deleted implementation via golden
-vectors. Being ESM-only, it needed `app/jest.config.js` to exist so
-Jest's CommonJS loader can transform it — Metro and `tsc` need no such
-help.
+Expo SDK 57; the standard native date picker, used for the Statistics
+"Custom" period rather than building one.
 
 **VisionCamera — not adopted.** For camera/CV work (v2), v5 needs
 `react-native-nitro-modules` + `react-native-nitro-image` and dropped
@@ -122,9 +78,6 @@ preview becomes a real requirement.
 
 ## Consequences
 
-- Every dependency addition under hard rule 2 gets an entry here at
-  approval time, not retroactively — this is the audit trail hard rule 2
-  implies should exist.
-- A rejected alternative's reasoning (unmaintained, wrong platform
-  story, too many native modules for the win) stays visible so the same
-  evaluation isn't redone from scratch later.
+- Every dependency approved under hard rule 2 gets an entry here at
+  approval time, rejected alternatives included, so the same evaluation is
+  not redone later.

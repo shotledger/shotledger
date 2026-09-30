@@ -1,33 +1,20 @@
 # ADR 0011: Regelverk are first-class, and one can adopt another
 
-Status: accepted (2026-09-12)
+Status: accepted (2026-09-12; klass layer 2026-09-21)
 
 ## Context
 
 Disciplines carried a `federation` field — `SPSF`, `ISSF` or `generic` — and
-every implemented discipline was offered to every shooter. That works while
-one federation matters. It stops working the moment a second does, which is
-the open #138 item: _"Weapon group and klass must be dynamic… they differ
-between countries and between federations within a country — SPSF vs Svenska
-Skyttesportförbundet — and a shooter can be a member of several at once."_
+every implemented discipline was offered to every shooter. That stops working
+once a second federation matters: weapon groups and klasser differ between
+federations, and a shooter can be a member of several at once.
 
 The maintainer asked for Svenska Skyttesportförbundet (SvSF) support and
-suggested that, if SvSF is 1:1 with ISSF, the app should simply call it ISSF.
-
-**It is not 1:1.** From SvSF's own regulations page (transcribed in
-docs/reference/svsf-rules.md):
-
-- SvSF publishes **Swedish translations of ISSF chapters 6, 7 and 8**, and
-  those translations — not ISSF's English text — govern **national**
-  competitions. ISSF's own text governs international ones.
-- SvSF adds a national layer ISSF has no concept of: _allmänna bestämmelser_,
-  an approved SM/DM event list, its own _skyttemärken_.
-- SvSF lists some events as _icke officiella grenar_ with SvSF's own rules —
-  25 m standardpistol and 50 m pistol. _Nordiska grenar_ and _nordisk trap_
-  were never ISSF at all.
-
-Calling SvSF "ISSF" would leave Swedish championships and those events with
-nowhere to live.
+suggested calling it ISSF if the two are 1:1. **They are not**
+(docs/reference/svsf-rules.md): SvSF's Swedish translations of ISSF chapters
+6–8 govern national competitions, and SvSF adds a national layer ISSF has no
+concept of — _allmänna bestämmelser_, an SM/DM event list, _skyttemärken_.
+Calling SvSF "ISSF" would leave Swedish championships with nowhere to live.
 
 ## Decision
 
@@ -42,11 +29,15 @@ is enabled on a fresh install, and — the load-bearing field — `adopts`.
   market, and a shooter who competes under nothing else should not have to
   switch anything on to log a session.
 - **ISSF** owns the international events.
-- **SvSF** owns its national additions and **adopts ISSF**.
+- **SvSF** owns its own definitions (`federation: 'SvSF'` — e.g.
+  `svsf-snabbluftpistol` and the SM/DM categories ISSF Rule 3.3 has no row
+  for) and **adopts ISSF**.
 
 `effectiveRegulations()` resolves adoption transitively, so enabling SvSF puts
 ISSF's disciplines in play without SvSF redefining a single one. Per the
 maintainer: _"Use ISSF when you can. Do not duplicate events. ISSF has prio."_
+An event carries the `regulationId` that defines it, so a shooter who enabled
+ISSF alone is not offered SvSF's categories.
 
 ### Filtering is silent
 
@@ -67,6 +58,20 @@ One settings row each, not one list. A build that adds a regulation does not
 have to migrate anyone's stored value: a row never written falls back to that
 regulation's own default.
 
+### No klass layer for SvSF
+
+SvSF sessions carry `event_id` and nothing else — no `shooter_class`, no new
+column, no change to `EntryCategory`. SvSF's Tävlings-PM §14 klasser
+(transcribed in docs/reference/svsf-rules.md) do not fit the app's model, and
+several are really different matches rather than classes.
+
+A klass says which prize table a result is judged against. That is a
+competition-administration fact; the app is a personal logbook that records
+what was shot, and the organiser decides what it was worth. The hederspris
+klass is the clearest case: §14 grades the previous year's **ranking
+competitions**, which the app does not distinguish from a club evening, so a
+derived klass would be a confident number that is often wrong.
+
 ## Consequences
 
 - Adding a federation is a registry entry plus discipline definitions. No
@@ -75,50 +80,9 @@ regulation's own default.
   "a member of several at once" means in practice.
 - The Settings row shows what is **in effect**, adoption included, so ISSF
   appearing from an SvSF switch is explained rather than surprising.
-- **Not addressed here**: SvSF's SM/DM event list, _nordiska grenar_ and
-  _skyttemärken_ are not defined. The model has the shape for them; the data
-  does not, and inventing regulatory detail is forbidden by hard rule 4.
-
-## Correction, 2026-09-12
-
-The Context above said SvSF keeps 25 m standardpistol and 50 m pistol because
-**ISSF dropped them**. Reading the actual rule book showed that is wrong:
-Rule 3.3 still recognizes both in all four categories (STPM/STPW, FPM/FPW,
-all `WCH`). What they were dropped from is the **Olympic program**, which
-is a different list. SvSF calling them _icke officiella_ is about its own
-national championship program, not about whether ISSF defines them.
-
-So the consequence stands but for a better reason: SvSF needs no discipline
-definitions of its own for these two, because adopting ISSF already brings
-them — exactly the outcome "Use ISSF when you can. Do not duplicate events."
-was aiming at. See docs/reference/issf-rules.md, "Recognized events and their
-categories", and docs/reference/svsf-rules.md for what SvSF actually publishes
-for the two (national **mixed-team** formats, which the app has no model for).
-
-- Klasser remain federation-derived (`shooterClassesForDiscipline`). Making a
-  shooter's klass per-federation — the second half of the #138 item — was
-  closed by ADR 0014: SvSF gets no klass layer, so SPSF's stays the only one.
-
-## Addendum, 2026-09-16 (#228)
-
-SvSF now owns `federation: 'SvSF'` in the registry instead of borrowing
-ISSF's, because it has definitions of its own: `svsf-snabbluftpistol`, its one
-pistol discipline with a Swedish special reglemente, and `SVSF_EVENTS`, the
-SM/DM categories ISSF Rule 3.3 has no row for — a men's sportpistol event, a
-common junior event in standardpistol, and open senior and junior events in
-snabbpistol, fripistol, grovpistol and snabbluftpistol
-(docs/reference/svsf-rules.md, "What ISSF Rule 3.3 lacks"). Grovpistol is
-ISSF's 25 m Centre Fire Pistol and so was added as `issf-centre-fire-pistol`,
-not as an SvSF discipline — the adoption rule applied. ISSF's definitions still
-arrive through `adopts`; `activeFederations(['svsf'])` now yields generic,
-ISSF and SvSF, and an event carries the `regulationId` that defines it, so a
-shooter who enabled ISSF alone is not offered SvSF's categories. Each event
-also carries its own junior age (21 on ISSF grenar, 20 on snabbluftpistol —
-allmänna bestämmelser 1.5.1/1.5.2).
-
-Still unencoded, and why: falling target (hit-or-miss scoring, one point per
-hit, does not fit ring scoring), finals of any gren, Tävlings-PM 14's
-klassindelning (hederspris, junior äldre/yngre, youth, veteran and stödhand
-classes — settled in the negative by ADR 0014), every
-team format (no team model) and skyttemärken SvSF. Nordiska grenar turned out
-not to exist for pistol.
+- `shooter_class` means exactly one thing: an SPSF klass. If SvSF competition
+  administration — entries, start lists, prize tables — ever moves into scope,
+  this is the section to revisit.
+- What SvSF publishes that is still unencoded, and why, is listed in
+  docs/reference/svsf-rules.md; inventing regulatory detail is forbidden by
+  hard rule 4.

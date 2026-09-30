@@ -4,10 +4,8 @@ Status: accepted (2026-09-02)
 
 ## Context
 
-`.shotledger` backup bundles need to hold a database file, optional
-photos, and (at the time, see ADR 0007 — since superseded) an optional
-sealed Vault section as one exportable file. The
-obvious shape is a zip. No zip library exists in the lockfile — `fflate`,
+`.shotledger` backup bundles need to hold a database file and optional
+photos as one exportable file. The obvious shape is a zip. No zip library exists in the lockfile — `fflate`,
 `jszip` and `adm-zip` were checked, zero matches — and hard rule 2
 forbids adding a dependency without asking.
 
@@ -37,10 +35,6 @@ newer than the running build's own migrations
 (`shared/src/backup/compat.ts`); an older bundle is silently brought up
 to date by the existing migration gate on next launch.
 
-`expo-document-picker` was **not** added for restore — it mirrors
-`csv-import.ts`'s existing use of `expo-file-system`'s
-`File.pickFileAsync`.
-
 ## Consequences
 
 - Bundles are uncompressed, so file size scales directly with photo
@@ -49,6 +43,6 @@ to date by the existing migration gate on next launch.
 - Restore always requires a manual "close and reopen the app" step —
   tracked as a UX gap worth an `expo-updates` ask later, not solved
   here.
-- The container format is versioned
-  (`BACKUP_CONTAINER_FORMAT_VERSION`), so its layout can change without
-  breaking old bundles, independent of the database schema version.
+- The container carries its own `BACKUP_CONTAINER_FORMAT_VERSION`,
+  independent of the database schema. Before 1.0 a layout change edits the
+  format in place (hard rule 8) rather than reading both shapes.
