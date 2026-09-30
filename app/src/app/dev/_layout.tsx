@@ -1,6 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
 
-import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
+import { DEV_TOOLS_ENABLED } from '@/constants/flags';
 
 // Dev routes (seed/wipe demo data, component gallery) must be reachable in
 // dev builds only (§4 M2) — not linked from the tab shell, and redirected

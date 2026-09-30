@@ -721,7 +721,10 @@
   "dev": {
     "title": "Dev",
     "componentsTitle": "Components",
-    "sessionsCount": "{{count}} sessions"
+    "sessionsCount": "{{count}} sessions",
+    "flagsTitle": "Feature Flags",
+    "flagDevToolsTitle": "Developer Tools",
+    "flagDevToolsSubtitle": "Demo data, the wipe button and this screen. Set at build time only."
   },
   "competitionLevel": {
     "forening": "Club Competition",

@@ -4,7 +4,7 @@
 // place of the real HttpClient behind the same interface, so the import
 // flow, "My starts", and the review UI can be exercised end-to-end on a
 // dev build without a real Webshooter account. Toggled by the
-// `webshooterDevMock` setting (Settings → dev section, __DEV__ only).
+// `webshooterMock` flag (constants/flags.ts, flipped from /dev).
 import type { HttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
 import {
   authUserSchema,
