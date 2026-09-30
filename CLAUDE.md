@@ -1,6 +1,6 @@
 # ShotLedger — agent instructions
 
-Free, open-source (private for now) target-shooting logbook app.
+Open-source (private for now) target-shooting logbook app.
 React Native + Expo + TypeScript; local-first SQLite; optional Cloudflare
 sync. Android first — **all code must stay iOS-compatible**.
 

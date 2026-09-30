@@ -239,7 +239,7 @@ before the web app is deployed.** Confirmed as stated.
   convention: it holds no outbox, and none of ADR 0003's guardrails are
   re-implemented in a browser.
 - Offline does not apply. The web app requires the network by definition;
-  PRODUCT principle 3 ("sync is an option, never a precondition") is
+  PRODUCT principle 2 ("sync is an option, never a precondition") is
   preserved because the web app is never the only way to do anything — the
   phone remains complete without it.
 - **When this gets revisited:** if #301's write paths are approved, the

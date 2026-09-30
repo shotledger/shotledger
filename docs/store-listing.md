@@ -28,11 +28,11 @@ ShotLedger — Target Shooting Log & Scoring
 ShotLedger — Target Shooting Log
 
 **Short description** (max 80 chars):
-Free target-shooting logbook: scores, stats, firearms, ammo, no account.
+Target-shooting logbook: scores, stats, firearms, ammo, no account.
 
 **Full description:**
 
-ShotLedger is a free, offline-first logbook for target shooters. Log
+ShotLedger is an offline-first logbook for target shooters. Log
 training and competition sessions with a fast per-shot keypad — integer
 or decimal scoring, 5/6/10-shot or custom series, running totals as you
 shoot.
@@ -54,9 +54,8 @@ a PDF formatted for license applications and föreningsintyg.
 
 **Your data is yours.** Everything lives on your device in a local
 database. CSV export and import are always available — no lock-in, no
-required account, no subscription. ShotLedger is free; if you'd like to
-support development, there's an optional donation link in Settings that
-unlocks nothing (paid features do not exist in this app).
+required account. If you'd like to support development, there's an
+optional donation link in Settings; it unlocks nothing.
 
 Currently supports SPSF disciplines (precision and militär snabbmatch)
 plus free-form training. Android only for now.
@@ -75,11 +74,11 @@ ShotLedger — Skytteloggbok & Poängräkning
 ShotLedger — Skytteloggbok
 
 **Kort beskrivning** (max 80 tecken):
-Gratis skytteloggbok: resultat, statistik, vapen, ammunition, inget konto.
+Skytteloggbok: resultat, statistik, vapen, ammunition, inget konto.
 
 **Fullständig beskrivning:**
 
-ShotLedger är en gratis, offline-first loggbok för målskyttar. Logga
+ShotLedger är en offline-first loggbok för målskyttar. Logga
 tränings- och tävlingspass med ett snabbt knappsatsgränssnitt per skott —
 heltals- eller decimalpoäng, serier om 5/6/10 skott eller valfri längd,
 löpande totalsumma medan du skjuter.
@@ -101,9 +100,8 @@ formaterad för licensansökningar och föreningsintyg.
 
 **Din data är din.** Allt lagras lokalt på din enhet. CSV-export och
 -import finns alltid tillgängligt — ingen inlåsning, inget obligatoriskt
-konto, ingen prenumeration. ShotLedger är gratis; vill du stötta
-utvecklingen finns en frivillig donationslänk under Inställningar som
-inte låser upp något (appen har inga betalfunktioner).
+konto. Vill du stötta utvecklingen finns en frivillig donationslänk under
+Inställningar; den låser inte upp något.
 
 Stödjer för närvarande SPSF-grenar (precision och militär snabbmatch)
 samt fri träning. Endast Android tills vidare.

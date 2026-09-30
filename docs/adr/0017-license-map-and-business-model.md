@@ -35,18 +35,9 @@ Facts the decision rests on:
 
 ### Business model (issue #359, option C)
 
-Everything the app does on the phone — logging, scoring, statistics,
-license-activity evidence, on-device photo scoring, import, export and backup
-to a file — is free today. Services ShotLedger itself runs — sync between
-devices, web access, server-side photo scoring — may be paid. Price follows
-value to the user, not the maintainer's cost.
-
-No absolute is promised. The commitment says what is free _today_; the
-maintainer keeps the option to move or gate a feature later. No billing exists
-yet. The app stays donation-funded (Stripe Payment Link plus GitHub Sponsors,
-#353), a gift that unlocks nothing, and donations continue alongside any paid
-service; only the in-app framing of the donation link is revisited when the
-first paid service ships (#353, #354).
+The app is donation-funded (#353) and has no billing. Services ShotLedger
+itself runs may become paid later; nothing is promised about what is or stays
+free. Price follows value to the user, not the maintainer's cost.
 
 ### License map
 
@@ -188,8 +179,8 @@ AGPL, the wire format is an idea, and a clean-room server is always lawful.
 
 - `LICENSE`, `LICENSES/`, `REUSE.toml`, `backend/LICENSE`, `CLA.md`,
   `CONTRIBUTING.md` and the `license` fields in every `package.json` are the
-  implementation. `app/PRODUCT.md`, the README and the manual's privacy page
-  say "free on the phone today" instead of "never gated".
+  implementation. `app/PRODUCT.md`, the README, the manual and the store listing
+  make no statement about what is free or included.
 - Contributions to `app/` and `shared/` arrive under AGPL together with the
   permissions; a contribution that strips them is not merged.
 - ADR 0004 is superseded; ADR 0005 gains a pointer to the platform-libraries
@@ -202,7 +193,7 @@ AGPL, the wire format is an idea, and a clean-room server is always lawful.
 - Trademark registration.
 - Lawyer review: ELv2's enforceability against a stranger who did not accept
   it, the Swedish position on agent-written code, and the Cyber Resilience
-  Act classification of a free app monetized through a paid service.
+  Act classification of an app monetized through a paid service.
 - Whether Anthropic's Commercial or Consumer terms govern the maintainer's
   plan.
 
