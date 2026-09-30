@@ -172,9 +172,6 @@ So the licenses are notice and posture; the moat is operational:
   and the human review trail in git — which is what evidences human
   conception and redaction if copyright is ever contested. Keep writing it.
 
-The protocol itself is unprotected by either license: `shared/src/sync` is
-AGPL, the wire format is an idea, and a clean-room server is always lawful.
-
 ## Consequences
 
 - `LICENSE`, `LICENSES/`, `REUSE.toml`, `backend/LICENSE`, `CLA.md`,
