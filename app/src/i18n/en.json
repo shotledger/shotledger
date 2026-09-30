@@ -658,7 +658,10 @@
       "title": "Stopwatch",
       "start": "Start",
       "stop": "Stop",
-      "reset": "Reset"
+      "reset": "Reset",
+      "lap": "Lap",
+      "resume": "Resume",
+      "lapNumber": "Lap {{number}}"
     },
     "menuLabel": "Session Menu",
     "menuSights": "Sights",

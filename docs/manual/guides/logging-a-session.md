@@ -78,7 +78,10 @@ This exists because you do not always enter series in the order you shot them
 Two buttons sit above the series list:
 
 - **Stopwatch** — opens over the session. It keeps running when you close it,
-  because it is timing your session rather than the panel.
+  because it is timing your session rather than the panel. The buttons work
+  like a phone stopwatch: **Lap** and **Start**, then **Lap** and **Stop**
+  while it runs, then **Reset** and **Resume** once stopped. Laps are listed
+  under the buttons, newest first.
 - **Sights** — the sight settings for this session's firearm, so you can
   record a correction between series without leaving the session.
 

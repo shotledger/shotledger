@@ -10,7 +10,13 @@
 // timestamp, so persisting it would resurrect a "running" stopwatch days
 // later after the app was killed — worse than starting fresh. Closing the
 // app ends the session's timing, as it does on a wristwatch left behind.
-import { resetStopwatch, startStopwatch, stopStopwatch, STOPWATCH_ZERO } from './stopwatch';
+import {
+  lapStopwatch,
+  resetStopwatch,
+  startStopwatch,
+  stopStopwatch,
+  STOPWATCH_ZERO,
+} from './stopwatch';
 import type { StopwatchState } from './stopwatch';
 
 type Listener = () => void;
@@ -44,6 +50,10 @@ export function startSessionStopwatch(sessionId: string, now: number): void {
 
 export function stopSessionStopwatch(sessionId: string, now: number): void {
   set(sessionId, stopStopwatch(getSessionStopwatch(sessionId), now));
+}
+
+export function lapSessionStopwatch(sessionId: string, now: number): void {
+  set(sessionId, lapStopwatch(getSessionStopwatch(sessionId), now));
 }
 
 export function resetSessionStopwatch(sessionId: string): void {

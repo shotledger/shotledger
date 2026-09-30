@@ -1,9 +1,12 @@
 import {
   formatStopwatch,
+  lapStopwatch,
   resetStopwatch,
   startStopwatch,
   stopStopwatch,
   stopwatchElapsedMs,
+  stopwatchLaps,
+  stopwatchPhase,
   STOPWATCH_ZERO,
 } from './stopwatch';
 
@@ -91,8 +94,60 @@ describe('start/stop/reset', () => {
   });
 
   it('resets to zero and stopped, from running or stopped', () => {
-    expect(resetStopwatch()).toEqual({ startedAt: null, bankedMs: 0 });
+    expect(resetStopwatch()).toEqual({ startedAt: null, bankedMs: 0, laps: [] });
     expect(stopwatchElapsedMs(resetStopwatch(), T0 + 999_999)).toBe(0);
     expect(formatStopwatch(stopwatchElapsedMs(resetStopwatch(), T0))).toBe('00:00');
+  });
+});
+
+describe('stopwatchPhase', () => {
+  it('is idle at zero, running while running, stopped once time is banked', () => {
+    expect(stopwatchPhase(STOPWATCH_ZERO)).toBe('idle');
+    const running = startStopwatch(STOPWATCH_ZERO, T0);
+    expect(stopwatchPhase(running)).toBe('running');
+    expect(stopwatchPhase(stopStopwatch(running, T0 + 1_000))).toBe('stopped');
+    expect(stopwatchPhase(resetStopwatch())).toBe('idle');
+  });
+
+  it('reads as running even before the first millisecond has passed', () => {
+    expect(stopwatchPhase(startStopwatch(STOPWATCH_ZERO, T0))).toBe('running');
+  });
+});
+
+describe('laps', () => {
+  it('records the total at each press and lists lap durations newest first', () => {
+    let state = startStopwatch(STOPWATCH_ZERO, T0);
+    state = lapStopwatch(state, T0 + 40_000);
+    state = lapStopwatch(state, T0 + 95_000);
+    expect(state.laps).toEqual([40_000, 95_000]);
+    expect(stopwatchLaps(state)).toEqual([
+      { number: 2, ms: 55_000 },
+      { number: 1, ms: 40_000 },
+    ]);
+  });
+
+  it('measures across a stop and resume from banked time, not wall-clock time', () => {
+    let state = startStopwatch(STOPWATCH_ZERO, T0);
+    state = lapStopwatch(state, T0 + 10_000);
+    state = stopStopwatch(state, T0 + 20_000);
+    state = startStopwatch(state, T0 + 500_000);
+    state = lapStopwatch(state, T0 + 505_000);
+    expect(stopwatchLaps(state)).toEqual([
+      { number: 2, ms: 15_000 },
+      { number: 1, ms: 10_000 },
+    ]);
+  });
+
+  it('ignores a lap while stopped or idle', () => {
+    expect(lapStopwatch(STOPWATCH_ZERO, T0)).toBe(STOPWATCH_ZERO);
+    const stopped = stopStopwatch(startStopwatch(STOPWATCH_ZERO, T0), T0 + 1_000);
+    expect(lapStopwatch(stopped, T0 + 2_000)).toBe(stopped);
+  });
+
+  it('keeps laps through stop and resume, and reset clears them', () => {
+    let state = lapStopwatch(startStopwatch(STOPWATCH_ZERO, T0), T0 + 1_000);
+    state = startStopwatch(stopStopwatch(state, T0 + 2_000), T0 + 3_000);
+    expect(state.laps).toEqual([1_000]);
+    expect(stopwatchLaps(resetStopwatch())).toEqual([]);
   });
 });

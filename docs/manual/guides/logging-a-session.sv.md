@@ -77,7 +77,10 @@ dem — en serie som fylls i sent hör hemma där den skedde, inte sist.
 Två knappar sitter ovanför serielistan:
 
 - **Tidtagarur** — öppnas ovanpå passet. Det fortsätter gå när du stänger det,
-  eftersom det tar tid på ditt pass och inte på panelen.
+  eftersom det tar tid på ditt pass och inte på panelen. Knapparna fungerar
+  som ett stoppur i telefonen: **Varv** och **Starta**, sedan **Varv** och
+  **Stoppa** medan det går, och **Nollställ** och **Återuppta** när det är
+  stoppat. Varven listas under knapparna, det senaste först.
 - **Sikte** — siktesinställningarna för passets vapen, så att du kan anteckna
   en justering mellan serier utan att lämna passet.
 
