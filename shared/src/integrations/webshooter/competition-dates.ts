@@ -19,6 +19,15 @@ function todayIso(now: Date): string {
 }
 
 /**
+ * The local calendar day a stored UTC timestamp falls on. Slicing the ISO
+ * string gives the UTC day instead — a session shot 00:00–02:00 Swedish
+ * summer time lands on the previous day and misses that day's competition.
+ */
+export function localCalendarDay(iso: string): string {
+  return todayIso(new Date(iso));
+}
+
+/**
  * String comparison, not Date arithmetic: `YYYY-MM-DD` sorts
  * lexicographically, and `new Date('2026-09-12')` is parsed as UTC
  * midnight, which reads as yesterday for anyone west of Greenwich and

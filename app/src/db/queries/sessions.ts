@@ -1,4 +1,5 @@
 import type { LocationUsage } from '@shotledger/shared';
+import { localCalendarDay } from '@shotledger/shared/src/integrations/webshooter/competition-dates';
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql } from 'drizzle-orm';
 
 import type { CompetitionLevel } from '../../features/session/labels';
@@ -180,7 +181,7 @@ export function listHeuristicMatchCandidates(db: Database): {
     .map((row) => ({
       id: row.id,
       externalRef: row.externalRef,
-      date: row.date.slice(0, 10),
+      date: localCalendarDay(row.date),
       eventName: row.eventName ?? '',
       weaponGroup: row.weaponGroup ?? '',
     }));
