@@ -16,6 +16,7 @@ import type {
 import { applyImport, dryRunImport } from '@/db/json-export/apply-import';
 import { buildExportJson } from '@/db/json-export/build-export';
 import { db } from '@/db/client';
+import { localDateStamp } from '@/features/export/local-date-stamp';
 import { pickJsonText } from '@/platform/import-file';
 import { shareJson } from '@/platform/export-file';
 
@@ -35,7 +36,7 @@ export interface ImportDryRunResult {
 }
 
 function exportFilename(): string {
-  const date = new Date().toISOString().slice(0, 10);
+  const date = localDateStamp();
   return `shotledger-export-${date}.json`;
 }
 
