@@ -721,7 +721,10 @@
   "dev": {
     "title": "Dev",
     "componentsTitle": "Komponenter",
-    "sessionsCount": "{{count}} pass"
+    "sessionsCount": "{{count}} pass",
+    "flagsTitle": "Funktionsflaggor",
+    "flagDevToolsTitle": "Utvecklarverktyg",
+    "flagDevToolsSubtitle": "Demodata, rensningsknappen och den här skärmen. Sätts bara vid bygget."
   },
   "competitionLevel": {
     "forening": "Föreningstävling",

@@ -12,7 +12,7 @@ import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '@/components/card';
-import { DEV_TOOLS_ENABLED } from '@/constants/dev-tools';
+import { DEV_TOOLS_ENABLED } from '@/constants/flags';
 import { effectiveRegulations } from '@shotledger/shared/src/regulations/registry';
 
 import { DrillDownRow } from '@/components/drill-down-row';

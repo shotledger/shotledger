@@ -8,20 +8,15 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { DrillDownRow } from '@/components/drill-down-row';
-import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 
-import { db } from '@/db/client';
-import { getSetting, setSetting } from '@/db/queries/settings';
 import { PROVIDERS } from '@shotledger/shared/src/integrations/providers/registry';
 import { isProviderEnabled } from '@/features/providers/use-provider-enabled';
-import { Spacing } from '@/theme/tokens';
 
 export default function ToolsScreen() {
   const { t } = useTranslation();
@@ -37,15 +32,6 @@ export default function ToolsScreen() {
       setEnabledProviders(PROVIDERS.filter((provider) => isProviderEnabled(provider.id)));
     }, []),
   );
-  const [devMockEnabled, setDevMockEnabled] = useState(() =>
-    db ? getSetting<boolean>(db, 'webshooterDevMock', false) : false,
-  );
-
-  function onToggleDevMock(next: boolean) {
-    setDevMockEnabled(next);
-    if (db) setSetting<boolean>(db, 'webshooterDevMock', next);
-  }
-
   return (
     <Screen>
       <ScreenTitle>{t('tools.title')}</ScreenTitle>
@@ -89,33 +75,6 @@ export default function ToolsScreen() {
           />
         </Card>
       ))}
-
-      {__DEV__ && (
-        <View style={styles.devSection}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            {t('settings.devSection')}
-          </ThemedText>
-          <Card>
-            <ListRow
-              title={t('webshooter.devMockTitle')}
-              subtitle={t('webshooter.devMockSubtitle')}
-              trailing={
-                <Switch
-                  value={devMockEnabled}
-                  onValueChange={onToggleDevMock}
-                  testID="webshooter-dev-mock-toggle"
-                />
-              }
-            />
-          </Card>
-        </View>
-      )}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  devSection: {
-    gap: Spacing.two,
-  },
-});
