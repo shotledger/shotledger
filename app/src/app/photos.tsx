@@ -34,6 +34,7 @@ import { disciplineLabel, formatLocalDate } from '@/features/session/labels';
 import { shareExistingFile } from '@/platform/share-file';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
+import { localDayStartIso } from '@/features/dates/local-day';
 
 export default function PhotosScreen() {
   const { t, i18n } = useTranslation();
@@ -140,7 +141,9 @@ export default function PhotosScreen() {
         )}
         {groups.map((group) => (
           <Card key={group.day}>
-            <ThemedText type="smallBold">{formatLocalDate(group.day, i18n.language)}</ThemedText>
+            <ThemedText type="smallBold">
+              {formatLocalDate(localDayStartIso(group.day), i18n.language)}
+            </ThemedText>
             <View style={styles.grid}>
               {group.photos.map((photo) => {
                 const uri = resolveSeriesPhotoUri(photo.photoUri);

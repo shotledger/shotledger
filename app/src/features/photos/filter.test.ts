@@ -103,7 +103,7 @@ describe('filterPhotosByDate', () => {
 
   it('compares the day, not the instant', () => {
     // Late in the day must still be inside a to-bound of that same day.
-    const late = [photo({ seriesId: 'z', startedAt: '2026-09-01T23:59:00.000Z' })];
+    const late = [photo({ seriesId: 'z', startedAt: new Date(2026, 8, 1, 23, 59).toISOString() })];
     expect(filterPhotosByDate(late, null, '2026-09-01')).toHaveLength(1);
   });
 
@@ -220,4 +220,12 @@ describe('filterPhotosByFacets', () => {
       'b',
     ]);
   });
+});
+
+it('groups a photo shot just after local midnight under that local day', () => {
+  const justAfterMidnight = new Date(2026, 9, 1, 0, 30).toISOString();
+
+  expect(
+    groupPhotosByDay([photo({ seriesId: 'a', startedAt: justAfterMidnight })]).map((g) => g.day),
+  ).toEqual(['2026-10-01']);
 });
