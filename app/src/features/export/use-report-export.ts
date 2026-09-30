@@ -21,6 +21,7 @@ import { buildSessionExports } from '@/db/json-export/build-export';
 import { listTags } from '@/db/queries/tags';
 import { buildFirearmExports } from '@/db/json-export/build-export';
 import { buildShootingLogHtmlForFilters } from '@/features/export/use-pdf-export';
+import { localDateStamp } from '@/features/export/local-date-stamp';
 import type { AnalyticsFilterState, PeriodRange } from '@/features/stats/use-stats-data';
 import { shareJson } from '@/platform/export-file';
 import { exportHtmlAsPdf } from '@/platform/pdf-export';
@@ -37,7 +38,7 @@ export interface ReportExportInput {
 }
 
 function stamp(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDateStamp();
 }
 
 function filteredSessionExports(sessionIds: readonly string[]) {

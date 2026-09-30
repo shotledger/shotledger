@@ -14,6 +14,7 @@ import { getSetting, setSetting } from '@/db/queries/settings';
 import { buildBackupBundle } from '@/db/backup/export-bundle';
 import { inspectBundle, restoreBundle, type RestorePreview } from '@/db/backup/restore-bundle';
 import { pickBundleBytes, shareBundle } from '@/platform/backup-fs';
+import { localDateStamp } from '@/features/export/local-date-stamp';
 import { isFolderSaveSupported, pickFolder, saveBytesToFolder } from '@/platform/save-to-folder';
 
 import { reduceFolderState } from './folder-state';
@@ -51,7 +52,7 @@ export type BackupStatus =
 export type RestoreOutcome = { kind: 'ok' } | { kind: 'failed' };
 
 export function bundleFilename(options: { includePhotos: boolean }): string {
-  const date = new Date().toISOString().slice(0, 10);
+  const date = localDateStamp();
   const scope = options.includePhotos ? 'with-photos' : 'database';
   return `shotledger-backup-${scope}-${date}.shotledger`;
 }
