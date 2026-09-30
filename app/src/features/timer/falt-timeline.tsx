@@ -3,11 +3,13 @@
 // the firing period is positive. Each numbered command is marked on the bar
 // with its number from the list below it (maintainer, 2026-09-09: "Make a
 // numbers list of commands and indicate those numbers on the time line"), and
-// the parti (delmoment) intervals are badged above the shooting window.
+// the parti (delmoment) intervals are badged above the shooting window, with
+// their unit so a duration never reads as a command number.
 import { ALLA_KLARA_AT_SECONDS, faltPartiIntervals, type FaltProgram } from '@shotledger/shared';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -21,6 +23,8 @@ import { Radius, Spacing } from '@/theme/tokens';
 const AMBER = '#E8B84B';
 
 const MARKER_SIZE = 20;
+/** Wide enough for "120 s"; fixed so the badge can be centered on its interval. */
+const BADGE_WIDTH = 44;
 
 const startSecondsOf = (program: FaltProgram) => program.startSeconds;
 const spanOf = (program: FaltProgram) => program.endSeconds - program.startSeconds;
@@ -60,6 +64,7 @@ export function FaltTimeline({
     onSeek((startSecondsOf(program) + fraction * spanOf(program)) * 1_000);
   }
 
+  const { t } = useTranslation();
   const theme = useTheme();
   const { settings, startSeconds, endSeconds } = program;
   const shooting = settings.shootingSeconds;
@@ -86,32 +91,36 @@ export function FaltTimeline({
     .map((color, i) => ({ key: `seg-${i}`, weight: bounds[i + 1]! - bounds[i]!, color }))
     .filter((segment) => segment.weight > 0);
 
-  // Each interval's badge sits over the middle of that stretch of the shooting window.
+  // Each interval's badge sits over the middle of that stretch of the shooting
+  // window. A single parti is the whole window, which the scale already labels.
   const intervals = faltPartiIntervals(settings);
+  const showIntervals = intervals.length > 1;
   const partiBounds = [0, ...settings.partiSeconds, shooting];
 
   return (
     <View style={styles.wrapper} testID={testID}>
-      <View style={styles.overlayRow}>
-        {intervals.map((seconds, index) => (
-          <View
-            key={`parti-${index}`}
-            style={[
-              styles.badge,
-              {
-                left: `${at((partiBounds[index]! + partiBounds[index + 1]!) / 2) * 100}%`,
-                borderColor: theme.border,
-                backgroundColor: theme.background,
-              },
-            ]}
-            testID={`falt-interval-${index + 1}`}
-          >
-            <ThemedText type="small" style={styles.badgeText}>
-              {seconds}
-            </ThemedText>
-          </View>
-        ))}
-      </View>
+      {showIntervals && (
+        <View style={styles.overlayRow}>
+          {intervals.map((seconds, index) => (
+            <View
+              key={`parti-${index}`}
+              style={[
+                styles.badge,
+                {
+                  left: `${at((partiBounds[index]! + partiBounds[index + 1]!) / 2) * 100}%`,
+                  borderColor: theme.border,
+                  backgroundColor: theme.background,
+                },
+              ]}
+              testID={`falt-interval-${index + 1}`}
+            >
+              <ThemedText type="small" style={styles.badgeText}>
+                {t('faltTimer.seconds', { value: seconds })}
+              </ThemedText>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.overlayRow}>
         {program.commands
@@ -198,9 +207,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    marginLeft: -MARKER_SIZE / 2,
-    minWidth: MARKER_SIZE,
-    paddingHorizontal: 2,
+    marginLeft: -BADGE_WIDTH / 2,
+    width: BADGE_WIDTH,
     borderWidth: 1,
     borderRadius: Radius.small,
     alignItems: 'center',
