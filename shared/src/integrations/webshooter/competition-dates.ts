@@ -19,6 +19,23 @@ function todayIso(now: Date): string {
 }
 
 /**
+ * The local calendar day a stored UTC timestamp falls on. Slicing the ISO
+ * string gives the UTC day instead — a session shot 00:00–02:00 Swedish
+ * summer time lands on the previous day and misses that day's competition.
+ */
+export function localCalendarDay(iso: string): string {
+  return todayIso(new Date(iso));
+}
+
+/** Local midnight of a competition's `YYYY-MM-DD` day, as the UTC timestamp a session stores. */
+export function competitionDayStartIso(date: string): string {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const day = Number(date.slice(8, 10));
+  return new Date(year, month - 1, day).toISOString();
+}
+
+/**
  * String comparison, not Date arithmetic: `YYYY-MM-DD` sorts
  * lexicographically, and `new Date('2026-09-12')` is parsed as UTC
  * midnight, which reads as yesterday for anyone west of Greenwich and

@@ -4,6 +4,7 @@
 // docs/specs/webshooter-core-spec.md §0 and docs/specs/webshooter-app-spec.md.
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ResultRow } from '@shotledger/shared/src/integrations/webshooter';
+import { localCalendarDay } from '@shotledger/shared/src/integrations/webshooter/competition-dates';
 
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
@@ -361,7 +362,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
       program: PRECISION,
       linkToSessionId: first.sessionId,
     });
-    expect(getSession(db, first.sessionId)?.startedAt.slice(0, 10)).toBe('2026-05-11');
+    expect(localCalendarDay(getSession(db, first.sessionId)!.startedAt)).toBe('2026-05-11');
   });
 
   it('never clobbers enrichment fields that were empty and then locally filled between two re-imports', () => {
