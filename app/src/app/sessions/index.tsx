@@ -35,6 +35,7 @@ import {
 } from '@/features/sessions/session-filters';
 import { useSessionsList } from '@/features/sessions/use-sessions-list';
 import { Spacing } from '@/theme/tokens';
+import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
 
 export default function SessionsListScreen() {
   const { t, i18n } = useTranslation();
@@ -154,8 +155,10 @@ export default function SessionsListScreen() {
               testID="sessions-custom-date-picker"
               value={
                 new Date(
-                  (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
-                    new Date().toISOString().slice(0, 10),
+                  localDayStartIso(
+                    (pickerOpen === 'from' ? filter.customFrom : filter.customTo) ??
+                      localDayOf(new Date().toISOString()),
+                  ),
                 )
               }
               mode="date"
@@ -163,7 +166,7 @@ export default function SessionsListScreen() {
               onChange={(_event, selected) => {
                 setPickerOpen(null);
                 if (!selected) return;
-                const value = selected.toISOString().slice(0, 10);
+                const value = localDayOf(selected.toISOString());
                 setFilter((current) =>
                   pickerOpen === 'from'
                     ? { ...current, customFrom: value }

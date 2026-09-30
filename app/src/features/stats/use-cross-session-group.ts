@@ -21,6 +21,7 @@ import { useMemo } from 'react';
 
 import { db } from '@/db/client';
 import { listMarksBySession, type SessionMarks } from '@/db/queries/shot-marks';
+import { localDayOf } from '@/features/dates/local-day';
 
 export interface CrossSessionGroup {
   target: TargetFaceDefinition;
@@ -40,7 +41,7 @@ function inScope(
   disciplineId: string | null,
 ): boolean {
   if (disciplineId !== null && session.disciplineId !== disciplineId) return false;
-  const day = session.startedAt.slice(0, 10);
+  const day = localDayOf(session.startedAt);
   if (from !== null && day < from) return false;
   if (to !== null && day > to) return false;
   return true;

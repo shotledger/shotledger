@@ -36,6 +36,7 @@ import {
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSessions } from '@/db/queries/sessions';
 import { listTags } from '@/db/queries/tags';
+import { localDayEndIso, localDayStartIso } from '@/features/dates/local-day';
 
 export const STATS_PERIODS = ['30d', '6m', '12m', 'all', 'custom'] as const;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
@@ -95,8 +96,8 @@ export function periodRange(
   if (filters.period === 'all') return { fromIso: null, toIso: null };
   if (filters.period === 'custom') {
     return {
-      fromIso: filters.customFrom ? `${filters.customFrom}T00:00:00.000Z` : null,
-      toIso: filters.customTo ? `${filters.customTo}T23:59:59.999Z` : null,
+      fromIso: filters.customFrom ? localDayStartIso(filters.customFrom) : null,
+      toIso: filters.customTo ? localDayEndIso(filters.customTo) : null,
     };
   }
   return {
