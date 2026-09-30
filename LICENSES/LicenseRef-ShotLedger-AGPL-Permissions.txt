@@ -1,0 +1,35 @@
+ShotLedger additional permissions under GNU AGPL version 3 section 7
+
+These permissions supplement the GNU Affero General Public License,
+version 3 or (at your option) any later version, for the parts of
+ShotLedger licensed under it (see the LICENSE file at the root of the
+repository). They are "additional permissions" in the sense of section 7
+of that license: they relax some of its conditions and impose none. As
+section 7 provides, anyone conveying a covered work may remove them.
+
+1. App stores
+
+If you convey a covered work in object-code form through an application
+store or similar distribution channel whose terms impose conditions on
+recipients that are incompatible with this License (for example the
+Apple App Store or Google Play), the copyright holders grant you
+permission to do so, provided that (a) you otherwise comply with this
+License, including section 6, and (b) the complete Corresponding Source
+of the version you convey is available under this License, with or
+without this permission, through a channel that does not impose those
+conditions.
+
+2. Platform libraries
+
+If you modify this Program, or any covered work, by linking or combining
+it with Google ML Kit, Google Play services, Apple system frameworks, or
+other proprietary libraries supplied by the operating-system vendor or
+its application store that are required to run the Program on that
+platform (or modified versions of those libraries), the copyright
+holders grant you additional permission to convey the resulting work.
+Corresponding Source for such a combination need not include the source
+code of those libraries.
+
+These permissions do not grant any rights in those libraries or
+channels; you must obtain them from their owners. Nothing here waives
+section 13 of the License.

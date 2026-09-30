@@ -27,5 +27,7 @@ That is the default and the intended way to use the app.
 
 ## Donations
 
-The app is free and always will be. Donations unlock nothing — no feature is
-gated behind one. That is a deliberate constraint, not a current state.
+Everything the app does on your phone is free today, and donations unlock
+nothing — no feature is gated behind one. Services that ShotLedger itself
+runs, such as sync between devices, may cost money in the future; nothing is
+paid today.

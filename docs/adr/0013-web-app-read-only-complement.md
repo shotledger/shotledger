@@ -218,8 +218,8 @@ side-by-side viewing works off today's protocol. What is blocked is
 adding it is a protocol bump and sync-engine work, which means the
 old-coder loop.
 
-**Hosting at all.** ADR 0004 chose AGPL-3.0-or-later "once the repo goes
-public". A hosted web app is network use under §13, which obliges offering
+**Hosting at all.** The app is AGPL-3.0-or-later (ADR 0017, formerly
+ADR 0004). A hosted web app is network use under §13, which obliges offering
 the Corresponding Source from the page itself. **The repo must be public
 before the web app is deployed.** Confirmed as stated.
 

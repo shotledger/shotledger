@@ -1,6 +1,6 @@
 # ADR 0004: AGPL-3.0-or-later license with a contributor CLA
 
-Status: accepted (2026-09-02)
+Status: superseded by ADR 0017 (2026-09-30); was accepted 2026-09-02
 
 ## Context
 

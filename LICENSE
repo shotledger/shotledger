@@ -1,0 +1,28 @@
+ShotLedger — license map
+
+Copyright (c) 2026 Jimisola Laursen
+
+This repository contains works under more than one license. REUSE.toml
+decides which license applies to which file and is authoritative; in
+summary:
+
+- backend/ — Elastic License 2.0. Text: LICENSES/Elastic-2.0.txt.
+  Licensor notice: backend/LICENSE.
+
+- Everything else, including app/ and shared/ — GNU Affero General Public
+  License, version 3 or (at your option) any later version. Text:
+  LICENSES/AGPL-3.0-or-later.txt. It comes with the additional permissions
+  under its section 7 in LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt
+  (conveying through app stores; combining with proprietary platform
+  libraries such as Google ML Kit).
+
+- Third-party components keep their own licenses. .claude/skills/old-coder/
+  is vendored under MIT (its own LICENSE file). The dependencies bundled into
+  the app are listed in app/src/constants/licenses.json and
+  app/src/constants/native-licenses.ts.
+
+In SPDX terms: backend/ is "Elastic-2.0"; the rest is
+"AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions".
+
+Contributions: see CONTRIBUTING.md and CLA.md. The reasoning behind this map
+is recorded in docs/adr/0017-license-map-and-business-model.md.

@@ -5,7 +5,9 @@ Status: accepted (2026-09-02)
 ## Context
 
 ADR 0004 chose AGPL specifically so a hosted fork of the sync backend
-owes its changes back. That is a license question. It does not answer a
+owes its changes back (ADR 0017 has since put the backend under the
+Elastic License 2.0 and kept the app under AGPL). That is a license
+question. It does not answer a
 different, purely technical one: can the backend actually tell whether a
 request came from the real ShotLedger app or from someone else's client
 calling the same API? This record exists so the AGPL decision is never
@@ -22,7 +24,10 @@ Two real levers exist, neither of which is a license question:
 
 1. **Play Integrity API / App Attest** to reject requests from a
    re-signed or rooted/emulated client — real, but store-distribution-only
-   and not airtight against a determined attacker.
+   and not airtight against a determined attacker. Both are proprietary
+   platform libraries; linking them into the AGPL app is covered by the
+   platform-libraries permission in
+   `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt` (ADR 0017).
 2. **Per-account auth plus Workers rate limits/quotas** (`better-auth`,
    already planned) to bound cost and abuse regardless of which client
    calls in.
