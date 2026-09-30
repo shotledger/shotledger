@@ -52,6 +52,7 @@ framing is revisited (#353, #354).
 | Path                        | License                                                    | SPDX                                                            |
 | --------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------- |
 | `backend/`                  | Elastic License 2.0, licensor Jimisola Laursen             | `Elastic-2.0`                                                   |
+| `shared/src/sync/`          | Apache-2.0 — the protocol the backend compiles in          | `Apache-2.0`                                                    |
 | `app/`, `shared/`, all else | AGPL-3.0-or-later with the §7 additional permissions below | `AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions` |
 | `.claude/skills/old-coder/` | MIT, vendored                                              | `MIT`                                                           |
 
@@ -84,9 +85,32 @@ it, because of ML Kit.
 
 ### `shared/` inside the backend
 
-<!-- PENDING MAINTAINER DECISION: conditional ELv2 grant for shared/ versus a
-permissive license on shared/src/sync/ only. This section is filled in once
-the decision is made; nothing else in this ADR depends on it. -->
+The backend needs exactly two modules of `shared/`: `shared/src/sync/protocol.ts`
+(the zod schemas, protocol version and page size) and `merge.ts` (the
+conflict rule). Both import only `zod`. Rather than dual-license them into
+ELv2 by a grant only the sole copyright holder could make, that directory is
+**Apache-2.0** — the Airbyte pattern (ELv2 platform, MIT protocol) and
+Elastic's own (ELv2 server, Apache-2.0 clients). The merge rule becoming
+permissive is deliberate: the wire format is an idea and a clean-room
+server was always lawful, so nothing is given away that the licence could
+have kept. The scoring engine, compliance, CSV, backup and the sync _client_
+stay AGPL.
+
+Three things hold it in place. `backend/src` imports
+`@shotledger/shared/src/sync` only — ESLint `no-restricted-imports`, scoped
+to `backend/src/**`, rejects the package root and every other subpath.
+`shared/src/sync/**` may import only `zod` and its own files (tests may add
+`vitest` and `fast-check`) — the same rule, scoped there. And an esbuild
+bundle of `backend/src/index.ts` with a metafile lists
+`shared/src/sync/{index,merge,protocol}.ts` as the only `shared/` inputs
+among 892 modules; repeat that check when the backend's imports change.
+`backend/test/` may keep importing the AGPL sync client from the package
+root — tests are not part of the Worker bundle.
+
+An `exports` map with a `./sync` alias was tried and dropped: the app
+deep-imports `@shotledger/shared/src/…` in ten files, and TypeScript's
+`bundler` resolution does not extension-search `exports` targets, so the map
+broke `pnpm typecheck:app` while adding nothing the lint rule does not.
 
 ### Contributor terms
 
@@ -98,9 +122,10 @@ before a contributor's first pull request merges. `CONTRIBUTING.md` states the
 inbound terms per directory. The signing mechanism is chosen on the go-public
 checklist (#100).
 
-**What the CLA does:** lets `shared/` contributions be compiled into the ELv2
-backend, lets the §7 permissions be amended for a new store or library, and
-lets a future version be licensed differently.
+**What the CLA does:** lets the §7 permissions be amended for a new store or
+library, lets a module move between the AGPL and Apache-2.0 parts of
+`shared/` if the backend ever needs more than the protocol, and lets a
+future version be licensed differently.
 
 **What it does not do:** touch anything already released. AGPL §2 grants its
 rights "for the term of copyright on the Program", "irrevocable provided the
@@ -174,10 +199,9 @@ AGPL, the wire format is an idea, and a clean-room server is always lawful.
 - CLA mechanism (bot or signatures file) before the first outside PR; whether
   `reuse lint` joins CI (#100).
 - Trademark registration.
-- Lawyer review: the `shared/` grant once decided, ELv2's enforceability
-  against a stranger who did not accept it, the Swedish position on
-  agent-written code, and the Cyber Resilience Act classification of a free
-  app monetized through a paid service.
+- Lawyer review: ELv2's enforceability against a stranger who did not accept
+  it, the Swedish position on agent-written code, and the Cyber Resilience
+  Act classification of a free app monetized through a paid service.
 - Whether Anthropic's Commercial or Consumer terms govern the maintainer's
   plan.
 

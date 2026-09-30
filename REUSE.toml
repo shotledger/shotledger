@@ -12,6 +12,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 Jimisola Laursen"
 SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions"
 
+# The sync protocol and merge rule, which the backend compiles in. Permissive
+# so that nothing AGPL enters the Worker bundle (ADR 0017).
+[[annotations]]
+path = "shared/src/sync/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Jimisola Laursen"
+SPDX-License-Identifier = "Apache-2.0"
+
 [[annotations]]
 path = "backend/**"
 precedence = "closest"

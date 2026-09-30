@@ -16,6 +16,7 @@ truth. A contribution is licensed under the terms of the directory it lands in:
 | Directory                          | Inbound terms                                                                                                                                                        |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `backend/`                         | Elastic License 2.0 (`LICENSES/Elastic-2.0.txt`)                                                                                                                     |
+| `shared/src/sync/`                 | Apache-2.0 (`LICENSES/Apache-2.0.txt`) — the sync protocol the backend compiles in; it may import only `zod` and its own files                                       |
 | `app/`, `shared/`, everything else | AGPL-3.0-or-later (`LICENSES/AGPL-3.0-or-later.txt`) **together with** the section 7 additional permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt` |
 
 "Together with" matters: a contribution to `app/` or `shared/` carries the
@@ -52,10 +53,9 @@ with outbound Option Five, which means:
 - **You keep your copyright.** The CLA is a license to the maintainer, not an
   assignment.
 - **The maintainer may license your contribution under other terms as well**
-  — for example under the Elastic License 2.0 when `shared/` code is compiled
-  into the backend, or under a future version of the additional permissions
-  for a new store — and must always also offer it under the license the
-  project used the day you submitted it.
+  — for example under a future version of the additional permissions for a
+  new store — and must always also offer it under the license the project
+  used the day you submitted it.
 - **Governing law is Sweden.**
 
 What the CLA cannot do: withdraw a version already released. Every release
