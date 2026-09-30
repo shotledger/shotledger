@@ -48,11 +48,8 @@ import {
   formatLocalDate,
   type CompetitionLevel,
 } from '@/features/session/labels';
+import { withLocalDay } from '@/features/session/with-local-day';
 import { Spacing } from '@/theme/tokens';
-
-function toDateOnly(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 export default function EditSessionScreen() {
   const { t, i18n } = useTranslation();
@@ -174,13 +171,13 @@ export default function EditSessionScreen() {
         {datePickerOpen && (
           <DateTimePicker
             testID="edit-date-picker"
-            value={new Date(toDateOnly(new Date(startedAt)))}
+            value={new Date(startedAt)}
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
             onChange={(_event, selected) => {
               setDatePickerOpen(false);
               if (!selected) return;
-              setStartedAt(selected.toISOString());
+              setStartedAt(withLocalDay(startedAt, selected));
             }}
           />
         )}
