@@ -18,6 +18,7 @@ import {
   type DisciplineProgramIds,
   type ResultRow,
 } from '@shotledger/shared/src/integrations/webshooter';
+import { competitionDayStartIso } from '@shotledger/shared/src/integrations/webshooter/competition-dates';
 
 import type { Database } from '../types';
 import { addStation, listStationsForSession, softDeleteStation } from './falt';
@@ -280,7 +281,7 @@ export function importResultRow(
       // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
       // session's startedAt is that field's DB column, always overwritten
       // on re-import (a Webshooter date correction, however rare).
-      startedAt: new Date(competition.date).toISOString(),
+      startedAt: competitionDayStartIso(competition.date),
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
       // disciplineId/programId/type are intentionally not in
@@ -298,7 +299,7 @@ export function importResultRow(
       competitionName: competition.name,
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
-      startedAt: new Date(competition.date).toISOString(),
+      startedAt: competitionDayStartIso(competition.date),
       externalSource: 'webshooter',
       externalRef,
       externalSyncedAt: new Date().toISOString(),

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPastCompetition, isUpcomingCompetition, localCalendarDay } from './competition-dates';
+import {
+  competitionDayStartIso,
+  isPastCompetition,
+  isUpcomingCompetition,
+  localCalendarDay,
+} from './competition-dates';
 
 const NOW = new Date(2026, 8, 12, 14, 30); // 2026-09-12 local, mid-afternoon
 
@@ -49,5 +54,12 @@ describe('localCalendarDay', () => {
     // (22:30Z in Swedish summer), which slice(0, 10) would report.
     expect(localCalendarDay(new Date(2026, 8, 12, 0, 30).toISOString())).toBe('2026-09-12');
     expect(localCalendarDay(new Date(2026, 8, 12, 23, 30).toISOString())).toBe('2026-09-12');
+  });
+});
+
+describe('competitionDayStartIso', () => {
+  it('is local midnight of the competition day, which reads back as that day', () => {
+    expect(competitionDayStartIso('2026-06-13')).toBe(new Date(2026, 5, 13).toISOString());
+    expect(localCalendarDay(competitionDayStartIso('2026-06-13T00:00:00'))).toBe('2026-06-13');
   });
 });
