@@ -21,7 +21,8 @@ till knappsatsen.
 2. **Sätt fyra punkter på en ring, om appen ber om det.** När appen inte
    hittar tavlan själv drar du de fyra handtagen dit en ring du ser korsar
    upptill, till höger, nedtill och till vänster, och väljer den ringen under
-   **Ring du markerar**. Det är det som låter appen räkna bort vinkeln du
+   **Ring du markerar** — appen väntar på det valet i stället för att anta den
+   yttersta ringen. Det är det som låter appen räkna bort vinkeln du
    fotograferade ur.
 3. **Markera hålen.**
    - **Kontrollera förslagen.** På 25 m precisionstavlan letar appen också

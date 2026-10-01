@@ -21,7 +21,8 @@ the keypad.
 2. **Place four points on a ring, if asked.** When the app cannot find the
    target by itself, drag the four handles to where a ring you can see crosses
    the top, right, bottom and left, and pick that ring under **Ring You Are
-   Marking**. This is what lets the app undo the angle you photographed from.
+   Marking** — the app waits for that pick rather than assume the outermost
+   ring. This is what lets the app undo the angle you photographed from.
 3. **Mark the holes.**
    - **Check the suggestions.** On the 25 m precision face the app also looks
      for the holes — whether it found the rings by itself or you placed the four
