@@ -162,3 +162,17 @@ python eval_closeup.py --glob '<photos>/*.jpg' --out closeup.csv
 python gen_closeup_lock_fixtures.py > \
     ../../app/src/features/photo-scoring/closeup-lock.fixtures.json
 ```
+
+The ring layout is a `RingModel`: `PRECISION` (the default, unchanged) and
+`MILSNABB` (lines at 10 + 40k mm). The milsnabb model is measured but not in
+the app; [`docs/specs/cv-milsnabb-closeup-lock-2026-10.md`](../../docs/specs/cv-milsnabb-closeup-lock-2026-10.md)
+says why. `gen_closeup_lock_fixtures.py milsnabb` prints its synthetic
+scenarios, which nothing consumes yet.
+
+```bash
+# list files of photo paths, kept outside the repo; --identity also checks
+# the precision model against a copy of closeup_lock.py from before the
+# ring model (git show <rev>:spike/cv/closeup_lock.py > v0.py)
+python eval_milsnabb.py --milsnabb milsnabb.txt --precision others.txt \
+    --identity --v0 v0.py --out milsnabb.csv
+```
