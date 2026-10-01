@@ -162,9 +162,9 @@ export default function ScanScreen() {
       // corner screen with four handles to drag.
       setCorners(defaultCorners(image.width, image.height));
       if (manualOnly) {
-        // The auto pipeline is validated for the precision face's solid
-        // black disc only (spec §0); the milsnabb annulus goes straight to
-        // manual corners rather than risk a confident, wrong lock.
+        // The auto pipeline is validated on the precision face only (spec
+        // §10.1); a manual-only face goes straight to corners rather than
+        // risk a confident, wrong lock.
         setPhase('corners');
         return;
       }
@@ -321,7 +321,13 @@ export default function ScanScreen() {
 
   function onUseCorners() {
     if (!target) return;
-    const projective = transformFromCorners(corners, target, cornerRing ?? undefined);
+    // No default ring: assuming the outermost one when the points sit on an
+    // inner ring scales every score silently (500/180 on a milsnabb close-up).
+    if (cornerRing === null) {
+      setNotice(t('photoScoring.cornerRingRequired'));
+      return;
+    }
+    const projective = transformFromCorners(corners, target, cornerRing);
     if (!projective) {
       setNotice(t('photoScoring.cornersInvalid'));
       return;
@@ -665,12 +671,14 @@ export default function ScanScreen() {
                 </ThemedText>
                 <View style={styles.row}>
                   {target.rings.map((ring) => {
-                    const outermost = target.rings[target.rings.length - 1]?.label;
-                    const active = (cornerRing ?? outermost) === ring.label;
+                    const active = cornerRing === ring.label;
                     return (
                       <Pressable
                         key={ring.label}
-                        onPress={() => setCornerRing(ring.label)}
+                        onPress={() => {
+                          setCornerRing(ring.label);
+                          setNotice(null);
+                        }}
                         testID={`corner-ring-${ring.label}`}
                       >
                         <Chip label={ring.label} tone={active ? 'primary' : 'neutral'} />

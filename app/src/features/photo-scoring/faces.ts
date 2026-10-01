@@ -2,10 +2,10 @@
 //
 // Phase 1 shipped auto-geometry for the precision face only (spec §0, CV
 // spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment) is
-// MANUAL-ONLY: `guess_kind` mistypes it on 8/10 photos and a misdetection
-// makes the ring scale 2.5x wrong, so the auto pipeline is never attempted for
-// it — capture goes straight to the four-corner screen. Any other face is not
-// supported.
+// MANUAL-ONLY: the disc lock's validity gate was calibrated on precision faces
+// only and rejected all three milsnabb photos (spec §10.1), and the close-up
+// lock assumes precision's 25 mm ring step — so capture goes straight to the
+// four-corner screen. Any other face is not supported.
 //
 // The ISSF faces join on the same rule, by what the auto pipeline was actually
 // validated against rather than by federation:
