@@ -1,4 +1,4 @@
-"""Lock onto a close-up of the 25 m precision face without its black edge.
+"""Lock onto a close-up of a ring face without its black edge.
 
 The disc lock in target_cv.py anchors on the black zone's outer edge (the 7
 ring). A close-up of the 8-10 rings has no such edge, but it still has the
@@ -13,6 +13,10 @@ multiple of 25 mm from the centre (X at 12.5 mm is the only exception). So:
    ellipse, whose fit gives the affine (tilt) and refines the centre.
 
 Returns an image -> mm homography, or None when the evidence is too thin.
+
+The ring layout is a `RingModel`. On the milsnabb face (SHB J.7.1) the lines
+sit at 10 + 40k mm with the X at 25, so the comb has a phase: line k is at
+(k + 1/4) periods (docs/specs/cv-milsnabb-closeup-lock-2026-10.md).
 
 This is the reference for `app/src/features/photo-scoring/closeup-lock.ts`,
 pinned to it by `closeup-lock.fixtures.json` (gen_closeup_lock_fixtures.py).
@@ -43,6 +47,39 @@ GATE_COMB = 8.0
 GATE_RING_OFFSET_MM = 0.5
 
 
+# The milsnabb period search: lines scored, and the robust z each must reach.
+COMB_LINES = 3
+LINE_Z = 3.0
+
+
+@dataclass(frozen=True)
+class RingModel:
+    """Ring line k (k >= 1) at offset_mm + k * step_mm; `inner_mm` is one more
+    line inside the comb that the fit and the yardstick use."""
+    step_mm: float
+    offset_mm: float = 0.0
+    inner_mm: float | None = None
+    # radii the ring-offset yardstick reads, and how many must be in frame
+    yardstick_mm: tuple[float, ...] = (25.0, 50.0, 75.0)
+    min_lines: int = 1
+    # the outermost line (milsnabb's black edge); None reads on to the frame
+    max_k: int | None = None
+    # refuse a lock whose centre is outside the photo
+    need_centre: bool = False
+    # arcs per ring the yardstick reads separately
+    arcs: int = 1
+
+    @property
+    def phase(self) -> float:
+        return self.offset_mm / self.step_mm
+
+
+PRECISION = RingModel(RING_STEP_MM)
+# Two lines (X and 10) read 1:2 on both faces, so a lock needs a third line,
+# and two of the three a step apart.
+MILSNABB = RingModel(40.0, 10.0, 25.0, (25.0, 50.0, 90.0, 130.0, 170.0, 210.0), 3, 6, True, 4)
+
+
 @dataclass
 class CloseupLock:
     to_mm: np.ndarray          # 3x3, original image px -> mm, centre at 0,0
@@ -56,11 +93,16 @@ class CloseupLock:
     ring_offset_mm: float | None  # worst ring's distance from its printed line
     vote_center: tuple[float, float]  # work px
     period: float              # work px
+    ring_lines: int = 0        # yardstick rings in frame
+    model: RingModel = PRECISION
+    in_frame: bool = True      # the centre is in the photo
 
 
 def passes_gate(lock: CloseupLock | None) -> bool:
     return bool(lock is not None and lock.residual_mm <= GATE_RESIDUAL_MM and lock.comb >= GATE_COMB
-                and lock.ring_offset_mm is not None and lock.ring_offset_mm <= GATE_RING_OFFSET_MM)
+                and lock.ring_offset_mm is not None and lock.ring_offset_mm <= GATE_RING_OFFSET_MM
+                and lock.ring_lines >= lock.model.min_lines
+                and (lock.in_frame or not lock.model.need_centre))
 
 
 # ------------------------------------------------------------ image operations
@@ -287,6 +329,49 @@ def _best_period(prof: np.ndarray) -> tuple[float, float, int]:
     return best
 
 
+def _best_period_lines(prof: np.ndarray, model: RingModel) -> tuple[float, float, int]:
+    """`_best_period` for a comb with a phase, scored on the innermost lines
+    only (the inner line, then k = 1..COMB_LINES): tilt moves the outer lines
+    of a whole-face photo too far for one period to fit them all. Off is the
+    strength half-way between neighbouring lines, so a scale that lands on
+    every other line is marked down by the lines it skips."""
+    valid = np.nonzero(~np.isnan(prof))[0]
+    if len(valid) < 40:
+        return 0.0, 0.0, 0
+    rlim = int(valid.max())
+    vals = prof[valid]
+    base = _median(vals)
+    mad = _median(np.abs(vals - base)) + 1e-6
+    z = np.nan_to_num((prof - base) / mad, nan=0.0)
+    ms = ([model.inner_mm / model.step_mm] if model.inner_mm is not None else []) + \
+        [k + model.phase for k in range(1, COMB_LINES + 1)]
+    mids = [(a + b) / 2 for a, b in zip(ms, ms[1:])]
+
+    def peak(r, P):
+        half = max(2.0, 0.04 * P)
+        return z[int(r - half):int(r + half) + 1].max()
+
+    best = (0.0, -1e9, 0)
+    i = 0
+    while (12.0 + 0.25 * i) * ms[model.min_lines - 1] + 3 < rlim:
+        P = 12.0 + 0.25 * i
+        i += 1
+        on = [peak(m * P, P) for m in ms if m * P + 3 < rlim and not np.isnan(prof[int(m * P)])]
+        off = [peak(m * P, P) for m in mids if m * P + 3 < rlim and not np.isnan(prof[int(m * P)])]
+        if len(on) < model.min_lines or not off:
+            continue
+        # Each line has to be there on its own, not carried by the mean: the
+        # precision face's 25 and 50 mm lines would carry a milsnabb comb.
+        if sum(1 for v in on if v >= LINE_Z and v > max(off)) < model.min_lines:
+            continue
+        sc = sum(on) / len(on) - sum(off) / len(off)
+        if sc > best[1]:
+            best = (P, sc, len(on))
+    if best[1] <= 0:
+        return 0.0, 0.0, 0
+    return best
+
+
 def _solve(A: np.ndarray, b: np.ndarray) -> np.ndarray | None:
     """Gaussian elimination with partial pivoting, as the port does it."""
     n = len(b)
@@ -332,10 +417,10 @@ def _soft_l1(r: np.ndarray) -> float:
     return float(np.sum(2.0 * F_SCALE_MM ** 2 * (np.sqrt(1.0 + z) - 1.0)))
 
 
-def _refine_homography(H0: np.ndarray, pts: np.ndarray, ks: np.ndarray):
-    """Robust least squares on the ring points: each should land k*25 mm from
-    the origin. Perspective makes the rings non-concentric ellipses, which the
-    affine cannot follow. A rotation about the centre leaves every radius
+def _refine_homography(H0: np.ndarray, pts: np.ndarray, ks: np.ndarray, step_mm: float = RING_STEP_MM):
+    """Robust least squares on the ring points: each should land k steps
+    from the origin (25 k mm on precision). Perspective makes the rings
+    non-concentric ellipses, which the affine cannot follow. A rotation about the centre leaves every radius
     unchanged, so a weak prior holds that one direction in place.
 
     Levenberg-Marquardt on iteratively reweighted residuals, soft-L1 loss at
@@ -343,7 +428,7 @@ def _refine_homography(H0: np.ndarray, pts: np.ndarray, ks: np.ndarray):
     port can mirror it."""
     H0 = H0 / H0[2, 2]
     x = H0.ravel()[:8].astype(np.float64)
-    target = ks * RING_STEP_MM
+    target = ks * step_mm
     skew0 = H0[0, 1] - H0[1, 0]
     r, J = _residuals(x, pts, target, skew0)
     cost = _soft_l1(r)
@@ -485,32 +570,36 @@ def _unit_map(cx: float, cy: float, Q: np.ndarray):
 # ------------------------------------------------------------ the lock
 
 def lock_closeup(img: np.ndarray, projective: bool = True,
-                 work_long_side: int = WORK_LONG_SIDE) -> CloseupLock | None:
+                 work_long_side: int = WORK_LONG_SIDE, model: RingModel = PRECISION) -> CloseupLock | None:
     g0 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if img.ndim == 3 else img
     g, S = work_image(g0, work_long_side)
-    return lock_work(g, S, projective)
+    return lock_work(g, S, projective, model)
 
 
-def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True) -> CloseupLock | None:
+def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True,
+              model: RingModel = PRECISION) -> CloseupLock | None:
     cx0, cy0 = _vote_center(g)
     ridge, ang = _polar_ridge(g, cx0, cy0)
-    P, comb, _ = _best_period(_profile(ridge))
+    prof = _profile(ridge)
+    P, comb, _ = _best_period_lines(prof, model) if model.phase else _best_period(prof)
     if P <= 0:
         return None
     lines = circle_ridge(g)
-    fit = _fit(g, cx0, cy0, P, projective, (ridge, ang))
+    fit = _fit(g, cx0, cy0, P, projective, (ridge, ang), model)
     if fit is None:
         return None
+    offset, n_lines = ring_offsets_n(lines, fit[0], model.yardstick_mm, arcs=model.arcs)
     # Holes shot through the middle can leave the X ring as the strongest
     # comb at half a step. Then every odd ring of the fit sits between two
-    # printed lines, which the fit itself shows.
-    offset = ring_offsets(lines, fit[0])
-    if _is_half_period(lines, fit[0]) or offset is None or offset > GATE_RING_OFFSET_MM:
-        refit = _fit(g, cx0, cy0, 2 * P, projective, (ridge, ang))
+    # printed lines, which the fit itself shows. Precision only: its X is
+    # the one line at half a step.
+    if not model.phase and (_is_half_period(lines, fit[0]) or offset is None
+                            or offset > GATE_RING_OFFSET_MM):
+        refit = _fit(g, cx0, cy0, 2 * P, projective, (ridge, ang), model)
         if refit is not None:
-            re_offset = ring_offsets(lines, refit[0])
+            re_offset, re_n = ring_offsets_n(lines, refit[0], model.yardstick_mm, arcs=model.arcs)
             if re_offset is not None and (offset is None or re_offset < offset):
-                fit, offset = refit, re_offset
+                fit, offset, n_lines = refit, re_offset, re_n
     work_to_mm, ecx, ecy, d1, d2, used, support, residual = fit
     to_mm = work_to_mm @ S
     c = np.linalg.inv(to_mm) @ np.array([0.0, 0.0, 1.0])
@@ -526,6 +615,9 @@ def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True) -> CloseupL
         ring_offset_mm=offset,
         vote_center=(cx0, cy0),
         period=P,
+        ring_lines=n_lines,
+        model=model,
+        in_frame=bool(0 <= ecx <= g.shape[1] - 1 and 0 <= ecy <= g.shape[0] - 1),
     )
 
 
@@ -572,6 +664,15 @@ def ring_offsets(lines: np.ndarray, to_mm: np.ndarray, radii=(25.0, 50.0, 75.0),
     lock's circle peaks; the max |offset| over rings mostly in frame. Both
     the gate and the choice between two locks hold a lock to this. `lines` is
     `circle_ridge` of the image `to_mm` maps from."""
+    return ring_offsets_n(lines, to_mm, radii, win, step)[0]
+
+
+def ring_offsets_n(lines: np.ndarray, to_mm: np.ndarray, radii=(25.0, 50.0, 75.0),
+                   win: float = 3.0, step: float = 0.1, arcs: int = 1) -> tuple[float | None, int]:
+    """`ring_offsets`, and how many rings it read. With `arcs`, each ring is
+    read per arc (those mostly in frame) and the worst arc counts: a lock
+    whose ring is right on one side and wrong on the other averages out over
+    the whole circle."""
     inv = np.linalg.inv(to_mm)
     ang = _circle_angles()
     n_off = int(round(2 * win / step))
@@ -579,25 +680,39 @@ def ring_offsets(lines: np.ndarray, to_mm: np.ndarray, radii=(25.0, 50.0, 75.0),
     for R in radii:
         if _circle_mean(lines, inv, R, ang) is None:
             continue
-        best, bo = -math.inf, 0.0
-        for i in range(n_off + 1):
-            o = -win + i * step
-            v = _circle_mean(lines, inv, R + o, ang)
-            v = -1.0 if v is None else v
-            if v > best:
-                best, bo = v, o
-        worst = max(worst, abs(bo))
+        for j in range(arcs):
+            a = ang[j * 360 // arcs:(j + 1) * 360 // arcs]
+            if arcs > 1 and _circle_mean(lines, inv, R, a) is None:
+                continue
+            best, bo = -math.inf, 0.0
+            for i in range(n_off + 1):
+                o = -win + i * step
+                v = _circle_mean(lines, inv, R + o, a)
+                v = -1.0 if v is None else v
+                if v > best:
+                    best, bo = v, o
+            worst = max(worst, abs(bo))
         n += 1
-    return worst if n else None
+    return (worst if n else None), n
 
 
-def _ring_points(ridge: np.ndarray, ang: np.ndarray, cx: float, cy: float, P: float):
-    """Per ray, the ridge maximum near each k*P, where it stands out."""
+def _ring_multiples(nr: int, P: float, model: RingModel) -> list[float]:
+    """Each ring's radius in periods: k + phase, and the inner line first."""
+    ph = model.phase
+    ms = [model.inner_mm / model.step_mm] if model.inner_mm is not None else []
+    kmax = int(nr / P - ph)
+    if model.max_k is not None:
+        kmax = min(kmax, model.max_k)
+    return ms + [k + ph for k in range(1, kmax + 1)]
+
+
+def _ring_points(ridge: np.ndarray, ang: np.ndarray, cx: float, cy: float, P: float,
+                 model: RingModel = PRECISION, ms: list[float] | None = None):
+    """Per ray, the ridge maximum near each ring's radius, where it stands out."""
     xs, ys, ks = [], [], []
     seen = found = 0
     nr = ridge.shape[1]
-    kmax = int(nr / P)
-    for k in range(1, kmax + 1):
+    for k in (_ring_multiples(nr, P, model) if ms is None else ms):
         lo, hi = int(k * P - 0.25 * P), int(k * P + 0.25 * P) + 1
         if hi >= nr:
             break
@@ -628,18 +743,128 @@ def _ring_points(ridge: np.ndarray, ang: np.ndarray, cx: float, cy: float, P: fl
     return np.stack([np.concatenate(xs), np.concatenate(ys)], 1), np.concatenate(ks), seen, found
 
 
-def _fit(g: np.ndarray, cx: float, cy: float, P: float, projective: bool, first):
+def _guided_points(ridge: np.ndarray, ang: np.ndarray, cx: float, cy: float, m: float,
+                   radius: np.ndarray, half: float):
+    """`_ring_points` for ring `m`, with each ray's band centred on
+    radius[ray], where the last fit puts the ring, rather than at m * P."""
+    na, nr = ridge.shape
+    W = 2 * int(math.ceil(half)) + 1
+    rows = np.arange(na)
+    lo = np.floor(radius - half).astype(np.int64)
+    idx = lo[:, None] + np.arange(W)[None, :]
+    inr = (idx >= 0) & (idx < nr)
+    band = np.full((na, W), np.nan)
+    band[inr] = ridge[np.broadcast_to(rows[:, None], idx.shape)[inr], idx[inr]]
+    okrow = ~np.isnan(band).any(axis=1)
+    if okrow.mean() < 0.15:
+        return None
+    b = np.where(np.isnan(band), -1.0, band)
+    j = np.argmax(b, axis=1)
+    peak = b[rows, j]
+    level = np.median(b, axis=1)
+    strong = okrow & (peak > 2.0 * level + 1.0)
+    jj = np.clip(j, 1, W - 2)
+    y0, y1, y2 = b[rows, jj - 1], b[rows, jj], b[rows, jj + 1]
+    den = y0 - 2 * y1 + y2
+    sub = np.where(np.abs(den) > 1e-6, 0.5 * (y0 - y2) / np.where(den == 0, 1, den), 0.0)
+    r = (lo + jj + np.clip(sub, -0.5, 0.5))[strong]
+    a = ang[strong]
+    pts = np.stack([cx + r * np.cos(a), cy + r * np.sin(a)], 1)
+    return pts, np.full(len(r), float(m)), int(okrow.sum()), int(strong.sum())
+
+
+# The milsnabb fit: points further than this from their ring are dropped,
+# and a later pass looks this many periods either side of the last fit.
+TRIM_MM = 2.0
+GUIDE_HALF = 0.1
+
+
+def _ring_radius_px(inv: np.ndarray, R: float, cx: float, cy: float, ang: np.ndarray) -> np.ndarray:
+    """Along each ray from (cx, cy), the distance to where `inv` puts the mm
+    circle of radius R."""
+    t = np.arange(4 * len(ang)) * (2 * np.pi / (4 * len(ang)))
+    X, Y = R * np.cos(t), R * np.sin(t)
+    w = inv[2, 0] * X + inv[2, 1] * Y + inv[2, 2]
+    px = (inv[0, 0] * X + inv[0, 1] * Y + inv[0, 2]) / w - cx
+    py = (inv[1, 0] * X + inv[1, 1] * Y + inv[1, 2]) / w - cy
+    a = np.mod(np.arctan2(py, px), 2 * np.pi)
+    o = np.argsort(a, kind="stable")
+    return np.interp(ang, a[o], np.hypot(px, py)[o], period=2 * np.pi)
+
+
+def _fit_phased(g: np.ndarray, cx: float, cy: float, P: float, projective: bool, first,
+                model: RingModel):
+    """`_fit` for a face whose comb has a phase, always projective. The first pass fits the
+    three innermost lines, which the period search scored. Each later pass
+    looks for every line only near where the last homography puts it, since
+    on a whole-face photo tilt moves the outer lines further than a band
+    around k * P allows for, and drops points more than TRIM_MM off their
+    ring before refitting."""
+    ridge, ang = first
+    got = _ring_points(ridge, ang, cx, cy, P, model, _ring_multiples(ridge.shape[1], P, model)[:3])
+    if got is None or len(got[0]) < 50:
+        return None
+    pts, ks, seen, found = got
+    norm = np.array([cx, cy]) + (pts - np.array([cx, cy])) / ks[:, None]
+    ell = _fit_ellipse(norm)
+    if ell is None:
+        return None
+    ecx, ecy, Q = ell
+    U, d1, d2 = _unit_map(ecx, ecy, Q)
+    H, _ = _refine_homography(np.diag([model.step_mm, model.step_mm, 1.0]) @ U, pts, ks, model.step_mm)
+    for _ in range(2):
+        inv = np.linalg.inv(H)
+        c = inv @ np.array([0.0, 0.0, 1.0])
+        cx, cy = c[0] / c[2], c[1] / c[2]
+        ridge, ang = _polar_ridge(g, cx, cy)
+        nr = ridge.shape[1]
+        xs, kk = [], []
+        seen = found = 0
+        for m in _ring_multiples(nr, P, model):
+            r = _ring_radius_px(inv, m * model.step_mm, cx, cy, ang)
+            got = _guided_points(ridge, ang, cx, cy, m, r, max(3.0, GUIDE_HALF * P))
+            if got is None:
+                continue
+            xs.append(got[0])
+            kk.append(got[1])
+            seen += got[2]
+            found += got[3]
+        if not xs:
+            return None
+        pts, ks = np.concatenate(xs), np.concatenate(kk)
+        if len(pts) < 50:
+            return None
+        H, _ = _refine_homography(H, pts, ks, model.step_mm)
+        q = H @ np.vstack([pts.T, np.ones(len(pts))])
+        keep = np.abs(np.hypot(q[0] / q[2], q[1] / q[2]) - ks * model.step_mm) <= TRIM_MM
+        pts, ks = pts[keep], ks[keep]
+        if len(pts) < 50:
+            return None
+        H, residual = _refine_homography(H, pts, ks, model.step_mm)
+    c = np.linalg.inv(H) @ np.array([0.0, 0.0, 1.0])
+    return H, c[0] / c[2], c[1] / c[2], d1, d2, len(set(ks.tolist())), found / max(1, seen), residual
+
+
+def _fit(g: np.ndarray, cx: float, cy: float, P: float, projective: bool, first,
+         model: RingModel = PRECISION):
+    if model.phase:
+        return _fit_phased(g, cx, cy, P, projective, first, model)
+    return _fit_comb(g, cx, cy, P, projective, first, model)
+
+
+def _fit_comb(g: np.ndarray, cx: float, cy: float, P: float, projective: bool, first,
+              model: RingModel = PRECISION):
     ridge, ang = first
     fitted = None
     for it in range(3):
         if it > 0:
             # rays radial from the refined centre
             ridge, ang = _polar_ridge(g, cx, cy)
-        got = _ring_points(ridge, ang, cx, cy, P)
+        got = _ring_points(ridge, ang, cx, cy, P, model)
         if got is None:
             return None
         pts, ks, seen, found = got
-        used = len({int(k) for k in ks})
+        used = len(set(ks.tolist()))
         if len(pts) < 50:
             return None
         norm = np.array([cx, cy]) + (pts - np.array([cx, cy])) / ks[:, None]
@@ -651,15 +876,15 @@ def _fit(g: np.ndarray, cx: float, cy: float, P: float, projective: bool, first)
         # radial residual of each original point against its own ring
         q = (U @ np.vstack([pts.T, np.ones(len(pts))]))[:2].T
         rad = np.hypot(q[:, 0], q[:, 1]) / ks
-        residual = float(np.median(np.abs(rad - 1.0) * ks * RING_STEP_MM))
+        residual = float(np.median(np.abs(rad - 1.0) * ks * model.step_mm))
         fitted = (U, ecx, ecy, d1, d2, used, found / max(1, seen), residual, pts, ks)
         cx, cy = ecx, ecy
         P = (d1 + d2) / 4.0
 
     U, ecx, ecy, d1, d2, used, support, residual, pts, ks = fitted
-    work_to_mm = np.diag([RING_STEP_MM, RING_STEP_MM, 1.0]) @ U
+    work_to_mm = np.diag([model.step_mm, model.step_mm, 1.0]) @ U
     if projective:
-        work_to_mm, residual = _refine_homography(work_to_mm, pts, ks)
+        work_to_mm, residual = _refine_homography(work_to_mm, pts, ks, model.step_mm)
         c = np.linalg.inv(work_to_mm) @ np.array([0.0, 0.0, 1.0])
         ecx, ecy = c[0] / c[2], c[1] / c[2]
     return work_to_mm, ecx, ecy, d1, d2, used, support, residual

@@ -75,9 +75,11 @@ def synthetic_canvas(seed: int, size: int, holes, patches, black_r: int, rings, 
     return out
 
 
-def synthetic_closeup(seed: int, width: int, height: int, H, holes) -> np.ndarray:
+def synthetic_closeup(seed: int, width: int, height: int, H, holes, rings=None,
+                      black_r: int | None = None) -> np.ndarray:
     """A photo-like close-up of the precision face's ring lines, for the
-    close-up lock's fixture (TS twin: `syntheticCloseup`).
+    close-up lock's fixture (TS twin: `syntheticCloseup`). `rings` and
+    `black_r` draw another face (MILSNABB_CLOSEUP_RINGS).
 
     `H` is nine integers mapping a quarter-pixel sample (4x+1 or 4x+3) to
     target units of 1/8 mm: (U/W, V/W) with U = H0 qx + H1 qy + H2, and so on.
@@ -85,6 +87,8 @@ def synthetic_closeup(seed: int, width: int, height: int, H, holes) -> np.ndarra
     every 25 mm and the X at 12.5 mm, the black disc to 100 mm, and `holes`
     as (x, y) target units. Every product stays below 2^53 so a JS double
     holds it exactly."""
+    rings = CLOSEUP_RINGS if rings is None else rings
+    black_r = CLOSEUP_BLACK_R if black_r is None else black_r
     qx = (4 * np.arange(width, dtype=np.int64))[None, :]
     qy = (4 * np.arange(height, dtype=np.int64))[:, None]
     total = np.zeros((height, width), np.int64)
@@ -95,9 +99,9 @@ def synthetic_closeup(seed: int, width: int, height: int, H, holes) -> np.ndarra
         W = H[6] * X + H[7] * Y + H[8]
         r2 = U * U + V * V
         w2 = W * W
-        black = r2 <= (CLOSEUP_BLACK_R * CLOSEUP_BLACK_R) * w2
+        black = r2 <= (black_r * black_r) * w2
         v = np.where(black, 40, 225)
-        for rr in CLOSEUP_RINGS:
+        for rr in rings:
             lo, hi = rr - CLOSEUP_LINE_HALF, rr + CLOSEUP_LINE_HALF
             on = (lo * lo * w2 <= r2) & (r2 <= hi * hi * w2)
             v = np.where(on, np.where(black, 200, 60), v)
@@ -134,6 +138,10 @@ CLOSEUP_RINGS = (100,) + tuple(200 * k for k in range(1, 9))   # X, then 25..200
 CLOSEUP_LINE_HALF = 3          # a 0.75 mm line
 CLOSEUP_HOLE_R = 22            # 5.6 mm calibre
 CLOSEUP_WORK_LONG_SIDE = 768   # the fixture's 1024 px images resize by 0.75, as a 2048 px photo does
+# Milsnabb (SHB J.7.1): black to the 5 ring's 250 mm, whose edge is its line;
+# X at 25 mm, then 50, 90, ... 210 mm.
+MILSNABB_CLOSEUP_BLACK_R = 2000
+MILSNABB_CLOSEUP_RINGS = (200,) + tuple(400 + 320 * k for k in range(5))
 CLOSEUP_SCENARIOS = [
     # the 9-10 view, square on
     dict(name="centred", seed=11, width=1024, height=768,
@@ -153,6 +161,38 @@ CLOSEUP_SCENARIOS = [
     # the centre out of frame: only the outer rings, which no lock may accept
     dict(name="outer", seed=15, width=1024, height=768,
          H=closeup_homography(1024, 768, 4.0, -420.0, 380.0), holes=[(1100, 40)]),
+]
+
+# The milsnabb model's fixture, in 1/8 mm. `face` is what is drawn and `model`
+# what locks it, so the last two are the two faces read as each other.
+MILSNABB_CLOSEUP_SCENARIOS = [
+    # the 9-10 view, square on
+    dict(name="m-centred", face="milsnabb", model="milsnabb", seed=21, width=1024, height=768,
+         H=closeup_homography(1024, 768, 4.0, 520.0, 380.0), holes=[(150, -90), (-260, 140)]),
+    # wider, rotated and stretched
+    dict(name="m-affine", face="milsnabb", model="milsnabb", seed=22, width=1024, height=768,
+         H=closeup_homography(1024, 768, 2.6, 500.0, 400.0, rot_deg=15.0, aniso=0.95),
+         holes=[(400, 30), (-90, -560), (700, 600)]),
+    # in perspective, out to the 7 ring
+    dict(name="m-perspective", face="milsnabb", model="milsnabb", seed=23, width=1024, height=768,
+         H=closeup_homography(1024, 768, 2.0, 480.0, 390.0, rot_deg=-8.0, aniso=0.97, g=1, w0=32768),
+         holes=[(0, 300), (820, -700), (-1000, 260)]),
+    # off-centre, holes through the 10 and the X
+    dict(name="m-off-centre", face="milsnabb", model="milsnabb", seed=24, width=1024, height=768,
+         H=closeup_homography(1024, 768, 3.4, 330.0, 260.0, rot_deg=5.0),
+         holes=[(30, 0), (-60, 110), (330, -40), (160, 330)]),
+    # only the X and the 10: their 1:2 is the precision face's 10 and 9 too
+    dict(name="m-two-lines", face="milsnabb", model="milsnabb", seed=25, width=1024, height=768,
+         H=closeup_homography(1024, 768, 7.5, 512.0, 384.0), holes=[(90, 40)]),
+    # the centre out of frame
+    dict(name="m-outer", face="milsnabb", model="milsnabb", seed=26, width=1024, height=768,
+         H=closeup_homography(1024, 768, 2.4, -260.0, 380.0), holes=[(1800, 40)]),
+    # a precision close-up read as milsnabb, and a milsnabb one read as precision
+    dict(name="precision-as-m", face="precision", model="milsnabb", seed=27, width=1024, height=768,
+         H=closeup_homography(1024, 768, 5.0, 500.0, 400.0, rot_deg=10.0), holes=[(120, -60)]),
+    dict(name="m-as-precision", face="milsnabb", model="precision", seed=28, width=1024, height=768,
+         H=closeup_homography(1024, 768, 2.6, 500.0, 400.0, rot_deg=15.0, aniso=0.95),
+         holes=[(400, 30)]),
 ]
 
 
