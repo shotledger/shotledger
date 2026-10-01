@@ -23,6 +23,11 @@ the keypad.
    the top, right, bottom and left, and pick that ring under **Ring You Are
    Marking** — the app waits for that pick rather than assume the outermost
    ring. This is what lets the app undo the angle you photographed from.
+   Once the ring is picked, the app draws it through your four points, marks
+   the center they give, and draws the other rings faintly. They should all
+   sit on the printed lines; if they miss, a handle or the ring you picked is
+   off. A handle can go past the edge of the photo when that part of the ring
+   is out of frame.
 3. **Mark the holes.**
    - **Check the suggestions.** On the 25 m precision face the app also looks
      for the holes — whether it found the rings by itself or you placed the four

@@ -39,7 +39,11 @@ import {
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
 import { type CloseupLock, chooseLock } from '@/features/photo-scoring/closeup-lock';
-import { type Homography, transformFromCorners } from '@/features/photo-scoring/corners';
+import {
+  type Homography,
+  ringOverlay,
+  transformFromCorners,
+} from '@/features/photo-scoring/corners';
 import {
   isAutoFace,
   isManualOnlyFace,
@@ -662,6 +666,7 @@ export default function ScanScreen() {
               photo={photo}
               scaleToOriginal={geometryImage.scaleToOriginal}
               labels={['1', '2', '3', '4']}
+              overlay={target && cornerRing ? ringOverlay(corners, target, cornerRing) : null}
             />
             {target && (
               <Card>
