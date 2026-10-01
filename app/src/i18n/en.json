@@ -658,7 +658,10 @@
       "title": "Stopwatch",
       "start": "Start",
       "stop": "Stop",
-      "reset": "Reset"
+      "reset": "Reset",
+      "lap": "Lap",
+      "resume": "Resume",
+      "lapNumber": "Lap {{number}}"
     },
     "menuLabel": "Session Menu",
     "menuSights": "Sights",
@@ -895,7 +898,8 @@
     "seriesProgress": "Series {{current}} / {{total}}",
     "modes": {
       "timer": "Timer",
-      "falt": "Field"
+      "falt": "Field",
+      "stopwatch": "Stopwatch"
     },
     "spokenPrompts": "Spoken Prompts",
     "newRun": "New Run",

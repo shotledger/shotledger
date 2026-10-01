@@ -1,4 +1,5 @@
-// A plain count-up stopwatch for a session: start, stop, reset, MM:SS.
+// A plain count-up stopwatch for a session, MM:SS, with laps. The buttons
+// follow a phone stopwatch: Lap·Start, Lap·Stop, Reset·Resume.
 // Deliberately not part of `features/timer/` — those three (time limit,
 // shot timer, fälttimer) count down and cue the shooter; this one only tells
 // you how long you have been at it.
@@ -20,9 +21,15 @@ import { useKeepAwakeWhile } from '@/features/timer/use-keep-awake-on-screen';
 
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
-import { formatStopwatch, stopwatchElapsedMs } from '@/features/session/stopwatch';
+import {
+  formatStopwatch,
+  stopwatchElapsedMs,
+  stopwatchLaps,
+  stopwatchPhase,
+} from '@/features/session/stopwatch';
 import {
   getSessionStopwatch,
+  lapSessionStopwatch,
   resetSessionStopwatch,
   startSessionStopwatch,
   stopSessionStopwatch,
@@ -48,7 +55,8 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
   );
   const [now, setNow] = useState(() => Date.now());
 
-  const isRunning = state.startedAt !== null;
+  const phase = stopwatchPhase(state);
+  const isRunning = phase === 'running';
   // A running stopwatch is a timer like any other: the screen has to stay
   // readable while it counts (maintainer, 2026-09-11, "and timer in session
   // view"). Tied to running rather than to the screen — the session view is
@@ -69,10 +77,22 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
     else startSessionStopwatch(sessionId, at);
   }
 
-  function onReset() {
-    setNow(Date.now());
-    resetSessionStopwatch(sessionId);
+  // Lap while running, Reset once stopped — the same slot, as on a phone.
+  function onSecondary() {
+    const at = Date.now();
+    setNow(at);
+    if (phase === 'stopped') resetSessionStopwatch(sessionId);
+    else lapSessionStopwatch(sessionId, at);
   }
+
+  const primaryLabel =
+    phase === 'running'
+      ? 'session.stopwatch.stop'
+      : phase === 'stopped'
+        ? 'session.stopwatch.resume'
+        : 'session.stopwatch.start';
+  const secondaryDisabled = phase === 'idle';
+  const laps = stopwatchLaps(state);
 
   return (
     <Card>
@@ -81,6 +101,23 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
         {formatStopwatch(stopwatchElapsedMs(state, now))}
       </ThemedText>
       <View style={styles.buttons}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: secondaryDisabled }}
+          disabled={secondaryDisabled}
+          testID="session-stopwatch-secondary"
+          onPress={onSecondary}
+          style={({ pressed }) => [
+            styles.button,
+            { borderWidth: 1, borderColor: theme.border },
+            secondaryDisabled && styles.disabled,
+            pressed && styles.pressed,
+          ]}
+        >
+          <ThemedText type="smallBold">
+            {t(phase === 'stopped' ? 'session.stopwatch.reset' : 'session.stopwatch.lap')}
+          </ThemedText>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           testID="session-stopwatch-toggle"
@@ -92,22 +129,20 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
           ]}
         >
           <ThemedText type="smallBold" themeColor="onPrimary">
-            {t(isRunning ? 'session.stopwatch.stop' : 'session.stopwatch.start')}
+            {t(primaryLabel)}
           </ThemedText>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          testID="session-stopwatch-reset"
-          onPress={onReset}
-          style={({ pressed }) => [
-            styles.button,
-            { borderWidth: 1, borderColor: theme.border },
-            pressed && styles.pressed,
-          ]}
-        >
-          <ThemedText type="smallBold">{t('session.stopwatch.reset')}</ThemedText>
-        </Pressable>
       </View>
+      {laps.map((lap) => (
+        <View
+          key={lap.number}
+          style={[styles.lapRow, { borderTopColor: theme.border }]}
+          testID={`session-stopwatch-lap-${lap.number}`}
+        >
+          <ThemedText>{t('session.stopwatch.lapNumber', { number: lap.number })}</ThemedText>
+          <ThemedText style={styles.lapTime}>{formatStopwatch(lap.ms)}</ThemedText>
+        </View>
+      ))}
     </Card>
   );
 }
@@ -133,5 +168,17 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  disabled: {
+    opacity: 0.4,
+  },
+  lapRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  lapTime: {
+    fontVariant: ['tabular-nums'],
   },
 });

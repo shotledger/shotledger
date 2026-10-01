@@ -1,6 +1,6 @@
 # Timers
 
-**Tools → Timers.** Two modes, both on one screen.
+**Tools → Timers.** Three modes, all on one screen.
 
 ## Timer
 
@@ -77,6 +77,14 @@ at Eld, at each parti and when the time is up.
 
 You can scrub the sequence while it is paused and tap a command to jump to it,
 which is what makes it usable for practice rather than only for a live string.
+
+## Stopwatch
+
+A plain count-up stopwatch with laps — the same one a session has, but with a
+clock of its own, so it never times a session. **Lap** and **Start**, then
+**Lap** and **Stop** while it runs, then **Reset** and **Resume** once stopped;
+laps are listed under the buttons, newest first. It keeps running while you
+switch mode, and starts from zero when the app is closed.
 
 ## Silent mode
 

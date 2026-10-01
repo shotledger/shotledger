@@ -12,9 +12,19 @@ export interface StopwatchState {
   readonly startedAt: number | null;
   /** Elapsed ms banked by earlier runs, excluding any run in progress. */
   readonly bankedMs: number;
+  /** Total elapsed ms at each Lap press, oldest first. */
+  readonly laps: readonly number[];
 }
 
-export const STOPWATCH_ZERO: StopwatchState = { startedAt: null, bankedMs: 0 };
+export const STOPWATCH_ZERO: StopwatchState = { startedAt: null, bankedMs: 0, laps: [] };
+
+/** Which pair of buttons to show: Lap·Start, Lap·Stop or Reset·Resume. */
+export type StopwatchPhase = 'idle' | 'running' | 'stopped';
+
+export function stopwatchPhase(state: StopwatchState): StopwatchPhase {
+  if (state.startedAt !== null) return 'running';
+  return state.bankedMs > 0 ? 'stopped' : 'idle';
+}
 
 /** Elapsed ms at `now`. A clock that went backwards yields the banked time, never less. */
 export function stopwatchElapsedMs(state: StopwatchState, now: number): number {
@@ -25,16 +35,36 @@ export function stopwatchElapsedMs(state: StopwatchState, now: number): number {
 /** Start, or keep running unchanged so a stray press cannot restart the clock. */
 export function startStopwatch(state: StopwatchState, now: number): StopwatchState {
   if (state.startedAt !== null) return state;
-  return { startedAt: now, bankedMs: state.bankedMs };
+  return { ...state, startedAt: now };
 }
 
 /** Stop, banking the run in progress. */
 export function stopStopwatch(state: StopwatchState, now: number): StopwatchState {
   if (state.startedAt === null) return state;
-  return { startedAt: null, bankedMs: stopwatchElapsedMs(state, now) };
+  return { ...state, startedAt: null, bankedMs: stopwatchElapsedMs(state, now) };
 }
 
-/** Back to 00:00 and stopped. */
+/** Record a lap at `now`. Only while running — a stopped clock has no lap to close. */
+export function lapStopwatch(state: StopwatchState, now: number): StopwatchState {
+  if (state.startedAt === null) return state;
+  return { ...state, laps: [...state.laps, stopwatchElapsedMs(state, now)] };
+}
+
+export interface StopwatchLap {
+  /** 1-based, in the order the laps were taken. */
+  readonly number: number;
+  /** Duration of this lap alone, not the running total. */
+  readonly ms: number;
+}
+
+/** Recorded laps as durations, newest first — the order a phone stopwatch lists them. */
+export function stopwatchLaps(state: StopwatchState): StopwatchLap[] {
+  return state.laps
+    .map((at, i) => ({ number: i + 1, ms: at - (i === 0 ? 0 : state.laps[i - 1]) }))
+    .reverse();
+}
+
+/** Back to 00:00, stopped, no laps. */
 export function resetStopwatch(): StopwatchState {
   return STOPWATCH_ZERO;
 }

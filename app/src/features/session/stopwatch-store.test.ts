@@ -2,6 +2,7 @@ import { stopwatchElapsedMs } from './stopwatch';
 import {
   clearAllSessionStopwatches,
   getSessionStopwatch,
+  lapSessionStopwatch,
   resetSessionStopwatch,
   startSessionStopwatch,
   stopSessionStopwatch,
@@ -12,7 +13,7 @@ afterEach(() => clearAllSessionStopwatches());
 
 describe('session stopwatch store', () => {
   it('an untouched session reads as zero and stopped', () => {
-    expect(getSessionStopwatch('s1')).toEqual({ startedAt: null, bankedMs: 0 });
+    expect(getSessionStopwatch('s1')).toEqual({ startedAt: null, bankedMs: 0, laps: [] });
   });
 
   it('keeps one clock per session — the point of the store', () => {
@@ -61,6 +62,14 @@ describe('session stopwatch store', () => {
     startSessionStopwatch('s1', 1_000);
     stopSessionStopwatch('s1', 4_000);
     resetSessionStopwatch('s1');
-    expect(getSessionStopwatch('s1')).toEqual({ startedAt: null, bankedMs: 0 });
+    expect(getSessionStopwatch('s1')).toEqual({ startedAt: null, bankedMs: 0, laps: [] });
+  });
+
+  it('records laps on the session they were taken on', () => {
+    startSessionStopwatch('s1', 1_000);
+    lapSessionStopwatch('s1', 3_000);
+    lapSessionStopwatch('s2', 3_000); // never started — nothing to lap
+    expect(getSessionStopwatch('s1').laps).toEqual([2_000]);
+    expect(getSessionStopwatch('s2').laps).toEqual([]);
   });
 });
