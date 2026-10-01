@@ -325,7 +325,7 @@ interface TargetFaceDefinition {
   id: string;
   rings: readonly TargetRing[]; // ascending diameter, X first
   referenceDiameterMm: number; // outer diameter of the printed black zone (fit anchor)
-  referenceIsSolidBlack: boolean; // true = precision solid disc, false = milsnabb annulus
+  referenceIsSolidBlack: boolean; // true = filled black disc, false = black ring around a light centre
 }
 ```
 
@@ -336,7 +336,7 @@ interface TargetFaceDefinition {
 | TG3  | `SPSF_PISTOL_25M_PRECISION.referenceIsSolidBlack`                                                                                                              | true                                                                                                                      |
 | TG4  | `SPSF_SNABBSKJUTNING_25M.rings`                                                                                                                                | 7 rings X,10..5 with diameters 50,100,180,260,340,420,500mm (SHB J.7.1 p.297)                                             |
 | TG5  | `SPSF_SNABBSKJUTNING_25M.referenceDiameterMm`                                                                                                                  | 500 (black across 5-10)                                                                                                   |
-| TG6  | `SPSF_SNABBSKJUTNING_25M.referenceIsSolidBlack`                                                                                                                | false                                                                                                                     |
+| TG6  | `SPSF_SNABBSKJUTNING_25M.referenceIsSolidBlack`                                                                                                                | true                                                                                                                      |
 | TG7  | only ring X has `isInnerTen: true` on both faces                                                                                                               | verified over the full ring list                                                                                          |
 | TG8  | `getTargetFace('spsf-pistol-25m-precision')` / `('spsf-snabbskjutning-25m')`                                                                                   | returns the matching definition                                                                                           |
 | TG9  | `getTargetFace('nonsense')`                                                                                                                                    | `undefined`                                                                                                               |
