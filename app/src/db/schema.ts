@@ -123,6 +123,7 @@ export const sessions = sqliteTable('sessions', {
   // a fixed number of fired shots in `extra_rounds` and never gets series.
   // The two are mutually exclusive by construction, which is what makes the
   // sessions list sortable/filterable on shape without deriving it per row.
+  // Immutable after creation: flipping it would strand the series or rounds.
   kind: text('kind', { enum: ['series', 'rounds'] })
     .notNull()
     .default('series'),

@@ -1187,7 +1187,7 @@ restates §0 rules 1–6 verbatim.
 > That withdraws the "we want the original picture as well" requirement the
 > paragraph above records, so the scan now keeps only the recognized fields
 > and deletes the image. Gone with it: the `/vault` screens, the vault store,
-> the AES-GCM envelope, the passphrase re-wrap of ADR 0007, the Android
+> the AES-GCM envelope, the bundle passphrase re-wrap, the Android
 > backup-exclusion config plugin, `licenses.vault_document_id` (migration
 > `0001`), and the `expo-crypto`, `expo-local-authentication` and
 > `@noble/hashes` dependencies. A bundle written by a build that still had

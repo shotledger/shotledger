@@ -348,7 +348,7 @@ therefore have nothing to attach to yet.
 ## Klassindelning (Tävlings-PM 14) — not encoded
 
 Transcribed for the record; none of it is in the app, and none of it will be:
-ADR 0014 decided against a klass layer for SvSF sessions (SPSF's klasser
+ADR 0011 decided against a klass layer for SvSF sessions (SPSF's klasser
 remain the only ones modelled).
 
 **14 Klassindelning för hederspriser** — minimum scores to reach a class:
@@ -486,7 +486,7 @@ seniorklass."_ The app records nothing about record eligibility.
 - **Finals** in any gren, snabbluftpistol's §9 included.
 - **Klassindelning** (Tävlings-PM 14, 14.1–14.5, 16): hederspris classes
   1/2/3, junior äldre/yngre, the Lp 11/13/16 youth classes, veteran classes,
-  LP Stöd and stödhandsklasser. Deliberately so — ADR 0014.
+  LP Stöd and stödhandsklasser. Deliberately so — ADR 0011.
 - **Team formats**: mixade lag (25 m standard, 50 m, luftpistol), lag-SM 10 m,
   and every Herrlag/Damlag/Juniorlag row in 15.1.
 - **Skyttemärken SvSF**.

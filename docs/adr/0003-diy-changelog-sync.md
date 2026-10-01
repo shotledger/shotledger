@@ -1,6 +1,6 @@
 # ADR 0003: Build the sync engine (DIY changelog), don't adopt a library
 
-Status: proposed (2026-09-01; accepted when this PR is merged)
+Status: accepted (2026-09-01)
 
 ## Context
 

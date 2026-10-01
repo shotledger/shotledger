@@ -3,11 +3,11 @@
 Status: accepted (2026-09-30). Supersedes ADR 0004.
 
 Not legal advice. The sources at the end were read in full; a lawyer's review
-of the points listed under "Open" is still owed.
+is still owed, and it and the other open actions are tracked on #100.
 
 ## Context
 
-ADR 0004 picked AGPL-3.0-or-later for the whole repository plus a CLA, on the
+The earlier decision picked AGPL-3.0-or-later for the whole repository plus a CLA, on the
 reasoning that AGPL §13 makes a hosted fork of the sync backend owe its
 changes back. Issue #359 then asked what the business model is, and the two
 questions turned out to be one: whether the backend is open source decides
@@ -68,7 +68,7 @@ AGPL-licensed file:
    services, Apple system frameworks and similar vendor libraries, with
    Corresponding Source not having to include them. This is what makes the
    APK redistributable at all, and it covers Play Integrity / App Attest
-   (ADR 0005) before they are adopted.
+   before they are adopted.
 
 Both are adopted now, while there is one copyright holder; from the first
 outside contribution they would need every contributor's consent. Side
@@ -98,11 +98,6 @@ bundle of `backend/src/index.ts` with a metafile lists
 among 892 modules; repeat that check when the backend's imports change.
 `backend/test/` may keep importing the AGPL sync client from the package
 root — tests are not part of the Worker bundle.
-
-An `exports` map with a `./sync` alias was tried and dropped: the app
-deep-imports `@shotledger/shared/src/…` in ten files, and TypeScript's
-`bundler` resolution does not extension-search `exports` targets, so the map
-broke `pnpm typecheck:app` while adding nothing the lint rule does not.
 
 ### Contributor terms
 
@@ -143,8 +138,8 @@ which is exactly the shape option C has.
   in-process end-to-end test (`backend/test/sync-client.spec.ts`) both need
   the backend beside `shared/`. The repository has never been public, so no
   history rewrite is involved either way.
-- **AGPL for the app is unchanged from ADR 0004**, and so is ADR 0013's
-  consequence that the repository must be public before a web app is hosted.
+- **AGPL for the app is unchanged.** A hosted web app (ADR 0013) is network
+  use under §13, so the repository must be public before one is deployed.
 
 ## What the licenses do not protect
 
@@ -162,8 +157,11 @@ phrase.
 
 So the licenses are notice and posture; the moat is operational:
 
-- accounts, quotas and rate limits on the hosted service (ADR 0005), plus a
-  terms-of-service for it;
+- accounts, quotas and rate limits on the hosted service, plus a
+  terms-of-service for it. No client-side check survives an open-source
+  client — any embedded secret is readable — so the backend bounds cost and
+  abuse per account instead of authenticating the binary; Play Integrity /
+  App Attest are a later hardening option, never a precondition for sync;
 - server-side model weights are never published;
 - the **ShotLedger** trademark, to be registered (PRV / EUIPO) — unaffected by
   authorship and the one instrument that stops someone else selling
@@ -180,19 +178,6 @@ So the licenses are notice and posture; the moat is operational:
   make no statement about what is free or included.
 - Contributions to `app/` and `shared/` arrive under AGPL together with the
   permissions; a contribution that strips them is not merged.
-- ADR 0004 is superseded; ADR 0005 gains a pointer to the platform-libraries
-  permission.
-
-## Open (maintainer actions)
-
-- CLA mechanism (bot or signatures file) before the first outside PR; whether
-  `reuse lint` joins CI (#100).
-- Trademark registration.
-- Lawyer review: ELv2's enforceability against a stranger who did not accept
-  it, the Swedish position on agent-written code, and the Cyber Resilience
-  Act classification of an app monetized through a paid service.
-- Whether Anthropic's Commercial or Consumer terms govern the maintainer's
-  plan.
 
 ## Sources
 
