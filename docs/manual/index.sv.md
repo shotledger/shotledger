@@ -3,8 +3,7 @@
 En skytteloggbok för pistolskyttar, byggd kring det som faktiskt händer på
 banan: en serie skjuts, skotten knappas in, nästa serie börjar.
 
-Den är gratis, kräver inget konto och fungerar offline. Donationer låser inte
-upp något.
+Den kräver inget konto och fungerar offline.
 
 ## Vad den gör
 

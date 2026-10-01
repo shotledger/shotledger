@@ -4,8 +4,7 @@ A target-shooting logbook for pistol shooters, built around what actually
 happens at the range: a series is shot, its shots are tapped in, the next
 series begins.
 
-It is free, has no account requirement, and works offline. Donations unlock
-nothing.
+It has no account requirement and works offline.
 
 ## What it does
 

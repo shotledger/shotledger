@@ -8,7 +8,7 @@ import {
   type PushAck,
   type StoredRow,
   type SyncTableName,
-} from '@shotledger/shared';
+} from '@shotledger/shared/src/sync';
 
 import { syncIdempotency, syncRows } from './schema';
 

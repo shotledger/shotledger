@@ -24,8 +24,3 @@ That is the default and the intended way to use the app.
   and the photo is then deleted — the app has nowhere to keep it.
 - **Training marks**, if you opt in to keeping them. They stay on the device to
   train a future hole detector, and you can delete them.
-
-## Donations
-
-The app is free and always will be. Donations unlock nothing — no feature is
-gated behind one. That is a deliberate constraint, not a current state.

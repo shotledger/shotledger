@@ -1,0 +1,34 @@
+# Per-file licensing, REUSE specification 3.3. The root LICENSE file is the
+# human summary; this file is what `reuse lint` and SPDX tooling read. A later
+# table wins over an earlier one for the files both match.
+version = 1
+SPDX-PackageName = "ShotLedger"
+SPDX-PackageSupplier = "Jimisola Laursen"
+SPDX-PackageDownloadLocation = "https://github.com/jimisola/shotledger"
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Jimisola Laursen"
+SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-ShotLedger-AGPL-Permissions"
+
+# The sync protocol and merge rule, which the backend compiles in. Permissive
+# so that nothing AGPL enters the Worker bundle (ADR 0017).
+[[annotations]]
+path = "shared/src/sync/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Jimisola Laursen"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "backend/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Jimisola Laursen"
+SPDX-License-Identifier = "Elastic-2.0"
+
+# Vendored byte-for-byte from AmazingAng/old-coder; see its LICENSE file.
+[[annotations]]
+path = ".claude/skills/old-coder/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 amazingang"
+SPDX-License-Identifier = "MIT"

@@ -34,6 +34,67 @@ export default tseslint.config(
     rules: {},
   },
   {
+    // The Worker bundle is ELv2 and may only compile in the Apache-2.0
+    // protocol package, never the AGPL rest of shared/ (ADR 0017).
+    files: ['backend/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@shotledger/shared',
+              message: 'backend/src may only import @shotledger/shared/src/sync (ADR 0017).',
+            },
+          ],
+          patterns: [
+            {
+              regex: '^@shotledger/shared/(?!src/sync$)',
+              message: 'backend/src may only import @shotledger/shared/src/sync (ADR 0017).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // shared/src/sync is Apache-2.0 and must stay self-contained: zod and
+    // its own files only, so the backend never pulls AGPL code through it.
+    files: ['shared/src/sync/**/*.ts'],
+    ignores: ['shared/src/sync/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!zod$)(?!\\./)',
+              message:
+                'shared/src/sync may import only zod and files in its own directory (ADR 0017).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['shared/src/sync/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!zod$|vitest$|fast-check$)(?!\\./)',
+              message:
+                'shared/src/sync tests may import only zod, vitest, fast-check and files in this directory (ADR 0017).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // app: React Native components
     files: ['app/**/*.{ts,tsx}'],
     plugins: {

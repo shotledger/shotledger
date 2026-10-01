@@ -1,6 +1,6 @@
 # ShotLedger — agent instructions
 
-Free, open-source (private for now) target-shooting logbook app.
+Open-source (private for now) target-shooting logbook app.
 React Native + Expo + TypeScript; local-first SQLite; optional Cloudflare
 sync. Android first — **all code must stay iOS-compatible**.
 
@@ -11,6 +11,9 @@ sync. Android first — **all code must stay iOS-compatible**.
   the same branch as a change that shifts one of these.
 - `docs/architecture.md` — the tech-choice table and iOS-readiness
   rules, at a glance.
+- `LICENSE`, `CONTRIBUTING.md`, `CLA.md` — the license map (`app/` and
+  `shared/` AGPL-3.0-or-later with the §7 permissions, `backend/` ELv2)
+  and the terms contributions arrive under. ADR 0017 records why.
 - `docs/decisions-log-archive.md` — the historical record of every
   narrower decision (a bug's root cause, a library pick, a wording
   call) that predates issue #138. Nothing here is open work; it

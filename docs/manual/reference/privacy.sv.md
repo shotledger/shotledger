@@ -24,9 +24,3 @@ Det är standardläget och det sätt appen är tänkt att användas på.
   raderas sedan — appen har ingenstans att spara det.
 - **Träningsmarkeringar**, om du väljer att spara dem. De stannar på enheten
   för att träna en framtida håldetektor, och du kan radera dem.
-
-## Donationer
-
-Appen är gratis och kommer alltid att vara det. Donationer låser inte upp
-något — ingen funktion ligger bakom en donation. Det är en medveten
-begränsning, inte ett nuläge.

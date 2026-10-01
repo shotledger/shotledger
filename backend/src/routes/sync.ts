@@ -7,7 +7,7 @@ import {
   PushRequestSchema,
   type PullResponse,
   type PushResponse,
-} from '@shotledger/shared';
+} from '@shotledger/shared/src/sync';
 
 import { devBearerAuthenticator, type Authenticator } from '../auth';
 import { applyPushChange, createDb, pullTablePage } from '../db/queries';
