@@ -13,6 +13,7 @@ import { TagChips } from '@/components/tag-chips';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
+import { SwipeAction } from '@/components/swipe-action';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
@@ -27,7 +28,6 @@ import {
   type SessionShapeFilter,
 } from '@/features/home/home-session-row';
 import { useHomeData } from '@/features/home/use-home-data';
-import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
@@ -43,7 +43,6 @@ function capitalize(value: string): string {
 export default function HomeScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
     useHomeData();
   const { profile } = useComplianceProfile();
@@ -139,24 +138,18 @@ export default function HomeScreen() {
                 overshootRight={false}
                 renderRightActions={() => (
                   <View style={styles.rowActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      testID={`home-session-${index}-share`}
+                    <SwipeAction
+                      kind="share"
+                      label={t('home.shareSession')}
                       onPress={() => router.push(`/session/${session.id}/share`)}
-                      style={[styles.rowAction, { backgroundColor: theme.backgroundSelected }]}
-                    >
-                      <ThemedText type="smallBold">{t('home.shareSession')}</ThemedText>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      testID={`home-session-${index}-delete`}
+                      testID={`home-session-${index}-share`}
+                    />
+                    <SwipeAction
+                      kind="delete"
+                      label={t('common.deleteSession')}
                       onPress={() => onDeleteSession(session)}
-                      style={[styles.rowAction, { backgroundColor: theme.danger }]}
-                    >
-                      <ThemedText type="smallBold" themeColor="onPrimary">
-                        {t('common.deleteSession')}
-                      </ThemedText>
-                    </Pressable>
+                      testID={`home-session-${index}-delete`}
+                    />
                   </View>
                 )}
               >
@@ -226,11 +219,5 @@ const styles = StyleSheet.create({
   rowActions: {
     flexDirection: 'row',
     gap: Spacing.one,
-  },
-  rowAction: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    borderRadius: Radius.medium,
   },
 });

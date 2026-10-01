@@ -55,6 +55,7 @@ import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
 import { WebshooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
+import { SwipeAction } from '@/components/swipe-action';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -393,16 +394,12 @@ export default function SessionDetailScreen() {
         containerStyle={[styles.seriesWrapper, held && styles.liftedWrapper]}
         overshootRight={false}
         renderRightActions={() => (
-          <Pressable
-            accessibilityRole="button"
-            testID={`series-${row.position}-delete`}
+          <SwipeAction
+            kind="delete"
+            label={t('session.deleteSeries')}
             onPress={() => onDeleteSeries(row)}
-            style={[styles.deleteAction, { backgroundColor: theme.danger }]}
-          >
-            <ThemedText type="smallBold" themeColor="onPrimary">
-              {t('session.deleteSeries')}
-            </ThemedText>
-          </Pressable>
+            testID={`series-${row.position}-delete`}
+          />
         )}
       >
         <GestureDetector gesture={Gesture.Simultaneous(lift, drag)}>{content}</GestureDetector>
@@ -929,12 +926,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  deleteAction: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    borderRadius: Radius.medium,
   },
   /**
    * The held row. `seriesRow` carries no background of its own — the card

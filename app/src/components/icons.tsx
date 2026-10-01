@@ -74,3 +74,25 @@ export function PhotoIcon({ color, size = DEFAULT_SIZE }: IconProps) {
     </Svg>
   );
 }
+
+/** A bin with a lid: the delete affordance on swiped list rows (#456). */
+export function TrashIcon({ color, size = DEFAULT_SIZE }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 7h16" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path
+        d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Path d="M10 11v5M14 11v5" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
