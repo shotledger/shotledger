@@ -21,7 +21,7 @@ export interface TargetFaceDefinition {
   readonly rings: readonly TargetRing[];
   /** Outer diameter of the printed black zone — the ellipse-fit anchor. */
   readonly referenceDiameterMm: number;
-  /** true = precision solid black disc; false = milsnabb black annulus. */
+  /** true = the black is a filled disc; false = a black ring around a light centre. */
   readonly referenceIsSolidBlack: boolean;
 }
 
@@ -62,7 +62,7 @@ export const SPSF_SNABBSKJUTNING_25M: TargetFaceDefinition = {
     ring('5', 5, 500),
   ],
   referenceDiameterMm: 500,
-  referenceIsSolidBlack: false,
+  referenceIsSolidBlack: true,
 };
 
 // ISSF faces, transcribed from docs/reference/issf-rules.md, which cites the
@@ -122,10 +122,7 @@ export const ISSF_25M_PRECISION: TargetFaceDefinition = {
 
 /**
  * GTR 6.3.4.4, "25m Rapid Fire Pistol Target". Black covers rings 5-10, i.e.
- * the whole 500mm scoring area — the same sheet as the SPSF milsnabb face,
- * and it takes that face's `referenceIsSolidBlack: false` for the same
- * reason: the CV reference is the printed black's outer edge, an annulus
- * boundary here rather than a filled disc.
+ * the whole 500mm scoring area — the same sheet as the SPSF milsnabb face.
  */
 export const ISSF_25M_RAPID_FIRE: TargetFaceDefinition = {
   id: 'issf-25m-rapid-fire',
@@ -139,7 +136,7 @@ export const ISSF_25M_RAPID_FIRE: TargetFaceDefinition = {
     ring('5', 5, 500),
   ],
   referenceDiameterMm: 500,
-  referenceIsSolidBlack: false,
+  referenceIsSolidBlack: true,
 };
 
 // SvSF face, transcribed from docs/reference/svsf-rules.md (Reglemente för
@@ -149,9 +146,7 @@ export const ISSF_25M_RAPID_FIRE: TargetFaceDefinition = {
 /**
  * Snabbluftpistol §3: 10 ring 22.0 mm down to 5 ring 154.5 mm, inner ten
  * 11 mm. The value rings and aiming lines are printed white (§3), so the
- * black runs out to the 5 ring's edge — the 25 m rapid fire layout at 10 m —
- * and it takes that face's `referenceIsSolidBlack: false` for the same
- * reason: the CV reference is the black's outer edge, not a filled disc.
+ * black runs out to the 5 ring's edge — the 25 m rapid fire layout at 10 m.
  */
 export const SVSF_10M_SNABBLUFTPISTOL: TargetFaceDefinition = {
   id: 'svsf-10m-snabbluftpistol',
@@ -165,7 +160,7 @@ export const SVSF_10M_SNABBLUFTPISTOL: TargetFaceDefinition = {
     ring('5', 5, 154.5),
   ],
   referenceDiameterMm: 154.5,
-  referenceIsSolidBlack: false,
+  referenceIsSolidBlack: true,
 };
 
 const TARGET_FACES: Readonly<Record<string, TargetFaceDefinition>> = {

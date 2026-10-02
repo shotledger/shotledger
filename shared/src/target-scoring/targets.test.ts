@@ -55,8 +55,8 @@ describe('SPSF_SNABBSKJUTNING_25M', () => {
     expect(SPSF_SNABBSKJUTNING_25M.referenceDiameterMm).toBe(500);
   });
 
-  it('TG6: referenceIsSolidBlack is false', () => {
-    expect(SPSF_SNABBSKJUTNING_25M.referenceIsSolidBlack).toBe(false);
+  it('TG6: referenceIsSolidBlack is true (SHB J.7.1: black across 5-10)', () => {
+    expect(SPSF_SNABBSKJUTNING_25M.referenceIsSolidBlack).toBe(true);
   });
 });
 
@@ -73,9 +73,9 @@ describe('SVSF_10M_SNABBLUFTPISTOL', () => {
     ]);
   });
 
-  it('TG5b: referenceDiameterMm is 154.5 (black across 5-10) and not a solid disc', () => {
+  it('TG5b: referenceDiameterMm is 154.5 and the black is a solid disc across 5-10', () => {
     expect(SVSF_10M_SNABBLUFTPISTOL.referenceDiameterMm).toBe(154.5);
-    expect(SVSF_10M_SNABBLUFTPISTOL.referenceIsSolidBlack).toBe(false);
+    expect(SVSF_10M_SNABBLUFTPISTOL.referenceIsSolidBlack).toBe(true);
   });
 });
 
