@@ -23,7 +23,11 @@ till knappsatsen.
    upptill, till höger, nedtill och till vänster, och väljer den ringen under
    **Ring du markerar** — appen väntar på det valet i stället för att anta den
    yttersta ringen. Det är det som låter appen räkna bort vinkeln du
-   fotograferade ur.
+   fotograferade ur. När ringen är vald ritar appen den genom dina fyra
+   punkter, markerar centrum som de ger och ritar de andra ringarna svagt.
+   Alla ska ligga på de tryckta linjerna; missar de är ett handtag eller den
+   valda ringen fel. Ett handtag kan dras utanför fotots kant när den delen av
+   ringen ligger utanför bild.
 3. **Markera hålen.**
    - **Kontrollera förslagen.** På 25 m precisionstavlan letar appen också
      efter hålen — oavsett om den hittade ringarna själv eller du satte de fyra

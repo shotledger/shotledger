@@ -1,9 +1,11 @@
 // The manual 4-point fallback, shown when the validity gate rejects the
 // automatic fit. Spec: docs/specs/photo-scoring-phase1-spec.md §2.5.
 //
-// The user drags four handles onto the outermost ring's top/right/bottom/left
-// extremes. Order is fixed and labelled, because a homography built from
-// mismatched correspondences is silently wrong rather than an error.
+// The user drags four handles onto a ring's top/right/bottom/left extremes.
+// Order is fixed and labelled, because a homography built from mismatched
+// correspondences is silently wrong rather than an error. Once the ring is
+// known, the rings those four points imply are drawn on the photo (#347), and
+// a margin around the photo lets a handle sit past its edge on a close-up.
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -17,6 +19,8 @@ import {
 import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import type { Point } from '@shotledger/shared';
 
+import type { RingOverlay } from '@/features/photo-scoring/corners';
+
 import type { CapturedPhoto } from '@/features/photo-scoring/capture';
 import { cropLoupe } from '@/features/photo-scoring/capture';
 
@@ -25,6 +29,9 @@ const HANDLE_COLOR = '#38bdf8';
 const GUIDE_COLOR = 'rgba(56, 189, 248, 0.5)';
 const LOUPE_SIZE = 140;
 const CROSSHAIR_COLOR = '#38bdf8';
+/** Dark border around the photo, as a fraction of its size, where a handle may still go. */
+const MARGIN = 0.15;
+const CENTER_ARM = 10;
 
 export interface CornerAdjusterProps extends Omit<ViewProps, 'onLayout'> {
   photoUri: string;
@@ -43,6 +50,8 @@ export interface CornerAdjusterProps extends Omit<ViewProps, 'onLayout'> {
    */
   photo?: CapturedPhoto;
   scaleToOriginal?: number;
+  /** The rings the four points imply, in IMAGE px; null until a ring is picked. */
+  overlay?: RingOverlay | null;
 }
 
 /** A small, gesture-less magnifier cropped from the full-resolution photo. */
@@ -107,6 +116,7 @@ export function CornerAdjuster({
   labels,
   photo,
   scaleToOriginal,
+  overlay,
   style,
   ...rest
 }: CornerAdjusterProps) {
@@ -117,6 +127,7 @@ export function CornerAdjuster({
   // is written in an effect, never during render.
   const cornersRef = useRef(corners);
   const scaleRef = useRef(0);
+  const offsetRef = useRef({ x: 0, y: 0 });
   const draggingRef = useRef(-1);
   const onChangeRef = useRef(onChange);
   useEffect(() => {
@@ -126,10 +137,11 @@ export function CornerAdjuster({
 
   function onLayout(event: LayoutChangeEvent) {
     const { width } = event.nativeEvent.layout;
-    const height = (width * imageHeight) / imageWidth;
     // Written from an event handler, which the gesture callbacks then read.
-    scaleRef.current = width / imageWidth;
-    setLayout({ width, height });
+    const fit = fitPhoto(width, imageWidth, imageHeight);
+    scaleRef.current = fit.scale;
+    offsetRef.current = fit.offset;
+    setLayout({ width, height: fit.surfaceHeight });
   }
 
   const [responder, setResponder] = useState<PanResponderInstance | null>(null);
@@ -141,10 +153,14 @@ export function CornerAdjuster({
         onPanResponderGrant: (event) => {
           const { locationX, locationY } = event.nativeEvent;
           const scale = scaleRef.current;
+          const offset = offsetRef.current;
           let best = -1;
           let bestDistance = Infinity;
           cornersRef.current.forEach((corner, index) => {
-            const distance = Math.hypot(locationX - corner.x * scale, locationY - corner.y * scale);
+            const distance = Math.hypot(
+              locationX - (corner.x * scale + offset.x),
+              locationY - (corner.y * scale + offset.y),
+            );
             if (distance < bestDistance) {
               bestDistance = distance;
               best = index;
@@ -161,11 +177,12 @@ export function CornerAdjuster({
           const scale = scaleRef.current;
           if (index < 0 || scale === 0) return;
           const { locationX, locationY } = event.nativeEvent;
+          const offset = offsetRef.current;
           const next = cornersRef.current.map((corner, i) =>
             i === index
               ? {
-                  x: Math.max(0, Math.min(imageWidth, locationX / scale)),
-                  y: Math.max(0, Math.min(imageHeight, locationY / scale)),
+                  x: clamp((locationX - offset.x) / scale, imageWidth),
+                  y: clamp((locationY - offset.y) / scale, imageHeight),
                 }
               : corner,
           );
@@ -179,8 +196,12 @@ export function CornerAdjuster({
     );
   }, [imageWidth, imageHeight]);
 
-  const scale = layout.width > 0 ? layout.width / imageWidth : 0;
-  const polygon = corners.map((c) => `${c.x * scale},${c.y * scale}`).join(' ');
+  const fit = layout.width > 0 ? fitPhoto(layout.width, imageWidth, imageHeight) : null;
+  const scale = fit?.scale ?? 0;
+  const sx = (point: Point) => point.x * scale + (fit?.offset.x ?? 0);
+  const sy = (point: Point) => point.y * scale + (fit?.offset.y ?? 0);
+  const pointsAttr = (points: readonly Point[]) =>
+    points.map((point) => `${sx(point)},${sy(point)}`).join(' ');
   const activeCorner = activeIndex >= 0 ? corners[activeIndex] : undefined;
 
   return (
@@ -190,7 +211,24 @@ export function CornerAdjuster({
         style={[styles.surface, { height: layout.height }]}
         {...(responder?.panHandlers ?? {})}
       >
-        <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="fill" />
+        {fit && (
+          // Not a touch target: touches must land on the surface, so their
+          // locationX is in surface coordinates, not the inset photo's.
+          <View
+            pointerEvents="none"
+            style={[
+              styles.photo,
+              {
+                left: fit.offset.x,
+                top: fit.offset.y,
+                width: imageWidth * scale,
+                height: imageHeight * scale,
+              },
+            ]}
+          >
+            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="fill" />
+          </View>
+        )}
         {scale > 0 && (
           <Svg
             style={StyleSheet.absoluteFill}
@@ -198,12 +236,47 @@ export function CornerAdjuster({
             height={layout.height}
             pointerEvents="none"
           >
-            <Polygon points={polygon} fill="none" stroke={GUIDE_COLOR} strokeWidth={2} />
+            {overlay ? (
+              <>
+                {overlay.rings.map((ring) => (
+                  <Polygon
+                    key={`ring-${ring.label}`}
+                    points={pointsAttr(ring.points)}
+                    fill="none"
+                    stroke={ring.picked ? HANDLE_COLOR : GUIDE_COLOR}
+                    strokeWidth={ring.picked ? 2 : 1}
+                  />
+                ))}
+                <Line
+                  x1={sx(overlay.center) - CENTER_ARM}
+                  y1={sy(overlay.center)}
+                  x2={sx(overlay.center) + CENTER_ARM}
+                  y2={sy(overlay.center)}
+                  stroke={HANDLE_COLOR}
+                  strokeWidth={2}
+                />
+                <Line
+                  x1={sx(overlay.center)}
+                  y1={sy(overlay.center) - CENTER_ARM}
+                  x2={sx(overlay.center)}
+                  y2={sy(overlay.center) + CENTER_ARM}
+                  stroke={HANDLE_COLOR}
+                  strokeWidth={2}
+                />
+              </>
+            ) : (
+              <Polygon
+                points={pointsAttr(corners)}
+                fill="none"
+                stroke={GUIDE_COLOR}
+                strokeWidth={2}
+              />
+            )}
             {corners.map((corner, index) => (
               <Circle
                 key={labels[index] ?? index}
-                cx={corner.x * scale}
-                cy={corner.y * scale}
+                cx={sx(corner)}
+                cy={sy(corner)}
                 r={HANDLE_RADIUS}
                 fill={HANDLE_COLOR}
                 fillOpacity={0.5}
@@ -214,8 +287,8 @@ export function CornerAdjuster({
             {corners.map((corner, index) => (
               <SvgText
                 key={`label-${labels[index] ?? index}`}
-                x={corner.x * scale}
-                y={corner.y * scale + 5}
+                x={sx(corner)}
+                y={sy(corner) + 5}
                 fill="#ffffff"
                 fontSize={13}
                 fontWeight="bold"
@@ -234,6 +307,21 @@ export function CornerAdjuster({
       </View>
     </View>
   );
+}
+
+/** How the photo sits inside the surface: scaled to fit, inset by MARGIN on every side. */
+function fitPhoto(surfaceWidth: number, imageWidth: number, imageHeight: number) {
+  const scale = surfaceWidth / (imageWidth * (1 + 2 * MARGIN));
+  return {
+    scale,
+    offset: { x: MARGIN * imageWidth * scale, y: MARGIN * imageHeight * scale },
+    surfaceHeight: imageHeight * scale * (1 + 2 * MARGIN),
+  };
+}
+
+/** A handle may go past the photo's edge, but not past the margin around it. */
+function clamp(value: number, extent: number): number {
+  return Math.max(-MARGIN * extent, Math.min((1 + MARGIN) * extent, value));
 }
 
 /** Sensible starting handles: a diamond inscribed in the photo. */
@@ -257,6 +345,9 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#000',
     overflow: 'hidden',
+  },
+  photo: {
+    position: 'absolute',
   },
   loupeAnchor: {
     position: 'absolute',

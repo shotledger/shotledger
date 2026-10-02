@@ -3,6 +3,7 @@ import { SPSF_PISTOL_25M_PRECISION as TARGET } from '@shotledger/shared';
 import {
   applyHomography,
   homographyFromQuad,
+  ringOverlay,
   ringReferencePoints,
   transformFromCorners,
 } from './corners';
@@ -154,5 +155,53 @@ describe('transformFromCorners', () => {
 
   it('returns null on a degenerate quad', () => {
     expect(transformFromCorners([p(0, 0), p(1, 0), p(2, 0), p(3, 0)], TARGET)).toBeNull();
+  });
+});
+
+describe('ringOverlay', () => {
+  // Corners 100px from (100, 100), on the 7 ring (radius 100mm): 1 px per mm.
+  const corners = [p(100, 0), p(200, 100), p(100, 200), p(0, 100)];
+
+  it('draws the picked ring through the four points', () => {
+    const overlay = ringOverlay(corners, TARGET, '7')!;
+    const seven = overlay.rings.find((ring) => ring.picked)!;
+    expect(seven.label).toBe('7');
+    for (const point of seven.points) {
+      expect(Math.hypot(point.x - 100, point.y - 100)).toBeCloseTo(100, 6);
+    }
+    // Points 0, 18, 36, 54 of 72 are right, bottom, left, top.
+    expect(seven.points[18]!.x).toBeCloseTo(100, 6);
+    expect(seven.points[18]!.y).toBeCloseTo(200, 6);
+  });
+
+  it('draws every other ring at its own scale, and only the picked one is marked', () => {
+    const overlay = ringOverlay(corners, TARGET, '7')!;
+    expect(overlay.rings).toHaveLength(TARGET.rings.length);
+    expect(overlay.rings.filter((ring) => ring.picked)).toHaveLength(1);
+    const ten = overlay.rings.find((ring) => ring.label === '10')!;
+    const tenRadius = TARGET.rings.find((ring) => ring.label === '10')!.diameterMm / 2;
+    expect(Math.hypot(ten.points[0]!.x - 100, ten.points[0]!.y - 100)).toBeCloseTo(tenRadius, 6);
+  });
+
+  it('shows a wrong ring pick as rings that miss the points', () => {
+    // Same points, but said to be on the outermost ring: the 7 ring is then
+    // drawn at 200/500 of the quad, well inside the handles.
+    const overlay = ringOverlay(corners, TARGET, '1')!;
+    const seven = overlay.rings.find((ring) => ring.label === '7')!;
+    expect(Math.hypot(seven.points[0]!.x - 100, seven.points[0]!.y - 100)).toBeCloseTo(40, 6);
+  });
+
+  it('puts the center where the perspective puts it, not midway between the handles', () => {
+    // Left and right sit low, as in a photo shot from below. Diameters stay
+    // straight lines under a homography, so the center is where top-bottom
+    // crosses left-right: (100, 140), not the handles' midpoint (100, 110).
+    const tilted = [p(100, 20), p(200, 140), p(100, 200), p(0, 140)];
+    const overlay = ringOverlay(tilted, TARGET, '7')!;
+    expect(overlay.center.x).toBeCloseTo(100, 6);
+    expect(overlay.center.y).toBeCloseTo(140, 6);
+  });
+
+  it('returns null on a degenerate quad', () => {
+    expect(ringOverlay([p(0, 0), p(1, 0), p(2, 0), p(3, 0)], TARGET, '7')).toBeNull();
   });
 });
