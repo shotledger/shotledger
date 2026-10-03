@@ -37,6 +37,8 @@ function group(overrides: Partial<SessionImportGroup> = {}): SessionImportGroup 
     extraRounds: null,
     tags: [],
     series: [],
+    faltResultMode: null,
+    stations: [],
     ...overrides,
   };
 }

@@ -36,6 +36,8 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     extraRounds: null,
     tags: [],
     series: [],
+    faltResultMode: null,
+    stations: [],
     ...overrides,
   };
 }
@@ -64,6 +66,58 @@ describe('importSessionsFromJson', () => {
     expect(isError(result)).toBe(false);
     expect((result as ImportResult).sessions).toEqual(input);
     expect((result as ImportResult).errors).toEqual([]);
+  });
+
+  it('J6: a station no round could have produced rejects its session', () => {
+    const station = {
+      position: 1,
+      hits: 5,
+      figuresHit: 3,
+      points: null,
+      pointsMax: null,
+      isScratched: false,
+      isShootOff: false,
+      note: null,
+    };
+    const bad = [
+      { ...station, hits: 7 },
+      { ...station, hits: 3, figuresHit: 4 },
+      { ...station, hits: 4, figuresHit: 0 },
+      { ...station, hits: -1, figuresHit: 0 },
+      { ...station, position: 0 },
+      { ...station, points: 11, pointsMax: 10 },
+      { ...station, points: -1 },
+    ];
+    for (const candidate of bad) {
+      const result = importSessionsFromJson(
+        exportSessionsToJson([session({ stations: [candidate] })], OPTIONS),
+      ) as ImportResult;
+      expect(result.sessions, JSON.stringify(candidate)).toEqual([]);
+      expect(result.errors).toHaveLength(1);
+    }
+  });
+
+  it('J6: a scratched station keeps numbers a scoring one could not have', () => {
+    const scratched = {
+      position: 3,
+      hits: 6,
+      figuresHit: 0,
+      points: null,
+      pointsMax: null,
+      isScratched: true,
+      isShootOff: false,
+      note: null,
+    };
+    const input = [session({ disciplineId: 'spsf-falt', stations: [scratched] })];
+    const result = importSessionsFromJson(exportSessionsToJson(input, OPTIONS)) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions).toEqual(input);
+  });
+
+  it('a file whose sessions carry no stations field is refused session by session', () => {
+    const { stations: _stations, faltResultMode: _mode, ...older } = session();
+    const result = importSessionsFromJson(exportSessionsToJson([older as never], OPTIONS));
+    expect((result as ImportResult).sessions).toEqual([]);
   });
 
   it('C9: a file that is not ours is refused, and nothing is imported', () => {
