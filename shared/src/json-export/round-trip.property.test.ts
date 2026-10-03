@@ -36,14 +36,12 @@ const seriesArb = fc.record({
 });
 
 // A scoring station must be arithmetically possible; a scratched one need not be.
-const scoringStationNumbersArb = fc
-  .integer({ min: 0, max: 6 })
-  .chain((hits) =>
-    fc.record({
-      hits: fc.constant(hits),
-      figuresHit: hits === 0 ? fc.constant(0) : fc.integer({ min: 1, max: hits }),
-    }),
-  );
+const scoringStationNumbersArb = fc.integer({ min: 0, max: 6 }).chain((hits) =>
+  fc.record({
+    hits: fc.constant(hits),
+    figuresHit: hits === 0 ? fc.constant(0) : fc.integer({ min: 1, max: hits }),
+  }),
+);
 const scratchedStationNumbersArb = fc.record({
   hits: fc.integer({ min: 0, max: 6 }),
   figuresHit: fc.integer({ min: 0, max: 6 }),

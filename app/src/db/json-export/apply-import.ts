@@ -17,7 +17,16 @@ import {
   SHOTS_PER_STATION,
 } from '@shotledger/shared';
 
-import { ammoLots, faltStations, firearms, licenses, series, sessions, shots, tags } from '../schema';
+import {
+  ammoLots,
+  faltStations,
+  firearms,
+  licenses,
+  series,
+  sessions,
+  shots,
+  tags,
+} from '../schema';
 import type { Database } from '../types';
 import { listStationsForSession } from '../queries/falt';
 import { softDeleteSeries } from '../queries/series';

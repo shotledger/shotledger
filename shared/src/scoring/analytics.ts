@@ -375,9 +375,6 @@ export function analyticsReportTotals(
     sessionCount: reportSessions.length,
     volumeShotCount:
       totals.volumeShotCount +
-      reportSessions.reduce(
-        (sum, session) => sum + session.extraRounds + session.stationRounds,
-        0,
-      ),
+      reportSessions.reduce((sum, session) => sum + session.extraRounds + session.stationRounds, 0),
   };
 }
