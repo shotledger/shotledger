@@ -1,12 +1,12 @@
-// fit_hole_proposals.py in TypeScript: the logistic regression behind
-// HOLE_PROPOSAL_WEIGHTS / HOLE_PROPOSAL_BIAS, cross-validated 5-fold by photo
-// with the Python's folds, then fitted on everything.
+// The logistic regression behind HOLE_PROPOSAL_WEIGHTS / HOLE_PROPOSAL_BIAS,
+// cross-validated 5-fold by photo (the folds the spike drew), then fitted on
+// everything.
 //
 //   node tools/cv/fit/fit-hole-proposals.mts candidates.csv --marks marks.txt
 //   node tools/cv/fit/fit-hole-proposals.mts a.csv --test b.csv --marks marks.txt
 //
-// Input is the candidates CSV `parity_holes.py score --csv` (or
-// eval_hole_proposals.py --out) writes; every column after `resp` is a feature.
+// Input is the candidates CSV score-holes.tool.ts writes (CV_SCORE_CSV);
+// every column after `resp` is a feature.
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 

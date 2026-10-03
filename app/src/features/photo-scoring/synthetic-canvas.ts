@@ -1,10 +1,10 @@
-// A synthetic rectified canvas, drawn with integer arithmetic only, so it
-// reproduces `spike/cv/synthetic_canvas.py` pixel for pixel. Test support for
-// the hole-proposal lock-step fixture; no real photo is involved (hard rule 7).
+// A synthetic rectified canvas, drawn with integer arithmetic only, so every
+// platform draws it pixel for pixel alike. Test support for the hole-proposal
+// lock-step fixture; no real photo is involved (hard rule 7).
 //
 // Every shape is a squared-distance or rectangle test on integer coordinates;
 // the paper grain and the torn rims come from a 32-bit hash of (x, y, seed).
-// Keep both implementations in lock-step.
+// The fixtures carry each drawing's checksum, so a change here shows.
 
 export function hash32(x: number, y: number, seed: number): number {
   let h = ((Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ seed) >>> 0) >>> 0;
@@ -102,8 +102,7 @@ export const CLOSEUP_DRAWING = {
 } as const;
 
 /**
- * A photo-like close-up of the precision face's ring lines, the twin of
- * `synthetic_closeup` in `spike/cv/synthetic_canvas.py`, for the close-up
+ * A photo-like close-up of the precision face's ring lines, for the close-up
  * lock's fixture. `H` maps a quarter-pixel sample (4x+1 or 4x+3) to target
  * units: (U/W, V/W). Every product stays below 2^53, so the doubles here are
  * exact integers.

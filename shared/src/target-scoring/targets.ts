@@ -1,7 +1,6 @@
 // Target face data for photo scoring, transcribed from
 // docs/reference/spsf-shb-2026.md (F.7.1 p.182 / J.7.1 p.297) and
-// cross-checked against spike/cv/target_cv.py's PRECISION_RINGS /
-// MILSNABB_RINGS / TARGETS (spike/cv-target-scoring branch). Executable
+// cross-checked against the CV spike's ring tables. Executable
 // spec: docs/specs/target-scoring-math-spec.md §3.
 //
 // `id` matches shared/src/disciplines `Discipline.targetFace` exactly

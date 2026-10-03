@@ -1,6 +1,5 @@
-// Ellipse -> target-mm rectification math, ported from the CV spike
-// (spike/cv/target_cv.py on branch spike/cv-target-scoring, stages 2-3:
-// build_geom / refine_geom / _radial_profile). Executable spec:
+// Ellipse -> target-mm rectification math, ported from the CV spike (stages
+// 2-3: build_geom / refine_geom / _radial_profile). Executable spec:
 // docs/specs/target-scoring-math-spec.md §2.
 //
 // This module starts from "an ellipse and hole pixel-coordinates exist" —
@@ -39,7 +38,7 @@ function assertPositive(value: number, what: string): void {
   if (!(value > 0)) throw new RangeError(`${what} must be > 0, got ${value}`);
 }
 
-/** Ports build_geom (target_cv.py:167-188). See spec §2.2. */
+/** Ports the spike's build_geom. See spec §2.2. */
 export function buildRectification(
   ellipse: EllipseFit,
   referenceDiameterMm: number,
@@ -101,7 +100,7 @@ export function targetMmToImage(t: RectificationTransform, p: Point): Point {
 
 /**
  * Ports the effect of refine_geom's (dx, dy, scale) correction
- * (target_cv.py:193-237), redefined in mm-space (spec §2.4): for every image
+ * redefined in mm-space (spec §2.4): for every image
  * point p, imageToTargetMm(refine(t,dx,dy,scale), p) === scale * (imageToTargetMm(t, p) - (dx, dy)).
  */
 export function refineRectification(
@@ -123,10 +122,10 @@ export function refineRectification(
 }
 
 /**
- * Ports the scoring inner loop of refine_geom (target_cv.py:219-227): the
+ * Ports the scoring inner loop of refine_geom: the
  * pure-math half of the spike's alignment objective. `profile` is a 1-D
  * array indexed by radius-in-samples (the native layer's warpPolar +
- * high-pass output, target_cv.py's _radial_profile). Spec §2.5.
+ * high-pass output). Spec §2.5.
  */
 export function scoreRadialProfile(
   profile: ArrayLike<number>,
@@ -180,7 +179,7 @@ function grid(center: number, halfWidth: number, step: number): number[] {
 
 /**
  * Ports the coarse-to-fine grid search driver in refine_geom
- * (target_cv.py:206-231), generalized over a caller-supplied `evaluate`
+ * generalized over a caller-supplied `evaluate`
  * callback so the native layer can drive the same search with its own image
  * sampling (spec §2.6).
  */

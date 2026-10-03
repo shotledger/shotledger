@@ -99,7 +99,7 @@ describe('checkGeometryValidity', () => {
 });
 
 // The gate exists to reject exactly these, so they are asserted with the real
-// numbers spike/cv/validity_gate.py measured, not with invented ones.
+// numbers the gate's calibration measured, not with invented ones.
 describe('the corpus photos the gate exists for', () => {
   it('rejects 20250906_104730, which locked onto a treeline and gravel', () => {
     const result = checkGeometryValidity({

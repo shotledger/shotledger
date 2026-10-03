@@ -8,8 +8,8 @@
 // finding demands.
 //
 // Pure arithmetic over numbers the native layer measures, so it is testable
-// without OpenCV. Thresholds are calibrated on the real 38-photo corpus by
-// spike/cv/validity_gate.py — see docs/specs/photo-scoring-phase1-evidence.md.
+// without OpenCV. Thresholds are calibrated on the real 38-photo corpus — see
+// docs/specs/photo-scoring-phase1-evidence.md.
 
 /** Raw measurements the native geometry stage supplies. */
 export interface GeometryMetrics {

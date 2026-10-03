@@ -1,11 +1,10 @@
 // Hole proposals: candidate bullet holes on the rectified canvas, each with a
 // probability — the assisted "suggest holes" stage.
 //
-// A line-for-line port of `spike/cv/hole_proposals.py`, which is the reference
-// for the arithmetic and the file the constants were fitted against (numbers:
-// docs/specs/cv-hole-proposals-2026-09.md). `hole-proposals.fixtures.json`,
-// written from synthetic canvases by `spike/cv/gen_hole_proposal_fixtures.py`,
-// pins the two together; change one and you change both.
+// A line-for-line port of the Python spike's hole proposals (numbers:
+// docs/specs/cv-hole-proposals-2026-09.md). `hole-proposals.fixtures.json` is
+// a snapshot of this module on synthetic canvases (`pnpm cv:fixtures`);
+// regenerate it after a change on purpose.
 //
 // Pure JS on the gray `RectifiedCanvas` that `runGeometry` already hands out,
 // like tap-snap, so it runs in a unit test and on the web. On a device the
@@ -105,9 +104,8 @@ export type HoleProposalFeatureName = (typeof HOLE_PROPOSAL_FEATURE_NAMES)[numbe
 export type HoleProposalFeatures = Record<HoleProposalFeatureName, number>;
 
 /**
- * Fitted by `spike/cv/fit_hole_proposals.py` on 5169 candidates from the 31
- * hand-marked photos (152 holes). Raw feature scale. Lock-step with
- * `hole_proposals.WEIGHTS`.
+ * Fitted on 5169 candidates from the 31 hand-marked photos (152 holes);
+ * `tools/cv/fit/fit-hole-proposals.mts` refits them. Raw feature scale.
  */
 export const HOLE_PROPOSAL_WEIGHTS: HoleProposalFeatures = {
   orient_entropy: 4.271673,

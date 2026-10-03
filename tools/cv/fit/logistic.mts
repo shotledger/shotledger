@@ -1,7 +1,6 @@
-// The estimator, folds and table helpers fit_hole_filter.py and
-// fit_hole_proposals.py share, in plain TypeScript: Newton's method on
-// standardised features with a small L2 ridge (not on the bias), folded back
-// to raw scale, exactly as `fit_hole_filter.fit` does with numpy.
+// The estimator, folds and table helpers the two fits share: Newton's method
+// on standardised features with a small L2 ridge (not on the bias), folded
+// back to raw scale, as the spike's numpy fit did (fit.check.ts pins it).
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename } from 'node:path';

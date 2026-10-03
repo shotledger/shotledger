@@ -1,12 +1,11 @@
-// fit_hole_filter.py in TypeScript: the hole/patch filter's logistic
-// regression (HOLE_FILTER_WEIGHTS / HOLE_FILTER_BIAS in hole-features.ts),
-// cross-validated 5-fold by photo with the Python's folds, then fitted on
-// everything.
+// The hole/patch filter's logistic regression (HOLE_FILTER_WEIGHTS /
+// HOLE_FILTER_BIAS in hole-features.ts), cross-validated 5-fold by photo (the
+// folds the spike drew), then fitted on everything.
 //
 //   node tools/cv/fit/fit-hole-filter.mts --stage tight pooled.csv
 //   node tools/cv/fit/fit-hole-filter.mts --stage tight a.csv --test b.csv
 //
-// Input is score_stages.py's candidates CSV: one row per candidate with its
+// Input is score-stages.tool.ts's candidates CSV: one row per candidate with its
 // label and features, plus a `cand = -1` row per photo and stage whose `r_mm`
 // holds that photo's miss count. Every column after `r_mm` is a feature.
 import { parseArgs } from 'node:util';

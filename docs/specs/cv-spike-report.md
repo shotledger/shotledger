@@ -1,6 +1,8 @@
 # CV spike — photo target scoring (v2)
 
-**Branch:** `spike/cv-target-scoring` · **Prototype:** [`spike/cv/`](../../spike/cv/)
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+
+**Branch:** `spike/cv-target-scoring` · **Prototype:** `spike/cv/` (retired)
 · **Date:** 2026-09-01 · **Status:** spike complete, findings only — nothing
 merged into the app.
 
@@ -62,7 +64,7 @@ personal and are deliberately not in the repo.
 ## 2. Pipeline
 
 Python + OpenCV, five separable stages so a failure can be attributed to
-one of them. Full description in [`spike/cv/README.md`](../../spike/cv/README.md).
+one of them. Full description in `spike/cv/README.md` (retired).
 
 1. **Find the face.** Otsu on a heavily blurred gray copy; largest dark blob
    is the printed black zone. `fitEllipseDirect` on its contour (much better

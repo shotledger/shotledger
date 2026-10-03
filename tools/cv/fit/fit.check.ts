@@ -40,7 +40,7 @@ test('integers as Generator.integers', () => {
   expect(new Pcg64(5).integers(0, 3, 12)).toEqual([2, 2, 0, 2, 1, 1, 1, 0, 2, 0, 0, 1]);
 });
 
-test('Newton fit and AUC as fit_hole_filter.py', () => {
+test('Newton fit and AUC as numpy computed them', () => {
   const x = Array.from({ length: 24 }, (_, i) => [
     (i % 7) * 0.5 + 0.1 * (i % 3),
     ((i * 37) % 11) / 3.0 - 1.0,

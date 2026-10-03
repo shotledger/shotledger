@@ -9,17 +9,17 @@ Private for now. Licensing: see [`LICENSE`](LICENSE) and ADR 0017.
 
 ## Where things are
 
-| Path                            | What it is                                                                                                                                                       |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`app/`](app/README.md)         | The React Native + Expo app: screens, local SQLite database, i18n, platform wrappers. `app/PRODUCT.md` says what the product is and why.                         |
-| [`shared/`](shared/README.md)   | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.         |
-| [`backend/`](backend/README.md) | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                        |
-| `docs/`                         | Architecture, ADRs, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                        |
-| `docs/manual/`                  | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                   |
-| `scripts/`                      | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                           |
-| `patches/`                      | pnpm patches for two dependencies, each with its reason in `pnpm-workspace.yaml`.                                                                                |
-| `spike/cv/`                     | Throwaway Python/OpenCV prototype that measured whether photo scoring is feasible. Not wired into the app; still the tool the corpus measurements are made with. |
-| `stryker.config.json`           | Mutation-testing configuration for the evidence-first modules.                                                                                                   |
+| Path                              | What it is                                                                                                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`app/`](app/README.md)           | The React Native + Expo app: screens, local SQLite database, i18n, platform wrappers. `app/PRODUCT.md` says what the product is and why.                                         |
+| [`shared/`](shared/README.md)     | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.                         |
+| [`backend/`](backend/README.md)   | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                                        |
+| `docs/`                           | Architecture, ADRs, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                        |
+| `docs/manual/`                    | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                                   |
+| `scripts/`                        | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                                           |
+| `patches/`                        | pnpm patches for two dependencies, each with its reason in `pnpm-workspace.yaml`.                                                                                                |
+| [`tools/cv/`](tools/cv/README.md) | TypeScript tools that run the app's photo-scoring CV on real photos kept outside the repo, label holes, fit the hole models and write the CV fixtures. Not part of `pnpm check`. |
+| `stryker.config.json`             | Mutation-testing configuration for the evidence-first modules.                                                                                                                   |
 
 ## Getting started
 

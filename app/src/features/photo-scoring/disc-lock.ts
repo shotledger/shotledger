@@ -1,6 +1,6 @@
 // The disc lock: stages 1-3 of the geometry pipeline, over `DiscOps`.
-// Ported from spike/cv/target_cv.py (branch spike/cv-target-scoring):
-// find_face / _refit_rays / build_geom / refine_geom.
+// Ported from the Python CV spike's find_face / _refit_rays / build_geom /
+// refine_geom.
 // Spec: docs/specs/photo-scoring-phase1-spec.md §5.2.
 //
 // This module is deliberately THIN. Everything decidable by arithmetic lives
@@ -208,7 +208,7 @@ function findFace<M, C>(ops: DiscOps<M, C>, gray: M): { ellipse: EllipseFit; fil
 /**
  * Stage 1b: re-fit the black-zone boundary from ray casts, dropping any ray
  * that leaves the frame — "much steadier than one contour fit when the card
- * is cropped" (target_cv.py:_refit_rays).
+ * is cropped", as the spike measured.
  *
  * The mask is pulled into JS once; 360 rays over it is a few milliseconds,
  * where the same walk through native calls would be seconds.
@@ -304,7 +304,7 @@ function radialProfile<M, C>(
   }
 
   // High-pass: |profile - smoothed|, so it fires on a white line on black and
-  // a black line on white alike (target_cv.py:_radial_profile).
+  // a black line on white alike.
   const half = 10;
   const out = new Float64Array(cols);
   for (let r = 0; r < cols; r += 1) {

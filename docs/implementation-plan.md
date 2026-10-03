@@ -1039,7 +1039,7 @@ restates §0 rules 1–6 verbatim.
 > **Tap-to-mark now runs a fitted hole/patch filter** as a second gate, on
 > `feat/cv-hole-patch-filter`: six texture descriptors of the 12 mm crop and a
 > logistic regression over them (`shared/src/target-scoring/hole-features.ts`,
-> constants fitted in `spike/cv/`). Measured behind the existing proposal
+> constants fitted by the CV tools, now `tools/cv/`). Measured behind the existing proposal
 > stage it cuts false positives ~15x, 4.65 to 0.32 per photo, at 90%
 > precision. No new dependency — eight constants and no runtime. Spec and
 > evidence: `docs/specs/cv-assisted-detection-{spec,evidence}.md`; the
@@ -1051,7 +1051,7 @@ restates §0 rules 1–6 verbatim.
 >
 > **The app now suggests holes** (2026-09-22, #347/#264): a
 > Laplacian-of-Gaussian proposal stage and a 30-feature logistic regression on
-> the rectified canvas, ported line for line from `spike/cv/hole_proposals.py`
+> the rectified canvas, ported line for line from the Python spike
 > to `app/src/features/photo-scoring/hole-proposals.ts` and pinned by a
 > synthetic lock-step fixture. Measured on the 31 hand-marked photos with
 > corrected labels: 74% recall, 92% precision, 0.32 false positives per photo,
