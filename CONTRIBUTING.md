@@ -1,8 +1,9 @@
 # Contributing to ShotLedger
 
 Thanks for helping. The working rules — branch per change, Conventional
-Commits, the checks CI runs, the agentic loop — are in [`CLAUDE.md`](CLAUDE.md)
-and apply to human contributors just as much. This file covers the part
+Commits, the checks CI runs — are in [`CLAUDE.md`](CLAUDE.md) and the
+`CLAUDE.md` files in each folder, and apply to human contributors just as
+much. Running the app is in [`.claude/skills/run-app/`](.claude/skills/run-app/SKILL.md). This file covers the part
 `CLAUDE.md` does not: the terms your contribution arrives under.
 
 Nothing in this file is legal advice.
