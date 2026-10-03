@@ -128,7 +128,7 @@ New **DATA_001** (the export carries a fält session whole; SVC on J3) and
 "SCORE_003's SVC gains V1–V3": SCORE_003 is worded about sighters, so a station
 test would have verified a requirement that does not mention stations.
 
-## Layer B — statistics and PBs (to specify after §B.0)
+## Layer B — statistics and PBs
 
 ### B.0 Decisions needed from the maintainer
 
@@ -147,6 +147,58 @@ test would have verified a requirement that does not mention stations.
 4. **Mixed reports.** A report with "all disciplines" selected: fält sessions
    contribute to session count and volume only, never to ring means — the
    current behaviour, now explicit. A series-length filter excludes fält.
+
+### B.1 Scenarios (written after approval, from §B.0's proposals as approved)
+
+A new pure module `shared/src/scoring/falt-analytics.ts` holds the logic; the
+app layer only loads rows and renders. A fält session enters as
+`FaltAnalyticsSession` — its id, start, type, discipline, vapengrupp, result
+mode, tag ids and its stations with their scratched/särskjutning flags.
+
+Report (§B.0.1, §B.0.2, §B.0.4):
+
+- **R1** `faltReportTotals` over the report's fält sessions gives session
+  count, **scoring** station count, hits, figures hit, and hit rate =
+  hits / (6 × scoring stations); hit rate is `null` with no scoring station.
+- **R2** A scratched or särskjutning station adds nothing to R1's station
+  count, hits or figures (SCORE_005).
+- **R3** `faltSessionPoints` gives one point per fält session with at least one
+  scoring station: date, discipline, hits per station; ordered by date then id.
+- **R4** The fält sessions in a report pass the same date, type, discipline and
+  tag filter as every other session (`filterAnalyticsSessions`).
+- **R5** A shots-per-series filter excludes every fält session from the report
+  — its count, its volume and R1. It does **not** exclude a rounds-only
+  session (#349's rule, FS-6/RS-5, unchanged): fält is excluded because it has
+  stations, not because it lacks series.
+- **R6** Filter options: a database holding only fält sessions has data
+  (`hasAnyData`), and `spsf-falt` is offered as a discipline.
+- **R7** UI: when the report holds fält sessions, a Fältskjutning card shows
+  R1 and a hits-per-station chart over R3. When the selected discipline scores
+  hits, the ring cards (records, sums, per-shot, ring charts, distribution)
+  are not shown.
+
+Personal bests (§B.0.3):
+
+- **PB1** `faltPersonalBests` groups by discipline, vapengrupp, result mode
+  (`null` read as `falt`) and **scoring** station count, and keeps the best by
+  `compareFaltResults` in that mode.
+- **PB2** Two rounds `compareFaltResults` cannot separate: the earlier one
+  stands (first set, never displaced by an equal).
+- **PB3** A session with no scoring station has no PB and no group.
+- **PB4** A 10-station round with two scratched groups with 8-station rounds.
+- **PB5** UI: Records lists one row per group — "Fältskjutning · C · 8
+  stations" with the result in that mode's words — and the row opens the
+  session. The freeform coverage line counts a session with a fält PB group as
+  counted.
+- **PB6** Records' group label falls back to the discipline's own name, so no
+  raw `discipline.spsf-falt` key is ever shown.
+
+Invariants: **N6** every ring statistic, record and PB is unchanged for a
+database with no fält session (existing suites untouched); **N7** no fält
+number ever enters a ring mean, total or record.
+
+reqstool: **SCORE_007** "A fält personal best compares like with like"
+(PB1, PB4), SVC on a top-level PB4 test.
 
 ## Setup plan
 
