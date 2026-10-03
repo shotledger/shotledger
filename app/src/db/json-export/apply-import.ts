@@ -2,7 +2,7 @@
 // docs/specs/json-export-spec.md): builds an ExistingIndex from the DB, calls
 // the pure dry-run planner, and — on confirm — applies the plan inside one
 // transaction (spec criterion 13).
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   buildDryRunPlan,
   firearmDisplayName,
@@ -14,10 +14,21 @@ import {
   type ImportRecords,
   type LicenseExport,
   type SessionImportGroup,
+  SHOTS_PER_STATION,
 } from '@shotledger/shared';
 
-import { ammoLots, firearms, licenses, series, sessions, shots, tags } from '../schema';
+import {
+  ammoLots,
+  faltStations,
+  firearms,
+  licenses,
+  series,
+  sessions,
+  shots,
+  tags,
+} from '../schema';
 import type { Database } from '../types';
+import { listStationsForSession } from '../queries/falt';
 import { softDeleteSeries } from '../queries/series';
 import { listSeriesForSession } from '../queries/series';
 import { softDeleteShot, listShotsForSeries } from '../queries/shots';
@@ -143,6 +154,8 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * operation stays idempotent. A total-override series (Webshooter/ShotLog)
  * has no shot rows and still contributes nothing — the same convention
  * `deleteSeriesAndShots` already backs out on.
+ *
+ * @Requirements DATA_001
  */
 export function applyImport(
   db: Database,
@@ -352,14 +365,15 @@ export function applyImport(
       if (existing != null && existing.deletedAt === null && existing.firearmId) {
         const before = listSeriesForSession(tx, group.sessionId).reduce(
           (sum, row) => sum + listShotsForSeries(tx, row.id).length,
-          existing.extraRounds ?? 0,
+          (existing.extraRounds ?? 0) +
+            listStationsForSession(tx, group.sessionId).length * SHOTS_PER_STATION,
         );
         addRounds(existing.firearmId, -before);
       }
       if (firearmId) {
         const after = group.series.reduce(
           (sum, row) => sum + row.shots.length,
-          group.extraRounds ?? 0,
+          (group.extraRounds ?? 0) + group.stations.length * SHOTS_PER_STATION,
         );
         addRounds(firearmId, after);
       }
@@ -383,6 +397,7 @@ export function applyImport(
         decimalScoring: group.decimalScoring ? 1 : 0,
         seriesLength: group.seriesLength,
         extraRounds: group.extraRounds,
+        faltResultMode: group.faltResultMode,
         updatedAt: now,
       };
 
@@ -395,6 +410,11 @@ export function applyImport(
           for (const shot of listShotsForSeries(tx, s.id)) softDeleteShot(tx, shot.id);
           softDeleteSeries(tx, s.id);
         }
+        // Direct, not softDeleteStation: the counter was already moved above.
+        tx.update(faltStations)
+          .set({ deletedAt: now, updatedAt: now })
+          .where(and(eq(faltStations.sessionId, group.sessionId), isNull(faltStations.deletedAt)))
+          .run();
       } else {
         tx.insert(sessions)
           .values({ id: group.sessionId, createdAt: now, deletedAt: null, ...sessionValues })
@@ -431,6 +451,27 @@ export function applyImport(
             })
             .run();
         }
+      }
+
+      for (const station of group.stations) {
+        tx.insert(faltStations)
+          .values({
+            id: newId(),
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            sessionId: group.sessionId,
+            position: station.position,
+            hits: station.hits,
+            figuresHit: station.figuresHit,
+            points: station.points,
+            pointsMax: station.pointsMax,
+            isScratched: station.isScratched ? 1 : 0,
+            isShootOff: station.isShootOff ? 1 : 0,
+            photoUri: null,
+            note: station.note,
+          })
+          .run();
       }
 
       for (const tagName of group.tags) {

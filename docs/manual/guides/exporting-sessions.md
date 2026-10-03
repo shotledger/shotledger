@@ -1,7 +1,7 @@
 # Exporting and importing sessions
 
-**Settings → Backup & Data → Sessions Export.** One JSON file holding every session, series
-and shot, plus the firearms and licenses behind them.
+**Settings → Backup & Data → Sessions Export.** One JSON file holding every session, series,
+shot and fält station, plus the firearms and licenses behind them.
 
 This is not the same thing as a [backup](backup-and-restore.md). A backup is
 the whole app — settings, photos, maintenance, tags — and exists so you can put
@@ -38,7 +38,7 @@ already have. The file is a record of shooting, not the authority on how many
 rounds this device has counted through that firearm.
 
 The sessions it brings in do count, though. Each imported session adds its
-shots, and its unscored extra rounds, to the counters of the firearm it names —
+shots, its unscored extra rounds and six rounds for every fält station to the counters of the firearm it names —
 the same as if you had logged it here. Importing the same file twice does not
 count it twice: the second import moves the counters by the difference, and
 usually by nothing at all.
@@ -121,7 +121,9 @@ One session, one scored series of three shots:
             { "position": 3, "valueTenths": 80, "isInnerTen": false }
           ]
         }
-      ]
+      ],
+      "faltResultMode": null,
+      "stations": []
     }
   ],
   "firearms": [
@@ -158,16 +160,18 @@ One session, one scored series of three shots:
 
 ### Reading the fields
 
-| Field          | Meaning                                                                                                                                              |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `valueTenths`  | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                      |
-| `isInnerTen`   | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                           |
-| `isSighter`    | A sighting series. It carries no shots here and does not count towards a total.                                                                      |
-| `weaponGroup`  | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                       |
-| `eventId`      | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                        |
-| `seriesLength` | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.          |
-| `firearmId`    | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                |
-| `firearm`      | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with. |
+| Field            | Meaning                                                                                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `valueTenths`    | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                        |
+| `isInnerTen`     | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                             |
+| `isSighter`      | A sighting series. It carries no shots here and does not count towards a total.                                                                                                        |
+| `weaponGroup`    | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                         |
+| `eventId`        | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                          |
+| `seriesLength`   | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                            |
+| `firearmId`      | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                  |
+| `firearm`        | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                   |
+| `stations`       | A fältskjutning session's stations: hits, figures hit, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session. |
+| `faltResultMode` | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                   |
 
 ### Firearms and licenses
 

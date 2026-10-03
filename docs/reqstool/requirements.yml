@@ -103,6 +103,24 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_006
+    title: Every fält station is six rounds of volume, whatever it scored
+    significance: shall
+    description: >-
+      The app shall count six rounds for every recorded fält station — scratched
+      and särskjutning stations included — wherever it reports rounds fired: the
+      shots-logged total, the statistics report, the JSON report and the
+      shooting log, the import preview and the firearm and ammunition counters.
+    rationale: >-
+      Six shots are fired at every station (SHB 2026 D.6.4 p. 91), and a
+      scratched or särskjutning station's rounds were still fired, the same
+      split SCORE_003 makes for a sighter. A fält session stores no shot rows,
+      so a screen that counts shot rows reports it as zero rounds — in the
+      shooting log, which is offered as evidence of activity.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall
@@ -195,6 +213,22 @@ requirements:
       delete. Both fail silently.
     categories:
       - reliability
+    revision: '0.1.0'
+
+  - id: DATA_001
+    title: A JSON sessions export carries a fält session whole
+    significance: shall
+    description: >-
+      The app shall write every station of a fält session — hits, figures hit,
+      poängmål points and max, scratched, särskjutning and note — and the
+      session's result mode into a JSON sessions export, and an import of that
+      file shall recreate them unchanged and credit the firearm their rounds.
+    rationale: >-
+      The export is the documented way to move shooting between installs. A
+      fält session that came back empty would look imported while its result
+      was gone, and nothing on screen would say so.
+    categories:
+      - functional-suitability
     revision: '0.1.0'
 
   - id: APP_001

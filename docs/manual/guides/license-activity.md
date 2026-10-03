@@ -75,7 +75,8 @@ number, the period the log covers, the firearm if you exported for one, how many
 sessions and how many shots, and the date it was generated. The two blanks are
 the paper form's own, to be written in by hand — the app stores neither, because
 neither is data it needs. Every figure there is labelled, so a reader who was not
-with you at the range can tell what each number is.
+with you at the range can tell what each number is. A fält session counts six
+shots for every station, including a scratched one.
 
 **Shooting activity** names the competition when the session had one, then the
 discipline, then your weapon group and class — "Pistol-SM · Fält · C" rather

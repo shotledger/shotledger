@@ -8,6 +8,7 @@ import { buildShootingLogHtml, formatGroupAndClass, type PdfLogEntry } from '@sh
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
 import { listSessions } from '@/db/queries/sessions';
+import { stationRoundsForSession } from '@/db/queries/falt';
 import { listScoredShotsForSession } from '@/db/queries/shots';
 import { disciplineLabel } from '@/features/session/labels';
 
@@ -83,7 +84,10 @@ export function buildShootingLogHtmlForFilters(
 
   const firearm = filters.firearmId ? getFirearm(db, filters.firearmId) : null;
   const totalShots = entries.reduce(
-    (sum, entry, i) => sum + listScoredShotsForSession(db, sessions[i]!.id).length,
+    (sum, entry, i) =>
+      sum +
+      listScoredShotsForSession(db, sessions[i]!.id).length +
+      stationRoundsForSession(db, sessions[i]!.id),
     0,
   );
 

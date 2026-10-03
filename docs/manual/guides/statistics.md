@@ -21,7 +21,9 @@ back to still says what it is about.
 
 The count above the report is every session the filter matched, including a
 session you logged as a round count with no series in it — those shots are in
-the totals too. It therefore agrees with the session count on Home.
+the totals too. A fält session's stations count six shots each, scratched and
+särskjutning stations included, since those rounds were fired. It therefore
+agrees with the session count on Home.
 
 The filters stay as you left them. Leave the tab and come back and the form is
 still the one you built — it scrolls back to the top so you can see that, with

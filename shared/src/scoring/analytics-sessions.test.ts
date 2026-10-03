@@ -42,6 +42,7 @@ function session(overrides: Partial<AnalyticsSession> = {}): AnalyticsSession {
     disciplineId: 'spsf-precision',
     tagIds: [],
     extraRounds: 0,
+    stationRounds: 0,
     ...overrides,
   };
 }
@@ -254,6 +255,15 @@ describe('analyticsReportTotals', () => {
     const totals = analyticsReportTotals(matched, sessions);
     expect(totals.sessionCount).toBe(1);
     expect(totals.volumeShotCount).toBe(10);
+  });
+
+  it('V3: volumeShotCount adds every report session’s fält station rounds', () => {
+    const matched = [series({ sessionId: 'a', values: [90, 90] })];
+    const sessions = [
+      session({ id: 'a', extraRounds: 1 }),
+      session({ id: 'falt', disciplineId: 'spsf-falt', stationRounds: 18 }),
+    ];
+    expect(analyticsReportTotals(matched, sessions).volumeShotCount).toBe(21);
   });
 
   it('RT-6: the sighter scope still reaches the delegated fields', () => {

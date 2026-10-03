@@ -31,6 +31,18 @@ export interface SeriesExport {
   shots: ShotExport[];
 }
 
+/** One fält station (docs/specs/falt-stations-spec.md). */
+export interface StationExport {
+  position: number;
+  hits: number;
+  figuresHit: number;
+  points: number | null;
+  pointsMax: number | null;
+  isScratched: boolean;
+  isShootOff: boolean;
+  note: string | null;
+}
+
 /** One session's worth of exportable data, as the app layer assembles it. */
 export interface SessionExport {
   id: string;
@@ -61,6 +73,9 @@ export interface SessionExport {
   extraRounds: number | null;
   tags: string[];
   series: SeriesExport[];
+  /** How a fält round is reported; `null` on any other discipline. */
+  faltResultMode: 'falt' | 'poangfalt' | null;
+  stations: StationExport[];
 }
 
 /** A firearm, as the envelope carries it. Everything the firearms table holds
@@ -132,6 +147,47 @@ const seriesSchema = z.object({
   isFinal: z.boolean().describe('Whether the series belongs to a championship final.'),
   shots: z.array(shotSchema).describe('The shots of this series, in the order they were entered.'),
 });
+
+// Same bounds as the app's entry path (app/src/db/queries/falt.ts), which a
+// scratched station skips: it records what went wrong, possible or not.
+const stationSchema = z
+  .object({
+    position: z.number().int().min(1).describe('1-based station number within the round.'),
+    hits: z.number().int().min(0).max(6).describe('Hits at the station, 0-6 (six shots).'),
+    figuresHit: z
+      .number()
+      .int()
+      .min(0)
+      .max(6)
+      .describe('Figures hit at least once. Never more than `hits`.'),
+    points: z
+      .number()
+      .int()
+      .min(0)
+      .nullable()
+      .describe('Poängmål points scored, or null when the station had no ringed figure.'),
+    pointsMax: z
+      .number()
+      .int()
+      .min(0)
+      .nullable()
+      .describe('What that poängmål could give — the organizer picks the scheme.'),
+    isScratched: z
+      .boolean()
+      .describe('An annulled station: kept and shown, never scored. Its rounds still count.'),
+    isShootOff: z
+      .boolean()
+      .describe('A särskjutning station: decides placement only, never enters the score.'),
+    note: z.string().nullable().describe("The station's note."),
+  })
+  .refine(
+    (s) =>
+      s.isScratched ||
+      (s.figuresHit <= s.hits &&
+        (s.hits === 0 || s.figuresHit > 0) &&
+        (s.points === null || s.pointsMax === null || s.points <= s.pointsMax)),
+    { message: 'station numbers no station could have produced' },
+  );
 
 export const sessionExportSchema = z.object({
   id: z
@@ -227,6 +283,16 @@ export const sessionExportSchema = z.object({
     .describe('Rounds fired but never scored — the whole shot count of a rounds-only session.'),
   tags: z.array(z.string()).describe("The session's tags."),
   series: z.array(seriesSchema).describe('The series of this session, in order.'),
+  faltResultMode: z
+    .enum(['falt', 'poangfalt'])
+    .nullable()
+    .describe(
+      'How a fältskjutning round is reported — hits and figures, or the poängfält sum. ' +
+        'Null on any other discipline.',
+    ),
+  stations: z
+    .array(stationSchema)
+    .describe('The fält stations of this session, in order. Empty on any other discipline.'),
 });
 
 export const firearmExportSchema = z.object({

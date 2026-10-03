@@ -1,3 +1,4 @@
+import { SHOTS_PER_STATION } from '../scoring/falt';
 import type { SessionImportGroup } from './import';
 import type { FirearmExport, LicenseExport } from './types';
 
@@ -22,6 +23,7 @@ export interface SessionPlanItem {
   sessionId: string;
   name: string;
   action: 'create' | 'update';
+  /** Shots in its series plus six per fält station. */
   shotCount: number;
 }
 
@@ -84,7 +86,10 @@ export function buildDryRunPlan(
       sessionId: group.sessionId,
       name: group.name,
       action: index.sessionIds.has(group.sessionId) ? 'update' : 'create',
-      shotCount: group.series.reduce((sum, s) => sum + s.shots.length, 0),
+      shotCount: group.series.reduce(
+        (sum, s) => sum + s.shots.length,
+        group.stations.length * SHOTS_PER_STATION,
+      ),
     });
 
     if (group.firearm && !firearmNames.has(group.firearm)) {

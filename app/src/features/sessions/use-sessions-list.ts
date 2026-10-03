@@ -4,7 +4,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 
+import { getDiscipline } from '@shotledger/shared';
 import { db } from '@/db/client';
+import { faltSessionResult } from '@/db/queries/falt';
 import { listFirearms } from '@/db/queries/firearms';
 import { listSessions } from '@/db/queries/sessions';
 import { listAllStatsSeries } from '@/db/queries/stats';
@@ -44,13 +46,19 @@ function loadSessionsList(): SessionsListData {
     else seriesBySession.set(series.sessionId, [series]);
   }
 
-  const rows = sessions.map((session) =>
-    buildSessionListRow(
+  const rows = sessions.map((session) => {
+    // Same as Home: a fält session has no series, so its result comes from its stations.
+    const falt =
+      getDiscipline(session.disciplineId)?.scoring === 'hits'
+        ? faltSessionResult(db!, session.id)
+        : null;
+    return buildSessionListRow(
       session,
       seriesBySession.get(session.id) ?? [],
       tagsBySession.get(session.id) ?? [],
-    ),
-  );
+      falt === null ? null : { hits: falt.hits, figuresHit: falt.figuresHit },
+    );
+  });
 
   const disciplineIds: string[] = [];
   for (const row of rows) {

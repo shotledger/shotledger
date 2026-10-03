@@ -11,16 +11,20 @@ import {
   type SessionExport,
 } from '@shotledger/shared';
 
-import { ammoLots, firearms, licenses, series, sessions, shots } from '../schema';
+import { ammoLots, faltStations, firearms, licenses, series, sessions, shots } from '../schema';
 import type { Database } from '../types';
 import { listTagsForSession } from '../queries/tags';
 
 /** Assembles every non-deleted session (with its series/shots/tags) into
- * the shape `exportSessionsToJson` expects. */
+ * the shape `exportSessionsToJson` expects.
+ *
+ * @Requirements DATA_001
+ */
 export function buildSessionExports(db: Database): SessionExport[] {
   const sessionRows = db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
   const seriesRows = db.select().from(series).where(isNull(series.deletedAt)).all();
   const shotRows = db.select().from(shots).where(isNull(shots.deletedAt)).all();
+  const stationRows = db.select().from(faltStations).where(isNull(faltStations.deletedAt)).all();
   const firearmRows = db.select().from(firearms).where(isNull(firearms.deletedAt)).all();
   const ammoLotRows = db.select().from(ammoLots).where(isNull(ammoLots.deletedAt)).all();
 
@@ -32,6 +36,12 @@ export function buildSessionExports(db: Database): SessionExport[] {
     const bucket = seriesBySession.get(s.sessionId) ?? [];
     bucket.push(s);
     seriesBySession.set(s.sessionId, bucket);
+  }
+  const stationsBySession = new Map<string, typeof stationRows>();
+  for (const station of stationRows) {
+    const bucket = stationsBySession.get(station.sessionId) ?? [];
+    bucket.push(station);
+    stationsBySession.set(station.sessionId, bucket);
   }
   const shotsBySeries = new Map<string, typeof shotRows>();
   for (const shot of shotRows) {
@@ -84,6 +94,20 @@ export function buildSessionExports(db: Database): SessionExport[] {
               isInnerTen: shot.isInnerTen === 1,
             })),
         })),
+        faltResultMode: session.faltResultMode,
+        stations: (stationsBySession.get(session.id) ?? [])
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((station) => ({
+            position: station.position,
+            hits: station.hits,
+            figuresHit: station.figuresHit,
+            points: station.points,
+            pointsMax: station.pointsMax,
+            isScratched: station.isScratched === 1,
+            isShootOff: station.isShootOff === 1,
+            note: station.note,
+          })),
       };
     });
 }

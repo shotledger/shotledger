@@ -123,6 +123,8 @@ export interface AnalyticsSession {
   tagIds: readonly string[];
   /** Unscored extra rounds on the session (spec A1 §A1.3); 0 when unset. */
   extraRounds: number;
+  /** Rounds fired at fält stations — six per station, scratched included; 0 otherwise. */
+  stationRounds: number;
 }
 
 /**
@@ -373,6 +375,6 @@ export function analyticsReportTotals(
     sessionCount: reportSessions.length,
     volumeShotCount:
       totals.volumeShotCount +
-      reportSessions.reduce((sum, session) => sum + session.extraRounds, 0),
+      reportSessions.reduce((sum, session) => sum + session.extraRounds + session.stationRounds, 0),
   };
 }

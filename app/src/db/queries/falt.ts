@@ -1,6 +1,6 @@
 // Fält stations (docs/specs/falt-stations-spec.md). A station is not a series:
 // see the table's comment in schema.ts for why it has its own table.
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import {
   faltResult,
   poangfaltPoints,
@@ -162,6 +162,28 @@ export function softDeleteStation(db: Database, id: string): void {
     .where(and(eq(faltStations.id, id), isNull(faltStations.deletedAt)))
     .run();
   moveRoundCount(db, current.sessionId, -SHOTS_PER_STATION);
+}
+
+/** Rounds fired at a session's live stations, scored or not.
+ *
+ * @Requirements SCORE_006
+ */
+export function stationRoundsForSession(db: Database, sessionId: string): number {
+  return listStationsForSession(db, sessionId).length * SHOTS_PER_STATION;
+}
+
+/** Rounds fired at every live station of every live session.
+ *
+ * @Requirements SCORE_006
+ */
+export function countAllStationRounds(db: Database): number {
+  const row = db
+    .select({ count: sql<number>`count(*)` })
+    .from(faltStations)
+    .innerJoin(sessions, eq(faltStations.sessionId, sessions.id))
+    .where(and(isNull(faltStations.deletedAt), isNull(sessions.deletedAt)))
+    .get();
+  return (row?.count ?? 0) * SHOTS_PER_STATION;
 }
 
 export interface FaltSessionResult {

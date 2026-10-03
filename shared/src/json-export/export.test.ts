@@ -35,6 +35,8 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     extraRounds: null,
     tags: [],
     series: [],
+    faltResultMode: null,
+    stations: [],
     ...overrides,
   };
 }

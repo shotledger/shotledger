@@ -1,4 +1,4 @@
-// Glue layer (mirrors db/csv/build-export.ts): assembles a backup bundle
+// Glue layer (mirrors db/json-export/build-export.ts): assembles a backup bundle
 // (manifest.json + database.sqlite3 + optional photos/ and sync-photos/)
 // from the live DB. Uses a VACUUM INTO'd copy throughout — never the live
 // file: the copy is what gets its photo_uri columns rewritten to relative

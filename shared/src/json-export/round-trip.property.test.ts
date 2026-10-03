@@ -35,6 +35,40 @@ const seriesArb = fc.record({
   shots: fc.array(shotArb, { maxLength: 6 }),
 });
 
+// A scoring station must be arithmetically possible; a scratched one need not be.
+const scoringStationNumbersArb = fc.integer({ min: 0, max: 6 }).chain((hits) =>
+  fc.record({
+    hits: fc.constant(hits),
+    figuresHit: hits === 0 ? fc.constant(0) : fc.integer({ min: 1, max: hits }),
+  }),
+);
+const scratchedStationNumbersArb = fc.record({
+  hits: fc.integer({ min: 0, max: 6 }),
+  figuresHit: fc.integer({ min: 0, max: 6 }),
+});
+const pointsArb = fc.oneof(
+  fc.constant({ points: null, pointsMax: null }),
+  fc.integer({ min: 0, max: 50 }).chain((pointsMax) =>
+    fc.record({
+      points: fc.option(fc.integer({ min: 0, max: pointsMax }), { nil: null }),
+      pointsMax: fc.option(fc.constant(pointsMax), { nil: null }),
+    }),
+  ),
+);
+const stationArb = fc.boolean().chain((isScratched) =>
+  fc
+    .tuple(
+      isScratched ? scratchedStationNumbersArb : scoringStationNumbersArb,
+      pointsArb,
+      fc.record({
+        position: fc.integer({ min: 1, max: 14 }),
+        isShootOff: fc.boolean(),
+        note: nullableText,
+      }),
+    )
+    .map(([numbers, points, rest]) => ({ ...rest, ...numbers, ...points, isScratched })),
+);
+
 const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   id: fc.string({ minLength: 1, maxLength: 8 }),
   name: textArb,
@@ -58,6 +92,8 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),
   tags: fc.array(textArb, { maxLength: 3 }),
   series: fc.array(seriesArb, { maxLength: 4 }),
+  faltResultMode: fc.constantFrom('falt' as const, 'poangfalt' as const, null),
+  stations: fc.array(stationArb, { maxLength: 4 }),
 });
 
 const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({
