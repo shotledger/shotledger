@@ -1044,6 +1044,7 @@
     "adjustCorners": "Placera punkterna själv",
     "adjustCornersHint": "Dra varje handtag dit en ring du ser korsar upptill, till höger, nedtill och till vänster, i den ordningen.",
     "milsnabbCornersHint": "Automatisk tavelavläsning finns inte än för den här tavlan. Dra varje handtag dit en ring du ser korsar upptill, till höger, nedtill och till vänster, i den ordningen, och välj sedan den ringen nedan.",
+    "milsnabbLockRefusedHint": "Ringlinjerna gick inte att läsa på det här fotot. Dra varje handtag dit en ring du ser korsar upptill, till höger, nedtill och till vänster, i den ordningen, och välj sedan den ringen nedan.",
     "cornersInvalid": "Dra isär punkterna — de ligger för nära en rak linje.",
     "useCorners": "Använd de här punkterna",
     "manualGeometry": "Punkter placerade för hand",

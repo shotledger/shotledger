@@ -79,6 +79,11 @@ node tools/cv/eval/diff.mts disc base.jsonl disc.jsonl [--key canvasToMm]
 # the disc lock's
 CV_EVAL_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup-real
+
+# the milsnabb lock on milsnabb photos and crops, and on precision photos
+# (negatives); the set file is a TSV of pgm path, set, framing, face
+CV_MIL_SETS=sets.tsv CV_MIL_OUT=milsnabb.jsonl [CV_MIL_SHARD=i/n] [CV_MIL_CROPS=1] \
+    pnpm exec vitest run -c tools/cv/vitest.config.ts milsnabb.eval
 ```
 
 The hole proposals run on the rectified canvas the app hands them.
@@ -185,6 +190,6 @@ Retired with the spike and not ported, recoverable from git history
   same metrics and verdict from the app's lock.
 - `eval_closeup.py`, close-ups cut synthetically from whole photos;
   `closeup-real.eval.ts` covers real photos.
-- the milsnabb ring model of the close-up lock and `eval_milsnabb.py`
-  ([`docs/specs/cv-milsnabb-closeup-lock-2026-10.md`](../../docs/specs/cv-milsnabb-closeup-lock-2026-10.md)
-  says why it is not in the app).
+- the milsnabb ring model of the close-up lock and `eval_milsnabb.py`. The
+  app's own milsnabb lock (`milsnabb-lock.ts`) replaced them, measured by
+  `milsnabb.eval.ts`.

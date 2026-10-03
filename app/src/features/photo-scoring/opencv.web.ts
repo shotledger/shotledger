@@ -15,3 +15,7 @@ export function rectifyFromHomography(): never {
 export function runCloseupLock(): never {
   throw new Error('Photo scoring needs a native build');
 }
+
+export function runMilsnabbLock(): never {
+  throw new Error('Photo scoring needs a native build');
+}

@@ -17,7 +17,9 @@ till knappsatsen.
    lyckas. Det behöver inte vara helt rakt. På 25 m precisionstavlan räcker
    en närbild av ringarna du träffade — till exempel nian och tian — så länge
    centrum är med i bild: appen hittar tavlan på ringlinjerna, så svartens
-   ytterkant får ligga utanför bild. Det tar några sekunder att hitta
+   ytterkant får ligga utanför bild. På snabbskjutningstavlan läser appen
+   ringlinjerna på spegeln: få med X, tian, nian och åttan i bild, eller
+   minst tre av dem, och centrum. Det tar några sekunder att hitta
    tavlan; raden under snurran visar vilket steg appen är på, och går du
    tillbaka avbryts det.
 2. **Sätt fyra punkter på en ring, om appen ber om det.** När appen inte

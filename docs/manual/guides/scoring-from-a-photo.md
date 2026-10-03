@@ -17,9 +17,11 @@ the keypad.
    you can manage. It does not need to be perfectly straight. On the 25 m
    precision face a close-up of the rings you hit is enough — the 9 and 10, say
    — as long as the center is in the photo: the app finds the target from the
-   ring lines, so the edge of the black can be out of frame. Finding the
-   target takes a few seconds; the line under the spinner says which step it
-   is on, and going back stops it.
+   ring lines, so the edge of the black can be out of frame. On the rapid-fire
+   face the app reads the ring lines of the center card: get the X, 10, 9 and
+   8 in the photo, or at least three of them, with the center in frame.
+   Finding the target takes a few seconds; the line under the spinner says
+   which step it is on, and going back stops it.
 2. **Place four points on a ring, if asked.** When the app cannot find the
    target by itself, drag the four handles to where a ring you can see crosses
    the top, right, bottom and left, and pick that ring under **Ring You Are

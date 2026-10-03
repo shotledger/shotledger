@@ -31,7 +31,7 @@ export const WORK_LONG_SIDE = 1536;
 const VOTE_LONG_SIDE = 512;
 const VOTE_WINDOW = 24;
 const VOTE_MAX_EDGES = 30000;
-const NANG = 720;
+export const NANG = 720;
 const PRIOR_WEIGHT = 10;
 const F_SCALE_MM = 0.5;
 const LM_ITERS = 100;
@@ -233,7 +233,7 @@ function resizeArea(img: GrayImage, width: number, height: number): CloseupImage
   return { data: out, width, height };
 }
 
-function bilinearAt(img: CloseupImage, x: number, y: number): number {
+export function bilinearAt(img: CloseupImage, x: number, y: number): number {
   const { data, width: w, height: h } = img;
   const x0 = Math.floor(x);
   const y0 = Math.floor(y);
@@ -298,9 +298,9 @@ export const pureCloseupOps: CloseupOps = {
 
 // ---------------------------------------------------------------- helpers
 
-type M3 = number[];
+export type M3 = number[];
 
-function mul3(a: readonly number[], b: readonly number[]): M3 {
+export function mul3(a: readonly number[], b: readonly number[]): M3 {
   const out: M3 = [];
   for (let r = 0; r < 3; r += 1) {
     for (let c = 0; c < 3; c += 1) {
@@ -314,12 +314,12 @@ function mul3(a: readonly number[], b: readonly number[]): M3 {
   return out;
 }
 
-function asHomography(m: readonly number[]): Homography {
+export function asHomography(m: readonly number[]): Homography {
   return [m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]] as unknown as Homography;
 }
 
 /** numpy's median: the mean of the two middle values for an even count. */
-function median(values: Float64Array): number {
+export function median(values: Float64Array): number {
   const n = values.length;
   const s = Float64Array.from(values).sort();
   const mid = n >> 1;
@@ -421,7 +421,7 @@ function edges(img: CloseupImage, ops: CloseupOps): Edges {
   return out;
 }
 
-function voteCenter(g: CloseupImage, ops: CloseupOps): { x: number; y: number } {
+export function voteCenter(g: CloseupImage, ops: CloseupOps): { x: number; y: number } {
   const { width: W, height: H } = g;
   const f = Math.min(1, VOTE_LONG_SIDE / Math.max(H, W));
   const w = Math.trunc(W * f + 0.5);
@@ -507,7 +507,7 @@ function refineVote(g: CloseupImage, cx: number, cy: number, ops: CloseupOps) {
 
 // ---------------------------------------------------------------- profile
 
-interface Ridge {
+export interface Ridge {
   /** NANG x nr, NaN outside the frame. */
   readonly data: Float64Array;
   readonly nr: number;
@@ -517,7 +517,7 @@ interface Ridge {
 
 /** Polar resample, then a thin-line response along the radius (abs, both
  *  polarities). The low-pass is normalised over in-frame samples only. */
-function polarRidge(g: CloseupImage, cx: number, cy: number, ops: CloseupOps): Ridge {
+export function polarRidge(g: CloseupImage, cx: number, cy: number, ops: CloseupOps): Ridge {
   const { width: w, height: h } = g;
   const nr = Math.trunc(Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy)));
   const { cos, sin } = polarAngles(NANG);
@@ -544,7 +544,7 @@ function polarRidge(g: CloseupImage, cx: number, cy: number, ops: CloseupOps): R
   return { data: ridge, nr, cos, sin };
 }
 
-function profile(ridge: Ridge): Float64Array {
+export function profile(ridge: Ridge): Float64Array {
   const { data, nr } = ridge;
   const prof = new Float64Array(nr);
   for (let r = 0; r < nr; r += 1) {
@@ -675,7 +675,7 @@ function ringPoints(ridge: Ridge, cx: number, cy: number, P: number): RingPoints
   return any ? out : null;
 }
 
-interface Ellipse {
+export interface Ellipse {
   readonly cx: number;
   readonly cy: number;
   /** (p - c)^T Q (p - c) = 1, [q00, q01, q11]. */
@@ -754,7 +754,7 @@ function realEigenvectors(m: readonly number[]): number[][] {
 
 /** Direct least-squares ellipse (Fitzgibbon, in Halir and Flusser's stable
  *  form) on normalised points; null when the best conic is not an ellipse. */
-function fitEllipse(xs: Float64Array, ys: Float64Array): Ellipse | null {
+export function fitEllipse(xs: Float64Array, ys: Float64Array): Ellipse | null {
   const n = xs.length;
   let mx = 0;
   let my = 0;
@@ -831,7 +831,7 @@ function fitEllipse(xs: Float64Array, ys: Float64Array): Ellipse | null {
 
 /** Affine taking the ellipse to the unit circle without rotating the picture
  *  (the symmetric square root of Q), and the ellipse's two full axes. */
-function unitMap(e: Ellipse): { m: M3; d1: number; d2: number } {
+export function unitMap(e: Ellipse): { m: M3; d1: number; d2: number } {
   const [a, b, c] = e.q;
   const sd = Math.sqrt(a * c - b * b);
   const t = Math.sqrt(a + c + 2 * sd);
@@ -912,20 +912,21 @@ function residuals(
 }
 
 /**
- * Robust least squares on the ring points: each should land k * 25 mm from
- * the origin. Levenberg-Marquardt on iteratively reweighted residuals with a
- * soft-L1 loss, as the reference writes out; a weak prior holds the rotation,
- * which no radius can see.
+ * Robust least squares on the ring points: each should land k steps (25 mm on
+ * precision) from the origin. Levenberg-Marquardt on iteratively reweighted
+ * residuals with a soft-L1 loss, as the reference writes out; a weak prior
+ * holds the rotation, which no radius can see.
  */
-function refineHomography(
+export function refineHomography(
   H0: readonly number[],
   px: Float64Array,
   py: Float64Array,
   ks: Float64Array,
+  stepMm: number = RING_STEP_MM,
 ): { H: M3; residual: number } {
   const h22 = H0[8] as number;
   let x = H0.slice(0, 8).map((v) => v / h22);
-  const target = ks.map((k) => k * RING_STEP_MM);
+  const target = ks.map((k) => k * stepMm);
   const skew0 = (x[1] as number) - (x[3] as number);
   let { r, J } = residuals(x, px, py, target, skew0);
   let cost = softL1(r);

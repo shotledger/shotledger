@@ -1,4 +1,4 @@
-import { isManualOnlyFace, isPhotoScoringSupported } from './faces';
+import { isManualOnlyFace, isMilsnabbLockFace, isPhotoScoringSupported } from './faces';
 
 it('supports the auto-locked and the corner-only faces, and nothing else', () => {
   for (const face of [
@@ -14,8 +14,15 @@ it('supports the auto-locked and the corner-only faces, and nothing else', () =>
   expect(isPhotoScoringSupported('')).toBe(false);
 });
 
-it('scores the rapid-fire and air-pistol faces by corners only', () => {
+it('keeps the rapid-fire and air-pistol faces off the disc lock', () => {
   expect(isManualOnlyFace('spsf-snabbskjutning-25m')).toBe(true);
   expect(isManualOnlyFace('issf-10m-air-pistol')).toBe(true);
   expect(isManualOnlyFace('spsf-pistol-25m-precision')).toBe(false);
+});
+
+it('tries the milsnabb lock on the milsnabb sheet only', () => {
+  expect(isMilsnabbLockFace('spsf-snabbskjutning-25m')).toBe(true);
+  expect(isMilsnabbLockFace('issf-25m-rapid-fire')).toBe(true);
+  expect(isMilsnabbLockFace('issf-10m-air-pistol')).toBe(false);
+  expect(isMilsnabbLockFace('spsf-pistol-25m-precision')).toBe(false);
 });
