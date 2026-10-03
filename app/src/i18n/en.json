@@ -716,7 +716,10 @@
     "seriesLength": "Shots per Series",
     "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
     "celebrationPerfect": "Perfect Series!",
-    "celebrationFullScore": "Great Job!"
+    "celebrationFullScore": "Great Job!",
+    "officialStandardMedal": "Official Standard Medal",
+    "officialStandardMedalHint": "Nationell helmatch has no point limits: silver goes to the best ninth of the field and bronze to the best third, per weapon group. Record the medal the results list gives.",
+    "officialStandardMedalRecorded": "Standard Medal: {{medal}}"
   },
   "share": {
     "title": "Share Session",
@@ -1255,5 +1258,12 @@
     "noStations": "No Stations Yet",
     "noStationsBody": "Add your first station and record the hits.",
     "save": "Save Station"
+  },
+  "stage": {
+    "spsf-helmatch": {
+      "A": "A · Precision",
+      "B": "B · Rapid Fire",
+      "C": "C · Figure Shooting"
+    }
   }
 }

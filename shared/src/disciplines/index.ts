@@ -101,6 +101,8 @@ export interface SeriesSkeletonEntry {
   timeLimitSeconds: number | null;
   /** The group's face, else the discipline's; null for a discipline without one. */
   targetFace: string | null;
+  /** The group's stage (helmatch delmoment), null when it names none. */
+  stage: string | null;
 }
 
 export interface SessionNameParts {
@@ -268,21 +270,20 @@ export function buildProgramSkeleton(program: Program): readonly SeriesSkeletonE
 
   const disciplineFace = getDiscipline(program.disciplineId)?.targetFace ?? null;
   const entries: SeriesSkeletonEntry[] = [];
-  const push = (isSighter: boolean, timeLimitSeconds: number | null, targetFace: string | null) =>
-    entries.push({
-      position: entries.length + 1,
-      isSighter,
+  for (const group of structure.groups) {
+    const shared = {
       isFinal: false,
       shots: program.shotsPerSeries,
-      timeLimitSeconds,
-      targetFace,
-    });
-
-  for (const group of structure.groups) {
-    const timeLimit = group.timeLimitSeconds ?? null;
-    const face = group.targetFace ?? disciplineFace;
-    for (let i = 0; i < (group.sighterSeries ?? 0); i += 1) push(true, timeLimit, face);
-    for (let i = 0; i < group.seriesCount; i += 1) push(false, timeLimit, face);
+      timeLimitSeconds: group.timeLimitSeconds ?? null,
+      targetFace: group.targetFace ?? disciplineFace,
+      stage: group.stage ?? null,
+    };
+    for (let i = 0; i < (group.sighterSeries ?? 0); i += 1) {
+      entries.push({ position: entries.length + 1, isSighter: true, ...shared });
+    }
+    for (let i = 0; i < group.seriesCount; i += 1) {
+      entries.push({ position: entries.length + 1, isSighter: false, ...shared });
+    }
   }
 
   return entries;
@@ -294,6 +295,22 @@ export function programSighterCount(program: Program): number {
     (total, group) => total + (group.sighterSeries ?? 0),
     0,
   );
+}
+
+/** A program's stages in group order, each once; empty when it names none. */
+export function programStages(program: Program): string[] {
+  const stages: string[] = [];
+  for (const group of program.structure?.groups ?? []) {
+    if (group.stage !== undefined && !stages.includes(group.stage)) stages.push(group.stage);
+  }
+  return stages;
+}
+
+/** The stage a series belongs to, by position, as its face and time limit are. */
+export function seriesStage(programId: string | null, position: number): string | null {
+  const program = programId ? getProgram(programId) : undefined;
+  const entry = program ? buildProgramSkeleton(program)[position - 1] : undefined;
+  return entry?.stage ?? null;
 }
 
 /**

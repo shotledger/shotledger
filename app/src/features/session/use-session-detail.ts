@@ -8,6 +8,8 @@ import {
   getDiscipline,
   getProgram,
   goldSeriesThreshold,
+  programStages,
+  stageSubtotals,
   seriesAverageTenths,
   seriesInnerTenAverage,
   sessionInnerTenCount,
@@ -16,6 +18,7 @@ import {
   type EntryShot,
   type Program,
   type SessionResults,
+  type StageSubtotal,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -39,6 +42,8 @@ export interface SeriesRow {
   guldThreshold: number | null;
   isGoldSeries: boolean;
   timeLimitSeconds: number | null;
+  /** The program stage (helmatch delmoment) the series belongs to, else null. */
+  stage: string | null;
   /** Webshooter series-level-total granularity (spec Amendment WS1) — no shots exist for this row. */
   isTotalOverride: boolean;
   totalOverrideShotCount: number | null;
@@ -49,6 +54,8 @@ export interface SessionDetail {
   program: Program | null;
   seriesRows: SeriesRow[];
   results: SessionResults;
+  /** One subtotal per program stage, in order — helmatch's A, B, C; empty for most. */
+  stageSubtotals: StageSubtotal[];
   /** Mean of the scored series' totals, in tenths — the header's "snitt/serie". */
   seriesAverageTenths: number | null;
   /** Innertior (centrumtia count) in the scored series (spec A-S7). */
@@ -83,6 +90,7 @@ const EMPTY: SessionDetail = {
   program: null,
   seriesRows: [],
   results: { beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false },
+  stageSubtotals: [],
   seriesAverageTenths: null,
   innerTenCount: 0,
   innerTenAverage: null,
@@ -112,7 +120,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   );
   const birthYear = getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null);
   const year = new Date(session.startedAt).getFullYear();
-  const skeleton = program ? buildProgramSkeleton(program).map((e) => e.timeLimitSeconds) : [];
+  const skeleton = program ? buildProgramSkeleton(program) : [];
   const guldThreshold = goldSeriesThreshold({
     weaponGroup: session.weaponGroup,
     disciplineId: session.disciplineId,
@@ -151,7 +159,8 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
         guldThreshold !== null &&
         !isSighter &&
         tenthsToScore(totalTenths) >= guldThreshold,
-      timeLimitSeconds: skeleton[row.position - 1] ?? null,
+      timeLimitSeconds: skeleton[row.position - 1]?.timeLimitSeconds ?? null,
+      stage: skeleton[row.position - 1]?.stage ?? null,
       isTotalOverride,
       totalOverrideShotCount: isTotalOverride ? row.totalOverrideShotCount : null,
     };
@@ -172,6 +181,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     program,
     seriesRows,
     results,
+    stageSubtotals: program ? stageSubtotals(programStages(program), seriesRows) : [],
     seriesAverageTenths: seriesAverageTenths(forResults),
     // A stored counter wins where there are no shot flags to count: a
     // ShotLog import is one total with no `shots` rows, so counting would

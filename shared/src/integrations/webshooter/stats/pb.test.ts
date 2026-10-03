@@ -302,6 +302,29 @@ describe('bestNSeries', () => {
     expect(result.get('spsf-precision:spsf:C')?.sessionId).toBe('higher');
   });
 
+  it('R2: a helmatch tie on the total goes to the higher C, then B (SHB I.6.11.2.1)', () => {
+    const group = 'spsf-helmatch:spsf:C';
+    const tied = (sessionId: string, tieBreakTenths: number[]) =>
+      freeformSession({
+        sessionId,
+        disciplineId: 'spsf-helmatch',
+        seriesTenths: [5600],
+        tieBreakTenths,
+      });
+    expect(
+      bestSession([tied('first', [1800, 1900]), tied('second', [1900, 1800])]).get(group)
+        ?.sessionId,
+    ).toBe('second');
+    expect(
+      bestSession([tied('first', [1900, 1800]), tied('second', [1900, 1810])]).get(group)
+        ?.sessionId,
+    ).toBe('second');
+    expect(
+      bestSession([tied('first', [1900, 1810]), tied('second', [1900, 1800])]).get(group)
+        ?.sessionId,
+    ).toBe('first');
+  });
+
   it('an exact tie keeps the first-seen session', () => {
     const result = bestNSeries(
       [

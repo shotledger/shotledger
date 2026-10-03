@@ -4,6 +4,7 @@
 import { isNull } from 'drizzle-orm';
 import {
   getDiscipline,
+  seriesStage,
   SHOTS_PER_STATION,
   type AnalyticsSeries,
   type AnalyticsSession,
@@ -62,6 +63,7 @@ function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
           : null,
       sessionType: session.type,
       tagIds: tagIdsBySession.get(row.sessionId) ?? [],
+      stage: seriesStage(session.programId, row.position),
     });
   }
   return result;

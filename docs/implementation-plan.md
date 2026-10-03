@@ -761,6 +761,13 @@ shoots three faces, so program groups carry their own face (§6.3).
       sighter. Figurskjutning is C alone. The figurtavla is a face id
       without dimensions (I.7.1.2 p. 268 prints a picture only), so it is
       keypad-only.
+- [x] **Helmatch result** (#476 slice 4, spec:
+      `docs/specs/helmatch-result-spec.md`). Program groups name a `stage`
+      (helmatch A, B, C); the session shows each delmoment's subtotal,
+      sighters excluded; an equal total ranks on C, then B (I.6.11.2.1) in
+      Records' best session and the report's best session; a helmatch
+      competition records its official standardmedalj by hand, since the
+      medal is placement-only (C.5.1.1.7) and never computed.
 
 **Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
 25m standard, 50m pistol — defaults need VERIFY then). Community adds
@@ -981,7 +988,9 @@ vapengrupp (no age adjustment; C.5.1.2.3 p. 71), precision:
 
 &gt;10 series: take the 10-series value ÷10 × series count (C.5.1.2.3).
 Militär snabbmatch (12 series, C.5.1.2.5): silver A 540 · R 552 · B 561 ·
-C 564; brons A 516 · R 528 · B 537 · C 540. Standardmedalj i guld is not
+C 564; brons A 516 · R 528 · B 537 · C 540. Nationell helmatch has no
+points path (C.5.1.1.7, placement only): its official medal is recorded,
+never computed. Standardmedalj i guld is not
 a score — it is 50 accumulated medal points (brons=1, silver=2; C.5.2.1
 p. 73). M5 shows a subtle standardmedalj marker when a session total
 meets a threshold; accumulated-points tracking is v2+.

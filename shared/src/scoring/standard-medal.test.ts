@@ -1,7 +1,11 @@
 // Executable spec: docs/specs/m5-stats-spec.md — behaviors B1-B12.
 import { describe, expect, it } from 'vitest';
 
-import { standardMedalForSession, standardMedalPoints } from './standard-medal';
+import {
+  placementOnlyStandardMedal,
+  standardMedalForSession,
+  standardMedalPoints,
+} from './standard-medal';
 
 describe('standardMedalPoints', () => {
   it('B1: exact silver hit at a tabulated series count', () => {
@@ -395,4 +399,53 @@ it('judges the standardmedalj on the grundomgång, never on the after-final tota
     standardMedalForSession({ ...base, hasFinal: true, totalSeriesCount: 8, totalTenths: 3330 })
       .grade,
   ).toBe('brons');
+});
+
+describe('Nationell helmatch: placement only (SHB C.5.1.1.7, C.5.1.2)', () => {
+  it('M1: helmatch is placement-only; the disciplines with a points path are not', () => {
+    expect(placementOnlyStandardMedal('spsf-helmatch')).toBe(true);
+    for (const id of [
+      'spsf-precision',
+      'spsf-milsnabb',
+      'spsf-magnumprecision',
+      'spsf-figurskjutning',
+      'generic-rings',
+    ]) {
+      expect(placementOnlyStandardMedal(id)).toBe(false);
+    }
+  });
+
+  it('M2: no helmatch total computes a medal', () => {
+    for (const weaponGroup of ['spsf:A', 'spsf:B', 'spsf:C']) {
+      expect(
+        standardMedalPoints({
+          disciplineId: 'spsf-helmatch',
+          weaponGroup,
+          seriesCount: 12,
+          totalPoints: 600,
+        }),
+      ).toEqual({ grade: null, silverThreshold: null, bronsThreshold: null });
+    }
+  });
+});
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_009
+ */
+it('treats helmatch as placement-only and computes no medal from any helmatch total', () => {
+  expect(placementOnlyStandardMedal('spsf-helmatch')).toBe(true);
+  expect(placementOnlyStandardMedal('spsf-precision')).toBe(false);
+  for (const totalPoints of [0, 540, 600]) {
+    expect(
+      standardMedalPoints({
+        disciplineId: 'spsf-helmatch',
+        weaponGroup: 'spsf:C',
+        seriesCount: 12,
+        totalPoints,
+      }).grade,
+    ).toBeNull();
+  }
 });

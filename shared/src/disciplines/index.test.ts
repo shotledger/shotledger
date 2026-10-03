@@ -21,12 +21,14 @@ import {
   PROGRAMS,
   programSchema,
   programSighterCount,
+  programStages,
   programsForDiscipline,
   requireDiscipline,
   resolveWeaponGroupIds,
   ringScoringDisciplines,
   scoringModeFor,
   selectableWeaponGroups,
+  seriesStage,
   seriesTargetFace,
   disciplinesForRegulations,
   shooterClassesForDiscipline,
@@ -153,6 +155,7 @@ describe('programs (spec G5-G9)', () => {
       // provserie: 5 shots at 10 s (SHB J.6.6.2) — omgång 1's limit
       timeLimitSeconds: 10,
       targetFace: 'spsf-snabbskjutning-25m',
+      stage: null,
     });
     expect(skeleton.map((s) => s.position)).toEqual([...Array(13)].map((_, i) => i + 1));
     expect(skeleton.slice(1).map((s) => s.timeLimitSeconds)).toEqual([
@@ -177,6 +180,7 @@ describe('programs (spec G5-G9)', () => {
         shots: 5,
         timeLimitSeconds: null,
         targetFace: face,
+        stage: null,
       },
       {
         position: 2,
@@ -185,6 +189,7 @@ describe('programs (spec G5-G9)', () => {
         shots: 5,
         timeLimitSeconds: null,
         targetFace: face,
+        stage: null,
       },
       {
         position: 3,
@@ -193,6 +198,7 @@ describe('programs (spec G5-G9)', () => {
         shots: 5,
         timeLimitSeconds: null,
         targetFace: face,
+        stage: null,
       },
     ]);
   });
@@ -210,6 +216,7 @@ describe('programs (spec G5-G9)', () => {
         shots: 5,
         timeLimitSeconds: 20,
         targetFace: 'spsf-snabbskjutning-25m',
+        stage: null,
       },
     ]);
   });
@@ -955,6 +962,8 @@ describe('per-group sighters and faces (§6.3, #476)', () => {
     const id = 'issf-centre-fire-pistol';
     expect(seriesTargetFace(id, id, 1)).toBe('issf-25m-precision');
     expect(seriesTargetFace(id, id, 8)).toBe('issf-25m-rapid-fire');
+    // the last precision series and the first rapid one — the stage boundary
+    expect(seriesTargetFace(id, id, 7)).toBe('issf-25m-precision');
     // appended past the skeleton, or no program at all
     expect(seriesTargetFace(id, id, 14)).toBe('issf-25m-precision');
     expect(seriesTargetFace(id, null, 8)).toBe('issf-25m-precision');
@@ -1074,4 +1083,36 @@ it('lays out helmatch and figurskjutning as SHB I.6.1 shoots them', () => {
   expect(layout('spsf-figurskjutning')).toEqual(c);
   const scored = buildProgramSkeleton(getProgram('spsf-helmatch')!).filter((s) => !s.isSighter);
   expect(scored.reduce((n, s) => n + s.shots, 0) * 10).toBe(600);
+});
+
+describe('program stages (helmatch delmoment, #476)', () => {
+  it('S4: the helmatch skeleton carries A, B and C by position', () => {
+    const program = getProgram('spsf-helmatch')!;
+    expect(buildProgramSkeleton(program).map((entry) => entry.stage)).toEqual([
+      ...Array<string>(5).fill('A'),
+      ...Array<string>(5).fill('B'),
+      ...Array<string>(4).fill('C'),
+    ]);
+    expect(programStages(program)).toEqual(['A', 'B', 'C']);
+    expect(seriesStage('spsf-helmatch', 1)).toBe('A');
+    expect(seriesStage('spsf-helmatch', 6)).toBe('B');
+    expect(seriesStage('spsf-helmatch', 14)).toBe('C');
+    expect(seriesStage('spsf-helmatch', 15)).toBeNull();
+    expect(seriesStage(null, 1)).toBeNull();
+    expect(seriesStage('spsf-milsnabb', 2)).toBeNull();
+  });
+
+  it('S4: a program without stages lists none', () => {
+    expect(programStages(getProgram('spsf-milsnabb')!)).toEqual([]);
+    expect(programStages(getProgram('spsf-precision')!)).toEqual([]);
+  });
+
+  it('S4: a stage id must not be empty', () => {
+    expect(() =>
+      programSchema.parse({
+        ...milsnabbProgramJson,
+        structure: { groups: [{ seriesCount: 1, stage: '' }] },
+      }),
+    ).toThrow();
+  });
 });

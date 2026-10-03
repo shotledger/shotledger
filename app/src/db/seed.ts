@@ -406,6 +406,77 @@ export function seedDemoData(db: Database) {
   }
 
   seedFaltSessions(db, sportPistol.id, tavlingTag.id);
+  seedHelmatchSessions(db, sportPistol22.id, tavlingTag.id, traningTag.id);
+}
+
+/**
+ * Two Nationell helmatch competitions tied on 524, the later one ahead on
+ * delmoment C (SHB I.6.11.2.1) with its official silver recorded, and one
+ * figurskjutning training round. Fixed numbers: each one shows a case.
+ */
+function seedHelmatchSessions(
+  db: Database,
+  firearmId: string,
+  matchTag: string,
+  trainingTag: string,
+) {
+  const fixedSeries = (sessionId: string, position: number, shots: number[], isSighter = false) => {
+    const s = addSeries(db, { sessionId, position, isSighter });
+    shots.forEach((value, index) => {
+      addShot(db, { seriesId: s.id, position: index + 1, valueTenths: value * 10 });
+    });
+  };
+  const matches = [
+    { daysAgo: 40, a: [10, 9, 9, 8, 9], b: [9, 9, 8, 8, 10], c: [10, 9, 8, 8, 7], medal: null },
+    {
+      daysAgo: 12,
+      a: [9, 9, 8, 8, 10],
+      b: [9, 8, 8, 7, 10],
+      c: [10, 10, 9, 8, 8],
+      medal: 'silver',
+    },
+  ] as const;
+  for (const match of matches) {
+    const session = createSession(db, {
+      name: 'Tävling Nationell helmatch',
+      type: 'competition',
+      disciplineId: 'spsf-helmatch',
+      programId: 'spsf-helmatch',
+      competitionLevel: 'krets',
+      weaponGroup: 'spsf:C',
+      shooterClass: '2',
+      firearmId,
+      startedAt: isoDaysAgo(match.daysAgo),
+      location: 'Klubbens bana',
+      officialStandardMedal: match.medal,
+    });
+    addSessionTag(db, session.id, matchTag);
+    // Layout of the Full Match: A sighter + 4, B sighter + 4, C 4 (SHB I.6.1).
+    fixedSeries(session.id, 1, [9, 8, 10, 7, 9], true);
+    for (let p = 2; p <= 5; p++) fixedSeries(session.id, p, [...match.a]);
+    fixedSeries(session.id, 6, [8, 9, 7, 10, 8], true);
+    for (let p = 7; p <= 10; p++) fixedSeries(session.id, p, [...match.b]);
+    for (let p = 11; p <= 14; p++) fixedSeries(session.id, p, [...match.c]);
+    applyRoundCountDelta(db, firearmId, 14 * 5);
+  }
+
+  const training = createSession(db, {
+    name: 'Träning Figurskjutning',
+    type: 'training',
+    disciplineId: 'spsf-figurskjutning',
+    programId: 'spsf-figurskjutning',
+    weaponGroup: 'spsf:C',
+    firearmId,
+    startedAt: isoDaysAgo(5),
+    location: 'Klubbens bana',
+  });
+  addSessionTag(db, training.id, trainingTag);
+  // A figure shot is worth 0 or 6-10 (I.7.1.2): the 0 is a miss off the figure.
+  fixedSeries(training.id, 1, [10, 9, 8, 8, 7]);
+  fixedSeries(training.id, 2, [9, 9, 8, 0, 7]);
+  fixedSeries(training.id, 3, [10, 8, 8, 7, 6]);
+  fixedSeries(training.id, 4, [9, 8, 7, 0, 0]);
+  applyRoundCountDelta(db, firearmId, 4 * 5);
 }
 
 /**

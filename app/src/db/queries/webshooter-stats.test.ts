@@ -119,3 +119,33 @@ describe('listFreeformSessionsForPb', () => {
     expect(rows[0]!.seriesTenths).toHaveLength(2);
   });
 });
+
+describe('helmatch tie-break keys (SHB I.6.11.2.1)', () => {
+  it('carries the C then B subtotals of a helmatch Full Match, sighters left out', () => {
+    const session = createSession(db, {
+      name: 'Helmatch',
+      type: 'competition',
+      disciplineId: 'spsf-helmatch',
+      programId: 'spsf-helmatch',
+      weaponGroup: 'spsf:C',
+      startedAt: '2026-05-10T09:00:00.000Z',
+    });
+    // Position 6 is B's sighter, 7 a B series, 11 the first C series.
+    const scored = (position: number, valueTenths: number, isSighter = false) => {
+      const s = addSeries(db, { sessionId: session.id, position, isSighter });
+      addShot(db, { seriesId: s.id, position: 1, valueTenths });
+    };
+    scored(2, 100);
+    scored(6, 90, true);
+    scored(7, 80);
+    scored(11, 70);
+    const rows = listFreeformSessionsForPb(db);
+    expect(rows[0]!.seriesTenths).toEqual([100, 80, 70]);
+    expect(rows[0]!.tieBreakTenths).toEqual([70, 80]);
+  });
+
+  it('carries no keys for any other discipline', () => {
+    sevenSeriesSession();
+    expect(listFreeformSessionsForPb(db)[0]!.tieBreakTenths).toEqual([]);
+  });
+});

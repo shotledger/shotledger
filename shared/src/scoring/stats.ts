@@ -39,6 +39,8 @@ export interface StatsSeries {
    * is no shot data to pool.
    */
   totalOverride?: { tenths: number; shotCount: number } | null;
+  /** The program stage the series belongs to (helmatch delmoment); absent for most. */
+  stage?: string | null;
 }
 
 // --- Low-level tenths math -----------------------------------------------

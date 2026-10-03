@@ -716,7 +716,10 @@
     "seriesLength": "Skott per serie",
     "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
     "celebrationPerfect": "Perfekt serie!",
-    "celebrationFullScore": "Bra jobbat!"
+    "celebrationFullScore": "Bra jobbat!",
+    "officialStandardMedal": "Officiell standardmedalj",
+    "officialStandardMedalHint": "Nationell helmatch har inga poänggränser: silver går till bästa niondelen av fältet och brons till bästa tredjedelen, per vapengrupp. Ange medaljen som resultatlistan ger.",
+    "officialStandardMedalRecorded": "Standardmedalj: {{medal}}"
   },
   "share": {
     "title": "Dela pass",
@@ -1255,5 +1258,12 @@
     "noStations": "Inga stationer än",
     "noStationsBody": "Lägg till din första station och notera träffarna.",
     "save": "Spara station"
+  },
+  "stage": {
+    "spsf-helmatch": {
+      "A": "A · Precision",
+      "B": "B · Snabbskjutning",
+      "C": "C · Figurskjutning"
+    }
   }
 }

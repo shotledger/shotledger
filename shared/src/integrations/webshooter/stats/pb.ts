@@ -2,6 +2,8 @@
 // §6.3, v2 spec §B.1/§B.5). Pure functions over plain result/session rows —
 // no per-shot data exists for imported results (§B.4).
 
+import { ranksAhead } from '../../../scoring/stages';
+
 /** One row per competition result — the common input shape (spec §6.1). */
 export interface CompetitionResultForStats {
   sessionId: string;
@@ -139,6 +141,8 @@ export interface FreeformSessionForPb {
   date: string;
   /** Non-sighter, non-final series totals (tenths), any order. */
   seriesTenths: readonly number[];
+  /** What breaks a tie on the total — helmatch's C then B (`tieBreakTenths`). */
+  tieBreakTenths?: readonly number[];
 }
 
 /** Same shape and the same klass-free rule as `officialPbGroupKey`. */
@@ -178,18 +182,27 @@ export function bestNSeries(
   return best;
 }
 
-/** Best total regardless of series count (spec §6.3). */
+/**
+ * Best total regardless of series count (spec §6.3). A tie goes by the
+ * session's tie-break keys (helmatch: C, then B), else to the first seen.
+ */
 export function bestSession(
   sessions: readonly FreeformSessionForPb[],
 ): Map<string, BestSeriesResult> {
   const best = new Map<string, BestSeriesResult>();
 
+  const keys = new Map<string, readonly number[]>();
   for (const session of sessions) {
     const totalTenths = session.seriesTenths.reduce((sum, value) => sum + value, 0);
+    const tieBreakTenths = session.tieBreakTenths ?? [];
     const key = freeformGroupKey(session);
     const current = best.get(key);
-    if (current === undefined || totalTenths > current.totalTenths) {
+    if (
+      current === undefined ||
+      ranksAhead({ totalTenths, tieBreakTenths }, { ...current, tieBreakTenths: keys.get(key)! })
+    ) {
       best.set(key, { sessionId: session.sessionId, totalTenths });
+      keys.set(key, tieBreakTenths);
     }
   }
 

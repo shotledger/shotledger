@@ -18,6 +18,7 @@ import {
   findEvent,
   formatShooterClass,
   getProgram,
+  placementOnlyStandardMedal,
   programsForDiscipline,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
@@ -59,6 +60,9 @@ import { Spacing } from '@/theme/tokens';
 // The picker's value for Free Format, as on the new-session form.
 const FREE_FORMAT = 'none';
 
+type OfficialMedalChoice = 'none' | 'brons' | 'silver';
+const OFFICIAL_MEDAL_CHOICES: readonly OfficialMedalChoice[] = ['none', 'brons', 'silver'];
+
 export default function EditSessionScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -78,6 +82,11 @@ export default function EditSessionScreen() {
     (session?.competitionLevel as CompetitionLevel | null) ?? 'forening',
   );
   const [isChampionship, setIsChampionship] = useState(session?.isChampionship === 1);
+  const [officialMedal, setOfficialMedal] = useState<OfficialMedalChoice>(
+    session?.officialStandardMedal === 'brons' || session?.officialStandardMedal === 'silver'
+      ? session.officialStandardMedal
+      : 'none',
+  );
   const [weaponGroup, setWeaponGroup] = useState<string | null>(session?.weaponGroup ?? null);
   const [shooterClass, setShooterClass] = useState<string | null>(session?.shooterClass ?? null);
   const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
@@ -96,6 +105,9 @@ export default function EditSessionScreen() {
   }
 
   const isCompetition = session.type === 'competition';
+  // A placement-only medal cannot be computed from one session, so the
+  // official one is recorded by hand (SHB C.5.1.2).
+  const recordsOfficialMedal = isCompetition && placementOnlyStandardMedal(session.disciplineId);
   // Same rule as the new-session form: vapengrupp and klass are competition
   // concepts. Here it is one-way — a picker hides only when the session has no
   // value stored, so editing can never strand a value it stopped showing.
@@ -165,6 +177,9 @@ export default function EditSessionScreen() {
       firearmId,
       ammoLotId,
       seriesEntryMode,
+      ...(recordsOfficialMedal
+        ? { officialStandardMedal: officialMedal === 'none' ? null : officialMedal }
+        : {}),
     });
     const nextProgramId = programId === FREE_FORMAT ? null : programId;
     if (nextProgramId !== session.programId) changeMatchFormat(db, session.id, nextProgramId);
@@ -269,6 +284,25 @@ export default function EditSessionScreen() {
             placeholder={t('session.competitionNamePlaceholder')}
             testID="edit-competition-name"
           />
+          {recordsOfficialMedal && (
+            <>
+              <OptionPicker
+                label={t('session.officialStandardMedal')}
+                options={toOptions(
+                  OFFICIAL_MEDAL_CHOICES.map((value) => ({
+                    value,
+                    label: t(`webshooter.medal.${value}`),
+                  })),
+                  'edit-official-medal',
+                )}
+                value={officialMedal}
+                onChange={setOfficialMedal}
+              />
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('session.officialStandardMedalHint')}
+              </ThemedText>
+            </>
+          )}
         </Card>
       )}
 
