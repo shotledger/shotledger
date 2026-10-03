@@ -16,8 +16,8 @@ sync. Android first — **all code must stay iOS-compatible**.
   and the terms contributions arrive under. ADR 0017 records why.
 - `docs/decisions-log-archive.md` — the historical record of every
   narrower decision (a bug's root cause, a library pick, a wording
-  call) that predates issue #138. Nothing here is open work; it
-  replaced `plan.md`, which is retired.
+  call). Nothing here is open work; it replaced `plan.md`, which is
+  retired.
 - `docs/implementation-plan.md` — the execution spec: milestones,
   schema, screen inventory, per-task acceptance criteria. Follow it;
   do not improvise product decisions.
@@ -37,20 +37,6 @@ sync. Android first — **all code must stay iOS-compatible**.
   engine** — the maintainer does not read that code line by line; the
   approved spec and evidence report are the review. Routine UI work uses
   normal tests instead.
-- **Outstanding work lives in ten topic issues, #346–#355** — timers, photo
-  scoring, sessions/log, statistics, export/import, federation model,
-  WebShooter, funding, store/release, tooling. They are independent, not
-  sub-issues of anything. `gh issue list` to find the one that owns your
-  change; tick its checkboxes in the same branch (`gh issue edit <n>
---body-file …`) and note anything you decided or could not resolve as a
-  comment on it. Check the relevant one before starting UI work.
-
-  They came from **#138**, which merged `plan.md` and the retired
-  `docs/feedback-backlog.md` and was **closed 2026-09-20** once it had grown
-  into a bug list, the maintainer's account admin and several epics at once.
-  Read it only for the closed-items log. Longer-running work has its own
-  issues too — #100, #116, #264, #267.
-
 - `docs/manual/` — the **user** manual, published with MkDocs. Written for
   shooters, not for contributors, and gated by `mkdocs build --strict`.
   See the documentation rule under Definition of done.
@@ -116,13 +102,13 @@ sync. Android first — **all code must stay iOS-compatible**.
    `docs/reference/` — a Swedish federation's rules are documented in
    Swedish.
 
-   **Swedish descriptive terms are translated** (maintainer's ruling on
-   #321 part 2, 2026-09-20): `guldserie` → `goldSeries`, `standardmedalj`
+   **Swedish descriptive terms are translated** (maintainer's ruling,
+   2026-09-20): `guldserie` → `goldSeries`, `standardmedalj`
    → `standardMedal`, `märke` → `badge`, `valör` → `grade`, `vapengrupp`
    → `weaponGroup`. The earlier proposal to keep them Swedish as "terms of
    art" was **rejected** — do not reintroduce it.
 
-   **One carve-out stands** (#321 part 3): a name keeps the spelling of
+   **One carve-out stands**: a name keeps the spelling of
    the thing it names, so the app never contradicts the document or rule
    book it cites.
    - a federation's own official name for a discipline — `milsnabb`,
@@ -169,8 +155,7 @@ the directories are the quadrants, the nav deliberately does not name them):
 | "why is it like this" — a model, a limitation, a trade-off | `explanation/`       |
 
 A page doing two of these is two pages. Explanation leaking into `guides/` is
-the failure mode this exists to stop — see issue #309 for the migration, still
-in progress.
+the failure mode this exists to stop.
 
 ## Agentic loop (verified at M0 scaffold — keep this section updated)
 
@@ -249,7 +234,7 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
   duplicates, no build tooling, and every `name@version` still resolves in
   `pnpm-lock.yaml` — a direct `app` dependency to exactly that version). So a
   Renovate or lockfile-maintenance PR that moves a bundled version goes red
-  until someone regenerates on that branch (#385). What it cannot see is a
+  until someone regenerates on that branch. What it cannot see is a
   package newly entering the bundle without any listed version moving — that
   is the residual case hard rule 2 still covers by hand. It does **not** regenerate — that is
   `pnpm licenses:generate`, which runs a real `expo export --source-maps` and
@@ -270,8 +255,8 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
 --noEmit -p tsconfig.json`) as a separate step (wired up in
   `feat/polish-1`, after fixing the two remaining M0/M1-vintage errors).
 - **The three docs gates are NOT in `pnpm check`** — CI's _Build (strict)_ job
-  runs them, so a docs change that passes `check` can still fail CI (it did, on
-  #258). Run all three before pushing one:
+  runs them, so a docs change that passes `check` can still fail CI. Run all
+  three before pushing one:
   - `mkdocs build --strict` — links and nav.
   - `node scripts/docs-translation-check.mjs` — fails when a `.sv.md` page's
     last commit is older than its English source. An English-only edit with no
@@ -279,7 +264,7 @@ i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run
     take, not a gate to loosen.
   - `node scripts/docs-anchor-check.mjs` (`pnpm docs:anchors`) — fails on a link
     to a heading that no longer exists. `--strict` logs that at INFO and exits
-    0, so it is invisible to the build (#343).
+    0, so it is invisible to the build.
 
   They stay out of `pnpm check` because they need the Python toolchain
   (`pip install -r docs/requirements.txt`), which a code-only contributor has
@@ -369,7 +354,7 @@ pnpm exec expo prebuild --platform android --no-install`, then `cd android &&
   forbidden): `cd backend && pnpm test` runs its own Cloudflare Workers
   vitest suite; not wired into the root `pnpm check`, but CI runs it as its
   own step after `check`. It stays on vitest 4 until
-  `@cloudflare/vitest-plugin` supports 5 (#438). On this sandbox the
+  `@cloudflare/vitest-plugin` supports 5. On this sandbox the
   Workers pool is slow enough that `test/sync.spec.ts`'s 205-row pagination
   case can exceed vitest's default 5 s timeout — a sandbox artifact, not a
   regression; re-run with `npx vitest run test/sync.spec.ts
