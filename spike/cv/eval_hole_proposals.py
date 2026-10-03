@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import glob
 import math
 import os
 import pickle
@@ -27,6 +28,7 @@ import numpy as np
 
 import hole_proposals as HP
 import target_cv as T
+from closeup_lock import lock_closeup, passes_gate
 
 CANVAS_PX = 2100
 SPIKE_CANVAS_PX = 1040
@@ -69,6 +71,33 @@ def rectify(path, long_side, cache_dir=None):
     return out
 
 
+def rectify_closeup(path, long_side):
+    """The same canvas, laid out by the close-up lock instead of the disc: a
+    close-up has no disc to lock to. None when the lock fails its gate."""
+    img = T.load(path, long_side)
+    lock = lock_closeup(img)
+    if not passes_gate(lock):
+        return None
+    k = 4.0  # px/mm, as build_geom's canvas
+    H = np.array([[k, 0, CANVAS_PX / 2], [0, k, CANVAS_PX / 2], [0, 0, 1.0]]) @ lock.to_mm
+    big = cv2.warpPerspective(img, H, (CANVAS_PX, CANVAS_PX), flags=cv2.INTER_CUBIC,
+                              borderValue=(255, 255, 255))
+    # outside the photo is white paper to the detector; mark it so a renderer
+    # can crop to what was actually photographed
+    seen = cv2.warpPerspective(np.full(img.shape[:2], 255, np.uint8), H, (CANVAS_PX, CANVAS_PX),
+                               flags=cv2.INTER_NEAREST)
+    return dict(bgr=big, gray=cv2.cvtColor(big, cv2.COLOR_BGR2GRAY), seen=seen,
+                center=(CANVAS_PX / 2, CANVAS_PX / 2), px_per_mm=k, shift=0.0)
+
+
+def photo_path(src, name):
+    """`name` with whatever extension it has in `src`."""
+    hits = sorted(glob.glob(os.path.join(os.path.expanduser(src), glob.escape(name) + ".*")))
+    if not hits:
+        raise SystemExit(f"no photo {name} in {src}")
+    return hits[0]
+
+
 def match(cands, holes, d):
     """Greedy nearest-first matching; returns labels per candidate and the
     number of unclaimed holes."""
@@ -99,12 +128,22 @@ def main() -> None:
     ap.add_argument("--long-side", type=int, default=2048)
     ap.add_argument("--caliber", type=float, default=T.BULLET_MM)
     ap.add_argument("--report", action="store_true", help="apply the fitted constants")
+    ap.add_argument("--lock", choices=("disc", "closeup"), default="disc",
+                    help="closeup: lay the canvas out by the close-up lock; marks are then "
+                         "in this canvas's px, as mark_holes.py --lock closeup renders it")
     a = ap.parse_args()
 
     rows = []
     per_photo = {}
     for name, holes in read_marks(a.marks).items():
-        rec = rectify(os.path.join(os.path.expanduser(a.src), name + ".jpg"), a.long_side, a.cache)
+        path = photo_path(a.src, name)
+        if a.lock == "closeup":
+            rec = rectify_closeup(path, a.long_side)
+            if rec is None:
+                print(f"{name} close-up lock failed its gate; skipped", flush=True)
+                continue
+        else:
+            rec = rectify(path, a.long_side, a.cache)
         face = HP.Face(rec["center"][0], rec["center"][1], rec["px_per_mm"], a.caliber,
                        T.TARGETS["precision"]["black_mm"] / 2, PRECISION_RINGS_MM[-1], PRECISION_RINGS_MM)
         holes_here = [(x + rec["shift"], y + rec["shift"]) for x, y in holes]

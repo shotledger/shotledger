@@ -21,7 +21,7 @@
 // hand them to OpenCV (closeup-lock-native.ts); everything else is plain JS.
 import { reflectIndex } from '@shotledger/shared';
 
-import type { Homography } from './corners';
+import { applyHomography, type Homography } from './corners';
 import { invertHomography } from './transform';
 
 // ---------------------------------------------------------------- constants
@@ -1083,6 +1083,26 @@ function circleMean(lines: CloseupImage, inv: readonly number[], R: number): num
   return n / 360 < 0.3 ? null : sum / n;
 }
 
+/** `circleMean`, but the median: a ring line runs the whole way round, while
+ *  a digit, a hole or a patch covers only part of a circle. */
+function circleMedian(lines: CloseupImage, inv: readonly number[], R: number): number | null {
+  const { width: w, height: h } = lines;
+  const v = new Float64Array(360);
+  let n = 0;
+  for (let i = 0; i < 360; i += 1) {
+    const X = R * (CIRCLE_ANGLES.cos[i] as number);
+    const Y = R * (CIRCLE_ANGLES.sin[i] as number);
+    const d = inv[6]! * X + inv[7]! * Y + inv[8]!;
+    const x = (inv[0]! * X + inv[1]! * Y + inv[2]!) / d;
+    const y = (inv[3]! * X + inv[4]! * Y + inv[5]!) / d;
+    if (x >= 0 && x < w - 1 && y >= 0 && y < h - 1) {
+      v[n] = bilinearAt(lines, x, y);
+      n += 1;
+    }
+  }
+  return n / 360 < 0.3 ? null : median(v.subarray(0, n));
+}
+
 function workRingOffset(lines: CloseupImage, workToMm: readonly number[]): number | null {
   const inv = invertHomography(asHomography(workToMm));
   if (!inv) return null;
@@ -1139,6 +1159,93 @@ function isHalfPeriod(lines: CloseupImage, workToMm: readonly number[]): boolean
   return odd.length > 0 && even.length > 0 && mean(odd) < 1.3 && mean(even) > 1.8;
 }
 
+/** The finer steps tried, finest first. */
+const FINER_STEPS = [4, 3, 2] as const;
+/** Each class of a finer step's extra lines must be this strong against the
+ *  weakest of the fit's own lines, and against the finer step's gaps. */
+const FINER_VS_LINES = 0.5;
+const FINER_VS_GAPS = 1.8;
+/** The 1 ring, in steps: nothing outside it is a ring line. */
+const OUTER_RING_STEPS = 10;
+
+/**
+ * Whether every line a step m times finer predicts is printed. Line j of the
+ * finer step sits at j * 25 / m mm of this fit; the ones that are not the
+ * fit's own fall into m - 1 classes (j mod m), each tested alone, so a
+ * 2x-coarse fit's real half-step lines cannot carry a 4x candidate's missing
+ * quarter-step ones. Radii under one step are skipped: the X ring sits at
+ * half a step on any scale.
+ */
+function finerLinesPresent(lines: CloseupImage, workToMm: readonly number[], m: number): boolean {
+  const inv = invertHomography(asHomography(workToMm));
+  if (!inv) return false;
+  const strengths = (radii: number[]) =>
+    radii.map((R) => circleMedian(lines, inv, R)).filter((v): v is number => v !== null);
+  const mean = (a: number[]) => a.reduce((t, v) => t + v, 0) / a.length;
+  const own: number[] = [];
+  for (let k = 1; k <= Math.floor(OUTER_RING_STEPS / m); k += 1) own.push(k * RING_STEP_MM);
+  const gaps: number[] = [];
+  for (let j = m; j < OUTER_RING_STEPS; j += 1) gaps.push(((j + 0.5) * RING_STEP_MM) / m);
+  const ownS = strengths(own);
+  const gapS = strengths(gaps);
+  if (ownS.length < 2 || gapS.length < 2) return false;
+  const floor = FINER_VS_LINES * Math.min(...ownS);
+  const gap = mean(gapS);
+  for (let c = 1; c < m; c += 1) {
+    const radii: number[] = [];
+    for (let j = m; j <= OUTER_RING_STEPS; j += 1)
+      if (j % m === c) radii.push((j * RING_STEP_MM) / m);
+    const extra = strengths(radii);
+    if (extra.length === 0) return false;
+    const e = mean(extra);
+    if (e < floor || e < FINER_VS_GAPS * gap) return false;
+  }
+  return true;
+}
+
+/**
+ * Every whole multiple of 25 mm is a printed line, so a fit at 2, 3 or 4
+ * times the true step still has a line under each ring and passes the
+ * yardstick. Take the finest step whose extra lines are all printed: its mm
+ * are this fit's times m, and a refit there adds the finer lines' points;
+ * keep whichever sits closer to the lines. Lock-step with `_finest_step`.
+ */
+function finestStep(
+  g: CloseupImage,
+  lines: CloseupImage,
+  fit: Fit,
+  offset: number | null,
+  P: number,
+  ops: CloseupOps,
+): { fit: Fit; offset: number | null; P: number } {
+  const toWork = invertHomography(asHomography(fit.workToMm));
+  if (!toWork) return { fit, offset, P };
+  const cx = toWork[2] / toWork[8];
+  const cy = toWork[5] / toWork[8];
+  for (const m of FINER_STEPS) {
+    if (!finerLinesPresent(lines, fit.workToMm, m)) continue;
+    let cand: Fit = {
+      workToMm: mul3([m, 0, 0, 0, m, 0, 0, 0, 1], fit.workToMm),
+      d1: fit.d1 / m,
+      d2: fit.d2 / m,
+      used: fit.used,
+      support: fit.support,
+      residual: fit.residual * m,
+    };
+    let off = workRingOffset(lines, cand.workToMm);
+    const refit = fitRings(g, cx, cy, P / m, polarRidge(g, cx, cy, ops), ops);
+    if (refit) {
+      const rOff = workRingOffset(lines, refit.workToMm);
+      if (rOff !== null && (off === null || rOff < off)) {
+        cand = refit;
+        off = rOff;
+      }
+    }
+    return { fit: cand, offset: off, P: P / m };
+  }
+  return { fit, offset, P };
+}
+
 // ---------------------------------------------------------------- the lock
 
 /** The lock on an already prepared work image. */
@@ -1149,7 +1256,9 @@ export function lockCloseupWork(
   const { g, lines } = work;
   const vote = voteCenter(g, ops);
   const ridge = polarRidge(g, vote.x, vote.y, ops);
-  const { P, comb } = bestPeriod(profile(ridge));
+  const best = bestPeriod(profile(ridge));
+  const comb = best.comb;
+  let P = best.P;
   if (P <= 0) return null;
   let fit = fitRings(g, vote.x, vote.y, P, ridge, ops);
   if (!fit) return null;
@@ -1163,9 +1272,11 @@ export function lockCloseupWork(
       if (reOffset !== null && (offset === null || reOffset < offset)) {
         fit = refit;
         offset = reOffset;
+        P = 2 * P;
       }
     }
   }
+  ({ fit, offset, P } = finestStep(g, lines, fit, offset, P, ops));
   const toMm = mul3(fit.workToMm, work.toWork);
   const toImage = invertHomography(asHomography(toMm));
   if (!toImage) return null;
@@ -1204,20 +1315,42 @@ export function passesCloseupGate(lock: CloseupLock | null): lock is CloseupLock
   );
 }
 
+/** mm per image px of `toMm` near `at`, from its Jacobian. */
+function mmPerPx(toMm: Homography, at: { readonly x: number; readonly y: number }): number {
+  const p = applyHomography(toMm, at);
+  const px = applyHomography(toMm, { x: at.x + 1, y: at.y });
+  const py = applyHomography(toMm, { x: at.x, y: at.y + 1 });
+  return Math.sqrt(Math.abs((px.x - p.x) * (py.y - p.y) - (px.y - p.y) * (py.x - p.x)));
+}
+
+/** A close-up lock at 2, 3 or 4 times the true ring step reads this share of
+ *  the disc lock's mm per px; the disc lock is never off by such a factor. */
+const SCALE_VETO = [1 / 2, 1 / 3, 1 / 4] as const;
+const SCALE_VETO_TOL = 0.06;
+
 /**
  * Which lock the marking screen uses (spec, "Consequences for the app"): the
  * one that passes its gate; when both do, the one whose rings sit closer to
- * the printed lines, the disc lock on a tie; null when neither passes.
+ * the printed lines, the disc lock on a tie; null when neither passes. A
+ * close-up whose scale is a whole-number fraction of a passing disc lock's
+ * locked onto every second, third or fourth line, and is refused.
  */
 export function chooseLock(options: {
   readonly discPasses: boolean;
   /** The disc lock's `ringOffsetMm` on the same work image. */
   readonly discOffsetMm: number | null;
   readonly closeup: CloseupLock | null;
+  /** The disc lock's image px -> mm, for the scale check. */
+  readonly discToMm?: Homography;
 }): 'disc' | 'closeup' | null {
-  const closeupPasses = passesCloseupGate(options.closeup);
+  const { closeup, discToMm } = options;
+  const closeupPasses = passesCloseupGate(closeup);
   if (!options.discPasses) return closeupPasses ? 'closeup' : null;
   if (!closeupPasses) return 'disc';
+  if (discToMm) {
+    const ratio = mmPerPx(closeup.toMm, closeup.center) / mmPerPx(discToMm, closeup.center);
+    if (SCALE_VETO.some((f) => Math.abs(ratio / f - 1) <= SCALE_VETO_TOL)) return 'disc';
+  }
   const disc = options.discOffsetMm ?? Infinity;
-  return (options.closeup?.ringOffsetMm ?? Infinity) < disc ? 'closeup' : 'disc';
+  return (closeup.ringOffsetMm ?? Infinity) < disc ? 'closeup' : 'disc';
 }

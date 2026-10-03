@@ -166,11 +166,30 @@ draws integer-only close-ups the TypeScript twin reproduces, and
 # centre is out of frame, which the gate must refuse
 python eval_closeup.py --glob '<photos>/*.jpg' --out closeup.csv
 
+# real photos: both locks, the app's choice between them, and the close-up's
+# scale against the disc lock's; overlays/ shows each lock's numbered rings
+python eval_closeup_real.py --glob '<photos>/*.jpg' --out <dir>
+
 # regenerate the lock-step fixture after any change to the arithmetic, then
 # run prettier on it
 python gen_closeup_lock_fixtures.py > \
     ../../app/src/features/photo-scoring/closeup-lock.fixtures.json
 ```
+
+The fixture pins the TypeScript to this module on synthetic close-ups only.
+`parity/` compares the two on real photos, from identical greyscale pixels:
+
+```bash
+python parity/parity_closeup.py prep <pgm-dir> <photos>...
+PYTHONPATH=. python parity/parity_closeup.py run <pgm-dir> py.jsonl
+CV_PARITY_IN=<pgm-dir> CV_PARITY_OUT=ts.jsonl \
+    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts   # from the repo root
+python parity/parity_closeup.py diff py.jsonl ts.jsonl
+```
+
+`mark_holes.py` and `eval_hole_proposals.py` take `--lock closeup` to lay the
+canvas out by this lock instead of the disc, for labelling and measuring real
+close-ups.
 
 The ring layout is a `RingModel`: `PRECISION` (the default, unchanged) and
 `MILSNABB` (lines at 10 + 40k mm). The milsnabb model is measured but not in

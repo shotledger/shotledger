@@ -599,7 +599,9 @@ def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True,
         if refit is not None:
             re_offset, re_n = ring_offsets_n(lines, refit[0], model.yardstick_mm, arcs=model.arcs)
             if re_offset is not None and (offset is None or re_offset < offset):
-                fit, offset, n_lines = refit, re_offset, re_n
+                fit, offset, n_lines, P = refit, re_offset, re_n, 2 * P
+    if not model.phase:
+        fit, offset, n_lines, P = _finest_step(g, lines, fit, offset, n_lines, P, projective, model)
     work_to_mm, ecx, ecy, d1, d2, used, support, residual = fit
     to_mm = work_to_mm @ S
     c = np.linalg.inv(to_mm) @ np.array([0.0, 0.0, 1.0])
@@ -641,6 +643,84 @@ def _circle_mean(ridge, inv, R, ang):
 
 def _circle_angles() -> np.ndarray:
     return np.arange(360) * (2 * np.pi / 360)
+
+
+def _circle_median(ridge, inv, R, ang):
+    """`_circle_mean`, but the median: a ring line runs the whole way round,
+    while a digit, a hole or a patch covers only part of a circle."""
+    X, Y = R * np.cos(ang), R * np.sin(ang)
+    w_ = inv[2, 0] * X + inv[2, 1] * Y + inv[2, 2]
+    px = (inv[0, 0] * X + inv[0, 1] * Y + inv[0, 2]) / w_
+    py = (inv[1, 0] * X + inv[1, 1] * Y + inv[1, 2]) / w_
+    h, w = ridge.shape
+    ok = (px >= 0) & (px < w - 1) & (py >= 0) & (py < h - 1)
+    if ok.mean() < 0.3:
+        return None
+    return _median(bilinear(ridge, px[ok], py[ok]))
+
+
+FINER_STEPS = (4, 3, 2)
+# Each class of extra lines a finer step predicts must be this strong against
+# the weakest of the fit's own lines, and against the gaps between the finer
+# step's lines.
+FINER_VS_LINES = 0.5
+FINER_VS_GAPS = 1.8
+# The 1 ring, in steps: nothing outside it is a ring line.
+OUTER_RING_STEPS = 10
+
+
+def _finer_lines_present(lines: np.ndarray, work_to_mm: np.ndarray, m: int) -> bool:
+    """Whether every line a step m times finer predicts is printed. Line j of
+    the finer step sits at j * 25 / m mm of this fit; the ones that are not
+    the fit's own fall into m - 1 classes (j mod m), and each class is tested
+    alone, so a 2x-coarse fit's real half-step lines cannot carry a 4x
+    candidate's missing quarter-step ones. Radii under one step of this fit
+    are skipped: the X ring sits at half a step on any scale."""
+    inv = np.linalg.inv(work_to_mm)
+    ang = _circle_angles()
+    s = RING_STEP_MM
+
+    def strengths(radii):
+        v = [_circle_median(lines, inv, R, ang) for R in radii]
+        return [x for x in v if x is not None]
+
+    own = strengths([k * s for k in range(1, OUTER_RING_STEPS // m + 1)])
+    gap = strengths([(j + 0.5) * s / m for j in range(m, OUTER_RING_STEPS)])
+    if len(own) < 2 or len(gap) < 2:
+        return False
+    floor = FINER_VS_LINES * min(own)
+    gap_mean = float(np.mean(gap))
+    for c in range(1, m):
+        extra = strengths([j * s / m for j in range(m, OUTER_RING_STEPS + 1) if j % m == c])
+        if not extra:
+            return False
+        e = float(np.mean(extra))
+        if e < floor or e < FINER_VS_GAPS * gap_mean:
+            return False
+    return True
+
+
+def _finest_step(g: np.ndarray, lines: np.ndarray, fit, offset, n_lines, P, projective: bool,
+                 model: RingModel):
+    """Every whole multiple of 25 mm is a printed line, so a fit at 2, 3 or 4
+    times the true step still has a line under each ring and passes the
+    yardstick. Take the finest step whose extra lines are all printed: its mm
+    are this fit's times m, and a refit there adds the finer lines' points;
+    keep whichever sits closer to the lines."""
+    _, ecx, ecy, d1, d2, used, support, residual = fit
+    for m in FINER_STEPS:
+        if not _finer_lines_present(lines, fit[0], m):
+            continue
+        cand = (np.diag([float(m), float(m), 1.0]) @ fit[0], ecx, ecy, d1 / m, d2 / m, used,
+                support, residual * m)
+        off, n = ring_offsets_n(lines, cand[0], model.yardstick_mm, arcs=model.arcs)
+        refit = _fit(g, ecx, ecy, P / m, projective, _polar_ridge(g, ecx, ecy))
+        if refit is not None:
+            r_off, r_n = ring_offsets_n(lines, refit[0], model.yardstick_mm, arcs=model.arcs)
+            if r_off is not None and (off is None or r_off < off):
+                cand, off, n = refit, r_off, r_n
+        return cand, off, n, P / m
+    return fit, offset, n_lines, P
 
 
 def _is_half_period(lines: np.ndarray, work_to_mm: np.ndarray) -> bool:
