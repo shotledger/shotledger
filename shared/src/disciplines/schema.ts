@@ -90,6 +90,8 @@ export const programSchema = z.strictObject({
             sighterSeries: z.int().min(0).optional(),
             /** Overrides the discipline's face; must resolve in the target registry. */
             targetFace: z.string().min(1).optional(),
+            /** The part of the match the group belongs to, e.g. helmatch delmoment "A". */
+            stage: z.string().min(1).optional(),
           }),
         )
         .min(1),

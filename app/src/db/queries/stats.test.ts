@@ -79,3 +79,18 @@ describe('listAllStatsSeries', () => {
     expect(listAllStatsSeries(db)).toHaveLength(1);
   });
 });
+
+it('tags each series with its program stage, by position', () => {
+  const session = createSession(db, {
+    name: 'H',
+    type: 'competition',
+    disciplineId: 'spsf-helmatch',
+    programId: 'spsf-helmatch',
+    startedAt: '2026-01-05T00:00:00.000Z',
+  });
+  const ids = [1, 6, 11, 15].map(
+    (position) => addSeries(db, { sessionId: session.id, position }).id,
+  );
+  const stageById = new Map(listAllStatsSeries(db).map((series) => [series.id, series.stage]));
+  expect(ids.map((id) => stageById.get(id))).toEqual(['A', 'B', 'C', null]);
+});

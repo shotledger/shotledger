@@ -476,6 +476,17 @@ export default function SessionDetailScreen() {
 
       <WebshooterSessionBadge session={session} />
 
+      {/* A medal recorded by hand (Edit Session); an imported one is on the badge above. */}
+      {session.externalSource !== 'webshooter' &&
+        (session.officialStandardMedal === 'brons' ||
+          session.officialStandardMedal === 'silver') && (
+          <ThemedText type="small" themeColor="textSecondary" testID="session-official-medal">
+            {t('session.officialStandardMedalRecorded', {
+              medal: t(`webshooter.medal.${session.officialStandardMedal}`),
+            })}
+          </ThemedText>
+        )}
+
       {isFaltSession && (
         <FaltStations
           sessionId={id}
@@ -486,6 +497,11 @@ export default function SessionDetailScreen() {
       {!isFaltSession && (
         <Card style={styles.metricCard}>
           {metricRows([
+            ...detail.stageSubtotals.map((subtotal) => ({
+              label: t(`stage.${session.programId}.${subtotal.stage}`),
+              value: String(tenthsToScore(subtotal.totalTenths)),
+              testID: `result-stage-${subtotal.stage}`,
+            })),
             ...(results.hasFinal
               ? [
                   {

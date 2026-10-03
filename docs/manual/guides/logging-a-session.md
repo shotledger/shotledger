@@ -130,6 +130,28 @@ Under the series list:
 For a championship format the total is split into **before final** and
 **final**, because they are judged separately.
 
+## National Combined Match
+
+A **Full Match** of Nationell helmatch arrives as three parts of four series:
+**A · Precision** on the precision target, **B · Rapid Fire** on the rapid-fire
+target, and **C · Figure Shooting** on the figure target at 18, 16, 14 and 12
+seconds. A has a sighter before it and so has B; C has none. The summary shows
+each part's subtotal above the total, out of 200 each and 600 in all.
+
+When two of your helmatch results are equal, the higher C ranks first, then the
+higher B — the rule book's order. A is never used. Records and the statistics
+report's best session follow it.
+
+The standard medal in helmatch goes by placing alone: silver to the best ninth
+of the field, bronze to the best third, per weapon group. One session cannot
+work that out, so for a competition you record the medal the results list
+gives: **Edit Session → Official Standard Medal**. It then shows under the
+session's title.
+
+The figure target is scored on the keypad only. **Figure Shooting** on its own
+is part C as a training session: four series, no sighter, and statistics of its
+own.
+
 ## Photographs
 
 Any series can carry a photograph of its target. A series with a photo shows a

@@ -48,6 +48,18 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_008
+    requirement_ids: ['SCORE_008']
+    title: Verify helmatch subtotals leave sighters out and an equal total ranks on C, then B
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_SCORE_009
+    requirement_ids: ['SCORE_009']
+    title: Verify helmatch is placement-only and no helmatch total yields a medal
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not

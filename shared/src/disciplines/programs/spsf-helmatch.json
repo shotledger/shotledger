@@ -14,32 +14,38 @@
       {
         "seriesCount": 4,
         "timeLimitSeconds": 300,
-        "sighterSeries": 1
+        "sighterSeries": 1,
+        "stage": "A"
       },
       {
         "seriesCount": 4,
         "sighterSeries": 1,
-        "targetFace": "spsf-snabbskjutning-25m"
+        "targetFace": "spsf-snabbskjutning-25m",
+        "stage": "B"
       },
       {
         "seriesCount": 1,
         "timeLimitSeconds": 18,
-        "targetFace": "spsf-helmatch-figurtavla"
+        "targetFace": "spsf-helmatch-figurtavla",
+        "stage": "C"
       },
       {
         "seriesCount": 1,
         "timeLimitSeconds": 16,
-        "targetFace": "spsf-helmatch-figurtavla"
+        "targetFace": "spsf-helmatch-figurtavla",
+        "stage": "C"
       },
       {
         "seriesCount": 1,
         "timeLimitSeconds": 14,
-        "targetFace": "spsf-helmatch-figurtavla"
+        "targetFace": "spsf-helmatch-figurtavla",
+        "stage": "C"
       },
       {
         "seriesCount": 1,
         "timeLimitSeconds": 12,
-        "targetFace": "spsf-helmatch-figurtavla"
+        "targetFace": "spsf-helmatch-figurtavla",
+        "stage": "C"
       }
     ]
   }

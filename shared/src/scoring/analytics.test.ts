@@ -343,6 +343,31 @@ describe('analyticsRecords', () => {
     expect(analyticsRecords(tied).mostTens).toMatchObject({ sessionId: 'earlier' });
   });
 
+  it('R1: two helmatch sessions tied on the total rank by C, then B (SHB I.6.11.2.1)', () => {
+    // Both 140: "first" has the higher B, "second" the higher C — C wins.
+    const helmatch = (sessionId: string, startedAt: string, a: number, b: number, c: number) => [
+      series({ sessionId, startedAt, disciplineId: 'spsf-helmatch', stage: 'A', values: [a] }),
+      series({ sessionId, startedAt, disciplineId: 'spsf-helmatch', stage: 'B', values: [b] }),
+      series({ sessionId, startedAt, disciplineId: 'spsf-helmatch', stage: 'C', values: [c] }),
+    ];
+    const points = analyticsSessionPoints([
+      ...helmatch('first', '2026-05-01T10:00:00.000Z', 50, 50, 40),
+      ...helmatch('second', '2026-06-01T10:00:00.000Z', 50, 40, 50),
+    ]);
+    expect(points.map((point) => point.tieBreakTenths)).toEqual([
+      [40, 50],
+      [50, 40],
+    ]);
+    expect(analyticsRecords(points).bestSessionTotalTenths).toMatchObject({
+      sessionId: 'second',
+      value: 140,
+    });
+  });
+
+  it('R3: a precision session carries no tie-break keys', () => {
+    expect(analyticsSessionPoints([series({ values: [90] })])[0]?.tieBreakTenths).toEqual([]);
+  });
+
   it('A-R4: no points means no records', () => {
     expect(analyticsRecords([])).toEqual({
       bestSessionTotalTenths: null,

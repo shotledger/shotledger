@@ -6,9 +6,11 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { CompetitionResultForStats } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import {
+  seriesStage,
   sessionInnerTenCount,
   sessionResults,
   sumValueTenths,
+  tieBreakTenths,
   type SeriesForResults,
 } from '@shotledger/shared';
 
@@ -102,6 +104,8 @@ export interface FreeformSessionRow {
   shooterClass: string | null;
   date: string;
   seriesTenths: number[];
+  /** Helmatch's C then B subtotals; empty for most disciplines. */
+  tieBreakTenths: number[];
 }
 
 /**
@@ -146,6 +150,14 @@ export function listFreeformSessionsForPb(db: Database): FreeformSessionRow[] {
       shooterClass: session.shooterClass ?? null,
       date: session.startedAt,
       seriesTenths,
+      tieBreakTenths: tieBreakTenths(
+        session.disciplineId,
+        seriesRows.map((row, index) => ({
+          stage: seriesStage(session.programId, row.position),
+          isSighter: false,
+          totalTenths: seriesTenths[index]!,
+        })),
+      ),
     });
   }
   return results;

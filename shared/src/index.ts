@@ -6,6 +6,7 @@ export * from './scoring/totals';
 export * from './scoring/entry';
 export * from './scoring/badges';
 export * from './scoring/standard-medal';
+export * from './scoring/stages';
 export * from './scoring/stats';
 export * from './scoring/analytics';
 export * from './scoring/group';

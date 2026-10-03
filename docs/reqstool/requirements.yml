@@ -139,6 +139,36 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_008
+    title: Helmatch delmoment subtotals, and ties broken on C then B
+    significance: shall
+    description: >-
+      For a Nationell helmatch session the app shall show the A, B and C
+      subtotals, each the sum of that delmoment's non-sighter series, and
+      wherever it ranks sessions it shall break an equal total on the higher C
+      and then the higher B, never on A.
+    rationale: >-
+      SHB 2026 I.6.11.2.1 p. 265: "den som har högst poäng i delmoment C går
+      före, därefter i delmoment B". Ranking an equal total any other way names
+      the wrong session as a shooter's best.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: SCORE_009
+    title: A helmatch standardmedalj is recorded, never computed
+    significance: shall
+    description: >-
+      The app shall compute no standardmedalj from a Nationell helmatch total,
+      and shall let a competition session record the official one.
+    rationale: >-
+      Helmatch medals go by placement in the field per vapengrupp (C.5.1.1.7,
+      C.5.1.2 p. 70); the fixed-points tables have no helmatch row (C.5.1.2.3–6
+      p. 71). A computed medal would be invented.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall

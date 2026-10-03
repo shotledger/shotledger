@@ -153,6 +153,20 @@ function thresholdsFor(input: StandardMedalPointsInput): Thresholds | null {
   return null;
 }
 
+/**
+ * Disciplines whose standardmedalj comes from placement alone — the best 1/9
+ * silver, the best 1/3 brons of the field (C.5.1.2 p. 70) — with no
+ * fixed-points path. One session cannot compute such a medal, so the app only
+ * records the official one. Nationell helmatch: C.5.1.1.7 p. 70; the
+ * points tables (C.5.1.2.3–6 p. 71) have no helmatch row.
+ */
+const PLACEMENT_ONLY_DISCIPLINES: ReadonlySet<string> = new Set(['spsf-helmatch']);
+
+/** @Requirements SCORE_009 */
+export function placementOnlyStandardMedal(disciplineId: string): boolean {
+  return PLACEMENT_ONLY_DISCIPLINES.has(disciplineId);
+}
+
 /** The brons/silver band a session/section's point total meets, if any. */
 export function standardMedalPoints(input: StandardMedalPointsInput): StandardMedalResult {
   const thresholds = thresholdsFor(input);

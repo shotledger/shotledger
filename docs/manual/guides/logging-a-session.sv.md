@@ -129,6 +129,28 @@ Under serielistan:
 I ett mästerskapsformat delas totalen upp i **före final** och **final**,
 eftersom de bedöms var för sig.
 
+## Nationell helmatch
+
+**Hela matchen** i nationell helmatch kommer som tre delmoment om fyra serier:
+**A · Precision** på precisionstavlan, **B · Snabbskjutning** på
+snabbskjutningstavlan och **C · Figurskjutning** på figurtavlan med 18, 16, 14
+och 12 sekunder. Före A och före B finns en provserie, före C ingen.
+Sammanställningen visar varje delmoments delsumma ovanför totalen, högst 200
+vardera och 600 totalt.
+
+När två av dina helmatchresultat är lika går högst C före, därefter högst B —
+regelbokens ordning. A används aldrig. Rekord och statistikrapportens bästa
+pass följer den.
+
+Standardmedaljen i helmatch avgörs bara av placering: silver till bästa
+niondelen av fältet, brons till bästa tredjedelen, per vapengrupp. Ett enskilt
+pass kan inte räkna ut det, så för en tävling anger du medaljen som
+resultatlistan ger: **Redigera pass → Officiell standardmedalj**. Den visas
+sedan under passets rubrik.
+
+Figurtavlan räknas bara med knappsatsen. **Figurskjutning** som egen gren är
+delmoment C som träningspass: fyra serier, ingen provserie och egen statistik.
+
 ## Foton
 
 Vilken serie som helst kan bära ett foto av sin tavla. En serie med foto visar

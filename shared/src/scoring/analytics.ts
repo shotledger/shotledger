@@ -17,6 +17,7 @@ import {
   type SighterScope,
   type StatsSeries,
 } from './stats';
+import { ranksAhead, tieBreakTenths } from './stages';
 
 /**
  * A ten is any shot worth 10.0 or more. Integer scoring stores exactly 100;
@@ -207,6 +208,8 @@ export interface AnalyticsSessionPoint {
   meanShotTenths: number | null;
   innerTenCount: number;
   tenCount: number;
+  /** What breaks a tie on the total — helmatch's C then B subtotals; empty for most. */
+  tieBreakTenths: number[];
 }
 
 /**
@@ -237,6 +240,14 @@ export function analyticsSessionPoints(
       scoredSeriesCount: scored.length,
       scoredShotCount: shots.length,
       sessionTotalTenths,
+      tieBreakTenths: tieBreakTenths(
+        sessionSeries[0]!.disciplineId,
+        sessionSeries.map((series) => ({
+          stage: series.stage ?? null,
+          isSighter: series.isSighter,
+          totalTenths: seriesTotalTenths(series),
+        })),
+      ),
       meanSeriesTotalTenths: scored.length === 0 ? null : sessionTotalTenths / scored.length,
       meanShotTenths: meanTenths(shots),
       innerTenCount: shots.filter((shot) => shot.isInnerTen).length,
@@ -263,19 +274,30 @@ export interface AnalyticsRecords {
   mostTens: AnalyticsRecord | null;
 }
 
-/** Maximum of `pick` over `candidates`; ties keep the first (earliest). */
+/**
+ * Maximum of `pick` over `candidates`; ties keep the first (earliest), unless
+ * `tieBreak` names keys that separate them.
+ */
 function maxRecord(
   candidates: readonly AnalyticsSessionPoint[],
   pick: (point: AnalyticsSessionPoint) => number,
+  tieBreak: (point: AnalyticsSessionPoint) => readonly number[] = () => [],
 ): AnalyticsRecord | null {
-  let best: AnalyticsRecord | null = null;
+  let best: { record: AnalyticsRecord; keys: readonly number[] } | null = null;
   for (const point of candidates) {
     const value = pick(point);
-    if (best === null || value > best.value) {
-      best = { sessionId: point.sessionId, startedAt: point.startedAt, value };
+    const keys = tieBreak(point);
+    if (
+      best === null ||
+      ranksAhead(
+        { totalTenths: value, tieBreakTenths: keys },
+        { totalTenths: best.record.value, tieBreakTenths: best.keys },
+      )
+    ) {
+      best = { record: { sessionId: point.sessionId, startedAt: point.startedAt, value }, keys };
     }
   }
-  return best;
+  return best?.record ?? null;
 }
 
 /**
@@ -288,7 +310,11 @@ export function analyticsRecords(points: readonly AnalyticsSessionPoint[]): Anal
   const withShots = points.filter((point) => point.scoredShotCount > 0);
 
   return {
-    bestSessionTotalTenths: maxRecord(withSeries, (point) => point.sessionTotalTenths),
+    bestSessionTotalTenths: maxRecord(
+      withSeries,
+      (point) => point.sessionTotalTenths,
+      (point) => point.tieBreakTenths,
+    ),
     mostInnerTens: maxRecord(withShots, (point) => point.innerTenCount),
     mostTens: maxRecord(withShots, (point) => point.tenCount),
   };

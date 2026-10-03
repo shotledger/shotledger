@@ -129,8 +129,9 @@ describe('seedDemoData', () => {
   it('creates ~30 sessions with a mix of training/competition and one final', () => {
     seedDemoData(db);
     const sessions = listSessions(db);
-    // 30 ring sessions plus the four fält rounds.
-    expect(sessions.length).toBe(34);
+    // 30 ring sessions, the four fält rounds, two helmatch and one figurskjutning.
+    expect(sessions.length).toBe(37);
+    expect(sessions.filter((s) => s.disciplineId === 'spsf-helmatch')).toHaveLength(2);
     expect(sessions.some((s) => s.type === 'competition')).toBe(true);
     expect(sessions.some((s) => s.type === 'training')).toBe(true);
     expect(sessions.some((s) => s.disciplineId === 'spsf-milsnabb')).toBe(true);
@@ -204,7 +205,7 @@ describe('seedDemoData', () => {
   it('is idempotent: re-running does not duplicate data', () => {
     seedDemoData(db);
     seedDemoData(db);
-    expect(listSessions(db)).toHaveLength(34);
+    expect(listSessions(db)).toHaveLength(37);
     expect(listFirearms(db)).toHaveLength(4);
     expect(listAmmoLots(db)).toHaveLength(5);
     expect(listFirearmGroups(db, firearmByModel('MR73 Sport').id)).toHaveLength(2);
