@@ -2,7 +2,8 @@
 
 [Scoring a target from a photograph](../guides/scoring-from-a-photo.md) is the
 task. This page is what the feature actually is, and why it stops where it
-stops.
+stops. [How the app finds the holes](how-holes-are-found.md) is what it does
+between the photo and the suggestions.
 
 ## Assisted, not automatic
 

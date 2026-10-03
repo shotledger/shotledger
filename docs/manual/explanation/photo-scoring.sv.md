@@ -2,7 +2,8 @@
 
 [Att räkna en tavla från ett foto](../guides/scoring-from-a-photo.sv.md) är
 uppgiften. Den här sidan handlar om vad funktionen faktiskt är, och varför den
-slutar där den slutar.
+slutar där den slutar. [Hur appen hittar hålen](how-holes-are-found.sv.md) är
+vad den gör mellan fotot och förslagen.
 
 ## Assisterad, inte automatisk
 
