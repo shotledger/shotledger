@@ -72,6 +72,11 @@ lyfter sig över de andra och listan visar var den kommer att hamna.
 Det finns därför att man inte alltid fyller i serierna i den ordning man sköt
 dem — en serie som fylls i sent hör hemma där den skedde, inte sist.
 
+## Att ta bort en serie
+
+Svep en serie åt vänster så visas papperskorgsikonen, och tryck på den. Du får
+bekräfta innan serien och dess skott tas bort.
+
 ## Tidtagaruret och siktet
 
 Två knappar sitter ovanför serielistan:
@@ -110,6 +115,11 @@ ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
 
 Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där du
 kan filtrera på gren, vapen och vapengrupp.
+
+## Att dela eller ta bort ett pass från Hem
+
+På Hem sveper du ett pass åt vänster så visas två ikoner: dela och papperskorg.
+Du får bekräfta innan ett pass tas bort.
 
 ## Att hitta ett pass igen
 

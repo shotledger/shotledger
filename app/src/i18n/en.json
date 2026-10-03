@@ -655,7 +655,6 @@
     "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
     "newSeriesHint": "This series is saved when you tap Save.",
     "stopwatch": {
-      "title": "Stopwatch",
       "start": "Start",
       "stop": "Stop",
       "reset": "Reset",
