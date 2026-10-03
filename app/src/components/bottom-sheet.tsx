@@ -27,33 +27,32 @@ export function BottomSheet({ visible, onClose, title, children, testID }: Botto
       onRequestClose={onClose}
       testID={testID}
     >
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-        accessibilityRole="button"
-        testID={testID ? `${testID}-backdrop` : undefined}
-      >
-        {/* Swallows the touch so tapping the panel doesn't fall through to the backdrop above. */}
-        <Pressable onPress={() => {}}>
-          <SafeAreaView edges={['bottom']}>
-            <ThemedView type="backgroundElement" style={styles.panel}>
-              {title ? (
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.title}>
-                  {title}
-                </ThemedText>
-              ) : null}
-              {children}
-              <View style={styles.bottomSpacer} />
-            </ThemedView>
-          </SafeAreaView>
-        </Pressable>
-      </Pressable>
+      <View style={styles.root}>
+        {/* A sibling of the panel, not its parent, so the panel is not a button inside a button. */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          testID={testID ? `${testID}-backdrop` : undefined}
+        />
+        <SafeAreaView edges={['bottom']} pointerEvents="box-none">
+          <ThemedView type="backgroundElement" style={styles.panel}>
+            {title ? (
+              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.title}>
+                {title}
+              </ThemedText>
+            ) : null}
+            {children}
+            <View style={styles.bottomSpacer} />
+          </ThemedView>
+        </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  root: {
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.4)',

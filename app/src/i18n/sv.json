@@ -655,7 +655,6 @@
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
     "newSeriesHint": "Serien sparas när du trycker på Spara.",
     "stopwatch": {
-      "title": "Stoppur",
       "start": "Starta",
       "stop": "Stoppa",
       "reset": "Nollställ",

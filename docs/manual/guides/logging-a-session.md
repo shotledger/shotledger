@@ -73,6 +73,11 @@ drag: the row lifts above the others and the list shows where it will land.
 This exists because you do not always enter series in the order you shot them
 — a series entered late belongs where it happened, not at the end.
 
+## Deleting a series
+
+Swipe a series left to reveal the trash icon, then tap it. You are asked to
+confirm before the series and its shots are removed.
+
 ## The stopwatch and sights
 
 Two buttons sit above the series list:
@@ -111,6 +116,11 @@ from it — see [Scoring from a photo](scoring-from-a-photo.md).
 
 Every photo you take also appears in the gallery under **Tools → Photos**,
 where you can filter by discipline, firearm and weapon group.
+
+## Sharing or deleting a session from Home
+
+On Home, swipe a session left to reveal two icons: share and trash. Deleting
+asks you to confirm first.
 
 ## Finding a session again
 

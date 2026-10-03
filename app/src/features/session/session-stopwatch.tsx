@@ -96,7 +96,6 @@ export function SessionStopwatch({ sessionId }: SessionStopwatchProps) {
 
   return (
     <Card>
-      <ThemedText type="smallBold">{t('session.stopwatch.title')}</ThemedText>
       <ThemedText style={styles.clock} testID="session-stopwatch-time">
         {formatStopwatch(stopwatchElapsedMs(state, now))}
       </ThemedText>
