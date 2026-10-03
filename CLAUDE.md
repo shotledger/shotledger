@@ -96,6 +96,11 @@ sync. Android first — **all code must stay iOS-compatible**.
      changes the sync wire format. A Drizzle _property_ may be English over
      a Swedish _column_ — `officialStandardMedal` on
      `official_standardmedalj` is intended.
+10. **Märken (skill badges) are out of scope** — pistolskyttemärket,
+    märke i Nationell helmatch and the like: no badge tracking, progress
+    or eligibility. The existing guldserie threshold (`shared/src/scoring/badges.ts`)
+    stays. **Standardmedaljer are in scope** in every discipline where SHB
+    defines one (Del C.5).
 
 ## Definition of done
 
