@@ -45,8 +45,8 @@ gold rings and **Great Job!** A **perfect series** goes one further: every shot
 an inner ten, or 10.9 with decimal scoring (54.5), and gets **Perfect Series!**
 It plays only when you complete the series, never when you reopen one, and with
 the phone's reduce-motion setting on you see only the text. In the session's
-series list, each total sits on a gold bar that fills towards a full score —
-solid at 50, with an extra ring for a perfect series.
+series list, a full-score total is shown on gold, with an extra ring for a
+perfect series.
 
 ## Sighters
 

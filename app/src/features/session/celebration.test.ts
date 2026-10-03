@@ -2,7 +2,6 @@ import {
   celebratesDiscipline,
   celebrationTier,
   tierToCelebrate,
-  totalFillFraction,
   type TierContext,
 } from './celebration';
 
@@ -76,22 +75,6 @@ describe('tierToCelebrate', () => {
   it('celebrates a climb to a higher tier', () => {
     expect(tierToCelebrate('gold', 'fullScore')).toBe('fullScore');
     expect(tierToCelebrate('fullScore', 'perfect')).toBe('perfect');
-  });
-});
-
-describe('totalFillFraction', () => {
-  it('is the total over every shot in the 10 ring', () => {
-    expect(totalFillFraction(470, 5)).toBeCloseTo(0.94);
-    expect(totalFillFraction(500, 5)).toBe(1);
-    expect(totalFillFraction(0, 5)).toBe(0);
-  });
-
-  it('caps a decimal total above 50 at full', () => {
-    expect(totalFillFraction(545, 5)).toBe(1);
-  });
-
-  it('is empty for a series with no length', () => {
-    expect(totalFillFraction(100, 0)).toBe(0);
   });
 });
 

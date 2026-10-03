@@ -70,12 +70,3 @@ export function tierToCelebrate(
   if (highestSoFar !== null && RANK[next] <= RANK[highestSoFar]) return null;
   return next;
 }
-
-/**
- * How full the total's pill is on the series list: total over every shot in
- * the 10 ring, capped at 1 — a decimal series above 50 is simply full.
- */
-export function totalFillFraction(totalTenths: number, seriesLength: number): number {
-  if (seriesLength <= 0) return 0;
-  return Math.min(1, Math.max(0, totalTenths / (seriesLength * TEN_RING_TENTHS)));
-}

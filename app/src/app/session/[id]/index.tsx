@@ -35,11 +35,7 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
 import { seriesDropPlan } from '@/features/session/series-move';
-import {
-  celebratesDiscipline,
-  celebrationTier,
-  totalFillFraction,
-} from '@/features/session/celebration';
+import { celebratesDiscipline, celebrationTier } from '@/features/session/celebration';
 import { SeriesTotalPill } from '@/components/series-total-pill';
 import { SessionToolsRow } from '@/features/session/session-tools-row';
 import {
@@ -289,8 +285,7 @@ export default function SessionDetailScreen() {
 
   const renderSeries = (row: SeriesRow) => {
     const held = dragging?.id === row.id;
-    const celebrates = celebratesDiscipline(session.disciplineId);
-    const tier = celebrates
+    const tier = celebratesDiscipline(session.disciplineId)
       ? celebrationTier(row.shots, {
           mode: detail.scoringMode,
           seriesLength: detail.seriesLength,
@@ -377,10 +372,9 @@ export default function SessionDetailScreen() {
               </Pressable>
             )}
             {row.isGoldSeries && <Chip label={t('session.goldSeries')} tone="primary" />}
-            {celebrates ? (
+            {tier === 'fullScore' || tier === 'perfect' ? (
               <SeriesTotalPill
                 label={totalLabel}
-                fraction={totalFillFraction(row.totalTenths, detail.seriesLength)}
                 tier={tier}
                 testID={`series-${row.position}-total`}
               />

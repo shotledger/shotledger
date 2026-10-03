@@ -275,11 +275,8 @@ export default function ComponentsGalleryScreen() {
 
       <Section title="SeriesTotalPill (#482)">
         <View style={styles.wrapRow}>
-          <SeriesTotalPill label="9" fraction={0.18} tier={null} />
-          <SeriesTotalPill label="38" fraction={0.76} tier={null} />
-          <SeriesTotalPill label="47" fraction={0.94} tier="gold" />
-          <SeriesTotalPill label="50" fraction={1} tier="fullScore" />
-          <SeriesTotalPill label="50" fraction={1} tier="perfect" />
+          <SeriesTotalPill label="50" tier="fullScore" />
+          <SeriesTotalPill label="50" tier="perfect" />
         </View>
       </Section>
 

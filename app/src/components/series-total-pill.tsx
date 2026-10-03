@@ -1,48 +1,34 @@
-// A series total on the session list, over a gold fill that grows towards a
-// full score (#482). Full score is solid gold; perfect adds an outer ring.
+// A full-score series total on the session list (#482): solid gold, with an
+// outer ring when perfect.
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import type { CelebrationTier } from '@/features/session/celebration';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export interface SeriesTotalPillProps {
   label: string;
-  /** 0–1, from `totalFillFraction`. */
-  fraction: number;
-  tier: CelebrationTier | null;
+  tier: 'fullScore' | 'perfect';
   testID?: string;
 }
 
-export function SeriesTotalPill({ label, fraction, tier, testID }: SeriesTotalPillProps) {
+export function SeriesTotalPill({ label, tier, testID }: SeriesTotalPillProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const solid = tier === 'fullScore' || tier === 'perfect';
-  const tierLabel =
-    tier === 'perfect'
-      ? t('session.celebrationPerfect')
-      : tier === 'fullScore'
-        ? t('session.celebrationFullScore')
-        : null;
+  const tierLabel = t(
+    tier === 'perfect' ? 'session.celebrationPerfect' : 'session.celebrationFullScore',
+  );
 
   return (
     <View
       style={[styles.ring, tier === 'perfect' && { borderColor: theme.celebration }]}
       accessible
-      accessibilityLabel={tierLabel ? `${label}, ${tierLabel}` : label}
+      accessibilityLabel={`${label}, ${tierLabel}`}
       testID={testID}
     >
-      <View style={[styles.pill, { backgroundColor: theme.backgroundSelected }]}>
-        <View
-          style={[
-            styles.fill,
-            { backgroundColor: theme.celebration, width: `${fraction * 100}%` },
-            !solid && styles.partial,
-          ]}
-        />
-        <ThemedText type="smallBold" style={[styles.label, solid && { color: theme.background }]}>
+      <View style={[styles.pill, { backgroundColor: theme.celebration }]}>
+        <ThemedText type="smallBold" style={[styles.label, { color: theme.background }]}>
           {label}
         </ThemedText>
       </View>
@@ -60,21 +46,11 @@ const styles = StyleSheet.create({
   pill: {
     minWidth: 52,
     borderRadius: Radius.pill,
-    overflow: 'hidden',
     alignItems: 'center',
-  },
-  fill: {
-    ...StyleSheet.absoluteFill,
-    right: undefined,
-  },
-  partial: {
-    opacity: 0.35,
-  },
-  // Padding on the label, not the pill: a percentage width on the absolute
-  // fill resolves against the pill's content box and would stop short of it.
-  label: {
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
+  },
+  label: {
     fontVariant: ['tabular-nums'],
   },
 });
