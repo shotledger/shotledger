@@ -36,8 +36,19 @@ const PRIOR_WEIGHT = 10;
 const F_SCALE_MM = 0.5;
 const LM_ITERS = 100;
 
-/** The gate (spec): median fit residual, comb score, ring offset. */
-export const CLOSEUP_GATE = { residualMm: 0.5, comb: 8, ringOffsetMm: 0.5 } as const;
+/** The gate (spec): median fit residual, comb score, ring offset, and how
+ *  much brighter the paper outside the black is than the black (a precision
+ *  lock on a milsnabb photo sees black there; real precision locks >= 0.58). */
+export const CLOSEUP_GATE = {
+  residualMm: 0.5,
+  comb: 8,
+  ringOffsetMm: 0.5,
+  faceContrast: 0.25,
+} as const;
+
+/** Radii (mm) inside the precision black, and on the paper outside it. */
+const FACE_BLACK_MM = [55, 65, 75, 85] as const;
+const FACE_PAPER_MM = [112, 118, 125, 132, 140] as const;
 
 // ---------------------------------------------------------------- types
 
@@ -94,6 +105,9 @@ export interface CloseupLock {
   readonly rings: number;
   readonly support: number;
   readonly axisRatio: number;
+  /** Paper minus black through the lock, in the photo's p5-p95 range; null
+   *  when either zone is out of frame. */
+  readonly faceContrast: number | null;
   /** Work px, for the lock-step fixture. */
   readonly voteCenter: { readonly x: number; readonly y: number };
   /** Work px. */
@@ -1246,6 +1260,26 @@ function finestStep(
   return { fit, offset, P };
 }
 
+/**
+ * How much brighter the face is outside its black than inside, through the
+ * lock: the median grey along circles in each zone, in the work image's own
+ * p5-p95 range. Null when either zone is out of frame. Lock-step with
+ * `_face_contrast`.
+ */
+function faceContrast(g: CloseupImage, workToMm: readonly number[]): number | null {
+  const inv = invertHomography(asHomography(workToMm));
+  if (!inv) return null;
+  const zone = (radii: readonly number[]) => {
+    const v = radii.map((R) => circleMedian(g, inv, R)).filter((x): x is number => x !== null);
+    return v.length ? median(Float64Array.from(v)) : null;
+  };
+  const black = zone(FACE_BLACK_MM);
+  const paper = zone(FACE_PAPER_MM);
+  if (black === null || paper === null) return null;
+  const span = Math.max(quantile(g.data, 0.95) - quantile(g.data, 0.05), 1);
+  return (paper - black) / span;
+}
+
 // ---------------------------------------------------------------- the lock
 
 /** The lock on an already prepared work image. */
@@ -1290,6 +1324,7 @@ export function lockCloseupWork(
     rings: fit.used,
     support: fit.support,
     axisRatio: Math.max(fit.d1, fit.d2) / Math.max(1e-6, Math.min(fit.d1, fit.d2)),
+    faceContrast: faceContrast(g, fit.workToMm),
     voteCenter: vote,
     period: P,
   };
@@ -1311,7 +1346,8 @@ export function passesCloseupGate(lock: CloseupLock | null): lock is CloseupLock
     lock.residualMm <= CLOSEUP_GATE.residualMm &&
     lock.comb >= CLOSEUP_GATE.comb &&
     lock.ringOffsetMm !== null &&
-    lock.ringOffsetMm <= CLOSEUP_GATE.ringOffsetMm
+    lock.ringOffsetMm <= CLOSEUP_GATE.ringOffsetMm &&
+    (lock.faceContrast === null || lock.faceContrast >= CLOSEUP_GATE.faceContrast)
   );
 }
 

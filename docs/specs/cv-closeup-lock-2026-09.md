@@ -155,3 +155,21 @@ lock the midpoints are real lines; the finer-step test then brings it back.
 `_best_period`'s comb could saturate the black's edge so that the coarse
 period never wins, but that lowers every comb score, and the gate's comb ≥ 8
 would need recalibrating.
+
+## 2026-10-03: a precision lock on a milsnabb photo
+
+Issue #495. Photographed in a precision session, a milsnabb target can pass
+the precision lock: 9 of 100 milsnabb crops and photos did after #493
+(`spike/cv/eval_milsnabb.py`). The gate now also compares the face through
+the lock: on precision, the paper at 112–140 mm is white; on milsnabb it is
+still black. The median grey along circles in that zone, minus the median at
+55–85 mm, over the photo's p5–p95 range, must reach 0.25. Over 163 real
+precision locks with both zones in frame it was at least 0.58; on a milsnabb
+photo it is about 0. Where either zone is out of frame, the check abstains.
+
+It refused 1 of the 9; no precision photo lost a pass or changed lock (285
+real photos). Most of the rest are tight crops of milsnabb's X and 10 rings,
+whose 25 and 50 mm radii have the same 1:2 ratio as precision's X and 10:
+line for line a precision 9–10 close-up at twice the size. Only an absolute
+size can tell them apart, such as a hole's diameter against the session's
+calibre.

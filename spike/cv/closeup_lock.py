@@ -45,6 +45,10 @@ NANG = 720
 GATE_RESIDUAL_MM = 0.5
 GATE_COMB = 8.0
 GATE_RING_OFFSET_MM = 0.5
+# The precision face is white outside its 100 mm black, the milsnabb face is
+# black out to 250 mm: paper minus black, in the photo's p5-p95 range, below
+# this means the lock is on the wrong face. Real precision locks: >= 0.58.
+GATE_FACE_CONTRAST = 0.25
 
 
 # The milsnabb period search: lines scored, and the robust z each must reach.
@@ -68,13 +72,18 @@ class RingModel:
     need_centre: bool = False
     # arcs per ring the yardstick reads separately
     arcs: int = 1
+    # radii (mm) inside the face's black, and on the paper outside it, that
+    # the face check compares; None skips the check
+    black_mm: tuple[float, ...] | None = None
+    paper_mm: tuple[float, ...] | None = None
 
     @property
     def phase(self) -> float:
         return self.offset_mm / self.step_mm
 
 
-PRECISION = RingModel(RING_STEP_MM)
+PRECISION = RingModel(RING_STEP_MM, black_mm=(55.0, 65.0, 75.0, 85.0),
+                      paper_mm=(112.0, 118.0, 125.0, 132.0, 140.0))
 # Two lines (X and 10) read 1:2 on both faces, so a lock needs a third line,
 # and two of the three a step apart.
 MILSNABB = RingModel(40.0, 10.0, 25.0, (25.0, 50.0, 90.0, 130.0, 170.0, 210.0), 3, 6, True, 4)
@@ -96,13 +105,15 @@ class CloseupLock:
     ring_lines: int = 0        # yardstick rings in frame
     model: RingModel = PRECISION
     in_frame: bool = True      # the centre is in the photo
+    face_contrast: float | None = None  # paper minus black; None when not both in frame
 
 
 def passes_gate(lock: CloseupLock | None) -> bool:
     return bool(lock is not None and lock.residual_mm <= GATE_RESIDUAL_MM and lock.comb >= GATE_COMB
                 and lock.ring_offset_mm is not None and lock.ring_offset_mm <= GATE_RING_OFFSET_MM
                 and lock.ring_lines >= lock.model.min_lines
-                and (lock.in_frame or not lock.model.need_centre))
+                and (lock.in_frame or not lock.model.need_centre)
+                and (lock.face_contrast is None or lock.face_contrast >= GATE_FACE_CONTRAST))
 
 
 # ------------------------------------------------------------ image operations
@@ -603,6 +614,7 @@ def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True,
     if not model.phase:
         fit, offset, n_lines, P = _finest_step(g, lines, fit, offset, n_lines, P, projective, model)
     work_to_mm, ecx, ecy, d1, d2, used, support, residual = fit
+    contrast = _face_contrast(g, work_to_mm, model)
     to_mm = work_to_mm @ S
     c = np.linalg.inv(to_mm) @ np.array([0.0, 0.0, 1.0])
     return CloseupLock(
@@ -620,6 +632,7 @@ def lock_work(g: np.ndarray, S: np.ndarray, projective: bool = True,
         ring_lines=n_lines,
         model=model,
         in_frame=bool(0 <= ecx <= g.shape[1] - 1 and 0 <= ecy <= g.shape[0] - 1),
+        face_contrast=contrast,
     )
 
 
@@ -657,6 +670,28 @@ def _circle_median(ridge, inv, R, ang):
     if ok.mean() < 0.3:
         return None
     return _median(bilinear(ridge, px[ok], py[ok]))
+
+
+def _face_contrast(g: np.ndarray, work_to_mm: np.ndarray, model: RingModel) -> float | None:
+    """How much brighter the face is outside its black than inside, through
+    the lock: the median grey along circles in each zone, in the photo's own
+    p5-p95 range. None when either zone is out of frame. A precision lock on
+    a milsnabb photo sees black where its paper should be."""
+    if model.black_mm is None or model.paper_mm is None:
+        return None
+    inv = np.linalg.inv(work_to_mm)
+    ang = _circle_angles()
+
+    def zone(radii):
+        v = [_circle_median(g, inv, R, ang) for R in radii]
+        v = [x for x in v if x is not None]
+        return _median(np.array(v)) if v else None
+
+    black, paper = zone(model.black_mm), zone(model.paper_mm)
+    if black is None or paper is None:
+        return None
+    span = max(_quantile(g, 0.95) - _quantile(g, 0.05), 1.0)
+    return (paper - black) / span
 
 
 FINER_STEPS = (4, 3, 2)

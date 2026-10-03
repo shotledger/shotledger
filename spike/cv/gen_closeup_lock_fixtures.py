@@ -71,7 +71,8 @@ def main() -> None:
                 residualMm=float(lock.residual_mm), comb=float(lock.comb),
                 ringOffsetMm=None if lock.ring_offset_mm is None else float(lock.ring_offset_mm),
                 rings=int(lock.rings), voteCenter=[float(v) for v in lock.vote_center],
-                period=float(lock.period))
+                period=float(lock.period),
+                faceContrast=None if lock.face_contrast is None else float(lock.face_contrast))
             if milsnabb:
                 row["lock"].update(ringLines=int(lock.ring_lines), inFrame=bool(lock.in_frame))
             T = truth_to_mm(H)
@@ -83,7 +84,8 @@ def main() -> None:
         out.append(row)
     head = dict(workLongSide=CLOSEUP_WORK_LONG_SIDE, blackR=CLOSEUP_BLACK_R, rings=list(CLOSEUP_RINGS),
                 lineHalf=CLOSEUP_LINE_HALF, holeR=CLOSEUP_HOLE_R, gate=dict(
-                    residualMm=CL.GATE_RESIDUAL_MM, comb=CL.GATE_COMB, ringOffsetMm=CL.GATE_RING_OFFSET_MM))
+                    residualMm=CL.GATE_RESIDUAL_MM, comb=CL.GATE_COMB, ringOffsetMm=CL.GATE_RING_OFFSET_MM,
+                    faceContrast=CL.GATE_FACE_CONTRAST))
     if milsnabb:
         head.update(milsnabbBlackR=MILSNABB_CLOSEUP_BLACK_R, milsnabbRings=list(MILSNABB_CLOSEUP_RINGS),
                     models={k: model_json(m) for k, m in MODELS.items()},
