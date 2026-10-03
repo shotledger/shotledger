@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@expo/ui": "57.0.20",
+    "@expo/ui": "57.0.21",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-community/slider": "5.2.1",
     "@react-native-ml-kit/text-recognition": "2.0.0",
