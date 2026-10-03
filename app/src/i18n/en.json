@@ -593,6 +593,7 @@
     "fullMatchHintSighter": "Lays out a sighter series and {{series}} scoring series.",
     "fullMatchHintSighterTimed": "Lays out a sighter series and {{series}} scoring series at {{times}} s.",
     "fullMatchHintFinal": "A final can be started when the scoring series are done.",
+    "matchFormatLocked": "Can no longer be changed: the session has results.",
     "competitionLevel": "Competition Level",
     "championship": "Championship",
     "competitionName": "Competition Name",

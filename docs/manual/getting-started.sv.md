@@ -70,7 +70,8 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
   till. Raden under valen säger vad upplägget lägger ut. **Fritt format**
   lägger inte till något: du lägger till serierna efter hand, med den längd som
   nästa rad anger. En tävling börjar på hela matchen och ett träningspass
-  på fritt format; båda går att ändra. En gren utan eget fast format — Träning
+  på fritt format; båda går att ändra, här eller senare under Redigera pass
+  fram till första skottet. En gren utan eget fast format — Träning
   (ringad tavla) — visar ingen rad för matchupplägg alls.
 - **Skott per serie** — valfritt antal, med grenens egen längd förvald.
   Serieinmatningen visar en ruta per skott, så femskottsserier i en gren med

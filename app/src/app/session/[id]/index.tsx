@@ -428,8 +428,8 @@ export default function SessionDetailScreen() {
           {[
             formatSessionDate(session.startedAt, i18n.language),
             t(`sessionType.${session.type}`),
-            // The format is chosen once, on creation, and cannot be edited —
-            // so it has to be readable somewhere afterwards (#348).
+            // The format locks at the first result (#475), so it has to be
+            // readable somewhere afterwards.
             session.programId
               ? matchFormatLabel(
                   t,

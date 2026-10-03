@@ -16,6 +16,18 @@ ut som `shotlog:review` eller `shotledger:championship`, med ett prefix och ett
 kolon; de visas här men utelämnas på start- och loggbokslistorna, där dina egna
 etiketter annars trängs undan. Du kan fortfarande filtrera loggboken på dem.
 
+## Att byta matchupplägg
+
+Valde du hela matchen när du menade fritt format, eller tvärtom:
+
+1. Öppna passets **⋮**-meny och välj **Redigera pass**.
+2. Välj upplägg under **Matchupplägg** och tryck **Spara ändringar**.
+
+Serierna läggs upp på nytt för det nya upplägget, och därför går det bara fram
+till första resultatet: ett skott, ett foto som väntar på att poängsättas eller
+en importerad summa. Därefter visar raden upplägget med en notering om att det
+inte längre går att ändra.
+
 ## Serier och skott
 
 En **serie** är en omgång skott som räknas ihop — fem skott i SPSF:s precision,

@@ -69,7 +69,7 @@ your own, and stops asking you every session. You can always override it.
   line under the chips says what this format lays out. **Free Format** adds
   nothing: you add the series as you go, at the length the next row sets. A
   competition starts on Full Match and training on Free Format; both are yours
-  to change. A discipline with no fixed format of its own — Practice
+  to change, here or later on Edit Session until the first shot. A discipline with no fixed format of its own — Practice
   (Ring Target) — shows no Match Format row at all.
 - **Shots per Series** — any number, starting at the discipline's own length.
   Series entry shows one box per shot, so shooting fives on a ten-shot
