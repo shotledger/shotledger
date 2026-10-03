@@ -167,3 +167,47 @@ export function transformFromCorners(
   if (!toMm || !toImage) return null;
   return { toMm, toImage };
 }
+
+/** Points per drawn ring — enough that a large ring reads as a smooth curve. */
+const RING_OUTLINE_POINTS = 72;
+
+export interface RingOutline {
+  readonly label: string;
+  /** The ring the four points sit on. */
+  readonly picked: boolean;
+  /** Closed outline in image px. */
+  readonly points: readonly Point[];
+}
+
+export interface RingOverlay {
+  /** The target center in image px — where the four points put it. */
+  readonly center: Point;
+  readonly rings: readonly RingOutline[];
+}
+
+/**
+ * Every ring of the target drawn through the four hand-placed points, so the
+ * user sees whether the rings they imply sit on the printed ones — a wrong
+ * ring pick or a misplaced handle shows as rings that miss (#347). Returns
+ * null on a degenerate quad.
+ */
+export function ringOverlay(
+  imageCorners: readonly Point[],
+  target: { rings: readonly RingLike[] },
+  ringLabel: string,
+): RingOverlay | null {
+  const transform = transformFromCorners(imageCorners, target, ringLabel);
+  if (!transform) return null;
+  const rings = target.rings.map((ring) => {
+    const r = ring.diameterMm / 2;
+    const points: Point[] = [];
+    for (let i = 0; i < RING_OUTLINE_POINTS; i += 1) {
+      const angle = (2 * Math.PI * i) / RING_OUTLINE_POINTS;
+      points.push(
+        applyHomography(transform.toImage, { x: r * Math.cos(angle), y: r * Math.sin(angle) }),
+      );
+    }
+    return { label: ring.label, picked: ring.label === ringLabel, points };
+  });
+  return { center: applyHomography(transform.toImage, { x: 0, y: 0 }), rings };
+}
