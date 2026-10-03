@@ -778,6 +778,12 @@ disciplines via PR once public.
       the shooting log, the import preview — counts six per station; the
       Sessions list shows a fält result instead of `0p`. There is no CSV
       export left to extend (#170 replaced it).
+- [x] **Fält statistics and personal bests** (#315 PR 2 layer B, same
+      spec). The report gets a Fältskjutning card — stations, hits, figures
+      hit, hit rate, hits per station over time — and drops the ring cards
+      when a hits discipline is picked; a shots-per-series filter leaves fält
+      out. Records keeps a fält best per vapengrupp, result mode and number
+      of stations that counted, ranked in SHB's särskiljning order.
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 
