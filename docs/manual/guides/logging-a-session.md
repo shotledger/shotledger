@@ -17,6 +17,18 @@ appear here but are left off the Home and logbook lists, where your own tags
 would otherwise be pushed out of sight. You can still filter the logbook by
 them.
 
+## Changing the match format
+
+Picked Full Match when you meant Free Format, or the other way round:
+
+1. Open the session's **⋮** menu and choose **Edit Session**.
+2. Pick the format under **Match Format** and tap **Save Changes**.
+
+The series are laid out afresh for the new format, which is why this works
+only until the first result: a shot, a photo waiting to be scored, or an
+imported total. After that the row shows the format with a note that it can
+no longer be changed.
+
 ## Series and shots
 
 A **series** is a run of shots scored together — five shots in SPSF precision,
