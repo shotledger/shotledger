@@ -43,6 +43,7 @@ function session(overrides: Partial<AnalyticsSession> = {}): AnalyticsSession {
     tagIds: [],
     extraRounds: 0,
     stationRounds: 0,
+    scoresHits: false,
     ...overrides,
   };
 }
@@ -184,6 +185,20 @@ describe('analyticsReportSessions', () => {
     expect(
       ids(analyticsReportSessions(sessions, all, matched, filter({ shotsPerSeries: 5 }))),
     ).toEqual(['rounds-only']);
+  });
+
+  it('R5: shotsPerSeries excludes a fält session, which has stations rather than series', () => {
+    const sessions = [
+      session({ id: 'rounds-only' }),
+      session({ id: 'falt', disciplineId: 'spsf-falt', stationRounds: 12, scoresHits: true }),
+    ];
+    expect(ids(analyticsReportSessions(sessions, [], [], filter({ shotsPerSeries: 6 })))).toEqual([
+      'rounds-only',
+    ]);
+    expect(ids(analyticsReportSessions(sessions, [], [], ANY_ANALYTICS_FILTER))).toEqual([
+      'falt',
+      'rounds-only',
+    ]);
   });
 
   it('RS-6: a matched series whose session is unknown is dropped, not invented', () => {

@@ -11,7 +11,7 @@ import { addSeries } from './series';
 import { createSession } from './sessions';
 import { addShot } from './shots';
 import { addSessionTag, getOrCreateTag } from './tags';
-import { listAllAnalyticsSeries, listAnalyticsSessions } from './stats';
+import { listAllAnalyticsSeries, listAnalyticsSessions, listFaltAnalyticsSessions } from './stats';
 import { sessions } from '../schema';
 import type { Database } from '../types';
 
@@ -126,4 +126,47 @@ it('V3: a fält session’s station rounds are in the report volume, scratched a
 
   expect(totals.sessionCount).toBe(2);
   expect(totals.volumeShotCount).toBe(5 + 18);
+});
+
+it('loads every live fält session with its stations in order, flags and tags included', () => {
+  const db = createTestDb();
+  ordinarySession(db, 5);
+  const falt = createSession(db, {
+    name: 'Kretsfält',
+    type: 'competition',
+    disciplineId: 'spsf-falt',
+    weaponGroup: 'spsf:C',
+    faltResultMode: 'poangfalt',
+    startedAt: '2026-08-20T09:00:00.000Z',
+  });
+  const tag = getOrCreateTag(db, 'KM');
+  addSessionTag(db, falt.id, tag.id);
+  addStation(db, { sessionId: falt.id, position: 2, hits: 6, figuresHit: 0, isScratched: true });
+  addStation(db, { sessionId: falt.id, position: 1, hits: 5, figuresHit: 3, points: 4 });
+  const gone = createSession(db, {
+    name: 'Borttaget',
+    type: 'training',
+    disciplineId: 'spsf-falt',
+    startedAt: '2026-08-21T09:00:00.000Z',
+  });
+  db.update(sessions)
+    .set({ deletedAt: '2026-08-22T00:00:00.000Z' })
+    .where(eq(sessions.id, gone.id))
+    .run();
+
+  expect(listFaltAnalyticsSessions(db)).toEqual([
+    {
+      id: falt.id,
+      startedAt: '2026-08-20T09:00:00.000Z',
+      sessionType: 'competition',
+      disciplineId: 'spsf-falt',
+      weaponGroup: 'spsf:C',
+      resultMode: 'poangfalt',
+      tagIds: [tag.id],
+      stations: [
+        { hits: 5, figuresHit: 3, points: 4, isScratched: false, isShootOff: false },
+        { hits: 6, figuresHit: 0, points: null, isScratched: true, isShootOff: false },
+      ],
+    },
+  ]);
 });

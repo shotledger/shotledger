@@ -12,6 +12,7 @@ export * from './scoring/group';
 export * from './scoring/heatmap';
 export * from './scoring/coaching';
 export * from './scoring/falt';
+export * from './scoring/falt-analytics';
 export * from './disciplines';
 export * from './firearms';
 export * from './ammo';
