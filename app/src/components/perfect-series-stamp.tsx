@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
@@ -14,6 +15,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/hooks/use-theme';
 
 const SIZE = 28;
+const STAMP_DELAY_MS = 450;
 const C = SIZE / 2;
 
 // Hole offsets from the center, in px: a tight group in the 10, tighter for
@@ -45,7 +47,11 @@ export function PerfectSeriesStamp({
 
   useEffect(() => {
     if (!playing) return;
-    progress.value = withTiming(1, { duration: 420, easing: Easing.out(Easing.back(1.6)) });
+    // Waits out the back-navigation slide, which would otherwise hide it.
+    progress.value = withDelay(
+      STAMP_DELAY_MS,
+      withTiming(1, { duration: 420, easing: Easing.out(Easing.back(1.6)) }),
+    );
   }, [playing, progress]);
 
   const style = useAnimatedStyle(() => ({
