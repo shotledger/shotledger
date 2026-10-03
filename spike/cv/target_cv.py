@@ -322,7 +322,7 @@ def ring_residuals(rect, geom: Geometry, kind: str, win_mm=3.0):
 
 # ---------------------------------------------------------------- gate
 # Mirrors app/src/features/photo-scoring/validity.ts (the reference) and
-# runGeometry's metric computation in opencv.ts, so a corpus run answers
+# runDiscLock's metric computation in disc-lock.ts, so a corpus run answers
 # "would the app have accepted this" rather than "did the pipeline produce
 # a fit".
 
