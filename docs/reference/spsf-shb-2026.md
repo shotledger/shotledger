@@ -142,6 +142,83 @@ mention in the märke chapter is the _årtalsmärke_ substitution (Bilaga 1 mom
 vapengrupp A's, or C's with optics), which is a v2+ concern and is not
 implemented.
 
+## Del I — Nationell helmatch
+
+Del I, pp. 245–275. "En kombinerad skjutning på bana mot precisionstavla,
+snabbpistoltavla och figurtavla på 25 m avstånd" (I.1.1 p. 246). Tävlingsformer
+"Ej tillämpligt" (I.1.2 p. 246): no round or final format.
+
+**Omfattning** (I.6.1 p. 258) — three delmoment, max 200 each, **600 in all**:
+
+| Delmoment                 | Target (I.7.1)                                      | Series     | Time per series                  | Provserie       |
+| ------------------------- | --------------------------------------------------- | ---------- | -------------------------------- | --------------- |
+| **A** Precisionsskjutning | Pistoltavla 25 m precision (I.7.1.1 p. 266)         | 4 × 5 shot | 5 min                            | allowed         |
+| **B** Snabbskjutning      | Snabbskjutningstavla 25 m (I.7.1.2 p. 267)          | 4 × 5 shot | 5 × 3 s                          | allowed         |
+| **C** Figurskjutning      | Figurtavla för Nationell Helmatch (Bild 24, p. 268) | 4 × 5 shot | 18 / 16 / 14 / 12 s (series 1–4) | **not allowed** |
+
+- **Figurskjutning is delmoment C, not a discipline of its own.** I.6.1 p. 258
+  is the only place SHB uses the word. C also says "max 5 skott per figur, en
+  figur i taget" and "Figurerna får beskjutas i valfri ordning" (I.6.1.3).
+- 5 shots per series in every delmoment (I.6.4 p. 260); time per series is
+  I.6.1 (I.6.5 p. 260).
+- **Sighters:** "Före första serien i delmoment A och B skjuts provskott enligt
+  bestämmelserna för respektive delmoment" (I.6.6.2 p. 260) — so one sighter
+  before A and one before B, none before C. Förberedelsetid 3 min before the
+  competition and between delmoment; no loading (I.6.6.1 p. 260).
+- **B timing.** I.6.1.2 gives only "5x3 sekunder". The 7 s between exposures
+  is in I.6.2.3 p. 259 ("tavlorna svänger bort. Kommer fram efter 7
+  sekunder"), and Del H spells it out: one shot per exposure (H.6.4 p. 229);
+  3 s shown, 7 s away, repeated until shown 5 times (H.6.5 p. 229).
+- **B and C start when the targets turn away** (I.6.7 p. 260); both are
+  shot on turning targets ("automatiska vridmål", p. 268).
+- **Position** (I.6.3 p. 259): A standing without support hand, nothing
+  touching a support; B and C standing without support, the arm lowered to
+  färdigställning between exposures. **Vet Ä may use the support hand**
+  (I.6.3.2 p. 260); anyone turning 70 may in A, B and R (I.6.3.3 p. 260).
+- **Malfunctions** (I.6.8, I.6.8.1 pp. 260–261): no re-shoot in A, one per
+  delmoment in B and C. In C the series is re-shot and the same number of best
+  hits is struck when marking.
+- A shot on the wrong target or figure counts as a miss (I.6.10.3 p. 262).
+  Scoring rule as precision: "Kulhål räknas till det högre värdet så snart
+  ringens ytterkant är tangerad" (I.6.10.1 p. 261).
+
+**Targets** (I.7.1 pp. 266–268):
+
+- A — Pistoltavla 25 m precision (I.7.1.1 p. 266): the same ring table as
+  [Targets](#targets) (X 25 … 1 500 mm, black 7–10). The app's
+  `spsf-pistol-25m-precision` face.
+- B — Snabbskjutningstavla 25 m (I.7.1.2 p. 267): rings 5–10, X 50, 10 100,
+  9 180, 8 260, 7 340, 6 420, 5 500 mm, black across 5–10 — identical to
+  milsnabb's (J.7.1). The app's `spsf-snabbskjutning-25m` face.
+- C — **Figurtavla för Nationell Helmatch** (p. 268): "Figurtavla med 4
+  ringade figurer valörer från 6 till 10" (Bild 24). **No dimensions are
+  printed**; the picture shows the four figures. A shot is therefore worth
+  0 or 6–10, B 0 or 5–10, A 0–10.
+
+**Särskiljning** (I.6.11.2.1 p. 265): "den som har högst poäng i delmoment C
+går före, därefter i delmoment B." Then särskjutning or lottning; särskjutning
+is normally for the medal places only, and at SM, landsdels- and
+kretsmästerskap it is required for every medal (I.6.11.2.1.1). Särskjutning is
+in delmoment C, 5-shot series under C's rules (I.6.11.2.3 p. 265). **A tie is
+never broken on A**, and there is no X count or series countback.
+Resultatberäkning itself is "Ej tillämpligt" (I.6.11 p. 265) — the result is
+the sum.
+
+**Klasser and vapengrupper** (I.2.1 p. 247): klass follows precision —
+1, 2, 3 in **A, B, C**; Jun, Dam 1–3, Vet Y, Vet Ä in **C** only. Vapengrupper
+A, B, C only (I.4.1–I.4.3 pp. 253–256; **no R**, and a revolver always counts as
+B, I.4.2 p. 255). One start per competition in vapengrupp C (I.2.2 p. 247).
+
+**Standardmedalj — placement only.** All participants are pooled per
+vapengrupp A, B, C regardless of klass (C.5.1.1.7 p. 70); silver to the best
+1/9, brons to the best 1/3, rounded down, ties included (C.5.1.2 p. 70).
+Fixed point limits exist only for precision, magnumprecision, milsnabb and PPC
+(C.5.1.2.3–C.5.1.2.6 p. 71) — **none for helmatch**, so one session cannot
+compute a medal; only the official one can be recorded.
+
+**No records** (C.3.7.3 p. 59: "Ej tillämpligt"). **Märke i Nationell
+helmatch** exists (Bilaga 1 mom 5.9 p. 465) but märken are out of scope.
+
 ## Fältskjutning
 
 Fältskjutning is "skjutning på korta tider mot i terrängen, på varierande
@@ -630,7 +707,9 @@ More than 10 series: 10-series value ÷ 10 × series count. Milsnabb
 (C.5.1.2.5, 12 series): silver A 540 / R 552 / B 561 / C 564; brons
 A 516 / R 528 / B 537 / C 540. Magnumprecision (C.5.1.2.4, 6 series):
 silver M1–M4/M8 282 / M5 294 / M6–M7/M9 270; brons 274 / 288 / 253 — see
-[Magnumprecision](#magnumprecision) for the series-count caveat. No age
+[Magnumprecision](#magnumprecision) for the series-count caveat. Nationell
+helmatch has placement only, no fixed points — see
+[Del I — Nationell helmatch](#del-i--nationell-helmatch). No age
 adjustment on standardmedalj.
 Guld standardmedalj = 50 accumulated points (brons=1, silver=2;
 C.5.2.1 p. 73); överstycke med krans at 100…3000 (C.5.2.2).

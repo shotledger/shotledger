@@ -83,6 +83,19 @@ Facts and citations: the "Fältskjutning" section of
     omfattning, its own M-vapengrupper and a standardmedalj rule that
     counts träff, träffade figurer _and_ poäng.
 
+## Nationell helmatch (Del I) — figurskjutning is delmoment C
+
+Facts: the "Del I — Nationell helmatch" section of the reference file.
+
+18. **Three delmoment of 4 × 5 shots, 200 each, 600 total**: A precision
+    (pistoltavla), B snabbskjutning (snabbskjutningstavla), C figurskjutning
+    (figurtavla, 18/16/14/12 s). Each delmoment shoots its own face.
+19. **Sighters before A and before B, never before C** (I.6.6.2).
+20. **Tie-break is C, then B — never A**, then särskjutning in C (I.6.11.2).
+21. **Standardmedalj is placement-only** (C.5.1.1.7, C.5.1.2): record the
+    official medal, never compute one. No records, and the märke is out of
+    scope.
+
 Terminology: provskott/provserie = sighter · särskjutning = tie-break
 (no sighters, out of v1) · guldserie = series meeting märke guld ·
 vapengrupp = gun class · klass = shooter class · KM = klubbmästerskap ·
