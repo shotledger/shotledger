@@ -12,7 +12,7 @@ import { applyHomography, type Homography } from './corners';
 import { CLOSEUP_DRAWING, syntheticCloseup } from './synthetic-canvas';
 import { invertHomography } from './transform';
 
-/** Against the Python reference, mm (task spec: centre and radii). */
+/** Against the fixture, mm (task spec: centre and radii). */
 const TOL_MM = 0.05;
 
 type Scenario = (typeof fixture.scenarios)[number];
@@ -46,7 +46,7 @@ function radiusMm(h: readonly number[], p: { x: number; y: number }): number {
   return Math.hypot(q.x, q.y);
 }
 
-it('carries the same constants as the Python reference', () => {
+it('carries the same constants as the fixture', () => {
   expect(fixture.gate).toEqual(CLOSEUP_GATE);
   expect(fixture.blackR).toBe(CLOSEUP_DRAWING.blackR);
   expect(fixture.rings).toEqual([...CLOSEUP_DRAWING.rings]);
@@ -54,7 +54,7 @@ it('carries the same constants as the Python reference', () => {
   expect(fixture.holeR).toBe(CLOSEUP_DRAWING.holeR);
 });
 
-it('draws the synthetic close-ups pixel for pixel as the reference does', () => {
+it('draws the synthetic close-ups pixel for pixel as the fixture records', () => {
   for (const s of fixture.scenarios) {
     let sum = 0;
     for (const v of imageOf(s).data) sum += v;
@@ -62,16 +62,16 @@ it('draws the synthetic close-ups pixel for pixel as the reference does', () => 
   }
 });
 
-it('locks every synthetic close-up where the reference does, to the same centre and rings', () => {
+it('locks every synthetic close-up where the fixture does, to the same centre and rings', () => {
   for (const s of fixture.scenarios) {
     const got = results.get(s.name)!.lock;
     const ref = s.lock;
     expect([s.name, got === null]).toEqual([s.name, ref === null]);
     if (!got || !ref) continue;
-    // the lock's centre, measured by the reference's mapping
+    // the lock's centre, measured by the fixture's mapping
     const centreErr = radiusMm(ref.toMm, got.center);
     if (centreErr > TOL_MM) throw new Error(`${s.name}: centre off by ${centreErr} mm`);
-    // points on the reference's 25/50/75 mm circles, measured by the lock
+    // points on the fixture's 25/50/75 mm circles, measured by the lock
     const back = invertHomography(ref.toMm as unknown as Homography)!;
     for (const R of [25, 50, 75]) {
       for (let i = 0; i < 36; i += 1) {
@@ -95,7 +95,7 @@ it('locks every synthetic close-up where the reference does, to the same centre 
   }
 });
 
-it('reaches the same gate verdict as the reference', () => {
+it('reaches the same gate verdict as the fixture', () => {
   for (const s of fixture.scenarios) {
     expect([s.name, passesCloseupGate(results.get(s.name)!.lock)]).toEqual([s.name, s.passes]);
   }

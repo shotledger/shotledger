@@ -9,11 +9,11 @@
 // separate the two, and a logistic regression over them is eight constants and
 // no runtime.
 //
-// The arithmetic mirrors `spike/cv/hole_filter.py`, which is the reference:
-// that file runs against OpenCV and produced the fitted weights. This one runs
-// where the app does, on the gray `RectifiedCanvas` and without OpenCV — so
-// every convolution below has to reproduce OpenCV's own, border handling
-// included. `hole-features.fixtures.json` pins the two together.
+// The arithmetic mirrors the Python spike's, which ran against OpenCV and
+// produced the fitted weights. This one runs where the app does, on the gray
+// `RectifiedCanvas` and without OpenCV — so every convolution below has to
+// reproduce OpenCV's own, border handling included.
+// `hole-features.fixtures.json` is a snapshot of it (`pnpm cv:fixtures`).
 
 /** A square, row-major, 8-bit gray crop. */
 export interface GrayCrop {
@@ -49,9 +49,9 @@ const ORIENT_BINS = 18;
 const GRADIENT_EPSILON = 1e-9;
 
 /**
- * Fitted on 208 candidates from 31 hand-marked photos across both corpora —
- * `spike/cv/fit_hole_filter.py`. Raw feature scale, so they apply to the
- * numbers `holeFeatures` returns with no standardization step.
+ * Fitted on 208 candidates from 31 hand-marked photos across both corpora;
+ * `tools/cv/fit/fit-hole-filter.mts` refits them. Raw feature scale, so they
+ * apply to the numbers `holeFeatures` returns with no standardization step.
  */
 export const HOLE_FILTER_WEIGHTS: HoleFeatures = {
   orientEntropy: 28.0314,

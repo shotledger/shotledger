@@ -1,5 +1,7 @@
 # Target-scoring math — executable specification
 
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+
 > Old-coder SPEC artifact for the CV-spike math port (photo target scoring,
 > mathematics only).
 > Absolute path: `/home/jimisola/cloud/dev/clones/jimisola/github/mobile-app/docs/specs/target-scoring-math-spec.md`

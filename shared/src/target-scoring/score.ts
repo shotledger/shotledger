@@ -1,6 +1,5 @@
-// SHB F.6.10.1 edge-touch scoring, ported from spike/cv/target_cv.py's
-// score_hole (spike/cv-target-scoring branch, lines 444-460). Executable
-// spec: docs/specs/target-scoring-math-spec.md §4.
+// SHB F.6.10.1 edge-touch scoring, ported from the CV spike's score_hole.
+// Executable spec: docs/specs/target-scoring-math-spec.md §4.
 //
 // SHB F.6.10.1 p.176 (docs/reference/spsf-shb-2026.md:31-32): "Kulhål
 // räknas till det högre värdet så snart ringens ytterkant är tangerad" —
@@ -14,7 +13,7 @@ import type { TargetFaceDefinition } from './targets';
 
 /** Standard ammunition bullet diameters — not an SHB table (see spec §4.3). */
 export const CALIBER_MM: Readonly<Record<string, number>> = {
-  '.22': 5.6, // .22 LR — target_cv.py's BULLET_MM
+  '.22': 5.6, // .22 LR
   '9mm': 9.0, // 9x19mm Parabellum
   '.32': 7.65, // .32 ACP / 7.65mm Browning
   '.38': 9.07, // .38 Special

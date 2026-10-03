@@ -1,11 +1,10 @@
 // Close-up lock: the 25 m precision face found from its ring lines alone, for
 // a photo of the inner rings where the black disc's edge is out of frame.
 //
-// A line-for-line port of `spike/cv/closeup_lock.py`, the reference for the
-// arithmetic and the file the gate was measured with (numbers:
-// docs/specs/cv-closeup-lock-2026-09.md). `closeup-lock.fixtures.json`,
-// written from synthetic close-ups by `spike/cv/gen_closeup_lock_fixtures.py`,
-// pins the two together; change one and you change both.
+// A line-for-line port of the Python spike's close-up lock, which the gate was
+// measured with (numbers: docs/specs/cv-closeup-lock-2026-09.md).
+// `closeup-lock.fixtures.json` is a snapshot of this module on synthetic
+// close-ups (`pnpm cv:fixtures`); regenerate it after a change on purpose.
 //
 // The stage:
 //  1. centre: every strong edge votes along its normal, at 512 px and then

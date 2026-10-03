@@ -1,5 +1,7 @@
 # Hole/patch filter — executable spec
 
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+
 Evidence-first spec for the fitted hole/patch filter and its use in
 `snapToHole`. Written under `.claude/skills/old-coder/`; the approved spec plus
 [`cv-assisted-detection-evidence.md`](cv-assisted-detection-evidence.md) are the

@@ -1,5 +1,7 @@
 # A second shooter's photos, measured (2026-09-15)
 
+> **2026-10-03:** the Python in `spike/cv/` is retired; the CV tools are TypeScript in [`tools/cv/`](../../tools/cv/README.md) ([ADR 0018](../adr/0018-cv-tools-in-typescript.md)). The record below is as written.
+
 The first corpus from someone other than the maintainer. It answers a question
 the earlier measurements could not: **does the pipeline hold up on another
 shooter's targets, phone and club?**
@@ -170,3 +172,5 @@ Reproduce (photos and output stay outside the tree):
 ```bash
 spike/cv/eval_corpus.py --in <photos> --out <dir> --kind precision --prior on|off
 ```
+
+`eval_corpus.py` was retired without a TypeScript port (ADR 0018); `git log -- spike/cv/eval_corpus.py` finds it.
