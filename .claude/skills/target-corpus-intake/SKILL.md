@@ -73,9 +73,12 @@ magick compare -metric RMSE /tmp/a.png /tmp/b.png null:   # (0.003) = same photo
 Keep the larger or original-format copy. A smaller copy can come without a
 capture time, so also compare photos that look the same on the sheet.
 
+Record `face`, `framing` and `flags` for every photo as you go, in the
+manifest's terms (step 5), so the manifest lines fall out of the review.
+
 Tell the maintainer what arrived before going further: counts per face and
-framing, what is new compared with `CORPUS.md` (real close-ups? milsnabb?), and
-what you propose to drop.
+framing, what is new compared with `CORPUS.md` and `manifest.jsonl` (real
+close-ups? milsnabb?), and what you propose to drop.
 
 ## 4. Drop what is not wanted
 
@@ -94,18 +97,47 @@ Only with consent recorded:
    per contributor so provenance never mixes. Use the slug style already in
    `CORPUS.md`. If the contributor already has a folder, add a dated subfolder
    rather than merging.
-2. Write `<contributor-slug>/README.md`: the source path, what was received,
-   what was deleted and why, and a triage table (face, framing, notable
-   photos).
-3. Add or extend the contributor's section in `CORPUS.md`: counts, faces, what
+2. Add one line per photo to `target-corpus/manifest.jsonl` (schema below),
+   keeping the file sorted by `path`. Every photo in the corpus is listed
+   there exactly once.
+3. Write `<contributor-slug>/README.md`: the source path, what was received,
+   what was deleted and why, and anything notable the manifest's fields do
+   not capture.
+4. Add or extend the contributor's section in `CORPUS.md`: counts, faces, what
    it adds, whether there is any milsnabb, and the **consent line**: date,
    "reported by the maintainer", and its scope. If the scope was not stated,
    record the scope assumed and say that it was assumed.
-4. If anything was extracted or converted from a source the maintainer keeps,
+5. If anything was extracted or converted from a source the maintainer keeps,
    put a short note beside that source saying where the photos went, what was
-   dropped, and how to undo it (delete the corpus folder and its `CORPUS.md`
-   section, plus any label files made from it) or redo it (the `stage.sh`
-   command line).
+   dropped, and how to undo it (delete the corpus folder, its manifest lines
+   and its `CORPUS.md` section, plus any label files made from it) or redo it
+   (the `stage.sh` command line).
+
+### The manifest
+
+`manifest.jsonl` is what the evaluation tools select photos by, so a
+precision measurement never silently includes a milsnabb photo. Folders stay
+per contributor for provenance; the face lives here. One JSON object per line:
+
+```json
+{
+  "path": "<contributor-slug>/jpg/IMG_0001.jpg",
+  "face": "precision",
+  "framing": "close-up",
+  "flags": ["heavy-pasting"]
+}
+```
+
+| Field     | Values                                                                                                                                                                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`    | relative to the corpus root                                                                                                                                                                                                                                                                  |
+| `face`    | `precision` (F.7.1, spegel included), `milsnabb` (J.7.1), `falt` (a fältskytte figure; code in `notes`), `other` (say what in `notes`)                                                                                                                                                       |
+| `framing` | `close-up` (most of the black's edge out of frame), `black` (whole black in frame, nothing much beyond the card), `spegel-over-full` (a centre card over a full target, both visible), `whole-target` (the whole face, no separate card), `camera-frame` (spotting camera or screen capture) |
+| `flags`   | optional: `heavy-pasting`, `hand-marked`, `in-hand`, `blurred`, `duplicate-suspect`                                                                                                                                                                                                          |
+| `notes`   | optional, short, factual, never a person's name                                                                                                                                                                                                                                              |
+
+Validate after every edit: each line parses, each path exists, and each photo
+in the corpus appears exactly once.
 
 ## 6. What next
 
