@@ -265,7 +265,7 @@ function refitRays<M, C>(
  * centered. One source of truth for the linear map is what makes a mark land
  * in the same target-mm the scorer uses.
  */
-function canvasHomography(t: RectificationTransform, canvasSize: number): number[] {
+export function canvasHomography(t: RectificationTransform, canvasSize: number): number[] {
   const [a, b, c, d] = t.m;
   const k = CANVAS_PX_PER_MM;
   const half = canvasSize / 2;
