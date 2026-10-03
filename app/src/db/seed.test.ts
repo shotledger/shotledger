@@ -7,7 +7,7 @@ import { listFirearms } from './queries/firearms';
 import { latestLicense } from './queries/licenses';
 import { listSessions, sumExtraRounds } from './queries/sessions';
 import { listTags } from './queries/tags';
-import { shots } from './schema';
+import { faltStations, shots } from './schema';
 import { seedDemoData, wipeDemoData } from './seed';
 import { createTestDb } from './test-db';
 import type { Database } from './types';
@@ -129,7 +129,8 @@ describe('seedDemoData', () => {
   it('creates ~30 sessions with a mix of training/competition and one final', () => {
     seedDemoData(db);
     const sessions = listSessions(db);
-    expect(sessions.length).toBe(30);
+    // 30 ring sessions plus the four fält rounds.
+    expect(sessions.length).toBe(34);
     expect(sessions.some((s) => s.type === 'competition')).toBe(true);
     expect(sessions.some((s) => s.type === 'training')).toBe(true);
     expect(sessions.some((s) => s.disciplineId === 'spsf-milsnabb')).toBe(true);
@@ -203,10 +204,28 @@ describe('seedDemoData', () => {
   it('is idempotent: re-running does not duplicate data', () => {
     seedDemoData(db);
     seedDemoData(db);
-    expect(listSessions(db)).toHaveLength(30);
+    expect(listSessions(db)).toHaveLength(34);
     expect(listFirearms(db)).toHaveLength(4);
     expect(listAmmoLots(db)).toHaveLength(5);
     expect(listFirearmGroups(db, firearmByModel('MR73 Sport').id)).toHaveLength(2);
+  });
+});
+
+describe('seedDemoData — fält', () => {
+  it('seeds four fält rounds whose stations each show a case', () => {
+    seedDemoData(db);
+    const falt = listSessions(db).filter((s) => s.disciplineId === 'spsf-falt');
+    expect(falt.map((s) => s.name).sort()).toEqual([
+      'Fält-KM',
+      'Kretsfält',
+      'Kretsfält vår',
+      'Poängfält',
+    ]);
+    const stations = db.select().from(faltStations).all();
+    expect(stations).toHaveLength(8 + 10 + 8 + 9);
+    expect(stations.filter((s) => s.isScratched === 1)).toHaveLength(2);
+    expect(stations.filter((s) => s.isShootOff === 1)).toHaveLength(1);
+    expect(stations.filter((s) => s.points !== null)).toHaveLength(2);
   });
 });
 
@@ -218,6 +237,7 @@ describe('wipeDemoData', () => {
     expect(listFirearms(db)).toHaveLength(0);
     expect(listAmmoLots(db)).toHaveLength(0);
     expect(listTags(db)).toHaveLength(0);
+    expect(db.select().from(faltStations).all()).toHaveLength(0);
   });
 });
 

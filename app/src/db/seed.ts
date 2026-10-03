@@ -1,5 +1,6 @@
 // Dev-only demo fixture (§3, M1). Invoked from the /dev debug route and by
 // Maestro flows later — never imported from production screens.
+import { addStation, type AddStationInput } from './queries/falt';
 import { addFirearmGroup } from './queries/firearm-groups';
 import { addLicense } from './queries/licenses';
 import { logMaintenanceEvent } from './queries/maintenance-events';
@@ -13,6 +14,7 @@ import { createSightSetting } from './queries/sight-settings';
 import { addSessionTag, getOrCreateTag } from './queries/tags';
 import {
   ammoLots,
+  faltStations,
   firearmGroups,
   firearms,
   licenses,
@@ -402,10 +404,112 @@ export function seedDemoData(db: Database) {
     applyRoundCountDelta(db, firearm.id, (scoredCount + 1) * 5);
     if (i % 3 === 0) setSessionExtraRounds(db, session.id, 5 + Math.floor(rng() * 10));
   }
+
+  seedFaltSessions(db, sportPistol.id, tavlingTag.id);
+}
+
+/**
+ * Four fält rounds in vapengrupp A, so the station list, the fält statistics
+ * and the fält records have something to show: an ordinary kretsfält, a
+ * ten-station championship with two stations scratched (an eight-station
+ * result), a poängfält round, and a round with a särskjutning station.
+ * Fixed numbers rather than the PRNG — each one is there to show a case.
+ */
+function seedFaltSessions(db: Database, firearmId: string, tagId: string) {
+  type Entry = [hits: number, figuresHit: number, extra?: Partial<AddStationInput>];
+  const rounds: {
+    name: string;
+    daysAgo: number;
+    mode: 'falt' | 'poangfalt';
+    stations: Entry[];
+  }[] = [
+    {
+      name: 'Kretsfält',
+      daysAgo: 70,
+      mode: 'falt',
+      stations: [
+        [5, 3],
+        [6, 4],
+        [4, 3],
+        [6, 5],
+        [3, 2],
+        [5, 4],
+        [6, 3],
+        [4, 4],
+      ],
+    },
+    {
+      name: 'Fält-KM',
+      daysAgo: 40,
+      mode: 'falt',
+      stations: [
+        [6, 4],
+        [6, 5],
+        [5, 4],
+        [6, 3],
+        [5, 5],
+        [6, 4],
+        [4, 3],
+        [6, 6],
+        [6, 0, { isScratched: true, note: 'Strukits — fel avstånd' }],
+        [2, 2, { isScratched: true }],
+      ],
+    },
+    {
+      name: 'Poängfält',
+      daysAgo: 25,
+      mode: 'poangfalt',
+      stations: [
+        [5, 4],
+        [6, 5, { points: 8, pointsMax: 10 }],
+        [4, 4],
+        [6, 4],
+        [5, 5, { points: 4, pointsMax: 5 }],
+        [6, 3],
+        [3, 3],
+        [6, 6],
+      ],
+    },
+    {
+      name: 'Kretsfält vår',
+      daysAgo: 10,
+      mode: 'falt',
+      stations: [
+        [6, 4],
+        [5, 4],
+        [6, 5],
+        [5, 3],
+        [6, 4],
+        [4, 4],
+        [6, 5],
+        [5, 5],
+        [4, 3, { isShootOff: true }],
+      ],
+    },
+  ];
+
+  for (const round of rounds) {
+    const session = createSession(db, {
+      name: round.name,
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      competitionLevel: 'krets',
+      weaponGroup: 'spsf:A',
+      shooterClass: '2',
+      startedAt: isoDaysAgo(round.daysAgo),
+      firearmId,
+      faltResultMode: round.mode,
+    });
+    addSessionTag(db, session.id, tagId);
+    round.stations.forEach(([hits, figuresHit, extra], index) => {
+      addStation(db, { sessionId: session.id, position: index + 1, hits, figuresHit, ...extra });
+    });
+  }
 }
 
 /** Deletes all demo data (hard delete — this is fixture data, not user data). */
 export function wipeDemoData(db: Database) {
+  db.delete(faltStations).run();
   db.delete(shots).run();
   db.delete(series).run();
   db.delete(sessionTags).run();
