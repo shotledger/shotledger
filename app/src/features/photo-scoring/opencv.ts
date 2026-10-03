@@ -27,6 +27,7 @@ import {
 
 import { type CloseupLock, closeupWorkImage, lockCloseupWork, ringOffsetMm } from './closeup-lock';
 import { nativeCloseupOps } from './closeup-lock-native';
+import { lockMilsnabbWork, type MilsnabbLock } from './milsnabb-lock';
 import type { Homography } from './corners';
 import {
   type DiscLockOptions,
@@ -252,21 +253,32 @@ export function runCloseupLock(options: {
   readonly base64: string;
   readonly discToMm?: Homography;
 }): CloseupLockRun {
-  const arena = new Arena();
-  let gray: { data: Uint8Array; width: number; height: number };
-  try {
-    const src = arena.keep(MatClass.createFromBase64(options.base64));
-    const mat = arena.dst();
-    OpenCV.cvtColor(src, mat, ColorConversionCodes.COLOR_BGR2GRAY);
-    const { buffer, rows, cols } = mat.toBuffer('uint8');
-    // Copied: the view points at native memory that releaseAll frees.
-    gray = { data: Uint8Array.from(buffer), width: cols, height: rows };
-  } finally {
-    arena.releaseAll();
-  }
-  const work = closeupWorkImage(gray, nativeCloseupOps);
+  const work = closeupWorkImage(grayOf(options.base64), nativeCloseupOps);
   return {
     lock: lockCloseupWork(work, nativeCloseupOps),
     discRingOffsetMm: options.discToMm ? ringOffsetMm(work, options.discToMm) : null,
   };
+}
+
+/** The milsnabb lock (milsnabb-lock.ts) on the geometry image, with OpenCV
+ *  doing the image-wide operations as for the close-up lock. */
+export function runMilsnabbLock(options: { readonly base64: string }): MilsnabbLock | null {
+  return lockMilsnabbWork(
+    closeupWorkImage(grayOf(options.base64), nativeCloseupOps),
+    nativeCloseupOps,
+  );
+}
+
+function grayOf(base64: string): { data: Uint8Array; width: number; height: number } {
+  const arena = new Arena();
+  try {
+    const src = arena.keep(MatClass.createFromBase64(base64));
+    const mat = arena.dst();
+    OpenCV.cvtColor(src, mat, ColorConversionCodes.COLOR_BGR2GRAY);
+    const { buffer, rows, cols } = mat.toBuffer('uint8');
+    // Copied: the view points at native memory that releaseAll frees.
+    return { data: Uint8Array.from(buffer), width: cols, height: rows };
+  } finally {
+    arena.releaseAll();
+  }
 }

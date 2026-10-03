@@ -1071,6 +1071,11 @@ restates §0 rules 1–6 verbatim.
 > §10 of the phase 1 spec/evidence. No new dependency, no schema change; the
 > shared ring table/scoring and the corner-homography math were already
 > face-generic.
+>
+> **Since 2026-10-03 the milsnabb face tries a lock of its own first**
+> (`milsnabb-lock.ts`, #495): the X, 10, 9 and 8 lines of the centre card,
+> falling back to the corners when it refuses. Numbers in
+> `docs/specs/cv-milsnabb-closeup-lock-2026-10.md`.
 
 > **Backup export/import has since shipped** on `feat/backup-bundles`:
 > `.shotledger` bundles (database-only or database+photos), Settings →

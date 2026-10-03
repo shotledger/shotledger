@@ -26,6 +26,16 @@ Det gör den oavsett om den hittade tavlan själv — på svartens kant eller p�
 ringlinjerna i en närbild — eller om du satte de fyra punkterna. På alla andra
 tavlor markerar du varje hål.
 
+## Snabbskjutningstavlan
+
+På snabbskjutningstavlan hittar appen tavlan på ringlinjerna på spegeln som
+sitter häftad över mitten: X, tian, nian och åttan. Spegeln sitter aldrig
+exakt på tavlans egna ringar; på fotona appen mättes på låg den oftast 1 till
+2 mm fel. Ett hål räknas på det som sitter framför det, så appen följer
+spegeln. Sjuan, sexan och femman som den ritar utanför spegeln kan därför
+missa de tryckta linjerna med en millimeter eller två. Ett hål där ute som
+sitter nära en linje är värt att jämföra med den tryckta linjen.
+
 ## Att hjälpa den bli bättre
 
 **Inställningar → Förbättra automatisk poängräkning → Spara mina markeringar som träningsdata** är avstängt som

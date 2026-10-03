@@ -1,11 +1,11 @@
 // Which target faces photo scoring can handle, and how.
 //
 // Phase 1 shipped auto-geometry for the precision face only (spec §0, CV
-// spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment) is
-// MANUAL-ONLY: the disc lock's validity gate was calibrated on precision faces
-// only and rejected all three milsnabb photos (spec §10.1), and the close-up
-// lock assumes precision's 25 mm ring step — so capture goes straight to the
-// four-corner screen. Any other face is not supported.
+// spike §6.2). The milsnabb face (§0 "milsnabb-photo-corners" amendment)
+// never takes the disc lock, whose validity gate was calibrated on precision
+// faces only (spec §10.1). It has its own ring-line lock (milsnabb-lock.ts,
+// docs/specs/cv-milsnabb-closeup-lock-2026-10.md), and falls back to the four
+// corners when that refuses. Any other face is not supported.
 //
 // The ISSF faces join on the same rule, by what the auto pipeline was actually
 // validated against rather than by federation:
@@ -40,7 +40,18 @@ export function isAutoFace(faceId: string): boolean {
   return AUTO_FACE_IDS.has(faceId);
 }
 
-/** The face is scored from four hand-placed corners, never auto-locked. */
+/** The face never takes the disc lock: its own ring lock or four corners. */
 export function isManualOnlyFace(faceId: string): boolean {
   return MANUAL_ONLY_FACE_IDS.has(faceId);
+}
+
+// The milsnabb sheet; ISSF's rapid fire face is the same sheet (targets.ts).
+const MILSNABB_LOCK_FACE_IDS: ReadonlySet<string> = new Set([
+  'spsf-snabbskjutning-25m',
+  'issf-25m-rapid-fire',
+]);
+
+/** The milsnabb lock is tried before the corners. */
+export function isMilsnabbLockFace(faceId: string): boolean {
+  return MILSNABB_LOCK_FACE_IDS.has(faceId);
 }

@@ -39,6 +39,7 @@ import {
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
 import { type CloseupLock, chooseLock } from '@/features/photo-scoring/closeup-lock';
+import { type MilsnabbLock, passesMilsnabbGate } from '@/features/photo-scoring/milsnabb-lock';
 import {
   type Homography,
   ringOverlay,
@@ -47,6 +48,7 @@ import {
 import {
   isAutoFace,
   isManualOnlyFace,
+  isMilsnabbLockFace,
   isPhotoScoringSupported,
 } from '@/features/photo-scoring/faces';
 import {
@@ -63,6 +65,7 @@ import {
   type GeometryPipelineResult,
   rectifyFromHomography,
   runCloseupLock,
+  runMilsnabbLock,
   runGeometry,
 } from '@/features/photo-scoring/opencv';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
@@ -207,9 +210,29 @@ export default function ScanScreen() {
       // corner screen with four handles to drag.
       setCorners(defaultCorners(image.width, image.height));
       if (manualOnly) {
-        // The auto pipeline is validated on the precision face only (spec
-        // §10.1); a manual-only face goes straight to corners rather than
-        // risk a confident, wrong lock.
+        // The disc lock is validated on the precision face only (spec
+        // §10.1). The milsnabb sheet has its own ring-line lock, known from
+        // the session's discipline and never guessed; when it refuses, or on
+        // any other such face, the shooter places the corners.
+        if (isMilsnabbLockFace(faceId)) {
+          if (!(await enter('rings'))) return;
+          const milsnabbLocked = timeStage('milsnabb lock');
+          let lock: MilsnabbLock | null = null;
+          try {
+            lock = runMilsnabbLock({ base64: image.base64 });
+          } catch (error: unknown) {
+            if (__DEV__) console.warn('milsnabb lock failed', error);
+          }
+          milsnabbLocked();
+          if (!(await settled())) return;
+          const toImage = passesMilsnabbGate(lock) && invertHomography(lock.toMm);
+          if (lock && toImage) {
+            total();
+            setTransform(fromProjective({ toMm: lock.toMm, toImage }, 'closeup'));
+            setPhase('marking');
+            return;
+          }
+        }
         setPhase('corners');
         return;
       }
@@ -746,7 +769,11 @@ export default function ScanScreen() {
           <>
             <ThemedText type="small" themeColor="textSecondary">
               {t(
-                manualOnly ? 'photoScoring.milsnabbCornersHint' : 'photoScoring.adjustCornersHint',
+                isMilsnabbLockFace(faceId)
+                  ? 'photoScoring.milsnabbLockRefusedHint'
+                  : manualOnly
+                    ? 'photoScoring.milsnabbCornersHint'
+                    : 'photoScoring.adjustCornersHint',
               )}
             </ThemedText>
             <CornerAdjuster
