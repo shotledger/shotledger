@@ -743,6 +743,16 @@ public.
 shares the precision target face — G.7.1 p. 205 shoots "Pistoltavla 25 m
 precision" at 50 m (G.7.2 p. 206) — and is the discipline that makes the
 already-defined vapengrupper `M1`–`M9` reachable.
+**Added 2026-10-03 (#476):** SPSF Nationell helmatch (SHB Del I) and its
+delmoment C, figurskjutning, as a training discipline of its own. Helmatch
+shoots three faces, so program groups carry their own face (§6.3).
+
+- [x] **Per-group sighters and target faces** (#476 slice 2). A
+      fixed-format program's group names its own `sighterSeries` and an
+      optional `targetFace`; the one-sighter guard covers freeform sessions
+      only; ISSF 25m Pistol and Centre Fire shoot their rapid-fire stage on
+      `issf-25m-rapid-fire`; every consumer reads the series' face.
+
 **Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
 25m standard, 50m pistol — defaults need VERIFY then). Community adds
 disciplines via PR once public.
