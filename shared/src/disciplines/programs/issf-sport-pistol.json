@@ -10,14 +10,15 @@
   "scoring": "integer",
   "supportsFinal": false,
   "structure": {
-    "sighterSeries": 1,
     "groups": [
       {
         "seriesCount": 6,
-        "timeLimitSeconds": 240
+        "timeLimitSeconds": 240,
+        "sighterSeries": 1
       },
       {
-        "seriesCount": 6
+        "seriesCount": 6,
+        "targetFace": "issf-25m-rapid-fire"
       }
     ]
   }

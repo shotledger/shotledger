@@ -72,6 +72,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_DISC_003
+    requirement_ids: ['DISC_003']
+    title: Verify a skeleton puts each group's sighters before it and each series on its group's face
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_TIMER_001
     requirement_ids: ['TIMER_001']
     title: Verify a loud event is rejected for being too long or rising too slowly

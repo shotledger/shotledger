@@ -10,7 +10,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { Point } from '@shotledger/shared';
-import { analyzeGroup, getDiscipline, requireTargetFace } from '@shotledger/shared';
+import { analyzeGroup, requireTargetFace, seriesTargetFace } from '@shotledger/shared';
 import { uuidv7 } from 'uuidv7';
 
 import { ActionSheet } from '@/components/action-sheet';
@@ -123,7 +123,12 @@ export default function ScanScreen() {
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
-  const faceId = getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '';
+  const faceId =
+    seriesTargetFace(
+      detail.session?.disciplineId ?? '',
+      detail.session?.programId ?? null,
+      position,
+    ) ?? '';
   const supported = isPhotoScoringSupported(faceId);
   const manualOnly = isManualOnlyFace(faceId);
   const target = supported ? requireTargetFace(faceId) : undefined;

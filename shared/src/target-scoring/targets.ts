@@ -175,6 +175,11 @@ export function getTargetFace(id: string): TargetFaceDefinition | undefined {
   return TARGET_FACES[id];
 }
 
+/** Whether a discipline or program group may name this face id. */
+export function isKnownTargetFace(id: string): boolean {
+  return Object.hasOwn(TARGET_FACES, id);
+}
+
 export function requireTargetFace(id: string): TargetFaceDefinition {
   const face = getTargetFace(id);
   if (!face) throw new Error(`Unknown target face: ${id}`);

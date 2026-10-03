@@ -3,15 +3,16 @@
 //
 // Pooling is only meaningful within one target face: a mark is in target
 // millimeters, and 50 mm on the precision face is a different ring from
-// 50 mm on the milsnabb one. So the pool is per discipline, and the caller
+// 50 mm on the milsnabb one. So the pool is per discipline and face — a
+// program group may shoot another face than its discipline's — and the caller
 // gets told which discipline it picked rather than being handed a silent mix.
 import {
   analyzeGroup,
   analyzePointsLost,
   buildHeatmap,
   coachingHint,
-  getDiscipline,
   requireTargetFace,
+  seriesTargetFace,
   type CoachingHint,
   type GroupAnalysis,
   type Heatmap,
@@ -21,6 +22,7 @@ import { useMemo } from 'react';
 
 import { db } from '@/db/client';
 import { listMarksBySession, type SessionMarks } from '@/db/queries/shot-marks';
+import { busiestBucket } from '@/features/photo-scoring/face-buckets';
 import { localDayOf } from '@/features/dates/local-day';
 
 export interface CrossSessionGroup {
@@ -59,21 +61,15 @@ export function useCrossSessionGroup(
     );
     if (scoped.length === 0) return null;
 
-    // Pool the single busiest discipline rather than mixing faces. Picking
-    // the most-shot one keeps the answer stable as the period widens.
-    const byDiscipline = new Map<string, SessionMarks[]>();
-    for (const session of scoped) {
-      const bucket = byDiscipline.get(session.disciplineId);
-      if (bucket) bucket.push(session);
-      else byDiscipline.set(session.disciplineId, [session]);
-    }
-    const [chosenId, sessions] = [...byDiscipline.entries()].sort(
-      (a, b) =>
-        b[1].reduce((n, s) => n + s.marks.length, 0) - a[1].reduce((n, s) => n + s.marks.length, 0),
-    )[0]!;
-
-    const faceId = getDiscipline(chosenId)?.targetFace;
-    if (!faceId) return null;
+    // Pool the single busiest discipline and face rather than mixing faces.
+    // Picking the most-shot one keeps the answer stable as the period widens.
+    const tagged = scoped.flatMap((session) => session.marks.map((mark) => ({ session, mark })));
+    const chosen = busiestBucket(tagged, ({ session, mark }) => {
+      const face = seriesTargetFace(session.disciplineId, session.programId, mark.seriesPosition);
+      return face === undefined ? undefined : `${session.disciplineId} ${face}`;
+    });
+    if (!chosen) return null;
+    const [chosenId, faceId] = chosen.key.split(' ') as [string, string];
     let target: TargetFaceDefinition;
     try {
       target = requireTargetFace(faceId);
@@ -82,13 +78,11 @@ export function useCrossSessionGroup(
       return null;
     }
 
-    const marks = sessions.flatMap((session) =>
-      session.marks.map((mark) => ({
-        xMm: mark.xMm,
-        yMm: mark.yMm,
-        caliberMm: mark.caliberMm,
-      })),
-    );
+    const marks = chosen.items.map(({ mark }) => ({
+      xMm: mark.xMm,
+      yMm: mark.yMm,
+      caliberMm: mark.caliberMm,
+    }));
     const analysis = analyzeGroup(marks);
     if (!analysis) return null;
 
@@ -96,7 +90,7 @@ export function useCrossSessionGroup(
     return {
       target,
       disciplineId: chosenId,
-      sessionCount: sessions.length,
+      sessionCount: new Set(chosen.items.map(({ session }) => session.sessionId)).size,
       marks,
       analysis,
       heatmap: extentMm > 0 ? buildHeatmap(marks, extentMm) : null,

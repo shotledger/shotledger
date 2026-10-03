@@ -203,6 +203,22 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: DISC_003
+    title: A fixed-format series is shot on its group's face, behind its group's sighters
+    significance: shall
+    description: >-
+      For a fixed-format program, the app shall resolve each series to the target
+      face its group names, else the discipline's, and shall lay out each group's
+      own sighter series before that group's scored series.
+    rationale: >-
+      Nationell helmatch shoots three faces, with a provserie before delmoment A
+      and B and none before C (SHB 2026 I.6.1 p. 258, I.6.6.2 p. 260). A series
+      scored against the wrong face reads the wrong ring from a photo, and a
+      sighter in the wrong place takes a scored series out of the result.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: TIMER_001
     title: Shot detection gates on duration and rise, not loudness
     significance: shall

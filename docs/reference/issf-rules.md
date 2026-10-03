@@ -111,8 +111,8 @@ competition shots**, men & women identical format. Time limit 75 minutes
 (EST) / 90 minutes (paper); 15 minutes preparation and sighting time;
 **sighting shots unlimited** during that time (4 sighting targets,
 paper) — there is no fixed sighter-series count, unlike the SPSF
-programs. Because our `structure.sighterSeries` can only express a fixed
-leading count of full series, this is shipped as `sighterSeries: 0`
+programs. Because a group's `sighterSeries` can only express a fixed
+count of full series, this is shipped as `sighterSeries: 0`
 (no pre-created sighter skeleton) — sighting is logged as ordinary
 untimed series with the existing `is_sighter` flag, not auto-generated.
 This is a modeling limitation, not a guessed number.
@@ -160,13 +160,9 @@ two 30-shot stages:
 **Targets — this event genuinely uses two different targets**, one per
 stage (GTR 6.3.4.4/6.3.4.5, both explicitly listing "the precision
 stage of ... the 25m Pistol event" / "Rapid Fire stages of ... the 25m
-Pistol event"). Our schema has one `targetFace` per discipline, so
-`targetFace` is set to `issf-25m-precision` (the precision-stage target)
-as the representative id; the rapid-fire stage's distinct target
-(`issf-25m-rapid-fire`, same dimensions as 25m Rapid Fire Pistol below)
-is documented here, not modeled as a second field. This is a schema
-limitation, not a guessed value — flagging for a possible v2
-per-program `targetFace` override.
+Pistol event"). The discipline's `targetFace` is `issf-25m-precision` (the
+precision-stage target), and the program's rapid-fire group overrides it with
+`issf-25m-rapid-fire` (same dimensions as 25m Rapid Fire Pistol below).
 
 **Scoring**: integer in qualification (GTR 6.3.3.2); `allowsDecimal:
 false`. Finals for this event use hit/miss hit-zones, not decimal rings
@@ -188,9 +184,9 @@ except a single shot pistol, of calibre 7.62mm to 9.65mm (.30" - .38")",
 which the app records on the firearm, not the discipline.
 
 So `programs/issf-centre-fire-pistol.json` is structurally identical to
-`issf-sport-pistol.json`, and a test asserts it stays so. Same
-`issf-25m-precision` representative target and the same two-target caveat as
-25m Pistol; integer scoring (GTR 6.3.3.2), `allowsDecimal: false`.
+`issf-sport-pistol.json`, and a test asserts it stays so. The same two faces
+as 25m Pistol — precision stage on `issf-25m-precision`, rapid-fire group on
+`issf-25m-rapid-fire`; integer scoring (GTR 6.3.3.2), `allowsDecimal: false`.
 
 Rule 3.3: `CFPM M only`, `CFPW W` — no junior event in either table. SvSF
 runs it at SM as one open senior class (Tävlings-PM 15.1 "Grovpistol —
@@ -223,16 +219,14 @@ dimensions as `issf-25m-precision` below.
 Pistol Rules Rule 8.7.6.3.a: **60 shots, 2 stages of 30 shots**. Each
 stage: 6 series of 5 shots — 2 series at 8 s, 2 at 6 s, 2 at 4 s, one
 shot per target across 5 targets per series. Rule 8.7.6.3.b: **one**
-5-shot sighting series (at 8 s) allowed **before each stage** — our
-schema's `sighterSeries` is a single leading count before all groups, so
-this ships as **one leading sighter** (5 shots, inheriting the first
-group's 8 s limit) rather than two, with the full 60 scored shots
-represented as **12 series in the correct repeating 8/6/6/4/4 pattern**
-across both stages (`groups: [{2,8},{2,6},{2,4},{2,8},{2,6},{2,4}]`).
-This compresses "sighter before each stage" into "one sighter up front"
-— a documented modeling choice forced by the schema/app's one-sighter-
-per-section convention, not a change to any verified shot count or time
-limit. 3 minutes preparation time (8.7.6.1.e).
+5-shot sighting series (at 8 s) allowed **before each stage**. This ships
+as **one leading sighter** on the first group (5 shots, inheriting its 8 s
+limit) rather than two, with the full 60 scored shots represented as **12
+series in the correct repeating 8/6/6/4/4 pattern** across both stages
+(`groups: [{2,8},{2,6},{2,4},{2,8},{2,6},{2,4}]`). It was a schema limit when
+the program shipped; groups carry their own `sighterSeries` since #476, so a
+second sighter before stage two is now a data change, not yet made. Not a
+change to any verified shot count or time limit. 3 minutes preparation time (8.7.6.1.e).
 
 **Does this fit the ring-scoring model, or should it defer like fält
 (hit/figure scoring)?** It fits. Qualification scoring is full ring

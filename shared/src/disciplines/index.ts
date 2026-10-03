@@ -29,6 +29,7 @@ import spsfPrecisionProgram from './programs/spsf-precision.json';
 import svsfSnabbluftpistolProgram from './programs/svsf-snabbluftpistol.json';
 import { GENERIC_SHOOTER_CLASSES, SPSF_SHOOTER_CLASSES, type ShooterClass } from './classes';
 import { GENERIC_WEAPON_GROUPS, findWeaponGroup, type WeaponGroup } from './groups';
+import { isKnownTargetFace } from '../target-scoring/targets';
 import { disciplineSchema, programSchema, type Discipline, type Program } from './schema';
 
 export * from './schema';
@@ -68,7 +69,20 @@ export const PROGRAMS: readonly Program[] = [
   issfFreePistolProgram,
   issfCenterFirePistolProgram,
   svsfSnabbluftpistolProgram,
-].map((raw) => programSchema.parse(raw));
+].map((raw) => assertProgramFaces(programSchema.parse(raw)));
+
+/**
+ * A group's face override must name a face the app knows; a typo would
+ * otherwise surface as a series silently scored against the discipline's face.
+ */
+export function assertProgramFaces(program: Program): Program {
+  for (const group of program.structure?.groups ?? []) {
+    if (group.targetFace !== undefined && !isKnownTargetFace(group.targetFace)) {
+      throw new Error(`Program ${program.id} references unknown target face ${group.targetFace}`);
+    }
+  }
+  return program;
+}
 
 /** One series the UI should pre-create for a fixed-format program (§6.3). */
 export interface SeriesSkeletonEntry {
@@ -77,6 +91,8 @@ export interface SeriesSkeletonEntry {
   isFinal: boolean;
   shots: number;
   timeLimitSeconds: number | null;
+  /** The group's face, else the discipline's; null for a discipline without one. */
+  targetFace: string | null;
 }
 
 export interface SessionNameParts {
@@ -233,39 +249,58 @@ export function shooterClassesForDiscipline(disciplineId: string): readonly Shoo
 /**
  * The series a fixed-format program pre-creates. Freeform programs (and free
  * training) return [] — series counts are never fixed there (§6.3).
- * The provserie's time limit is omgång 1's (SHB J.6.6.2: 5 shots at 10 s),
- * which is why the structure schema needs no separate field for it.
+ * A group's sighters come first and share its time limit and face: the
+ * milsnabb provserie is shot at omgång 1's 10 s (SHB J.6.6.2).
+ *
+ * @Requirements DISC_003
  */
 export function buildProgramSkeleton(program: Program): readonly SeriesSkeletonEntry[] {
   const { structure } = program;
   if (!structure) return [];
 
+  const disciplineFace = getDiscipline(program.disciplineId)?.targetFace ?? null;
   const entries: SeriesSkeletonEntry[] = [];
-  const firstGroupLimit = structure.groups[0]?.timeLimitSeconds ?? null;
-
-  for (let i = 0; i < structure.sighterSeries; i += 1) {
+  const push = (isSighter: boolean, timeLimitSeconds: number | null, targetFace: string | null) =>
     entries.push({
       position: entries.length + 1,
-      isSighter: true,
+      isSighter,
       isFinal: false,
       shots: program.shotsPerSeries,
-      timeLimitSeconds: firstGroupLimit,
+      timeLimitSeconds,
+      targetFace,
     });
-  }
 
   for (const group of structure.groups) {
-    for (let i = 0; i < group.seriesCount; i += 1) {
-      entries.push({
-        position: entries.length + 1,
-        isSighter: false,
-        isFinal: false,
-        shots: program.shotsPerSeries,
-        timeLimitSeconds: group.timeLimitSeconds ?? null,
-      });
-    }
+    const timeLimit = group.timeLimitSeconds ?? null;
+    const face = group.targetFace ?? disciplineFace;
+    for (let i = 0; i < (group.sighterSeries ?? 0); i += 1) push(true, timeLimit, face);
+    for (let i = 0; i < group.seriesCount; i += 1) push(false, timeLimit, face);
   }
 
   return entries;
+}
+
+/** Sighter series a fixed-format program lays out, across all its groups. */
+export function programSighterCount(program: Program): number {
+  return (program.structure?.groups ?? []).reduce(
+    (total, group) => total + (group.sighterSeries ?? 0),
+    0,
+  );
+}
+
+/**
+ * The face a series is shot against. A fixed-format program's series resolves
+ * its group by position; any other series — freeform, or appended past the
+ * skeleton — is on the discipline's face.
+ */
+export function seriesTargetFace(
+  disciplineId: string,
+  programId: string | null,
+  position: number,
+): string | undefined {
+  const program = programId ? getProgram(programId) : undefined;
+  const entry = program ? buildProgramSkeleton(program)[position - 1] : undefined;
+  return entry?.targetFace ?? getDiscipline(disciplineId)?.targetFace;
 }
 
 /**

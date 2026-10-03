@@ -6,6 +6,7 @@ import faltDisciplineJson from './definitions/spsf-falt.json';
 import precisionDisciplineJson from './definitions/spsf-precision.json';
 import milsnabbProgramJson from './programs/spsf-milsnabb.json';
 import {
+  assertProgramFaces,
   buildProgramSkeleton,
   decimalAllowed,
   defaultSessionName,
@@ -19,12 +20,14 @@ import {
   getProgram,
   PROGRAMS,
   programSchema,
+  programSighterCount,
   programsForDiscipline,
   requireDiscipline,
   resolveWeaponGroupIds,
   ringScoringDisciplines,
   scoringModeFor,
   selectableWeaponGroups,
+  seriesTargetFace,
   disciplinesForRegulations,
   shooterClassesForDiscipline,
   weaponGroupsForRegulations,
@@ -65,7 +68,7 @@ describe('data validation (spec G1-G4)', () => {
     expect(() => disciplineSchema.parse({ ...precisionDisciplineJson, surprise: true })).toThrow();
     expect(() => programSchema.parse({ ...milsnabbProgramJson, scoring: 'hits' })).toThrow();
     expect(() =>
-      programSchema.parse({ ...milsnabbProgramJson, structure: { sighterSeries: 1, groups: [] } }),
+      programSchema.parse({ ...milsnabbProgramJson, structure: { groups: [] } }),
     ).toThrow();
   });
 
@@ -126,9 +129,8 @@ describe('programs (spec G5-G9)', () => {
     const program = getProgram('spsf-milsnabb');
     expect(program).toMatchObject({ shotsPerSeries: 5, scoring: 'integer', supportsFinal: false });
     expect(program?.structure).toEqual({
-      sighterSeries: 1,
       groups: [
-        { seriesCount: 4, timeLimitSeconds: 10 },
+        { seriesCount: 4, timeLimitSeconds: 10, sighterSeries: 1 },
         { seriesCount: 4, timeLimitSeconds: 8 },
         { seriesCount: 4, timeLimitSeconds: 6 },
       ],
@@ -148,6 +150,7 @@ describe('programs (spec G5-G9)', () => {
       shots: 5,
       // provserie: 5 shots at 10 s (SHB J.6.6.2) — omgång 1's limit
       timeLimitSeconds: 10,
+      targetFace: 'spsf-snabbskjutning-25m',
     });
     expect(skeleton.map((s) => s.position)).toEqual([...Array(13)].map((_, i) => i + 1));
     expect(skeleton.slice(1).map((s) => s.timeLimitSeconds)).toEqual([
@@ -161,22 +164,51 @@ describe('programs (spec G5-G9)', () => {
   it('a fixed-format program without time limits yields null limits', () => {
     const untimed = programSchema.parse({
       ...milsnabbProgramJson,
-      structure: { sighterSeries: 1, groups: [{ seriesCount: 2 }] },
+      structure: { groups: [{ seriesCount: 2, sighterSeries: 1 }] },
     });
+    const face = 'spsf-snabbskjutning-25m';
     expect(buildProgramSkeleton(untimed)).toEqual([
-      { position: 1, isSighter: true, isFinal: false, shots: 5, timeLimitSeconds: null },
-      { position: 2, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: null },
-      { position: 3, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: null },
+      {
+        position: 1,
+        isSighter: true,
+        isFinal: false,
+        shots: 5,
+        timeLimitSeconds: null,
+        targetFace: face,
+      },
+      {
+        position: 2,
+        isSighter: false,
+        isFinal: false,
+        shots: 5,
+        timeLimitSeconds: null,
+        targetFace: face,
+      },
+      {
+        position: 3,
+        isSighter: false,
+        isFinal: false,
+        shots: 5,
+        timeLimitSeconds: null,
+        targetFace: face,
+      },
     ]);
   });
 
   it('a fixed-format program without a sighter starts at the first scored series', () => {
     const noSighter = programSchema.parse({
       ...milsnabbProgramJson,
-      structure: { sighterSeries: 0, groups: [{ seriesCount: 1, timeLimitSeconds: 20 }] },
+      structure: { groups: [{ seriesCount: 1, timeLimitSeconds: 20 }] },
     });
     expect(buildProgramSkeleton(noSighter)).toEqual([
-      { position: 1, isSighter: false, isFinal: false, shots: 5, timeLimitSeconds: 20 },
+      {
+        position: 1,
+        isSighter: false,
+        isFinal: false,
+        shots: 5,
+        timeLimitSeconds: 20,
+        targetFace: 'spsf-snabbskjutning-25m',
+      },
     ]);
   });
 
@@ -209,7 +241,7 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
       expect(program.scoring).toBe('integer');
       expect(program.supportsFinal).toBe(false);
       if (!program.structure) throw new Error(`${id} has no structure`);
-      expect(program.structure.sighterSeries).toBe(sighterSeries);
+      expect(programSighterCount(program)).toBe(sighterSeries);
 
       const scoredSeriesCount = program.structure.groups.reduce((n, g) => n + g.seriesCount, 0);
       expect(scoredSeriesCount).toBe(series);
@@ -227,16 +259,16 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
 
   it('issf-air-pistol and issf-free-pistol have unlimited (unmodeled) sighters, not a fixed count', () => {
     // Documented in issf-rules.md: ISSF allows unlimited sighting shots
-    // during prep time for these two events, which our fixed sighterSeries
+    // during prep time for these two events, which a fixed sighterSeries
     // count cannot express, so both ship sighterSeries: 0.
-    expect(getProgram('issf-air-pistol')?.structure?.sighterSeries).toBe(0);
-    expect(getProgram('issf-free-pistol')?.structure?.sighterSeries).toBe(0);
+    expect(getProgram('issf-air-pistol')?.structure?.groups[0]?.sighterSeries).toBe(0);
+    expect(getProgram('issf-free-pistol')?.structure?.groups[0]?.sighterSeries).toBe(0);
   });
 
   it('issf-standard-pistol: 150/20/10 second stages (8.7.6.5)', () => {
     const program = getProgram('issf-standard-pistol');
     expect(program?.structure?.groups).toEqual([
-      { seriesCount: 4, timeLimitSeconds: 150 },
+      { seriesCount: 4, timeLimitSeconds: 150, sighterSeries: 1 },
       { seriesCount: 4, timeLimitSeconds: 20 },
       { seriesCount: 4, timeLimitSeconds: 10 },
     ]);
@@ -245,7 +277,7 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
   it('issf-rapid-fire-pistol: 8/6/4 second series, repeated across two stages (8.7.6.3.a)', () => {
     const program = getProgram('issf-rapid-fire-pistol');
     expect(program?.structure?.groups).toEqual([
-      { seriesCount: 2, timeLimitSeconds: 8 },
+      { seriesCount: 2, timeLimitSeconds: 8, sighterSeries: 1 },
       { seriesCount: 2, timeLimitSeconds: 6 },
       { seriesCount: 2, timeLimitSeconds: 4 },
       { seriesCount: 2, timeLimitSeconds: 8 },
@@ -256,9 +288,10 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
 
   it('issf-sport-pistol: 240s precision stage, untimed rapid stage (8.7.6.4)', () => {
     const program = getProgram('issf-sport-pistol');
+    // The rapid-fire stage is shot on the rapid fire face (GTR 6.3.4.4).
     expect(program?.structure?.groups).toEqual([
-      { seriesCount: 6, timeLimitSeconds: 240 },
-      { seriesCount: 6 },
+      { seriesCount: 6, timeLimitSeconds: 240, sighterSeries: 1 },
+      { seriesCount: 6, targetFace: 'issf-25m-rapid-fire' },
     ]);
   });
 
@@ -297,10 +330,9 @@ describe('SvSF pistol programs (docs/reference/svsf-rules.md)', () => {
     });
     expect(program?.structure).toEqual({
       // §6.3: one 5-shot provserie at 10 s before each round; one leading
-      // sighter is the schema's shape, as for ISSF rapid fire.
-      sighterSeries: 1,
+      // sighter is kept, as for ISSF rapid fire.
       groups: [
-        { seriesCount: 2, timeLimitSeconds: 10 },
+        { seriesCount: 2, timeLimitSeconds: 10, sighterSeries: 1 },
         { seriesCount: 2, timeLimitSeconds: 8 },
         { seriesCount: 2, timeLimitSeconds: 6 },
         { seriesCount: 2, timeLimitSeconds: 10 },
@@ -610,14 +642,17 @@ describe('mutation-hardening', () => {
       { disciplineId: '' },
       { shotsPerSeries: 0 },
       { supportsFinal: 1 },
-      { structure: { sighterSeries: -1, groups: [{ seriesCount: 1 }] } },
-      { structure: { sighterSeries: 1, groups: [{ seriesCount: 0 }] } },
-      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, timeLimitSeconds: 0 }] } },
-      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, timeLimitSeconds: 1.5 }] } },
-      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1, extra: true }] } },
-      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1 }], extra: true } },
-      { structure: { groups: [{ seriesCount: 1 }] } },
-      { structure: { sighterSeries: 1 } },
+      { structure: { groups: [{ seriesCount: 1, sighterSeries: -1 }] } },
+      { structure: { groups: [{ seriesCount: 1, sighterSeries: 1.5 }] } },
+      { structure: { groups: [{ seriesCount: 0 }] } },
+      { structure: { groups: [{ seriesCount: 1, timeLimitSeconds: 0 }] } },
+      { structure: { groups: [{ seriesCount: 1, timeLimitSeconds: 1.5 }] } },
+      { structure: { groups: [{ seriesCount: 1, targetFace: '' }] } },
+      { structure: { groups: [{ seriesCount: 1, extra: true }] } },
+      { structure: { groups: [{ seriesCount: 1 }], extra: true } },
+      // the leading count moved onto the group
+      { structure: { sighterSeries: 1, groups: [{ seriesCount: 1 }] } },
+      { structure: {} },
       { surprise: true },
     ];
     for (const patch of badPrograms) {
@@ -873,4 +908,110 @@ describe('Magnumprecision (SHB Del G, spec MP1-MP8)', () => {
       getDiscipline('spsf-precision')?.targetFace,
     );
   });
+});
+
+describe('per-group sighters and faces (§6.3, #476)', () => {
+  const twoFaces = programSchema.parse({
+    ...milsnabbProgramJson,
+    id: 'two-faces',
+    structure: {
+      groups: [
+        { seriesCount: 1, timeLimitSeconds: 300, sighterSeries: 1 },
+        {
+          seriesCount: 1,
+          timeLimitSeconds: 15,
+          sighterSeries: 1,
+          targetFace: 'issf-25m-rapid-fire',
+        },
+        { seriesCount: 1, targetFace: 'spsf-pistol-25m-precision' },
+      ],
+    },
+  });
+
+  it('counts the sighters of every group', () => {
+    expect(programSighterCount(twoFaces)).toBe(2);
+  });
+
+  it('counts no sighters for a freeform program', () => {
+    expect(programSighterCount(getProgram('spsf-precision')!)).toBe(0);
+  });
+
+  it('gives a skeleton series a null face when the discipline has none', () => {
+    const orphan = programSchema.parse({ ...milsnabbProgramJson, disciplineId: 'nope' });
+    expect(buildProgramSkeleton(orphan).every((s) => s.targetFace === null)).toBe(true);
+  });
+
+  it('files the centre fire rapid stage under the rapid-fire face', () => {
+    const skeleton = buildProgramSkeleton(getProgram('issf-centre-fire-pistol')!);
+    expect(skeleton.map((s) => s.targetFace)).toEqual([
+      ...Array<string>(7).fill('issf-25m-precision'),
+      ...Array<string>(6).fill('issf-25m-rapid-fire'),
+    ]);
+  });
+
+  it('resolves a series face by position, falling back to the discipline', () => {
+    const id = 'issf-centre-fire-pistol';
+    expect(seriesTargetFace(id, id, 1)).toBe('issf-25m-precision');
+    expect(seriesTargetFace(id, id, 8)).toBe('issf-25m-rapid-fire');
+    // appended past the skeleton, or no program at all
+    expect(seriesTargetFace(id, id, 14)).toBe('issf-25m-precision');
+    expect(seriesTargetFace(id, null, 8)).toBe('issf-25m-precision');
+    expect(seriesTargetFace('spsf-precision', 'spsf-precision', 3)).toBe(
+      'spsf-pistol-25m-precision',
+    );
+    expect(seriesTargetFace('nope', 'nope', 1)).toBeUndefined();
+  });
+
+  it('every shipped group face resolves in the target registry', () => {
+    for (const program of PROGRAMS) expect(assertProgramFaces(program)).toBe(program);
+  });
+
+  it('rejects a group face the registry does not know', () => {
+    const typo = programSchema.parse({
+      ...milsnabbProgramJson,
+      structure: { groups: [{ seriesCount: 1, targetFace: 'spsf-snabb' }] },
+    });
+    expect(() => assertProgramFaces(typo)).toThrow(
+      /Program spsf-milsnabb references unknown target face spsf-snabb/,
+    );
+    // an inherited prototype key is not a face either
+    const proto = programSchema.parse({
+      ...milsnabbProgramJson,
+      structure: { groups: [{ seriesCount: 1, targetFace: 'toString' }] },
+    });
+    expect(() => assertProgramFaces(proto)).toThrow(/unknown target face toString/);
+  });
+});
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_DISC_003
+ */
+it('lays out each group behind its own sighters, on its own face and time', () => {
+  const threeGroups = programSchema.parse({
+    ...milsnabbProgramJson,
+    structure: {
+      groups: [
+        { seriesCount: 1, timeLimitSeconds: 300, sighterSeries: 1 },
+        {
+          seriesCount: 1,
+          timeLimitSeconds: 15,
+          sighterSeries: 1,
+          targetFace: 'issf-25m-rapid-fire',
+        },
+        { seriesCount: 1, targetFace: 'spsf-pistol-25m-precision' },
+      ],
+    },
+  });
+  expect(
+    buildProgramSkeleton(threeGroups).map((s) => [s.isSighter, s.timeLimitSeconds, s.targetFace]),
+  ).toEqual([
+    [true, 300, 'spsf-snabbskjutning-25m'],
+    [false, 300, 'spsf-snabbskjutning-25m'],
+    [true, 15, 'issf-25m-rapid-fire'],
+    [false, 15, 'issf-25m-rapid-fire'],
+    [false, null, 'spsf-pistol-25m-precision'],
+  ]);
 });

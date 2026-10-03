@@ -11,6 +11,10 @@ It works on the 25 m precision and rapid-fire faces and the ISSF 10 m air
 pistol face. For a session on any other target, **Add Series** goes straight to
 the keypad.
 
+Each series is scored on the face its stage is shot on. On a **Full Match** of
+25m Sport Pistol or 25m Centre Fire Pistol, the precision stage uses the
+precision face and the rapid-fire stage the rapid-fire face.
+
 ## How to do it
 
 1. **Photograph the target.** Get the target face in frame, as square-on as

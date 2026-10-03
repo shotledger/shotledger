@@ -66,6 +66,10 @@ export type Discipline = z.infer<typeof disciplineSchema>;
  * §6.3 programSchema. `structure` is present ONLY for fixed-format programs
  * (milsnabb); its absence means the program is freeform and pre-creates
  * nothing — series counts are never fixed for those.
+ *
+ * A group's `sighterSeries` come before that group's scored series, and its
+ * `targetFace` overrides the discipline's — Nationell helmatch shoots three
+ * faces with sighters before A and B only (SHB I.6.1, I.6.6.2).
  */
 export const programSchema = z.strictObject({
   id: z.string().min(1),
@@ -77,12 +81,15 @@ export const programSchema = z.strictObject({
   supportsFinal: z.boolean(),
   structure: z
     .strictObject({
-      sighterSeries: z.int().min(0),
       groups: z
         .array(
           z.strictObject({
             seriesCount: z.int().positive(),
             timeLimitSeconds: z.int().positive().optional(),
+            /** Sighter series laid out before this group; absent means none. */
+            sighterSeries: z.int().min(0).optional(),
+            /** Overrides the discipline's face; must resolve in the target registry. */
+            targetFace: z.string().min(1).optional(),
           }),
         )
         .min(1),

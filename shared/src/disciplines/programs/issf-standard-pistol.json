@@ -10,11 +10,11 @@
   "scoring": "integer",
   "supportsFinal": false,
   "structure": {
-    "sighterSeries": 1,
     "groups": [
       {
         "seriesCount": 4,
-        "timeLimitSeconds": 150
+        "timeLimitSeconds": 150,
+        "sighterSeries": 1
       },
       {
         "seriesCount": 4,
