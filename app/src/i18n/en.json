@@ -714,7 +714,9 @@
     "faltTotal": "{{hits}} hits in {{figures}} figures",
     "poangfaltTotal": "{{points}} points",
     "seriesLength": "Shots per Series",
-    "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot."
+    "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
+    "celebrationPerfect": "Perfect Series!",
+    "celebrationFullScore": "Great Job!"
   },
   "share": {
     "title": "Share Session",

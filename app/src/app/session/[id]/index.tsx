@@ -35,6 +35,8 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
 import { seriesDropPlan } from '@/features/session/series-move';
+import { celebratesDiscipline, celebrationTier } from '@/features/session/celebration';
+import { SeriesTotalPill } from '@/components/series-total-pill';
 import { SessionToolsRow } from '@/features/session/session-tools-row';
 import {
   SeriesEntryChoiceSheet,
@@ -283,6 +285,20 @@ export default function SessionDetailScreen() {
 
   const renderSeries = (row: SeriesRow) => {
     const held = dragging?.id === row.id;
+    const tier = celebratesDiscipline(session.disciplineId)
+      ? celebrationTier(row.shots, {
+          mode: detail.scoringMode,
+          seriesLength: detail.seriesLength,
+          guldThreshold: row.guldThreshold,
+          isSighter: row.isSighter,
+        })
+      : null;
+    // A sighter's score is shown with a marker rather than hidden: it is
+    // deliberately unscored, not unknown, and the row already carries a
+    // Sighter chip to say which.
+    const totalLabel = row.isSighter
+      ? t('session.sighterScore', { score: tenthsToScore(row.totalTenths) })
+      : String(tenthsToScore(row.totalTenths));
     // Long-press to lift, then drag. `minDistance(0)` on the pan would steal
     // the swipe-to-delete gesture, so the pan is gated behind the long press
     // and does nothing until one has happened.
@@ -356,14 +372,15 @@ export default function SessionDetailScreen() {
               </Pressable>
             )}
             {row.isGoldSeries && <Chip label={t('session.goldSeries')} tone="primary" />}
-            <ThemedText type="smallBold">
-              {/* A sighter's score is shown with a marker rather than hidden:
-                  it is deliberately unscored, not unknown, and the row already
-                  carries a Sighter chip to say which. */}
-              {row.isSighter
-                ? t('session.sighterScore', { score: tenthsToScore(row.totalTenths) })
-                : tenthsToScore(row.totalTenths)}
-            </ThemedText>
+            {tier === 'fullScore' || tier === 'perfect' ? (
+              <SeriesTotalPill
+                label={totalLabel}
+                tier={tier}
+                testID={`series-${row.position}-total`}
+              />
+            ) : (
+              <ThemedText type="smallBold">{totalLabel}</ThemedText>
+            )}
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
                 already taken by delete, and the two must not be neighbors. */}

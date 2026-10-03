@@ -24,6 +24,8 @@ export const Colors = {
     border: '#D4CDDF',
     danger: '#C4321F',
     success: '#1F7A44',
+    // Perfect-series gold (#482) — decorative only, never an interactive token.
+    celebration: '#8A6100',
   },
   // "Purple Rain" dark theme. Deep near-black purple ground with
   // purple-tinted (never gray) text and borders. Two accent options were
@@ -43,6 +45,7 @@ export const Colors = {
     border: '#7360B0',
     danger: '#FF7A85',
     success: '#4FD68C',
+    celebration: '#E8B84B', // === PURPLE_RAIN_GOLD_ACCENT_REJECTED.primary, non-interactive use
   },
 } as const;
 

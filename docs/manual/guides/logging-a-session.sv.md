@@ -37,6 +37,16 @@ decimaler beroende på program.
 Tryck på en serie för att fylla i den. Knappsatsen går vidare efter varje skott,
 så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
 
+I precision, magnumprecision och militär snabbmatch markerar knappsatsen en bra
+serie när du fyller i sista skottet. Når serien guldseriegränsen blir summan
+guldfärgad och telefonen ger en lätt vibration. Alla skott i tian — 50 i en
+femskottsserie — ger guldringar och **Bra jobbat!** En **perfekt serie** går
+ett steg längre: bara innertior, eller 10,9 med decimalräkning (54,5), och ger
+**Perfekt serie!** Det visas bara när du fyller i serien, aldrig när du öppnar
+en sparad, och med telefonens inställning för minskade rörelser ser du bara
+texten. I passets serielista visas summan för en serie med full poäng på guld, med en
+extra ring för en perfekt serie.
+
 ## Provserier
 
 Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot

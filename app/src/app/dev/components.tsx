@@ -14,6 +14,8 @@ import { ListRow } from '@/components/list-row';
 import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
+import type { Celebration } from '@/components/series-celebration';
+import { SeriesTotalPill } from '@/components/series-total-pill';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
@@ -27,6 +29,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import type { Mark } from '@/features/photo-scoring/marks';
 import { scoreMarks } from '@/features/photo-scoring/marks';
+import type { CelebrationTier } from '@/features/session/celebration';
 import type { TargetTransform } from '@/features/photo-scoring/transform';
 import { Spacing } from '@/theme/tokens';
 
@@ -93,6 +96,13 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
   },
 ];
 
+// One finished series per tier, so each celebration can be replayed on demand.
+const CELEBRATION_DEMOS: readonly { tier: CelebrationTier; label: string; values: number[] }[] = [
+  { tier: 'gold', label: 'Gold (47)', values: [100, 100, 90, 90, 90] },
+  { tier: 'fullScore', label: 'Full Score (5×10)', values: [100, 100, 100, 100, 100] },
+  { tier: 'perfect', label: 'Perfect (5×X)', values: [100, 100, 100, 100, 100] },
+];
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
@@ -108,6 +118,24 @@ export default function ComponentsGalleryScreen() {
   const [keypad, setKeypad] = useState<KeypadState>(() =>
     createKeypadState({ mode: 'integer', seriesLength: 5 }),
   );
+  const [celebrationKeypad, setCelebrationKeypad] = useState<KeypadState>(() =>
+    createKeypadState({ mode: 'integer', seriesLength: 5 }),
+  );
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+
+  function playCelebration(demo: (typeof CELEBRATION_DEMOS)[number]) {
+    setCelebrationKeypad(
+      createKeypadState({
+        mode: 'integer',
+        seriesLength: 5,
+        shots: demo.values.map((valueTenths) => ({
+          valueTenths,
+          isInnerTen: demo.tier === 'perfect',
+        })),
+      }),
+    );
+    setCelebration((prev) => ({ tier: demo.tier, id: (prev?.id ?? 0) + 1 }));
+  }
 
   return (
     <Screen fab={<FAB label="New session" onPress={() => {}} />}>
@@ -224,6 +252,34 @@ export default function ComponentsGalleryScreen() {
         </Card>
       </Section>
 
+      <Section title="Series celebration — tiers (#482)">
+        <View style={styles.wrapRow}>
+          {CELEBRATION_DEMOS.map((demo) => (
+            <PrimaryButton
+              key={demo.tier}
+              label={demo.label}
+              onPress={() => playCelebration(demo)}
+              testID={`celebrate-${demo.tier}`}
+            />
+          ))}
+        </View>
+        <Card>
+          <ScoreKeypad
+            state={celebrationKeypad}
+            onChange={setCelebrationKeypad}
+            celebration={celebration}
+            highlightTotal={celebration !== null}
+          />
+        </Card>
+      </Section>
+
+      <Section title="SeriesTotalPill (#482)">
+        <View style={styles.wrapRow}>
+          <SeriesTotalPill label="50" tier="fullScore" />
+          <SeriesTotalPill label="50" tier="perfect" />
+        </View>
+      </Section>
+
       <Section title="PrimaryButton">
         <PrimaryButton label="Save" onPress={() => {}} />
       </Section>
@@ -260,6 +316,11 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  wrapRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   headerRow: {

@@ -4,3 +4,7 @@
 export function vibrate(_durationMs = 120): void {}
 
 export function cancelVibration(): void {}
+
+export function tick(): void {}
+
+export function notifySuccess(): void {}

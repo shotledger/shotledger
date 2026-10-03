@@ -714,7 +714,9 @@
     "faltTotal": "{{hits}} träff i {{figures}} figurer",
     "poangfaltTotal": "{{points}} poäng",
     "seriesLength": "Skott per serie",
-    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott."
+    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
+    "celebrationPerfect": "Perfekt serie!",
+    "celebrationFullScore": "Bra jobbat!"
   },
   "share": {
     "title": "Dela pass",

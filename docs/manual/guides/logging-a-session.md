@@ -38,6 +38,16 @@ decimals depending on the program.
 Tap a series to enter it. The keypad advances after each shot, so you are not
 reaching for a "next" button between shots.
 
+In precision, magnum precision and militär snabbmatch, the keypad marks a good
+series as you finish it. Reaching the gold-series score turns the total gold
+with a light buzz. Every shot in the 10 ring — 50 in a five-shot series — gets
+gold rings and **Great Job!** A **perfect series** goes one further: every shot
+an inner ten, or 10.9 with decimal scoring (54.5), and gets **Perfect Series!**
+It plays only when you complete the series, never when you reopen one, and with
+the phone's reduce-motion setting on you see only the text. In the session's
+series list, a full-score total is shown on gold, with an extra ring for a
+perfect series.
+
 ## Sighters
 
 Mark a series as a **sighter** from the series menu, and it stops counting
