@@ -437,7 +437,9 @@ export default function SessionDetailScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => <SessionMenu sessionId={id} />,
+          headerRight: () => (
+            <SessionMenu sessionId={id} reportAvailable={!isRoundsSession && !isFaltSession} />
+          ),
         }}
       />
 

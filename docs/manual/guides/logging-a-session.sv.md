@@ -160,6 +160,26 @@ ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
 Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där du
 kan filtrera på gren, vapen och vapengrupp.
 
+## Passrapport
+
+**⋮ → Passrapport** gör en PDF av passet och lämnar över den till
+delningsrutan, för att skriva ut eller skicka till en tränare. Överst står
+datum, gren och vapen, sedan en sammanfattning av passet: samma resultat som
+passvyn visar (totalt, snitt per serie, innertior och eventuella delsummor),
+skottfördelningen, och alla hål från serierna räknade från foto på en tavla,
+med gruppens sidled, höjdled, medelradie och största spridning. Från 20 hål
+står en värmekarta över samma hål bredvid, som i passvyn. Provserier räknas
+inte med i sammanfattningen. Har bara några serier foto står det under
+tavlan hur många den visar.
+
+Under sammanfattningen visas serierna sida vid sida, tre per rad: varje series
+summa och skottvärden och, för en serie räknad från foto, dess egen tavla och
+gruppmått. En serie inmatad med knappsatsen visar bara värdena. Provserier och
+finalserier är märkta.
+
+Rapporten är på appens språk. Fältskjutningspass har ingen: de räknas i
+träffar på figurer, utan ringar att rita.
+
 ## Att dela eller ta bort ett pass från Hem
 
 På Hem sveper du ett pass åt vänster så visas två ikoner: dela och papperskorg.

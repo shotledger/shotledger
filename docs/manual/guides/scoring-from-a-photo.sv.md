@@ -72,9 +72,16 @@ snabbskjutningsmomentet snabbskjutningstavlan.
 4. **Kontrollera poängen**, och spara den sedan till serien. När två eller fler
    hål är markerade visas sidled, höjdled, medelradie och största spridning
    under poängen medan du markerar.
-5. **Titta på den senare.** Markeringarna och träffbildens siffror följer med
+5. **Skanna nästa serie.** I stället för Spara sparar **⋮ → Spara och skanna
+   nästa** den här serien och öppnar kameran för nästa, utan att gå tillbaka
+   till passet. Med hela matchen går den till nästa serie som fortfarande är
+   tom, och när alla andra serier är ifyllda erbjuds den inte. Annars läggs en
+   ny serie till efter den sista; den nya serien är en vanlig serie, aldrig en
+   provserie.
+6. **Titta på den senare.** Markeringarna och träffbildens siffror följer med
    fotot. Öppna fotot från serien så ser du markeringarna utritade på tavlan,
-   med siffrorna under.
+   med siffrorna under. [Passrapporten](logging-a-session.md#passrapport)
+   samlar alla seriers tavlor och siffror på en sida att skriva ut eller dela.
 
 ## Att få ett bra foto
 
