@@ -1029,6 +1029,8 @@
     "pickFromLibrary": "Choose from Library",
     "permissionDenied": "Permission was refused. Allow camera and photo access to scan a target.",
     "analyzing": "Locking onto the target…",
+    "analyzingRings": "Reading the ring lines…",
+    "analyzingStraighten": "Straightening the photo…",
     "unsupportedTitle": "Not Supported Yet",
     "unsupportedBody": "Photo scoring works on the 25 m precision and rapid-fire faces and the ISSF 10 m air pistol face. This session uses {{face}}.",
     "lockFailedTitle": "Couldn't Lock the Target",

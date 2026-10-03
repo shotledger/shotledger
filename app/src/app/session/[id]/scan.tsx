@@ -5,7 +5,7 @@
 // decides is delegated: `runGeometry` measures, `checkGeometryValidity`
 // judges, `markReducer` owns the interaction rules, `scoreHole` owns the SHB
 // edge rule. What is left here is sequencing and presentation.
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -85,6 +85,24 @@ import { Radius, Spacing } from '@/theme/tokens';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
 
+/** What the 'analyzing' card says, one stage of the lock at a time. */
+type AnalyzeStage = 'target' | 'rings' | 'straighten';
+
+const STAGE_KEYS: Record<AnalyzeStage, string> = {
+  target: 'photoScoring.analyzing',
+  rings: 'photoScoring.analyzingRings',
+  straighten: 'photoScoring.analyzingStraighten',
+};
+
+/** Starts timing a stage; the returned function logs its milliseconds to the
+ *  device log, dev builds only. */
+function timeStage(stage: string): () => void {
+  const since = performance.now();
+  return () => {
+    if (__DEV__) console.log(`[scan-timing] ${stage}: ${Math.round(performance.now() - since)} ms`);
+  };
+}
+
 const REASON_KEYS: Record<ValidityReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
   zoneFraction: 'photoScoring.reasonZoneFraction',
@@ -114,6 +132,10 @@ export default function ScanScreen() {
   const initialCaliber = resolveCaliber(firearm?.caliber);
 
   const [phase, setPhase] = useState<Phase>('capture');
+  const [stage, setStage] = useState<AnalyzeStage>('target');
+  // Bumped by Back and Retake, so an analysis still running for a photo the
+  // shooter has left is dropped when it finishes instead of applied.
+  const analyzeRun = useRef(0);
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [geometryImage, setGeometryImage] = useState<GeometryImage | null>(null);
   const [transform, setTransform] = useState<TargetTransform | null>(null);
@@ -158,9 +180,28 @@ export default function ScanScreen() {
 
   async function analyze(captured: CapturedPhoto) {
     if (!target) return;
+    const run = (analyzeRun.current += 1);
+    const current = () => analyzeRun.current === run;
+    // Each lock stage blocks the JS thread for up to a couple of seconds, and
+    // a Back or Retake pressed meanwhile is only delivered once it ends.
+    // Yielding after each stage lets that press run and bump the counter, and
+    // lets the next stage's message paint.
+    const settled = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return current();
+    };
+    const enter = (next: AnalyzeStage) => {
+      setStage(next);
+      return settled();
+    };
+    const total = timeStage('total');
+    setStage('target');
     setPhase('analyzing');
     try {
+      const prepared = timeStage('prepare');
       const image = await prepareGeometryImage(captured);
+      prepared();
+      if (!(await enter('target'))) return;
       setGeometryImage(image);
       // Set before the pipeline runs, so a pipeline throw still reaches the
       // corner screen with four handles to drag.
@@ -173,6 +214,7 @@ export default function ScanScreen() {
         return;
       }
       let disc: { result: GeometryPipelineResult; validity: ValidityResult } | null = null;
+      const discLocked = timeStage('disc lock');
       try {
         const result = runGeometry({
           base64: image.base64,
@@ -186,6 +228,7 @@ export default function ScanScreen() {
         // A pipeline throw ("no dark region found") is the same product
         // outcome as a failed gate: the disc lock could not lock the target.
       }
+      discLocked();
       const discTransform = disc?.validity.valid ? fromRectification(disc.result.transform) : null;
 
       // A close-up of the inner rings has no disc edge to lock on, but its
@@ -196,13 +239,16 @@ export default function ScanScreen() {
       const discToMm =
         (discTransform && invertHomography(homographyOf(discTransform))) ?? undefined;
       if (isAutoFace(faceId)) {
+        if (!(await enter('rings'))) return;
+        const closeupLocked = timeStage('close-up lock');
         try {
-          const run = runCloseupLock({ base64: image.base64, discToMm });
-          closeup = run.lock;
-          discOffsetMm = run.discRingOffsetMm;
+          const lock = runCloseupLock({ base64: image.base64, discToMm });
+          closeup = lock.lock;
+          discOffsetMm = lock.discRingOffsetMm;
         } catch (error: unknown) {
           if (__DEV__) console.warn('close-up lock failed', error);
         }
+        closeupLocked();
       }
 
       const choice = chooseLock({
@@ -211,6 +257,17 @@ export default function ScanScreen() {
         closeup,
         discToMm,
       });
+      const toImage = closeup && invertHomography(closeup.toMm);
+      const closeupMapping =
+        choice === 'closeup' && closeup && toImage ? { toMm: closeup.toMm, toImage } : null;
+      let rectified: RectifiedCanvas | null = null;
+      if (closeupMapping) {
+        if (!(await enter('straighten'))) return;
+        rectified = rectify(image.base64, closeupMapping.toMm, target);
+      }
+      if (!(await settled())) return;
+      total();
+
       if (choice === 'disc' && disc && discTransform) {
         setTransform(discTransform);
         setCanvas(disc.result.canvas);
@@ -218,16 +275,19 @@ export default function ScanScreen() {
         suggestHoles(disc.result.canvas, target);
         return;
       }
-      const toImage = closeup && invertHomography(closeup.toMm);
-      if (choice === 'closeup' && closeup && toImage) {
-        setTransform(fromProjective({ toMm: closeup.toMm, toImage }, 'closeup'));
+      if (closeupMapping) {
+        setTransform(fromProjective(closeupMapping, 'closeup'));
         setPhase('marking');
-        straighten(image.base64, closeup.toMm, target);
+        if (rectified) {
+          setCanvas(rectified);
+          suggestHoles(rectified, target);
+        }
         return;
       }
       setReasons(disc ? disc.validity.reasons : ['zoneContrast']);
       setPhase('rejected');
     } catch {
+      if (!current()) return;
       setReasons(['zoneContrast']);
       setPhase('rejected');
     }
@@ -236,19 +296,25 @@ export default function ScanScreen() {
   /**
    * The rectified canvas from a projective mm mapping — a close-up lock or
    * corners placed by hand — so tap-snap and the hole detector help as they
-   * do on a disc lock. Without it the shooter marks by hand.
+   * do on a disc lock. Null when it fails: the shooter then marks by hand.
    */
-  function straighten(base64: string, toMm: Homography, face: NonNullable<typeof target>) {
+  function rectify(
+    base64: string,
+    toMm: Homography,
+    face: NonNullable<typeof target>,
+  ): RectifiedCanvas | null {
+    const rectified = timeStage('rectify');
     try {
-      const rectified = rectifyFromHomography({
+      return rectifyFromHomography({
         base64,
         toMm,
         outerRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
       });
-      setCanvas(rectified);
-      suggestHoles(rectified, face);
     } catch (error: unknown) {
       if (__DEV__) console.warn('rectify from homography failed', error);
+      return null;
+    } finally {
+      rectified();
     }
   }
 
@@ -327,6 +393,21 @@ export default function ScanScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on arrival
   }, []);
 
+  // Leaving the screen (header or hardware Back) disowns a running analysis
+  // as soon as the navigator starts removing the screen, not at unmount after
+  // the transition.
+  const navigation = useNavigation();
+  useEffect(() => {
+    const cancel = () => {
+      analyzeRun.current += 1;
+    };
+    const unsubscribe = navigation.addListener('beforeRemove', cancel);
+    return () => {
+      unsubscribe();
+      cancel();
+    };
+  }, [navigation]);
+
   function onUseCorners() {
     if (!target) return;
     // No default ring: assuming the outermost one when the points sit on an
@@ -347,11 +428,16 @@ export default function ScanScreen() {
     // straightened too. Only on the face tap-snap and the detector were
     // measured on.
     if (geometryImage && isAutoFace(faceId)) {
-      straighten(geometryImage.base64, projective.toMm, target);
+      const rectified = rectify(geometryImage.base64, projective.toMm, target);
+      if (rectified) {
+        setCanvas(rectified);
+        suggestHoles(rectified, target);
+      }
     }
   }
 
   function onRetake() {
+    analyzeRun.current += 1;
     setPhoto(null);
     setGeometryImage(null);
     setTransform(null);
@@ -626,7 +712,9 @@ export default function ScanScreen() {
         {phase === 'analyzing' && (
           <Card>
             <ActivityIndicator testID="scan-analyzing" />
-            <ThemedText themeColor="textSecondary">{t('photoScoring.analyzing')}</ThemedText>
+            <ThemedText themeColor="textSecondary" testID="scan-analyzing-stage">
+              {t(STAGE_KEYS[stage])}
+            </ThemedText>
           </Card>
         )}
 

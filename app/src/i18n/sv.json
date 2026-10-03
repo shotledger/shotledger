@@ -1029,6 +1029,8 @@
     "pickFromLibrary": "Välj från biblioteket",
     "permissionDenied": "Behörighet nekades. Tillåt kamera och foton för att skanna en tavla.",
     "analyzing": "Låser på tavlan…",
+    "analyzingRings": "Läser av ringlinjerna…",
+    "analyzingStraighten": "Rätar upp fotot…",
     "unsupportedTitle": "Stöds inte ännu",
     "unsupportedBody": "Fotoräkning fungerar på 25 m precisions- och snabbskjutningstavla och ISSF:s 10 m luftpistoltavla. Det här passet använder {{face}}.",
     "lockFailedTitle": "Kunde inte låsa tavlan",

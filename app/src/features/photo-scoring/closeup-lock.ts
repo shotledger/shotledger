@@ -22,6 +22,7 @@
 import { reflectIndex } from '@shotledger/shared';
 
 import { applyHomography, type Homography } from './corners';
+import { quantile } from './order-statistics';
 import { invertHomography } from './transform';
 
 // ---------------------------------------------------------------- constants
@@ -324,15 +325,6 @@ function median(values: Float64Array): number {
   const s = Float64Array.from(values).sort();
   const mid = n >> 1;
   return n % 2 ? (s[mid] as number) : ((s[mid - 1] as number) + (s[mid] as number)) / 2;
-}
-
-/** numpy's linear quantile. */
-function quantile(values: Float64Array, q: number): number {
-  const s = Float64Array.from(values).sort();
-  const pos = q * (s.length - 1);
-  const lo = Math.floor(pos);
-  const hi = Math.min(lo + 1, s.length - 1);
-  return (s[lo] as number) + ((s[hi] as number) - (s[lo] as number)) * (pos - lo);
 }
 
 /** Gaussian elimination with partial pivoting; null when singular. */
