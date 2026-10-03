@@ -4,9 +4,9 @@
 // details, weapon group/class, firearm, ammo lot, tags. Share is NOT here:
 // beside Save it read as "save and share" on a form with unsaved changes
 // (maintainer, 2026-09-15), and the session ⋮ menu already owns it.
-// Discipline/program
-// and type are not editable here (they drive the series skeleton and are
-// excluded from `UpdateSessionInput` on purpose).
+// Discipline and type are not editable here (they drive the series skeleton and
+// are excluded from `UpdateSessionInput` on purpose). The match format is, but
+// only until the first result (#475, db/queries/match-format.ts).
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -17,6 +17,8 @@ import {
   eventsForDiscipline,
   findEvent,
   formatShooterClass,
+  getProgram,
+  programsForDiscipline,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
 } from '@shotledger/shared';
@@ -36,6 +38,7 @@ import { db } from '@/db/client';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { listFirearms } from '@/db/queries/firearms';
+import { canChangeMatchFormat, changeMatchFormat } from '@/db/queries/match-format';
 import { getSession, updateSession } from '@/db/queries/sessions';
 import {
   addSessionTag,
@@ -46,10 +49,15 @@ import {
 import {
   COMPETITION_LEVELS,
   formatLocalDate,
+  matchFormatHint,
+  matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
 import { withLocalDay } from '@/features/session/with-local-day';
 import { Spacing } from '@/theme/tokens';
+
+// The picker's value for Free Format, as on the new-session form.
+const FREE_FORMAT = 'none';
 
 export default function EditSessionScreen() {
   const { t, i18n } = useTranslation();
@@ -75,6 +83,7 @@ export default function EditSessionScreen() {
   const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
   const [firearmId, setFirearmId] = useState<string | null>(session?.firearmId ?? null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(session?.ammoLotId ?? null);
+  const [programId, setProgramId] = useState(session?.programId ?? FREE_FORMAT);
   const [tags, setTags] = useState(() => (db ? listTagsForSession(db, id) : []));
   const [newTag, setNewTag] = useState('');
 
@@ -113,6 +122,10 @@ export default function EditSessionScreen() {
   const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);
   const firearms = listFirearms(db);
   const ammoLots = listAmmoLots(db);
+  const programs = session.kind === 'series' ? programsForDiscipline(session.disciplineId) : [];
+  const formatEditable = canChangeMatchFormat(db, session.id);
+  const chosenProgram = programId === FREE_FORMAT ? undefined : getProgram(programId);
+  const programHint = chosenProgram ? matchFormatHint(t, chosenProgram) : null;
 
   const toOptions = <T extends string>(
     values: readonly { value: T; label: string }[],
@@ -153,6 +166,8 @@ export default function EditSessionScreen() {
       ammoLotId,
       seriesEntryMode,
     });
+    const nextProgramId = programId === FREE_FORMAT ? null : programId;
+    if (nextProgramId !== session.programId) changeMatchFormat(db, session.id, nextProgramId);
     router.back();
   }
 
@@ -188,6 +203,45 @@ export default function EditSessionScreen() {
         <ThemedText type="smallBold">{t('session.notes')}</ThemedText>
         <TextField value={notes} onChangeText={setNotes} multiline testID="edit-notes" />
       </Card>
+
+      {programs.length > 0 && (
+        <Card>
+          {formatEditable ? (
+            <>
+              <OptionPicker
+                label={t('session.matchFormat')}
+                options={toOptions(
+                  [
+                    { value: FREE_FORMAT, label: t('session.freeFormat') },
+                    ...programs.map((p) => ({
+                      value: p.id,
+                      label: matchFormatLabel(t, p.id, programs.length),
+                    })),
+                  ],
+                  'edit-program',
+                )}
+                value={programId}
+                onChange={setProgramId}
+              />
+              {programHint && (
+                <ThemedText type="small" themeColor="textSecondary" testID="edit-program-hint">
+                  {programHint}
+                </ThemedText>
+              )}
+            </>
+          ) : (
+            <>
+              <ThemedText type="smallBold">{t('session.matchFormat')}</ThemedText>
+              <ThemedText testID="edit-program-locked">
+                {matchFormatLabel(t, session.programId, programs.length)}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('session.matchFormatLocked')}
+              </ThemedText>
+            </>
+          )}
+        </Card>
+      )}
 
       {isCompetition && (
         <Card>

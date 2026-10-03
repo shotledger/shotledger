@@ -593,6 +593,7 @@
     "fullMatchHintSighter": "Lägger upp en provserie och {{series}} tävlingsserier.",
     "fullMatchHintSighterTimed": "Lägger upp en provserie och {{series}} tävlingsserier på {{times}} s.",
     "fullMatchHintFinal": "En final kan startas när tävlingsserierna är klara.",
+    "matchFormatLocked": "Kan inte längre ändras: passet har resultat.",
     "competitionLevel": "Tävlingsnivå",
     "championship": "Mästerskap",
     "competitionName": "Tävlingens namn",
