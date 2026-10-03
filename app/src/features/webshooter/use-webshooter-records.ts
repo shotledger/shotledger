@@ -3,6 +3,13 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
+  faltPbCoverage,
+  faltPersonalBests,
+  parseFaltPbGroupKey,
+  poangfaltPoints,
+  type FaltResultMode,
+} from '@shotledger/shared';
+import {
   personalBests,
   bestNSeries,
   bestSession,
@@ -19,6 +26,8 @@ import {
 } from '@shotledger/shared/src/integrations/webshooter/stats/yearOverYear';
 
 import { db } from '@/db/client';
+import { listSessions } from '@/db/queries/sessions';
+import { listFaltAnalyticsSessions } from '@/db/queries/stats';
 import {
   countAllSessions,
   listCompetitionResultsForStats,
@@ -38,6 +47,21 @@ export interface FreeformPbRow {
   bestSessionTenths: number | null;
 }
 
+export interface FaltPbRow {
+  groupKey: string;
+  disciplineId: string;
+  weaponGroupId: string | null;
+  mode: FaltResultMode;
+  stationCount: number;
+  sessionId: string;
+  sessionName: string;
+  startedAt: string;
+  hits: number;
+  figuresHit: number;
+  /** The poängfält sum — what a poängfält row shows. */
+  points: number;
+}
+
 export interface YoYGroupRow {
   groupKey: string;
   years: YearStat[];
@@ -52,6 +76,8 @@ export interface WebshooterRecordsData {
   /** What each section was computed from — never optional (#318). */
   officialCoverage: PbCoverage;
   freeformCoverage: PbCoverage;
+  faltPbs: FaltPbRow[];
+  faltCoverage: PbCoverage;
 }
 
 const NO_COVERAGE: PbCoverage = { considered: 0, counted: 0, ungrouped: 0 };
@@ -64,6 +90,8 @@ function computeRecords(): WebshooterRecordsData {
       yearOverYear: [],
       officialCoverage: NO_COVERAGE,
       freeformCoverage: NO_COVERAGE,
+      faltPbs: [],
+      faltCoverage: NO_COVERAGE,
     };
   }
 
@@ -91,6 +119,21 @@ function computeRecords(): WebshooterRecordsData {
     bestSessionTenths: bestOverall.get(groupKey)?.totalTenths ?? null,
   }));
 
+  const faltSessions = listFaltAnalyticsSessions(db);
+  const nameById = new Map(listSessions(db).map((session) => [session.id, session.name] as const));
+  const faltPbs: FaltPbRow[] = [...faltPersonalBests(faltSessions)]
+    .map(([groupKey, pb]) => ({
+      groupKey,
+      ...parseFaltPbGroupKey(groupKey),
+      sessionId: pb.sessionId,
+      sessionName: nameById.get(pb.sessionId) ?? pb.sessionId,
+      startedAt: pb.startedAt,
+      hits: pb.result.hits,
+      figuresHit: pb.result.figuresHit,
+      points: poangfaltPoints(pb.result),
+    }))
+    .sort((a, b) => a.groupKey.localeCompare(b.groupKey));
+
   const yoyMap = yearStats(competitionResults);
   const yearOverYear: YoYGroupRow[] = [...yoyMap.entries()].map(([groupKey, byYear]) => {
     const years = yearsWithData(byYear)
@@ -112,6 +155,8 @@ function computeRecords(): WebshooterRecordsData {
     yearOverYear,
     officialCoverage: officialPbCoverage(competitionResults),
     freeformCoverage: freeformPbCoverage(freeformSessions, totalSessions),
+    faltPbs,
+    faltCoverage: faltPbCoverage(faltSessions, totalSessions),
   };
 }
 

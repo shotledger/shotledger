@@ -44,5 +44,14 @@ any open picker closed.
   and the labels name the year whenever the range crosses one. Past eight
   disciplines the chart says how many it left out rather than giving two of
   them the same colour.
+- **Fältskjutning**, when the report holds fält sessions: stations, hits,
+  figures hit, the hit rate (hits out of six per station) and a chart of hits
+  per station over time. Only stations that count are in it — a scratched or
+  särskjutning station is not part of a result. Pick _Fältskjutning_ as the
+  discipline and the ring cards above are left out, since none of them can say
+  anything about a fält round.
 - **Export** as PDF or JSON. The JSON carries the filter — sighter setting
   included — alongside the numbers.
+
+A **Shots per Series** filter leaves fält sessions out: a fält round has
+stations, not series, so it has no series length to match.

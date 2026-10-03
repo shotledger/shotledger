@@ -121,6 +121,24 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_007
+    title: A fält personal best compares like with like
+    significance: shall
+    description: >-
+      The app shall keep a fält personal best per discipline, vapengrupp, result
+      mode and number of scoring stations, shall rank rounds in a group by SHB's
+      särskiljning order for that mode, and shall count a round's stations after
+      scratched and särskjutning stations are removed — so a ten-station round
+      with two scratched competes with eight-station rounds.
+    rationale: >-
+      Hits out of eight stations and hits out of ten are not the same scale, and
+      vanlig fält and poängfält rank the same round differently (SHB 2026
+      D.6.11.2.1.1–2 pp. 95–96). A best that mixed them would name the round
+      with the most stations, not the best shooting.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall

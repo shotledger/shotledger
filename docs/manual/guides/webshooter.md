@@ -91,6 +91,12 @@ There are two sets, because they answer different questions:
   official best however good the score.
 - **Your own bests** ignore all of that and look at every session you logged —
   best five series, best ten, best whole session.
+- **Fältskjutning bests** are kept per weapon group and **number of stations
+  that counted**, because hits out of eight stations and out of ten are not
+  the same scale. A ten-station championship with two stations scratched is an
+  eight-station result and competes with your kretsfält rounds. Rounds are
+  ranked the way SHB places them — hits, then figures — and poängfält rounds
+  are kept apart, by their points. Tap a best to open the session.
 
 Bests are grouped by **discipline and weapon group**. Your shooter class is not
 part of it: moving from klass 2 to klass 3 does not reset your best with a gun.

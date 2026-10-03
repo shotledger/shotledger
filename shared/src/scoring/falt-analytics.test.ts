@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { ANY_ANALYTICS_FILTER, type AnalyticsFilter } from './analytics';
 import { type FaltStationEntry } from './falt';
 import {
+  faltPbCoverage,
   faltPbGroupKey,
   faltPersonalBests,
   faltReportTotals,
@@ -287,4 +288,18 @@ it('PB4: a ten-station round with two scratched competes with eight-station roun
   });
   expect([...pbs.keys()]).toEqual([group]);
   expect(pbs.get(group)?.sessionId).toBe('sm');
+});
+
+describe('faltPbCoverage', () => {
+  it('PB5: counts the sessions that reached a group, and the ungrouped among them', () => {
+    const coverage = faltPbCoverage(
+      [
+        session({ id: 'a' }),
+        session({ id: 'ungrouped', weaponGroup: null }),
+        session({ id: 'scratched', stations: [station(6, 0, { isScratched: true })] }),
+      ],
+      40,
+    );
+    expect(coverage).toEqual({ considered: 40, counted: 2, ungrouped: 1 });
+  });
 });

@@ -176,3 +176,16 @@ export function faltPersonalBests(
     ]),
   );
 }
+
+/** Same shape as the ring sections' `PbCoverage`, so Records can say what a fält best is the best OF. */
+export function faltPbCoverage(
+  sessions: readonly FaltAnalyticsSession[],
+  consideredSessionCount: number,
+): { considered: number; counted: number; ungrouped: number } {
+  const counted = sessions.filter((session) => scoringStations(session.stations).length > 0);
+  return {
+    considered: consideredSessionCount,
+    counted: counted.length,
+    ungrouped: counted.filter((session) => session.weaponGroup === null).length,
+  };
+}

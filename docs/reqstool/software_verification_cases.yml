@@ -42,6 +42,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_007
+    requirement_ids: ['SCORE_007']
+    title: Verify a ten-station round with two scratched is grouped and ranked with eight-station rounds
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not

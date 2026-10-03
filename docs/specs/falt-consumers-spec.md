@@ -188,8 +188,11 @@ Personal bests (§B.0.3):
 - **PB4** A 10-station round with two scratched groups with 8-station rounds.
 - **PB5** UI: Records lists one row per group — "Fältskjutning · C · 8
   stations" with the result in that mode's words — and the row opens the
-  session. The freeform coverage line counts a session with a fält PB group as
-  counted.
+  session. _Revised during implementation:_ fält gets **its own** coverage
+  line (`faltPbCoverage`: counted = sessions with a scoring station,
+  ungrouped = those without a vapengrupp) under its own section, instead of
+  folding into the freeform line — one line describing two different bases
+  would say neither.
 - **PB6** Records' group label falls back to the discipline's own name, so no
   raw `discipline.spsf-falt` key is ever shown.
 
