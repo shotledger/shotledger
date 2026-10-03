@@ -228,3 +228,17 @@ export function coarseToFineRefine(
 
   return { dxMm: bestDx, dyMm: bestDy, scale: bestScale, score: bestScore };
 }
+
+/**
+ * The transform a `coarseToFineRefine` search settles on. Its `scale` is the
+ * one the rings were scored at (ring r mm at r * pxPerMm * scale on the
+ * canvas), so a target-mm is a base-mm *divided* by it: `refineRectification`
+ * takes the reciprocal. Passing the search's scale straight through put the
+ * disc lock's transform off by scale squared (#496).
+ */
+export function applyRefinement(
+  t: RectificationTransform,
+  result: Pick<CoarseToFineResult, 'dxMm' | 'dyMm' | 'scale'>,
+): RectificationTransform {
+  return refineRectification(t, result.dxMm, result.dyMm, 1 / result.scale);
+}

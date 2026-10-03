@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  applyRefinement,
   buildRectification,
   coarseToFineRefine,
   imageToTargetMm,
@@ -473,5 +474,52 @@ describe('geometry properties', () => {
         },
       ),
     );
+  });
+});
+
+// spec table AR — applyRefinement
+describe('applyRefinement', () => {
+  // A canvas at 4 px/mm whose printed rings sit 6% further out than the base
+  // transform assumes: ring r mm at r * 4 * 1.06 px. The search scores rings
+  // at r * 4 * scale, so it settles on 1.06, and a ring must then come out at
+  // r mm, not r * 1.06^2.
+  const PX_PER_MM = 4;
+  const TRUE_SCALE = 1.06;
+  const RINGS = [25, 50, 75, 100];
+  const base: RectificationTransform = {
+    center: { x: 0, y: 0 },
+    m: [1 / PX_PER_MM, 0, 0, 1 / PX_PER_MM],
+    offset: { x: 0, y: 0 },
+  };
+  const profile = new Float64Array(600);
+  for (const r of RINGS) profile[Math.round(r * PX_PER_MM * TRUE_SCALE)] = 1;
+  const result = coarseToFineRefine((_dx, _dy, scale) =>
+    scoreRadialProfile(profile, PX_PER_MM * scale, RINGS),
+  );
+
+  it('AR1: the search settles on the scale the rings were drawn at', () => {
+    expect(result.scale).toBeCloseTo(TRUE_SCALE, 2);
+  });
+
+  it('AR2: a printed ring maps back to its own radius in mm', () => {
+    const t = applyRefinement(base, { dxMm: 0, dyMm: 0, scale: result.scale });
+    for (const r of RINGS) {
+      const mm = imageToTargetMm(t, { x: r * PX_PER_MM * TRUE_SCALE, y: 0 });
+      // within the search's scale resolution (0.5%), where the old
+      // pass-through put it 12% out
+      expect(Math.abs(mm.x - r)).toBeLessThan(0.005 * r);
+    }
+  });
+
+  it('AR3: is refineRectification with the reciprocal scale, and the shift unchanged', () => {
+    const r = { dxMm: 1.5, dyMm: -2, scale: 1.08 };
+    const p = { x: 37, y: -12 };
+    expect(imageToTargetMm(applyRefinement(base, r), p)).toEqual(
+      imageToTargetMm(refineRectification(base, r.dxMm, r.dyMm, 1 / r.scale), p),
+    );
+    // the shift is in base mm: the refined centre is (dx, dy) of the base
+    const c = imageToTargetMm(applyRefinement(base, r), { x: 1.5 * PX_PER_MM, y: -2 * PX_PER_MM });
+    expect(c.x).toBeCloseTo(0, 12);
+    expect(c.y).toBeCloseTo(0, 12);
   });
 });
