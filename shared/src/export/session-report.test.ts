@@ -146,7 +146,9 @@ describe('buildSessionReportHtml', () => {
     ]);
     expect(at).toContain('<div class="plot-caption">All Series · Heatmap</div>');
     expect(count(at, '<svg')).toBe(2);
-    expect(at).toContain('fill="#f97316"');
+    // Drawn over the face, blurred, hottest cell whitening past red.
+    expect(at).toContain('filter="url(#heat-blur)"');
+    expect(at).toMatch(/fill="#ff[d-f][0-9a-f]{3}" fill-opacity="0\.9"/);
   });
 
   it('prints the shot distribution as value over count', () => {

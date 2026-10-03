@@ -5,7 +5,8 @@
 //
 // Shared does no i18n: every label and formatted value comes from the caller.
 import { analyzeGroup } from '../scoring/group';
-import { buildHeatmap, MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
+import { MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
+import { densityGrid, heatColor } from './heat-density';
 import type { TargetFaceDefinition } from '../target-scoring/targets';
 
 function escapeHtml(value: string): string {
@@ -77,10 +78,6 @@ export interface SessionReportSummary {
 const PAPER = '#f4f0e8';
 const INK = '#1c1c1e';
 const ON_BLACK = '#f2ede3';
-// Heat cells, as components/shot-heatmap.tsx.
-const HEAT = '#f97316';
-const HEAT_MIN_OPACITY = 0.18;
-const HEAT_MAX_OPACITY = 0.82;
 // Marks and group overlay, as components/group-plot.tsx.
 const SHOT_FILL = '#2563eb';
 const SHOT_STROKE = '#93c5fd';
@@ -108,18 +105,8 @@ export function reportViewHalfMm(
   return Math.min(outermost, radii[holding + 1] ?? outermost) * 1.05;
 }
 
-/**
- * The target face with its marks as an inline SVG string, drawn in target-mm
- * user space — the string twin of `TargetFace` + `GroupPlot` in the app,
- * framed on the marks by `reportViewHalfMm`.
- */
-export function targetFaceSvg(
-  target: TargetFaceDefinition,
-  marks: readonly SessionReportMark[],
-  sizePx: number,
-  mode: 'marks' | 'heatmap' = 'marks',
-): string {
-  const half = reportViewHalfMm(target, marks);
+/** The bare face — paper, black, rings, ring numbers — over a `half`-mm view. */
+function faceParts(target: TargetFaceDefinition, half: number): string[] {
   const extent = half * 2;
   const stroke = extent / 250;
   const fontSize = extent * 0.032;
@@ -152,19 +139,22 @@ export function targetFaceSvg(
       );
     }
   });
-  if (mode === 'heatmap') {
-    // Binned over the whole face, as the app's ShotHeatmap; the view crops it.
-    const faceExtent = target.rings[target.rings.length - 1]?.diameterMm || 1;
-    const heatmap = buildHeatmap(marks, faceExtent);
-    const faceHalf = faceExtent / 2;
-    for (const cell of heatmap?.cells ?? []) {
-      const opacity = HEAT_MIN_OPACITY + cell.intensity * (HEAT_MAX_OPACITY - HEAT_MIN_OPACITY);
-      parts.push(
-        `<rect x="${n(cell.column * heatmap!.cellSizeMm - faceHalf)}" y="${n(cell.row * heatmap!.cellSizeMm - faceHalf)}" width="${n(heatmap!.cellSizeMm)}" height="${n(heatmap!.cellSizeMm)}" fill="${HEAT}" fill-opacity="${n(opacity)}"/>`,
-      );
-    }
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}">${parts.join('')}</svg>`;
-  }
+  return parts;
+}
+
+/**
+ * The target face with its marks as an inline SVG string, drawn in target-mm
+ * user space — the string twin of `TargetFace` + `GroupPlot` in the app,
+ * framed on the marks by `reportViewHalfMm`.
+ */
+export function targetFaceSvg(
+  target: TargetFaceDefinition,
+  marks: readonly SessionReportMark[],
+  sizePx: number,
+): string {
+  const half = reportViewHalfMm(target, marks);
+  const extent = half * 2;
+  const parts = faceParts(target, half);
   for (const mark of marks) {
     parts.push(
       `<circle cx="${n(mark.xMm)}" cy="${n(mark.yMm)}" r="${n(mark.caliberMm / 2)}" fill="${SHOT_FILL}" stroke="${SHOT_STROKE}" stroke-width="${n(mark.caliberMm / 8)}" opacity="0.85"/>`,
@@ -182,6 +172,34 @@ export function targetFaceSvg(
     );
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}">${parts.join('')}</svg>`;
+}
+
+/**
+ * A smooth density of the marks laid over the face, as a sports heat map over
+ * the pitch: empty ground stays clear, color and opacity rise with density.
+ * Same view as `targetFaceSvg`.
+ */
+export function heatDensitySvg(
+  target: TargetFaceDefinition,
+  marks: readonly SessionReportMark[],
+  sizePx: number,
+): string {
+  const half = reportViewHalfMm(target, marks);
+  const extent = half * 2;
+  const parts = faceParts(target, half);
+  const grid = densityGrid(marks, extent);
+  const cells: string[] = [];
+  for (const [index, value] of (grid?.values ?? []).entries()) {
+    if (!grid || value < 0.04) continue;
+    const row = Math.floor(index / grid.resolution);
+    const column = index % grid.resolution;
+    // Overlap each cell slightly so the blur leaves no seams.
+    cells.push(
+      `<rect x="${n(column * grid.cellSizeMm - half)}" y="${n(row * grid.cellSizeMm - half)}" width="${n(grid.cellSizeMm * 1.05)}" height="${n(grid.cellSizeMm * 1.05)}" fill="${heatColor(value)}" fill-opacity="${n(Math.min(0.9, 0.25 + value * 0.75))}"/>`,
+    );
+  }
+  const blur = grid ? n(grid.cellSizeMm * 0.8) : '0';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}"><defs><filter id="heat-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs>${parts.join('')}<g filter="url(#heat-blur)">${cells.join('')}</g></svg>`;
 }
 
 function figuresTable(figures: readonly SessionReportField[]): string {
@@ -204,7 +222,7 @@ function summarySection(summary: SessionReportSummary): string {
         plot.marks.length >= MIN_SHOTS_FOR_HEATMAP
           ? `<div class="plot">
       <div class="plot-caption">${escapeHtml(plot.heatmapCaption)}</div>
-      <div class="face">${targetFaceSvg(plot.target, plot.marks, 240, 'heatmap')}</div>
+      <div class="face">${heatDensitySvg(plot.target, plot.marks, 240)}</div>
     </div>`
           : '';
       return `<div class="plot">
