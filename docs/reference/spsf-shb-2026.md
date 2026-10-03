@@ -273,7 +273,7 @@ placement (D.6.11.2.3 p. 96).
 - **One (1) omskjutning per start for vapenfel** (D.6.8.1 p. 92: "Skytt
   äger rätt till 1 omskjutning per start på grund av vapenfel.
   Särskjutning räknas som ny start."). This is **not** graded by
-  vapengrupp, unlike milsnabb's J.6.8.1 — see `VERIFY:` below.
+  vapengrupp, unlike milsnabb's J.6.8.1.
 - Qualifying causes are enumerated (D.6.8 p. 92): visible feed/ejection
   fault, a klickad patron in the chamber, fewer than 6 rounds in a
   correctly inserted magazine, failure to fire on test with the slide
@@ -532,52 +532,56 @@ Skjutställningar are stående, knästående, sittande and liggande, with or
 without stödhand, or valfri (D.6.3 p. 89); liggande or knästående must be
 announced in the inbjudan.
 
-### `VERIFY:` — fält questions SHB upplaga 21 does not answer
+### Fält questions SHB upplaga 21 does not settle — resolved
 
-None of these may be inferred from the WebShooter cache or from practice.
+Each was a `VERIFY:` until the maintainer ruled on it (2026-09-22) or a
+fresh read of SHB 2026 showed where the decision lies (2026-10-03).
 
-- `VERIFY:` **Poängmål / ringade figurer — the ring values.** SHB names
-  poängmål and ringade figurer repeatedly for fält (D.6.10.1 p. 93,
-  D.6.11.2.1.1–2 pp. 95–96, D.6.11.3 p. 97) but Del D defines **no ring
-  scheme, no ring diameters and no valör range** for a fält figure. The
-  only concrete numbers are Stolpskottet's ring Ø 12 cm (p. 109) and
-  Lurifaxen being barred as a poängmål (p. 109). Where are a ringed fält
-  figure's valörer defined, and is the arrangör free to choose them?
-- `VERIFY:` **How many stations carry poängmål in plain fält.** Magnumfält
-  requires at least two (E.6.1 p. 135); Del D states no minimum at all,
-  only "eventuellt förekommande ringad(e) figur(er)". Is a plain-fält
-  poängmål wholly at the arrangör's discretion?
-- `VERIFY:` **Is "poängfältskjutning" chosen per competition, and must it
-  be announced?** D.6.11 p. 95 and D.10.3 p. 117 describe it as a distinct
-  tävlingsform with its own rules (free eldfördelning; six hits in one
-  figure may count; both easy and hard figures on every station,
-  D.10.4 p. 118) — but SHB does not say who decides, or when.
-- `VERIFY:` **Does a särskjutning's result enter the recorded score, or
-  only the placement?** D.6.11.3 p. 97 numbers särskjutning series as
-  stations 11, 12 … yet describes them purely as deciding the medallists
-  and the order behind them. Which number is "the result" — main round
-  only, or main round plus särskjutning?
-- `VERIFY:` **Does a särskjutning have a sighter?** SHB gives fält no
-  provskott at all (D.6.6 p. 91) and says nothing special for
-  särskjutning; confirm there is genuinely none.
-- `VERIFY:` **Omskjutning count per vapengrupp.** D.6.8.1 p. 92 says
-  flatly **1 per start**, with no vapengrupp split. Is the fält figure 1
-  for every vapengrupp, or is there a source outside SHB Del D?
-- `VERIFY:` **A station "deemed wrong" and scratched.** SHB Del D has no
-  such concept: a faulty target, faulty målspel or funktionär error
-  triggers **omskjutning of that station for the affected shooters**
-  (D.6.9 p. 92), not annulment. Is scratching a station a real SHB
-  instrument (and if so, where), a jury/tävlingsledning power under Del C,
-  or a practice? And what makes a mästerskap invalid if it happens —
-  C.3.6.1.2 p. 55's "minst 48 skott" is the only stated minimum, and it is
-  expressed in shots.
-- `VERIFY:` **`OptR` / an optics variant of vapengrupp R.** SHB fält has
-  A, A optisk, B, C and R only (D.4 pp. 82–86; C.5.1.1.2 p. 69). Is
-  `OptR` a sanctioned SPSF vapengrupp, a krets-level local class, or a
-  WebShooter artefact?
-- `VERIFY:` **Fältskyttemärket for vapengrupp A optisk.** The tables at
-  mom 5.7.1 pp. 462–463 cover A, B/C and R only. Does an A-optisk shooter
-  use the A row, or is the märke unavailable in that vapengrupp?
+- **Poängmål ring values: the arrangör chooses** (maintainer, 2026-09-22).
+  Del D defines no ring scheme, diameters or valör range for a fält figure
+  (D.6.10.1 p. 93, D.6.11.2.1.1–2 pp. 95–96); only Stolpskottet's ring
+  Ø 12 cm and Lurifaxen's exclusion are concrete (p. 109). Schemes such as
+  1–5 or 1–10 occur, so the shooter records points scored and the maximum
+  per station.
+- **Poängmål stations in plain fält: the arrangör's choice.** Del D speaks
+  only of "eventuellt förekommande ringad(e) figur(er), där det av
+  förutsättningarna tydligt framgår att målen är poängmål för
+  särskiljning" (D.6.11.2.1.1 p. 95, D.6.11.2.2.1–2 p. 96), and the
+  förutsättningar list (D.9.14 p. 116) has no poängmål item. Only
+  magnumfält sets a minimum of two (E.6.1 p. 135).
+- **Poängfält vs vanlig fält: the arrangör's choice, known before the
+  start.** The organisationskommitté fixes the programme and issues the
+  inbjudan (C.4.3.1.3 p. 66, C.4.3.1.5 p. 66), and "formerna för
+  tävlingens genomförande [ska vara] delgivna och klara för alla skyttar
+  före tävlingens påbörjande" (D.6 p. 88). SHB names no deadline beyond
+  the målförutsättningar rule for mästerskap (C.3.5.2.2 p. 54).
+- **Särskjutning decides placement only** (maintainer, 2026-09-22). It
+  never enters the recorded score.
+- **No sighter in a fält särskjutning.** Fält has no provskott (D.6.6
+  p. 91), and särskjutning stations follow "SHB regler för
+  fältskyttestationer" (D.6.11.3 p. 97). Magnumfält's särskjutning on a
+  "särskild skjutstation" (E.6.11.3 p. 140) is a different rule.
+- **Omskjutning: one per start, every vapengrupp** (D.6.8.1 p. 92).
+  Nothing in Del D or SäkB grades it by vapengrupp; that split is
+  milsnabb's (J.6.8.1). An omskjutning ordered for a faulty target,
+  målspel or funktionär (D.6.9 p. 92) does not use up the allowance.
+- **A station can be scratched** (maintainer, 2026-09-22): kept, marked,
+  and left out of the result. SHB names no such instrument. The closest
+  powers are the jury's ("Beslut i juryn avgör vilken serie som räknas",
+  B.3.5 p. 44; C.4.1.5 p. 62) and, for mästerskap, the organising level
+  deciding whatever SHB does not regulate (C.3.6 p. 55).
+- **A mästerskap below 48 shots: the organising level decides.**
+  C.3.6.1.2 p. 55 sets the minimum and says nothing of the consequence;
+  C.3.6 p. 55 leaves unregulated mästerskap questions to "respektive
+  nivå". Other floors a scratched station can break: standardmedalj needs
+  ≥ 6 stations × 6 shots (C.5.1 p. 69).
+- **`OptR` is not a sanctioned vapengrupp** (maintainer, 2026-09-22).
+  Fält has A, A optisk, B, C and R (D.4 pp. 82–86).
+- **Fältskyttemärket in A optisk uses the A row** (maintainer,
+  2026-09-22; tables at Bilaga 1 mom 5.7.1 pp. 462–463).
+
+### `VERIFY:` — still open
+
 - `VERIFY:` **Whether a fält result's per-station breakdown is official.**
   SHB defines the result as a total ("antal träff i antal figurer",
   D.6.11 p. 95); the skjutkort carries per-station entries (D.6.8 p. 92,
