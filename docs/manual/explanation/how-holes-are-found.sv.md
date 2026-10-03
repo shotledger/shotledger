@@ -24,6 +24,16 @@ mitten. Appen letar upp den punkt som alla krökta linjer i fotot är centrerade
 kring, mäter avståndet mellan linjerna och anpassar ringarna efter dem. Den
 behöver aldrig läsa någon ringsiffra.
 
+En milsnabbtavlas ringlinjer kan lura det andra sättet. En närbild av dess X
+och tia har samma mönster i förhållandet 1:2 som precisionstavlans, i dubbel
+storlek. Därför gör appen två kontroller till i en precisionssession innan den
+använder en anpassning efter ringlinjerna. Den avvisar anpassningen om
+milsnabbtavlans egen anpassning också fungerar på fotot. Den avvisar den också
+om hålen blir ungefär hälften så stora som din kaliber ger. Finns det inga hål
+att mäta kan den andra kontrollen inte hjälpa. Då kan ett milsnabbfoto
+fortfarande slinka igenom, oftast en tät närbild av X och tian, så räkna
+milsnabb i en milsnabbsession.
+
 Båda sätten provas. Vart och ett måste klara sina egna kontroller: ringarna det
 ritar ska ligga på tryckta linjer, inom en halv millimeter. Klarar båda det
 använder appen det vars ringar ligger närmast linjerna. Klarar inget av dem det

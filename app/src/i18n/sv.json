@@ -1052,6 +1052,8 @@
     "reasonCenterInFrame": "Tavlans mitt är utanför fotot.",
     "reasonZoneContrast": "Ingen svart zon hittades mot tavelpappret.",
     "reasonProfileScore": "Ringlinjerna kunde inte hittas.",
+    "reasonMilsnabbLock": "Ringarna stämmer med en milsnabbtavla, inte sessionens precisionstavla.",
+    "reasonHoleSize": "Hålen ser hälften så stora ut som kalibern ger, som när en milsnabbtavla läses som en precisionstavla.",
     "retake": "Ta om",
     "adjustCorners": "Placera punkterna själv",
     "adjustCornersHint": "Dra varje handtag dit en ring du ser korsar upptill, till höger, nedtill och till vänster, i den ordningen.",

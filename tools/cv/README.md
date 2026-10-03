@@ -20,6 +20,7 @@ In the order `scan.tsx` runs them:
 | ---------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------- |
 | Disc lock: fit the black, rectify  | `app/src/features/photo-scoring/disc-lock.ts` (ops: `opencv.ts`)                           | `docs/specs/cv-corpus-validation-2026-09.md`    |
 | Close-up lock, and which lock wins | `app/src/features/photo-scoring/closeup-lock.ts`                                           | `docs/specs/cv-closeup-lock-2026-09.md`         |
+| Milsnabb guards on the close-up    | `app/src/features/photo-scoring/precision-guards.ts`                                       | `docs/specs/cv-closeup-lock-2026-09.md`         |
 | Suggested holes                    | `app/src/features/photo-scoring/hole-proposals.ts`                                         | `docs/specs/cv-hole-proposals-2026-09.md`       |
 | Tap snap and the hole/patch filter | `app/src/features/photo-scoring/tap-snap.ts`, `shared/src/target-scoring/hole-features.ts` | `docs/specs/cv-corpus-validation-2026-09.md` §5 |
 
@@ -84,6 +85,12 @@ CV_EVAL_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
 # (negatives); the set file is a TSV of pgm path, set, framing, face
 CV_MIL_SETS=sets.tsv CV_MIL_OUT=milsnabb.jsonl [CV_MIL_SHARD=i/n] [CV_MIL_CROPS=1] \
     pnpm exec vitest run -c tools/cv/vitest.config.ts milsnabb.eval
+
+# the precision close-up lock's two milsnabb guards (precision-guards.ts) on
+# the same sets and crops (crops.ts), with chooseLock's pick against the disc
+# lock; about 4 s per image the close-up lock passes, so shard it
+CV_GUARD_SETS=sets.tsv CV_GUARD_OUT=guards.jsonl [CV_GUARD_SHARD=i/n] [CV_GUARD_CROPS=1] \
+    [CV_GUARD_DUMP=<dir>] pnpm exec vitest run -c tools/cv/vitest.config.ts guards.eval
 ```
 
 The hole proposals run on the rectified canvas the app hands them.

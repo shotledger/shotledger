@@ -175,3 +175,60 @@ whose 25 and 50 mm radii have the same 1:2 ratio as precision's X and 10:
 line for line a precision 9–10 close-up at twice the size. Only an absolute
 size can tell them apart, such as a hole's diameter against the session's
 calibre.
+
+### The two guards
+
+`precision-guards.ts`. In `scan.tsx` they run only when `chooseLock` picks
+the close-up lock in a precision session. A refused close-up falls back to the
+disc lock when that passes; otherwise the photo is rejected, with the guard's
+reason.
+
+- **The milsnabb lock as a guard.** #508's milsnabb lock runs on the close-up
+  lock's own work image. When it passes its gate, the precision lock is
+  refused. Its gate needs three card rings in frame, so it cannot see a crop of
+  the X and 10 alone.
+- **Hole size.** On the close-up lock's rectified canvas the hole proposals
+  run twice: at the session's calibre, and at half of it. Through a lock twice
+  too large a hole reads half its size, so the detector finds it only at half
+  the calibre. A hole's size is its blob's area as a disc's diameter, since the
+  probabilities saturate at 1. The lock is refused when no hole is found at the
+  calibre and the holes found at half of it have a median under 0.5 × the
+  calibre. Any hole found at the calibre abstains, and so does a canvas with no
+  holes. At half the calibre the detector also picks up paper texture, up to
+  192 "holes" on one precision crop. On 91 precision images it found nothing
+  at the calibre and up to 21 holes at half of it, and every median stayed
+  above the cut.
+
+Measured with `tools/cv/eval/guards.eval.ts`, which runs `chooseLock` against
+the disc lock as `scan.tsx` does. It used the 37 milsnabb photos and the
+milsnabb crops of `milsnabb.eval.ts` (same pixels), and 507 precision photos,
+169 of them also cut into 9–10, 8–10 and 7–10 crops. Every count is of images
+where the app would use the precision close-up lock.
+
+| Milsnabb images, precision lock used | Images | Before | Milsnabb guard | Hole size | After |
+| ------------------------------------ | -----: | -----: | -------------: | --------: | ----: |
+| Whole photos                         |     37 |      4 |              2 |         1 |     1 |
+| Crop of the 10                       |     66 |     24 |              0 |         1 |    23 |
+| Crop of the 9–10                     |     54 |     10 |             10 |         0 |     0 |
+| Wider crop of the 9–10               |     37 |      7 |              6 |         0 |     1 |
+| Centre out of frame                  |    137 |     21 |              0 |         1 |    20 |
+| **Total**                            |    331 |     66 |             18 |         3 |    45 |
+
+**Precision.** Neither guard refused any of the 1,231 precision images
+where the close-up lock is used: 224 whole photos and 1,007 crops. The
+milsnabb lock passed on none of them. The closest precision readings
+to the hole-size cut are a median of 2.88 and 3.05 mm (two 9–10 crops). A cut
+at 0.55 × the calibre would refuse both, so the margin is small.
+
+**What is left.** The hole check catches few milsnabb photos. Most of the
+milsnabb close-ups that remain have no hole the detector finds at either size.
+In some 10-only crops the holes read at full size, because the lock put
+milsnabb's X and 10 (25 and 50 mm) on precision's 10 and 9 at the true scale.
+No hole size can tell those apart.
+
+**Still open.** Many of the remaining passes are perspective that no
+photo has: the mapping's projective denominator over the photo falls below 0.5
+or rises above 2. One 10-crop lock draws the canvas as two wedges with the
+horizon through it. A gate on that range would refuse 16 of the remaining 45,
+at a cost of one precision 9–10 crop (0.48 at one corner). This is not built;
+it is a change to the lock's gate, and that is the maintainer's call.

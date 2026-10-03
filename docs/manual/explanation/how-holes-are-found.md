@@ -23,6 +23,15 @@ The app finds the point that all the curved lines in the photo are centred on,
 measures how far apart the lines are, and fits the rings to them. It never has
 to read a ring number.
 
+The ring lines of a milsnabb target can fool this second method. A close-up of
+its X and 10 has the same 1:2 pattern as the precision face's, at twice the
+size. So in a precision session the app makes two more checks before it uses a
+fit from the ring lines. It refuses the fit if the milsnabb target's own fit
+also works on the photo. It also refuses it if the holes come out about half
+the size your caliber makes. When there are no holes to measure, that second
+check cannot help. A milsnabb photo can then still get through, mostly a tight
+close-up of the X and 10, so score milsnabb in a milsnabb session.
+
 Both are tried. Each one has to pass its own checks: the rings it draws must
 sit on printed lines, to within half a millimetre. If both pass, the app uses
 the one whose rings sit closer to the lines. If neither passes, it asks you to

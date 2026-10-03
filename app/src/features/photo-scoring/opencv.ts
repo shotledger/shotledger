@@ -241,6 +241,9 @@ export interface CloseupLockRun {
   readonly lock: CloseupLock | null;
   /** `discToMm`'s ring offset, measured on the same work image as the lock's. */
   readonly discRingOffsetMm: number | null;
+  /** The milsnabb lock on the same work image, for the guard against a
+   *  precision lock on a milsnabb photo (precision-guards.ts). */
+  readonly milsnabb: () => MilsnabbLock | null;
 }
 
 /**
@@ -257,6 +260,7 @@ export function runCloseupLock(options: {
   return {
     lock: lockCloseupWork(work, nativeCloseupOps),
     discRingOffsetMm: options.discToMm ? ringOffsetMm(work, options.discToMm) : null,
+    milsnabb: () => lockMilsnabbWork(work, nativeCloseupOps),
   };
 }
 
