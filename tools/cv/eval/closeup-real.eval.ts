@@ -1,9 +1,8 @@
-// eval_closeup_real.py in TypeScript, without the overlays: per photo both
-// locks as the app runs them — the disc lock on OpenCV.js, the close-up lock
-// on its pure ops — both held to the ring-offset yardstick, `chooseLock`'s
-// pick, and the close-up's scale against the disc lock's.
+// Per photo both locks as the app runs them — the disc lock on OpenCV.js, the
+// close-up lock on its pure ops — both held to the ring-offset yardstick,
+// `chooseLock`'s pick, and the close-up's scale against the disc lock's.
 //
-//   CV_PARITY_IN=<dir of .pgm> CV_REAL_OUT=<out.jsonl> \
+//   CV_EVAL_IN=<dir of .pgm> CV_REAL_OUT=<out.jsonl> \
 //     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup-real
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,10 +22,10 @@ import { runDisc } from './disc-run';
 import { loadOpenCv } from './opencv-js-disc-ops';
 import { readPgm } from './pgm';
 
-const dir = process.env.CV_PARITY_IN;
+const dir = process.env.CV_EVAL_IN;
 const out = process.env.CV_REAL_OUT;
 
-/** mm per image px of `toMm` near `at` (eval_closeup_real.local_scale). */
+/** mm per image px of `toMm` near `at`. */
 function localScale(toMm: Homography, at: { x: number; y: number }): number {
   const p = applyHomography(toMm, at);
   const px = applyHomography(toMm, { x: at.x + 1, y: at.y });

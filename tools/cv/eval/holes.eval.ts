@@ -1,10 +1,11 @@
 // The app's hole proposals (hole-proposals.ts, pure ops) on real rectified
-// canvases, for a side-by-side with the Python reference (parity_holes.py).
-// Both read the same PGM and take the face from its JSON sidecar, both written
-// by `parity_holes.py prep`, so a difference is the algorithm.
+// canvases: every candidate with its features and probability, and the
+// proposals. Reads the PGMs and sidecars holes-prep.tool.ts writes.
+// score-holes.tool.ts measures a run against hand marks; `diff.mts holes`
+// compares two runs.
 //
-//   CV_PARITY_IN=<canvas dir> CV_PARITY_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c tools/cv/vitest.config.ts holes
+//   CV_EVAL_IN=<canvas dir> CV_EVAL_OUT=<out.jsonl> \
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts holes.eval
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -30,16 +31,16 @@ interface Sidecar {
   readonly ringRadiiMm: readonly number[];
 }
 
-test('hole proposals on every canvas', () => {
-  const dir = process.env.CV_PARITY_IN;
-  const out = process.env.CV_PARITY_OUT;
-  if (!dir || !out) throw new Error('set CV_PARITY_IN and CV_PARITY_OUT');
+const dir = process.env.CV_EVAL_IN;
+const out = process.env.CV_EVAL_OUT;
+
+test.skipIf(!dir || !out)('hole proposals on every canvas', () => {
   const lines: string[] = [];
-  for (const name of readdirSync(dir)
+  for (const name of readdirSync(dir!)
     .filter((f) => f.endsWith('.json'))
     .sort()) {
-    const side = JSON.parse(readFileSync(join(dir, name), 'utf8')) as Sidecar;
-    const pgm = readPgm(join(dir, `${side.photo}.pgm`));
+    const side = JSON.parse(readFileSync(join(dir!, name), 'utf8')) as Sidecar;
+    const pgm = readPgm(join(dir!, `${side.photo}.pgm`));
     if (pgm.width !== pgm.height) throw new Error(`${side.photo}: canvas is not square`);
     const canvas: RectifiedCanvas = {
       data: pgm.data,
@@ -83,6 +84,6 @@ test('hole proposals on every canvas', () => {
       }),
     );
   }
-  writeFileSync(out, lines.join('\n') + '\n');
+  writeFileSync(out!, lines.join('\n') + '\n');
   expect(lines.length).toBeGreaterThan(0);
 });

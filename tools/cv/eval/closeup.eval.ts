@@ -1,9 +1,9 @@
-// The app's close-up lock (closeup-lock.ts, pure ops) on real photos, for a
-// side-by-side with the Python reference (parity_closeup.py). Both read the
-// same greyscale PGMs, so a difference is the algorithm, not the decoder.
+// The app's close-up lock (closeup-lock.ts, pure ops) on real photos: per
+// greyscale PGM (prep.sh) the lock, its gate's numbers and its verdict.
+// `diff.mts closeup` compares two runs, e.g. before and after a change.
 //
-//   CV_PARITY_IN=<dir of .pgm> CV_PARITY_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup
+//   CV_EVAL_IN=<dir of .pgm> CV_EVAL_OUT=<out.jsonl> \
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup.eval
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -17,16 +17,16 @@ import {
 
 import { readPgm } from './pgm';
 
-test('close-up lock on every PGM', () => {
-  const dir = process.env.CV_PARITY_IN;
-  const out = process.env.CV_PARITY_OUT;
-  if (!dir || !out) throw new Error('set CV_PARITY_IN and CV_PARITY_OUT');
+const dir = process.env.CV_EVAL_IN;
+const out = process.env.CV_EVAL_OUT;
+
+test.skipIf(!dir || !out)('close-up lock on every PGM', () => {
   const lines: string[] = [];
-  for (const name of readdirSync(dir)
+  for (const name of readdirSync(dir!)
     .filter((f) => f.endsWith('.pgm'))
     .sort()) {
     const t0 = performance.now();
-    const lock = lockCloseupWork(closeupWorkImage(readPgm(join(dir, name))));
+    const lock = lockCloseupWork(closeupWorkImage(readPgm(join(dir!, name))));
     lines.push(
       JSON.stringify({
         photo: name.replace(/\.pgm$/, ''),
@@ -42,6 +42,6 @@ test('close-up lock on every PGM', () => {
       }),
     );
   }
-  writeFileSync(out, lines.join('\n') + '\n');
+  writeFileSync(out!, lines.join('\n') + '\n');
   expect(lines.length).toBeGreaterThan(0);
 });

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-/** Binary greyscale PGM (P5, maxval 255), as ImageMagick and cv2.imwrite write it. */
+/** Binary greyscale PGM (P5, maxval 255), as prep.sh and holes-prep write it. */
 export function readPgm(path: string) {
   const buf = readFileSync(path);
   let pos = 0;
