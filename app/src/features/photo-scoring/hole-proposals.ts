@@ -30,6 +30,7 @@
 //     and refine each centre to the centroid of its deviation from the paper
 import { HOLE_CROP_PX, holeFeatures, reflectIndex } from '@shotledger/shared';
 
+import { kthSmallest } from './order-statistics';
 import type { RectifiedCanvas } from './tap-snap';
 
 // ---------------------------------------------------------------- constants
@@ -432,32 +433,6 @@ function maxFilter(
     }
   }
   return out;
-}
-
-/** The k-th smallest value (0-based) by quickselect, in place. */
-function kthSmallest(a: Float64Array, k: number): number {
-  let lo = 0;
-  let hi = a.length - 1;
-  while (lo < hi) {
-    const pivot = a[(lo + hi) >> 1] as number;
-    let i = lo;
-    let j = hi;
-    while (i <= j) {
-      while ((a[i] as number) < pivot) i += 1;
-      while ((a[j] as number) > pivot) j -= 1;
-      if (i <= j) {
-        const t = a[i] as number;
-        a[i] = a[j] as number;
-        a[j] = t;
-        i += 1;
-        j -= 1;
-      }
-    }
-    if (k <= j) hi = j;
-    else if (k >= i) lo = i;
-    else break;
-  }
-  return a[k] as number;
 }
 
 /** numpy's median: the mean of the two middle values for an even count.
