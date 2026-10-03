@@ -36,6 +36,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_006
+    requirement_ids: ['SCORE_006']
+    title: Verify shots logged counts six rounds per live station, scratched and särskjutning included
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not
@@ -69,6 +75,12 @@ cases:
   - id: SVC_BACKEND_001
     requirement_ids: ['BACKEND_001']
     title: Verify the quota boundary is inclusive and usage is floored at zero
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_DATA_001
+    requirement_ids: ['DATA_001']
+    title: Verify a fält session's stations and result mode survive export, wipe and import
     verification: automated-test
     revision: '0.1.0'
 

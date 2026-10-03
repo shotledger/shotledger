@@ -59,8 +59,8 @@ by the sqlite bundle):
 
 - `faltResultMode: 'falt' | 'poangfalt' | null`
 - `stations: Station[]`, where `Station` = `{ position, hits, figuresHit,
-  points: int|null, pointsMax: int|null, isScratched, isShootOff, note:
-  string|null }`. `photoUri` is not exported (a series' isn't either).
+points: int|null, pointsMax: int|null, isScratched, isShootOff, note:
+string|null }`. `photoUri` is not exported (a series' isn't either).
 
 - **J1** Export of a fält session with 3 stations (one scratched, one
   särskjutning, one with poäng 8/10) carries all three with every field, in
@@ -118,13 +118,15 @@ by the sqlite bundle):
   from the two added fields.
 - **N2** No consumer scores a scratched or särskjutning station.
 - **N3** Firearm counter and ammo usage numbers unchanged (already correct).
-- **N4** No statistic shows a fält *result* in Layer A — that is Layer B.
+- **N4** No statistic shows a fält _result_ in Layer A — that is Layer B.
 - **N5** No new dependency. No DB schema change (stations already exist).
 
 ### reqstool
 
-New **EXPORT_00x** "A JSON export round-trips a fält session's stations" with
-SVC on J3/J7; SCORE_003's SVC gains V1–V3 as verification of the volume rule.
+New **DATA_001** (the export carries a fält session whole; SVC on J3) and
+**SCORE_006** (every station is six rounds of volume; SVC on V1). Revised from
+"SCORE_003's SVC gains V1–V3": SCORE_003 is worded about sighters, so a station
+test would have verified a requirement that does not mention stations.
 
 ## Layer B — statistics and PBs (to specify after §B.0)
 

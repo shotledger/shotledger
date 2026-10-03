@@ -204,17 +204,23 @@ describe('stations are volume, even when they are not score (spec P6, P7)', () =
   });
 });
 
-describe('station rounds reach every volume figure (falt-consumers-spec V1, V2)', () => {
-  it('V1: shots logged counts six rounds per live station, scratched and särskjutning included', () => {
-    addStation(db, { sessionId, position: 1, hits: 5, figuresHit: 3 });
-    addStation(db, { sessionId, position: 2, hits: 6, figuresHit: 0, isScratched: true });
-    const gone = addStation(db, { sessionId, position: 3, hits: 4, figuresHit: 2 });
-    addStation(db, { sessionId, position: 4, hits: 4, figuresHit: 2, isShootOff: true });
-    softDeleteStation(db, gone.id);
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_SCORE_006
+ */
+it('V1: shots logged counts six rounds per live station, scratched and särskjutning included', () => {
+  addStation(db, { sessionId, position: 1, hits: 5, figuresHit: 3 });
+  addStation(db, { sessionId, position: 2, hits: 6, figuresHit: 0, isScratched: true });
+  const gone = addStation(db, { sessionId, position: 3, hits: 4, figuresHit: 2 });
+  addStation(db, { sessionId, position: 4, hits: 4, figuresHit: 2, isShootOff: true });
+  softDeleteStation(db, gone.id);
 
-    expect(countVolumeRounds(db)).toBe(18);
-  });
+  expect(countVolumeRounds(db)).toBe(18);
+});
 
+describe('station rounds reach every volume figure (falt-consumers-spec V2)', () => {
   it('V2: a session’s station rounds, live stations only', () => {
     const other = createSession(db, {
       name: 'Annat',

@@ -16,7 +16,10 @@ import type { Database } from '../types';
 import { listTagsForSession } from '../queries/tags';
 
 /** Assembles every non-deleted session (with its series/shots/tags) into
- * the shape `exportSessionsToJson` expects. */
+ * the shape `exportSessionsToJson` expects.
+ *
+ * @Requirements DATA_001
+ */
 export function buildSessionExports(db: Database): SessionExport[] {
   const sessionRows = db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
   const seriesRows = db.select().from(series).where(isNull(series.deletedAt)).all();

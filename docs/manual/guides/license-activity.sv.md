@@ -74,7 +74,8 @@ personnummer, perioden loggen omfattar, vapnet om du exporterat för ett, hur
 många pass och hur många skott, och datumet den skapades. De två tomma raderna är
 pappersblankettens egna, att fylla i för hand — appen lagrar ingendera, för
 ingendera är uppgifter den behöver. Varje siffra där är märkt, så att den som
-läser loggen utan att ha varit med på banan ser vad varje tal betyder.
+läser loggen utan att ha varit med på banan ser vad varje tal betyder. Ett
+fältpass räknas som sex skott för varje station, även en struken.
 
 **Skytteaktivitet** anger tävlingens namn när passet hade ett, sedan grenen och
 sedan din vapengrupp och klass — "Pistol-SM · Fält · C" i stället för bara

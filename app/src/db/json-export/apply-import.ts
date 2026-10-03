@@ -145,6 +145,8 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * operation stays idempotent. A total-override series (Webshooter/ShotLog)
  * has no shot rows and still contributes nothing — the same convention
  * `deleteSeriesAndShots` already backs out on.
+ *
+ * @Requirements DATA_001
  */
 export function applyImport(
   db: Database,

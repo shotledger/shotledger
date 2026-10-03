@@ -164,12 +164,18 @@ export function softDeleteStation(db: Database, id: string): void {
   moveRoundCount(db, current.sessionId, -SHOTS_PER_STATION);
 }
 
-/** Rounds fired at a session's live stations, scored or not. */
+/** Rounds fired at a session's live stations, scored or not.
+ *
+ * @Requirements SCORE_006
+ */
 export function stationRoundsForSession(db: Database, sessionId: string): number {
   return listStationsForSession(db, sessionId).length * SHOTS_PER_STATION;
 }
 
-/** Rounds fired at every live station of every live session. */
+/** Rounds fired at every live station of every live session.
+ *
+ * @Requirements SCORE_006
+ */
 export function countAllStationRounds(db: Database): number {
   const row = db
     .select({ count: sql<number>`count(*)` })

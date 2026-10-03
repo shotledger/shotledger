@@ -119,26 +119,6 @@ describe('fält stations in the JSON export', () => {
     expect(exported?.faltResultMode).toBeNull();
   });
 
-  it('J3: imports them back into an emptied database field for field', () => {
-    const db = createTestDb();
-    const { session } = seedFalt(db);
-    const json = buildExportJson(db, '1.0.0');
-
-    wipe(db);
-    const { errors, groups, records } = dryRunImport(db, json);
-    expect(errors).toEqual([]);
-    applyImport(db, groups, records);
-
-    expect(getSession(db, session.id)?.faltResultMode).toBe('poangfalt');
-    expect(stationFields(db, session.id)).toEqual(
-      EXPECTED_STATIONS.map((s) => ({
-        ...s,
-        isScratched: s.isScratched ? 1 : 0,
-        isShootOff: s.isShootOff ? 1 : 0,
-      })),
-    );
-  });
-
   it('J4: credits the firearm six rounds per station, scratched and särskjutning included', () => {
     const db = createTestDb();
     const { firearm } = seedFalt(db);
@@ -166,4 +146,30 @@ describe('fält stations in the JSON export', () => {
     expect(stationFields(db, session.id)).toHaveLength(4);
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(24);
   });
+});
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_DATA_001
+ */
+it('J3: imports them back into an emptied database field for field', () => {
+  const db = createTestDb();
+  const { session } = seedFalt(db);
+  const json = buildExportJson(db, '1.0.0');
+
+  wipe(db);
+  const { errors, groups, records } = dryRunImport(db, json);
+  expect(errors).toEqual([]);
+  applyImport(db, groups, records);
+
+  expect(getSession(db, session.id)?.faltResultMode).toBe('poangfalt');
+  expect(stationFields(db, session.id)).toEqual(
+    EXPECTED_STATIONS.map((s) => ({
+      ...s,
+      isScratched: s.isScratched ? 1 : 0,
+      isShootOff: s.isShootOff ? 1 : 0,
+    })),
+  );
 });

@@ -21,7 +21,9 @@ Rapporten upprepar alla filter högst upp, så en rapport du exporterat eller
 
 Antalet ovanför rapporten är varje pass filtret träffade, även ett pass du
 loggat som antal skott utan serier — de skotten finns med i totalerna också.
-Det stämmer därför med antalet pass på startsidan.
+Ett fältpass stationer räknas som sex skott var, även strukna stationer och
+särskjutningsstationer, eftersom de skotten avlossades. Det stämmer därför med
+antalet pass på startsidan.
 
 Filtren ligger kvar som du lämnade dem. Lämna fliken och kom tillbaka, så är
 formuläret fortfarande det du byggde — det rullar upp till toppen så att du ser
