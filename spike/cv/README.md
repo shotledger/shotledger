@@ -183,9 +183,33 @@ The fixture pins the TypeScript to this module on synthetic close-ups only.
 python parity/parity_closeup.py prep <pgm-dir> <photos>...
 PYTHONPATH=. python parity/parity_closeup.py run <pgm-dir> py.jsonl
 CV_PARITY_IN=<pgm-dir> CV_PARITY_OUT=ts.jsonl \
-    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts   # from the repo root
+    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup   # from the repo root
 python parity/parity_closeup.py diff py.jsonl ts.jsonl
 ```
+
+The same for `hole-proposals.ts`. `prep` rectifies each photo as
+`eval_hole_proposals.py` does and writes the canvas as a PGM plus a JSON
+sidecar (centre, scale, face); a photo is named by its file's stem, as in the
+marks file. `score` measures the TypeScript's own output against hand marks
+by `eval_hole_proposals.py --report`'s matching rule, with the shipped
+constants on the photos they were fitted on; `--csv` writes the candidates in
+`eval_hole_proposals.py --out`'s format, so `fit_hole_proposals.py` gives the
+spec's cross-validated numbers from the TypeScript's features.
+
+```bash
+PYTHONPATH=. python parity/parity_holes.py prep <canvas-dir> <photos>... [--lock closeup]
+PYTHONPATH=. python parity/parity_holes.py run <canvas-dir> py.jsonl
+CV_PARITY_IN=<canvas-dir> CV_PARITY_OUT=ts.jsonl \
+    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts holes   # from the repo root
+PYTHONPATH=. python parity/parity_holes.py diff py.jsonl ts.jsonl
+PYTHONPATH=. python parity/parity_holes.py score ts.jsonl marks.txt --csv ts.csv
+python fit_hole_proposals.py ts.csv --marks marks.txt
+```
+
+`diff` holds `orient_entropy` to a float64 recomputation of the reference's
+value rather than to the value itself: the reference bins float32 angles, and
+on 5169 real candidates that moved it by up to 0.6%, against the 2.4e-4 the fixture saw on
+synthetic art. Every other value is held to the fixture's tolerances.
 
 `mark_holes.py` and `eval_hole_proposals.py` take `--lock closeup` to lay the
 canvas out by this lock instead of the disc, for labelling and measuring real
