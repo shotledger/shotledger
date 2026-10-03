@@ -295,11 +295,12 @@ describe('faltPbCoverage', () => {
     const coverage = faltPbCoverage(
       [
         session({ id: 'a' }),
+        session({ id: 'b', weaponGroup: 'spsf:B' }),
         session({ id: 'ungrouped', weaponGroup: null }),
         session({ id: 'scratched', stations: [station(6, 0, { isScratched: true })] }),
       ],
       40,
     );
-    expect(coverage).toEqual({ considered: 40, counted: 2, ungrouped: 1 });
+    expect(coverage).toEqual({ considered: 40, counted: 3, ungrouped: 1 });
   });
 });

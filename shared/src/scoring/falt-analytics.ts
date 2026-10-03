@@ -129,7 +129,13 @@ export function faltPbGroupKey(group: FaltPbGroup): string {
 }
 
 export function parseFaltPbGroupKey(key: string): FaltPbGroup {
-  const [disciplineId = '', weaponGroupId = '', mode, stationCount = ''] = key.split('|');
+  // A key from faltPbGroupKey always has four parts.
+  const [disciplineId, weaponGroupId, mode, stationCount] = key.split('|') as [
+    string,
+    string,
+    string,
+    string,
+  ];
   return {
     disciplineId,
     weaponGroupId: weaponGroupId === '' ? null : weaponGroupId,
