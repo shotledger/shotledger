@@ -60,6 +60,7 @@ import {
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
 import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
+import { type ScanNextTarget, scanNextTarget } from '@/features/photo-scoring/scan-next';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
 import {
   type GeometryPipelineResult,
@@ -123,6 +124,18 @@ export default function ScanScreen() {
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
+  // Save and Scan Next, in the ⋮ menu beside Retake; null when a full match
+  // has no empty series left after this one.
+  const scanNext = scanNextTarget({
+    isFixedFormat: detail.isFixedFormat,
+    rows: detail.seriesRows.map((r) => ({
+      position: r.position,
+      isFinal: r.isFinal,
+      hasResult: r.shots.length > 0 || r.isTotalOverride,
+    })),
+    savedPosition: position,
+    savedIsFinal: row?.isFinal ?? final === '1',
+  });
   const faceId =
     seriesTargetFace(
       detail.session?.disciplineId ?? '',
@@ -497,7 +510,7 @@ export default function ScanScreen() {
     dispatch({ type: 'tap', id: uuidv7(), xMm: point.xMm, yMm: point.yMm });
   }
 
-  function onSave() {
+  function onSave(leave = true) {
     // A series added straight into "Score from Photo" has no row yet; it is
     // written here, as the keypad screen writes its own on save.
     const seriesId =
@@ -541,7 +554,14 @@ export default function ScanScreen() {
         });
       }
     }
-    router.back();
+    if (leave) router.back();
+  }
+
+  function onSaveAndScanNext(next: ScanNextTarget) {
+    onSave(false);
+    // A fresh screen in place of this one, so the camera opens on arrival as
+    // it does from Add Series, and Back still lands on the session.
+    router.replace(`/session/${id}/scan?pos=${next.position}${next.isFinal ? '&final=1' : ''}`);
   }
 
   if (!supported) {
@@ -686,7 +706,11 @@ export default function ScanScreen() {
                 testID="scan-caliber"
               />
               <View style={styles.save}>
-                <PrimaryButton label={t('photoScoring.save')} onPress={onSave} testID="scan-save" />
+                <PrimaryButton
+                  label={t('photoScoring.save')}
+                  onPress={() => onSave()}
+                  testID="scan-save"
+                />
               </View>
             </View>
           )}
@@ -694,7 +718,18 @@ export default function ScanScreen() {
         <ActionSheet
           visible={menuOpen}
           onClose={() => setMenuOpen(false)}
-          actions={[{ key: 'retake', label: t('photoScoring.retake'), onPress: onRetake }]}
+          actions={[
+            ...(scanNext && markState.marks.length > 0
+              ? [
+                  {
+                    key: 'scan-next',
+                    label: t('photoScoring.saveAndScanNext'),
+                    onPress: () => onSaveAndScanNext(scanNext),
+                  },
+                ]
+              : []),
+            { key: 'retake', label: t('photoScoring.retake'), onPress: onRetake },
+          ]}
         />
         <ActionSheet
           visible={caliberOpen}

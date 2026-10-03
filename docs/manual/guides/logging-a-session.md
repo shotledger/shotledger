@@ -161,6 +161,19 @@ from it — see [Scoring from a photo](scoring-from-a-photo.md).
 Every photo you take also appears in the gallery under **Tools → Photos**,
 where you can filter by discipline, firearm and weapon group.
 
+## Session report
+
+**⋮ → Session Report** makes a PDF of the session and hands it to the share
+sheet, to print or send to a coach. It opens with the date, discipline,
+firearm, total and inner tens, then shows the series side by side, three to a
+row: each one's total and shot values and, for a series scored from a photo,
+the target with the holes drawn on it and the windage, elevation, mean radius
+and max spread. A series entered on the keypad shows its values only.
+Sighters and final series are labelled.
+
+The report is in the app's language. Field shooting sessions have none: they
+are scored in hits on figures, with no rings to draw.
+
 ## Sharing or deleting a session from Home
 
 On Home, swipe a session left to reveal two icons: share and trash. Deleting

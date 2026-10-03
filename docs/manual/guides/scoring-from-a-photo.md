@@ -68,9 +68,17 @@ precision face and the rapid-fire stage the rapid-fire face.
 4. **Check the score**, then save it to the series. Once two or more holes are
    marked, the windage, elevation, mean radius and max spread are shown under
    the score as you go.
-5. **Look at it later.** The marks and the group figures stay with the photo.
+5. **Scan the next series.** Instead of Save, **⋮ → Save and Scan Next** saves
+   this series and opens the camera for the next one, without going back to
+   the session. In a full match it goes to the next series still empty, and
+   once every other series is filled it is not offered. Otherwise it adds a
+   new series after the last one; the new series is an ordinary one, never a
+   sighter.
+6. **Look at it later.** The marks and the group figures stay with the photo.
    Open the photo from the series and you see the marks drawn on the target,
-   with the figures below it.
+   with the figures below it. The
+   [session report](logging-a-session.md#session-report) puts every series'
+   target and figures on one page to print or share.
 
 ## Getting a good photograph
 
