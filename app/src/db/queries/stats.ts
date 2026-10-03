@@ -2,9 +2,15 @@
 // non-deleted session/series/shot once and joins in JS (three flat scans
 // instead of an N+1 per-series query), matching StatsSeries exactly.
 import { isNull } from 'drizzle-orm';
-import type { AnalyticsSeries, AnalyticsSession, StatsSeries, StatsShot } from '@shotledger/shared';
+import {
+  SHOTS_PER_STATION,
+  type AnalyticsSeries,
+  type AnalyticsSession,
+  type StatsSeries,
+  type StatsShot,
+} from '@shotledger/shared';
 
-import { series, sessionTags, sessions, shots } from '../schema';
+import { faltStations, series, sessionTags, sessions, shots } from '../schema';
 import type { Database } from '../types';
 
 function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
@@ -79,6 +85,15 @@ export function listAllAnalyticsSeries(db: Database): AnalyticsSeries[] {
 export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
   const sessionRows = db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
   const sessionTagRows = db.select().from(sessionTags).all();
+  const stationRows = db
+    .select({ sessionId: faltStations.sessionId })
+    .from(faltStations)
+    .where(isNull(faltStations.deletedAt))
+    .all();
+  const stationCountBySession = new Map<string, number>();
+  for (const row of stationRows) {
+    stationCountBySession.set(row.sessionId, (stationCountBySession.get(row.sessionId) ?? 0) + 1);
+  }
 
   const tagIdsBySession = new Map<string, string[]>();
   for (const row of sessionTagRows) {
@@ -94,5 +109,6 @@ export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
     disciplineId: row.disciplineId,
     tagIds: tagIdsBySession.get(row.id) ?? [],
     extraRounds: row.extraRounds ?? 0,
+    stationRounds: (stationCountBySession.get(row.id) ?? 0) * SHOTS_PER_STATION,
   }));
 }

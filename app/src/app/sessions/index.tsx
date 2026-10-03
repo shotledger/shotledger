@@ -248,7 +248,9 @@ export default function SessionsListScreen() {
             title={item.name}
             subtitle={[
               formatSessionDate(item.startedAt, i18n.language),
-              formatSessionTotal(item.total),
+              item.falt
+                ? t('session.faltTotal', { hits: item.falt.hits, figures: item.falt.figuresHit })
+                : formatSessionTotal(item.total),
               item.seriesAverage === null ? null : formatSeriesAverage(item.seriesAverage),
               item.seriesAverage === null ? null : `${item.innerTenCount}X`,
             ]

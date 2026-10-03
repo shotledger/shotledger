@@ -4,6 +4,7 @@ import { series, shots } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 import { sumExtraRounds } from './sessions';
+import { countAllStationRounds } from './falt';
 
 export interface AddShotInput {
   seriesId: string;
@@ -121,10 +122,10 @@ export function countAllShots(db: Database): number {
 }
 
 /**
- * Total rounds fired: every logged shot (sighters included) plus every
- * session's unscored `extra_rounds` (spec A1 §A1.3, A-X3). This — not
- * `countAllShots` — is the number to show as "shots logged".
+ * Total rounds fired: every logged shot (sighters included), every session's
+ * unscored `extra_rounds` (spec A1 §A1.3, A-X3) and six per fält station. This
+ * — not `countAllShots` — is the number to show as "shots logged".
  */
 export function countVolumeRounds(db: Database): number {
-  return countAllShots(db) + sumExtraRounds(db);
+  return countAllShots(db) + sumExtraRounds(db) + countAllStationRounds(db);
 }

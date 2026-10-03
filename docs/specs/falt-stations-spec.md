@@ -156,7 +156,7 @@ Everything already there (`faltResult`, `poangfaltPoints`,
 
 Two existing read paths must learn the second table, because a session that
 fired 60 rounds may not report 0: `round-count.ts` (the firearm round counter)
-and `ammo-usage.ts` count `SHOTS_PER_STATION` per non-scratched station. A
+and `ammo-usage.ts` count `SHOTS_PER_STATION` per station, scratched or not. A
 scratched station's shots were still fired, so they count for volume and not
 for score — the same split `isSighter` already has (SCORE_003).
 

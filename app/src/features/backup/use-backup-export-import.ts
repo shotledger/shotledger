@@ -1,5 +1,5 @@
 // Settings-screen glue for backup export/import. Mirrors
-// features/csv/use-csv-export-import.ts's shape: a
+// features/json-export/use-json-export-import.ts's shape: a
 // preview/confirm split for restore (`planRestore` never touches the DB,
 // `confirmRestore` applies it), i18n'd status text, and a "last backup"
 // timestamp persisted via the settings table.

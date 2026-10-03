@@ -36,7 +36,7 @@ most user-visible first:
 
 ## Shape: two stacked PRs
 
-- **Layer A — integrity and volume** (items 1–4, 7–9). No product decision
+- **Layer A — integrity and volume** (items 1–4, 8–9; item 7 dropped, see Backup bundle). No product decision
   open; fully specified below.
 - **Layer B — statistics and PBs** (items 5–6). Needs the decisions in §B.0
   before it is specified to scenario level.
@@ -79,6 +79,9 @@ by the sqlite bundle):
 - **J7** Property: `export → import → export` is identity for sessions with
   arbitrary valid stations (extends `round-trip.property.test.ts`).
 - **J8** `buildAnalyticsReportJson` `shotsFired` includes station rounds.
+- **J9** (added during implementation) The import preview's per-session
+  shot count includes `6 × stations` — otherwise a fält session previews as
+  "0 shots", the number the user checks to see they picked the right file.
 
 ### Sessions list
 
@@ -93,10 +96,16 @@ by the sqlite bundle):
 - **V3** Stats report Total shots includes station rounds of the fält
   sessions in the report's session set.
 
-### Backup bundle
+### Backup bundle — dropped during implementation (spec revision, 2026-10-03)
 
-- **B1** A station's `photo_uri` is bundled and rewritten like a series'.
-- **B2** The manifest counts stations.
+- ~~**B1** A station's `photo_uri` is bundled and rewritten like a series'.~~
+  Nothing writes a station photo: the column exists, but no screen or import
+  sets it. Bundling it is code for a case that cannot occur; it belongs with
+  whatever change adds a station photo.
+- ~~**B2** The manifest counts stations.~~ A required count would make every
+  existing backup fail manifest validation on restore; an optional one is the
+  read-both-shapes path hard rule 8 rules out. The count is display-only, and
+  the stations themselves are in the bundled database either way.
 
 ### Housekeeping
 

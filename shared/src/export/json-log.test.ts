@@ -42,6 +42,8 @@ const session: SessionExport = {
       ],
     },
   ],
+  faltResultMode: null,
+  stations: [],
 };
 
 // #308: naming the firearm is what demonstrates activity with one's own guns,

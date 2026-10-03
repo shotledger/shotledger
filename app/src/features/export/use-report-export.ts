@@ -1,13 +1,12 @@
 // Export of a generated analytics report in the format the user picks
 // (maintainer: "an export button and then next user selects format").
 //
-// All three formats describe the same filtered set of sessions and reuse
-// the existing exporters rather than duplicating them:
+// Both formats describe the same filtered set of sessions and reuse the
+// existing exporters rather than duplicating them:
 //   PDF  — shared/src/export/pdf-log.ts via use-pdf-export.ts, restricted
 //          to the matched session ids.
 //   JSON — shared/src/export/json-log.ts, over the same SessionExport[]
-//          the CSV exporter assembles.
-//   CSV  — shared/src/csv/export.ts, over that same SessionExport[].
+//          the JSON sessions export assembles.
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import {

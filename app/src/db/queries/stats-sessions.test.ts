@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { analyticsReportSet, ANY_ANALYTICS_FILTER, type AnalyticsFilter } from '@shotledger/shared';
 
 import { createTestDb } from '../test-db';
+import { addStation } from './falt';
 import { addSeries } from './series';
 import { createSession } from './sessions';
 import { addShot } from './shots';
@@ -106,4 +107,23 @@ describe('the analytics report counts sessions with no series (#349)', () => {
     expect(totals.sessionCount).toBe(1);
     expect(totals.volumeShotCount).toBe(12);
   });
+});
+
+it('V3: a fält session’s station rounds are in the report volume, scratched and särskjutning included', () => {
+  const db = createTestDb();
+  ordinarySession(db, 5);
+  const falt = createSession(db, {
+    name: 'Kretsfält',
+    type: 'competition',
+    disciplineId: 'spsf-falt',
+    startedAt: '2026-08-20T09:00:00.000Z',
+  });
+  addStation(db, { sessionId: falt.id, position: 1, hits: 5, figuresHit: 3 });
+  addStation(db, { sessionId: falt.id, position: 2, hits: 6, figuresHit: 0, isScratched: true });
+  addStation(db, { sessionId: falt.id, position: 3, hits: 4, figuresHit: 2, isShootOff: true });
+
+  const { totals } = report(db);
+
+  expect(totals.sessionCount).toBe(2);
+  expect(totals.volumeShotCount).toBe(5 + 18);
 });

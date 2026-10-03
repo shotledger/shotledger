@@ -23,9 +23,10 @@ export function buildSessionListRow(
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],
+  falt: HomeSessionRow['falt'] = null,
 ): SessionListRow {
   return {
-    ...buildHomeSessionRow(session, sessionSeries, tags),
+    ...buildHomeSessionRow(session, sessionSeries, tags, falt),
     disciplineId: session.disciplineId,
     firearmId: session.firearmId ?? null,
   };

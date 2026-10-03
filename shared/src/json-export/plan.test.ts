@@ -151,6 +151,8 @@ describe('buildDryRunPlan shot counts', () => {
               ],
             },
           ],
+          faltResultMode: null,
+          stations: [],
         },
       ],
       {
@@ -166,6 +168,37 @@ describe('buildDryRunPlan shot counts', () => {
     // 5 shots across 3 series: the two numbers must differ, or counting
     // series instead of shots would pass unnoticed (mutation survivor, fixed).
     expect(plan.sessions[0]!.shotCount).toBe(5);
+  });
+
+  it('J9: a fält session’s stations count six rounds each', () => {
+    const station = {
+      position: 1,
+      hits: 5,
+      figuresHit: 3,
+      points: null,
+      pointsMax: null,
+      isScratched: false,
+      isShootOff: false,
+      note: null,
+    };
+    const plan = buildDryRunPlan(
+      [
+        group({
+          disciplineId: 'spsf-falt',
+          faltResultMode: 'falt',
+          stations: [station, { ...station, position: 2, isScratched: true }],
+        }),
+      ],
+      {
+        sessionIds: new Set(),
+        firearmIds: new Set(),
+        licenseIds: new Set(),
+        firearmNames: new Set(),
+        ammoLotNames: new Set(),
+        tagNames: new Set(),
+      },
+    );
+    expect(plan.sessions[0]!.shotCount).toBe(12);
   });
 });
 
@@ -194,6 +227,8 @@ describe('buildDryRunPlan tag reuse', () => {
       extraRounds: null,
       tags: ['KM', 'Nytt'],
       series: [],
+      faltResultMode: null,
+      stations: [],
     };
     const plan = buildDryRunPlan([group], {
       sessionIds: new Set(),
@@ -235,6 +270,8 @@ describe('buildDryRunPlan tag reuse', () => {
       extraRounds: null,
       tags: ['KM'],
       series: [],
+      faltResultMode: null,
+      stations: [],
     };
     const plan = buildDryRunPlan(
       [

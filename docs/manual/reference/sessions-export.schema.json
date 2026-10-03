@@ -255,6 +255,100 @@
               "additionalProperties": false
             },
             "description": "The series of this session, in order."
+          },
+          "faltResultMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "falt",
+                  "poangfalt"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How a fältskjutning round is reported — hits and figures, or the poängfält sum. Null on any other discipline."
+          },
+          "stations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "1-based station number within the round."
+                },
+                "hits": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6,
+                  "description": "Hits at the station, 0-6 (six shots)."
+                },
+                "figuresHit": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6,
+                  "description": "Figures hit at least once. Never more than `hits`."
+                },
+                "points": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Poängmål points scored, or null when the station had no ringed figure."
+                },
+                "pointsMax": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What that poängmål could give — the organizer picks the scheme."
+                },
+                "isScratched": {
+                  "type": "boolean",
+                  "description": "An annulled station: kept and shown, never scored. Its rounds still count."
+                },
+                "isShootOff": {
+                  "type": "boolean",
+                  "description": "A särskjutning station: decides placement only, never enters the score."
+                },
+                "note": {
+                  "description": "The station's note.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "position",
+                "hits",
+                "figuresHit",
+                "points",
+                "pointsMax",
+                "isScratched",
+                "isShootOff",
+                "note"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The fält stations of this session, in order. Empty on any other discipline."
           }
         },
         "required": [
@@ -279,7 +373,9 @@
           "seriesLength",
           "extraRounds",
           "tags",
-          "series"
+          "series",
+          "faltResultMode",
+          "stations"
         ],
         "additionalProperties": false,
         "title": "Session"

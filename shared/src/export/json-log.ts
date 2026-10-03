@@ -6,7 +6,7 @@
 // The shape is a documented, stable contract: `format` + `version` are the
 // first two keys so a consumer can dispatch on them, scores are in display
 // points (never tenths, which are an internal storage detail), and the
-// session bodies reuse the CSV exporter's `SessionExport` shape so both
+// session bodies reuse the sessions export's `SessionExport` shape so both
 // exports describe the same data the same way.
 
 import type { AnalyticsRecord, AnalyticsRecords, AnalyticsTotals } from '../scoring/analytics';
