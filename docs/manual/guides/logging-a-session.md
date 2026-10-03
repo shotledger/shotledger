@@ -164,12 +164,18 @@ where you can filter by discipline, firearm and weapon group.
 ## Session report
 
 **⋮ → Session Report** makes a PDF of the session and hands it to the share
-sheet, to print or send to a coach. It opens with the date, discipline,
-firearm, total and inner tens, then shows the series side by side, three to a
-row: each one's total and shot values and, for a series scored from a photo,
-the target with the holes drawn on it and the windage, elevation, mean radius
-and max spread. A series entered on the keypad shows its values only.
-Sighters and final series are labelled.
+sheet, to print or send to a coach. It opens with the date, discipline and
+firearm, then a session summary: the same results as the session screen (total,
+average per series, inner tens, and any subtotals), the shot distribution, and
+every hole from the series scored from a photo on one target, with the
+group's windage, elevation, mean radius and max spread. Sighters are left out
+of the summary. When only some series have a photo, the target's caption says
+how many it covers.
+
+Below the summary the series sit side by side, three to a row: each one's total
+and shot values and, for a series scored from a photo, its own target and group
+figures. A series entered on the keypad shows its values only. Sighters and
+final series are labelled.
 
 The report is in the app's language. Field shooting sessions have none: they
 are scored in hits on figures, with no rings to draw.

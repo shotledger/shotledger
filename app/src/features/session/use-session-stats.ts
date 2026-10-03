@@ -70,7 +70,7 @@ const EMPTY: SessionStats = {
   standardMedal: null,
 };
 
-function loadSessionStats(sessionId: string): SessionStats {
+export function loadSessionStats(sessionId: string): SessionStats {
   if (!db || !sessionId) return EMPTY;
 
   const all = listAllStatsSeries(db);

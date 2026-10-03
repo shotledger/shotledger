@@ -5,10 +5,14 @@ import type { TFunction } from 'i18next';
 import {
   analyzeGroup,
   buildSessionReportHtml,
-  getDiscipline,
   getTargetFace,
+  seriesTargetFace,
   tenthsToScore,
+  type SessionReportField,
+  type SessionReportMark,
+  type SessionReportPlot,
   type SessionReportSeries,
+  type TargetFaceDefinition,
 } from '@shotledger/shared';
 
 import { formatShotValue } from '@/components/shot-chips';
@@ -17,6 +21,7 @@ import { listMarksForSeries } from '@/db/queries/shot-marks';
 import { formatSessionDate } from '@/features/home/format-session-date';
 import { disciplineLabel } from '@/features/session/labels';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { loadSessionStats } from '@/features/session/use-session-stats';
 
 /** The report HTML for a session, or `null` with no DB or no such session. */
 export function buildSessionReportHtmlFor(
@@ -29,8 +34,29 @@ export function buildSessionReportHtmlFor(
   const { session } = detail;
   if (!session) return null;
 
-  const target = getTargetFace(getDiscipline(session.disciplineId)?.targetFace ?? '') ?? null;
   const mm = (value: number) => t('photoScoring.millimeters', { value: value.toFixed(1) });
+  const groupFigures = (marks: readonly SessionReportMark[]): SessionReportField[] => {
+    if (marks.length < 2) return [];
+    const group = analyzeGroup(marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })));
+    if (!group) return [];
+    return [
+      { label: t('photoScoring.windage'), value: mm(group.windageMm) },
+      { label: t('photoScoring.elevation'), value: mm(group.elevationMm) },
+      { label: t('photoScoring.meanRadius'), value: mm(group.meanRadiusMm) },
+      { label: t('photoScoring.maxSpread'), value: mm(group.extremeSpreadMm) },
+    ];
+  };
+  // Scoring marks pooled per face for the summary; a sighter scores nothing.
+  const pooled = new Map<
+    string,
+    {
+      target: TargetFaceDefinition;
+      marks: SessionReportMark[];
+      stages: Set<string | null>;
+      marked: number;
+    }
+  >();
+  const scoringPerFace = new Map<string, number>();
 
   // Main series first, then the final, each in position order — as the
   // session view lists them.
@@ -39,9 +65,21 @@ export function buildSessionReportHtmlFor(
     ...detail.seriesRows.filter((row) => row.isFinal),
   ];
   const series: SessionReportSeries[] = rows.map((row) => {
-    const marks = listMarksForSeries(db!, row.id);
-    const group =
-      marks.length >= 2 ? analyzeGroup(marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm }))) : null;
+    const faceId = seriesTargetFace(session.disciplineId, session.programId, row.position);
+    const target = (faceId && getTargetFace(faceId)) || null;
+    const marks: SessionReportMark[] = listMarksForSeries(db!, row.id).map((m) => ({
+      xMm: m.xMm,
+      yMm: m.yMm,
+      caliberMm: m.caliberMm,
+    }));
+    if (faceId && !row.isSighter) scoringPerFace.set(faceId, (scoringPerFace.get(faceId) ?? 0) + 1);
+    if (target && faceId && marks.length > 0 && !row.isSighter) {
+      const entry = pooled.get(faceId) ?? { target, marks: [], stages: new Set(), marked: 0 };
+      entry.marks.push(...marks);
+      entry.stages.add(row.stage);
+      entry.marked += 1;
+      pooled.set(faceId, entry);
+    }
     return {
       title: t('session.seriesTitle', { position: row.position }),
       tags: [
@@ -50,17 +88,73 @@ export function buildSessionReportHtmlFor(
       ],
       total: String(tenthsToScore(row.totalTenths)),
       values: row.shots.map((shot) => formatShotValue(shot, detail.scoringMode)),
-      marks: marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm, caliberMm: m.caliberMm })),
-      figures: group
-        ? [
-            { label: t('photoScoring.windage'), value: mm(group.windageMm) },
-            { label: t('photoScoring.elevation'), value: mm(group.elevationMm) },
-            { label: t('photoScoring.meanRadius'), value: mm(group.meanRadiusMm) },
-            { label: t('photoScoring.maxSpread'), value: mm(group.extremeSpreadMm) },
-          ]
-        : [],
+      marks,
+      figures: groupFigures(marks),
+      target,
     };
   });
+
+  // One plot per face; a helmatch delmoment is named.
+  // When only some series have a photo, the caption says how many it covers.
+  const plots: SessionReportPlot[] = [...pooled.entries()].map(([faceId, entry]) => {
+    const [stage] = entry.stages;
+    const scoring = scoringPerFace.get(faceId) ?? entry.marked;
+    const coverage =
+      entry.marked === scoring
+        ? t('session.reportAllSeries')
+        : t('session.reportMarkedSeries', { marked: entry.marked, total: scoring });
+    const caption =
+      pooled.size > 1 && entry.stages.size === 1 && stage
+        ? `${t(`stage.${session.programId}.${stage}`)} · ${coverage}`
+        : coverage;
+    return {
+      caption,
+      target: entry.target,
+      marks: entry.marks,
+      figures: groupFigures(entry.marks),
+    };
+  });
+
+  const { results } = detail;
+  const stats = loadSessionStats(sessionId);
+  // Highest value first, as a score sheet reads; X counts under 10 (DistributionBucket).
+  const distribution =
+    stats.shotCount > 0
+      ? {
+          heading: t('stats.distributionTitleWithCount', { count: stats.shotCount }),
+          buckets: [...stats.distribution]
+            .sort((a, b) => b.value - a.value)
+            .map((bucket) => ({ label: String(bucket.value), value: String(bucket.count) })),
+        }
+      : null;
+  const resultFields: SessionReportField[] = [
+    ...detail.stageSubtotals.map((subtotal) => ({
+      label: t(`stage.${session.programId}.${subtotal.stage}`),
+      value: String(tenthsToScore(subtotal.totalTenths)),
+    })),
+    ...(results.hasFinal
+      ? [
+          {
+            label: t('session.beforeFinal'),
+            value: String(tenthsToScore(results.beforeFinalTenths)),
+          },
+          { label: t('session.final'), value: String(tenthsToScore(results.finalTenths)) },
+        ]
+      : []),
+    { label: t('session.total'), value: String(tenthsToScore(results.totalTenths)) },
+    {
+      label: t('session.seriesAverage'),
+      value:
+        detail.seriesAverageTenths === null
+          ? '\u2013'
+          : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
+    },
+    { label: t('session.innerTenCount'), value: String(detail.innerTenCount) },
+    {
+      label: t('session.innerTenAverage'),
+      value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
+    },
+  ];
 
   return buildSessionReportHtml(
     {
@@ -72,15 +166,16 @@ export function buildSessionReportHtmlFor(
           label: t('session.firearm'),
           value: detail.firearmName ?? t('compliance.pdfNoFirearm'),
         },
-        { label: t('session.total'), value: String(tenthsToScore(detail.results.totalTenths)) },
-        { label: t('session.innerTenCount'), value: String(detail.innerTenCount) },
       ],
+      summaryHeading: t('session.reportSummary'),
+      results: resultFields,
+      plots,
+      distribution,
       generatedAtLabel: t('compliance.pdfGeneratedAt', {
         date: formatSessionDate(new Date().toISOString(), language),
       }),
       emptyLabel: t('session.noSeries'),
     },
-    target,
     series,
   );
 }

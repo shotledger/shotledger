@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
+import { ISSF_25M_RAPID_FIRE, SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
 import {
   buildSessionReportHtml,
   reportViewHalfMm,
@@ -15,8 +15,14 @@ const summary: SessionReportSummary = {
     { label: 'Date', value: '3 Oct 2026' },
     { label: 'Discipline', value: 'Precision' },
     { label: 'Firearm', value: 'Make Model' },
-    { label: 'Total', value: '183' },
   ],
+  summaryHeading: 'Session Summary',
+  results: [
+    { label: 'Total', value: '183' },
+    { label: 'Avg/Series', value: '91.5' },
+  ],
+  plots: [],
+  distribution: null,
   generatedAtLabel: 'Generated 3 Oct 2026',
   emptyLabel: 'No series yet.',
 };
@@ -37,6 +43,7 @@ const photoSeries: SessionReportSeries = {
     { label: 'Mean Radius', value: '15.0 mm' },
     { label: 'Max Spread', value: '33.3 mm' },
   ],
+  target: SPSF_PISTOL_25M_PRECISION,
 };
 
 const keypadSeries: SessionReportSeries = {
@@ -46,6 +53,7 @@ const keypadSeries: SessionReportSeries = {
   values: ['10', '9', '9', '8', '8'],
   marks: [],
   figures: [],
+  target: SPSF_PISTOL_25M_PRECISION,
 };
 
 function count(haystack: string, needle: string): number {
@@ -54,7 +62,7 @@ function count(haystack: string, needle: string): number {
 
 describe('buildSessionReportHtml', () => {
   it('prints the header fields in order', () => {
-    const html = buildSessionReportHtml(summary, SPSF_PISTOL_25M_PRECISION, [photoSeries]);
+    const html = buildSessionReportHtml(summary, [photoSeries]);
     const order = summary.fields.map((f) =>
       html.indexOf(`<span class="label">${f.label}</span> ${f.value}`),
     );
@@ -64,10 +72,7 @@ describe('buildSessionReportHtml', () => {
   });
 
   it('draws a target only for a series with marks; a keypad series prints values only', () => {
-    const html = buildSessionReportHtml(summary, SPSF_PISTOL_25M_PRECISION, [
-      photoSeries,
-      keypadSeries,
-    ]);
+    const html = buildSessionReportHtml(summary, [photoSeries, keypadSeries]);
     expect(count(html, 'class="card"')).toBe(2);
     expect(count(html, '<svg')).toBe(1);
     expect(count(html, 'class="figures"')).toBe(1);
@@ -77,29 +82,82 @@ describe('buildSessionReportHtml', () => {
   });
 
   it('draws no target when the session has no known face', () => {
-    const html = buildSessionReportHtml(summary, null, [photoSeries]);
+    const html = buildSessionReportHtml(summary, [{ ...photoSeries, target: null }]);
     expect(html).not.toContain('<svg');
     expect(html).toContain('Windage');
   });
 
   it('says so when there are no series', () => {
-    const html = buildSessionReportHtml(summary, SPSF_PISTOL_25M_PRECISION, []);
+    const html = buildSessionReportHtml(summary, []);
     expect(html).toContain('No series yet.');
     expect(html).not.toContain('class="card"');
   });
 
   it('escapes every caller string', () => {
-    const html = buildSessionReportHtml({ ...summary, title: '<b>&"\'' }, null, [
+    const html = buildSessionReportHtml({ ...summary, title: '<b>&"\'' }, [
       { ...keypadSeries, title: '<script>' },
     ]);
     expect(html).toContain('&lt;b&gt;&amp;&quot;&#39;');
     expect(html).not.toContain('<script>');
   });
 
+  it('opens with the session summary: results, then one target per plot', () => {
+    const plot = {
+      caption: 'All Series',
+      target: SPSF_PISTOL_25M_PRECISION,
+      marks: photoSeries.marks,
+      figures: photoSeries.figures,
+    };
+    const html = buildSessionReportHtml({ ...summary, plots: [plot, { ...plot, caption: 'B' }] }, [
+      keypadSeries,
+    ]);
+    expect(html.indexOf('<h2>Session Summary</h2>')).toBeLessThan(html.indexOf('class="card"'));
+    expect(html).toContain(
+      '<div class="result-value">91.5</div><div class="result-label">Avg/Series</div>',
+    );
+    expect(count(html, 'class="plot"')).toBe(2);
+    expect(count(html, '<svg')).toBe(2);
+    expect(html).toContain('<div class="plot-caption">B</div>');
+  });
+
+  it('prints the shot distribution as value over count', () => {
+    const html = buildSessionReportHtml(
+      {
+        ...summary,
+        distribution: {
+          heading: 'Shot Distribution (8 shots)',
+          buckets: [
+            { label: '10', value: '3' },
+            { label: '9', value: '5' },
+          ],
+        },
+      },
+      [keypadSeries],
+    );
+    expect(html).toContain('Shot Distribution (8 shots)');
+    expect(html).toContain('<tr><th>10</th><th>9</th></tr><tr><td>3</td><td>5</td></tr>');
+  });
+
+  it('prints the results without a plot when no series has marks', () => {
+    const html = buildSessionReportHtml(summary, [keypadSeries]);
+    expect(html).toContain('class="results"');
+    expect(html).not.toContain('class="plots"');
+    expect(html).not.toContain('<svg');
+  });
+
+  it('draws each series on its own face', () => {
+    const html = buildSessionReportHtml(summary, [
+      photoSeries,
+      { ...photoSeries, title: 'Series 2', target: ISSF_25M_RAPID_FIRE },
+    ]);
+    const viewBoxes = [...html.matchAll(/viewBox="([^"]+)"/g)].map((m) => m[1]);
+    // The same marks frame differently on the two faces' ring spacing.
+    expect(viewBoxes).toHaveLength(2);
+    expect(viewBoxes[0]).not.toBe(viewBoxes[1]);
+  });
+
   it('matches the snapshot', () => {
-    expect(
-      buildSessionReportHtml(summary, SPSF_PISTOL_25M_PRECISION, [photoSeries, keypadSeries]),
-    ).toMatchSnapshot();
+    expect(buildSessionReportHtml(summary, [photoSeries, keypadSeries])).toMatchSnapshot();
   });
 });
 

@@ -1,6 +1,6 @@
-// Pure HTML builder for the per-session report (#499): a header, then one
-// compact card per series with its target, marks, shot values and group
-// figures. expo-print turns it into a PDF on the app side; nothing here
+// Pure HTML builder for the per-session report (#499): a header, a session
+// summary (results plus every scoring mark on one target), then one compact
+// card per series with its target, marks, shot values and group figures. expo-print turns it into a PDF on the app side; nothing here
 // imports RN, so it is testable with plain vitest, like pdf-log.ts.
 //
 // Shared does no i18n: every label and formatted value comes from the caller.
@@ -41,13 +41,30 @@ export interface SessionReportSeries {
   marks: readonly SessionReportMark[];
   /** Windage, elevation, mean radius, max spread — empty below two marks. */
   figures: readonly SessionReportField[];
+  /** The face this series is shot on; null draws no target. */
+  target: TargetFaceDefinition | null;
+}
+
+/** Every scoring mark of the session on one face, with the group figures. */
+export interface SessionReportPlot {
+  caption: string;
+  target: TargetFaceDefinition;
+  marks: readonly SessionReportMark[];
+  figures: readonly SessionReportField[];
 }
 
 export interface SessionReportSummary {
   /** The session's name. */
   title: string;
-  /** Date, discipline, firearm, total — in the order given. */
+  /** Date, discipline, firearm — in the order given. */
   fields: readonly SessionReportField[];
+  summaryHeading: string;
+  /** The session's results (subtotals, total, averages), as the session screen shows them. */
+  results: readonly SessionReportField[];
+  /** One per face that carries marks; empty when no series has a photo. */
+  plots: readonly SessionReportPlot[];
+  /** Scored shots per value ("10" → "7"), highest first; null with none. */
+  distribution: { heading: string; buckets: readonly SessionReportField[] } | null;
   generatedAtLabel: string;
   /** Printed instead of the cards when the session has no series. */
   emptyLabel: string;
@@ -146,19 +163,59 @@ export function targetFaceSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}">${parts.join('')}</svg>`;
 }
 
-function seriesCard(series: SessionReportSeries, target: TargetFaceDefinition | null): string {
+function figuresTable(figures: readonly SessionReportField[]): string {
+  if (figures.length === 0) return '';
+  return `<table class="figures">${figures
+    .map((f) => `<tr><td>${escapeHtml(f.label)}</td><td>${escapeHtml(f.value)}</td></tr>`)
+    .join('')}</table>`;
+}
+
+function summarySection(summary: SessionReportSummary): string {
+  const results = summary.results
+    .map(
+      (f) =>
+        `<div class="result"><div class="result-value">${escapeHtml(f.value)}</div><div class="result-label">${escapeHtml(f.label)}</div></div>`,
+    )
+    .join('');
+  const plots = summary.plots
+    .map(
+      (plot) => `<div class="plot">
+      <div class="plot-caption">${escapeHtml(plot.caption)}</div>
+      <div class="face">${targetFaceSvg(plot.target, plot.marks, 240)}</div>
+      ${figuresTable(plot.figures)}
+    </div>`,
+    )
+    .join('');
+  const { distribution } = summary;
+  const distributionTable = distribution
+    ? `<div class="distribution">
+      <div class="plot-caption">${escapeHtml(distribution.heading)}</div>
+      <table><tr>${distribution.buckets.map((b) => `<th>${escapeHtml(b.label)}</th>`).join('')}</tr><tr>${distribution.buckets
+        .map((b) => `<td>${escapeHtml(b.value)}</td>`)
+        .join('')}</tr></table>
+    </div>`
+    : '';
+  return `<section class="summary">
+    <h2>${escapeHtml(summary.summaryHeading)}</h2>
+    <div class="summary-body">
+      ${plots ? `<div class="plots">${plots}</div>` : ''}
+      <div class="summary-numbers">
+        <div class="results">${results}</div>
+        ${distributionTable}
+      </div>
+    </div>
+  </section>`;
+}
+
+function seriesCard(series: SessionReportSeries): string {
+  const { target } = series;
   const tags = series.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
   const face =
     target && series.marks.length > 0
       ? `<div class="face">${targetFaceSvg(target, series.marks, 200)}</div>`
       : '';
   const values = series.values.map((v) => `<span class="value">${escapeHtml(v)}</span>`).join('');
-  const figures =
-    series.figures.length > 0
-      ? `<table class="figures">${series.figures
-          .map((f) => `<tr><td>${escapeHtml(f.label)}</td><td>${escapeHtml(f.value)}</td></tr>`)
-          .join('')}</table>`
-      : '';
+  const figures = figuresTable(series.figures);
   return `<div class="card">
     <div class="card-head"><span class="series-title">${escapeHtml(series.title)}</span>${tags}<span class="total">${escapeHtml(series.total)}</span></div>
     ${face}
@@ -170,7 +227,6 @@ function seriesCard(series: SessionReportSeries, target: TargetFaceDefinition | 
 /** Builds the session report HTML. Pure — no I/O, no RN. */
 export function buildSessionReportHtml(
   summary: SessionReportSummary,
-  target: TargetFaceDefinition | null,
   series: readonly SessionReportSeries[],
 ): string {
   const fields = summary.fields
@@ -182,7 +238,7 @@ export function buildSessionReportHtml(
   const body =
     series.length === 0
       ? `<p class="empty">${escapeHtml(summary.emptyLabel)}</p>`
-      : `<div class="grid">${series.map((s) => seriesCard(s, target)).join('')}</div>`;
+      : `${summarySection(summary)}<div class="grid">${series.map(seriesCard).join('')}</div>`;
 
   return `<!doctype html>
 <html>
@@ -196,7 +252,22 @@ export function buildSessionReportHtml(
   .label { color: #555; }
   .generated { font-size: 10px; color: #666; margin-bottom: 12px; }
   /* Three series across, like TargetScan's side-by-side session report. */
-  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  h2 { font-size: 14px; margin: 0 0 8px; }
+  .summary { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+  .results { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: 8px; }
+  .result-value { font-size: 18px; font-weight: 700; }
+  .result-label { font-size: 10px; color: #555; }
+  .summary-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .summary-numbers { flex: 1; min-width: 200px; }
+  .plots { display: flex; flex-wrap: wrap; gap: 16px; }
+  .distribution table { border-collapse: collapse; font-size: 11px; margin-top: 2px; }
+  .distribution th, .distribution td { border: 1px solid #ccc; padding: 2px 6px; text-align: center; }
+  .distribution th { background: #f2f2f2; font-weight: 600; }
+  .plot { width: 240px; }
+  .plot-caption { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .plot .face svg { max-width: 240px; }
+  /* align-items: a card without a target keeps its own height beside one with. */
+  .grid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
   .card { width: calc((100% - 20px) / 3); box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; padding: 8px; break-inside: avoid; page-break-inside: avoid; }
   .card-head { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 6px; }
   .series-title { font-weight: 600; }
