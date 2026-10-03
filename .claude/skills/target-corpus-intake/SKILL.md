@@ -143,11 +143,13 @@ in the corpus appears exactly once.
 
 The photos are only measured once something runs on them:
 
-- `spike/cv/eval_closeup_real.py`: runs both target locks on every photo and
-  draws overlays to check by eye.
-- `spike/cv/mark_holes.py`, then `eval_hole_proposals.py`: hand-label hole
+- `tools/cv/eval/` `closeup-real`: runs both target locks on every photo and
+  writes one JSON line per photo.
+- `tools/cv/fit/` `mark-holes`, then `eval/` `score-holes`: hand-label hole
   centres and measure the hole suggestions. Labels go in
   `target-corpus/labels/`, never in the repo.
+
+`tools/cv/README.md` has the commands.
 
 A milsnabb photo is the scarcest thing the corpus lacks; say so when one
 arrives.
