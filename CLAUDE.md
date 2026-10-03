@@ -180,7 +180,7 @@ in progress.
   blocks by default — esbuild for bundling, workerd for
   `backend`'s Cloudflare Workers vitest pool). Also one-time per
   contributor after cloning (a security trust step, not a dependency
-  install): `claude plugin install impeccable@pbakaus-impeccable` — the
+  install): `claude plugin install impeccable@impeccable` — the
   marketplace is already registered in `.claude/settings.json`, which
   enables the plugin for everyone once installed.
 - Web preview (primary UI iteration surface): `cd app && pnpm exec expo

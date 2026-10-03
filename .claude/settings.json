@@ -1,6 +1,6 @@
 {
   "enabledPlugins": {
-    "impeccable": true,
+    "impeccable@impeccable": true,
     "reqstool@reqstool-ai": true,
     "reqstool-openspec@reqstool-ai": true
   },
