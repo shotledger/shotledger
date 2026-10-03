@@ -39,12 +39,13 @@ så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
 
 I precision, magnumprecision och militär snabbmatch markerar knappsatsen en bra
 serie när du fyller i sista skottet. Når serien guldseriegränsen blir summan
-guldfärgad och telefonen ger en lätt vibration. En **fullpott** — alla skott i
-tian — ger guldringar och **Fullpott!**, och bara innertior lägger till **Alla
-innertior!** Det visas bara när du fyller i serien, aldrig när du öppnar en
-sparad, och med telefonens inställning för minskade rörelser ser du bara
-texten. Tillbaka i passet har en fullpottserie en liten tavelstämpel i stället
-för guldseriemärket.
+guldfärgad och telefonen ger en lätt vibration. Alla skott i tian — 50 i en
+femskottsserie — ger guldringar och **Bra jobbat!** En **perfekt serie** går
+ett steg längre: bara innertior, eller 10,9 med decimalräkning (54,5), och ger
+**Perfekt serie!** Det visas bara när du fyller i serien, aldrig när du öppnar
+en sparad, och med telefonens inställning för minskade rörelser ser du bara
+texten. I passets serielista ligger varje summa på en guldstapel som fylls mot
+full poäng — helt fylld vid 50, med en extra ring för en perfekt serie.
 
 ## Provserier
 

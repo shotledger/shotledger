@@ -1,4 +1,4 @@
-// The perfect-series moment on the keypad (#482): gold rings ripple out like a
+// The full-score moment on the keypad (#482): gold rings ripple out like a
 // target and the label pops in, then everything fades. Touches pass through,
 // so it never blocks entry or Save.
 import { useEffect, useState } from 'react';
@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { isPerfectTier, type CelebrationTier } from '@/features/session/celebration';
+import type { CelebrationTier } from '@/features/session/celebration';
 import { useTheme } from '@/hooks/use-theme';
 import { notifySuccess, tick, vibrate } from '@/platform/haptics';
 import { Radius, Spacing } from '@/theme/tokens';
@@ -38,7 +38,7 @@ function playHaptic(tier: CelebrationTier): () => void {
     return () => {};
   }
   notifySuccess();
-  if (tier !== 'perfectInner') return () => {};
+  if (tier !== 'perfect') return () => {};
   // A second, heavier beat sets the rarest tier apart by feel alone.
   const timer = setTimeout(() => vibrate(250), 220);
   return () => clearTimeout(timer);
@@ -59,13 +59,7 @@ function Ring({ index, color }: { index: number; color: string }) {
   return <Animated.View style={[styles.ring, { borderColor: color }, style]} />;
 }
 
-function Label({
-  tier,
-  reduceMotion,
-}: {
-  tier: 'perfect' | 'perfectInner';
-  reduceMotion: boolean;
-}) {
+function Label({ tier, reduceMotion }: { tier: 'fullScore' | 'perfect'; reduceMotion: boolean }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const opacity = useSharedValue(0);
@@ -95,13 +89,8 @@ function Label({
       ]}
     >
       <ThemedText type="subtitle" themeColor="celebration" style={styles.title}>
-        {t('session.celebrationPerfect')}
+        {t(tier === 'perfect' ? 'session.celebrationPerfect' : 'session.celebrationFullScore')}
       </ThemedText>
-      {tier === 'perfectInner' && (
-        <ThemedText type="smallBold" themeColor="celebration">
-          {t('session.celebrationPerfectInner')}
-        </ThemedText>
-      )}
     </Animated.View>
   );
 }
@@ -119,9 +108,9 @@ export function SeriesCelebration({ celebration }: { celebration: Celebration })
     return () => clearTimeout(timer);
   }, []);
 
-  if (!visible || !isPerfectTier(tier)) return null;
+  if (!visible || tier === 'gold') return null;
 
-  const rings = tier === 'perfectInner' ? 5 : 3;
+  const rings = tier === 'perfect' ? 5 : 3;
   return (
     <View
       pointerEvents="none"

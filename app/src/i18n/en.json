@@ -716,9 +716,7 @@
     "seriesLength": "Shots per Series",
     "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
     "celebrationPerfect": "Perfect Series!",
-    "celebrationPerfectInner": "All Inner Tens!",
-    "perfectStamp": "Perfect series",
-    "perfectInnerStamp": "Perfect series, all inner tens"
+    "celebrationFullScore": "Great Job!"
   },
   "share": {
     "title": "Share Session",

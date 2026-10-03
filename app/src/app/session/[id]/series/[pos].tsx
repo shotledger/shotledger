@@ -32,8 +32,6 @@ import {
 import {
   celebratesDiscipline,
   celebrationTier,
-  isPerfectTier,
-  markStampPending,
   tierToCelebrate,
   type CelebrationTier,
 } from '@/features/session/celebration';
@@ -97,6 +95,7 @@ export default function SeriesEntryScreen() {
   const tierOf = (next: KeypadState, sighter: boolean): CelebrationTier | null =>
     celebrates
       ? celebrationTier(next.shots, {
+          mode: next.mode,
           seriesLength: next.seriesLength,
           guldThreshold,
           isSighter: sighter,
@@ -165,7 +164,6 @@ export default function SeriesEntryScreen() {
     }
 
     saveSeriesShots(db, seriesId, shots);
-    if (celebration && isPerfectTier(currentTier)) markStampPending(seriesId);
 
     if (row && isSighter !== (row.isSighter ?? false)) {
       try {

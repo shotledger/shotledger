@@ -1,10 +1,19 @@
-// Perfect-series celebration (#482): which tier a series has reached, and
-// whether an edit should celebrate it.
-import { tenthsToScore, type EntryShot } from '@shotledger/shared';
+// Series celebration (#482): which tier a series has reached, and whether an
+// edit should celebrate it.
+import {
+  MAX_VALUE_TENTHS,
+  tenthsToScore,
+  type EntryShot,
+  type ScoringMode,
+} from '@shotledger/shared';
 
-export type CelebrationTier = 'gold' | 'perfect' | 'perfectInner';
+/**
+ * `fullScore`: every shot in the 10 ring (5×10 = 50). `perfect`: nothing left
+ * to gain — every shot an inner ten in integer scoring, 10.9 in decimal (54.5).
+ */
+export type CelebrationTier = 'gold' | 'fullScore' | 'perfect';
 
-/** Ring disciplines where a perfect series is celebrated. */
+/** Ring disciplines where a series is celebrated. */
 const CELEBRATED_DISCIPLINES: ReadonlySet<string> = new Set([
   'spsf-precision',
   'spsf-magnumprecision',
@@ -13,33 +22,34 @@ const CELEBRATED_DISCIPLINES: ReadonlySet<string> = new Set([
 
 const TEN_RING_TENTHS = 100;
 
-const RANK: Record<CelebrationTier, number> = { gold: 1, perfect: 2, perfectInner: 3 };
+const RANK: Record<CelebrationTier, number> = { gold: 1, fullScore: 2, perfect: 3 };
 
 export function celebratesDiscipline(disciplineId: string | null | undefined): boolean {
   return disciplineId != null && CELEBRATED_DISCIPLINES.has(disciplineId);
 }
 
 export interface TierContext {
+  mode: ScoringMode;
   seriesLength: number;
   /** Gold-series threshold in points, or null where the märke rule does not apply. */
   guldThreshold: number | null;
   isSighter: boolean;
 }
 
-/**
- * The tier a series has reached, or null. Perfect means complete with every
- * shot in the 10 ring — any series length, integer or decimal.
- */
+function isPerfectShot(shot: EntryShot, mode: ScoringMode): boolean {
+  return mode === 'decimal' ? shot.valueTenths === MAX_VALUE_TENTHS : shot.isInnerTen;
+}
+
+/** The tier a complete series has reached, or null. Any series length. */
 export function celebrationTier(
   shots: readonly (EntryShot | null)[],
-  { seriesLength, guldThreshold, isSighter }: TierContext,
+  { mode, seriesLength, guldThreshold, isSighter }: TierContext,
 ): CelebrationTier | null {
   const entered = shots.filter((shot): shot is EntryShot => shot !== null);
   if (entered.length !== seriesLength) return null;
 
-  if (entered.every((shot) => shot.valueTenths >= TEN_RING_TENTHS)) {
-    return entered.every((shot) => shot.isInnerTen) ? 'perfectInner' : 'perfect';
-  }
+  if (entered.every((shot) => isPerfectShot(shot, mode))) return 'perfect';
+  if (entered.every((shot) => shot.valueTenths >= TEN_RING_TENTHS)) return 'fullScore';
 
   const totalTenths = entered.reduce((sum, shot) => sum + shot.valueTenths, 0);
   if (guldThreshold !== null && !isSighter && tenthsToScore(totalTenths) >= guldThreshold) {
@@ -61,21 +71,11 @@ export function tierToCelebrate(
   return next;
 }
 
-export function isPerfectTier(tier: CelebrationTier | null): tier is 'perfect' | 'perfectInner' {
-  return tier === 'perfect' || tier === 'perfectInner';
-}
-
-// The series saved as perfect on the entry screen, so session detail stamps
-// it in once on return instead of every time the row renders.
-let pendingStampSeriesId: string | null = null;
-
-export function markStampPending(seriesId: string): void {
-  pendingStampSeriesId = seriesId;
-}
-
-/** The series marked by `markStampPending`, once; null after that. */
-export function takePendingStamp(): string | null {
-  const seriesId = pendingStampSeriesId;
-  pendingStampSeriesId = null;
-  return seriesId;
+/**
+ * How full the total's pill is on the series list: total over every shot in
+ * the 10 ring, capped at 1 — a decimal series above 50 is simply full.
+ */
+export function totalFillFraction(totalTenths: number, seriesLength: number): number {
+  if (seriesLength <= 0) return 0;
+  return Math.min(1, Math.max(0, totalTenths / (seriesLength * TEN_RING_TENTHS)));
 }

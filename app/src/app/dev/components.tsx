@@ -13,9 +13,9 @@ import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
-import { PerfectSeriesStamp } from '@/components/perfect-series-stamp';
 import { ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
+import { SeriesTotalPill } from '@/components/series-total-pill';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
@@ -99,8 +99,8 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
 // One finished series per tier, so each celebration can be replayed on demand.
 const CELEBRATION_DEMOS: readonly { tier: CelebrationTier; label: string; values: number[] }[] = [
   { tier: 'gold', label: 'Gold (47)', values: [100, 100, 90, 90, 90] },
-  { tier: 'perfect', label: 'Perfect (50)', values: [100, 100, 100, 100, 100] },
-  { tier: 'perfectInner', label: 'All Inner Tens', values: [100, 100, 100, 100, 100] },
+  { tier: 'fullScore', label: 'Full Score (5×10)', values: [100, 100, 100, 100, 100] },
+  { tier: 'perfect', label: 'Perfect (5×X)', values: [100, 100, 100, 100, 100] },
 ];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -122,7 +122,6 @@ export default function ComponentsGalleryScreen() {
     createKeypadState({ mode: 'integer', seriesLength: 5 }),
   );
   const [celebration, setCelebration] = useState<Celebration | null>(null);
-  const [stampRun, setStampRun] = useState(0);
 
   function playCelebration(demo: (typeof CELEBRATION_DEMOS)[number]) {
     setCelebrationKeypad(
@@ -131,7 +130,7 @@ export default function ComponentsGalleryScreen() {
         seriesLength: 5,
         shots: demo.values.map((valueTenths) => ({
           valueTenths,
-          isInnerTen: demo.tier === 'perfectInner',
+          isInnerTen: demo.tier === 'perfect',
         })),
       }),
     );
@@ -274,17 +273,13 @@ export default function ComponentsGalleryScreen() {
         </Card>
       </Section>
 
-      <Section title="PerfectSeriesStamp (#482)">
-        <View style={styles.headerRow}>
-          <View style={styles.row} key={stampRun}>
-            <PerfectSeriesStamp innerTens={false} animate={stampRun > 0} />
-            <PerfectSeriesStamp innerTens animate={stampRun > 0} />
-          </View>
-          <PrimaryButton
-            label="Replay Stamp"
-            onPress={() => setStampRun((run) => run + 1)}
-            testID="replay-stamp"
-          />
+      <Section title="SeriesTotalPill (#482)">
+        <View style={styles.wrapRow}>
+          <SeriesTotalPill label="9" fraction={0.18} tier={null} />
+          <SeriesTotalPill label="38" fraction={0.76} tier={null} />
+          <SeriesTotalPill label="47" fraction={0.94} tier="gold" />
+          <SeriesTotalPill label="50" fraction={1} tier="fullScore" />
+          <SeriesTotalPill label="50" fraction={1} tier="perfect" />
         </View>
       </Section>
 
