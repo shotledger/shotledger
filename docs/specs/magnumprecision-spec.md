@@ -79,14 +79,14 @@ they are reviewable rather than buried:
 
 ### `VERIFY:` — what Part G does not say
 
-- **`VERIFY:` What fixed standardmedalj threshold applies to a magnumprecision
-  competition of more than six series.** C.5.1.2.4 prints one unlabelled
-  silver/brons pair per vapengrupp with no series-count column, and — unlike
-  precision's C.5.1.2.3 — states no scaling rule. C.5.1 p. 69 fixes the
-  tävlingsomfattning at 6 series, so the table is read as the 6-series row and
-  nothing else. **Implemented as: fixed thresholds apply at exactly 6 scored
-  series, `null` otherwise.** Inventing precision's ÷10× rule here would be a
-  guessed regulatory value, which hard rule 4 forbids.
+- **Resolved 2026-10-03: no fixed standardmedalj threshold above six
+  series.** C.5.1.2.4 prints one unlabelled silver/brons pair per vapengrupp
+  with no series-count column, and unlike precision's C.5.1.2.3 it states no
+  scaling rule. C.5.1 p. 69 fixes the tävlingsomfattning at 6 series, so the
+  table is the 6-series row and nothing else. A discussion the maintainer
+  relayed confirmed this reading (`docs/reference/spsf-shb-2026.md`).
+  **Implemented as: fixed thresholds apply at exactly 6 scored series, `null`
+  otherwise.**
 - **`VERIFY:` The English name.** SHB has no English name for the discipline.
   Per CLAUDE.md rule 9's carve-out (a federation's own discipline name keeps
   its spelling), both locales get **"Magnumprecision"**. Flipping English to

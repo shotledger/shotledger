@@ -60,8 +60,8 @@ const PRECISION_WEAPON_GROUP_TO_STD_GROUP: Record<string, StandardMedalPrecision
 // Magnumprecision (C.5.1.2.4 p. 71). The table prints one silver/brons pair
 // per vapengrupp with no series-count column and states no scaling rule, so
 // it is read as the six-series omfattning C.5.1 p. 69 fixes — "Magnumprecision
-// 6 serier om vardera 5 skott" — and nothing is extrapolated beyond it. See
-// docs/specs/magnumprecision-spec.md for the open VERIFY on longer matches.
+// 6 serier om vardera 5 skott" — and nothing is extrapolated beyond it: SHB
+// sets no limit for longer matches (confirmed 2026-10-03).
 const MAGNUM_SERIES_COUNT = 6;
 const MAGNUM_THRESHOLDS: Record<StandardMedalMagnumRow, Thresholds> = {
   'M1-M4,M8': { silver: 282, brons: 274 },
