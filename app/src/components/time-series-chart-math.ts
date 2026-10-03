@@ -115,9 +115,9 @@ export interface GroupedLines {
  * something has to give; the count of what was dropped is returned so the
  * screen can say so rather than silently showing part of the picture.
  */
-export function groupByDiscipline(
-  points: readonly DisciplinePoint[],
-  pick: (point: DisciplinePoint) => number | null,
+export function groupByDiscipline<P extends DisciplinePoint>(
+  points: readonly P[],
+  pick: (point: P) => number | null,
   label: (disciplineId: string) => string,
   colors: readonly string[],
 ): GroupedLines {

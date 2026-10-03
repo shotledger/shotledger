@@ -16,6 +16,10 @@ import {
   analyticsReportSet,
   analyticsSessionPoints,
   compareRecentSeries,
+  faltReportTotals,
+  faltSessionPoints,
+  filterFaltSessions,
+  getDiscipline,
   goldSeriesCount,
   sampleStandardDeviationTenths,
   scoredShots,
@@ -25,6 +29,8 @@ import {
   type AnalyticsSessionPoint,
   type AnalyticsSessionType,
   type AnalyticsTotals,
+  type FaltReportTotals,
+  type FaltSessionPoint,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -32,6 +38,7 @@ import {
   listAllAnalyticsSeries,
   listAllStatsSeries,
   listAnalyticsSessions,
+  listFaltAnalyticsSessions,
 } from '@/db/queries/stats';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSessions } from '@/db/queries/sessions';
@@ -180,9 +187,17 @@ function loadFilterOptions(): AnalyticsFilterOptions {
     if (count > 0) lengths.add(count);
   }
 
+  // A fält session has stations, not series, so the series scan cannot see it.
+  const falt = listFaltAnalyticsSessions(db);
+
   return {
-    hasAnyData: all.length > 0,
-    disciplineIds: [...new Set(all.map((series) => series.disciplineId))].sort(),
+    hasAnyData: all.length > 0 || falt.length > 0,
+    disciplineIds: [
+      ...new Set([
+        ...all.map((series) => series.disciplineId),
+        ...falt.map((session) => session.disciplineId),
+      ]),
+    ].sort(),
     shotsPerSeriesValues: [...lengths].sort((a, b) => a - b),
     tags: listTags(db).map((tag) => ({ id: tag.id, name: tag.name })),
   };
@@ -232,6 +247,13 @@ export interface AnalyticsReportData {
   sessionIds: string[];
   /** Names of the filter's tags, so the report can echo them instead of a count. */
   tagNames: string[];
+  /** The report's fält sessions, or null when it has none. */
+  falt: { totals: FaltReportTotals; points: FaltSessionPoint[] } | null;
+  /**
+   * False when the selected discipline scores hits: every ring card would be
+   * empty, and an empty card reads as a result of zero.
+   */
+  showRingCards: boolean;
 }
 
 const EMPTY_TOTALS: AnalyticsTotals = {
@@ -260,12 +282,16 @@ const EMPTY_REPORT: AnalyticsReportData = {
   distribution: [],
   sessionIds: [],
   tagNames: [],
+  falt: null,
+  showRingCards: true,
 };
 
 function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
   if (!db) return EMPTY_REPORT;
 
   const all = listAllAnalyticsSeries(db);
+  const faltAll = listFaltAnalyticsSessions(db);
+  const faltMatched = filterFaltSessions(faltAll, toAnalyticsFilter(state));
   // The sighter scope is a scoring question, not a membership one, so it
   // rides on the aggregations rather than on the filter.
   const scope = { includeSighters: state.includeSighters };
@@ -289,7 +315,7 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
       : { ...record, sessionName: nameById.get(record.sessionId) ?? record.sessionId };
 
   return {
-    hasAnyData: all.length > 0,
+    hasAnyData: all.length > 0 || faltAll.length > 0,
     // The session set, not the series: a filter whose only match is a
     // rounds-only session would otherwise count 1 and then render the empty
     // state (spec revision, #349).
@@ -312,6 +338,12 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
     tagNames: listTags(db)
       .filter((tag) => state.tagIds.includes(tag.id))
       .map((tag) => tag.name),
+    falt:
+      faltMatched.length === 0
+        ? null
+        : { totals: faltReportTotals(faltMatched), points: faltSessionPoints(faltMatched) },
+    showRingCards:
+      state.disciplineId === null || getDiscipline(state.disciplineId)?.scoring !== 'hits',
   };
 }
 

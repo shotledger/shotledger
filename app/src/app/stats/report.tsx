@@ -214,20 +214,26 @@ export default function StatsReportScreen() {
         <EmptyState title={t('stats.emptyFilteredTitle')} body={t('stats.emptyFilteredBody')} />
       ) : (
         <>
-          <Card>
-            <ThemedText type="smallBold">{t('stats.summaryTitle')}</ThemedText>
-            {recordRow(
-              t('stats.recordSessionScore'),
-              data.bestSessionScore,
-              score(data.bestSessionScore?.value ?? null),
-            )}
-            {recordRow(
-              t('stats.recordInnerTens'),
-              data.mostInnerTens,
-              String(data.mostInnerTens?.value ?? DASH),
-            )}
-            {recordRow(t('stats.recordTens'), data.mostTens, String(data.mostTens?.value ?? DASH))}
-          </Card>
+          {data.showRingCards && (
+            <Card>
+              <ThemedText type="smallBold">{t('stats.summaryTitle')}</ThemedText>
+              {recordRow(
+                t('stats.recordSessionScore'),
+                data.bestSessionScore,
+                score(data.bestSessionScore?.value ?? null),
+              )}
+              {recordRow(
+                t('stats.recordInnerTens'),
+                data.mostInnerTens,
+                String(data.mostInnerTens?.value ?? DASH),
+              )}
+              {recordRow(
+                t('stats.recordTens'),
+                data.mostTens,
+                String(data.mostTens?.value ?? DASH),
+              )}
+            </Card>
+          )}
 
           <Card>
             <ThemedText type="smallBold">{t('stats.sumTitle')}</ThemedText>
@@ -238,120 +244,174 @@ export default function StatsReportScreen() {
                 value={String(data.totals.volumeShotCount)}
               />
               <StatTile
-                testID="stat-total-score"
-                label={t('stats.totalScore')}
-                value={score(data.totals.sumTenths)}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <StatTile
                 testID="stat-sessions"
                 label={t('stats.sessions')}
                 value={String(data.totals.sessionCount)}
               />
-              <StatTile
-                testID="stat-series"
-                label={t('stats.seriesCount')}
-                value={String(data.totals.scoredSeriesCount)}
-              />
             </View>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-inner-tens"
-                label={t('stats.innerTens')}
-                value={String(data.totals.innerTenCount)}
-              />
-              <StatTile
-                testID="stat-tens"
-                label={t('stats.tens')}
-                value={String(data.totals.tenCount)}
-              />
-            </View>
+            {data.showRingCards && (
+              <>
+                <View style={styles.gridRow}>
+                  <StatTile
+                    testID="stat-total-score"
+                    label={t('stats.totalScore')}
+                    value={score(data.totals.sumTenths)}
+                  />
+                  <StatTile
+                    testID="stat-series"
+                    label={t('stats.seriesCount')}
+                    value={String(data.totals.scoredSeriesCount)}
+                  />
+                </View>
+                <View style={styles.gridRow}>
+                  <StatTile
+                    testID="stat-inner-tens"
+                    label={t('stats.innerTens')}
+                    value={String(data.totals.innerTenCount)}
+                  />
+                  <StatTile
+                    testID="stat-tens"
+                    label={t('stats.tens')}
+                    value={String(data.totals.tenCount)}
+                  />
+                </View>
+              </>
+            )}
           </Card>
 
-          <Card>
-            <ThemedText type="smallBold">{t('stats.perShotTitle')}</ThemedText>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-mean"
-                label={t('stats.mean')}
-                value={score(data.totals.meanShotTenths)}
-              />
-              <StatTile
-                testID="stat-mean-series"
-                label={t('stats.meanPerSeries')}
-                value={score(data.totals.meanSeriesTenths)}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <StatTile
-                testID="stat-sd"
-                label={t('stats.standardDeviation')}
-                value={data.sdTenths === null ? DASH : tenthsToScore(data.sdTenths).toFixed(2)}
-              />
-              <StatTile
-                testID="stat-x-percent"
-                label={t('stats.xPercent')}
-                value={
-                  data.totals.scoredShotCount === 0
-                    ? DASH
-                    : `${((data.totals.innerTenCount / data.totals.scoredShotCount) * 100).toFixed(0)}%`
-                }
-              />
-            </View>
-            {data.goldSeriesCount > 0 && (
+          {data.falt && (
+            <Card testID="stats-falt">
+              <ThemedText type="smallBold">{disciplineLabel(t, 'spsf-falt')}</ThemedText>
               <View style={styles.gridRow}>
                 <StatTile
-                  testID="stat-gold-series-count"
-                  label={t('stats.goldSeriesCount')}
-                  value={String(data.goldSeriesCount)}
+                  testID="stat-falt-stations"
+                  label={t('stats.faltStations')}
+                  value={String(data.falt.totals.stationCount)}
+                />
+                <StatTile
+                  testID="stat-falt-hit-rate"
+                  label={t('stats.faltHitRate')}
+                  value={
+                    data.falt.totals.hitRate === null
+                      ? DASH
+                      : `${(data.falt.totals.hitRate * 100).toFixed(0)}%`
+                  }
                 />
               </View>
-            )}
-          </Card>
+              <View style={styles.gridRow}>
+                <StatTile
+                  testID="stat-falt-hits"
+                  label={t('stats.faltHits')}
+                  value={String(data.falt.totals.hits)}
+                />
+                <StatTile
+                  testID="stat-falt-figures"
+                  label={t('stats.faltFiguresHit')}
+                  value={String(data.falt.totals.figuresHit)}
+                />
+              </View>
+              <ThemedText type="smallBold">{t('stats.chartFaltHitsPerStation')}</ThemedText>
+              <ChartBody
+                grouped={groupByDiscipline(
+                  data.falt.points,
+                  (point) => point.hitsPerStation,
+                  (disciplineId) => disciplineLabel(t, disciplineId),
+                  CHART_LINE_COLORS[themeName],
+                )}
+                formatValue={(value) => value.toFixed(1)}
+                formatDate={formatShortDate}
+                t={t}
+              />
+            </Card>
+          )}
 
-          <Card>
-            <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>
-            <ChartBody
-              grouped={chart((point) => point.meanSeriesTotalTenths)}
-              formatValue={(value) => tenthsToScore(value).toFixed(0)}
-              formatDate={formatShortDate}
-              t={t}
-            />
-          </Card>
+          {data.showRingCards && (
+            <>
+              <Card>
+                <ThemedText type="smallBold">{t('stats.perShotTitle')}</ThemedText>
+                <View style={styles.gridRow}>
+                  <StatTile
+                    testID="stat-mean"
+                    label={t('stats.mean')}
+                    value={score(data.totals.meanShotTenths)}
+                  />
+                  <StatTile
+                    testID="stat-mean-series"
+                    label={t('stats.meanPerSeries')}
+                    value={score(data.totals.meanSeriesTenths)}
+                  />
+                </View>
+                <View style={styles.gridRow}>
+                  <StatTile
+                    testID="stat-sd"
+                    label={t('stats.standardDeviation')}
+                    value={data.sdTenths === null ? DASH : tenthsToScore(data.sdTenths).toFixed(2)}
+                  />
+                  <StatTile
+                    testID="stat-x-percent"
+                    label={t('stats.xPercent')}
+                    value={
+                      data.totals.scoredShotCount === 0
+                        ? DASH
+                        : `${((data.totals.innerTenCount / data.totals.scoredShotCount) * 100).toFixed(0)}%`
+                    }
+                  />
+                </View>
+                {data.goldSeriesCount > 0 && (
+                  <View style={styles.gridRow}>
+                    <StatTile
+                      testID="stat-gold-series-count"
+                      label={t('stats.goldSeriesCount')}
+                      value={String(data.goldSeriesCount)}
+                    />
+                  </View>
+                )}
+              </Card>
 
-          <Card>
-            <ThemedText type="smallBold">{t('stats.chartShotMean')}</ThemedText>
-            <ChartBody
-              grouped={chart((point) => point.meanShotTenths)}
-              formatValue={(value) => tenthsToScore(value).toFixed(1)}
-              formatDate={formatShortDate}
-              t={t}
-            />
-          </Card>
+              <Card>
+                <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>
+                <ChartBody
+                  grouped={chart((point) => point.meanSeriesTotalTenths)}
+                  formatValue={(value) => tenthsToScore(value).toFixed(0)}
+                  formatDate={formatShortDate}
+                  t={t}
+                />
+              </Card>
 
-          <Card>
-            <ThemedText type="smallBold">{t('stats.chartSessionScore')}</ThemedText>
-            <ChartBody
-              grouped={chart((point) =>
-                point.scoredSeriesCount === 0 ? null : point.sessionTotalTenths,
-              )}
-              formatValue={(value) => tenthsToScore(value).toFixed(0)}
-              formatDate={formatShortDate}
-              t={t}
-            />
-          </Card>
+              <Card>
+                <ThemedText type="smallBold">{t('stats.chartShotMean')}</ThemedText>
+                <ChartBody
+                  grouped={chart((point) => point.meanShotTenths)}
+                  formatValue={(value) => tenthsToScore(value).toFixed(1)}
+                  formatDate={formatShortDate}
+                  t={t}
+                />
+              </Card>
 
-          <Card>
-            <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
-            {data.distribution.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.distributionEmpty')}
-              </ThemedText>
-            ) : (
-              <DistributionBarChart buckets={data.distribution} />
-            )}
-          </Card>
+              <Card>
+                <ThemedText type="smallBold">{t('stats.chartSessionScore')}</ThemedText>
+                <ChartBody
+                  grouped={chart((point) =>
+                    point.scoredSeriesCount === 0 ? null : point.sessionTotalTenths,
+                  )}
+                  formatValue={(value) => tenthsToScore(value).toFixed(0)}
+                  formatDate={formatShortDate}
+                  t={t}
+                />
+              </Card>
+
+              <Card>
+                <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
+                {data.distribution.length === 0 ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {t('stats.distributionEmpty')}
+                  </ThemedText>
+                ) : (
+                  <DistributionBarChart buckets={data.distribution} />
+                )}
+              </Card>
+            </>
+          )}
 
           {pickingFormat ? (
             <Card testID="stats-export-formats">

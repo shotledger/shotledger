@@ -12,15 +12,19 @@ import {
   parseStatsGroupKey,
   type PbCoverage,
 } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
+import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { useWebshooterRecords } from '@/features/webshooter/use-webshooter-records';
+import { formatSessionDate } from '@/features/home/format-session-date';
+import { disciplineLabel } from '@/features/session/labels';
+import { useWebshooterRecords, type FaltPbRow } from '@/features/webshooter/use-webshooter-records';
 import { Spacing } from '@/theme/tokens';
 
 function fmt(tenths: number | null): string {
@@ -48,7 +52,8 @@ function CoverageLine({ coverage, testID }: { coverage: PbCoverage; testID: stri
 }
 
 export default function WebshooterRecordsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
 
   // The group key is an id, not a label — "spsf-precision:spsf:A" is what the
   // screen used to print (#138: "This is not for humans"). Written out it is
@@ -56,7 +61,7 @@ export default function WebshooterRecordsScreen() {
   function groupLabel(groupKey: string): string {
     const { disciplineId, weaponGroupId } = parseStatsGroupKey(groupKey);
     const discipline = getDiscipline(disciplineId);
-    const name = discipline ? t(`discipline.${disciplineId}` as const) : disciplineId;
+    const name = disciplineLabel(t, disciplineId);
     const federation =
       discipline && discipline.federation !== 'generic' ? `${discipline.federation} ` : '';
     // No vapengrupp recorded is its own bucket, and says so — the alternative
@@ -66,10 +71,34 @@ export default function WebshooterRecordsScreen() {
     return group ? `${federation}${name} · ${group}` : `${federation}${name}`;
   }
 
-  const { officialPbs, freeformPbs, yearOverYear, officialCoverage, freeformCoverage } =
-    useWebshooterRecords();
+  const {
+    officialPbs,
+    freeformPbs,
+    yearOverYear,
+    officialCoverage,
+    freeformCoverage,
+    faltPbs,
+    faltCoverage,
+  } = useWebshooterRecords();
 
-  const empty = officialPbs.length === 0 && freeformPbs.length === 0 && yearOverYear.length === 0;
+  const empty =
+    officialPbs.length === 0 &&
+    freeformPbs.length === 0 &&
+    yearOverYear.length === 0 &&
+    faltPbs.length === 0;
+
+  // "Fältskjutning · C · 8 stations", plus the mode when it is poängfält: the
+  // two modes rank differently, so they are separate records.
+  function faltGroupLabel(row: FaltPbRow): string {
+    return [
+      disciplineLabel(t, row.disciplineId),
+      row.weaponGroupId ? weaponGroupLabel(row.weaponGroupId) : t('webshooter.ungrouped'),
+      t('webshooter.faltStationCount', { count: row.stationCount }),
+      row.mode === 'poangfalt' ? t('session.faltResultModePoangfalt') : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
 
   return (
     <Screen>
@@ -110,6 +139,31 @@ export default function WebshooterRecordsScreen() {
               </ThemedText>
             </Card>
           ))}
+        </View>
+      )}
+
+      {faltPbs.length > 0 && (
+        <View style={styles.section}>
+          <ThemedText type="smallBold">{t('webshooter.faltPbTitle')}</ThemedText>
+          <CoverageLine coverage={faltCoverage} testID="records-coverage-falt" />
+          <Card>
+            {faltPbs.map((row) => (
+              <DrillDownRow
+                key={row.groupKey}
+                testID={`records-falt-${row.groupKey}`}
+                title={faltGroupLabel(row)}
+                subtitle={`${row.sessionName} · ${formatSessionDate(row.startedAt, i18n.language)}`}
+                value={
+                  row.mode === 'poangfalt'
+                    ? t('session.poangfaltTotal', { points: row.points })
+                    : t('session.faltTotal', { hits: row.hits, figures: row.figuresHit })
+                }
+                onPress={() =>
+                  router.push({ pathname: '/session/[id]', params: { id: row.sessionId } })
+                }
+              />
+            ))}
+          </Card>
         </View>
       )}
 

@@ -95,6 +95,12 @@ Det finns två uppsättningar, eftersom de svarar på olika frågor:
   officiellt bästa hur bra resultatet än är.
 - **Dina egna bästa** bortser från allt det och tittar på varje pass du loggat
   — bästa fem serier, bästa tio, bästa hela pass.
+- **Personbästa i fältskjutning** hålls per vapengrupp och **antal stationer
+  som räknades**, eftersom träffar av åtta stationer och av tio inte är samma
+  skala. Ett mästerskap på tio stationer där två ströks är ett resultat på åtta
+  stationer och tävlar med dina kretsfältsomgångar. Omgångar rangordnas som SHB
+  placerar dem — träffar, sedan figurer — och poängfältsomgångar hålls för sig,
+  efter sina poäng. Tryck på ett bästa för att öppna passet.
 
 Bästaresultat grupperas efter **gren och vapengrupp**. Din skytteklass ingår
 inte: att gå från klass 2 till klass 3 nollställer inte ditt bästa med ett

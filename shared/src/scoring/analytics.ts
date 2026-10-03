@@ -125,6 +125,8 @@ export interface AnalyticsSession {
   extraRounds: number;
   /** Rounds fired at fält stations — six per station, scratched included; 0 otherwise. */
   stationRounds: number;
+  /** A hits discipline (fält): stations, never series. */
+  scoresHits: boolean;
 }
 
 /**
@@ -168,7 +170,12 @@ export function analyticsReportSessions(
   const matchedIds = new Set(matchedSeries.map((series) => series.sessionId));
   const seriesFree = new Set(
     filterAnalyticsSessions(
-      sessions.filter((session) => !withAnySeries.has(session.id)),
+      sessions.filter(
+        (session) =>
+          !withAnySeries.has(session.id) &&
+          // A fält round has stations, not series, so a series-length question excludes it.
+          !(session.scoresHits && filter.shotsPerSeries !== null),
+      ),
       filter,
     ).map((session) => session.id),
   );
