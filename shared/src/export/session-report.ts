@@ -5,6 +5,7 @@
 //
 // Shared does no i18n: every label and formatted value comes from the caller.
 import { analyzeGroup } from '../scoring/group';
+import { buildHeatmap, MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
 import type { TargetFaceDefinition } from '../target-scoring/targets';
 
 function escapeHtml(value: string): string {
@@ -51,6 +52,8 @@ export interface SessionReportPlot {
   target: TargetFaceDefinition;
   marks: readonly SessionReportMark[];
   figures: readonly SessionReportField[];
+  /** Caption of the heat map drawn beside it from MIN_SHOTS_FOR_HEATMAP marks, as in the app. */
+  heatmapCaption: string;
 }
 
 export interface SessionReportSummary {
@@ -74,6 +77,10 @@ export interface SessionReportSummary {
 const PAPER = '#f4f0e8';
 const INK = '#1c1c1e';
 const ON_BLACK = '#f2ede3';
+// Heat cells, as components/shot-heatmap.tsx.
+const HEAT = '#f97316';
+const HEAT_MIN_OPACITY = 0.18;
+const HEAT_MAX_OPACITY = 0.82;
 // Marks and group overlay, as components/group-plot.tsx.
 const SHOT_FILL = '#2563eb';
 const SHOT_STROKE = '#93c5fd';
@@ -110,6 +117,7 @@ export function targetFaceSvg(
   target: TargetFaceDefinition,
   marks: readonly SessionReportMark[],
   sizePx: number,
+  mode: 'marks' | 'heatmap' = 'marks',
 ): string {
   const half = reportViewHalfMm(target, marks);
   const extent = half * 2;
@@ -144,6 +152,19 @@ export function targetFaceSvg(
       );
     }
   });
+  if (mode === 'heatmap') {
+    // Binned over the whole face, as the app's ShotHeatmap; the view crops it.
+    const faceExtent = target.rings[target.rings.length - 1]?.diameterMm || 1;
+    const heatmap = buildHeatmap(marks, faceExtent);
+    const faceHalf = faceExtent / 2;
+    for (const cell of heatmap?.cells ?? []) {
+      const opacity = HEAT_MIN_OPACITY + cell.intensity * (HEAT_MAX_OPACITY - HEAT_MIN_OPACITY);
+      parts.push(
+        `<rect x="${n(cell.column * heatmap!.cellSizeMm - faceHalf)}" y="${n(cell.row * heatmap!.cellSizeMm - faceHalf)}" width="${n(heatmap!.cellSizeMm)}" height="${n(heatmap!.cellSizeMm)}" fill="${HEAT}" fill-opacity="${n(opacity)}"/>`,
+      );
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}">${parts.join('')}</svg>`;
+  }
   for (const mark of marks) {
     parts.push(
       `<circle cx="${n(mark.xMm)}" cy="${n(mark.yMm)}" r="${n(mark.caliberMm / 2)}" fill="${SHOT_FILL}" stroke="${SHOT_STROKE}" stroke-width="${n(mark.caliberMm / 8)}" opacity="0.85"/>`,
@@ -178,13 +199,20 @@ function summarySection(summary: SessionReportSummary): string {
     )
     .join('');
   const plots = summary.plots
-    .map(
-      (plot) => `<div class="plot">
+    .map((plot) => {
+      const heat =
+        plot.marks.length >= MIN_SHOTS_FOR_HEATMAP
+          ? `<div class="plot">
+      <div class="plot-caption">${escapeHtml(plot.heatmapCaption)}</div>
+      <div class="face">${targetFaceSvg(plot.target, plot.marks, 240, 'heatmap')}</div>
+    </div>`
+          : '';
+      return `<div class="plot">
       <div class="plot-caption">${escapeHtml(plot.caption)}</div>
       <div class="face">${targetFaceSvg(plot.target, plot.marks, 240)}</div>
       ${figuresTable(plot.figures)}
-    </div>`,
-    )
+    </div>${heat}`;
+    })
     .join('');
   const { distribution } = summary;
   const distributionTable = distribution

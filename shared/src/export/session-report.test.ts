@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
 import { ISSF_25M_RAPID_FIRE, SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
 import {
   buildSessionReportHtml,
@@ -107,6 +108,7 @@ describe('buildSessionReportHtml', () => {
       target: SPSF_PISTOL_25M_PRECISION,
       marks: photoSeries.marks,
       figures: photoSeries.figures,
+      heatmapCaption: 'All Series · Heatmap',
     };
     const html = buildSessionReportHtml({ ...summary, plots: [plot, { ...plot, caption: 'B' }] }, [
       keypadSeries,
@@ -118,6 +120,33 @@ describe('buildSessionReportHtml', () => {
     expect(count(html, 'class="plot"')).toBe(2);
     expect(count(html, '<svg')).toBe(2);
     expect(html).toContain('<div class="plot-caption">B</div>');
+  });
+
+  it('adds a heat map beside the combined target from MIN_SHOTS_FOR_HEATMAP marks', () => {
+    const marksOf = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        xMm: (i % 7) * 6 - 18,
+        yMm: (i % 5) * 7 - 14,
+        caliberMm: 5.6,
+      }));
+    const plot = (count: number) => ({
+      caption: 'All Series',
+      target: SPSF_PISTOL_25M_PRECISION,
+      marks: marksOf(count),
+      figures: [],
+      heatmapCaption: 'All Series · Heatmap',
+    });
+    const below = buildSessionReportHtml({ ...summary, plots: [plot(MIN_SHOTS_FOR_HEATMAP - 1)] }, [
+      keypadSeries,
+    ]);
+    expect(count(below, '<svg')).toBe(1);
+    expect(below).not.toContain('Heatmap');
+    const at = buildSessionReportHtml({ ...summary, plots: [plot(MIN_SHOTS_FOR_HEATMAP)] }, [
+      keypadSeries,
+    ]);
+    expect(at).toContain('<div class="plot-caption">All Series · Heatmap</div>');
+    expect(count(at, '<svg')).toBe(2);
+    expect(at).toContain('fill="#f97316"');
   });
 
   it('prints the shot distribution as value over count', () => {

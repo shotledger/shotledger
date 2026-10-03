@@ -168,8 +168,9 @@ sheet, to print or send to a coach. It opens with the date, discipline and
 firearm, then a session summary: the same results as the session screen (total,
 average per series, inner tens, and any subtotals), the shot distribution, and
 every hole from the series scored from a photo on one target, with the
-group's windage, elevation, mean radius and max spread. Sighters are left out
-of the summary. When only some series have a photo, the target's caption says
+group's windage, elevation, mean radius and max spread. From 20 holes up, a
+heat map of the same holes sits beside it, as on the session screen. Sighters
+are left out of the summary. When only some series have a photo, the target's caption says
 how many it covers.
 
 Below the summary the series sit side by side, three to a row: each one's total

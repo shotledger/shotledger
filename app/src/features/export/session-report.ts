@@ -112,6 +112,7 @@ export function buildSessionReportHtmlFor(
       target: entry.target,
       marks: entry.marks,
       figures: groupFigures(entry.marks),
+      heatmapCaption: `${caption} · ${t('photoScoring.heatmapMode')}`,
     };
   });
 
