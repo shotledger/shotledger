@@ -109,6 +109,30 @@ python gen_hole_feature_fixtures.py > \
     ../../shared/src/target-scoring/hole-features.fixtures.json
 ```
 
+Steps 1 and 3 also run in TypeScript (`tools/`), from the repo root, with no
+Python (#488 stage 3). The fit is plain TypeScript run by Node's own type
+stripping; it prints the Python's table and constants byte for byte, with the
+same folds (numpy's `default_rng` is reimplemented; `tools/fit.check.ts` pins
+it and the estimator to numpy):
+
+```bash
+# 1. the grids, from the app's disc lock on OpenCV.js; PNG plus a JSON sidecar
+#    (image px -> label px), labels in the same frame as mark_holes.py's
+CV_MARK_IN=<photos> CV_MARK_OUT=<grids> CV_MARK_ONLY=names.txt \
+    pnpm exec vitest run --silent=false -c spike/cv/parity/vitest.config.ts mark-holes
+
+# 3. the fit
+node spike/cv/tools/fit-hole-filter.mts --stage tight pooled.csv
+node spike/cv/tools/fit-hole-filter.mts --stage tight corpusA.csv --test corpusB.csv
+```
+
+A mark belongs to the canvas it was read off. The TypeScript grid is the
+app's lock, not `target_cv.py`'s: on 28 of the 31 marked photos the marks land
+within 0.4 px median (3 px at the 90th percentile) of the Python canvas, but on
+three with a clipped black zone the two ellipse fits differ by an in-plane
+rotation, so marks read off one canvas do not fit the other there. The
+sidecar's matrix carries a mark between them through the photo.
+
 Ground truth is **hole centres, not candidate labels**: labelling the
 candidates a detector proposes cannot measure the holes it misses.
 
@@ -139,6 +163,8 @@ python eval_hole_proposals.py --marks marks.txt --in <photos> --cache <dir> --re
 #    and hole-proposals.ts
 python fit_hole_proposals.py candidates.csv --marks marks.txt
 python fit_hole_proposals.py a.csv --test b.csv --marks marks.txt
+#    or the same fit in TypeScript, from the repo root (same folds, same output)
+node spike/cv/tools/fit-hole-proposals.mts candidates.csv --marks marks.txt
 
 # 3. regenerate the lock-step fixture after any change to the arithmetic
 python gen_hole_proposal_fixtures.py > \
@@ -229,7 +255,9 @@ CV_PARITY_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
 
 `mark_holes.py` and `eval_hole_proposals.py` take `--lock closeup` to lay the
 canvas out by this lock instead of the disc, for labelling and measuring real
-close-ups.
+close-ups. `tools/mark-holes.tool.ts` takes `CV_MARK_LOCK=closeup` for the
+same, on `closeup-lock.ts`; on 12 real close-ups its canvas sits within 0.5 px
+of the Python's.
 
 The ring layout is a `RingModel`: `PRECISION` (the default, unchanged) and
 `MILSNABB` (lines at 10 + 40k mm). The milsnabb model is measured but not in
