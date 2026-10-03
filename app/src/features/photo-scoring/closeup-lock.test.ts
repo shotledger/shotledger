@@ -89,6 +89,9 @@ it('locks every synthetic close-up where the reference does, to the same centre 
     expect(Math.abs(got.comb - ref.comb)).toBeLessThanOrEqual(0.01 * Math.abs(ref.comb));
     expect(got.ringOffsetMm).not.toBeNull();
     expect(Math.abs(got.ringOffsetMm! - ref.ringOffsetMm!)).toBeLessThanOrEqual(0.1 + 1e-9);
+    expect([s.name, got.faceContrast === null]).toEqual([s.name, ref.faceContrast === null]);
+    if (got.faceContrast !== null && ref.faceContrast !== null)
+      expect(Math.abs(got.faceContrast - ref.faceContrast)).toBeLessThanOrEqual(0.01);
   }
 });
 
@@ -122,6 +125,7 @@ describe('chooseLock', () => {
     rings: 3,
     support: 1,
     axisRatio: 1,
+    faceContrast: null,
     voteCenter: { x: 0, y: 0 },
     period: 100,
   });
