@@ -32,10 +32,10 @@ pnpm check                            # every gate CI runs
 cd app && pnpm exec expo start        # Metro, for a dev build or the web preview
 ```
 
-Android toolchain, emulator, Maestro flows, standalone builds and the
-backend's in-process test harness are all described step by step in
-`CLAUDE.md` under "Agentic loop". The sync backend's layout is in
-`docs/sync-backend.md`.
+Android toolchain, emulator, Maestro flows and standalone builds are
+described step by step in `.claude/skills/run-app/`; the backend's
+in-process test harness in `backend/CLAUDE.md`. The sync backend's layout
+is in `docs/sync-backend.md`.
 
 ## Checks
 
@@ -86,8 +86,9 @@ slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 - A change that alters what a user sees updates `docs/manual/` in the same
   pull request.
 
-`CLAUDE.md` is the full set of rules and the agentic loop; it applies to
-human contributors just as much.
+`CLAUDE.md` (with the `CLAUDE.md` in `app/`, `shared/`, `backend/` and
+`docs/`) is the full set of rules; it applies to human contributors just as
+much.
 
 ## Reading order
 

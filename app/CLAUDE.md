@@ -1,0 +1,63 @@
+# app/ — the Expo app
+
+Rules that apply everywhere are in the root `CLAUDE.md`. Running and driving
+the app is the `run-app` skill.
+
+## Checks specific to the app
+
+- `pnpm typecheck:app` — the `app/` project is not composite, so the root
+  `pnpm typecheck` (`tsc -b`) skips it; `pnpm check` runs both.
+- `pnpm i18n:check` (`scripts/i18n-check.mjs`) — `app/src/i18n/{en,sv}.json`
+  must have identical key sets, and every key must be referenced in
+  `app/src`.
+- **Fast Refresh does not reload the i18n resources.** A new key renders as
+  its raw path (`compliance.criterionOtherFirearm`) until a cold start
+  (`adb shell am force-stop` + relaunch). Restart before concluding a string
+  is broken.
+
+## Licenses
+
+Adding or removing a dependency means running `pnpm licenses:generate` and
+committing the regenerated `src/constants/licenses.json`.
+
+- `licenses:generate` runs a real `expo export --source-maps` and derives the
+  list from Metro's module graph, so it lists only what ships in the APK
+  (~3 s warm, ~20 s cold). Not `pnpm licenses list --prod`: `expo` declares
+  `@expo/cli` as a runtime dependency, which would credit metro, babel and
+  terser.
+- `pnpm licenses:check` (in `pnpm check`) validates the committed file:
+  well-formed, sorted, no duplicates or build tooling, and every
+  `name@version` still a direct `app` dependency in `pnpm-lock.yaml`. A
+  Renovate PR that moves a bundled version therefore goes red until someone
+  regenerates on that branch. It cannot see a package newly entering the
+  bundle without a listed version moving — that case is still on you.
+- A **native** dependency (a Gradle artifact, a vendored C/C++ library) is
+  invisible to the script — hand-edit `src/constants/native-licenses.ts`.
+
+## Database
+
+- Schema changes go through a Drizzle migration (hard rule 2).
+- **Regenerating `0000_baseline.sql` needs `expo start --clear`.** Babel's
+  `inline-import` pastes the SQL into `migrations.js`, and Metro caches that
+  transform by `migrations.js`'s own content, which a regeneration does not
+  change. A stale cache creates the old schema and the first write fails with
+  `table … has no column named …`. Restart Metro with `--clear` and
+  `adb shell pm clear app.shotledger`; a release build on a stale cache must
+  be rebuilt.
+
+## Demo data and dev tools
+
+- `/dev` (`src/app/dev/index.tsx`) has "Load demo data" / "Wipe data";
+  `/dev/components` is the component gallery. Both redirect to `/` outside
+  dev builds (`src/app/dev/_layout.tsx`).
+- Deep link `app://dev` (the scheme is `app`; there is no `shotledger://`).
+- On web the DB needs the page cross-origin isolated; Metro cannot send the
+  COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
+- `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release
+  build. **Never set it for a Play build — it ships a wipe button.**
+
+## Sync backend URL
+
+`EXPO_PUBLIC_API_BASE_URL`, else `app.json`'s `expo.extra.apiBaseUrl`
+(placeholder `https://api.shotledger.app`). Never a secret — the session
+token lives in SecureStore, never in the tree or the DB.
