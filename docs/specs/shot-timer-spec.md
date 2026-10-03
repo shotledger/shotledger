@@ -41,33 +41,15 @@ CLAUDE.md and gets normal tests, not this loop.
 
 ## 1. Modules under specification
 
-| Module                        | Responsibility                                                                                      |
-| ----------------------------- | --------------------------------------------------------------------------------------------------- |
-| `shared/src/timer/types.ts`   | `TimerConfig`/`TimerPhase`/`TimerEvent`/`TimerCue` data shapes                                      |
-| `shared/src/timer/engine.ts`  | `TimerEngine` — the state machine (ready delay → series → rest → … → done)                          |
-| `shared/src/timer/presets.ts` | PAR presets + `buildMilsnabbDrillConfig()` generated from the `spsf-milsnabb` program's `structure` |
+| Module                       | Responsibility                                                             |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `shared/src/timer/types.ts`  | `TimerConfig`/`TimerPhase`/`TimerEvent`/`TimerCue` data shapes             |
+| `shared/src/timer/engine.ts` | `TimerEngine` — the state machine (ready delay → series → rest → … → done) |
 
-## 2. Domain facts the milsnabb drill preset is built from
+## 2. Presets (removed)
 
-- `shared/src/disciplines/programs/spsf-milsnabb.json`: `sighterSeries: 1`,
-  groups `[{4×10s}, {4×8s}, {4×6s}]` — already the source of truth for
-  scoring (M3); the timer reads it rather than duplicating the numbers.
-- `docs/reference/spsf-shb-2026.md` "Militär snabbmatch" / SHB J.6.1 p. 290:
-  **3 omgångar × 4 serier × 5 skott**, times 10 s / 8 s / 6 s, preceded by
-  **one provserie of 5 shots at 10 s** (J.6.6.2) — matches the JSON exactly,
-  confirming the generator has nothing to invent.
-- SHB J.6.2 p. 290: **"FÄRDIGA" (ready) is called 60 s after "LADDA" (load)",
-  then targets appear for the series' time limit.** This is a once-per-omgång
-  range-command cadence in a real match, not a per-series pause. Modeling
-  it before all 13 series (the engine's ready delay precedes _every_ series
-  — see §3) would make a solo drill ~13 minutes of standing still, so
-  `MILSNABB_PRACTICE_READY_DELAY_MS` (5 s) is the practice default; the
-  authentic `MILSNABB_OFFICIAL_READY_DELAY_MS` (60 s) is exposed for a
-  shooter who wants the real cadence (custom preset builder). This is a
-  **documented simplification, not a claimed procedural fact** — flagged
-  again in §5 deviations.
-- The rest between series (target re-set / breathe, `MILSNABB_DEFAULT_REST_MS`
-  = 5 s) has no SHB citation — it is a practical default, not a rule.
+The PAR presets and the milsnabb drill (`presets.ts`) were removed once the
+timer UI stopped offering them (#154); their tests went with them.
 
 ## 3. Engine state machine (negative constraints, each mapped to a test in EVIDENCE)
 
@@ -113,21 +95,6 @@ idle --start()--> readyDelay(0) --> series(0) --[more series?]--> rest(1) --> re
 - **D9** `TimerEngine` never imports from `react-native`/`expo` — the host
   (a React hook driving `setInterval`) owns the clock; the engine only ever
   sees deltas via `advance()`.
-
-## 4. Presets (§4)
-
-- `PAR_SINGLE` — 1 series, fixed 3 s ready delay, no rest.
-- `PAR_RANDOM_START` — 1 series, ready delay randomized 1–4 s (start signal
-  cannot be anticipated).
-- `PAR_INTERVAL_DRILL` — 5 reps × 5 s, ready delay randomized 1–3 s each
-  rep, 10 s rest between reps.
-- `buildMilsnabbDrillConfig(readyDelayMs?, restMs?)` — generated from the
-  `spsf-milsnabb` program (§2); throws on a malformed/missing program as a
-  data-integrity guard (mirrors `requireDiscipline`'s pattern in
-  `shared/src/disciplines/index.ts`).
-- Custom: the UI composes an arbitrary `TimerConfig` directly (par time,
-  ready delay/range, reps, rest) — no dedicated preset object needed since
-  the engine takes the config as data.
 
 ## 5. Testing standards (per CLAUDE.md §7 / M3 precedent)
 
