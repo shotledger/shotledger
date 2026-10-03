@@ -199,9 +199,9 @@ it.
 Issue #495, resumed. Implementation: `app/src/features/photo-scoring/milsnabb-lock.ts`,
 a sibling of `closeup-lock.ts` that reuses its centre vote, polar ridge,
 ellipse and robust homography. Evaluation:
-`spike/cv/parity/milsnabb.parity.ts`, which runs the app's TypeScript in
-Node on 2048 px greyscale PGMs (ImageMagick, as `parity_closeup.py prep`).
-There is no Python twin: the TypeScript is the reference (#488).
+`tools/cv/eval/milsnabb.eval.ts`, which runs the app's TypeScript in
+Node on 2048 px greyscale PGMs (ImageMagick, as `tools/cv/eval/prep.sh`).
+There is no Python twin: the TypeScript is the reference (ADR 0018).
 
 **Verdict: the bar holds for the milsnabb lock, and it is wired in.** It
 locks 23 of 37 real photos (9/15 close-ups, 13/21 whole targets with a card)
