@@ -771,6 +771,13 @@ disciplines via PR once public.
       (PR 2), and the SHB questions that remain unanswered (poängmål ring
       values are settled: the arrangör chooses, so the app records the max
       alongside the score).
+- [x] **Fält in exports and every volume figure** (#315 PR 2 layer A,
+      spec: `docs/specs/falt-consumers-spec.md`). The JSON sessions export
+      carries each session's `stations` and `faltResultMode` and an import
+      recreates them; every rounds-fired figure — Shots Logged, the report,
+      the shooting log, the import preview — counts six per station; the
+      Sessions list shows a fält result instead of `0p`. There is no CSV
+      export left to extend (#170 replaced it).
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 
