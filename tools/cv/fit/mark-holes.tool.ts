@@ -4,7 +4,7 @@
 //
 //   CV_MARK_IN=<photos> CV_MARK_OUT=<dir> [CV_MARK_ONLY=names.txt] \
 //   [CV_MARK_LOCK=disc|closeup] [CV_MARK_LONG_SIDE=2048] \
-//     pnpm exec vitest run --silent=false -c spike/cv/parity/vitest.config.ts mark-holes
+//     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 //
 // (--silent=false shows the per-photo lines; vitest hides a passing test's output.)
 // A 50 px grid, every 100 px intersection labelled in tens of px ("45,32" is
@@ -44,7 +44,7 @@ import {
   runDiscLock,
 } from '../../../app/src/features/photo-scoring/disc-lock';
 import { checkGeometryValidity } from '../../../app/src/features/photo-scoring/validity';
-import { type Cv, loadOpenCv, openCvJsDiscOps } from '../parity/opencv-js-disc-ops';
+import { type Cv, loadOpenCv, openCvJsDiscOps } from '../eval/opencv-js-disc-ops';
 
 const FACE = SPSF_PISTOL_25M_PRECISION;
 const GRID_PX = 50;

@@ -112,18 +112,18 @@ python gen_hole_feature_fixtures.py > \
 Steps 1 and 3 also run in TypeScript (`tools/`), from the repo root, with no
 Python (#488 stage 3). The fit is plain TypeScript run by Node's own type
 stripping; it prints the Python's table and constants byte for byte, with the
-same folds (numpy's `default_rng` is reimplemented; `tools/fit.check.ts` pins
+same folds (numpy's `default_rng` is reimplemented; `tools/cv/fit/fit.check.ts` pins
 it and the estimator to numpy):
 
 ```bash
 # 1. the grids, from the app's disc lock on OpenCV.js; PNG plus a JSON sidecar
 #    (image px -> label px), labels in the same frame as mark_holes.py's
 CV_MARK_IN=<photos> CV_MARK_OUT=<grids> CV_MARK_ONLY=names.txt \
-    pnpm exec vitest run --silent=false -c spike/cv/parity/vitest.config.ts mark-holes
+    pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 
 # 3. the fit
-node spike/cv/tools/fit-hole-filter.mts --stage tight pooled.csv
-node spike/cv/tools/fit-hole-filter.mts --stage tight corpusA.csv --test corpusB.csv
+node tools/cv/fit/fit-hole-filter.mts --stage tight pooled.csv
+node tools/cv/fit/fit-hole-filter.mts --stage tight corpusA.csv --test corpusB.csv
 ```
 
 A mark belongs to the canvas it was read off. The TypeScript grid is the
@@ -164,7 +164,7 @@ python eval_hole_proposals.py --marks marks.txt --in <photos> --cache <dir> --re
 python fit_hole_proposals.py candidates.csv --marks marks.txt
 python fit_hole_proposals.py a.csv --test b.csv --marks marks.txt
 #    or the same fit in TypeScript, from the repo root (same folds, same output)
-node spike/cv/tools/fit-hole-proposals.mts candidates.csv --marks marks.txt
+node tools/cv/fit/fit-hole-proposals.mts candidates.csv --marks marks.txt
 
 # 3. regenerate the lock-step fixture after any change to the arithmetic
 python gen_hole_proposal_fixtures.py > \
@@ -209,7 +209,7 @@ The fixture pins the TypeScript to this module on synthetic close-ups only.
 python parity/parity_closeup.py prep <pgm-dir> <photos>...
 PYTHONPATH=. python parity/parity_closeup.py run <pgm-dir> py.jsonl
 CV_PARITY_IN=<pgm-dir> CV_PARITY_OUT=ts.jsonl \
-    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup   # from the repo root
+    pnpm exec vitest run -c tools/cv/vitest.config.ts closeup   # from the repo root
 python parity/parity_closeup.py diff py.jsonl ts.jsonl
 ```
 
@@ -226,7 +226,7 @@ spec's cross-validated numbers from the TypeScript's features.
 PYTHONPATH=. python parity/parity_holes.py prep <canvas-dir> <photos>... [--lock closeup]
 PYTHONPATH=. python parity/parity_holes.py run <canvas-dir> py.jsonl
 CV_PARITY_IN=<canvas-dir> CV_PARITY_OUT=ts.jsonl \
-    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts holes   # from the repo root
+    pnpm exec vitest run -c tools/cv/vitest.config.ts holes   # from the repo root
 PYTHONPATH=. python parity/parity_holes.py diff py.jsonl ts.jsonl
 PYTHONPATH=. python parity/parity_holes.py score ts.jsonl marks.txt --csv ts.csv
 python fit_hole_proposals.py ts.csv --marks marks.txt
@@ -239,23 +239,23 @@ synthetic art. Every other value is held to the fixture's tolerances.
 
 The disc lock runs in Node too: `disc-lock.ts` takes its OpenCV calls through
 `DiscOps`, which the app fills from react-native-fast-opencv and
-`parity/opencv-js-disc-ops.ts` from OpenCV.js (`@techstark/opencv-js`, a root
+`tools/cv/eval/opencv-js-disc-ops.ts` from OpenCV.js (`@techstark/opencv-js`, a root
 dev dependency pinned to the device's OpenCV 4.12.0). `parity_disc.py`
 compares it with `target_cv.py`'s on the same PGMs, and
-`closeup-real.parity.ts` is `eval_closeup_real.py` without the overlays:
+`tools/cv/eval/closeup-real.eval.ts` is `eval_closeup_real.py` without the overlays:
 
 ```bash
 PYTHONPATH=.:parity python parity/parity_disc.py run <pgm-dir> py.jsonl
 CV_PARITY_IN=<pgm-dir> CV_DISC_OUT=ts.jsonl \
-    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts disc
+    pnpm exec vitest run -c tools/cv/vitest.config.ts disc
 python parity/parity_disc.py diff py.jsonl ts.jsonl
 CV_PARITY_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
-    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup-real
+    pnpm exec vitest run -c tools/cv/vitest.config.ts closeup-real
 ```
 
 `mark_holes.py` and `eval_hole_proposals.py` take `--lock closeup` to lay the
 canvas out by this lock instead of the disc, for labelling and measuring real
-close-ups. `tools/mark-holes.tool.ts` takes `CV_MARK_LOCK=closeup` for the
+close-ups. `tools/cv/fit/mark-holes.tool.ts` takes `CV_MARK_LOCK=closeup` for the
 same, on `closeup-lock.ts`; on 12 real close-ups its canvas sits within 0.5 px
 of the Python's.
 

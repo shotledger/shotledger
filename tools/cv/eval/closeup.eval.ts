@@ -3,7 +3,7 @@
 // same greyscale PGMs, so a difference is the algorithm, not the decoder.
 //
 //   CV_PARITY_IN=<dir of .pgm> CV_PARITY_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

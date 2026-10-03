@@ -4,7 +4,7 @@
 // pick, and the close-up's scale against the disc lock's.
 //
 //   CV_PARITY_IN=<dir of .pgm> CV_REAL_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup-real
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup-real
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

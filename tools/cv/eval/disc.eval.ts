@@ -4,7 +4,7 @@
 // the decoder.
 //
 //   CV_PARITY_IN=<dir of .pgm> CV_DISC_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c spike/cv/parity/vitest.config.ts disc
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts disc
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

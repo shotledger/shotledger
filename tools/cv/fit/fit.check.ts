@@ -1,7 +1,7 @@
 // Pins the fits' numerics to numpy 2.5 on synthetic data: the folds come from
 // the same random draws and the estimator lands on the same weights.
 //
-//   pnpm exec vitest run -c spike/cv/parity/vitest.config.ts fit.check
+//   pnpm exec vitest run -c tools/cv/vitest.config.ts fit.check
 import { expect, test } from 'vitest';
 
 import { auc, fit, predict, pyFixed } from './logistic.mts';

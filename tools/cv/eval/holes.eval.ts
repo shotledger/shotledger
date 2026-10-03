@@ -4,7 +4,7 @@
 // by `parity_holes.py prep`, so a difference is the algorithm.
 //
 //   CV_PARITY_IN=<canvas dir> CV_PARITY_OUT=<out.jsonl> \
-//     pnpm exec vitest run -c spike/cv/parity/vitest.config.ts holes
+//     pnpm exec vitest run -c tools/cv/vitest.config.ts holes
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

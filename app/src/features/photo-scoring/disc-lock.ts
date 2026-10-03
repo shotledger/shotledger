@@ -10,7 +10,7 @@
 //
 // The OpenCV calls go through `DiscOps`, as the close-up lock's go through
 // `CloseupOps`: on the device react-native-fast-opencv (opencv.ts), in Node
-// the OpenCV.js build (spike/cv/parity/opencv-js-disc-ops.ts), so an
+// the OpenCV.js build (tools/cv/eval/opencv-js-disc-ops.ts), so an
 // evaluation runs this same code on the same library the phone runs.
 //
 // Two integration facts from the spike (§4.6) shape it:

@@ -3,8 +3,8 @@
 // cross-validated 5-fold by photo with the Python's folds, then fitted on
 // everything.
 //
-//   node spike/cv/tools/fit-hole-filter.mts --stage tight pooled.csv
-//   node spike/cv/tools/fit-hole-filter.mts --stage tight a.csv --test b.csv
+//   node tools/cv/fit/fit-hole-filter.mts --stage tight pooled.csv
+//   node tools/cv/fit/fit-hole-filter.mts --stage tight a.csv --test b.csv
 //
 // Input is score_stages.py's candidates CSV: one row per candidate with its
 // label and features, plus a `cand = -1` row per photo and stage whose `r_mm`

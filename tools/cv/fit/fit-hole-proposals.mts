@@ -2,8 +2,8 @@
 // HOLE_PROPOSAL_WEIGHTS / HOLE_PROPOSAL_BIAS, cross-validated 5-fold by photo
 // with the Python's folds, then fitted on everything.
 //
-//   node spike/cv/tools/fit-hole-proposals.mts candidates.csv --marks marks.txt
-//   node spike/cv/tools/fit-hole-proposals.mts a.csv --test b.csv --marks marks.txt
+//   node tools/cv/fit/fit-hole-proposals.mts candidates.csv --marks marks.txt
+//   node tools/cv/fit/fit-hole-proposals.mts a.csv --test b.csv --marks marks.txt
 //
 // Input is the candidates CSV `parity_holes.py score --csv` (or
 // eval_hole_proposals.py --out) writes; every column after `resp` is a feature.
