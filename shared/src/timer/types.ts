@@ -2,7 +2,7 @@
 // spec: docs/specs/shot-timer-spec.md). The engine emits cues as DATA
 // (`TimerCue`); the app layer maps those to expo-audio/Vibration calls.
 
-/** One series in a drill: PAR mode has exactly one, interval/milsnabb many. */
+/** One series in a drill: PAR mode has exactly one, interval mode many. */
 export interface SeriesSpec {
   /** 0-based position in `TimerConfig.series`. */
   index: number;
