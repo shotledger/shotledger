@@ -82,6 +82,8 @@ describe('data validation (spec G1-G4)', () => {
       'issf-sport-pistol',
       'issf-standard-pistol',
       'spsf-falt',
+      'spsf-figurskjutning',
+      'spsf-helmatch',
       'spsf-magnumprecision',
       'spsf-milsnabb',
       'spsf-precision',
@@ -1014,4 +1016,62 @@ it('lays out each group behind its own sighters, on its own face and time', () =
     [false, 15, 'issf-25m-rapid-fire'],
     [false, null, 'spsf-pistol-25m-precision'],
   ]);
+});
+
+describe('Nationell helmatch and figurskjutning (SHB Del I)', () => {
+  it('both are 5-shot integer rings disciplines in vapengrupp A, B and C (I.2.1, I.4)', () => {
+    for (const id of ['spsf-helmatch', 'spsf-figurskjutning']) {
+      const discipline = requireDiscipline(id);
+      expect(discipline).toMatchObject({
+        federation: 'SPSF',
+        scoring: 'rings',
+        allowsDecimal: false,
+        defaultSeriesLength: 5,
+      });
+      expect(weaponGroupsForDiscipline(id).map((g) => g.id)).toEqual([
+        'spsf:A',
+        'spsf:B',
+        'spsf:C',
+      ]);
+      expect(shooterClassesForDiscipline(id).length).toBeGreaterThan(0);
+      expect(programsForDiscipline(id).map((p) => p.id)).toEqual([id]);
+      expect(getProgram(id)).toMatchObject({ scoring: 'integer', supportsFinal: false });
+    }
+    expect(requireDiscipline('spsf-helmatch').targetFace).toBe('spsf-pistol-25m-precision');
+  });
+});
+
+/**
+ * Top-level, so reqstool can match this testcase back to its annotation — see
+ * the convention in ADR 0015.
+ *
+ * @SVCs SVC_DISC_004
+ */
+it('lays out helmatch and figurskjutning as SHB I.6.1 shoots them', () => {
+  const precision = 'spsf-pistol-25m-precision';
+  const rapid = 'spsf-snabbskjutning-25m';
+  const figure = 'spsf-helmatch-figurtavla';
+  const layout = (id: string) =>
+    buildProgramSkeleton(getProgram(id)!).map((s) => [
+      s.isSighter,
+      s.timeLimitSeconds,
+      s.targetFace,
+    ]);
+  const c = [
+    [false, 18, figure],
+    [false, 16, figure],
+    [false, 14, figure],
+    [false, 12, figure],
+  ];
+  // Sighters before A and B only (I.6.6.2); 4 x 5 shots per delmoment (I.6.1).
+  expect(layout('spsf-helmatch')).toEqual([
+    [true, 300, precision],
+    ...Array(4).fill([false, 300, precision]),
+    [true, null, rapid],
+    ...Array(4).fill([false, null, rapid]),
+    ...c,
+  ]);
+  expect(layout('spsf-figurskjutning')).toEqual(c);
+  const scored = buildProgramSkeleton(getProgram('spsf-helmatch')!).filter((s) => !s.isSighter);
+  expect(scored.reduce((n, s) => n + s.shots, 0) * 10).toBe(600);
 });

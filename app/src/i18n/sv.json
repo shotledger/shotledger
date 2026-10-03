@@ -761,12 +761,16 @@
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch",
     "spsf-magnumprecision": "Magnumprecision",
+    "spsf-helmatch": "Nationell helmatch",
+    "spsf-figurskjutning": "Figurskjutning",
     "generic-rings": "Träning (ringtavla)"
   },
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Militär snabbmatch",
-    "spsf-magnumprecision": "Magnumprecision"
+    "spsf-magnumprecision": "Magnumprecision",
+    "spsf-helmatch": "Nationell helmatch",
+    "spsf-figurskjutning": "Figurskjutning"
   },
   "webshooter": {
     "sectionTitle": "Webshooter",

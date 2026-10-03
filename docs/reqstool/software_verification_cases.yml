@@ -78,6 +78,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_DISC_004
+    requirement_ids: ['DISC_004']
+    title: Verify the helmatch and figurskjutning skeletons against SHB I.6.1
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_TIMER_001
     requirement_ids: ['TIMER_001']
     title: Verify a loud event is rejected for being too long or rising too slowly

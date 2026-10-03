@@ -219,6 +219,22 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: DISC_004
+    title: Nationell helmatch and figurskjutning are laid out as SHB Del I shoots them
+    significance: shall
+    description: >-
+      The app shall lay out a Full Match of Nationell helmatch as delmoment A, B
+      and C of four 5-shot series each, with one sighter before A and one before
+      B and none before C, A on the precision face at 5 minutes per series, B on
+      the snabbskjutningstavla and C on the figurtavla at 18, 16, 14 and 12
+      seconds; and a Full Match of figurskjutning as delmoment C alone.
+    rationale: >-
+      SHB 2026 I.6.1 p. 258 and I.6.6.2 p. 260. A provserie before C does not
+      exist, and a C series on the wrong face or time misstates what was shot.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: TIMER_001
     title: Shot detection gates on duration and rise, not loudness
     significance: shall

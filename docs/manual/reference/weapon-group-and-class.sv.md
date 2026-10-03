@@ -107,13 +107,14 @@ rangordna-men-spärra-inte-regel som för klasser.
 
 ## Vilka grupper varje gren tillåter
 
-| Gren                    | Grupper                                |
-| ----------------------- | -------------------------------------- |
-| SPSF precision          | A, AM, AP, AG, A-opt, B, C             |
-| SPSF militär snabbmatch | A, A-opt, B, C, R                      |
-| SPSF magnumprecision    | M1–M9, och inget annat                 |
-| ISSF- och SvSF-grenar   | inga — ingendera använder vapengrupper |
-| Träning (ringad tavla)  | inga — se nedan                        |
+| Gren                                       | Grupper                                |
+| ------------------------------------------ | -------------------------------------- |
+| SPSF precision                             | A, AM, AP, AG, A-opt, B, C             |
+| SPSF militär snabbmatch                    | A, A-opt, B, C, R                      |
+| SPSF magnumprecision                       | M1–M9, och inget annat                 |
+| SPSF nationell helmatch och figurskjutning | A, B, C                                |
+| ISSF- och SvSF-grenar                      | inga — ingendera använder vapengrupper |
+| Träning (ringad tavla)                     | inga — se nedan                        |
 
 ## Magnumprecision frågar inte efter någon klass
 

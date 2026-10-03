@@ -175,9 +175,16 @@ export function getTargetFace(id: string): TargetFaceDefinition | undefined {
   return TARGET_FACES[id];
 }
 
+/**
+ * Faces the app knows by id but has no dimensions for, so they are scored on
+ * the keypad only. SHB prints the helmatch figurtavla as a picture: "4 ringade
+ * figurer valörer från 6 till 10" (I.7.1.2 p. 268), no measurements.
+ */
+const MANUAL_ENTRY_FACE_IDS: ReadonlySet<string> = new Set(['spsf-helmatch-figurtavla']);
+
 /** Whether a discipline or program group may name this face id. */
 export function isKnownTargetFace(id: string): boolean {
-  return Object.hasOwn(TARGET_FACES, id);
+  return Object.hasOwn(TARGET_FACES, id) || MANUAL_ENTRY_FACE_IDS.has(id);
 }
 
 export function requireTargetFace(id: string): TargetFaceDefinition {

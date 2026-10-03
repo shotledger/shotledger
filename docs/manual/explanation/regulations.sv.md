@@ -32,6 +32,8 @@ SvSF — den läggs aldrig in två gånger.
 | Precision           | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
 | Militär snabbmatch  | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
 | Magnumprecision     | ✓    |      |      | SPSF          | Endast vapengrupp — ingen klass                |
+| Nationell helmatch  | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
+| Figurskjutning      | ✓    |      |      | SPSF          | Vapengrupp och klass                           |
 | Luftpistol          |      | ✓    | ✓    | ISSF          | Tävlingsklass                                  |
 | Sportpistol         |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Herr)          |
 | Standardpistol      |      | ✓    | ✓    | ISSF          | Tävlingsklass (SvSF lägger till Junior)        |

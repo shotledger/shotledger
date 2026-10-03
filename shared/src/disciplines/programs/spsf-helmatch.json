@@ -1,0 +1,46 @@
+{
+  "id": "spsf-helmatch",
+  "disciplineId": "spsf-helmatch",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Nationell helmatch",
+    "en": "National Combined Match"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "groups": [
+      {
+        "seriesCount": 4,
+        "timeLimitSeconds": 300,
+        "sighterSeries": 1
+      },
+      {
+        "seriesCount": 4,
+        "sighterSeries": 1,
+        "targetFace": "spsf-snabbskjutning-25m"
+      },
+      {
+        "seriesCount": 1,
+        "timeLimitSeconds": 18,
+        "targetFace": "spsf-helmatch-figurtavla"
+      },
+      {
+        "seriesCount": 1,
+        "timeLimitSeconds": 16,
+        "targetFace": "spsf-helmatch-figurtavla"
+      },
+      {
+        "seriesCount": 1,
+        "timeLimitSeconds": 14,
+        "targetFace": "spsf-helmatch-figurtavla"
+      },
+      {
+        "seriesCount": 1,
+        "timeLimitSeconds": 12,
+        "targetFace": "spsf-helmatch-figurtavla"
+      }
+    ]
+  }
+}
