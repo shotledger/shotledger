@@ -9,7 +9,7 @@
 // 2026-09-03).
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
@@ -18,6 +18,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScoreKeypad } from '@/components/score-keypad';
+import type { Celebration } from '@/components/series-celebration';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
@@ -28,6 +29,14 @@ import {
   setSeriesSighter,
   updateSeries,
 } from '@/db/queries/series';
+import {
+  celebratesDiscipline,
+  celebrationTier,
+  isPerfectTier,
+  markStampPending,
+  tierToCelebrate,
+  type CelebrationTier,
+} from '@/features/session/celebration';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
@@ -82,6 +91,29 @@ export default function SeriesEntryScreen() {
 
   const guldThreshold = row ? row.guldThreshold : detail.guldThreshold;
 
+  // #482: celebrate only a tier this visit climbs into — reopening a saved
+  // 50, or backspacing and re-entering, stays quiet.
+  const celebrates = celebratesDiscipline(detail.session?.disciplineId);
+  const tierOf = (next: KeypadState, sighter: boolean): CelebrationTier | null =>
+    celebrates
+      ? celebrationTier(next.shots, {
+          seriesLength: next.seriesLength,
+          guldThreshold,
+          isSighter: sighter,
+        })
+      : null;
+  const highestTier = useRef<CelebrationTier | null>(tierOf(state, isSighter));
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const currentTier = tierOf(state, isSighter);
+
+  function onKeypadChange(next: KeypadState) {
+    setState(next);
+    const reached = tierToCelebrate(highestTier.current, tierOf(next, isSighter));
+    if (reached === null) return;
+    highestTier.current = reached;
+    setCelebration((prev) => ({ tier: reached, id: (prev?.id ?? 0) + 1 }));
+  }
+
   async function onAttachPhoto() {
     const uri = await pickSeriesPhoto();
     if (uri === 'denied') {
@@ -133,6 +165,7 @@ export default function SeriesEntryScreen() {
     }
 
     saveSeriesShots(db, seriesId, shots);
+    if (celebration && isPerfectTier(currentTier)) markStampPending(seriesId);
 
     if (row && isSighter !== (row.isSighter ?? false)) {
       try {
@@ -174,7 +207,12 @@ export default function SeriesEntryScreen() {
       )}
 
       <Card>
-        <ScoreKeypad state={state} onChange={setState} />
+        <ScoreKeypad
+          state={state}
+          onChange={onKeypadChange}
+          celebration={celebration}
+          highlightTotal={currentTier !== null}
+        />
       </Card>
 
       {/* A thumbnail where Add Photo already lives, so the photo is visible

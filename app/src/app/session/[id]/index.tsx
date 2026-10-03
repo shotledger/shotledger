@@ -3,8 +3,8 @@
 // guldserie badge (§6.5), and the controls that grow the session — add
 // series, start final. Swipe a series row left to delete it (§4 fix batch,
 // 2026-09-03).
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handler';
@@ -35,6 +35,13 @@ import { ShotChips } from '@/components/shot-chips';
 import { StatTile } from '@/components/stat-tile';
 import { TagChips } from '@/components/tag-chips';
 import { seriesDropPlan } from '@/features/session/series-move';
+import {
+  celebratesDiscipline,
+  celebrationTier,
+  isPerfectTier,
+  takePendingStamp,
+} from '@/features/session/celebration';
+import { PerfectSeriesStamp } from '@/components/perfect-series-stamp';
 import { SessionToolsRow } from '@/features/session/session-tools-row';
 import {
   SeriesEntryChoiceSheet,
@@ -81,6 +88,14 @@ export default function SessionDetailScreen() {
   // cannot be arithmetic on a constant — and a ref cannot be read from the
   // handlers, which are built during render.
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
+  // The series just saved as perfect, whose stamp plays once (#482).
+  const [stampingId, setStampingId] = useState<string | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      const seriesId = takePendingStamp();
+      if (seriesId) setStampingId(seriesId);
+    }, []),
+  );
 
   const { session, seriesRows, results, tags, firearmName } = detail;
   const [extraRounds, setExtraRounds] = useState<string>(
@@ -283,6 +298,14 @@ export default function SessionDetailScreen() {
 
   const renderSeries = (row: SeriesRow) => {
     const held = dragging?.id === row.id;
+    const tier = celebratesDiscipline(session.disciplineId)
+      ? celebrationTier(row.shots, {
+          seriesLength: detail.seriesLength,
+          guldThreshold: row.guldThreshold,
+          isSighter: row.isSighter,
+        })
+      : null;
+    const perfectTier = isPerfectTier(tier) ? tier : null;
     // Long-press to lift, then drag. `minDistance(0)` on the pan would steal
     // the swipe-to-delete gesture, so the pan is gated behind the long press
     // and does nothing until one has happened.
@@ -355,7 +378,15 @@ export default function SessionDetailScreen() {
                 <PhotoIcon color={theme.primary} size={20} />
               </Pressable>
             )}
-            {row.isGoldSeries && <Chip label={t('session.goldSeries')} tone="primary" />}
+            {perfectTier ? (
+              <PerfectSeriesStamp
+                innerTens={perfectTier === 'perfectInner'}
+                animate={row.id === stampingId}
+                testID={`series-${row.position}-perfect`}
+              />
+            ) : (
+              row.isGoldSeries && <Chip label={t('session.goldSeries')} tone="primary" />
+            )}
             <ThemedText type="smallBold">
               {/* A sighter's score is shown with a marker rather than hidden:
                   it is deliberately unscored, not unknown, and the row already

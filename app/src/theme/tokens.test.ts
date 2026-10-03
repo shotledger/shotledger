@@ -90,6 +90,8 @@ describe('theme tokens', () => {
       ['success on background', c.success, c.background],
       ['danger on backgroundElement', c.danger, c.backgroundElement],
       ['success on backgroundElement', c.success, c.backgroundElement],
+      ['celebration on background', c.celebration, c.background],
+      ['celebration on backgroundElement', c.celebration, c.backgroundElement],
     ])('clears AA 4.5:1 for %s', (_label, fg, bg) => {
       expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
     });

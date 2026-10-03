@@ -37,6 +37,15 @@ decimaler beroende på program.
 Tryck på en serie för att fylla i den. Knappsatsen går vidare efter varje skott,
 så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
 
+I precision, magnumprecision och militär snabbmatch markerar knappsatsen en bra
+serie när du fyller i sista skottet. Når serien guldseriegränsen blir summan
+guldfärgad och telefonen ger en lätt vibration. En **fullpott** — alla skott i
+tian — ger guldringar och **Fullpott!**, och bara innertior lägger till **Alla
+innertior!** Det visas bara när du fyller i serien, aldrig när du öppnar en
+sparad, och med telefonens inställning för minskade rörelser ser du bara
+texten. Tillbaka i passet har en fullpottserie en liten tavelstämpel i stället
+för guldseriemärket.
+
 ## Provserier
 
 Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot

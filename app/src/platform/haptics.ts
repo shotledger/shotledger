@@ -28,3 +28,21 @@ export function vibrate(durationMs = 120): void {
  * wrapper and the web variant.
  */
 export function cancelVibration(): void {}
+
+/** The lightest tap — a selection change. Best-effort — never throws. */
+export function tick(): void {
+  try {
+    void Haptics.selectionAsync().catch(() => {});
+  } catch {
+    // Best-effort, as above.
+  }
+}
+
+/** The platform's "success" pattern. Best-effort — never throws. */
+export function notifySuccess(): void {
+  try {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  } catch {
+    // Best-effort, as above.
+  }
+}

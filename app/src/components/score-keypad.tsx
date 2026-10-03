@@ -1,5 +1,13 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   pressKey,
   selectShot,
@@ -10,6 +18,7 @@ import {
   type KeypadState,
 } from '@shotledger/shared';
 
+import { SeriesCelebration, type Celebration } from '@/components/series-celebration';
 import { ShotChips } from '@/components/shot-chips';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,6 +27,10 @@ import { Radius, Spacing } from '@/theme/tokens';
 export interface ScoreKeypadProps {
   state: KeypadState;
   onChange: (next: KeypadState) => void;
+  /** The tier just reached (#482); plays over the keypad. */
+  celebration?: Celebration | null;
+  /** Gold total while the series sits at gold or perfect. */
+  highlightTotal?: boolean;
 }
 
 function keyLabel(key: KeypadKey): string {
@@ -36,11 +49,28 @@ function accessibilityLabel(key: KeypadKey, t: (k: string) => string): string {
  * (docs/specs/m3-scoring-spec.md §3); this component only renders the state
  * and forwards key presses, so the state machine stays unit-testable.
  */
-export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
+export function ScoreKeypad({
+  state,
+  onChange,
+  celebration = null,
+  highlightTotal = false,
+}: ScoreKeypadProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const keys = visibleKeys(state);
   const total = tenthsToScore(seriesTotalTenths(state));
+
+  const reduceMotion = useReducedMotion();
+  const totalScale = useSharedValue(1);
+  const celebrationId = celebration?.id;
+  useEffect(() => {
+    if (celebrationId === undefined || reduceMotion) return;
+    totalScale.value = withSequence(
+      withTiming(1.35, { duration: 160 }),
+      withTiming(1, { duration: 260 }),
+    );
+  }, [celebrationId, reduceMotion, totalScale]);
+  const totalStyle = useAnimatedStyle(() => ({ transform: [{ scale: totalScale.value }] }));
 
   return (
     <View style={styles.container}>
@@ -55,9 +85,15 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
         <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
           {state.mode === 'decimal' ? t('session.keypadHintDecimal') : t('session.keypadHint')}
         </ThemedText>
-        <ThemedText type="smallBold" testID="series-running-total">
-          {`${t('session.seriesTotal')}: ${total}`}
-        </ThemedText>
+        <Animated.View style={totalStyle}>
+          <ThemedText
+            type="smallBold"
+            themeColor={highlightTotal ? 'celebration' : 'text'}
+            testID="series-running-total"
+          >
+            {`${t('session.seriesTotal')}: ${total}`}
+          </ThemedText>
+        </Animated.View>
       </View>
 
       <View style={styles.keys}>
@@ -81,6 +117,8 @@ export function ScoreKeypad({ state, onChange }: ScoreKeypadProps) {
           </Pressable>
         ))}
       </View>
+
+      {celebration && <SeriesCelebration key={celebration.id} celebration={celebration} />}
     </View>
   );
 }

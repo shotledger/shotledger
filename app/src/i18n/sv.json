@@ -714,7 +714,11 @@
     "faltTotal": "{{hits}} träff i {{figures}} figurer",
     "poangfaltTotal": "{{points}} poäng",
     "seriesLength": "Skott per serie",
-    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott."
+    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
+    "celebrationPerfect": "Fullpott!",
+    "celebrationPerfectInner": "Alla innertior!",
+    "perfectStamp": "Fullpott",
+    "perfectInnerStamp": "Fullpott, alla innertior"
   },
   "share": {
     "title": "Dela pass",
