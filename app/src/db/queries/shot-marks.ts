@@ -88,6 +88,9 @@ export function saveSeriesMarks(
 
 export interface StoredMark {
   shotId: string;
+  seriesId: string;
+  /** The series' position in its session — what resolves its target face. */
+  seriesPosition: number;
   position: number;
   xMm: number;
   yMm: number;
@@ -101,6 +104,7 @@ function selectMarks(db: Database) {
     .select({
       shotId: shots.id,
       seriesId: shots.seriesId,
+      seriesPosition: series.position,
       position: shots.position,
       xMm: shotMarks.xMm,
       yMm: shotMarks.yMm,
@@ -109,11 +113,14 @@ function selectMarks(db: Database) {
       isInnerTen: shots.isInnerTen,
     })
     .from(shotMarks)
-    .innerJoin(shots, eq(shotMarks.shotId, shots.id));
+    .innerJoin(shots, eq(shotMarks.shotId, shots.id))
+    .innerJoin(series, eq(shots.seriesId, series.id));
 }
 
 function toStoredMark(r: {
   shotId: string;
+  seriesId: string;
+  seriesPosition: number;
   position: number;
   xMm: number;
   yMm: number;
@@ -139,7 +146,6 @@ export function listMarksForSeries(db: Database, seriesId: string): StoredMark[]
  */
 export function listMarksForSession(db: Database, sessionId: string): StoredMark[] {
   return selectMarks(db)
-    .innerJoin(series, eq(shots.seriesId, series.id))
     .where(
       and(
         eq(series.sessionId, sessionId),
@@ -207,6 +213,7 @@ export interface SessionMarks {
   sessionId: string;
   startedAt: string;
   disciplineId: string;
+  programId: string | null;
   marks: StoredMark[];
 }
 
@@ -225,6 +232,8 @@ export function listMarksBySession(db: Database): SessionMarks[] {
   const rows = db
     .select({
       shotId: shots.id,
+      seriesId: shots.seriesId,
+      seriesPosition: series.position,
       position: shots.position,
       xMm: shotMarks.xMm,
       yMm: shotMarks.yMm,
@@ -234,6 +243,7 @@ export function listMarksBySession(db: Database): SessionMarks[] {
       sessionId: sessions.id,
       startedAt: sessions.startedAt,
       disciplineId: sessions.disciplineId,
+      programId: sessions.programId,
     })
     .from(shotMarks)
     .innerJoin(shots, eq(shotMarks.shotId, shots.id))
@@ -262,6 +272,7 @@ export function listMarksBySession(db: Database): SessionMarks[] {
         sessionId: key,
         startedAt: row.startedAt,
         disciplineId: row.disciplineId,
+        programId: row.programId,
         marks: [mark],
       });
   }

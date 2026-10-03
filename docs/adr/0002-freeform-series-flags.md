@@ -26,3 +26,12 @@ SHB J.6.1) declare a `structure` and pre-create their skeleton.
   JSON data files, addable by PR.
 - UI enforces the one-sighter-per-section rule (toggle disables).
 - Särskjutning is logged as ordinary extra series in v1.
+
+## Amendment (2026-10-03, #476)
+
+A fixed-format program's groups carry their own `sighterSeries` and an
+optional `targetFace`. Nationell helmatch needs a sighter before two of its
+three delmoment and a different face for each (SHB I.6.1, I.6.6.2). The
+one-sighter-per-section rule now guards freeform sessions only; a
+fixed-format session takes its skeleton as the truth. Still no Drizzle
+change: a series resolves its group, time limit and face by position.

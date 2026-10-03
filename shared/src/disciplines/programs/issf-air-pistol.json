@@ -10,10 +10,10 @@
   "scoring": "integer",
   "supportsFinal": false,
   "structure": {
-    "sighterSeries": 0,
     "groups": [
       {
-        "seriesCount": 6
+        "seriesCount": 6,
+        "sighterSeries": 0
       }
     ]
   }

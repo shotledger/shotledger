@@ -11,6 +11,10 @@ Den fungerar på 25 m precisions- och snabbskjutningstavla och ISSF:s 10 m
 luftpistoltavla. För ett pass på någon annan tavla går **Lägg till serie** direkt
 till knappsatsen.
 
+Varje serie räknas på den tavla dess moment skjuts mot. I **Hela matchen** i
+Sportpistol och Grovpistol använder precisionsmomentet precisionstavlan och
+snabbskjutningsmomentet snabbskjutningstavlan.
+
 ## Så gör du
 
 1. **Fotografera tavlan.** Få med tavelansiktet i bild, så rakt framifrån du

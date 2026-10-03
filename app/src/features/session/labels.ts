@@ -2,7 +2,7 @@
 // themselves live in shared/ data files; their display names are i18n keys so
 // every string on screen goes through i18n (§0 rule 5).
 import type { TFunction } from 'i18next';
-import { getDiscipline, getProgram, type Program } from '@shotledger/shared';
+import { getDiscipline, getProgram, programSighterCount, type Program } from '@shotledger/shared';
 
 export const COMPETITION_LEVELS = ['forening', 'krets', 'landsdel', 'national', 'riks'] as const;
 export type CompetitionLevel = (typeof COMPETITION_LEVELS)[number];
@@ -35,10 +35,11 @@ export function matchFormatHint(t: TFunction, program: Program): string | null {
   const times = limits.every((seconds) => seconds !== undefined)
     ? [...new Set(limits)].join('/')
     : null;
-  // Every shipped program has 0 or 1 sighter series; more than one is counted
-  // in with the rest rather than given wording of its own.
-  const sighter = structure.sighterSeries === 1;
-  const series = sighter ? scoring : scoring + structure.sighterSeries;
+  // One sighter gets wording of its own; more than one is counted in with
+  // the rest.
+  const sighters = programSighterCount(program);
+  const sighter = sighters === 1;
+  const series = sighter ? scoring : scoring + sighters;
   const key = sighter
     ? times
       ? 'session.fullMatchHintSighterTimed'

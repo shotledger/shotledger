@@ -15,6 +15,7 @@ import {
   formatGroupAndClass,
   MIN_SHOTS_FOR_HEATMAP,
   programsForDiscipline,
+  seriesTargetFace,
   tenthsToScore,
   getDiscipline,
 } from '@shotledger/shared';
@@ -123,7 +124,8 @@ export default function SessionDetailScreen() {
   function onAddSeries() {
     // Photo scoring cannot read every face; for one it cannot, the keypad is
     // the only way in, so neither the choice nor a remembered "photo" applies.
-    const faceId = getDiscipline(session!.disciplineId)?.targetFace ?? '';
+    const faceId =
+      seriesTargetFace(session!.disciplineId, session!.programId, nextSeriesPosition()) ?? '';
     if (!isPhotoScoringSupported(faceId)) {
       openSeriesEntry('manual');
       return;

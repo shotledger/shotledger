@@ -15,7 +15,8 @@ Hard rules that implementations must never violate:
 1. **Series counts are never fixed** for freeform programs (precision).
    Only fixed-format programs (milsnabb) pre-create a skeleton.
 2. **Max ONE sighter (provskott) series per section** — one in the main
-   round, one in the final. What a sighter counts towards depends on where
+   round, one in the final. That guards freeform sessions; a fixed-format
+   program lays its sighters out per group (helmatch: before A and B). What a sighter counts towards depends on where
    you are asking (maintainer, 2026-09-16 and 2026-09-17; see
    `docs/specs/sighters-in-statistics-spec.md`):
    - **Inside a session** it is excluded from the result and from every

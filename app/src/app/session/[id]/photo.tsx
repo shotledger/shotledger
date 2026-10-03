@@ -6,7 +6,7 @@
 import {
   analyzeGroup,
   analyzePointsLost,
-  getDiscipline,
+  seriesTargetFace,
   getTargetFace,
   tenthsToScore,
 } from '@shotledger/shared';
@@ -50,7 +50,13 @@ export default function SeriesPhotoScreen() {
   const row = detail.seriesRows.find((series) => series.position === position);
   const uri = resolveSeriesPhotoUri(row?.photoUri ?? null);
 
-  const target = getTargetFace(getDiscipline(detail.session?.disciplineId ?? '')?.targetFace ?? '');
+  const target = getTargetFace(
+    seriesTargetFace(
+      detail.session?.disciplineId ?? '',
+      detail.session?.programId ?? null,
+      position,
+    ) ?? '',
+  );
 
   // Marks exist only where the series was scored by tapping holes on the
   // photo, so their presence is what distinguishes the two ways a score got

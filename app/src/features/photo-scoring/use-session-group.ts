@@ -6,11 +6,17 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import type { GroupAnalysis, PointsLostAnalysis, TargetFaceDefinition } from '@shotledger/shared';
-import { analyzeGroup, analyzePointsLost, getDiscipline, getTargetFace } from '@shotledger/shared';
+import {
+  analyzeGroup,
+  analyzePointsLost,
+  getTargetFace,
+  seriesTargetFace,
+} from '@shotledger/shared';
 
 import { db } from '@/db/client';
 import { getSession } from '@/db/queries/sessions';
 import { type StoredMark, listMarksForSession } from '@/db/queries/shot-marks';
+import { busiestBucket } from './face-buckets';
 
 export interface SessionGroup {
   readonly marks: readonly StoredMark[];
@@ -22,16 +28,21 @@ export interface SessionGroup {
 export function loadSessionGroup(sessionId: string): SessionGroup | null {
   if (!db) return null;
 
-  const marks = listMarksForSession(db, sessionId);
-  if (marks.length === 0) return null;
+  const all = listMarksForSession(db, sessionId);
+  if (all.length === 0) return null;
 
   const session = getSession(db, sessionId);
-  const faceId = getDiscipline(session?.disciplineId ?? '')?.targetFace ?? '';
-  const target = getTargetFace(faceId);
-  // A mark can only have been made against a known face, but a discipline's
-  // targetFace could be edited in a later data file — better to hide the view
-  // than to plot millimeters against the wrong ring scale.
-  if (!target) return null;
+  const disciplineId = session?.disciplineId ?? '';
+  const programId = session?.programId ?? null;
+  const chosen = busiestBucket(all, (mark) =>
+    seriesTargetFace(disciplineId, programId, mark.seriesPosition),
+  );
+  const target = chosen ? getTargetFace(chosen.key) : undefined;
+  // A mark can only have been made against a known face, but a face id could
+  // be edited in a later data file — better to hide the view than to plot
+  // millimeters against the wrong ring scale.
+  if (!chosen || !target) return null;
+  const marks = chosen.items;
 
   const analysis = analyzeGroup(marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm })));
   if (!analysis) return null;

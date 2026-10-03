@@ -202,3 +202,29 @@ describe('updateSeries', () => {
     expect(updateSeries(db, s.id, { photoGeometry: null })?.photoGeometry).toBeNull();
   });
 });
+
+describe('sighters in a fixed-format session', () => {
+  let fixedId: string;
+
+  beforeEach(() => {
+    fixedId = createSession(db, {
+      name: 'M',
+      type: 'competition',
+      disciplineId: 'spsf-milsnabb',
+      programId: 'spsf-milsnabb',
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }).id;
+  });
+
+  it('takes the skeleton as the truth: a second main sighter is accepted', () => {
+    addSeries(db, { sessionId: fixedId, position: 1, isSighter: true });
+    const second = addSeries(db, { sessionId: fixedId, position: 6, isSighter: true });
+    expect(second.isSighter).toBe(1);
+  });
+
+  it('lets setSeriesSighter mark a second sighter', () => {
+    addSeries(db, { sessionId: fixedId, position: 1, isSighter: true });
+    const other = addSeries(db, { sessionId: fixedId, position: 2 });
+    expect(setSeriesSighter(db, other.id, true)?.isSighter).toBe(1);
+  });
+});

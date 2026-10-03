@@ -1,6 +1,7 @@
+import { getProgram } from '@shotledger/shared';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { series } from '../schema';
+import { series, sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 
@@ -30,9 +31,24 @@ export interface AddSeriesInput {
 }
 
 /**
- * Adds a series to a session. Enforces §3/§6.3: at most one sighter
- * (provskott) series per section — one in the main round, one in the final
- * (a final sighter has both isSighter and isFinal set).
+ * A fixed-format session takes its program's skeleton as the truth about
+ * sighters (§6.3) — Nationell helmatch lays out one before A and one before B
+ * — so the one-sighter guard applies to freeform sessions only.
+ */
+function isFixedFormatSession(db: Database, sessionId: string): boolean {
+  const row = db
+    .select({ programId: sessions.programId })
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .get();
+  const program = row?.programId ? getProgram(row.programId) : undefined;
+  return program?.structure !== undefined;
+}
+
+/**
+ * Adds a series to a session. Enforces §3/§6.3 in a freeform session: at
+ * most one sighter (provskott) series per section — one in the main round,
+ * one in the final (a final sighter has both isSighter and isFinal set).
  */
 export function addSeries(db: Database, input: AddSeriesInput) {
   const isSighter = input.isSighter ?? false;
@@ -45,7 +61,7 @@ export function addSeries(db: Database, input: AddSeriesInput) {
     throw new RangeError('An override series cannot also be a sighter series.');
   }
 
-  if (isSighter) {
+  if (isSighter && !isFixedFormatSession(db, input.sessionId)) {
     const existing = db
       .select()
       .from(series)
@@ -117,7 +133,7 @@ export function updateSeries(
  * Sets or clears a series' sighter flag after creation (the sighter choice
  * moved from the add-series step onto the series entry screen).
  * Re-enforces the same one-sighter-per-section
- * rule as `addSeries`; a series that already is the section's sighter can
+ * rule as `addSeries`, in freeform sessions only; a series that already is the section's sighter can
  * always turn itself off. Returns `undefined` for an unknown/tombstoned id.
  */
 export function setSeriesSighter(db: Database, id: string, isSighter: boolean) {
@@ -128,7 +144,7 @@ export function setSeriesSighter(db: Database, id: string, isSighter: boolean) {
     throw new RangeError('An override series cannot also be a sighter series.');
   }
 
-  if (isSighter && current.isSighter !== 1) {
+  if (isSighter && current.isSighter !== 1 && !isFixedFormatSession(db, current.sessionId)) {
     const existing = db
       .select()
       .from(series)

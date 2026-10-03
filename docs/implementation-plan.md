@@ -743,6 +743,16 @@ public.
 shares the precision target face — G.7.1 p. 205 shoots "Pistoltavla 25 m
 precision" at 50 m (G.7.2 p. 206) — and is the discipline that makes the
 already-defined vapengrupper `M1`–`M9` reachable.
+**Added 2026-10-03 (#476):** SPSF Nationell helmatch (SHB Del I) and its
+delmoment C, figurskjutning, as a training discipline of its own. Helmatch
+shoots three faces, so program groups carry their own face (§6.3).
+
+- [x] **Per-group sighters and target faces** (#476 slice 2). A
+      fixed-format program's group names its own `sighterSeries` and an
+      optional `targetFace`; the one-sighter guard covers freeform sessions
+      only; ISSF 25m Pistol and Centre Fire shoot their rapid-fire stage on
+      `issf-25m-rapid-fire`; every consumer reads the series' face.
+
 **Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
 25m standard, 50m pistol — defaults need VERIFY then). Community adds
 disciplines via PR once public.
@@ -798,20 +808,32 @@ lightweight preset naming the competition type and its defaults:
   scoring: 'integer'|'decimal',
   supportsFinal: boolean,          -- final section available in UI
   structure?: {                    -- ONLY for fixed-format programs
-    sighterSeries: number,         -- leading sighters (e.g. 1)
-    groups: [ { seriesCount, timeLimitSeconds? } ] } }
+    groups: [ { seriesCount, timeLimitSeconds?,
+                sighterSeries?,    -- sighters laid out before this group
+                targetFace? } ] } }  -- overrides the discipline's face
 ```
 
 A program **with** `structure` pre-creates its series skeleton on session
-start (time limits shown per series, derived from position — no schema
-change); a program **without** it is fully freeform (§ above). Precision
-is freeform; milsnabb is fixed.
+start (time limits and faces resolved per series from its position — no
+schema change); a program **without** it is fully freeform (§ above).
+Precision is freeform; milsnabb is fixed.
+
+**Amended 2026-10-03 (#476):** sighters and faces moved onto the group.
+Nationell helmatch shoots three faces with a sighter before delmoment A and
+B and none before C (SHB I.6.1, I.6.6.2), which a single leading count and
+one face per discipline could not express. Existing programs carry
+`sighterSeries: 1` on group 0; ISSF 25m Pistol and Centre Fire's rapid-fire
+group names `issf-25m-rapid-fire`. A group face must resolve in the target
+registry. Consumers (series entry, photo scoring, the group views) read the
+series' face, not the discipline's.
 
 Per-series flags carry the structure instead of the program:
 `is_sighter` (provskott) and `is_final` (series belongs to the final).
 **Maintainer rule: at most ONE sighter per section** — one in the main
 round, one in the final (both flags set on a final's sighter). The UI
-disables the sighter toggle once the current section has one.
+disables the sighter toggle once the current section has one. The rule
+guards **freeform** sessions; a fixed-format session takes its skeleton as
+the truth about sighters (#476).
 
 **Result model — maintainer-confirmed:** when a session contains final
 series, three results are tracked and displayed, all derived:
