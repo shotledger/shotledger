@@ -47,6 +47,38 @@ function inFrame(toMm: Homography, R: number, width: number, height: number): nu
   return n / 360;
 }
 
+/**
+ * How far `other`'s rings sit from `ref`'s: points on ref's 25/50/75 mm
+ * circles that fall inside the photo, measured in other's mm. Per ring the
+ * median and the 95th percentile of |r - R|; the worst ring of each.
+ */
+function ringAgreement(
+  ref: Homography,
+  other: Homography,
+  width: number,
+  height: number,
+): { median: number; p95: number } | null {
+  const toImage = invertHomography(ref);
+  if (!toImage) return null;
+  let median = -1;
+  let p95 = -1;
+  for (const R of [25, 50, 75]) {
+    const d: number[] = [];
+    for (let i = 0; i < 180; i += 1) {
+      const a = (2 * Math.PI * i) / 180;
+      const q = applyHomography(toImage, { x: R * Math.cos(a), y: R * Math.sin(a) });
+      if (q.x < 0 || q.x >= width || q.y < 0 || q.y >= height) continue;
+      const m = applyHomography(other, q);
+      d.push(Math.abs(Math.hypot(m.x, m.y) - R));
+    }
+    if (d.length < 54) continue; // under 30% of the circle in frame
+    d.sort((x, y) => x - y);
+    median = Math.max(median, d[Math.floor(d.length / 2)]!);
+    p95 = Math.max(p95, d[Math.min(d.length - 1, Math.floor(0.95 * d.length))]!);
+  }
+  return median < 0 ? null : { median, p95 };
+}
+
 const round = (v: number | null | undefined, digits: number) =>
   v === null || v === undefined ? null : Number(v.toFixed(digits));
 
@@ -90,6 +122,17 @@ test.skipIf(!dir || !out)('both locks on every PGM', async () => {
       row.vetoed =
         passesCloseupGate(closeup) &&
         [1 / 2, 1 / 3, 1 / 4].some((f) => Math.abs(ratio / f - 1) <= 0.06);
+      // the disc lock's error, where the close-up lock is a trustworthy
+      // reference: passing, at the disc's scale, and tight on the lines
+      if (
+        passesCloseupGate(closeup) &&
+        Math.abs(ratio - 1) <= 0.03 &&
+        (closeup.ringOffsetMm ?? Infinity) <= 0.3
+      ) {
+        const err = ringAgreement(closeup.toMm, discToMm, gray.width, gray.height);
+        row.discErrMedianMm = round(err?.median, 2);
+        row.discErrP95Mm = round(err?.p95, 2);
+      }
     }
     const chosenToMm =
       chosen === 'disc' ? discToMm : chosen === 'closeup' ? closeup?.toMm : undefined;
