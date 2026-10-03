@@ -14,8 +14,9 @@ import { syntheticCanvas } from './synthetic-canvas';
 import type { RectifiedCanvas } from './tap-snap';
 
 /**
- * Relative tolerance against the Python reference. Everything this module
- * computes itself is float64 on both sides and agrees to ~1e-9. The six
+ * Relative tolerance against the fixture, set when it came from the Python
+ * spike (until ADR 0018). Everything this module computes itself was float64
+ * on both sides and agreed to ~1e-9. The six
  * texture features come from `holeFeatures`, which mirrors an OpenCV float32
  * pipeline (see hole-features.test.ts), and on synthetic art with exactly
  * vertical edges a float32 rounding residue can move one edge pixel across an
@@ -30,7 +31,7 @@ const TEXTURE_FEATURES = new Set(HOLE_PROPOSAL_FEATURE_NAMES.slice(0, 6));
 function closeTo(actual: number, expected: number, label: string, rel = REL) {
   const tolerance = rel * Math.max(1, Math.abs(expected));
   if (Math.abs(actual - expected) > tolerance) {
-    throw new Error(`${label}: got ${actual}, reference ${expected}`);
+    throw new Error(`${label}: got ${actual}, fixture ${expected}`);
   }
 }
 
@@ -58,7 +59,7 @@ function canvasOf(scenario: (typeof fixture.scenarios)[number]): RectifiedCanvas
   return { data, size: scenario.size, centerXPx: c, centerYPx: c, pxPerMm: fixture.pxPerMm };
 }
 
-it('carries the same constants as the Python reference', () => {
+it('carries the same constants as the fixture', () => {
   expect(fixture.featureNames).toEqual([...HOLE_PROPOSAL_FEATURE_NAMES]);
   for (const name of HOLE_PROPOSAL_FEATURE_NAMES) {
     expect(HOLE_PROPOSAL_WEIGHTS[name]).toBe(fixture.weights[name]);
@@ -67,7 +68,7 @@ it('carries the same constants as the Python reference', () => {
   expect(HOLE_PROPOSAL_THRESHOLD).toBe(fixture.threshold);
 });
 
-it('draws the synthetic canvases pixel for pixel as the reference does', () => {
+it('draws the synthetic canvases pixel for pixel as the fixture records', () => {
   for (const scenario of fixture.scenarios) {
     const canvas = canvasOf(scenario);
     let sum = 0;
@@ -83,7 +84,7 @@ it('builds the Gaussian kernel from the formula, normalised', () => {
   expect(k[3]).toBeGreaterThan(k[2] as number);
 });
 
-it('reproduces every candidate, feature and probability of the reference', () => {
+it('reproduces every candidate, feature and probability of the fixture', () => {
   const face = faceOf();
   for (const scenario of fixture.scenarios) {
     const canvas = canvasOf(scenario);
@@ -107,7 +108,7 @@ it('reproduces every candidate, feature and probability of the reference', () =>
   }
 });
 
-it('proposes the same holes at the same refined centres as the reference', () => {
+it('proposes the same holes at the same refined centres as the fixture', () => {
   const face = faceOf();
   for (const scenario of fixture.scenarios) {
     const canvas = canvasOf(scenario);

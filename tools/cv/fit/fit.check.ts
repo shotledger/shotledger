@@ -32,6 +32,14 @@ test('shuffle as Generator.shuffle on a list', () => {
   ]);
 });
 
+test('integers as Generator.integers', () => {
+  // g = default_rng(20260916); g.integers(0, 256, 10, dtype=np.uint8); g.integers(-20, 21, 10)
+  const g = new Pcg64(20260916);
+  expect([...g.bytes(10)]).toEqual([135, 176, 63, 169, 224, 176, 240, 37, 184, 221]);
+  expect(g.integers(-20, 21, 10)).toEqual([-7, -7, 0, 5, -7, -5, -14, -4, 7, -14]);
+  expect(new Pcg64(5).integers(0, 3, 12)).toEqual([2, 2, 0, 2, 1, 1, 1, 0, 2, 0, 0, 1]);
+});
+
 test('Newton fit and AUC as fit_hole_filter.py', () => {
   const x = Array.from({ length: 24 }, (_, i) => [
     (i % 7) * 0.5 + 0.1 * (i % 3),

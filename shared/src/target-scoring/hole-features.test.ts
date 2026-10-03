@@ -23,8 +23,8 @@ const FEATURE_KEYS = [
   'stdDev',
 ] as const satisfies readonly (keyof HoleFeatures)[];
 
-/** The Python fixture names features in snake_case; map once, here. */
-const PYTHON_KEY: Record<(typeof FEATURE_KEYS)[number], string> = {
+/** The fixture names features in snake_case; map once, here. */
+const SNAKE_KEY: Record<(typeof FEATURE_KEYS)[number], string> = {
   orientEntropy: 'orient_entropy',
   hfEnergy: 'hf_energy',
   laplacianVar: 'laplacian_var',
@@ -42,7 +42,8 @@ function crop(size: number, fill: (x: number, y: number) => number): GrayCrop {
 }
 
 /**
- * OpenCV and numpy run this pipeline in float32, the TypeScript in float64, so
+ * Set when the fixture came from the Python spike (until ADR 0018), whose
+ * OpenCV and numpy ran this pipeline in float32, the TypeScript in float64, so
  * the two agree to about 1e-7 relative and no closer. See the spec's revision
  * note on behavior 7: this bound is still orders of magnitude tighter than
  * either porting bug the fixture actually caught.
@@ -54,7 +55,7 @@ function expectLockStep(actual: number, expected: number, what: string): void {
   const difference = Math.abs(actual - expected);
   if (difference > allowed) {
     throw new Error(
-      `${what}: TypeScript ${actual} vs Python ${expected} ` +
+      `${what}: got ${actual}, fixture ${expected} ` +
         `(difference ${difference}, allowed ${allowed})`,
     );
   }
@@ -204,7 +205,7 @@ describe('holeProbability', () => {
   });
 });
 
-describe('lock-step with spike/cv/hole_filter.py', () => {
+describe('lock-step with the fixture', () => {
   it('uses the crop size the weights were fitted on', () => {
     expect(HOLE_CROP_PX).toBe(fixtures.cropPx);
   });
@@ -213,8 +214,8 @@ describe('lock-step with spike/cv/hole_filter.py', () => {
     expect(HOLE_FILTER_BIAS).toBeCloseTo(fixtures.bias, 12);
     expect(HOLE_PROBABILITY_THRESHOLD).toBeCloseTo(fixtures.threshold, 12);
     for (const key of FEATURE_KEYS) {
-      const pythonWeight = (fixtures.weights as Record<string, number>)[PYTHON_KEY[key]];
-      expect(HOLE_FILTER_WEIGHTS[key]).toBeCloseTo(pythonWeight as number, 12);
+      const fixtureWeight = (fixtures.weights as Record<string, number>)[SNAKE_KEY[key]];
+      expect(HOLE_FILTER_WEIGHTS[key]).toBeCloseTo(fixtureWeight as number, 12);
     }
   });
 
@@ -235,14 +236,14 @@ describe('lock-step with spike/cv/hole_filter.py', () => {
         size: testCase.size,
       });
       for (const key of FEATURE_KEYS) {
-        const expected = (testCase.features as Record<string, number>)[PYTHON_KEY[key]];
+        const expected = (testCase.features as Record<string, number>)[SNAKE_KEY[key]];
         expectLockStep(features[key], expected as number, key);
       }
       expectLockStep(holeProbability(features), testCase.probability, 'probability');
     },
   );
 
-  it('agrees with Python that a flat dark patch is not a hole', () => {
+  it('reads the flat dark patch as not a hole', () => {
     const patch = fixtures.cases.find((c) => c.name === 'flat_patch_dark');
     expect(patch).toBeDefined();
     const features = holeFeatures({
@@ -252,7 +253,7 @@ describe('lock-step with spike/cv/hole_filter.py', () => {
     expect(isHoleLike(features)).toBe(false);
   });
 
-  it('agrees with Python that a hole reads the same in either polarity', () => {
+  it('reads the hole the same in either polarity', () => {
     const inBlack = fixtures.cases.find((c) => c.name === 'hole_in_black');
     const onPaper = fixtures.cases.find((c) => c.name === 'hole_on_paper');
     expect(inBlack).toBeDefined();

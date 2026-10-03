@@ -1,8 +1,8 @@
-// numpy's `np.random.default_rng(seed).shuffle(list)` in TypeScript, so the
-// fits split photos into the same cross-validation folds the Python did:
-// SeedSequence -> PCG64 (XSL-RR 128/64) -> Generator.shuffle's untyped path,
-// which draws each swap index with `random_interval` (masked rejection on
-// 32-bit draws). Checked against numpy 2.5 in tools.check.ts.
+// The parts of numpy's `np.random.default_rng(seed)` the tools use, in
+// TypeScript: SeedSequence -> PCG64 (XSL-RR 128/64), then `shuffle` (the
+// fits' cross-validation folds, drawn as numpy drew them) and two forms of
+// `integers` (the synthetic crops of the hole-feature fixture). Checked
+// against numpy 2.5 in fit.check.ts.
 
 const MASK32 = 0xffffffff;
 const M128 = (1n << 128n) - 1n;
@@ -97,6 +97,39 @@ export class Pcg64 {
       const v = (this.next32() & mask) >>> 0;
       if (v <= max) return v;
     }
+  }
+
+  /** `integers(0, 256, n, dtype=np.uint8)`: the bytes of 32-bit draws, low byte first. */
+  bytes(n: number): Uint8Array {
+    const out = new Uint8Array(n);
+    let buf = 0;
+    for (let i = 0; i < n; i += 1) {
+      if (i % 4 === 0) buf = this.next32();
+      else buf >>>= 8;
+      out[i] = buf & 0xff;
+    }
+    return out;
+  }
+
+  /** `integers(low, high, n)` as int64, for a range below 2^21: Lemire's
+   *  bounded draw on 32-bit draws (the product stays exact in a double). */
+  integers(low: number, high: number, n: number): number[] {
+    const range = high - low;
+    if (range < 2 || range > 1 << 21) throw new RangeError('range not needed here');
+    const threshold = (MASK32 - (range - 1)) % range;
+    const out: number[] = [];
+    for (let i = 0; i < n; i += 1) {
+      let m = this.next32() * range;
+      let leftover = m % 2 ** 32;
+      if (leftover < range) {
+        while (leftover < threshold) {
+          m = this.next32() * range;
+          leftover = m % 2 ** 32;
+        }
+      }
+      out.push(low + Math.floor(m / 2 ** 32));
+    }
+    return out;
   }
 
   /** `Generator.shuffle` on a Python list, in place. */
