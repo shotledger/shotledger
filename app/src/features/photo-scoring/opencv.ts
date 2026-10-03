@@ -16,9 +16,9 @@
 //    everything, `warpPolar` for anything radial, small arrays into JS.
 import type { EllipseFit, RectificationTransform } from '@shotledger/shared';
 import {
+  applyRefinement,
   buildRectification,
   coarseToFineRefine,
-  refineRectification,
   scoreRadialProfile,
 } from '@shotledger/shared';
 import type { Mat, RotatedRect } from 'react-native-fast-opencv';
@@ -454,7 +454,7 @@ export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult
       scoreRadialProfile(profileAt(dxMm, dyMm), CANVAS_PX_PER_MM * scale, options.ringRadiiMm),
     );
 
-    const transform = refineRectification(base, refined.dxMm, refined.dyMm, refined.scale);
+    const transform = applyRefinement(base, refined);
 
     // Gate metrics, measured on the same pixels the geometry used.
     const mad = medianAbsoluteDeviation(profileAt(refined.dxMm, refined.dyMm));

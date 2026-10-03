@@ -223,6 +223,25 @@ target_cv.py:218); keep the best-scoring candidate; then `searchMm = stepMm *
 | CF4 | default options omitted entirely                                                                                                 | same result as passing the documented defaults explicitly (property: options object is optional, not required)                                                                                                                                 |
 | CF5 | `evaluate` is called                                                                                                             | never with a `scale<=0` argument (grid construction keeps `scale` positive: default window 1±0.12 keeps this true; a deliberately small `initialStepMm` still can't push scale to 0 — asserted by inspecting every call's arguments via a spy) |
 
+### 2.6a `applyRefinement(t, result): RectificationTransform` (added 2026-10-03, #496)
+
+Turns a `coarseToFineRefine` result into the refined transform. The search's
+`scale` is the one the rings were scored at (ring r mm at r · pxPerMm · scale
+on the canvas, as `scoreRadialProfile` is called with `pxPerMm * scale`), so a
+target-mm is a base-mm **divided** by it. `refineRectification` (§2.4)
+multiplies, so this passes it the reciprocal:
+`refineRectification(t, dxMm, dyMm, 1 / scale)`. The shift stays in base mm.
+`target_cv.refine_geom` does the same (`px_per_mm *= sc`), and so does the
+app's canvas (`pxPerMm: CANVAS_PX_PER_MM * scale`). Passing the scale straight
+through, as the app did until #496, put the disc lock's transform off by
+scale² (the search ranges 0.88–1.12).
+
+| ID  | Input                                          | Assertion                                                                  |
+| --- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| AR1 | a radial profile with rings at r · 4 · 1.06 px | the search settles on scale ≈ 1.06                                         |
+| AR2 | the same, through `applyRefinement`            | each printed ring maps back to r mm within 0.5 %                           |
+| AR3 | any dx, dy, scale                              | equals `refineRectification` with `1 / scale`; (dx, dy) maps to the centre |
+
 ### 2.7 Properties (fast-check)
 
 - **GP1** Round-trip: for any `EllipseFit` satisfying GB4/GB5's preconditions
