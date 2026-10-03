@@ -1,27 +1,9 @@
-// Stages 1-3 of the geometry pipeline, on react-native-fast-opencv.
-// Ported from spike/cv/target_cv.py (branch spike/cv-target-scoring):
-// find_face / _refit_rays / build_geom / refine_geom.
-// Spec: docs/specs/photo-scoring-phase1-spec.md §5.2.
+// The disc lock (disc-lock.ts) and the close-up lock on react-native-fast-opencv.
 //
-// This module is deliberately THIN. Everything decidable by arithmetic lives
-// in tested pure modules — `shared/src/target-scoring` owns the rectification
-// math and the search driver, `validity.ts` owns the gate — so what remains
-// here is only the part that genuinely needs pixels, which is the part that
-// would need a device test to cover.
-//
-// Two integration facts from the spike (§4.6) shape it:
-//  * there is no `imread`: pixels arrive via `Mat.createFromBase64`;
-//  * there is no per-pixel accessor: `toBuffer()` copies a whole Mat, so a JS
-//    loop is only affordable over small reduced arrays. Rule: native ops for
-//    everything, `warpPolar` for anything radial, small arrays into JS.
-import type { EllipseFit, RectificationTransform } from '@shotledger/shared';
-import {
-  applyRefinement,
-  buildRectification,
-  coarseToFineRefine,
-  scoreRadialProfile,
-} from '@shotledger/shared';
-import type { Mat, RotatedRect } from 'react-native-fast-opencv';
+// `nativeDiscOps` is `DiscOps` on the device's OpenCV, one native call per
+// operation, every allocation through an `Arena`; the algorithm itself is in
+// disc-lock.ts, which an evaluation in Node runs on OpenCV.js instead.
+import type { Mat, MatVector as MatVectorType, RotatedRect } from 'react-native-fast-opencv';
 import {
   BorderTypes,
   ColorConversionCodes,
@@ -46,31 +28,17 @@ import {
 import { type CloseupLock, closeupWorkImage, lockCloseupWork, ringOffsetMm } from './closeup-lock';
 import { nativeCloseupOps } from './closeup-lock-native';
 import type { Homography } from './corners';
-import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
+import {
+  type DiscLockOptions,
+  type DiscOps,
+  type GeometryPipelineResult,
+  type RotatedRectFit,
+  rectifyWithHomography,
+  runDiscLock,
+} from './disc-lock';
 import type { RectifiedCanvas } from './tap-snap';
-import type { GeometryMetrics } from './validity';
 
-/** Rectified working canvas resolution, as in the spike. Fixing it makes
- *  runtime independent of the input photo's size. */
-export const CANVAS_PX_PER_MM = 4;
-
-export interface GeometryPipelineResult {
-  readonly transform: RectificationTransform;
-  readonly ellipse: EllipseFit;
-  readonly metrics: GeometryMetrics;
-  /**
-   * The rectified gray canvas, copied out before the native Mats are
-   * released, so tap-snap can run on a typed array with no OpenCV call per
-   * tap (see tap-snap.ts). One copy per photo — a few megabytes that the
-   * caller drops when it leaves the marking phase.
-   *
-   * `center*Px` and `pxPerMm` describe the mapping the refinement settled on,
-   * taken from the same numbers the refinement was scored with rather than
-   * re-derived: the profile search centers on `canvasSize / 2 + dxMm *
-   * CANVAS_PX_PER_MM` and scores ring radii at `CANVAS_PX_PER_MM * scale`.
-   */
-  readonly canvas: RectifiedCanvas;
-}
+export { CANVAS_PX_PER_MM, type GeometryPipelineResult } from './disc-lock';
 
 /**
  * Native objects live in a native buffer until released, and a photo-heavy
@@ -111,398 +79,144 @@ class Arena {
   }
 }
 
-function discMean(arena: Arena, gray: Mat, cx: number, cy: number, r: number): number {
-  const mask = arena.mask(gray.rows, gray.cols);
-  const center = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
-  OpenCV.circle(
-    mask,
-    center,
-    Math.max(2, Math.round(r)),
-    arena.keep(Scalar.create(255, 255, 255)),
-    -1,
-    LineTypes.LINE_8,
-  );
-  return OpenCV.mean(gray, mask).a;
+function rectFit(rect: RotatedRect): RotatedRectFit {
+  return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, angle: rect.angle };
 }
 
-function annulusMean(
-  arena: Arena,
-  gray: Mat,
-  cx: number,
-  cy: number,
-  r0: number,
-  r1: number,
-): number {
-  const mask = arena.mask(gray.rows, gray.cols);
-  const center = arena.keep(Point.create(Math.round(cx), Math.round(cy)));
-  OpenCV.circle(
-    mask,
-    center,
-    Math.max(2, Math.round(r1)),
-    arena.keep(Scalar.create(255, 255, 255)),
-    -1,
-    LineTypes.LINE_8,
-  );
-  OpenCV.circle(
-    mask,
-    center,
-    Math.max(1, Math.round(r0)),
-    arena.keep(Scalar.create(0, 0, 0)),
-    -1,
-    LineTypes.LINE_8,
-  );
-  return OpenCV.mean(gray, mask).a;
-}
-
-/**
- * Smallest share of the frame a contour must cover to be considered the face
- * at all. The printed black zone fills a good part of any usable photo; this
- * only keeps `fitEllipse` away from specks, where a fitted ellipse says
- * nothing and the call can fail outright on too few points.
- */
-const MIN_CANDIDATE_AREA_FRACTION = 0.005;
-
-/**
- * OpenCV reports a RotatedRect's size as (width, height) with the angle
- * measured against that axis order. `buildRectification` requires the axes
- * pre-sorted (math spec GB5); rotating by 90° when they swap keeps the angle
- * consistent with the new order.
- */
-function toEllipseFit(rect: RotatedRect): EllipseFit {
-  const swap = rect.width > rect.height;
+/** `DiscOps` on react-native-fast-opencv; everything it allocates is `arena`'s. */
+function nativeDiscOps(arena: Arena): DiscOps<Mat, MatVectorType> {
   return {
-    center: { x: rect.x, y: rect.y },
-    minorAxis: swap ? rect.height : rect.width,
-    majorAxis: swap ? rect.width : rect.height,
-    rotationDeg: swap ? rect.angle + 90 : rect.angle,
+    size: (img) => ({ rows: img.rows, cols: img.cols }),
+    zeros: (rows, cols) => arena.mask(rows, cols),
+    gaussianBlur: (src, ksize) => {
+      const dst = arena.dst();
+      OpenCV.GaussianBlur(src, dst, arena.keep(Size.create(ksize, ksize)), 0);
+      return dst;
+    },
+    thresholdOtsuInv: (src) => {
+      const dst = arena.dst();
+      OpenCV.threshold(
+        src,
+        dst,
+        0,
+        255,
+        ThresholdTypes.THRESH_BINARY_INV | ThresholdTypes.THRESH_OTSU,
+      );
+      return dst;
+    },
+    rectKernel: (ksize) =>
+      arena.keep(
+        OpenCV.getStructuringElement(MorphShapes.MORPH_RECT, arena.keep(Size.create(ksize, ksize))),
+      ),
+    morphologyEx: (img, op, kernel) =>
+      OpenCV.morphologyEx(
+        img,
+        img,
+        op === 'open' ? MorphTypes.MORPH_OPEN : MorphTypes.MORPH_CLOSE,
+        kernel,
+      ),
+    externalContours: (binary) => {
+      const contours = arena.keep(MatVector.create());
+      OpenCV.findContours(
+        binary,
+        contours,
+        RetrievalModes.RETR_EXTERNAL,
+        ContourApproximationModes.CHAIN_APPROX_NONE,
+      );
+      return contours;
+    },
+    contourCount: (contours) => contours.length,
+    contourArea: (contours, index) => OpenCV.contourArea(contours.get(index)).value,
+    fitContourEllipse: (contours, index) =>
+      rectFit(arena.keep(OpenCV.fitEllipse(contours.get(index)))),
+    fillContour: (mask, contours, index) =>
+      OpenCV.drawContours(
+        mask,
+        contours,
+        index,
+        arena.keep(Scalar.create(255, 255, 255)),
+        -1,
+        LineTypes.LINE_8,
+      ),
+    fitPointsEllipse: (xy) => {
+      const points = arena.keep(PointVector.create());
+      for (let i = 0; i < xy.length; i += 2) {
+        points.push(arena.keep(Point.create(xy[i] as number, xy[i + 1] as number)));
+      }
+      return rectFit(arena.keep(OpenCV.fitEllipse(points)));
+    },
+    warpPerspective: (src, matrix, size) => {
+      const dst = arena.dst();
+      OpenCV.warpPerspective(
+        src,
+        dst,
+        arena.keep(MatClass.create(3, 3, DataTypes.CV_64F, [...matrix])),
+        arena.keep(Size.create(size, size)),
+        InterpolationFlags.INTER_CUBIC,
+        BorderTypes.BORDER_CONSTANT,
+        arena.keep(Scalar.create(255, 255, 255)),
+      );
+      return dst;
+    },
+    warpPolar: (src, cx, cy, maxRadius, cols, rows) => {
+      const dst = arena.dst();
+      OpenCV.warpPolar(
+        src,
+        dst,
+        arena.keep(Size.create(cols, rows)),
+        arena.keep(Point2f.create(cx, cy)),
+        maxRadius,
+        InterpolationFlags.INTER_LINEAR,
+      );
+      return dst;
+    },
+    circleMaskMean: (src, cx, cy, circles) => {
+      const mask = arena.mask(src.rows, src.cols);
+      const center = arena.keep(Point.create(cx, cy));
+      for (const { radius, value } of circles) {
+        OpenCV.circle(
+          mask,
+          center,
+          radius,
+          arena.keep(Scalar.create(value, value, value)),
+          -1,
+          LineTypes.LINE_8,
+        );
+      }
+      return OpenCV.mean(src, mask).a;
+    },
+    // `.buffer` is the typed array itself, not an ArrayBuffer, despite the
+    // name; a view on native memory that releaseAll frees.
+    bytes: (img) => {
+      const { buffer, rows, cols } = img.toBuffer('uint8');
+      return { data: buffer, rows, cols };
+    },
   };
 }
 
-/**
- * Stage 1: the largest dark blob is the printed black zone.
- *
- * Otsu runs on a heavily blurred copy on purpose — the split wanted is
- * paper/black, not texture. `fitEllipseDirect` is missing upstream in
- * react-native-fast-opencv, so this uses plain `fitEllipse`; stage 3 is what
- * rescues a poor fit, and the validity gate catches the cases where it does
- * not.
- */
-function findFace(arena: Arena, src: Mat): { ellipse: EllipseFit; filled: Mat; gray: Mat } {
+/** The photo, decoded, as the grey Mat the locks work on. */
+function grayFromBase64(arena: Arena, base64: string): Mat {
+  const src = arena.keep(MatClass.createFromBase64(base64));
   const gray = arena.dst();
   OpenCV.cvtColor(src, gray, ColorConversionCodes.COLOR_BGR2GRAY);
-
-  const blurred = arena.dst();
-  OpenCV.GaussianBlur(gray, blurred, arena.keep(Size.create(31, 31)), 0);
-
-  const binary = arena.dst();
-  OpenCV.threshold(
-    blurred,
-    binary,
-    0,
-    255,
-    ThresholdTypes.THRESH_BINARY_INV | ThresholdTypes.THRESH_OTSU,
-  );
-
-  const kernel = arena.keep(
-    OpenCV.getStructuringElement(MorphShapes.MORPH_RECT, arena.keep(Size.create(9, 9))),
-  );
-  OpenCV.morphologyEx(binary, binary, MorphTypes.MORPH_OPEN, kernel);
-  OpenCV.morphologyEx(binary, binary, MorphTypes.MORPH_CLOSE, kernel);
-
-  const contours = arena.keep(MatVector.create());
-  OpenCV.findContours(
-    binary,
-    contours,
-    RetrievalModes.RETR_EXTERNAL,
-    ContourApproximationModes.CHAIN_APPROX_NONE,
-  );
-
-  // Shape, not just size: see face-candidate.ts. A contour has to be large
-  // enough for fitEllipse to mean anything before it is worth describing, so
-  // tiny specks are skipped rather than fitted.
-  const minCandidateArea = MIN_CANDIDATE_AREA_FRACTION * gray.rows * gray.cols;
-  const candidates: FaceCandidate[] = [];
-  for (let i = 0; i < contours.length; i += 1) {
-    const area = OpenCV.contourArea(contours.get(i)).value;
-    if (area < minCandidateArea) continue;
-    const fit = toEllipseFit(OpenCV.fitEllipse(contours.get(i)));
-    candidates.push({
-      index: i,
-      area,
-      majorAxis: fit.majorAxis,
-      minorAxis: fit.minorAxis,
-    });
-  }
-
-  const picked = pickFaceCandidate(candidates);
-  if (!picked) throw new Error('no dark region found');
-  const best = picked.index;
-
-  const rect = arena.keep(OpenCV.fitEllipse(contours.get(best)));
-
-  const filled = arena.mask(gray.rows, gray.cols);
-  OpenCV.drawContours(
-    filled,
-    contours,
-    best,
-    arena.keep(Scalar.create(255, 255, 255)),
-    -1,
-    LineTypes.LINE_8,
-  );
-
-  return { ellipse: toEllipseFit(rect), filled, gray };
+  return gray;
 }
 
-/**
- * Stage 1b: re-fit the black-zone boundary from ray casts, dropping any ray
- * that leaves the frame — "much steadier than one contour fit when the card
- * is cropped" (target_cv.py:_refit_rays).
- *
- * The mask is pulled into JS once with `toBuffer`; 360 rays over it is a few
- * milliseconds, where the same walk through native calls would be seconds.
- */
-function refitRays(
-  arena: Arena,
-  filled: Mat,
-  ellipse: EllipseFit,
-  iterations = 3,
-  rayCount = 360,
-): EllipseFit {
-  const { buffer, rows, cols } = filled.toBuffer('uint8');
-  let current = ellipse;
-
-  for (let iter = 0; iter < iterations; iter += 1) {
-    const cx = current.center.x;
-    const cy = current.center.y;
-    const rMax = 0.75 * Math.max(rows, cols);
-    const found: number[] = [];
-
-    for (let i = 0; i < rayCount; i += 1) {
-      const angle = (2 * Math.PI * i) / rayCount;
-      const dx = Math.cos(angle);
-      const dy = Math.sin(angle);
-      let lastX = -1;
-      let lastY = -1;
-      for (let r = 2; r < rMax; r += 1.5) {
-        const x = Math.round(cx + r * dx);
-        const y = Math.round(cy + r * dy);
-        if (x <= 2 || x >= cols - 3 || y <= 2 || y >= rows - 3) {
-          // The ray left the frame, so the true boundary is outside the
-          // photo and everything this ray found is unusable.
-          lastX = -1;
-          break;
-        }
-        if (buffer[y * cols + x]) {
-          lastX = x;
-          lastY = y;
-        }
-      }
-      if (lastX >= 0) found.push(lastX, lastY);
-    }
-
-    if (found.length < 60) return current; // too few rays survived to re-fit
-
-    const points = arena.keep(PointVector.create());
-    for (let i = 0; i < found.length; i += 2) {
-      points.push(arena.keep(Point.create(found[i] as number, found[i + 1] as number)));
-    }
-    current = toEllipseFit(arena.keep(OpenCV.fitEllipse(points)));
-  }
-  return current;
-}
-
-/**
- * The 3x3 image->canvas matrix, derived from the shared rectification so the
- * canvas is exactly `buildRectification` scaled to CANVAS_PX_PER_MM and
- * centered. One source of truth for the linear map is what makes a mark land
- * in the same target-mm the scorer uses.
- */
-function canvasHomography(arena: Arena, t: RectificationTransform, canvasSize: number): Mat {
-  const [a, b, c, d] = t.m;
-  const k = CANVAS_PX_PER_MM;
-  const half = canvasSize / 2;
-  const tx = half - k * (a * t.center.x + b * t.center.y) + k * t.offset.x;
-  const ty = half - k * (c * t.center.x + d * t.center.y) + k * t.offset.y;
-  // prettier-ignore
-  return arena.keep(
-    MatClass.create(3, 3, DataTypes.CV_64F, [
-      k * a, k * b, tx,
-      k * c, k * d, ty,
-      0,     0,     1,
-    ]),
-  );
-}
-
-/**
- * The radial edge profile at a candidate center. `warpPolar` turns the radial
- * problem into a row reduction — it is the primitive the spike wished for,
- * since `remap` is missing upstream and this is the better tool anyway
- * (spike §4.6).
- */
-function radialProfile(
-  arena: Arena,
-  canvas: Mat,
-  cx: number,
-  cy: number,
-  radiusPx: number,
-): Float64Array {
-  const angleBins = 360;
-  const polar = arena.dst();
-  OpenCV.warpPolar(
-    canvas,
-    polar,
-    arena.keep(Size.create(Math.round(radiusPx), angleBins)),
-    arena.keep(Point2f.create(cx, cy)),
-    radiusPx,
-    InterpolationFlags.INTER_LINEAR,
-  );
-
-  const { buffer, rows, cols } = polar.toBuffer('uint8');
-  const meanByRadius = new Float64Array(cols);
-  for (let r = 0; r < cols; r += 1) {
-    let sum = 0;
-    for (let a = 0; a < rows; a += 1) sum += buffer[a * cols + r] as number;
-    meanByRadius[r] = sum / rows;
-  }
-
-  // High-pass: |profile - smoothed|, so it fires on a white line on black and
-  // a black line on white alike (target_cv.py:_radial_profile).
-  const half = 10;
-  const out = new Float64Array(cols);
-  for (let r = 0; r < cols; r += 1) {
-    let sum = 0;
-    let n = 0;
-    for (let k = Math.max(0, r - half); k < Math.min(cols, r + half + 1); k += 1) {
-      sum += meanByRadius[k] as number;
-      n += 1;
-    }
-    out[r] = Math.abs((meanByRadius[r] as number) - sum / n);
-  }
-  return out;
-}
-
-/** Median absolute deviation — the normalizer that turns the profile score
- *  into an absolute threshold instead of a proxy for the photo's contrast. */
-function medianAbsoluteDeviation(values: Float64Array): number {
-  const sorted = Array.from(values).sort((x, y) => x - y);
-  const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
-  const deviations = sorted.map((v) => Math.abs(v - median)).sort((x, y) => x - y);
-  return deviations[Math.floor(deviations.length / 2)] ?? 0;
-}
-
-export interface RunGeometryOptions {
+export interface RunGeometryOptions extends DiscLockOptions {
   readonly base64: string;
-  readonly width: number;
-  readonly height: number;
-  readonly referenceDiameterMm: number;
-  /** Ascending ring radii, mm — the template the profile is matched against. */
-  readonly ringRadiiMm: readonly number[];
 }
 
-/**
- * Pixels in, a target-mm transform and the gate's metrics out.
- *
- * This function never decides whether the result is trustworthy — it only
- * measures. `checkGeometryValidity` makes that call, so the threshold logic
- * stays in a module that can be unit-tested against the real corpus numbers.
- */
+/** The disc lock (`runDiscLock`) on a photo. */
 export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult {
   const arena = new Arena();
   try {
-    const src = arena.keep(MatClass.createFromBase64(options.base64));
-    const { ellipse: initial, filled, gray } = findFace(arena, src);
-    const ellipse = refitRays(arena, filled, initial);
-
-    const base = buildRectification(ellipse, options.referenceDiameterMm);
-    const outerRadiusMm = (options.ringRadiiMm[options.ringRadiiMm.length - 1] ?? 250) * 1.05;
-    const canvasSize = Math.round(2 * outerRadiusMm * CANVAS_PX_PER_MM);
-
-    const canvas = arena.dst();
-    OpenCV.warpPerspective(
-      gray,
-      canvas,
-      canvasHomography(arena, base, canvasSize),
-      arena.keep(Size.create(canvasSize, canvasSize)),
-      InterpolationFlags.INTER_CUBIC,
-      BorderTypes.BORDER_CONSTANT,
-      arena.keep(Scalar.create(255, 255, 255)),
-    );
-
-    // The profile depends only on (dx, dy) — `scale` merely rescales the
-    // radius lookup — so it is memoised per center, exactly as the spike's
-    // loop nesting does. Without this the search would warpPolar once per
-    // (dx, dy, scale) triple rather than once per center: ~150 calls instead
-    // of a few thousand.
-    const cache = new Map<string, Float64Array>();
-    const radiusPx = outerRadiusMm * CANVAS_PX_PER_MM;
-    const profileAt = (dxMm: number, dyMm: number): Float64Array => {
-      const key = `${dxMm.toFixed(3)}:${dyMm.toFixed(3)}`;
-      const hit = cache.get(key);
-      if (hit) return hit;
-      const profile = radialProfile(
-        arena,
-        canvas,
-        canvasSize / 2 + dxMm * CANVAS_PX_PER_MM,
-        canvasSize / 2 + dyMm * CANVAS_PX_PER_MM,
-        radiusPx,
-      );
-      cache.set(key, profile);
-      return profile;
-    };
-
-    const refined = coarseToFineRefine((dxMm, dyMm, scale) =>
-      scoreRadialProfile(profileAt(dxMm, dyMm), CANVAS_PX_PER_MM * scale, options.ringRadiiMm),
-    );
-
-    const transform = applyRefinement(base, refined);
-
-    // Gate metrics, measured on the same pixels the geometry used.
-    const mad = medianAbsoluteDeviation(profileAt(refined.dxMm, refined.dyMm));
-    const r = ellipse.minorAxis / 2;
-    const inner = discMean(arena, gray, ellipse.center.x, ellipse.center.y, 0.7 * r);
-    const outer = annulusMean(arena, gray, ellipse.center.x, ellipse.center.y, 1.15 * r, 1.4 * r);
-
-    const metrics: GeometryMetrics = {
-      axisRatio: ellipse.majorAxis / ellipse.minorAxis,
-      zoneFraction: ellipse.majorAxis / Math.max(options.width, options.height),
-      centerInFrame:
-        ellipse.center.x >= 0 &&
-        ellipse.center.x < options.width &&
-        ellipse.center.y >= 0 &&
-        ellipse.center.y < options.height,
-      zoneContrastGray: outer - inner,
-      profileScore: mad > 1e-6 ? refined.score / mad : 0,
-    };
-
-    // `.buffer` is the typed array itself, not an ArrayBuffer, despite the name.
-    const { buffer: bytes } = canvas.toBuffer('uint8');
-    return {
-      transform,
-      ellipse,
-      metrics,
-      canvas: {
-        // Copied: the buffer is a view on native memory that releaseAll frees.
-        // Copied: the view points at native memory that releaseAll frees.
-        data: Uint8Array.from(bytes),
-        size: canvasSize,
-        centerXPx: canvasSize / 2 + refined.dxMm * CANVAS_PX_PER_MM,
-        centerYPx: canvasSize / 2 + refined.dyMm * CANVAS_PX_PER_MM,
-        pxPerMm: CANVAS_PX_PER_MM * refined.scale,
-      },
-    };
+    return runDiscLock(nativeDiscOps(arena), grayFromBase64(arena, options.base64), options);
   } finally {
     arena.releaseAll();
   }
 }
 
-/**
- * The rectified gray canvas for a photo whose image-px -> target-mm mapping is
- * already known — the hand-placed corners' homography — so tap-snap and the
- * hole detector get the same 4 px/mm, target-centred canvas the automatic
- * lock produces. Also what makes a close-up usable: the corners can sit on
- * any visible ring, and the canvas only holds what the photo shows (the rest
- * is white padding, which the detector masks out).
- */
+/** `rectifyWithHomography` on a photo. */
 export function rectifyFromHomography(options: {
   readonly base64: string;
   /** Image px -> target mm. */
@@ -512,42 +226,11 @@ export function rectifyFromHomography(options: {
 }): RectifiedCanvas {
   const arena = new Arena();
   try {
-    const src = arena.keep(MatClass.createFromBase64(options.base64));
-    const gray = arena.dst();
-    OpenCV.cvtColor(src, gray, ColorConversionCodes.COLOR_BGR2GRAY);
-
-    const k = CANVAS_PX_PER_MM;
-    const canvasSize = Math.round(2 * options.outerRadiusMm * 1.05 * k);
-    const half = canvasSize / 2;
-    // canvas px = k * mm + half, and mm = toMm(image px).
-    const h = options.toMm;
-    // prettier-ignore
-    const toCanvas = arena.keep(
-      MatClass.create(3, 3, DataTypes.CV_64F, [
-        k * h[0] + half * h[6], k * h[1] + half * h[7], k * h[2] + half * h[8],
-        k * h[3] + half * h[6], k * h[4] + half * h[7], k * h[5] + half * h[8],
-        h[6],                   h[7],                   h[8],
-      ]),
+    return rectifyWithHomography(
+      nativeDiscOps(arena),
+      grayFromBase64(arena, options.base64),
+      options,
     );
-    const canvas = arena.dst();
-    OpenCV.warpPerspective(
-      gray,
-      canvas,
-      toCanvas,
-      arena.keep(Size.create(canvasSize, canvasSize)),
-      InterpolationFlags.INTER_CUBIC,
-      BorderTypes.BORDER_CONSTANT,
-      arena.keep(Scalar.create(255, 255, 255)),
-    );
-    const { buffer: bytes } = canvas.toBuffer('uint8');
-    return {
-      // Copied: the view points at native memory that releaseAll frees.
-      data: Uint8Array.from(bytes),
-      size: canvasSize,
-      centerXPx: half,
-      centerYPx: half,
-      pxPerMm: k,
-    };
   } finally {
     arena.releaseAll();
   }

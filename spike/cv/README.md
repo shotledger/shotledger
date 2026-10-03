@@ -11,7 +11,7 @@ both together. The rest is throwaway. In the order `scan.tsx` runs them:
 
 | Stage                              | App                                                                                        | Reference           | Measurement                                     |
 | ---------------------------------- | ------------------------------------------------------------------------------------------ | ------------------- | ----------------------------------------------- |
-| Disc lock: fit the black, rectify  | `app/src/features/photo-scoring/opencv.ts`                                                 | `target_cv.py`      | `docs/specs/cv-corpus-validation-2026-09.md`    |
+| Disc lock: fit the black, rectify  | `app/src/features/photo-scoring/disc-lock.ts` (ops: `opencv.ts`)                           | `target_cv.py`      | `docs/specs/cv-corpus-validation-2026-09.md`    |
 | Close-up lock, and which lock wins | `app/src/features/photo-scoring/closeup-lock.ts`                                           | `closeup_lock.py`   | `docs/specs/cv-closeup-lock-2026-09.md`         |
 | Suggested holes                    | `app/src/features/photo-scoring/hole-proposals.ts`                                         | `hole_proposals.py` | `docs/specs/cv-hole-proposals-2026-09.md`       |
 | Tap snap and the hole/patch filter | `app/src/features/photo-scoring/tap-snap.ts`, `shared/src/target-scoring/hole-features.ts` | `hole_filter.py`    | `docs/specs/cv-corpus-validation-2026-09.md` §5 |
@@ -210,6 +210,22 @@ python fit_hole_proposals.py ts.csv --marks marks.txt
 value rather than to the value itself: the reference bins float32 angles, and
 on 5169 real candidates that moved it by up to 0.6%, against the 2.4e-4 the fixture saw on
 synthetic art. Every other value is held to the fixture's tolerances.
+
+The disc lock runs in Node too: `disc-lock.ts` takes its OpenCV calls through
+`DiscOps`, which the app fills from react-native-fast-opencv and
+`parity/opencv-js-disc-ops.ts` from OpenCV.js (`@techstark/opencv-js`, a root
+dev dependency pinned to the device's OpenCV 4.12.0). `parity_disc.py`
+compares it with `target_cv.py`'s on the same PGMs, and
+`closeup-real.parity.ts` is `eval_closeup_real.py` without the overlays:
+
+```bash
+PYTHONPATH=.:parity python parity/parity_disc.py run <pgm-dir> py.jsonl
+CV_PARITY_IN=<pgm-dir> CV_DISC_OUT=ts.jsonl \
+    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts disc
+python parity/parity_disc.py diff py.jsonl ts.jsonl
+CV_PARITY_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
+    pnpm exec vitest run -c spike/cv/parity/vitest.config.ts closeup-real
+```
 
 `mark_holes.py` and `eval_hole_proposals.py` take `--lock closeup` to lay the
 canvas out by this lock instead of the disc, for labelling and measuring real
