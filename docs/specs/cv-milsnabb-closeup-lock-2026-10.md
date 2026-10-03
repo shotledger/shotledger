@@ -8,7 +8,12 @@ evaluation: `spike/cv/eval_milsnabb.py`. Method and gate inherit from
 [`cv-closeup-lock-2026-09.md`](cv-closeup-lock-2026-09.md), the precision
 face's report.
 
-**Verdict: the bar does not hold, so nothing is wired into the app.**
+**Superseded on 2026-10-03** by
+[the last section](#2026-10-03-the-centre-cards-own-rings): a lock on the
+centre card's own rings, in TypeScript, locks 23 of 37 real photos and is
+wired into the app. What follows up to that section is the first attempt.
+
+**First verdict: the bar does not hold, so nothing is wired into the app.**
 The milsnabb face stays on hand-placed points. The model locks a close-up of
 the 9–10 rings and refuses every negative it was given, but it refuses the
 whole photos the maintainer actually takes. The precision lock that already
@@ -188,3 +193,155 @@ it.
 3. **More photos.** 11 photos, 7 with a reference, is too few to set a
    gate's thresholds. A labelled set would also replace the self-referential
    yardstick with a measured error.
+
+## 2026-10-03: the centre card's own rings
+
+Issue #495, resumed. Implementation: `app/src/features/photo-scoring/milsnabb-lock.ts`,
+a sibling of `closeup-lock.ts` that reuses its centre vote, polar ridge,
+ellipse and robust homography. Evaluation:
+`spike/cv/parity/milsnabb.parity.ts`, which runs the app's TypeScript in
+Node on 2048 px greyscale PGMs (ImageMagick, as `parity_closeup.py prep`).
+There is no Python twin: the TypeScript is the reference (#488).
+
+**Verdict: the bar holds for the milsnabb lock, and it is wired in.** It
+locks 23 of 37 real photos (9/15 close-ups, 13/21 whole targets with a card)
+where the first model locked none, never with fewer than three rings, and
+passes none of 137 crops with the centre out of frame or 1631 precision
+photos and crops. The rest of the bar's "vice versa", the shipped precision
+lock on milsnabb photos, still fails and is #495's second item. Two
+limitations stay: the 7 to 5 rings follow the card, not the face, and one
+ring crossing in 368 was 0.8 mm off by eye.
+
+### Why whole photos failed
+
+The first model (Python) on all 24 milsnabb photos then in the corpus, read
+ring by ring and quarter by quarter on overlays:
+
+- **The fit spanned two sheets.** It fitted the X to the 6 line and the
+  black's edge with one homography. The X, 10, 9 and 8 lines are printed on
+  the centre card; the 7 and 6 lines on the face behind it. Fitted to the
+  card's lines alone, the 7 and 6 lines then read a median 1.4 mm off, and up
+  to 3 mm (the edge of the search) — the card is stapled where it lands.
+  With both in one fit, every ring was pulled part of the way, and some
+  quarter of some ring always ended up more than 0.5 mm off.
+- **The black's edge is not a line.** The first model fitted a ring at
+  250 mm, which is the edge of the black, a step rather than a thin line; the
+  line filter answers on both sides of it.
+- **The lines are 1 mm wide, measured to their outer edge.** A ring's
+  diameter runs to the outer edge of its line (the scoring edge), and these
+  lines are about 1 mm wide (J.7.1 allows 0.5–1.0). The first model put the
+  line's centre on the ring's radius, so the X line read a few tenths of a
+  millimetre inside its circle on almost every photo, and the scale stretched
+  to compensate.
+
+### The lock
+
+- **The card's rings only:** the X, 10, 9 and 8, all on the card. Holes are
+  scored on what is in front of them, so the card's geometry is the one to
+  score with. On a face without a card the same four lines are printed on
+  the face.
+- **Line centres 0.5 mm inside the ring**, so the circle the lock reports is
+  the ring's outer edge. Over the passing locks the four lines then read a
+  mean offset of +0.03, 0.00, +0.04 and −0.07 mm; no trend with radius.
+- The period search, the guided fit and the trimming are the first model's,
+  scored on these four lines.
+- **Gate:** residual ≤ 0.5 mm, comb ≥ 8, at least three of the four rings in
+  frame, the centre in frame, and every quarter of every ring in frame within
+  0.5 mm of its printed line.
+
+### Real photos
+
+37 milsnabb photos: the 24 then in the corpus and 13 that the maintainer
+confirmed on 2026-10-03, during this work (now in the corpus too). Nothing
+was tuned on the 13; they were run once the lock above was fixed, and are
+also shown on their own.
+
+| Framing (manifest) | All 37          | First 24 | The 13 |
+| ------------------ | --------------- | -------: | -----: |
+| close-up           | 9/15            |      5/9 |    4/6 |
+| spegel-over-full   | 13/21           |    10/15 |    3/6 |
+| black (no card)    | 1/1             |        — |    1/1 |
+| **all**            | **23/37 (62%)** |    15/24 |   8/13 |
+
+The first model locked 0 of 11.
+
+**By eye.** Every one of the 23 passes was drawn: the lock's line-centre
+circle on 4× zooms of the four axis crossings of each of the four rings
+(368 tiles, less those out of frame). The circle runs within the width of the
+printed line at nearly every crossing. The exceptions are on the 8 ring where the white
+aiming bar crosses it, on two photos (about 0.8 mm off on a heavily pasted
+target, about 0.5 mm on the other), and one photo whose card reads about
+0.4 mm in on every ring. The yardstick averages a quarter, so a single
+crossing can be worse than the quarter it lies in.
+
+**Refused** (14): on 9 photos only the 8 ring is off, by 0.6–1.9 mm in one or
+two quarters while the X to 9 sit within 0.3 mm. Zoomed, the printed line
+really is there, so it is the card rather than the fit: it is not flat near
+its edge, or not quite in the plane of the face. Two more are off at an inner
+ring too (a steep view; a doubtful all-black card). Three are whole targets on a stand,
+small in a tall frame, about 1 px per mm, where the lock never finds the
+step (comb 4–6).
+
+**Crops.** Cut from the 23 passing photos around their lock, upsampled to
+2048 px, centred and twice off-centre by up to 30%:
+
+| View                | Passes      | Centre against the whole-photo lock, median (max) | Radius within 90 mm, median |
+| ------------------- | ----------- | ------------------------------------------------: | --------------------------: |
+| the 10 (±55 mm)     | 0/66        |                                                 — |                           — |
+| 9–10 (±100 mm)      | 38/54 (70%) |                                    0.06 (0.15) mm |                     0.05 mm |
+| 9–10 wide (±120 mm) | 27/37 (73%) |                                    0.04 (0.09) mm |                     0.03 mm |
+
+The 10 alone shows two lines and is refused by design.
+
+**The face beyond the card.** Through a card lock, the face's 7 and 6 lines
+read a median 1.4 mm off, 90th percentile 3 mm. The app keeps one homography
+per photo, so the 7, 6 and 5 rings it draws can miss the printed lines by that
+much, and a hole out there near a line can score wrong. The manual says so
+(explanation, "The rapid-fire face"). Scoring the face's own zone needs a
+second mapping outside the card, which the stored geometry
+(`series.photo_geometry`, one 3×3) does not hold.
+
+### Negatives
+
+| Negative                                                         | Passes the milsnabb gate |
+| ---------------------------------------------------------------- | -----------------------: |
+| milsnabb crops with the centre out of frame                      |                **0/137** |
+| precision photos, whole (all 507 in the manifest)                |                **0/507** |
+| precision photos, crops around the disc lock (every third photo) |               **0/1124** |
+| synthetic precision close-up (unit test)                         |                  **0/1** |
+
+The precision crops are the precision report's three views and crops the
+size of the milsnabb views, centred and once off-centre, plus three with the
+centre out of frame, on the 149 of 169 photos whose disc lock passes.
+
+On precision photos the yardstick is what refuses: on 289 of the 507 whole
+photos and 917 of the 1124 crops it is the only part of the gate that fails.
+Every whole-photo lock is at least 1.2 mm off somewhere, against a gate of
+0.5. Two crops came closer, 0.5 and 0.6 mm, each reading only two rings, the
+1:2 pair both faces share; the three-ring rule refused them. On the
+milsnabb crops with the centre out of frame, 20 locks fit the rings well and
+are refused by the centre rule alone.
+
+**The other way round**, the precision lock that ships, on milsnabb photos:
+4 of 37 whole photos pass, and 24/66, 10/54 and 7/37 of the three views, and
+21 of 137 crops with the centre out of frame. That is the second item of
+#495 and is unchanged here; the app runs the precision lock only in a
+precision session. As a guard there, the milsnabb fit (its gate without the
+centre rule) flags 18 of the 21 precision passes on the 9–10 views and the
+whole photos, but none of the 24 on the 10 alone, where it sees two lines.
+
+### In the app
+
+`scan.tsx` runs the milsnabb lock for a session whose discipline's face is
+the milsnabb sheet (`spsf-snabbskjutning-25m`, and `issf-25m-rapid-fire`,
+the same sheet). The face comes from the discipline and is never guessed.
+The disc lock is still never tried. A passing lock goes straight to marking;
+a refusal goes to the four corners, as before, with a hint that the rings
+could not be read. Hole suggestions stay precision-only. In Node, on the
+pure operations, the lock takes 1.3–3 s per photo on a loaded machine; on a
+device it uses the close-up lock's OpenCV operations.
+
+**Not measured here:** the lock on a device. Unit tests
+(`milsnabb-lock.test.ts`) cover synthetic photos: a tilted card 1.8 mm off
+the face, a close-up of the X to 9, the centre out of frame, the X and 10
+alone, and the precision face.
