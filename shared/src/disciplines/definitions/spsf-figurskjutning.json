@@ -1,0 +1,13 @@
+{
+  "id": "spsf-figurskjutning",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Figurskjutning",
+    "en": "Figure Shooting"
+  },
+  "targetFace": "spsf-helmatch-figurtavla",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": ["spsf:A", "spsf:B", "spsf:C"]
+}

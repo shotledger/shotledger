@@ -13,6 +13,8 @@ import issfRapidFirePistolDiscipline from './definitions/issf-rapid-fire-pistol.
 import issfSportPistolDiscipline from './definitions/issf-sport-pistol.json';
 import issfStandardPistolDiscipline from './definitions/issf-standard-pistol.json';
 import spsfFaltDiscipline from './definitions/spsf-falt.json';
+import spsfFigurskjutningDiscipline from './definitions/spsf-figurskjutning.json';
+import spsfHelmatchDiscipline from './definitions/spsf-helmatch.json';
 import spsfMagnumprecisionDiscipline from './definitions/spsf-magnumprecision.json';
 import spsfMilsnabbDiscipline from './definitions/spsf-milsnabb.json';
 import spsfPrecisionDiscipline from './definitions/spsf-precision.json';
@@ -23,6 +25,8 @@ import issfFreePistolProgram from './programs/issf-free-pistol.json';
 import issfRapidFirePistolProgram from './programs/issf-rapid-fire-pistol.json';
 import issfSportPistolProgram from './programs/issf-sport-pistol.json';
 import issfStandardPistolProgram from './programs/issf-standard-pistol.json';
+import spsfFigurskjutningProgram from './programs/spsf-figurskjutning.json';
+import spsfHelmatchProgram from './programs/spsf-helmatch.json';
 import spsfMagnumprecisionProgram from './programs/spsf-magnumprecision.json';
 import spsfMilsnabbProgram from './programs/spsf-milsnabb.json';
 import spsfPrecisionProgram from './programs/spsf-precision.json';
@@ -46,6 +50,8 @@ export const DISCIPLINES: readonly Discipline[] = [
   // keeps it out of the pickers until then.
   spsfFaltDiscipline,
   spsfMagnumprecisionDiscipline,
+  spsfHelmatchDiscipline,
+  spsfFigurskjutningDiscipline,
   genericRings,
   issfAirPistolDiscipline,
   issfSportPistolDiscipline,
@@ -62,6 +68,8 @@ export const PROGRAMS: readonly Program[] = [
   spsfPrecisionProgram,
   spsfMilsnabbProgram,
   spsfMagnumprecisionProgram,
+  spsfHelmatchProgram,
+  spsfFigurskjutningProgram,
   issfAirPistolProgram,
   issfSportPistolProgram,
   issfStandardPistolProgram,
@@ -252,7 +260,7 @@ export function shooterClassesForDiscipline(disciplineId: string): readonly Shoo
  * A group's sighters come first and share its time limit and face: the
  * milsnabb provserie is shot at omgång 1's 10 s (SHB J.6.6.2).
  *
- * @Requirements DISC_003
+ * @Requirements DISC_003, DISC_004
  */
 export function buildProgramSkeleton(program: Program): readonly SeriesSkeletonEntry[] {
   const { structure } = program;

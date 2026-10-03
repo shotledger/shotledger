@@ -110,13 +110,14 @@ rank-don't-gate rule as for classes.
 
 ## Which groups each discipline allows
 
-| Discipline              | Groups                            |
-| ----------------------- | --------------------------------- |
-| SPSF precision          | A, AM, AP, AG, A-opt, B, C        |
-| SPSF militär snabbmatch | A, A-opt, B, C, R                 |
-| SPSF Magnumprecision    | M1–M9, and nothing else           |
-| ISSF and SvSF events    | none — neither uses weapon groups |
-| Practice (Ring Target)  | none — see below                  |
+| Discipline                                 | Groups                            |
+| ------------------------------------------ | --------------------------------- |
+| SPSF precision                             | A, AM, AP, AG, A-opt, B, C        |
+| SPSF militär snabbmatch                    | A, A-opt, B, C, R                 |
+| SPSF Magnumprecision                       | M1–M9, and nothing else           |
+| SPSF Nationell helmatch and figurskjutning | A, B, C                           |
+| ISSF and SvSF events                       | none — neither uses weapon groups |
+| Practice (Ring Target)                     | none — see below                  |
 
 ## Magnumprecision asks for no class
 

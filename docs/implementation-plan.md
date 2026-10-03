@@ -752,6 +752,15 @@ shoots three faces, so program groups carry their own face (§6.3).
       optional `targetFace`; the one-sighter guard covers freeform sessions
       only; ISSF 25m Pistol and Centre Fire shoot their rapid-fire stage on
       `issf-25m-rapid-fire`; every consumer reads the series' face.
+- [x] **`spsf-helmatch` and `spsf-figurskjutning`** (#476 slice 3). Both in
+      vapengrupp A, B, C with SPSF klasser (I.2.1). Helmatch: A 4 × 5 min
+      on the precision face with a sighter, B 4 series on
+      `spsf-snabbskjutning-25m` with a sighter and no `timeLimitSeconds`
+      (5 × 3 s exposures are not a series limit, as for ISSF 25m Pistol's
+      rapid stage), C 18/16/14/12 s on `spsf-helmatch-figurtavla`, no
+      sighter. Figurskjutning is C alone. The figurtavla is a face id
+      without dimensions (I.7.1.2 p. 268 prints a picture only), so it is
+      keypad-only.
 
 **Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
 25m standard, 50m pistol — defaults need VERIFY then). Community adds
@@ -864,6 +873,8 @@ maintainer against Skjuthandboken/ISSF rules before the JSON ships):
 | `spsf-precision`       | SPSF       | Precision          | 5 shots/series, integer, supportsFinal, freeform. SHB: ordinary competitions ≥6 series (F.6.1 p. 174); championships 7 + final 3 = 10 (C.3.6.1.1 p. 55); one 5-shot sighter series per round (F.6.6.2, C.3.6.1.1); total = sum of all 10 (final carries over); standardmedalj computed on the 7-series grundomgång (C.5.1.1.4) — which is exactly the stored beforeFinal |
 | `spsf-milsnabb`        | SPSF       | Militär snabbmatch | fixed (SHB J.6.1 p. 290, confirmed): 1 provserie of **5 shots** at 10 s, then 4 series à 10 s + 4 à 8 s + 4 à 6 s, 5 shots each = 60 scored shots, max 600. Vapengrupper A, B, C, R                                                                                                                                                                                      |
 | `spsf-magnumprecision` | SPSF       | Magnumprecision    | 5 shots/series (G.6.4 p. 200), integer, **no final** (G.1.2 p. 192 "Ej tillämpligt"; ties go to särskjutning, G.6.11.3 p. 204), freeform — G.6.1 p. 199 says "i regel minst sex (6) serier". 5 min per series (G.6.5 p. 200), one 5-shot sighter within 5 min (G.6.6.2 p. 200). Vapengrupper M1–M9; **no klassindelning at all** (G.2.1 p. 193)                          |
+| `spsf-helmatch`        | SPSF       | Nationell helmatch | fixed (SHB I.6.1 p. 258): A 1 sighter + 4 × 5 min on the precision face; B 1 sighter + 4 series on the snabbskjutningstavla (5 × 3 s exposures, no series limit); C 4 series at 18/16/14/12 s on the figurtavla, no sighter (I.6.6.2). 5 shots each, max 600. Vapengrupper A, B, C                                                                                       |
+| `spsf-figurskjutning`  | SPSF       | Figurskjutning     | fixed: delmoment C alone (I.6.1.3) — 4 series at 18/16/14/12 s on the figurtavla, no sighter, 5 shots each. A training form of its own, so its statistics never pool with matches                                                                                                                                                                                        |
 
 ISSF programs (10m air pistol 60/40, 25m pistol, 25m standard, 50m
 pistol) are **v2** — their defaults carry VERIFY items to resolve then.

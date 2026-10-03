@@ -24,6 +24,12 @@ Air Pistol / Free Pistol / Sport Pistol / Standard Pistol / Rapid Fire Pistol / 
 : Luftpistol, fripistol, sportpistol, standardpistol, snabbpistol och
 grovpistol — ISSF:s sex pistolgrenar.
 
+National Combined Match / Figure Shooting
+: Nationell helmatch och figurskjutning under sina engelska namn i appen.
+Figurskjutning finns både som delmoment C i helmatchen och som egen gren för
+träning. Figurtavlan räknas bara med knappsatsen — Skjuthandboken anger inga
+mått för fotoräkningen att utgå från.
+
 Omskjutning
 : Omskjutning av en station efter måltavelfel eller vapenfel. Det omskjutna
 resultatet är det som gäller.

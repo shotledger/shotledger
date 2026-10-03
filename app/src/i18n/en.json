@@ -761,12 +761,16 @@
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire",
     "spsf-magnumprecision": "Magnumprecision",
+    "spsf-helmatch": "National Combined Match",
+    "spsf-figurskjutning": "Figure Shooting",
     "generic-rings": "Practice (Ring Target)"
   },
   "program": {
     "spsf-precision": "Precision",
     "spsf-milsnabb": "Military Rapid Fire",
-    "spsf-magnumprecision": "Magnumprecision"
+    "spsf-magnumprecision": "Magnumprecision",
+    "spsf-helmatch": "National Combined Match",
+    "spsf-figurskjutning": "Figure Shooting"
   },
   "webshooter": {
     "sectionTitle": "Webshooter",

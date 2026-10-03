@@ -6,6 +6,13 @@ Fält
 : Field shooting. Moving between stations and shooting varied targets at
 unknown distances.
 
+Figurskjutning
+: Figure shooting — delmoment C of Nationell helmatch: four 5-shot series at
+18, 16, 14 and 12 seconds on the figure target, no sighter. The app also
+offers it on its own, as **Figure Shooting**, for training. The figure target
+has four ringed figures worth 6 to 10; the app scores it on the keypad only,
+because the rule book gives no dimensions for photo scoring to work from.
+
 Föreningsintyg
 : The certificate a club issues confirming your activity, used in a licence
 renewal.
@@ -21,6 +28,12 @@ the class. See [Weapon group and class](weapon-group-and-class.md).
 Grovpistol
 : Centre fire pistol — ISSF's 25 m Centre Fire Pistol, the sport pistol
 course shot with a 7.62–9.65 mm gun. SvSF runs it at SM as one open class.
+
+Helmatch
+: Nationell helmatch — the app's **National Combined Match**. Three 25 m parts
+of four 5-shot series each, 200 points per part and 600 in all: A precision,
+B rapid fire on the rapid-fire target, and C figurskjutning. **Full Match**
+lays it out with a sighter before A and before B, and none before C.
 
 Klass
 : Your competition class as a shooter — the app calls it **Class**. See

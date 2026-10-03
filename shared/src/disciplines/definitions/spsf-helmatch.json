@@ -1,0 +1,13 @@
+{
+  "id": "spsf-helmatch",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Nationell helmatch",
+    "en": "National Combined Match"
+  },
+  "targetFace": "spsf-pistol-25m-precision",
+  "defaultSeriesLength": 5,
+  "scoring": "rings",
+  "allowsDecimal": false,
+  "weaponGroups": ["spsf:A", "spsf:B", "spsf:C"]
+}

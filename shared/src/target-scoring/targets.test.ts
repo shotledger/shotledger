@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { DISCIPLINES } from '../disciplines';
+import { DISCIPLINES, getDiscipline } from '../disciplines';
 import {
   getTargetFace,
   ISSF_10M_AIR_PISTOL,
   ISSF_25M_PRECISION,
   ISSF_25M_RAPID_FIRE,
+  isKnownTargetFace,
   requireTargetFace,
   SPSF_PISTOL_25M_PRECISION,
   SPSF_SNABBSKJUTNING_25M,
@@ -159,9 +160,10 @@ describe('getTargetFace / requireTargetFace', () => {
 
   it('TG11: every SPSF rings discipline resolves its targetFace without throwing', () => {
     // generic-rings (federation "generic") deliberately has no fixed SHB
-    // dimensions and is out of scope here — see spec §3.
+    // dimensions and is out of scope here — see spec §3. Figurskjutning's
+    // face is known by id only (TG11f).
     const spsfRingsDisciplines = DISCIPLINES.filter(
-      (d) => d.scoring === 'rings' && d.federation === 'SPSF',
+      (d) => d.scoring === 'rings' && d.federation === 'SPSF' && d.id !== 'spsf-figurskjutning',
     );
     expect(spsfRingsDisciplines.length).toBeGreaterThan(0);
     for (const discipline of spsfRingsDisciplines) {
@@ -169,6 +171,15 @@ describe('getTargetFace / requireTargetFace', () => {
       // lost its targetFace must fail this test, not skip it.
       expect(() => requireTargetFace(discipline.targetFace ?? '')).not.toThrow();
     }
+  });
+
+  it('TG11f: the helmatch figurtavla is a known face without dimensions', () => {
+    // SHB I.7.1.2 p. 268 prints it as a picture only: keypad entry, no photo.
+    expect(isKnownTargetFace('spsf-helmatch-figurtavla')).toBe(true);
+    expect(getTargetFace('spsf-helmatch-figurtavla')).toBeUndefined();
+    expect(getDiscipline('spsf-figurskjutning')?.targetFace).toBe('spsf-helmatch-figurtavla');
+    expect(isKnownTargetFace('spsf-pistol-25m-precision')).toBe(true);
+    expect(isKnownTargetFace('nonsense')).toBe(false);
   });
 
   it('TG12: rings are strictly ascending with no duplicate labels or diameters', () => {

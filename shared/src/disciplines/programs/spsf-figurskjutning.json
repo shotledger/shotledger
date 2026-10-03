@@ -1,0 +1,20 @@
+{
+  "id": "spsf-figurskjutning",
+  "disciplineId": "spsf-figurskjutning",
+  "federation": "SPSF",
+  "name": {
+    "sv": "Figurskjutning",
+    "en": "Figure Shooting"
+  },
+  "shotsPerSeries": 5,
+  "scoring": "integer",
+  "supportsFinal": false,
+  "structure": {
+    "groups": [
+      { "seriesCount": 1, "timeLimitSeconds": 18 },
+      { "seriesCount": 1, "timeLimitSeconds": 16 },
+      { "seriesCount": 1, "timeLimitSeconds": 14 },
+      { "seriesCount": 1, "timeLimitSeconds": 12 }
+    ]
+  }
+}
