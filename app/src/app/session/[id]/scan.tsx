@@ -193,12 +193,11 @@ export default function ScanScreen() {
       // the printed lines wins (docs/specs/cv-closeup-lock-2026-09.md).
       let closeup: CloseupLock | null = null;
       let discOffsetMm: number | null = null;
+      const discToMm =
+        (discTransform && invertHomography(homographyOf(discTransform))) ?? undefined;
       if (isAutoFace(faceId)) {
         try {
-          const run = runCloseupLock({
-            base64: image.base64,
-            discToMm: (discTransform && invertHomography(homographyOf(discTransform))) ?? undefined,
-          });
+          const run = runCloseupLock({ base64: image.base64, discToMm });
           closeup = run.lock;
           discOffsetMm = run.discRingOffsetMm;
         } catch (error: unknown) {
@@ -206,7 +205,12 @@ export default function ScanScreen() {
         }
       }
 
-      const choice = chooseLock({ discPasses: discTransform !== null, discOffsetMm, closeup });
+      const choice = chooseLock({
+        discPasses: discTransform !== null,
+        discOffsetMm,
+        closeup,
+        discToMm,
+      });
       if (choice === 'disc' && disc && discTransform) {
         setTransform(discTransform);
         setCanvas(disc.result.canvas);

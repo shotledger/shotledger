@@ -93,3 +93,65 @@ disc lock on 17.
 - **Still open.** The printed ring numbers are not used. They would be a
   second check on the step, and they are what a close-up with no ring line
   but the 10 would need.
+
+## 2026-10-03: a lock at a multiple of the step
+
+Issue #406. Re-measured on 285 real photos contributed on 2026-10-03 (three
+shooters, mostly a spegel pasted over a full target), with
+`spike/cv/eval_closeup_real.py`. It runs both locks on whole photos and
+compares their scales, and it draws each lock's numbered rings for checking by
+eye.
+
+**The bug.** The lock could settle on 2, 3 or 4 times the true ring step, so
+that its 10 ring was drawn on the printed 9 line, or on the black's edge. The
+gate cannot see this. Every whole multiple of 25 mm is a printed line, so a
+lock at 50 mm per step still finds a line under each ring it checks. The gate
+is also measured in the lock's own mm, so a 2×-coarse lock is held to a gate
+twice as loose. Where the disc lock also passed, the choice then preferred the
+close-up, because its rings looked closer to the lines. Every hole would score
+one or more rings too high. All of these were whole-face photos, not
+close-ups: a coarse step needs lines at 50, 100 and 150 mm in frame. The comb
+in `_best_period` lets the black's edge, by far the strongest line, carry a
+coarse period. The existing check against half or a third of the period
+scores a 2× candidate at about 0, because its half-way points are real lines.
+
+**The fix.**
+
+- **The finest step whose lines are all printed.** After the fit, the lock
+  tries ¼, ⅓ and ½ of its step and takes the finest one whose extra lines are
+  really there. Lines are read as the median along the circle, because a ring
+  runs the whole way round while digits, holes and patches cover only part of
+  it. The extra lines are tested one class (j mod m) at a time, so a 2×
+  lock's real half-step lines cannot carry a ¼-step candidate. Each class must
+  reach half the weakest of the fit's own lines and 1.8 times the gaps between
+  the finer step's lines. Radii stop at the 1 ring. The lock then refits at
+  the finer step and keeps whichever sits closer to the lines.
+- **The period after the half-step refit** is now doubled with the fit. It
+  was left at the old value, which the finer-step refit read.
+- **`chooseLock` refuses a close-up at ½, ⅓ or ¼ of a passing disc lock's
+  scale** (±6 %). The disc lock is never off by a whole-number factor; where
+  it is wrong, its scale is off by 0.63–0.88, so a veto on these ratios only
+  never overrules a correct close-up.
+
+| Real photos (285)                                   | Before | After |
+| --------------------------------------------------- | -----: | ----: |
+| Close-up passes at the wrong scale, used by the app |     35 |     0 |
+| Close-up passes at the right scale                  |    136 |   154 |
+| Right-scale passes lost or changed                  |      — |     0 |
+| Wrong-scale passes stopped by the `chooseLock` veto |      — |     2 |
+
+On the crops of the earlier corpus, the 9–10 and 8–10 views agree with the
+disc lock as before, within one crop. The 7–10 view passes two crops fewer;
+the passes lost were at the wrong scale. Crops with the centre out of frame
+still never lock.
+
+**Parity.** `spike/cv/parity/` runs the app's TypeScript lock in Node and the
+Python reference on the same greyscale pixels and compares them. They agree
+within 0.05 mm on all 20 real photos tried, before and after the fix. This is
+the first stage of #488.
+
+**Still open.** `_is_half_period` can promote a 2× lock to 4×, because on a 2×
+lock the midpoints are real lines; the finer-step test then brings it back.
+`_best_period`'s comb could saturate the black's edge so that the coarse
+period never wins, but that lowers every comb score, and the gate's comb ≥ 8
+would need recalibrating.

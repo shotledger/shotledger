@@ -146,6 +146,27 @@ describe('chooseLock', () => {
     );
   });
 
+  it('refuses a close-up at a whole-number fraction of the disc lock’s scale', () => {
+    // 1 mm per px for the disc; a close-up at 0.5 mm per px read every second
+    // printed line as one step.
+    const disc: Homography = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+    const at = (s: number) => ({ ...lock(0.1), toMm: [s, 0, 0, 0, s, 0, 0, 0, 1] as Homography });
+    for (const s of [1 / 2, 1 / 3, 1 / 4, 0.52, 0.32]) {
+      expect([
+        s,
+        chooseLock({ discPasses: true, discOffsetMm: 0.7, closeup: at(s), discToMm: disc }),
+      ]).toEqual([s, 'disc']);
+    }
+    // A disc lock that is merely a little off is not vetoed: the closer
+    // rings still win.
+    for (const s of [1, 0.88, 0.63, 0.41]) {
+      expect([
+        s,
+        chooseLock({ discPasses: true, discOffsetMm: 0.7, closeup: at(s), discToMm: disc }),
+      ]).toEqual([s, 'closeup']);
+    }
+  });
+
   it('falls through to the corners when neither passes', () => {
     expect(chooseLock({ discPasses: false, discOffsetMm: 0.1, closeup: lock(0.9) })).toBeNull();
     expect(chooseLock({ discPasses: false, discOffsetMm: null, closeup: null })).toBeNull();
