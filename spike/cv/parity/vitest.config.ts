@@ -4,7 +4,11 @@ import { defineConfig } from 'vitest/config';
 // closeup.parity.ts). A whole corpus takes minutes, hence the timeout.
 export default defineConfig({
   test: {
-    include: ['spike/cv/parity/*.parity.ts'],
+    include: [
+      'spike/cv/parity/*.parity.ts',
+      'spike/cv/tools/*.check.ts',
+      'spike/cv/tools/*.tool.ts',
+    ],
     testTimeout: 60 * 60 * 1000,
   },
 });
