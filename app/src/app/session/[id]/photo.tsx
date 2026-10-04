@@ -13,11 +13,13 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ActionSheet } from '@/components/action-sheet';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { GroupStats } from '@/components/group-stats';
+import { OverflowIcon } from '@/components/icons';
 import { MarkCanvas } from '@/components/mark-canvas';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
@@ -30,6 +32,7 @@ import type { Mark } from '@/features/photo-scoring/marks';
 import { deserializeTransform } from '@/features/photo-scoring/transform';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
+import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
 /**
@@ -85,6 +88,8 @@ export default function SeriesPhotoScreen() {
   }, [row, target]);
 
   const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const theme = useTheme();
 
   const geometry = scored?.geometry ?? null;
   const aspectMatches =
@@ -114,9 +119,25 @@ export default function SeriesPhotoScreen() {
 
   return (
     <Screen scroll={false}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('session.seriesTitle', { position })}
-      </ThemedText>
+      <View style={styles.titleRow}>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('session.seriesTitle', { position })}
+        </ThemedText>
+        {/* Re-scoring is the series view's business. From the gallery this is
+            a picture you are looking at, so the action is offered only where
+            you arrived with a series in hand. */}
+        {from !== 'gallery' && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('photoScoring.menuLabel')}
+            testID="photo-menu"
+            onPress={() => setMenuOpen(true)}
+            style={styles.menuTrigger}
+          >
+            <OverflowIcon color={theme.primary} />
+          </Pressable>
+        )}
+      </View>
       <MarkCanvas
         style={styles.stage}
         testID="series-photo"
@@ -129,9 +150,6 @@ export default function SeriesPhotoScreen() {
         marks={overlay ? scored?.marks : undefined}
         onImageSize={(width, height) => setNatural({ width, height })}
       />
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('photoScoring.zoomHint')}
-      </ThemedText>
       {/* What the photo was worth. Arriving from the gallery you are
           browsing, not scoring, and a bare "Score from This Photo" answered
           a question nobody asked (maintainer, on device 2026-09-11). */}
@@ -162,21 +180,34 @@ export default function SeriesPhotoScreen() {
         </ThemedText>
       )}
 
-      {/* Re-scoring is the series view's business. From the gallery this is
-          a picture you are looking at, so the action is offered only where
-          you arrived with a series in hand. */}
-      {from !== 'gallery' && (
-        <PrimaryButton
-          label={t('session.photoRescore')}
-          onPress={() => router.replace(`/session/${id}/scan?pos=${position}`)}
-          testID="photo-rescore"
-        />
-      )}
+      <ActionSheet
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        actions={[
+          {
+            key: 'rescore',
+            label: t('session.photoRescore'),
+            onPress: () => router.replace(`/session/${id}/scan?pos=${position}`),
+          },
+        ]}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  menuTrigger: {
+    // Material's 48dp touch-target floor, as the scan screen's.
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scoreRow: {
     flexDirection: 'row',
     alignItems: 'center',

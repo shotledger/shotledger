@@ -83,7 +83,8 @@ Session** changes the answer later (**Ask**, **Manual** or **Photo**).
    sighter.
 6. **Look at it later.** The marks and the group figures stay with the photo.
    Open the photo from the series and you see the marks drawn on the target,
-   with the figures below it. The
+   with the figures below it; pinch or double-tap to zoom, as when marking.
+   **⋮ → Score from This Photo** marks it again. The
    [session report](logging-a-session.md#session-report) puts every series'
    target and figures on one page to print or share.
 

@@ -1090,7 +1090,6 @@
     "cornerRingRequired": "Pick the ring the points sit on under Ring You Are Marking first.",
     "plotMode": "Plot",
     "heatmapMode": "Heatmap",
-    "zoomHint": "Pinch or double-tap to zoom. Drag with one finger to pan when zoomed.",
     "undo": "Undo",
     "deselect": "Done",
     "suggesting": "Looking for holes…",

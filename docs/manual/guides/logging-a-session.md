@@ -156,8 +156,8 @@ own.
 ## Photographs
 
 Any series can carry a photograph of its target. A series with a photo shows a
-camera icon; tap it to see the picture, and from there you can score the series
-from it — see [Scoring from a photo](scoring-from-a-photo.md).
+camera icon; tap it to see the picture. There, **⋮ → Score from This Photo**
+scores the series from it — see [Scoring from a photo](scoring-from-a-photo.md).
 
 Every photo you take also appears in the gallery under **Tools → Photos**,
 where you can filter by discipline, firearm and weapon group.
