@@ -10,7 +10,7 @@ import {
 } from '@shotledger/shared/src/sync';
 
 import type { Authenticator } from '../auth';
-import { applyPushChange, createDb, pullTablePage } from '../db/queries';
+import { applyPush, createDb, pullTablePage } from '../db/queries';
 
 export interface SyncEnv {
   Bindings: Env;
@@ -83,12 +83,7 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     const db = createDb(c.env.DB);
     const userId = c.get('userId');
 
-    const acks: PushResponse['acks'] = [];
-    // Sequential, in array order — strict pull -> push -> ack cycle, no
-    // fan-out (spec §6).
-    for (const change of parsed.data.changes) {
-      acks.push(await applyPushChange(db, userId, change));
-    }
+    const acks = await applyPush(db, userId, parsed.data.changes);
 
     const response: PushResponse = { protocolVersion: PROTOCOL_VERSION, acks };
     return c.json(response);
