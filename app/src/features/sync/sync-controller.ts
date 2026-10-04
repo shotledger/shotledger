@@ -8,6 +8,7 @@ import {
   reduceSyncStatus,
   runSyncCycle,
   shouldRetry,
+  type SyncCycleResult,
   type SyncEvent,
   type SyncStatus,
 } from '@shotledger/shared';
@@ -31,6 +32,14 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let writeDebounce: ReturnType<typeof setTimeout> | null = null;
 
 const WRITE_DEBOUNCE_MS = 400;
+
+/**
+ * Back-to-back continuations of a `partial` cycle per loop. A cycle already
+ * moves up to 100 pull pages and 100 push batches, so five more cover any
+ * real backlog; a server that always answers `partial` costs five extra
+ * cycles per trigger, then waits for the next one.
+ */
+export const MAX_PARTIAL_RERUNS = 5;
 
 function emit(event: SyncEvent): void {
   status = reduceSyncStatus(status, event);
@@ -65,12 +74,15 @@ function cancelRetry(): void {
   }
 }
 
-async function runOnce(): Promise<void> {
-  if (!db) return;
+/** `null` when the cycle failed (or could not start). */
+async function runOnce(): Promise<SyncCycleResult['status'] | null> {
+  if (!db) return null;
   const store = createSyncStore(db);
   emit({ type: 'started' });
   try {
     const result = await runSyncCycle({ store, transport: getSyncTransport(), newId });
+    // A retry armed by an earlier failure in this loop has nothing left to do.
+    cancelRetry();
     emit({
       type: 'succeeded',
       at: new Date().toISOString(),
@@ -80,6 +92,7 @@ async function runOnce(): Promise<void> {
     // Photos move after the rows that reference them, and never block a
     // cycle: a failed upload is the queue's problem, not sync's.
     void runPhotoQueue();
+    return result.status;
   } catch (error) {
     const errorKey = classifySyncError(error);
     emit({ type: 'failed', errorKey });
@@ -101,12 +114,14 @@ async function runOnce(): Promise<void> {
         nextBackoffMs(status.attempt - 1),
       );
     }
+    return null;
   }
 }
 
 /**
  * Fire-and-forget. Never awaited by the UI; a second call while a cycle runs
- * schedules exactly one re-run rather than a second loop.
+ * schedules exactly one re-run rather than a second loop. A `partial` cycle
+ * continues at once, up to MAX_PARTIAL_RERUNS times.
  */
 export async function requestSync(): Promise<void> {
   if (!canSync()) return;
@@ -117,10 +132,16 @@ export async function requestSync(): Promise<void> {
   running = true;
   cancelRetry();
   try {
+    let partialReruns = 0;
+    let again: boolean;
     do {
       rerunRequested = false;
-      await runOnce();
-    } while (rerunRequested);
+      const outcome = await runOnce();
+      const continuePartial = outcome === 'partial' && partialReruns < MAX_PARTIAL_RERUNS;
+      if (continuePartial) partialReruns += 1;
+      // A cycle can end the session (unauthenticated), so check again.
+      again = (rerunRequested || continuePartial) && canSync();
+    } while (again);
   } finally {
     running = false;
   }

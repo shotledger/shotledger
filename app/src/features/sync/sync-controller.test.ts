@@ -250,6 +250,43 @@ describe('the single loop', () => {
   });
 });
 
+describe('a partial cycle', () => {
+  it('continues at once until a cycle drains', async () => {
+    const { controller } = load();
+    mockRunSyncCycle
+      .mockResolvedValueOnce({ ...OK_RESULT, status: 'partial' })
+      .mockResolvedValueOnce({ ...OK_RESULT, status: 'partial' })
+      .mockResolvedValueOnce(OK_RESULT);
+
+    await controller.requestSync();
+
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(3);
+    expect(controller.getSyncStatus().state).toBe('idle');
+  });
+
+  it('stops after MAX_PARTIAL_RERUNS when the server never drains', async () => {
+    const { controller } = load();
+    mockRunSyncCycle.mockResolvedValue({ ...OK_RESULT, status: 'partial' });
+
+    await controller.requestSync();
+
+    expect(controller.MAX_PARTIAL_RERUNS).toBe(5);
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(1 + controller.MAX_PARTIAL_RERUNS);
+    await jest.advanceTimersByTimeAsync(600_000);
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(1 + controller.MAX_PARTIAL_RERUNS);
+  });
+
+  it('gives every trigger its own continuation budget', async () => {
+    const { controller } = load();
+    mockRunSyncCycle.mockResolvedValue({ ...OK_RESULT, status: 'partial' });
+
+    await controller.requestSync();
+    await controller.requestSync();
+
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(2 * (1 + controller.MAX_PARTIAL_RERUNS));
+  });
+});
+
 describe('notifyLocalWrite', () => {
   it('coalesces a burst of writes into one cycle, 400 ms after the last', async () => {
     const { controller } = load();
@@ -350,6 +387,22 @@ describe('backoff after a failed cycle', () => {
     expect(mockRunSyncCycle).toHaveBeenCalledTimes(2);
   });
 
+  it('cancels the retry when a re-run in the same loop succeeds', async () => {
+    const { controller } = load();
+    const first = holdNextCycle();
+
+    const loop = controller.requestSync();
+    await settle();
+    await controller.requestSync();
+    first.fail(new TypeError('Network request failed'));
+    await loop;
+
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(2);
+    expect(controller.getSyncStatus().state).toBe('idle');
+    await jest.advanceTimersByTimeAsync(600_000);
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(2);
+  });
+
   it('drops a pending retry on resetSyncController and notifies listeners', async () => {
     const { controller, shared } = load();
     mockRunSyncCycle.mockRejectedValueOnce(new TypeError('Network request failed'));
@@ -387,6 +440,20 @@ describe('an unauthenticated cycle', () => {
     controller.notifyLocalWrite();
     await jest.advanceTimersByTimeAsync(10_000);
     expect(mockRunSyncCycle).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops a re-run queued before the session ended', async () => {
+    const { controller, shared } = load();
+    const first = holdNextCycle();
+
+    const loop = controller.requestSync();
+    await settle();
+    await controller.requestSync();
+    first.fail(new shared.SyncHttpError(401, 'unauthenticated', 'session expired'));
+    await loop;
+
+    expect(mockRunSyncCycle).toHaveBeenCalledTimes(1);
+    expect(mockClearSessionToken).toHaveBeenCalledTimes(1);
   });
 
   it('treats a 401 from the auth client the same way', async () => {

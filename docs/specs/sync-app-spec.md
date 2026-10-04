@@ -310,7 +310,9 @@ enforced by having exactly one loop:
 
 - `requestSync(reason)` — if a cycle is running, it sets a _rerun_ flag and
   returns; the running cycle re-runs once on completion. Otherwise it starts
-  one. This is the debounce and the mutex in one mechanism.
+  one. This is the debounce and the mutex in one mechanism. A `partial`
+  cycle continues at once, at most `MAX_PARTIAL_RERUNS = 5` times per
+  loop, and the loop stops as soon as `canSync()` turns false.
 - **Triggers:** app foreground (`AppState` `change` → `active`), a
   400 ms-debounced signal after any local write (the sync screen and the
   controller both call `notifyLocalWrite()`; the outbox trigger has already
