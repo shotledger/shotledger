@@ -22,7 +22,7 @@ import { createSyncRoutes } from '../src/routes/sync';
 
 import { gateD1, SimulatedCrash } from './gated-d1';
 
-// Scenarios C1–C8 and the 500-change adversarial case of
+// Scenarios C1–C9 and the 500-change adversarial case (ADV1) of
 // docs/specs/sync-push-atomicity-spec.md.
 
 const USER = 'u';
@@ -416,7 +416,7 @@ describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
   });
 });
 
-describe('A1 a full push is one batch', () => {
+describe('ADV1 a full push is one batch', () => {
   it('a 500-change push applies every change at seqs 1..500', async () => {
     const changes = Array.from({ length: 500 }, (_, i) => live(i + 1, `row-${i}`, `m${i}`));
     const gate = gateD1(env.DB, { kind: 'pause', at: -1 });
