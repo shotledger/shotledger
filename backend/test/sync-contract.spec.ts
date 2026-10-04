@@ -18,9 +18,10 @@ import {
   createHttpSyncTransport,
   createPhotoApi,
   isLocalPhotoUri,
-  isRetryablePhotoStatus,
+  MAX_PHOTO_ATTEMPTS,
   parseSyncPhotoUri,
   PhotoHttpError,
+  photoFailureForStatus,
   PROTOCOL_VERSION_UNSUPPORTED,
   PULL_PAGE_SIZE,
   PUSH_BATCH_MAX,
@@ -266,11 +267,11 @@ class PhotoDevice {
       if (error instanceof PhotoHttpError) {
         return {
           type: 'failed',
-          retryable: isRetryablePhotoStatus(error.status),
+          failure: photoFailureForStatus(error.status),
           error: `http_${error.status}`,
         };
       }
-      return { type: 'failed', retryable: true, error: 'network' };
+      return { type: 'failed', failure: 'unreachable', error: 'network' };
     }
   }
 
@@ -289,6 +290,7 @@ class PhotoDevice {
           attempts: action.attempts,
           lastError: action.lastError,
         });
+      if (action.endPass) return;
     }
   }
 }
@@ -497,7 +499,13 @@ describe('I11 photos end to end through the photo queue', () => {
     await photosB.drain(1);
 
     expect(photosB.actions).toEqual([
-      { type: 'giveUp', id: expect.any(String), attempts: 1, lastError: 'http_404' },
+      {
+        type: 'giveUp',
+        id: expect.any(String),
+        attempts: MAX_PHOTO_ATTEMPTS,
+        lastError: 'http_404',
+        endPass: false,
+      },
     ]);
     expect([...photosB.queue.values()]).toMatchObject([
       { kind: 'download', photoId: 'never-uploaded', lastError: 'http_404' },
