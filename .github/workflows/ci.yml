@@ -38,7 +38,7 @@ jobs:
       # Python, same as the docs gates.
       - uses: actions/setup-python@v7.0.0
         with:
-          python-version: '3.14.7'
+          python-version: '3.14.8'
 
       # --python is load-bearing: pipx builds its venv with the interpreter pipx
       # itself was installed with (system 3.12 on ubuntu-latest), not with the
