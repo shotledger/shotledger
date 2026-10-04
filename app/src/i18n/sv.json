@@ -693,7 +693,7 @@
       "manual": "Manuellt",
       "photo": "Foto"
     },
-    "entryModeHint": "Hur en ny serie läggs till. Fråga ger valet varje gång.",
+    "entryModeHint": "Hur en tom serie fylls i. Fråga ger valet varje gång.",
     "locationUseMyLocation": "Använd min plats",
     "locationRangesNearby": "Banor nära dig",
     "locationRangesNeedOnline": "Slå på Föreslå platser från kartan i Inställningar för att hitta banor nära dig.",

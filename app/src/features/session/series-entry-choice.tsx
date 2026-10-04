@@ -21,6 +21,8 @@ export type SeriesEntryChoice = Exclude<SeriesEntryMode, 'ask'>;
 
 export interface SeriesEntryChoiceSheetProps {
   visible: boolean;
+  /** Defaults to "Add Series". */
+  title?: string;
   onClose: () => void;
   /** `remember` is the switch: persist this choice for the rest of the session. */
   onChoose: (choice: SeriesEntryChoice, remember: boolean) => void;
@@ -28,6 +30,7 @@ export interface SeriesEntryChoiceSheetProps {
 
 export function SeriesEntryChoiceSheet({
   visible,
+  title,
   onClose,
   onChoose,
 }: SeriesEntryChoiceSheetProps) {
@@ -45,7 +48,7 @@ export function SeriesEntryChoiceSheet({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={t('session.entryChoiceTitle')}
+      title={title ?? t('session.entryChoiceTitle')}
       testID="series-entry-choice"
     >
       {(['manual', 'photo'] as const).map((choice) => (

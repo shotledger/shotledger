@@ -693,7 +693,7 @@
       "manual": "Manual",
       "photo": "Photo"
     },
-    "entryModeHint": "How a new series is added. Ask offers the choice each time.",
+    "entryModeHint": "How an empty series is scored. Ask offers the choice each time.",
     "locationUseMyLocation": "Use My Location",
     "locationRangesNearby": "Ranges Near You",
     "locationRangesNeedOnline": "Turn on Suggest Places from the Map in Settings to find ranges near you.",
