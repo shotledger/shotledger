@@ -15,6 +15,14 @@ Varje serie räknas på den tavla dess moment skjuts mot. I **Hela matchen** i
 Sportpistol och Grovpistol använder precisionsmomentet precisionstavlan och
 snabbskjutningsmomentet snabbskjutningstavlan.
 
+**Lägg till serie** låter dig välja **Poängsätt från foto** eller **Mata in
+manuellt**; **Använd för resten av passet** gör att den slutar fråga. Ett
+program med ett fast antal serier, som milsnabb eller en ISSF-match på 25 m,
+visar sina serier från början och har ingen Lägg till serie: tryck
+på en tom serie så får du samma val. En serie som redan har ett resultat öppnas
+på knappsatsen. **⋮ → Redigera pass** ändrar svaret i efterhand (**Fråga**,
+**Manuellt** eller **Foto**).
+
 ## Så gör du
 
 1. **Fotografera tavlan.** Få med tavelansiktet i bild, så rakt framifrån du

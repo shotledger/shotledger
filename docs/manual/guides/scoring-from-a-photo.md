@@ -15,6 +15,13 @@ Each series is scored on the face its stage is shot on. On a **Full Match** of
 25m Sport Pistol or 25m Centre Fire Pistol, the precision stage uses the
 precision face and the rapid-fire stage the rapid-fire face.
 
+**Add Series** asks whether to **Score from Photo** or **Enter Manually**;
+**Use for the rest of this session** stops it asking. A program with a fixed
+set of series, such as milsnabb or an ISSF 25 m match, lists its
+series from the start and has no Add Series: tap an empty series to get the
+same choice. A series that already has a score opens on the keypad. **⋮ → Edit
+Session** changes the answer later (**Ask**, **Manual** or **Photo**).
+
 ## How to do it
 
 1. **Photograph the target.** Get the target face in frame, as square-on as

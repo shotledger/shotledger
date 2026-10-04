@@ -65,6 +65,13 @@ import { Radius, Spacing } from '@/theme/tokens';
 
 type DetailView = 'series' | 'stats' | 'group';
 
+/** The series an entry screen opens on: a new one, or an empty pre-created one. */
+interface EntryTarget {
+  position: number;
+  isFinal: boolean;
+  isNew: boolean;
+}
+
 export default function SessionDetailScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
@@ -76,6 +83,7 @@ export default function SessionDetailScreen() {
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
+  const [entryTarget, setEntryTarget] = useState<EntryTarget | null>(null);
   const [plotMode, setPlotMode] = useState<'plot' | 'heatmap'>('plot');
   const [dragging, setDragging] = useState<{ id: string; isFinal: boolean } | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -102,8 +110,14 @@ export default function SessionDetailScreen() {
     );
   }
 
-  function openSeries(position: number) {
-    router.push(`/session/${id}/series/${position}`);
+  function openSeries(row: SeriesRow) {
+    // A fixed-format program creates its series up front and has no Add
+    // Series, so opening an empty one is where photo or keypad is chosen.
+    if (detail.isFixedFormat && row.shots.length === 0 && !row.isTotalOverride) {
+      startEntry({ position: row.position, isFinal: row.isFinal, isNew: false });
+      return;
+    }
+    router.push(`/session/${id}/series/${row.position}`);
   }
 
   /**
@@ -116,34 +130,39 @@ export default function SessionDetailScreen() {
     return seriesRows.reduce((max, row) => Math.max(max, row.position), 0) + 1;
   }
 
-  function openSeriesEntry(choice: SeriesEntryChoice) {
-    const position = nextSeriesPosition();
+  function openSeriesEntry(choice: SeriesEntryChoice, target: EntryTarget) {
+    const final = target.isFinal ? '&final=1' : '';
     if (choice === 'photo') {
-      router.push(`/session/${id}/scan?pos=${position}${nextIsFinal ? '&final=1' : ''}`);
+      router.push(`/session/${id}/scan?pos=${target.position}${final}`);
       return;
     }
-    router.push(`/session/${id}/series/${position}?new=1${nextIsFinal ? '&final=1' : ''}`);
+    router.push(`/session/${id}/series/${target.position}${target.isNew ? `?new=1${final}` : ''}`);
   }
 
-  function onAddSeries() {
+  function startEntry(target: EntryTarget) {
     // Photo scoring cannot read every face; for one it cannot, the keypad is
     // the only way in, so neither the choice nor a remembered "photo" applies.
     const faceId =
-      seriesTargetFace(session!.disciplineId, session!.programId, nextSeriesPosition()) ?? '';
+      seriesTargetFace(session!.disciplineId, session!.programId, target.position) ?? '';
     if (!isPhotoScoringSupported(faceId)) {
-      openSeriesEntry('manual');
+      openSeriesEntry('manual', target);
       return;
     }
     if (session!.seriesEntryMode === 'ask') {
+      setEntryTarget(target);
       setEntryChoiceOpen(true);
       return;
     }
-    openSeriesEntry(session!.seriesEntryMode);
+    openSeriesEntry(session!.seriesEntryMode, target);
+  }
+
+  function onAddSeries() {
+    startEntry({ position: nextSeriesPosition(), isFinal: nextIsFinal, isNew: true });
   }
 
   function onChooseEntry(choice: SeriesEntryChoice, remember: boolean) {
     if (remember && db) updateSession(db, id, { seriesEntryMode: choice });
-    openSeriesEntry(choice);
+    if (entryTarget) openSeriesEntry(choice, entryTarget);
   }
 
   /**
@@ -333,7 +352,7 @@ export default function SessionDetailScreen() {
       <Pressable
         accessibilityRole="button"
         testID={`series-${row.position}`}
-        onPress={() => openSeries(row.position)}
+        onPress={() => openSeries(row)}
         onLayout={(event) => {
           const height = event.nativeEvent.layout.height;
           setRowHeights((current) =>
@@ -848,6 +867,11 @@ export default function SessionDetailScreen() {
       <SeriesEntryChoiceSheet
         visible={entryChoiceOpen}
         onClose={() => setEntryChoiceOpen(false)}
+        title={
+          entryTarget && !entryTarget.isNew
+            ? t('session.seriesTitle', { position: entryTarget.position })
+            : undefined
+        }
         onChoose={onChooseEntry}
       />
     </Screen>
