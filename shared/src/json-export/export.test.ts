@@ -60,8 +60,8 @@ describe('exportSessionsToJson', () => {
       }));
     const input = session({
       series: [
-        { position: 1, isSighter: false, isFinal: false, shots: shots(80) },
-        { position: 2, isSighter: false, isFinal: false, shots: shots(90) },
+        { position: 1, isSighter: false, isFinal: false, totalOverride: null, shots: shots(80) },
+        { position: 2, isSighter: false, isFinal: false, totalOverride: null, shots: shots(90) },
       ],
     });
 
@@ -73,13 +73,13 @@ describe('exportSessionsToJson', () => {
 
   it('C3: a series with zero shots survives — the CSV shape could not hold one', () => {
     const input = session({
-      series: [{ position: 1, isSighter: true, isFinal: false, shots: [] }],
+      series: [{ position: 1, isSighter: true, isFinal: false, totalOverride: null, shots: [] }],
     });
     const parsed = JSON.parse(exportSessionsToJson([input], OPTIONS)) as {
       sessions: SessionExport[];
     };
     expect(parsed.sessions[0]!.series).toEqual([
-      { position: 1, isSighter: true, isFinal: false, shots: [] },
+      { position: 1, isSighter: true, isFinal: false, shots: [], totalOverride: null },
     ]);
   });
 

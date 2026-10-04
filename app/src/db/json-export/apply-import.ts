@@ -153,9 +153,7 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * attributed shots on the real-data pass. A session contributes its real shot
  * rows plus its unscored extra rounds; re-importing the same file moves the
  * counter by the difference rather than by the whole session again, so the
- * operation stays idempotent. A total-override series (Webshooter/ShotLog)
- * has no shot rows and still contributes nothing — the same convention
- * `deleteSeriesAndShots` already backs out on.
+ * operation stays idempotent.
  *
  * @Requirements DATA_001
  */
@@ -431,6 +429,9 @@ export function applyImport(
             isSighter: s.isSighter ? 1 : 0,
             isFinal: s.isFinal ? 1 : 0,
             photoUri: null,
+            isTotalOverride: s.totalOverride ? 1 : 0,
+            totalOverrideTenths: s.totalOverride?.tenths ?? null,
+            totalOverrideShotCount: s.totalOverride?.shotCount ?? null,
           })
           .run();
         for (const shot of s.shots) {

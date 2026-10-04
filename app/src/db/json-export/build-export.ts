@@ -93,6 +93,10 @@ export function buildSessionExports(db: Database): SessionExport[] {
               valueTenths: shot.valueTenths,
               isInnerTen: shot.isInnerTen === 1,
             })),
+          totalOverride:
+            s.isTotalOverride === 1 && s.totalOverrideTenths !== null
+              ? { tenths: s.totalOverrideTenths, shotCount: s.totalOverrideShotCount }
+              : null,
         })),
         faltResultMode: session.faltResultMode,
         stations: (stationsBySession.get(session.id) ?? [])

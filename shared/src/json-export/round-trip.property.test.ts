@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, type ImportResult } from './import';
-import type { FirearmExport, LicenseExport, SessionExport } from './types';
+import type { FirearmExport, LicenseExport, SessionExport, ShotExport } from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
@@ -27,13 +27,26 @@ const shotArb = fc.record({
   isInnerTen: fc.boolean(),
 });
 
-const seriesArb = fc.record({
+const shotSeriesArb = fc.record({
   position: fc.integer({ min: 1, max: 10 }),
   isSighter: fc.boolean(),
   isFinal: fc.boolean(),
   // maxLength 0 is reachable: a series with no shots must survive (C3).
   shots: fc.array(shotArb, { maxLength: 6 }),
+  totalOverride: fc.constant(null),
 });
+// A total-only series: no shots, never a sighter.
+const totalOnlySeriesArb = fc.record({
+  position: fc.integer({ min: 1, max: 10 }),
+  isSighter: fc.constant(false),
+  isFinal: fc.boolean(),
+  shots: fc.constant<ShotExport[]>([]),
+  totalOverride: fc.record({
+    tenths: fc.integer({ min: 0, max: 1090 }),
+    shotCount: fc.option(fc.integer({ min: 1, max: 10 }), { nil: null }),
+  }),
+});
+const seriesArb = fc.oneof(shotSeriesArb, totalOnlySeriesArb);
 
 // A scoring station must be arithmetically possible; a scratched one need not be.
 const scoringStationNumbersArb = fc.integer({ min: 0, max: 6 }).chain((hits) =>

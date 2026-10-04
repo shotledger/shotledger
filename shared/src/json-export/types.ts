@@ -24,11 +24,20 @@ export interface ShotExport {
   isInnerTen: boolean;
 }
 
+/** A series saved as a total with no shots (a WebShooter or ShotLog import). */
+export interface TotalOverrideExport {
+  tenths: number;
+  /** `null` when the source gave no shot count (ShotLog). */
+  shotCount: number | null;
+}
+
 export interface SeriesExport {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
   shots: ShotExport[];
+  /** Set on a total-only series, whose `shots` is then empty. */
+  totalOverride: TotalOverrideExport | null;
 }
 
 /** One fält station (docs/specs/falt-stations-spec.md). */
@@ -139,14 +148,48 @@ const shotSchema = z.object({
     .describe('Whether the shot counts as an inner ten (X), used for tie-breaks.'),
 });
 
-const seriesSchema = z.object({
-  position: z.number().int().min(1).describe('1-based position of the series within its session.'),
-  isSighter: z
-    .boolean()
-    .describe('A sighter (provserie) is shot but not counted towards the session total.'),
-  isFinal: z.boolean().describe('Whether the series belongs to a championship final.'),
-  shots: z.array(shotSchema).describe('The shots of this series, in the order they were entered.'),
-});
+const seriesSchema = z
+  .object({
+    position: z
+      .number()
+      .int()
+      .min(1)
+      .describe('1-based position of the series within its session.'),
+    isSighter: z
+      .boolean()
+      .describe('A sighter (provserie) is shot but not counted towards the session total.'),
+    isFinal: z.boolean().describe('Whether the series belongs to a championship final.'),
+    shots: z
+      .array(shotSchema)
+      .describe('The shots of this series, in the order they were entered.'),
+    totalOverride: z
+      .object({
+        tenths: z
+          .number()
+          .int()
+          .min(0)
+          .describe('The series total in tenths of a point, as the source reported it.'),
+        shotCount: z
+          .number()
+          .int()
+          .positive()
+          .nullable()
+          .describe(
+            "Shots behind that total, or null when the source gave none; the discipline's " +
+              'series length then stands in.',
+          ),
+      })
+      .nullable()
+      .default(null)
+      .describe(
+        'A series known only by its total, as WebShooter and ShotLog report results. ' +
+          'Null on a series scored shot by shot.',
+      ),
+  })
+  // The app stores a total-only series without shot rows, and never as a sighter.
+  .refine((s) => s.totalOverride === null || (s.shots.length === 0 && !s.isSighter), {
+    message: 'a total-only series with shots or flagged as a sighter',
+  });
 
 // Same bounds as the app's entry path (app/src/db/queries/falt.ts), which a
 // scratched station skips: it records what went wrong, possible or not.
