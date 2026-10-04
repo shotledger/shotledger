@@ -503,12 +503,19 @@ describe('runSyncCycle — push', () => {
       rows: new Map([['tags:t1', row({ id: 't1' })]]),
     });
     // Acks nothing, so clearOutboxEntry is never called and the entry stays.
+    let calls = 0;
     const transport = createTransport({
-      push: async (request) => ({ protocolVersion: request.protocolVersion, acks: [] }),
+      push: async (request) => {
+        calls += 1;
+        return { protocolVersion: request.protocolVersion, acks: [] };
+      },
     });
 
     const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
+    // Retried up to the cap, then stopped: more than once, never forever.
+    expect(calls).toBeGreaterThan(1);
+    expect(calls).toBe(MAX_PUSH_ITERATIONS);
     expect(result.status).toBe('partial');
     expect(fake.outbox).toHaveLength(1);
   });
@@ -531,11 +538,5 @@ describe('runSyncCycle — push', () => {
     expect(push).not.toHaveBeenCalled();
     expect(result.status).toBe('ok');
     expect(fake.outbox).toHaveLength(0);
-  });
-});
-
-describe('MAX_PUSH_ITERATIONS', () => {
-  it('is a positive cap', () => {
-    expect(MAX_PUSH_ITERATIONS).toBeGreaterThan(0);
   });
 });

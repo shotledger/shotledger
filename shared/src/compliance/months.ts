@@ -22,8 +22,8 @@ export function wholeMonthsBetween(earlierIso: string, laterIso: string): number
   let months =
     (later.getUTCFullYear() - earlier.getUTCFullYear()) * 12 +
     (later.getUTCMonth() - earlier.getUTCMonth());
-  // If the day-of-month/time hasn't yet been reached in the later date's
-  // month, the last increment doesn't count as a whole month.
+  // If the day-of-month hasn't yet been reached in the later date's month, the
+  // last increment doesn't count as a whole month. Time of day is ignored.
   if (later.getUTCDate() < earlier.getUTCDate()) {
     months -= 1;
   }

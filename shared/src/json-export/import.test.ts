@@ -116,8 +116,13 @@ describe('importSessionsFromJson', () => {
 
   it('a file whose sessions carry no stations field is refused session by session', () => {
     const { stations: _stations, faltResultMode: _mode, ...older } = session();
-    const result = importSessionsFromJson(exportSessionsToJson([older as never], OPTIONS));
-    expect((result as ImportResult).sessions).toEqual([]);
+    const result = importSessionsFromJson(
+      exportSessionsToJson([older as never], OPTIONS),
+    ) as ImportResult;
+    expect(result.sessions).toEqual([]);
+    expect(result.errors).toEqual([
+      { code: 'invalid-session', sessionIndex: 0, message: expect.stringContaining('stations') },
+    ]);
   });
 
   it('C9: a file that is not ours is refused, and nothing is imported', () => {

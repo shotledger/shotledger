@@ -11,9 +11,9 @@ describe('subtractMonthsUtc', () => {
 
   it('clamps at month-end when the target month is shorter (B19)', () => {
     // Mar 31 - 1 month: Feb has no 31st, JS Date clamps into March.
-    const result = subtractMonthsUtc(new Date('2026-03-31T00:00:00Z'), 1);
-    expect(result.toISOString()).not.toBe('2026-02-31T00:00:00.000Z');
-    expect(result.getUTCMonth()).toBe(2); // rolled into March, not February
+    expect(subtractMonthsUtc(new Date('2026-03-31T00:00:00Z'), 1).toISOString()).toBe(
+      '2026-03-03T00:00:00.000Z',
+    );
   });
 });
 
@@ -32,6 +32,10 @@ describe('wholeMonthsBetween', () => {
 
   it('floors 5mo 29d to 5 (I3)', () => {
     expect(wholeMonthsBetween('2026-03-03T00:00:00Z', '2026-09-01T00:00:00Z')).toBe(5);
+  });
+
+  it('ignores time of day by design: 03-01 noon to 09-01 midnight is 6, not 5', () => {
+    expect(wholeMonthsBetween('2026-03-01T12:00:00Z', '2026-09-01T00:00:00Z')).toBe(6);
   });
 
   it('counts a full year as 12', () => {
