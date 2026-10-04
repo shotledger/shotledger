@@ -368,9 +368,9 @@ describe('planning a restore', () => {
     expect(result.current.statusText).toBe(en.backup.restoreInvalid);
   });
 
-  it('refuses a backup from a newer schema', async () => {
+  it('refuses a backup from a different schema baseline', async () => {
     mockPickBundleBytes.mockResolvedValue({ name: 'b.shotledger', bytes: BYTES });
-    mockInspectBundle.mockReturnValue({ manifest: {}, compatibility: 'newer' });
+    mockInspectBundle.mockReturnValue({ manifest: {}, compatibility: 'mismatch' });
     const { result } = await renderBackupHook();
 
     let plan: unknown;
@@ -379,13 +379,16 @@ describe('planning a restore', () => {
     });
 
     expect(plan).toBeNull();
-    expect(result.current.status).toEqual({ kind: 'restore-newer-schema' });
-    expect(result.current.statusText).toBe(en.backup.restoreNewerSchema);
+    expect(result.current.status).toEqual({ kind: 'restore-schema-mismatch' });
+    expect(result.current.statusText).toBe(en.backup.restoreSchemaMismatch);
     expect(mockRestoreBundle).not.toHaveBeenCalled();
   });
 
   it('returns the preview and bytes of a valid backup without touching the database', async () => {
-    const preview = { manifest: { schemaMigrationIdx: 1 }, compatibility: 'same' };
+    const preview = {
+      manifest: { schemaMigrationTag: '0000_baseline', schemaMigrationWhen: 1 },
+      compatibility: 'ok',
+    };
     mockPickBundleBytes.mockResolvedValue({ name: 'b.shotledger', bytes: BYTES });
     mockInspectBundle.mockReturnValue(preview);
     const { result } = await renderBackupHook();
