@@ -12,6 +12,14 @@ Spec: `docs/specs/sighter-vs-result-spec.md`, approved by the maintainer
 - **Entry points:** `pnpm check` and
   `pnpm exec stryker run --mutate shared/src/scoring/sighter-relation.ts`.
 
+**Re-run at merge**, after rebasing onto `origin/main` at f54060d (#585 and
+#591 landed; the conflicts in `shared/src/index.ts`, `report.tsx`,
+`use-stats-data.ts`, the i18n files and the Statistics guide were additions on
+both sides, all kept): `pnpm check` exit 0, 148 vitest files and 2753 tests
+passed, 55 jest suites, en/sv 1160 keys each; Stryker on `sighter-relation.ts`
+127 killed, 1 timeout, 1 survived (the same equivalent mutant), 99.22; mkdocs
+strict, translation and anchor checks pass.
+
 ## Scenarios → tests
 
 All in `shared/src/scoring/sighter-relation.test.ts`.
