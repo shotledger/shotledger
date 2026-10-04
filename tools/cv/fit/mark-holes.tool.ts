@@ -138,6 +138,9 @@ test.skipIf(!src || !dst)('labelled grids for marking holes', async () => {
             imageWidth: photo.width,
             imageHeight: photo.height,
             imageToLabel: out.imageToLabel,
+            // where the PNG sits in label px (a close-up's crop)
+            x0: out.x0,
+            y0: out.y0,
             centerXPx: out.centerXPx,
             centerYPx: out.centerYPx,
             pxPerMm: out.pxPerMm,
