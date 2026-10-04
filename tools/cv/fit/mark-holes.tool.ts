@@ -3,7 +3,7 @@
 // candidates a detector liked.
 //
 //   CV_MARK_IN=<photos> CV_MARK_OUT=<dir> [CV_MARK_ONLY=names.txt] \
-//   [CV_MARK_LOCK=disc|closeup] [CV_MARK_LONG_SIDE=2048] \
+//   [CV_MARK_LOCK=disc|closeup|milsnabb] [CV_MARK_LONG_SIDE=2048] \
 //     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 //
 // (--silent=false shows the per-photo lines; vitest hides a passing test's output.)
@@ -19,7 +19,7 @@ import { crc32, deflateSync } from 'node:zlib';
 import { expect, test } from 'vitest';
 
 import { type Cv, loadOpenCv } from '../eval/opencv-js-disc-ops';
-import { expandHome, type LabelCanvas, labelCanvas, loadPhoto } from './label-canvas';
+import { expandHome, type LabelCanvas, labelCanvas, loadPhoto, parseLock } from './label-canvas';
 
 const GRID_PX = 50;
 // RGB Mats: yellow lines, red every 100 px and on the labels.
@@ -90,8 +90,7 @@ const src = process.env.CV_MARK_IN;
 const dst = process.env.CV_MARK_OUT;
 
 test.skipIf(!src || !dst)('labelled grids for marking holes', async () => {
-  const lock = process.env.CV_MARK_LOCK ?? 'disc';
-  if (lock !== 'disc' && lock !== 'closeup') throw new Error(`CV_MARK_LOCK=${lock}`);
+  const lock = parseLock(process.env.CV_MARK_LOCK ?? 'disc', 'CV_MARK_LOCK');
   const longSide = Number(process.env.CV_MARK_LONG_SIDE ?? 2048);
   const onlyPath = process.env.CV_MARK_ONLY;
   const only = onlyPath

@@ -2,9 +2,11 @@
 // grey canvas as a PGM, plus a JSON sidecar with its centre, scale and face.
 // The canvas is the one the app hands the hole proposals: the disc lock's
 // (runDiscLock on OpenCV.js) or, with CV_PREP_LOCK=closeup, the close-up
-// lock's through rectifyWithHomography, as scan.tsx does.
+// lock's through rectifyWithHomography, as scan.tsx does. With
+// CV_PREP_LOCK=milsnabb the milsnabb lock's, and the sidecar carries the
+// milsnabb face (black to 250 mm) instead of the precision one.
 //
-//   CV_PREP_IN=<photos> CV_PREP_OUT=<canvas dir> [CV_PREP_LOCK=disc|closeup] \
+//   CV_PREP_IN=<photos> CV_PREP_OUT=<canvas dir> [CV_PREP_LOCK=disc|closeup|milsnabb] \
 //   [CV_PREP_ONLY=names.txt] [CV_PREP_LONG_SIDE=2048] \
 //     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts holes-prep
 //
@@ -30,10 +32,16 @@ import {
 import type { RectifiedCanvas } from '../../../app/src/features/photo-scoring/tap-snap';
 import { checkGeometryValidity } from '../../../app/src/features/photo-scoring/validity';
 import {
+  lockMilsnabbWork,
+  passesMilsnabbGate,
+} from '../../../app/src/features/photo-scoring/milsnabb-lock';
+import {
   CANVAS_PX,
   expandHome,
   FACE,
+  faceFor,
   loadPhoto,
+  parseLock,
   RING_RADII_MM,
   SPIKE_CANVAS_PX,
 } from '../fit/label-canvas';
@@ -44,8 +52,8 @@ const src = process.env.CV_PREP_IN;
 const dst = process.env.CV_PREP_OUT;
 
 test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () => {
-  const lock = process.env.CV_PREP_LOCK ?? 'disc';
-  if (lock !== 'disc' && lock !== 'closeup') throw new Error(`CV_PREP_LOCK=${lock}`);
+  const lock = parseLock(process.env.CV_PREP_LOCK ?? 'disc', 'CV_PREP_LOCK');
+  const face = faceFor(lock);
   const longSide = Number(process.env.CV_PREP_LONG_SIDE ?? 2048);
   const onlyPath = process.env.CV_PREP_ONLY;
   const only = onlyPath
@@ -82,9 +90,22 @@ test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () 
         }
         canvas = rectifyWithHomography(ops, gray, {
           toMm: closeup.toMm,
-          outerRadiusMm: RING_RADII_MM.at(-1)!,
+          outerRadiusMm: face.ringRadiiMm.at(-1)!,
         });
         note = 'close-up lock';
+      } else if (lock === 'milsnabb') {
+        const milsnabb = lockMilsnabbWork(
+          closeupWorkImage({ data: photo.gray, width: photo.width, height: photo.height }),
+        );
+        if (!passesMilsnabbGate(milsnabb)) {
+          console.log(`${name}: milsnabb lock failed its gate; skipped`);
+          continue;
+        }
+        canvas = rectifyWithHomography(ops, gray, {
+          toMm: milsnabb.toMm,
+          outerRadiusMm: face.ringRadiiMm.at(-1)!,
+        });
+        note = 'milsnabb lock';
       } else {
         const result = runDiscLock(ops, gray, {
           width: photo.width,
@@ -120,9 +141,9 @@ test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () 
         pxPerMm: canvas.pxPerMm,
         shift: lock === 'disc' ? (CANVAS_PX - SPIKE_CANVAS_PX) / 2 : 0,
         caliberMm: CALIBER_MM,
-        blackRadiusMm: FACE.referenceDiameterMm / 2,
-        maxRadiusMm: RING_RADII_MM.at(-1)!,
-        ringRadiiMm: RING_RADII_MM,
+        blackRadiusMm: face.blackRadiusMm,
+        maxRadiusMm: face.ringRadiiMm.at(-1)!,
+        ringRadiiMm: face.ringRadiiMm,
       }),
     );
     ready += 1;
