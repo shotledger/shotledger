@@ -261,12 +261,11 @@ describe('compareSessionTypes', () => {
     fc.assert(
       fc.property(fc.array(one, { maxLength: 30 }), (records) => {
         const list = records.map((record) => series(record));
-        const swapped = list.map((s) => ({
-          ...s,
-          sessionType: (s.sessionType === 'training'
-            ? 'competition'
-            : 'training') as AnalyticsSessionType,
-        }));
+        const swapped = list.map((s) => {
+          const sessionType: AnalyticsSessionType =
+            s.sessionType === 'training' ? 'competition' : 'training';
+          return { ...s, sessionType };
+        });
         const before = compareSessionTypes(list);
         const after = compareSessionTypes(swapped);
         expect(after.map((row) => [row.disciplineId, row.seriesLength])).toEqual(
