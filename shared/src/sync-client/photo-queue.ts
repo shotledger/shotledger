@@ -65,7 +65,9 @@ export function applyPhotoTaskOutcome(
 
   const attempts = entry.attempts + 1;
   if (!outcome.retryable || attempts >= MAX_PHOTO_ATTEMPTS) {
-    return { type: 'giveUp', id: entry.id, attempts, lastError: outcome.error };
+    // Spend every remaining attempt: the cap is what stops
+    // selectNextPhotoTask picking the entry again.
+    return { type: 'giveUp', id: entry.id, attempts: MAX_PHOTO_ATTEMPTS, lastError: outcome.error };
   }
   return { type: 'retry', id: entry.id, attempts, lastError: outcome.error };
 }
