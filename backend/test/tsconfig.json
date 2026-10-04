@@ -1,7 +1,12 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["@cloudflare/vitest-plugin/types"]
+    "types": ["@cloudflare/vitest-plugin/types"],
+    // Checked by `pnpm typecheck` with `tsc -p`, never emitted: compiled
+    // test copies in dist/ would be collected by vitest.
+    "composite": false,
+    "declaration": false,
+    "noEmit": true
   },
   "include": ["./**/*.ts", "../worker-configuration.d.ts"],
   "exclude": []

@@ -2,10 +2,15 @@
 // since this task never runs wrangler against a real account.
 /// <reference types="@cloudflare/workers-types" />
 
-interface Env {
-  DB: D1Database;
-  PHOTOS: R2Bucket;
-  // Dev/test-only placeholder — production value is a `wrangler secret`,
-  // never committed (docs/specs/backend-auth-photos-spec.md §2).
-  BETTER_AUTH_SECRET: string;
+// Same shape `wrangler types` emits: `cloudflare:test`'s `env` is typed as
+// `Cloudflare.Env`, the Worker's handlers use the global `Env`.
+declare namespace Cloudflare {
+  interface Env {
+    DB: D1Database;
+    PHOTOS: R2Bucket;
+    // Dev/test-only placeholder — production value is a `wrangler secret`,
+    // never committed (docs/specs/backend-auth-photos-spec.md §2).
+    BETTER_AUTH_SECRET: string;
+  }
 }
+interface Env extends Cloudflare.Env {}
