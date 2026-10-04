@@ -7,7 +7,7 @@
     "node": "26.10.0"
   },
   "scripts": {
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p backend/test/tsconfig.json",
     "typecheck:app": "node scripts/ensure-expo-env.mjs && cd app && pnpm exec tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --check .",
