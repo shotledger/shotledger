@@ -36,7 +36,7 @@ function authHeaders(token: string) {
 
 async function userIdOf(token: string): Promise<string> {
   const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
-  const { user } = (await session.json()) as { user: { id: string } };
+  const { user } = await session.json<{ user: { id: string } }>();
   return user.id;
 }
 
@@ -111,7 +111,7 @@ describe('account deletion', () => {
       body: JSON.stringify({ dryRun: true }),
     });
     expect(dryRun.status).toBe(200);
-    const body = (await dryRun.json()) as { dryRun: boolean; deleted: Record<string, number> };
+    const body = await dryRun.json<{ dryRun: boolean; deleted: Record<string, number> }>();
     expect(body.dryRun).toBe(true);
     expect(body.deleted.syncRows).toBe(1);
     expect(body.deleted.photos).toBe(1);
@@ -135,7 +135,7 @@ describe('account deletion', () => {
       body: JSON.stringify({ dryRun: false }),
     });
     expect(del.status).toBe(200);
-    expect(((await del.json()) as { dryRun: boolean }).dryRun).toBe(false);
+    expect((await del.json<{ dryRun: boolean }>()).dryRun).toBe(false);
 
     // The session's bearer token is rejected on the next authenticated call.
     const after = await fetchApp('/photos/usage', { headers: authHeaders(token) });
@@ -182,7 +182,7 @@ describe('account routes reject a request without a valid session', () => {
     it(`POST /account/delete with ${credential.name} is 401 and deletes nothing`, async () => {
       const token = await signUp('a-401@example.com');
       const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
-      const { user } = (await session.json()) as { user: { id: string } };
+      const { user } = await session.json<{ user: { id: string } }>();
 
       const response = await fetchApp('/account/delete', {
         method: 'POST',

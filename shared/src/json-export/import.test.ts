@@ -121,6 +121,7 @@ describe('importSessionsFromJson', () => {
     ) as ImportResult;
     expect(result.sessions).toEqual([]);
     expect(result.errors).toEqual([
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- vitest types asymmetric matchers as `any`
       { code: 'invalid-session', sessionIndex: 0, message: expect.stringContaining('stations') },
     ]);
   });

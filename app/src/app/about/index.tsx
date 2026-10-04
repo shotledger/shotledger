@@ -39,7 +39,7 @@ export default function AboutScreen() {
         />
         <ListRow
           title={t('about.repoLink')}
-          onPress={() => Linking.openURL(REPO_URL)}
+          onPress={() => void Linking.openURL(REPO_URL)}
           testID="about-repo-link"
         />
       </Card>

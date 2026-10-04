@@ -160,7 +160,7 @@ export default function PhotosScreen() {
                         `/session/${photo.sessionId}/photo?pos=${photo.position}&from=gallery`,
                       )
                     }
-                    onLongPress={() => onShare(photo)}
+                    onLongPress={() => void onShare(photo)}
                     testID={`photo-${photo.seriesId}`}
                     style={styles.tile}
                   >

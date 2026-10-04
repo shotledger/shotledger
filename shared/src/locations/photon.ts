@@ -69,7 +69,7 @@ export function parsePhotonResponse(body: unknown, limit = 5): string[] {
     if (typeof feature !== 'object' || feature === null) continue;
     const properties = (feature as { properties?: unknown }).properties;
     if (typeof properties !== 'object' || properties === null) continue;
-    const label = formatPhotonFeature(properties as PhotonProperties);
+    const label = formatPhotonFeature(properties);
     if (!label || seen.has(label)) continue;
     seen.add(label);
     labels.push(label);

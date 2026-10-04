@@ -158,7 +158,7 @@ describe('programs (spec G5-G9)', () => {
       targetFace: 'spsf-snabbskjutning-25m',
       stage: null,
     });
-    expect(skeleton.map((s) => s.position)).toEqual([...Array(13)].map((_, i) => i + 1));
+    expect(skeleton.map((s) => s.position)).toEqual(Array.from({ length: 13 }, (_, i) => i + 1));
     expect(skeleton.slice(1).map((s) => s.timeLimitSeconds)).toEqual([
       10, 10, 10, 10, 8, 8, 8, 8, 6, 6, 6, 6,
     ]);
@@ -1084,9 +1084,9 @@ it('lays out helmatch and figurskjutning as SHB I.6.1 shoots them', () => {
   // Sighters before A and B only (I.6.6.2); 4 x 5 shots per delmoment (I.6.1).
   expect(layout('spsf-helmatch')).toEqual([
     [true, 300, precision],
-    ...Array(4).fill([false, 300, precision]),
+    ...Array.from({ length: 4 }, () => [false, 300, precision]),
     [true, null, rapid],
-    ...Array(4).fill([false, null, rapid]),
+    ...Array.from({ length: 4 }, () => [false, null, rapid]),
     ...c,
   ]);
   expect(layout('spsf-figurskjutning')).toEqual(c);

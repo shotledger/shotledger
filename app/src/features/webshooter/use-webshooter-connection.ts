@@ -67,7 +67,7 @@ export function useWebshooterConnection(): WebshooterConnectionState {
 
   useEffect(() => {
     let canceled = false;
-    loadTokenCache().then((token) => {
+    void loadTokenCache().then((token) => {
       if (!canceled) setConnected(token !== null);
     });
     return () => {

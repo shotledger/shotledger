@@ -74,7 +74,8 @@ export function playTimerCueSound(kind: TimerCueKind): void {
   try {
     const player = ensurePlayers()[kind];
     if (!player) return;
-    player.seekTo(0);
+    // Async, so the surrounding try cannot catch its rejection.
+    player.seekTo(0).catch(() => undefined);
     player.play();
   } catch {
     // Best-effort — a playback failure should never interrupt the drill.

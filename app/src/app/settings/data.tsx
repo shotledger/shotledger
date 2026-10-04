@@ -64,13 +64,13 @@ export default function DataSettingsScreen() {
         <ListRow
           title={t('jsonExport.exportTitle')}
           subtitle={t('jsonExport.exportSubtitle')}
-          onPress={exportJson}
+          onPress={() => void exportJson()}
           testID="settings-export-json"
         />
         <ListRow
           title={t('jsonExport.importTitle')}
           subtitle={t('jsonExport.importSubtitle')}
-          onPress={onImportJson}
+          onPress={() => void onImportJson()}
           testID="settings-import-json"
         />
         {statusText ? (

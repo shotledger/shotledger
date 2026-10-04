@@ -107,7 +107,7 @@ describe('photo upload', () => {
     const token = await signUp('p4@example.com');
     const response = await upload(token, 'photo-4', bytes(500));
     expect(response.status).toBe(201);
-    const body = (await response.json()) as { photoId: string; sizeBytes: number };
+    const body = await response.json<{ photoId: string; sizeBytes: number }>();
     expect(body).toMatchObject({ photoId: 'photo-4', sizeBytes: 500 });
 
     const usage = await fetchApp('/photos/usage', { headers: authHeaders(token) });
@@ -117,7 +117,7 @@ describe('photo upload', () => {
   it('P5 rejects an upload that would exceed the remaining quota, quota unchanged', async () => {
     const token = await signUp('p5@example.com');
     const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
-    const { user } = (await session.json()) as { user: { id: string } };
+    const { user } = await session.json<{ user: { id: string } }>();
     // Shrink this user's quota directly in D1 (the API never exposes a way
     // to do this — the 1GB default is too large to exhaust via uploads
     // capped at MAX_PHOTO_BYTES and RATE_LIMIT_MAX_UPLOADS/hour) so the
@@ -182,11 +182,9 @@ describe('photo upload', () => {
   it('P10 DELETE as owner returns 204, decreases quota by exactly the photo size, and a later GET is 404', async () => {
     const token = await signUp('p10@example.com');
     await upload(token, 'photo-10', bytes(300));
-    const usageBefore = (await (
+    const usageBefore = await (
       await fetchApp('/photos/usage', { headers: authHeaders(token) })
-    ).json()) as {
-      usedBytes: number;
-    };
+    ).json<{ usedBytes: number }>();
     expect(usageBefore.usedBytes).toBe(300);
 
     const del = await fetchApp('/photos/photo-10', {
@@ -195,11 +193,9 @@ describe('photo upload', () => {
     });
     expect(del.status).toBe(204);
 
-    const usageAfter = (await (
+    const usageAfter = await (
       await fetchApp('/photos/usage', { headers: authHeaders(token) })
-    ).json()) as {
-      usedBytes: number;
-    };
+    ).json<{ usedBytes: number }>();
     expect(usageAfter.usedBytes).toBe(0);
 
     const getAfter = await fetchApp('/photos/photo-10', { headers: authHeaders(token) });
@@ -226,11 +222,9 @@ describe('photo upload', () => {
     await upload(token, 'photo-12', bytes(100));
     await upload(token, 'photo-12', bytes(300));
 
-    const usage = (await (
+    const usage = await (
       await fetchApp('/photos/usage', { headers: authHeaders(token) })
-    ).json()) as {
-      usedBytes: number;
-    };
+    ).json<{ usedBytes: number }>();
     expect(usage.usedBytes).toBe(300);
   });
 
@@ -287,7 +281,7 @@ describe('photo routes reject a request without a valid session', () => {
       headers: async () => {
         const token = await signUp('p-401@example.com');
         const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
-        const { user } = (await session.json()) as { user: { id: string } };
+        const { user } = await session.json<{ user: { id: string } }>();
         return authHeaders(user.id);
       },
     },

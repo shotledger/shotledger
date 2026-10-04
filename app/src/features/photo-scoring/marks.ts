@@ -131,7 +131,13 @@ export function markReducer(state: MarkState, action: MarkAction): MarkState {
     case 'select':
     case 'deselect':
       return applyAction(state, action);
-    default: {
+    case 'tap':
+    case 'move':
+    case 'delete':
+    case 'toggleInnerTen':
+    case 'callRing':
+    case 'setCaliber':
+    case 'suggest': {
       const next = applyAction(state, action);
       if (next === state || (next.marks === state.marks && next.caliberMm === state.caliberMm)) {
         return next;

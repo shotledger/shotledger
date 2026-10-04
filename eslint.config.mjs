@@ -29,9 +29,31 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    // shared, backend: plain TS, no React
+    // Type information for every TS file in a workspace package; each file
+    // resolves its nearest tsconfig.json.
+    files: ['shared/**/*.ts', 'backend/**/*.ts', 'app/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    // shared, backend: plain TS, no React — the full type-checked set.
     files: ['shared/**/*.ts', 'backend/**/*.ts'],
-    rules: {},
+    extends: [tseslint.configs.recommendedTypeCheckedOnly],
+    rules: {
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+    },
+  },
+  {
+    // Test fakes implement async ports synchronously, and some rely on an
+    // `async` throw becoming a rejection; adding an `await` would be noise.
+    files: ['shared/**/*.test.ts', 'backend/test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off',
+    },
   },
   {
     // The Worker bundle is ELv2 and may only compile in the Apache-2.0
@@ -109,6 +131,11 @@ export default tseslint.config(
       // Metro's static-asset loading (images, fonts) is require()-based; this
       // is the RN idiom, not a CommonJS holdover.
       '@typescript-eslint/no-require-imports': 'off',
+      // The type-aware rules that catch real bugs here; the rest of
+      // recommendedTypeChecked is noise against RN typings for now.
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
     },
   },
   {
