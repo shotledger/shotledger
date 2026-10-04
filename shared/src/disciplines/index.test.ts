@@ -242,7 +242,7 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
   ];
 
   it.each(issfPrograms)(
-    '$id: $shots scored shots across $series series, max score = shots x 10',
+    '$id: $shots scored shots across $series series',
     ({ id, shots, series, sighterSeries }) => {
       const program = getProgram(id);
       if (!program) throw new Error(`${id} program missing`);
@@ -256,8 +256,6 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
       expect(scoredSeriesCount).toBe(series);
       const scoredShots = scoredSeriesCount * program.shotsPerSeries;
       expect(scoredShots).toBe(shots);
-      const maxScore = scoredShots * 10;
-      expect(maxScore).toBe(shots * 10);
 
       const skeleton = buildProgramSkeleton(program);
       expect(skeleton.filter((s) => s.isSighter)).toHaveLength(sighterSeries);

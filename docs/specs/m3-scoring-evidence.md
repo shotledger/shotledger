@@ -259,6 +259,10 @@ Scratchpad directory
   `schema.ts`. Today only the schemas run at module load, so the on-disk runner
   covers the whole gap — but if more module-level logic appears in `shared/`,
   the runner's mutant list has to grow with it.
+  **No longer true (2026-10-04):** the medal and badge threshold tables,
+  `APPLY_ORDER` and the SE compliance constants also run at module load, and
+  the on-disk runner does not mutate them; only a test pinning every value
+  checks them (#535).
 
 ## 7. Reproducing this report
 

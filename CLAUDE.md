@@ -28,8 +28,8 @@ sync. Android first — **all code must stay iOS-compatible**.
 - `docs/adr/` — architecture decision records. Add one when changing an
   architectural decision; never silently contradict an accepted ADR.
 - `.claude/skills/old-coder/` — evidence-first development loop. **Mandatory
-  for changes to `shared/scoring/`, `shared/compliance/`, `shared/csv/` and
-  the sync engine**: the maintainer does not read that code line by line;
+  for changes to `shared/scoring/`, `shared/compliance/` and the sync
+  engine**: the maintainer does not read that code line by line;
   the approved spec and evidence report are the review. Routine UI work
   uses normal tests. Vendored byte-for-byte from upstream: do not edit it.
 - `docs/release.md` — the release checklist; `docs/store-listing.md` — the

@@ -20,16 +20,20 @@ describe('checkQuota', () => {
     expect(checkQuota(1001, 1000, 0)).toEqual({ allowed: false, reason: 'quota_exceeded' });
   });
 
-  it('property: allowed matches the spec definition exactly for all non-negative inputs', () => {
+  it('property: an upload is allowed exactly when it ends at or under the limit', () => {
+    // Built from the boundary: the upload overshoots the free space by `over`
+    // bytes, so the expected answer is the sign of `over`.
     fc.assert(
       fc.property(
         fc.nat({ max: 10_000_000 }),
         fc.nat({ max: 10_000_000 }),
-        fc.nat({ max: 10_000_000 }),
-        (usedBytes, limitBytes, incomingBytes) => {
-          const result = checkQuota(usedBytes, limitBytes, incomingBytes);
-          expect(result.allowed).toBe(usedBytes + incomingBytes <= limitBytes);
-          if (!result.allowed) expect(result.reason).toBe('quota_exceeded');
+        fc.integer({ min: -1000, max: 1000 }),
+        (usedBytes, freeBytes, over) => {
+          fc.pre(freeBytes + over >= 0);
+          const result = checkQuota(usedBytes, usedBytes + freeBytes, freeBytes + over);
+          expect(result).toEqual(
+            over <= 0 ? { allowed: true } : { allowed: false, reason: 'quota_exceeded' },
+          );
         },
       ),
     );

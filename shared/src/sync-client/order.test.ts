@@ -13,23 +13,8 @@ describe('APPLY_ORDER', () => {
     expect([...APPLY_ORDER].sort()).toEqual([...SYNC_TABLE_NAMES].sort());
   });
 
-  it('places every parent before the tables that reference it', () => {
-    const rank = (t: SyncTableName) => APPLY_ORDER.indexOf(t);
-    // Matches app/src/db/schema.ts's `references()` declarations.
-    const edges: [SyncTableName, SyncTableName][] = [
-      ['firearms', 'licenses'],
-      ['firearms', 'firearm_groups'],
-      ['firearms', 'maintenance_events'],
-      ['firearms', 'sight_settings'],
-      ['firearms', 'sessions'],
-      ['ammo_lots', 'sessions'],
-      ['sessions', 'series'],
-      ['series', 'shots'],
-    ];
-    for (const [parent, child] of edges) {
-      expect(rank(parent)).toBeLessThan(rank(child));
-    }
-  });
+  // Parent-before-child is checked against the schema's own foreign keys in
+  // app/src/db/sync-apply-order.test.ts.
 
   it('ranks an unknown table last rather than throwing', () => {
     expect(applyRank('nope' as SyncTableName)).toBe(APPLY_ORDER.length);
