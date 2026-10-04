@@ -434,7 +434,7 @@ no new dependency, no schema/persistence change; it is derived purely from
 | PL5 | a tight group (small spread) placed off-center                        | most of the loss is points-lost-to-position, little to size                                                                                                                 |
 | PL6 | a loose group (large spread) placed exactly on center                 | points-lost-to-position = 0, all loss is points-lost-to-size                                                                                                                |
 | PL7 | any group                                                             | `pointsLostToSize >= 0` (9.1); `pointsLostToPosition` is signed — see PL9                                                                                                   |
-| PL8 | any group                                                             | `actualScore + pointsLostToPosition + pointsLostToSize === maxScore` (holds by construction: it's `actual + (recentered - actual) + (max - recentered)`)                    |
+| PL8 | any group, translated by `(dx, dy)`                                   | `recenteredScore` is unchanged: recentering removes the translation. (`actual + position + size === max` holds by construction and is not asserted.)                        |
 | PL9 | two marks dead center, one 300 mm out (precision face, `.22` caliber) | `actualScore = 20`, `recenteredScore = 17`, `pointsLostToPosition = -3` — the called-flier counterexample from 9.1, confirming the function reports it rather than clamping |
 
 ### 9.4 Simplification called out explicitly

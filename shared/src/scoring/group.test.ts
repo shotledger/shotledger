@@ -177,17 +177,21 @@ describe('analyzePointsLost', () => {
     }
   });
 
-  it('PL8: actual + pointsLostToPosition + pointsLostToSize === maxScore', () => {
-    for (const marks of [
-      [mark(0, 0)],
-      [mark(95, 5), mark(100, -5), mark(105, 0)],
-      [mark(0, 0), mark(0, 0), mark(300, 0)],
+  it('PL8: translating a group changes its actual score but not its recentered score', () => {
+    const group = [mark(95, 5), mark(100, -5), mark(105, 0)];
+    const base = analyzePointsLost(group, FACE);
+    for (const [dx, dy] of [
+      [-100, 0],
+      [0, 200],
+      [-250, 130],
     ]) {
-      const result = analyzePointsLost(marks, FACE);
-      if (!result) throw new Error('expected a result');
-      expect(result.actualScore + result.pointsLostToPosition + result.pointsLostToSize).toBe(
-        result.maxScore,
+      const moved = analyzePointsLost(
+        group.map((m) => mark(m.xMm + dx!, m.yMm + dy!)),
+        FACE,
       );
+      expect(moved?.actualScore).not.toBe(base?.actualScore);
+      expect(moved?.recenteredScore).toBe(base?.recenteredScore);
+      expect(moved?.pointsLostToSize).toBe(base?.pointsLostToSize);
     }
   });
 

@@ -196,7 +196,22 @@ describe('computeFirearmLicenseActivity', () => {
       rule({ weaponGroups: ['spsf:B'], requiredActivities: 2 }),
     ]);
     const result = computeFirearmLicenseActivity([], p, ['spsf:C', 'spsf:B'], NOW);
-    expect(result).toHaveLength(2);
+    expect(
+      result.map(({ weaponGroups, requiredActivities }) => ({ weaponGroups, requiredActivities })),
+    ).toEqual([
+      { weaponGroups: ['spsf:C'], requiredActivities: 4 },
+      { weaponGroups: ['spsf:B'], requiredActivities: 2 },
+    ]);
+  });
+
+  it('applies a rule covering several groups to a firearm holding only one of them', () => {
+    const p = profile([rule({ weaponGroups: ['spsf:C', 'spsf:B'] })]);
+    const sessions = [session({ weaponGroup: 'spsf:C' })];
+    const result = computeFirearmLicenseActivity(sessions, p, ['spsf:C'], NOW);
+    expect(result.map((s) => [s.weaponGroups, s.activityCount])).toEqual([
+      [['spsf:C', 'spsf:B'], 1],
+    ]);
+    expect(computeLicenseActivityForWeaponGroup(sessions, p, 'spsf:B', NOW)?.activityCount).toBe(1);
   });
 
   it('does not double-count a group covered twice by the same rule', () => {
@@ -298,7 +313,8 @@ describe('shooter-scope rules (FAP 551-3 5–6 §§)', () => {
     const result = computeOverallLicenseActivity(sessions, profile([shooterRule()]), [], NOW);
     expect(result.statuses).toHaveLength(1);
     expect(result.statuses[0]?.activityCount).toBe(1);
-    expect(result.overall).not.toBeNull();
+    // 1 of 4 is below half the requirement.
+    expect(result.overall).toBe('red');
   });
 
   it('S6: a firearm with no weapon groups still gets the shooter-level status', () => {

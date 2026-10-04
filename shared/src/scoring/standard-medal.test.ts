@@ -197,6 +197,87 @@ describe('standardMedalPoints', () => {
   });
 });
 
+// Expected values are docs/reference/spsf-shb-2026.md §"Standardmedalj",
+// transcribing SHB 2026 C.5.1.2.3 p. 71 (precision) and C.5.1.2.5 p. 71
+// (militär snabbmatch). Each row checks both bands at and one below the line.
+describe('standardMedalPoints — the full threshold tables', () => {
+  const bands = (
+    disciplineId: string,
+    weaponGroup: string,
+    seriesCount: number,
+    silver: number,
+    brons: number,
+  ) => {
+    const at = (totalPoints: number) =>
+      standardMedalPoints({ disciplineId, weaponGroup, seriesCount, totalPoints });
+    const thresholds = { silverThreshold: silver, bronsThreshold: brons };
+    expect(at(silver)).toEqual({ grade: 'silver', ...thresholds });
+    expect(at(silver - 1)).toEqual({ grade: 'brons', ...thresholds });
+    expect(at(brons)).toEqual({ grade: 'brons', ...thresholds });
+    expect(at(brons - 1)).toEqual({ grade: null, ...thresholds });
+  };
+
+  const precision: [number, string, number, number][] = [
+    [6, 'A', 277, 267],
+    [6, 'B', 282, 273],
+    [6, 'C', 283, 276],
+    [7, 'A', 323, 312],
+    [7, 'B', 329, 319],
+    [7, 'C', 330, 322],
+    [10, 'A', 461, 445],
+    [10, 'B', 470, 455],
+    [10, 'C', 471, 460],
+  ];
+
+  it.each(precision)(
+    'precision, %i series, group %s: silver %i, brons %i (C.5.1.2.3)',
+    (seriesCount, group, silver, brons) => {
+      bands('spsf-precision', `spsf:${group}`, seriesCount, silver, brons);
+    },
+  );
+
+  const milsnabb: [string, number, number][] = [
+    ['A', 540, 516],
+    ['R', 552, 528],
+    ['B', 561, 537],
+    ['C', 564, 540],
+  ];
+
+  it.each(milsnabb)(
+    'milsnabb, 12 series, group %s: silver %i, brons %i (C.5.1.2.5)',
+    (group, silver, brons) => {
+      bands('spsf-milsnabb', `spsf:${group}`, 12, silver, brons);
+    },
+  );
+
+  // A-opt shares A's column in C.5.1.2.3; AM, AP and AG are sub-groups of A
+  // (F.4 pp. 169-172).
+  it.each(['spsf:A', 'spsf:AM', 'spsf:AP', 'spsf:AG', 'spsf:A-opt'])(
+    'precision %s is judged on the A row',
+    (weaponGroup) => {
+      for (const [seriesCount, , silver, brons] of precision.filter(([, g]) => g === 'A')) {
+        bands('spsf-precision', weaponGroup, seriesCount, silver, brons);
+      }
+    },
+  );
+
+  // Above 10 series: the 10-series value / 10 x series count (C.5.1.2.3),
+  // rounded to the nearest point (m5-stats-spec "Domain facts" item 4). These
+  // counts land on .5, .7 and .3, where nearest, floor and ceiling disagree.
+  const scaled: [number, string, number, number][] = [
+    [15, 'A', 692, 668], // 691.5, 667.5
+    [17, 'A', 784, 757], // 783.7, 756.5
+    [13, 'C', 612, 598], // 612.3, 598
+  ];
+
+  it.each(scaled)(
+    'precision, %i series, group %s scales to silver %i, brons %i',
+    (seriesCount, group, silver, brons) => {
+      bands('spsf-precision', `spsf:${group}`, seriesCount, silver, brons);
+    },
+  );
+});
+
 describe('standardMedalForSession', () => {
   it('B11: no final — evaluates the (only) total', () => {
     expect(

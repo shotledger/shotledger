@@ -63,10 +63,16 @@ describe('analyzeGroup properties', () => {
   });
 
   it('GP4: the analysis does not depend on the order of the shots', () => {
+    const pointsAndPermutation = points.chain((ps) =>
+      fc.tuple(
+        fc.constant(ps),
+        fc.shuffledSubarray([...ps.keys()], { minLength: ps.length, maxLength: ps.length }),
+      ),
+    );
     fc.assert(
-      fc.property(points, (ps) => {
+      fc.property(pointsAndPermutation, ([ps, order]) => {
         const base = require_(ps);
-        const shuffled = require_([...ps].reverse());
+        const shuffled = require_(order.map((i) => ps[i]!));
         expect(shuffled.mpiMm.xMm).toBeCloseTo(base.mpiMm.xMm, 9);
         expect(shuffled.mpiMm.yMm).toBeCloseTo(base.mpiMm.yMm, 9);
         expect(shuffled.meanRadiusMm).toBeCloseTo(base.meanRadiusMm, 9);
@@ -96,24 +102,15 @@ describe('analyzePointsLost properties', () => {
     );
   });
 
-  it('PP2: actual + pointsLostToPosition + pointsLostToSize === maxScore (spec §9.3 PL8)', () => {
+  it('PP2: translating the group leaves recenteredScore unchanged (spec §9.3 PL8)', () => {
     fc.assert(
-      fc.property(marks, (ms) => {
-        const result = analyzePointsLost(ms, FACE);
-        if (!result) throw new Error('expected a non-null analysis for a non-empty group');
-        expect(
-          result.actualScore + result.pointsLostToPosition + result.pointsLostToSize,
-        ).toBeCloseTo(result.maxScore, 9);
-      }),
-    );
-  });
-
-  it('PP3: recenteredScore never exceeds maxScore', () => {
-    fc.assert(
-      fc.property(marks, (ms) => {
-        const result = analyzePointsLost(ms, FACE);
-        if (!result) throw new Error('expected a non-null analysis for a non-empty group');
-        expect(result.recenteredScore).toBeLessThanOrEqual(result.maxScore);
+      fc.property(marks, coord, coord, (ms, dx, dy) => {
+        const base = analyzePointsLost(ms, FACE);
+        const moved = analyzePointsLost(
+          ms.map((m) => ({ ...m, xMm: m.xMm + dx, yMm: m.yMm + dy })),
+          FACE,
+        );
+        expect(moved?.recenteredScore).toBe(base?.recenteredScore);
       }),
     );
   });
