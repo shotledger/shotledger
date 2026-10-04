@@ -8,7 +8,7 @@ import {
   session as authSession,
   user as authUser,
 } from '../db/auth-schema';
-import { photos, quota } from '../db/photo-schema';
+import { photos, quota, rateLimitWindows } from '../db/photo-schema';
 import { createDb, type Db } from '../db/queries';
 import { syncIdempotency, syncRows, syncSequence } from '../db/schema';
 
@@ -88,6 +88,7 @@ export function createAccountRoutes(
       db.delete(syncSequence).where(eq(syncSequence.userId, userId)),
       db.delete(syncIdempotency).where(eq(syncIdempotency.userId, userId)),
       db.delete(quota).where(eq(quota.userId, userId)),
+      db.delete(rateLimitWindows).where(eq(rateLimitWindows.userId, userId)),
       db.delete(authSession).where(eq(authSession.userId, userId)),
       db.delete(authAccount).where(eq(authAccount.userId, userId)),
       db.delete(authUser).where(eq(authUser.id, userId)),
