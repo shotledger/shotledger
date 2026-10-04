@@ -9,6 +9,8 @@ import {
   type StatsSeries,
 } from '@shotledger/shared';
 
+import type { FaltResultSummary } from '@/features/session/format-falt-result';
+
 /** Conventional "average" glyph (U+2300 DIAMETER SIGN) for the row subtitle. */
 export const AVERAGE_SYMBOL = '⌀';
 
@@ -28,11 +30,11 @@ export interface HomeSessionRow {
   startedAt: string;
   total: number;
   /**
-   * A fält session's result, when this is one: hits and figures hit over the
-   * scoring stations. `total` is meaningless there — fält has no points — so
-   * the row prints this instead (#315).
+   * A fält session's result, when this is one, over the scoring stations.
+   * `total` is meaningless there — it has no ring points — so the row prints
+   * this instead (#315), in the session's result mode (#513).
    */
-  falt: { hits: number; figuresHit: number } | null;
+  falt: FaltResultSummary | null;
   /** Mean of the session's scored series, in display points. `null` when none. */
   seriesAverage: number | null;
   /** Inner tens (Swedish: innertior) in the session's scored series. */
@@ -78,7 +80,7 @@ export function buildHomeSessionRow(
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],
-  falt: { hits: number; figuresHit: number } | null = null,
+  falt: FaltResultSummary | null = null,
 ): HomeSessionRow {
   const average = seriesAverageTenths(sessionSeries);
   return {

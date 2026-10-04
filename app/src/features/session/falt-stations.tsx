@@ -15,6 +15,8 @@ import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
 import { Spacing } from '@/theme/tokens';
 
+import { formatFaltResult } from './format-falt-result';
+
 const EMPTY_RESULT = {
   stationCount: 0,
   hits: 0,
@@ -77,11 +79,7 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
           <Tile
             testID="falt-result"
             label={t('session.total')}
-            value={
-              resultMode === 'poangfalt'
-                ? t('session.poangfaltTotal', { points: result.poangfaltPoints })
-                : t('session.faltTotal', { hits: result.hits, figures: result.figuresHit })
-            }
+            value={formatFaltResult(t, { ...result, mode: resultMode })}
           />
           <Tile
             testID="falt-station-count"

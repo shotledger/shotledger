@@ -11,6 +11,7 @@ import { countVolumeRounds } from '@/db/queries/shots';
 import { listAllStatsSeries } from '@/db/queries/stats';
 import { listSessions } from '@/db/queries/sessions';
 import { faltSessionResult } from '@/db/queries/falt';
+import { faltSummaryOf } from '@/features/session/format-falt-result';
 import { listTagsBySession } from '@/db/queries/tags';
 
 import { countSessionsByType, type HomeSessionCounts } from './home-session-counts';
@@ -42,7 +43,7 @@ function loadHomeData(): HomeData {
       session,
       allSeries.filter((series) => series.sessionId === session.id),
       tagsBySession.get(session.id) ?? [],
-      falt === null ? null : { hits: falt.hits, figuresHit: falt.figuresHit },
+      falt === null ? null : faltSummaryOf(session.faltResultMode, falt),
     );
   });
 

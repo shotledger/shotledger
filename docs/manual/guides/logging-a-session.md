@@ -69,7 +69,8 @@ Each station is six shots, and you record two numbers — hits, and how many
 figures those hits landed in. Five hits in three figures reads **5/3**: you
 missed one shot, or put two in the same figure. The session total shows
 "26 hits in 22 figures", or one sum in point field, where every hit is a point
-and every figure hit is another.
+and every figure hit is another. Home and the sessions list show the result
+the same way.
 
 Where the organiser put out a **ringed figure**, turn on _Ringed Figure_ and
 record the points you scored and what the figure was worth. There is no fixed

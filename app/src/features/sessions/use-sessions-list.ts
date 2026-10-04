@@ -7,6 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import { getDiscipline } from '@shotledger/shared';
 import { db } from '@/db/client';
 import { faltSessionResult } from '@/db/queries/falt';
+import { faltSummaryOf } from '@/features/session/format-falt-result';
 import { listFirearms } from '@/db/queries/firearms';
 import { listSessions } from '@/db/queries/sessions';
 import { listAllStatsSeries } from '@/db/queries/stats';
@@ -56,7 +57,7 @@ function loadSessionsList(): SessionsListData {
       session,
       seriesBySession.get(session.id) ?? [],
       tagsBySession.get(session.id) ?? [],
-      falt === null ? null : { hits: falt.hits, figuresHit: falt.figuresHit },
+      falt === null ? null : faltSummaryOf(session.faltResultMode, falt),
     );
   });
 
