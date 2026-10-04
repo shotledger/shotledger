@@ -22,7 +22,8 @@ Två saker ändrar sig inte:
 
 - **Loggade skott** räknas alltid med provserier, i båda lägena. Du sköt de
   skotten oavsett vad serien kallades, och siffran måste stämma med vapnets
-  skotträknare och din ammunitionsåtgång.
+  skotträknare, din ammunitionsåtgång och skytteloggen — se [Hur avlossade skott
+  räknas](how-shots-are-counted.md).
 - Antalet **guldserier** räknar alltid med en provserie, i båda lägena. En
   femtia på en provserie ger märket precis som vilken annan serie som helst, så
   filtret har inget att säga till om där.

@@ -3,9 +3,10 @@
 // instead of an N+1 per-series query), matching StatsSeries exactly.
 import { isNull } from 'drizzle-orm';
 import {
+  disciplineSeriesLength,
   getDiscipline,
   seriesStage,
-  SHOTS_PER_STATION,
+  totalOnlyShotCount,
   type AnalyticsSeries,
   type AnalyticsSession,
   type FaltAnalyticsSession,
@@ -41,6 +42,14 @@ function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
   for (const row of seriesRows) {
     const session = sessionById.get(row.sessionId);
     if (!session) continue; // orphaned series (soft-deleted session) — never surfaced
+    // WS1 (docs/specs/webshooter-app-spec.md): an imported Webshooter
+    // series has no shot rows, only a stored total/shot-count.
+    const totalOverride =
+      row.isTotalOverride === 1 &&
+      row.totalOverrideTenths !== null &&
+      row.totalOverrideShotCount !== null
+        ? { tenths: row.totalOverrideTenths, shotCount: row.totalOverrideShotCount }
+        : null;
     result.push({
       id: row.id,
       sessionId: row.sessionId,
@@ -53,13 +62,13 @@ function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
       isSighter: row.isSighter === 1,
       isFinal: row.isFinal === 1,
       shots: shotsBySeries.get(row.id) ?? [],
-      // WS1 (docs/specs/webshooter-app-spec.md): an imported Webshooter
-      // series has no shot rows, only a stored total/shot-count.
-      totalOverride:
-        row.isTotalOverride === 1 &&
-        row.totalOverrideTenths !== null &&
-        row.totalOverrideShotCount !== null
-          ? { tenths: row.totalOverrideTenths, shotCount: row.totalOverrideShotCount }
+      totalOverride,
+      volumeOnlyShotCount:
+        row.isTotalOverride === 1 && totalOverride === null
+          ? totalOnlyShotCount(
+              row.totalOverrideShotCount,
+              disciplineSeriesLength(session.disciplineId),
+            )
           : null,
       sessionType: session.type,
       tagIds: tagIdsBySession.get(row.sessionId) ?? [],
@@ -114,7 +123,8 @@ export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
     disciplineId: row.disciplineId,
     tagIds: tagIdsBySession.get(row.id) ?? [],
     extraRounds: row.extraRounds ?? 0,
-    stationRounds: (stationCountBySession.get(row.id) ?? 0) * SHOTS_PER_STATION,
+    stationCount: stationCountBySession.get(row.id) ?? 0,
+    seriesLength: disciplineSeriesLength(row.disciplineId),
     scoresHits: getDiscipline(row.disciplineId)?.scoring === 'hits',
   }));
 }

@@ -200,6 +200,37 @@ describe('buildDryRunPlan shot counts', () => {
     );
     expect(plan.sessions[0]!.shotCount).toBe(12);
   });
+
+  it('U8: a session’s extra rounds count too — the preview is its volume', () => {
+    const plan = buildDryRunPlan(
+      [
+        group({
+          extraRounds: 12,
+          series: [
+            {
+              position: 1,
+              isSighter: false,
+              isFinal: false,
+              shots: [1, 2, 3, 4, 5].map((position) => ({
+                position,
+                valueTenths: 100,
+                isInnerTen: false,
+              })),
+            },
+          ],
+        }),
+      ],
+      {
+        sessionIds: new Set(),
+        firearmIds: new Set(),
+        licenseIds: new Set(),
+        firearmNames: new Set(),
+        ammoLotNames: new Set(),
+        tagNames: new Set(),
+      },
+    );
+    expect(plan.sessions[0]!.shotCount).toBe(17);
+  });
 });
 
 describe('buildDryRunPlan tag reuse', () => {

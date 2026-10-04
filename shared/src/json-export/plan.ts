@@ -1,4 +1,5 @@
-import { SHOTS_PER_STATION } from '../scoring/falt';
+import { disciplineSeriesLength } from '../disciplines';
+import { sessionVolume } from '../scoring/volume';
 import type { SessionImportGroup } from './import';
 import type { FirearmExport, LicenseExport } from './types';
 
@@ -49,6 +50,23 @@ export interface ImportRecords {
 
 /** The one spelling of a firearm's name, shared by the exporter, the plan and
  *  the name-matching import path — they must agree or a firearm duplicates. */
+/**
+ * Rounds fired in a session from a file (`sessionVolume`). A file carries no
+ * total-only series, so every series counts by its shot rows.
+ */
+export function importedSessionVolume(group: SessionImportGroup): number {
+  return sessionVolume({
+    series: group.series.map((s) => ({
+      shotCount: s.shots.length,
+      totalOnly: false,
+      overrideShotCount: null,
+    })),
+    extraRounds: group.extraRounds,
+    stationCount: group.stations.length,
+    seriesLength: disciplineSeriesLength(group.disciplineId),
+  });
+}
+
 export function firearmDisplayName(firearm: { make: string; model: string }): string {
   return `${firearm.make} ${firearm.model}`;
 }
@@ -86,10 +104,8 @@ export function buildDryRunPlan(
       sessionId: group.sessionId,
       name: group.name,
       action: index.sessionIds.has(group.sessionId) ? 'update' : 'create',
-      shotCount: group.series.reduce(
-        (sum, s) => sum + s.shots.length,
-        group.stations.length * SHOTS_PER_STATION,
-      ),
+      // The rounds this session adds to Shots Logged (#512).
+      shotCount: importedSessionVolume(group),
     });
 
     if (group.firearm && !firearmNames.has(group.firearm)) {

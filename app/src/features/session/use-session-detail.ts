@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   buildProgramSkeleton,
+  disciplineSeriesLength,
   getDiscipline,
   getProgram,
   goldSeriesThreshold,
@@ -15,6 +16,7 @@ import {
   sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
+  totalOnlyShotCount,
   type EntryShot,
   type Program,
   type SessionResults,
@@ -166,12 +168,16 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     };
   });
 
+  const totalOnlySeriesLength = disciplineSeriesLength(session.disciplineId);
   const forResults = seriesRows.map((row) => ({
     isSighter: row.isSighter,
     isFinal: row.isFinal,
     shots: row.shots,
     totalOverride: row.isTotalOverride
-      ? { tenths: row.totalTenths, shotCount: row.totalOverrideShotCount ?? 5 }
+      ? {
+          tenths: row.totalTenths,
+          shotCount: totalOnlyShotCount(row.totalOverrideShotCount, totalOnlySeriesLength),
+        }
       : null,
   }));
   const results = sessionResults(forResults);

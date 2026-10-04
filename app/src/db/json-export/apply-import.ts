@@ -14,7 +14,7 @@ import {
   type ImportRecords,
   type LicenseExport,
   type SessionImportGroup,
-  SHOTS_PER_STATION,
+  importedSessionVolume,
 } from '@shotledger/shared';
 
 import {
@@ -28,12 +28,12 @@ import {
   tags,
 } from '../schema';
 import type { Database } from '../types';
-import { listStationsForSession } from '../queries/falt';
 import { softDeleteSeries } from '../queries/series';
 import { listSeriesForSession } from '../queries/series';
 import { softDeleteShot, listShotsForSeries } from '../queries/shots';
 import { addSessionTag, getOrCreateTag } from '../queries/tags';
 import { applyRoundCountDelta } from '../queries/round-count';
+import { sessionVolumeRounds } from '../queries/volume';
 import { newId, nowIso } from '../util';
 
 export interface ImportDryRun {
@@ -359,7 +359,6 @@ export function applyImport(
           id: sessions.id,
           deletedAt: sessions.deletedAt,
           firearmId: sessions.firearmId,
-          extraRounds: sessions.extraRounds,
         })
         .from(sessions)
         .where(eq(sessions.id, group.sessionId))
@@ -370,19 +369,10 @@ export function applyImport(
       // import moves them by the difference. A tombstoned row contributes
       // nothing: `deleteSessionAndSeries` backed it out when it was deleted.
       if (existing != null && existing.deletedAt === null && existing.firearmId) {
-        const before = listSeriesForSession(tx, group.sessionId).reduce(
-          (sum, row) => sum + listShotsForSeries(tx, row.id).length,
-          (existing.extraRounds ?? 0) +
-            listStationsForSession(tx, group.sessionId).length * SHOTS_PER_STATION,
-        );
-        addRounds(existing.firearmId, -before);
+        addRounds(existing.firearmId, -sessionVolumeRounds(tx, group.sessionId));
       }
       if (firearmId) {
-        const after = group.series.reduce(
-          (sum, row) => sum + row.shots.length,
-          (group.extraRounds ?? 0) + group.stations.length * SHOTS_PER_STATION,
-        );
-        addRounds(firearmId, after);
+        addRounds(firearmId, importedSessionVolume(group));
       }
 
       const sessionValues = {

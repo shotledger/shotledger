@@ -60,6 +60,12 @@ cases:
     verification: automated-test
     revision: '0.1.0'
 
+  - id: SVC_SCORE_010
+    requirement_ids: ['SCORE_010']
+    title: Verify a session's rounds fired counts shots, sighters, total-only series, extra rounds and stations, in the rule and in the database
+    verification: automated-test
+    revision: '0.1.0'
+
   - id: SVC_COMPL_001
     requirement_ids: ['COMPL_001']
     title: Verify sessions inside the window are counted at their training/competition weight and those outside are not

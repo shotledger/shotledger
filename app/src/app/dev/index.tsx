@@ -17,6 +17,7 @@ import { FLAGS, type FlagName, isFlagEnabled } from '@/constants/flags';
 import { db } from '@/db/client';
 import { setFlagOverride } from '@/db/queries/feature-flags';
 import { listSessions } from '@/db/queries/sessions';
+import { firearmCounterDrift } from '@/db/queries/volume';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
 import { Spacing } from '@/theme/tokens';
 
@@ -28,6 +29,7 @@ export default function DevScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [sessions, setSessions] = useState<SessionRow[]>(() => (db ? listSessions(db) : []));
+  const [drift, setDrift] = useState(() => (db ? firearmCounterDrift(db) : []));
 
   const [flags, setFlags] = useState(() =>
     Object.fromEntries(FLAG_NAMES.map((name) => [name, isFlagEnabled(name)])),
@@ -41,7 +43,9 @@ export default function DevScreen() {
   }, []);
 
   const refresh = useCallback(() => {
-    if (db) setSessions(listSessions(db));
+    if (!db) return;
+    setSessions(listSessions(db));
+    setDrift(firearmCounterDrift(db));
   }, []);
 
   const onLoadDemoData = useCallback(() => {
@@ -103,6 +107,27 @@ export default function DevScreen() {
           />
         ))}
       </Card>
+
+      {drift.length > 0 && (
+        <>
+          <ThemedText type="smallBold">{t('dev.driftTitle')}</ThemedText>
+          <ThemedText type="small">{t('dev.driftSubtitle')}</ThemedText>
+          <Card>
+            {drift.map((row) => (
+              <ListRow
+                key={row.firearmId}
+                title={`${row.make} ${row.model}`.trim()}
+                trailing={
+                  <ThemedText type="small">
+                    {t('dev.driftRounds', { count: row.rounds })}
+                  </ThemedText>
+                }
+                testID={`dev-drift-${row.firearmId}`}
+              />
+            ))}
+          </Card>
+        </>
+      )}
 
       <ThemedText type="smallBold">{t('dev.sessionsCount', { count: sessions.length })}</ThemedText>
 

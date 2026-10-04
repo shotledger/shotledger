@@ -18,6 +18,7 @@ import {
   type StatsSeries,
 } from './stats';
 import { ranksAhead, tieBreakTenths } from './stages';
+import { sessionVolume, toVolumeSeries, volumeOfSeries } from './volume';
 
 /**
  * A ten is any shot worth 10.0 or more. Integer scoring stores exactly 100;
@@ -62,7 +63,7 @@ export const ANY_ANALYTICS_FILTER: AnalyticsFilter = {
  * length.
  */
 function firedShotCount(series: StatsSeries): number {
-  return series.totalOverride?.shotCount ?? series.shots.length;
+  return volumeOfSeries(series);
 }
 
 /** A series that carries a score (override total or real shots), per `scope`. */
@@ -124,8 +125,10 @@ export interface AnalyticsSession {
   tagIds: readonly string[];
   /** Unscored extra rounds on the session (spec A1 §A1.3); 0 when unset. */
   extraRounds: number;
-  /** Rounds fired at fält stations — six per station, scratched included; 0 otherwise. */
-  stationRounds: number;
+  /** Live fält stations, scratched included; 0 otherwise. */
+  stationCount: number;
+  /** The discipline's `defaultSeriesLength` (`disciplineSeriesLength`). */
+  seriesLength: number;
   /** A hits discipline (fält): stations, never series. */
   scoresHits: boolean;
 }
@@ -403,11 +406,25 @@ export function analyticsReportTotals(
   scope: SighterScope = {},
 ): AnalyticsTotals {
   const totals = analyticsTotals(matchedSeries, scope);
+  const seriesBySession = new Map<string, AnalyticsSeries[]>();
+  for (const series of matchedSeries) {
+    const bucket = seriesBySession.get(series.sessionId) ?? [];
+    bucket.push(series);
+    seriesBySession.set(series.sessionId, bucket);
+  }
   return {
     ...totals,
     sessionCount: reportSessions.length,
-    volumeShotCount:
-      totals.volumeShotCount +
-      reportSessions.reduce((sum, session) => sum + session.extraRounds + session.stationRounds, 0),
+    volumeShotCount: reportSessions.reduce(
+      (sum, session) =>
+        sum +
+        sessionVolume({
+          series: (seriesBySession.get(session.id) ?? []).map(toVolumeSeries),
+          extraRounds: session.extraRounds,
+          stationCount: session.stationCount,
+          seriesLength: session.seriesLength,
+        }),
+      0,
+    ),
   };
 }

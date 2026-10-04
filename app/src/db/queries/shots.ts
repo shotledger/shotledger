@@ -3,8 +3,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { series, shots } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
-import { sumExtraRounds } from './sessions';
-import { countAllStationRounds } from './falt';
+import { totalVolumeRounds } from './volume';
 
 export interface AddShotInput {
   seriesId: string;
@@ -122,10 +121,10 @@ export function countAllShots(db: Database): number {
 }
 
 /**
- * Total rounds fired: every logged shot (sighters included), every session's
- * unscored `extra_rounds` (spec A1 §A1.3, A-X3) and six per fält station. This
- * — not `countAllShots` — is the number to show as "shots logged".
+ * Home's "Shots Logged": every live session's volume (`sessionVolume`) —
+ * not `countAllShots`, which misses extra rounds, stations and total-only
+ * series.
  */
 export function countVolumeRounds(db: Database): number {
-  return countAllShots(db) + sumExtraRounds(db) + countAllStationRounds(db);
+  return totalVolumeRounds(db);
 }

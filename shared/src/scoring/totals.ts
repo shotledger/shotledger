@@ -2,6 +2,8 @@
 // are computed, never stored. value_tenths is one integer storage for both
 // scoring modes (§3) — sums stay integer, dividing by 10 only at display time.
 
+import { volumeOfSeries } from './volume';
+
 export interface ScoredShot {
   valueTenths: number;
 }
@@ -98,10 +100,7 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
  * @Requirements SCORE_003
  */
 export function shotVolume(seriesList: readonly SeriesForResults[]): number {
-  return seriesList.reduce(
-    (count, series) => count + (series.totalOverride?.shotCount ?? series.shots.length),
-    0,
-  );
+  return seriesList.reduce((count, series) => count + volumeOfSeries(series), 0);
 }
 
 // --- Amendment A1 §A1.2: session-header stats ---

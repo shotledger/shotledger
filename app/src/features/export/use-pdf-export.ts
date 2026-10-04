@@ -8,8 +8,7 @@ import { buildShootingLogHtml, formatGroupAndClass, type PdfLogEntry } from '@sh
 import { db } from '@/db/client';
 import { getFirearm } from '@/db/queries/firearms';
 import { listSessions } from '@/db/queries/sessions';
-import { stationRoundsForSession } from '@/db/queries/falt';
-import { listScoredShotsForSession } from '@/db/queries/shots';
+import { totalVolumeRoundsFor } from '@/db/queries/volume';
 import { disciplineLabel } from '@/features/session/labels';
 
 export interface PdfExportFilters {
@@ -83,12 +82,11 @@ export function buildShootingLogHtmlForFilters(
   }));
 
   const firearm = filters.firearmId ? getFirearm(db, filters.firearmId) : null;
-  const totalShots = entries.reduce(
-    (sum, entry, i) =>
-      sum +
-      listScoredShotsForSession(db, sessions[i]!.id).length +
-      stationRoundsForSession(db, sessions[i]!.id),
-    0,
+  // Every shot fired, sighters and extra rounds included (#512): the same
+  // figure as Shots Logged, over the printed sessions.
+  const totalShots = totalVolumeRoundsFor(
+    db,
+    sessions.map((session) => session.id),
   );
 
   return buildShootingLogHtml(

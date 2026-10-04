@@ -55,7 +55,8 @@ export function filterFaltSessions(
       sessions.map((session) => ({
         ...session,
         extraRounds: 0,
-        stationRounds: 0,
+        stationCount: 0,
+        seriesLength: SHOTS_PER_STATION,
         scoresHits: true,
       })),
       filter,

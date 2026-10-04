@@ -742,6 +742,9 @@
     "componentsTitle": "Komponenter",
     "sessionsCount": "{{count}} pass",
     "flagsTitle": "Funktionsflaggor",
+    "driftTitle": "Avvikelse i skotträknare",
+    "driftSubtitle": "Skott i serier med bara totalsumma som räknaren aldrig fick. Rätta en räknare med Justera antal skott.",
+    "driftRounds": "{{count}} skott",
     "flagDevToolsTitle": "Utvecklarverktyg",
     "flagDevToolsSubtitle": "Demodata, rensningsknappen och den här skärmen. Sätts bara vid bygget."
   },
