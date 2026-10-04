@@ -18,12 +18,12 @@ describe('addLicense / latestLicense', () => {
     const original = addLicense(db, {
       firearmId,
       licenseNumber: 'A1',
-      validUntil: '2027-01-01T00:00:00.000Z',
+      validUntil: '2027-01-01',
     });
     const renewal = addLicense(db, {
       firearmId,
       licenseNumber: 'A2',
-      validUntil: '2029-01-01T00:00:00.000Z',
+      validUntil: '2029-01-01',
     });
     expect(listLicenses(db, firearmId)).toHaveLength(2);
     expect(latestLicense(db, firearmId)?.id).toBe(renewal.id);

@@ -29,35 +29,74 @@ describe('shouldNotifyMaintenanceDue', () => {
   });
 });
 
+// Reminders fire at local midnight; the expected instants are built with the
+// local Date constructor so they hold in whatever zone runs the tests.
+const localMidnight = (year: number, monthIndex: number, day: number) =>
+  new Date(year, monthIndex, day).toISOString();
+
 describe('licenseExpiryNotifications', () => {
-  const validUntil = '2027-01-01T00:00:00.000Z';
+  const validUntil = '2027-01-01';
 
   it('returns [] for tills vidare (null valid_until)', () => {
     expect(licenseExpiryNotifications(null)).toEqual([]);
   });
 
   it('returns all future lead-time reminders, computed from valid_until', () => {
-    const now = new Date('2026-01-01T00:00:00.000Z');
+    const now = new Date(2026, 0, 1);
     const result = licenseExpiryNotifications(validUntil, now);
     expect(result.map((r) => r.leadDays)).toEqual([90, 30, 7]);
-    expect(result[0]?.fireAt).toBe('2026-10-03T00:00:00.000Z'); // 90 days before
+  });
+
+  it('fires at local midnight of the day the lead time names, not UTC midnight', () => {
+    const now = new Date(2026, 0, 1);
+    expect(licenseExpiryNotifications(validUntil, now)).toEqual([
+      { leadDays: 90, fireAt: localMidnight(2026, 9, 3) },
+      { leadDays: 30, fireAt: localMidnight(2026, 11, 2) },
+      { leadDays: 7, fireAt: localMidnight(2026, 11, 25) },
+    ]);
+  });
+
+  it('counts lead times in calendar days across a DST change', () => {
+    // European summer time ends 2026-10-25: a 24-hour step back from
+    // 1 Nov would land an hour off midnight.
+    const now = new Date(2026, 8, 1);
+    expect(licenseExpiryNotifications('2026-11-01', now, [7, 30])).toEqual([
+      { leadDays: 7, fireAt: localMidnight(2026, 9, 25) },
+      { leadDays: 30, fireAt: localMidnight(2026, 9, 2) },
+    ]);
   });
 
   it('drops lead times that already lie in the past', () => {
-    const now = new Date('2026-12-20T00:00:00.000Z'); // 12 days before expiry
+    const now = new Date(2026, 11, 20); // 12 days before expiry
     const result = licenseExpiryNotifications(validUntil, now);
     expect(result.map((r) => r.leadDays)).toEqual([7]);
   });
 
+  it('drops a reminder whose instant is exactly now', () => {
+    const now = new Date(2026, 11, 25); // the 7-day reminder's instant
+    expect(licenseExpiryNotifications(validUntil, now)).toEqual([]);
+    const justBefore = new Date(now.getTime() - 1);
+    expect(licenseExpiryNotifications(validUntil, justBefore).map((r) => r.leadDays)).toEqual([7]);
+  });
+
   it('returns [] once every lead time has passed', () => {
-    const now = new Date('2026-12-31T23:00:00.000Z');
+    const now = new Date(2026, 11, 31, 23, 0);
     expect(licenseExpiryNotifications(validUntil, now)).toEqual([]);
   });
 
   it('honors a custom lead-time list', () => {
-    const now = new Date('2026-01-01T00:00:00.000Z');
-    const result = licenseExpiryNotifications(validUntil, now, [1]);
-    expect(result).toHaveLength(1);
-    expect(result[0]?.leadDays).toBe(1);
+    const now = new Date(2026, 0, 1);
+    expect(licenseExpiryNotifications(validUntil, now, [1])).toEqual([
+      { leadDays: 1, fireAt: localMidnight(2026, 11, 31) },
+    ]);
+  });
+
+  it.each([
+    ['an empty string', ''],
+    ['free text', 'next year'],
+    ['an impossible day', '2026-02-31'],
+    ['a full timestamp', '2027-01-01T00:00:00.000Z'],
+  ])('schedules nothing for %s', (_label, value) => {
+    expect(licenseExpiryNotifications(value, new Date(2026, 0, 1))).toEqual([]);
   });
 });

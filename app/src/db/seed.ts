@@ -1,5 +1,6 @@
 // Dev-only demo fixture (§3, M1). Invoked from the /dev debug route and by
 // Maestro flows later — never imported from production screens.
+import { localDayOf } from '../features/dates/local-day';
 import { addStation, type AddStationInput } from './queries/falt';
 import { addFirearmGroup } from './queries/firearm-groups';
 import { addLicense } from './queries/licenses';
@@ -46,8 +47,9 @@ function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * DAY_MS).toISOString();
 }
 
-function isoDaysFromNow(days: number): string {
-  return new Date(Date.now() + days * DAY_MS).toISOString();
+/** A license date as the app stores it: a bare local `YYYY-MM-DD`. */
+function licenseDayFromNow(days: number): string {
+  return localDayOf(new Date(Date.now() + days * DAY_MS).toISOString());
 }
 
 /**
@@ -106,8 +108,8 @@ export function seedDemoData(db: Database) {
     firearmId: sportPistol22.id,
     licenseNumber: 'DEMO-2024-0001',
     purpose: 'Målskjutning',
-    decidedOn: isoDaysAgo(200),
-    validUntil: isoDaysFromNow(900),
+    decidedOn: licenseDayFromNow(-200),
+    validUntil: licenseDayFromNow(900),
     authority: 'Polismyndigheten',
   });
   createSightSetting(db, {
@@ -141,8 +143,8 @@ export function seedDemoData(db: Database) {
     firearmId: sportPistol.id,
     licenseNumber: 'DEMO-2024-0002',
     purpose: 'Målskjutning',
-    decidedOn: isoDaysAgo(200),
-    validUntil: isoDaysFromNow(900), // ~30 months out
+    decidedOn: licenseDayFromNow(-200),
+    validUntil: licenseDayFromNow(900), // ~30 months out
     authority: 'Polismyndigheten',
   });
   createSightSetting(db, {
@@ -179,8 +181,8 @@ export function seedDemoData(db: Database) {
     firearmId: revolver.id,
     licenseNumber: 'DEMO-2024-0003',
     purpose: 'Målskjutning',
-    decidedOn: isoDaysAgo(1600),
-    validUntil: isoDaysFromNow(270), // ~9 months out — exercises "expires soon"
+    decidedOn: licenseDayFromNow(-1600),
+    validUntil: licenseDayFromNow(270), // ~9 months out — exercises "expires soon"
     authority: 'Polismyndigheten',
   });
   createSightSetting(db, {

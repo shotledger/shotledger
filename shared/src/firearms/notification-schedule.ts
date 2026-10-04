@@ -3,9 +3,9 @@
 // (app/src/platform/notifications.ts) is the only place that calls the
 // expo-notifications API; this module has no RN/Expo imports so it is fully
 // vitest-covered and testable without a device or emulator.
-import { LICENSE_EXPIRY_LEAD_DAYS, MAINTENANCE_RED_THRESHOLD } from './constants';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { LICENSE_EXPIRY_LEAD_DAYS } from './constants';
+import { parseLicenseDate } from './license-date';
+import { maintenanceStatus } from './maintenance-status';
 
 /**
  * Whether logging a new round count should trigger the "maintenance due"
@@ -18,9 +18,10 @@ export function shouldNotifyMaintenanceDue(
   nextRoundsSinceMaintenance: number,
   intervalRounds: number | null | undefined,
 ): boolean {
-  if (intervalRounds == null || intervalRounds <= 0) return false;
-  const threshold = intervalRounds * MAINTENANCE_RED_THRESHOLD;
-  return previousRoundsSinceMaintenance < threshold && nextRoundsSinceMaintenance >= threshold;
+  return (
+    maintenanceStatus(previousRoundsSinceMaintenance, intervalRounds) !== 'red' &&
+    maintenanceStatus(nextRoundsSinceMaintenance, intervalRounds) === 'red'
+  );
 }
 
 export interface LicenseExpiryNotification {
@@ -32,8 +33,10 @@ export interface LicenseExpiryNotification {
 /**
  * The set of license-expiry reminders (§4 M4: 90/30/7 days before
  * valid_until, VERIFY) that still lie in the future relative to `now` — a
- * license renewed or with a past lead time yields fewer/no entries. Returns
- * [] for `validUntil: null` (tills vidare — nothing to remind about).
+ * license renewed or with a past lead time yields fewer/no entries. Each
+ * fires at local midnight `leadDays` calendar days before valid_until.
+ * Returns [] for `validUntil: null` (tills vidare — nothing to remind about)
+ * and for a value that is not a `YYYY-MM-DD` date.
  */
 export function licenseExpiryNotifications(
   validUntil: string | null,
@@ -41,12 +44,14 @@ export function licenseExpiryNotifications(
   leadDaysList: readonly number[] = LICENSE_EXPIRY_LEAD_DAYS,
 ): readonly LicenseExpiryNotification[] {
   if (validUntil === null) return [];
-  const expiry = new Date(validUntil).getTime();
+  const lastDay = parseLicenseDate(validUntil);
+  if (lastDay === null) return [];
   const notifications: LicenseExpiryNotification[] = [];
   for (const leadDays of leadDaysList) {
-    const fireAtMs = expiry - leadDays * DAY_MS;
-    if (fireAtMs > now.getTime()) {
-      notifications.push({ leadDays, fireAt: new Date(fireAtMs).toISOString() });
+    // The Date constructor rolls a day below 1 into the previous month.
+    const fireAt = new Date(lastDay.year, lastDay.month - 1, lastDay.day - leadDays);
+    if (fireAt.getTime() > now.getTime()) {
+      notifications.push({ leadDays, fireAt: fireAt.toISOString() });
     }
   }
   return notifications;

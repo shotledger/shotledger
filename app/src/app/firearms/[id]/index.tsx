@@ -11,6 +11,7 @@ import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
+  parseLicenseDate,
   resolveActiveSightSetting,
   selectableWeaponGroups,
   shouldNotifyMaintenanceDue,
@@ -121,6 +122,11 @@ export default function FirearmDetailScreen() {
   const [validUntil, setValidUntil] = useState('');
   const [conditions, setConditions] = useState('');
   const [authority, setAuthority] = useState('');
+  // Empty is "tills vidare"; anything else must be a real YYYY-MM-DD, or the
+  // license would read expired and schedule no reminders.
+  const validUntilInvalid =
+    validUntil.trim() !== '' && parseLicenseDate(validUntil.trim()) === null;
+  const [licenseSaveAttempted, setLicenseSaveAttempted] = useState(false);
 
   const [scan, setScan] = useState<ScanState>({ status: 'idle' });
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
@@ -259,6 +265,7 @@ export default function FirearmDetailScreen() {
 
   async function onAddLicense() {
     if (!db) return;
+    if (validUntilInvalid) return setLicenseSaveAttempted(true);
     // The scan only ever fed the form; the image itself is not kept.
     const uri = scannedImageUri;
     if (uri) {
@@ -303,6 +310,7 @@ export default function FirearmDetailScreen() {
     setValidUntil('');
     setConditions('');
     setAuthority('');
+    setLicenseSaveAttempted(false);
     setShowAddLicense(false);
     resetScan();
     refresh();
@@ -999,6 +1007,11 @@ export default function FirearmDetailScreen() {
               placeholder="YYYY-MM-DD"
               testID="license-valid-until"
             />
+            {licenseSaveAttempted && validUntilInvalid ? (
+              <ThemedText type="small" themeColor="danger" testID="license-valid-until-error">
+                {t('firearms.validUntilInvalid')}
+              </ThemedText>
+            ) : null}
             <ThemedText type="small">{t('firearms.conditions')}</ThemedText>
             <TextField value={conditions} onChangeText={setConditions} />
             <ThemedText type="small">{t('firearms.authority')}</ThemedText>
