@@ -35,6 +35,7 @@ import {
   type NamedRecord,
 } from '@/features/stats/use-stats-data';
 import { ShotHeatmap } from '@/components/shot-heatmap';
+import { SessionTypeComparisonCard } from '@/features/stats/session-type-comparison-card';
 import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf } from '@/features/dates/local-day';
@@ -367,6 +368,10 @@ export default function StatsReportScreen() {
                   </View>
                 )}
               </Card>
+
+              {data.typeComparison.length > 0 && (
+                <SessionTypeComparisonCard rows={data.typeComparison} />
+              )}
 
               <Card>
                 <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>

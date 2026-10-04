@@ -16,6 +16,7 @@ import {
   analyticsReportSet,
   analyticsSessionPoints,
   compareRecentSeries,
+  compareSessionTypes,
   faltReportTotals,
   faltSessionPoints,
   filterFaltSessions,
@@ -32,6 +33,7 @@ import {
   type AnalyticsTotals,
   type FaltReportTotals,
   type FaltSessionPoint,
+  type SessionTypeComparison,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -255,6 +257,8 @@ export interface AnalyticsReportData {
    * empty, and an empty card reads as a result of zero.
    */
   showRingCards: boolean;
+  /** Training vs competition (#570); only with the Type filter on All. */
+  typeComparison: SessionTypeComparison[];
 }
 
 const EMPTY_TOTALS: AnalyticsTotals = {
@@ -285,6 +289,7 @@ const EMPTY_REPORT: AnalyticsReportData = {
   tagNames: [],
   falt: null,
   showRingCards: true,
+  typeComparison: [],
 };
 
 function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
@@ -345,6 +350,7 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
         : { totals: faltReportTotals(faltMatched), points: faltSessionPoints(faltMatched) },
     showRingCards:
       state.disciplineId === null || getDiscipline(state.disciplineId)?.scoring !== 'hits',
+    typeComparison: state.sessionType === null ? compareSessionTypes(matched, scope) : [],
   };
 }
 
