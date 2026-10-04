@@ -52,6 +52,12 @@ export default function SettingsScreen() {
           testID="settings-open-personal"
         />
         <DrillDownRow
+          title={t('settings.trackingTitle')}
+          subtitle={t('settings.trackingRowSubtitle')}
+          onPress={() => router.push('/settings/tracking')}
+          testID="settings-open-tracking"
+        />
+        <DrillDownRow
           title={t('regulations.settingsRowTitle')}
           subtitle={activeRegulationSummary}
           onPress={() => router.push('/regulations')}

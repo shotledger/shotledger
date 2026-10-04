@@ -3,7 +3,7 @@
 // edit route — lot-vs-lot comparison stays v3, so a form is the whole screen.
 import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getAmmoLot, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
+import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 
 function numberOrNull(value: string): number | null {
@@ -36,6 +37,7 @@ export default function AmmoLotDetailScreen() {
   const [quantity, setQuantity] = useState(lot?.quantity != null ? String(lot.quantity) : '');
   const [purchasedOn, setPurchasedOn] = useState(lot?.purchasedOn ?? '');
   const [isHandload, setIsHandload] = useState(lot?.isHandload === 1);
+  const tracked = useMemo(() => readTrackedInputs(db), []);
   const [brand, setBrand] = useState(lot?.brand ?? '');
   const [product, setProduct] = useState(lot?.product ?? '');
   const [lotNumber, setLotNumber] = useState(lot?.lotNumber ?? '');
@@ -115,10 +117,13 @@ export default function AmmoLotDetailScreen() {
           onChangeText={setPurchasedOn}
           maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
         />
-        <View style={styles.switchRow}>
-          <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
-          <Switch value={isHandload} onValueChange={setIsHandload} />
-        </View>
+        {/* Hidden by What I Track (#569) unless this lot already is one. */}
+        {(tracked.handloads || lot?.isHandload === 1) && (
+          <View style={styles.switchRow}>
+            <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
+            <Switch value={isHandload} onValueChange={setIsHandload} />
+          </View>
+        )}
       </Card>
 
       {!isHandload && (

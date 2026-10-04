@@ -156,6 +156,12 @@ is marked as its default, the app asks rather than guessing.
 You can still correct either one afterwards: editing a session shows whatever it
 has stored.
 
+**If you never use them**, switch them off in **Settings → What I Track**. With
+**I Compete in Weapon Groups** off, a competition takes its weapon group from
+the firearm exactly as training does. With **I Record My Class** off, it records
+no class. Sessions that already have a weapon group or class keep it, and still
+show it.
+
 **Practice has no weapon group.** A weapon group is how SPSF sorts guns into
 competition classes, so it means nothing on a practice session that belongs to
 no federation. The app asks you for the gun instead, and the gun carries its own

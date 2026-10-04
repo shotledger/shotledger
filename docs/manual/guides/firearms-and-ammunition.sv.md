@@ -67,6 +67,10 @@ laddning, tändhatt, hylsa, patronens totallängd och crimp. Det finns där för
 att en laddning som sköt bra ska gå att göra om, och en som inte gjorde det ska
 gå att känna igen.
 
+Laddar du aldrig själv stänger du av **Inställningar → Vad jag registrerar →
+Jag handladdar**, så försvinner reglaget Handladdning och receptet ur
+ammunitionsformuläret. En sats som redan är en handladdning behåller dem.
+
 ### Power factor och mynningsenergi
 
 Ange kulvikt och mynningshastighet så visar appen båda:

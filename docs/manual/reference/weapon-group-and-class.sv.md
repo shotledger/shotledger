@@ -150,6 +150,12 @@ pistolskyttemärket fortsätter räkna dina träningsserier — och det registre
 ingen klass. Om ett vapen ligger i flera vapengrupper och ingen av dem är
 markerad som dess standard frågar appen i stället för att gissa.
 
+**Om du aldrig använder dem** stänger du av dem under **Inställningar → Vad jag
+registrerar**. Med **Jag tävlar i vapengrupper** avstängt tar en tävling
+vapengruppen från vapnet, precis som träning gör. Med **Jag registrerar min
+klass** avstängt registrerar den ingen klass. Pass som redan har en vapengrupp
+eller klass behåller den och visar den fortfarande.
+
 Du kan alltid rätta endera i efterhand: när du redigerar ett pass visas det som
 finns sparat.
 
