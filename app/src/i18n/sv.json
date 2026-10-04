@@ -1090,7 +1090,6 @@
     "cornerRingRequired": "Välj först vilken ring punkterna ligger på under Ring du markerar.",
     "plotMode": "Plot",
     "heatmapMode": "Värmekarta",
-    "zoomHint": "Nyp eller dubbeltryck för att zooma. Dra med ett finger för att panorera när du zoomat in.",
     "undo": "Ångra",
     "deselect": "Klar",
     "suggesting": "Letar efter hål…",

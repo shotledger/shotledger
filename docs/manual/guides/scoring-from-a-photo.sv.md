@@ -88,7 +88,9 @@ på knappsatsen. **⋮ → Redigera pass** ändrar svaret i efterhand (**Fråga*
    provserie.
 6. **Titta på den senare.** Markeringarna och träffbildens siffror följer med
    fotot. Öppna fotot från serien så ser du markeringarna utritade på tavlan,
-   med siffrorna under. [Passrapporten](logging-a-session.md#passrapport)
+   med siffrorna under; nyp eller dubbeltryck för att zooma, som när du
+   markerar. **⋮ → Poängsätt från det här fotot** markerar det på nytt.
+   [Passrapporten](logging-a-session.md#passrapport)
    samlar alla seriers tavlor och siffror på en sida att skriva ut eller dela.
 
 ## Att få ett bra foto

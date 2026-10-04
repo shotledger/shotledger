@@ -155,8 +155,8 @@ delmoment C som träningspass: fyra serier, ingen provserie och egen statistik.
 ## Foton
 
 Vilken serie som helst kan bära ett foto av sin tavla. En serie med foto visar
-en kameraikon; tryck på den för att se bilden, och därifrån kan du räkna serien
-ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
+en kameraikon; tryck på den för att se bilden. Där räknar **⋮ → Poängsätt från
+det här fotot** serien ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
 
 Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där du
 kan filtrera på gren, vapen och vapengrupp.
