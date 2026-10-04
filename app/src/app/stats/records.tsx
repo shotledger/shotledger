@@ -24,6 +24,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { formatSessionDate } from '@/features/home/format-session-date';
 import { disciplineLabel } from '@/features/session/labels';
+import { formatFaltResult } from '@/features/session/format-falt-result';
 import { useWebshooterRecords, type FaltPbRow } from '@/features/webshooter/use-webshooter-records';
 import { Spacing } from '@/theme/tokens';
 
@@ -153,11 +154,7 @@ export default function WebshooterRecordsScreen() {
                 testID={`records-falt-${row.groupKey}`}
                 title={faltGroupLabel(row)}
                 subtitle={`${row.sessionName} · ${formatSessionDate(row.startedAt, i18n.language)}`}
-                value={
-                  row.mode === 'poangfalt'
-                    ? t('session.poangfaltTotal', { points: row.points })
-                    : t('session.faltTotal', { hits: row.hits, figures: row.figuresHit })
-                }
+                value={formatFaltResult(t, { ...row, poangfaltPoints: row.points })}
                 onPress={() =>
                   router.push({ pathname: '/session/[id]', params: { id: row.sessionId } })
                 }

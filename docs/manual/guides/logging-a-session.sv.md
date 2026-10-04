@@ -68,7 +68,8 @@ Varje station är sex skott, och du noterar två tal — träffar, och hur mång
 figurer träffarna hamnade i. Fem träff i tre figurer skrivs **5/3**: du
 missade ett skott, eller satte två i samma figur. Passets resultat visar
 "26 träff i 22 figurer", eller en summa i poängfält, där varje träff ger en
-poäng och varje träffad figur ytterligare en.
+poäng och varje träffad figur ytterligare en. Hem och passlistan visar
+resultatet på samma sätt.
 
 Där arrangören satt ut en **ringad figur** slår du på _Ringad figur_ och
 noterar poängen du fick och vad figuren var värd. Fältskjutning har inget

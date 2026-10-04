@@ -34,6 +34,7 @@ import {
   type SessionListFilter,
 } from '@/features/sessions/session-filters';
 import { useSessionsList } from '@/features/sessions/use-sessions-list';
+import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
 
@@ -248,9 +249,7 @@ export default function SessionsListScreen() {
             title={item.name}
             subtitle={[
               formatSessionDate(item.startedAt, i18n.language),
-              item.falt
-                ? t('session.faltTotal', { hits: item.falt.hits, figures: item.falt.figuresHit })
-                : formatSessionTotal(item.total),
+              item.falt ? formatFaltResult(t, item.falt) : formatSessionTotal(item.total),
               item.seriesAverage === null ? null : formatSeriesAverage(item.seriesAverage),
               item.seriesAverage === null ? null : `${item.innerTenCount}X`,
             ]

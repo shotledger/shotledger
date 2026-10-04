@@ -28,6 +28,7 @@ import {
   type SessionShapeFilter,
 } from '@/features/home/home-session-row';
 import { useHomeData } from '@/features/home/use-home-data';
+import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Radius, Spacing } from '@/theme/tokens';
 
 const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
@@ -159,10 +160,7 @@ export default function HomeScreen() {
                   subtitle={[
                     formatSessionDate(session.startedAt, i18n.language),
                     session.falt
-                      ? t('session.faltTotal', {
-                          hits: session.falt.hits,
-                          figures: session.falt.figuresHit,
-                        })
+                      ? formatFaltResult(t, session.falt)
                       : formatSessionTotal(session.total),
                     // Average and inner-ten count are omitted, never printed
                     // as 0/NaN, when the session has nothing scored yet
