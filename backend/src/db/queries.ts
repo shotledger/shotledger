@@ -187,3 +187,16 @@ export async function applyPushChange(
 
   return { clientChangeId: change.clientChangeId, status: 'applied', seq: row.seq };
 }
+
+/** Applies one push request's changes in array order; one ack per change. */
+export async function applyPush(
+  db: Db,
+  userId: string,
+  changes: ClientChange[],
+): Promise<PushAck[]> {
+  const acks: PushAck[] = [];
+  for (const change of changes) {
+    acks.push(await applyPushChange(db, userId, change));
+  }
+  return acks;
+}
