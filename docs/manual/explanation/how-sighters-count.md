@@ -22,7 +22,8 @@ Two things do not move:
 
 - **Shots Logged** always includes sighters, in both positions. You fired those
   rounds whatever you called the series, and the figure has to match your
-  firearm's round counter and your ammunition use.
+  firearm's round counter, your ammunition use and the shooting log — see [How
+  shots fired are counted](how-shots-are-counted.md).
 - The **guldserie** count always counts a sighter, in either position. A 50 on a
   sighting series earns the märke exactly like any other series, so the filter
   has no say in it.

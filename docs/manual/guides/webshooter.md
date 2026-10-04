@@ -63,7 +63,8 @@ a result. Signing up is not the same as shooting: a no-show or a DNF leaves an
 entry and nothing to import, so those are not offered.
 
 Precision and milsnabb come in as one total per series; Webshooter does not
-keep the individual shots. Fältskjutning and poängfält come in **station by
+keep the individual shots. Each series still counts its shots as fired — in
+Shots Logged, the ammunition lot and the firearm's round counter. Fältskjutning and poängfält come in **station by
 station** — hits, figures hit and any poängmål points, with shoot-off stations
 kept but left out of the total — and show as the result mode the competition
 used. A fält result whose station numbers could not have happened, such as

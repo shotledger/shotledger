@@ -46,8 +46,9 @@ goda skäl, och appen känner dem inte.
 
 Till ett vapen samlas:
 
-- **Skottantal**, från de pass du loggar på det. Raderar du ett pass räknas
-  dess skott bort igen.
+- **Skottantal**, från de pass du loggar på det — varje avlossat skott, räknat
+  [på samma sätt överallt](../explanation/how-shots-are-counted.md). Raderar du
+  ett pass räknas dess skott bort igen.
 - **Underhåll** — rengöringar och utfört arbete, med skottantalet vid
   tillfället.
 - **Siktesinställningar**, med namn, så att "inomhus 25 m" och "fält ute" blir

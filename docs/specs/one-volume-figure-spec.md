@@ -169,4 +169,17 @@ Options — the maintainer's call (hard rule 8 permits rewriting rows pre-1.0):
 
 ## Revisions
 
-- (none yet)
+- **2026-10-04, during implementation.**
+  - Setup plan: `scripts/mutate-volume.mjs` added — `app/src` is outside
+    Stryker's scope, so the app half of the rule gets on-disk manual mutants
+    (same contract as `scripts/mutate-schema.mjs`).
+  - A8 widened: assigning the firearm also credits a fält import's stations,
+    which were written before the firearm was set and so were never counted.
+  - Test edits beyond U7, each a consequence of a scenario above:
+    `webshooter.test.ts` "assigns the chosen firearm…" expects 40, not 5 (A8:
+    seven total-only series of five plus five sighter rounds);
+    `falt.test.ts` V2 asks `sessionVolumeRounds` instead of
+    `stationRoundsForSession`, same numbers — that helper and
+    `countAllStationRounds` were removed, so six-per-station lives only in
+    `sessionVolume`; `analytics-sessions.test.ts` passes `stationCount: 2/3`
+    where it passed `stationRounds: 12/18` (U7's rename).

@@ -106,6 +106,7 @@ plugins:
             Regulations: Reglementen
             How license activity is counted: Så räknas skjutaktiviteten
             How sighters count: Hur provserier räknas
+            How shots fired are counted: Hur avlossade skott räknas
             What photo scoring does: Vad fotoräkningen gör
             What the group figures mean: Vad träffbildens siffror betyder
             How the app finds the holes: Hur appen hittar hålen
@@ -136,6 +137,7 @@ nav:
       - Regulations: explanation/regulations.md
       - How license activity is counted: explanation/license-activity.md
       - How sighters count: explanation/how-sighters-count.md
+      - How shots fired are counted: explanation/how-shots-are-counted.md
       - What photo scoring does: explanation/photo-scoring.md
       - What the group figures mean: explanation/group-figures.md
       - How the app finds the holes: explanation/how-holes-are-found.md

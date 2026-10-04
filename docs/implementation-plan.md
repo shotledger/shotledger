@@ -804,6 +804,13 @@ disciplines via PR once public.
       the shooting log, the import preview — counts six per station; the
       Sessions list shows a fält result instead of `0p`. There is no CSV
       export left to extend (#170 replaced it).
+- [x] **One volume figure** (#512, spec:
+      `docs/specs/one-volume-figure-spec.md`). Every rounds-fired figure —
+      Shots Logged, ammo lot usage, the firearm counters, the reports, the
+      import preview and the shooting log — is a sum of one per-session
+      count: shots with sighters, a total-only series' stored shot count,
+      extra rounds and six per station. Counters stored before it are not
+      rewritten; the spec lists the options.
 - [x] **Fält statistics and personal bests** (#315 PR 2 layer B, same
       spec). The report gets a Fältskjutning card — stations, hits, figures
       hit, hit rate, hits per station over time — and drops the ring cards

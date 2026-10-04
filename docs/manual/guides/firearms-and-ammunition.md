@@ -46,8 +46,9 @@ you may have a good reason, and the app does not know it.
 
 A firearm accumulates:
 
-- **Round count**, from the sessions you log against it. Deleting a session
-  backs its rounds out again.
+- **Round count**, from the sessions you log against it — every shot fired,
+  counted [the same way everywhere](../explanation/how-shots-are-counted.md).
+  Deleting a session backs its rounds out again.
 - **Maintenance** — cleanings and work done, with the round count at the time.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
