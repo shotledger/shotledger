@@ -11,6 +11,17 @@ entry is deleted with it; git keeps the history.
 
 ## Decision
 
+**`@testing-library/react-native@14.0.1`** (MIT) with its required peer
+**`test-renderer@1.2.0`** (MIT) — 2026-10-04, app dev dependencies so
+hooks and components can be tested under jest-expo (`renderHook`, `act`).
+v14 is the line built for React 19; it renders through `test-renderer`, a
+small `react-reconciler` host. `test-renderer` is pinned to 1.2.0 because
+it is the release on `react-reconciler@0.33` (React 19.2); 1.3.0 moved to
+0.34 (React 19.3). Neither reaches the bundle. Rejected:
+**`react-test-renderer`**, deprecated under React 19 and what RNTL v13
+needs; and **plain jest with no hook harness**, which leaves every hook
+untested because a hook only runs inside a rendered component.
+
 **`@reqstool/reqstool-typescript-tags@0.3.0`** (MIT) and
 **`jest-junit@17.0.0`** (Apache-2.0) — 2026-09-21, dev dependencies for
 requirement↔test traceability; see ADR 0015. Neither reaches the bundle.
