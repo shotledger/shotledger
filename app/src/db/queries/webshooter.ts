@@ -31,8 +31,8 @@ import {
   updateSession,
 } from './sessions';
 import { getSetting, setSetting } from './settings';
-import { applyRoundCountDelta, setSessionExtraRounds } from './round-count';
-import { sessionVolumeRounds, withSessionVolumeDelta } from './volume';
+import { setSessionExtraRounds } from './round-count';
+import { withSessionVolumeDelta } from './volume';
 
 // --- §A.8 classname -> weapon_group/shooter_class, with the settings cache ---
 
@@ -335,13 +335,8 @@ export function importResultRow(
     // field: never overwriting one the user already picked (§A.3's
     // "never clobber a user-entered value" rule extends to this write too).
     if (session && !session.firearmId) {
+      // Also moves the rounds already written above onto it (#512).
       updateSession(db, sessionId, { firearmId: options.applySighterRoundsForFirearmId });
-      // The rounds already written above were fired with it too (#512).
-      applyRoundCountDelta(
-        db,
-        options.applySighterRoundsForFirearmId,
-        sessionVolumeRounds(db, sessionId),
-      );
     }
     const roundsCount = countDistinctRounds(row);
     const currentExtra = session?.extraRounds ?? 0;

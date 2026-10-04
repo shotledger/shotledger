@@ -31,7 +31,8 @@ figurskjutning and helmatch, six for fält.
 ## Firearm counters and older imports
 
 A firearm's counters are kept as running totals: logging, editing or deleting
-a session moves them by the difference it makes. A series saved as a
+a session moves them by the difference it makes. Picking another firearm for
+a session moves its shots from the old firearm to the new one. A series saved as a
 total only, from Webshooter or ShotLog, only started counting in this version,
 so a firearm whose sessions include such a series from before it reads lower
 than the sessions add up to. Correct it once with **Adjust Round Count** on the

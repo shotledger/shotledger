@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { addSeries, getSeries } from './series';
-import { createSession, getSession } from './sessions';
+import { createSession, getSession, updateSession } from './sessions';
 import { createFirearm, getFirearm } from './firearms';
 import { listShotsForSeries } from './shots';
 import {
@@ -236,5 +236,78 @@ describe('applyRoundCountDelta', () => {
 
   it('returns undefined for an unknown firearm', () => {
     expect(applyRoundCountDelta(db, 'missing', 5)).toBeUndefined();
+  });
+});
+
+describe('updateSession — changing the firearm moves the rounds (#564)', () => {
+  function sessionWithRounds(firearmId: string | null) {
+    const session = createSession(db, {
+      name: 'Test',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId,
+      startedAt: new Date().toISOString(),
+    });
+    const s = addSeries(db, { sessionId: session.id, position: 1 });
+    saveSeriesShots(db, s.id, [shot(90), shot(90), shot(90)]);
+    // A total-only series counts too: its stored five shots.
+    addSeries(db, {
+      sessionId: session.id,
+      position: 2,
+      isTotalOverride: true,
+      totalOverrideTenths: 450,
+      totalOverrideShotCount: 5,
+    });
+    setSessionExtraRounds(db, session.id, 2);
+    return session;
+  }
+
+  function counters(id: string) {
+    const f = getFirearm(db, id);
+    return [f?.roundCount, f?.roundsSinceMaintenance];
+  }
+
+  it('takes the rounds off the old firearm and puts them on the new one', () => {
+    const oldFirearm = createFirearm(db, { make: 'Pardini', model: 'K22' });
+    const newFirearm = createFirearm(db, { make: 'Walther', model: 'GSP' });
+    const session = sessionWithRounds(oldFirearm.id);
+    // saveSeriesShots and setSessionExtraRounds moved 3 + 2; addSeries does
+    // not move a counter, so the total-only series' 5 are added by hand.
+    applyRoundCountDelta(db, oldFirearm.id, 5);
+    expect(counters(oldFirearm.id)).toEqual([10, 10]);
+
+    updateSession(db, session.id, { firearmId: newFirearm.id });
+
+    expect(counters(oldFirearm.id)).toEqual([0, 0]);
+    expect(counters(newFirearm.id)).toEqual([10, 10]);
+  });
+
+  it('only takes them off when the firearm is cleared', () => {
+    const firearm = createFirearm(db, { make: 'Pardini', model: 'K22' });
+    const session = sessionWithRounds(firearm.id);
+    applyRoundCountDelta(db, firearm.id, 5);
+
+    updateSession(db, session.id, { firearmId: null });
+
+    expect(counters(firearm.id)).toEqual([0, 0]);
+  });
+
+  it('only puts them on when a session gets its first firearm', () => {
+    const firearm = createFirearm(db, { make: 'Pardini', model: 'K22' });
+    const session = sessionWithRounds(null);
+
+    updateSession(db, session.id, { firearmId: firearm.id });
+
+    expect(counters(firearm.id)).toEqual([10, 10]);
+  });
+
+  it('moves nothing when the firearm is saved unchanged or not in the patch', () => {
+    const firearm = createFirearm(db, { make: 'Pardini', model: 'K22' });
+    const session = sessionWithRounds(firearm.id);
+
+    updateSession(db, session.id, { firearmId: firearm.id, name: 'Renamed' });
+    updateSession(db, session.id, { name: 'Again' });
+
+    expect(counters(firearm.id)).toEqual([5, 5]);
   });
 });
