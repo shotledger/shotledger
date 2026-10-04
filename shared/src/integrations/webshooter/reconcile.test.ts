@@ -1,4 +1,7 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+
+import { localDayOf } from '../../dates';
 import {
   buildExternalRef,
   classifyMergeField,
@@ -79,39 +82,41 @@ describe('nameSimilarity', () => {
 });
 
 describe('findHeuristicCandidates', () => {
+  // Built with the local Date constructor so the local day holds in any zone.
+  const midMorning = new Date(2026, 5, 13, 11).toISOString();
   const existing = [
     {
       id: 'a',
       externalRef: null,
-      date: '2026-06-13T09:00:00.000Z',
+      startedAt: midMorning,
       eventName: 'KM Precision C',
       weaponGroup: 'spsf:C',
     },
     {
       id: 'b-already-linked',
       externalRef: 'webshooter:1:1',
-      date: '2026-06-13T09:00:00.000Z',
+      startedAt: midMorning,
       eventName: 'KM Precision C',
       weaponGroup: 'spsf:C',
     },
     {
       id: 'c-different-day',
       externalRef: null,
-      date: '2026-06-14T09:00:00.000Z',
+      startedAt: new Date(2026, 5, 14, 11).toISOString(),
       eventName: 'KM Precision C',
       weaponGroup: 'spsf:C',
     },
     {
       id: 'd-different-weapon-group',
       externalRef: null,
-      date: '2026-06-13T09:00:00.000Z',
+      startedAt: midMorning,
       eventName: 'KM Precision C',
       weaponGroup: 'spsf:A',
     },
     {
       id: 'e-unrelated-name',
       externalRef: null,
-      date: '2026-06-13T09:00:00.000Z',
+      startedAt: midMorning,
       eventName: 'Vårtävling Militär snabbmatch',
       weaponGroup: 'spsf:C',
     },
@@ -154,6 +159,60 @@ describe('findHeuristicCandidates', () => {
       minNameSimilarity: nameSimilarity(candidate.eventName, existing[0]!.eventName),
     });
     expect(atThreshold.map((s) => s.id)).toContain('a');
+  });
+});
+
+describe('findHeuristicCandidates — the local day of startedAt', () => {
+  const candidate = { date: '2026-06-13', eventName: 'KM Precision C', weaponGroup: 'spsf:C' };
+  const session = (id: string, startedAt: Date) => ({
+    id,
+    externalRef: null,
+    startedAt: startedAt.toISOString(),
+    eventName: 'KM Precision C',
+    weaponGroup: 'spsf:C',
+  });
+
+  it('matches a session shot just after local midnight, which is the previous UTC day east of Greenwich', () => {
+    const existing = [
+      session('just-after-midnight', new Date(2026, 5, 13, 0, 30)),
+      session('just-before-midnight', new Date(2026, 5, 13, 23, 30)),
+      session('the-night-before', new Date(2026, 5, 12, 23, 30)),
+      session('the-night-after', new Date(2026, 5, 14, 0, 30)),
+    ];
+    expect(findHeuristicCandidates(existing, candidate).map((s) => s.id)).toEqual([
+      'just-after-midnight',
+      'just-before-midnight',
+    ]);
+  });
+
+  it('ignores a time after the competition date', () => {
+    const existing = [session('a', new Date(2026, 5, 13, 11))];
+    const timed = { ...candidate, date: '2026-06-13 09:00:00' };
+    expect(findHeuristicCandidates(existing, timed).map((s) => s.id)).toEqual(['a']);
+  });
+
+  it('matches exactly what the old caller-converts path matched', () => {
+    // Before: listHeuristicMatchCandidates converted startedAt with the local-day
+    // helper and the matcher sliced that day. Now the matcher converts the instant.
+    const viaOldPath = (startedAt: string, day: string) =>
+      localDayOf(startedAt).slice(0, 10) === day;
+    const minMs = new Date(2024, 0, 1).getTime();
+    const maxMs = new Date(2030, 11, 31).getTime();
+    fc.assert(
+      fc.property(
+        fc.integer({ min: minMs, max: maxMs }),
+        fc.integer({ min: -36, max: 36 }),
+        (ms, hourShift) => {
+          const startedAt = new Date(ms).toISOString();
+          const day = localDayOf(new Date(ms + hourShift * 3_600_000).toISOString());
+          const matched = findHeuristicCandidates([session('s', new Date(ms))], {
+            ...candidate,
+            date: day,
+          });
+          expect(matched.length === 1).toBe(viaOldPath(startedAt, day));
+        },
+      ),
+    );
   });
 });
 

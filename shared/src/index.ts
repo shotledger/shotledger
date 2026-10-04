@@ -15,6 +15,7 @@ export * from './scoring/coaching';
 export * from './scoring/falt';
 export * from './scoring/falt-analytics';
 export * from './scoring/volume';
+export * from './dates';
 export * from './disciplines';
 export * from './firearms';
 export * from './ammo';

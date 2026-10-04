@@ -3,6 +3,8 @@
 // circuits to merge; heuristic candidates are always surfaced for user
 // confirmation, never auto-merged.
 
+import { localDayOf } from '../../dates';
+
 // --- §5.1 external ref -------------------------------------------------------
 
 export function buildExternalRef(
@@ -31,12 +33,14 @@ export function findExactMatch<T extends ExactMatchSessionInput>(
 export interface HeuristicSessionInput {
   id: string;
   externalRef: string | null;
-  date: string;
+  /** The session's stored UTC instant; matched on the local day it falls on. */
+  startedAt: string;
   eventName: string;
   weaponGroup: string;
 }
 
 export interface HeuristicCandidateInput {
+  /** The competition's `YYYY-MM-DD` day; a trailing time is ignored. */
   date: string;
   eventName: string;
   weaponGroup: string;
@@ -87,10 +91,6 @@ export function nameSimilarity(a: string, b: string): number {
   return 1 - levenshteinDistance(normalizedA, normalizedB) / maxLength;
 }
 
-function toCalendarDay(dateIso: string): string {
-  return dateIso.slice(0, 10);
-}
-
 /**
  * Sessions with no `externalRef` (heuristic only applies to pre-feature
  * manual sessions, §A.2), matching calendar day + weapon group exactly and
@@ -103,11 +103,11 @@ export function findHeuristicCandidates<T extends HeuristicSessionInput>(
   options: HeuristicMatchOptions = {},
 ): T[] {
   const minNameSimilarity = options.minNameSimilarity ?? DEFAULT_MIN_NAME_SIMILARITY;
-  const candidateDay = toCalendarDay(candidate.date);
+  const candidateDay = candidate.date.slice(0, 10);
 
   return existingSessions.filter((session) => {
     if (session.externalRef !== null) return false;
-    if (toCalendarDay(session.date) !== candidateDay) return false;
+    if (localDayOf(session.startedAt) !== candidateDay) return false;
     if (session.weaponGroup !== candidate.weaponGroup) return false;
     return nameSimilarity(session.eventName, candidate.eventName) >= minNameSimilarity;
   });

@@ -2,7 +2,7 @@ import {
   isCaliberPreset,
   isLoadSystemCode,
   licenseStatus,
-  parseLicenseDate,
+  parseLocalDay,
 } from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -80,7 +80,7 @@ describe('seedDemoData', () => {
     for (const model of ['AW93', 'Tactical Sport 2 Orange', 'MR73 Sport']) {
       const license = latestLicense(db, firearmByModel(model).id)!;
       for (const value of [license.decidedOn, license.validUntil]) {
-        expect(parseLicenseDate(value!), `${model}: ${value}`).not.toBeNull();
+        expect(parseLocalDay(value!), `${model}: ${value}`).not.toBeNull();
       }
       expect(licenseStatus(license.validUntil), model).toBe('valid');
     }

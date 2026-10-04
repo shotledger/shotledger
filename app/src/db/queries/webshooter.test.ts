@@ -4,7 +4,7 @@
 // docs/specs/webshooter-core-spec.md §0 and docs/specs/webshooter-app-spec.md.
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ResultRow } from '@shotledger/shared/src/integrations/webshooter';
-import { localCalendarDay } from '@shotledger/shared/src/integrations/webshooter/competition-dates';
+import { localDayOf } from '@shotledger/shared/src/dates';
 
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
@@ -203,6 +203,22 @@ describe('classifyResultRow', () => {
     });
     const candidate = classifyResultRow(db, resultRow(), COMPETITION);
     expect(candidate.verdict.kind).toBe('probable-match');
+  });
+
+  it('matches a manual session on its local day, and reports that day, when shot just after local midnight', () => {
+    const { id } = createSession(db, {
+      name: 'KM Precision (manual entry)',
+      type: 'competition',
+      disciplineId: 'spsf-precision',
+      competitionName: 'KM Precision',
+      weaponGroup: 'spsf:C',
+      startedAt: new Date(2026, 4, 10, 0, 30).toISOString(),
+    });
+    const candidate = classifyResultRow(db, resultRow(), COMPETITION);
+    expect(candidate.verdict).toEqual({
+      kind: 'probable-match',
+      candidates: [{ id, eventName: 'KM Precision', date: '2026-05-10' }],
+    });
   });
 });
 
@@ -408,7 +424,7 @@ describe('importResultRow — re-import field-level merge (§A.3)', () => {
       program: PRECISION,
       linkToSessionId: first.sessionId,
     });
-    expect(localCalendarDay(getSession(db, first.sessionId)!.startedAt)).toBe('2026-05-11');
+    expect(localDayOf(getSession(db, first.sessionId)!.startedAt)).toBe('2026-05-11');
   });
 
   it('never clobbers enrichment fields that were empty and then locally filled between two re-imports', () => {

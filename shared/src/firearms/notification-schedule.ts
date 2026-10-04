@@ -4,7 +4,7 @@
 // expo-notifications API; this module has no RN/Expo imports so it is fully
 // vitest-covered and testable without a device or emulator.
 import { LICENSE_EXPIRY_LEAD_DAYS, LICENSE_EXPIRY_REMINDER_HOUR } from './constants';
-import { parseLicenseDate } from './license-date';
+import { parseLocalDay } from '../dates';
 import { maintenanceStatus } from './maintenance-status';
 
 /**
@@ -44,7 +44,7 @@ export function licenseExpiryNotifications(
   leadDaysList: readonly number[] = LICENSE_EXPIRY_LEAD_DAYS,
 ): readonly LicenseExpiryNotification[] {
   if (validUntil === null) return [];
-  const lastDay = parseLicenseDate(validUntil);
+  const lastDay = parseLocalDay(validUntil);
   if (lastDay === null) return [];
   const notifications: LicenseExpiryNotification[] = [];
   for (const leadDays of leadDaysList) {

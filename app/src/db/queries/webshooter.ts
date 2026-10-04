@@ -18,7 +18,7 @@ import {
   type DisciplineProgramIds,
   type ResultRow,
 } from '@shotledger/shared/src/integrations/webshooter';
-import { competitionDayStartIso } from '@shotledger/shared/src/integrations/webshooter/competition-dates';
+import { localDayOf, localDayStartIso } from '@shotledger/shared/src/dates';
 
 import type { Database } from '../types';
 import { addStation, listStationsForSession, softDeleteStation } from './falt';
@@ -152,7 +152,11 @@ export function classifyResultRow(
       ...base,
       verdict: {
         kind: 'probable-match',
-        candidates: heuristic.map((c) => ({ id: c.id, eventName: c.eventName, date: c.date })),
+        candidates: heuristic.map((c) => ({
+          id: c.id,
+          eventName: c.eventName,
+          date: localDayOf(c.startedAt),
+        })),
       },
     };
   }
@@ -286,7 +290,7 @@ export function importResultRow(
       // §A.3's SCORE_BEARING_FIELDS includes competitionDate — the
       // session's startedAt is that field's DB column, always overwritten
       // on re-import (a Webshooter date correction, however rare).
-      startedAt: competitionDayStartIso(competition.date),
+      startedAt: localDayStartIso(competition.date),
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
       // disciplineId/programId/type are intentionally not in
@@ -304,7 +308,7 @@ export function importResultRow(
       competitionName: competition.name,
       weaponGroup: classMapping.weaponGroup,
       shooterClass: classMapping.shooterClass,
-      startedAt: competitionDayStartIso(competition.date),
+      startedAt: localDayStartIso(competition.date),
       externalSource: 'webshooter',
       externalRef,
       externalSyncedAt: new Date().toISOString(),
