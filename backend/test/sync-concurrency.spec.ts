@@ -333,6 +333,18 @@ describe('C7 a rejected change consumes no seq', () => {
   });
 });
 
+describe('C9 a stale retry never overwrites a newer edit', () => {
+  it('replaying an applied change after another device edited the row acks duplicate and changes nothing', async () => {
+    await applyPush(db(), USER, [live(1, 'r1', 'A')]);
+    await applyPush(db(), USER, [live(2, 'r1', 'B')]);
+    const before = await snapshot();
+
+    const [retry] = await applyPush(db(), USER, [live(1, 'r1', 'A')]);
+    expect(retry).toStrictEqual({ clientChangeId: cid(1), status: 'duplicate', seq: 1 });
+    expect(await snapshot()).toBe(before);
+  });
+});
+
 describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
   const app = new Hono<{ Bindings: Env }>();
   app.route(

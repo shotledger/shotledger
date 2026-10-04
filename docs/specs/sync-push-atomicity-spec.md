@@ -166,6 +166,11 @@ Feature: concurrent pushes to one account converge
   Scenario: C8 concurrent HTTP pushes converge (stress, supplementary)
     Given two devices on u, each with 10 rounds of Promise.all pushes and pulls over rows r1..r3
     Then each device's applied pulls equal a fresh full pull at the end
+
+  Scenario: C9 a stale retry never overwrites a newer edit (added in revision 6)
+    Given c1 {r1 "A"} applied at seq 1 and c2 {r1 "B"} applied at seq 2
+    When c1 {r1 "A"} is pushed again
+    Then it acks duplicate@1 and every sync table is unchanged
 ```
 
 C1–C4 are RED against `main` (shown in §1). C6 and C7 are RED on `main`
@@ -320,3 +325,10 @@ Decisions: Q1 keep server-order LWW (ADR 0003); Q2 nothing is deployed, so
 the design must hold on the Free plan (revision 4), and a batch is one call
 to D1; Q3 no istanbul, keep the mutation-script substitute. Both wire
 changes are accepted.
+
+2026-10-04, during implementation:
+
+6. §4: added C9. The mutant "a duplicate rewrites the row" (`NOT_DUP`
+   dropped from statement 3) survived C1–C8, because no scenario replayed a
+   change after another one had edited the row. C9 passes on `main` too
+   and is regression armor; that mutant is its RED.
