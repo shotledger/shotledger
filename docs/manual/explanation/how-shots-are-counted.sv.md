@@ -23,15 +23,16 @@ station lägger aldrig till något till din poäng — se [Hur provserier
 räknas](how-sighters-count.md) — men skotten gick ändå genom vapnet och ur
 ammunitionsasken.
 
-## När appen inte vet
+## När inget antal skott sparades
 
-En serie importerad från ShotLog är en summa utan antal skott, så appen vet
-inte hur många skott det var. Den räknar **inga** i stället för att gissa. Lägg
-in skotten som extraskott på passet om du vill att de ska räknas.
+En serie importerad från ShotLog är en summa utan antal skott. Den räknas som
+en hel serie i sin gren: fem skott för precision, milsnabb, figurskjutning och
+helmatch, sex för fält.
 
 ## Vapnets räknare och äldre importer
 
 Ett vapens räknare förs som löpande summor: att logga, ändra eller ta bort ett
-pass flyttar dem med den skillnad det gör. En serie importerad från Webshooter
-började räknas först i den här versionen, så ett vapen vars pass har en sådan
-serie från tidigare visar lägre än vad passen summerar till.
+pass flyttar dem med den skillnad det gör. En serie som bara sparats som en
+summa, från Webshooter eller ShotLog, började räknas först i den här versionen,
+så ett vapen vars pass har en sådan serie från tidigare visar lägre än vad
+passen summerar till. Rätta det en gång med **Justera antal skott** på vapnet.

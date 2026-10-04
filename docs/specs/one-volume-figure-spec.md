@@ -1,7 +1,7 @@
 # One volume figure — spec
 
-Status: **not approved** — written in an autonomous run (2026-10-04); the
-maintainer reviews it after the fact. Issue #512. Stacks on #543 (#511).
+Status: **approved** by the maintainer on 2026-10-04, after the code, with
+the rulings under Revisions. Issue #512. Stacked on #543 (#511), since merged.
 
 ## Why
 
@@ -145,8 +145,11 @@ added to a counter. Two consequences:
   rule. A WebShooter import sets a firearm only through the sighter-rounds
   option, so the drift is bounded by those imports.
 
-- Deleting or re-importing one of those old series now backs out rounds that
-  were never added, so the counter drops below its true value (clamped at 0).
+- Deleting one of those old series now backs out rounds that were never
+  added, so the counter drops below its true value (clamped at 0). A
+  re-import moves the counter only by the change in the series' counts: an
+  identical re-import moves 0, and only one whose counts fell backs out
+  rounds that were never added.
 
 Options — the maintainer's call (hard rule 8 permits rewriting rows pre-1.0):
 
@@ -183,3 +186,46 @@ Options — the maintainer's call (hard rule 8 permits rewriting rows pre-1.0):
     `countAllStationRounds` were removed, so six-per-station lives only in
     `sessionVolume`; `analytics-sessions.test.ts` passes `stationCount: 2/3`
     where it passed `stationRounds: 12/18` (U7's rename).
+- **2026-10-04, maintainer's rulings (spec approved).**
+  - **No stored shot count means the discipline's series length, not 0.** A
+    total-only series with no `total_override_shot_count` (ShotLog) counts as
+    its discipline's `defaultSeriesLength` — 5 for precision, milsnabb,
+    figurskjutning and helmatch, 6 for fält — everywhere volume is counted.
+    This supersedes "contributes **0**" under The rule and in U2.
+    - Shape: `VolumeSeries` gains `totalOnly`; `seriesVolume(series,
+seriesLength)` and `VolumeSession.seriesLength` take the length as an
+      input, so `volume.ts` stays pure. `totalOnlyShotCount(stored, length)`
+      is the one resolution; a length that is not a positive integer throws
+      `RangeError` when a series needs it. `disciplineSeriesLength(id)`
+      (`shared/src/disciplines`) reads the definition; an id this build does
+      not know gets 5, as a new session would. The session's own
+      `series_length` and the program's are not consulted.
+    - The scoring modules' series shape carries resolved counts. A ShotLog
+      series still has no `totalOverride`, so every score statistic leaves
+      it out as before (N2); the statistics loader sets the new
+      `volumeOnlyShotCount` instead, which only volume reads.
+      `AnalyticsSession` gains `seriesLength`.
+    - The session screen's hard-coded `?? 5` (`use-session-detail.ts`)
+      uses `totalOnlyShotCount` with the discipline's length.
+    - The JSON import preview and apply share `importedSessionVolume`.
+    - Test edits: U1 adds a total-only series with no count (44 → 49); U2's
+      "no stored count is 0" becomes "is the series length"; A1 expects 5,
+      not 0, for its count-less series; `AnalyticsSession` fixtures carry
+      `seriesLength`.
+    - New scenarios: **A10** a count-less total-only series counts 5 on a
+      precision session and 6 on a fält one, in volume and in the
+      statistics' volume but in no score; deleting one from a
+      firearm-linked fält session backs out 6. **U9**
+      `disciplineSeriesLength` per discipline, 5 for an unknown id.
+  - **Counters already stored: option 2, no migration.** The maintainer
+    corrects each counter once with Adjust Round Count. **B1**
+    `firearmCounterDrift` (`app/src/db/queries/volume.ts`) reads, per live
+    firearm, the rounds of every live total-only series on its live sessions
+    by the new rule, and writes nothing; the `/dev` screen lists it under
+    _Round Counter Drift_. The manual's firearms guide points at Adjust
+    Round Count.
+  - The re-import consequence above is reworded: it holds only when the
+    series' counts changed.
+  - Known gap: the ShotLog import (a `/dev` tool) never moved a firearm
+    counter and still does not, so a firearm-linked ShotLog import now adds
+    to the drift.

@@ -22,15 +22,17 @@ station never adds to your score — see [How sighters
 count](how-sighters-count.md) — but its rounds still went through the gun and
 out of the ammunition box.
 
-## When the app does not know
+## When no shot count was saved
 
-A series imported from ShotLog is a total with no shot count, so the app does
-not know how many shots it was. It counts **none** rather than guess. Add the
-rounds as extra rounds on that session if you want them counted.
+A series imported from ShotLog is a total with no shot count. It counts as one
+full series of its discipline: five shots for precision, milsnabb,
+figurskjutning and helmatch, six for fält.
 
 ## Firearm counters and older imports
 
 A firearm's counters are kept as running totals: logging, editing or deleting
-a session moves them by the difference it makes. A series imported from
-Webshooter only started counting in this version, so a firearm whose sessions
-include such a series from before it reads lower than the sessions add up to.
+a session moves them by the difference it makes. A series saved as a
+total only, from Webshooter or ShotLog, only started counting in this version,
+so a firearm whose sessions include such a series from before it reads lower
+than the sessions add up to. Correct it once with **Adjust Round Count** on the
+firearm.

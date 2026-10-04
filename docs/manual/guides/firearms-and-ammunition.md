@@ -48,7 +48,8 @@ A firearm accumulates:
 
 - **Round count**, from the sessions you log against it — every shot fired,
   counted [the same way everywhere](../explanation/how-shots-are-counted.md).
-  Deleting a session backs its rounds out again.
+  Deleting a session backs its rounds out again. **Adjust Round Count** on the
+  firearm corrects a counter that is off.
 - **Maintenance** — cleanings and work done, with the round count at the time.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
