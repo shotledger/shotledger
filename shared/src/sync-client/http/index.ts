@@ -173,10 +173,7 @@ export function createAccountApi(config: HttpClientConfig) {
     /** GDPR delete. `dryRun` returns the counts without deleting anything. */
     async deleteAccount(dryRun = false): Promise<Record<string, number>> {
       const json = await postJson(config, '/account/delete', { dryRun });
-      return ((json as { deleted?: Record<string, number> }).deleted ?? {}) as Record<
-        string,
-        number
-      >;
+      return (json as { deleted?: Record<string, number> }).deleted ?? {};
     },
   };
 }

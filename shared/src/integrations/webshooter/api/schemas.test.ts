@@ -203,9 +203,7 @@ describe('wire schema round-trips (synthetic fixtures)', () => {
       fixtureResultsResponse([
         {
           ...fixtureResultRow(),
-          results: [
-            { ...fixtureStationResult(), station_figure_hits: value as unknown as number[] },
-          ],
+          results: [{ ...fixtureStationResult(), station_figure_hits: value }],
         },
       ]),
     );

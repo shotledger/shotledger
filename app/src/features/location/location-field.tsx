@@ -81,7 +81,7 @@ export function LocationField({ value, onChange, onlineEnabled, language }: Loca
           accessibilityRole="button"
           testID="location-use-my-location"
           disabled={rangeState.status === 'locating'}
-          onPress={findRanges}
+          onPress={() => void findRanges()}
           style={[
             styles.pill,
             styles.locateButton,

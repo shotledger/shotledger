@@ -141,7 +141,7 @@ export function useFaltTimer(settings: FaltTimerSettings): UseFaltTimerResult {
   const teardown = useCallback(() => {
     stopInterval();
     stopSpeaking();
-    deactivateKeepAwake(KEEP_AWAKE_TAG);
+    void deactivateKeepAwake(KEEP_AWAKE_TAG);
   }, [stopInterval]);
 
   useEffect(() => {
@@ -170,7 +170,7 @@ export function useFaltTimer(settings: FaltTimerSettings): UseFaltTimerResult {
     if (next.kind === 'done') {
       stopInterval();
       setIsRunning(false);
-      deactivateKeepAwake(KEEP_AWAKE_TAG);
+      void deactivateKeepAwake(KEEP_AWAKE_TAG);
     }
   }, [playCues, stopInterval]);
 

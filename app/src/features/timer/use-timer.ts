@@ -106,7 +106,7 @@ export function useTimer(setup: TimerSetup, prompts: TimerPrompts): UseTimerResu
     lastWindowRef.current = null;
     void listener?.stop();
     stopSpeaking();
-    deactivateKeepAwake(KEEP_AWAKE_TAG);
+    void deactivateKeepAwake(KEEP_AWAKE_TAG);
   }, []);
 
   useEffect(() => {

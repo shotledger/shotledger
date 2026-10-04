@@ -31,7 +31,7 @@ async function post(path: string, rawBody: string) {
   const ctx = createExecutionContext();
   const response = await app.fetch(request, env, ctx);
   await waitOnExecutionContext(ctx);
-  return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+  return { status: response.status, body: await response.json<Record<string, unknown>>() };
 }
 
 const send = (path: string, body: unknown) => post(path, JSON.stringify(body));

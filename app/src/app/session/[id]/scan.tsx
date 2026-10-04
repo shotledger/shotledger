@@ -821,12 +821,12 @@ export default function ScanScreen() {
             </ThemedText>
             <PrimaryButton
               label={t('photoScoring.capture')}
-              onPress={() => onCapture('camera')}
+              onPress={() => void onCapture('camera')}
               testID="scan-camera"
             />
             <PrimaryButton
               label={t('photoScoring.pickFromLibrary')}
-              onPress={() => onCapture('library')}
+              onPress={() => void onCapture('library')}
               testID="scan-library"
             />
           </Card>

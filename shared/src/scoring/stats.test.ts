@@ -212,7 +212,7 @@ describe('sessionTrend', () => {
 });
 
 describe('per-series score math', () => {
-  const fiveShots = (perShotTenths: number) => Array(5).fill(shot(perShotTenths));
+  const fiveShots = (perShotTenths: number) => Array.from({ length: 5 }, () => shot(perShotTenths));
 
   it('averages series totals, not shot values', () => {
     // 45p and 43p (in tenths) — mean 44.0p, which is what the session
@@ -368,7 +368,8 @@ describe('compareRecentSeries', () => {
   it('compares series scores, not shot values, at series level', () => {
     // Four 5-shot series: two old at 40p, two recent at 45p. The per-shot
     // mean moves 80 -> 90 tenths; the per-series mean moves 400 -> 450.
-    const fiveShots = (perShotTenths: number) => Array(5).fill(shot(perShotTenths));
+    const fiveShots = (perShotTenths: number) =>
+      Array.from({ length: 5 }, () => shot(perShotTenths));
     const four = [80, 80, 90, 90].map((v, i) =>
       series({
         id: `p${i}`,

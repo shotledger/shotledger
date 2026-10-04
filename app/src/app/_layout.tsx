@@ -12,7 +12,7 @@ import '@/i18n';
 import { purgeRemovedVaultStorage } from '@/platform/vault-purge';
 import { AppSettingsProvider } from '@/state/app-settings';
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 // Hosts the (tabs) group inside a Stack alongside modal-stacked session
 // routes and dev routes — fixes the M1-reported gap where non-tab routes

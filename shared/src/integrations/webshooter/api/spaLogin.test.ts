@@ -213,6 +213,7 @@ describe('discoverPublishedClientSecret', () => {
     // React Native's fetch is not the only thing that can reject here, and a
     // rejection carrying a bare string must still produce a readable detail
     // rather than "[object Object]" or an empty string.
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- a non-Error rejection is the case under test
     const fetchImpl = vi.fn(() => Promise.reject('offline')) as unknown as typeof fetch;
 
     await expect(discoverPublishedClientSecret(fetchImpl, SITE)).resolves.toEqual({
@@ -242,6 +243,7 @@ describe('discoverPublishedClientSecret', () => {
 
   it('keeps a non-Error body-read rejection readable too', async () => {
     const fetchImpl = vi.fn(() =>
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- a non-Error rejection is the case under test
       Promise.resolve({ ok: true, status: 200, text: () => Promise.reject('aborted') }),
     ) as unknown as typeof fetch;
 
@@ -296,9 +298,10 @@ describe('createSpaLoginClient', () => {
     });
 
     const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
-    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe(
-      'rotated-secret',
-    );
+    expect(
+      (JSON.parse((calls[1]![1] as { body: string }).body) as { client_secret: string })
+        .client_secret,
+    ).toBe('rotated-secret');
   });
 
   it('falls back to a configured secret when the page cannot be read', async () => {
@@ -311,7 +314,10 @@ describe('createSpaLoginClient', () => {
     }).login({ username: 'a', password: 'b' });
 
     const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
-    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe('test-secret');
+    expect(
+      (JSON.parse((calls[1]![1] as { body: string }).body) as { client_secret: string })
+        .client_secret,
+    ).toBe('test-secret');
   });
 
   it('prefers the published secret over a stale configured one', async () => {
@@ -324,9 +330,10 @@ describe('createSpaLoginClient', () => {
     }).login({ username: 'a', password: 'b' });
 
     const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
-    expect(JSON.parse((calls[1]![1] as { body: string }).body).client_secret).toBe(
-      'published-secret',
-    );
+    expect(
+      (JSON.parse((calls[1]![1] as { body: string }).body) as { client_secret: string })
+        .client_secret,
+    ).toBe('published-secret');
   });
 
   it('never sends credentials when it has no secret at all, and says why', async () => {

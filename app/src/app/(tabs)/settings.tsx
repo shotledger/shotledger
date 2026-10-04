@@ -130,7 +130,7 @@ export default function SettingsScreen() {
         <ListRow
           title={t('settings.supportDevelopment')}
           subtitle={t('settings.supportSubtitle')}
-          onPress={() => Linking.openURL(SUPPORT_URL)}
+          onPress={() => void Linking.openURL(SUPPORT_URL)}
           testID="settings-support-development"
         />
         <DrillDownRow

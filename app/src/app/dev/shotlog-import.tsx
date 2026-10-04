@@ -40,7 +40,12 @@ function encodeRole(role: ShotlogTagRole): string {
       return `discipline|${role.disciplineId}`;
     case 'weapon-group':
       return `group|${role.weaponGroup}|${role.shooterClass ?? ''}`;
-    default:
+    case 'ignore':
+    case 'competition':
+    case 'sighter':
+    case 'final':
+    case 'dnf':
+    case 'firearm':
       return role.kind;
   }
 }

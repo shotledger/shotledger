@@ -246,9 +246,7 @@ class PhotoDevice {
     try {
       if (entry.kind === 'upload') {
         const bytes = this.files.get(entry.localUri!)!;
-        await this.device
-          .photoApi()
-          .upload(entry.photoId, bytes.slice().buffer as ArrayBuffer, 'image/jpeg');
+        await this.device.photoApi().upload(entry.photoId, bytes.slice().buffer, 'image/jpeg');
         // The marker swap is a local write, so it syncs like any other edit.
         const row = this.device.get('series', entry.photoId)!;
         this.device.write('series', {
@@ -523,6 +521,7 @@ describe('I11 photos end to end through the photo queue', () => {
     expect(photosB.actions).toEqual([
       {
         type: 'giveUp',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- vitest types asymmetric matchers as `any`
         id: expect.any(String),
         attempts: MAX_PHOTO_ATTEMPTS,
         lastError: 'http_404',

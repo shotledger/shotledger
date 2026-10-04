@@ -17,7 +17,7 @@ export function detectDeviceLanguage(): SupportedLanguage {
 }
 
 if (!i18next.isInitialized) {
-  i18next.use(initReactI18next).init({
+  void i18next.use(initReactI18next).init({
     resources: {
       en: { translation: en },
       sv: { translation: sv },

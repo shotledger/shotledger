@@ -126,7 +126,7 @@ export default function ShareCardScreen() {
 
       <PrimaryButton
         label={sharing ? t('share.sharing') : t('share.share')}
-        onPress={onShare}
+        onPress={() => void onShare()}
         disabled={sharing}
         testID="share-card-share"
       />

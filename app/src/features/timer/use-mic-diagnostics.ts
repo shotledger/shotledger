@@ -58,7 +58,7 @@ export function useMicDiagnostics() {
       void listener?.stop();
       // Leaving the screen must not leave the phone awake for the rest of
       // the day.
-      deactivateKeepAwake(KEEP_AWAKE_TAG);
+      void deactivateKeepAwake(KEEP_AWAKE_TAG);
     },
     [],
   );
@@ -107,7 +107,7 @@ export function useMicDiagnostics() {
     const listener = listenerRef.current;
     listenerRef.current = null;
     await listener?.stop();
-    deactivateKeepAwake(KEEP_AWAKE_TAG);
+    void deactivateKeepAwake(KEEP_AWAKE_TAG);
     setRecording(false);
   }, []);
 

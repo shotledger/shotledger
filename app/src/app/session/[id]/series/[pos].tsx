@@ -228,7 +228,7 @@ export default function SeriesEntryScreen() {
 
       <PrimaryButton
         label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
-        onPress={onAttachPhoto}
+        onPress={() => void onAttachPhoto()}
         testID="attach-photo"
       />
 

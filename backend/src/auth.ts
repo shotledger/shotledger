@@ -13,11 +13,11 @@ export interface Authenticator {
 // Trusts the bearer token verbatim as the user id — test fixtures only
 // (`backend/test/sync.spec.ts`); never mount it in the Worker.
 export const devBearerAuthenticator: Authenticator = {
-  async authenticate(request: Request): Promise<string | null> {
+  authenticate(request: Request): Promise<string | null> {
     const header = request.headers.get('authorization');
-    if (!header?.startsWith('Bearer ')) return null;
+    if (!header?.startsWith('Bearer ')) return Promise.resolve(null);
     const token = header.slice('Bearer '.length).trim();
-    return token.length > 0 ? token : null;
+    return Promise.resolve(token.length > 0 ? token : null);
   },
 };
 
