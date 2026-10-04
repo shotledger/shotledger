@@ -34,6 +34,19 @@ function authHeaders(token: string) {
   return { authorization: `Bearer ${token}` };
 }
 
+async function userIdOf(token: string): Promise<string> {
+  const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
+  const { user } = (await session.json()) as { user: { id: string } };
+  return user.id;
+}
+
+async function rateLimitRowCount(userId: string): Promise<number> {
+  const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM rate_limit_windows WHERE user_id = ?')
+    .bind(userId)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
 function bytes(n: number): Uint8Array {
   return new Uint8Array(n).fill(1);
 }
@@ -132,14 +145,23 @@ describe('account deletion', () => {
   it('A3 deleting user A does not touch user B rows', async () => {
     const tokenA = await signUp('a3-a@example.com');
     const tokenB = await signUp('a3-b@example.com');
+    const userIdA = await userIdOf(tokenA);
+    const userIdB = await userIdOf(tokenB);
     await upload(tokenA, 'photo-a3-a', bytes(10));
     await upload(tokenB, 'photo-a3-b', bytes(10));
+    // Each upload consumed a rate-limit window: both users now own a row.
+    expect(await rateLimitRowCount(userIdA)).toBe(1);
+    expect(await rateLimitRowCount(userIdB)).toBe(1);
 
     await fetchApp('/account/delete', {
       method: 'POST',
       headers: { ...authHeaders(tokenA), 'content-type': 'application/json' },
       body: JSON.stringify({ dryRun: false }),
     });
+
+    // A's rate-limit windows go with the account; B's stay.
+    expect(await rateLimitRowCount(userIdA)).toBe(0);
+    expect(await rateLimitRowCount(userIdB)).toBe(1);
 
     const bStillWorks = await fetchApp('/photos/photo-a3-b', { headers: authHeaders(tokenB) });
     expect(bStillWorks.status).toBe(200);

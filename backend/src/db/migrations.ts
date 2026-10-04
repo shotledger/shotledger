@@ -19,7 +19,8 @@ interface D1Migration {
  * `cloudflare:test`) takes exactly this shape. The `.sql` file under
  * `backend/migrations/` is the copy `wrangler d1 migrations apply` will use
  * once this backend is actually deployed (out of scope for this task) and
- * must be kept in lock-step with the statements below.
+ * must be kept in lock-step with the statements below
+ * (test/migrations-drift.spec.ts checks it).
  */
 export const SYNC_MIGRATIONS: D1Migration[] = [
   {

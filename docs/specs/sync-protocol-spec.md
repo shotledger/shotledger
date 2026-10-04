@@ -123,6 +123,10 @@ payload: unknown nullable, deletedAt: string nullable, updatedAt: string
   — it is never compared to decide merge outcomes (§3).
 - `PushRequestSchema` — `{ protocolVersion, changes: ClientChange[] }`,
   1–500 entries (batch cap; a client with more changes calls push again).
+  The route also caps each change's `payload` at `MAX_PAYLOAD_BYTES`
+  (16 KiB of UTF-8 `JSON.stringify` output): one change over it refuses the
+  whole request with `413 { error: 'payload_too_large', clientChangeId }`
+  before anything is written.
 - `PushAckSchema` — `{ clientChangeId: uuid, status: 'applied' |
 'rejected' | 'duplicate', seq?: positive int, reason?: string }`.
   `rejected` is what the ADR calls a "server-authoritative rejection"

@@ -134,7 +134,7 @@ createAuth(c.env).handler(c.req.raw))` — better-auth's own handler serves
     `photos` row first (best-effort, outside the batch — a missing R2
     object does not abort the rest; an already-partially-deleted account
     must still finish), then `photos`/`sync_rows`/`sync_sequence`/
-    `sync_idempotency`/`quota` rows, then the better-auth `session`/
+    `sync_idempotency`/`quota`/`rate_limit_windows` rows, then the better-auth `session`/
     `account`/`user` rows, all `WHERE user_id = ?` (`user` by `id`).
     **Revised from the original draft** (see `## Revisions`): rather than
     calling `auth.api.deleteUser` for the `user` row, `session`/`account`/
@@ -395,8 +395,8 @@ secret`, never committed, provisioned by the maintainer.
 
 ## 9. Known limits (declared, not hidden)
 
-- `rate_limit_windows` rows are never pruned (§6b) — acceptable growth rate,
-  flagged for a future cleanup task.
+- `rate_limit_windows` rows are never pruned (§6b), except by account
+  deletion (§3) — acceptable growth rate, flagged for a future cleanup task.
 - `WorkersBindingRateLimiter` (the production-binding implementation) has no
   automated test — the binding cannot be constructed in the vitest pool.
   Manual smoke test against a real `wrangler dev` deployment is the

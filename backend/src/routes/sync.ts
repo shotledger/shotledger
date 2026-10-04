@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import {
   checkProtocolVersion,
+  MAX_PAYLOAD_BYTES,
   PROTOCOL_VERSION,
   PullRequestSchema,
   PushRequestSchema,
@@ -78,6 +79,24 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     const versionCheck = checkProtocolVersion(parsed.data.protocolVersion);
     if (!versionCheck.ok) {
       return c.json(versionCheck.error, 409);
+    }
+
+    // Checked for the whole batch before any write, so a refusal stores nothing.
+    const encoder = new TextEncoder();
+    const oversized = parsed.data.changes.find(
+      (change) =>
+        change.payload !== null &&
+        encoder.encode(JSON.stringify(change.payload)).byteLength > MAX_PAYLOAD_BYTES,
+    );
+    if (oversized) {
+      return c.json(
+        {
+          error: 'payload_too_large',
+          clientChangeId: oversized.clientChangeId,
+          maxPayloadBytes: MAX_PAYLOAD_BYTES,
+        },
+        413,
+      );
     }
 
     const db = createDb(c.env.DB);

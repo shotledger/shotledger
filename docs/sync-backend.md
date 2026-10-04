@@ -86,7 +86,7 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   `Authorization: Bearer <sessionToken>` (from the `set-auth-token`
   response header on sign-up/sign-in) instead of relying on cookies.
   Account deletion (`POST /account/delete`) is a hand-written cascade over
-  `sync_rows`/`photos`/`quota`/`session`/`account`/`user`, not
+  `sync_rows`/`photos`/`quota`/`rate_limit_windows`/`session`/`account`/`user`, not
   `auth.api.deleteUser` (which gates on an email-verification flow this
   backend has no provider for) — see spec §3 and its Revisions entry.
 - **Photos on R2**, keyed `${userId}/${photoId}`. Size cap, quota, and rate

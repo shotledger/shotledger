@@ -18,6 +18,13 @@ export const PULL_PAGE_SIZE = 200;
 export const PUSH_BATCH_MAX = 500;
 
 /**
+ * Max UTF-8 bytes of one change's `JSON.stringify(payload)` on push. The
+ * fullest app row is ~2.6 KB; 12 tables x PULL_PAGE_SIZE rows at this cap
+ * keeps a pull response near 38 MiB, inside the Worker's 128 MB.
+ */
+export const MAX_PAYLOAD_BYTES = 16_384;
+
+/**
  * Tables that follow the id/updated_at/deleted_at sync convention
  * (docs/implementation-plan.md §3). `settings` and `session_tags` are
  * deliberately excluded — see spec §1.
