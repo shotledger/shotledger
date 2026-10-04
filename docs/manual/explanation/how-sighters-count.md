@@ -37,3 +37,24 @@ Two things do not move:
 
 The **Sighters** filter on the [Statistics
 tab](../guides/statistics.md) is where you choose between the two.
+
+## Does the sighter predict the match?
+
+The report's **Sighter and Result** card puts each competition's sighter next
+to its match: one dot per competition, the sighter's average per shot across
+and the match's average per shot up. Finals are left out of the match, because
+only the top shooters shoot one. An ISSF match's stage sighters are pooled.
+Training sessions are left out, and so are competitions without a sighter.
+
+Each discipline gets its own card, because a milsnabb shot and a precision shot
+average differently and mixing them would invent a relation. Under 10
+competitions the card only says how many more it needs. From 10 it gives
+Pearson's correlation **r**, from −1 to 1, and puts it in words. Under 0.1 the
+sighter says little about the match. From 0.1 the relation is weak, from 0.3
+moderate and from 0.5 strong. These are the usual rule-of-thumb cut-offs.
+
+It shows whether the two **go together**, not that one **causes** the other. A
+good day, the weather or the range can lift both the sighter and the match.
+
+The card ignores the **Sighters** filter: the sighter is what it measures, and
+the match never includes it.

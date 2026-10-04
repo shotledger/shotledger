@@ -56,6 +56,11 @@ any open picker closed.
   training. Like is compared with like: one table per discipline and series
   length, and only where both training and competition have series. It counts
   the same series as the rest of the report, so the sighter setting applies.
+- **Sighter and Result**, unless **Session Type** is _Training_: each
+  competition's sighter against its match, one dot per competition and one
+  card per discipline. From 10 competitions it says whether a better sighter
+  goes with a better match, and how strongly. See
+  [How sighters count](../explanation/how-sighters-count.md#does-the-sighter-predict-the-match).
 - **Where Your Shots Land**, when sessions in the report were scored from a
   photo: their holes on one heat map, with a line on whether the points you
   lose are mostly a sight adjustment or mostly spread. See

@@ -24,6 +24,7 @@ import {
   goldSeriesCount,
   sampleStandardDeviationTenths,
   scoredShots,
+  sighterRelation,
   tenthsToScore,
   volumeOfSeries,
   type AnalyticsFilter,
@@ -34,6 +35,7 @@ import {
   type FaltReportTotals,
   type FaltSessionPoint,
   type SessionTypeComparison,
+  type SighterRelation,
 } from '@shotledger/shared';
 
 import { db } from '@/db/client';
@@ -259,6 +261,8 @@ export interface AnalyticsReportData {
   showRingCards: boolean;
   /** Training vs competition (#570); only with the Type filter on All. */
   typeComparison: SessionTypeComparison[];
+  /** Sighter vs competition result per discipline (#573); none with Training picked. */
+  sighterRelation: SighterRelation[];
 }
 
 const EMPTY_TOTALS: AnalyticsTotals = {
@@ -290,6 +294,7 @@ const EMPTY_REPORT: AnalyticsReportData = {
   falt: null,
   showRingCards: true,
   typeComparison: [],
+  sighterRelation: [],
 };
 
 function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
@@ -351,6 +356,7 @@ function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
     showRingCards:
       state.disciplineId === null || getDiscipline(state.disciplineId)?.scoring !== 'hits',
     typeComparison: state.sessionType === null ? compareSessionTypes(matched, scope) : [],
+    sighterRelation: state.sessionType === 'training' ? [] : sighterRelation(matched),
   };
 }
 

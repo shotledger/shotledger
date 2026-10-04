@@ -55,6 +55,11 @@ det, med eventuell öppen väljare stängd.
   Lika jämförs med lika: en tabell per gren och serielängd, och bara där både
   träning och tävling har serier. Den räknar samma serier som resten av
   rapporten, så inställningen för provserier gäller.
+- **Provserie och resultat**, utom när **Typ av pass** står på _Träning_:
+  varje tävlings provserie mot dess match, en punkt per tävling och ett kort
+  per gren. Från 10 tävlingar säger det om en bättre provserie hänger ihop med
+  en bättre match, och hur starkt. Se
+  [Hur provserier räknas](../explanation/how-sighters-count.md#forutsager-provserien-matchen).
 - **Var dina skott hamnar**, när pass i rapporten räknats från foto: deras hål
   på en värmekarta, med en rad om huruvida poängen du tappar mest är en
   siktjustering eller mest spridning. Se
