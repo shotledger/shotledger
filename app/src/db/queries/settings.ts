@@ -45,6 +45,11 @@ export const SETTINGS_KEYS = {
   // local-only: target photos are personal data under hard rule 7, so consent
   // here is consent to keep labels ON THIS DEVICE, not to send anything.
   photoTrainingConsent: 'photoTrainingConsent',
+  // Settings → Optional Fields (#569). Each hides an input the shooter never
+  // uses; stored values stay and still show. All on by default.
+  trackHandloads: 'trackHandloads',
+  trackWeaponGroups: 'trackWeaponGroups',
+  trackShooterClass: 'trackShooterClass',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

@@ -63,6 +63,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
+import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { TagSelect } from '@/features/tags/tag-select';
 import { Spacing } from '@/theme/tokens';
 
@@ -159,6 +160,7 @@ export default function NewSessionScreen() {
   const router = useRouter();
 
   const [type, setType] = useState<SessionType>('training');
+  const tracked = useMemo(() => readTrackedInputs(db), []);
   const [kind, setKind] = useState<SessionKind>('series');
   // One regelverk at a time (maintainer, 2026-09-12: pick the regulation
   // first). With a single one enabled it is not a choice, so the picker stays
@@ -247,7 +249,11 @@ export default function NewSessionScreen() {
   // rather than asking. Klass and event are entry classifications with no
   // meaning outside a competition, so they are simply not recorded.
   const isCompetition = type === 'competition';
-  const derivedGroup = isCompetition ? null : derivedWeaponGroup(firearmId);
+  // Settings → Optional Fields can switch the competition pickers off; the
+  // weapon group then comes from the gun exactly as in training (#569).
+  const asksGroup = isCompetition && tracked.weaponGroups;
+  const asksClass = isCompetition && tracked.shooterClass;
+  const derivedGroup = asksGroup ? null : derivedWeaponGroup(firearmId);
   // The one case training still asks: a gun IS chosen but sits in several
   // groups with no tie broken. Nulling it there would cost the shooter their
   // märke count on a gun the app knows about. With no firearm chosen there is
@@ -255,8 +261,8 @@ export default function NewSessionScreen() {
   // otherwise "training does not ask for a vapengrupp" would be false for
   // every session that has not picked a gun yet, which is most of them.
   const showGroupPicker =
-    groups.length > 0 && (isCompetition || (firearmId !== null && derivedGroup === null));
-  const showClassPicker = allClasses.length > 0 && isCompetition;
+    groups.length > 0 && (asksGroup || (firearmId !== null && derivedGroup === null));
+  const showClassPicker = allClasses.length > 0 && asksClass;
   const showEventPicker = events.length > 0 && isCompetition;
 
   const firearms = useMemo(() => (db ? listFirearms(db) : []), []);
@@ -330,8 +336,8 @@ export default function NewSessionScreen() {
       competitionLevel: type === 'competition' ? level : null,
       isChampionship: type === 'competition' && isChampionship,
       competitionName: type === 'competition' && competitionName ? competitionName : null,
-      weaponGroup: isCompetition ? weaponGroup : (derivedGroup ?? weaponGroup),
-      shooterClass: isCompetition ? shooterClass : null,
+      weaponGroup: asksGroup ? weaponGroup : (derivedGroup ?? weaponGroup),
+      shooterClass: asksClass ? shooterClass : null,
       eventId: isCompetition ? eventId : null,
       firearmId,
       ammoLotId,

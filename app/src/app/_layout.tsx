@@ -103,6 +103,10 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('settings.theme') }}
       />
       <Stack.Screen
+        name="settings/tracking"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.trackingTitle') }}
+      />
+      <Stack.Screen
         name="settings/location"
         options={{ presentation: 'modal', headerShown: true, title: t('settings.locationLookup') }}
       />

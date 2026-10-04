@@ -3,7 +3,7 @@
 // isHandload (§3).
 import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { createAmmoLot } from '@/db/queries/ammo-lots';
+import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 
 function numberOrNull(value: string): number | null {
@@ -31,6 +32,7 @@ export default function NewAmmoLotScreen() {
   const [quantity, setQuantity] = useState('');
   const [purchasedOn, setPurchasedOn] = useState('');
   const [isHandload, setIsHandload] = useState(false);
+  const tracked = useMemo(() => readTrackedInputs(db), []);
 
   const [brand, setBrand] = useState('');
   const [product, setProduct] = useState('');
@@ -99,10 +101,12 @@ export default function NewAmmoLotScreen() {
           maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
           placeholder="YYYY-MM-DD"
         />
-        <View style={styles.switchRow}>
-          <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
-          <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
-        </View>
+        {tracked.handloads && (
+          <View style={styles.switchRow}>
+            <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
+            <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
+          </View>
+        )}
       </Card>
 
       {!isHandload && (

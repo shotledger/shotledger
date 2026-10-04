@@ -9,7 +9,7 @@
 // only until the first result (#475, db/queries/match-format.ts).
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
@@ -56,6 +56,7 @@ import {
   type CompetitionLevel,
 } from '@/features/session/labels';
 import { withLocalDay } from '@/features/session/with-local-day';
+import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 
 // The picker's value for Free Format, as on the new-session form.
@@ -88,6 +89,7 @@ export default function EditSessionScreen() {
       ? session.officialStandardMedal
       : 'none',
   );
+  const tracked = useMemo(() => readTrackedInputs(db), []);
   const [weaponGroup, setWeaponGroup] = useState<string | null>(session?.weaponGroup ?? null);
   const [shooterClass, setShooterClass] = useState<string | null>(session?.shooterClass ?? null);
   const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
@@ -130,8 +132,12 @@ export default function EditSessionScreen() {
       ? findEvent(session.eventId)
       : undefined;
   const events = stored === undefined ? offered : [...offered, stored];
-  const showGroupPicker = groups.length > 0 && (isCompetition || weaponGroup !== null);
-  const showClassPicker = classes.length > 0 && (isCompetition || shooterClass !== null);
+  // Optional Fields (#569) hides an empty picker the shooter switched off; a
+  // stored value still shows, by the same one-way rule.
+  const showGroupPicker =
+    groups.length > 0 && ((isCompetition && tracked.weaponGroups) || weaponGroup !== null);
+  const showClassPicker =
+    classes.length > 0 && ((isCompetition && tracked.shooterClass) || shooterClass !== null);
   const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);
   const firearms = listFirearms(db);
   const ammoLots = listAmmoLots(db);

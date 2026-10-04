@@ -65,6 +65,10 @@ For a handload you can record bullet make, model and weight, powder and charge,
 primer, brass, cartridge overall length and crimp. Those exist so a load that
 shot well is reproducible, and a load that did not is identifiable.
 
+If you never handload, switch off **Settings → Optional Fields → Handloads** and
+the handload switch and recipe leave the ammunition form. A lot that is already
+a handload keeps them.
+
 ### Power factor and muzzle energy
 
 Enter a bullet weight and a muzzle velocity and the app shows both:
