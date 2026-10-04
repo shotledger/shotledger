@@ -249,7 +249,7 @@ export default function NewSessionScreen() {
   // rather than asking. Klass and event are entry classifications with no
   // meaning outside a competition, so they are simply not recorded.
   const isCompetition = type === 'competition';
-  // Settings → What I Track can switch the competition pickers off; the
+  // Settings → Optional Fields can switch the competition pickers off; the
   // weapon group then comes from the gun exactly as in training (#569).
   const asksGroup = isCompetition && tracked.weaponGroups;
   const asksClass = isCompetition && tracked.shooterClass;

@@ -132,7 +132,7 @@ export default function EditSessionScreen() {
       ? findEvent(session.eventId)
       : undefined;
   const events = stored === undefined ? offered : [...offered, stored];
-  // What I Track (#569) hides an empty picker the shooter switched off; a
+  // Optional Fields (#569) hides an empty picker the shooter switched off; a
   // stored value still shows, by the same one-way rule.
   const showGroupPicker =
     groups.length > 0 && ((isCompetition && tracked.weaponGroups) || weaponGroup !== null);

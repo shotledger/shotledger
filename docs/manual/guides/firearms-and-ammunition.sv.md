@@ -67,7 +67,7 @@ laddning, tändhatt, hylsa, patronens totallängd och crimp. Det finns där för
 att en laddning som sköt bra ska gå att göra om, och en som inte gjorde det ska
 gå att känna igen.
 
-Laddar du aldrig själv stänger du av **Inställningar → Vad jag registrerar → Handladdning**, så försvinner reglaget Handladdning och receptet ur
+Laddar du aldrig själv stänger du av **Inställningar → Valfria fält → Handladdning**, så försvinner reglaget Handladdning och receptet ur
 ammunitionsformuläret. En sats som redan är en handladdning behåller dem.
 
 ### Power factor och mynningsenergi

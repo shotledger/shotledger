@@ -82,7 +82,7 @@ For a **competition** you are also asked for your **weapon group** and
 **class**, because that is what you are entered under. Training does not ask:
 the app takes the weapon group from the gun you picked, so your
 pistolskyttemärke still counts practice series, and it records no class at all.
-If you never compete in weapon groups or classes, **Settings → What I Track**
+If you never compete in weapon groups or classes, **Settings → Optional Fields**
 stops competitions asking too.
 
 A session created as the full match arrives with its series already laid out,

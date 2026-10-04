@@ -1,4 +1,4 @@
-// Settings → What I Track (#569): inputs a shooter can switch off because
+// Settings → Optional Fields (#569): inputs a shooter can switch off because
 // they never use them. Switching one off hides the input only — values
 // already stored stay, and still show where they are set.
 import type { Database } from '@/db/types';

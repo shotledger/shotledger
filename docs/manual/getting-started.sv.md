@@ -84,8 +84,7 @@ För en **tävling** frågas du dessutom efter **vapengrupp** och **klass**,
 eftersom det är det du är anmäld i. Träning frågar inte: appen tar vapengruppen
 ur vapnet du valde, så att ditt pistolskyttemärke fortfarande räknar
 träningsserier, och den registrerar ingen klass alls.
-Tävlar du aldrig i vapengrupper eller klasser gör **Inställningar → Vad jag
-registrerar** att tävlingar slutar fråga också.
+Tävlar du aldrig i vapengrupper eller klasser gör **Inställningar → Valfria fält** att tävlingar slutar fråga också.
 
 Ett pass som skapats som hela matchen kommer med sina serier redan utlagda, så
 att du inte bygger ställningarna medan laget väntar. Upplägget går inte att

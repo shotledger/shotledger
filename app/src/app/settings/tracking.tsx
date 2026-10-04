@@ -1,4 +1,4 @@
-// Settings → What I Track (#569). A switch per input a shooter may never
+// Settings → Optional Fields (#569). A switch per input a shooter may never
 // use. Off hides the input only; see features/settings/tracked-inputs.ts.
 import { Stack } from 'expo-router';
 import { useState } from 'react';

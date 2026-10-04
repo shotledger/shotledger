@@ -117,7 +117,7 @@ export default function AmmoLotDetailScreen() {
           onChangeText={setPurchasedOn}
           maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
         />
-        {/* Hidden by What I Track (#569) unless this lot already is one. */}
+        {/* Hidden by Optional Fields (#569) unless this lot already is one. */}
         {(tracked.handloads || lot?.isHandload === 1) && (
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>

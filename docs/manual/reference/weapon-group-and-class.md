@@ -156,7 +156,7 @@ is marked as its default, the app asks rather than guessing.
 You can still correct either one afterwards: editing a session shows whatever it
 has stored.
 
-**If you never use them**, switch them off in **Settings → What I Track**. With
+**If you never use them**, switch them off in **Settings → Optional Fields**. With
 **Weapon Groups** off, a competition takes its weapon group from
 the firearm exactly as training does. With **Shooter Class** off, it records
 no class. Sessions that already have a weapon group or class keep it, and still
