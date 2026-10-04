@@ -37,9 +37,15 @@ Round counts are the one thing an import will not overwrite on a firearm you
 already have. The file is a record of shooting, not the authority on how many
 rounds this device has counted through that firearm.
 
-The sessions it brings in do count, though. Each imported session adds its
-shots, its unscored extra rounds and six rounds for every fält station to the counters of the firearm it names —
-the same as if you had logged it here. Importing the same file twice does not
+A firearm the import creates is the other way round: it takes its round counts
+from the file, and those already include the file's sessions. Restoring a full
+export into an emptied app therefore gives every firearm back exactly the
+counts it had, not those counts plus its sessions a second time.
+
+On a firearm you already have, the sessions it brings in do count. Each
+imported session adds its shots, its unscored extra rounds and six rounds for
+every fält station to the counters of the firearm it names — the same as if
+you had logged it here. Importing the same file twice does not
 count it twice: the second import moves the counters by the difference, and
 usually by nothing at all.
 

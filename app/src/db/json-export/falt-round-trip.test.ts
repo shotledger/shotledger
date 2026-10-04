@@ -156,7 +156,7 @@ describe('fält stations in the JSON export', () => {
  */
 it('J3: imports them back into an emptied database field for field', () => {
   const db = createTestDb();
-  const { session } = seedFalt(db);
+  const { firearm, session } = seedFalt(db);
   const json = buildExportJson(db, '1.0.0');
 
   wipe(db);
@@ -172,4 +172,6 @@ it('J3: imports them back into an emptied database field for field', () => {
       isShootOff: s.isShootOff ? 1 : 0,
     })),
   );
+  // The restored firearm keeps the file's 24, not 24 plus the session again (#511).
+  expect(getFirearm(db, firearm.id)?.roundCount).toBe(24);
 });
