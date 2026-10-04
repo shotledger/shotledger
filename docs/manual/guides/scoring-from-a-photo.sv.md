@@ -106,14 +106,16 @@ på knappsatsen. **⋮ → Redigera pass** ändrar svaret i efterhand (**Fråga*
 
 Utöver själva poängen:
 
-| Siffra                           | Vad den säger dig                                                                                        |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Sidled** och **höjdled**       | Hur långt träffbildens mitt ligger från centrum, i sidled och i höjdled. I praktiken en siktesjustering. |
-| **Medelradie**                   | Genomsnittligt avstånd från träffbildens mitt — det ärliga måttet på jämnhet.                            |
-| **Största spridning**            | De två hål som ligger längst från varandra. En enda flygare dominerar måttet.                            |
-| **Möjlig poäng**                 | Vad samma träffbild hade gett centrerad.                                                                 |
-| **Poäng förlorade på läge**      | Den del du får tillbaka med en siktesjustering.                                                          |
-| **Poäng förlorade på spridning** | Den del som bara jämnare skjutande återtar.                                                              |
+| Siffra                              | Vad den säger dig                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| **Sida** och **Höjd**               | Hur långt träffbildens mitt ligger från centrum, i sidled och i höjdled, i mm.    |
+| **Medelradie**                      | Genomsnittligt avstånd från träffbildens mitt — det ärliga måttet på jämnhet.     |
+| **Största spridning**               | De två hål som ligger längst från varandra. Ett enda bortaskott dominerar måttet. |
+| **Potentiell poäng**                | Vad samma träffbild hade gett centrerad.                                          |
+| **Förlorade poäng: Till läge**      | Den del du får tillbaka med en siktjustering.                                     |
+| **Förlorade poäng: Till spridning** | Den del som bara jämnare skjutning tar tillbaka.                                  |
 
 Uppdelningen mellan läge och spridning är den användbara: den skiljer ett
-siktesproblem från ett teknikproblem, och de kräver olika arbete.
+siktproblem från ett teknikproblem, och de kräver olika arbete.
+[Vad träffbildens siffror betyder](../explanation/group-figures.md) förklarar
+varje siffra, och när förlorade poäng bara är en uppskattning.

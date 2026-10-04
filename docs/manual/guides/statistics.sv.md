@@ -49,6 +49,10 @@ det, med eventuell öppen väljare stängd.
   struken station eller en särskjutningsstation är inte del av ett resultat.
   Väljer du _Fältskjutning_ som gren utelämnas ringkorten ovan, eftersom inget
   av dem kan säga något om en fältomgång.
+- **Var dina skott hamnar**, när pass i rapporten räknats från foto: deras hål
+  på en värmekarta, med en rad om huruvida poängen du tappar mest är en
+  siktjustering eller mest spridning. Se
+  [Vad träffbildens siffror betyder](../explanation/group-figures.md#over-flera-pass).
 - **Export** som PDF eller JSON. JSON-filen bär med sig filtret —
   provserieinställningen inräknad — vid sidan av siffrorna.
 
