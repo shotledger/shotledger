@@ -107,12 +107,17 @@ const STAGE_KEYS: Record<AnalyzeStage, string> = {
   straighten: 'photoScoring.analyzingStraighten',
 };
 
+/** A release build logs scan timings only when built with this set (#528). */
+const LOG_SCAN_TIMING = __DEV__ || process.env.EXPO_PUBLIC_SCAN_TIMING === '1';
+
 /** Starts timing a stage; the returned function logs its milliseconds to the
- *  device log, dev builds only. */
+ *  device log. */
 function timeStage(stage: string): () => void {
   const since = performance.now();
   return () => {
-    if (__DEV__) console.log(`[scan-timing] ${stage}: ${Math.round(performance.now() - since)} ms`);
+    if (LOG_SCAN_TIMING) {
+      console.log(`[scan-timing] ${stage}: ${Math.round(performance.now() - since)} ms`);
+    }
   };
 }
 
