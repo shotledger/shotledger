@@ -1,0 +1,51 @@
+name: Mutation
+
+# Too slow for every PR, so the mutation layers of the gauntlet run here
+# rather than in CI; coverage, the cheap layer, runs in `pnpm check`.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12.8.2
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Stryker
+        run: pnpm mutation --reporters clear-text,progress-append-only,html
+
+      - name: Schema mutants
+        if: ${{ !cancelled() }}
+        run: pnpm mutation:schema
+
+      - name: Webshooter schema mutants
+        if: ${{ !cancelled() }}
+        run: pnpm mutation:webshooter-schema
+
+      - uses: actions/upload-artifact@v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          if-no-files-found: ignore
