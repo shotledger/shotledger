@@ -1,6 +1,6 @@
 // Pure calendar-event builder (spec §7, v2 spec §C.2). No expo-calendar call
 // here — that's app-layer wiring, later.
-import { localToUtcIso } from './mapping';
+import { localToUtcIso } from '../../dates';
 
 export interface CalendarEventInput {
   competitionId: number | string;
@@ -57,6 +57,8 @@ export interface CalendarEvent {
   busy: boolean;
 }
 
+// A slice is right here, unlike on an ISO instant: the input is already
+// Stockholm wall-clock time, so its date part is the local day.
 function localDatePart(localDateTime: string): string {
   return localDateTime.slice(0, 10);
 }

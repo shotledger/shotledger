@@ -28,7 +28,8 @@ guardrails and photo policy, is ADR 0003.
 **Dates and times**: every datetime is stored as UTC (`toISOString()`), and
 converted to the phone's time zone only where a user sees or picks a day,
 month or year. Never take a day by slicing an ISO string, which gives the UTC
-day. Use `app/src/features/dates/local-day.ts`.
+day. Use `shared/src/dates/`, which the app reaches through
+`app/src/features/dates/local-day.ts`.
 
 **iOS-readiness rules**, enforced from the first PR even though Android
 ships first:

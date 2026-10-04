@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  competitionDayStartIso,
-  isPastCompetition,
-  isUpcomingCompetition,
-  localCalendarDay,
-} from './competition-dates';
+import { isPastCompetition, isUpcomingCompetition } from './competition-dates';
 
 const NOW = new Date(2026, 8, 12, 14, 30); // 2026-09-12 local, mid-afternoon
 
@@ -39,27 +34,14 @@ describe('competition date boundaries', () => {
   it('tolerates a full timestamp as well as a bare date', () => {
     expect(isUpcomingCompetition('2026-09-13 09:00:00', NOW)).toBe(true);
     expect(isPastCompetition('2026-09-11 09:00:00', NOW)).toBe(true);
+    // Unsliced, '2026-09-12 09:00:00' sorts after '2026-09-12' and today
+    // would stop counting as past.
+    expect(isPastCompetition('2026-09-12 09:00:00', NOW)).toBe(true);
   });
 
   it('handles a year boundary', () => {
     const newYearsEve = new Date(2026, 11, 31, 23, 0);
     expect(isUpcomingCompetition('2027-01-01', newYearsEve)).toBe(true);
     expect(isPastCompetition('2027-01-01', newYearsEve)).toBe(false);
-  });
-});
-
-describe('localCalendarDay', () => {
-  it('returns the local day of a timestamp, not the UTC day', () => {
-    // 00:30 local is the previous UTC day anywhere east of Greenwich
-    // (22:30Z in Swedish summer), which slice(0, 10) would report.
-    expect(localCalendarDay(new Date(2026, 8, 12, 0, 30).toISOString())).toBe('2026-09-12');
-    expect(localCalendarDay(new Date(2026, 8, 12, 23, 30).toISOString())).toBe('2026-09-12');
-  });
-});
-
-describe('competitionDayStartIso', () => {
-  it('is local midnight of the competition day, which reads back as that day', () => {
-    expect(competitionDayStartIso('2026-06-13')).toBe(new Date(2026, 5, 13).toISOString());
-    expect(localCalendarDay(competitionDayStartIso('2026-06-13T00:00:00'))).toBe('2026-06-13');
   });
 });

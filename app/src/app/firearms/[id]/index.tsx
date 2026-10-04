@@ -11,7 +11,7 @@ import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
-  parseLicenseDate,
+  parseLocalDay,
   resolveActiveSightSetting,
   selectableWeaponGroups,
   shouldNotifyMaintenanceDue,
@@ -125,8 +125,7 @@ export default function FirearmDetailScreen() {
   const [authority, setAuthority] = useState('');
   // Empty is "tills vidare"; anything else must be a real YYYY-MM-DD, or the
   // license would read expired and schedule no reminders.
-  const validUntilInvalid =
-    validUntil.trim() !== '' && parseLicenseDate(validUntil.trim()) === null;
+  const validUntilInvalid = validUntil.trim() !== '' && parseLocalDay(validUntil.trim()) === null;
   const [licenseSaveAttempted, setLicenseSaveAttempted] = useState(false);
 
   const [scan, setScan] = useState<ScanState>({ status: 'idle' });

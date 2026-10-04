@@ -1,7 +1,7 @@
 // Pure license-expiry status math (§4 M4), driven off the latest license row
 // for a firearm. `validUntil: null` means "tills vidare" (indefinite) — always valid.
 import { LICENSE_EXPIRING_SOON_DAYS } from './constants';
-import { calendarDaysUntil, parseLicenseDate } from './license-date';
+import { calendarDaysUntil, parseLocalDay } from '../dates';
 
 export type LicenseStatus = 'none' | 'valid' | 'expiringSoon' | 'expired';
 
@@ -13,7 +13,7 @@ export function licenseStatus(
 ): LicenseStatus {
   if (validUntil === undefined) return 'none';
   if (validUntil === null) return 'valid'; // tills vidare
-  const lastDay = parseLicenseDate(validUntil);
+  const lastDay = parseLocalDay(validUntil);
   // Fail closed: a value that is not a date must not pass for a valid license.
   if (lastDay === null) return 'expired';
   const daysLeft = calendarDaysUntil(lastDay, now);
