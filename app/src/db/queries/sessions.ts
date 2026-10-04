@@ -5,6 +5,8 @@ import type { CompetitionLevel } from '../../features/session/labels';
 import { sessions } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
+import { applyRoundCountDelta } from './firearm-counters';
+import { sessionVolumeRounds } from './volume';
 
 export type SessionType = 'training' | 'competition';
 
@@ -114,7 +116,20 @@ export type UpdateSessionInput = Partial<
   }
 >;
 
+/** A changed `firearmId` moves the session's rounds from the old firearm's
+ *  counters to the new one's (#564). */
 export function updateSession(db: Database, id: string, patch: UpdateSessionInput) {
+  if (patch.firearmId !== undefined) {
+    const before = getSession(db, id)?.firearmId ?? null;
+    const after = patch.firearmId ?? null;
+    if (before !== after) {
+      const rounds = sessionVolumeRounds(db, id);
+      if (rounds !== 0) {
+        if (before) applyRoundCountDelta(db, before, -rounds);
+        if (after) applyRoundCountDelta(db, after, rounds);
+      }
+    }
+  }
   const now = nowIso();
   const values: Record<string, unknown> = { ...patch, updatedAt: now };
   if ('isChampionship' in patch) values.isChampionship = patch.isChampionship ? 1 : 0;

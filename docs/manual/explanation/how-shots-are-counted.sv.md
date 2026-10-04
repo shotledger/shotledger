@@ -32,7 +32,8 @@ helmatch, sex för fält.
 ## Vapnets räknare och äldre importer
 
 Ett vapens räknare förs som löpande summor: att logga, ändra eller ta bort ett
-pass flyttar dem med den skillnad det gör. En serie som bara sparats som en
+pass flyttar dem med den skillnad det gör. Väljer du ett annat vapen för ett
+pass flyttas dess skott från det gamla vapnet till det nya. En serie som bara sparats som en
 summa, från Webshooter eller ShotLog, började räknas först i den här versionen,
 så ett vapen vars pass har en sådan serie från tidigare visar lägre än vad
 passen summerar till. Rätta det en gång med **Justera antal skott** på vapnet.

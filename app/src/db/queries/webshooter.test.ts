@@ -305,8 +305,9 @@ describe('importResultRow — fresh import', () => {
       applySighterRoundsForFirearmId: other.id,
     });
     expect(getSession(db, first.sessionId)?.firearmId).toBe(original.id);
-    // The round-count delta still applies, to the ALREADY-linked firearm (never `other`).
-    expect(getFirearm(db, original.id)?.roundCount).toBe(5);
+    // Every round lands on the ALREADY-linked firearm (never `other`): the
+    // session's 35 when it was assigned (#564), then the 5 sighter rounds.
+    expect(getFirearm(db, original.id)?.roundCount).toBe(40);
     expect(getFirearm(db, other.id)?.roundCount).toBe(0);
   });
 
