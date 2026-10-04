@@ -37,39 +37,50 @@ export function selectNextPhotoTask(entries: readonly PhotoQueueEntry[]): PhotoQ
 }
 
 /**
- * HTTP status classification. A 413 (too large / over quota) and a 404
- * (photo gone server-side) are permanent: the same bytes will fail the same
- * way forever, so retrying is a battery bug, not resilience. 401 is
- * permanent for the queue too — the controller handles re-auth, and the
- * entry is retried after the next successful sign-in.
+ * What a failure costs the entry, and whether the pass goes on:
+ * - `permanent`: the same request fails the same way forever (404, 413, no
+ *   local file, over the size cap). Terminal; retrying is a battery bug.
+ * - `transient`: the server answered but could not serve it now (5xx, 408,
+ *   429), or the device could not read or write the file. One attempt.
+ * - `unreachable`: no response at all (offline, DNS, timeout). Free: not the
+ *   photo's fault, and counting it turns a weekend offline into never.
+ * - `unauthenticated`: 401. Free: the controller re-authenticates, and the
+ *   next pass retries the entry.
+ * Anything but `permanent` ends the pass, since its cause has not changed
+ * within it.
  */
-export function isRetryablePhotoStatus(status: number): boolean {
-  if (status === 408 || status === 429) return true;
-  if (status >= 500) return true;
-  return false;
+export type PhotoFailure = 'permanent' | 'transient' | 'unreachable' | 'unauthenticated';
+
+export function photoFailureForStatus(status: number): PhotoFailure {
+  if (status === 401) return 'unauthenticated';
+  if (status === 408 || status === 429 || status >= 500) return 'transient';
+  return 'permanent';
 }
 
 export type PhotoTaskOutcome =
-  { type: 'succeeded' } | { type: 'failed'; retryable: boolean; error: string };
+  { type: 'succeeded' } | { type: 'failed'; failure: PhotoFailure; error: string };
 
 export type PhotoQueueAction =
-  | { type: 'remove'; id: string }
-  | { type: 'retry'; id: string; attempts: number; lastError: string }
-  | { type: 'giveUp'; id: string; attempts: number; lastError: string };
+  | { type: 'remove'; id: string; endPass: boolean }
+  | { type: 'retry'; id: string; attempts: number; lastError: string; endPass: boolean }
+  | { type: 'giveUp'; id: string; attempts: number; lastError: string; endPass: boolean };
 
 export function applyPhotoTaskOutcome(
   entry: PhotoQueueEntry,
   outcome: PhotoTaskOutcome,
 ): PhotoQueueAction {
-  if (outcome.type === 'succeeded') return { type: 'remove', id: entry.id };
+  if (outcome.type === 'succeeded') return { type: 'remove', id: entry.id, endPass: false };
 
-  const attempts = entry.attempts + 1;
-  if (!outcome.retryable || attempts >= MAX_PHOTO_ATTEMPTS) {
+  const { id } = entry;
+  const lastError = outcome.error;
+  const endPass = outcome.failure !== 'permanent';
+  const attempts = outcome.failure === 'transient' ? entry.attempts + 1 : entry.attempts;
+  if (!endPass || attempts >= MAX_PHOTO_ATTEMPTS) {
     // Spend every remaining attempt: the cap is what stops
     // selectNextPhotoTask picking the entry again.
-    return { type: 'giveUp', id: entry.id, attempts: MAX_PHOTO_ATTEMPTS, lastError: outcome.error };
+    return { type: 'giveUp', id, attempts: MAX_PHOTO_ATTEMPTS, lastError, endPass };
   }
-  return { type: 'retry', id: entry.id, attempts, lastError: outcome.error };
+  return { type: 'retry', id, attempts, lastError, endPass };
 }
 
 /**

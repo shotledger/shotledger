@@ -4,10 +4,11 @@ import { describe, expect, it } from 'vitest';
 import {
   applyPhotoTaskOutcome,
   fitsPhotoSizeCap,
-  isRetryablePhotoStatus,
+  photoFailureForStatus,
   MAX_PHOTO_ATTEMPTS,
   PHOTO_MAX_BYTES,
   selectNextPhotoTask,
+  type PhotoFailure,
   type PhotoQueueEntry,
   type PhotoTaskOutcome,
 } from './photo-queue';
@@ -62,58 +63,99 @@ describe('selectNextPhotoTask', () => {
   });
 });
 
-describe('isRetryablePhotoStatus', () => {
-  it('retries throttling and server faults', () => {
-    expect(isRetryablePhotoStatus(429)).toBe(true);
-    expect(isRetryablePhotoStatus(408)).toBe(true);
-    expect(isRetryablePhotoStatus(500)).toBe(true);
-    expect(isRetryablePhotoStatus(503)).toBe(true);
+describe('photoFailureForStatus', () => {
+  it('counts throttling and server faults as transient', () => {
+    expect(photoFailureForStatus(408)).toBe('transient');
+    expect(photoFailureForStatus(429)).toBe('transient');
+    expect(photoFailureForStatus(500)).toBe('transient');
+    expect(photoFailureForStatus(503)).toBe('transient');
   });
 
-  it('does not retry a photo the server will always refuse', () => {
-    expect(isRetryablePhotoStatus(413)).toBe(false);
-    expect(isRetryablePhotoStatus(404)).toBe(false);
-    expect(isRetryablePhotoStatus(401)).toBe(false);
-    expect(isRetryablePhotoStatus(400)).toBe(false);
-    expect(isRetryablePhotoStatus(201)).toBe(false);
+  it('sets 401 apart: a sign-in problem, not the photo', () => {
+    expect(photoFailureForStatus(401)).toBe('unauthenticated');
+  });
+
+  it('treats every other status as permanent', () => {
+    for (const status of [201, 400, 402, 403, 404, 407, 409, 413, 428, 430, 499]) {
+      expect(photoFailureForStatus(status)).toBe('permanent');
+    }
   });
 });
 
+function failed(failure: PhotoFailure, error = 'e'): PhotoTaskOutcome {
+  return { type: 'failed', failure, error };
+}
+
 describe('applyPhotoTaskOutcome', () => {
-  it('removes the entry on success', () => {
+  it('removes the entry on success and carries on with the pass', () => {
     expect(applyPhotoTaskOutcome(entry(), { type: 'succeeded' })).toEqual({
       type: 'remove',
       id: 'q1',
+      endPass: false,
     });
   });
 
-  it('increments the attempt count on a retryable failure', () => {
-    expect(
-      applyPhotoTaskOutcome(entry({ attempts: 1 }), {
-        type: 'failed',
-        retryable: true,
-        error: 'offline',
-      }),
-    ).toEqual({ type: 'retry', id: 'q1', attempts: 2, lastError: 'offline' });
+  it('spends one attempt on a transient failure and ends the pass', () => {
+    expect(applyPhotoTaskOutcome(entry({ attempts: 1 }), failed('transient', 'http_503'))).toEqual({
+      type: 'retry',
+      id: 'q1',
+      attempts: 2,
+      lastError: 'http_503',
+      endPass: true,
+    });
   });
 
-  it('gives up on a permanent failure by spending every remaining attempt', () => {
-    expect(
-      applyPhotoTaskOutcome(entry(), { type: 'failed', retryable: false, error: 'too_large' }),
-    ).toEqual({ type: 'giveUp', id: 'q1', attempts: MAX_PHOTO_ATTEMPTS, lastError: 'too_large' });
+  it.each(['unreachable', 'unauthenticated'] as const)(
+    'spends no attempt when %s, and ends the pass',
+    (failure) => {
+      expect(applyPhotoTaskOutcome(entry({ attempts: 3 }), failed(failure, 'network'))).toEqual({
+        type: 'retry',
+        id: 'q1',
+        attempts: 3,
+        lastError: 'network',
+        endPass: true,
+      });
+    },
+  );
+
+  it('gives up on a permanent failure by spending every remaining attempt, and carries on', () => {
+    expect(applyPhotoTaskOutcome(entry(), failed('permanent', 'too_large'))).toEqual({
+      type: 'giveUp',
+      id: 'q1',
+      attempts: MAX_PHOTO_ATTEMPTS,
+      lastError: 'too_large',
+      endPass: false,
+    });
   });
+
+  it('gives up once a transient failure reaches the cap, and ends the pass', () => {
+    const action = applyPhotoTaskOutcome(
+      entry({ attempts: MAX_PHOTO_ATTEMPTS - 1 }),
+      failed('transient', 'http_500'),
+    );
+    expect(action).toEqual({
+      type: 'giveUp',
+      id: 'q1',
+      attempts: MAX_PHOTO_ATTEMPTS,
+      lastError: 'http_500',
+      endPass: true,
+    });
+  });
+
+  const failures = fc.constantFrom<PhotoFailure>(
+    'permanent',
+    'transient',
+    'unreachable',
+    'unauthenticated',
+  );
 
   it('property: a give-up is never picked again', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 0, max: MAX_PHOTO_ATTEMPTS - 1 }),
-        fc.boolean(),
-        (attempts, retryable) => {
-          const action = applyPhotoTaskOutcome(entry({ attempts }), {
-            type: 'failed',
-            retryable,
-            error: 'e',
-          });
+        failures,
+        (attempts, failure) => {
+          const action = applyPhotoTaskOutcome(entry({ attempts }), failed(failure));
           if (action.type !== 'giveUp') return;
           expect(selectNextPhotoTask([entry({ attempts: action.attempts })])).toBeNull();
         },
@@ -121,29 +163,27 @@ describe('applyPhotoTaskOutcome', () => {
     );
   });
 
-  it('gives up once the attempt cap is reached', () => {
-    const action = applyPhotoTaskOutcome(entry({ attempts: MAX_PHOTO_ATTEMPTS - 1 }), {
-      type: 'failed',
-      retryable: true,
-      error: 'offline',
-    });
-    expect(action).toEqual({
-      type: 'giveUp',
-      id: 'q1',
-      attempts: MAX_PHOTO_ATTEMPTS,
-      lastError: 'offline',
-    });
+  it('property: a retry stays under the cap and never lowers the count', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: MAX_PHOTO_ATTEMPTS + 5 }),
+        failures,
+        (attempts, failure) => {
+          const action = applyPhotoTaskOutcome(entry({ attempts }), failed(failure));
+          if (action.type !== 'retry') return;
+          expect(action.attempts).toBeLessThan(MAX_PHOTO_ATTEMPTS);
+          expect(action.attempts).toBeGreaterThanOrEqual(attempts);
+        },
+      ),
+    );
   });
 
-  it('property: a retryable failure never exceeds the attempt cap', () => {
+  it('property: only a permanent failure lets the pass carry on', () => {
     fc.assert(
-      fc.property(fc.integer({ min: 0, max: MAX_PHOTO_ATTEMPTS + 5 }), (attempts) => {
-        const action = applyPhotoTaskOutcome(entry({ attempts }), {
-          type: 'failed',
-          retryable: true,
-          error: 'e',
-        });
-        if (action.type === 'retry') expect(action.attempts).toBeLessThan(MAX_PHOTO_ATTEMPTS);
+      fc.property(fc.integer({ min: 0, max: MAX_PHOTO_ATTEMPTS - 1 }), failures, (a, failure) => {
+        expect(applyPhotoTaskOutcome(entry({ attempts: a }), failed(failure)).endPass).toBe(
+          failure !== 'permanent',
+        );
       }),
     );
   });
@@ -151,8 +191,8 @@ describe('applyPhotoTaskOutcome', () => {
 
 /**
  * The runner's loop (app/src/features/sync/photo-queue-runner.ts) with the
- * I/O replaced by `run`: pick, run, apply, record. Returns how many times
- * each entry was attempted in this pass.
+ * I/O replaced by `run`: pick, run, apply, record, stop when told to.
+ * Returns how many times each entry was attempted in this pass.
  */
 function drainPass(
   queue: PhotoQueueEntry[],
@@ -168,6 +208,7 @@ function drainPass(
     const index = queue.findIndex((e) => e.id === action.id);
     if (action.type === 'remove') queue.splice(index, 1);
     else queue[index] = { ...next, attempts: action.attempts, lastError: action.lastError };
+    if (action.endPass) break;
   }
   return tries;
 }
@@ -180,7 +221,7 @@ describe('draining the queue', () => {
     ['an upload over the size cap', 'upload', 'photo_too_large'],
   ] as const)('attempts %s once, then never picks it again', (_, kind, error) => {
     const queue = [entry({ kind })];
-    const fail = (): PhotoTaskOutcome => ({ type: 'failed', retryable: false, error });
+    const fail = (): PhotoTaskOutcome => failed('permanent', error);
 
     expect(drainPass(queue, fail).get('q1')).toBe(1);
     expect(drainPass(queue, fail).size).toBe(0);
@@ -193,9 +234,7 @@ describe('draining the queue', () => {
       entry({ id: 'ok', createdAt: '2026-09-02T00:00:00.000Z' }),
     ];
     const tries = drainPass(queue, (e) =>
-      e.id === 'gone'
-        ? { type: 'failed', retryable: false, error: 'http_404' }
-        : { type: 'succeeded' },
+      e.id === 'gone' ? failed('permanent', 'http_404') : { type: 'succeeded' },
     );
     expect([...tries]).toEqual([
       ['gone', 1],
@@ -204,16 +243,25 @@ describe('draining the queue', () => {
     expect(queue.map((e) => e.id)).toEqual(['gone']);
   });
 
-  it('retries a retryable failure up to the cap and no further', () => {
+  it('tries a transient failure once per pass, reaching the cap only across passes', () => {
     const queue = [entry()];
-    const offline = (): PhotoTaskOutcome => ({ type: 'failed', retryable: true, error: 'network' });
+    const serverDown = (): PhotoTaskOutcome => failed('transient', 'http_503');
 
-    let total = 0;
-    for (let pass = 0; pass < MAX_PHOTO_ATTEMPTS + 2; pass += 1) {
-      total += drainPass(queue, offline).get('q1') ?? 0;
+    for (let pass = 1; pass <= MAX_PHOTO_ATTEMPTS; pass += 1) {
+      expect(drainPass(queue, serverDown).get('q1')).toBe(1);
+      expect(queue[0]?.attempts).toBe(pass);
     }
-    expect(total).toBe(MAX_PHOTO_ATTEMPTS);
-    expect(queue[0]?.attempts).toBe(MAX_PHOTO_ATTEMPTS);
+    expect(drainPass(queue, serverDown).size).toBe(0);
+  });
+
+  it('never wears out an entry while the device is offline', () => {
+    const queue = [entry()];
+    const offline = (): PhotoTaskOutcome => failed('unreachable', 'network');
+
+    for (let pass = 0; pass < MAX_PHOTO_ATTEMPTS * 3; pass += 1) {
+      expect(drainPass(queue, offline).get('q1')).toBe(1);
+    }
+    expect(queue[0]?.attempts).toBe(0);
   });
 });
 
