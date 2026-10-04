@@ -28,6 +28,7 @@ import {
   type EventDefinition,
   type ShooterProfile,
   type SkillClass,
+  TEXT_LIMITS,
 } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
@@ -416,7 +417,12 @@ export default function NewSessionScreen() {
             testID="session-name-info"
           />
         </View>
-        <TextField value={name} onChangeText={setNameOverride} testID="session-name" />
+        <TextField
+          value={name}
+          onChangeText={setNameOverride}
+          maxLength={TEXT_LIMITS.sessions.name}
+          testID="session-name"
+        />
       </Card>
 
       <Card>
@@ -547,6 +553,7 @@ export default function NewSessionScreen() {
           <TextField
             value={competitionName}
             onChangeText={setCompetitionName}
+            maxLength={TEXT_LIMITS.sessions.competition_name}
             placeholder={t('session.competitionNamePlaceholder')}
             testID="competition-name"
           />

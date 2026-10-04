@@ -1140,6 +1140,7 @@
       "network": "Ingen kontakt med servern. Försöker igen automatiskt.",
       "unauthenticated": "Din session har gått ut. Logga in igen.",
       "versionUnsupported": "Den här appversionen är för gammal för att synka. Uppdatera appen.",
+      "payloadTooLarge": "En post är för stor för att synka. Korta anteckningarna så fortsätter synken.",
       "unknown": "Något gick fel. Försöker igen automatiskt."
     },
     "error": {

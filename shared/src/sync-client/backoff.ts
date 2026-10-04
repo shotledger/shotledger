@@ -18,7 +18,7 @@ export interface BackoffOptions {
 export function nextBackoffMs(attempt: number, options: BackoffOptions = {}): number {
   const baseMs = options.baseMs ?? BACKOFF_BASE_MS;
   const maxMs = options.maxMs ?? BACKOFF_MAX_MS;
-  const safeAttempt = attempt < 0 ? 0 : attempt;
+  const safeAttempt = Math.max(attempt, 0);
   // 2 ** 1024 is Infinity, and Infinity * base is Infinity — Math.min still
   // clamps to maxMs, so a runaway attempt counter cannot produce NaN.
   const grown = baseMs * 2 ** safeAttempt;
@@ -28,9 +28,11 @@ export function nextBackoffMs(attempt: number, options: BackoffOptions = {}): nu
 /**
  * Sync failure kinds the UI distinguishes. `unauthenticated` is terminal —
  * retrying a dead session forever burns battery for nothing; the controller
- * clears the token and asks the user to sign in again.
+ * clears the token and asks the user to sign in again. `payloadTooLarge` is a
+ * row over MAX_PAYLOAD_BYTES; it recurs until the user shortens the row.
  */
-export type SyncErrorKey = 'network' | 'unauthenticated' | 'versionUnsupported' | 'unknown';
+export type SyncErrorKey =
+  'network' | 'unauthenticated' | 'versionUnsupported' | 'payloadTooLarge' | 'unknown';
 
 export function shouldRetry(errorKey: SyncErrorKey): boolean {
   return errorKey !== 'unauthenticated';

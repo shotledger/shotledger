@@ -1,7 +1,7 @@
 // New ammo lot form (§4 M4): factory fields always shown; the handload
 // recipe section (powder/charge/primer/brass/COL/crimp) toggles with
 // isHandload (§3).
-import { muzzleEnergyJoules, powerFactor } from '@shotledger/shared';
+import { muzzleEnergyJoules, powerFactor, TEXT_LIMITS } from '@shotledger/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -83,12 +83,22 @@ export default function NewAmmoLotScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('ammo.label')}</ThemedText>
-        <TextField value={label} onChangeText={setLabel} testID="ammo-label" />
+        <TextField
+          value={label}
+          onChangeText={setLabel}
+          maxLength={TEXT_LIMITS.ammo_lots.label}
+          testID="ammo-label"
+        />
         <CaliberPicker label={t('ammo.caliber')} value={caliber} onChange={setCaliber} />
         <ThemedText type="smallBold">{t('ammo.quantity')}</ThemedText>
         <TextField value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
         <ThemedText type="smallBold">{t('ammo.purchasedOn')}</ThemedText>
-        <TextField value={purchasedOn} onChangeText={setPurchasedOn} placeholder="YYYY-MM-DD" />
+        <TextField
+          value={purchasedOn}
+          onChangeText={setPurchasedOn}
+          maxLength={TEXT_LIMITS.ammo_lots.purchased_on}
+          placeholder="YYYY-MM-DD"
+        />
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('ammo.isHandload')}</ThemedText>
           <Switch value={isHandload} onValueChange={setIsHandload} testID="handload-toggle" />
@@ -98,19 +108,39 @@ export default function NewAmmoLotScreen() {
       {!isHandload && (
         <Card>
           <ThemedText type="smallBold">{t('ammo.brand')}</ThemedText>
-          <TextField value={brand} onChangeText={setBrand} />
+          <TextField
+            value={brand}
+            onChangeText={setBrand}
+            maxLength={TEXT_LIMITS.ammo_lots.brand}
+          />
           <ThemedText type="smallBold">{t('ammo.product')}</ThemedText>
-          <TextField value={product} onChangeText={setProduct} />
+          <TextField
+            value={product}
+            onChangeText={setProduct}
+            maxLength={TEXT_LIMITS.ammo_lots.product}
+          />
           <ThemedText type="smallBold">{t('ammo.lotNumber')}</ThemedText>
-          <TextField value={lotNumber} onChangeText={setLotNumber} />
+          <TextField
+            value={lotNumber}
+            onChangeText={setLotNumber}
+            maxLength={TEXT_LIMITS.ammo_lots.lot_number}
+          />
         </Card>
       )}
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.bulletMake')}</ThemedText>
-        <TextField value={bulletMake} onChangeText={setBulletMake} />
+        <TextField
+          value={bulletMake}
+          onChangeText={setBulletMake}
+          maxLength={TEXT_LIMITS.ammo_lots.bullet_make}
+        />
         <ThemedText type="smallBold">{t('ammo.bulletModel')}</ThemedText>
-        <TextField value={bulletModel} onChangeText={setBulletModel} />
+        <TextField
+          value={bulletModel}
+          onChangeText={setBulletModel}
+          maxLength={TEXT_LIMITS.ammo_lots.bullet_model}
+        />
         <ThemedText type="smallBold">{t('ammo.bulletWeightGr')}</ThemedText>
         <TextField
           value={bulletWeightGr}
@@ -157,7 +187,12 @@ export default function NewAmmoLotScreen() {
         <Card testID="handload-recipe">
           <ThemedText type="smallBold">{t('ammo.recipeTitle')}</ThemedText>
           <ThemedText type="small">{t('ammo.powder')}</ThemedText>
-          <TextField value={powder} onChangeText={setPowder} testID="ammo-powder" />
+          <TextField
+            value={powder}
+            onChangeText={setPowder}
+            maxLength={TEXT_LIMITS.ammo_lots.powder}
+            testID="ammo-powder"
+          />
           <ThemedText type="small">{t('ammo.powderChargeGr')}</ThemedText>
           <TextField
             value={powderChargeGr}
@@ -165,9 +200,17 @@ export default function NewAmmoLotScreen() {
             keyboardType="decimal-pad"
           />
           <ThemedText type="small">{t('ammo.primer')}</ThemedText>
-          <TextField value={primer} onChangeText={setPrimer} />
+          <TextField
+            value={primer}
+            onChangeText={setPrimer}
+            maxLength={TEXT_LIMITS.ammo_lots.primer}
+          />
           <ThemedText type="small">{t('ammo.brass')}</ThemedText>
-          <TextField value={brass} onChangeText={setBrass} />
+          <TextField
+            value={brass}
+            onChangeText={setBrass}
+            maxLength={TEXT_LIMITS.ammo_lots.brass}
+          />
           <ThemedText type="small">{t('ammo.colMm')}</ThemedText>
           <TextField value={colMm} onChangeText={setColMm} keyboardType="decimal-pad" />
           <ThemedText type="small">{t('ammo.crimpMm')}</ThemedText>
@@ -177,7 +220,12 @@ export default function NewAmmoLotScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('ammo.notes')}</ThemedText>
-        <TextField value={notes} onChangeText={setNotes} multiline />
+        <TextField
+          value={notes}
+          onChangeText={setNotes}
+          maxLength={TEXT_LIMITS.ammo_lots.notes}
+          multiline
+        />
       </Card>
 
       <PrimaryButton

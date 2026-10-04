@@ -19,6 +19,7 @@ import {
   weaponGroupLabel,
   type ParsedLicenseCard,
   type WeaponGroup,
+  TEXT_LIMITS,
 } from '@shotledger/shared';
 
 import { ScreenTitle } from '@/components/screen-title';
@@ -798,6 +799,7 @@ export default function FirearmDetailScreen() {
             <TextField
               value={sightLabel}
               onChangeText={setSightLabel}
+              maxLength={TEXT_LIMITS.sight_settings.label}
               placeholder={t('firearms.sightLabelPlaceholder')}
               testID="sight-label"
             />
@@ -873,7 +875,12 @@ export default function FirearmDetailScreen() {
               </ThemedText>
             </Pressable>
             <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextField value={sightNotes} onChangeText={setSightNotes} testID="sight-notes" />
+            <TextField
+              value={sightNotes}
+              onChangeText={setSightNotes}
+              maxLength={TEXT_LIMITS.sight_settings.notes}
+              testID="sight-notes"
+            />
             <PrimaryButton
               label={t('common.save')}
               onPress={onSaveSightSetting}
@@ -994,16 +1001,27 @@ export default function FirearmDetailScreen() {
             <TextField
               value={licenseNumber}
               onChangeText={setLicenseNumber}
+              maxLength={TEXT_LIMITS.licenses.license_number}
               testID="license-number"
             />
             <ThemedText type="small">{t('firearms.purpose')}</ThemedText>
-            <TextField value={purpose} onChangeText={setPurpose} />
+            <TextField
+              value={purpose}
+              onChangeText={setPurpose}
+              maxLength={TEXT_LIMITS.licenses.purpose}
+            />
             <ThemedText type="small">{t('firearms.decidedOn')}</ThemedText>
-            <TextField value={decidedOn} onChangeText={setDecidedOn} placeholder="YYYY-MM-DD" />
+            <TextField
+              value={decidedOn}
+              onChangeText={setDecidedOn}
+              maxLength={TEXT_LIMITS.licenses.decided_on}
+              placeholder="YYYY-MM-DD"
+            />
             <ThemedText type="small">{t('firearms.validUntil')}</ThemedText>
             <TextField
               value={validUntil}
               onChangeText={setValidUntil}
+              maxLength={TEXT_LIMITS.licenses.valid_until}
               placeholder="YYYY-MM-DD"
               testID="license-valid-until"
             />
@@ -1013,9 +1031,17 @@ export default function FirearmDetailScreen() {
               </ThemedText>
             ) : null}
             <ThemedText type="small">{t('firearms.conditions')}</ThemedText>
-            <TextField value={conditions} onChangeText={setConditions} />
+            <TextField
+              value={conditions}
+              onChangeText={setConditions}
+              maxLength={TEXT_LIMITS.licenses.conditions}
+            />
             <ThemedText type="small">{t('firearms.authority')}</ThemedText>
-            <TextField value={authority} onChangeText={setAuthority} />
+            <TextField
+              value={authority}
+              onChangeText={setAuthority}
+              maxLength={TEXT_LIMITS.licenses.authority}
+            />
             <PrimaryButton
               label={t('common.save')}
               onPress={() => void onAddLicense()}
@@ -1078,11 +1104,16 @@ export default function FirearmDetailScreen() {
             <TextField
               value={eventKind}
               onChangeText={setEventKind}
+              maxLength={TEXT_LIMITS.maintenance_events.kind}
               placeholder={t('firearms.kindPlaceholder')}
               testID="event-kind"
             />
             <ThemedText type="small">{t('firearms.notes')}</ThemedText>
-            <TextField value={eventNotes} onChangeText={setEventNotes} />
+            <TextField
+              value={eventNotes}
+              onChangeText={setEventNotes}
+              maxLength={TEXT_LIMITS.maintenance_events.notes}
+            />
             <PrimaryButton label={t('common.save')} onPress={onLogEvent} testID="save-event" />
           </>
         ) : (
@@ -1106,6 +1137,7 @@ export default function FirearmDetailScreen() {
             <TextField
               value={adjustReason}
               onChangeText={setAdjustReason}
+              maxLength={TEXT_LIMITS.maintenance_events.notes}
               placeholder={t('firearms.adjustReasonPlaceholder')}
               testID="adjust-reason"
             />

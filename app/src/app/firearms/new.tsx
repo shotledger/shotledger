@@ -1,6 +1,7 @@
 // New-firearm form (§4 M4 §5 /firearms/new). Weapon groups, license, and
 // maintenance are managed on the detail screen after creation — the same
 // append-as-you-go pattern M3 used for series (§4 M3).
+import { TEXT_LIMITS } from '@shotledger/shared';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,9 +62,19 @@ export default function NewFirearmScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('firearms.make')}</ThemedText>
-        <TextField value={make} onChangeText={setMake} testID="firearm-make" />
+        <TextField
+          value={make}
+          onChangeText={setMake}
+          maxLength={TEXT_LIMITS.firearms.make}
+          testID="firearm-make"
+        />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
-        <TextField value={model} onChangeText={setModel} testID="firearm-model" />
+        <TextField
+          value={model}
+          onChangeText={setModel}
+          maxLength={TEXT_LIMITS.firearms.model}
+          testID="firearm-model"
+        />
         <CaliberPicker label={t('firearms.caliber')} value={caliber} onChange={setCaliber} />
       </Card>
 
@@ -82,9 +93,17 @@ export default function NewFirearmScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('firearms.serialNumber')}</ThemedText>
-        <TextField value={serialNumber} onChangeText={setSerialNumber} />
+        <TextField
+          value={serialNumber}
+          onChangeText={setSerialNumber}
+          maxLength={TEXT_LIMITS.firearms.serial_number}
+        />
         <ThemedText type="smallBold">{t('firearms.vapenId')}</ThemedText>
-        <TextField value={vapenId} onChangeText={setVapenId} />
+        <TextField
+          value={vapenId}
+          onChangeText={setVapenId}
+          maxLength={TEXT_LIMITS.firearms.vapen_id}
+        />
         <LoadSystemPicker
           label={t('firearms.loadSystem')}
           value={loadSystem}
@@ -106,7 +125,12 @@ export default function NewFirearmScreen() {
 
       <Card>
         <ThemedText type="smallBold">{t('firearms.notes')}</ThemedText>
-        <TextField value={notes} onChangeText={setNotes} multiline />
+        <TextField
+          value={notes}
+          onChangeText={setNotes}
+          maxLength={TEXT_LIMITS.firearms.notes}
+          multiline
+        />
       </Card>
 
       <PrimaryButton

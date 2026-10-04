@@ -1,6 +1,7 @@
 // Tag selection at session creation. Existing tags are pills to toggle; the
 // text field adds a new one. Nothing is written to the database here — the
 // screen owns that, after the session row exists.
+import { TEXT_LIMITS } from '@shotledger/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -80,6 +81,7 @@ export function TagSelect({ known, selected, onChange }: TagSelectProps) {
       <TextField
         value={draft}
         onChangeText={setDraft}
+        maxLength={TEXT_LIMITS.tags.name}
         onSubmitEditing={commitDraft}
         onBlur={commitDraft}
         returnKeyType="done"
