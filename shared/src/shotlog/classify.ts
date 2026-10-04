@@ -82,7 +82,7 @@ export function classifyTags(
           groups.push({ weaponGroup: role.weaponGroup, shooterClass: role.shooterClass });
         }
         break;
-      default:
+      case 'firearm':
         if (!firearmLabels.includes(role.label)) firearmLabels.push(role.label);
         break;
     }
