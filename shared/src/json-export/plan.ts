@@ -48,18 +48,13 @@ export interface ImportRecords {
   licenses?: readonly LicenseExport[];
 }
 
-/** The one spelling of a firearm's name, shared by the exporter, the plan and
- *  the name-matching import path — they must agree or a firearm duplicates. */
-/**
- * Rounds fired in a session from a file (`sessionVolume`). A file carries no
- * total-only series, so every series counts by its shot rows.
- */
+/** Rounds fired in a session from a file, counted as `sessionVolume` counts it. */
 export function importedSessionVolume(group: SessionImportGroup): number {
   return sessionVolume({
     series: group.series.map((s) => ({
       shotCount: s.shots.length,
-      totalOnly: false,
-      overrideShotCount: null,
+      totalOnly: s.totalOverride !== null,
+      overrideShotCount: s.totalOverride?.shotCount ?? null,
     })),
     extraRounds: group.extraRounds,
     stationCount: group.stations.length,
@@ -67,6 +62,8 @@ export function importedSessionVolume(group: SessionImportGroup): number {
   });
 }
 
+/** The one spelling of a firearm's name, shared by the exporter, the plan and
+ *  the name-matching import path — they must agree or a firearm duplicates. */
 export function firearmDisplayName(firearm: { make: string; model: string }): string {
   return `${firearm.make} ${firearm.model}`;
 }

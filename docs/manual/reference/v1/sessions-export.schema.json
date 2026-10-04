@@ -244,13 +244,52 @@
                     "additionalProperties": false
                   },
                   "description": "The shots of this series, in the order they were entered."
+                },
+                "totalOverride": {
+                  "default": null,
+                  "description": "A series known only by its total, as WebShooter and ShotLog report results. Null on a series scored shot by shot.",
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "tenths": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "The series total in tenths of a point, as the source reported it."
+                        },
+                        "shotCount": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Shots behind that total, or null when the source gave none; the discipline's series length then stands in."
+                        }
+                      },
+                      "required": [
+                        "tenths",
+                        "shotCount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
                 "position",
                 "isSighter",
                 "isFinal",
-                "shots"
+                "shots",
+                "totalOverride"
               ],
               "additionalProperties": false
             },

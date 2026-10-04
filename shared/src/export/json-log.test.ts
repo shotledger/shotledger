@@ -36,6 +36,7 @@ const session: SessionExport = {
       position: 1,
       isSighter: false,
       isFinal: false,
+      totalOverride: null,
       shots: [
         { position: 1, valueTenths: 100, isInnerTen: true },
         { position: 2, valueTenths: 90, isInnerTen: false },

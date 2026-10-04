@@ -2,6 +2,8 @@
 // table, import, and assert every score/volume statistic is identical.
 import {
   meanTenths,
+  scoredSeriesTotalsTenths,
+  sessionResults,
   scoredShots,
   volumeShotCount,
   xCount,
@@ -15,11 +17,12 @@ import { addFirearmGroup } from '../queries/firearm-groups';
 import { createAmmoLot } from '../queries/ammo-lots';
 import { createFirearm, listFirearms } from '../queries/firearms';
 import { addLicense, listLicenses } from '../queries/licenses';
-import { addSeries } from '../queries/series';
+import { addSeries, listSeriesForSession } from '../queries/series';
 import { createSession, sumExtraRounds } from '../queries/sessions';
 import { addShot, countVolumeRounds } from '../queries/shots';
 import { addSessionTag, getOrCreateTag, listTagsForSession } from '../queries/tags';
 import { listAllStatsSeries } from '../queries/stats';
+import { sessionVolumeRounds } from '../queries/volume';
 import {
   ammoLots,
   firearmGroups,
@@ -315,4 +318,86 @@ it('keeps the shots per series chosen at creation across export and import', () 
       .all()
       .map((s) => s.seriesLength),
   ).toEqual([5]);
+});
+
+describe('a series saved as a total only (#563)', () => {
+  function seedTotalOnly(db: Database) {
+    const firearm = createFirearm(db, { make: 'Walther', model: 'GSP' });
+    const session = createSession(db, {
+      name: 'Webshooter-resultat',
+      type: 'competition',
+      disciplineId: 'precision',
+      firearmId: firearm.id,
+      startedAt: '2026-08-20T09:00:00.000Z',
+    });
+    // Webshooter gives a shot count with the total; ShotLog gives none.
+    addSeries(db, {
+      sessionId: session.id,
+      position: 1,
+      isTotalOverride: true,
+      totalOverrideTenths: 470,
+      totalOverrideShotCount: 5,
+    });
+    addSeries(db, {
+      sessionId: session.id,
+      position: 2,
+      isTotalOverride: true,
+      totalOverrideTenths: 450,
+      totalOverrideShotCount: null,
+    });
+    return { firearm, session };
+  }
+
+  function totals(db: Database, sessionId: string) {
+    const rows = listSeriesForSession(db, sessionId).map((s) => ({
+      isSighter: s.isSighter === 1,
+      isFinal: s.isFinal === 1,
+      shots: [],
+      totalOverride: { tenths: s.totalOverrideTenths!, shotCount: s.totalOverrideShotCount ?? 0 },
+    }));
+    return {
+      seriesTotals: rows.map((s) => s.totalOverride.tenths),
+      sessionTotal: sessionResults(rows).totalTenths,
+      // ShotLog's series has no shot count, so statistics leave it out.
+      statsSeriesTotals: scoredSeriesTotalsTenths(listAllStatsSeries(db)),
+      volume: sessionVolumeRounds(db, sessionId),
+    };
+  }
+
+  it('keeps its total and its volume across export, wipe and import', () => {
+    const db = createTestDb();
+    const { session } = seedTotalOnly(db);
+    const before = totals(db, session.id);
+    expect(before).toEqual({
+      seriesTotals: [470, 450],
+      sessionTotal: 920,
+      statsSeriesTotals: [470],
+      volume: 10,
+    });
+
+    const json = buildExportJson(db, '1.0.0');
+    wipeEverything(db);
+    const { plan, errors, groups, records } = dryRunImport(db, json);
+    expect(errors).toEqual([]);
+    expect(plan.sessions[0]?.shotCount).toBe(10);
+    applyImport(db, groups, records);
+
+    expect(totals(db, session.id)).toEqual(before);
+    expect(db.select().from(series).all()).toMatchObject([
+      { isTotalOverride: 1, totalOverrideTenths: 470, totalOverrideShotCount: 5 },
+      { isTotalOverride: 1, totalOverrideTenths: 450, totalOverrideShotCount: null },
+    ]);
+  });
+
+  it('re-importing onto itself leaves the firearm counter where it was', () => {
+    const db = createTestDb();
+    const { firearm } = seedTotalOnly(db);
+    db.update(firearms).set({ roundCount: 10 }).where(eq(firearms.id, firearm.id)).run();
+    const json = buildExportJson(db, '1.0.0');
+
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    expect(listFirearms(db)[0]?.roundCount).toBe(10);
+  });
 });

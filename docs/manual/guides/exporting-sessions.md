@@ -115,7 +115,8 @@ One session, one scored series of three shots:
           "position": 1,
           "isSighter": true,
           "isFinal": false,
-          "shots": []
+          "shots": [],
+          "totalOverride": null
         },
         {
           "position": 2,
@@ -125,7 +126,8 @@ One session, one scored series of three shots:
             { "position": 1, "valueTenths": 100, "isInnerTen": true },
             { "position": 2, "valueTenths": 90, "isInnerTen": false },
             { "position": 3, "valueTenths": 80, "isInnerTen": false }
-          ]
+          ],
+          "totalOverride": null
         }
       ],
       "faltResultMode": null,
@@ -166,18 +168,19 @@ One session, one scored series of three shots:
 
 ### Reading the fields
 
-| Field            | Meaning                                                                                                                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `valueTenths`    | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                        |
-| `isInnerTen`     | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                             |
-| `isSighter`      | A sighting series. It carries no shots here and does not count towards a total.                                                                                                        |
-| `weaponGroup`    | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                         |
-| `eventId`        | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                          |
-| `seriesLength`   | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                            |
-| `firearmId`      | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                  |
-| `firearm`        | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                   |
-| `stations`       | A fältskjutning session's stations: hits, figures hit, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session. |
-| `faltResultMode` | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                   |
+| Field            | Meaning                                                                                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `valueTenths`    | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                                                                      |
+| `isInnerTen`     | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                                                                           |
+| `isSighter`      | A sighting series. It carries no shots here and does not count towards a total.                                                                                                                                                      |
+| `totalOverride`  | A series saved as a total only, as a Webshooter or ShotLog import gives it: `tenths` is the total, `shotCount` the shots behind it or `null` when none was given. Its `shots` is then empty. `null` on a series scored shot by shot. |
+| `weaponGroup`    | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                                                                       |
+| `eventId`        | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                                                                        |
+| `seriesLength`   | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                                                                          |
+| `firearmId`      | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                                                                |
+| `firearm`        | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                                                                 |
+| `stations`       | A fältskjutning session's stations: hits, figures hit, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session.                                               |
+| `faltResultMode` | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                                                                 |
 
 ### Firearms and licenses
 
