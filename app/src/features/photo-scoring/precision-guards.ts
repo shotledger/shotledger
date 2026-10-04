@@ -1,7 +1,9 @@
-// Two checks that refuse a precision close-up lock on a milsnabb photo, where
+// Three checks that refuse a precision close-up lock on a milsnabb photo, where
 // a crop of milsnabb's X and 10 rings reads line for line as precision's at
 // twice the size (docs/specs/cv-closeup-lock-2026-09.md, last section).
 import type { TargetFaceDefinition } from '@shotledger/shared';
+
+import type { Homography } from './corners';
 
 import {
   type HoleCandidate,
@@ -13,7 +15,11 @@ import { type MilsnabbLock, passesMilsnabbGate } from './milsnabb-lock';
 import type { RectifiedCanvas } from './tap-snap';
 
 /** Why a precision close-up lock was refused. */
-export type PrecisionGuardRefusal = 'milsnabbLock' | 'holeSize';
+export type PrecisionGuardRefusal = 'milsnabbLock' | 'perspective' | 'holeSize';
+
+/** The range the mapping's projective denominator may span over the photo,
+ *  relative to its value at the target centre. */
+export const PERSPECTIVE_GUARD = { min: 0.5, max: 2 } as const;
 
 export const HOLE_SIZE_GUARD = {
   /** Only holes the proposals would suggest are read. */
@@ -77,6 +83,29 @@ export function holesTooSmall(
   if (fullMm.length > 0) return false;
   if (halfMm.length === 0) return false;
   return median(halfMm) < HOLE_SIZE_GUARD.maxShare * caliberMm;
+}
+
+/**
+ * The perspective guard: true when the lock's projective denominator at a
+ * corner of the photo is outside PERSPECTIVE_GUARD of its value at the target
+ * centre, or changes sign there (the horizon crosses the photo). No hand-held
+ * photo of a flat target is that oblique; a lock on the wrong rings can be.
+ */
+export function perspectiveRefuses(
+  toMm: Homography,
+  center: { readonly x: number; readonly y: number },
+  size: { readonly width: number; readonly height: number },
+): boolean {
+  const w = (x: number, y: number) => toMm[6] * x + toMm[7] * y + toMm[8];
+  const atCenter = w(center.x, center.y);
+  if (!(Math.abs(atCenter) > 0)) return true;
+  for (const x of [0, size.width]) {
+    for (const y of [0, size.height]) {
+      const ratio = w(x, y) / atCenter;
+      if (!(ratio >= PERSPECTIVE_GUARD.min && ratio <= PERSPECTIVE_GUARD.max)) return true;
+    }
+  }
+  return false;
 }
 
 /** The milsnabb guard: the milsnabb lock passing on the same photo. */

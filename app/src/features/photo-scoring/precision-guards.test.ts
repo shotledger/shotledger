@@ -7,8 +7,11 @@ import {
   holeDiametersMm,
   holesTooSmall,
   milsnabbLockRefuses,
+  PERSPECTIVE_GUARD,
+  perspectiveRefuses,
   proposalFaceOf,
 } from './precision-guards';
+import type { Homography } from './corners';
 import { syntheticCanvas } from './synthetic-canvas';
 import type { RectifiedCanvas } from './tap-snap';
 
@@ -140,5 +143,37 @@ describe('proposalFaceOf', () => {
       Math.max(...SPSF_PISTOL_25M_PRECISION.rings.map((r) => r.diameterMm / 2)),
     );
     expect(face.ringRadiiMm).toHaveLength(SPSF_PISTOL_25M_PRECISION.rings.length);
+  });
+});
+
+describe('perspectiveRefuses', () => {
+  const size = { width: 2000, height: 1500 };
+  const center = { x: 1000, y: 750 };
+  // 0.1 mm per px round the centre, with the denominator tilted along x by g.
+  const tilted = (g: number): Homography => [0.1, 0, -100, 0, 0.1, -75, g, 0, 1 - g * 1000];
+
+  it('keeps a lock seen square on', () => {
+    expect(perspectiveRefuses(tilted(0), center, size)).toBe(false);
+  });
+
+  it('keeps a tilt whose denominator stays inside the range at every corner', () => {
+    // 1 -/+ 1000 g at the left and right edges.
+    expect(perspectiveRefuses(tilted(0.0004), center, size)).toBe(false);
+    expect(perspectiveRefuses(tilted(-0.0004), center, size)).toBe(false);
+  });
+
+  it('refuses where a corner falls outside the range', () => {
+    const edge = 1 - PERSPECTIVE_GUARD.min;
+    expect(perspectiveRefuses(tilted((edge + 0.01) / 1000), center, size)).toBe(true);
+    expect(perspectiveRefuses(tilted(-(edge + 0.01) / 1000), center, size)).toBe(true);
+  });
+
+  it('refuses a mapping whose horizon crosses the photo', () => {
+    expect(perspectiveRefuses(tilted(0.0015), center, size)).toBe(true);
+  });
+
+  it('reads the same at any scale of the matrix', () => {
+    const h = tilted(0.0004).map((v) => -3 * v) as unknown as Homography;
+    expect(perspectiveRefuses(h, center, size)).toBe(false);
   });
 });

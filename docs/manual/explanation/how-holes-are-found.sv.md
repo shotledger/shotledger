@@ -26,11 +26,12 @@ behöver aldrig läsa någon ringsiffra.
 
 En milsnabbtavlas ringlinjer kan lura det andra sättet. En närbild av dess X
 och tia har samma mönster i förhållandet 1:2 som precisionstavlans, i dubbel
-storlek. Därför gör appen två kontroller till i en precisionssession innan den
-använder en anpassning efter ringlinjerna. Den avvisar anpassningen om
-milsnabbtavlans egen anpassning också fungerar på fotot. Den avvisar den också
-om hålen blir ungefär hälften så stora som din kaliber ger. Finns det inga hål
-att mäta kan den andra kontrollen inte hjälpa. Då kan ett milsnabbfoto
+storlek. Därför gör appen tre kontroller till i en precisionssession innan den
+använder en anpassning efter ringlinjerna. Den avvisar anpassningen om ringarna
+bara stämmer vid en lutning som inget foto av en plan tavla har. Den avvisar
+den om milsnabbtavlans egen anpassning också fungerar på fotot. Och den avvisar
+den om hålen blir ungefär hälften så stora som din kaliber ger. Finns det inga
+hål att mäta kan den sista kontrollen inte hjälpa. Då kan ett milsnabbfoto
 fortfarande slinka igenom, oftast en tät närbild av X och tian, så räkna
 milsnabb i en milsnabbsession.
 

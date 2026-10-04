@@ -1,7 +1,8 @@
-// The precision close-up lock's two milsnabb guards on real photos: the
-// milsnabb lock passing on the same photo, and the holes' size against the
-// calibre (precision-guards.ts). Not part of `pnpm check`: the photos live
-// outside the repo (docs/specs/cv-closeup-lock-2026-09.md, last section).
+// The precision close-up lock's three milsnabb guards on real photos: the
+// lock's perspective over the photo, the milsnabb lock passing on the same
+// photo, and the holes' size against the calibre (precision-guards.ts). Not
+// part of `pnpm check`: the photos live outside the repo
+// (docs/specs/cv-closeup-lock-2026-09.md, last section).
 //
 //   CV_GUARD_SETS=<tsv: pgm path, set, framing, face> CV_GUARD_OUT=<out.jsonl> \
 //   [CV_GUARD_SHARD=i/n] [CV_GUARD_CROPS=1] \
@@ -12,7 +13,7 @@
 // whole photo, and with crops the precision views around its disc lock. Every
 // image whose precision close-up lock passes its gate gets a row with
 // chooseLock's pick against the disc lock (the guards run in scan.tsx only on
-// 'closeup'), both guards' readings and verdict (`refusedBy`), and the raw
+// 'closeup'), the guards' readings and verdict (`refusedBy`), and the raw
 // candidates behind the hole reading; the rest get a row saying it did not
 // pass. CV_GUARD_DUMP=<dir> writes each guarded canvas as a PGM.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -43,6 +44,7 @@ import {
   holeDiametersMm,
   holesTooSmall,
   milsnabbLockRefuses,
+  perspectiveRefuses,
   proposalFaceOf,
 } from '../../../app/src/features/photo-scoring/precision-guards';
 import { crops, MIL_OUTER, MIL_VIEWS, photoSeed, PRE_VIEWS, rng } from './crops';
@@ -134,20 +136,29 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
     half: rawHoles(canvas, { ...face, caliberMm: CALIBER_MM / 2 }),
   };
   const t2 = performance.now();
-  // The mapping's projective denominator at the photo's corners: a sign
-  // change puts the horizon inside the photo.
+  // The mapping's projective denominator at the photo's corners, as is
+  // ([8] = 1, so 1 at the photo's origin) and relative to the target centre's
+  // (perspectiveRefuses): a sign change puts the horizon inside the photo.
   const [, , , , , , g, h] = lock.toMm as unknown as number[];
   const w = [0, image.width].flatMap((x) => [0, image.height].map((y) => g! * x + h! * y + 1));
+  const wAtCenter = g! * lock.center.x + h! * lock.center.y + 1;
+  const wc = w.map((v) => v / wAtCenter);
+  const perspective = perspectiveRefuses(lock.toMm, lock.center, image);
   return {
     passes: true,
     choice,
     period: round(lock.period),
     wMin: round(Math.min(...w), 3),
     wMax: round(Math.max(...w), 3),
+    wcMin: round(Math.min(...wc), 3),
+    wcMax: round(Math.max(...wc), 3),
+    perspective,
     milsnabb: mil
       ? {
           passes: passesMilsnabbGate(mil),
           lines: mil.ringLines,
+          rings: mil.rings,
+          support: round(mil.support),
           off: round(mil.ringOffsetMm),
           res: round(mil.residualMm),
           comb: round(mil.comb, 1),
@@ -156,11 +167,14 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
       : null,
     holes: { full: full.map((d) => round(d)), half: half.map((d) => round(d)) },
     raw,
-    refusedBy: milsnabbLockRefuses(mil)
-      ? 'milsnabbLock'
-      : holesTooSmall(full, half, CALIBER_MM)
-        ? 'holeSize'
-        : null,
+    // In scan.tsx's order.
+    refusedBy: perspective
+      ? 'perspective'
+      : milsnabbLockRefuses(mil)
+        ? 'milsnabbLock'
+        : holesTooSmall(full, half, CALIBER_MM)
+          ? 'holeSize'
+          : null,
     msLocks: Math.round(t1 - t0),
     msHoles: Math.round(t2 - t1),
   };

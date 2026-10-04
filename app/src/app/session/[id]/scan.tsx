@@ -74,6 +74,7 @@ import {
   holeDiametersMm,
   holesTooSmall,
   milsnabbLockRefuses,
+  perspectiveRefuses,
   type PrecisionGuardRefusal,
   proposalFaceOf,
 } from '@/features/photo-scoring/precision-guards';
@@ -124,6 +125,7 @@ const REASON_KEYS: Record<RejectReason, string> = {
   zoneContrast: 'photoScoring.reasonZoneContrast',
   profileScore: 'photoScoring.reasonProfileScore',
   milsnabbLock: 'photoScoring.reasonMilsnabbLock',
+  perspective: 'photoScoring.reasonPerspective',
   holeSize: 'photoScoring.reasonHoleSize',
 };
 
@@ -318,8 +320,9 @@ export default function ScanScreen() {
       // A milsnabb photo in a precision session can pass the precision lock
       // at twice its true scale (spec, "a precision lock on a milsnabb photo").
       let refusal: PrecisionGuardRefusal | null = null;
-      if (closeupMapping && closeupRun) {
-        if (milsnabbLockOn(closeupRun)) refusal = 'milsnabbLock';
+      if (closeupMapping && closeupRun && closeup) {
+        if (perspectiveRefuses(closeup.toMm, closeup.center, image)) refusal = 'perspective';
+        else if (milsnabbLockOn(closeupRun)) refusal = 'milsnabbLock';
         else {
           if (!(await enter('straighten'))) return;
           rectified = rectify(image.base64, closeupMapping.toMm, target);
