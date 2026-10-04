@@ -11,5 +11,8 @@ export const MAINTENANCE_RED_THRESHOLD = 1.0;
 /** VERIFY: preferred lead times for license expiry reminders (days before valid_until). */
 export const LICENSE_EXPIRY_LEAD_DAYS: readonly number[] = [90, 30, 7];
 
+/** Local hour of day a license expiry reminder fires (maintainer's call). */
+export const LICENSE_EXPIRY_REMINDER_HOUR = 9;
+
 /** VERIFY: same boundary used to badge a license "expiring soon" in the UI. */
 export const LICENSE_EXPIRING_SOON_DAYS = 30;
