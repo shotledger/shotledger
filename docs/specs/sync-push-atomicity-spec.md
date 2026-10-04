@@ -3,8 +3,8 @@
 > Old-coder SPEC for #536. Evidence report, once written:
 > `docs/specs/sync-push-atomicity-evidence.md`.
 >
-> **Approval status: NOT YET OBTAINED.** No production code is written
-> until the maintainer approves this document.
+> **Approval status: Approved 2026-10-04 (maintainer-delegated review), with
+> revisions 1–5.**
 
 - **Tier: 3.** Concurrency and data loss: two devices on one account can
   lose an edit, resurrect a deleted row, or leave a third device permanently
@@ -77,6 +77,10 @@ OK      := ?7 IS NOT NULL OR NOT EXISTS (row ?1/?3/?4 with deleted_at IS NOT NUL
 - **Ack.** If statement 1 returns a record, the ack is `duplicate` with that
   record's seq or reason. Otherwise the ack is statement 4's `RETURNING`
   row.
+- If statement 1 returns no record _and_ statement 4 returns no row,
+  `applyPush` throws. That state is unreachable inside one serialized
+  transaction; the batch has already committed, the 500 makes the client
+  retry, and the retry acks `duplicate`.
 - **Idempotency is atomic.** The record and the row commit together or not
   at all, so no crash can leave one without the other.
 - **A rejected change keeps its record.** The record is written with
@@ -190,6 +194,8 @@ interleaving tests are not a lab artefact, not a RED gate.
 2. A push is all or nothing. Today, if D1 fails mid-push, the changes before
    the failure stay applied. After this change none are applied. The
    response is still 500, and the client retries the same `clientChangeId`s.
+   A push that commits but whose response is lost retries as all
+   `duplicate` acks — the client clears each entry (engine.ts:139,143).
 3. Under concurrent pushes, seq order equals commit order.
 
 ## 6. Verified facts about D1 (sources)
@@ -208,7 +214,9 @@ interleaving tests are not a lab artefact, not a RED gate.
     same batch;
   - `INSERT … SELECT … WHERE <guard> ON CONFLICT DO UPDATE` parses, and a
     false guard writes nothing;
-  - a leading `SELECT` sees the pre-batch state;
+  - statement 1 sees the transaction state at that point, including
+    records written by earlier changes in the same batch (C6's `c1 again`
+    depends on this);
   - `ON CONFLICT DO NOTHING RETURNING` returns the row only when it was
     inserted;
   - the full design (§3) produced C6's acks exactly.
@@ -220,8 +228,8 @@ interleaving tests are not a lab artefact, not a RED gate.
   (`A0 B0 A1 B1 A2 B2`). The race is real in the test runtime. Its timing
   over HTTP is not controllable, which is why C1–C4 use a gate.
 - D1 requires exactly as many bindings as the highest `?N` in the statement
-  ("Wrong number of parameter bindings"), so each statement binds its own
-  prefix.
+  ("Wrong number of parameter bindings"), so statements are built with
+  Drizzle's builders, which number their own placeholders.
 
 ## 7. Setup plan (what approval authorizes)
 
@@ -263,11 +271,12 @@ interleaving tests are not a lab artefact, not a RED gate.
 
 ## 9. Risks
 
-- **Batch size.** A full push is 2000 statements in one transaction. D1
-  documents per-statement limits, but no per-batch statement cap was found.
-  The adversarial pass measures it in the local pool only. If it fails, the
-  push is split into chunks, which is still atomic per change. That would
-  be recorded as a revision.
+- **Batch size.** One batch per push. The adversarial pass records the
+  500-change batch's wall time in the evidence. If it fails or exceeds 10 s
+  locally, chunk at 100 changes (5 batches per push, still inside the Free
+  plan's 50 subrequests); atomicity is then per chunk, which every scenario
+  still satisfies. The 30 s duration limit applies to "the entire batch
+  call" (D1 limits page, footnote 4).
 - **"Queries per Worker invocation" (1000 paid, 50 free).** The docs do not
   say whether a batch counts once. Today a full push already makes about
   2500 queries, so this design is no worse either way, and much better if a
@@ -295,4 +304,19 @@ interleaving tests are not a lab artefact, not a RED gate.
 
 ## Revisions
 
-- (none yet)
+2026-10-04, from the maintainer-delegated review (APPROVE WITH REVISIONS):
+
+1. §3: `applyPush` throws when statement 1 and statement 4 both return
+   nothing.
+2. §6: statement 1 sees the in-transaction state, which C6 relies on.
+3. §6: the "binds its own prefix" claim is dropped; Drizzle's builders
+   number placeholders.
+4. §9: batch size is a rule: one batch per push, chunk at 100 changes if
+   the 500-change batch fails or exceeds 10 s locally.
+5. §5: a committed push whose response is lost retries as `duplicate`
+   acks.
+
+Decisions: Q1 keep server-order LWW (ADR 0003); Q2 nothing is deployed, so
+the design must hold on the Free plan (revision 4), and a batch is one call
+to D1; Q3 no istanbul, keep the mutation-script substitute. Both wire
+changes are accepted.
