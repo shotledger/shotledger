@@ -199,7 +199,8 @@ describe('classifyResultRow', () => {
       disciplineId: 'spsf-precision',
       competitionName: 'KM Precision',
       weaponGroup: 'spsf:C',
-      startedAt: '2026-05-10T08:00:00.000Z',
+      // Local wall-clock, so it lands on the competition's day in any zone.
+      startedAt: new Date(2026, 4, 10, 10, 0).toISOString(),
     });
     const candidate = classifyResultRow(db, resultRow(), COMPETITION);
     expect(candidate.verdict.kind).toBe('probable-match');
