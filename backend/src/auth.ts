@@ -10,13 +10,8 @@ export interface Authenticator {
   authenticate(request: Request): Promise<string | null>;
 }
 
-// TODO(better-auth): `backend/src/routes/sync.ts` still defaults to this dev
-// stub — cutting it over to `betterAuthAuthenticator` would require rewriting
-// `backend/test/sync.spec.ts`'s fixtures around real session tokens, which is
-// a deliberate decision for the maintainer, not a side effect of the
-// auth+photos task (docs/specs/backend-auth-photos-spec.md §2). This dev
-// stub trusts the bearer token verbatim as the user id — never use it
-// outside local/test environments.
+// Trusts the bearer token verbatim as the user id — test fixtures only
+// (`backend/test/sync.spec.ts`); never mount it in the Worker.
 export const devBearerAuthenticator: Authenticator = {
   async authenticate(request: Request): Promise<string | null> {
     const header = request.headers.get('authorization');

@@ -9,7 +9,7 @@ import {
   type PushResponse,
 } from '@shotledger/shared/src/sync';
 
-import { devBearerAuthenticator, type Authenticator } from '../auth';
+import type { Authenticator } from '../auth';
 import { applyPushChange, createDb, pullTablePage } from '../db/queries';
 
 export interface SyncEnv {
@@ -18,14 +18,10 @@ export interface SyncEnv {
 }
 
 /**
- * Default stays the dev stub so `backend/test/sync.spec.ts` keeps its bare
- * token fixtures; `src/index.ts` mounts this with the real better-auth
- * authenticator (docs/specs/sync-app-spec.md §8) — the shipped Worker must
- * never accept a bearer string as a user id verbatim.
+ * No default authenticator: a mount must name one, so the dev stub can never
+ * be picked up by accident (docs/specs/sync-app-spec.md §8).
  */
-export function createSyncRoutes(
-  authenticatorFor: (env: Env) => Authenticator = () => devBearerAuthenticator,
-) {
+export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) {
   const app = new Hono<SyncEnv>();
 
   app.use('*', async (c, next) => {

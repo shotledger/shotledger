@@ -53,6 +53,12 @@ export function createPhotoRoutes(
       return c.json({ error: 'photo_too_large' }, 413);
     }
 
+    // A new id has no row yet; an existing one must be the requester's.
+    const existing = await findPhoto(db, photoId);
+    if (existing && authorizeOwner(existing.userId, userId) === 'not_found') {
+      return c.json({ error: 'not_found' }, 404);
+    }
+
     const rateLimiter = new D1RateLimiter(db);
     const rate = await rateLimiter.consume(userId, Date.now());
     if (!rate.allowed) {

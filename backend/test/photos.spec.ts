@@ -233,4 +233,84 @@ describe('photo upload', () => {
     };
     expect(usage.usedBytes).toBe(300);
   });
+
+  it("P13 uploading to another user's photoId is 404 and leaves the owner's photo and both usages untouched", async () => {
+    const owner = await signUp('p13-owner@example.com');
+    const other = await signUp('p13-other@example.com');
+    const ownerBytes = bytes(100);
+    expect((await upload(owner, 'photo-13', ownerBytes)).status).toBe(201);
+
+    const otherBytes = new Uint8Array(250).fill(9);
+    const response = await fetchApp('/photos/upload/photo-13', {
+      method: 'POST',
+      headers: authHeaders(other, {
+        'content-type': 'image/png',
+        'content-length': String(otherBytes.byteLength),
+      }),
+      body: otherBytes,
+    });
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'not_found' });
+
+    const ownerGet = await fetchApp('/photos/photo-13', { headers: authHeaders(owner) });
+    expect(ownerGet.status).toBe(200);
+    expect(ownerGet.headers.get('content-type')).toBe('image/jpeg');
+    expect(new Uint8Array(await ownerGet.arrayBuffer())).toEqual(ownerBytes);
+
+    const row = await env.DB.prepare(
+      'SELECT size_bytes AS sizeBytes, content_type AS contentType FROM photos WHERE photo_id = ?',
+    )
+      .bind('photo-13')
+      .first();
+    expect(row).toEqual({ sizeBytes: 100, contentType: 'image/jpeg' });
+
+    const ownerUsage = await fetchApp('/photos/usage', { headers: authHeaders(owner) });
+    expect(await ownerUsage.json()).toMatchObject({ usedBytes: 100 });
+    const otherUsage = await fetchApp('/photos/usage', { headers: authHeaders(other) });
+    expect(await otherUsage.json()).toMatchObject({ usedBytes: 0 });
+  });
+});
+
+describe('photo routes reject a request without a valid session', () => {
+  const routes: { method: string; path: string }[] = [
+    { method: 'POST', path: '/photos/upload/photo-401' },
+    { method: 'GET', path: '/photos/usage' },
+    { method: 'GET', path: '/photos/photo-401' },
+    { method: 'DELETE', path: '/photos/photo-401' },
+  ];
+  // `user id` is what the dev stub would accept as a bearer token.
+  const credentials: { name: string; headers: () => Promise<Record<string, string>> }[] = [
+    { name: 'no token', headers: async () => ({}) },
+    { name: 'a forged token', headers: async () => authHeaders('forged-session-token') },
+    {
+      name: 'a user id as the token',
+      headers: async () => {
+        const token = await signUp('p-401@example.com');
+        const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
+        const { user } = (await session.json()) as { user: { id: string } };
+        return authHeaders(user.id);
+      },
+    },
+  ];
+
+  for (const { method, path } of routes) {
+    for (const credential of credentials) {
+      it(`${method} ${path} with ${credential.name} is 401`, async () => {
+        const body = method === 'POST' ? bytes(10) : undefined;
+        const response = await fetchApp(path, {
+          method,
+          headers: {
+            ...(await credential.headers()),
+            ...(body && {
+              'content-type': 'image/jpeg',
+              'content-length': String(body.byteLength),
+            }),
+          },
+          body,
+        });
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({ error: 'unauthenticated' });
+      });
+    }
+  }
 });

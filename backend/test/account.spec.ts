@@ -89,16 +89,7 @@ beforeEach(async () => {
 describe('account deletion', () => {
   it('A1 dryRun:true reports nonzero counts and deletes nothing', async () => {
     const token = await signUp('a1@example.com');
-    // The dev-stub-authenticated /sync route uses a separate identity space
-    // (bearer token = user id verbatim) from better-auth's real user ids, so
-    // account-deletion counts against sync_rows are exercised using the
-    // better-auth user id directly as the sync bearer token — the sync
-    // route's dev stub accepts any nonempty token as a user id, so this
-    // reuses the same real userId as the row owner.
-    const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
-    const { user } = (await session.json()) as { user: { id: string } };
-
-    await pushSyncRow(user.id, 'firearm-a1');
+    expect((await pushSyncRow(token, 'firearm-a1')).status).toBe(200);
     await upload(token, 'photo-a1', bytes(50));
 
     const dryRun = await fetchApp('/account/delete', {
@@ -109,6 +100,7 @@ describe('account deletion', () => {
     expect(dryRun.status).toBe(200);
     const body = (await dryRun.json()) as { dryRun: boolean; deleted: Record<string, number> };
     expect(body.dryRun).toBe(true);
+    expect(body.deleted.syncRows).toBe(1);
     expect(body.deleted.photos).toBe(1);
     expect(body.deleted.quota).toBe(1);
     expect(body.deleted.sessions).toBeGreaterThanOrEqual(1);
@@ -154,4 +146,32 @@ describe('account deletion', () => {
     const bUsage = await fetchApp('/photos/usage', { headers: authHeaders(tokenB) });
     expect(await bUsage.json()).toMatchObject({ usedBytes: 10 });
   });
+});
+
+describe('account routes reject a request without a valid session', () => {
+  // `user id` is what the dev stub would accept as a bearer token.
+  const credentials: { name: string; headers: (userId: string) => Record<string, string> }[] = [
+    { name: 'no token', headers: () => ({}) },
+    { name: 'a forged token', headers: () => authHeaders('forged-session-token') },
+    { name: 'a user id as the token', headers: (userId) => authHeaders(userId) },
+  ];
+
+  for (const credential of credentials) {
+    it(`POST /account/delete with ${credential.name} is 401 and deletes nothing`, async () => {
+      const token = await signUp('a-401@example.com');
+      const session = await fetchApp('/api/auth/get-session', { headers: authHeaders(token) });
+      const { user } = (await session.json()) as { user: { id: string } };
+
+      const response = await fetchApp('/account/delete', {
+        method: 'POST',
+        headers: { ...credential.headers(user.id), 'content-type': 'application/json' },
+        body: JSON.stringify({ dryRun: false }),
+      });
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({ error: 'unauthenticated' });
+
+      const stillAuthed = await fetchApp('/photos/usage', { headers: authHeaders(token) });
+      expect(stillAuthed.status).toBe(200);
+    });
+  }
 });

@@ -34,9 +34,10 @@ export async function findPhoto(db: Db, photoId: string): Promise<PhotoRow | und
 
 /**
  * Upserts the photo row and updates quota usage in one D1 batch (spec §5
- * step 6). A re-upload to the same `photoId` (must already belong to
- * `userId` — callers only reach here after `authorizeOwner` on any existing
- * row) nets only the size difference, never the sum (P12).
+ * step 6). A re-upload to the same `photoId` nets only the size difference,
+ * never the sum (P12). The caller must already have run `authorizeOwner` on
+ * any existing row (the upload route does, P13): the upsert never changes
+ * `userId`.
  */
 export async function recordUpload(
   db: Db,
