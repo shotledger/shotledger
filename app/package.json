@@ -54,6 +54,7 @@
     "uuidv7": "1.2.1"
   },
   "devDependencies": {
+    "@testing-library/react-native": "14.0.1",
     "@types/better-sqlite3": "9.6.0",
     "@types/jest": "30.0.0",
     "@types/react": "19.3.0",
@@ -64,6 +65,7 @@
     "jest": "30.5.2",
     "jest-expo": "57.0.5",
     "jest-junit": "17.0.0",
+    "test-renderer": "1.2.0",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "scripts": {

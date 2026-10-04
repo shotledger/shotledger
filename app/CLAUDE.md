@@ -15,6 +15,20 @@ the app is the `run-app` skill.
   (`adb shell am force-stop` + relaunch). Restart before concluding a string
   is broken.
 
+## Testing hooks
+
+Jest (`jest-expo`) with `@testing-library/react-native`; the pattern is
+`features/backup/use-backup-export-import.test.ts`.
+
+- `await renderHook(...)`, and wrap every call that sets state in
+  `await act(...)` — both are async in v14.
+- Mock at the module boundary: `@/db/client` (getters, so a test can set
+  `db` to `null`), `@/db/queries/*`, `@/db/backup/*`, `@/platform/*`.
+  Keep pure helpers (`folder-state.ts`, `@shotledger/shared`) real.
+- Module-level state (`features/sync/sync-controller.ts`) needs a fresh
+  copy per test: `require` it inside `jest.isolateModules`, with fake
+  timers for debounces and backoff.
+
 ## Licenses
 
 Adding or removing a dependency means running `pnpm licenses:generate` and
