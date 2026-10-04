@@ -6,6 +6,9 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { createTestDb } from '../test-db';
+import { wipeDemoData } from '../seed';
+import { addStation } from '../queries/falt';
+import { applyRoundCountDelta } from '../queries/round-count';
 import { createFirearm, getFirearm } from '../queries/firearms';
 import { addSeries } from '../queries/series';
 import { createSession } from '../queries/sessions';
@@ -216,5 +219,100 @@ describe('import moves the linked firearm round counters (#350)', () => {
     reimport(db, small);
 
     expect(counters(db, firearm.id)).toEqual({ roundCount: 0, roundsSinceMaintenance: 0 });
+  });
+});
+
+/** Exports, empties the database, and imports the file with its firearms. */
+function restore(db: Database, json: string) {
+  wipeDemoData(db);
+  reimportWithRecords(db, json);
+}
+
+function reimportWithRecords(db: Database, json: string) {
+  const { errors, groups, records } = dryRunImport(db, json);
+  expect(errors).toEqual([]);
+  applyImport(db, groups, records);
+}
+
+/** A ring session, its rounds credited as logging it in the app would. */
+function logRingSession(db: Database, firearmId: string, shotCount: number, extraRounds: number) {
+  makeSession(db, { firearmId, shotCount, extraRounds });
+  applyRoundCountDelta(db, firearmId, shotCount + extraRounds);
+}
+
+/** A firearm with history before this device, so the two counters differ. */
+function makeFirearmWithHistory(db: Database) {
+  return createFirearm(db, {
+    make: 'Glock',
+    model: '17',
+    caliber: '9 mm',
+    roundCount: 1200,
+    maintenanceIntervalRounds: 500,
+    roundsSinceMaintenance: 120,
+  });
+}
+
+describe("a full restore keeps the file's firearm counters (#511)", () => {
+  it('RC-9: a ring session is not counted on top of the restored counters', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    logRingSession(db, firearm.id, 7, 3);
+    const original = counters(db, firearm.id);
+    expect(original).toEqual({ roundCount: 1210, roundsSinceMaintenance: 130 });
+
+    restore(db, buildExportJson(db, '1.0.0'));
+
+    expect(counters(db, firearm.id)).toEqual(original);
+  });
+
+  it('RC-10: a fält session is not counted on top of the restored counters', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    const session = createSession(db, {
+      name: 'Kretsfält',
+      type: 'competition',
+      disciplineId: 'spsf-falt',
+      firearmId: firearm.id,
+      startedAt: '2026-05-10T09:00:00.000Z',
+      faltResultMode: 'falt',
+    });
+    addStation(db, { sessionId: session.id, position: 1, hits: 5, figuresHit: 3 });
+    addStation(db, { sessionId: session.id, position: 2, hits: 6, figuresHit: 4 });
+    const original = counters(db, firearm.id);
+    expect(original).toEqual({ roundCount: 1212, roundsSinceMaintenance: 132 });
+
+    restore(db, buildExportJson(db, '1.0.0'));
+
+    expect(counters(db, firearm.id)).toEqual(original);
+  });
+
+  it('RC-11: importing the same file twice after a restore changes nothing', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    logRingSession(db, firearm.id, 7, 3);
+    const original = counters(db, firearm.id);
+    const json = buildExportJson(db, '1.0.0');
+
+    restore(db, json);
+    reimportWithRecords(db, json);
+    reimportWithRecords(db, json);
+
+    expect(counters(db, firearm.id)).toEqual(original);
+  });
+
+  it('RC-12: a name-matched firearm keeps its own counter and moves by the difference', () => {
+    const db = createTestDb();
+    const firearm = makeFirearmWithHistory(db);
+    logRingSession(db, firearm.id, 7, 0);
+    const json = buildExportJson(db, '1.0.0');
+
+    // Another device: the same gun under a different id, with its own count.
+    wipeDemoData(db);
+    const local = createFirearm(db, { make: 'Glock', model: '17', roundCount: 50 });
+    reimportWithRecords(db, json);
+    reimportWithRecords(db, json);
+
+    expect(counters(db, local.id)).toEqual({ roundCount: 57, roundsSinceMaintenance: 7 });
+    expect(getFirearm(db, firearm.id)).toBeUndefined();
   });
 });

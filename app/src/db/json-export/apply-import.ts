@@ -143,8 +143,10 @@ function splitFirearmName(name: string): { make: string; model: string } {
  * id in the file, still match on exact name or are created. Round counters on
  * a firearm that already exists here are left alone — a file is a record of
  * shooting, not the authority on how many rounds this device has counted.
+ * A firearm created from the file takes the file's counters, which already
+ * include its sessions, so those sessions do not add to it again (#511).
  *
- * The sessions it creates do move those counters, though (#350). Logging a
+ * The sessions it creates do move an existing firearm's counters (#350). Logging a
  * session in the app adds its shots to the linked firearm's counters, and an
  * import that skipped that step left Rounds Fired and every maintenance
  * interval reading zero for the shooter with the most history — 11,615
@@ -167,6 +169,9 @@ export function applyImport(
     const firearmIdByFileId = new Map<string, string>();
     const ammoLotIdByName = new Map<string, string>();
     const tagIdByName = new Map<string, string>();
+    /** Firearms created from the file: their counters already include the
+     *  file's sessions, so those sessions add nothing to them (#511). */
+    const insertedFromFile = new Set<string>();
 
     /** A firearm the file carries: its id wins, then its display name, then
      *  it is inserted keeping the file's id so a re-import is idempotent. */
@@ -221,6 +226,7 @@ export function applyImport(
           roundsSinceMaintenance: firearm.roundsSinceMaintenance,
         })
         .run();
+      insertedFromFile.add(firearm.id);
       return firearm.id;
     };
 
@@ -332,6 +338,7 @@ export function applyImport(
     /** Net round-counter movement per firearm, applied once at the end. */
     const roundDeltaByFirearm = new Map<string, number>();
     const addRounds = (firearmId: string, delta: number) => {
+      if (insertedFromFile.has(firearmId)) return;
       roundDeltaByFirearm.set(firearmId, (roundDeltaByFirearm.get(firearmId) ?? 0) + delta);
     };
 

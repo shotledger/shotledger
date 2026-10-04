@@ -37,9 +37,15 @@ Skotträknarna är det enda en import inte skriver över på ett vapen du redan 
 Filen är ett register över skjutande, inte sanningen om hur många skott den här
 enheten har räknat genom vapnet.
 
-Passen den hämtar in räknas däremot. Varje importerat pass lägger sina skott,
-sina oräknade extraskott och sex skott för varje fältstation till räknarna för det vapen det anger — precis som
-om du hade loggat passet här. Att importera samma fil två gånger räknar den inte
+Ett vapen som importen skapar är tvärtom: det får sina skotträknare från filen,
+och de innehåller redan filens pass. Att återställa en fullständig export i en
+tömd app ger därför varje vapen tillbaka exakt de räknare det hade, inte
+räknarna plus dess pass en gång till.
+
+På ett vapen du redan har räknas passen den hämtar in däremot. Varje importerat
+pass lägger sina skott, sina oräknade extraskott och sex skott för varje
+fältstation till räknarna för det vapen det anger — precis som om du hade
+loggat passet här. Att importera samma fil två gånger räknar den inte
 två gånger: den andra importen flyttar räknarna med skillnaden, och oftast inte
 alls.
 
