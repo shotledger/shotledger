@@ -49,6 +49,12 @@ det, med eventuell öppen väljare stängd.
   struken station eller en särskjutningsstation är inte del av ett resultat.
   Väljer du _Fältskjutning_ som gren utelämnas ringkorten ovan, eftersom inget
   av dem kan säga något om en fältomgång.
+- **Träning mot tävling**, när **Typ av pass** står på _Alla_: träning och tävling
+  sida vid sida, med pass, medel, median, bästa, std.avv. och snitt X per
+  serie, och en rad om hur långt över eller under träningen tävlingen ligger.
+  Lika jämförs med lika: en tabell per gren och serielängd, och bara där både
+  träning och tävling har serier. Den räknar samma serier som resten av
+  rapporten, så inställningen för provserier gäller.
 - **Var dina skott hamnar**, när pass i rapporten räknats från foto: deras hål
   på en värmekarta, med en rad om huruvida poängen du tappar mest är en
   siktjustering eller mest spridning. Se

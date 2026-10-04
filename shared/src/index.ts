@@ -9,6 +9,7 @@ export * from './scoring/standard-medal';
 export * from './scoring/stages';
 export * from './scoring/stats';
 export * from './scoring/analytics';
+export * from './scoring/session-type-comparison';
 export * from './scoring/group';
 export * from './scoring/heatmap';
 export * from './scoring/coaching';
