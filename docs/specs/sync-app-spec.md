@@ -390,10 +390,12 @@ spec's declared limit.
 - **Property:** `buildClientChange` never returns a change with both a
   non-null payload and a non-null `deletedAt` — i.e. it always satisfies the
   server's `ClientChangeSchema.refine`, asserted by parsing the result.
-- Photo queue: `selectNextUpload` prefers the oldest non-exhausted entry;
-  `applyUploadResult` retires on success, increments on retryable failure,
-  and marks `failed` at `MAX_PHOTO_ATTEMPTS = 5`; a `413`/`quota_exceeded`
-  is **not** retryable (retrying a too-large photo forever is a battery bug).
+- Photo queue: `selectNextPhotoTask` prefers the oldest non-exhausted entry;
+  `applyPhotoTaskOutcome` retires on success, gives up at once on a
+  permanent failure (`404`, `413`: retrying a too-large photo forever is a
+  battery bug), spends one attempt of `MAX_PHOTO_ATTEMPTS = 5` on a 5xx,
+  408 or 429, and none on no response or a 401. Every failure but a
+  permanent one ends the pass.
 
 **`app/src/db/queries/sync-store.test.ts`** (root vitest, better-sqlite3 via
 `createTestDb`) — the adapter and, crucially, the triggers:

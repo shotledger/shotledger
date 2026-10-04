@@ -4,8 +4,8 @@
 import {
   applyPhotoTaskOutcome,
   fitsPhotoSizeCap,
-  isRetryablePhotoStatus,
   PhotoHttpError,
+  photoFailureForStatus,
   selectNextPhotoTask,
   toSyncPhotoUri,
   type PhotoQueueEntry,
@@ -26,31 +26,52 @@ import { getPhotoApi, getSessionTokenCache } from './client';
 /** One pass costs at most this many network round trips, so a big backlog cannot hang a cycle. */
 const MAX_TASKS_PER_PASS = 10;
 
+/** A request that got no response at all, as opposed to a local file error. */
+class NoResponseError extends Error {}
+
+/** Runs a photo API call, marking any throw that carries no HTTP status as no response. */
+async function request<T>(call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    throw error instanceof PhotoHttpError ? error : new NoResponseError(String(error));
+  }
+}
+
 function outcomeFor(error: unknown): PhotoTaskOutcome {
   if (error instanceof PhotoHttpError) {
     return {
       type: 'failed',
-      retryable: isRetryablePhotoStatus(error.status),
+      failure: photoFailureForStatus(error.status),
       error: `http_${error.status}`,
     };
   }
-  return { type: 'failed', retryable: true, error: 'network' };
+  if (error instanceof NoResponseError) {
+    return { type: 'failed', failure: 'unreachable', error: 'network' };
+  }
+  // Reading or writing the file on this device failed. It must cost an
+  // attempt, or a broken file at the head of the queue would block it forever.
+  return { type: 'failed', failure: 'transient', error: 'local_io' };
 }
 
 async function runUpload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
-  if (entry.localUri === null) return { type: 'failed', retryable: false, error: 'no_local_file' };
+  if (entry.localUri === null) {
+    return { type: 'failed', failure: 'permanent', error: 'no_local_file' };
+  }
 
   const bytes = await prepareSyncPhotoBytes(entry.localUri);
   if (!fitsPhotoSizeCap(bytes.byteLength)) {
     // The server would answer 413; failing here saves the round trip and
     // records a reason the user can actually read.
-    return { type: 'failed', retryable: false, error: 'photo_too_large' };
+    return { type: 'failed', failure: 'permanent', error: 'photo_too_large' };
   }
 
-  await getPhotoApi().upload(
-    entry.photoId,
-    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
-    'image/jpeg',
+  await request(() =>
+    getPhotoApi().upload(
+      entry.photoId,
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      'image/jpeg',
+    ),
   );
 
   // Swap the device-local path for the device-independent marker. This is a
@@ -61,7 +82,7 @@ async function runUpload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
 }
 
 async function runDownload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
-  const bytes = await getPhotoApi().download(entry.photoId);
+  const bytes = await request(() => getPhotoApi().download(entry.photoId));
   writeSyncPhoto(entry.photoId, new Uint8Array(bytes));
   return { type: 'succeeded' };
 }
@@ -91,5 +112,6 @@ export async function runPhotoQueue(): Promise<void> {
     const action = applyPhotoTaskOutcome(entry, outcome);
     if (action.type === 'remove') removePhotoTask(db, action.id);
     else recordPhotoAttempt(db, action.id, action.attempts, action.lastError);
+    if (action.endPass) return;
   }
 }
