@@ -9,13 +9,11 @@
 import {
   analyzeGroup,
   analyzePointsLost,
-  buildHeatmap,
   coachingHint,
   requireTargetFace,
   seriesTargetFace,
   type CoachingHint,
   type GroupAnalysis,
-  type Heatmap,
   type TargetFaceDefinition,
 } from '@shotledger/shared';
 import { useMemo } from 'react';
@@ -31,7 +29,6 @@ export interface CrossSessionGroup {
   sessionCount: number;
   marks: { xMm: number; yMm: number; caliberMm: number }[];
   analysis: GroupAnalysis;
-  heatmap: Heatmap | null;
   hint: CoachingHint | null;
 }
 
@@ -86,14 +83,12 @@ export function useCrossSessionGroup(
     const analysis = analyzeGroup(marks);
     if (!analysis) return null;
 
-    const extentMm = target.rings[target.rings.length - 1]?.diameterMm ?? 0;
     return {
       target,
       disciplineId: chosenId,
       sessionCount: new Set(chosen.items.map(({ session }) => session.sessionId)).size,
       marks,
       analysis,
-      heatmap: extentMm > 0 ? buildHeatmap(marks, extentMm) : null,
       hint: coachingHint(analysis, analyzePointsLost(marks, target)),
     };
   }, [from, to, disciplineId]);

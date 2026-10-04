@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { densityBandwidthMm, densityGrid, heatColor } from './heat-density';
+import {
+  densityBandwidthMm,
+  densityGrid,
+  heatColor,
+  heatDensityCells,
+  MIN_SHOTS_FOR_HEATMAP,
+} from './heat-density';
 
 describe('heatColor', () => {
   it('runs dark blue → cyan → green → yellow → red → near white', () => {
@@ -66,4 +72,46 @@ describe('densityGrid', () => {
     expect(() => densityGrid([{ xMm: 0, yMm: 0 }], 0)).toThrow(RangeError);
     expect(() => densityGrid([{ xMm: 0, yMm: 0 }], 100, 0)).toThrow(RangeError);
   });
+});
+
+describe('densityGrid input', () => {
+  it('rejects a non-finite coordinate', () => {
+    expect(() => densityGrid([{ xMm: Number.NaN, yMm: 0 }], 100)).toThrow(RangeError);
+    expect(() => densityGrid([{ xMm: 0, yMm: Number.POSITIVE_INFINITY }], 100)).toThrow(RangeError);
+  });
+});
+
+describe('heatDensityCells', () => {
+  const cluster = [
+    { xMm: 25, yMm: -25 },
+    { xMm: 26, yMm: -24 },
+    { xMm: 24, yMm: -26 },
+  ];
+
+  it('draws the hottest cell under the cluster, in the peak color', () => {
+    const layer = heatDensityCells(cluster, 100, 10)!;
+    const hottest = layer.cells.find((c) => c.color === heatColor(1))!;
+    // Column 7, row 2 of a 10 mm grid from -50: its top-left corner.
+    expect(hottest).toMatchObject({ xMm: 20, yMm: -30, opacity: 0.9 });
+    expect(hottest.sizeMm).toBeCloseTo(10.5);
+    expect(layer.blurMm).toBeCloseTo(8);
+  });
+
+  it('leaves ground nobody shot at clear', () => {
+    const layer = heatDensityCells(cluster, 100, 10)!;
+    expect(layer.cells.length).toBeLessThan(100);
+    expect(layer.cells.some((c) => c.xMm === -50 && c.yMm === 40)).toBe(false);
+    for (const cell of layer.cells) {
+      expect(cell.opacity).toBeGreaterThanOrEqual(0.25);
+      expect(cell.opacity).toBeLessThanOrEqual(0.9);
+    }
+  });
+
+  it('returns null with no points', () => {
+    expect(heatDensityCells([], 100)).toBeNull();
+  });
+});
+
+it('shows a heat map from 20 shots', () => {
+  expect(MIN_SHOTS_FOR_HEATMAP).toBe(20);
 });

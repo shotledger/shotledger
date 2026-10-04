@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
+import { MIN_SHOTS_FOR_HEATMAP } from '../heatmap/heat-density';
 import { ISSF_25M_RAPID_FIRE, SPSF_PISTOL_25M_PRECISION } from '../target-scoring/targets';
 import {
   buildSessionReportHtml,

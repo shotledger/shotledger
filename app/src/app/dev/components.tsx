@@ -17,6 +17,7 @@ import { ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
 import { SeriesTotalPill } from '@/components/series-total-pill';
 import { Screen } from '@/components/screen';
+import { ShotHeatmap } from '@/components/shot-heatmap';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
 import { Stepper } from '@/components/stepper';
@@ -97,6 +98,18 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
 ];
 
 // One finished series per tier, so each celebration can be replayed on demand.
+// 40 synthetic holes for the heat map: a main group low left of center and a
+// few strays. Deterministic, so a screenshot is reproducible.
+const HEATMAP_PREVIEW_SHOTS = Array.from({ length: 40 }, (_, i) => {
+  const stray = i % 10 === 9;
+  const angle = i * 2.399963;
+  const radius = (stray ? 160 : 60) * Math.sqrt(((i * 7919) % 97) / 97);
+  return {
+    xMm: (stray ? 0 : -45) + radius * Math.cos(angle),
+    yMm: (stray ? 0 : 55) + radius * Math.sin(angle),
+  };
+});
+
 const CELEBRATION_DEMOS: readonly { tier: CelebrationTier; label: string; values: number[] }[] = [
   { tier: 'gold', label: 'Gold (47)', values: [100, 100, 90, 90, 90] },
   { tier: 'fullScore', label: 'Full Score (5×10)', values: [100, 100, 100, 100, 100] },
@@ -302,6 +315,11 @@ export default function ComponentsGalleryScreen() {
           selectedId={null}
           readOnly
         />
+      </Section>
+      <Section title="ShotHeatmap (#523)">
+        <View style={{ alignItems: 'center' }}>
+          <ShotHeatmap target={EDGE_CALL_PREVIEW_TARGET} shots={HEATMAP_PREVIEW_SHOTS} size={300} />
+        </View>
       </Section>
     </Screen>
   );

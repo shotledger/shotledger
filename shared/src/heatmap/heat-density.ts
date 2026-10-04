@@ -1,9 +1,15 @@
-// A smooth shot-density heat map for the session report: a Gaussian kernel
-// density over the holes, colored blue → cyan → green → yellow → red → white,
-// with no target face under it. The app's binned `buildHeatmap` answers the
-// same question on screen; this is the print form.
+// A smooth shot-density heat map: a Gaussian kernel density over the holes,
+// colored blue → cyan → green → yellow → red → white and laid over the target
+// face like a football heat map over the pitch. The app's `ShotHeatmap` and
+// the session report both draw it from `heatDensityCells`.
 //
 // Target-mm throughout, origin at the target center, y increasing downward.
+
+/**
+ * Below this the picture is noise: with a handful of holes the density is
+ * just a blob per hole, and the group plot already says that.
+ */
+export const MIN_SHOTS_FOR_HEATMAP = 20;
 
 export interface DensityGrid {
   resolution: number;
@@ -48,6 +54,11 @@ export function densityGrid(
     throw new RangeError(`resolution must be a positive integer, got ${resolution}`);
   }
   if (points.length === 0) return null;
+  for (const p of points) {
+    if (!Number.isFinite(p.xMm) || !Number.isFinite(p.yMm)) {
+      throw new RangeError(`heat map coordinates must be finite, got (${p.xMm}, ${p.yMm})`);
+    }
+  }
 
   const h = densityBandwidthMm(points, extentMm);
   const twoHSquared = 2 * h * h;
@@ -85,4 +96,49 @@ export function heatColor(value: number): string {
       .toString(16)
       .padStart(2, '0');
   return `#${hex(r)}${hex(g)}${hex(b)}`;
+}
+
+/** One drawn cell of the density, in target-mm. */
+export interface HeatDensityCell {
+  xMm: number;
+  yMm: number;
+  sizeMm: number;
+  color: string;
+  opacity: number;
+}
+
+export interface HeatDensityLayer {
+  cells: HeatDensityCell[];
+  /** Gaussian blur, in target-mm, that hides the cell edges. */
+  blurMm: number;
+}
+
+/** Below this share of the peak a cell is left out, so empty ground stays clear. */
+const MIN_DRAWN_VALUE = 0.04;
+
+/**
+ * The density as cells ready to draw under a blur, over a square of
+ * `extentMm` centered on the target. Each cell overlaps its neighbors
+ * slightly so the blur leaves no seams. Null with no points.
+ */
+export function heatDensityCells(
+  points: readonly Point[],
+  extentMm: number,
+  resolution = 60,
+): HeatDensityLayer | null {
+  const grid = densityGrid(points, extentMm, resolution);
+  if (!grid) return null;
+  const half = extentMm / 2;
+  const cells: HeatDensityCell[] = [];
+  for (const [index, value] of grid.values.entries()) {
+    if (value < MIN_DRAWN_VALUE) continue;
+    cells.push({
+      xMm: (index % resolution) * grid.cellSizeMm - half,
+      yMm: Math.floor(index / resolution) * grid.cellSizeMm - half,
+      sizeMm: grid.cellSizeMm * 1.05,
+      color: heatColor(value),
+      opacity: Math.min(0.9, 0.25 + value * 0.75),
+    });
+  }
+  return { cells, blurMm: grid.cellSizeMm * 0.8 };
 }
