@@ -280,6 +280,9 @@ export const faltStations = sqliteTable('falt_stations', {
   hits: integer('hits').notNull().default(0),
   // 0-hits: "5/3" is five hits spread over three figures.
   figuresHit: integer('figures_hit').notNull().default(0),
+  // 1-6 figures set out at the station; NULL when not recorded (a Webshooter
+  // import gives none). Answers "did I hit every figure" (#567).
+  figureCount: integer('figure_count'),
   // Poängmål (D.6.10.1 p. 93). NULL = the station carried no ringed figure,
   // which 0 does not say. There is no fixed ring scheme — the arrangör
   // chooses, so the shooter records the max alongside what they scored

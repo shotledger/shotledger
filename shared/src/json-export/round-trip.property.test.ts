@@ -50,14 +50,20 @@ const seriesArb = fc.oneof(shotSeriesArb, totalOnlySeriesArb);
 
 // A scoring station must be arithmetically possible; a scratched one need not be.
 const scoringStationNumbersArb = fc.integer({ min: 0, max: 6 }).chain((hits) =>
-  fc.record({
-    hits: fc.constant(hits),
-    figuresHit: hits === 0 ? fc.constant(0) : fc.integer({ min: 1, max: hits }),
-  }),
+  (hits === 0 ? fc.constant(0) : fc.integer({ min: 1, max: hits })).chain((figuresHit) =>
+    fc.record({
+      hits: fc.constant(hits),
+      figuresHit: fc.constant(figuresHit),
+      figureCount: fc.option(fc.integer({ min: Math.max(1, figuresHit), max: 6 }), {
+        nil: null,
+      }),
+    }),
+  ),
 );
 const scratchedStationNumbersArb = fc.record({
   hits: fc.integer({ min: 0, max: 6 }),
   figuresHit: fc.integer({ min: 0, max: 6 }),
+  figureCount: fc.option(fc.integer({ min: 1, max: 6 }), { nil: null }),
 });
 const pointsArb = fc.oneof(
   fc.constant({ points: null, pointsMax: null }),

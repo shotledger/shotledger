@@ -333,6 +333,19 @@
                   "maximum": 6,
                   "description": "Figures hit at least once. Never more than `hits`."
                 },
+                "figureCount": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 6
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Figures set out at the station, or null when not recorded."
+                },
                 "points": {
                   "anyOf": [
                     {
@@ -379,6 +392,7 @@
                 "position",
                 "hits",
                 "figuresHit",
+                "figureCount",
                 "points",
                 "pointsMax",
                 "isScratched",

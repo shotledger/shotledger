@@ -178,6 +178,7 @@ describe('buildDryRunPlan shot counts', () => {
       position: 1,
       hits: 5,
       figuresHit: 3,
+      figureCount: null,
       points: null,
       pointsMax: null,
       isScratched: false,

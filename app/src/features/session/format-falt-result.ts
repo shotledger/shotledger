@@ -35,3 +35,30 @@ export function formatFaltResult(t: TFunction, result: FaltResultSummary): strin
     ? t('session.poangfaltTotal', { points: result.poangfaltPoints })
     : t('session.faltTotal', { hits: result.hits, figures: result.figuresHit });
 }
+
+/** One station as its row reads: "6/3 of 4, 12p of 20p" (#567). */
+export function formatStation(
+  t: TFunction,
+  station: {
+    hits: number;
+    figuresHit: number;
+    figureCount: number | null;
+    points: number | null;
+    pointsMax: number | null;
+  },
+): string {
+  const figures =
+    station.figureCount === null
+      ? `${station.hits}/${station.figuresHit}`
+      : t('station.rowFiguresOf', {
+          hits: station.hits,
+          figuresHit: station.figuresHit,
+          figureCount: station.figureCount,
+        });
+  if (station.points === null) return figures;
+  const points =
+    station.pointsMax === null
+      ? t('station.rowPoints', { points: station.points })
+      : t('station.rowPointsOf', { points: station.points, max: station.pointsMax });
+  return `${figures}, ${points}`;
+}

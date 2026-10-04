@@ -73,6 +73,23 @@ describe('addStation / listStationsForSession (spec P2)', () => {
     ).not.toThrow();
   });
 
+  it('keeps the figure count, and refuses one no station can have (#567)', () => {
+    const row = addStation(db, { sessionId, position: 1, hits: 6, figuresHit: 3, figureCount: 4 });
+    expect(row.figureCount).toBe(4);
+    expect(addStation(db, { sessionId, position: 2, hits: 6, figuresHit: 3 }).figureCount).toBe(
+      null,
+    );
+    for (const figureCount of [0, 7, 2.5]) {
+      expect(() =>
+        addStation(db, { sessionId, position: 3, hits: 6, figuresHit: 3, figureCount }),
+      ).toThrow(RangeError);
+    }
+    // More figures hit than the station set out.
+    expect(() =>
+      addStation(db, { sessionId, position: 3, hits: 6, figuresHit: 5, figureCount: 4 }),
+    ).toThrow(RangeError);
+  });
+
   it('P2d: a soft-deleted station leaves the list and the result', () => {
     const kept = addStation(db, { sessionId, position: 1, hits: 5, figuresHit: 3 });
     const gone = addStation(db, { sessionId, position: 2, hits: 6, figuresHit: 2 });
@@ -90,6 +107,14 @@ describe('updateStation', () => {
     const patched = updateStation(db, row.id, { hits: 6, figuresHit: 2, isScratched: true });
     expect(patched).toMatchObject({ hits: 6, figuresHit: 2, isScratched: 1 });
     expect(patched!.updatedAt >= row.updatedAt).toBe(true);
+  });
+
+  it('patches the figure count, and clears it with null (#567)', () => {
+    const row = addStation(db, { sessionId, position: 1, hits: 5, figuresHit: 3 });
+    expect(updateStation(db, row.id, { figureCount: 4 })?.figureCount).toBe(4);
+    expect(updateStation(db, row.id, { hits: 6 })?.figureCount).toBe(4);
+    expect(updateStation(db, row.id, { figureCount: null })?.figureCount).toBe(null);
+    expect(() => updateStation(db, row.id, { figureCount: 2 })).toThrow(RangeError);
   });
 
   it('refuses an impossible patch to a station that still scores', () => {

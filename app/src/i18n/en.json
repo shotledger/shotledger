@@ -1279,19 +1279,21 @@
     "title": "Station {{position}}",
     "hits": "Hits",
     "figuresHit": "Figures Hit",
+    "figureCount": "Figures",
     "points": "Points",
     "pointsMax": "Max Points",
-    "pointsTarget": "Ringed Figure",
-    "pointsHelp": "Only where the organiser designated a ringed figure. The rings decide a tie, never the result.",
+    "of": "of",
+    "pointsInvalid": "Points can't be more than the max.",
     "scratched": "Scratched",
-    "scratchedHelp": "Kept in the round and shown, but not counted — a station annulled for breaking the rules.",
     "shootOff": "Shoot-off",
-    "shootOffHelp": "Shot to separate equal results. It decides placement, never the recorded score.",
     "delete": "Delete Station",
     "deleteConfirm": "Delete this station?",
     "noStations": "No Stations Yet",
     "noStationsBody": "Add your first station and record the hits.",
-    "save": "Save Station"
+    "save": "Save Station",
+    "rowFiguresOf": "{{hits}}/{{figuresHit}} of {{figureCount}}",
+    "rowPoints": "{{points}}p",
+    "rowPointsOf": "{{points}}p of {{max}}p"
   },
   "stage": {
     "spsf-helmatch": {

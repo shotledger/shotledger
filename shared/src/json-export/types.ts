@@ -45,6 +45,8 @@ export interface StationExport {
   position: number;
   hits: number;
   figuresHit: number;
+  /** Figures set out at the station, or `null` when not recorded. */
+  figureCount: number | null;
   points: number | null;
   pointsMax: number | null;
   isScratched: boolean;
@@ -203,6 +205,13 @@ const stationSchema = z
       .min(0)
       .max(6)
       .describe('Figures hit at least once. Never more than `hits`.'),
+    figureCount: z
+      .number()
+      .int()
+      .min(1)
+      .max(6)
+      .nullable()
+      .describe('Figures set out at the station, or null when not recorded.'),
     points: z
       .number()
       .int()
@@ -228,6 +237,7 @@ const stationSchema = z
       s.isScratched ||
       (s.figuresHit <= s.hits &&
         (s.hits === 0 || s.figuresHit > 0) &&
+        (s.figureCount === null || s.figuresHit <= s.figureCount) &&
         (s.points === null || s.pointsMax === null || s.points <= s.pointsMax)),
     { message: 'station numbers no station could have produced' },
   );

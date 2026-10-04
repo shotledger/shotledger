@@ -179,7 +179,7 @@ One session, one scored series of three shots:
 | `seriesLength`   | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                                                                          |
 | `firearmId`      | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                                                                |
 | `firearm`        | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                                                                 |
-| `stations`       | A fältskjutning session's stations: hits, figures hit, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session.                                               |
+| `stations`       | A fältskjutning session's stations: hits, figures hit, the station's figure count, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session.                   |
 | `faltResultMode` | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                                                                 |
 
 ### Firearms and licenses

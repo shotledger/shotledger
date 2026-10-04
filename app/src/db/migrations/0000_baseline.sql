@@ -33,6 +33,7 @@ CREATE TABLE `falt_stations` (
 	`position` integer NOT NULL,
 	`hits` integer DEFAULT 0 NOT NULL,
 	`figures_hit` integer DEFAULT 0 NOT NULL,
+	`figure_count` integer,
 	`points` integer,
 	`points_max` integer,
 	`is_scratched` integer DEFAULT 0 NOT NULL,
