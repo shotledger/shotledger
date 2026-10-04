@@ -83,7 +83,7 @@ export function ScoreKeypad({
 
       <View style={styles.totalRow}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-          {state.mode === 'decimal' ? t('session.keypadHintDecimal') : t('session.keypadHint')}
+          {state.mode === 'decimal' ? t('session.keypadHintDecimal') : null}
         </ThemedText>
         <Animated.View style={totalStyle}>
           <ThemedText

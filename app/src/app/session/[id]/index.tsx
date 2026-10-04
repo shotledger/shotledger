@@ -838,14 +838,6 @@ export default function SessionDetailScreen() {
             </Card>
           )}
 
-          {/* A drag gesture is invisible: nothing on the row says it can be
-              picked up, so the hint has to. */}
-          {!isRoundsSession && seriesRows.length > 1 && (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('session.reorderHint')}
-            </ThemedText>
-          )}
-
           {!detail.isFixedFormat && !isRoundsSession && !isFaltSession && (
             <Card>
               <PrimaryButton

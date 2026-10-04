@@ -664,9 +664,6 @@ export default function NewSessionScreen() {
             onChange={(value) => setFaltResultMode(value as 'falt' | 'poangfalt')}
             testID="falt-result-mode"
           />
-          <ThemedText type="small" style={styles.helpText}>
-            {t('session.faltResultModeHelp')}
-          </ThemedText>
         </Card>
       )}
 
@@ -713,10 +710,6 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     flexShrink: 1,
-  },
-  helpText: {
-    marginTop: Spacing.two,
-    opacity: 0.7,
   },
   switchRow: {
     flexDirection: 'row',

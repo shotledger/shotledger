@@ -115,17 +115,13 @@
     "standardMedalSilver": "Standardmedalj silver reached",
     "standardMedalBronze": "Standardmedalj brons reached",
     "sectionPeriod": "Sessions",
-    "sectionPeriodHint": "The date range the report covers.",
     "sectionType": "Session Type",
-    "sectionTypeHint": "Training, competition, or both.",
     "sectionSighters": "Sighters",
     "sectionSightersHint": "Outside a session a sighter is an ordinary series. Shots Logged always includes them.",
     "sightersInclude": "Include",
     "sightersExclude": "Exclude",
-    "sectionDisciplineHint": "Limit the report to one discipline.",
     "sectionDisciplineChoice": "Selected Discipline",
     "sectionShotsPerSeries": "Shots per Series",
-    "sectionShotsHint": "Compare only series of the same length.",
     "sectionTags": "Tags",
     "sectionTagsHint": "Keep sessions carrying any of the tags you pick.",
     "sectionTagsChoice": "Selected Tags",
@@ -363,7 +359,6 @@
     "velocityMps": "Velocity (m/s)",
     "velocityHint": "Chronographed muzzle velocity, in meters per second.",
     "powerFactor": "Power Factor",
-    "powerFactorHint": "Calculated from bullet weight and velocity (grains x fps / 1000).",
     "recipeTitle": "Handload Recipe",
     "powder": "Powder",
     "powderChargeGr": "Powder Charge (gr)",
@@ -401,8 +396,7 @@
     "compareImbalance": "These lots differ {{ratio}}x in shot count, so the table is not a fair race — the lot with fewer shots has the less settled average.",
     "compareCaveats": "Shots inside one series move together, so the true uncertainty is a little wider than the intervals shown. And nothing here separates the ammunition from your own form on the day a lot happened to be used.",
     "muzzleEnergy": "Muzzle Energy",
-    "joules": "{{value}} J",
-    "muzzleEnergyHint": "Energy at the muzzle, from bullet weight and velocity. Any legal limit is yours to check."
+    "joules": "{{value}} J"
   },
   "settings": {
     "title": "Settings",
@@ -666,7 +660,6 @@
     "photoPermissionDenied": "The app was not granted access to photos.",
     "save": "Save Series",
     "backspace": "Delete",
-    "keypadHint": "One tap per shot — 10 is an ordinary ten, X an inner ten",
     "keypadHintDecimal": "Two taps per shot: ring, then tenth",
     "seriesAverage": "Avg/Series",
     "innerTenCount": "X (Inner Tens)",
@@ -738,7 +731,6 @@
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
     "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
-    "reorderHint": "Long-press a series to move it.",
     "scoredFromPhoto": "Scored from Photo",
     "scoredManually": "Entered Manually",
     "sighterScore": "{{score}}*",
@@ -746,7 +738,6 @@
     "faltResultMode": "Result Mode",
     "faltResultModeFalt": "Field",
     "faltResultModePoangfalt": "Point field",
-    "faltResultModeHelp": "Field shooting is scored as hits in figures. Point field adds them into one sum: one point per hit and one per figure hit.",
     "addStation": "Add Station",
     "stations": "Stations",
     "faltTotal": "{{hits}} hits in {{figures}} figures",
@@ -756,7 +747,6 @@
     "celebrationPerfect": "Perfect Series!",
     "celebrationFullScore": "Great Job!",
     "officialStandardMedal": "Official Standard Medal",
-    "officialStandardMedalHint": "Nationell helmatch has no point limits: silver goes to the best ninth of the field and bronze to the best third, per weapon group. Record the medal the results list gives.",
     "officialStandardMedalRecorded": "Standard Medal: {{medal}}"
   },
   "share": {
@@ -1249,7 +1239,6 @@
     "emptyBody": "Photos you attach to a series, or take when scoring from a photo, collect here.",
     "notDownloaded": "Not downloaded",
     "openLabel": "Open the photo from {{session}}, series {{position}}",
-    "shareHint": "Long-press a photo to share, copy or save it.",
     "allOf": "All"
   },
   "providers": {

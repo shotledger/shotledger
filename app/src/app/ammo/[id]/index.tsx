@@ -194,12 +194,6 @@ export default function AmmoLotDetailScreen() {
                 </ThemedText>
               </View>
             </View>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('ammo.powerFactorHint')}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('ammo.muzzleEnergyHint')}
-            </ThemedText>
           </>
         )}
       </Card>
