@@ -316,10 +316,8 @@ SvSF's own pistol discipline, encoded as `svsf-snabbluftpistol` with
 - **§6.2** — 3 minutes preparation time.
 - **§6.3 Provserie** — _"Före varje omgångs början får den tävlande skjuta en
   (1) provserie om fem (5) skott på tio (10) sekunder."_ One per round, i.e.
-  two in all; encoded as one `sighterSeries: 1` on the first group — the same
-  compression the ISSF rapid fire program documents, now a data choice since
-  groups carry their own sighters (#476).
-  The sighter inherits the first group's 10 s.
+  two in all; encoded as `sighterSeries: 1` on the first group of each round,
+  so each sighter inherits that group's 10 s.
 - **§6.4 Kommandon** — marking in whole points: _"Röd för 10 och 10i, vit för
   övriga samt meddelar summa."_ Integer scoring; `allowsDecimal: false`,
   program `scoring: 'integer'`.

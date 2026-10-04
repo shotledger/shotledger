@@ -236,9 +236,9 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
     { id: 'issf-air-pistol', shots: 60, series: 6, sighterSeries: 0 },
     { id: 'issf-free-pistol', shots: 60, series: 12, sighterSeries: 0 },
     { id: 'issf-standard-pistol', shots: 60, series: 12, sighterSeries: 1 },
-    { id: 'issf-rapid-fire-pistol', shots: 60, series: 12, sighterSeries: 1 },
-    { id: 'issf-sport-pistol', shots: 60, series: 12, sighterSeries: 1 },
-    { id: 'issf-centre-fire-pistol', shots: 60, series: 12, sighterSeries: 1 },
+    { id: 'issf-rapid-fire-pistol', shots: 60, series: 12, sighterSeries: 2 },
+    { id: 'issf-sport-pistol', shots: 60, series: 12, sighterSeries: 2 },
+    { id: 'issf-centre-fire-pistol', shots: 60, series: 12, sighterSeries: 2 },
   ];
 
   it.each(issfPrograms)(
@@ -283,23 +283,33 @@ describe('ISSF pistol programs (docs/reference/issf-rules.md)', () => {
 
   it('issf-rapid-fire-pistol: 8/6/4 second series, repeated across two stages (8.7.6.3.a)', () => {
     const program = getProgram('issf-rapid-fire-pistol');
+    // 8.7.6.3.b: one 8 s sighting series before each stage.
     expect(program?.structure?.groups).toEqual([
       { seriesCount: 2, timeLimitSeconds: 8, sighterSeries: 1 },
       { seriesCount: 2, timeLimitSeconds: 6 },
       { seriesCount: 2, timeLimitSeconds: 4 },
-      { seriesCount: 2, timeLimitSeconds: 8 },
+      { seriesCount: 2, timeLimitSeconds: 8, sighterSeries: 1 },
       { seriesCount: 2, timeLimitSeconds: 6 },
       { seriesCount: 2, timeLimitSeconds: 4 },
     ]);
+    const skeleton = buildProgramSkeleton(program!);
+    expect(skeleton[7]).toMatchObject({ isSighter: true, timeLimitSeconds: 8 });
   });
 
   it('issf-sport-pistol: 240s precision stage, untimed rapid stage (8.7.6.4)', () => {
     const program = getProgram('issf-sport-pistol');
-    // The rapid-fire stage is shot on the rapid fire face (GTR 6.3.4.4).
+    // The rapid-fire stage is shot on the rapid fire face (GTR 6.3.4.4);
+    // each stage opens with its own sighting series (8.7.6.4.a).
     expect(program?.structure?.groups).toEqual([
       { seriesCount: 6, timeLimitSeconds: 240, sighterSeries: 1 },
-      { seriesCount: 6, targetFace: 'issf-25m-rapid-fire' },
+      { seriesCount: 6, targetFace: 'issf-25m-rapid-fire', sighterSeries: 1 },
     ]);
+    const skeleton = buildProgramSkeleton(program!);
+    expect(skeleton[7]).toMatchObject({
+      isSighter: true,
+      timeLimitSeconds: null,
+      targetFace: 'issf-25m-rapid-fire',
+    });
   });
 
   it('issf-centre-fire-pistol: the same course as 25m Pistol (8.7.6.4 governs both)', () => {
@@ -336,21 +346,21 @@ describe('SvSF pistol programs (docs/reference/svsf-rules.md)', () => {
       supportsFinal: false,
     });
     expect(program?.structure).toEqual({
-      // §6.3: one 5-shot provserie at 10 s before each round; one leading
-      // sighter is kept, as for ISSF rapid fire.
+      // §6.3: one 5-shot provserie at 10 s before each round.
       groups: [
         { seriesCount: 2, timeLimitSeconds: 10, sighterSeries: 1 },
         { seriesCount: 2, timeLimitSeconds: 8 },
         { seriesCount: 2, timeLimitSeconds: 6 },
-        { seriesCount: 2, timeLimitSeconds: 10 },
+        { seriesCount: 2, timeLimitSeconds: 10, sighterSeries: 1 },
         { seriesCount: 2, timeLimitSeconds: 8 },
         { seriesCount: 2, timeLimitSeconds: 6 },
       ],
     });
     const skeleton = buildProgramSkeleton(program!);
-    expect(skeleton).toHaveLength(13);
+    expect(skeleton).toHaveLength(14);
     expect(skeleton[0]).toMatchObject({ isSighter: true, timeLimitSeconds: 10 });
-    expect(skeleton.slice(1).reduce((n, s) => n + s.shots, 0)).toBe(60);
+    expect(skeleton[7]).toMatchObject({ isSighter: true, timeLimitSeconds: 10 });
+    expect(skeleton.filter((s) => !s.isSighter).reduce((n, s) => n + s.shots, 0)).toBe(60);
   });
 
   it('svsf-snabbluftpistol is SvSF-owned, integer, and scored on its own 10 m face', () => {
@@ -952,7 +962,7 @@ describe('per-group sighters and faces (§6.3, #476)', () => {
     const skeleton = buildProgramSkeleton(getProgram('issf-centre-fire-pistol')!);
     expect(skeleton.map((s) => s.targetFace)).toEqual([
       ...Array<string>(7).fill('issf-25m-precision'),
-      ...Array<string>(6).fill('issf-25m-rapid-fire'),
+      ...Array<string>(7).fill('issf-25m-rapid-fire'),
     ]);
   });
 
@@ -960,10 +970,10 @@ describe('per-group sighters and faces (§6.3, #476)', () => {
     const id = 'issf-centre-fire-pistol';
     expect(seriesTargetFace(id, id, 1)).toBe('issf-25m-precision');
     expect(seriesTargetFace(id, id, 8)).toBe('issf-25m-rapid-fire');
-    // the last precision series and the first rapid one — the stage boundary
+    // the last precision series and the rapid stage's sighter — the stage boundary
     expect(seriesTargetFace(id, id, 7)).toBe('issf-25m-precision');
     // appended past the skeleton, or no program at all
-    expect(seriesTargetFace(id, id, 14)).toBe('issf-25m-precision');
+    expect(seriesTargetFace(id, id, 15)).toBe('issf-25m-precision');
     expect(seriesTargetFace(id, null, 8)).toBe('issf-25m-precision');
     expect(seriesTargetFace('spsf-precision', 'spsf-precision', 3)).toBe(
       'spsf-pistol-25m-precision',
