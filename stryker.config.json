@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Mutation-testing gauntlet layer for the M3 shared scoring modules (docs/specs/m3-scoring-spec.md). Run: pnpm mutation. `mutate` is order-sensitive: every negation goes LAST, because a positive pattern after one re-adds what it removed — that is how the json-export test files came to be mutated.",
+  "_comment": "The gauntlet's module list: vitest.config.ts takes its coverage include/exclude from `mutate` too. Run: pnpm mutation. `mutate` is order-sensitive: every negation goes LAST, because a positive pattern after one re-adds what it removed — that is how the json-export test files came to be mutated.",
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "vitest": {
@@ -36,5 +36,5 @@
   "tempDirName": ".stryker-tmp",
   "plugins": ["@stryker-mutator/vitest-runner"],
   "ignoreStatic": true,
-  "_comment2": "ignoreStatic: mutants in code that only runs at module load (the zod schema declarations) cannot be activated by the vitest runner once the module is cached, so Stryker cannot evaluate them. They are covered instead by the on-disk manual mutants recorded in docs/specs/m3-scoring-evidence.md."
+  "ignoreStatic_comment": "ignoreStatic: mutants in code that only runs at module load cannot be activated by the vitest runner once the module is cached, so Stryker never evaluates them. That is the zod schemas — covered by the on-disk mutants of pnpm mutation:schema — and every lookup table (medal and badge thresholds, APPLY_ORDER, the SE constants), which only a test pinning each value can check."
 }
