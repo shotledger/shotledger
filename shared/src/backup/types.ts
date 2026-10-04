@@ -43,12 +43,12 @@ export type BackupCounts = z.infer<typeof BackupCountsSchema>;
 export const BackupManifestSchema = z.object({
   containerFormatVersion: z.literal(BACKUP_CONTAINER_FORMAT_VERSION),
   appVersion: z.string(),
-  // Drizzle journal bookkeeping (app/src/db/migrations/meta/_journal.json),
-  // read at export time — lets a restore refuse a bundle whose schema is
-  // newer than what this build of the app knows how to migrate.
+  // The last entry of the Drizzle journal (app/src/db/migrations/meta/_journal.json)
+  // at export time. The baseline is reset rather than migrated, so its tag
+  // repeats across resets and only `when` tells two baselines apart.
   schemaJournalVersion: z.string(),
   schemaMigrationTag: z.string(),
-  schemaMigrationIdx: z.number().int().nonnegative(),
+  schemaMigrationWhen: z.number().int().nonnegative(),
   kind: BackupKindSchema,
   createdAt: z.string(),
   counts: BackupCountsSchema,

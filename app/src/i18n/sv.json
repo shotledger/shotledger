@@ -480,7 +480,7 @@
     "exportFailed": "Export av säkerhetskopia misslyckades",
     "restoreCanceled": "Återställning avbruten",
     "restoreInvalid": "Den filen är inte en ShotLedger-säkerhetskopia",
-    "restoreNewerSchema": "Den här säkerhetskopian gjordes med en nyare version av appen — uppdatera appen innan du återställer den",
+    "restoreSchemaMismatch": "Den här säkerhetskopian gjordes med en annan version av appen och kan inte återställas med den här. Om den kommer från en nyare version, uppdatera appen och försök igen.",
     "restoreSuccess": "Återställning klar — stäng och öppna appen igen",
     "restoreFailed": "Återställningen misslyckades",
     "saveToFolderSubtitle": "Skriv en kopia direkt till en mapp du väljer, utan delningsmenyn",

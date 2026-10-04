@@ -480,7 +480,7 @@
     "exportFailed": "Backup export failed",
     "restoreCanceled": "Restore canceled",
     "restoreInvalid": "That file isn't a ShotLedger backup",
-    "restoreNewerSchema": "This backup was made by a newer version of the app — update the app before restoring it",
+    "restoreSchemaMismatch": "This backup was made by a different version of the app and can't be restored by this one. If it came from a newer version, update the app and try again.",
     "restoreSuccess": "Restore complete — close and reopen the app",
     "restoreFailed": "Restore failed",
     "saveToFolderSubtitle": "Write a copy directly into a folder you choose, without the share sheet",

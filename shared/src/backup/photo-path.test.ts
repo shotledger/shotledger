@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extensionFromUri,
   isPhotoEntryName,
+  isSafeEntryName,
   isSyncPhotoEntryName,
   photoEntryFilename,
   photoEntryName,
@@ -23,6 +24,10 @@ describe('photoEntryName', () => {
 describe('extensionFromUri', () => {
   it('extracts a lowercase extension from a plain file URI', () => {
     expect(extensionFromUri('file:///data/user/0/app/photo.JPG')).toBe('.jpg');
+  });
+
+  it('keeps a non-jpg extension from a URI without a query string', () => {
+    expect(extensionFromUri('file:///data/user/0/app/target.png')).toBe('.png');
   });
 
   it('strips a query string before extracting the extension', () => {
@@ -62,5 +67,72 @@ describe('sync photo entries', () => {
     expect(isSyncPhotoEntryName(photoEntryName('a', '.jpg'))).toBe(false);
     expect(isSyncPhotoEntryName('database.sqlite3')).toBe(false);
     expect(isSyncPhotoEntryName('sync-photos/a.png')).toBe(false);
+  });
+});
+
+// Restore turns a photo entry's name into a file path, so the name has to be
+// exactly what export writes: `<id>.<ext>` with no separator or dot in the id.
+describe('photo entry names are whitelisted, not trusted', () => {
+  it('accepts every character an id and extension may hold', () => {
+    expect(isPhotoEntryName('photos/AZaz09_-.jpg')).toBe(true);
+    expect(isPhotoEntryName('photos/a.z09')).toBe(true);
+    expect(isPhotoEntryName(photoEntryName('0192f3a4-7b1c-7def-8a12-3456789abcde', '.png'))).toBe(
+      true,
+    );
+    expect(isSyncPhotoEntryName('sync-photos/AZaz09_-.jpg')).toBe(true);
+  });
+
+  it.each([
+    'photos/../x.jpg',
+    'photos/a/b.jpg',
+    'photos/',
+    '',
+    'photos/.jpg',
+    'photos/abc',
+    'photos/abc.',
+    'photos/a.b.jpg',
+    'photos/abc.JPG',
+    'photos/a b.jpg',
+    'photos/a.jpg/x',
+    'evil/photos/a.jpg',
+    'photos\\..\\x.jpg',
+  ])('rejects %j as a photo entry', (name) => {
+    expect(isPhotoEntryName(name)).toBe(false);
+  });
+
+  it.each([
+    'sync-photos/../x.jpg',
+    'sync-photos/a/b.jpg',
+    'sync-photos/.jpg',
+    'sync-photos/',
+    'sync-photos/a.jpg/x',
+    'evil/sync-photos/a.jpg',
+    'sync-photos/a.png',
+  ])('rejects %j as a sync photo entry', (name) => {
+    expect(isSyncPhotoEntryName(name)).toBe(false);
+  });
+});
+
+describe('isSafeEntryName', () => {
+  it('passes the fixed entries and names restore never writes to disk', () => {
+    expect(isSafeEntryName('manifest.json')).toBe(true);
+    expect(isSafeEntryName('database.sqlite3')).toBe(true);
+    expect(isSafeEntryName('vault/payload.enc')).toBe(true);
+  });
+
+  it('passes well-formed photo entries in both namespaces', () => {
+    expect(isSafeEntryName(photoEntryName('series-1', '.jpg'))).toBe(true);
+    expect(isSafeEntryName(syncPhotoEntryName('photo-9'))).toBe(true);
+  });
+
+  it.each(['photos/../x.jpg', 'photos/a/b.jpg', 'photos/', 'sync-photos/../x.jpg', 'sync-photos/'])(
+    'fails %j, a malformed name under a photo prefix',
+    (name) => {
+      expect(isSafeEntryName(name)).toBe(false);
+    },
+  );
+
+  it('holds a sync-photos/ name to the sync rule, which allows only .jpg', () => {
+    expect(isSafeEntryName('sync-photos/a.png')).toBe(false);
   });
 });

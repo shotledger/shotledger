@@ -198,7 +198,7 @@ normalization rather than throwing.
 | Vault section, right passphrase | vault has documents  | **Merged, never replaced** — see below                                                      |
 | Vault section, wrong passphrase | any                  | Fails cleanly with nothing written; the user retries or chooses "Restore Without the Vault" |
 | Vault section, user skips       | any                  | Database (+ photos) restored; vault untouched; status says the vault was skipped            |
-| Newer schema                    | any                  | Refused before anything is written (unchanged, `compat.ts`)                                 |
+| Other schema baseline           | any                  | Refused before anything is written (`compat.ts`, tag and `when` must match)                 |
 | Truncated / not a bundle        | any                  | Refused with a distinct message (unchanged, `InvalidContainerError`)                        |
 
 **Merge, not replace, and only for the vault.** The database restore stays a
@@ -283,11 +283,14 @@ counterpart in a library call.)
 | B1  | Default export                                                 | database + both photo namespaces present, **no vault section** |
 | B2  | Opt-in export, right passphrase                                | the same documents come back out                               |
 | B3  | Opt-in export, wrong passphrase                                | vault fails; database entry and counts still readable          |
-| B4  | Byte-for-byte pre-vault bundle                                 | inspects, has no vault, schema check says `ok`                 |
+| B4  | Bundle without the counts added later                          | inspects, schema check says `ok`                               |
 | B5  | Truncated at four offsets                                      | `InvalidContainerError` at each — never a silent half-read     |
-| B6  | Bundle from a newer schema                                     | `newer`, refused before anything is written                    |
+| B6  | Bundle from a different schema baseline                        | `mismatch`, refused before anything is written                 |
 | B7  | Corrupted vault section                                        | database still readable; vault rejects                         |
 | B8  | Vault section and whole bundle searched for document plaintext | not present                                                    |
+| B10 | Manifest without `schemaMigrationWhen`                         | invalid, refused                                               |
+| B11 | Photo entry name that is not `<id>.<ext>` (`photos/../x.jpg`)  | invalid, refused before anything is written                    |
+| B12 | Duplicate entry name, empty name, or trailing bytes            | invalid, refused                                               |
 
 ### Vault ↔ bundle transfer — `vault-transfer.ts`
 

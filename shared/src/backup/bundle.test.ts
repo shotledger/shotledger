@@ -1,13 +1,20 @@
-// End-to-end evidence for the bundle format itself (spec behaviors B1-B8):
+// End-to-end evidence for the bundle format itself (spec behaviors B1-B12):
 // a bundle is assembled exactly as app/src/db/backup/export-bundle.ts
-// assembles one, then read back exactly as restore-bundle.ts reads one. The
-// app-side glue is thin IO around these bytes, so the failure cases that
-// matter — truncation, a newer schema, a bundle from an older build — are
-// provable here without a device.
+// assembles one, then read back through `readBundle`, which is what
+// restore-bundle.ts calls. The app-side glue is thin IO around these bytes,
+// so the failure cases that matter — truncation, a different schema baseline,
+// an entry name that would escape the photos folder — are provable here
+// without a device.
 import { describe, expect, it } from 'vitest';
 
+import { readBundle } from './bundle';
 import { checkSchemaCompatibility } from './compat';
-import { InvalidContainerError, packContainer, unpackContainer } from './container';
+import {
+  type ContainerEntry,
+  InvalidContainerError,
+  packContainer,
+  unpackContainer,
+} from './container';
 import {
   isPhotoEntryName,
   isSyncPhotoEntryName,
@@ -16,7 +23,6 @@ import {
 } from './photo-path';
 import {
   BACKUP_CONTAINER_FORMAT_VERSION,
-  BackupManifestSchema,
   DATABASE_ENTRY_NAME,
   MANIFEST_ENTRY_NAME,
   type BackupManifest,
@@ -24,6 +30,9 @@ import {
 
 // Stand-in for the VACUUM'd SQLite copy — the bundle treats it as opaque bytes.
 const DATABASE_BYTES = new TextEncoder().encode('SQLite format 3 (synthetic)');
+
+// This build's migration journal, reduced to what the manifest carries.
+const BASELINE = { tag: '0000_baseline', when: 1790148364655 };
 
 function baseCounts() {
   return {
@@ -51,8 +60,8 @@ function buildBundle(options: { withPhotos: boolean }) {
     containerFormatVersion: BACKUP_CONTAINER_FORMAT_VERSION,
     appVersion: '1.0.0',
     schemaJournalVersion: '7',
-    schemaMigrationTag: '0004_tag',
-    schemaMigrationIdx: 4,
+    schemaMigrationTag: BASELINE.tag,
+    schemaMigrationWhen: BASELINE.when,
     kind: options.withPhotos ? 'database+photos' : 'database',
     createdAt: '2026-09-03T12:00:00.000Z',
     counts: {
@@ -75,37 +84,27 @@ function buildBundle(options: { withPhotos: boolean }) {
   return { bytes, manifest };
 }
 
-/** What `inspectBundle` does, minus the app's zod-to-status plumbing. */
-function inspect(bytes: Uint8Array) {
-  const entries = unpackContainer(bytes);
-  const manifestEntry = entries.find((e) => e.name === MANIFEST_ENTRY_NAME);
-  if (!manifestEntry) return null;
-  const parsed = BackupManifestSchema.safeParse(
-    JSON.parse(new TextDecoder().decode(manifestEntry.data)),
-  );
-  if (!parsed.success) return null;
-  return { manifest: parsed.data, entries };
+function manifestEntry(manifest: unknown): ContainerEntry {
+  return { name: MANIFEST_ENTRY_NAME, data: new TextEncoder().encode(JSON.stringify(manifest)) };
 }
 
 describe('backup bundle round trip', () => {
   it('B1: an export carries the database and photos', () => {
     const { bytes } = buildBundle({ withPhotos: true });
-    const read = inspect(bytes);
+    const read = readBundle(bytes);
 
     expect(read?.entries.find((e) => e.name === DATABASE_ENTRY_NAME)?.data).toEqual(DATABASE_BYTES);
     expect(read?.entries.filter((e) => isPhotoEntryName(e.name))).toHaveLength(1);
     expect(read?.entries.filter((e) => isSyncPhotoEntryName(e.name))).toHaveLength(1);
   });
 
-  it('B4: a bundle written by an older build still inspects and restores', () => {
-    // Byte-for-byte what the shipped format produced: none of the counts
-    // added since.
+  it('B4: a bundle without the counts added since the first format still inspects and restores', () => {
     const legacyManifest = {
       containerFormatVersion: BACKUP_CONTAINER_FORMAT_VERSION,
       appVersion: '1.0.0',
       schemaJournalVersion: '7',
-      schemaMigrationTag: '0003_soft_hemingway',
-      schemaMigrationIdx: 3,
+      schemaMigrationTag: BASELINE.tag,
+      schemaMigrationWhen: BASELINE.when,
       kind: 'database+photos',
       createdAt: '2026-09-02T10:00:00.000Z',
       counts: baseCounts(),
@@ -119,10 +118,10 @@ describe('backup bundle round trip', () => {
       { name: photoEntryName('series-1', '.jpg'), data: Uint8Array.from([1, 2, 3]) },
     ]);
 
-    const read = inspect(legacy);
+    const read = readBundle(legacy);
     expect(read).not.toBeNull();
     expect(read?.manifest.counts.syncPhotos).toBeUndefined();
-    expect(checkSchemaCompatibility(read!.manifest.schemaMigrationIdx, 5)).toBe('ok');
+    expect(checkSchemaCompatibility(read!.manifest, BASELINE)).toBe('ok');
   });
 
   it('B5: a truncated bundle is rejected as a container error, not silently half-read', () => {
@@ -134,12 +133,14 @@ describe('backup bundle round trip', () => {
     }
   });
 
-  it('B6: a bundle from a newer schema is refused before anything is written', () => {
+  it('B6: a bundle from a different schema baseline is refused before anything is written', () => {
     const { bytes } = buildBundle({ withPhotos: false });
-    const read = inspect(bytes);
-    // This build knows about fewer migrations than the bundle was made with.
-    expect(checkSchemaCompatibility(read!.manifest.schemaMigrationIdx, 3)).toBe('newer');
-    expect(checkSchemaCompatibility(read!.manifest.schemaMigrationIdx, 9)).toBe('ok');
+    const read = readBundle(bytes);
+    // The baseline was reset since: same tag, same index, different `when`.
+    expect(checkSchemaCompatibility(read!.manifest, { ...BASELINE, when: BASELINE.when + 1 })).toBe(
+      'mismatch',
+    );
+    expect(checkSchemaCompatibility(read!.manifest, BASELINE)).toBe('ok');
   });
 
   it('B9: a bundle carrying the removed Vault section still restores, section ignored', () => {
@@ -150,8 +151,8 @@ describe('backup bundle round trip', () => {
       containerFormatVersion: BACKUP_CONTAINER_FORMAT_VERSION,
       appVersion: '1.0.0',
       schemaJournalVersion: '7',
-      schemaMigrationTag: '0000_baseline',
-      schemaMigrationIdx: 0,
+      schemaMigrationTag: BASELINE.tag,
+      schemaMigrationWhen: BASELINE.when,
       kind: 'database+photos',
       createdAt: '2026-09-10T10:00:00.000Z',
       counts: { ...baseCounts(), photos: 1, vaultDocuments: 3 },
@@ -172,12 +173,87 @@ describe('backup bundle round trip', () => {
       { name: 'vault/payload.enc', data: Uint8Array.from([9, 9, 9, 9]) },
     ]);
 
-    const read = inspect(bundle);
+    const read = readBundle(bundle);
     expect(read).not.toBeNull();
     expect(read?.entries.find((e) => e.name === DATABASE_ENTRY_NAME)?.data).toEqual(DATABASE_BYTES);
     expect(read?.entries.filter((e) => isPhotoEntryName(e.name))).toHaveLength(1);
     // Stripped by zod rather than rejected, and not carried forward.
     expect('vault' in read!.manifest).toBe(false);
     expect('vaultDocuments' in read!.manifest.counts).toBe(false);
+  });
+
+  it('B10: a bundle exported before the baseline identity was recorded is refused as invalid', () => {
+    // What every bundle carried while the check compared an index.
+    const { manifest } = buildBundle({ withPhotos: false });
+    const { schemaMigrationWhen: _when, ...rest } = manifest;
+    const preChange = packContainer([
+      manifestEntry({ ...rest, schemaMigrationIdx: 0 }),
+      { name: DATABASE_ENTRY_NAME, data: DATABASE_BYTES },
+    ]);
+    expect(readBundle(preChange)).toBeNull();
+  });
+
+  it.each([
+    'photos/../x.jpg',
+    'photos/a/b.jpg',
+    'photos/',
+    'sync-photos/../x.jpg',
+    'sync-photos/../../pre-restore-backups/x.jpg',
+  ])('B11: an entry named %j refuses the whole bundle before anything is written', (name) => {
+    const { manifest } = buildBundle({ withPhotos: false });
+    const hostile = packContainer([
+      manifestEntry(manifest),
+      { name: DATABASE_ENTRY_NAME, data: DATABASE_BYTES },
+      { name, data: Uint8Array.from([1]) },
+    ]);
+    expect(readBundle(hostile)).toBeNull();
+  });
+
+  it('B12: a bundle the container itself refuses is invalid, not a crash', () => {
+    const { bytes } = buildBundle({ withPhotos: true });
+    const padded = new Uint8Array(bytes.length + 1);
+    padded.set(bytes);
+    expect(readBundle(padded)).toBeNull();
+    expect(readBundle(bytes.slice(0, bytes.length - 1))).toBeNull();
+  });
+});
+
+describe('readBundle', () => {
+  it('returns the parsed manifest and every entry of a well-formed bundle', () => {
+    const { bytes, manifest } = buildBundle({ withPhotos: true });
+    const read = readBundle(bytes);
+    expect(read?.manifest).toEqual(manifest);
+    expect(read?.entries.map((e) => e.name)).toEqual([
+      MANIFEST_ENTRY_NAME,
+      DATABASE_ENTRY_NAME,
+      'photos/series-1.jpg',
+      'sync-photos/photo-9.jpg',
+    ]);
+  });
+
+  it('is null without a manifest entry', () => {
+    expect(readBundle(packContainer([{ name: DATABASE_ENTRY_NAME, data: DATABASE_BYTES }]))).toBe(
+      null,
+    );
+  });
+
+  it('finds the manifest wherever it sits among the entries', () => {
+    const { manifest } = buildBundle({ withPhotos: false });
+    const bundle = packContainer([
+      { name: DATABASE_ENTRY_NAME, data: DATABASE_BYTES },
+      manifestEntry(manifest),
+    ]);
+    expect(readBundle(bundle)?.manifest).toEqual(manifest);
+  });
+
+  it('is null when the manifest is not JSON', () => {
+    const bundle = packContainer([
+      { name: MANIFEST_ENTRY_NAME, data: new TextEncoder().encode('{not json') },
+    ]);
+    expect(readBundle(bundle)).toBeNull();
+  });
+
+  it('is null when the manifest is JSON of the wrong shape', () => {
+    expect(readBundle(packContainer([manifestEntry({ kind: 'database' })]))).toBeNull();
   });
 });
