@@ -24,6 +24,14 @@ describe('resolveActiveSightSetting', () => {
     expect(resolveActiveSightSetting([newer, older])).toBe(newer);
   });
 
+  it('lets a newer edit win even over a setting with a later id', () => {
+    const laterIdOlderEdit = setting('b', 1, '2026-01-01T00:00:00Z');
+    const earlierIdNewerEdit = setting('a', 1, '2026-03-01T00:00:00Z');
+    expect(resolveActiveSightSetting([earlierIdNewerEdit, laterIdOlderEdit])).toBe(
+      earlierIdNewerEdit,
+    );
+  });
+
   it('breaks an updatedAt tie on id so every device agrees', () => {
     const lower = setting('a', 1, '2026-01-01T00:00:00Z');
     const higher = setting('b', 1, '2026-01-01T00:00:00Z');

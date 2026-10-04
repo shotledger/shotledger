@@ -30,6 +30,7 @@ describe('maintenanceProgress', () => {
   it('is null with no interval', () => {
     expect(maintenanceProgress(100, null)).toBeNull();
     expect(maintenanceProgress(100, 0)).toBeNull();
+    expect(maintenanceProgress(100, undefined)).toBeNull();
   });
 
   it('is the used fraction of the interval', () => {
