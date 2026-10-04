@@ -11,6 +11,7 @@
 
 import { goldSeriesThreshold } from './badges';
 import { tenthsToScore } from './totals';
+import { volumeOfSeries } from './volume';
 
 export interface StatsShot {
   valueTenths: number;
@@ -122,10 +123,7 @@ export function scoredShots(
  * `shots.length` (always 0 for such a series).
  */
 export function volumeShotCount(seriesList: readonly StatsSeries[]): number {
-  return seriesList.reduce(
-    (count, series) => count + (series.totalOverride?.shotCount ?? series.shots.length),
-    0,
-  );
+  return seriesList.reduce((count, series) => count + volumeOfSeries(series), 0);
 }
 
 // --- Per-series score math ---------------------------------------------------

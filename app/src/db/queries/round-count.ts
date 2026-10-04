@@ -1,98 +1,80 @@
 import { eq } from 'drizzle-orm';
 
-import { series, sessions } from '../schema';
+import { series } from '../schema';
 import type { Database } from '../types';
-import { listStationsForSession, softDeleteStation } from './falt';
+import { listStationsForSession, tombstoneStation } from './falt';
 // Re-exported: this was defined here before a fält station needed it too.
 export { applyRoundCountDelta } from './firearm-counters';
-import { applyRoundCountDelta } from './firearm-counters';
 import { getSession, softDeleteSession, updateSession } from './sessions';
 import { listSeriesForSession, softDeleteSeries } from './series';
 import { listShotsForSeries, replaceSeriesShots, softDeleteShot, type AddShotInput } from './shots';
+import { withSessionVolumeDelta } from './volume';
+
+/** The session a series belongs to, deleted or not. */
+function sessionIdOfSeries(db: Database, seriesId: string): string | undefined {
+  return db
+    .select({ sessionId: series.sessionId })
+    .from(series)
+    .where(eq(series.id, seriesId))
+    .get()?.sessionId;
+}
+
+/** Runs `mutate`, moving the firearm counters by the series' session-volume delta. */
+function withSeriesVolumeDelta<T>(db: Database, seriesId: string, mutate: () => T): T {
+  const sessionId = sessionIdOfSeries(db, seriesId);
+  return sessionId ? withSessionVolumeDelta(db, sessionId, mutate) : mutate();
+}
 
 /**
- * Replaces a series' shots (as `replaceSeriesShots`) and keeps the linked
- * firearm's round counters in sync — §4 M4: the round counter increments
- * for every shot including sighters, but only for firearm-linked sessions.
- * Uses the shot-count delta (not the raw new count) so re-editing an
- * already-saved series adds/removes only the difference instead of
- * double-counting.
+ * Replaces a series' shots (as `replaceSeriesShots`) and moves the linked
+ * firearm's round counters by the change in the session's volume — §4 M4:
+ * every shot counts, sighters included, and re-editing a saved series moves
+ * only the difference.
  */
 export function saveSeriesShots(
   db: Database,
   seriesId: string,
   entered: readonly Omit<AddShotInput, 'seriesId' | 'position'>[],
 ) {
-  const previousCount = listShotsForSeries(db, seriesId).length;
-  const saved = replaceSeriesShots(db, seriesId, entered);
-  const delta = saved.length - previousCount;
-
-  if (delta !== 0) {
-    const seriesRow = db.select().from(series).where(eq(series.id, seriesId)).get();
-    const sessionRow = seriesRow
-      ? db.select().from(sessions).where(eq(sessions.id, seriesRow.sessionId)).get()
-      : undefined;
-    if (sessionRow?.firearmId) {
-      applyRoundCountDelta(db, sessionRow.firearmId, delta);
-    }
-  }
-
-  return saved;
+  return withSeriesVolumeDelta(db, seriesId, () => replaceSeriesShots(db, seriesId, entered));
 }
 
-/**
- * Deletes a series (swipe-to-delete on the session detail's series list):
- * soft-deletes its shots and the series row (§3: soft-delete everywhere),
- * and backs the shot count out of the linked firearm's round counters —
- * mirrors `saveSeriesShots`' delta convention (removing N shots is the same
- * adjustment as editing them away). An override series (Webshooter/ShotLog
- * import) has no `shots` rows and was never counted into the round counter
- * on creation, so it contributes no delta here either.
- */
-export function deleteSeriesAndShots(db: Database, seriesId: string) {
-  const seriesShots = listShotsForSeries(db, seriesId);
-  for (const shot of seriesShots) {
+/** Soft-deletes a series and its shots without moving any counter. */
+function tombstoneSeries(db: Database, seriesId: string) {
+  for (const shot of listShotsForSeries(db, seriesId)) {
     softDeleteShot(db, shot.id);
   }
-
-  const seriesRow = db.select().from(series).where(eq(series.id, seriesId)).get();
-  const sessionRow = seriesRow
-    ? db.select().from(sessions).where(eq(sessions.id, seriesRow.sessionId)).get()
-    : undefined;
-  if (sessionRow?.firearmId && seriesShots.length > 0) {
-    applyRoundCountDelta(db, sessionRow.firearmId, -seriesShots.length);
-  }
-
   softDeleteSeries(db, seriesId);
 }
 
 /**
- * Deletes a session (swipe-to-delete on the sessions list): soft-deletes
- * every series under it via `deleteSeriesAndShots` — which already tombstones
- * each series' shots and backs the shot count out of the linked firearm's
- * round counters — does the same for a fält session's stations, then backs
- * out the session's own unscored extra rounds (spec A1 §A1.3, never a shot
- * row) the same way, and finally soft-deletes the session row itself (§3:
- * soft-delete everywhere).
+ * Deletes a series (swipe-to-delete on the session detail's series list):
+ * soft-deletes its shots and the series row (§3: soft-delete everywhere) and
+ * backs its volume — shot rows, or a total-only series' stored count — out of
+ * the linked firearm's round counters.
+ */
+export function deleteSeriesAndShots(db: Database, seriesId: string) {
+  withSeriesVolumeDelta(db, seriesId, () => tombstoneSeries(db, seriesId));
+}
+
+/**
+ * Deletes a session (swipe-to-delete on the sessions list): soft-deletes its
+ * series, shots and fält stations and the session row itself (§3:
+ * soft-delete everywhere), and backs the session's whole volume out of the
+ * linked firearm's round counters in one move.
  */
 export function deleteSessionAndSeries(db: Database, sessionId: string) {
-  const sessionRow = getSession(db, sessionId);
-  if (!sessionRow) return;
+  if (!getSession(db, sessionId)) return;
 
-  for (const seriesRow of listSeriesForSession(db, sessionId)) {
-    deleteSeriesAndShots(db, seriesRow.id);
-  }
-
-  // A fält session's rounds live on stations, not on shots.
-  for (const station of listStationsForSession(db, sessionId)) {
-    softDeleteStation(db, station.id);
-  }
-
-  if (sessionRow.firearmId && sessionRow.extraRounds) {
-    applyRoundCountDelta(db, sessionRow.firearmId, -sessionRow.extraRounds);
-  }
-
-  softDeleteSession(db, sessionId);
+  withSessionVolumeDelta(db, sessionId, () => {
+    for (const seriesRow of listSeriesForSession(db, sessionId)) {
+      tombstoneSeries(db, seriesRow.id);
+    }
+    for (const station of listStationsForSession(db, sessionId)) {
+      tombstoneStation(db, station.id);
+    }
+    softDeleteSession(db, sessionId);
+  });
 }
 
 /**
@@ -109,10 +91,5 @@ export function setSessionExtraRounds(db: Database, sessionId: string, extraRoun
   const sessionRow = getSession(db, sessionId);
   if (!sessionRow) return undefined;
 
-  const delta = (extraRounds ?? 0) - (sessionRow.extraRounds ?? 0);
-  const updated = updateSession(db, sessionId, { extraRounds });
-  if (delta !== 0 && sessionRow.firearmId) {
-    applyRoundCountDelta(db, sessionRow.firearmId, delta);
-  }
-  return updated;
+  return withSessionVolumeDelta(db, sessionId, () => updateSession(db, sessionId, { extraRounds }));
 }

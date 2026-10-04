@@ -169,6 +169,26 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: SCORE_010
+    title: Rounds fired is one figure, wherever it is shown
+    significance: shall
+    description: >-
+      The app shall count a session's rounds fired as every shot of every
+      series, sighters included, the stored shot count of a series saved as a
+      total only, the session's extra rounds and six per fält station, and
+      shall use that count for the shots-logged total, ammunition lot usage,
+      the firearm round counters, the statistics and JSON reports, the import
+      preview and the shooting log.
+    rationale: >-
+      Six figures with six rules disagreed, and the shooting log — offered as
+      evidence of activity — left out sighters and extra rounds that were
+      fired (maintainer ruling 2026-10-04 on #512). A series imported as a
+      total was still fired, so leaving it out under-reports volume the same
+      way.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: COMPL_001
     title: License activity counts sessions inside the rule's window
     significance: shall

@@ -42,7 +42,7 @@ function session(overrides: Partial<AnalyticsSession> = {}): AnalyticsSession {
     disciplineId: 'spsf-precision',
     tagIds: [],
     extraRounds: 0,
-    stationRounds: 0,
+    stationCount: 0,
     scoresHits: false,
     ...overrides,
   };
@@ -190,7 +190,7 @@ describe('analyticsReportSessions', () => {
   it('R5: shotsPerSeries excludes a fält session, which has stations rather than series', () => {
     const sessions = [
       session({ id: 'rounds-only' }),
-      session({ id: 'falt', disciplineId: 'spsf-falt', stationRounds: 12, scoresHits: true }),
+      session({ id: 'falt', disciplineId: 'spsf-falt', stationCount: 2, scoresHits: true }),
     ];
     expect(ids(analyticsReportSessions(sessions, [], [], filter({ shotsPerSeries: 6 })))).toEqual([
       'rounds-only',
@@ -276,7 +276,7 @@ describe('analyticsReportTotals', () => {
     const matched = [series({ sessionId: 'a', values: [90, 90] })];
     const sessions = [
       session({ id: 'a', extraRounds: 1 }),
-      session({ id: 'falt', disciplineId: 'spsf-falt', stationRounds: 18 }),
+      session({ id: 'falt', disciplineId: 'spsf-falt', stationCount: 3 }),
     ];
     expect(analyticsReportTotals(matched, sessions).volumeShotCount).toBe(21);
   });
@@ -333,5 +333,26 @@ describe('analyticsReportSet', () => {
     expect(onlySeriesFree.sessions.map((s) => s.id)).toEqual(['rounds']);
     expect(onlySeriesFree.hasMatches).toBe(true);
     expect(analyticsReportSet([], [], ANY_ANALYTICS_FILTER).hasMatches).toBe(false);
+  });
+});
+
+describe('the report volume is the sum of sessionVolume (one-volume-figure-spec U7)', () => {
+  it('U7: counts each report session’s matched series, total-only ones included, its extra rounds and stations', () => {
+    const matched = [
+      series({ sessionId: 'a', isSighter: true, values: [90, 90] }),
+      series({ sessionId: 'a', totalOverride: { tenths: 450, shotCount: 5 } }),
+      series({ sessionId: 'b', values: [100] }),
+    ];
+    const sessions = [
+      session({ id: 'a', extraRounds: 3 }),
+      session({ id: 'b' }),
+      session({ id: 'falt', disciplineId: 'spsf-falt', stationCount: 2 }),
+    ];
+    expect(analyticsReportTotals(matched, sessions).volumeShotCount).toBe(2 + 5 + 3 + 1 + 12);
+  });
+
+  it('U7: a series of a session outside the report set does not count', () => {
+    const matched = [series({ sessionId: 'elsewhere', values: [100, 100] })];
+    expect(analyticsReportTotals(matched, [session({ id: 'a' })]).volumeShotCount).toBe(0);
   });
 });

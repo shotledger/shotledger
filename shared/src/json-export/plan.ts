@@ -1,4 +1,4 @@
-import { SHOTS_PER_STATION } from '../scoring/falt';
+import { sessionVolume } from '../scoring/volume';
 import type { SessionImportGroup } from './import';
 import type { FirearmExport, LicenseExport } from './types';
 
@@ -86,10 +86,13 @@ export function buildDryRunPlan(
       sessionId: group.sessionId,
       name: group.name,
       action: index.sessionIds.has(group.sessionId) ? 'update' : 'create',
-      shotCount: group.series.reduce(
-        (sum, s) => sum + s.shots.length,
-        group.stations.length * SHOTS_PER_STATION,
-      ),
+      // The rounds this session adds to Shots Logged (#512): a file carries
+      // no total-only series, so every series counts by its shot rows.
+      shotCount: sessionVolume({
+        series: group.series.map((s) => ({ shotCount: s.shots.length, overrideShotCount: null })),
+        extraRounds: group.extraRounds,
+        stationCount: group.stations.length,
+      }),
     });
 
     if (group.firearm && !firearmNames.has(group.firearm)) {

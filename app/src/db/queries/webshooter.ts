@@ -31,7 +31,8 @@ import {
   updateSession,
 } from './sessions';
 import { getSetting, setSetting } from './settings';
-import { setSessionExtraRounds } from './round-count';
+import { applyRoundCountDelta, setSessionExtraRounds } from './round-count';
+import { sessionVolumeRounds, withSessionVolumeDelta } from './volume';
 
 // --- §A.8 classname -> weapon_group/shooter_class, with the settings cache ---
 
@@ -194,20 +195,24 @@ function replaceOverrideSeries(db: Database, sessionId: string, row: ResultRow) 
   // rewrites them wholesale, since there is no per-shot enrichment on an
   // override series to preserve (photoUri is the only per-series
   // enrichment field and is never set on one, §A.3's field list).
-  for (const existing of listSeriesForSession(db, sessionId)) {
-    softDeleteSeries(db, existing.id);
-  }
+  // A total-only series' shots are volume like any other (#512), so a linked
+  // firearm's counters move by the new series' counts minus the old ones.
+  withSessionVolumeDelta(db, sessionId, () => {
+    for (const existing of listSeriesForSession(db, sessionId)) {
+      softDeleteSeries(db, existing.id);
+    }
 
-  const mapped = mapStationResultsToSeries(row, 5); // shotsPerSeries=5, both v1 programs (§A.4)
-  mapped.forEach((m, index) => {
-    addSeries(db, {
-      sessionId,
-      position: index + 1,
-      isFinal: m.isFinal,
-      note: m.note,
-      isTotalOverride: true,
-      totalOverrideTenths: m.totalOverrideTenths,
-      totalOverrideShotCount: m.totalOverrideShotCount,
+    const mapped = mapStationResultsToSeries(row, 5); // shotsPerSeries=5, both v1 programs (§A.4)
+    mapped.forEach((m, index) => {
+      addSeries(db, {
+        sessionId,
+        position: index + 1,
+        isFinal: m.isFinal,
+        note: m.note,
+        isTotalOverride: true,
+        totalOverrideTenths: m.totalOverrideTenths,
+        totalOverrideShotCount: m.totalOverrideShotCount,
+      });
     });
   });
 }
@@ -327,6 +332,12 @@ export function importResultRow(
     // "never clobber a user-entered value" rule extends to this write too).
     if (session && !session.firearmId) {
       updateSession(db, sessionId, { firearmId: options.applySighterRoundsForFirearmId });
+      // The rounds already written above were fired with it too (#512).
+      applyRoundCountDelta(
+        db,
+        options.applySighterRoundsForFirearmId,
+        sessionVolumeRounds(db, sessionId),
+      );
     }
     const roundsCount = countDistinctRounds(row);
     const currentExtra = session?.extraRounds ?? 0;

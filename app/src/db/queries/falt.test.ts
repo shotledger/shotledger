@@ -13,10 +13,10 @@ import {
   getStation,
   listStationsForSession,
   softDeleteStation,
-  stationRoundsForSession,
   updateStation,
 } from './falt';
 import { countVolumeRounds } from './shots';
+import { sessionVolumeRounds } from './volume';
 
 let db: Database;
 let sessionId: string;
@@ -234,7 +234,7 @@ describe('station rounds reach every volume figure (falt-consumers-spec V2)', ()
     softDeleteStation(db, gone.id);
     addStation(db, { sessionId: other, position: 1, hits: 1, figuresHit: 1 });
 
-    expect(stationRoundsForSession(db, sessionId)).toBe(12);
-    expect(stationRoundsForSession(db, other)).toBe(6);
+    expect(sessionVolumeRounds(db, sessionId)).toBe(12);
+    expect(sessionVolumeRounds(db, other)).toBe(6);
   });
 });

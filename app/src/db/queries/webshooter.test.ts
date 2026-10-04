@@ -269,7 +269,9 @@ describe('importResultRow — fresh import', () => {
       applySighterRoundsForFirearmId: firearm.id,
     });
     expect(getSession(db, sessionId)?.firearmId).toBe(firearm.id);
-    expect(getFirearm(db, firearm.id)?.roundCount).toBe(5);
+    // Seven total-only series of five (#512, one-volume-figure-spec A8) plus
+    // the five sighter rounds.
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
   });
 
   it('never overwrites an already-assigned firearm when applying sighter rounds', () => {
@@ -300,6 +302,50 @@ describe('importResultRow — fresh import', () => {
       applySighterRoundsForFirearmId: firearm.id,
     });
     expect(getSession(db, sessionId)?.extraRounds).toBe(10);
+  });
+});
+
+describe('importResultRow — total-only series are volume (one-volume-figure-spec A7)', () => {
+  it('A7: a re-import over a firearm-linked session moves the counter by the change in series', () => {
+    const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
+    const first = importResultRow(db, resultRow(), COMPETITION, {
+      program: PRECISION,
+      applySighterRoundsForFirearmId: firearm.id,
+    });
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
+
+    const shorter = resultRow();
+    shorter.results = shorter.results.slice(0, 6);
+    importResultRow(db, shorter, COMPETITION, {
+      program: PRECISION,
+      linkToSessionId: first.sessionId,
+    });
+
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(35);
+    expect(getFirearm(db, firearm.id)?.roundsSinceMaintenance).toBe(35);
+  });
+
+  it('A8: assigning the firearm on a fält import credits its stations and the sighter rounds', () => {
+    const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
+    importResultRow(db, faltRow(), FALT_COMPETITION, {
+      program: FALT,
+      applySighterRoundsForFirearmId: firearm.id,
+    });
+    // Four stations (the shoot-off included) of six, plus five sighter rounds.
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(29);
+  });
+
+  it('A7: re-importing the same result moves nothing', () => {
+    const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
+    const first = importResultRow(db, resultRow(), COMPETITION, {
+      program: PRECISION,
+      applySighterRoundsForFirearmId: firearm.id,
+    });
+    importResultRow(db, resultRow(), COMPETITION, {
+      program: PRECISION,
+      linkToSessionId: first.sessionId,
+    });
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
   });
 });
 

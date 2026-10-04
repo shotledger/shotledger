@@ -316,3 +316,27 @@ describe("a full restore keeps the file's firearm counters (#511)", () => {
     expect(getFirearm(db, firearm.id)).toBeUndefined();
   });
 });
+
+describe('the import counts volume by the one rule (one-volume-figure-spec A9)', () => {
+  it('A9: importing over a session takes its total-only series into the before figure', () => {
+    const db = createTestDb();
+    const firearm = makeFirearm(db);
+    const session = makeSession(db, { firearmId: firearm.id, shotCount: 4, extraRounds: 2 });
+    const json = buildExportJson(db, '1.0.0');
+    // A WebShooter-style total-only series the file cannot carry.
+    addSeries(db, {
+      sessionId: session.id,
+      position: 2,
+      isTotalOverride: true,
+      totalOverrideTenths: 450,
+      totalOverrideShotCount: 5,
+    });
+    zeroCounters(db, firearm.id);
+    applyRoundCountDelta(db, firearm.id, 11);
+
+    reimport(db, json);
+
+    // Before: 4 shots + 2 extra + 5 total-only = 11. After: the file's 4 + 2.
+    expect(counters(db, firearm.id)).toEqual({ roundCount: 6, roundsSinceMaintenance: 6 });
+  });
+});

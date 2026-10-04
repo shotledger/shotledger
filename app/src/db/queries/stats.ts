@@ -5,7 +5,6 @@ import { isNull } from 'drizzle-orm';
 import {
   getDiscipline,
   seriesStage,
-  SHOTS_PER_STATION,
   type AnalyticsSeries,
   type AnalyticsSession,
   type FaltAnalyticsSession,
@@ -114,7 +113,7 @@ export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
     disciplineId: row.disciplineId,
     tagIds: tagIdsBySession.get(row.id) ?? [],
     extraRounds: row.extraRounds ?? 0,
-    stationRounds: (stationCountBySession.get(row.id) ?? 0) * SHOTS_PER_STATION,
+    stationCount: stationCountBySession.get(row.id) ?? 0,
     scoresHits: getDiscipline(row.disciplineId)?.scoring === 'hits',
   }));
 }

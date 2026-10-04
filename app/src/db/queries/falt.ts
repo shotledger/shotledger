@@ -1,6 +1,6 @@
 // Fält stations (docs/specs/falt-stations-spec.md). A station is not a series:
 // see the table's comment in schema.ts for why it has its own table.
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   faltResult,
   poangfaltPoints,
@@ -9,10 +9,10 @@ import {
   type FaltStationEntry,
 } from '@shotledger/shared';
 
-import { faltStations, sessions } from '../schema';
+import { faltStations } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
-import { applyRoundCountDelta } from './firearm-counters';
+import { withSessionVolumeDelta } from './volume';
 
 export interface AddStationInput {
   sessionId: string;
@@ -86,18 +86,10 @@ export function addStation(db: Database, input: AddStationInput): StationRow {
     photoUri: input.photoUri ?? null,
     note: input.note ?? null,
   };
-  db.insert(faltStations).values(row).run();
-  // Six rounds went down the barrel whatever the marker wrote (D.6.4 p. 91).
-  // A scratched station counts here for the same reason a sighter does: it is
-  // volume, not score (SCORE_003's split).
-  moveRoundCount(db, input.sessionId, SHOTS_PER_STATION);
+  // Six rounds went down the barrel whatever the marker wrote (D.6.4 p. 91),
+  // scratched or not: volume, not score (SCORE_003's split).
+  withSessionVolumeDelta(db, input.sessionId, () => db.insert(faltStations).values(row).run());
   return row;
-}
-
-/** Moves the session firearm's counters, if the session has one. */
-function moveRoundCount(db: Database, sessionId: string, delta: number): void {
-  const sessionRow = db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
-  if (sessionRow?.firearmId) applyRoundCountDelta(db, sessionRow.firearmId, delta);
 }
 
 export function listStationsForSession(db: Database, sessionId: string): StationRow[] {
@@ -155,35 +147,16 @@ export function updateStation(
 export function softDeleteStation(db: Database, id: string): void {
   const current = getStation(db, id);
   if (!current) return;
+  withSessionVolumeDelta(db, current.sessionId, () => tombstoneStation(db, id));
+}
 
+/** Soft-deletes a station without moving any counter — for a caller that moves them itself. */
+export function tombstoneStation(db: Database, id: string): void {
   const now = nowIso();
   db.update(faltStations)
     .set({ deletedAt: now, updatedAt: now })
     .where(and(eq(faltStations.id, id), isNull(faltStations.deletedAt)))
     .run();
-  moveRoundCount(db, current.sessionId, -SHOTS_PER_STATION);
-}
-
-/** Rounds fired at a session's live stations, scored or not.
- *
- * @Requirements SCORE_006
- */
-export function stationRoundsForSession(db: Database, sessionId: string): number {
-  return listStationsForSession(db, sessionId).length * SHOTS_PER_STATION;
-}
-
-/** Rounds fired at every live station of every live session.
- *
- * @Requirements SCORE_006
- */
-export function countAllStationRounds(db: Database): number {
-  const row = db
-    .select({ count: sql<number>`count(*)` })
-    .from(faltStations)
-    .innerJoin(sessions, eq(faltStations.sessionId, sessions.id))
-    .where(and(isNull(faltStations.deletedAt), isNull(sessions.deletedAt)))
-    .get();
-  return (row?.count ?? 0) * SHOTS_PER_STATION;
 }
 
 export interface FaltSessionResult {
