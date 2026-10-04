@@ -1,6 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
 import { reqstoolTestName, vitestClassnameTemplate } from './scripts/reqstool-stem.js';
+import stryker from './stryker.config.json' with { type: 'json' };
+
+// One list of gauntlet modules: Stryker's `mutate`, negations last.
+const gauntletInclude = stryker.mutate.filter((glob) => !glob.startsWith('!'));
+const gauntletExclude = stryker.mutate
+  .filter((glob) => glob.startsWith('!'))
+  .map((glob) => glob.slice(1));
 
 export default defineConfig({
   test: {
@@ -22,26 +29,11 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      // The old-coder gauntlet layer for M3: the shared scoring/discipline
-      // modules are the code the maintainer does not read line by line, so
-      // they carry a hard threshold. `vitest run --coverage` exits nonzero
-      // when it is missed — a gauntlet layer, not a report.
-      include: [
-        'shared/src/scoring/**/*.ts',
-        'shared/src/disciplines/**/*.ts',
-        'shared/src/compliance/**/*.ts',
-        'shared/src/integrations/webshooter/**/*.ts',
-        'shared/src/shotlog/**/*.ts',
-        'shared/src/sync/**/*.ts',
-        'shared/src/sync-client/*.ts',
-        'backend/src/lib/quota.ts',
-        'backend/src/lib/rate-limit.ts',
-        'backend/src/lib/authz.ts',
-        'shared/src/timer/**/*.ts',
-        'shared/src/target-scoring/**/*.ts',
-        'shared/src/json-export/**/*.ts',
-      ],
-      exclude: ['**/*.test.ts'],
+      // The old-coder gauntlet: the modules the maintainer does not read line
+      // by line carry a hard threshold. `pnpm check` runs with `--coverage`,
+      // so missing it fails the build — a gauntlet layer, not a report.
+      include: gauntletInclude,
+      exclude: gauntletExclude,
       reporter: ['text-summary', 'json-summary'],
       reportsDirectory: 'coverage',
       thresholds: {

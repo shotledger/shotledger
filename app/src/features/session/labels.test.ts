@@ -33,9 +33,18 @@ describe('matchFormatHint', () => {
   });
 
   it('names no time when the program mixes timed and untimed groups', () => {
-    expect(matchFormatHint(t, program('issf-sport-pistol'))).toBe(
-      'session.fullMatchHintSighter(12,null)',
-    );
+    const sportPistol = program('issf-sport-pistol');
+    const oneSighter: Program = {
+      ...sportPistol,
+      structure: {
+        groups: [{ seriesCount: 6, timeLimitSeconds: 240, sighterSeries: 1 }, { seriesCount: 6 }],
+      },
+    };
+    expect(matchFormatHint(t, oneSighter)).toBe('session.fullMatchHintSighter(12,null)');
+  });
+
+  it('counts a sighter per stage in with the scoring series', () => {
+    expect(matchFormatHint(t, program('issf-sport-pistol'))).toBe('session.fullMatchHint(14,null)');
   });
 
   it('counts a program with no sighter series as plain series', () => {

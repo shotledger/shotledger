@@ -14,10 +14,8 @@ app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 // endpoints (docs/specs/backend-auth-photos-spec.md §2).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => createAuth(c.env).handler(c.req.raw));
 
-// Real auth on /sync (docs/specs/sync-app-spec.md §8). createSyncRoutes'
-// own default is still the dev stub, which is what backend/test/sync.spec.ts
-// mounts for its bare-token fixtures — nothing reachable from this Worker
-// trusts a bearer string as a user id.
+// Real auth on /sync (docs/specs/sync-app-spec.md §8) — nothing reachable
+// from this Worker trusts a bearer string as a user id.
 app.route(
   '/sync',
   createSyncRoutes((env) => betterAuthAuthenticator(createAuth(env))),

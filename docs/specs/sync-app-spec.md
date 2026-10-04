@@ -337,10 +337,10 @@ enforced by having exactly one loop:
 
 ## 8. Backend change (one line, deliberately minimal)
 
-`/sync` still _defaults_ to `devBearerAuthenticator` inside
-`createSyncRoutes()` so `backend/test/sync.spec.ts`'s 14 fixtures stay
-untouched (that suite's N3 constraint), but **`backend/src/index.ts` now
-mounts it with `betterAuthAuthenticator`**:
+`createSyncRoutes()` has no default authenticator (#532): every mount names
+one. `backend/test/sync.spec.ts` passes `devBearerAuthenticator` for its
+bare-token fixtures, and **`backend/src/index.ts` mounts it with
+`betterAuthAuthenticator`**:
 
 ```ts
 app.route('/sync', createSyncRoutes(betterAuthAuthenticatorFor));

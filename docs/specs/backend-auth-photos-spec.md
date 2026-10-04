@@ -178,6 +178,10 @@ client-supplied, so a user cannot guess/collide another user's key).
      missing or absent (`411 Length Required`) or exceeds `MAX_PHOTO_BYTES`
      (`413 Payload Too Large`, body `{ error: 'photo_too_large' }`) — task
      instruction: "enforce size cap ... BEFORE accepting bytes".
+     Then, if a `photos` row for `photoId` exists, `authorizeOwner` on it —
+     `404 { error: 'not_found' }` when it belongs to someone else, the same
+     answer `GET`/`DELETE` give, so an upload cannot overwrite another
+     user's row or reveal that the id is taken.
   2. Rate limit check (`RateLimiter.consume`) — `429 Too Many Requests` +
      `Retry-After` header on failure, body `{ error: 'rate_limited' }`.
   3. Quota check (`checkQuota(current.usedBytes, current.limitBytes,
@@ -350,6 +354,11 @@ quota_exceeded`, quota unchanged, R2 object not written.
   unaffected (owner's subsequent `GET` still `200`).
 - P12 re-upload to the same `photoId` (replace) → quota reflects only the
   net size difference, not the sum of both uploads.
+- P13 upload to a `photoId` another user owns → `404 not_found`; the owner's
+  bytes, size, content type and usage are unchanged, the uploader's usage is
+  `0`.
+- Every `/photos` route answers `401` to no token, a forged token, and a
+  user id sent as the token.
 
 `backend/test/account.spec.ts`:
 
@@ -360,6 +369,8 @@ quota_exceeded`, quota unchanged, R2 object not written.
   token is rejected (`401`) on the next authenticated call.
 - A3 deleting user A's account does not touch user B's rows (cross-user
   isolation, mirrors S9c in the sync suite).
+- `POST /account/delete` answers `401` to no token, a forged token, and a
+  user id sent as the token, and deletes nothing.
 
 ## 8. Must NOT (negative constraints)
 

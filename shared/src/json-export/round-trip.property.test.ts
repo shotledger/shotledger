@@ -84,7 +84,13 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   firearmId: nullableText,
   firearm: nullableText,
   ammoLot: nullableText,
-  startedAt: fc.constant('2026-01-01T00:00:00.000Z'),
+  startedAt: fc
+    .date({
+      min: new Date('1900-01-01T00:00:00Z'),
+      max: new Date('2199-12-31T23:59:59Z'),
+      noInvalidDate: true,
+    })
+    .map((d) => d.toISOString()),
   location: nullableText,
   notes: nullableText,
   decimalScoring: fc.boolean(),
@@ -125,6 +131,46 @@ const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
   conditions: nullableText,
   authority: nullableText,
 });
+
+type Json = fc.JsonValue;
+
+/** Every path to a value inside `value`, the root excluded. */
+function pathsIn(value: Json, prefix: (string | number)[] = []): (string | number)[][] {
+  if (value === null || typeof value !== 'object') return [];
+  const keys: (string | number)[] = Array.isArray(value) ? [...value.keys()] : Object.keys(value);
+  return keys.flatMap((key) => {
+    const path = [...prefix, key];
+    return [path, ...pathsIn((value as Record<string | number, Json>)[key]!, path)];
+  });
+}
+
+/** A copy of `root` with the value at `path` replaced, or removed when `replacement` is undefined. */
+function mutateAt(root: Json, path: (string | number)[], replacement: Json | undefined): Json {
+  const copy = structuredClone(root);
+  let parent = copy as Record<string | number, Json>;
+  for (const key of path.slice(0, -1)) parent = parent[key] as Record<string | number, Json>;
+  const last = path[path.length - 1]!;
+  if (replacement !== undefined) parent[last] = replacement;
+  else if (Array.isArray(parent)) parent.splice(last as number, 1);
+  else delete parent[last];
+  return copy;
+}
+
+const mutatedExportArb = fc
+  .tuple(
+    fc.array(sessionArb, { minLength: 1, maxLength: 3 }),
+    fc.array(firearmArb, { maxLength: 2 }),
+    fc.array(licenseArb, { maxLength: 2 }),
+  )
+  .chain(([sessions, firearms, licenses]) => {
+    const file = JSON.parse(
+      exportSessionsToJson(sessions, { ...OPTIONS, firearms, licenses }),
+    ) as Json;
+    const paths = pathsIn(file);
+    return fc
+      .tuple(fc.constantFrom(...paths), fc.option(fc.jsonValue(), { nil: undefined, freq: 4 }))
+      .map(([path, replacement]) => mutateAt(file, path, replacement) as Record<string, Json>);
+  });
 
 describe('JSON export properties', () => {
   it('P21: import(export(x)) deep-equals x, for any sessions', () => {
@@ -170,12 +216,43 @@ describe('JSON export properties', () => {
 
   it('P22: import never throws on JSON-shaped nonsense either', () => {
     // Random strings are almost never valid JSON, so they exercise only the
-    // malformed path. This drives the parts past it.
+    // malformed path. This drives the envelope check past it.
     fc.assert(
       fc.property(fc.json(), (text) => {
         expect(() => importSessionsFromJson(text)).not.toThrow();
       }),
       { numRuns: 500 },
     );
+  });
+
+  it('P22: a valid file with one field mutated is refused whole or entry by entry, never thrown', () => {
+    // Random JSON almost never passes the envelope, so the per-entry parsers
+    // behind it only run on a real export with one value replaced or removed.
+    let accepted = 0;
+    let entryErrors = 0;
+    fc.assert(
+      fc.property(mutatedExportArb, (file) => {
+        const result = importSessionsFromJson(JSON.stringify(file));
+        if ('code' in result) {
+          expect(['not-a-shotledger-file', 'newer-format-version']).toContain(result.code);
+          return;
+        }
+        accepted += 1;
+        entryErrors += result.errors.length;
+        // Every entry either imports or is reported once — none is lost.
+        for (const [key, code] of [
+          ['sessions', 'invalid-session'],
+          ['firearms', 'invalid-firearm'],
+          ['licenses', 'invalid-license'],
+        ] as const) {
+          const given = Array.isArray(file[key]) ? (file[key] as unknown[]).length : 0;
+          const failed = result.errors.filter((e) => e.code === code).length;
+          expect(result[key].length + failed).toBe(given);
+        }
+      }),
+      { numRuns: 500 },
+    );
+    expect(accepted).toBeGreaterThan(0);
+    expect(entryErrors).toBeGreaterThan(0);
   });
 });

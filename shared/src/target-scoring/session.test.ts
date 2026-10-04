@@ -44,9 +44,8 @@ describe('scoreSeries', () => {
   it('SE4: scores every hole, in input order', () => {
     const holes: Hole[] = [holeAtRadius(0), holeAtRadius(100), holeAtRadius(600)];
     const results = scoreSeries(holes, SPSF_PISTOL_25M_PRECISION);
-    expect(results).toHaveLength(3);
-    expect(results[0]?.ringLabel).toBe('X');
-    expect(results[2]?.ringLabel).toBe('0');
+    // Ring 7 is 200 mm across; a .22 hole centred 100 mm out reaches 97.2 mm.
+    expect(results.map((r) => r.ringLabel)).toEqual(['X', '7', '0']);
   });
 });
 
@@ -54,11 +53,14 @@ describe('seriesToEntryShots', () => {
   it('SE5: every output satisfies entry.ts own valueTenths invariant', () => {
     const holes: Hole[] = [holeAtRadius(0), holeAtRadius(60), holeAtRadius(150), holeAtRadius(600)];
     const shots = seriesToEntryShots(holes, SPSF_PISTOL_25M_PRECISION);
-    for (const shot of shots) {
-      expect(shot.valueTenths).toBeGreaterThanOrEqual(0);
-      expect(shot.valueTenths).toBeLessThanOrEqual(109);
-      expect(Number.isInteger(shot.valueTenths)).toBe(true);
-    }
+    // Nearest hole edges at 0, 57.2, 147.2 and 597.2 mm against ring radii X 12.5,
+    // 8 75, 5 150 and 1 250 (SHB F.7.1).
+    expect(shots).toEqual([
+      { valueTenths: 100, isInnerTen: true },
+      { valueTenths: 80, isInnerTen: false },
+      { valueTenths: 50, isInnerTen: false },
+      { valueTenths: 0, isInnerTen: false },
+    ]);
     expect(() =>
       createKeypadState({ mode: 'integer', seriesLength: shots.length, shots }),
     ).not.toThrow();
