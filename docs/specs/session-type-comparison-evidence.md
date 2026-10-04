@@ -13,6 +13,11 @@ maintainer 2026-10-04 ("approved", replying to the spec path). Issue #570.
   100% coverage gate, jest) and
   `pnpm exec stryker run --mutate shared/src/scoring/session-type-comparison.ts`.
 
+**Re-run at merge**, after rebasing onto `origin/main` at 0ec0c09 (#585
+landed): `pnpm check` exit 0, 147 vitest files and 2736 tests passed, 55 jest
+suites; Stryker on `session-type-comparison.ts` 86 killed, 0 survived (100.00);
+mkdocs strict, translation and anchor checks pass.
+
 ## Scenarios → tests
 
 All in `shared/src/scoring/session-type-comparison.test.ts`.
