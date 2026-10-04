@@ -175,3 +175,83 @@ whose 25 and 50 mm radii have the same 1:2 ratio as precision's X and 10:
 line for line a precision 9–10 close-up at twice the size. Only an absolute
 size can tell them apart, such as a hole's diameter against the session's
 calibre.
+
+### The three guards
+
+`precision-guards.ts`. In `scan.tsx` they run only when `chooseLock` picks
+the close-up lock in a precision session, in this order. A refused close-up
+falls back to the disc lock when that passes; otherwise the photo is rejected,
+with the first guard's reason.
+
+- **Perspective.** The lock's projective denominator at each corner of the
+  photo, over its value at the target centre, must stay within 0.5–2. A
+  sign change means the horizon crosses the photo. No hand-held photo of a
+  flat target is that oblique, but a lock on the wrong rings can be: one
+  10-crop lock drew the canvas as two wedges with the horizon through it.
+- **The milsnabb lock as a guard.** #508's milsnabb lock runs on the close-up
+  lock's own work image. When it passes its gate, the precision lock is
+  refused. Its gate needs three card rings in frame and three rings in the
+  fit, so it cannot see a crop of the X and 10 alone.
+- **Hole size.** On the close-up lock's rectified canvas the hole proposals
+  run twice: at the session's calibre, and at half of it. Through a lock twice
+  too large a hole reads half its size, so the detector finds it only at half
+  the calibre. A hole's size is its blob's area as a disc's diameter, since the
+  probabilities saturate at 1. The lock is refused when no hole is found at the
+  calibre and the holes found at half of it have a median under 0.5 × the
+  calibre. Any hole found at the calibre abstains, and so does a canvas with no
+  holes. At half the calibre the detector also picks up paper texture, up to
+  192 "holes" on one precision crop. On 91 precision images it found nothing
+  at the calibre and up to 21 holes at half of it, and every median stayed
+  above the cut.
+
+Measured with `tools/cv/eval/guards.eval.ts`, which runs `chooseLock` against
+the disc lock as `scan.tsx` does. It used the 37 milsnabb photos and the
+milsnabb crops of `milsnabb.eval.ts` (same pixels), and 507 precision photos,
+169 of them also cut into 9–10, 8–10 and 7–10 crops. Every count is of images
+where the app would use the precision close-up lock.
+
+Each image is counted under the first guard that refuses it.
+
+| Milsnabb images, precision lock used | Images | Before | Perspective | Milsnabb guard | Hole size | After |
+| ------------------------------------ | -----: | -----: | ----------: | -------------: | --------: | ----: |
+| Whole photos                         |     37 |      4 |           0 |              2 |         1 |     1 |
+| Crop of the 10                       |     66 |     24 |          11 |              0 |         1 |    12 |
+| Crop of the 9–10                     |     54 |     10 |           6 |              4 |         0 |     0 |
+| Wider crop of the 9–10               |     37 |      7 |           2 |              5 |         0 |     0 |
+| Centre out of frame                  |    137 |     21 |           1 |              0 |         1 |    19 |
+| **Total**                            |    331 |     66 |          20 |             11 |         3 |    32 |
+
+Without the perspective guard the other two leave 45; it takes 13 of those.
+
+**Precision.** No guard refused any of the 1,231 precision images where the
+close-up lock is used: 224 whole photos and 1,007 crops. The milsnabb lock
+passed on none of them. The margins are small on two guards:
+
+- Perspective: the most oblique precision image is a 9–10 crop at 0.508 of
+  the centre's denominator at one corner. Measured from the photo's corner
+  instead of the target centre it read 0.48 and was refused, so the guard
+  reads it relative to the centre.
+- Hole size: the closest precision medians are 2.88 and 3.05 mm (two 9–10
+  crops). A cut at 0.55 × the calibre would refuse both.
+
+**A false refusal, fixed.** A noise-free synthetic precision close-up was
+refused by the milsnabb guard; a noisy copy was not. The milsnabb lock put its
+X and 10 on precision's 10 and 9 at the true scale, and its 9 on flat black.
+There the line response is flat (about 1e-7 on the noise-free image), so the
+search for the line's offset peaks anywhere in its ±3 mm window. On that image
+it peaked within the 0.5 mm gate, so a ring with no line counted as read. On a
+real photo, texture puts the peak at random across the window, which is why
+none of 1,231 was refused. The fit itself used only two rings, so the gate now
+also needs three rings in the fit (`MILSNABB_GATE.minLines` for both). It
+refuses no milsnabb lock the old gate passed, in `milsnabb.eval.ts` or in the
+table above. `milsnabb-lock.test.ts` draws that close-up.
+
+**What is left.** The hole check catches few milsnabb photos. Of the 32 left,
+15 have no hole the detector finds at either size, and 12 read holes at full
+size, because the lock put milsnabb's X and 10 (25 and 50 mm) on precision's 10
+and 9 at the true scale. No hole size can tell those apart.
+
+**Still open: #526.** Of the 12 crops of the 10 that are left, 5 read holes
+at the full calibre, 6 have no hole the detector finds, and 1 reads a single
+hole at half the calibre, above the cut. Their perspective stays within
+0.55–1.52. Without holes, nothing in the ring lines tells them apart.

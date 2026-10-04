@@ -61,8 +61,10 @@ What differs for `MILSNABB`:
    drops points more than 2 mm off their ring.
 3. **Gate.** The precision gate (residual ≤ 0.5 mm, comb ≥ 8, rings ≤ 0.5 mm
    from their lines) plus three things:
-   - at least three rings in frame, read at 25, 50, 90, 130, 170 and 210 mm.
-     The X and the 10 alone read 1:2 on both faces, so two lines never lock;
+   - at least three rings in frame, read at 25, 50, 90, 130, 170 and 210 mm,
+     and three rings in the fit. The X and the 10 alone read 1:2 on both
+     faces, so two lines never lock. A ring in frame on flat black still
+     reads an offset (cv-closeup-lock-2026-09.md, last section);
    - the centre in frame;
    - each ring read on each quarter of its circle separately, every quarter
      within 0.5 mm.

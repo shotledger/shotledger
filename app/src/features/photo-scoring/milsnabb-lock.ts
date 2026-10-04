@@ -12,8 +12,9 @@
 //    cannot fit both. Holes are scored on what is in front: the card;
 //  - a line's centre is fitted half a line width inside its ring, because a
 //    ring's diameter is measured to the outer edge of its 1 mm line;
-//  - the gate reads each ring per quarter, needs three rings in frame (the X
-//    and 10 alone read 1:2 on both faces) and the centre in frame.
+//  - the gate reads each ring per quarter, needs three rings in frame and in
+//    the fit (the X and 10 alone read 1:2 on both faces) and the centre in
+//    frame.
 import type { Homography } from './corners';
 import {
   asHomography,
@@ -50,7 +51,8 @@ export const MILSNABB_GATE = {
   residualMm: 0.5,
   comb: 8,
   ringOffsetMm: 0.5,
-  /** Rings in frame: the X and 10 alone read 1:2 on both faces. */
+  /** Rings in frame, and rings in the fit: the X and 10 alone read 1:2 on
+   *  both faces. A ring in frame with no line on it still reads an offset. */
   minLines: 3,
 } as const;
 
@@ -477,6 +479,7 @@ export function passesMilsnabbGate(lock: MilsnabbLock | null): lock is MilsnabbL
     lock.ringOffsetMm !== null &&
     lock.ringOffsetMm <= MILSNABB_GATE.ringOffsetMm &&
     lock.ringLines >= MILSNABB_GATE.minLines &&
+    lock.rings >= MILSNABB_GATE.minLines &&
     lock.inFrame
   );
 }

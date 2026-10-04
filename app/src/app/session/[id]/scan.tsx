@@ -59,16 +59,25 @@ import {
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
-import { proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
+import { holeCandidates, proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
 import { type ScanNextTarget, scanNextTarget } from '@/features/photo-scoring/scan-next';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
 import {
+  type CloseupLockRun,
   type GeometryPipelineResult,
   rectifyFromHomography,
   runCloseupLock,
   runMilsnabbLock,
   runGeometry,
 } from '@/features/photo-scoring/opencv';
+import {
+  holeDiametersMm,
+  holesTooSmall,
+  milsnabbLockRefuses,
+  perspectiveRefuses,
+  type PrecisionGuardRefusal,
+  proposalFaceOf,
+} from '@/features/photo-scoring/precision-guards';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
@@ -107,12 +116,17 @@ function timeStage(stage: string): () => void {
   };
 }
 
-const REASON_KEYS: Record<ValidityReason, string> = {
+type RejectReason = ValidityReason | PrecisionGuardRefusal;
+
+const REASON_KEYS: Record<RejectReason, string> = {
   axisRatio: 'photoScoring.reasonAxisRatio',
   zoneFraction: 'photoScoring.reasonZoneFraction',
   centerInFrame: 'photoScoring.reasonCenterInFrame',
   zoneContrast: 'photoScoring.reasonZoneContrast',
   profileScore: 'photoScoring.reasonProfileScore',
+  milsnabbLock: 'photoScoring.reasonMilsnabbLock',
+  perspective: 'photoScoring.reasonPerspective',
+  holeSize: 'photoScoring.reasonHoleSize',
 };
 
 export default function ScanScreen() {
@@ -163,7 +177,7 @@ export default function ScanScreen() {
   // Held only while marking, and dropped on retake: a few megabytes of
   // rectified gray pixels that tap-snap searches.
   const [canvas, setCanvas] = useState<RectifiedCanvas | null>(null);
-  const [reasons, setReasons] = useState<readonly ValidityReason[]>([]);
+  const [reasons, setReasons] = useState<readonly RejectReason[]>([]);
   const [corners, setCorners] = useState<readonly Point[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   // Which ring the four corners are being placed on. The outermost by
@@ -275,6 +289,7 @@ export default function ScanScreen() {
       // A close-up of the inner rings has no disc edge to lock on, but its
       // ring lines lock it; when both locks pass, the one that sits closer to
       // the printed lines wins (docs/specs/cv-closeup-lock-2026-09.md).
+      let closeupRun: CloseupLockRun | null = null;
       let closeup: CloseupLock | null = null;
       let discOffsetMm: number | null = null;
       const discToMm =
@@ -283,9 +298,9 @@ export default function ScanScreen() {
         if (!(await enter('rings'))) return;
         const closeupLocked = timeStage('close-up lock');
         try {
-          const lock = runCloseupLock({ base64: image.base64, discToMm });
-          closeup = lock.lock;
-          discOffsetMm = lock.discRingOffsetMm;
+          closeupRun = runCloseupLock({ base64: image.base64, discToMm });
+          closeup = closeupRun.lock;
+          discOffsetMm = closeupRun.discRingOffsetMm;
         } catch (error: unknown) {
           if (__DEV__) console.warn('close-up lock failed', error);
         }
@@ -299,17 +314,30 @@ export default function ScanScreen() {
         discToMm,
       });
       const toImage = closeup && invertHomography(closeup.toMm);
-      const closeupMapping =
+      let closeupMapping =
         choice === 'closeup' && closeup && toImage ? { toMm: closeup.toMm, toImage } : null;
       let rectified: RectifiedCanvas | null = null;
-      if (closeupMapping) {
-        if (!(await enter('straighten'))) return;
-        rectified = rectify(image.base64, closeupMapping.toMm, target);
+      // A milsnabb photo in a precision session can pass the precision lock
+      // at twice its true scale (spec, "a precision lock on a milsnabb photo").
+      let refusal: PrecisionGuardRefusal | null = null;
+      if (closeupMapping && closeupRun && closeup) {
+        if (perspectiveRefuses(closeup.toMm, closeup.center, image)) refusal = 'perspective';
+        else if (milsnabbLockOn(closeupRun)) refusal = 'milsnabbLock';
+        else {
+          if (!(await enter('straighten'))) return;
+          rectified = rectify(image.base64, closeupMapping.toMm, target);
+          if (rectified && holesTooSmallOn(rectified, target)) refusal = 'holeSize';
+        }
+        if (refusal) {
+          if (__DEV__) console.warn('precision close-up lock refused:', refusal);
+          closeupMapping = null;
+          rectified = null;
+        }
       }
       if (!(await settled())) return;
       total();
 
-      if (choice === 'disc' && disc && discTransform) {
+      if ((choice === 'disc' || refusal) && disc && discTransform) {
         setTransform(discTransform);
         setCanvas(disc.result.canvas);
         setPhase('marking');
@@ -325,7 +353,7 @@ export default function ScanScreen() {
         }
         return;
       }
-      setReasons(disc ? disc.validity.reasons : ['zoneContrast']);
+      setReasons(refusal ? [refusal] : disc ? disc.validity.reasons : ['zoneContrast']);
       setPhase('rejected');
     } catch {
       if (!current()) return;
@@ -356,6 +384,38 @@ export default function ScanScreen() {
       return null;
     } finally {
       rectified();
+    }
+  }
+
+  /** The milsnabb guard: the milsnabb lock on the close-up lock's work image. */
+  function milsnabbLockOn(run: CloseupLockRun): boolean {
+    const checked = timeStage('milsnabb guard');
+    try {
+      return milsnabbLockRefuses(run.milsnabb());
+    } catch (error: unknown) {
+      if (__DEV__) console.warn('milsnabb guard failed', error);
+      return false;
+    } finally {
+      checked();
+    }
+  }
+
+  /** The hole-size guard: the holes on a close-up lock's canvas read at the
+   *  session's calibre. Abstains when the detector fails. */
+  function holesTooSmallOn(rectified: RectifiedCanvas, face: NonNullable<typeof target>): boolean {
+    const checked = timeStage('hole-size check');
+    try {
+      const caliberMm = markState.caliberMm;
+      const read = (atMm: number) =>
+        holeDiametersMm(rectified, proposalFaceOf(face, atMm), (canvas, proposalFace) =>
+          holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined),
+        );
+      return holesTooSmall(read(caliberMm), read(caliberMm / 2), caliberMm);
+    } catch (error: unknown) {
+      if (__DEV__) console.warn('hole-size check failed', error);
+      return false;
+    } finally {
+      checked();
     }
   }
 
