@@ -41,6 +41,7 @@ export class SyncHttpError extends Error {
 function errorKeyForStatus(status: number): SyncErrorKey {
   if (status === 401 || status === 403) return 'unauthenticated';
   if (status === 409) return 'versionUnsupported';
+  if (status === 413) return 'payloadTooLarge';
   if (status >= 500 || status === 408 || status === 429) return 'network';
   return 'unknown';
 }

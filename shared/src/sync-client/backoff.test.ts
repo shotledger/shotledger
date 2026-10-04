@@ -48,5 +48,6 @@ describe('shouldRetry', () => {
     expect(shouldRetry('network')).toBe(true);
     expect(shouldRetry('unknown')).toBe(true);
     expect(shouldRetry('versionUnsupported')).toBe(true);
+    expect(shouldRetry('payloadTooLarge')).toBe(true);
   });
 });

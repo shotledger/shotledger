@@ -1140,6 +1140,7 @@
       "network": "No connection to the server. Will retry automatically.",
       "unauthenticated": "Your session expired. Sign in again.",
       "versionUnsupported": "This app version is too old to sync. Please update.",
+      "payloadTooLarge": "An entry is too large to sync. Shorten its notes and sync will resume.",
       "unknown": "Something went wrong. Will retry automatically."
     },
     "error": {

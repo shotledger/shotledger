@@ -18,6 +18,7 @@ import {
   createHttpSyncTransport,
   createPhotoApi,
   isLocalPhotoUri,
+  MAX_PAYLOAD_BYTES,
   MAX_PHOTO_ATTEMPTS,
   parseSyncPhotoUri,
   PhotoHttpError,
@@ -450,6 +451,27 @@ describe('I10 a server that refuses the protocol version', () => {
     // Nothing was acked, so the change is still queued for an upgraded build.
     expect(deviceA.outbox.size).toBe(1);
     expect(await deviceB.sync()).toMatchObject({ pulled: 0 });
+  });
+});
+
+describe('I12 a row over the payload cap', () => {
+  it('a 413 on push surfaces as payloadTooLarge and keeps the outbox', async () => {
+    const row = { ...sessionRow('big-1', 'Long', T0), notes: 'x'.repeat(MAX_PAYLOAD_BYTES) };
+    deviceA.write('sessions', row);
+
+    const error = await deviceA.sync().then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(SyncHttpError);
+    expect((error as SyncHttpError).status).toBe(413);
+    expect(classifySyncError(error)).toBe('payloadTooLarge');
+    expect(deviceA.outbox.size).toBe(1);
+
+    // Shortened, the same row goes through on the next cycle.
+    deviceA.write('sessions', { ...row, notes: 'short' });
+    await deviceA.sync();
+    expect(deviceA.outbox.size).toBe(0);
   });
 });
 

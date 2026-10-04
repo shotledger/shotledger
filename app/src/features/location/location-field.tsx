@@ -1,7 +1,7 @@
 // Plain-text location entry with suggestions. The text field is the feature;
 // the suggestions only save typing, so nothing here can block input — offline,
 // with the online lookup off, with an empty history, it is still a text box.
-import { OSM_ATTRIBUTION, type RangeMatch } from '@shotledger/shared';
+import { OSM_ATTRIBUTION, type RangeMatch, TEXT_LIMITS } from '@shotledger/shared';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -60,6 +60,7 @@ export function LocationField({ value, onChange, onlineEnabled, language }: Loca
       <TextField
         value={value}
         onChangeText={onChange}
+        maxLength={TEXT_LIMITS.sessions.location}
         placeholder={t('session.locationPlaceholder')}
         autoCapitalize="words"
         autoCorrect={false}

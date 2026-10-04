@@ -11,6 +11,11 @@ Bådadera betyder mest för ett pass du inte fyllt i själv: en import bär med 
 sitt eget datum och lägger sin förklaring — vilket vapen, varför ett pass är
 flaggat för granskning — i anteckningarna.
 
+Anteckningar rymmer upp till 2 000 tecken och övriga textfält färre, så att
+varje post förblir liten nog att synka. Om synken någon gång säger att en post
+är för stor — en importerad anteckning kan vara längre än appen låter dig
+skriva — kortar du postens anteckningar så fortsätter synken.
+
 Under det ligger passets etiketter. Etiketter som appen skrivit åt sig själv ser
 ut som `shotlog:review` eller `shotledger:championship`, med ett prefix och ett
 kolon; de visas här men utelämnas på start- och loggbokslistorna, där dina egna

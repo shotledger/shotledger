@@ -22,6 +22,7 @@ import {
   programsForDiscipline,
   shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
+  TEXT_LIMITS,
 } from '@shotledger/shared';
 import { effectiveRegulationIds } from '@shotledger/shared/src/regulations/registry';
 
@@ -190,7 +191,12 @@ export default function EditSessionScreen() {
     <Screen>
       <Card>
         <ThemedText type="smallBold">{t('session.name')}</ThemedText>
-        <TextField value={name} onChangeText={setName} testID="edit-name" />
+        <TextField
+          value={name}
+          onChangeText={setName}
+          maxLength={TEXT_LIMITS.sessions.name}
+          testID="edit-name"
+        />
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
         <PrimaryButton
@@ -213,10 +219,21 @@ export default function EditSessionScreen() {
         )}
 
         <ThemedText type="smallBold">{t('session.location')}</ThemedText>
-        <TextField value={location} onChangeText={setLocation} testID="edit-location" />
+        <TextField
+          value={location}
+          onChangeText={setLocation}
+          maxLength={TEXT_LIMITS.sessions.location}
+          testID="edit-location"
+        />
 
         <ThemedText type="smallBold">{t('session.notes')}</ThemedText>
-        <TextField value={notes} onChangeText={setNotes} multiline testID="edit-notes" />
+        <TextField
+          value={notes}
+          onChangeText={setNotes}
+          maxLength={TEXT_LIMITS.sessions.notes}
+          multiline
+          testID="edit-notes"
+        />
       </Card>
 
       {programs.length > 0 && (
@@ -281,6 +298,7 @@ export default function EditSessionScreen() {
           <TextField
             value={competitionName}
             onChangeText={setCompetitionName}
+            maxLength={TEXT_LIMITS.sessions.competition_name}
             placeholder={t('session.competitionNamePlaceholder')}
             testID="edit-competition-name"
           />
@@ -408,6 +426,7 @@ export default function EditSessionScreen() {
           <TextField
             value={newTag}
             onChangeText={setNewTag}
+            maxLength={TEXT_LIMITS.tags.name}
             placeholder={t('session.tagPlaceholder')}
             style={styles.tagInput}
             onSubmitEditing={onAddTag}
