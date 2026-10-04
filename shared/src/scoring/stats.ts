@@ -40,6 +40,12 @@ export interface StatsSeries {
    * is no shot data to pool.
    */
   totalOverride?: { tenths: number; shotCount: number } | null;
+  /**
+   * A total-only series with no stored shot count (a ShotLog import) has no
+   * `totalOverride`, so every score statistic leaves it out; volume counts it
+   * as this — its discipline's series length (`totalOnlyShotCount`).
+   */
+  volumeOnlyShotCount?: number | null;
   /** The program stage the series belongs to (helmatch delmoment); absent for most. */
   stage?: string | null;
 }
@@ -119,8 +125,8 @@ export function scoredShots(
 
 /**
  * Volume metric: every shot including sighter series (spsf-domain rule 2).
- * An override series (WS1) contributes its stored shot count instead of
- * `shots.length` (always 0 for such a series).
+ * A total-only series contributes its shot count (`volumeOfSeries`) instead
+ * of `shots.length` (always 0 for such a series).
  */
 export function volumeShotCount(seriesList: readonly StatsSeries[]): number {
   return seriesList.reduce((count, series) => count + volumeOfSeries(series), 0);

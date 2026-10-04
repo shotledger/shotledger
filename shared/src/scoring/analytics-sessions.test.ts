@@ -43,6 +43,7 @@ function session(overrides: Partial<AnalyticsSession> = {}): AnalyticsSession {
     tagIds: [],
     extraRounds: 0,
     stationCount: 0,
+    seriesLength: 5,
     scoresHits: false,
     ...overrides,
   };
@@ -349,6 +350,13 @@ describe('the report volume is the sum of sessionVolume (one-volume-figure-spec 
       session({ id: 'falt', disciplineId: 'spsf-falt', stationCount: 2 }),
     ];
     expect(analyticsReportTotals(matched, sessions).volumeShotCount).toBe(2 + 5 + 3 + 1 + 12);
+  });
+
+  it('U7: counts a volume-only series (ShotLog) by its resolved count, and scores nothing for it', () => {
+    const matched = [series({ sessionId: 'a', volumeOnlyShotCount: 6 })];
+    const totals = analyticsReportTotals(matched, [session({ id: 'a' })]);
+    expect(totals.volumeShotCount).toBe(6);
+    expect(totals.scoredSeriesCount).toBe(0);
   });
 
   it('U7: a series of a session outside the report set does not count', () => {

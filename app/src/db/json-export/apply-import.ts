@@ -14,7 +14,7 @@ import {
   type ImportRecords,
   type LicenseExport,
   type SessionImportGroup,
-  sessionVolume,
+  importedSessionVolume,
 } from '@shotledger/shared';
 
 import {
@@ -372,18 +372,7 @@ export function applyImport(
         addRounds(existing.firearmId, -sessionVolumeRounds(tx, group.sessionId));
       }
       if (firearmId) {
-        // A file carries no total-only series, so every series counts by its shots.
-        addRounds(
-          firearmId,
-          sessionVolume({
-            series: group.series.map((row) => ({
-              shotCount: row.shots.length,
-              overrideShotCount: null,
-            })),
-            extraRounds: group.extraRounds,
-            stationCount: group.stations.length,
-          }),
-        );
+        addRounds(firearmId, importedSessionVolume(group));
       }
 
       const sessionValues = {

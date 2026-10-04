@@ -1,12 +1,18 @@
 // Rounds fired, read from the database and counted by the one shared rule,
 // `sessionVolume` (#512). Every volume figure in the app comes from here, and
 // every firearm-counter movement is a difference of two of them.
-import { and, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
-import { sessionVolume, type VolumeSeries } from '@shotledger/shared';
+import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
+import {
+  disciplineSeriesLength,
+  sessionVolume,
+  totalOnlyShotCount,
+  type VolumeSeries,
+} from '@shotledger/shared';
 
 import { faltStations, series, sessions, shots } from '../schema';
 import type { Database } from '../types';
 import { applyRoundCountDelta } from './firearm-counters';
+import { listFirearms } from './firearms';
 
 /**
  * Each live session's rounds fired, keyed by session id, for the sessions
@@ -19,7 +25,11 @@ export function sessionVolumes(db: Database, where?: SQL): Map<string, number> {
   const live = and(isNull(sessions.deletedAt), where);
 
   const sessionRows = db
-    .select({ id: sessions.id, extraRounds: sessions.extraRounds })
+    .select({
+      id: sessions.id,
+      disciplineId: sessions.disciplineId,
+      extraRounds: sessions.extraRounds,
+    })
     .from(sessions)
     .where(live)
     .all();
@@ -51,7 +61,8 @@ export function sessionVolumes(db: Database, where?: SQL): Map<string, number> {
     const bucket = seriesBySession.get(row.sessionId) ?? [];
     bucket.push({
       shotCount: row.shotCount,
-      overrideShotCount: row.isTotalOverride === 1 ? row.overrideShotCount : null,
+      totalOnly: row.isTotalOverride === 1,
+      overrideShotCount: row.overrideShotCount,
     });
     seriesBySession.set(row.sessionId, bucket);
   }
@@ -64,6 +75,7 @@ export function sessionVolumes(db: Database, where?: SQL): Map<string, number> {
         series: seriesBySession.get(row.id) ?? [],
         extraRounds: row.extraRounds,
         stationCount: stationsBySession.get(row.id) ?? 0,
+        seriesLength: disciplineSeriesLength(row.disciplineId),
       }),
     ]),
   );
@@ -105,4 +117,53 @@ export function withSessionVolumeDelta<T>(db: Database, sessionId: string, mutat
   const delta = sessionVolumeRounds(db, sessionId) - before;
   if (delta !== 0) applyRoundCountDelta(db, firearmId, delta);
   return result;
+}
+
+export interface FirearmCounterDrift {
+  firearmId: string;
+  make: string;
+  model: string;
+  /** Rounds in the firearm's total-only series that its counters never got. */
+  rounds: number;
+}
+
+/**
+ * Each live firearm's counter drift: the rounds of every live total-only
+ * series on its live sessions, by today's rule. Counters written before #512
+ * never got them; Adjust Round Count corrects a counter by this figure. A
+ * one-off read for the /dev screen — it writes nothing.
+ */
+export function firearmCounterDrift(db: Database): FirearmCounterDrift[] {
+  const rows = db
+    .select({
+      firearmId: sessions.firearmId,
+      disciplineId: sessions.disciplineId,
+      storedShotCount: series.totalOverrideShotCount,
+    })
+    .from(series)
+    .innerJoin(sessions, eq(series.sessionId, sessions.id))
+    .where(
+      and(
+        eq(series.isTotalOverride, 1),
+        isNull(series.deletedAt),
+        isNull(sessions.deletedAt),
+        isNotNull(sessions.firearmId),
+      ),
+    )
+    .all();
+
+  const drift = new Map<string, number>();
+  for (const row of rows) {
+    const rounds = totalOnlyShotCount(
+      row.storedShotCount,
+      disciplineSeriesLength(row.disciplineId),
+    );
+    drift.set(row.firearmId!, (drift.get(row.firearmId!) ?? 0) + rounds);
+  }
+  return listFirearms(db).map((firearm) => ({
+    firearmId: firearm.id,
+    make: firearm.make,
+    model: firearm.model,
+    rounds: drift.get(firearm.id) ?? 0,
+  }));
 }

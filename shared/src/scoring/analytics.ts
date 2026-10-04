@@ -127,6 +127,8 @@ export interface AnalyticsSession {
   extraRounds: number;
   /** Live fält stations, scratched included; 0 otherwise. */
   stationCount: number;
+  /** The discipline's `defaultSeriesLength` (`disciplineSeriesLength`). */
+  seriesLength: number;
   /** A hits discipline (fält): stations, never series. */
   scoresHits: boolean;
 }
@@ -420,6 +422,7 @@ export function analyticsReportTotals(
           series: (seriesBySession.get(session.id) ?? []).map(toVolumeSeries),
           extraRounds: session.extraRounds,
           stationCount: session.stationCount,
+          seriesLength: session.seriesLength,
         }),
       0,
     ),

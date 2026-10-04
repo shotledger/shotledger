@@ -24,6 +24,7 @@ import {
   sampleStandardDeviationTenths,
   scoredShots,
   tenthsToScore,
+  volumeOfSeries,
   type AnalyticsFilter,
   type AnalyticsRecords,
   type AnalyticsSessionPoint,
@@ -183,7 +184,7 @@ function loadFilterOptions(): AnalyticsFilterOptions {
   const all = listAllAnalyticsSeries(db);
   const lengths = new Set<number>();
   for (const series of all) {
-    const count = series.totalOverride?.shotCount ?? series.shots.length;
+    const count = volumeOfSeries(series);
     if (count > 0) lengths.add(count);
   }
 

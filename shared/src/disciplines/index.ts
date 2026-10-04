@@ -135,6 +135,15 @@ export function requireDiscipline(id: string): Discipline {
   return discipline;
 }
 
+/**
+ * A discipline's `defaultSeriesLength` — what a total-only series with no
+ * stored shot count counts as (`totalOnlyShotCount`). An id this build does
+ * not know (synced from a newer one) gets 5, as a new session would.
+ */
+export function disciplineSeriesLength(disciplineId: string): number {
+  return getDiscipline(disciplineId)?.defaultSeriesLength ?? 5;
+}
+
 export function getProgram(id: string): Program | undefined {
   return PROGRAMS.find((program) => program.id === id);
 }

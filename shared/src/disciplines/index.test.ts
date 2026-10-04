@@ -10,6 +10,7 @@ import {
   buildProgramSkeleton,
   decimalAllowed,
   defaultSessionName,
+  disciplineSeriesLength,
   DISCIPLINES,
   disciplineSchema,
   findWeaponGroup,
@@ -1122,5 +1123,20 @@ describe('program stages (helmatch delmoment, #476)', () => {
         structure: { groups: [{ seriesCount: 1, stage: '' }] },
       }),
     ).toThrow();
+  });
+});
+
+describe('disciplineSeriesLength', () => {
+  it('is the discipline’s defaultSeriesLength', () => {
+    expect(disciplineSeriesLength('spsf-precision')).toBe(5);
+    expect(disciplineSeriesLength('spsf-milsnabb')).toBe(5);
+    expect(disciplineSeriesLength('spsf-figurskjutning')).toBe(5);
+    expect(disciplineSeriesLength('spsf-helmatch')).toBe(5);
+    expect(disciplineSeriesLength('spsf-falt')).toBe(6);
+    expect(disciplineSeriesLength('issf-air-pistol')).toBe(10);
+  });
+
+  it('is 5 for a discipline this build does not know', () => {
+    expect(disciplineSeriesLength('no-such-discipline')).toBe(5);
   });
 });

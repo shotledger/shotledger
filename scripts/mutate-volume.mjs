@@ -39,9 +39,51 @@ const MUTANTS = [
   ],
   [
     'app/src/db/queries/volume.ts',
-    'overrideShotCount: row.isTotalOverride === 1 ? row.overrideShotCount : null,',
-    'overrideShotCount: null,',
+    'totalOnly: row.isTotalOverride === 1,',
+    'totalOnly: false,',
     'a total-only series counts as its zero shot rows',
+  ],
+  [
+    'app/src/db/queries/volume.ts',
+    'seriesLength: disciplineSeriesLength(row.disciplineId),\n      }),',
+    'seriesLength: 5,\n      }),',
+    'every discipline’s series length is 5',
+  ],
+  [
+    'app/src/db/queries/volume.ts',
+    '        eq(series.isTotalOverride, 1),\n',
+    '',
+    'drift counts ordinary series',
+  ],
+  [
+    'app/src/db/queries/volume.ts',
+    '        isNull(series.deletedAt),\n        isNull(sessions.deletedAt),\n',
+    '        isNull(sessions.deletedAt),\n',
+    'drift counts a deleted series',
+  ],
+  [
+    'app/src/db/queries/volume.ts',
+    '        isNull(sessions.deletedAt),\n        isNotNull(sessions.firearmId),',
+    '        isNotNull(sessions.firearmId),',
+    'drift counts a deleted session',
+  ],
+  [
+    'app/src/db/queries/volume.ts',
+    '      disciplineSeriesLength(row.disciplineId),\n    );',
+    '      5,\n    );',
+    'drift counts every discipline’s series as 5',
+  ],
+  [
+    'app/src/db/queries/stats.ts',
+    'row.isTotalOverride === 1 && totalOverride === null',
+    'totalOverride === null',
+    'the statistics count an ordinary series as volume-only',
+  ],
+  [
+    'app/src/db/queries/stats.ts',
+    'disciplineSeriesLength(session.disciplineId),',
+    '5,',
+    'the statistics count every discipline’s volume-only series as 5',
   ],
   [
     'app/src/db/queries/volume.ts',

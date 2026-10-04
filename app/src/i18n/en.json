@@ -742,6 +742,9 @@
     "componentsTitle": "Components",
     "sessionsCount": "{{count}} sessions",
     "flagsTitle": "Feature Flags",
+    "driftTitle": "Round Counter Drift",
+    "driftSubtitle": "Rounds in total-only series that each counter never got. Correct a counter with Adjust Round Count.",
+    "driftRounds": "{{count}} rounds",
     "flagDevToolsTitle": "Developer Tools",
     "flagDevToolsSubtitle": "Demo data, the wipe button and this screen. Set at build time only."
   },

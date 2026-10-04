@@ -1,8 +1,10 @@
 // docs/specs/one-volume-figure-spec.md — the A-n tags are its scenarios.
 import { eq } from 'drizzle-orm';
+import { seriesMeanTenths, volumeShotCount } from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { sessions } from '../schema';
+import { listAllStatsSeries } from './stats';
+import { firearms, series as seriesTable, sessions } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createAmmoLot } from './ammo-lots';
@@ -14,6 +16,7 @@ import { addSeries, softDeleteSeries } from './series';
 import { createSession } from './sessions';
 import { countVolumeRounds, listShotsForSeries, softDeleteShot } from './shots';
 import {
+  firearmCounterDrift,
   sessionVolumeRounds,
   sessionVolumes,
   totalVolumeRounds,
@@ -27,11 +30,18 @@ beforeEach(() => {
   db = createTestDb();
 });
 
-function session(options: { firearmId?: string; ammoLotId?: string; extraRounds?: number } = {}) {
+function session(
+  options: {
+    firearmId?: string;
+    ammoLotId?: string;
+    extraRounds?: number;
+    disciplineId?: string;
+  } = {},
+) {
   const row = createSession(db, {
     name: 'S',
     type: 'training',
-    disciplineId: 'spsf-precision',
+    disciplineId: options.disciplineId ?? 'spsf-precision',
     startedAt: '2026-05-01T10:00:00.000Z',
     firearmId: options.firearmId,
     ammoLotId: options.ammoLotId,
@@ -85,7 +95,7 @@ it('A1: a session’s volume counts shot rows, sighters, total-only series, extr
   addStation(db, { sessionId: id, position: 1, hits: 5, figuresHit: 3 });
   addStation(db, { sessionId: id, position: 2, hits: 6, figuresHit: 0, isScratched: true });
 
-  expect(sessionVolumeRounds(db, id)).toBe(5 + 5 + 10 + 0 + 7 + 12);
+  expect(sessionVolumeRounds(db, id)).toBe(5 + 5 + 10 + 5 + 7 + 12);
 });
 
 describe('sessionVolumes (A1)', () => {
@@ -188,5 +198,96 @@ describe('the firearm counter follows the session volume (A5–A6)', () => {
     const id = session();
     expect(withSessionVolumeDelta(db, id, () => totalOnly(id, 1, 5))).toEqual(expect.any(String));
     expect(getFirearm(db, firearmId)!.roundCount).toBe(0);
+  });
+});
+
+describe('a total-only series with no stored count counts as its discipline’s series length (A10)', () => {
+  it('five for precision, six for fält', () => {
+    const precision = session();
+    totalOnly(precision, 1, null);
+    const falt = session({ disciplineId: 'spsf-falt' });
+    totalOnly(falt, 1, null);
+
+    expect(sessionVolumeRounds(db, precision)).toBe(5);
+    expect(sessionVolumeRounds(db, falt)).toBe(6);
+  });
+
+  it('the statistics count it in volume and leave it out of every score', () => {
+    totalOnly(session(), 1, null);
+    totalOnly(session({ disciplineId: 'spsf-falt' }), 1, null);
+
+    const loaded = listAllStatsSeries(db);
+    expect(loaded.map((row) => [row.totalOverride, row.volumeOnlyShotCount]).sort()).toEqual([
+      [null, 5],
+      [null, 6],
+    ]);
+    expect(volumeShotCount(loaded)).toBe(11);
+    expect(seriesMeanTenths(loaded)).toBeNull();
+  });
+
+  it('an ordinary series is never volume-only', () => {
+    shotSeries(session(), 1, 3);
+    totalOnly(session(), 1, 4);
+    expect(listAllStatsSeries(db).map((row) => row.volumeOnlyShotCount)).toEqual([null, null]);
+  });
+
+  it('deleting one from a firearm-linked session backs the series length out', () => {
+    const firearmId = makeFirearm();
+    const id = session({ firearmId, disciplineId: 'spsf-falt' });
+    const imported = withSessionVolumeDelta(db, id, () => totalOnly(id, 1, null));
+    expect(getFirearm(db, firearmId)!.roundCount).toBe(6);
+
+    deleteSeriesAndShots(db, imported);
+
+    expect(getFirearm(db, firearmId)!.roundCount).toBe(0);
+  });
+});
+
+describe('firearmCounterDrift (B1)', () => {
+  it('sums each firearm’s live total-only series by today’s rule, and writes nothing', () => {
+    const pardini = makeFirearm();
+    const other = createFirearm(db, { make: 'Walther', model: 'GSP' }).id;
+    const precision = session({ firearmId: pardini });
+    shotSeries(precision, 1, 5);
+    totalOnly(precision, 2, 4);
+    totalOnly(precision, 3, null);
+    const falt = session({ firearmId: pardini, disciplineId: 'spsf-falt' });
+    totalOnly(falt, 1, null);
+    softDeleteSeries(db, totalOnly(falt, 2, 5));
+    const deleted = session({ firearmId: pardini });
+    totalOnly(deleted, 1, 5);
+    deleteSessionAndSeries(db, deleted);
+    totalOnly(session(), 1, 5);
+    const before = db.select().from(seriesTable).all();
+    const counters = getFirearm(db, pardini);
+
+    expect(firearmCounterDrift(db)).toEqual([
+      { firearmId: pardini, make: 'Pardini', model: 'SP', rounds: 4 + 5 + 6 },
+      { firearmId: other, make: 'Walther', model: 'GSP', rounds: 0 },
+    ]);
+    expect(getFirearm(db, pardini)).toEqual(counters);
+    expect(db.select().from(seriesTable).all()).toEqual(before);
+  });
+
+  it('leaves out a deleted session whose series are still live (a synced tombstone)', () => {
+    const firearmId = makeFirearm();
+    const id = session({ firearmId });
+    totalOnly(id, 1, 5);
+    db.update(sessions)
+      .set({ deletedAt: '2026-05-02T00:00:00.000Z' })
+      .where(eq(sessions.id, id))
+      .run();
+    expect(firearmCounterDrift(db)).toEqual([
+      { firearmId, make: 'Pardini', model: 'SP', rounds: 0 },
+    ]);
+  });
+
+  it('leaves out a deleted firearm', () => {
+    const id = makeFirearm();
+    db.update(firearms)
+      .set({ deletedAt: '2026-05-02T00:00:00.000Z' })
+      .where(eq(firearms.id, id))
+      .run();
+    expect(firearmCounterDrift(db)).toEqual([]);
   });
 });

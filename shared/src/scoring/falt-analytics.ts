@@ -56,6 +56,7 @@ export function filterFaltSessions(
         ...session,
         extraRounds: 0,
         stationCount: 0,
+        seriesLength: SHOTS_PER_STATION,
         scoresHits: true,
       })),
       filter,
