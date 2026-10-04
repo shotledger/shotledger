@@ -18,7 +18,8 @@
       },
       {
         "seriesCount": 6,
-        "targetFace": "issf-25m-rapid-fire"
+        "targetFace": "issf-25m-rapid-fire",
+        "sighterSeries": 1
       }
     ]
   }

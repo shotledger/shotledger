@@ -888,8 +888,8 @@ pistol) are **v2** — their defaults carry VERIFY items to resolve then.
 
 Added 2026-09-16 (#228): `issf-centre-fire-pistol` (ISSF, Grovpistol — the
 same structure as `issf-sport-pistol`, Pistol Rules 8.7.6.4) and
-`svsf-snabbluftpistol` (SvSF — 1 sighter, then 2 × 10 s + 2 × 8 s + 2 × 6 s
-twice, 5 shots each; Reglemente för 10 m Snabbluftpistol §6.1/§6.3). Cited in
+`svsf-snabbluftpistol` (SvSF — twice a sighter, then 2 × 10 s + 2 × 8 s +
+2 × 6 s, 5 shots each; Reglemente för 10 m Snabbluftpistol §6.1/§6.3). Cited in
 `docs/reference/issf-rules.md` and `docs/reference/svsf-rules.md`.
 
 Session names default to `<session type> — <local date>` (e.g. "Tävling —

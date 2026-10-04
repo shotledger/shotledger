@@ -144,10 +144,10 @@ Pistol Rules Rule 8.11 table + Rule 8.7.6.4: **60 shots**, divided into
 two 30-shot stages:
 
 - **Precision Stage**: 6 series of 5 shots, **240 seconds per series**
-  (8.7.6.4 table). One 5-shot sighting series is allowed before the
-  stage (8.7.6.4.a); no separate time limit is stated for it — it takes
-  the stage's 240 s, same pattern as the SPSF milsnabb provserie
-  inheriting omgång 1's limit.
+  (8.7.6.4 table). One 5-shot sighting series is allowed before each
+  stage (8.7.6.4.a), so each group carries `sighterSeries: 1`; no separate
+  time limit is stated for it — it takes the stage's 240 s, same pattern as
+  the SPSF milsnabb provserie inheriting omgång 1's limit.
 - **Rapid-fire Stage**: 6 series of 5 shots. Per shot, not per series:
   the target is shown 5 times for 3.0 s (−0.0/+0.2) each, 7 s (±0.1)
   between exposures, one shot per exposure (8.7.6.4.i). This does not
@@ -155,7 +155,8 @@ two 30-shot stages:
   series has N seconds", not "5 timed single-shot exposures") — the
   rapid-fire group therefore ships with **no** `timeLimitSeconds`, and
   the true per-shot timing is documented here rather than forced into a
-  field that would misrepresent it.
+  field that would misrepresent it. The stage's own sighting series
+  (8.7.6.4.a) inherits that: untimed, on the rapid-fire face.
 
 **Targets — this event genuinely uses two different targets**, one per
 stage (GTR 6.3.4.4/6.3.4.5, both explicitly listing "the precision
@@ -219,14 +220,12 @@ dimensions as `issf-25m-precision` below.
 Pistol Rules Rule 8.7.6.3.a: **60 shots, 2 stages of 30 shots**. Each
 stage: 6 series of 5 shots — 2 series at 8 s, 2 at 6 s, 2 at 4 s, one
 shot per target across 5 targets per series. Rule 8.7.6.3.b: **one**
-5-shot sighting series (at 8 s) allowed **before each stage**. This ships
-as **one leading sighter** on the first group (5 shots, inheriting its 8 s
-limit) rather than two, with the full 60 scored shots represented as **12
-series in the correct repeating 8/6/6/4/4 pattern** across both stages
-(`groups: [{2,8},{2,6},{2,4},{2,8},{2,6},{2,4}]`). It was a schema limit when
-the program shipped; groups carry their own `sighterSeries` since #476, so a
-second sighter before stage two is now a data change, not yet made. Not a
-change to any verified shot count or time limit. 3 minutes preparation time (8.7.6.1.e).
+5-shot sighting series (at 8 s) allowed **before each stage**. The full 60
+scored shots are represented as **12 series in the correct repeating
+8/8/6/6/4/4 pattern** across both stages
+(`groups: [{2,8},{2,6},{2,4},{2,8},{2,6},{2,4}]`), and the first group of
+each stage carries `sighterSeries: 1`, so each sighter inherits that group's
+8 s limit. 3 minutes preparation time (8.7.6.1.e).
 
 **Does this fit the ring-scoring model, or should it defer like fält
 (hit/figure scoring)?** It fits. Qualification scoring is full ring

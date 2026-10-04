@@ -26,7 +26,8 @@
       },
       {
         "seriesCount": 2,
-        "timeLimitSeconds": 8
+        "timeLimitSeconds": 8,
+        "sighterSeries": 1
       },
       {
         "seriesCount": 2,
