@@ -62,6 +62,7 @@ function milRow(image: GrayImage, ref?: Homography) {
     comb: round(lock.comb, 1),
     off: round(lock.ringOffsetMm, 1),
     lines: lock.ringLines,
+    rings: lock.rings,
     inFrame: lock.inFrame,
     arcs: milsnabbArcOffsetsMm(work, lock.toMm),
     faceArcs: milsnabbArcOffsetsMm(work, lock.toMm, FACE_RINGS_MM),

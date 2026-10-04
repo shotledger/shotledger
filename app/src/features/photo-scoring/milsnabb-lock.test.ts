@@ -69,7 +69,29 @@ function scene(o: {
   };
 }
 
-function draw(sc: Scene, seed: number): GrayImage {
+/** Shot holes on the noise-free precision close-up, mm from the centre. */
+const HOLES_MM = [
+  [-55, -40],
+  [8, -12],
+  [40, 18],
+  [-22, 30],
+] as const;
+
+/** Grey at a point of the precision face: 0.75 mm lines whose outer edge is
+ *  the ring's radius, white on the black out to 100 mm, black beyond. */
+function precisionShade(X: number, Y: number): number {
+  if (HOLES_MM.some(([x, y]) => Math.hypot(X - x, Y - y) <= 2.8)) return 190;
+  const r = Math.hypot(X, Y);
+  const line = [12.5, 25, 50, 75, 125, 150].some((R) => r <= R && r >= R - 0.75);
+  if (r <= 100) return line ? 235 : 20;
+  return line ? 20 : 242;
+}
+
+function draw(
+  sc: Scene,
+  seed: number | null,
+  shadeAt: (X: number, Y: number) => number = shade,
+): GrayImage {
   const { width, height, toFaceMm } = sc;
   const data = new Uint8Array(width * height);
   const sub = [0.25, 0.75];
@@ -79,10 +101,10 @@ function draw(sc: Scene, seed: number): GrayImage {
       for (const dy of sub) {
         for (const dx of sub) {
           const m = applyHomography(toFaceMm, { x: x - 0.5 + dx, y: y - 0.5 + dy });
-          total += shade(m.x, m.y);
+          total += shadeAt(m.x, m.y);
         }
       }
-      const v = Math.round(total / 4) + (hash32(x, y, seed) % 7) - 3;
+      const v = Math.round(total / 4) + (seed === null ? 0 : (hash32(x, y, seed) % 7) - 3);
       data[y * width + x] = Math.min(255, Math.max(0, v));
     }
   }
@@ -131,6 +153,13 @@ beforeAll(() => {
     }),
   };
   results.set('precision', { lock: lockMilsnabbWork(closeupWorkImage(pre)), image: pre });
+  // a noise-free precision close-up, 110 mm either side of the centre
+  const clean = draw(
+    scene({ width: 2000, height: 2000, cx: 1000, cy: 1000, ppmm: 9.1, tilt: [0, 0], rotate: 0 }),
+    null,
+    precisionShade,
+  );
+  results.set('precisionClean', { lock: lockMilsnabbWork(closeupWorkImage(clean)), image: clean });
 }, 180_000);
 
 /** Image px -> card mm, the truth a lock is held to. */
@@ -204,6 +233,16 @@ it('refuses the precision face', () => {
   expect(passesMilsnabbGate(results.get('precision')!.lock)).toBe(false);
 });
 
+it('refuses a noise-free precision close-up whose third ring has no line', () => {
+  // The X and 10 land on precision's 10 and 9; the 9 lands on flat black,
+  // where the offset search peaks anywhere in its window, here inside the
+  // gate. Only the rings in the fit tell it apart.
+  const lock = results.get('precisionClean')!.lock!;
+  expect(lock.rings).toBeLessThan(MILSNABB_GATE.minLines);
+  expect(passesMilsnabbGate(lock)).toBe(false);
+  expect(passesMilsnabbGate({ ...lock, rings: MILSNABB_GATE.minLines })).toBe(true);
+});
+
 it('gates on every part of the lock', () => {
   const lock = results.get('tilted')!.lock!;
   expect(passesMilsnabbGate(lock)).toBe(true);
@@ -214,6 +253,7 @@ it('gates on every part of the lock', () => {
     { ringOffsetMm: 0.6 },
     { ringOffsetMm: null },
     { ringLines: 2 },
+    { rings: 2 },
     { inFrame: false },
   ]) {
     expect([bad, passesMilsnabbGate({ ...lock, ...bad })]).toEqual([bad, false]);
