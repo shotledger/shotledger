@@ -37,3 +37,24 @@ Två saker ändrar sig inte:
 
 Filtret **Provserier** på [statistikfliken](../guides/statistics.sv.md) är där
 du väljer mellan de två.
+
+## Förutsäger provserien matchen?
+
+Rapportens kort **Provserie och resultat** ställer varje tävlings provserie
+bredvid dess match: en punkt per tävling, provseriens snitt per skott i sidled
+och matchens snitt per skott i höjdled. Finaler räknas inte in i matchen,
+eftersom bara de bästa skjuter en. En ISSF-matchs provserier per moment slås
+ihop. Träningspass räknas inte, och inte heller tävlingar utan provserie.
+
+Varje gren får ett eget kort, eftersom ett milsnabbskott och ett
+precisionsskott har olika snitt och en blandning skulle hitta på ett samband.
+Under 10 tävlingar säger kortet bara hur många fler det behöver. Från 10 ger
+det Pearsons korrelation **r**, från −1 till 1, och säger det i ord. Under 0,1
+säger provserien lite om matchen. Från 0,1 är sambandet svagt, från 0,3
+måttligt och från 0,5 starkt. Det är de vanliga tumregelgränserna.
+
+Det visar om de två **hänger ihop**, inte att det ena **orsakar** det andra.
+En bra dag, vädret eller banan kan lyfta både provserien och matchen.
+
+Kortet bryr sig inte om filtret **Provserier**: provserien är det som mäts,
+och matchen tar aldrig med den.
