@@ -86,6 +86,10 @@ export default function SessionDetailScreen() {
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
 
   const { session, seriesRows, results, tags, firearmName } = detail;
+  // Falls back to the series list when the chosen view has nothing left to
+  // show: the last series deleted, or the last photo marks removed.
+  const shownView: DetailView =
+    seriesRows.length === 0 || (view === 'group' && !group) ? 'series' : view;
   const [extraRounds, setExtraRounds] = useState<string>(
     session?.extraRounds == null ? '' : String(session.extraRounds),
   );
@@ -586,12 +590,12 @@ export default function SessionDetailScreen() {
             // the sessions that predate photo scoring.
             ...(group ? [{ value: 'group' as const, label: t('photoScoring.groupTitle') }] : []),
           ]}
-          value={view}
+          value={shownView}
           onChange={setView}
         />
       )}
 
-      {view === 'group' && group && (
+      {shownView === 'group' && group && (
         <Card testID="session-group-view">
           {/* The heatmap only earns its toggle once the plot is a smear —
               below that the two pictures say the same thing. */}
@@ -685,7 +689,7 @@ export default function SessionDetailScreen() {
         </Card>
       )}
 
-      {view === 'stats' && seriesRows.length > 0 ? (
+      {shownView === 'stats' ? (
         <Card testID="session-stats-view">
           <ThemedText type="smallBold" themeColor="textSecondary">
             {t('stats.statsPerSeriesTitle')}
@@ -792,7 +796,7 @@ export default function SessionDetailScreen() {
             </ThemedText>
           )}
         </Card>
-      ) : (
+      ) : shownView === 'series' ? (
         <>
           {seriesRows.length === 0 ? (
             isRoundsSession || isFaltSession ? null : (
@@ -840,7 +844,7 @@ export default function SessionDetailScreen() {
             </Card>
           )}
         </>
-      )}
+      ) : null}
       <SeriesEntryChoiceSheet
         visible={entryChoiceOpen}
         onClose={() => setEntryChoiceOpen(false)}
