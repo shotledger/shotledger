@@ -75,6 +75,16 @@ between the plot of every hole and a **heat map** that shows where they
 cluster. A session shot on two faces, such as a full match of 25m Sport
 Pistol, shows the face with the most marked holes.
 
+## Reading the heat map
+
+The heat map spreads each hole into a soft patch and adds the patches up, so
+where holes crowd together the color builds. It runs from blue, where only a
+stray or two landed, through green and yellow to red and white, where most of
+your shots went. Ground nobody hit stays clear, so the rings and their numbers
+show through. The colors are relative to the busiest spot on that target, not
+a count: a white center means "most of them went here", whether that is 20
+holes or 200. The same heat map appears in the session report.
+
 ## Across sessions
 
 When the Statistics report covers sessions scored from photos,

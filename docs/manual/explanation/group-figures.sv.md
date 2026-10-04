@@ -73,6 +73,16 @@ vyn växla mellan en plot av varje hål och en **värmekarta** som visar var de
 samlas. Ett pass som skjutits på två tavlor, till exempel hela matchen i
 Sportpistol, visar den tavla som har flest markerade hål.
 
+## Att läsa värmekartan
+
+Värmekartan breder ut varje hål till en mjuk fläck och lägger ihop fläckarna,
+så där hålen trängs bygger färgen på. Den går från blått, där bara någon enstaka
+träff hamnade, via grönt och gult till rött och vitt, där de flesta skotten
+gick. Där ingen träffat förblir det genomskinligt, så ringarna och deras siffror
+syns igenom. Färgerna är relativa till den tätaste platsen på just den tavlan,
+inte ett antal: ett vitt centrum betyder "de flesta hamnade här", oavsett om det
+är 20 hål eller 200. Samma värmekarta finns i passrapporten.
+
 ## Över flera pass
 
 När statistikrapporten omfattar pass som räknats från foto slår

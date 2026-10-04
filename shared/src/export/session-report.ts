@@ -5,8 +5,7 @@
 //
 // Shared does no i18n: every label and formatted value comes from the caller.
 import { analyzeGroup } from '../scoring/group';
-import { MIN_SHOTS_FOR_HEATMAP } from '../scoring/heatmap';
-import { densityGrid, heatColor } from './heat-density';
+import { heatDensityCells, MIN_SHOTS_FOR_HEATMAP } from '../heatmap/heat-density';
 import type { TargetFaceDefinition } from '../target-scoring/targets';
 
 function escapeHtml(value: string): string {
@@ -187,18 +186,12 @@ export function heatDensitySvg(
   const half = reportViewHalfMm(target, marks);
   const extent = half * 2;
   const parts = faceParts(target, half);
-  const grid = densityGrid(marks, extent);
-  const cells: string[] = [];
-  for (const [index, value] of (grid?.values ?? []).entries()) {
-    if (!grid || value < 0.04) continue;
-    const row = Math.floor(index / grid.resolution);
-    const column = index % grid.resolution;
-    // Overlap each cell slightly so the blur leaves no seams.
-    cells.push(
-      `<rect x="${n(column * grid.cellSizeMm - half)}" y="${n(row * grid.cellSizeMm - half)}" width="${n(grid.cellSizeMm * 1.05)}" height="${n(grid.cellSizeMm * 1.05)}" fill="${heatColor(value)}" fill-opacity="${n(Math.min(0.9, 0.25 + value * 0.75))}"/>`,
-    );
-  }
-  const blur = grid ? n(grid.cellSizeMm * 0.8) : '0';
+  const layer = heatDensityCells(marks, extent);
+  const cells = (layer?.cells ?? []).map(
+    (c) =>
+      `<rect x="${n(c.xMm)}" y="${n(c.yMm)}" width="${n(c.sizeMm)}" height="${n(c.sizeMm)}" fill="${c.color}" fill-opacity="${n(c.opacity)}"/>`,
+  );
+  const blur = layer ? n(layer.blurMm) : '0';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="${n(-half)} ${n(-half)} ${n(extent)} ${n(extent)}"><defs><filter id="heat-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs>${parts.join('')}<g filter="url(#heat-blur)">${cells.join('')}</g></svg>`;
 }
 
