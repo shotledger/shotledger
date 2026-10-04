@@ -19,13 +19,23 @@ export class InvalidContainerError extends Error {
   }
 }
 
+/** Entry names are unique and non-empty, so a lookup by name is unambiguous:
+ * a second `manifest.json` cannot shadow the first. Checked on both sides. */
+function checkName(name: string, seen: Set<string>): void {
+  if (name.length === 0) throw new InvalidContainerError('empty entry name');
+  if (seen.has(name)) throw new InvalidContainerError(`duplicate entry name: ${name}`);
+  seen.add(name);
+}
+
 export function packContainer(entries: readonly ContainerEntry[]): Uint8Array {
   const encoder = new TextEncoder();
   const encodedNames = entries.map((e) => encoder.encode(e.name));
+  const seen = new Set<string>();
   let total = MAGIC.length + 4;
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i]!;
     const nameBytes = encodedNames[i]!;
+    checkName(entry.name, seen);
     if (nameBytes.length > 0xffff) {
       throw new InvalidContainerError(`entry name too long: ${entry.name}`);
     }
@@ -74,6 +84,7 @@ export function unpackContainer(bytes: Uint8Array): ContainerEntry[] {
   offset += 4;
 
   const entries: ContainerEntry[] = [];
+  const seen = new Set<string>();
   for (let i = 0; i < count; i++) {
     if (offset + 2 > bytes.length) throw new InvalidContainerError('truncated entry name length');
     const nameLen = view.getUint16(offset, true);
@@ -81,6 +92,7 @@ export function unpackContainer(bytes: Uint8Array): ContainerEntry[] {
 
     if (offset + nameLen > bytes.length) throw new InvalidContainerError('truncated entry name');
     const name = decoder.decode(bytes.subarray(offset, offset + nameLen));
+    checkName(name, seen);
     offset += nameLen;
 
     if (offset + 4 > bytes.length)
@@ -96,5 +108,8 @@ export function unpackContainer(bytes: Uint8Array): ContainerEntry[] {
     entries.push({ name, data });
   }
 
+  if (offset !== bytes.length) {
+    throw new InvalidContainerError('trailing bytes after the last entry');
+  }
   return entries;
 }

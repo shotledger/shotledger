@@ -30,10 +30,17 @@ database singleton without a JS-reload dependency it doesn't have (no
 `expo-updates`), so restore ends with a "close and reopen the app"
 prompt rather than a live reload.
 
-Schema compatibility refuses a bundle whose `schemaMigrationIdx` is
-newer than the running build's own migrations
-(`shared/src/backup/compat.ts`); an older bundle is silently brought up
-to date by the existing migration gate on next launch.
+Schema compatibility: the manifest records the tag and `when` of the last
+Drizzle journal entry at export, and restore refuses a bundle unless both
+match the running build's (`shared/src/backup/compat.ts`). Before 1.0 the
+baseline is reset rather than migrated, so the tag alone (`0000_baseline`)
+cannot tell two baselines apart, and the migration gate cannot bring a
+bundle from another baseline up to date.
+
+Restore turns photo entry names into file paths, so a bundle is refused
+before anything is written unless every `photos/` and `sync-photos/` entry
+is a plain `<id>.<ext>`, and the container rejects empty or duplicate entry
+names and bytes after the last entry.
 
 ## Consequences
 

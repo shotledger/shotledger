@@ -31,6 +31,15 @@ Appen visar vad filen innehåller — datum, pass, serier, skott, vapen, foton �
 innan du bekräftar. Läs det; det är där du hinner upptäcka att du valde förra
 årets fil.
 
+Vissa filer avvisas innan något på enheten ändras:
+
+- **En fil från en version med en annan databasstruktur.** Fram till att
+  ShotLedger når 1.0 kan en ny version ändra strukturen utan att äldre
+  säkerhetskopior konverteras. Om filen kommer från en nyare version,
+  uppdatera appen och försök igen.
+- **En fil som är skadad, eller som inte ser ut precis som en fil appen själv
+  skriver.** Den rapporteras som att den inte är en ShotLedger-säkerhetskopia.
+
 En fil som gjorts av en äldre version som fortfarande hade valvet återställs
 som vanligt. Valvdelen hoppas över: funktionen finns inte längre, och inget i
 appen kan öppna den.

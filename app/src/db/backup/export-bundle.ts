@@ -18,6 +18,7 @@ import {
   type ContainerEntry,
   DATABASE_ENTRY_NAME,
   extensionFromUri,
+  latestMigration,
   MANIFEST_ENTRY_NAME,
   packContainer,
   parseSyncPhotoUri,
@@ -55,14 +56,13 @@ function countRows(copyDb: ReturnType<typeof drizzle>, table: CountableTable): n
 }
 
 function buildManifest(kind: BackupKind, counts: BackupCounts): BackupManifest {
-  const entries = journalMeta.entries;
-  const lastEntry = entries[entries.length - 1];
+  const migration = latestMigration(journalMeta);
   return {
     containerFormatVersion: BACKUP_CONTAINER_FORMAT_VERSION,
     appVersion: Constants.expoConfig?.version ?? 'unknown',
     schemaJournalVersion: journalMeta.version,
-    schemaMigrationTag: lastEntry?.tag ?? 'unknown',
-    schemaMigrationIdx: entries.length - 1,
+    schemaMigrationTag: migration.tag,
+    schemaMigrationWhen: migration.when,
     kind,
     createdAt: new Date().toISOString(),
     counts,

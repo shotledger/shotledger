@@ -41,7 +41,7 @@ export type BackupStatus =
   | { kind: 'export-failed' }
   | { kind: 'restore-canceled' }
   | { kind: 'restore-invalid' }
-  | { kind: 'restore-newer-schema' }
+  | { kind: 'restore-schema-mismatch' }
   | { kind: 'restore-success' }
   | { kind: 'restore-failed' }
   | { kind: 'folder-save-success' }
@@ -180,8 +180,8 @@ export function useBackupExportImport() {
       setStatus({ kind: 'restore-invalid' });
       return null;
     }
-    if (preview.compatibility === 'newer') {
-      setStatus({ kind: 'restore-newer-schema' });
+    if (preview.compatibility === 'mismatch') {
+      setStatus({ kind: 'restore-schema-mismatch' });
       return null;
     }
     return { preview, bytes: picked.bytes };
@@ -229,8 +229,8 @@ export function useBackupExportImport() {
         return t('backup.restoreCanceled');
       case 'restore-invalid':
         return t('backup.restoreInvalid');
-      case 'restore-newer-schema':
-        return t('backup.restoreNewerSchema');
+      case 'restore-schema-mismatch':
+        return t('backup.restoreSchemaMismatch');
       case 'restore-success':
         return t('backup.restoreSuccess');
       case 'restore-failed':

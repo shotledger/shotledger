@@ -15,8 +15,13 @@ export function extensionFromUri(uri: string): string {
   return match ? `.${match[1]!.toLowerCase()}` : '.jpg';
 }
 
+// Restore turns these names into file paths, so they are whitelisted to the
+// exact `<id>.<ext>` shape export writes: no separator and no dot in the id.
+const PHOTO_ENTRY_PATTERN = /^photos\/[\w-]+\.[a-z0-9]+$/;
+const SYNC_PHOTO_ENTRY_PATTERN = /^sync-photos\/[\w-]+\.jpg$/;
+
 export function isPhotoEntryName(name: string): boolean {
-  return name.startsWith(PHOTOS_ENTRY_PREFIX) && name.length > PHOTOS_ENTRY_PREFIX.length;
+  return PHOTO_ENTRY_PATTERN.test(name);
 }
 
 /** The bare filename (id + extension) of a photo entry, e.g. `photos/abc.jpg` -> `abc.jpg`. */
@@ -32,7 +37,15 @@ export function syncPhotoEntryName(photoId: string): string {
 }
 
 export function isSyncPhotoEntryName(name: string): boolean {
-  return name.startsWith(SYNC_PHOTOS_ENTRY_PREFIX) && name.endsWith('.jpg');
+  return SYNC_PHOTO_ENTRY_PATTERN.test(name);
+}
+
+/** False for a name under either photo prefix that is not a well-formed
+ * photo entry. Any other name is never written to disk, so it passes. */
+export function isSafeEntryName(name: string): boolean {
+  if (name.startsWith(SYNC_PHOTOS_ENTRY_PREFIX)) return isSyncPhotoEntryName(name);
+  if (name.startsWith(PHOTOS_ENTRY_PREFIX)) return isPhotoEntryName(name);
+  return true;
 }
 
 /** `sync-photos/abc.jpg` -> `abc`. */

@@ -1,21 +1,32 @@
-// Schema-compatibility check for restore: refuse a restore of a newer
-// schema, migrate an older one. Drizzle's own migrator tracks
-// which migrations a database has applied in a table stored inside the
-// database file itself, so a restored DB is brought up to date
-// automatically by the existing migration gate on next launch — the only
-// case that needs an explicit refusal is a bundle produced by a build with
-// migrations this build doesn't have yet.
-export type SchemaCompatibility = 'ok' | 'newer';
+// Schema-compatibility check for restore. Before 1.0 the database baseline is
+// reset rather than migrated (hard rule 8), so a bundle restores only onto
+// the exact baseline it was exported from: an older one has tables the new
+// baseline would be run over, a newer one columns this build lacks.
+import type { BackupManifest } from './types';
 
-/**
- * @param manifestMigrationIdx Last migration index applied when the bundle
- * was exported (`BackupManifest.schemaMigrationIdx`).
- * @param appMigrationCount Number of migrations this build of the app knows
- * about (`migrations.journal.entries.length`).
- */
+export type SchemaCompatibility = 'ok' | 'mismatch';
+
+/** A Drizzle journal entry, reduced to what identifies it. */
+export interface MigrationIdentity {
+  tag: string;
+  when: number;
+}
+
+/** The journal's last migration — what an export records and a restore
+ * compares against. */
+export function latestMigration(journal: {
+  entries: readonly MigrationIdentity[];
+}): MigrationIdentity {
+  const last = journal.entries[journal.entries.length - 1];
+  if (!last) throw new Error('the migration journal has no entries');
+  return { tag: last.tag, when: last.when };
+}
+
 export function checkSchemaCompatibility(
-  manifestMigrationIdx: number,
-  appMigrationCount: number,
+  manifest: Pick<BackupManifest, 'schemaMigrationTag' | 'schemaMigrationWhen'>,
+  app: MigrationIdentity,
 ): SchemaCompatibility {
-  return manifestMigrationIdx >= appMigrationCount ? 'newer' : 'ok';
+  return manifest.schemaMigrationTag === app.tag && manifest.schemaMigrationWhen === app.when
+    ? 'ok'
+    : 'mismatch';
 }

@@ -30,6 +30,15 @@ The app shows what the file contains — date, sessions, series, shots, firearms
 photos — before you confirm. Read it; that is the moment to notice you picked
 last year's file.
 
+Some files are refused before anything on the device changes:
+
+- **One made by a version with a different database layout.** Until
+  ShotLedger reaches 1.0, a new version may change the layout without
+  converting older backups. If the file came from a newer version, update the
+  app and try again.
+- **One that is damaged, or does not look exactly like a file the app
+  writes.** It is reported as not a ShotLedger backup.
+
 A file made by an older version that still had the Vault restores normally.
 The Vault part of it is ignored: that feature is gone, and nothing in the app
 can open it any more.

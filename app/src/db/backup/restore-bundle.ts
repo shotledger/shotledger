@@ -1,23 +1,20 @@
 // Glue layer for restore (mirrors export-bundle.ts). Restore is a full
-// replace, never a merge: validate the manifest, write an
-// automatic pre-restore backup, close the live connection, overwrite the DB
-// file, then restore any bundled photos and rewrite their paths. The
-// existing migration gate (db/migration-gate.tsx) brings an older-schema
-// restore up to date automatically on the next app launch — this module
-// only needs to refuse a bundle newer than what this build understands.
+// replace, never a merge: validate the bundle, write an automatic
+// pre-restore backup, close the live connection, overwrite the DB file, then
+// restore any bundled photos and rewrite their paths. A bundle from any other
+// schema baseline than this build's is refused (`checkSchemaCompatibility`).
 import type { SQLiteDatabase } from 'expo-sqlite';
 import {
   type BackupManifest,
-  BackupManifestSchema,
   checkSchemaCompatibility,
   DATABASE_ENTRY_NAME,
   isPhotoEntryName,
   isSyncPhotoEntryName,
-  MANIFEST_ENTRY_NAME,
+  latestMigration,
   photoEntryFilename,
+  readBundle,
   type SchemaCompatibility,
   syncPhotoEntryId,
-  unpackContainer,
 } from '@shotledger/shared';
 
 import {
@@ -38,32 +35,13 @@ export interface RestorePreview {
   compatibility: SchemaCompatibility;
 }
 
-/** Parses and validates a picked bundle's manifest without touching the DB.
+/** Parses and validates a picked bundle without touching the DB or disk.
  * `null` means the bundle is unreadable / not a ShotLedger backup. */
 export function inspectBundle(bytes: Uint8Array): RestorePreview | null {
-  let entries;
-  try {
-    entries = unpackContainer(bytes);
-  } catch {
-    return null;
-  }
-  const manifestEntry = entries.find((e) => e.name === MANIFEST_ENTRY_NAME);
-  if (!manifestEntry) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(new TextDecoder().decode(manifestEntry.data));
-  } catch {
-    return null;
-  }
-  const result = BackupManifestSchema.safeParse(parsed);
-  if (!result.success) return null;
-
-  const compatibility = checkSchemaCompatibility(
-    result.data.schemaMigrationIdx,
-    journalMeta.entries.length,
-  );
-  return { manifest: result.data, compatibility };
+  const bundle = readBundle(bytes);
+  if (!bundle) return null;
+  const compatibility = checkSchemaCompatibility(bundle.manifest, latestMigration(journalMeta));
+  return { manifest: bundle.manifest, compatibility };
 }
 
 function preRestoreBackupFilename(): string {
@@ -77,7 +55,14 @@ function preRestoreBackupFilename(): string {
  * restart afterwards — see the "restart required" status the calling hook
  * surfaces (this module cannot reopen the closed `db` singleton itself). */
 export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): Promise<boolean> {
-  const entries = unpackContainer(bytes);
+  // Re-validated here too: these bytes are what gets written, whatever the
+  // caller inspected.
+  const bundle = readBundle(bytes);
+  if (!bundle) return false;
+  if (checkSchemaCompatibility(bundle.manifest, latestMigration(journalMeta)) !== 'ok') {
+    return false;
+  }
+  const { entries } = bundle;
   const dbEntry = entries.find((e) => e.name === DATABASE_ENTRY_NAME);
   if (!dbEntry) return false;
   const photoEntries = entries

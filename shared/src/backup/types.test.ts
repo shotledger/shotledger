@@ -7,8 +7,8 @@ function validManifest() {
     containerFormatVersion: BACKUP_CONTAINER_FORMAT_VERSION,
     appVersion: '1.0.0',
     schemaJournalVersion: '7',
-    schemaMigrationTag: '0003_soft_hemingway',
-    schemaMigrationIdx: 3,
+    schemaMigrationTag: '0000_baseline',
+    schemaMigrationWhen: 1790148364655,
     kind: 'database' as const,
     createdAt: '2026-09-02T10:00:00.000Z',
     counts: {
@@ -53,6 +53,21 @@ describe('BackupManifestSchema', () => {
   it('rejects a missing field', () => {
     const { appVersion: _appVersion, ...rest } = validManifest();
     expect(BackupManifestSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it('rejects a manifest from before the baseline identity was recorded', () => {
+    // The shape every bundle had while the schema check compared an index:
+    // without `schemaMigrationWhen` there is nothing to compare, so it is
+    // refused as not a readable backup rather than restored blind.
+    const { schemaMigrationWhen: _when, ...rest } = validManifest();
+    expect(BackupManifestSchema.safeParse({ ...rest, schemaMigrationIdx: 0 }).success).toBe(false);
+  });
+
+  it('rejects a baseline timestamp that is not a whole non-negative number', () => {
+    for (const when of [-1, 1.5, '1790148364655']) {
+      const manifest = { ...validManifest(), schemaMigrationWhen: when };
+      expect(BackupManifestSchema.safeParse(manifest).success, String(when)).toBe(false);
+    }
   });
 
   it('rejects extra garbage instead of a manifest object', () => {
