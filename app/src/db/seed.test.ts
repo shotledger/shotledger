@@ -1,4 +1,9 @@
-import { isCaliberPreset, isLoadSystemCode } from '@shotledger/shared';
+import {
+  isCaliberPreset,
+  isLoadSystemCode,
+  licenseStatus,
+  parseLicenseDate,
+} from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { listAmmoLots } from './queries/ammo-lots';
@@ -68,6 +73,17 @@ describe('seedDemoData', () => {
       expect(latestLicense(db, firearmByModel(model).id), model).toBeDefined();
     }
     expect(latestLicense(db, firearmByModel('P8X').id)).toBeUndefined();
+  });
+
+  it('stores license dates as the bare YYYY-MM-DD real licenses carry', () => {
+    seedDemoData(db);
+    for (const model of ['AW93', 'Tactical Sport 2 Orange', 'MR73 Sport']) {
+      const license = latestLicense(db, firearmByModel(model).id)!;
+      for (const value of [license.decidedOn, license.validUntil]) {
+        expect(parseLicenseDate(value!), `${model}: ${value}`).not.toBeNull();
+      }
+      expect(licenseStatus(license.validUntil), model).toBe('valid');
+    }
   });
 
   it('exercises vapengrupp C, which only a .22 LR gun may enter', () => {

@@ -280,6 +280,7 @@
     "purpose": "Ändamål",
     "decidedOn": "Beslutsdatum",
     "validUntil": "Giltig till",
+    "validUntilInvalid": "Ange ett giltigt datum som ÅÅÅÅ-MM-DD, eller lämna fältet tomt om licensen gäller tills vidare.",
     "tillsVidare": "Tills vidare",
     "conditions": "Villkor",
     "authority": "Myndighet",

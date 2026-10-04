@@ -25,6 +25,7 @@
     "shared/src/target-scoring/*.ts",
     "shared/src/json-export/*.ts",
     "shared/src/backup/**/*.ts",
+    "shared/src/firearms/**/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
     "!shared/src/shotlog/fixtures.ts"

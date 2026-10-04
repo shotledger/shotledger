@@ -280,6 +280,7 @@
     "purpose": "Purpose",
     "decidedOn": "Decision Date",
     "validUntil": "Valid Until",
+    "validUntilInvalid": "Enter a real date as YYYY-MM-DD, or leave it empty if the license is valid indefinitely.",
     "tillsVidare": "Indefinite (tills vidare)",
     "conditions": "Conditions",
     "authority": "Authority",
