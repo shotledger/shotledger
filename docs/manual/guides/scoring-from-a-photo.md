@@ -100,14 +100,16 @@ Session** changes the answer later (**Ask**, **Manual** or **Photo**).
 
 Beyond the score itself:
 
-| Figure                        | What it tells you                                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Windage** and **elevation** | How far the group's centre sits from the middle, left–right and up–down. A sight correction, essentially. |
-| **Mean radius**               | Average distance from the group centre — the honest measure of consistency.                               |
-| **Max spread**                | The two furthest-apart holes. One flier dominates it.                                                     |
-| **Potential score**           | What the same group would have scored centred.                                                            |
-| **Points lost to position**   | The part you would get back with a sight adjustment.                                                      |
-| **Points lost to size**       | The part only tighter shooting recovers.                                                                  |
+| Figure                         | What it tells you                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| **Windage** and **Elevation**  | How far the group's center sits from the middle, left–right and up–down, in mm. |
+| **Mean Radius**                | Average distance from the group's center — the honest measure of consistency.   |
+| **Max Spread**                 | The two furthest-apart holes. One flier dominates it.                           |
+| **Potential Score**            | What the same group would have scored centered.                                 |
+| **Points Lost: To Position**   | The part you would get back with a sight adjustment.                            |
+| **Points Lost: To Group Size** | The part only tighter shooting recovers.                                        |
 
 The split between position and size is the useful one: it separates a sight
 problem from a technique problem, and they need different work.
+[What the group figures mean](../explanation/group-figures.md) explains each
+figure, and when points lost is only an estimate.

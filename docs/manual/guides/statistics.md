@@ -50,6 +50,10 @@ any open picker closed.
   särskjutning station is not part of a result. Pick _Fältskjutning_ as the
   discipline and the ring cards above are left out, since none of them can say
   anything about a fält round.
+- **Where Your Shots Land**, when sessions in the report were scored from a
+  photo: their holes on one heat map, with a line on whether the points you
+  lose are mostly a sight adjustment or mostly spread. See
+  [What the group figures mean](../explanation/group-figures.md#across-sessions).
 - **Export** as PDF or JSON. The JSON carries the filter — sighter setting
   included — alongside the numbers.
 
