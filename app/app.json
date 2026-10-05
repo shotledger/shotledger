@@ -57,7 +57,8 @@
           "isIosBackgroundLocationEnabled": false
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
     ],
     "extra": {
       "//": "Optional cloud sync backend. Public placeholder — override per build with EXPO_PUBLIC_API_BASE_URL, or point it at a local `wrangler dev`. Never a secret; the session token lives in SecureStore.",

@@ -21,7 +21,15 @@
       // deliberately via `npx expo install --fix` on a dedicated branch.
       description: 'Expo/RN core moves together, manually',
       groupName: 'expo core (manual)',
-      matchPackageNames: ['expo{/,}**', 'react-native{/,}**', 'react', 'react-dom'],
+      matchPackageNames: [
+        'expo{/,}**',
+        'react-native{/,}**',
+        'react',
+        'react-dom',
+        // Native modules the SDK pins too (`expo doctor` flags a drift).
+        '@react-native-community/datetimepicker',
+        '@react-native-community/slider',
+      ],
       enabled: false,
     },
     {
