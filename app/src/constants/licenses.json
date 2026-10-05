@@ -141,7 +141,7 @@
   },
   {
     "name": "expo",
-    "version": "57.0.25",
+    "version": "57.0.26",
     "license": "MIT"
   },
   {
@@ -166,7 +166,7 @@
   },
   {
     "name": "expo-constants",
-    "version": "57.0.19",
+    "version": "57.0.20",
     "license": "MIT"
   },
   {
@@ -231,7 +231,7 @@
   },
   {
     "name": "expo-modules-core",
-    "version": "57.0.19",
+    "version": "57.0.20",
     "license": "MIT"
   },
   {
@@ -246,7 +246,7 @@
   },
   {
     "name": "expo-router",
-    "version": "57.0.23",
+    "version": "57.0.24",
     "license": "MIT"
   },
   {
