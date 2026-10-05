@@ -51,13 +51,12 @@ committing the regenerated `src/constants/licenses.json`.
 ## Database
 
 - Schema changes go through a Drizzle migration (hard rule 2).
-- **Regenerating `0000_baseline.sql` needs `expo start --clear`.** Babel's
-  `inline-import` pastes the SQL into `migrations.js`, and Metro caches that
-  transform by `migrations.js`'s own content, which a regeneration does not
-  change. A stale cache creates the old schema and the first write fails with
-  `table … has no column named …`. Restart Metro with `--clear` and
-  `adb shell pm clear app.shotledger`; a release build on a stale cache must
-  be rebuilt.
+- **A baseline edit updates the `baseline sha256` line in `migrations.js`.**
+  Babel's `inline-import` pastes the SQL into `migrations.js`, and Metro caches
+  that transform by `migrations.js`'s own content, so without the line a build
+  ships the old schema and the first write fails with `table … has no column
+  named …`. `migrations.test.ts` fails until the hash matches. An install that
+  already ran the old baseline still needs `adb shell pm clear app.shotledger`.
 
 ## Demo data and dev tools
 
