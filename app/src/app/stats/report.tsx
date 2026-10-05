@@ -35,6 +35,7 @@ import {
   type NamedRecord,
 } from '@/features/stats/use-stats-data';
 import { ShotHeatmap } from '@/components/shot-heatmap';
+import { ZoomableView } from '@/components/zoomable-view';
 import { SessionTypeComparisonCard } from '@/features/stats/session-type-comparison-card';
 import { SighterRelationCard } from '@/features/stats/sighter-relation-card';
 import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
@@ -180,14 +181,20 @@ export default function StatsReportScreen() {
             })}
           </ThemedText>
 
-          <View style={styles.centered}>
-            <ShotHeatmap
-              target={crossSession.target}
-              shots={crossSession.marks}
-              size={300}
-              testID="cross-session-heatmap"
-            />
-          </View>
+          <ZoomableView
+            contentWidth={300}
+            contentHeight={300}
+            style={styles.heatmapCanvas}
+            testID="cross-session-heatmap"
+          >
+            {(box) => (
+              <ShotHeatmap
+                target={crossSession.target}
+                shots={crossSession.marks}
+                size={box.width}
+              />
+            )}
+          </ZoomableView>
 
           {crossSession.hint && (
             <>
@@ -469,8 +476,8 @@ export default function StatsReportScreen() {
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    alignItems: 'center',
+  heatmapCanvas: {
+    height: 300,
   },
   gridRow: {
     flexDirection: 'row',

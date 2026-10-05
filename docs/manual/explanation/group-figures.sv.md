@@ -70,7 +70,8 @@ grupp. Provserier är inte med, precis som de inte är med i passets resultat.
 Dess förlorade poäng gäller alla de hålen tillsammans, så den potentiella
 poängen gäller hela passets markerade skott, inte en serie. Från 20 hål kan
 vyn växla mellan en plot av varje hål och en **värmekarta** som visar var de
-samlas. Ett pass som skjutits på två tavlor, till exempel hela matchen i
+samlas. Båda zoomas och flyttas som fotot du räknar från: nyp, dra när du
+zoomat in, dubbeltryck, eller knapparna − / + / anpassa. Ett pass som skjutits på två tavlor, till exempel hela matchen i
 Sportpistol, visar den tavla som har flest markerade hål.
 
 ## Att läsa värmekartan
