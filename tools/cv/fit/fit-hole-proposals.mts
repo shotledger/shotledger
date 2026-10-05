@@ -22,6 +22,7 @@ import {
   predict,
   readCsv,
 } from './logistic.mts';
+import { parseMarks } from './marks.mts';
 
 /** hole-proposals.ts MERGE_RADIUS_D and the caliber of `ProposalFace`. */
 const MERGE_RADIUS_D = 1.0;
@@ -124,9 +125,8 @@ function main(): void {
   const folds = Number(values.folds);
   const d = BULLET_MM * Number(values['px-per-mm']);
   const holesPerPhoto = new Map<string, number>();
-  for (const line of readFileSync(expandHome(values.marks), 'utf8').split('\n')) {
-    const parts = line.split(/\s+/).filter(Boolean);
-    if (parts.length) holesPerPhoto.set(parts[0]!, parts.length - 1);
+  for (const [name, holes] of parseMarks(readFileSync(expandHome(values.marks), 'utf8'))) {
+    holesPerPhoto.set(name, holes.length);
   }
 
   const parts = positionals.map(load);

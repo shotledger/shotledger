@@ -20,40 +20,16 @@ import { join } from 'node:path';
 
 import { expect, test } from 'vitest';
 
-import {
-  closeupWorkImage,
-  lockCloseupWork,
-  passesCloseupGate,
-} from '../../../app/src/features/photo-scoring/closeup-lock';
-import {
-  rectifyWithHomography,
-  runDiscLock,
-} from '../../../app/src/features/photo-scoring/disc-lock';
-import type { RectifiedCanvas } from '../../../app/src/features/photo-scoring/tap-snap';
-import { checkGeometryValidity } from '../../../app/src/features/photo-scoring/validity';
-import {
-  lockMilsnabbWork,
-  passesMilsnabbGate,
-} from '../../../app/src/features/photo-scoring/milsnabb-lock';
-import {
-  CANVAS_PX,
-  expandHome,
-  FACE,
-  faceFor,
-  loadPhoto,
-  parseLock,
-  RING_RADII_MM,
-  SPIKE_CANVAS_PX,
-} from '../fit/label-canvas';
-import { loadOpenCv, openCvJsDiscOps } from './opencv-js-disc-ops';
+import { expandHome, loadPhoto, parseLock } from '../fit/label-canvas';
+import { appCanvas, labelShift, proposalFace } from './app-canvas';
+import { loadOpenCv } from './opencv-js-disc-ops';
 
-const CALIBER_MM = 5.6;
 const src = process.env.CV_PREP_IN;
 const dst = process.env.CV_PREP_OUT;
 
 test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () => {
   const lock = parseLock(process.env.CV_PREP_LOCK ?? 'disc', 'CV_PREP_LOCK');
-  const face = faceFor(lock);
+  const face = proposalFace(lock);
   const longSide = Number(process.env.CV_PREP_LONG_SIDE ?? 2048);
   const onlyPath = process.env.CV_PREP_ONLY;
   const only = onlyPath
@@ -75,57 +51,17 @@ test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () 
       continue;
     }
     const photo = loadPhoto(cv, join(inDir, file), longSide);
-    const ops = openCvJsDiscOps(cv);
-    let canvas: RectifiedCanvas;
-    let note: string;
+    let prepared;
     try {
-      const gray = ops.gray(photo.gray, photo.width, photo.height);
-      if (lock === 'closeup') {
-        const closeup = lockCloseupWork(
-          closeupWorkImage({ data: photo.gray, width: photo.width, height: photo.height }),
-        );
-        if (!passesCloseupGate(closeup)) {
-          console.log(`${name}: close-up lock failed its gate; skipped`);
-          continue;
-        }
-        canvas = rectifyWithHomography(ops, gray, {
-          toMm: closeup.toMm,
-          outerRadiusMm: face.ringRadiiMm.at(-1)!,
-        });
-        note = 'close-up lock';
-      } else if (lock === 'milsnabb') {
-        const milsnabb = lockMilsnabbWork(
-          closeupWorkImage({ data: photo.gray, width: photo.width, height: photo.height }),
-        );
-        if (!passesMilsnabbGate(milsnabb)) {
-          console.log(`${name}: milsnabb lock failed its gate; skipped`);
-          continue;
-        }
-        canvas = rectifyWithHomography(ops, gray, {
-          toMm: milsnabb.toMm,
-          outerRadiusMm: face.ringRadiiMm.at(-1)!,
-        });
-        note = 'milsnabb lock';
-      } else {
-        const result = runDiscLock(ops, gray, {
-          width: photo.width,
-          height: photo.height,
-          referenceDiameterMm: FACE.referenceDiameterMm,
-          ringRadiiMm: RING_RADII_MM,
-        });
-        canvas = result.canvas;
-        const { valid, reasons } = checkGeometryValidity(result.metrics);
-        note = `disc lock, gate ${valid ? 'pass' : reasons.join(',')}`;
-      }
-    } catch (error: unknown) {
-      console.log(
-        `${name}: ${lock} lock failed (${error instanceof Error ? error.message : String(error)}); skipped`,
-      );
-      continue;
+      prepared = appCanvas(cv, photo, lock);
     } finally {
-      ops.release();
       photo.rgb.delete();
     }
+    if (typeof prepared === 'string') {
+      console.log(`${name}: ${prepared}`);
+      continue;
+    }
+    const { canvas, note } = prepared;
     writeFileSync(
       join(outDir, `${name}.pgm`),
       Buffer.concat([Buffer.from(`P5\n${canvas.size} ${canvas.size}\n255\n`), canvas.data]),
@@ -139,11 +75,8 @@ test.skipIf(!src || !dst)('rectified canvases for the hole proposals', async () 
         centerXPx: canvas.centerXPx,
         centerYPx: canvas.centerYPx,
         pxPerMm: canvas.pxPerMm,
-        shift: lock === 'disc' ? (CANVAS_PX - SPIKE_CANVAS_PX) / 2 : 0,
-        caliberMm: CALIBER_MM,
-        blackRadiusMm: face.blackRadiusMm,
-        maxRadiusMm: face.ringRadiiMm.at(-1)!,
-        ringRadiiMm: face.ringRadiiMm,
+        shift: labelShift(lock),
+        ...face,
       }),
     );
     ready += 1;
