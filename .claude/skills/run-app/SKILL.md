@@ -33,8 +33,24 @@ curl -s -o /dev/null -w '%{http_code}' http://localhost:<port>/   # poll for 200
 ```
 
 View and screenshot with browser tooling; kill the server's PID when done.
-The DB needs the page cross-origin isolated, which Metro cannot provide — see
-`app/CLAUDE.md` (demo data).
+The DB needs the page cross-origin isolated, which Metro cannot provide. Put
+`scripts/coi-proxy.mjs` in front and browse its port:
+
+```bash
+node .claude/skills/run-app/scripts/coi-proxy.mjs <proxy-port> <port>   # backgrounded
+```
+
+Driving it:
+
+- **Tap by coordinates.** A click by element reference never fires React Native
+  Web's `Pressable` `onPress`; it fails silently.
+- **Load Demo Data takes about 10 s** on web, where every statement goes
+  through the worker's sync channel. Wait before reading the count.
+- **One tab per origin.** A second tab, or a frozen one, holds the OPFS
+  database and the next page shows a migration error. Use a fresh port for a
+  clean database.
+- **The session screen takes a minute to render on web** (#600) and freezes
+  the tab meanwhile. Open a screen below it, such as a station or series, by its URL.
 
 ## Driving the emulator
 
