@@ -7,7 +7,12 @@
     "scheme": "app",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "app.shotledger",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -39,7 +44,8 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Allow $(PRODUCT_NAME) to add your Webshooter competition starts to your calendar."
+          "calendarPermission": "Allow $(PRODUCT_NAME) to add your Webshooter competition starts to your calendar.",
+          "remindersPermission": false
         }
       ],
       [
@@ -51,13 +57,28 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to suggest the shooting range you are at. Used only when you tap it, never in the background.",
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to suggest the shooting range you are at. Used only when you tap it, never in the background.",
           "isAndroidBackgroundLocationEnabled": false,
-          "isIosBackgroundLocationEnabled": false
+          "isIosBackgroundLocationEnabled": false,
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to photograph targets and license cards.",
+          "photosPermission": "Allow $(PRODUCT_NAME) to pick photos of targets and license cards from your library.",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analyzed live and never stored."
+        }
+      ],
       "expo-asset"
     ],
     "extra": {
@@ -67,6 +88,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "locales": {
+      "sv": "./locales/sv.json"
     }
   }
 }

@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Tillåt $(PRODUCT_NAME) att använda kameran för att fotografera tavlor och licenskort.",
+    "NSPhotoLibraryUsageDescription": "Tillåt $(PRODUCT_NAME) att välja foton av tavlor och licenskort från ditt bildbibliotek.",
+    "NSMicrophoneUsageDescription": "Tillåt $(PRODUCT_NAME) att använda mikrofonen så att skjuttimern kan ta tid på dina skott. Ljudet analyseras direkt och sparas aldrig.",
+    "NSLocationWhenInUseUsageDescription": "Tillåt $(PRODUCT_NAME) att använda din plats för att föreslå skjutbanan du är på. Används bara när du trycker på det, aldrig i bakgrunden.",
+    "NSCalendarsUsageDescription": "Tillåt $(PRODUCT_NAME) att lägga till dina tävlingsstarter från Webshooter i kalendern.",
+    "NSCalendarsFullAccessUsageDescription": "Tillåt $(PRODUCT_NAME) att lägga till dina tävlingsstarter från Webshooter i kalendern."
+  }
+}
