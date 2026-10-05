@@ -1,0 +1,45 @@
+name: iOS build
+
+# Manual only: the EAS free tier allows 15 iOS builds a month, and no Mac is
+# needed because the build runs on EAS, not on this runner.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        type: choice
+        options:
+          - simulator
+        default: simulator
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12.8.2
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: expo/expo-github-action@9.0.0
+        with:
+          eas-version: 24.10.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # --no-wait: the job hands the build to EAS and ends, so a long queue on
+      # the free tier spends no Actions minutes.
+      - name: Start the EAS build
+        working-directory: app
+        run: eas build --platform ios --profile "${{ inputs.profile }}" --non-interactive --no-wait
