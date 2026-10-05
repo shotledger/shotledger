@@ -49,8 +49,6 @@ Driving it:
 - **One tab per origin.** A second tab, or a frozen one, holds the OPFS
   database and the next page shows a migration error. Use a fresh port for a
   clean database.
-- **The session screen takes a minute to render on web** (#600) and freezes
-  the tab meanwhile. Open a screen below it, such as a station or series, by its URL.
 
 ## Driving the emulator
 
