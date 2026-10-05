@@ -4,6 +4,7 @@
 //
 //   CV_MARK_IN=<photos> CV_MARK_OUT=<dir> [CV_MARK_ONLY=names.txt] \
 //   [CV_MARK_LOCK=disc|closeup|milsnabb] [CV_MARK_LONG_SIDE=2048] \
+//   [CV_MARK_PRELABEL=0.3 CV_MARK_MARKS=marks.txt] \
 //     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 //
 // (--silent=false shows the per-photo lines; vitest hides a passing test's output.)
@@ -11,20 +12,36 @@
 // x=450, y=320), on the canvas label-canvas.ts lays out. Each grid is a PNG
 // beside a JSON sidecar holding the image px -> label px matrix.
 //
+// CV_MARK_PRELABEL runs the app's hole proposals at that threshold on every
+// photo the marks file has no line for, appends them to it as a `?` line
+// (marks.mts) and rings them on the grid. Existing lines are never touched.
+//
 // Photos, grids and marks are personal data: keep them outside the repo.
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 
 import { expect, test } from 'vitest';
 
 import { type Cv, loadOpenCv } from '../eval/opencv-js-disc-ops';
+import { CALIBER_MM } from '../eval/app-canvas';
 import { expandHome, type LabelCanvas, labelCanvas, loadPhoto, parseLock } from './label-canvas';
+import { namesInMarks, prelabelLine } from './marks.mts';
+import { parseThreshold, type Prelabel, prelabelHoles } from './prelabel';
 
 const GRID_PX = 50;
 // RGB Mats: yellow lines, red every 100 px and on the labels.
 const YELLOW = [255, 255, 0, 0];
 const RED = [255, 0, 0, 0];
+// Pre-labels: a hole-sized ring and the mark's place in its `?` line.
+const CYAN = [0, 255, 255, 0];
 
 const pyMod = (a: number, n: number) => ((a % n) + n) % n;
 
@@ -86,6 +103,25 @@ function grid(cv: Cv, out: any, x0 = 0, y0 = 0): void {
   }
 }
 
+/** Ring each pre-label on `out`, numbered from 1 in its line's order. */
+function ringPrelabels(
+  cv: Cv,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- an OpenCV.js Mat
+  out: any,
+  marks: readonly Prelabel[],
+  radius: number,
+  x0: number,
+  y0: number,
+) {
+  const cyan = new cv.Scalar(...CYAN);
+  marks.forEach((m, i) => {
+    const at = new cv.Point(Math.round(m.x - x0), Math.round(m.y - y0));
+    cv.circle(out, at, Math.round(radius), cyan, 1, cv.LINE_AA, 0);
+    const label = new cv.Point(at.x + Math.round(radius) + 2, at.y - Math.round(radius));
+    cv.putText(out, String(i + 1), label, cv.FONT_HERSHEY_SIMPLEX, 0.4, cyan, 1, cv.LINE_AA, false);
+  });
+}
+
 const src = process.env.CV_MARK_IN;
 const dst = process.env.CV_MARK_OUT;
 
@@ -101,6 +137,16 @@ test.skipIf(!src || !dst)('labelled grids for marking holes', async () => {
           .filter(Boolean),
       )
     : null;
+  const prelabelAt = process.env.CV_MARK_PRELABEL
+    ? parseThreshold(process.env.CV_MARK_PRELABEL, 'CV_MARK_PRELABEL')
+    : null;
+  const marksPath = process.env.CV_MARK_MARKS ? expandHome(process.env.CV_MARK_MARKS) : null;
+  if (prelabelAt !== null && !marksPath) {
+    throw new Error('CV_MARK_PRELABEL needs CV_MARK_MARKS, the marks file it appends to');
+  }
+  // a photo with a line, confirmed or pre-labelled, is never pre-labelled again
+  const marked =
+    marksPath && existsSync(marksPath) ? namesInMarks(readFileSync(marksPath, 'utf8')) : new Set();
   const inDir = expandHome(src!);
   const outDir = expandHome(dst!);
   mkdirSync(outDir, { recursive: true });
@@ -123,8 +169,18 @@ test.skipIf(!src || !dst)('labelled grids for marking holes', async () => {
         console.log(`${name} ${out}`);
         continue;
       }
+      let prelabels: Prelabel[] | null = null;
+      if (prelabelAt !== null && !marked.has(name)) {
+        const found = prelabelHoles(cv, photo, lock, prelabelAt);
+        if (typeof found === 'string') console.log(`${name} not pre-labelled: ${found}`);
+        else prelabels = found;
+      }
       try {
         grid(cv, out.rgb, out.x0, out.y0);
+        if (prelabels) {
+          const radius = (CALIBER_MM * out.pxPerMm) / 2;
+          ringPrelabels(cv, out.rgb, prelabels, radius, out.x0, out.y0);
+        }
         const { cols: width, rows: height } = out.rgb;
         writeFileSync(
           join(outDir, `${name}_grid.png`),
@@ -144,10 +200,25 @@ test.skipIf(!src || !dst)('labelled grids for marking holes', async () => {
             centerXPx: out.centerXPx,
             centerYPx: out.centerYPx,
             pxPerMm: out.pxPerMm,
+            ...(prelabels && { prelabel: { threshold: prelabelAt, marks: prelabels } }),
           }),
         );
+        if (prelabels) {
+          // the line goes in only once its grid exists to correct it on
+          const text = marksPath && existsSync(marksPath) ? readFileSync(marksPath, 'utf8') : '';
+          const sep = text && !text.endsWith('\n') ? '\n' : '';
+          const line = prelabelLine(
+            name,
+            prelabels.map((m) => [m.x, m.y]),
+          );
+          appendFileSync(marksPath!, `${sep}${line}\n`);
+          marked.add(name);
+        }
         written += 1;
-        console.log(`${name} ${width}x${height} ${out.note}`);
+        console.log(
+          `${name} ${width}x${height} ${out.note}` +
+            (prelabels ? `, ${prelabels.length} pre-labelled at ${prelabelAt}` : ''),
+        );
       } finally {
         out.rgb.delete();
       }

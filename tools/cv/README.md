@@ -132,6 +132,37 @@ CV_MARK_IN=<photos> CV_MARK_OUT=<grids> [CV_MARK_ONLY=names.txt] [CV_MARK_LOCK=c
     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 ```
 
+**Pre-labelling.** With `CV_MARK_PRELABEL=<threshold>` the tool also runs the
+app's hole proposals (`hole-proposals.ts`, shipped constants) at that
+threshold on the canvas the app would hand them, under the same lock, and
+starts every photo that has no line in `CV_MARK_MARKS` from them. Correct the
+pre-labels rather than marking from scratch.
+
+```bash
+CV_MARK_IN=<photos> CV_MARK_OUT=<grids> [CV_MARK_LOCK=closeup|milsnabb] \
+CV_MARK_PRELABEL=0.3 CV_MARK_MARKS=marks.txt \
+    pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
+```
+
+- Each pre-labelled photo gets a line appended to the marks file, starting
+  with `?`: `?<name> x,y x,y ...`. Every reader of a marks file
+  (`score-holes`, `score-stages`, `fit-hole-proposals`) skips a `?` line, so a
+  pre-label never counts as ground truth. Move, add and delete marks on the
+  line, then delete the `?`: that confirms it.
+- A photo with any line, confirmed or `?`, is never pre-labelled again, and
+  the tool only appends: existing lines are never rewritten.
+- The grid rings each pre-label in cyan at hole size, numbered in its line's
+  order; the sidecar keeps the threshold and each mark's probability.
+- Check positions, not only presence. On 11 hand-marked precision photos, 0.3
+  found 78% of the holes at 2.1 false positives a photo, and a found hole's
+  pre-label sat 1.2 mm from its mark at the median but more than 4 mm off on
+  one in ten (touching holes, holes on a white line).
+- The classifier was fitted on precision photos; on milsnabb it finds about a
+  third of the holes (2026-10-05), so expect to mark most of them there.
+- `marks.check.ts` pins the `?` rule; `prelabel.check.ts`, on synthetic
+  photos, that a pre-label lands on its hole of the grid under the disc and
+  milsnabb locks.
+
 A mark belongs to the canvas it was read off. The marks of 2026-09-16 were
 read off the Python spike's canvas, which on 28 of the 31 photos sits within
 0.4 px median of this one; on three photos with a clipped black zone the two

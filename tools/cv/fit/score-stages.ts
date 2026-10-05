@@ -22,6 +22,7 @@ import {
   tightStage,
 } from './hole-stages';
 import { expandHome } from './label-canvas';
+import { type Marks, parseMarks } from './marks.mts';
 
 const MATCH_DIAMETERS = 0.9;
 const BULLET_MM = 5.6;
@@ -52,20 +53,11 @@ export const HEADER = [
   ...FEATURES.map(([k]) => k),
 ];
 
-export type Marks = Map<string, [number, number][]>;
+export type { Marks };
 
-/** `<name> x,y x,y ...` per line, in canvas px. */
+/** A marks file's confirmed marks, in canvas px; pre-labels are skipped. */
 export function readMarks(path: string): Marks {
-  const marks: Marks = new Map();
-  for (const line of readFileSync(expandHome(path), 'utf8').split('\n')) {
-    const parts = line.trim().split(/\s+/);
-    if (!parts[0]) continue;
-    marks.set(
-      parts[0],
-      parts.slice(1).map((p) => p.split(',').map(Number) as [number, number]),
-    );
-  }
-  return marks;
+  return parseMarks(readFileSync(expandHome(path), 'utf8'));
 }
 
 /** The 48 px crop centred on (x, y), or null at the canvas edge. */
