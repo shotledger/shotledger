@@ -9,7 +9,7 @@ import { useBackupExportImport, type BackupExportOptions } from './use-backup-ex
 
 const mockDb = { tag: 'drizzle-db' };
 const mockRawDb = { tag: 'raw-db' };
-const mockClient: { db: object | null; rawDb: object | null } = { db: mockDb, rawDb: mockRawDb };
+const mockClient: { db: object; rawDb: object | null } = { db: mockDb, rawDb: mockRawDb };
 jest.mock('@/db/client', () => ({
   get db() {
     return mockClient.db;
@@ -103,16 +103,6 @@ describe('initial state', () => {
     expect(result.current.folderUri).toBe('content://folder/a');
     expect(mockGetSetting).toHaveBeenCalledWith(mockDb, 'lastBackupAt', null);
     expect(mockGetSetting).toHaveBeenCalledWith(mockDb, 'backupFolderUri', null);
-  });
-
-  it('starts empty without touching settings when there is no database', async () => {
-    mockClient.db = null;
-
-    const { result } = await renderBackupHook();
-
-    expect(result.current.lastBackupAt).toBeNull();
-    expect(result.current.folderUri).toBeNull();
-    expect(mockGetSetting).not.toHaveBeenCalled();
   });
 });
 

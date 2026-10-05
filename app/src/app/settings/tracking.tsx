@@ -26,7 +26,7 @@ export default function TrackingSettingsScreen() {
 
   function onToggle(row: (typeof ROWS)[number], next: boolean) {
     setTracked((current) => ({ ...current, [row.field]: next }));
-    if (db) setSetting<boolean>(db, row.key, next);
+    setSetting<boolean>(db, row.key, next);
   }
 
   return (

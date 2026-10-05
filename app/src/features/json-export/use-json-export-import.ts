@@ -45,21 +45,13 @@ export function useJsonExportImport(appVersion: string) {
   const [status, setStatus] = useState<JsonExportStatus>({ kind: 'idle' });
 
   async function exportJson() {
-    if (!db) {
-      setStatus({ kind: 'export-failed' });
-      return;
-    }
     const ok = await shareJson(buildExportJson(db, appVersion), exportFilename());
     setStatus(ok ? { kind: 'export-success' } : { kind: 'export-failed' });
   }
 
   /** Picks a file and runs the dry-run plan, without touching the DB.
-   * Returns `null` if the user canceled the picker or there's no DB. */
+   * Returns `null` if the user canceled the picker. */
   async function planImport(): Promise<ImportDryRunResult | null> {
-    if (!db) {
-      setStatus({ kind: 'import-failed' });
-      return null;
-    }
     const text = await pickJsonText();
     if (text === null) {
       setStatus({ kind: 'import-canceled' });
@@ -71,10 +63,6 @@ export function useJsonExportImport(appVersion: string) {
   /** Applies a dry run the caller already showed the user — its sessions and
    * the firearms/licenses that came with them. */
   function confirmImport(dryRun: ImportDryRunResult) {
-    if (!db) {
-      setStatus({ kind: 'import-failed' });
-      return;
-    }
     applyImport(db, dryRun.groups, dryRun.records);
     setStatus({ kind: 'import-success', sessionCount: dryRun.groups.length });
   }

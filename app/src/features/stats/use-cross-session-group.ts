@@ -52,7 +52,6 @@ export function useCrossSessionGroup(
   disciplineId: string | null,
 ): CrossSessionGroup | null {
   return useMemo(() => {
-    if (!db) return null;
     const scoped = listMarksBySession(db).filter((session) =>
       inScope(session, from, to, disciplineId),
     );

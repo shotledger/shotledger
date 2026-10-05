@@ -14,7 +14,6 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { apiBaseUrl } from '@/constants/backend';
-import { db } from '@/db/client';
 import { useAccount } from '@/features/account/use-account';
 import { useSync } from '@/features/sync/use-sync';
 
@@ -28,10 +27,6 @@ export default function AccountScreen() {
   const [mode, setMode] = useState<Mode>('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // expo-sqlite has no usable web build under this Expo SDK, so `db` is null
-  // there and there is nothing to sync (same posture as Webshooter).
-  const syncAvailable = db !== null;
 
   function onSubmit() {
     if (mode === 'signUp') void account.signUp(email, password);
@@ -101,14 +96,8 @@ export default function AccountScreen() {
             <PrimaryButton
               label={t('account.syncNow')}
               onPress={syncNow}
-              disabled={!syncAvailable}
               testID="account-sync-now"
             />
-            {!syncAvailable && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('account.syncUnavailableWeb')}
-              </ThemedText>
-            )}
           </Card>
 
           <Card>

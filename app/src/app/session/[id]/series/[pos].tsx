@@ -123,15 +123,10 @@ export default function SeriesEntryScreen() {
     setPhotoUri(uri);
     // An unsaved series has no row to patch — the picked photo rides along
     // with the row Save creates.
-    if (db && row) updateSeries(db, row.id, { photoUri: uri });
+    if (row) updateSeries(db, row.id, { photoUri: uri });
   }
 
   function onSave() {
-    if (!db) {
-      router.back();
-      return;
-    }
-
     const shots = enteredShots(state).map((shot) => ({
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen,

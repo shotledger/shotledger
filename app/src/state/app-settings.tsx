@@ -1,6 +1,5 @@
 // Settings state backed by the `settings` table (§3), covering M2's
-// language and theme preferences. `db` is null on web (see db/client.web.ts)
-// so there settings fall back to in-memory 'system' for the session.
+// language and theme preferences.
 //
 // AppSettingsProvider is only ever rendered inside MigrationGate (see
 // app/_layout.tsx), so by the time its body runs the `settings` table is
@@ -25,25 +24,25 @@ interface AppSettingsValue {
 const AppSettingsContext = createContext<AppSettingsValue | null>(null);
 
 function readInitialLanguage(): LanguageSetting {
-  const stored = db ? getSetting<LanguageSetting>(db, SETTINGS_KEYS.language, 'system') : 'system';
+  const stored = getSetting<LanguageSetting>(db, SETTINGS_KEYS.language, 'system');
   if (stored !== 'system') void i18n.changeLanguage(stored);
   return stored;
 }
 
 export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeSetting>(() =>
-    db ? getSetting<ThemeSetting>(db, SETTINGS_KEYS.theme, 'system') : 'system',
+    getSetting<ThemeSetting>(db, SETTINGS_KEYS.theme, 'system'),
   );
   const [language, setLanguageState] = useState<LanguageSetting>(readInitialLanguage);
 
   const setTheme = useCallback((value: ThemeSetting) => {
     setThemeState(value);
-    if (db) setSetting(db, SETTINGS_KEYS.theme, value);
+    setSetting(db, SETTINGS_KEYS.theme, value);
   }, []);
 
   const setLanguage = useCallback((value: LanguageSetting) => {
     setLanguageState(value);
-    if (db) setSetting(db, SETTINGS_KEYS.language, value);
+    setSetting(db, SETTINGS_KEYS.language, value);
     void i18n.changeLanguage(value === 'system' ? detectDeviceLanguage() : value);
   }, []);
 

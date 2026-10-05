@@ -65,7 +65,6 @@ export function useWebshooterReview(competitionId: number) {
 
   const load = useCallback(
     async (options: { forceRefresh?: boolean } = {}) => {
-      if (!db) return;
       setLoading(true);
       setError(null);
       try {
@@ -79,9 +78,7 @@ export function useWebshooterReview(competitionId: number) {
           date: competition.date,
           resultsType: competition.results_type,
         };
-        setCandidates(
-          results.map((row) => ({ row, candidate: classifyResultRow(db!, row, info) })),
-        );
+        setCandidates(results.map((row) => ({ row, candidate: classifyResultRow(db, row, info) })));
       } catch {
         setError('fetchFailed');
       } finally {
@@ -102,7 +99,6 @@ export function useWebshooterReview(competitionId: number) {
       item: ReviewCandidate,
       options: { linkToSessionId?: string; applySighterRoundsForFirearmId?: string | null } = {},
     ) => {
-      if (!db) return null;
       const { disciplineId, programId, faltResultMode } = item.candidate;
       if (!disciplineId) {
         // classifyResultRow already resolved this for every importable

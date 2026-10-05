@@ -46,7 +46,6 @@ export function useShotlogImport() {
   const [status, setStatus] = useState<ShotlogImportStatus>({ kind: 'idle' });
 
   function buildPlan(source: string, mapping: ShotlogTagMapping) {
-    if (!db) return;
     const built = buildShotlogImportPlan(source, {
       tagMapping: mapping,
       knownFirearms: listFirearms(db).map((firearm) => ({
@@ -60,10 +59,6 @@ export function useShotlogImport() {
   }
 
   async function planImport() {
-    if (!db) {
-      setStatus({ kind: 'unavailable' });
-      return;
-    }
     const picked = await pickCsvText();
     if (picked === null) {
       setStatus({ kind: 'canceled' });
@@ -122,7 +117,7 @@ export function useShotlogImport() {
   }
 
   function runImport() {
-    if (!db || plan === null) {
+    if (plan === null) {
       setStatus({ kind: 'unavailable' });
       return;
     }

@@ -37,7 +37,6 @@ export function SessionMenu({ sessionId, reportAvailable = false, onDeleted }: S
         text: t('common.deleteSession'),
         style: 'destructive',
         onPress: () => {
-          if (!db) return;
           deleteSessionAndSeries(db, sessionId);
           onDeleted?.();
           router.replace('/');

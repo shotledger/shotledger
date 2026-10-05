@@ -80,21 +80,7 @@ export interface WebshooterRecordsData {
   faltCoverage: PbCoverage;
 }
 
-const NO_COVERAGE: PbCoverage = { considered: 0, counted: 0, ungrouped: 0 };
-
 function computeRecords(): WebshooterRecordsData {
-  if (!db) {
-    return {
-      officialPbs: [],
-      freeformPbs: [],
-      yearOverYear: [],
-      officialCoverage: NO_COVERAGE,
-      freeformCoverage: NO_COVERAGE,
-      faltPbs: [],
-      faltCoverage: NO_COVERAGE,
-    };
-  }
-
   const competitionResults = listCompetitionResultsForStats(db);
   const freeformSessions = listFreeformSessionsForPb(db);
   const totalSessions = countAllSessions(db);

@@ -23,13 +23,12 @@ import { disciplineLabel } from '@/features/session/labels';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { loadSessionStats } from '@/features/session/use-session-stats';
 
-/** The report HTML for a session, or `null` with no DB or no such session. */
+/** The report HTML for a session, or `null` with no such session. */
 export function buildSessionReportHtmlFor(
   t: TFunction,
   language: string,
   sessionId: string,
 ): string | null {
-  if (!db) return null;
   const detail = loadSessionDetail(sessionId);
   const { session } = detail;
   if (!session) return null;
@@ -67,7 +66,7 @@ export function buildSessionReportHtmlFor(
   const series: SessionReportSeries[] = rows.map((row) => {
     const faceId = seriesTargetFace(session.disciplineId, session.programId, row.position);
     const target = (faceId && getTargetFace(faceId)) || null;
-    const marks: SessionReportMark[] = listMarksForSeries(db!, row.id).map((m) => ({
+    const marks: SessionReportMark[] = listMarksForSeries(db, row.id).map((m) => ({
       xMm: m.xMm,
       yMm: m.yMm,
       caliberMm: m.caliberMm,

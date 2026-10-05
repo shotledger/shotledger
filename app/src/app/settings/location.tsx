@@ -23,12 +23,12 @@ export default function LocationSettingsScreen() {
   const { t } = useTranslation();
 
   const [onlineLocationLookup, setOnlineLocationLookup] = useState(() =>
-    db ? getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false) : false,
+    getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false),
   );
 
   function onToggle(next: boolean) {
     setOnlineLocationLookup(next);
-    if (db) setSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, next);
+    setSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, next);
   }
 
   return (

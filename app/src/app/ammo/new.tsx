@@ -56,7 +56,7 @@ export default function NewAmmoLotScreen() {
   const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
   function onCreate() {
-    if (!db || !canCreate) return;
+    if (!canCreate) return;
     createAmmoLot(db, {
       label: label.trim(),
       caliber,

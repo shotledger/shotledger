@@ -17,17 +17,7 @@ import { Spacing } from '@/theme/tokens';
 
 import { formatFaltResult, formatStation } from './format-falt-result';
 
-const EMPTY_RESULT = {
-  stationCount: 0,
-  hits: 0,
-  figuresHit: 0,
-  ringedFigurePoints: null,
-  poangfaltPoints: 0,
-  pointsMax: null,
-};
-
 function load(sessionId: string) {
-  if (!db) return { stations: [], result: EMPTY_RESULT };
   return {
     stations: listStationsForSession(db, sessionId),
     result: faltSessionResult(db, sessionId),

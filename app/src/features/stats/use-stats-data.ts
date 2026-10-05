@@ -175,16 +175,7 @@ export interface AnalyticsFilterOptions {
   tags: TagOption[];
 }
 
-const NO_OPTIONS: AnalyticsFilterOptions = {
-  hasAnyData: false,
-  disciplineIds: [],
-  shotsPerSeriesValues: [],
-  tags: [],
-};
-
 function loadFilterOptions(): AnalyticsFilterOptions {
-  if (!db) return NO_OPTIONS;
-
   const all = listAllAnalyticsSeries(db);
   const lengths = new Set<number>();
   for (const series of all) {
@@ -265,41 +256,7 @@ export interface AnalyticsReportData {
   sighterRelation: SighterRelation[];
 }
 
-const EMPTY_TOTALS: AnalyticsTotals = {
-  sessionCount: 0,
-  scoredSeriesCount: 0,
-  volumeShotCount: 0,
-  scoredShotCount: 0,
-  sumTenths: 0,
-  meanShotTenths: null,
-  meanSeriesTenths: null,
-  innerTenCount: 0,
-  tenCount: 0,
-};
-
-const EMPTY_REPORT: AnalyticsReportData = {
-  hasAnyData: false,
-  hasMatches: false,
-  totals: EMPTY_TOTALS,
-  sdTenths: null,
-  goldSeriesCount: 0,
-  records: { bestSessionTotalTenths: null, mostInnerTens: null, mostTens: null },
-  bestSessionScore: null,
-  mostInnerTens: null,
-  mostTens: null,
-  points: [],
-  distribution: [],
-  sessionIds: [],
-  tagNames: [],
-  falt: null,
-  showRingCards: true,
-  typeComparison: [],
-  sighterRelation: [],
-};
-
 function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
-  if (!db) return EMPTY_REPORT;
-
   const all = listAllAnalyticsSeries(db);
   const faltAll = listFaltAnalyticsSessions(db);
   const faltMatched = filterFaltSessions(faltAll, toAnalyticsFilter(state));
@@ -375,7 +332,6 @@ export function useAnalyticsReport(state: AnalyticsFilterState): AnalyticsReport
 
 /** Comparison of the most recent 100 series vs the 100 before that, same discipline+class. */
 export function loadComparisonForSession(disciplineId: string, shooterClass: string | null) {
-  if (!db) return null;
   const all = listAllStatsSeries(db);
   return compareRecentSeries(all, { disciplineId, shooterClass });
 }

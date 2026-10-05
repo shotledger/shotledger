@@ -1,8 +1,7 @@
 // Platform wrapper for expo-secure-store (§0 rule 6). The Webshooter token
 // is a hard "never a DB row" rule (integration spec §1) — this is its only
 // storage. Web has no SecureStore-backed keychain; ShotLedger's web preview
-// path is unaffected since Webshooter connect is a native-only flow (same
-// posture as expo-sqlite's db/client.web.ts null-db fallback).
+// path is unaffected since Webshooter connect is a native-only flow.
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 

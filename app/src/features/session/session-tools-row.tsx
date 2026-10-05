@@ -36,7 +36,7 @@ export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowP
   const [sightSettings, setSightSettings] = useState<ReturnType<typeof listSightSettings>>([]);
 
   function loadSights() {
-    if (!db || !sightsFirearmId) return [];
+    if (!sightsFirearmId) return [];
     const rows = listSightSettings(db, sightsFirearmId);
     setSightSettings(rows);
     return rows;

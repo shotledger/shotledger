@@ -50,9 +50,8 @@ export default function StationEntryScreen() {
   const { id, pos } = useLocalSearchParams<{ id: string; pos: string; new?: string }>();
   const position = Number(pos);
 
-  const row = db
-    ? (listStationsForSession(db, id).find((station) => station.position === position) ?? null)
-    : null;
+  const row =
+    listStationsForSession(db, id).find((station) => station.position === position) ?? null;
 
   const [hits, setHits] = useState(row?.hits ?? 0);
   const [figuresHit, setFiguresHit] = useState(row?.figuresHit ?? 0);
@@ -94,10 +93,6 @@ export default function StationEntryScreen() {
     (points !== null && pointsMax !== null && points > pointsMax);
 
   function onSave() {
-    if (!db) {
-      router.back();
-      return;
-    }
     if (pointsInvalid) return;
 
     const hasPoints = points !== null;
@@ -126,7 +121,7 @@ export default function StationEntryScreen() {
   }
 
   function onDelete() {
-    if (!db || !row) {
+    if (!row) {
       router.back();
       return;
     }
@@ -136,7 +131,7 @@ export default function StationEntryScreen() {
         text: t('station.delete'),
         style: 'destructive',
         onPress: () => {
-          softDeleteStation(db!, row.id);
+          softDeleteStation(db, row.id);
           router.back();
         },
       },

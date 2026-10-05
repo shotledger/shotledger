@@ -41,7 +41,6 @@ function stamp(): string {
 }
 
 function filteredSessionExports(sessionIds: readonly string[]) {
-  if (!db) return [];
   const allowed = new Set(sessionIds);
   return buildSessionExports(db).filter((session) => allowed.has(session.id));
 }
@@ -50,11 +49,6 @@ export function useReportExport(t: TFunction, locale: string) {
   const [status, setStatus] = useState<'idle' | 'success' | 'failed'>('idle');
 
   async function exportAs(format: ExportFormat, input: ReportExportInput): Promise<void> {
-    if (!db) {
-      setStatus('failed');
-      return;
-    }
-
     let ok: boolean;
     if (format === 'pdf') {
       const html = buildShootingLogHtmlForFilters(t, locale, {
@@ -63,7 +57,7 @@ export function useReportExport(t: TFunction, locale: string) {
         firearmId: null,
         sessionIds: input.sessionIds,
       });
-      ok = html !== null && (await exportHtmlAsPdf(html));
+      ok = await exportHtmlAsPdf(html);
     } else {
       const sessions = filteredSessionExports(input.sessionIds);
       {

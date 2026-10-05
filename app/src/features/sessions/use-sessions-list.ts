@@ -29,11 +29,7 @@ export interface SessionsListData {
   firearms: FirearmOption[];
 }
 
-const EMPTY: SessionsListData = { rows: [], disciplineIds: [], tagNames: [], firearms: [] };
-
 function loadSessionsList(): SessionsListData {
-  if (!db) return EMPTY;
-
   const sessions = listSessions(db);
   const tagsBySession = listTagsBySession(db);
 
@@ -51,7 +47,7 @@ function loadSessionsList(): SessionsListData {
     // Same as Home: a fält session has no series, so its result comes from its stations.
     const falt =
       getDiscipline(session.disciplineId)?.scoring === 'hits'
-        ? faltSessionResult(db!, session.id)
+        ? faltSessionResult(db, session.id)
         : null;
     return buildSessionListRow(
       session,

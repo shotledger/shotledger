@@ -11,7 +11,7 @@ import {
 
 import { runPhotoQueue } from './photo-queue-runner';
 
-const mockClient: { db: object | null } = { db: { tag: 'drizzle-db' } };
+const mockClient: { db: object } = { db: { tag: 'drizzle-db' } };
 jest.mock('@/db/client', () => ({
   get db() {
     return mockClient.db;

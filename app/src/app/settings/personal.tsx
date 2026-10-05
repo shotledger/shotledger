@@ -36,28 +36,28 @@ export default function PersonalSettingsScreen() {
   const { t } = useTranslation();
 
   const [skillClass, setSkillClass] = useState<SkillClass | null>(() =>
-    db ? getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null) : null,
+    getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null),
   );
   const [womensClasses, setWomensClasses] = useState<boolean>(() =>
-    db ? getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false) : false,
+    getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false),
   );
   const [birthYear, setBirthYear] = useState<number | null>(() =>
-    db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
+    getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null),
   );
 
   function onChangeSkillClass(next: SkillClass) {
     setSkillClass(next);
-    if (db) setSetting<SkillClass>(db, SETTINGS_KEYS.skillClass, next);
+    setSetting<SkillClass>(db, SETTINGS_KEYS.skillClass, next);
   }
 
   function onChangeWomensClasses(next: boolean) {
     setWomensClasses(next);
-    if (db) setSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, next);
+    setSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, next);
   }
 
   function applyBirthYear(year: number) {
     setBirthYear(year);
-    if (db) setSetting<number | null>(db, SETTINGS_KEYS.birthYear, year);
+    setSetting<number | null>(db, SETTINGS_KEYS.birthYear, year);
   }
 
   function onChangeBirthYear(year: number) {

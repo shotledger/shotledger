@@ -125,7 +125,7 @@ export function useAccount(): AccountState {
     await clearSessionToken();
     // Cursors and queued changes belong to the account that produced them.
     // The logbook itself is untouched — the app stays fully usable offline.
-    if (db) resetSyncState(db);
+    resetSyncState(db);
     resetSyncController();
     setSignedIn(false);
     setEmail(null);

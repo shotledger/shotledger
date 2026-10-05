@@ -23,7 +23,7 @@ export interface OverallLicenseActivityData {
 function loadOverallLicenseActivity(
   profile: JurisdictionProfile | null,
 ): OverallLicenseActivityData {
-  if (!db || !profile) return { overall: null, statuses: [] };
+  if (!profile) return { overall: null, statuses: [] };
   const sessions = listComplianceSessions(db);
   // The groups are still passed — a profile may hold weapon-group rules — but
   // they no longer gate the result: a shooter-scope rule applies with an empty
@@ -58,7 +58,7 @@ export function loadFirearmLicenseActivityStatus(
   profile: JurisdictionProfile | null,
   firearmId: string,
 ): LicenseActivityStatus | null {
-  if (!db || !profile) return null;
+  if (!profile) return null;
   const groups = listFirearmGroups(db, firearmId).map((g) => g.groupId);
   const sessions = listComplianceSessions(db);
   const statuses = computeFirearmLicenseActivity(sessions, profile, groups);

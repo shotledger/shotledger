@@ -11,7 +11,6 @@ import { db } from '@/db/client';
 import { getSetting, setSetting } from '@/db/queries/settings';
 
 export function isProviderEnabled(id: string): boolean {
-  if (!db) return false;
   return getSetting<boolean>(db, providerEnabledSettingKey(id), false);
 }
 
@@ -21,7 +20,7 @@ export function useProviderEnabled(id: string): [boolean, (next: boolean) => voi
   const set = useCallback(
     (next: boolean) => {
       setEnabled(next);
-      if (db) setSetting<boolean>(db, providerEnabledSettingKey(id), next);
+      setSetting<boolean>(db, providerEnabledSettingKey(id), next);
     },
     [id],
   );

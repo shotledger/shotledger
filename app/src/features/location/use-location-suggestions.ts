@@ -25,7 +25,7 @@ export interface LocationSuggestions {
 
 export function useLocationSuggestions(query: string, onlineEnabled: boolean, language?: string) {
   // Read once per screen: the set cannot change while the form is open.
-  const usage = useMemo(() => (db ? listLocationUsage(db) : []), []);
+  const usage = useMemo(() => listLocationUsage(db), []);
   // Keyed by the query it answers, so a reply for text the user has already
   // moved on from is simply not rendered — no clearing setState in the effect.
   const [answer, setAnswer] = useState<{ query: string; results: string[] }>({
