@@ -139,6 +139,7 @@ describe('faltSessionResult (spec P3)', () => {
       ringedFigurePoints: 8,
       poangfaltPoints: 15,
       pointsMax: 10,
+      figureCount: null,
     });
   });
 
@@ -150,7 +151,32 @@ describe('faltSessionResult (spec P3)', () => {
       ringedFigurePoints: null,
       poangfaltPoints: 0,
       pointsMax: null,
+      figureCount: null,
     });
+  });
+
+  it('sums the figure count when every scoring station has one (#607)', () => {
+    addStation(db, { sessionId, position: 1, hits: 6, figuresHit: 3, figureCount: 4 });
+    addStation(db, { sessionId, position: 2, hits: 5, figuresHit: 5, figureCount: 6 });
+    // Excluded stations neither add to the count nor need one.
+    addStation(db, { sessionId, position: 3, hits: 4, figuresHit: 2, isScratched: true });
+    addStation(db, { sessionId, position: 4, hits: 6, figuresHit: 6, isShootOff: true });
+
+    expect(faltSessionResult(db, sessionId).figureCount).toBe(10);
+  });
+
+  it('has no figure count when some scoring station lacks one (#607)', () => {
+    addStation(db, { sessionId, position: 1, hits: 6, figuresHit: 3, figureCount: 4 });
+    addStation(db, { sessionId, position: 2, hits: 5, figuresHit: 5 });
+
+    expect(faltSessionResult(db, sessionId).figureCount).toBeNull();
+  });
+
+  it('has no figure count when no station has one (#607)', () => {
+    addStation(db, { sessionId, position: 1, hits: 6, figuresHit: 3 });
+    addStation(db, { sessionId, position: 2, hits: 5, figuresHit: 5 });
+
+    expect(faltSessionResult(db, sessionId).figureCount).toBeNull();
   });
 });
 

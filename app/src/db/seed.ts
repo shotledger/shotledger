@@ -485,7 +485,8 @@ function seedHelmatchSessions(
  * Four fält rounds in vapengrupp A, so the station list, the fält statistics
  * and the fält records have something to show: an ordinary kretsfält, a
  * ten-station championship with two stations scratched (an eight-station
- * result), a poängfält round, and a round with a särskjutning station.
+ * result), a poängfält round, and a round with a särskjutning station and a
+ * figure count on every station.
  * Fixed numbers rather than the PRNG — each one is there to show a case.
  */
 function seedFaltSessions(db: Database, firearmId: string, tagId: string) {
@@ -548,15 +549,15 @@ function seedFaltSessions(db: Database, firearmId: string, tagId: string) {
       daysAgo: 10,
       mode: 'falt',
       stations: [
-        [6, 4],
-        [5, 4],
-        [6, 5],
-        [5, 3],
-        [6, 4],
-        [4, 4],
-        [6, 5],
-        [5, 5],
-        [4, 3, { isShootOff: true }],
+        [6, 4, { figureCount: 5 }],
+        [5, 4, { figureCount: 4 }],
+        [6, 5, { figureCount: 6 }],
+        [5, 3, { figureCount: 4 }],
+        [6, 4, { figureCount: 4 }],
+        [4, 4, { figureCount: 5 }],
+        [6, 5, { figureCount: 5 }],
+        [5, 5, { figureCount: 6 }],
+        [4, 3, { isShootOff: true, figureCount: 4 }],
       ],
     },
   ];

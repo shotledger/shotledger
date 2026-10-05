@@ -187,6 +187,8 @@ export interface FaltSessionResult {
   poangfaltPoints: number;
   /** What those poängmål could have given, for an "X of Y" reading; null when none. */
   pointsMax: number | null;
+  /** Figures over the scoring stations; null unless every one of them recorded a count (#607). */
+  figureCount: number | null;
 }
 
 /** A session's fält result, over the stations that actually score. */
@@ -211,9 +213,16 @@ export function faltSessionResult(db: Database, sessionId: string): FaltSessionR
     if (row.pointsMax != null) pointsMax = (pointsMax ?? 0) + row.pointsMax;
   });
 
+  const scoringRows = rows.filter((row) => row.isScratched !== 1 && row.isShootOff !== 1);
+  const figureCount =
+    scoringRows.length > 0 && scoringRows.every((row) => row.figureCount != null)
+      ? scoringRows.reduce((sum, row) => sum + row.figureCount!, 0)
+      : null;
+
   return {
     ...result,
     poangfaltPoints: poangfaltPoints(result),
     pointsMax,
+    figureCount,
   };
 }

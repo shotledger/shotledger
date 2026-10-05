@@ -754,6 +754,7 @@
     "addStation": "Lägg till station",
     "stations": "Stationer",
     "faltTotal": "{{hits}} träff i {{figures}} figurer",
+    "faltTotalOf": "{{hits}} träff i {{figures}} av {{figureCount}} figurer",
     "poangfaltTotal": "{{points}} poäng",
     "seriesLength": "Skott per serie",
     "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
