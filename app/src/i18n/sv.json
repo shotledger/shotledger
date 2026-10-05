@@ -786,7 +786,14 @@
     "flagFillToSeriesTitle": "Fyll förslag till seriens längd",
     "flagFillToSeriesSubtitle": "När färre hål föreslås än serien har skott läggs de näst bästa kandidaterna till, upp till det antalet.",
     "flagFilledStyleTitle": "Svagare ifyllda förslag",
-    "flagFilledStyleSubtitle": "Rita de ifyllda förslagen svagare än de säkra. Kräver fyllningsvalet."
+    "flagFilledStyleSubtitle": "Rita de ifyllda förslagen svagare än de säkra. Kräver fyllningsvalet.",
+    "assistLogTitle": "Assistentlogg",
+    "assistLogEmpty": "Inget än. Varje serie som sparas från Poängsätt från foto lägger till en rad.",
+    "assistLogNoFlags": "Inga experimentflaggor",
+    "assistLogRow_one": "{{count}} serie · föreslagna {{suggested}}: behållna {{kept}}, flyttade {{nudged}}, borttagna {{deleted}} · tillagda {{added}} · precision {{precision}}, träff {{recall}}",
+    "assistLogRow_other": "{{count}} serier · föreslagna {{suggested}}: behållna {{kept}}, flyttade {{nudged}}, borttagna {{deleted}} · tillagda {{added}} · precision {{precision}}, träff {{recall}}",
+    "assistLogExport": "Exportera",
+    "assistLogClear": "Rensa"
   },
   "competitionLevel": {
     "forening": "Föreningstävling",

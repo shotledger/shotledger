@@ -31,6 +31,8 @@ import { addSeries, updateSeries } from '@/db/queries/series';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { saveSeriesMarks } from '@/db/queries/shot-marks';
 import { recordTrainingSample } from '@/db/queries/training-samples';
+import { appendAssistEntry } from '@/db/queries/assist-log';
+import { type PlacedSuggestion, countAssist } from '@/features/photo-scoring/assist-log';
 import { CALIBER_KEYS, caliberMmFor, resolveCaliber } from '@/features/photo-scoring/caliber';
 import {
   type CapturedPhoto,
@@ -59,7 +61,7 @@ import {
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
-import { isFlagEnabled } from '@/constants/flags';
+import { DEV_TOOLS_ENABLED, FLAGS, type FlagName, isFlagEnabled } from '@/constants/flags';
 import {
   type HoleCandidate,
   holeCandidates,
@@ -128,6 +130,9 @@ function timeStage(stage: string): () => void {
     }
   };
 }
+
+/** Milliseconds for the assist log, read where the handlers need them. */
+const clock = () => performance.now();
 
 type RejectReason = ValidityReason | PrecisionGuardRefusal;
 
@@ -208,6 +213,14 @@ export default function ScanScreen() {
   // Experiment flag, read once per visit so the marks do not change look midway.
   const [fadeFilled] = useState(() => isFlagEnabled('suggestFilledStyle'));
   const [menuOpen, setMenuOpen] = useState(false);
+  // The assist log (dev builds): each suggestion as it first landed, and when
+  // the lock and the detector started and ended.
+  const placedSuggestions = useRef(new Map<string, PlacedSuggestion>());
+  const assistTimes = useRef<{
+    analyze?: number;
+    marking?: number;
+    suggestMs?: number;
+  }>({});
   const [caliberOpen, setCaliberOpen] = useState(false);
   // "Precision or milsnabb face?", open while an analysis waits on the answer.
   const faceAnswered = useRef<((answer: FaceAnswer) => void) | null>(null);
@@ -232,6 +245,18 @@ export default function ScanScreen() {
   const selectedScore = selectedIndex >= 0 ? scores[selectedIndex] : undefined;
   const selectedMark = selectedIndex >= 0 ? markState.marks[selectedIndex] : undefined;
 
+  useEffect(() => {
+    for (const m of markState.marks) {
+      if (m.suggested && !placedSuggestions.current.has(m.id)) {
+        placedSuggestions.current.set(m.id, { id: m.id, xMm: m.xMm, yMm: m.yMm, filled: m.filled });
+      }
+    }
+  }, [markState.marks]);
+
+  useEffect(() => {
+    if (phase === 'marking') assistTimes.current.marking = clock();
+  }, [phase]);
+
   async function analyze(captured: CapturedPhoto) {
     if (!target) return;
     const run = (analyzeRun.current += 1);
@@ -249,6 +274,7 @@ export default function ScanScreen() {
       return settled();
     };
     const total = timeStage('total');
+    assistTimes.current = { analyze: clock() };
     setStage('target');
     setPhase('analyzing');
     try {
@@ -494,6 +520,7 @@ export default function ScanScreen() {
   ) {
     const run = (proposalRun.current += 1);
     setSuggested('pending');
+    const started = clock();
     const timed = timeStage('hole suggestions');
     void proposeHolesAsync(rectified, proposalFaceOf(face, markState.caliberMm), {
       ops: nativeMapOps ?? undefined,
@@ -504,6 +531,7 @@ export default function ScanScreen() {
       .then((proposals) => {
         timed();
         if (proposalRun.current !== run) return;
+        assistTimes.current.suggestMs = clock() - started;
         // Far more holes than the series holds means the detector does not
         // understand this photo (measured on real targets it proposes about
         // one false hole in three photos). Suggesting nothing beats covering
@@ -611,6 +639,7 @@ export default function ScanScreen() {
     setCornerRing(null);
     proposalRun.current += 1;
     setSuggested(null);
+    placedSuggestions.current.clear();
     dispatch({ type: 'clear' });
     setNotice(null);
     setPhase('capture');
@@ -648,6 +677,7 @@ export default function ScanScreen() {
           }).id
         : null);
     if (db && seriesId) {
+      logAssist();
       saveSeriesMarks(db, seriesId, marksToShotMarkInputs(markState.marks, scores));
       // Kept with the photo so the series can draw its marks over it later.
       if (transform && geometryImage) {
@@ -679,6 +709,45 @@ export default function ScanScreen() {
       }
     }
     if (leave) router.back();
+  }
+
+  function logAssist() {
+    if (!DEV_TOOLS_ENABLED || !transform) return;
+    const placed = [...placedSuggestions.current.values()];
+    const { analyze, marking, suggestMs } = assistTimes.current;
+    const now = clock();
+    appendAssistEntry(db, {
+      at: new Date().toISOString(),
+      faceId,
+      lock: transform.source,
+      flags: Object.fromEntries(
+        (Object.keys(FLAGS) as FlagName[])
+          .filter((name) => FLAGS[name].overridable)
+          .map((name) => [name, isFlagEnabled(name)]),
+      ),
+      seriesLength: markState.maxMarks,
+      caliberMm: markState.caliberMm,
+      outcome:
+        suggested === null
+          ? 'none'
+          : suggested === 'pending' || suggested === 'unsure'
+            ? suggested
+            : 'ran',
+      timingsMs: {
+        lock: analyze !== undefined && marking !== undefined ? Math.round(marking - analyze) : null,
+        suggest: suggestMs !== undefined ? Math.round(suggestMs) : null,
+        marking: marking !== undefined ? Math.round(now - marking) : null,
+      },
+      counts: countAssist(placed, markState.marks),
+      suggestions: placed.map(({ xMm, yMm, filled }) => ({ xMm, yMm, filled })),
+      marks: markState.marks.map(({ xMm, yMm, suggested: s, filled, moved }) => ({
+        xMm,
+        yMm,
+        suggested: s,
+        filled,
+        moved,
+      })),
+    });
   }
 
   function onSaveAndScanNext(next: ScanNextTarget) {

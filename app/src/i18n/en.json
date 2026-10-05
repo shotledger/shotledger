@@ -786,7 +786,14 @@
     "flagFillToSeriesTitle": "Fill Suggestions To Series Length",
     "flagFillToSeriesSubtitle": "When fewer holes are suggested than the series has shots, add the next-best candidates up to that number.",
     "flagFilledStyleTitle": "Fainter Filled-In Suggestions",
-    "flagFilledStyleSubtitle": "Draw the filled-in suggestions fainter than the confident ones. Needs the fill option."
+    "flagFilledStyleSubtitle": "Draw the filled-in suggestions fainter than the confident ones. Needs the fill option.",
+    "assistLogTitle": "Assist Log",
+    "assistLogEmpty": "Nothing yet. Every series saved from Score from Photo adds an entry.",
+    "assistLogNoFlags": "No Experiment Flags",
+    "assistLogRow_one": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
+    "assistLogRow_other": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
+    "assistLogExport": "Export",
+    "assistLogClear": "Clear"
   },
   "competitionLevel": {
     "forening": "Club Competition",
