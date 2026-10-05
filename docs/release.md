@@ -76,31 +76,55 @@ deploy` is forbidden to agents; every command below is the maintainer's.
 
 ## (b) Repeatable steps, every release
 
-1. **Version.** It comes from the release tag. `app/package.json` stays
-   `0.0.0` in the repo and `app/app.config.ts` hands it to Expo. Until the
-   release workflow exists ([#623](https://github.com/jimisola/shotledger/issues/623)),
-   set `app/package.json`'s `version` on the build machine before building and
-   do not commit it. `eas.json` has `"appVersionSource": "local"`, so EAS reads
-   the Android `versionCode` from local state and increments it automatically
-   on each build — no manual versionCode bump needed.
-2. **Changelog.** Add an entry (VERIFY: no `CHANGELOG.md` exists yet in
-   this repo — start one, or use the Play Console release notes field
-   directly, whichever the maintainer prefers).
-3. **Build:**
-   ```bash
-   cd app && eas build --platform android --profile production
-   ```
-4. **Upload to Play Console closed testing:**
-   ```bash
-   cd app && eas submit --platform android --profile production
-   ```
-   (or upload the `.aab` manually in Play Console's closed-testing
-   track — `eas submit` needs a Google Service Account key configured
-   first; VERIFY that key's setup, it's part of (a) once decided).
-5. **Verify in Play Console** that the build is processed and testers
+**The tag is the version.** Tags are bare three-part semver (`0.1.0`, never
+`v0.1.0`). `app/package.json` holds a `0.0.0` placeholder, which Expo uses
+because `app.json` sets no `version`; the release workflow stamps the real
+version into it, uncommitted, right before `eas build`. The Android
+`versionCode` (and later the iOS `buildNumber`) belong to EAS:
+`"appVersionSource": "remote"` with `autoIncrement` on the `production`
+profile. The workflow is modelled on revolve_now's and calls nothing outside
+this repository: git-cliff from `.github/actions/setup-git-cliff` (pinned and
+checksum-verified), `.github/actions/check-version`, and `.github/cliff.toml`.
+
+One-time, before the first release:
+
+- [ ] Create the `release` environment with a required reviewer (Settings →
+      Environments). GitHub auto-creates it unprotected on first use, so
+      without this the approval gate does nothing.
+- [ ] The `EXPO_TOKEN` repository secret (see the iOS section).
+- [ ] Run one production build interactively,
+      `cd app && eas build --platform android --profile production`, so EAS
+      creates the upload keystore; the workflow's non-interactive build
+      cannot.
+
+Every release:
+
+1. **Preview it.** Actions → _Release_ → Run workflow from `main`, with
+   `dry-run` on (the default). It resolves the version from the
+   Conventional Commits since the last tag (`feat:` bumps the minor, `fix:`
+   the patch, a breaking change the minor while below 1.0.0) and writes the
+   release notes to the job summary. Nothing is built or tagged. Commits
+   missing from the notes were dropped as unconventional.
+2. **Run it for real** with `dry-run` off. Leave `version` empty to take the
+   auto-detected one; a different version needs `force`, and so does the
+   **first** release if it is not `0.1.0`.
+   - _prepare_ refuses a ref not on `main` (or `hotfix/*`, `release/*`), a
+     commit already tagged, and a tag that exists.
+   - _checks_ runs `ci.yml` on the same commit.
+   - _build_ waits for approval, stamps the version, builds the Play bundle
+     on EAS (`--wait`; the free tier's queue can be long), and refuses to
+     continue unless EAS reports the stamped version and the same commit.
+   - _publish_ pushes the tag and creates a **prerelease** with
+     `shotledger-<version>.aab` and `SHA256SUMS.txt`; _verify_ downloads
+     them back and checks the checksum; _promote_ marks it latest.
+3. **Upload to Play Console closed testing:** the `.aab` from the release,
+   or `cd app && eas submit --platform android --profile production`
+   (`eas submit` needs a Google Service Account key configured first;
+   VERIFY that key's setup, it's part of (a) once decided).
+4. **Verify in Play Console** that the build is processed and testers
    can install it (internal test link, or the closed-testing opt-in
    link).
-6. **Promote to production** when ready: in Play Console, promote the
+5. **Promote to production** when ready: in Play Console, promote the
    tested release from the closed-testing track to production. VERIFY
    exact click-path (UI changes over time).
 
