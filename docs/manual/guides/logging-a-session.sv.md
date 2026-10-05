@@ -69,15 +69,19 @@ körs på engelska, eftersom det är så regelboken kallar grenen — så ställ
 passet en extra fråga:
 om tävlingen skjuts som **fält** eller **poängfält**.
 
-Varje station är sex skott, och du noterar två tal — träffar, och hur många
-figurer träffarna hamnade i. Fem träff i tre figurer skrivs **5/3**: du
-missade ett skott, eller satte två i samma figur. Passets resultat visar
+Varje station är sex skott. På en skärm trycker du **Träff** (0–6),
+**Träffade figurer** och **Figurer**, hur många figurer stationen hade. Fem
+träff i tre av fyra figurer skrivs **5/3 av 4**: du missade ett skott eller
+satte två i samma figur, och en figur blev orörd. Låt Figurer stå på **–** om du
+inte vet; stationen skrivs då **5/3**. Passets resultat visar
 "26 träff i 22 figurer", eller en summa i poängfält, där varje träff ger en
 poäng och varje träffad figur ytterligare en. Hem och passlistan visar
 resultatet på samma sätt.
 
-Där arrangören satt ut en **ringad figur** slår du på _Ringad figur_ och
-noterar poängen du fick och vad figuren var värd. Fältskjutning har inget
+Där arrangören satt ut en **ringad figur** skriver du poängen du fick under
+**Poäng**, och vad figuren var värd efter "av" om du vet det. En station med
+poäng skrivs **6/3 av 4, 12p av 20p**. Lämna Poäng tomt på en station utan
+ringad figur. Fältskjutning har inget
 fast ringsystem — arrangören väljer — så appen frågar i stället för att anta.
 Poängen läggs aldrig till resultatet; de skiljer bara två skyttar som annars
 är lika.

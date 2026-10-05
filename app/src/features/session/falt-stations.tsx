@@ -15,7 +15,7 @@ import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
 import { Spacing } from '@/theme/tokens';
 
-import { formatFaltResult } from './format-falt-result';
+import { formatFaltResult, formatStation } from './format-falt-result';
 
 const EMPTY_RESULT = {
   stationCount: 0,
@@ -127,7 +127,7 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
                     style={excluded ? styles.excluded : undefined}
                     testID={`station-score-${station.position}`}
                   >
-                    {station.hits}/{station.figuresHit}
+                    {formatStation(t, station)}
                   </ThemedText>
                 </View>
               </Pressable>

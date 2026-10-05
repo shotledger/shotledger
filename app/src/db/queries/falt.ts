@@ -19,6 +19,8 @@ export interface AddStationInput {
   position: number;
   hits: number;
   figuresHit: number;
+  /** Figures set out at the station, 1-6; null when not recorded. */
+  figureCount?: number | null;
   /** Poängmål points scored; null = the station carried no ringed figure. */
   points?: number | null;
   /** What that poängmål could give — the arrangör picks the scheme (ruling 2026-09-22). */
@@ -41,6 +43,7 @@ function assertEnterable(input: {
   position: number;
   hits: number;
   figuresHit: number;
+  figureCount?: number | null;
   points?: number | null;
   pointsMax?: number | null;
   isScratched?: boolean;
@@ -56,6 +59,18 @@ function assertEnterable(input: {
   }
   if (hits > 0 && figuresHit === 0) {
     throw new RangeError(`${where}: ${hits} hits cannot be spread over 0 figures`);
+  }
+  const { figureCount } = input;
+  if (
+    figureCount != null &&
+    (!Number.isInteger(figureCount) || figureCount < 1 || figureCount > SHOTS_PER_STATION)
+  ) {
+    throw new RangeError(
+      `${where}: figureCount must be an integer 1-${SHOTS_PER_STATION} or null, got ${figureCount}`,
+    );
+  }
+  if (figureCount != null && figuresHit > figureCount) {
+    throw new RangeError(`${where}: ${figuresHit} figures hit of ${figureCount}`);
   }
   const { points, pointsMax } = input;
   if (points != null && (!Number.isInteger(points) || points < 0)) {
@@ -79,6 +94,7 @@ export function addStation(db: Database, input: AddStationInput): StationRow {
     position: input.position,
     hits: input.hits,
     figuresHit: input.figuresHit,
+    figureCount: input.figureCount ?? null,
     points: input.points ?? null,
     pointsMax: input.pointsMax ?? null,
     isScratched: input.isScratched ? 1 : 0,
@@ -121,6 +137,7 @@ export function updateStation(
     position: current.position,
     hits: patch.hits ?? current.hits,
     figuresHit: patch.figuresHit ?? current.figuresHit,
+    figureCount: patch.figureCount === undefined ? current.figureCount : patch.figureCount,
     points: patch.points === undefined ? current.points : patch.points,
     pointsMax: patch.pointsMax === undefined ? current.pointsMax : patch.pointsMax,
     isScratched: patch.isScratched ?? current.isScratched === 1,
@@ -131,6 +148,7 @@ export function updateStation(
     .set({
       hits: merged.hits,
       figuresHit: merged.figuresHit,
+      figureCount: merged.figureCount,
       points: merged.points,
       pointsMax: merged.pointsMax,
       isScratched: merged.isScratched ? 1 : 0,

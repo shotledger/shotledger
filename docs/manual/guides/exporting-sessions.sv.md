@@ -177,7 +177,7 @@ Ett pass, en räknande serie om tre skott:
 | `seriesLength`   | Skott per serie som valdes när passet skapades. `null` när hela matchen anger den, och på ett pass som inte skjuts i ringade serier.                                                                                                                            |
 | `firearmId`      | Vapnet i filens `firearms`-lista som passet sköts med, eller `null`.                                                                                                                                                                                            |
 | `firearm`        | Samma vapens fabrikat och modell som en enda sträng. Behålls bredvid id:t så att en fil vars `firearms`-lista inte rymmer det ändå säger vad som sköts med.                                                                                                     |
-| `stations`       | Ett fältskjutningspass stationer: träffar, träffade figurer, eventuella poängmålspoäng och deras max, och om stationen struks eller sköts som särskjutning. Tom på alla andra pass.                                                                             |
+| `stations`       | Ett fältskjutningspass stationer: träffar, träffade figurer, stationens antal figurer, eventuella poängmålspoäng och deras max, och om stationen struks eller sköts som särskjutning. Tom på alla andra pass.                                                   |
 | `faltResultMode` | `falt` eller `poangfalt` — hur fältomgången redovisas. `null` på alla andra pass.                                                                                                                                                                               |
 
 ### Vapen och licenser

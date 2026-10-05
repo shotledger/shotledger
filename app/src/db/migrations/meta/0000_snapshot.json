@@ -237,6 +237,13 @@
           "autoincrement": false,
           "default": 0
         },
+        "figure_count": {
+          "name": "figure_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "points": {
           "name": "points",
           "type": "integer",

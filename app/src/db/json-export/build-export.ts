@@ -106,6 +106,7 @@ export function buildSessionExports(db: Database): SessionExport[] {
             position: station.position,
             hits: station.hits,
             figuresHit: station.figuresHit,
+            figureCount: station.figureCount,
             points: station.points,
             pointsMax: station.pointsMax,
             isScratched: station.isScratched === 1,

@@ -1279,19 +1279,21 @@
     "title": "Station {{position}}",
     "hits": "Träff",
     "figuresHit": "Träffade figurer",
+    "figureCount": "Figurer",
     "points": "Poäng",
     "pointsMax": "Maxpoäng",
-    "pointsTarget": "Ringad figur",
-    "pointsHelp": "Bara där arrangören satt ut en ringad figur. Ringarna skiljer lika resultat, de är aldrig resultatet.",
+    "of": "av",
+    "pointsInvalid": "Poängen kan inte vara fler än maxpoängen.",
     "scratched": "Struken",
-    "scratchedHelp": "Ligger kvar i ronden och visas, men räknas inte — en station som annullerats för regelbrott.",
     "shootOff": "Särskjutning",
-    "shootOffHelp": "Skjuts för att skilja lika resultat. Den avgör placering, aldrig det noterade resultatet.",
     "delete": "Ta bort station",
     "deleteConfirm": "Ta bort den här stationen?",
     "noStations": "Inga stationer än",
     "noStationsBody": "Lägg till din första station och notera träffarna.",
-    "save": "Spara station"
+    "save": "Spara station",
+    "rowFiguresOf": "{{hits}}/{{figuresHit}} av {{figureCount}}",
+    "rowPoints": "{{points}}p",
+    "rowPointsOf": "{{points}}p av {{max}}p"
   },
   "stage": {
     "spsf-helmatch": {

@@ -1,7 +1,7 @@
-// Fält station entry (#315). The ring keypad has nothing to bind to here:
-// holes are counted per figure after the series, so a station is two numbers
-// the shooter reads off the marker's call — "five in three" — plus the
-// poängmål where the arrangör designated one.
+// Fält station entry (#315, reworked in #567). A station answers four
+// questions in one screen: did every shot hit, did I hit every figure, did I
+// score points, and what could I have scored. Each count is one row of
+// equal-width segments, so 0-6 never wraps.
 //
 // A station reached via "Add Station" (`?new=1`) does not exist in the
 // database yet. It is created by Save, and only when something was entered —
@@ -13,9 +13,10 @@ import { Alert, StyleSheet, Switch, View } from 'react-native';
 import { SHOTS_PER_STATION } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
-import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import {
@@ -26,12 +27,21 @@ import {
 } from '@/db/queries/falt';
 import { Spacing } from '@/theme/tokens';
 
-/** 0…6 as picker options — a station is six shots, so there is no seventh hit. */
-function countOptions(max: number, min = 0) {
+const NOT_RECORDED = 'none';
+
+/** min…max as segments. */
+function countSegments(max: number, min = 0) {
   return Array.from({ length: Math.max(0, max - min + 1) }, (_, index) => {
     const value = String(min + index);
-    return { value, label: value, testID: `count-${min + index}` };
+    return { value, label: value };
   });
+}
+
+/** A whole number from a text field, or null when it is empty or not one. */
+function parseCount(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return Number(trimmed);
 }
 
 export default function StationEntryScreen() {
@@ -46,31 +56,55 @@ export default function StationEntryScreen() {
 
   const [hits, setHits] = useState(row?.hits ?? 0);
   const [figuresHit, setFiguresHit] = useState(row?.figuresHit ?? 0);
-  const [hasPoints, setHasPoints] = useState(row?.points != null);
-  const [points, setPoints] = useState(row?.points ?? 0);
-  const [pointsMax, setPointsMax] = useState(row?.pointsMax ?? 0);
+  const [figureCount, setFigureCount] = useState<number | null>(row?.figureCount ?? null);
+  const [pointsText, setPointsText] = useState(row?.points == null ? '' : String(row.points));
+  const [pointsMaxText, setPointsMaxText] = useState(
+    row?.pointsMax == null ? '' : String(row.pointsMax),
+  );
   const [isScratched, setIsScratched] = useState(row?.isScratched === 1);
   const [isShootOff, setIsShootOff] = useState(row?.isShootOff === 1);
 
-  // The constraint is expressed by what the control offers, not by validating
-  // after the fact: a figure cannot be hit more times than shots hit it, and
-  // hits have to land somewhere (spec U3).
+  // The constraints are expressed by what the controls offer, not by
+  // validating after the fact: a figure cannot be hit more times than shots
+  // hit it, hits have to land somewhere, and no more figures can be hit than
+  // the station set out.
+  const figuresHitMax = Math.min(hits, figureCount ?? SHOTS_PER_STATION);
+  function clampFiguresHit(nextHits: number, nextCount: number | null) {
+    const max = Math.min(nextHits, nextCount ?? SHOTS_PER_STATION);
+    let next = Math.min(figuresHit, max);
+    if (nextHits > 0 && next === 0) next = Math.min(1, max);
+    if (nextHits === 0) next = 0;
+    setFiguresHit(next);
+  }
   function onHitsChange(next: number) {
     setHits(next);
-    if (figuresHit > next) setFiguresHit(next);
-    if (next > 0 && figuresHit === 0) setFiguresHit(1);
-    if (next === 0) setFiguresHit(0);
+    clampFiguresHit(next, figureCount);
   }
+  function onFigureCountChange(next: number | null) {
+    setFigureCount(next);
+    clampFiguresHit(hits, next);
+  }
+
+  const points = parseCount(pointsText);
+  const pointsMax = parseCount(pointsMaxText);
+  // Points without a max are fine (the max is optional); more than the max is not.
+  const pointsInvalid =
+    (pointsText.trim() !== '' && points === null) ||
+    (pointsMaxText.trim() !== '' && pointsMax === null) ||
+    (points !== null && pointsMax !== null && points > pointsMax);
 
   function onSave() {
     if (!db) {
       router.back();
       return;
     }
+    if (pointsInvalid) return;
 
+    const hasPoints = points !== null;
     const patch = {
       hits,
       figuresHit,
+      figureCount,
       points: hasPoints ? points : null,
       pointsMax: hasPoints ? pointsMax : null,
       isScratched,
@@ -82,7 +116,7 @@ export default function StationEntryScreen() {
     } else {
       // Nothing entered, nothing to keep — saving a blank station would
       // recreate the empty row this flow exists to avoid.
-      if (hits === 0 && !hasPoints && !isScratched && !isShootOff) {
+      if (hits === 0 && figureCount === null && !hasPoints && !isScratched && !isShootOff) {
         router.back();
         return;
       }
@@ -114,47 +148,63 @@ export default function StationEntryScreen() {
       <ThemedText type="subtitle">{t('station.title', { position })}</ThemedText>
 
       <Card>
-        <OptionPicker
-          label={t('station.hits')}
-          options={countOptions(SHOTS_PER_STATION)}
+        <ThemedText type="smallBold">{t('station.hits')}</ThemedText>
+        <SegmentedControl
+          options={countSegments(SHOTS_PER_STATION)}
           value={String(hits)}
           onChange={(value) => onHitsChange(Number(value))}
+          scrollable={false}
+          testID="station-hits"
         />
-      </Card>
 
-      <Card>
-        <OptionPicker
-          label={t('station.figuresHit')}
-          // Never more figures than hits, and never zero while hits exist.
-          options={countOptions(hits, hits > 0 ? 1 : 0)}
+        <ThemedText type="smallBold">{t('station.figuresHit')}</ThemedText>
+        <SegmentedControl
+          // Never more figures than hits or than the station has, and never
+          // zero while hits exist.
+          options={countSegments(figuresHitMax, hits > 0 ? 1 : 0)}
           value={String(figuresHit)}
           onChange={(value) => setFiguresHit(Number(value))}
+          scrollable={false}
+          testID="station-figures-hit"
         />
-      </Card>
 
-      <Card>
-        <View style={styles.switchRow}>
-          <ThemedText type="small">{t('station.pointsTarget')}</ThemedText>
-          <Switch value={hasPoints} onValueChange={setHasPoints} testID="station-poangmal-toggle" />
+        <ThemedText type="smallBold">{t('station.figureCount')}</ThemedText>
+        <SegmentedControl
+          options={[{ value: NOT_RECORDED, label: '–' }, ...countSegments(SHOTS_PER_STATION, 1)]}
+          value={figureCount === null ? NOT_RECORDED : String(figureCount)}
+          onChange={(value) => onFigureCountChange(value === NOT_RECORDED ? null : Number(value))}
+          scrollable={false}
+          testID="station-figure-count"
+        />
+
+        <ThemedText type="smallBold">{t('station.points')}</ThemedText>
+        <View style={styles.pointsRow}>
+          <TextField
+            value={pointsText}
+            onChangeText={setPointsText}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            style={styles.pointsField}
+            accessibilityLabel={t('station.points')}
+            testID="station-points"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('station.of')}
+          </ThemedText>
+          <TextField
+            value={pointsMaxText}
+            onChangeText={setPointsMaxText}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            style={styles.pointsField}
+            accessibilityLabel={t('station.pointsMax')}
+            testID="station-points-max"
+          />
         </View>
-        {hasPoints && (
-          <>
-            <OptionPicker
-              label={t('station.points')}
-              options={countOptions(Math.max(pointsMax, 10))}
-              value={String(points)}
-              onChange={(value) => setPoints(Number(value))}
-            />
-            <OptionPicker
-              label={t('station.pointsMax')}
-              options={countOptions(20, 1)}
-              value={String(pointsMax)}
-              onChange={(value) => setPointsMax(Number(value))}
-            />
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('station.pointsHelp')}
-            </ThemedText>
-          </>
+        {pointsInvalid && (
+          <ThemedText type="small" themeColor="danger" testID="station-points-invalid">
+            {t('station.pointsInvalid')}
+          </ThemedText>
         )}
       </Card>
 
@@ -167,12 +217,6 @@ export default function StationEntryScreen() {
             testID="station-scratched-toggle"
           />
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('station.scratchedHelp')}
-        </ThemedText>
-      </Card>
-
-      <Card>
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('station.shootOff')}</ThemedText>
           <Switch
@@ -181,9 +225,6 @@ export default function StationEntryScreen() {
             testID="station-shootoff-toggle"
           />
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('station.shootOffHelp')}
-        </ThemedText>
       </Card>
 
       <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
@@ -200,5 +241,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  pointsField: {
+    flex: 1,
   },
 });

@@ -70,15 +70,19 @@ of series. Pick **Fältskjutning** as the discipline — the app keeps the Swedi
 English too, because that is what the rule book calls the event and the session asks one
 extra question: whether the competition is run as **field** or **point field**.
 
-Each station is six shots, and you record two numbers — hits, and how many
-figures those hits landed in. Five hits in three figures reads **5/3**: you
-missed one shot, or put two in the same figure. The session total shows
+Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
+Hit**, and **Figures**, how many figures the station had. Five hits in three of
+four figures reads **5/3 of 4**: you missed one shot or put two in the same
+figure, and one figure went untouched. Leave Figures at **–** if you don't
+know it; the station then reads **5/3**. The session total shows
 "26 hits in 22 figures", or one sum in point field, where every hit is a point
 and every figure hit is another. Home and the sessions list show the result
 the same way.
 
-Where the organiser put out a **ringed figure**, turn on _Ringed Figure_ and
-record the points you scored and what the figure was worth. There is no fixed
+Where the organiser put out a **ringed figure**, type the points you scored
+under **Points**, and what the figure was worth after "of" if you know it. A
+station with points reads **6/3 of 4, 12p of 20p**. Leave Points empty on a
+station without a ringed figure. There is no fixed
 ring scheme in field shooting — organisers choose — so the app asks rather
 than assumes. Those points never add to your result; they only separate two
 shooters who are otherwise equal.

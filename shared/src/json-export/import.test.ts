@@ -74,6 +74,7 @@ describe('importSessionsFromJson', () => {
       position: 1,
       hits: 5,
       figuresHit: 3,
+      figureCount: null,
       points: null,
       pointsMax: null,
       isScratched: false,
@@ -88,6 +89,8 @@ describe('importSessionsFromJson', () => {
       { ...station, position: 0 },
       { ...station, points: 11, pointsMax: 10 },
       { ...station, points: -1 },
+      { ...station, figureCount: 2 },
+      { ...station, figureCount: 7 },
     ];
     for (const candidate of bad) {
       const result = importSessionsFromJson(
@@ -103,6 +106,7 @@ describe('importSessionsFromJson', () => {
       position: 3,
       hits: 6,
       figuresHit: 0,
+      figureCount: null,
       points: null,
       pointsMax: null,
       isScratched: true,
