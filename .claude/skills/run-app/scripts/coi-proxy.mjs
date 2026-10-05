@@ -1,6 +1,7 @@
 // Puts COOP/COEP on Metro's web output so the OPFS database works (ADR 0012).
 //   node coi-proxy.mjs <listen-port> <metro-port>
 import http from 'node:http';
+import process from 'node:process';
 
 const [, , listenPort, metroPort] = process.argv;
 http
