@@ -768,7 +768,11 @@
     "driftSubtitle": "Skott i serier med bara totalsumma som räknaren aldrig fick. Rätta en räknare med Justera antal skott.",
     "driftRounds": "{{count}} skott",
     "flagDevToolsTitle": "Utvecklarverktyg",
-    "flagDevToolsSubtitle": "Demodata, rensningsknappen och den här skärmen. Sätts bara vid bygget."
+    "flagDevToolsSubtitle": "Demodata, rensningsknappen och den här skärmen. Sätts bara vid bygget.",
+    "flagFillToSeriesTitle": "Fyll förslag till seriens längd",
+    "flagFillToSeriesSubtitle": "När färre hål föreslås än serien har skott läggs de näst bästa kandidaterna till, upp till det antalet.",
+    "flagFilledStyleTitle": "Svagare ifyllda förslag",
+    "flagFilledStyleSubtitle": "Rita de ifyllda förslagen svagare än de säkra. Kräver fyllningsvalet."
   },
   "competitionLevel": {
     "forening": "Föreningstävling",

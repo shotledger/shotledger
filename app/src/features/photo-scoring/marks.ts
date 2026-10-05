@@ -39,6 +39,12 @@ export interface Mark {
    * two labels a future detector learns most from.
    */
   readonly suggested: boolean;
+  /**
+   * A suggestion added only to fill the series up to its shot count, from
+   * below the detector's confident threshold. Always `suggested` too; the
+   * canvas may draw it fainter (experiment flag `suggestFilledStyle`).
+   */
+  readonly filled: boolean;
 }
 
 export interface MarkState {
@@ -87,7 +93,10 @@ export type MarkAction =
   | { type: 'setCaliber'; caliberMm: number }
   | { type: 'undo' }
   /** The detector's proposals, in target-mm; see `suggest` in the reducer. */
-  | { type: 'suggest'; marks: readonly { id: string; xMm: number; yMm: number }[] }
+  | {
+      type: 'suggest';
+      marks: readonly { id: string; xMm: number; yMm: number; filled?: boolean }[];
+    }
   | { type: 'clear' };
 
 export const MARK_LIMIT_REACHED = 'markLimitReached' as const;
@@ -165,6 +174,7 @@ function applyAction(state: MarkState, action: MarkAction): MarkState {
         calledRingLabel: null,
         moved: false,
         suggested: false,
+        filled: false,
       };
       // A new mark is selected, so Move/Delete is one tap away — the
       // benchmark's behavior.
@@ -190,6 +200,7 @@ function applyAction(state: MarkState, action: MarkAction): MarkState {
           calledRingLabel: null,
           moved: false,
           suggested: true,
+          filled: p.filled === true,
         });
       }
       return marks.length === state.marks.length ? state : { ...state, marks };

@@ -24,6 +24,22 @@ export const FLAGS = {
     labelKey: 'webshooter.devMockTitle',
     descriptionKey: 'webshooter.devMockSubtitle',
   },
+  // Photo scoring: after the confident hole suggestions, fill up to the
+  // series' shot count with the next-best candidates. Off = the default.
+  suggestFillToSeries: {
+    build: false,
+    overridable: true,
+    labelKey: 'dev.flagFillToSeriesTitle',
+    descriptionKey: 'dev.flagFillToSeriesSubtitle',
+  },
+  // Photo scoring: draw those filled-in suggestions fainter than the
+  // confident ones, so they read as "check this one". Off = drawn alike.
+  suggestFilledStyle: {
+    build: false,
+    overridable: true,
+    labelKey: 'dev.flagFilledStyleTitle',
+    descriptionKey: 'dev.flagFilledStyleSubtitle',
+  },
 } as const satisfies Record<string, FlagSpec>;
 
 export type FlagName = keyof typeof FLAGS;

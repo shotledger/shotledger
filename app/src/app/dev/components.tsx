@@ -73,6 +73,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     calledRingLabel: null,
     moved: false,
     suggested: false,
+    filled: false,
   },
   {
     id: 'mid-ring',
@@ -83,6 +84,7 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     calledRingLabel: null,
     moved: false,
     suggested: false,
+    filled: false,
   },
   // Ring 9's boundary is radius 50mm; near-edge = radius - caliber/2, so
   // 52.3mm out puts the near-edge 0.5mm inside it — under the 1mm
@@ -96,6 +98,22 @@ const EDGE_CALL_PREVIEW_MARKS: readonly Mark[] = [
     calledRingLabel: null,
     moved: false,
     suggested: false,
+    filled: false,
+  },
+];
+
+// A tapped mark, a confident suggestion and a filled-in one (experiment flag
+// suggestFilledStyle), to see the three looks together.
+const SUGGESTION_PREVIEW_MARKS: readonly Mark[] = [
+  { ...EDGE_CALL_PREVIEW_MARKS[0]!, id: 'tapped', xMm: -60, yMm: 0 },
+  { ...EDGE_CALL_PREVIEW_MARKS[0]!, id: 'suggested', xMm: 0, yMm: 0, suggested: true },
+  {
+    ...EDGE_CALL_PREVIEW_MARKS[0]!,
+    id: 'filled',
+    xMm: 60,
+    yMm: 0,
+    suggested: true,
+    filled: true,
   },
 ];
 
@@ -315,6 +333,26 @@ export default function ComponentsGalleryScreen() {
           marks={EDGE_CALL_PREVIEW_MARKS}
           scores={scoreMarks(EDGE_CALL_PREVIEW_MARKS, EDGE_CALL_PREVIEW_TARGET)}
           selectedId={null}
+          readOnly
+        />
+      </Section>
+      <Section title="MarkCanvas — suggestions (tapped, suggested, filled in)">
+        <ThemedText type="small" themeColor="textSecondary">
+          Left to right: a tapped mark, a confident suggestion, and a suggestion that only filled
+          the series, drawn fainter when the suggestFilledStyle flag is on (it is, here).
+        </ThemedText>
+        <MarkCanvas
+          testID="suggestion-preview"
+          style={styles.canvas}
+          photoUri={EDGE_CALL_PREVIEW_PHOTO_URI}
+          imageWidth={EDGE_CALL_PREVIEW_IMAGE_SIZE}
+          imageHeight={EDGE_CALL_PREVIEW_IMAGE_SIZE}
+          transform={EDGE_CALL_PREVIEW_TRANSFORM}
+          target={EDGE_CALL_PREVIEW_TARGET}
+          marks={SUGGESTION_PREVIEW_MARKS}
+          scores={scoreMarks(SUGGESTION_PREVIEW_MARKS, EDGE_CALL_PREVIEW_TARGET)}
+          selectedId={null}
+          fadeFilled
           readOnly
         />
       </Section>

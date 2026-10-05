@@ -146,6 +146,13 @@ export const HOLE_PROPOSAL_BIAS = -26.046342;
  */
 export const HOLE_PROPOSAL_THRESHOLD = 0.7;
 
+/**
+ * The floor when a series is filled up to its shot count with the next-best
+ * candidates (`fillTo`). Measured 5-fold by photo on the 31 labelled photos:
+ * 74.3% → 81.6% recall, 94.2% → 89.2% precision, no hole lost.
+ */
+export const HOLE_PROPOSAL_FILL_THRESHOLD = 0.1;
+
 // ---------------------------------------------------------------- types
 
 /** What the stage knows about the face, all in mm except the scale. */
@@ -176,6 +183,8 @@ export interface HoleProposal {
   /** Canvas px of the peak this proposal started from. */
   readonly peakX: number;
   readonly peakY: number;
+  /** Added to fill the series (`fillTo`), below the confident threshold. */
+  readonly filled: boolean;
 }
 
 /** A float image, row-major. */
@@ -913,8 +922,9 @@ export function proposeHoles(
   face: ProposalFace,
   threshold = HOLE_PROPOSAL_THRESHOLD,
   ops: MapOps = pureMapOps,
+  fillTo = 0,
 ): HoleProposal[] {
-  return selectProposals(canvas, face, holeCandidates(canvas, face, ops), threshold);
+  return selectProposals(canvas, face, holeCandidates(canvas, face, ops), threshold, fillTo);
 }
 
 /**
@@ -925,7 +935,13 @@ export function proposeHoles(
 export async function proposeHolesAsync(
   canvas: RectifiedCanvas,
   face: ProposalFace,
-  options: { readonly ops?: MapOps; readonly threshold?: number; readonly batch?: number } = {},
+  options: {
+    readonly ops?: MapOps;
+    readonly threshold?: number;
+    readonly batch?: number;
+    /** Fill up to this many proposals from the next-best candidates; 0 = off. */
+    readonly fillTo?: number;
+  } = {},
 ): Promise<HoleProposal[]> {
   const ops = options.ops ?? pureMapOps;
   const batch = options.batch ?? 8;
@@ -943,22 +959,32 @@ export async function proposeHolesAsync(
       candidates.push({ ...peak, features, probability: holeProposalProbability(features) });
     }
   }
-  return selectProposals(canvas, face, candidates, options.threshold ?? HOLE_PROPOSAL_THRESHOLD);
+  return selectProposals(
+    canvas,
+    face,
+    candidates,
+    options.threshold ?? HOLE_PROPOSAL_THRESHOLD,
+    options.fillTo ?? 0,
+  );
 }
 
-function selectProposals(
+/**
+ * The confident candidates (probability >= `threshold`), merged; then, while
+ * fewer than `fillTo` were found, the next-best down to
+ * HOLE_PROPOSAL_FILL_THRESHOLD, marked `filled`. `fillTo` 0 is the default
+ * behaviour: confident only.
+ */
+export function selectProposals(
   canvas: RectifiedCanvas,
   face: ProposalFace,
   candidates: readonly HoleCandidate[],
   threshold: number,
+  fillTo = 0,
 ): HoleProposal[] {
   const d = holeDiameterPx(canvas, face);
-  const accepted = candidates
-    .filter((c) => c.probability >= threshold)
-    .sort((a, b) => b.probability - a.probability);
   const kept: HoleProposal[] = [];
-  for (const c of accepted) {
-    if (kept.some((k) => Math.hypot(c.x - k.peakX, c.y - k.peakY) < MERGE_RADIUS_D * d)) continue;
+  const take = (c: HoleCandidate, filled: boolean) => {
+    if (kept.some((k) => Math.hypot(c.x - k.peakX, c.y - k.peakY) < MERGE_RADIUS_D * d)) return;
     const inBlack = c.features.in_black > 0.5;
     const { bg, sign } = radialBins(canvas, c.x, c.y, d, inBlack);
     const refined = refineCenter(canvas, c.x, c.y, d, bg, sign);
@@ -968,7 +994,20 @@ function selectProposals(
       probability: c.probability,
       peakX: c.x,
       peakY: c.y,
+      filled,
     });
+  };
+  const byProbability = (a: HoleCandidate, b: HoleCandidate) => b.probability - a.probability;
+  for (const c of candidates.filter((c) => c.probability >= threshold).sort(byProbability)) {
+    take(c, false);
+  }
+  if (kept.length >= fillTo) return kept;
+  const next = candidates
+    .filter((c) => c.probability < threshold && c.probability >= HOLE_PROPOSAL_FILL_THRESHOLD)
+    .sort(byProbability);
+  for (const c of next) {
+    if (kept.length >= fillTo) break;
+    take(c, true);
   }
   return kept;
 }

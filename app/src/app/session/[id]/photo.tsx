@@ -77,6 +77,7 @@ export default function SeriesPhotoScreen() {
       calledRingLabel: null,
       moved: false,
       suggested: false,
+      filled: false,
     }));
     return {
       marks,

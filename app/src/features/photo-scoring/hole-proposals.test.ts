@@ -2,6 +2,7 @@ import fixture from './hole-proposals.fixtures.json';
 import {
   HOLE_PROPOSAL_BIAS,
   HOLE_PROPOSAL_FEATURE_NAMES,
+  HOLE_PROPOSAL_FILL_THRESHOLD,
   HOLE_PROPOSAL_THRESHOLD,
   HOLE_PROPOSAL_WEIGHTS,
   gaussianKernel,
@@ -9,6 +10,7 @@ import {
   holeProposalProbability,
   proposeHoles,
   type ProposalFace,
+  selectProposals,
 } from './hole-proposals';
 import { syntheticCanvas } from './synthetic-canvas';
 import type { RectifiedCanvas } from './tap-snap';
@@ -170,4 +172,55 @@ it('refuses a canvas that cannot hold the stage', () => {
       face,
     ),
   ).toEqual([]);
+});
+
+// Filling a series up to its shot count: four well-separated candidates of the
+// first synthetic scenario, with probabilities set by hand.
+function spacedCandidates(probabilities: readonly number[]) {
+  const scenario = fixture.scenarios[0]!;
+  const canvas = canvasOf(scenario);
+  const face = faceOf();
+  const d = fixture.caliberMm * fixture.pxPerMm;
+  const spaced: ReturnType<typeof holeCandidates> = [];
+  for (const c of holeCandidates(canvas, face)) {
+    if (spaced.every((o) => Math.hypot(c.x - o.x, c.y - o.y) > 3 * d)) spaced.push(c);
+  }
+  expect(spaced.length).toBeGreaterThanOrEqual(probabilities.length);
+  const candidates = probabilities.map((probability, i) => ({ ...spaced[i]!, probability }));
+  return { canvas, face, candidates, d };
+}
+
+it('keeps only the confident candidates when asked to fill nothing', () => {
+  const { canvas, face, candidates } = spacedCandidates([0.9, 0.5, 0.3, 0.05]);
+  const out = selectProposals(canvas, face, candidates, HOLE_PROPOSAL_THRESHOLD);
+  expect(out.map((p) => [p.probability, p.filled])).toEqual([[0.9, false]]);
+});
+
+it('fills up to the shot count with the next-best candidates, best first', () => {
+  const { canvas, face, candidates } = spacedCandidates([0.3, 0.9, 0.5, 0.2]);
+  const out = selectProposals(canvas, face, candidates, HOLE_PROPOSAL_THRESHOLD, 3);
+  expect(out.map((p) => [p.probability, p.filled])).toEqual([
+    [0.9, false],
+    [0.5, true],
+    [0.3, true],
+  ]);
+});
+
+it('does not fill when the confident candidates already fill the series', () => {
+  const { canvas, face, candidates } = spacedCandidates([0.9, 0.8, 0.5]);
+  const out = selectProposals(canvas, face, candidates, HOLE_PROPOSAL_THRESHOLD, 2);
+  expect(out.map((p) => p.filled)).toEqual([false, false]);
+});
+
+it('never fills below the fill floor, even when the series is not full', () => {
+  const { canvas, face, candidates } = spacedCandidates([0.9, HOLE_PROPOSAL_FILL_THRESHOLD - 0.01]);
+  expect(selectProposals(canvas, face, candidates, HOLE_PROPOSAL_THRESHOLD, 5)).toHaveLength(1);
+});
+
+it('does not fill a candidate that sits on one already kept', () => {
+  const { canvas, face, candidates, d } = spacedCandidates([0.9]);
+  const top = candidates[0]!;
+  const twin = { ...top, x: top.x + Math.round(0.4 * d), probability: 0.4 };
+  const out = selectProposals(canvas, face, [top, twin], HOLE_PROPOSAL_THRESHOLD, 3);
+  expect(out).toHaveLength(1);
 });

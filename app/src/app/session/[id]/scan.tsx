@@ -59,6 +59,7 @@ import {
   scoreMarks,
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
+import { isFlagEnabled } from '@/constants/flags';
 import { holeCandidates, proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
 import { type ScanNextTarget, scanNextTarget } from '@/features/photo-scoring/scan-next';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
@@ -196,6 +197,8 @@ export default function ScanScreen() {
   // retake disown a pass that was scheduled for the previous photo.
   const [suggested, setSuggested] = useState<'pending' | 'unsure' | number | null>(null);
   const proposalRun = useRef(0);
+  // Experiment flag, read once per visit so the marks do not change look midway.
+  const [fadeFilled] = useState(() => isFlagEnabled('suggestFilledStyle'));
   const [menuOpen, setMenuOpen] = useState(false);
   const [caliberOpen, setCaliberOpen] = useState(false);
 
@@ -442,21 +445,26 @@ export default function ScanScreen() {
         maxRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
         ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
       },
-      { ops: nativeMapOps ?? undefined },
+      {
+        ops: nativeMapOps ?? undefined,
+        // Experiment flag; 0 = the default, confident suggestions only.
+        fillTo: isFlagEnabled('suggestFillToSeries') ? markState.maxMarks : 0,
+      },
     )
       .then((proposals) => {
         if (proposalRun.current !== run) return;
         // Far more holes than the series holds means the detector does not
         // understand this photo (measured on real targets it proposes about
         // one false hole in three photos). Suggesting nothing beats covering
-        // the target in marks to delete.
-        if (proposals.length > 2 * markState.maxMarks + 2) {
+        // the target in marks to delete. Filled-in ones do not count: they
+        // only exist when there were too few.
+        if (proposals.filter((p) => !p.filled).length > 2 * markState.maxMarks + 2) {
           setSuggested('unsure');
           return;
         }
         dispatch({
           type: 'suggest',
-          marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm })),
+          marks: proposals.map((p) => ({ id: uuidv7(), xMm: p.xMm, yMm: p.yMm, filled: p.filled })),
         });
         setSuggested(proposals.length);
       })
@@ -728,6 +736,7 @@ export default function ScanScreen() {
               marks={markState.marks}
               scores={scores}
               selectedId={markState.selectedId}
+              fadeFilled={fadeFilled}
               onTapEmpty={onTapEmpty}
               onTapMark={(markId) => dispatch({ type: 'select', id: markId })}
               onMoveMark={(markId, mm) => {
