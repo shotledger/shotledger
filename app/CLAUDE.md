@@ -55,7 +55,7 @@ committing the regenerated `src/constants/licenses.json`.
   Babel's `inline-import` pastes the SQL into `migrations.js`, and Metro caches
   that transform by `migrations.js`'s own content, so without the line a build
   ships the old schema and the first write fails with `table … has no column
-  named …`. `migrations.test.ts` fails until the hash matches. An install that
+named …`. `migrations.test.ts` fails until the hash matches. An install that
   already ran the old baseline still needs `adb shell pm clear app.shotledger`.
 
 ## Demo data and dev tools
