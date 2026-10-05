@@ -157,8 +157,10 @@ The same statement, in user words, is in `docs/store-listing.md`.
 ## iOS (not shipped yet)
 
 The iOS build is configured (`ios.bundleIdentifier` `app.shotledger`,
-permission prompts in English and Swedish via `app/locales/sv.json`) but has
-never been built. There is no Mac in the loop: every iOS build runs on EAS.
+permission prompts in English and Swedish via `app/locales/sv.json`). The
+first simulator build succeeded on 2026-10-05, but the app has not yet run
+on a simulator or a device. There is no Mac in the loop: every iOS build
+runs on EAS.
 
 One-time setup (maintainer only):
 
@@ -181,14 +183,15 @@ Builds:
   the `preview` and `production` profiles of `app/eas.json`, added once the
   account exists.
 
-Known risks before the first build:
+Known risks:
 
-- `@react-native-ml-kit/text-recognition` pulls GoogleMLKit, whose pods
-  have shipped without an Apple-Silicon simulator slice. If the simulator
-  build fails there, simulator builds leave the OCR wrapper out.
-- `NATIVE_LICENSES` (`app/src/constants/native-licenses.ts`) lists the
-  Android artifacts only. Add the iOS pods' versions from the first build's
-  `Podfile.lock`.
+- GoogleMLKit 8.0.0 compiled for the simulator in the first build, but
+  nothing has exercised text recognition or OpenCV on iOS at runtime. It
+  also bundles the Chinese, Devanagari, Japanese and Korean models, so
+  expect a large app.
+- `NATIVE_LICENSES` (`app/src/constants/native-licenses.ts`) has
+  per-platform entries; the iOS ones come from that build's pod install.
+  Re-check them when ML Kit or `react-native-fast-opencv` moves.
 - App Store distribution of the AGPL app relies on the extra permission in
   `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`, which requires the
   full source to be available outside the store. Publish the source before
