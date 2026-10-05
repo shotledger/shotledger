@@ -203,7 +203,20 @@
       "onTarget": "Centered and tight. Little left to take here."
     },
     "chartDisciplinesOmitted_one": "One more discipline is not shown — narrow the discipline filter to see it.",
-    "chartDisciplinesOmitted_other": "{{count}} more disciplines are not shown — narrow the discipline filter to see them."
+    "chartDisciplinesOmitted_other": "{{count}} more disciplines are not shown — narrow the discipline filter to see them.",
+    "sectionIndexTitle": "In This Report",
+    "sectionCharts": "Charts Over Time",
+    "sectionQuestion": {
+      "shots": "Where do my shots group, across sessions?",
+      "records": "Which sessions were my best?",
+      "totals": "How much have I shot, and how well per shot and series?",
+      "falt": "How many hits and figures per station?",
+      "typeComparison": "Do I shoot differently in competition than in training?",
+      "sighter": "Does my sighter predict the competition result?",
+      "charts": "Am I getting better over time?",
+      "distribution": "Which rings do my shots land in?",
+      "export": "PDF or JSON"
+    }
   },
   "firearms": {
     "title": "Firearms & Ammo",

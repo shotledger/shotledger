@@ -31,6 +31,9 @@ det, med eventuell öppen väljare stängd.
 
 ## Rapporten
 
+Under filtret listar **I rapporten** de delar som rapporten innehåller, var
+och en med frågan den svarar på. Tryck på en för att gå direkt dit.
+
 - **Rekord** inom det filtrerade urvalet: bästa passresultat, flest innertior,
   flest tior. Tryck på ett för att öppna passet det kom från.
 - **Totaler**, både som summor (alla poäng, alla skott) och som snitt per skott
