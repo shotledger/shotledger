@@ -25,7 +25,14 @@ import {
   ThresholdTypes,
 } from 'react-native-fast-opencv';
 
-import { type CloseupLock, closeupWorkImage, lockCloseupWork, ringOffsetMm } from './closeup-lock';
+import {
+  type CloseupLock,
+  closeupWorkImage,
+  lockCloseupWork,
+  ringOffsetMm,
+  type XRingReading,
+  xRingReading,
+} from './closeup-lock';
 import { nativeCloseupOps } from './closeup-lock-native';
 import { lockMilsnabbWork, type MilsnabbLock } from './milsnabb-lock';
 import type { Homography } from './corners';
@@ -244,6 +251,9 @@ export interface CloseupLockRun {
   /** The milsnabb lock on the same work image, for the guard against a
    *  precision lock on a milsnabb photo (precision-guards.ts). */
   readonly milsnabb: () => MilsnabbLock | null;
+  /** The line response where the lock puts precision's X ring, for asking
+   *  the shooter which face it is (precision-guards.ts). */
+  readonly xRing: () => XRingReading | null;
 }
 
 /**
@@ -257,10 +267,12 @@ export function runCloseupLock(options: {
   readonly discToMm?: Homography;
 }): CloseupLockRun {
   const work = closeupWorkImage(grayOf(options.base64), nativeCloseupOps);
+  const lock = lockCloseupWork(work, nativeCloseupOps);
   return {
-    lock: lockCloseupWork(work, nativeCloseupOps),
+    lock,
     discRingOffsetMm: options.discToMm ? ringOffsetMm(work, options.discToMm) : null,
     milsnabb: () => lockMilsnabbWork(work, nativeCloseupOps),
+    xRing: () => (lock ? xRingReading(work, lock.toMm) : null),
   };
 }
 

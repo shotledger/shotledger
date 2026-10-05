@@ -1148,6 +1148,32 @@ export function ringOffsetMm(work: CloseupWork, toMm: Homography): number | null
   return workRingOffset(work.lines, mul3(toMm, fromWork));
 }
 
+/** Median line response round precision's X ring (12.5 mm), round its 10
+ *  (25 mm), and in the black between them (6.25 and 18.75 mm, averaged). */
+export interface XRingReading {
+  readonly x: number;
+  readonly ten: number;
+  readonly gap: number;
+}
+
+/**
+ * What the line response reads where a lock puts precision's X ring. A
+ * milsnabb face prints nothing inside its X, so a crop of its X and 10 locked
+ * as precision's 10 and 9 reads no line there. Null when the X, the 10 or both
+ * gaps are mostly out of frame.
+ */
+export function xRingReading(work: CloseupWork, toMm: Homography): XRingReading | null {
+  const fromWork = invertHomography(work.toWork);
+  const inv = fromWork && invertHomography(asHomography(mul3(toMm, fromWork)));
+  if (!inv) return null;
+  const at = (R: number) => circleMedian(work.lines, inv, R);
+  const x = at(12.5);
+  const ten = at(25);
+  const gaps = [at(6.25), at(18.75)].filter((v): v is number => v !== null);
+  if (x === null || ten === null || gaps.length === 0) return null;
+  return { x, ten, gap: gaps.reduce((s, v) => s + v, 0) / gaps.length };
+}
+
 function isHalfPeriod(lines: CloseupImage, workToMm: readonly number[]): boolean {
   const inv = invertHomography(asHomography(workToMm));
   if (!inv) return false;

@@ -1,6 +1,7 @@
 // The precision close-up lock's three milsnabb guards on real photos: the
 // lock's perspective over the photo, the milsnabb lock passing on the same
-// photo, and the holes' size against the calibre (precision-guards.ts). Not
+// photo, and the holes' size against the calibre (precision-guards.ts); and
+// whether the X line is missing, where scan.tsx asks for the face. Not
 // part of `pnpm check`: the photos live outside the repo
 // (docs/specs/cv-closeup-lock-2026-09.md, last section).
 //
@@ -28,6 +29,7 @@ import {
   lockCloseupWork,
   passesCloseupGate,
   ringOffsetMm,
+  xRingReading,
 } from '../../../app/src/features/photo-scoring/closeup-lock';
 import { rectifyWithHomography } from '../../../app/src/features/photo-scoring/disc-lock';
 import {
@@ -46,6 +48,7 @@ import {
   milsnabbLockRefuses,
   perspectiveRefuses,
   proposalFaceOf,
+  xLineMissing,
 } from '../../../app/src/features/photo-scoring/precision-guards';
 import { crops, MIL_OUTER, MIL_VIEWS, photoSeed, PRE_VIEWS, rng } from './crops';
 import { type DiscRun, runDisc } from './disc-run';
@@ -144,6 +147,15 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
   const wAtCenter = g! * lock.center.x + h! * lock.center.y + 1;
   const wc = w.map((v) => v / wAtCenter);
   const perspective = perspectiveRefuses(lock.toMm, lock.center, image);
+  const refusedBy = perspective
+    ? 'perspective'
+    : milsnabbLockRefuses(mil)
+      ? 'milsnabbLock'
+      : holesTooSmall(full, half, CALIBER_MM)
+        ? 'holeSize'
+        : null;
+  const xRing = xRingReading(work, lock.toMm);
+  const xMissing = xLineMissing(xRing);
   return {
     passes: true,
     choice,
@@ -168,13 +180,11 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
     holes: { full: full.map((d) => round(d)), half: half.map((d) => round(d)) },
     raw,
     // In scan.tsx's order.
-    refusedBy: perspective
-      ? 'perspective'
-      : milsnabbLockRefuses(mil)
-        ? 'milsnabbLock'
-        : holesTooSmall(full, half, CALIBER_MM)
-          ? 'holeSize'
-          : null,
+    refusedBy,
+    xRing: xRing && { x: round(xRing.x, 3), ten: round(xRing.ten, 3), gap: round(xRing.gap, 3) },
+    xMissing,
+    // scan.tsx asks "Precision or milsnabb face?" on these (#526).
+    asks: choice === 'closeup' && refusedBy === null && xMissing,
     msLocks: Math.round(t1 - t0),
     msHoles: Math.round(t2 - t1),
   };

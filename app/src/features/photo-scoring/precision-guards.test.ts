@@ -1,8 +1,11 @@
 import { SPSF_PISTOL_25M_PRECISION } from '@shotledger/shared';
 
+import fixture from './closeup-lock.fixtures.json';
+import { closeupWorkImage, type XRingReading, xRingReading } from './closeup-lock';
 import { holeCandidates, type ProposalFace } from './hole-proposals';
 import { MILSNABB_GATE, type MilsnabbLock } from './milsnabb-lock';
 import {
+  faceDecision,
   HOLE_SIZE_GUARD,
   holeDiametersMm,
   holesTooSmall,
@@ -10,9 +13,11 @@ import {
   PERSPECTIVE_GUARD,
   perspectiveRefuses,
   proposalFaceOf,
+  X_LINE_PROMPT,
+  xLineMissing,
 } from './precision-guards';
 import type { Homography } from './corners';
-import { syntheticCanvas } from './synthetic-canvas';
+import { syntheticCanvas, syntheticCloseup } from './synthetic-canvas';
 import type { RectifiedCanvas } from './tap-snap';
 
 const CALIBER = 5.6;
@@ -175,5 +180,123 @@ describe('perspectiveRefuses', () => {
   it('reads the same at any scale of the matrix', () => {
     const h = tilted(0.0004).map((v) => -3 * v) as unknown as Homography;
     expect(perspectiveRefuses(h, center, size)).toBe(false);
+  });
+});
+
+describe('xLineMissing', () => {
+  const reading = (x: number, ten = 1, gap = 0.1): XRingReading => ({ x, ten, gap });
+
+  it('abstains when the X ring could not be read', () => {
+    expect(xLineMissing(null)).toBe(false);
+  });
+
+  it('keeps an X line about as strong as the 10', () => {
+    expect(xLineMissing(reading(0.95))).toBe(false);
+  });
+
+  it('calls it missing when the X reads below both shares', () => {
+    expect(xLineMissing(reading(0.01))).toBe(true);
+  });
+
+  it('needs both shares: weak against the 10 but well above the gaps is a line', () => {
+    expect(xLineMissing(reading(0.1, 1, 0.01))).toBe(false);
+  });
+
+  it('puts the boundaries at the declared shares', () => {
+    const ten = 1;
+    const gap = 1;
+    const edge = X_LINE_PROMPT.maxOfTen * ten;
+    expect(xLineMissing(reading(edge, ten, gap))).toBe(false);
+    expect(xLineMissing(reading(edge - 1e-6, ten, gap))).toBe(true);
+    const gapEdge = X_LINE_PROMPT.maxOfGaps * 0.05;
+    expect(xLineMissing(reading(gapEdge, ten, 0.05))).toBe(false);
+    expect(xLineMissing(reading(gapEdge - 1e-6, ten, 0.05))).toBe(true);
+  });
+});
+
+describe('faceDecision', () => {
+  it('goes on as precision when the X line is there, whatever was answered', () => {
+    expect(faceDecision(false, undefined)).toBe('precision');
+    expect(faceDecision(false, 'milsnabb')).toBe('precision');
+  });
+
+  it('asks when the X line is missing and the session has no answer', () => {
+    expect(faceDecision(true, undefined)).toBe('ask');
+  });
+
+  it('uses the session’s answer instead of asking again', () => {
+    expect(faceDecision(true, 'precision')).toBe('precision');
+    expect(faceDecision(true, 'milsnabb')).toBe('milsnabb');
+  });
+});
+
+describe('xRingReading on line images', () => {
+  // A line response 4 px per mm, 1 on each drawn circle, a floor of paper
+  // texture elsewhere.
+  const PX_PER_MM = 4;
+  const SIZE = 480;
+  const C = SIZE / 2;
+  function workWith(radiiMm: readonly number[], covered?: (angle: number, rMm: number) => boolean) {
+    const data = new Float64Array(SIZE * SIZE);
+    for (let y = 0; y < SIZE; y += 1) {
+      for (let x = 0; x < SIZE; x += 1) {
+        const r = Math.hypot(x - C, y - C) / PX_PER_MM;
+        data[y * SIZE + x] = 0.05;
+        if (covered?.(Math.atan2(y - C, x - C), r)) continue;
+        if (radiiMm.some((R) => Math.abs(r - R) < 0.4)) data[y * SIZE + x] = 1;
+      }
+    }
+    const image = { data, width: SIZE, height: SIZE };
+    const identity = [1, 0, 0, 0, 1, 0, 0, 0, 1] as unknown as Homography;
+    return { g: image, lines: image, toWork: identity };
+  }
+  const s = 1 / PX_PER_MM;
+  const toMm = [s, 0, -C * s, 0, s, -C * s, 0, 0, 1] as unknown as Homography;
+
+  it('reads the X line on a precision centre', () => {
+    const r = xRingReading(workWith([12.5, 25, 50]), toMm);
+    expect(r).not.toBeNull();
+    expect(r!.x / r!.ten).toBeGreaterThan(0.9);
+    expect(xLineMissing(r)).toBe(false);
+  });
+
+  it('finds none where a milsnabb X and 10 sit on precision’s 10 and 9', () => {
+    const r = xRingReading(workWith([25, 50]), toMm);
+    expect(xLineMissing(r)).toBe(true);
+  });
+
+  it('cannot see an X line covered on most of the circle, as by pasters', () => {
+    // Pasters over three quarters of a shot-out centre, inside the 10: the
+    // median reads no line.
+    const covered = (a: number, rMm: number) => rMm < 20 && a > -Math.PI / 2;
+    const r = xRingReading(workWith([12.5, 25, 50], covered), toMm);
+    expect(xLineMissing(r)).toBe(true);
+  });
+
+  it('abstains when the centre is out of frame', () => {
+    const away = [s, 0, (-C - 200 * PX_PER_MM) * s, 0, s, -C * s, 0, 0, 1] as unknown as Homography;
+    expect(xRingReading(workWith([12.5, 25, 50]), away)).toBeNull();
+  });
+
+  it('reads the X line on a drawn precision close-up through its true lock', () => {
+    const scene = fixture.scenarios.find((sc) => sc.name === 'centred')!;
+    const image = {
+      width: scene.width,
+      height: scene.height,
+      data: syntheticCloseup({
+        seed: scene.seed,
+        width: scene.width,
+        height: scene.height,
+        H: scene.H,
+        holes: scene.holes.map(([x, y]) => [x as number, y as number] as const),
+      }),
+    };
+    const work = closeupWorkImage(image, undefined, fixture.workLongSide);
+    const trueLock = scene.lock!.toMm as unknown as Homography;
+    expect(xLineMissing(xRingReading(work, trueLock))).toBe(false);
+    // The same photo through a lock twice too large puts precision's X and 10
+    // on its 10 and 9, as a milsnabb crop's X and 10 do: no line at 12.5 mm.
+    const twice = trueLock.map((v, i) => (i < 6 ? 2 * v : v)) as unknown as Homography;
+    expect(xLineMissing(xRingReading(work, twice))).toBe(true);
   });
 });

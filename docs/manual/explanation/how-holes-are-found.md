@@ -31,8 +31,16 @@ slant that no photo of a flat target has. It refuses it if the milsnabb
 target's own fit also works on the photo. And it refuses it if the holes come
 out about half the size your caliber makes. When there are no holes to measure,
 that last check cannot help. A milsnabb photo can then still get through,
-mostly a tight close-up of the X and 10, so score milsnabb in a milsnabb
-session.
+mostly a tight close-up of the X and 10.
+
+For those the app looks for the precision face's X ring: the thin line inside
+the 10 that a milsnabb target does not have. If it finds no line there, it asks
+which target you photographed. It asks once per session and keeps your answer
+until the app is closed. Answer **Military Rapid Fire** and the fit from the
+ring lines is refused, as when one of the checks above refuses it. Pasters over
+a well-shot centre can hide the X line too, so a precision photo sometimes gets
+the question as well; answer **Precision** and scoring goes on as usual.
+Milsnabb is still best scored in a milsnabb session.
 
 Both are tried. Each one has to pass its own checks: the rings it draws must
 sit on printed lines, to within half a millimetre. If both pass, the app uses
