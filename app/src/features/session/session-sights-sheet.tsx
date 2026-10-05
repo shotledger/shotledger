@@ -50,7 +50,7 @@ export function SessionSightsSheet({
   const active = resolveActiveSightSetting(settings);
 
   function onSelect(id: string) {
-    if (!db || !firearmId) return;
+    if (!firearmId) return;
     setActiveSightSetting(db, firearmId, id);
     onChanged();
   }
@@ -58,7 +58,7 @@ export function SessionSightsSheet({
   // Writes straight through on every press. A Save button would be one more
   // thing to forget between series, and a click is a small, reversible edit.
   function onAdjust(axis: 'elevationClicks' | 'windageClicks', value: number | null) {
-    if (!db || !active) return;
+    if (!active) return;
     updateSightSetting(db, active.id, { [axis]: value });
     onChanged();
   }

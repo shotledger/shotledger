@@ -13,8 +13,7 @@ export interface TrackedInputs {
   shooterClass: boolean;
 }
 
-export function readTrackedInputs(db: Database | null): TrackedInputs {
-  if (!db) return { handloads: true, weaponGroups: true, shooterClass: true };
+export function readTrackedInputs(db: Database): TrackedInputs {
   return {
     handloads: getSetting<boolean>(db, SETTINGS_KEYS.trackHandloads, true),
     weaponGroups: getSetting<boolean>(db, SETTINGS_KEYS.trackWeaponGroups, true),

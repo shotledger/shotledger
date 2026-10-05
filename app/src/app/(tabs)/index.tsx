@@ -59,7 +59,6 @@ export default function HomeScreen() {
         text: t('common.deleteSession'),
         style: 'destructive',
         onPress: () => {
-          if (!db) return;
           deleteSessionAndSeries(db, session.id);
           refresh();
         },

@@ -38,10 +38,10 @@ export function CalendarPicker() {
   // calendar is chosen without asking for calendar permission just to
   // render a settings screen.
   const [chosenLabel, setChosenLabel] = useState<string | null>(() =>
-    db ? getSetting<string | null>(db, CALENDAR_TITLE_SETTING_KEY, null) : null,
+    getSetting<string | null>(db, CALENDAR_TITLE_SETTING_KEY, null),
   );
   const [chosenId, setChosenId] = useState<string | null>(() =>
-    db ? getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null) : null,
+    getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null),
   );
 
   const openSheet = useCallback(async () => {
@@ -59,10 +59,8 @@ export function CalendarPicker() {
   function choose(calendar: WritableCalendar) {
     setChosenId(calendar.id);
     setChosenLabel(calendarLabel(calendar));
-    if (db) {
-      setSetting<string>(db, CALENDAR_ID_SETTING_KEY, calendar.id);
-      setSetting<string>(db, CALENDAR_TITLE_SETTING_KEY, calendarLabel(calendar));
-    }
+    setSetting<string>(db, CALENDAR_ID_SETTING_KEY, calendar.id);
+    setSetting<string>(db, CALENDAR_TITLE_SETTING_KEY, calendarLabel(calendar));
   }
 
   const actions: ActionSheetAction[] = calendars.map((calendar) => ({

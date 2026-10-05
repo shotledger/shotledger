@@ -105,7 +105,6 @@ function calendarSignature(event: CalendarEvent, calendarId: string | null): str
 }
 
 function readStoredEntry(uid: string): StoredCalendarEntry | null {
-  if (!db) return null;
   const raw = getSetting<string | null>(db, calendarEventSettingKey(uid), null);
   if (raw === null) return null;
   try {
@@ -122,7 +121,6 @@ function readStoredEntry(uid: string): StoredCalendarEntry | null {
 }
 
 function writeStoredEntry(uid: string, entry: StoredCalendarEntry): void {
-  if (!db) return;
   setSetting<string>(db, calendarEventSettingKey(uid), JSON.stringify(entry));
 }
 
@@ -135,7 +133,6 @@ export function useWebshooterStarts() {
   const [skipped, setSkipped] = useState(0);
 
   const load = useCallback(async (options: { forceRefresh?: boolean } = {}) => {
-    if (!db) return;
     setLoading(true);
     setError(null);
     setErrorDetail(null);
@@ -331,7 +328,6 @@ export function useWebshooterStarts() {
 
   /** Returns the calendar it landed in, so the confirmation can name it. */
   const addToCalendar = useCallback(async (start: MyStart): Promise<string> => {
-    if (!db) return '';
     const stored = readStoredEntry(start.event.uid);
     const calendarId = getSetting<string | null>(db, CALENDAR_ID_SETTING_KEY, null);
     const upserted = await upsertCalendarEvent(start.event, stored?.eventId ?? null, calendarId);

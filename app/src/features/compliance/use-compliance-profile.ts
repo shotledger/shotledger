@@ -36,18 +36,15 @@ export interface ComplianceProfileState {
 }
 
 function loadSelection(locale: string): ProfileSelection {
-  if (!db) return 'none';
   const stored = getSetting<ProfileSelection | null>(db, SETTINGS_KEYS.complianceProfile, null);
   return stored ?? resolveDefaultProfileSelection(locale);
 }
 
 function loadVariantId(): string | null {
-  if (!db) return null;
   return getSetting<string | null>(db, SETTINGS_KEYS.complianceProfileVariant, null);
 }
 
 function loadOwnershipFacts(): FirearmOwnershipFact[] {
-  if (!db) return [];
   return listFirearmOwnershipFacts(db);
 }
 
@@ -76,12 +73,12 @@ export function useComplianceProfile(): ComplianceProfileState {
 
   const setSelection = useCallback((next: ProfileSelection) => {
     setSelectionState(next);
-    if (db) setSetting<ProfileSelection>(db, SETTINGS_KEYS.complianceProfile, next);
+    setSetting<ProfileSelection>(db, SETTINGS_KEYS.complianceProfile, next);
   }, []);
 
   const setVariantId = useCallback((next: string) => {
     setStoredVariantId(next);
-    if (db) setSetting<string>(db, SETTINGS_KEYS.complianceProfileVariant, next);
+    setSetting<string>(db, SETTINGS_KEYS.complianceProfileVariant, next);
   }, []);
 
   // An unknown or unset stored id resolves to the derived default rather than

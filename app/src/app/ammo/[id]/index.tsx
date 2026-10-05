@@ -29,8 +29,8 @@ export default function AmmoLotDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const lot = db ? getAmmoLot(db, id) : undefined;
-  const usage = db && lot ? getAmmoLotUsage(db, lot.id) : { sessionCount: 0, shotCount: 0 };
+  const lot = getAmmoLot(db, id);
+  const usage = lot ? getAmmoLotUsage(db, lot.id) : { sessionCount: 0, shotCount: 0 };
 
   const [label, setLabel] = useState(lot?.label ?? '');
   const [caliber, setCaliber] = useState<string | null>(lot?.caliber ?? null);
@@ -62,7 +62,7 @@ export default function AmmoLotDetailScreen() {
   const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
   const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
 
-  if (!db || !lot) {
+  if (!lot) {
     return (
       <Screen scroll={false}>
         <ScreenTitle>{t('ammo.editLot')}</ScreenTitle>
@@ -71,7 +71,7 @@ export default function AmmoLotDetailScreen() {
   }
 
   function onSave() {
-    if (!db || !lot) return;
+    if (!lot) return;
     updateAmmoLot(db, lot.id, {
       label: label.trim(),
       caliber,

@@ -15,7 +15,6 @@ import { getSetting, setSetting } from '@/db/queries/settings';
 
 export function isRegulationEnabled(id: string): boolean {
   const fallback = defaultEnabledRegulationIds().includes(id);
-  if (!db) return fallback;
   return getSetting<boolean>(db, regulationEnabledSettingKey(id), fallback);
 }
 
@@ -30,7 +29,7 @@ export function useRegulations() {
   const [enabled, setEnabled] = useState<string[]>(() => enabledRegulationIds());
 
   const toggle = useCallback((id: string, next: boolean) => {
-    if (db) setSetting<boolean>(db, regulationEnabledSettingKey(id), next);
+    setSetting<boolean>(db, regulationEnabledSettingKey(id), next);
     setEnabled(enabledRegulationIds());
   }, []);
 

@@ -56,7 +56,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
     // Nothing to scan: the empty result is derived at the bottom rather
     // than written here — a synchronous setState in an effect body is what
     // the React Compiler rule forbids, and it would cascade a render.
-    if (!db || candidates.length === 0) return;
+    if (candidates.length === 0) return;
 
     runId.current += 1;
     const thisRun = runId.current;
@@ -72,7 +72,7 @@ export function useWebshooterMyCompetitions<T extends { id: number }>(
       setChecked(0);
       try {
         await loadTokenCache();
-        const cardNumber = getSetting<string | null>(db!, 'webshooterCardNumber', null);
+        const cardNumber = getSetting<string | null>(db, 'webshooterCardNumber', null);
         const client = getWebshooterClient();
 
         for (const competition of candidates) {

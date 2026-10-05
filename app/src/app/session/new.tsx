@@ -106,7 +106,7 @@ function firstDisciplineFor(regulationId: string): string | undefined {
  * than guessing.
  */
 function derivedWeaponGroup(firearmId: string | null): string | null {
-  if (!db || firearmId === null) return null;
+  if (firearmId === null) return null;
   const rows = listFirearmGroups(db, firearmId);
   if (rows.length === 1) return rows[0]!.groupId;
   const marked = rows.filter((row) => row.isDefaultForGroup === 1);
@@ -148,11 +148,13 @@ export default function NewSessionScreen() {
   // a session is being created.
   const shooterProfile: ShooterProfile = useMemo(
     () => ({
-      birthYear: db ? getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null) : null,
-      skillClass: db ? getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null) : null,
-      competesInWomensClasses: db
-        ? getSetting<boolean>(db, SETTINGS_KEYS.competesInWomensClasses, false)
-        : false,
+      birthYear: getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null),
+      skillClass: getSetting<SkillClass | null>(db, SETTINGS_KEYS.skillClass, null),
+      competesInWomensClasses: getSetting<boolean>(
+        db,
+        SETTINGS_KEYS.competesInWomensClasses,
+        false,
+      ),
     }),
     [],
   );
@@ -265,11 +267,11 @@ export default function NewSessionScreen() {
   const showClassPicker = allClasses.length > 0 && asksClass;
   const showEventPicker = events.length > 0 && isCompetition;
 
-  const firearms = useMemo(() => (db ? listFirearms(db) : []), []);
-  const ammoLots = useMemo(() => (db ? listAmmoLots(db) : []), []);
-  const knownTags = useMemo(() => (db ? listTags(db).map((tag) => tag.name) : []), []);
+  const firearms = useMemo(() => listFirearms(db), []);
+  const ammoLots = useMemo(() => listAmmoLots(db), []);
+  const knownTags = useMemo(() => listTags(db).map((tag) => tag.name), []);
   const onlineLocationLookup = useMemo(
-    () => (db ? getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false) : false),
+    () => getSetting<boolean>(db, SETTINGS_KEYS.onlineLocationLookup, false),
     [],
   );
 
@@ -319,14 +321,11 @@ export default function NewSessionScreen() {
   function onSelectWeaponGroup(groupId: string) {
     setWeaponGroup(groupId);
     // Default the firearm to the one marked default for this vapengrupp (§4 M3).
-    if (db) {
-      const defaultFirearm = getDefaultFirearmForGroup(db, groupId);
-      if (defaultFirearm) setFirearmId(defaultFirearm.firearmId);
-    }
+    const defaultFirearm = getDefaultFirearmForGroup(db, groupId);
+    if (defaultFirearm) setFirearmId(defaultFirearm.firearmId);
   }
 
   function onCreate() {
-    if (!db) return;
     const session = createSession(db, {
       name: name.trim() || defaultName,
       type,

@@ -22,13 +22,13 @@ export default function TrainingDataSettingsScreen() {
   const { t } = useTranslation();
 
   const [trainingConsent, setTrainingConsent] = useState(() =>
-    db ? getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false) : false,
+    getSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, false),
   );
-  const [sampleCount, setSampleCount] = useState(() => (db ? countTrainingSamples(db) : 0));
+  const [sampleCount, setSampleCount] = useState(() => countTrainingSamples(db));
 
   function onToggleTrainingConsent(next: boolean) {
     setTrainingConsent(next);
-    if (db) setSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, next);
+    setSetting<boolean>(db, SETTINGS_KEYS.photoTrainingConsent, next);
   }
 
   function onDeleteTrainingSamples() {
@@ -41,7 +41,7 @@ export default function TrainingDataSettingsScreen() {
           text: t('settings.trainingDelete'),
           style: 'destructive',
           onPress: () => {
-            if (db) deleteAllTrainingSamples(db);
+            deleteAllTrainingSamples(db);
             setSampleCount(0);
           },
         },

@@ -40,7 +40,7 @@ export default function NewFirearmScreen() {
   const canCreate = make.trim().length > 0 && model.trim().length > 0;
 
   function onCreate() {
-    if (!db || !canCreate) return;
+    if (!canCreate) return;
     const interval = Number(maintenanceIntervalRounds);
     const firearm = createFirearm(db, {
       make: make.trim(),

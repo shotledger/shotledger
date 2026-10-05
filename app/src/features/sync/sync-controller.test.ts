@@ -6,7 +6,7 @@
 // rather than inside the first test's timeout.
 import { nextBackoffMs, type SyncCycleResult, type SyncStatus } from '@shotledger/shared';
 
-const mockClient: { db: object | null } = { db: { tag: 'drizzle-db' } };
+const mockClient: { db: object } = { db: { tag: 'drizzle-db' } };
 jest.mock('@/db/client', () => ({
   get db() {
     return mockClient.db;
@@ -125,17 +125,6 @@ describe('canSync', () => {
     await jest.advanceTimersByTimeAsync(10_000);
 
     expect(mockRunSyncCycle).not.toHaveBeenCalled();
-  });
-
-  it('is false without a database (web), and no cycle runs', async () => {
-    mockClient.db = null;
-    const { controller } = load();
-
-    expect(controller.canSync()).toBe(false);
-    await controller.requestSync();
-
-    expect(mockRunSyncCycle).not.toHaveBeenCalled();
-    expect(mockCreateSyncStore).not.toHaveBeenCalled();
   });
 });
 

@@ -28,14 +28,12 @@ function formatDate(iso: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
 }
 
-/** Builds the shooting-log HTML for the given filters, or `null` with no DB (web preview). */
+/** Builds the shooting-log HTML for the given filters. */
 export function buildShootingLogHtmlForFilters(
   t: TFunction,
   locale: string,
   filters: PdfExportFilters,
-): string | null {
-  if (!db) return null;
-
+): string {
   const allowed = filters.sessionIds ? new Set(filters.sessionIds) : null;
   const sessions = listSessions(db, {
     startedFrom: filters.startedFromIso ?? undefined,
@@ -53,7 +51,7 @@ export function buildShootingLogHtmlForFilters(
     if (!firearmId) return t('compliance.pdfNoFirearm');
     const cached = firearmNames.get(firearmId);
     if (cached !== undefined) return cached;
-    const firearm = getFirearm(db!, firearmId);
+    const firearm = getFirearm(db, firearmId);
     const name = firearm ? `${firearm.make} ${firearm.model}` : t('compliance.pdfNoFirearm');
     firearmNames.set(firearmId, name);
     return name;

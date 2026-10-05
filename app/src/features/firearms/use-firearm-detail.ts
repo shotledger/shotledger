@@ -63,7 +63,6 @@ export function loadFirearmDetail(
   firearmId: string,
   profile: JurisdictionProfile | null = null,
 ): FirearmDetail {
-  if (!db) return EMPTY;
   const firearm = getFirearm(db, firearmId);
   if (!firearm) return EMPTY;
 

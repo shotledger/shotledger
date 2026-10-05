@@ -1163,7 +1163,6 @@
     "neverSynced": "never",
     "lastSynced": "Last synced: {{when}}",
     "pendingChanges": "{{count}} change(s) waiting to upload",
-    "syncUnavailableWeb": "Sync is not available in the web preview.",
     "server": "Server: {{url}}",
     "deleteTitle": "Delete Account",
     "deleteSubtitle": "Removes your account and everything synced to the server",

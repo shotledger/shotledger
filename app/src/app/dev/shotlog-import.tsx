@@ -82,7 +82,7 @@ export default function ShotlogImportScreen() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
-  const firearms = db ? listFirearms(db) : [];
+  const firearms = listFirearms(db);
   const selectedCount = plan?.rows.filter((row) => row.selected).length ?? 0;
 
   function statusLabel(row: ShotlogPlanRow): string {

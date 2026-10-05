@@ -1,9 +1,7 @@
 // Persistence for the timer screens' own options, in the existing key/value
 // `settings` table (same shape as the backup folder URI in
-// features/backup/use-backup-export-import.ts). `db` is null on web, where
-// the values simply stay in component state for the session.
+// features/backup/use-backup-export-import.ts).
 import {
-  DEFAULT_TIMER_SETUP,
   faltCuesFromLegacy,
   normalizeFaltSettings,
   normalizeTimerSetup,
@@ -24,7 +22,6 @@ export function useFaltSettings(
   defaults: FaltTimerSettings,
 ): [FaltTimerSettings, (next: FaltTimerSettings) => void] {
   const [settings, setSettings] = useState<FaltTimerSettings>(() => {
-    if (!db) return defaults;
     const stored = getSetting<Record<string, unknown> | null>(db, SETTINGS_KEYS.faltTimer, null);
     // A row written before the 2026-09-09 rework carries the old
     // competition/training modes; the mode check drops it back to defaults.
@@ -46,7 +43,7 @@ export function useFaltSettings(
   });
 
   const update = useCallback((next: FaltTimerSettings) => {
-    if (db) setSetting(db, SETTINGS_KEYS.faltTimer, next);
+    setSetting(db, SETTINGS_KEYS.faltTimer, next);
     setSettings(next);
   }, []);
 
@@ -61,7 +58,6 @@ export function useFaltSettings(
  */
 export function useTimerSetup(): [TimerSetup, (next: TimerSetup) => void] {
   const [setup, setSetup] = useState<TimerSetup>(() => {
-    if (!db) return DEFAULT_TIMER_SETUP;
     // Spoken prompts lived in their own row before they joined this blob.
     const spokenPrompts = getSetting<unknown>(db, SETTINGS_KEYS.spokenPrompts, true);
     const stored = getSetting<unknown>(db, SETTINGS_KEYS.timerSetup, null);
@@ -72,7 +68,7 @@ export function useTimerSetup(): [TimerSetup, (next: TimerSetup) => void] {
   });
 
   const update = useCallback((next: TimerSetup) => {
-    if (db) setSetting(db, SETTINGS_KEYS.timerSetup, next);
+    setSetting(db, SETTINGS_KEYS.timerSetup, next);
     setSetup(next);
   }, []);
 

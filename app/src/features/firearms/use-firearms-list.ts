@@ -33,9 +33,8 @@ export interface FirearmListRow {
 }
 
 export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
-  if (!db) return [];
   return listFirearms(db).map((firearm) => {
-    const license = latestLicense(db!, firearm.id);
+    const license = latestLicense(db, firearm.id);
     return {
       id: firearm.id,
       make: firearm.make,

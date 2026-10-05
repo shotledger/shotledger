@@ -68,9 +68,7 @@ export function useRangeMatch() {
       if (id !== requestId.current) return;
 
       // The shooter's own spellings win over OSM's; see matchRanges.
-      const known = db
-        ? rankRecentLocations(listLocationUsage(db), '', Number.MAX_SAFE_INTEGER)
-        : [];
+      const known = rankRecentLocations(listLocationUsage(db), '', Number.MAX_SAFE_INTEGER);
       const matches = matchRanges(fix, ranges, known).slice(0, MAX_MATCHES);
       setState(matches.length > 0 ? { status: 'matched', matches } : { status: 'none' });
     } catch {

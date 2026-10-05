@@ -56,13 +56,12 @@ export function getSyncStatus(): SyncStatus {
   return status;
 }
 
-/** Sync is only possible with a session and a real (native) database. */
+/** Sync is only possible with a session. */
 export function canSync(): boolean {
-  return db !== null && getSessionTokenCache() !== null;
+  return getSessionTokenCache() !== null;
 }
 
 export async function refreshPendingCount(): Promise<void> {
-  if (!db) return;
   const pendingCount = await createSyncStore(db).pendingCount();
   emit({ type: 'pendingChanged', pendingCount });
 }
@@ -76,7 +75,6 @@ function cancelRetry(): void {
 
 /** `null` when the cycle failed (or could not start). */
 async function runOnce(): Promise<SyncCycleResult['status'] | null> {
-  if (!db) return null;
   const store = createSyncStore(db);
   emit({ type: 'started' });
   try {

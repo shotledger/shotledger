@@ -47,6 +47,6 @@ export type FlagName = keyof typeof FLAGS;
 export const DEV_TOOLS_ENABLED = FLAGS.devTools.build;
 
 export function isFlagEnabled(name: FlagName): boolean {
-  const overrides = DEV_TOOLS_ENABLED && db ? getFlagOverrides(db) : {};
+  const overrides = DEV_TOOLS_ENABLED ? getFlagOverrides(db) : {};
   return resolveFlag(FLAGS[name], overrides[name], DEV_TOOLS_ENABLED);
 }

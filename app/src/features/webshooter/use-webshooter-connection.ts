@@ -51,7 +51,6 @@ export interface WebshooterConnectionState {
 }
 
 function loadStoredCardNumber(): string | null {
-  if (!db) return null;
   return getSetting<string | null>(db, CARD_NUMBER_SETTING_KEY, null);
 }
 
@@ -93,7 +92,7 @@ export function useWebshooterConnection(): WebshooterConnectionState {
         return { shooting_card_number: user.shooting_card_number };
       },
     });
-    if (db) setSetting<string>(db, CARD_NUMBER_SETTING_KEY, resolved);
+    setSetting<string>(db, CARD_NUMBER_SETTING_KEY, resolved);
     setCardNumber(resolved);
   }, []);
 
@@ -199,7 +198,7 @@ export function useWebshooterConnection(): WebshooterConnectionState {
   const disconnect = useCallback(async () => {
     await clearWebshooterToken();
     setTokenCache(null);
-    if (db) setSetting<string | null>(db, CARD_NUMBER_SETTING_KEY, null);
+    setSetting<string | null>(db, CARD_NUMBER_SETTING_KEY, null);
     setCardNumber(null);
     setConnected(false);
   }, []);

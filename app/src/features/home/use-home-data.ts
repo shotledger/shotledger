@@ -28,8 +28,6 @@ export interface HomeData extends HomeSessionCounts {
 }
 
 function loadHomeData(): HomeData {
-  if (!db) return { shotsLoggedTotal: 0, sessionCount: 0, competitionCount: 0, latestSessions: [] };
-
   const allSessions = listSessions(db);
   const sessions = allSessions.slice(0, 10);
   const allSeries = listAllStatsSeries(db);
@@ -38,7 +36,7 @@ function loadHomeData(): HomeData {
     // A fält session has no series at all, so its row would otherwise read
     // "0p" forever (found on the emulator, #315).
     const isFalt = getDiscipline(session.disciplineId)?.scoring === 'hits';
-    const falt = isFalt ? faltSessionResult(db!, session.id) : null;
+    const falt = isFalt ? faltSessionResult(db, session.id) : null;
     return buildHomeSessionRow(
       session,
       allSeries.filter((series) => series.sessionId === session.id),

@@ -160,7 +160,7 @@ export default function FirearmDetailScreen() {
   const [sightNotes, setSightNotes] = useState('');
 
   const { firearm } = detail;
-  if (!db || !firearm) {
+  if (!firearm) {
     return (
       <Screen scroll={false}>
         <ScreenTitle>{t('firearms.detailTitle')}</ScreenTitle>
@@ -186,7 +186,7 @@ export default function FirearmDetailScreen() {
     editingSightId != null && currentSightSetting?.id === editingSightId;
 
   function onAddCaliber() {
-    if (!db || !newCaliber) return;
+    if (!newCaliber) return;
     addFirearmCaliber(db, { firearmId: firearm!.id, caliber: newCaliber });
     setNewCaliber(null);
     setShowAddCaliber(false);
@@ -194,13 +194,12 @@ export default function FirearmDetailScreen() {
   }
 
   function onRemoveCaliber(id: string) {
-    if (!db) return;
     softDeleteFirearmCaliber(db, id);
     refresh();
   }
 
   function onAddGroup() {
-    if (!db || !newGroupId) return;
+    if (!newGroupId) return;
     addFirearmGroup(db, {
       firearmId: firearm!.id,
       groupId: newGroupId,
@@ -213,7 +212,6 @@ export default function FirearmDetailScreen() {
   }
 
   function onSetDefaultGroup(groupRowId: string) {
-    if (!db) return;
     setDefaultFirearmGroup(db, groupRowId);
     refresh();
   }
@@ -264,7 +262,6 @@ export default function FirearmDetailScreen() {
   }
 
   async function onAddLicense() {
-    if (!db) return;
     if (validUntilInvalid) return setLicenseSaveAttempted(true);
     // The scan only ever fed the form; the image itself is not kept.
     const uri = scannedImageUri;
@@ -317,7 +314,7 @@ export default function FirearmDetailScreen() {
   }
 
   function onLogEvent() {
-    if (!db || !eventKind.trim()) return;
+    if (!eventKind.trim()) return;
     logMaintenanceEvent(db, {
       firearmId: firearm!.id,
       performedAt: eventPerformedAt,
@@ -332,7 +329,6 @@ export default function FirearmDetailScreen() {
   }
 
   function onAdjust() {
-    if (!db) return;
     const delta = Number(adjustDelta);
     if (!Number.isFinite(delta) || !adjustReason.trim()) return;
     adjustFirearmRoundCount(db, firearm!.id, delta, adjustReason.trim());
@@ -343,7 +339,6 @@ export default function FirearmDetailScreen() {
   }
 
   function onSaveInterval() {
-    if (!db) return;
     const previous = firearm!.roundsSinceMaintenance;
     const interval = intervalInput?.trim() ? Number(intervalInput) : null;
     updateFirearm(db, firearm!.id, {
@@ -382,7 +377,7 @@ export default function FirearmDetailScreen() {
   }
 
   function onSaveSightSetting() {
-    if (!db || !sightLabel.trim()) return;
+    if (!sightLabel.trim()) return;
     const elevationClicks = sightClicksForSave(sightElevation);
     const windageClicks = sightClicksForSave(sightWindage);
     const notes = sightNotes.trim() || null;
@@ -407,14 +402,14 @@ export default function FirearmDetailScreen() {
   }
 
   function onSetCurrentSightSetting() {
-    if (!db || !editingSightId) return;
+    if (!editingSightId) return;
     setActiveSightSetting(db, firearm!.id, editingSightId);
     closeSightForm();
     refresh();
   }
 
   function onDeleteSightSetting() {
-    if (!db || !editingSightId) return;
+    if (!editingSightId) return;
     softDeleteSightSetting(db, editingSightId);
     closeSightForm();
     refresh();

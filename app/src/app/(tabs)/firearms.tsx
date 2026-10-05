@@ -42,9 +42,7 @@ export default function FirearmsScreen() {
   const router = useRouter();
   const [section, setSection] = useState<Section>('firearms');
   const { rows: firearmRows } = useFirearmsList();
-  const ammoRows = db
-    ? listAmmoLots(db).map((lot) => ({ lot, usage: getAmmoLotUsage(db!, lot.id) }))
-    : [];
+  const ammoRows = listAmmoLots(db).map((lot) => ({ lot, usage: getAmmoLotUsage(db, lot.id) }));
 
   return (
     <Screen

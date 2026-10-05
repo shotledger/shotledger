@@ -69,7 +69,7 @@ export default function EditSessionScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const session = db ? getSession(db, id) : undefined;
+  const session = getSession(db, id);
 
   const [name, setName] = useState(session?.name ?? '');
   const [startedAt, setStartedAt] = useState(session?.startedAt ?? new Date().toISOString());
@@ -96,10 +96,10 @@ export default function EditSessionScreen() {
   const [firearmId, setFirearmId] = useState<string | null>(session?.firearmId ?? null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(session?.ammoLotId ?? null);
   const [programId, setProgramId] = useState(session?.programId ?? FREE_FORMAT);
-  const [tags, setTags] = useState(() => (db ? listTagsForSession(db, id) : []));
+  const [tags, setTags] = useState(() => listTagsForSession(db, id));
   const [newTag, setNewTag] = useState('');
 
-  if (!db || !session) {
+  if (!session) {
     return (
       <Screen scroll={false}>
         <ScreenTitle>{t('session.editTitle')}</ScreenTitle>
@@ -153,7 +153,6 @@ export default function EditSessionScreen() {
     values.map((option) => ({ ...option, testID: `${prefix}-${option.value}` }));
 
   function onAddTag() {
-    if (!db) return;
     const trimmed = newTag.trim();
     if (!trimmed) return;
     const tag = getOrCreateTag(db, trimmed);
@@ -163,13 +162,12 @@ export default function EditSessionScreen() {
   }
 
   function onRemoveTag(tagId: string) {
-    if (!db) return;
     removeSessionTag(db, id, tagId);
     setTags(listTagsForSession(db, id));
   }
 
   function onSave() {
-    if (!db || !session) return;
+    if (!session) return;
     updateSession(db, session.id, {
       name: name.trim() || session.name,
       startedAt,

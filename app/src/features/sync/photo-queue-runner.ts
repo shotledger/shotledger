@@ -77,7 +77,7 @@ async function runUpload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
   // Swap the device-local path for the device-independent marker. This is a
   // normal local write, so the outbox trigger queues it and the other device
   // learns the photo exists.
-  if (db) updateSeries(db, entry.photoId, { photoUri: toSyncPhotoUri(entry.photoId) });
+  updateSeries(db, entry.photoId, { photoUri: toSyncPhotoUri(entry.photoId) });
   return { type: 'succeeded' };
 }
 
@@ -89,7 +89,7 @@ async function runDownload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
 
 /** Fire-and-forget; never throws, so a photo failure can never fail a sync cycle. */
 export async function runPhotoQueue(): Promise<void> {
-  if (!db || getSessionTokenCache() === null) return;
+  if (getSessionTokenCache() === null) return;
 
   try {
     reconcilePhotoQueue(db, hasLocalSyncPhoto);

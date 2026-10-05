@@ -24,14 +24,14 @@ function xCountOf(shots: readonly { isInnerTen: boolean }[]): number {
   return shots.filter((shot) => shot.isInnerTen).length;
 }
 
-/** Builds the session card model, or `null` with no DB (web preview) or unknown session. */
+/** Builds the session card model, or `null` for an unknown session. */
 export function buildSessionShareCardModel(
   t: TFunction,
   locale: string,
   detail: SessionDetail,
   note: string,
 ): SessionShareCardModel | null {
-  if (!db || !detail.session) return null;
+  if (!detail.session) return null;
   const session = detail.session;
   const firearm = session.firearmId ? getFirearm(db, session.firearmId) : null;
 

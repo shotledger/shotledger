@@ -24,7 +24,7 @@ export default function EditFirearmScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const firearm = db ? getFirearm(db, id) : undefined;
+  const firearm = getFirearm(db, id);
 
   const [make, setMake] = useState(firearm?.make ?? '');
   const [model, setModel] = useState(firearm?.model ?? '');
@@ -38,7 +38,7 @@ export default function EditFirearmScreen() {
   const [loadSystem, setLoadSystem] = useState<string | null>(firearm?.loadSystem ?? null);
   const [notes, setNotes] = useState(firearm?.notes ?? '');
 
-  if (!db || !firearm) {
+  if (!firearm) {
     return (
       <Screen scroll={false}>
         <ScreenTitle>{t('firearms.editFirearm')}</ScreenTitle>
@@ -47,7 +47,7 @@ export default function EditFirearmScreen() {
   }
 
   function onSave() {
-    if (!db || !firearm) return;
+    if (!firearm) return;
     updateFirearm(db, firearm.id, {
       make: make.trim(),
       model: model.trim(),

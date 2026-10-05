@@ -108,7 +108,6 @@ const EMPTY: SessionDetail = {
 };
 
 export function loadSessionDetail(sessionId: string): SessionDetail {
-  if (!db) return EMPTY;
   const session = getSession(db, sessionId);
   if (!session) return EMPTY;
 

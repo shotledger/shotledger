@@ -71,7 +71,7 @@ const EMPTY: SessionStats = {
 };
 
 export function loadSessionStats(sessionId: string): SessionStats {
-  if (!db || !sessionId) return EMPTY;
+  if (!sessionId) return EMPTY;
 
   const all = listAllStatsSeries(db);
   const sessionSeries = all.filter((series) => series.sessionId === sessionId);

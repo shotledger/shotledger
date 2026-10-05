@@ -49,7 +49,7 @@ export default function WebshooterImportReviewScreen() {
   const id = Number(competitionId);
   const { candidates, loading, error, load, confirmImport } = useWebshooterReview(id);
   const [applySighterFirearmId, setApplySighterFirearmId] = useState<string | null>(null);
-  const firearms = db ? listFirearms(db) : [];
+  const firearms = listFirearms(db);
 
   useEffect(() => {
     void load();

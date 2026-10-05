@@ -35,17 +35,7 @@ export interface AmmoLotComparisonData {
   isImbalanced: boolean;
 }
 
-const EMPTY: AmmoLotComparisonData = {
-  hasAnyData: false,
-  rows: [],
-  headToHead: null,
-  sampleImbalance: null,
-  isImbalanced: false,
-};
-
 function load(): AmmoLotComparisonData {
-  if (!db) return EMPTY;
-
   const comparison: AmmoLotComparison = compareAmmoLots(
     listAllStatsSeries(db),
     listGroupSamplesByAmmoLot(db),

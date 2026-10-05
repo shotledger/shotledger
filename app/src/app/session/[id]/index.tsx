@@ -174,7 +174,6 @@ export default function SessionDetailScreen() {
    * counter moves once per edit, by the delta, rather than on every keystroke.
    */
   function onCommitExtraRounds() {
-    if (!db) return;
     const trimmed = extraRounds.trim();
     const parsed = trimmed === '' ? null : Number(trimmed);
     if (parsed !== null && (!Number.isInteger(parsed) || parsed < 0)) {
@@ -199,7 +198,6 @@ export default function SessionDetailScreen() {
           text: t('session.deleteSeries'),
           style: 'destructive',
           onPress: () => {
-            if (!db) return;
             deleteSeriesAndShots(db, row.id);
             refresh();
           },
@@ -272,7 +270,7 @@ export default function SessionDetailScreen() {
     const offset = dragOffset;
     setDragging(null);
     setDragOffset(0);
-    if (!held || !db) return;
+    if (!held) return;
 
     const section = sectionOf(held.isFinal);
     const fromIndex = section.findIndex((row) => row.id === held.id);

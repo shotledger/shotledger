@@ -62,19 +62,18 @@ export function useBackupExportImport() {
   const [status, setStatus] = useState<BackupStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() =>
-    db ? getSetting<string | null>(db, LAST_BACKUP_SETTING_KEY, null) : null,
+    getSetting<string | null>(db, LAST_BACKUP_SETTING_KEY, null),
   );
   const [folderUri, setFolderUri] = useState<string | null>(() =>
-    db ? getSetting<string | null>(db, FOLDER_SETTING_KEY, null) : null,
+    getSetting<string | null>(db, FOLDER_SETTING_KEY, null),
   );
 
   function persistFolder(next: string | null) {
-    if (db) setSetting(db, FOLDER_SETTING_KEY, next);
+    setSetting(db, FOLDER_SETTING_KEY, next);
     setFolderUri(next);
   }
 
   function recordBackupTimestamp() {
-    if (!db) return;
     const now = new Date().toISOString();
     setSetting(db, LAST_BACKUP_SETTING_KEY, now);
     setLastBackupAt(now);
@@ -82,7 +81,7 @@ export function useBackupExportImport() {
 
   /** Builds and delivers a bundle. */
   async function exportBundle(options: BackupExportOptions): Promise<void> {
-    if (!db || !rawDb) {
+    if (!rawDb) {
       setStatus({ kind: 'export-failed' });
       return;
     }

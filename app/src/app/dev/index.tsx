@@ -28,34 +28,30 @@ const FLAG_NAMES = Object.keys(FLAGS) as FlagName[];
 export default function DevScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [sessions, setSessions] = useState<SessionRow[]>(() => (db ? listSessions(db) : []));
-  const [drift, setDrift] = useState(() => (db ? firearmCounterDrift(db) : []));
+  const [sessions, setSessions] = useState<SessionRow[]>(() => listSessions(db));
+  const [drift, setDrift] = useState(() => firearmCounterDrift(db));
 
   const [flags, setFlags] = useState(() =>
     Object.fromEntries(FLAG_NAMES.map((name) => [name, isFlagEnabled(name)])),
   );
 
   const onToggleFlag = useCallback((name: FlagName, next: boolean) => {
-    if (!db) return;
     // Back at the build value means no override, so a later build change wins.
     setFlagOverride(db, name, next === FLAGS[name].build ? null : next);
     setFlags((current) => ({ ...current, [name]: next }));
   }, []);
 
   const refresh = useCallback(() => {
-    if (!db) return;
     setSessions(listSessions(db));
     setDrift(firearmCounterDrift(db));
   }, []);
 
   const onLoadDemoData = useCallback(() => {
-    if (!db) return;
     seedDemoData(db);
     refresh();
   }, [refresh]);
 
   const onWipeData = useCallback(() => {
-    if (!db) return;
     wipeDemoData(db);
     refresh();
   }, [refresh]);

@@ -44,7 +44,7 @@ export default function PhotosScreen() {
 
   // Read once: the gallery is a snapshot, and a photo cannot appear while it
   // is open without leaving the screen first.
-  const all = useMemo<GalleryPhoto[]>(() => (db ? listSeriesPhotos(db) : []), []);
+  const all = useMemo<GalleryPhoto[]>(() => listSeriesPhotos(db), []);
   // Firearm ids are what the rows carry; the chips have to say make + model.
   const firearmNames = useMemo(() => {
     const names: Record<string, string> = {};
