@@ -96,12 +96,14 @@ CV_GUARD_SETS=sets.tsv CV_GUARD_OUT=guards.jsonl [CV_GUARD_SHARD=i/n] [CV_GUARD_
 The hole proposals run on the rectified canvas the app hands them.
 `holes-prep.tool.ts` writes it per photo as a PGM plus a JSON sidecar
 (centre, scale, face), from the disc lock or, with `CV_PREP_LOCK=closeup`,
-the close-up lock. `score-holes.tool.ts` measures a run against hand marks
+the close-up lock, or with `CV_PREP_LOCK=milsnabb` the milsnabb lock, whose
+sidecar carries the milsnabb face (the app does not offer hole suggestions on
+that face, so this measures what they would do). `score-holes.tool.ts` measures a run against hand marks
 (below) with the shipped constants, on the photos they were fitted on;
 `CV_SCORE_CSV` also writes the labelled candidates for the proposal fit.
 
 ```bash
-CV_PREP_IN=<photos> CV_PREP_OUT=<canvas-dir> [CV_PREP_LOCK=closeup] [CV_PREP_ONLY=names.txt] \
+CV_PREP_IN=<photos> CV_PREP_OUT=<canvas-dir> [CV_PREP_LOCK=closeup|milsnabb] [CV_PREP_ONLY=names.txt] \
     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts holes-prep
 CV_EVAL_IN=<canvas-dir> CV_EVAL_OUT=holes.jsonl \
     pnpm exec vitest run -c tools/cv/vitest.config.ts holes.eval
@@ -120,12 +122,13 @@ a labelled grid (a 50 px grid, every 100 px intersection labelled in tens of
 px). Read the hole centres off by eye into a marks file, one line per photo:
 `<name> x,y x,y ...`. The canvas is the disc lock's 1040 px square round the
 black zone (`label-canvas.ts`), or with `CV_MARK_LOCK=closeup` the close-up
-lock's canvas, cropped to what the photo shows. A JSON sidecar beside each PNG
+lock's canvas, cropped to what the photo shows, or with `CV_MARK_LOCK=milsnabb`
+the same from the milsnabb lock. A JSON sidecar beside each PNG
 holds the image px -> label px matrix, which carries a mark to another canvas
 through the photo.
 
 ```bash
-CV_MARK_IN=<photos> CV_MARK_OUT=<grids> [CV_MARK_ONLY=names.txt] [CV_MARK_LOCK=closeup] \
+CV_MARK_IN=<photos> CV_MARK_OUT=<grids> [CV_MARK_ONLY=names.txt] [CV_MARK_LOCK=closeup|milsnabb] \
     pnpm exec vitest run --silent=false -c tools/cv/vitest.config.ts mark-holes
 ```
 

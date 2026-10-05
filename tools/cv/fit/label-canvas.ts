@@ -1,23 +1,31 @@
 // The canvas hole marks are read off and scored on: a photo decoded by
-// ImageMagick, locked by the app's disc lock (disc-lock.ts on OpenCV.js) or
-// close-up lock (closeup-lock.ts), and warped in colour.
+// ImageMagick, locked by the app's disc lock (disc-lock.ts on OpenCV.js),
+// close-up lock (closeup-lock.ts) or milsnabb lock (milsnabb-lock.ts), and
+// warped in colour.
 //  * disc: the 1040 px square round the black zone (2.6 black radii at
 //    4 px/mm), which is the app's 2100 px canvas less 530 px a side.
 //    Unrefined: the refinement moves the centre and scale the scorer reads,
 //    not the pixels.
-//  * closeup: the 2100 px canvas cropped to what the photo covers, labelled
-//    in full-canvas px.
+//  * closeup, milsnabb: the 2100 px canvas cropped to what the photo covers,
+//    labelled in full-canvas px.
 // The grey the locks see is OpenCV's RGB->grey, as on the device.
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 
 import { buildRectification } from '../../../shared/src/target-scoring/geometry';
-import { SPSF_PISTOL_25M_PRECISION } from '../../../shared/src/target-scoring/targets';
+import {
+  SPSF_PISTOL_25M_PRECISION,
+  SPSF_SNABBSKJUTNING_25M,
+} from '../../../shared/src/target-scoring/targets';
 import {
   closeupWorkImage,
   lockCloseupWork,
   passesCloseupGate,
 } from '../../../app/src/features/photo-scoring/closeup-lock';
+import {
+  lockMilsnabbWork,
+  passesMilsnabbGate,
+} from '../../../app/src/features/photo-scoring/milsnabb-lock';
 import {
   CANVAS_PX_PER_MM,
   canvasHomography,
@@ -35,7 +43,23 @@ export const CANVAS_PX = Math.round(
 /** The disc canvas: 2.6 black-zone radii a side. */
 export const SPIKE_CANVAS_PX = Math.round(2.6 * (FACE.referenceDiameterMm / 2) * CANVAS_PX_PER_MM);
 
-export type Lock = 'disc' | 'closeup';
+export const LOCKS = ['disc', 'closeup', 'milsnabb'] as const;
+export type Lock = (typeof LOCKS)[number];
+
+export function parseLock(value: string, variable: string): Lock {
+  const lock = LOCKS.find((l) => l === value);
+  if (!lock) throw new Error(`${variable}=${value} (one of ${LOCKS.join(', ')})`);
+  return lock;
+}
+
+/** What the hole proposals are told about the face a lock belongs to. */
+export function faceFor(lock: Lock) {
+  const face = lock === 'milsnabb' ? SPSF_SNABBSKJUTNING_25M : FACE;
+  return {
+    blackRadiusMm: face.referenceDiameterMm / 2,
+    ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
+  };
+}
 
 export const expandHome = (p: string) => (p.startsWith('~/') ? homedir() + p.slice(1) : p);
 
@@ -95,26 +119,43 @@ export function labelCanvas(cv: Cv, rgb: any, gray: Uint8Array, lock: Lock): Lab
     return out;
   };
   try {
-    if (lock === 'closeup') {
-      const closeup = lockCloseupWork(closeupWorkImage({ data: gray, width, height }));
-      if (!passesCloseupGate(closeup)) return 'close-up lock failed its gate; skipped';
+    if (lock === 'closeup' || lock === 'milsnabb') {
+      const work = closeupWorkImage({ data: gray, width, height });
+      let toMm: readonly number[];
+      let note: string;
+      if (lock === 'closeup') {
+        const closeup = lockCloseupWork(work);
+        if (!passesCloseupGate(closeup)) return 'close-up lock failed its gate; skipped';
+        toMm = closeup.toMm;
+        note = 'close-up lock, 4 px/mm';
+      } else {
+        // both faces are 500 mm across, so the precision canvas size fits
+        const milsnabb = lockMilsnabbWork(work);
+        if (!passesMilsnabbGate(milsnabb)) return 'milsnabb lock failed its gate; skipped';
+        toMm = milsnabb.toMm;
+        note = 'milsnabb lock, 4 px/mm';
+      }
       const k = CANVAS_PX_PER_MM;
       const half = CANVAS_PX / 2;
-      const h = mul3([k, 0, half, 0, k, half, 0, 0, 1], closeup.toMm);
+      const h = mul3([k, 0, half, 0, k, half, 0, 0, 1], toMm);
       const big = keep(warp(rgb, h, CANVAS_PX, CANVAS_PX, cv.INTER_CUBIC, white));
       // outside the photo is white paper to the detector; crop to what was photographed
       const ones = keep(new cv.Mat(height, width, cv.CV_8UC1, new cv.Scalar(255)));
       const seen = keep(warp(ones, h, CANVAS_PX, CANVAS_PX, cv.INTER_NEAREST, new cv.Scalar(0)));
       const r = cv.boundingRect(seen);
+      // copyTo owns its rows; OpenCV.js's roi().clone() keeps the source stride
+      const view = keep(big.roi(r));
+      const cropped = new cv.Mat();
+      view.copyTo(cropped);
       return {
-        rgb: big.roi(r).clone(),
+        rgb: cropped,
         x0: r.x,
         y0: r.y,
         imageToLabel: h,
         centerXPx: half,
         centerYPx: half,
         pxPerMm: k,
-        note: 'close-up lock, 4 px/mm',
+        note,
       };
     }
     const ops = openCvJsDiscOps(cv);
