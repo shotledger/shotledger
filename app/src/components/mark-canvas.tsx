@@ -13,15 +13,14 @@
 // to the gesture events. `readOnly` keeps zoom and pan and drops the rest.
 import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { type LayoutChangeEvent, Pressable, StyleSheet, View, type ViewProps } from 'react-native';
+import { type LayoutChangeEvent, StyleSheet, View, type ViewProps } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { Point, TargetFaceDefinition } from '@shotledger/shared';
 
-import { ThemedText } from '@/components/themed-text';
+import { ZoomControls } from '@/components/zoom-controls';
 import type { Mark, MarkScore } from '@/features/photo-scoring/marks';
 import type { TargetTransform } from '@/features/photo-scoring/transform';
 import {
@@ -43,7 +42,6 @@ import {
   zoomAt,
   zoomToPoint,
 } from '@/features/photo-scoring/viewport';
-import { Radius, Spacing } from '@/theme/tokens';
 
 const RING_SAMPLES = 72;
 const RING_COLOR = '#22d3ee';
@@ -132,7 +130,6 @@ export function MarkCanvas({
   style,
   ...rest
 }: MarkCanvasProps) {
-  const { t } = useTranslation();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const frame = useMemo(
     () => fitFrame(size.width, size.height, imageWidth, imageHeight),
@@ -529,67 +526,13 @@ export function MarkCanvas({
         </View>
       </GestureDetector>
 
-      {/* One opaque pill, so the buttons look the same over the photo and
-          over the letterbox bars. */}
-      <View style={styles.zoomButtons}>
-        <ZoomButton
-          label="−"
-          accessibilityLabel={t('photoScoring.zoomOut')}
-          onPress={() => zoomBy(1 / ZOOM_STEP)}
-          testID="canvas-zoom-out"
-        />
-        <View style={styles.zoomDivider} />
-        <ZoomButton
-          label="+"
-          accessibilityLabel={t('photoScoring.zoomIn')}
-          onPress={() => zoomBy(ZOOM_STEP)}
-          testID="canvas-zoom-in"
-        />
-        {/* Always present, so the buttons never shift under the finger. */}
-        <View style={styles.zoomDivider} />
-        <ZoomButton
-          label="⤢"
-          accessibilityLabel={t('photoScoring.zoomFit')}
-          onPress={() => animateTo(clampView(frame, IDENTITY_VIEW))}
-          disabled={zoomLevel <= MIN_ZOOM + 0.01}
-          testID="canvas-zoom-fit"
-        />
-      </View>
+      <ZoomControls
+        onZoomOut={() => zoomBy(1 / ZOOM_STEP)}
+        onZoomIn={() => zoomBy(ZOOM_STEP)}
+        onFit={() => animateTo(clampView(frame, IDENTITY_VIEW))}
+        fitDisabled={zoomLevel <= MIN_ZOOM + 0.01}
+      />
     </View>
-  );
-}
-
-function ZoomButton({
-  label,
-  accessibilityLabel,
-  onPress,
-  disabled = false,
-  testID,
-}: {
-  label: string;
-  accessibilityLabel: string;
-  onPress: () => void;
-  disabled?: boolean;
-  testID: string;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled }}
-      onPress={onPress}
-      disabled={disabled}
-      testID={testID}
-      hitSlop={6}
-      style={({ pressed }) => [styles.zoomButton, pressed && styles.zoomButtonPressed]}
-    >
-      <ThemedText
-        type="smallBold"
-        style={[styles.zoomButtonLabel, disabled && styles.zoomButtonLabelDisabled]}
-      >
-        {label}
-      </ThemedText>
-    </Pressable>
   );
 }
 
@@ -630,39 +573,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderWidth: 1.5,
     borderColor: CROSSHAIR_COLOR,
-  },
-  zoomButtons: {
-    position: 'absolute',
-    top: Spacing.two,
-    right: Spacing.two,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: Radius.medium,
-    backgroundColor: '#1c1c1e',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    overflow: 'hidden',
-  },
-  zoomButton: {
-    width: 44,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  zoomButtonPressed: {
-    backgroundColor: '#3a3a3c',
-  },
-  zoomDivider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: 'stretch',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  zoomButtonLabel: {
-    color: '#ffffff',
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  zoomButtonLabelDisabled: {
-    opacity: 0.35,
   },
 });

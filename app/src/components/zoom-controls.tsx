@@ -1,5 +1,5 @@
-// The − / + / fit pill over a zoomable canvas, so every canvas zooms the same
-// way (#608). Mark-canvas still carries its own copy until it moves to this.
+// The − / + / fit pill over a zoomable canvas: MarkCanvas and ZoomableView
+// both use it, so every canvas zooms the same way (#608).
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
