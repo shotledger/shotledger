@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ShotLedger",
-    "slug": "app",
+    "slug": "shotledger",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "app",
