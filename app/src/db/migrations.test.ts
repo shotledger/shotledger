@@ -10,6 +10,7 @@
 import Database from 'better-sqlite3';
 import { getTableColumns, getTableName, is } from 'drizzle-orm';
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,6 +60,13 @@ function freshDatabase(): Database.Database {
 }
 
 describe('the migration chain is the whole schema', () => {
+  it("names the baseline's hash in migrations.js, so Metro cannot serve a stale one (#610)", () => {
+    const sql = fs.readFileSync(path.join(migrationsDir, '0000_baseline.sql'));
+    const hash = createHash('sha256').update(sql).digest('hex');
+    const barrel = fs.readFileSync(path.join(migrationsDir, 'migrations.js'), 'utf-8');
+    expect(barrel).toContain(`// baseline sha256: ${hash}`);
+  });
+
   it('is exactly one baseline, never a chain', () => {
     // A second migration here means someone appended instead of regenerating.
     // That is the defect: this repo has no installed base to migrate, and a
