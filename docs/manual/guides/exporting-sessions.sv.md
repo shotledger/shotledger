@@ -84,7 +84,7 @@ Ett pass, en räknande serie om tre skott:
   "format": "shotledger.sessions",
   "formatVersion": 1,
   "generatedAt": "2026-09-12T18:30:00.000Z",
-  "app": { "name": "ShotLedger", "version": "1.0.0" },
+  "app": { "name": "ShotLedger", "version": "0.1.0" },
   "sessions": [
     {
       "id": "0d8f1c2e-4a7b-4c1d-9f3e-2b6a5c9d8e70",
