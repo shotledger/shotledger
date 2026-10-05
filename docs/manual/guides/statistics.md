@@ -31,6 +31,9 @@ any open picker closed.
 
 ## The report
 
+Below the filter, **In This Report** lists the sections this report holds,
+each with the question it answers. Tap one to scroll straight to it.
+
 - **Records** inside the filtered set: best session score, most inner tens, most
   tens. Tap one to open the session it came from.
 - **Totals**, both as sums (all the points, all the shots) and as averages per
