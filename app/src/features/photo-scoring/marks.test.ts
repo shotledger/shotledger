@@ -127,8 +127,10 @@ describe('markReducer', () => {
 });
 
 describe('suggest', () => {
-  const suggest = (state: MarkState, marks: { id: string; xMm: number; yMm: number }[]) =>
-    markReducer(state, { type: 'suggest', marks });
+  const suggest = (
+    state: MarkState,
+    marks: { id: string; xMm: number; yMm: number; filled?: boolean }[],
+  ) => markReducer(state, { type: 'suggest', marks });
 
   it('places the proposals as dashed, unselected marks at the current caliber', () => {
     const state = suggest(start(), [
@@ -140,6 +142,18 @@ describe('suggest', () => {
       ['p2', true, 5.6],
     ]);
     expect(state.selectedId).toBeNull();
+  });
+
+  it('remembers which proposals only filled the series, and a tap is never one', () => {
+    const state = suggest(tap(start(), 'a', 50, 50), [
+      { id: 'p1', xMm: 10, yMm: 0 },
+      { id: 'p2', xMm: -20, yMm: 30, filled: true },
+    ]);
+    expect(state.marks.map((m) => [m.id, m.suggested, m.filled])).toEqual([
+      ['a', false, false],
+      ['p1', true, false],
+      ['p2', true, true],
+    ]);
   });
 
   it('skips a proposal within one hole diameter of a mark the shooter placed', () => {
@@ -172,6 +186,12 @@ describe('suggest', () => {
     const moved = markReducer(state, { type: 'move', id: 'p1', xMm: 40, yMm: 0 });
     expect(moved.marks[0]).toMatchObject({ suggested: true, moved: true, xMm: 40 });
   });
+
+  it('a filled mark keeps its flag when moved', () => {
+    const state = suggest(start(), [{ id: 'p1', xMm: 0, yMm: 0, filled: true }]);
+    const moved = markReducer(state, { type: 'move', id: 'p1', xMm: 40, yMm: 0 });
+    expect(moved.marks[0]).toMatchObject({ suggested: true, filled: true, moved: true });
+  });
 });
 
 describe('undo', () => {
@@ -203,6 +223,7 @@ describe('undo', () => {
       yMm: 0,
       moved: false,
       suggested: false,
+      filled: false,
       calledRingLabel: '10',
     });
   });
@@ -269,6 +290,7 @@ const mark = (patch: Partial<Mark>): Mark => ({
   calledRingLabel: null,
   moved: false,
   suggested: false,
+  filled: false,
   ...patch,
 });
 

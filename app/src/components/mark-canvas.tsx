@@ -78,6 +78,8 @@ export interface MarkCanvasProps extends Omit<ViewProps, 'onLayout'> {
   /** Per-mark scores, same order as `marks`; drives the edge-call ring. */
   scores?: readonly MarkScore[];
   selectedId?: string | null;
+  /** Draw the suggestions that only filled the series fainter than the rest. */
+  fadeFilled?: boolean;
   /** Zoom and pan only: no adding, selecting or moving. */
   readOnly?: boolean;
   /** Target-mm of a tap on empty target. */
@@ -120,6 +122,7 @@ export function MarkCanvas({
   marks = [],
   scores = [],
   selectedId = null,
+  fadeFilled = false,
   readOnly = false,
   onTapEmpty,
   onTapMark,
@@ -453,6 +456,7 @@ export function MarkCanvas({
                   const center = centers[index] as Point;
                   const isSelected = mark.id === selectedId;
                   const isEdgeCall = scores[index]?.computed.edgeCall ?? false;
+                  const faint = fadeFilled && mark.filled && !isSelected;
                   return (
                     <Circle
                       key={mark.id}
@@ -464,12 +468,18 @@ export function MarkCanvas({
                       }
                       // A suggestion is also dashed, so it still reads as one
                       // to a shooter who cannot tell green from red.
-                      fillOpacity={0.55}
+                      fillOpacity={faint ? 0.25 : 0.55}
                       // An edge call is ringed, not recolored: the fill says
                       // selected or not, the ring says "needs your call".
                       stroke={isEdgeCall ? EDGE_CALL_COLOR : '#ffffff'}
                       strokeWidth={(isEdgeCall ? 2 : 1) * stroke}
-                      strokeDasharray={mark.suggested ? [3 * stroke, 2 * stroke] : undefined}
+                      strokeDasharray={
+                        faint
+                          ? [1.5 * stroke, 3 * stroke]
+                          : mark.suggested
+                            ? [3 * stroke, 2 * stroke]
+                            : undefined
+                      }
                     />
                   );
                 })}

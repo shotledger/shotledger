@@ -768,7 +768,11 @@
     "driftSubtitle": "Rounds in total-only series that each counter never got. Correct a counter with Adjust Round Count.",
     "driftRounds": "{{count}} rounds",
     "flagDevToolsTitle": "Developer Tools",
-    "flagDevToolsSubtitle": "Demo data, the wipe button and this screen. Set at build time only."
+    "flagDevToolsSubtitle": "Demo data, the wipe button and this screen. Set at build time only.",
+    "flagFillToSeriesTitle": "Fill Suggestions To Series Length",
+    "flagFillToSeriesSubtitle": "When fewer holes are suggested than the series has shots, add the next-best candidates up to that number.",
+    "flagFilledStyleTitle": "Fainter Filled-In Suggestions",
+    "flagFilledStyleSubtitle": "Draw the filled-in suggestions fainter than the confident ones. Needs the fill option."
   },
   "competitionLevel": {
     "forening": "Club Competition",
