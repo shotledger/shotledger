@@ -9,6 +9,8 @@ export interface FaltResultSummary {
   hits: number;
   figuresHit: number;
   poangfaltPoints: number;
+  /** The round's figures, when every scoring station recorded a count (#607). */
+  figureCount?: number | null;
 }
 
 /** A session's stored mode; `null` (not asked, or a pre-mode session) is plain fält. */
@@ -26,14 +28,22 @@ export function faltSummaryOf(
     hits: result.hits,
     figuresHit: result.figuresHit,
     poangfaltPoints: result.poangfaltPoints,
+    figureCount: result.figureCount ?? null,
   };
 }
 
-/** "47 points", or "26 hits in 22 figures". */
+/** "47 points", "26 hits in 22 figures", or "26 hits in 22 of 24 figures". */
 export function formatFaltResult(t: TFunction, result: FaltResultSummary): string {
-  return result.mode === 'poangfalt'
-    ? t('session.poangfaltTotal', { points: result.poangfaltPoints })
-    : t('session.faltTotal', { hits: result.hits, figures: result.figuresHit });
+  if (result.mode === 'poangfalt') {
+    return t('session.poangfaltTotal', { points: result.poangfaltPoints });
+  }
+  return result.figureCount == null
+    ? t('session.faltTotal', { hits: result.hits, figures: result.figuresHit })
+    : t('session.faltTotalOf', {
+        hits: result.hits,
+        figures: result.figuresHit,
+        figureCount: result.figureCount,
+      });
 }
 
 /** One station as its row reads: "6/3 of 4, 12p of 20p" (#567). */

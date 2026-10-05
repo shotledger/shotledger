@@ -23,7 +23,23 @@ describe('buildSessionListRow', () => {
   it('#513: a poängfält session carries its mode and points sum', () => {
     const falt = faltSummaryOf('poangfalt', { hits: 41, figuresHit: 34, poangfaltPoints: 75 });
     const row = buildSessionListRow(session, [], [], falt);
-    expect(row.falt).toEqual({ mode: 'poangfalt', hits: 41, figuresHit: 34, poangfaltPoints: 75 });
+    expect(row.falt).toEqual({
+      mode: 'poangfalt',
+      hits: 41,
+      figuresHit: 34,
+      poangfaltPoints: 75,
+      figureCount: null,
+    });
+  });
+
+  it('#607: a fält session carries its figure count', () => {
+    const falt = faltSummaryOf('falt', {
+      hits: 26,
+      figuresHit: 22,
+      poangfaltPoints: 48,
+      figureCount: 24,
+    });
+    expect(buildSessionListRow(session, [], [], falt).falt?.figureCount).toBe(24);
   });
 
   it('#513: a fält session with no stored mode reads as fält', () => {
