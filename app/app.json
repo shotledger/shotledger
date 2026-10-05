@@ -83,7 +83,10 @@
     ],
     "extra": {
       "//": "Optional cloud sync backend. Public placeholder — override per build with EXPO_PUBLIC_API_BASE_URL, or point it at a local `wrangler dev`. Never a secret; the session token lives in SecureStore.",
-      "apiBaseUrl": "https://api.shotledger.app"
+      "apiBaseUrl": "https://api.shotledger.app",
+      "eas": {
+        "projectId": "40247c86-ecf3-463d-a5a4-0ec904fa6109"
+      }
     },
     "experiments": {
       "typedRoutes": true,
@@ -91,6 +94,7 @@
     },
     "locales": {
       "sv": "./locales/sv.json"
-    }
+    },
+    "owner": "jimisola"
   }
 }
