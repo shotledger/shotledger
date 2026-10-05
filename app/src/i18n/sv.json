@@ -203,7 +203,20 @@
       "onTarget": "Centrerad och tät. Lite kvar att hämta här."
     },
     "chartDisciplinesOmitted_one": "En gren till visas inte — smalna av grenfiltret för att se den.",
-    "chartDisciplinesOmitted_other": "{{count}} grenar till visas inte — smalna av grenfiltret för att se dem."
+    "chartDisciplinesOmitted_other": "{{count}} grenar till visas inte — smalna av grenfiltret för att se dem.",
+    "sectionIndexTitle": "I rapporten",
+    "sectionCharts": "Diagram över tid",
+    "sectionQuestion": {
+      "shots": "Var samlas mina skott, över flera pass?",
+      "records": "Vilka pass var mina bästa?",
+      "totals": "Hur mycket har jag skjutit, och hur bra per skott och serie?",
+      "falt": "Hur många träffar och figurer per station?",
+      "typeComparison": "Skjuter jag annorlunda på tävling än på träning?",
+      "sighter": "Förutsäger provserien tävlingsresultatet?",
+      "charts": "Blir jag bättre över tid?",
+      "distribution": "Vilka ringar hamnar skotten i?",
+      "export": "PDF eller JSON"
+    }
   },
   "firearms": {
     "title": "Vapen & ammo",

@@ -4,9 +4,9 @@
 // filter the /stats form pushed in as a route param — nothing is stored.
 import type { TFunction } from 'i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { tenthsToScore } from '@shotledger/shared';
 
 import { ScreenTitle } from '@/components/screen-title';
@@ -38,6 +38,12 @@ import { ShotHeatmap } from '@/components/shot-heatmap';
 import { ZoomableView } from '@/components/zoomable-view';
 import { SessionTypeComparisonCard } from '@/features/stats/session-type-comparison-card';
 import { SighterRelationCard } from '@/features/stats/sighter-relation-card';
+import { ReportSectionIndex } from '@/features/stats/report-section-index';
+import {
+  MIN_INDEXED_SECTIONS,
+  reportSections,
+  type ReportSectionKey,
+} from '@/features/stats/report-sections';
 import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf } from '@/features/dates/local-day';
@@ -87,6 +93,38 @@ export default function StatsReportScreen() {
   const [pickingFormat, setPickingFormat] = useState(false);
   const { exportAs, statusText } = useReportExport(t, i18n.language);
   const themeName = useResolvedThemeName();
+  const scrollRef = useRef<ScrollView>(null);
+  const contentRef = useRef<View>(null);
+  // One ref per section, measured on tap rather than cached from onLayout: on
+  // web onLayout fires only on a resize, so a section pushed down by a card
+  // above it kept a stale top.
+  const shotsRef = useRef<View>(null);
+  const recordsRef = useRef<View>(null);
+  const totalsRef = useRef<View>(null);
+  const faltRef = useRef<View>(null);
+  const typeComparisonRef = useRef<View>(null);
+  const sighterRef = useRef<View>(null);
+  const chartsRef = useRef<View>(null);
+  const distributionRef = useRef<View>(null);
+  const exportRef = useRef<View>(null);
+  const jumpTo = (key: ReportSectionKey) => {
+    const section = {
+      shots: shotsRef,
+      records: recordsRef,
+      totals: totalsRef,
+      falt: faltRef,
+      typeComparison: typeComparisonRef,
+      sighter: sighterRef,
+      charts: chartsRef,
+      distribution: distributionRef,
+      export: exportRef,
+    }[key].current;
+    const content = contentRef.current;
+    if (!section || !content) return;
+    section.measureLayout(content, (_x, y) => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - Spacing.three), animated: true });
+    });
+  };
 
   const formatDate = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(iso));
@@ -126,6 +164,15 @@ export default function StatsReportScreen() {
       CHART_LINE_COLORS[themeName],
     );
 
+  const sections = reportSections({
+    hasCrossSession: crossSession !== null,
+    hasMatches: data.hasMatches,
+    showRingCards: data.showRingCards,
+    hasFalt: Boolean(data.falt),
+    hasTypeComparison: data.typeComparison.length > 0,
+    hasSighterRelation: data.sighterRelation.length > 0,
+  });
+
   const recordRow = (label: string, record: NamedRecord | null, value: string) =>
     record === null ? (
       <ThemedText type="small" themeColor="textSecondary">
@@ -141,7 +188,7 @@ export default function StatsReportScreen() {
     );
 
   return (
-    <Screen>
+    <Screen scrollRef={scrollRef} contentRef={contentRef}>
       <ScreenTitle>{t('stats.reportTitle')}</ScreenTitle>
 
       <Card>
@@ -170,8 +217,12 @@ export default function StatsReportScreen() {
         </ThemedText>
       </Card>
 
+      {sections.length >= MIN_INDEXED_SECTIONS && (
+        <ReportSectionIndex sections={sections} onJump={jumpTo} />
+      )}
+
       {crossSession && (
-        <Card testID="cross-session-group">
+        <Card testID="cross-session-group" ref={shotsRef}>
           <ThemedText type="smallBold">{t('stats.crossSessionTitle')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t('stats.crossSessionSubtitle', {
@@ -224,7 +275,7 @@ export default function StatsReportScreen() {
       ) : (
         <>
           {data.showRingCards && (
-            <Card>
+            <Card ref={recordsRef}>
               <ThemedText type="smallBold">{t('stats.summaryTitle')}</ThemedText>
               {recordRow(
                 t('stats.recordSessionScore'),
@@ -244,7 +295,7 @@ export default function StatsReportScreen() {
             </Card>
           )}
 
-          <Card>
+          <Card ref={totalsRef}>
             <ThemedText type="smallBold">{t('stats.sumTitle')}</ThemedText>
             <View style={styles.gridRow}>
               <StatTile
@@ -288,8 +339,51 @@ export default function StatsReportScreen() {
             )}
           </Card>
 
+          {data.showRingCards && (
+            <Card>
+              <ThemedText type="smallBold">{t('stats.perShotTitle')}</ThemedText>
+              <View style={styles.gridRow}>
+                <StatTile
+                  testID="stat-mean"
+                  label={t('stats.mean')}
+                  value={score(data.totals.meanShotTenths)}
+                />
+                <StatTile
+                  testID="stat-mean-series"
+                  label={t('stats.meanPerSeries')}
+                  value={score(data.totals.meanSeriesTenths)}
+                />
+              </View>
+              <View style={styles.gridRow}>
+                <StatTile
+                  testID="stat-sd"
+                  label={t('stats.standardDeviation')}
+                  value={data.sdTenths === null ? DASH : tenthsToScore(data.sdTenths).toFixed(2)}
+                />
+                <StatTile
+                  testID="stat-x-percent"
+                  label={t('stats.xPercent')}
+                  value={
+                    data.totals.scoredShotCount === 0
+                      ? DASH
+                      : `${((data.totals.innerTenCount / data.totals.scoredShotCount) * 100).toFixed(0)}%`
+                  }
+                />
+              </View>
+              {data.goldSeriesCount > 0 && (
+                <View style={styles.gridRow}>
+                  <StatTile
+                    testID="stat-gold-series-count"
+                    label={t('stats.goldSeriesCount')}
+                    value={String(data.goldSeriesCount)}
+                  />
+                </View>
+              )}
+            </Card>
+          )}
+
           {data.falt && (
-            <Card testID="stats-falt">
+            <Card testID="stats-falt" ref={faltRef}>
               <ThemedText type="smallBold">{disciplineLabel(t, 'spsf-falt')}</ThemedText>
               <View style={styles.gridRow}>
                 <StatTile
@@ -336,88 +430,53 @@ export default function StatsReportScreen() {
 
           {data.showRingCards && (
             <>
-              <Card>
-                <ThemedText type="smallBold">{t('stats.perShotTitle')}</ThemedText>
-                <View style={styles.gridRow}>
-                  <StatTile
-                    testID="stat-mean"
-                    label={t('stats.mean')}
-                    value={score(data.totals.meanShotTenths)}
-                  />
-                  <StatTile
-                    testID="stat-mean-series"
-                    label={t('stats.meanPerSeries')}
-                    value={score(data.totals.meanSeriesTenths)}
-                  />
-                </View>
-                <View style={styles.gridRow}>
-                  <StatTile
-                    testID="stat-sd"
-                    label={t('stats.standardDeviation')}
-                    value={data.sdTenths === null ? DASH : tenthsToScore(data.sdTenths).toFixed(2)}
-                  />
-                  <StatTile
-                    testID="stat-x-percent"
-                    label={t('stats.xPercent')}
-                    value={
-                      data.totals.scoredShotCount === 0
-                        ? DASH
-                        : `${((data.totals.innerTenCount / data.totals.scoredShotCount) * 100).toFixed(0)}%`
-                    }
-                  />
-                </View>
-                {data.goldSeriesCount > 0 && (
-                  <View style={styles.gridRow}>
-                    <StatTile
-                      testID="stat-gold-series-count"
-                      label={t('stats.goldSeriesCount')}
-                      value={String(data.goldSeriesCount)}
-                    />
-                  </View>
-                )}
-              </Card>
-
               {data.typeComparison.length > 0 && (
-                <SessionTypeComparisonCard rows={data.typeComparison} />
+                <View ref={typeComparisonRef}>
+                  <SessionTypeComparisonCard rows={data.typeComparison} />
+                </View>
               )}
 
               {data.sighterRelation.length > 0 && (
-                <SighterRelationCard entries={data.sighterRelation} />
+                <View ref={sighterRef}>
+                  <SighterRelationCard entries={data.sighterRelation} />
+                </View>
               )}
 
-              <Card>
-                <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>
-                <ChartBody
-                  grouped={chart((point) => point.meanSeriesTotalTenths)}
-                  formatValue={(value) => tenthsToScore(value).toFixed(0)}
-                  formatDate={formatShortDate}
-                  t={t}
-                />
-              </Card>
+              <View style={styles.section} ref={chartsRef}>
+                <Card>
+                  <ThemedText type="smallBold">{t('stats.chartSeriesMean')}</ThemedText>
+                  <ChartBody
+                    grouped={chart((point) => point.meanSeriesTotalTenths)}
+                    formatValue={(value) => tenthsToScore(value).toFixed(0)}
+                    formatDate={formatShortDate}
+                    t={t}
+                  />
+                </Card>
 
-              <Card>
-                <ThemedText type="smallBold">{t('stats.chartShotMean')}</ThemedText>
-                <ChartBody
-                  grouped={chart((point) => point.meanShotTenths)}
-                  formatValue={(value) => tenthsToScore(value).toFixed(1)}
-                  formatDate={formatShortDate}
-                  t={t}
-                />
-              </Card>
+                <Card>
+                  <ThemedText type="smallBold">{t('stats.chartShotMean')}</ThemedText>
+                  <ChartBody
+                    grouped={chart((point) => point.meanShotTenths)}
+                    formatValue={(value) => tenthsToScore(value).toFixed(1)}
+                    formatDate={formatShortDate}
+                    t={t}
+                  />
+                </Card>
 
-              <Card>
-                <ThemedText type="smallBold">{t('stats.chartSessionScore')}</ThemedText>
-                <ChartBody
-                  grouped={chart((point) =>
-                    point.scoredSeriesCount === 0 ? null : point.sessionTotalTenths,
-                  )}
-                  formatValue={(value) => tenthsToScore(value).toFixed(0)}
-                  formatDate={formatShortDate}
-                  t={t}
-                />
-              </Card>
+                <Card>
+                  <ThemedText type="smallBold">{t('stats.chartSessionScore')}</ThemedText>
+                  <ChartBody
+                    grouped={chart((point) =>
+                      point.scoredSeriesCount === 0 ? null : point.sessionTotalTenths,
+                    )}
+                    formatValue={(value) => tenthsToScore(value).toFixed(0)}
+                    formatDate={formatShortDate}
+                    t={t}
+                  />
+                </Card>
+              </View>
 
-              <Card>
+              <Card ref={distributionRef}>
                 <ThemedText type="smallBold">{t('stats.distributionTitle')}</ThemedText>
                 {data.distribution.length === 0 ? (
                   <ThemedText type="small" themeColor="textSecondary">
@@ -430,45 +489,47 @@ export default function StatsReportScreen() {
             </>
           )}
 
-          {pickingFormat ? (
-            <Card testID="stats-export-formats">
-              <ThemedText type="smallBold">{t('stats.exportFormatTitle')}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.exportScopeNote')}
-              </ThemedText>
-              {EXPORT_FORMATS.map((format) => (
-                <DrillDownRow
-                  key={format}
-                  title={formatLabel[format]}
-                  subtitle={t(`stats.exportHint.${format}`)}
-                  testID={`stats-export-${format}`}
-                  onPress={() => {
-                    setPickingFormat(false);
-                    void exportAs(format, {
-                      filter,
-                      range,
-                      sessionIds: data.sessionIds,
-                      totals: data.totals,
-                      records: data.records,
-                    });
-                  }}
-                />
-              ))}
-              <PrimaryButton label={t('common.cancel')} onPress={() => setPickingFormat(false)} />
-            </Card>
-          ) : (
-            <PrimaryButton
-              testID="stats-export"
-              label={t('stats.export')}
-              onPress={() => setPickingFormat(true)}
-            />
-          )}
+          <View style={styles.section} ref={exportRef}>
+            {pickingFormat ? (
+              <Card testID="stats-export-formats">
+                <ThemedText type="smallBold">{t('stats.exportFormatTitle')}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('stats.exportScopeNote')}
+                </ThemedText>
+                {EXPORT_FORMATS.map((format) => (
+                  <DrillDownRow
+                    key={format}
+                    title={formatLabel[format]}
+                    subtitle={t(`stats.exportHint.${format}`)}
+                    testID={`stats-export-${format}`}
+                    onPress={() => {
+                      setPickingFormat(false);
+                      void exportAs(format, {
+                        filter,
+                        range,
+                        sessionIds: data.sessionIds,
+                        totals: data.totals,
+                        records: data.records,
+                      });
+                    }}
+                  />
+                ))}
+                <PrimaryButton label={t('common.cancel')} onPress={() => setPickingFormat(false)} />
+              </Card>
+            ) : (
+              <PrimaryButton
+                testID="stats-export"
+                label={t('stats.export')}
+                onPress={() => setPickingFormat(true)}
+              />
+            )}
 
-          {statusText && (
-            <ThemedText type="small" themeColor="textSecondary" testID="stats-export-status">
-              {statusText}
-            </ThemedText>
-          )}
+            {statusText && (
+              <ThemedText type="small" themeColor="textSecondary" testID="stats-export-status">
+                {statusText}
+              </ThemedText>
+            )}
+          </View>
         </>
       )}
     </Screen>
@@ -478,6 +539,9 @@ export default function StatsReportScreen() {
 const styles = StyleSheet.create({
   heatmapCanvas: {
     height: 300,
+  },
+  section: {
+    gap: Spacing.three,
   },
   gridRow: {
     flexDirection: 'row',

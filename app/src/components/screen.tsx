@@ -47,6 +47,8 @@ export interface ScreenProps extends ViewProps {
    * focus. Ignored when `scroll` is false.
    */
   scrollRef?: Ref<ScrollView>;
+  /** Ref to the content column, the ancestor a child can `measureLayout` against. */
+  contentRef?: Ref<View>;
 }
 
 /**
@@ -62,6 +64,7 @@ export function Screen({
   fab,
   safeBottom,
   scrollRef,
+  contentRef,
   style,
   ...rest
 }: ScreenProps) {
@@ -87,7 +90,7 @@ export function Screen({
   }
 
   const inner = (
-    <View style={[styles.inner, !scroll && styles.innerFlex, style]} {...rest}>
+    <View ref={contentRef} style={[styles.inner, !scroll && styles.innerFlex, style]} {...rest}>
       {children}
     </View>
   );
