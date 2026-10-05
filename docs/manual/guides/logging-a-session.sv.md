@@ -164,7 +164,8 @@ en kameraikon; tryck på den för att se bilden. Där räknar **⋮ → Poängs�
 det här fotot** serien ur fotot — se [Räkna från foto](scoring-from-a-photo.md).
 
 Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där du
-kan filtrera på gren, vapen och vapengrupp.
+kan filtrera på gren, vapen och vapengrupp. Håll fingret på ett foto för att
+dela, kopiera eller spara det.
 
 ## Passrapport
 

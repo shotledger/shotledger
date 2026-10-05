@@ -115,17 +115,13 @@
     "standardMedalSilver": "Standardmedalj silver uppnådd",
     "standardMedalBronze": "Standardmedalj brons uppnådd",
     "sectionPeriod": "Pass",
-    "sectionPeriodHint": "Datumintervallet rapporten omfattar.",
     "sectionType": "Typ av pass",
-    "sectionTypeHint": "Träning, tävling eller båda.",
     "sectionSighters": "Provserier",
     "sectionSightersHint": "Utanför ett pass är en provserie en vanlig serie. Loggade skott räknas alltid med.",
     "sightersInclude": "Räkna med",
     "sightersExclude": "Räkna inte med",
-    "sectionDisciplineHint": "Begränsa rapporten till en gren.",
     "sectionDisciplineChoice": "Vald gren",
     "sectionShotsPerSeries": "Skott per serie",
-    "sectionShotsHint": "Jämför bara serier av samma längd.",
     "sectionTags": "Etiketter",
     "sectionTagsHint": "Behåll pass som har någon av de etiketter du väljer.",
     "sectionTagsChoice": "Valda etiketter",
@@ -363,7 +359,6 @@
     "velocityMps": "Hastighet (m/s)",
     "velocityHint": "Uppmätt mynningshastighet, i meter per sekund.",
     "powerFactor": "Power factor",
-    "powerFactorHint": "Beräknas från kulvikt och hastighet (grains x fps / 1000).",
     "recipeTitle": "Handladdningsrecept",
     "powder": "Krut",
     "powderChargeGr": "Krutladdning (gr)",
@@ -401,8 +396,7 @@
     "compareImbalance": "Partierna skiljer {{ratio}}x i antal skott, så tabellen är ingen rättvis jämförelse — partiet med färre skott har det mer osäkra snittet.",
     "compareCaveats": "Skott inom samma serie följs åt, så den verkliga osäkerheten är något större än intervallen som visas. Och inget här skiljer ammunitionen från din egen form de dagar ett parti råkade användas.",
     "muzzleEnergy": "Anslagsenergi",
-    "joules": "{{value}} J",
-    "muzzleEnergyHint": "Energi vid mynningen, från kulvikt och hastighet. Eventuella gränsvärden får du själv kontrollera."
+    "joules": "{{value}} J"
   },
   "settings": {
     "title": "Inställningar",
@@ -666,7 +660,6 @@
     "photoPermissionDenied": "Appen fick inte tillgång till bilder.",
     "save": "Spara serie",
     "backspace": "Radera",
-    "keypadHint": "Ett tryck per skott — 10 är en vanlig tia, X en centrumtia",
     "keypadHintDecimal": "Två tryck per skott: ring, sedan tiondel",
     "seriesAverage": "Snitt/serie",
     "innerTenCount": "X (innertior)",
@@ -738,7 +731,6 @@
     "replacePhoto": "Byt foto",
     "photoMissingTitle": "Fotot är inte tillgängligt",
     "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken.",
-    "reorderHint": "Håll in en serie för att flytta den.",
     "scoredFromPhoto": "Poängsatt från foto",
     "scoredManually": "Inmatad manuellt",
     "sighterScore": "{{score}}*",
@@ -746,7 +738,6 @@
     "faltResultMode": "Resultatform",
     "faltResultModeFalt": "Fält",
     "faltResultModePoangfalt": "Poängfält",
-    "faltResultModeHelp": "Fältskjutning räknas som träff i figurer. Poängfält lägger ihop dem till en summa: en poäng per träff och en per träffad figur.",
     "addStation": "Lägg till station",
     "stations": "Stationer",
     "faltTotal": "{{hits}} träff i {{figures}} figurer",
@@ -756,7 +747,6 @@
     "celebrationPerfect": "Perfekt serie!",
     "celebrationFullScore": "Bra jobbat!",
     "officialStandardMedal": "Officiell standardmedalj",
-    "officialStandardMedalHint": "Nationell helmatch har inga poänggränser: silver går till bästa niondelen av fältet och brons till bästa tredjedelen, per vapengrupp. Ange medaljen som resultatlistan ger.",
     "officialStandardMedalRecorded": "Standardmedalj: {{medal}}"
   },
   "share": {
@@ -1249,7 +1239,6 @@
     "emptyBody": "Foton du lägger till på en serie, eller tar när du poängsätter från foto, samlas här.",
     "notDownloaded": "Inte hämtat",
     "openLabel": "Öppna fotot från {{session}}, serie {{position}}",
-    "shareHint": "Håll in ett foto för att dela, kopiera eller spara det.",
     "allOf": "Alla"
   },
   "providers": {

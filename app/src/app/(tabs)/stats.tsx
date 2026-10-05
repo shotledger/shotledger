@@ -48,15 +48,17 @@ function FilterCard({
   children,
 }: {
   title: string;
-  hint: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <Card>
       <ThemedText type="smallBold">{title}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {hint}
-      </ThemedText>
+      {hint && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {hint}
+        </ThemedText>
+      )}
       {children}
     </Card>
   );
@@ -137,7 +139,7 @@ export default function StatsScreen() {
         />
       </Card>
 
-      <FilterCard title={t('stats.sectionPeriod')} hint={t('stats.sectionPeriodHint')}>
+      <FilterCard title={t('stats.sectionPeriod')}>
         <SegmentedControl
           options={periodOptions}
           value={filter.period}
@@ -189,7 +191,7 @@ export default function StatsScreen() {
         )}
       </FilterCard>
 
-      <FilterCard title={t('stats.sectionType')} hint={t('stats.sectionTypeHint')}>
+      <FilterCard title={t('stats.sectionType')}>
         <SegmentedControl
           options={[
             { value: ALL as TypeChoice, label: t('stats.all') },
@@ -215,7 +217,7 @@ export default function StatsScreen() {
         />
       </FilterCard>
 
-      <FilterCard title={t('session.discipline')} hint={t('stats.sectionDisciplineHint')}>
+      <FilterCard title={t('session.discipline')}>
         <DrillDownRow
           title={t('stats.sectionDisciplineChoice')}
           value={disciplineValue}
@@ -237,7 +239,7 @@ export default function StatsScreen() {
         )}
       </FilterCard>
 
-      <FilterCard title={t('stats.sectionShotsPerSeries')} hint={t('stats.sectionShotsHint')}>
+      <FilterCard title={t('stats.sectionShotsPerSeries')}>
         <OptionPicker
           options={[
             { value: ALL, label: t('stats.all') },

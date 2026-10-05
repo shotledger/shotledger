@@ -309,23 +309,18 @@ export default function EditSessionScreen() {
             testID="edit-competition-name"
           />
           {recordsOfficialMedal && (
-            <>
-              <OptionPicker
-                label={t('session.officialStandardMedal')}
-                options={toOptions(
-                  OFFICIAL_MEDAL_CHOICES.map((value) => ({
-                    value,
-                    label: t(`webshooter.medal.${value}`),
-                  })),
-                  'edit-official-medal',
-                )}
-                value={officialMedal}
-                onChange={setOfficialMedal}
-              />
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('session.officialStandardMedalHint')}
-              </ThemedText>
-            </>
+            <OptionPicker
+              label={t('session.officialStandardMedal')}
+              options={toOptions(
+                OFFICIAL_MEDAL_CHOICES.map((value) => ({
+                  value,
+                  label: t(`webshooter.medal.${value}`),
+                })),
+                'edit-official-medal',
+              )}
+              value={officialMedal}
+              onChange={setOfficialMedal}
+            />
           )}
         </Card>
       )}

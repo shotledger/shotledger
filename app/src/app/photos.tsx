@@ -186,9 +186,6 @@ export default function PhotosScreen() {
             </View>
           </Card>
         ))}
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('photos.shareHint')}
-        </ThemedText>
       </ScrollView>
     </Screen>
   );

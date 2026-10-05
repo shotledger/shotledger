@@ -165,7 +165,8 @@ camera icon; tap it to see the picture. There, **⋮ → Score from This Photo**
 scores the series from it — see [Scoring from a photo](scoring-from-a-photo.md).
 
 Every photo you take also appears in the gallery under **Tools → Photos**,
-where you can filter by discipline, firearm and weapon group.
+where you can filter by discipline, firearm and weapon group. Press and hold a
+photo to share, copy or save it.
 
 ## Session report
 
