@@ -29,6 +29,7 @@ import { EmptyState } from '@/components/empty-state';
 import { InfoButton } from '@/components/info-button';
 import { GroupPlot } from '@/components/group-plot';
 import { ShotHeatmap } from '@/components/shot-heatmap';
+import { ZoomableView } from '@/components/zoomable-view';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -71,6 +72,9 @@ interface EntryTarget {
   isFinal: boolean;
   isNew: boolean;
 }
+
+/** The Group view's canvas: square, the size the plot and heat map are drawn at. */
+const GROUP_PLOT_SIZE = 300;
 
 export default function SessionDetailScreen() {
   const { t, i18n } = useTranslation();
@@ -629,25 +633,34 @@ export default function SessionDetailScreen() {
               onChange={setPlotMode}
             />
           )}
-          <View style={styles.groupPlot}>
-            {plotMode === 'heatmap' && group.marks.length >= MIN_SHOTS_FOR_HEATMAP ? (
-              <ShotHeatmap
-                target={group.target}
-                shots={group.marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm }))}
-                size={300}
-              />
-            ) : (
-              <GroupPlot
-                target={group.target}
-                shots={group.marks.map((m) => ({
-                  xMm: m.xMm,
-                  yMm: m.yMm,
-                  caliberMm: m.caliberMm,
-                }))}
-                size={300}
-              />
-            )}
-          </View>
+          <ZoomableView
+            // Remounted per mode, so switching starts each one at fit.
+            key={plotMode}
+            contentWidth={GROUP_PLOT_SIZE}
+            contentHeight={GROUP_PLOT_SIZE}
+            style={styles.groupPlot}
+            testID="group-canvas"
+          >
+            {(box) =>
+              plotMode === 'heatmap' && group.marks.length >= MIN_SHOTS_FOR_HEATMAP ? (
+                <ShotHeatmap
+                  target={group.target}
+                  shots={group.marks.map((m) => ({ xMm: m.xMm, yMm: m.yMm }))}
+                  size={box.width}
+                />
+              ) : (
+                <GroupPlot
+                  target={group.target}
+                  shots={group.marks.map((m) => ({
+                    xMm: m.xMm,
+                    yMm: m.yMm,
+                    caliberMm: m.caliberMm,
+                  }))}
+                  size={box.width}
+                />
+              )
+            }
+          </ZoomableView>
           <View style={styles.resultsRow}>
             <StatTile
               testID="group-stat-windage"
@@ -931,7 +944,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
   },
   groupPlot: {
-    alignItems: 'center',
+    height: GROUP_PLOT_SIZE,
   },
   resultsRow: {
     flexDirection: 'row',
