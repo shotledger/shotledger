@@ -76,10 +76,13 @@ deploy` is forbidden to agents; every command below is the maintainer's.
 
 ## (b) Repeatable steps, every release
 
-1. **Version bump.** Update `app/app.json`'s `expo.version` (semver).
-   `eas.json` has `"appVersionSource": "local"`, so EAS reads the Android
-   `versionCode` from local state and increments it automatically on
-   each build — no manual versionCode bump needed.
+1. **Version.** It comes from the release tag. `app/package.json` stays
+   `0.0.0` in the repo and `app/app.config.ts` hands it to Expo. Until the
+   release workflow exists ([#623](https://github.com/jimisola/shotledger/issues/623)),
+   set `app/package.json`'s `version` on the build machine before building and
+   do not commit it. `eas.json` has `"appVersionSource": "local"`, so EAS reads
+   the Android `versionCode` from local state and increments it automatically
+   on each build — no manual versionCode bump needed.
 2. **Changelog.** Add an entry (VERIFY: no `CHANGELOG.md` exists yet in
    this repo — start one, or use the Play Console release notes field
    directly, whichever the maintainer prefers).

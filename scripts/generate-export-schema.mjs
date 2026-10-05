@@ -84,7 +84,7 @@ function document(id, description) {
         format: JSON_EXPORT_FORMAT,
         formatVersion: JSON_EXPORT_VERSION,
         generatedAt: '2026-09-13T09:41:00.000Z',
-        app: { name: 'ShotLedger', version: '1.0.0' },
+        app: { name: 'ShotLedger', version: '0.1.0' },
         sessions: [
           {
             id: 'ses_7Qn2',
