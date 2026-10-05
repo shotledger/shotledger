@@ -72,7 +72,8 @@ group. Sighters are left out, as they are from the session total. Its points
 lost are for all those holes together, so the potential score is for the whole
 session's marked shots, not one series. From 20 holes up, the view can switch
 between the plot of every hole and a **heat map** that shows where they
-cluster. A session shot on two faces, such as a full match of 25m Sport
+cluster. Both zoom and pan like the photo you score from: pinch, drag once
+zoomed in, double-tap, or the − / + / fit buttons. A session shot on two faces, such as a full match of 25m Sport
 Pistol, shows the face with the most marked holes.
 
 ## Reading the heat map

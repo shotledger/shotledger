@@ -17,7 +17,9 @@ import { ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
 import { SeriesTotalPill } from '@/components/series-total-pill';
 import { Screen } from '@/components/screen';
+import { GroupPlot } from '@/components/group-plot';
 import { ShotHeatmap } from '@/components/shot-heatmap';
+import { ZoomableView } from '@/components/zoomable-view';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StatTile } from '@/components/stat-tile';
 import { Stepper } from '@/components/stepper';
@@ -316,10 +318,33 @@ export default function ComponentsGalleryScreen() {
           readOnly
         />
       </Section>
-      <Section title="ShotHeatmap (#523)">
-        <View style={{ alignItems: 'center' }}>
-          <ShotHeatmap target={EDGE_CALL_PREVIEW_TARGET} shots={HEATMAP_PREVIEW_SHOTS} size={300} />
-        </View>
+      <Section title="GroupPlot in a ZoomableView">
+        <ZoomableView
+          contentWidth={300}
+          contentHeight={300}
+          style={{ height: 300 }}
+          testID="gallery-plot-zoom"
+        >
+          {(box) => (
+            <GroupPlot
+              target={EDGE_CALL_PREVIEW_TARGET}
+              shots={HEATMAP_PREVIEW_SHOTS.map((s) => ({ ...s, caliberMm: 5.6 }))}
+              size={box.width}
+            />
+          )}
+        </ZoomableView>
+      </Section>
+
+      <Section title="ShotHeatmap in a ZoomableView">
+        <ZoomableView contentWidth={300} contentHeight={300} style={{ height: 300 }}>
+          {(box) => (
+            <ShotHeatmap
+              target={EDGE_CALL_PREVIEW_TARGET}
+              shots={HEATMAP_PREVIEW_SHOTS}
+              size={box.width}
+            />
+          )}
+        </ZoomableView>
       </Section>
     </Screen>
   );
