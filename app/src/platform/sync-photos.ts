@@ -34,6 +34,20 @@ export function resolveSeriesPhotoUri(photoUri: string | null): string | null {
   return file.exists ? file.uri : null;
 }
 
+/**
+ * True when `series.photo_uri` names a file on this device that is no longer
+ * there, as after the OS cleared the cache it was saved in (#652). A sync
+ * marker is never gone: it is waiting to download.
+ */
+export function seriesPhotoGone(photoUri: string | null): boolean {
+  if (photoUri === null || Platform.OS === 'web' || !photoUri.startsWith('file:')) return false;
+  try {
+    return !new File(photoUri).exists;
+  } catch {
+    return true;
+  }
+}
+
 export function hasLocalSyncPhoto(photoId: string): boolean {
   if (Platform.OS === 'web') return false;
   return syncPhotoFile(photoId).exists;

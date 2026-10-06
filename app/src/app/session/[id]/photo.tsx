@@ -31,7 +31,7 @@ import { listMarksForSeries } from '@/db/queries/shot-marks';
 import type { Mark } from '@/features/photo-scoring/marks';
 import { deserializeTransform } from '@/features/photo-scoring/transform';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
-import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
+import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
 
@@ -51,7 +51,8 @@ export default function SeriesPhotoScreen() {
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);
-  const uri = resolveSeriesPhotoUri(row?.photoUri ?? null);
+  const gone = seriesPhotoGone(row?.photoUri ?? null);
+  const uri = gone ? null : resolveSeriesPhotoUri(row?.photoUri ?? null);
 
   const target = getTargetFace(
     seriesTargetFace(
@@ -111,7 +112,9 @@ export default function SeriesPhotoScreen() {
       <Screen>
         <Card>
           <ThemedText type="subtitle">{t('session.photoMissingTitle')}</ThemedText>
-          <ThemedText themeColor="textSecondary">{t('session.photoMissingBody')}</ThemedText>
+          <ThemedText themeColor="textSecondary" testID="photo-missing-body">
+            {t(gone ? 'session.photoGoneBody' : 'session.photoMissingBody')}
+          </ThemedText>
         </Card>
         <PrimaryButton label={t('common.close')} onPress={() => router.back()} />
       </Screen>
