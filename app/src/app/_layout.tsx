@@ -5,10 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { db } from '@/db/client';
 import { MigrationGate } from '@/db/migration-gate';
+import { rewriteSeriesPhotoUris } from '@/db/queries/series';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
+import { keepSeriesPhoto } from '@/platform/series-photos';
 import { purgeRemovedVaultStorage } from '@/platform/vault-purge';
 import { AppSettingsProvider } from '@/state/app-settings';
 
@@ -154,6 +157,11 @@ function ThemedApp() {
   const theme = useTheme();
   const resolvedThemeName = useResolvedThemeName();
   const base = resolvedThemeName === 'dark' ? DarkTheme : DefaultTheme;
+
+  // After the migrations, so the series table is there (#652).
+  useEffect(() => {
+    rewriteSeriesPhotoUris(db, keepSeriesPhoto);
+  }, []);
 
   const navigationTheme = useMemo<Theme>(
     () => ({

@@ -88,6 +88,7 @@ import {
   proposalFaceOf,
   xLineMissing,
 } from '@/features/photo-scoring/precision-guards';
+import { keepSeriesPhoto } from '@/platform/series-photos';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
   type TargetTransform,
@@ -562,10 +563,15 @@ export default function ScanScreen() {
       return;
     }
     if (!result) return;
-    setPhoto(result);
+    // A series that exists keeps the photo now, so out of the picker's cache.
+    const captured =
+      db && row ? { ...result, originalUri: keepSeriesPhoto(result.originalUri) } : result;
+    setPhoto(captured);
     // The old geometry belongs to the old photo; it is written again on save.
-    if (db && row) updateSeries(db, row.id, { photoUri: result.originalUri, photoGeometry: null });
-    await analyze(result);
+    if (db && row) {
+      updateSeries(db, row.id, { photoUri: captured.originalUri, photoGeometry: null });
+    }
+    await analyze(captured);
   }
 
   // Straight into the camera on arrival (maintainer, 2026-09-11: "Is it not
@@ -664,6 +670,8 @@ export default function ScanScreen() {
   }
 
   function onSave(leave = true) {
+    const keeps = db && (row || markState.marks.length > 0);
+    const photoUri = keeps && photo ? keepSeriesPhoto(photo.originalUri) : null;
     // A series added straight into "Score from Photo" has no row yet; it is
     // written here, as the keypad screen writes its own on save.
     const seriesId =
@@ -673,7 +681,7 @@ export default function ScanScreen() {
             sessionId: id,
             position,
             isFinal: final === '1',
-            photoUri: photo?.originalUri ?? null,
+            photoUri,
           }).id
         : null);
     if (db && seriesId) {
@@ -696,7 +704,7 @@ export default function ScanScreen() {
           seriesId,
           targetFaceId: faceId,
           geometrySource: transform.source,
-          photoUri: photo?.originalUri ?? null,
+          photoUri,
           marks: markState.marks.map((m) => ({
             xMm: m.xMm,
             yMm: m.yMm,
