@@ -1327,5 +1327,11 @@
       "B": "B · Rapid Fire",
       "C": "C · Figure Shooting"
     }
+  },
+  "web": {
+    "signInIntro": "Sign in with your ShotLedger account to view your statistics. Nothing is stored in this browser.",
+    "loading_one": "Loading your logbook… {{count}} row",
+    "loading_other": "Loading your logbook… {{count}} rows",
+    "loadFailed": "Could not load your logbook. Reload the page to try again."
   }
 }

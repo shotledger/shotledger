@@ -31,7 +31,7 @@ export default tseslint.config(
   {
     // Type information for every TS file in a workspace package; each file
     // resolves its nearest tsconfig.json.
-    files: ['shared/**/*.ts', 'backend/**/*.ts', 'app/**/*.{ts,tsx}'],
+    files: ['shared/**/*.ts', 'backend/**/*.ts', 'app/**/*.{ts,tsx}', 'web/**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -133,6 +133,18 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
       // The type-aware rules that catch real bugs here; the rest of
       // recommendedTypeChecked is noise against RN typings for now.
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+    },
+  },
+  {
+    // web: the read-only browser app (ADR 0013), React DOM.
+    files: ['web/**/*.{ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks },
+    languageOptions: { globals: globals.browser },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',

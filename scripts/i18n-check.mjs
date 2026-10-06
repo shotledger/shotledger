@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Gate: en.json and sv.json must have identical key sets, and every leaf key
-// must be referenced somewhere in app/src (literal `t('x.y')`/`t("x.y")`, or
+// must be referenced somewhere in app/src or web/src (literal `t('x.y')`/`t("x.y")`, or
 // via a dynamic namespace prefix like `t(\`discipline.${id}\`)`).
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const i18nDir = path.join(repoRoot, 'app/src/i18n');
-const appSrcDir = path.join(repoRoot, 'app/src');
+// The web app (ADR 0013) reads the same files, so its source counts too.
+const sourceDirs = [path.join(repoRoot, 'app/src'), path.join(repoRoot, 'web/src')];
 
 function loadJson(filePath) {
   let raw;
@@ -65,7 +66,7 @@ const svKeys = flatten(sv);
 const missingInSv = [...enKeys.keys()].filter((k) => !svKeys.has(k)).sort();
 const missingInEn = [...svKeys.keys()].filter((k) => !enKeys.has(k)).sort();
 
-const sourceFiles = listSourceFiles(appSrcDir);
+const sourceFiles = sourceDirs.flatMap((dir) => listSourceFiles(dir));
 const sourceTexts = sourceFiles.map((f) => readFileSync(f, 'utf8'));
 const combinedSource = sourceTexts.join('\n');
 

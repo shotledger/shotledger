@@ -11,7 +11,12 @@ const gauntletExclude = stryker.mutate
 
 export default defineConfig({
   test: {
-    include: ['shared/**/*.test.ts', 'backend/**/*.test.ts', 'app/src/db/**/*.test.ts'],
+    include: [
+      'shared/**/*.test.ts',
+      'backend/**/*.test.ts',
+      'app/src/db/**/*.test.ts',
+      'web/src/**/*.test.ts',
+    ],
     exclude: ['**/node_modules/**'],
     // JUnit alongside the default reporter so `reqstool status` can see which
     // @SVCs-tagged test actually ran (ADR 0015). `classnameTemplate` is what

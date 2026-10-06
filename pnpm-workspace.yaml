@@ -2,6 +2,7 @@ packages:
   - app
   - shared
   - backend
+  - web
 allowBuilds:
   '@parcel/watcher': true
   better-sqlite3: true
