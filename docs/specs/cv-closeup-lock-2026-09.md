@@ -301,6 +301,26 @@ Not done: running the check only on tight crops. That drops the guard on
 every other lock, so its verdicts are not the same by construction; it
 belongs with #528's per-guard decision after a phone timing.
 
+**Where the detector's time goes** (#648). `[scan-timing]` now logs whether
+the half-calibre run happened and, per detector run, its maps, peaks and
+features. On the emulator (release build) the maps take about 4.6 s of a run
+at the calibre, peaks 0.3 s and features 0.5 s. The maps' cost is per-pixel
+JavaScript under Hermes (the padding mask, the ring lines, the glyph
+components), not OpenCV: its three blurs take 0.5 s. All of those maps but the
+blurs are the same at any calibre, so a canvas's second run reuses its first's
+(`canvasMapsOf`). Candidates come out bit for bit the same as before, on 12
+corpus canvases at both calibres. On a precision close-up whose half-calibre
+run happens (about 7 % of them, the slow tail), three interleaved scans each:
+
+| Stage                         |      Before |       After |
+| ----------------------------- | ----------: | ----------: |
+| hole-size check               | 13.6–18.3 s |  9.8–10.4 s |
+| maps, run at half the calibre |   4.6–6.1 s | 0.71–0.76 s |
+
+What remains in that case is the half-calibre run's features (310 peaks,
+about 3.3 s). Every close-up lock still waits for the calibre's run before the
+marking screen opens.
+
 ## 2026-10-06: asking for the face when the X line is missing
 
 Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb

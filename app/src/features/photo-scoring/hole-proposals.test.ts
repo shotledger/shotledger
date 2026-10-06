@@ -176,6 +176,18 @@ it('refuses a canvas that cannot hold the stage', () => {
   ).toEqual([]);
 });
 
+it('reads a second calibre on a canvas as a fresh canvas does', () => {
+  const face = faceOf();
+  const half = { ...face, caliberMm: face.caliberMm / 2 };
+  const canvas = canvasOf(fixture.scenarios[0]!);
+  const fresh = () => ({ ...canvas, data: Uint8Array.from(canvas.data) });
+  holeCandidates(canvas, face);
+  expect(holeCandidates(canvas, half)).toEqual(holeCandidates(fresh(), half));
+  // The face's rings decide the maps too, so another face is not reused.
+  const inner = { ...face, maxRadiusMm: face.maxRadiusMm - 10 };
+  expect(holeCandidates(canvas, inner)).toEqual(holeCandidates(fresh(), inner));
+}, 30_000);
+
 // Filling a series up to its shot count: four well-separated candidates of the
 // first synthetic scenario, with probabilities set by hand.
 function spacedCandidates(probabilities: readonly number[]) {

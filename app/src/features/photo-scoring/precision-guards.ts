@@ -98,13 +98,18 @@ export function holeSizeCheck(
   face: TargetFaceDefinition,
   caliberMm: number,
   candidatesOf: (canvas: RectifiedCanvas, face: ProposalFace) => readonly HoleCandidate[],
-): { readonly tooSmall: boolean; readonly candidates: readonly HoleCandidate[] } {
+): {
+  readonly tooSmall: boolean;
+  readonly candidates: readonly HoleCandidate[];
+  /** Whether the half-calibre run happened. */
+  readonly halfRun: boolean;
+} {
   const full = proposalFaceOf(face, caliberMm);
   const candidates = candidatesOf(canvas, full);
   const fullMm = holeDiametersMm(canvas, full, () => candidates);
-  if (fullMm.length > 0) return { tooSmall: false, candidates };
+  if (fullMm.length > 0) return { tooSmall: false, candidates, halfRun: false };
   const halfMm = holeDiametersMm(canvas, proposalFaceOf(face, caliberMm / 2), candidatesOf);
-  return { tooSmall: holesTooSmall(fullMm, halfMm, caliberMm), candidates };
+  return { tooSmall: holesTooSmall(fullMm, halfMm, caliberMm), candidates, halfRun: true };
 }
 
 /**
