@@ -44,6 +44,9 @@ function tables(): PulledTables {
     ]),
     falt_stations: new Map(),
     tags: table([{ id: 't1', name: 'Club', color: null, deleted_at: null }]),
+    firearms: table([]),
+    licenses: table([]),
+    ammo_lots: table([]),
   };
 }
 

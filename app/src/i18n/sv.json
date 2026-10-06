@@ -1329,9 +1329,40 @@
     }
   },
   "web": {
-    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik. Inget sparas när du stänger fliken.",
+    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik och ditt konto. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
-    "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen."
+    "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen.",
+    "account": {
+      "title": "Konto",
+      "loading": "Hämtar…",
+      "devicesTitle": "Inloggade enheter",
+      "devicesFailed": "Kunde inte visa dina enheter. Logga ut och in igen för att se dem.",
+      "deviceApp": "ShotLedger-appen på {{os}}",
+      "deviceBrowser": "{{browser}} på {{os}}",
+      "deviceUnknown": "Okänd enhet",
+      "thisBrowser": "Den här webbläsaren",
+      "deviceDates": "Inloggad {{signedIn}} · senast aktiv {{lastActive}}",
+      "storageTitle": "Fotolagring",
+      "storageUsed": "{{used}} av {{limit}} används",
+      "storageFailed": "Kunde inte läsa din fotolagring.",
+      "downloadTitle": "Ladda ner allt",
+      "downloadBody": "Dina pass som en ShotLedger-JSON-fil och alla uppladdade tavelfoton, i en zip. Passens taggar finns kvar i telefonen; de synkas inte.",
+      "download": "Ladda ner",
+      "downloadProgress": "Hämtar foton… {{done}} av {{total}}",
+      "downloadMissing_one": "{{count}} foto kunde inte hämtas. Zip-filen listar det i missing.txt.",
+      "downloadMissing_other": "{{count}} foton kunde inte hämtas. Zip-filen listar dem i missing.txt.",
+      "downloadFailed": "Nedladdningen misslyckades. Försök igen.",
+      "deleteBody": "Raderar ditt konto och allt som synkats till servern, även foton, och loggar ut alla enheter. Loggboken i telefonen finns kvar. Det går inte att ångra.",
+      "deleteRows": "Synkade rader",
+      "deletePhotos": "Foton",
+      "deleteDevices": "Inloggade enheter",
+      "deleteFailed": "Kunde inte radera kontot. Försök igen.",
+      "deletedBody": "Dina serverdata är borta. Loggboken i telefonen är orörd."
+    },
+    "shell": {
+      "menu": "Huvudmeny",
+      "version": "Version"
+    }
   }
 }

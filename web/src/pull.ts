@@ -3,13 +3,16 @@
 // tab closes (ADR 0013).
 import type { PullRequest, PullResponse, SyncTableName } from '@shotledger/shared/src/sync';
 
-/** The tables the Statistics report reads. */
+/** The tables the Statistics report and the account download read. */
 export const WEB_TABLES = [
   'sessions',
   'series',
   'shots',
   'falt_stations',
   'tags',
+  'firearms',
+  'licenses',
+  'ammo_lots',
 ] as const satisfies readonly SyncTableName[];
 
 export type WebTable = (typeof WEB_TABLES)[number];

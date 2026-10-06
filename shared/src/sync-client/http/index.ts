@@ -90,6 +90,19 @@ export interface AccountSession {
   email: string;
 }
 
+/** One signed-in session on the account. */
+export interface AccountDevice {
+  /** The session token (unsigned): what `revokeDevice` takes. */
+  token: string;
+  createdAt: string;
+  /** Last time better-auth refreshed the session, roughly "last seen". */
+  updatedAt: string;
+  expiresAt: string;
+  userAgent: string | null;
+  /** The session making this request. */
+  isCurrent: boolean;
+}
+
 export class AuthError extends Error {
   constructor(
     readonly status: number,
@@ -168,6 +181,42 @@ export function createAccountApi(config: HttpClientConfig) {
       const json = (await response.json()) as { user?: { id?: string; email?: string } } | null;
       if (!json?.user?.id) return null;
       return { userId: json.user.id, email: json.user.email ?? '' };
+    },
+
+    /**
+     * The account's signed-in sessions, one per device or browser. better-auth
+     * answers 403 once the caller's own session is over a day old (its
+     * `freshAge`), so this suits a fresh sign-in, not a long-lived phone token.
+     */
+    async listDevices(): Promise<AccountDevice[]> {
+      const token = config.getToken();
+      const response = await config.fetchImpl(`${config.baseUrl}/api/auth/list-sessions`, {
+        headers: { authorization: `Bearer ${token ?? ''}`, origin: config.baseUrl },
+      });
+      const text = await response.text();
+      if (!response.ok) throw new AuthError(response.status, text.slice(0, 300));
+      // The bearer token is the session token plus its signature.
+      const current = token?.split('.')[0];
+      const rows = JSON.parse(text) as {
+        token: string;
+        createdAt: string;
+        updatedAt: string;
+        expiresAt: string;
+        userAgent?: string | null;
+      }[];
+      return rows.map((row) => ({
+        token: row.token,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        expiresAt: row.expiresAt,
+        userAgent: row.userAgent ?? null,
+        isCurrent: row.token === current,
+      }));
+    },
+
+    /** Signs another device out; its next request answers 401. */
+    async revokeDevice(sessionToken: string): Promise<void> {
+      await authRequest(config, '/revoke-session', { token: sessionToken }, config.getToken());
     },
 
     /** GDPR delete. `dryRun` returns the counts without deleting anything. */
