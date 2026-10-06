@@ -1329,7 +1329,7 @@
     }
   },
   "web": {
-    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik. Inget sparas i webbläsaren.",
+    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
     "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen."
