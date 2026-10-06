@@ -1327,5 +1327,11 @@
       "B": "B · Snabbskjutning",
       "C": "C · Figurskjutning"
     }
+  },
+  "web": {
+    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik. Inget sparas i webbläsaren.",
+    "loading_one": "Hämtar loggboken… {{count}} rad",
+    "loading_other": "Hämtar loggboken… {{count}} rader",
+    "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen."
   }
 }
