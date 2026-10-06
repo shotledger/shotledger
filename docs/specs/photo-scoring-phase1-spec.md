@@ -113,6 +113,7 @@ OpenCV):
 | `centerInFrame`    | ellipse center inside the image bounds                                                | extreme crops where the fit put the center outside the target                                                                                                   |
 | `zoneContrastGray` | mean gray of the **annulus at 1.15–1.40 r** minus mean gray of the **disc at 0.70 r** | the decisive one. A precision face is a solid black disc on light card, so this is a large positive step. Gravel, sky and a milsnabb annulus have no such step. |
 | `profileScore`     | stage-3 objective **normalized by the profile's own median absolute deviation**       | a flat, structureless radial profile. Normalization matters: the raw objective tracks photo contrast and is useless as an absolute threshold.                   |
+| `ringDriftMm`      | worst distance of the printed 9 and 8 lines from the fit's rings, searched ±12 mm     | a fit at the wrong scale, out of the refinement's ±12% reach. Added 2026-10-06; measured in `cv-corpus-validation-2026-09.md` §6                                |
 
 ### 2.3 Thresholds, and where they come from
 
@@ -122,6 +123,7 @@ axisRatio      <= 2.0
 centerInFrame == true
 zoneContrastGray >= 50
 profileScore     >= 20
+ringDriftMm      <= 4.5   (or null: neither line in frame)
 ```
 
 These are **measured, not chosen by taste**. `spike/cv/validity_gate.py`
@@ -134,7 +136,7 @@ and 50 sits inside it.
 
 | #   | Given                                                 | Then                                                                                                                                                                  |
 | --- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V1  | all five metrics inside their thresholds              | `{ valid: true, reasons: [] }`                                                                                                                                        |
+| V1  | every metric inside its threshold                     | `{ valid: true, reasons: [] }`                                                                                                                                        |
 | V2  | `axisRatio` 2.01                                      | invalid, reasons include `'axisRatio'`                                                                                                                                |
 | V3  | `zoneFraction` 0.09, and separately 0.96              | invalid, reasons include `'zoneFraction'` (both ends of the band are enforced)                                                                                        |
 | V4  | `centerInFrame` false                                 | invalid, reasons include `'centerInFrame'`                                                                                                                            |
@@ -143,6 +145,8 @@ and 50 sits inside it.
 | V7  | several metrics out of range at once                  | `reasons` lists **every** failing metric, in a stable declared order — the UI explains what went wrong, so a gate that stops at the first failure would hide the rest |
 | V8  | exactly-on-threshold values (2.0, 0.10, 0.95, 50, 20) | valid — thresholds are inclusive bounds                                                                                                                               |
 | V9  | a NaN in any metric                                   | invalid, reason for that metric (a NaN must never compare its way to `valid`)                                                                                         |
+| V10 | `ringDriftMm` 4.6                                     | invalid, reasons `['ringDrift']`                                                                                                                                      |
+| V11 | `ringDriftMm` null                                    | valid: with neither line in frame there is nothing to hold the fit to                                                                                                 |
 
 ### 2.5 What happens on failure
 

@@ -101,6 +101,8 @@ test.skipIf(!dir || !out)('both locks on every PGM', async () => {
       disc: discToMm ? 'pass' : 'fail',
       discReasons: disc.validity?.reasons ?? disc.error,
       discOff: round(discOffsetMm, 2),
+      // the disc lock's gate: how far the 9 and 8 lines are from its rings
+      discDrift: round(disc.result?.metrics.ringDriftMm, 2),
       // the same yardstick on the disc lock's canvas mapping (disc-run.ts)
       discCanvasOff: round(disc.canvasToMm && ringOffsetMm(work, disc.canvasToMm), 2),
       closeup: closeup === null ? 'none' : passesCloseupGate(closeup) ? 'pass' : 'fail',

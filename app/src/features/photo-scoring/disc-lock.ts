@@ -26,9 +26,11 @@ import {
   scoreRadialProfile,
 } from '@shotledger/shared';
 
+import { type CloseupOps, closeupWorkImage, pureCloseupOps, ringDriftMm } from './closeup-lock';
 import type { Homography } from './corners';
 import { pickFaceCandidate, type FaceCandidate } from './face-candidate';
 import type { RectifiedCanvas } from './tap-snap';
+import { fromRectification, homographyOf, invertHomography } from './transform';
 import type { GeometryMetrics } from './validity';
 
 /** Rectified working canvas resolution, as in the spike. Fixing it makes
@@ -348,6 +350,7 @@ export function runDiscLock<M, C>(
   ops: DiscOps<M, C>,
   gray: M,
   options: DiscLockOptions,
+  closeupOps: CloseupOps = pureCloseupOps,
 ): GeometryPipelineResult {
   const { ellipse: initial, filled } = findFace(ops, gray);
   const ellipse = refitRays(ops, filled, initial);
@@ -391,6 +394,14 @@ export function runDiscLock<M, C>(
   const r = ellipse.minorAxis / 2;
   const inner = discMean(ops, gray, ellipse.center.x, ellipse.center.y, 0.7 * r);
   const outer = annulusMean(ops, gray, ellipse.center.x, ellipse.center.y, 1.15 * r, 1.4 * r);
+  // The profile search only tries scales within 12% of the black's ellipse,
+  // so an ellipse of the wrong size leaves the rings off the printed lines.
+  const toMm = invertHomography(homographyOf(fromRectification(transform)));
+  const photo = ops.bytes(gray);
+  const work = closeupWorkImage(
+    { data: photo.data, width: photo.cols, height: photo.rows },
+    closeupOps,
+  );
 
   const metrics: GeometryMetrics = {
     axisRatio: ellipse.majorAxis / ellipse.minorAxis,
@@ -402,6 +413,7 @@ export function runDiscLock<M, C>(
       ellipse.center.y < options.height,
     zoneContrastGray: outer - inner,
     profileScore: mad > 1e-6 ? refined.score / mad : 0,
+    ringDriftMm: toMm && ringDriftMm(work, toMm),
   };
 
   const { data: bytes } = ops.bytes(canvas);

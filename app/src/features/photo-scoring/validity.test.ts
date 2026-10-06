@@ -8,6 +8,7 @@ const good: GeometryMetrics = {
   centerInFrame: true,
   zoneContrastGray: 156.1,
   profileScore: 232.25,
+  ringDriftMm: 0.8,
 };
 
 const withMetric = (patch: Partial<GeometryMetrics>): GeometryMetrics => ({ ...good, ...patch });
@@ -57,6 +58,7 @@ describe('checkGeometryValidity', () => {
       centerInFrame: false,
       zoneContrastGray: -100,
       profileScore: 1,
+      ringDriftMm: 12,
     });
     expect(result.valid).toBe(false);
     expect(result.reasons).toEqual([
@@ -65,6 +67,7 @@ describe('checkGeometryValidity', () => {
       'centerInFrame',
       'zoneContrast',
       'profileScore',
+      'ringDrift',
     ]);
   });
 
@@ -77,6 +80,7 @@ describe('checkGeometryValidity', () => {
         centerInFrame: true,
         zoneContrastGray: t.minZoneContrastGray,
         profileScore: t.minProfileScore,
+        ringDriftMm: t.maxRingDriftMm,
       }).valid,
     ).toBe(true);
     expect(checkGeometryValidity(withMetric({ zoneFraction: t.maxZoneFraction })).valid).toBe(true);
@@ -95,11 +99,23 @@ describe('checkGeometryValidity', () => {
     expect(checkGeometryValidity(withMetric({ profileScore: Number.NaN })).reasons).toContain(
       'profileScore',
     );
+    expect(checkGeometryValidity(withMetric({ ringDriftMm: Number.NaN })).reasons).toContain(
+      'ringDrift',
+    );
+  });
+
+  it('V10: rejects a fit whose rings drift off the printed lines', () => {
+    expect(checkGeometryValidity(withMetric({ ringDriftMm: 4.6 })).reasons).toEqual(['ringDrift']);
+  });
+
+  it('V11: passes a fit with no ring in frame to hold it to', () => {
+    expect(checkGeometryValidity(withMetric({ ringDriftMm: null })).valid).toBe(true);
   });
 });
 
 // The gate exists to reject exactly these, so they are asserted with the real
-// numbers the gate's calibration measured, not with invented ones.
+// numbers the gate's calibration measured, not with invented ones. That
+// calibration predates the ring offset, hence null.
 describe('the corpus photos the gate exists for', () => {
   it('rejects 20250906_104730, which locked onto a treeline and gravel', () => {
     const result = checkGeometryValidity({
@@ -108,6 +124,7 @@ describe('the corpus photos the gate exists for', () => {
       centerInFrame: true,
       zoneContrastGray: -111.5,
       profileScore: 7.05,
+      ringDriftMm: null,
     });
     expect(result.valid).toBe(false);
     // it fails on all four measured axes, not marginally on one
@@ -121,6 +138,7 @@ describe('the corpus photos the gate exists for', () => {
       centerInFrame: true,
       zoneContrastGray: -5.6,
       profileScore: 9.21,
+      ringDriftMm: null,
     });
     expect(result.valid).toBe(false);
     expect(result.reasons).toEqual(['axisRatio', 'zoneFraction', 'zoneContrast', 'profileScore']);
@@ -135,6 +153,7 @@ describe('the corpus photos the gate exists for', () => {
       centerInFrame: true,
       zoneContrastGray: -57.7,
       profileScore: 121.99,
+      ringDriftMm: null,
     });
     expect(result.valid).toBe(false);
     expect(result.reasons).toEqual(['zoneContrast']);
@@ -147,6 +166,7 @@ describe('the corpus photos the gate exists for', () => {
       centerInFrame: true,
       zoneContrastGray: -21.0,
       profileScore: 320.45,
+      ringDriftMm: null,
     });
     expect(result.valid).toBe(false);
     expect(result.reasons).toEqual(['zoneFraction', 'zoneContrast']);
@@ -160,6 +180,7 @@ describe('the corpus photos the gate exists for', () => {
         centerInFrame: true,
         zoneContrastGray: 84.2,
         profileScore: 33.84,
+        ringDriftMm: null,
       }).valid,
     ).toBe(true);
   });

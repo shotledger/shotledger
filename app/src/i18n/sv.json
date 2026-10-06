@@ -1096,6 +1096,7 @@
     "reasonCenterInFrame": "Tavlans mitt är utanför fotot.",
     "reasonZoneContrast": "Ingen svart zon hittades mot tavelpappret.",
     "reasonProfileScore": "Ringlinjerna kunde inte hittas.",
+    "reasonRingDrift": "Ringarna som hittades glider bort från de tryckta ringlinjerna, som när tavlan läses i fel storlek.",
     "reasonMilsnabbLock": "Ringarna stämmer med en milsnabbtavla, inte sessionens precisionstavla.",
     "reasonPerspective": "Ringarna stämmer bara vid en lutning som inget foto av en plan tavla har, som när en milsnabbtavla läses som en precisionstavla.",
     "reasonHoleSize": "Hålen ser hälften så stora ut som kalibern ger, som när en milsnabbtavla läses som en precisionstavla.",

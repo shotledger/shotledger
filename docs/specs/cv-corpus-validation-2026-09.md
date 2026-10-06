@@ -289,3 +289,75 @@ fitting on both corpora — which the shipped constants are.
 - Still the Python twin for the measurement. The TypeScript the app runs is
   pinned to it by a committed fixture, not by having been measured itself —
   see `cv-assisted-detection-evidence.md`.
+
+---
+
+## 6. The disc lock's scale (2026-10-06)
+
+Issue #264, found while measuring the disc lock in Node (#502). On 16 photos
+where both locks pass, the disc lock's scale was 7–27% off the close-up
+lock's, while the close-up lock sat on the printed lines. The disc lock's gate
+(§2 of `photo-scoring-phase1-spec.md`) checks the black's shape and the radial
+profile, not the scale. The profile search only tries scales within 12% of
+the black's fitted ellipse, so an ellipse of the wrong size leaves the rings
+between the printed lines, and nothing refused it. `chooseLock` already
+preferred the close-up lock on such photos; the harm was on photos where the
+close-up lock does not pass.
+
+### The check
+
+`ringDriftMm` (`closeup-lock.ts`) holds the disc lock to the close-up lock's
+ring-line yardstick: on the same line image, how far the printed 9 and 8
+lines (50 and 75 mm) sit from the lock's rings, searched ±12 mm. The gate
+refuses a fit that drifts more than **4.5 mm** (`ringDrift`). Two changes
+from `ringOffsetMm`, both measured:
+
+- **The window is almost half a step**, so a lock far off still finds its
+  line. The ±3 mm window of `ringOffsetMm` saturates at 3 mm on a wrong lock
+  and cannot tell it from a correct one.
+- **The 10's line is left out, and the line is read as the median along the
+  circle.** At ±12 mm the 10's window reaches the X ring, 12.5 mm inside it.
+  Read as the mean over all three rings, the same threshold refused 25 of the
+  232 photos where only the disc lock passes, instead of 8; on several of
+  them the 10's window peaked at its edge, next to the X ring, on rings that
+  sat on the lines by eye.
+
+### Measured
+
+`tools/cv/eval/closeup-real.eval.ts` (both locks, `chooseLock`, the scale
+ratio, and the gate's `discDrift`) and `disc.eval.ts`, on the 507 precision
+photos of the corpus manifest at 2048 px. Bands are the disc lock's scale
+against the close-up lock's, as #502 counted them.
+
+| Disc lock passed before this check      | Photos | Refused now | Drift, max | Lock used changes |
+| --------------------------------------- | -----: | ----------: | ---------: | ----------------: |
+| Close-up passes, scale within 3%        |    147 |       **0** |     3.6 mm |                 0 |
+| Close-up passes, scale 3–7% off         |     30 |           2 |     4.8 mm |                 0 |
+| **Close-up passes, scale 7–27% off**    | **16** |      **10** |    11.0 mm |                 0 |
+| Close-up passes at ½–¼ the scale (veto) |      9 |           0 |     3.6 mm |                 0 |
+| Close-up does not pass                  |    232 |           8 |    11.7 mm |             **8** |
+| **Total**                               |    434 |          20 |            |                 8 |
+
+- **No correct fit is refused.** The 147 fits the close-up lock confirms
+  drift 3.6 mm at most; 4.5 mm leaves 0.9 mm of margin.
+- **10 of the 16 wrong-scale fits are refused.** The other 6 drift 1.8–3.9
+  mm, about what the confirmed fits show (#496's affine error), so their
+  rings are no further off than an ordinary disc lock's.
+- **What changes in the app: 8 photos.** Where only the disc lock passes, it
+  now refuses 8 of 232, and each was checked by eye on its drawn rings: in
+  every one the fitted ellipse misses the black's edge and the rings sit
+  between the printed lines. They go to the corners screen instead of being
+  scored on wrong rings. Everywhere else `chooseLock` picks the same lock as
+  before: every refused fit there had already lost to the close-up lock.
+- **Milsnabb is untouched.** The disc lock never runs on the milsnabb face
+  (`faces.ts`: manual-only). On 37 milsnabb photos scored as precision, it
+  passed 1 before and 0 now.
+
+### Limits
+
+- "Correct" is defined by the close-up lock, which passes on 202 of the 434
+  photos the disc lock passes. On the other 232 there is no reference, only
+  the eye check. Several that still pass sit a few mm off the lines by eye;
+  that is the disc lock's general accuracy (#496), not its scale, and this
+  gate does not try to fix it.
+- One face, 2048 px, the maintainer's camera roll and three contributors.

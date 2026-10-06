@@ -15,6 +15,10 @@ two ways to work that out on the 25 m precision face.
 for the largest dark, roughly round area in the photo and fits an oval to its
 edge. The oval gives the centre, the scale and the angle you photographed from.
 It then nudges the drawn rings until they sit on the printed ring lines.
+The nudge corrects the size by an eighth at most, so an oval of the wrong size
+leaves the rings between the printed lines. The app therefore looks for the
+printed lines up to half a ring either side of its 10, 9 and 8 rings, and
+refuses the fit when any of the three is more than 4.5 mm off.
 
 **From the ring lines.** A close-up of the 9 and 10 has no black edge in it, so
 the first method has nothing to hold on to. The second one uses a property of

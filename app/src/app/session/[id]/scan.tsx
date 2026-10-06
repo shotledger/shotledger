@@ -134,6 +134,7 @@ const REASON_KEYS: Record<RejectReason, string> = {
   centerInFrame: 'photoScoring.reasonCenterInFrame',
   zoneContrast: 'photoScoring.reasonZoneContrast',
   profileScore: 'photoScoring.reasonProfileScore',
+  ringDrift: 'photoScoring.reasonRingDrift',
   milsnabbLock: 'photoScoring.reasonMilsnabbLock',
   perspective: 'photoScoring.reasonPerspective',
   holeSize: 'photoScoring.reasonHoleSize',

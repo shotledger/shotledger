@@ -16,6 +16,10 @@ Appen letar efter det största mörka, ungefär runda området i fotot och anpas
 en oval till dess kant. Ovalen ger mittpunkten, skalan och vinkeln du
 fotograferade från. Sedan justerar den de ritade ringarna tills de ligger på de
 tryckta ringlinjerna.
+Justeringen rättar storleken med högst en åttondel, så en oval i fel
+storlek lämnar ringarna mellan de tryckta linjerna. Därför letar appen efter de
+tryckta linjerna upp till en halv ring på vardera sidan om sina 10-, 9- och
+8-ringar, och avvisar anpassningen om någon av de tre ligger mer än 4,5 mm fel.
 
 **Från ringlinjerna.** En närbild av niorna och tian har ingen svart kant, så
 det första sättet har inget att hålla sig i. Det andra utnyttjar i stället en
