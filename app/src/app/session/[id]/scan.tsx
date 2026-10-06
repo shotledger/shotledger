@@ -71,13 +71,17 @@ import {
   runMilsnabbLock,
   runGeometry,
 } from '@/features/photo-scoring/opencv';
+import { faceAnswerFor, rememberFaceAnswer } from '@/features/photo-scoring/face-answers';
 import {
+  type FaceAnswer,
+  faceDecision,
   holeDiametersMm,
   holesTooSmall,
   milsnabbLockRefuses,
   perspectiveRefuses,
   type PrecisionGuardRefusal,
   proposalFaceOf,
+  xLineMissing,
 } from '@/features/photo-scoring/precision-guards';
 import { snapToHole, type RectifiedCanvas } from '@/features/photo-scoring/tap-snap';
 import {
@@ -201,6 +205,9 @@ export default function ScanScreen() {
   const [fadeFilled] = useState(() => isFlagEnabled('suggestFilledStyle'));
   const [menuOpen, setMenuOpen] = useState(false);
   const [caliberOpen, setCaliberOpen] = useState(false);
+  // "Precision or milsnabb face?", open while an analysis waits on the answer.
+  const faceAnswered = useRef<((answer: FaceAnswer) => void) | null>(null);
+  const [faceAskOpen, setFaceAskOpen] = useState(false);
 
   const [markState, dispatch] = useReducer(
     markReducer,
@@ -335,6 +342,12 @@ export default function ScanScreen() {
           if (!(await enter('straighten'))) return;
           rectified = rectify(image.base64, closeupMapping.toMm, target);
           if (rectified && holesTooSmallOn(rectified, target)) refusal = 'holeSize';
+          else {
+            // A milsnabb answer is refused as the milsnabb guard refuses.
+            const face = await faceOf(closeupRun);
+            if (!current()) return;
+            if (face === 'milsnabb') refusal = 'milsnabbLock';
+          }
         }
         if (refusal) {
           if (__DEV__) console.warn('precision close-up lock refused:', refusal);
@@ -425,6 +438,38 @@ export default function ScanScreen() {
     } finally {
       checked();
     }
+  }
+
+  /**
+   * The face a close-up lock that passed the guards is on. When no X ring line
+   * is printed where the lock puts it, as on a milsnabb crop of its X and 10
+   * (or a precision centre under pasters), the shooter is asked, at most once
+   * per session.
+   */
+  async function faceOf(run: CloseupLockRun): Promise<FaceAnswer> {
+    const checked = timeStage('x-line check');
+    let missing = false;
+    try {
+      missing = xLineMissing(run.xRing());
+    } catch (error: unknown) {
+      if (__DEV__) console.warn('x-line check failed', error);
+    } finally {
+      checked();
+    }
+    const decision = faceDecision(missing, faceAnswerFor(id));
+    if (decision !== 'ask') return decision;
+    const answer = await new Promise<FaceAnswer>((resolve) => {
+      faceAnswered.current = resolve;
+      setFaceAskOpen(true);
+    });
+    rememberFaceAnswer(id, answer);
+    return answer;
+  }
+
+  function answerFace(answer: FaceAnswer) {
+    setFaceAskOpen(false);
+    faceAnswered.current?.(answer);
+    faceAnswered.current = null;
   }
 
   /**
@@ -854,6 +899,24 @@ export default function ScanScreen() {
             </ThemedText>
           </Card>
         )}
+        {/* No dismiss: the analysis waits on the answer. */}
+        <ActionSheet
+          visible={faceAskOpen}
+          onClose={() => {}}
+          title={t('photoScoring.faceQuestion')}
+          actions={[
+            {
+              key: 'face-precision',
+              label: t('discipline.spsf-precision'),
+              onPress: () => answerFace('precision'),
+            },
+            {
+              key: 'face-milsnabb',
+              label: t('discipline.spsf-milsnabb'),
+              onPress: () => answerFace('milsnabb'),
+            },
+          ]}
+        />
 
         {phase === 'rejected' && (
           <Card>

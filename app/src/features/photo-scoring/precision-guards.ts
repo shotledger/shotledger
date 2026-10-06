@@ -1,8 +1,10 @@
 // Three checks that refuse a precision close-up lock on a milsnabb photo, where
 // a crop of milsnabb's X and 10 rings reads line for line as precision's at
-// twice the size (docs/specs/cv-closeup-lock-2026-09.md, last section).
+// twice the size, and the X-line check that asks the shooter about the crops
+// they miss (docs/specs/cv-closeup-lock-2026-09.md, last sections).
 import type { TargetFaceDefinition } from '@shotledger/shared';
 
+import type { XRingReading } from './closeup-lock';
 import type { Homography } from './corners';
 
 import {
@@ -111,4 +113,36 @@ export function perspectiveRefuses(
 /** The milsnabb guard: the milsnabb lock passing on the same photo. */
 export function milsnabbLockRefuses(milsnabb: MilsnabbLock | null): boolean {
   return passesMilsnabbGate(milsnabb);
+}
+
+/** The X line counts as missing below both shares (#526's median reading). */
+export const X_LINE_PROMPT = { maxOfTen: 0.15, maxOfGaps: 1.5 } as const;
+
+/**
+ * True when no X ring line is printed where the close-up lock puts it, as on a
+ * milsnabb crop of its X and 10. Paster-covered precision centres read the
+ * same, so this asks the shooter rather than refuses. Abstains on null.
+ */
+export function xLineMissing(reading: XRingReading | null): boolean {
+  if (!reading) return false;
+  return (
+    reading.x < X_LINE_PROMPT.maxOfTen * reading.ten &&
+    reading.x < X_LINE_PROMPT.maxOfGaps * reading.gap
+  );
+}
+
+/** The shooter's answer to "Precision or milsnabb face?". */
+export type FaceAnswer = 'precision' | 'milsnabb';
+
+/**
+ * What a precision close-up lock that passed the guards does next: go on as
+ * precision, refuse it as milsnabb, or ask. Asks only when the X line is
+ * missing and the session has no answer yet.
+ */
+export function faceDecision(
+  missing: boolean,
+  remembered: FaceAnswer | undefined,
+): FaceAnswer | 'ask' {
+  if (!missing) return 'precision';
+  return remembered ?? 'ask';
 }

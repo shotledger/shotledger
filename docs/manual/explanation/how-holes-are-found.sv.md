@@ -32,8 +32,16 @@ bara stämmer vid en lutning som inget foto av en plan tavla har. Den avvisar
 den om milsnabbtavlans egen anpassning också fungerar på fotot. Och den avvisar
 den om hålen blir ungefär hälften så stora som din kaliber ger. Finns det inga
 hål att mäta kan den sista kontrollen inte hjälpa. Då kan ett milsnabbfoto
-fortfarande slinka igenom, oftast en tät närbild av X och tian, så räkna
-milsnabb i en milsnabbsession.
+fortfarande slinka igenom, oftast en tät närbild av X och tian.
+
+För dem letar appen efter precisionstavlans X-ring: den tunna linjen inuti tian
+som en milsnabbtavla saknar. Hittar den ingen linje där frågar den vilken tavla
+du har fotograferat. Den frågar en gång per session och minns svaret tills
+appen stängs. Svarar du **Militär snabbmatch** avvisas anpassningen efter
+ringlinjerna, som när någon av kontrollerna ovan avvisar den. Lappar över en
+välskjuten mitt kan också dölja X-linjen, så ibland får även ett precisionsfoto
+frågan; svarar du **Precision** fortsätter räkningen som vanligt. Milsnabb
+räknas ändå bäst i en milsnabbsession.
 
 Båda sätten provas. Vart och ett måste klara sina egna kontroller: ringarna det
 ritar ska ligga på tryckta linjer, inom en halv millimeter. Klarar båda det
