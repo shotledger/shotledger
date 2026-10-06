@@ -3,6 +3,9 @@
 Rules that apply everywhere are in the root `CLAUDE.md`.
 
 - **Never deploy.** `wrangler deploy` is forbidden for an agent.
+- `wrangler dev` serves the web app from `../web/dist` (ADR 0013) and will
+  not start until it exists: `pnpm --filter @shotledger/web build` first. The
+  tests do not need it.
 - `pnpm test` (in `backend/`) runs the Cloudflare Workers vitest suite. It
   is not part of the root `pnpm check`; CI runs it as its own step. It stays
   on vitest 4 until `@cloudflare/vitest-plugin` supports 5.
