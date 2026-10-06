@@ -224,9 +224,10 @@ jobs:
 
   # THE APPROVAL GATE, and the only job that builds what ships.
   #
-  # !! The `release` environment must exist WITH a required reviewer. GitHub
-  # auto-creates a named environment on first use with no protection rules, so
-  # until it is configured by hand this job runs straight through.
+  # !! Advisory on this plan: a private repo on GitHub Free cannot have a
+  # required reviewer (the API answers 422), so the `release` environment has
+  # no protection rules and this job runs straight through. Add the maintainer
+  # as required reviewer once the repo is public or on Pro (#100).
   build:
     name: build on EAS
     needs: [prepare, checks]
