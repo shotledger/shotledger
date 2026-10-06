@@ -1,6 +1,7 @@
 # ADR 0013: The web app is a separate read-only complement, not a third sync device
 
-Status: accepted (2026-10-06; proposed 2026-09-18)
+Status: accepted (2026-10-06; proposed 2026-09-18). Its "the web app never
+writes" is superseded by ADR 0019; architecture B stands.
 
 ## Context
 
@@ -68,8 +69,9 @@ What each feature is still blocked on is tracked on #277.
   loosened.
 - The web app imports the existing i18n JSON and design tokens rather than
   restating them — a build-time file import, not a dependency on React Native.
-- The web app never writes. That is an invariant to test for: it holds no
-  outbox, and none of ADR 0003's guardrails are re-implemented in a browser.
+- The web app holds no outbox, and none of ADR 0003's guardrails are
+  re-implemented in a browser. It writes only as ADR 0019 allows: whole rows
+  through `/sync/push`, online.
 - Offline does not apply; the phone remains complete without the web app, so
   "sync is an option, never a precondition" still holds.
 - **When this gets revisited:** if #301's write paths are approved, the choice

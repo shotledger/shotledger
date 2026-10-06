@@ -96,12 +96,13 @@ settings  id TEXT PK (the key name itself, e.g. 'birthYear'),
 - **The allowlist is enforced in three places:**
   1. The app's settings triggers fire only `WHEN new.id IN (<the five>)`.
   2. `POST /sync/push` refuses the whole request, before any write, when a
-     `settings` change's `rowId` is not allowlisted:
+     `settings` change's `rowId` is not allowlisted, or its payload's `id`
+     is not its `rowId` (revision 3):
      `400 { error: 'setting_not_synced', clientChangeId }` — the same
      check-the-batch-first pattern as the 413 payload cap. This is what keeps
      a web writer (or any client) from parking a device-local key server-side.
-  3. The app's apply step drops a pulled `settings` row whose id is not
-     allowlisted (so shrinking the allowlist later cannot write a stale
+  3. The app's apply step drops a pulled `settings` row that fails the
+     same check (`isSyncableSettingRow`) (so shrinking the allowlist later cannot write a stale
      server row into a device-local key).
 
 ### 2.4 Client engine
@@ -225,6 +226,9 @@ Feature: server allowlist (backend, Workers pool)
     When A pushes [a valid sessions row, settings rowId 'backupFolder']
     Then the response is 400 { error: 'setting_not_synced', clientChangeId }
     And  a pull from cursor 0 returns neither row (nothing was written)
+  Scenario: B3c a settings change whose payload id is not its row id is refused (revision 3)
+  Scenario: B3d an allowlisted settings tombstone is not refused by the allowlist
+  Scenario: B3b the allowlist applies to the settings table only
   Scenario: B4 two devices write the same setting: the later push wins
     When A pushes birthYear '1980' and then B pushes birthYear '1981'
     Then a pull returns one birthYear row, value '1981'
@@ -297,6 +301,16 @@ Feature: settings (app queries)
     When applyChanges gets settings rowId 'backupFolder'
     Then the local backupFolder setting is unchanged
 
+  Scenario: S4b a pulled setting whose payload id differs from its row id is dropped (revision 3)
+  Scenario: E7/E8 (local) applying a pulled tag whose name exists here, live or
+            deleted, succeeds (sync-store.test.ts; the wedge itself)
+
+Feature: two phones on the real SQLite adapters (app/src/db/sync-tags-settings.test.ts —
+         the real engine and adapters, the server's merge rules in memory; revision 3)
+  Scenario: E10 tags and allowlisted settings reach the second phone; device-local ones do not
+  Scenario: E11 an untag and a settings edit on the second phone come back to the first
+  Scenario: E12 both phones create tag KM offline: neither sync fails, one KM on both sessions
+
 Feature: two devices end to end (backend/test/sync-client.spec.ts — the real
          engine on two in-memory stores against the real Worker)
   Scenario: E1 a tag added on A appears on B
@@ -333,9 +347,10 @@ Feature: web read side (vitest)
 - N3 No unique constraint over `(session_id, tag_id)` or `tags.name`; no
   settings tombstone written by the app (A1, S2, N8).
 - N4 The app never hard-deletes a synced row outside `seed.ts`'s dev wipe
-  (`removeSessionTag` is the one that changes; grep gate over
-  `app/src/db/queries` for `db.delete(` on a synced table, with a negative
-  control).
+  (`removeSessionTag` is the one that changes). Gate:
+  `app/src/db/no-hard-delete.test.ts` scans `app/src` for `.delete(<synced
+table>)` and `DELETE FROM <synced table>`, with a negative control. It
+  guards those two spellings, not every way to build a delete.
 - N5 `shared/` stays free of RN/Workers imports; no new dependency anywhere.
 - N6 No existing test is weakened or deleted; baseline failures recorded
   before the first change.
@@ -390,26 +405,12 @@ Feature: web read side (vitest)
 
 ## 7. What this means for the maintainer's phone and account
 
-The baseline reset means **the installed app cannot open its database after
-upgrading** (the journal no longer matches). Concretely:
-
-- The phone must be wiped (`adb shell pm clear app.shotledger`) and the new
-  build installed.
-- `.shotledger` backups taken before this build are refused by restore
-  (`checkSchemaCompatibility`), so they are not a way back.
-- Two ways to repopulate:
-  1. **Re-import the cleaned ShotLog export** (Settings → Import Sessions),
-     as after the last reset. Tags come back from the import. Then re-enter
-     the five account settings once. **The account on the server already
-     holds the old rows under the old ids**, so before signing in again,
-     delete the account (or its data) from Account & Sync, or every session
-     ends up twice.
-  2. **Sign in on the wiped phone and let sync restore it.** Everything that
-     already syncs comes back; tag links and the five settings do not (they
-     were never on the server) and must be redone by hand. No duplicates.
-- Sessions logged on the phone since the last ShotLog import exist only on
-  the phone and on the server; option 1 loses them unless they are re-entered,
-  option 2 keeps them.
+The baseline reset means the installed app cannot open its database after
+upgrading, and `.shotledger` backups taken before this build are refused by
+restore. **Upgrade: wipe (`adb shell pm clear app.shotledger`), install the
+new build, sign in, and let sync restore.** Anything that was not synced
+(tag links, the five account settings) is re-entered by hand; the phone held
+4 sessions and no tag links (maintainer, 2026-10-06).
 
 ## 8. Found on the way
 
@@ -425,3 +426,16 @@ upgrading** (the journal no longer matches). Concretely:
    `liveSessionTags`, which every caller uses, so `analytics-rows/rows.ts`
    stays unchanged and P4 is replaced by N2. §7 keeps both recovery routes;
    the maintainer chooses at upgrade time.
+2. **2026-10-06, during implementation.** The maintainer twice changed the
+   upgrade route (first a JSON re-import, then a one-off in-place migration)
+   and then returned to the plain baseline reset once his phone turned out to
+   hold 4 sessions and no tag links. §7 is that final route; no migration
+   beyond the single baseline ships.
+3. **2026-10-06, during implementation.** Hardening found while writing the
+   apply path: a `settings` row is also refused (server) and dropped (app)
+   when its payload `id` differs from its `rowId`, since the payload id is
+   what a device writes — B3c, B3d, S4b. The two-phone SQLite test (E10–E12)
+   was added because the in-memory devices of the backend e2e have no SQLite
+   constraints, so they could not show the tag-name wedge is gone.
+   `analytics-rows/rows.ts` stays unchanged (link dedupe is in
+   `liveSessionTags`, revision 1).

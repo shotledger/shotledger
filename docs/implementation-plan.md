@@ -237,10 +237,14 @@ sight_settings  firearm_id FK NOT NULL,
                                                -- ≤1 per firearm, query-enforced
                 notes TEXT
 
-tags            name TEXT NOT NULL UNIQUE
-session_tags    session_id FK, tag_id FK, PRIMARY KEY(session_id, tag_id)
+tags            name TEXT NOT NULL      -- not unique: readers resolve a
+                                        -- name to its earliest live tag
+                                        -- (ADR 0019)
+session_tags    session_id FK, tag_id FK  -- one synced row per link; the
+                                        -- pair is not unique (ADR 0019)
 
-settings        key TEXT PRIMARY KEY, value TEXT NOT NULL  -- JSON values
+settings        value TEXT NOT NULL     -- JSON values; id = the key. Only
+                                        -- SYNCED_SETTING_KEYS sync
 ```
 
 Derived values (series totals, session totals, X counts, statistics) are
@@ -1178,9 +1182,9 @@ restates §0 rules 1–6 verbatim.
 > sync screen and the photo queue). `backend/` is no longer hello-world.
 > Specs and evidence: `docs/specs/sync-protocol-*`,
 > `docs/specs/backend-auth-photos-*`, `docs/specs/sync-app-*`. No new
-> dependency was added on the app side. Still open: the `VERIFY:` question
-> in `sync-protocol-spec.md` §1 about whether `settings` and `session_tags`
-> should sync.
+> dependency was added on the app side. The `VERIFY:` in
+> `sync-protocol-spec.md` §1 about `settings` and `session_tags` was resolved
+> on 2026-10-06 (ADR 0019): both sync, `settings` for an allowlist only.
 
 > **All three timers have since shipped.** The time-limit/interval timer
 > (`feat/shot-timer`, `shared/src/timer/engine.ts`), the IPSC-style
