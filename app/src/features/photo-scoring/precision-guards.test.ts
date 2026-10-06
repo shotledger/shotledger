@@ -347,6 +347,7 @@ describe('holeSizeCheck on a synthetic canvas', () => {
     const { calls, candidatesOf } = counting();
     const check = holeSizeCheck(canvas, face, CALIBER, candidatesOf);
     expect(calls).toEqual([CALIBER]);
+    expect(check.halfRun).toBe(false);
     expect(check.tooSmall).toBe(eager(canvas));
     expect(check.candidates).toEqual(holeCandidates(canvas, proposalFaceOf(face, CALIBER)));
   });
@@ -356,6 +357,7 @@ describe('holeSizeCheck on a synthetic canvas', () => {
     const { calls, candidatesOf } = counting();
     const check = holeSizeCheck(canvas, face, CALIBER, candidatesOf);
     expect(calls).toEqual([CALIBER, CALIBER / 2]);
+    expect(check.halfRun).toBe(true);
     expect(check.tooSmall).toBe(eager(canvas));
   });
 });

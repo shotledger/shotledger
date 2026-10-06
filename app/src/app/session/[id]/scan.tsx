@@ -40,7 +40,11 @@ import {
   capturePhoto,
   prepareGeometryImage,
 } from '@/features/photo-scoring/capture';
-import { type CloseupLock, chooseLock } from '@/features/photo-scoring/closeup-lock';
+import {
+  type CloseupLock,
+  chooseLock,
+  passesCloseupGate,
+} from '@/features/photo-scoring/closeup-lock';
 import { type MilsnabbLock, passesMilsnabbGate } from '@/features/photo-scoring/milsnabb-lock';
 import {
   type Homography,
@@ -63,6 +67,7 @@ import {
 } from '@/features/photo-scoring/marks';
 import { DEV_TOOLS_ENABLED, FLAGS, type FlagName, isFlagEnabled } from '@/constants/flags';
 import {
+  type DetectorTimings,
   type HoleCandidate,
   holeCandidates,
   proposeHolesAsync,
@@ -121,15 +126,42 @@ const STAGE_KEYS: Record<AnalyzeStage, string> = {
 /** A release build logs scan timings only when built with this set (#528). */
 const LOG_SCAN_TIMING = __DEV__ || process.env.EXPO_PUBLIC_SCAN_TIMING === '1';
 
-/** Starts timing a stage; the returned function logs its milliseconds to the
- *  device log. */
-function timeStage(stage: string): () => void {
+/** Starts timing a stage; the returned function logs its milliseconds, and
+ *  any detail given, to the device log. */
+function timeStage(stage: string): (detail?: string) => void {
   const since = performance.now();
-  return () => {
+  return (detail) => {
     if (LOG_SCAN_TIMING) {
-      console.log(`[scan-timing] ${stage}: ${Math.round(performance.now() - since)} ms`);
+      const ms = Math.round(performance.now() - since);
+      console.log(`[scan-timing] ${stage}: ${ms} ms${detail ? `, ${detail}` : ''}`);
     }
   };
+}
+
+/** What a lock read, for telling a phone's verdict from the eval's (#649). */
+function logLock(name: string, reading: string) {
+  if (LOG_SCAN_TIMING) console.log(`[scan-lock] ${name}: ${reading}`);
+}
+
+const fixed = (v: number | null | undefined, digits = 2) =>
+  v === null || v === undefined ? '-' : v.toFixed(digits);
+
+function closeupReading(lock: CloseupLock | null): string {
+  if (!lock) return 'none';
+  return [
+    passesCloseupGate(lock) ? 'passes' : 'fails',
+    `residual ${fixed(lock.residualMm, 3)} mm`,
+    `comb ${fixed(lock.comb)}`,
+    `ring offset ${fixed(lock.ringOffsetMm)} mm`,
+    `face contrast ${fixed(lock.faceContrast)}`,
+    `period ${fixed(lock.period, 1)} px`,
+  ].join(', ');
+}
+
+/** One detector run's breakdown (#648). */
+function detectorReading(t: DetectorTimings): string {
+  const ms = (v: number) => `${Math.round(v)} ms`;
+  return `maps ${ms(t.mapsMs)}, peaks ${ms(t.peaksMs)}, features ${ms(t.featuresMs)} (${t.peaks} peaks, ${t.canvasPx} px canvas)`;
 }
 
 /** Milliseconds for the assist log, read where the handlers need them. */
@@ -281,7 +313,9 @@ export default function ScanScreen() {
     try {
       const prepared = timeStage('prepare');
       const image = await prepareGeometryImage(captured);
-      prepared();
+      prepared(
+        `${image.width}x${image.height} from ${captured.originalWidth}x${captured.originalHeight}`,
+      );
       if (!(await enter('target'))) return;
       setGeometryImage(image);
       // Set before the pipeline runs, so a pipeline throw still reaches the
@@ -325,11 +359,15 @@ export default function ScanScreen() {
           ringRadiiMm: target.rings.map((ring) => ring.diameterMm / 2),
         });
         disc = { result, validity: checkGeometryValidity(result.metrics) };
-      } catch {
+      } catch (error: unknown) {
         // A pipeline throw ("no dark region found") is the same product
         // outcome as a failed gate: the disc lock could not lock the target.
+        logLock('disc lock', `threw ${String(error)}`);
       }
       discLocked();
+      if (disc) {
+        logLock('disc lock', disc.validity.valid ? 'passes' : disc.validity.reasons.join(', '));
+      }
       const discTransform = disc?.validity.valid ? fromRectification(disc.result.transform) : null;
 
       // A close-up of the inner rings has no disc edge to lock on, but its
@@ -347,8 +385,10 @@ export default function ScanScreen() {
           closeupRun = runCloseupLock({ base64: image.base64, discToMm });
           closeup = closeupRun.lock;
           discOffsetMm = closeupRun.discRingOffsetMm;
+          logLock('close-up lock', closeupReading(closeup));
         } catch (error: unknown) {
           if (__DEV__) console.warn('close-up lock failed', error);
+          logLock('close-up lock', `threw ${String(error)}`);
         }
         closeupLocked();
       }
@@ -462,15 +502,24 @@ export default function ScanScreen() {
     face: NonNullable<typeof target>,
   ): ReturnType<typeof holeSizeCheck> | null {
     const checked = timeStage('hole-size check');
+    const runs: string[] = [];
+    let halfRun = false;
     try {
-      return holeSizeCheck(rectified, face, markState.caliberMm, (canvas, proposalFace) =>
-        holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined),
-      );
+      const check = holeSizeCheck(rectified, face, markState.caliberMm, (canvas, proposalFace) => {
+        const timings = {} as DetectorTimings;
+        const found = holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined, timings);
+        runs.push(`${proposalFace.caliberMm} mm: ${detectorReading(timings)}`);
+        return found;
+      });
+      halfRun = check.halfRun;
+      return check;
     } catch (error: unknown) {
       if (__DEV__) console.warn('hole-size check failed', error);
       return null;
     } finally {
-      checked();
+      checked(`half-calibre run: ${halfRun ? 'yes' : 'no'}`);
+      if (LOG_SCAN_TIMING)
+        for (const run of runs) console.log(`[scan-timing] hole detector at ${run}`);
     }
   }
 

@@ -187,6 +187,15 @@ export interface HoleProposal {
   readonly filled: boolean;
 }
 
+/** Where one detector run spent its time, for the scan-timing log. */
+export interface DetectorTimings {
+  mapsMs: number;
+  peaksMs: number;
+  featuresMs: number;
+  peaks: number;
+  canvasPx: number;
+}
+
 /** A float image, row-major. */
 interface Img {
   readonly data: Float64Array;
@@ -524,7 +533,41 @@ export const pureMapOps: MapOps = {
 /** Row-major float image, exported for the native `MapOps`. */
 export type { Img as MapImage };
 
-function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): Maps {
+/** The maps that do not depend on the calibre, so the hole-size check's
+ *  second run on a canvas reuses its first's. */
+interface CanvasMaps {
+  readonly half: Img;
+  readonly inzone: Uint8Array;
+  readonly black: Uint8Array;
+  readonly sampled: readonly number[];
+  /** The glyph map grown by one px, in px: divided by the hole diameter it is
+   *  the glyph map at that calibre. */
+  readonly glyphPx: Float64Array;
+}
+
+const canvasMapsCache = new WeakMap<
+  RectifiedCanvas,
+  { readonly face: ProposalFace; readonly ops: MapOps; readonly maps: CanvasMaps }
+>();
+
+function sameFaceGeometry(a: ProposalFace, b: ProposalFace): boolean {
+  return (
+    a.blackRadiusMm === b.blackRadiusMm &&
+    a.maxRadiusMm === b.maxRadiusMm &&
+    a.ringRadiiMm.length === b.ringRadiiMm.length &&
+    a.ringRadiiMm.every((r, i) => r === b.ringRadiiMm[i])
+  );
+}
+
+function canvasMapsOf(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): CanvasMaps {
+  const cached = canvasMapsCache.get(canvas);
+  if (cached && cached.ops === ops && sameFaceGeometry(cached.face, face)) return cached.maps;
+  const maps = computeCanvasMaps(canvas, face, ops);
+  canvasMapsCache.set(canvas, { face, ops, maps });
+  return maps;
+}
+
+function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): CanvasMaps {
   const half = ops.halfResolution(canvas);
   const { width: w, height: h } = half;
   const valid = validMask(half);
@@ -543,8 +586,6 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
       inzone[i] = r <= face.maxRadiusMm && valid[i] ? 1 : 0;
     }
   }
-  const dHalf = holeDiameterPx(canvas, face) / HALF;
-  const sigma1 = dHalf / (2 * Math.SQRT2);
   // The MAD over every MAD_STRIDE-th pixel in each direction of the scoring
   // area: a 1/16 sample is statistically the same number and keeps the two
   // exact medians affordable under Hermes.
@@ -552,23 +593,6 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
   for (let y = 0; y < h; y += MAD_STRIDE) {
     for (let x = 0; x < w; x += MAD_STRIDE) if (inzone[y * w + x]) sampled.push(y * w + x);
   }
-  const logOf = (sigma: number, floor: number): Float64Array => {
-    const lap = ops.blurLaplacian(half, sigma);
-    const count = sampled.length;
-    const z = new Float64Array(count);
-    for (let i = 0; i < count; i += 1) z[i] = lap[sampled[i] as number] as number;
-    const med = median(z);
-    const dev = new Float64Array(count);
-    for (let i = 0; i < count; i += 1) dev[i] = Math.abs((z[i] as number) - med);
-    const mad = Math.max(median(dev), floor) + 1e-3;
-    for (let i = 0; i < lap.length; i += 1) lap[i] = (lap[i] as number) / mad;
-    return lap;
-  };
-  const logs = {
-    s1: logOf(sigma1, MAD_FLOOR.s1),
-    s2: logOf(2 * sigma1, MAD_FLOOR.s2),
-    s05: logOf(0.5 * sigma1, MAD_FLOOR.s05),
-  };
 
   // printed-glyph extent map
   // Only the rings within reach of a pixel's whole-millimetre bucket are
@@ -589,6 +613,8 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
       }
     }
   }
+  // Extents in px: dividing by the hole diameter later gives the same values
+  // as dividing each extent first, max and division both being monotone.
   const glyph = new Float64Array(w * h);
   for (const useBlack of [true, false]) {
     const zone = new Uint8Array(w * h);
@@ -614,15 +640,40 @@ function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): 
     const ext = new Float64Array(stats.length);
     for (let id = 1; id < stats.length; id += 1) {
       const s = stats[id] as Component;
-      ext[id] = Math.max(s.w, s.h) / dHalf;
+      ext[id] = Math.max(s.w, s.h);
     }
     for (let i = 0; i < glyph.length; i += 1) {
       const v = ext[labels[i] as number] as number;
       if (v > (glyph[i] as number)) glyph[i] = v;
     }
   }
-  const glyphGrown = ops.maxFilter(glyph, w, h, 1);
-  return { half, inzone, black, logs, glyph: glyphGrown, dHalf };
+  return { half, inzone, black, sampled, glyphPx: ops.maxFilter(glyph, w, h, 1) };
+}
+
+function computeMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): Maps {
+  const { half, inzone, black, sampled, glyphPx } = canvasMapsOf(canvas, face, ops);
+  const dHalf = holeDiameterPx(canvas, face) / HALF;
+  const sigma1 = dHalf / (2 * Math.SQRT2);
+  const logOf = (sigma: number, floor: number): Float64Array => {
+    const lap = ops.blurLaplacian(half, sigma);
+    const count = sampled.length;
+    const z = new Float64Array(count);
+    for (let i = 0; i < count; i += 1) z[i] = lap[sampled[i] as number] as number;
+    const med = median(z);
+    const dev = new Float64Array(count);
+    for (let i = 0; i < count; i += 1) dev[i] = Math.abs((z[i] as number) - med);
+    const mad = Math.max(median(dev), floor) + 1e-3;
+    for (let i = 0; i < lap.length; i += 1) lap[i] = (lap[i] as number) / mad;
+    return lap;
+  };
+  const logs = {
+    s1: logOf(sigma1, MAD_FLOOR.s1),
+    s2: logOf(2 * sigma1, MAD_FLOOR.s2),
+    s05: logOf(0.5 * sigma1, MAD_FLOOR.s05),
+  };
+  const glyph = new Float64Array(glyphPx.length);
+  for (let i = 0; i < glyph.length; i += 1) glyph[i] = (glyphPx[i] as number) / dHalf;
+  return { half, inzone, black, logs, glyph, dHalf };
 }
 
 /** (x, y, |LoG| in MADs) at full-res px for each local maximum, raster order. */
@@ -900,14 +951,29 @@ export function holeCandidates(
   canvas: RectifiedCanvas,
   face: ProposalFace,
   ops: MapOps = pureMapOps,
+  timings?: DetectorTimings,
 ): HoleCandidate[] {
   if (canvas.size < 4 || canvas.pxPerMm <= 0) return [];
   if (canvas.data.length < canvas.size * canvas.size) return [];
+  const t0 = performance.now();
   const maps = computeMaps(canvas, face, ops);
-  return findPeaks(maps, ops).map((peak) => {
+  const t1 = performance.now();
+  const peaks = findPeaks(maps, ops);
+  const t2 = performance.now();
+  const found = peaks.map((peak) => {
     const features = featuresAt(canvas, peak.x, peak.y, maps, face);
     return { ...peak, features, probability: holeProposalProbability(features) };
   });
+  if (timings) {
+    Object.assign(timings, {
+      mapsMs: t1 - t0,
+      peaksMs: t2 - t1,
+      featuresMs: performance.now() - t2,
+      peaks: peaks.length,
+      canvasPx: canvas.size,
+    });
+  }
+  return found;
 }
 
 /**
