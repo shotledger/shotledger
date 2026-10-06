@@ -141,13 +141,17 @@ CREATE TABLE `series` (
 );
 --> statement-breakpoint
 CREATE TABLE `session_tags` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	`deleted_at` text,
 	`session_id` text NOT NULL,
 	`tag_id` text NOT NULL,
-	PRIMARY KEY(`session_id`, `tag_id`),
 	FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE INDEX `session_tags_session_tag_idx` ON `session_tags` (`session_id`,`tag_id`);--> statement-breakpoint
 CREATE TABLE `sessions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`created_at` text NOT NULL,
@@ -187,7 +191,10 @@ CREATE TABLE `sessions` (
 );
 --> statement-breakpoint
 CREATE TABLE `settings` (
-	`key` text PRIMARY KEY NOT NULL,
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	`deleted_at` text,
 	`value` text NOT NULL
 );
 --> statement-breakpoint
@@ -257,7 +264,7 @@ CREATE TABLE `tags` (
 	`name` text NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `tags_name_unique` ON `tags` (`name`);--> statement-breakpoint
+CREATE INDEX `tags_name_idx` ON `tags` (`name`);--> statement-breakpoint
 CREATE TABLE `training_samples` (
 	`id` text PRIMARY KEY NOT NULL,
 	`created_at` text NOT NULL,
@@ -525,6 +532,50 @@ BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
     VALUES ('firearm_calibers', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_session_tags_insert` AFTER INSERT ON `session_tags`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('session_tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_session_tags_update` AFTER UPDATE ON `session_tags`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('session_tags', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+-- Only the account settings sync (SYNCED_SETTING_KEYS in
+-- shared/src/sync/protocol.ts, ADR 0019); every other key is device-local.
+CREATE TRIGGER `sync_outbox_settings_insert` AFTER INSERT ON `settings`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
+    ON CONFLICT(`table_name`, `row_id`) DO UPDATE
+      SET `rev` = excluded.`rev`, `client_change_id` = NULL;
+END;
+--> statement-breakpoint
+CREATE TRIGGER `sync_outbox_settings_update` AFTER UPDATE ON `settings`
+WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+BEGIN
+  UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
+  INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
+    VALUES ('settings', new.`id`, (SELECT `last_rev` FROM `sync_control` WHERE `id` = 0), NULL)
     ON CONFLICT(`table_name`, `row_id`) DO UPDATE
       SET `rev` = excluded.`rev`, `client_change_id` = NULL;
 END;

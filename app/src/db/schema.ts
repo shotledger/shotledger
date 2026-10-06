@@ -3,7 +3,7 @@
 // (both UTC ISO-8601 TEXT), deleted_at (TEXT NULL, soft-delete tombstone).
 // Every read query MUST filter `deleted_at IS NULL`; writes always bump
 // `updated_at`; deletes set `deleted_at` instead of removing rows.
-import { integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 const common = {
   id: text('id').primaryKey(),
@@ -383,15 +383,24 @@ export const sightSettings = sqliteTable('sight_settings', {
   notes: text('notes'),
 });
 
-export const tags = sqliteTable('tags', {
-  ...common,
-  name: text('name').notNull().unique(),
-});
+// Not unique by name: two devices can create the same name offline, and a
+// unique index would fail the second one's pull. Readers resolve a name to
+// its earliest live tag (shared/src/tags/canonical.ts, ADR 0019).
+export const tags = sqliteTable(
+  'tags',
+  {
+    ...common,
+    name: text('name').notNull(),
+  },
+  (t) => [index('tags_name_idx').on(t.name)],
+);
 
-// Pure join table, per §3 exactly: no common columns, composite PK.
+// One synced row per link, so unlink is a tombstone and relink a new id. The
+// pair is deliberately not unique, for the same reason as tags.name.
 export const sessionTags = sqliteTable(
   'session_tags',
   {
+    ...common,
     sessionId: text('session_id')
       .notNull()
       .references(() => sessions.id),
@@ -399,11 +408,13 @@ export const sessionTags = sqliteTable(
       .notNull()
       .references(() => tags.id),
   },
-  (t) => [primaryKey({ columns: [t.sessionId, t.tagId] })],
+  (t) => [index('session_tags_session_tag_idx').on(t.sessionId, t.tagId)],
 );
 
+// `id` is the setting's key. Only SYNCED_SETTING_KEYS sync (the settings
+// triggers' WHEN clause); every other key is device-local.
 export const settings = sqliteTable('settings', {
-  key: text('key').primaryKey(),
+  ...common,
   value: text('value').notNull(), // JSON values
 });
 

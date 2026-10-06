@@ -23,13 +23,16 @@ const synced = new Set<string>(SYNC_TABLE_NAMES);
 
 // Local-only tables that reference synced ones. They never arrive in a pull,
 // so their place relative to APPLY_ORDER does not matter.
-const LOCAL_ONLY_CHILDREN = ['session_tags', 'shot_marks', 'training_samples'];
+const LOCAL_ONLY_CHILDREN = ['shot_marks', 'training_samples'];
 
 describe('APPLY_ORDER against the schema foreign keys', () => {
   it('reads a non-trivial edge set out of the schema', () => {
     // Guards the derivation itself: an empty edge list would pass every check below.
     expect(edges).toContainEqual({ parent: 'firearms', child: 'firearm_calibers' });
     expect(edges).toContainEqual({ parent: 'sessions', child: 'falt_stations' });
+    // P3 (sync-tags-settings spec): the link table's two parents.
+    expect(edges).toContainEqual({ parent: 'sessions', child: 'session_tags' });
+    expect(edges).toContainEqual({ parent: 'tags', child: 'session_tags' });
   });
 
   it('places every synced parent before each synced table that references it', () => {

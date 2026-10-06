@@ -36,6 +36,7 @@ const APP_TEXT_MAX: Record<string, number> = {
   ammo_lot_id: 36,
   session_id: 36,
   series_id: 36,
+  tag_id: 36,
   // Preset or catalogue ids, or a code an import carries.
   caliber: 64,
   load_system: 64,

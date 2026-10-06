@@ -6,6 +6,7 @@ import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import {
   APPLY_ORDER,
+  isSyncableSettingRow,
   type ChangeRow,
   type LocalRowSnapshot,
   type LocalStore,
@@ -23,7 +24,9 @@ import {
   licenses,
   maintenanceEvents,
   series,
+  sessionTags,
   sessions,
+  settings,
   shots,
   sightSettings,
   syncControl,
@@ -51,6 +54,8 @@ export const SYNC_TABLES: Record<SyncTableName, SQLiteTable> = {
   maintenance_events: maintenanceEvents,
   tags,
   sight_settings: sightSettings,
+  session_tags: sessionTags,
+  settings,
 };
 
 /**
@@ -82,6 +87,10 @@ function quoteIdentifier(name: string): string {
  * identifier).
  */
 function applyOne(db: Database, change: ChangeRow): void {
+  // A device-local key the server should never have held (ADR 0019).
+  if (change.tableName === 'settings' && !isSyncableSettingRow(change.rowId, change.payload)) {
+    return;
+  }
   const table = SYNC_TABLES[change.tableName];
   const tableSql = quoteIdentifier(getTableName(table));
 

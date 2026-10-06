@@ -12,7 +12,7 @@ import { createSession } from './sessions';
 import { addShot } from './shots';
 import { addSessionTag, getOrCreateTag } from './tags';
 import { listAllAnalyticsSeries, listAnalyticsSessions, listFaltAnalyticsSessions } from './stats';
-import { sessions } from '../schema';
+import { sessionTags, sessions, tags } from '../schema';
 import type { Database } from '../types';
 
 /**
@@ -169,4 +169,30 @@ it('loads every live fält session with its stations in order, flags and tags in
       ],
     },
   ]);
+});
+
+// docs/specs/sync-tags-settings-spec.md T4 / §2.8: the Statistics reads see
+// live links only, on the canonical tag, once.
+it('T4 stats tag ids are live, canonical and deduplicated', () => {
+  const db = createTestDb();
+  const tagged = ordinarySession(db, 1);
+  const untagged = ordinarySession(db, 1);
+  const km = getOrCreateTag(db, 'KM');
+  const T = '2026-10-06T00:00:00.000Z';
+  const copy = 'ffffffff-ffff-7fff-bfff-ffffffffffff';
+  db.insert(tags).values({ id: copy, name: 'KM', createdAt: T, updatedAt: T }).run();
+  const link = (id: string, sessionId: string, tagId: string, deletedAt: string | null = null) =>
+    db
+      .insert(sessionTags)
+      .values({ id, sessionId, tagId, createdAt: T, updatedAt: T, deletedAt })
+      .run();
+  link('l1', tagged.id, km.id);
+  link('l2', tagged.id, copy);
+  link('l3', untagged.id, km.id, T);
+
+  const bySession = new Map(listAnalyticsSessions(db).map((s) => [s.id, s.tagIds]));
+  expect(bySession.get(tagged.id)).toEqual([km.id]);
+  expect(bySession.get(untagged.id)).toEqual([]);
+  const series = listAllAnalyticsSeries(db).find((s) => s.sessionId === tagged.id);
+  expect(series?.tagIds).toEqual([km.id]);
 });

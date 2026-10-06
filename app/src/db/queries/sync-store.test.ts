@@ -2,11 +2,14 @@ import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { firearms, licenses, sessions, syncControl, syncOutbox } from '../schema';
+import { firearms, licenses, sessionTags, sessions, syncControl, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, softDeleteFirearm, updateFirearm } from './firearms';
+import { createSession } from './sessions';
+import { getSetting, SETTINGS_KEYS, setSetting } from './settings';
 import { createSyncStore, readRowSync, resetSyncState, SYNC_TABLES } from './sync-store';
+import { addSessionTag, getOrCreateTag, listTags, listTagsForSession, softDeleteTag } from './tags';
 
 let db: Database;
 let store: ReturnType<typeof createSyncStore>;
@@ -276,5 +279,117 @@ describe('pendingCount and resetSyncState', () => {
 
     expect(await store.pendingCount()).toBe(0);
     expect((await store.readCursors()).sessions).toBe(0);
+  });
+});
+
+// docs/specs/sync-tags-settings-spec.md §2.3–§2.5.
+describe('session_tags and settings', () => {
+  const T = '2026-10-06T00:00:00.000Z';
+  const settingRow = (id: string, value: string) =>
+    change({
+      tableName: 'settings',
+      rowId: id,
+      payload: { id, value, created_at: T, updated_at: T, deleted_at: null },
+    });
+
+  it('A4 applies a pulled tag link and a pulled setting without re-queueing them', async () => {
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: T,
+    }).id;
+    const tagId = getOrCreateTag(db, 'KM').id;
+    db.delete(syncOutbox).run();
+
+    await store.applyChanges([
+      change({
+        tableName: 'session_tags',
+        rowId: 'link-1',
+        payload: {
+          id: 'link-1',
+          created_at: T,
+          updated_at: T,
+          deleted_at: null,
+          session_id: sessionId,
+          tag_id: tagId,
+        },
+      }),
+      settingRow('birthYear', '1980'),
+    ]);
+
+    expect(listTagsForSession(db, sessionId).map((t) => t.name)).toEqual(['KM']);
+    expect(getSetting(db, SETTINGS_KEYS.birthYear, null)).toBe(1980);
+    expect(outboxRows()).toHaveLength(0);
+  });
+
+  it('a pulled link tombstone unlinks the session', async () => {
+    const sessionId = createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      startedAt: T,
+    }).id;
+    addSessionTag(db, sessionId, getOrCreateTag(db, 'KM').id);
+    const linkId = db.select().from(sessionTags).get()!.id;
+    await store.applyChanges([
+      change({ tableName: 'session_tags', rowId: linkId, payload: null, deletedAt: T }),
+    ]);
+    expect(listTagsForSession(db, sessionId)).toEqual([]);
+  });
+
+  it('S4 a pulled non-allowlisted setting is dropped, an allowlisted one applied', async () => {
+    setSetting(db, 'backupFolder', 'mine');
+    await store.applyChanges([
+      settingRow('backupFolder', '"theirs"'),
+      settingRow('skillClass', '2'),
+    ]);
+    expect(getSetting(db, 'backupFolder', null)).toBe('mine');
+    expect(getSetting(db, SETTINGS_KEYS.skillClass, null)).toBe(2);
+  });
+
+  it('S4b a pulled setting whose payload id differs from its row id is dropped', async () => {
+    setSetting(db, 'backupFolder', 'mine');
+    await store.applyChanges([
+      change({
+        tableName: 'settings',
+        rowId: 'birthYear',
+        payload: { id: 'backupFolder', value: '"theirs"', created_at: T, updated_at: T },
+      }),
+    ]);
+    expect(getSetting(db, 'backupFolder', null)).toBe('mine');
+    expect(getSetting(db, SETTINGS_KEYS.birthYear, null)).toBeNull();
+  });
+
+  const pulledTag = (id: string, name: string) =>
+    change({
+      tableName: 'tags',
+      rowId: id,
+      payload: { id, name, created_at: T, updated_at: T, deleted_at: null },
+    });
+
+  it('E7 applying a pulled tag whose name already exists here succeeds, and lists once', async () => {
+    const local = getOrCreateTag(db, 'KM');
+    await expect(
+      store.applyChanges([pulledTag('00000000-0000-7000-8000-000000000001', 'KM')]),
+    ).resolves.toBeUndefined();
+    expect(listTags(db).map((t) => t.name)).toEqual(['KM']);
+    expect(listTags(db)[0]!.id).not.toBe(local.id);
+  });
+
+  it('E8 applying a pulled re-created tag over a deleted one of that name succeeds', async () => {
+    const old = getOrCreateTag(db, 'KM');
+    softDeleteTag(db, old.id);
+    await store.applyChanges([pulledTag('ffffffff-ffff-7fff-bfff-ffffffffffff', 'KM')]);
+    expect(listTags(db).map((t) => t.id)).toEqual(['ffffffff-ffff-7fff-bfff-ffffffffffff']);
+  });
+
+  it('reads a synced setting back as its wire payload', () => {
+    setSetting(db, SETTINGS_KEYS.complianceProfile, 'se');
+    const row = readRowSync(db, 'settings', 'complianceProfile');
+    expect(row?.payload).toEqual(
+      expect.objectContaining({ id: 'complianceProfile', value: '"se"', deleted_at: null }),
+    );
+    expect(row?.deletedAt).toBeNull();
   });
 });
