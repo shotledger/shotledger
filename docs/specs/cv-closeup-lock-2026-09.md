@@ -321,6 +321,13 @@ What remains in that case is the half-calibre run's features (310 peaks,
 about 3.3 s). Every close-up lock still waits for the calibre's run before the
 marking screen opens.
 
+The padding mask and the glyph map's connected components, dilations and
+erosions now run in OpenCV on a device (`MapOps.components`, `dilate`,
+`erode`). Those are exact on 0/1 masks: on two corpus close-ups on the
+emulator, the scoring zone, black zone, glyph map and MAD sample came out
+identical pixel for pixel to the pure path, and the per-canvas maps took
+1.9 s against 3.5 s and 3.9 s against 6.7 s in the same runs.
+
 ## 2026-10-06: asking for the face when the X line is missing
 
 Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb

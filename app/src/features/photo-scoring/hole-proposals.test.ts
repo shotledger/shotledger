@@ -244,7 +244,14 @@ it('proposes the same holes from candidates already found, without running the m
   const ranMaps = (): never => {
     throw new Error('the maps ran');
   };
-  const noMaps: MapOps = { halfResolution: ranMaps, blurLaplacian: ranMaps, maxFilter: ranMaps };
+  const noMaps: MapOps = {
+    halfResolution: ranMaps,
+    blurLaplacian: ranMaps,
+    maxFilter: ranMaps,
+    components: ranMaps,
+    dilate: ranMaps,
+    erode: ranMaps,
+  };
   const canvas = canvasOf(fixture.scenarios[0]!);
   const fresh = await proposeHolesAsync(canvas, face);
   expect(fresh.length).toBeGreaterThan(0);
