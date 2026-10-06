@@ -8,6 +8,7 @@ import {
   faceDecision,
   HOLE_SIZE_GUARD,
   holeDiametersMm,
+  holeSizeCheck,
   holesTooSmall,
   milsnabbLockRefuses,
   PERSPECTIVE_GUARD,
@@ -298,5 +299,63 @@ describe('xRingReading on line images', () => {
     // on its 10 and 9, as a milsnabb crop's X and 10 do: no line at 12.5 mm.
     const twice = trueLock.map((v, i) => (i < 6 ? 2 * v : v)) as unknown as Homography;
     expect(xLineMissing(xRingReading(work, twice))).toBe(true);
+  });
+});
+
+describe('holeSizeCheck on a synthetic canvas', () => {
+  const pxPerMm = 5.5;
+  const size = 520;
+  const canvasAt = (scale: number): RectifiedCanvas => ({
+    data: syntheticCanvas({
+      seed: 1,
+      size,
+      holes: [
+        [230, 250],
+        [300, 300],
+        [250, 320],
+        [400, 260],
+      ],
+      patches: [],
+      blackR: 160,
+      rings: [40, 80, 120, 160, 200, 240],
+      pad: 360,
+    }),
+    size,
+    centerXPx: size / 2,
+    centerYPx: size / 2,
+    pxPerMm: scale * pxPerMm,
+  });
+  // Precision's face at the drawing's scale: the reading depends on the
+  // canvas and calibre, not on which rings the face lists.
+  const face = SPSF_PISTOL_25M_PRECISION;
+  const counting = () => {
+    const calls: number[] = [];
+    const candidatesOf = (canvas: RectifiedCanvas, f: ProposalFace) => {
+      calls.push(f.caliberMm);
+      return holeCandidates(canvas, f);
+    };
+    return { calls, candidatesOf };
+  };
+  const eager = (canvas: RectifiedCanvas) => {
+    const at = (caliberMm: number) =>
+      holeDiametersMm(canvas, proposalFaceOf(face, caliberMm), (c, f) => holeCandidates(c, f));
+    return holesTooSmall(at(CALIBER), at(CALIBER / 2), CALIBER);
+  };
+
+  it('skips the half-calibre run when the calibre reads a hole, with the same verdict', () => {
+    const canvas = canvasAt(1);
+    const { calls, candidatesOf } = counting();
+    const check = holeSizeCheck(canvas, face, CALIBER, candidatesOf);
+    expect(calls).toEqual([CALIBER]);
+    expect(check.tooSmall).toBe(eager(canvas));
+    expect(check.candidates).toEqual(holeCandidates(canvas, proposalFaceOf(face, CALIBER)));
+  });
+
+  it('runs at half the calibre when the calibre reads none, with the same verdict', () => {
+    const canvas = canvasAt(2);
+    const { calls, candidatesOf } = counting();
+    const check = holeSizeCheck(canvas, face, CALIBER, candidatesOf);
+    expect(calls).toEqual([CALIBER, CALIBER / 2]);
+    expect(check.tooSmall).toBe(eager(canvas));
   });
 });

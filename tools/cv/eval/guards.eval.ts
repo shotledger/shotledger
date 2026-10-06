@@ -18,6 +18,7 @@
 // candidates behind the hole reading; the rest get a row saying it did not
 // pass. CV_GUARD_DUMP=<dir> writes each guarded canvas as a PGM.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 
 import { expect, test } from 'vitest';
 
@@ -33,9 +34,12 @@ import {
 } from '../../../app/src/features/photo-scoring/closeup-lock';
 import { rectifyWithHomography } from '../../../app/src/features/photo-scoring/disc-lock';
 import {
+  HOLE_PROPOSAL_THRESHOLD,
   holeCandidates,
   MERGE_RADIUS_D,
+  proposeHoles,
   type ProposalFace,
+  selectProposals,
 } from '../../../app/src/features/photo-scoring/hole-proposals';
 import type { RectifiedCanvas } from '../../../app/src/features/photo-scoring/tap-snap';
 import {
@@ -44,7 +48,7 @@ import {
 } from '../../../app/src/features/photo-scoring/milsnabb-lock';
 import {
   holeDiametersMm,
-  holesTooSmall,
+  holeSizeCheck,
   milsnabbLockRefuses,
   perspectiveRefuses,
   proposalFaceOf,
@@ -129,11 +133,23 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
       Buffer.concat([Buffer.from(`P5\n${canvas.size} ${canvas.size}\n255\n`), canvas.data]),
     );
   }
+  // The hole-size guard as scan.tsx runs it.
+  const tg = performance.now();
+  const holeSize = holeSizeCheck(canvas, FACE, CALIBER_MM, (c, f) => holeCandidates(c, f));
+  const msGuard = Math.round(performance.now() - tg);
   const face = proposalFaceOf(FACE, CALIBER_MM);
-  const read = (caliberMm: number) =>
-    holeDiametersMm(canvas, { ...face, caliberMm }, (c, f) => holeCandidates(c, f));
-  const full = read(CALIBER_MM);
-  const half = read(CALIBER_MM / 2);
+  // The suggestions from the guard's candidates, as scan.tsx places them,
+  // against a fresh detector run.
+  const reused = isDeepStrictEqual(
+    proposeHoles(canvas, face),
+    selectProposals(canvas, face, holeSize.candidates, HOLE_PROPOSAL_THRESHOLD),
+  );
+  // Both readings, for the report, though the guard skips the half run
+  // when the full one reads a hole.
+  const full = holeDiametersMm(canvas, face, () => holeSize.candidates);
+  const half = holeDiametersMm(canvas, { ...face, caliberMm: CALIBER_MM / 2 }, (c, f) =>
+    holeCandidates(c, f),
+  );
   const raw = {
     full: rawHoles(canvas, face),
     half: rawHoles(canvas, { ...face, caliberMm: CALIBER_MM / 2 }),
@@ -151,7 +167,7 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
     ? 'perspective'
     : milsnabbLockRefuses(mil)
       ? 'milsnabbLock'
-      : holesTooSmall(full, half, CALIBER_MM)
+      : holeSize.tooSmall
         ? 'holeSize'
         : null;
   const xRing = xRingReading(work, lock.toMm);
@@ -187,6 +203,8 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
     asks: choice === 'closeup' && refusedBy === null && xMissing,
     msLocks: Math.round(t1 - t0),
     msHoles: Math.round(t2 - t1),
+    msGuard,
+    reused,
   };
 }
 

@@ -193,7 +193,8 @@ with the first guard's reason.
   refused. Its gate needs three card rings in frame and three rings in the
   fit, so it cannot see a crop of the X and 10 alone.
 - **Hole size.** On the close-up lock's rectified canvas the hole proposals
-  run twice: at the session's calibre, and at half of it. Through a lock twice
+  run at the session's calibre and, only when they find no hole there, at half
+  of it ("The hole-size check's cost" below). Through a lock twice
   too large a hole reads half its size, so the detector finds it only at half
   the calibre. A hole's size is its blob's area as a disc's diameter, since the
   probabilities saturate at 1. The lock is refused when no hole is found at the
@@ -255,6 +256,50 @@ and 9 at the true scale. No hole size can tell those apart.
 at the full calibre, 6 have no hole the detector finds, and 1 reads a single
 hole at half the calibre, above the cut. Their perspective stays within
 0.55–1.52. Without holes, nothing in the ring lines tells them apart.
+
+### The hole-size check's cost
+
+Issue #528. The check ran the hole detector twice, and on a lock that passed
+the guards the suggestions ran it a third time, at the calibre, on the same
+canvas. Two of those runs bought nothing, so it was cut to one without
+changing any guard's verdict (`holeSizeCheck`):
+
+- **The half-calibre run** happens only when the calibre's run finds no hole.
+  Any hole at the calibre abstains, so its result was never used.
+- **The suggestions** reuse the calibre's candidates
+  (`proposeHolesAsync`'s `candidates`). The canvas, face and calibre are the
+  same, so the candidates are the same.
+
+`guards.eval.ts` on the sets above, run before and after on main as of #634:
+all 1,864 rows are identical apart from timings, `refusedBy` and `asks`
+included, and the milsnabb table above comes out the same. No guard refuses
+any of the 1,184 precision images where the close-up lock is used: 224 whole
+photos and 960 crops (#634 changed the disc lock the crops are cut from,
+hence not 1,231). On 1,105 of them (93 %) the calibre's run finds a hole and the
+half-calibre run is skipped. Suggestions from the reused candidates match a
+fresh detector run on all 1,289 images whose close-up lock passes its gate.
+
+Time spent in the check in Node (pure-JS maps, 10 eval shards in
+parallel, so only the ratio counts): median 2.7 s before, 1.5 s after; 0.56
+of the time before, over all 1,219 images where the check runs. The
+suggestions' own detector run, about as long as the check's calibre run, is
+gone on top of that.
+
+On the emulator (dev build, software GPU), three scans of a drawn precision
+close-up with four holes, before and after, `[scan-timing]`:
+
+| Stage              |      Before |       After |
+| ------------------ | ----------: | ----------: |
+| hole-size check    | 10.0–10.4 s |       4.6 s |
+| hole suggestions   |   4.8–4.9 s | 0.16–0.28 s |
+| total (to marking) | 27.6–28.5 s | 22.7–25.2 s |
+
+The suggestions are the same (one hole suggested in both). These are
+emulator numbers; the phone timing that #528 asks for is still to do.
+
+Not done: running the check only on tight crops. That drops the guard on
+every other lock, so its verdicts are not the same by construction; it
+belongs with #528's per-guard decision after a phone timing.
 
 ## 2026-10-06: asking for the face when the X line is missing
 

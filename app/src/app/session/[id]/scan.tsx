@@ -60,7 +60,11 @@ import {
   seriesScoreLine,
 } from '@/features/photo-scoring/marks';
 import { isFlagEnabled } from '@/constants/flags';
-import { holeCandidates, proposeHolesAsync } from '@/features/photo-scoring/hole-proposals';
+import {
+  type HoleCandidate,
+  holeCandidates,
+  proposeHolesAsync,
+} from '@/features/photo-scoring/hole-proposals';
 import { type ScanNextTarget, scanNextTarget } from '@/features/photo-scoring/scan-next';
 import { nativeMapOps } from '@/features/photo-scoring/hole-proposals-native';
 import {
@@ -75,8 +79,7 @@ import { faceAnswerFor, rememberFaceAnswer } from '@/features/photo-scoring/face
 import {
   type FaceAnswer,
   faceDecision,
-  holeDiametersMm,
-  holesTooSmall,
+  holeSizeCheck,
   milsnabbLockRefuses,
   perspectiveRefuses,
   type PrecisionGuardRefusal,
@@ -333,6 +336,7 @@ export default function ScanScreen() {
       let closeupMapping =
         choice === 'closeup' && closeup && toImage ? { toMm: closeup.toMm, toImage } : null;
       let rectified: RectifiedCanvas | null = null;
+      let rectifiedCandidates: readonly HoleCandidate[] | undefined;
       // A milsnabb photo in a precision session can pass the precision lock
       // at twice its true scale (spec, "a precision lock on a milsnabb photo").
       let refusal: PrecisionGuardRefusal | null = null;
@@ -342,7 +346,9 @@ export default function ScanScreen() {
         else {
           if (!(await enter('straighten'))) return;
           rectified = rectify(image.base64, closeupMapping.toMm, target);
-          if (rectified && holesTooSmallOn(rectified, target)) refusal = 'holeSize';
+          const holes = rectified && holeSizeOn(rectified, target);
+          rectifiedCandidates = holes?.candidates;
+          if (holes?.tooSmall) refusal = 'holeSize';
           else {
             // A milsnabb answer is refused as the milsnabb guard refuses.
             const face = await faceOf(closeupRun);
@@ -371,7 +377,7 @@ export default function ScanScreen() {
         setPhase('marking');
         if (rectified) {
           setCanvas(rectified);
-          suggestHoles(rectified, target);
+          suggestHoles(rectified, target, rectifiedCandidates);
         }
         return;
       }
@@ -423,19 +429,19 @@ export default function ScanScreen() {
   }
 
   /** The hole-size guard: the holes on a close-up lock's canvas read at the
-   *  session's calibre. Abstains when the detector fails. */
-  function holesTooSmallOn(rectified: RectifiedCanvas, face: NonNullable<typeof target>): boolean {
+   *  session's calibre. Abstains (null) when the detector fails. */
+  function holeSizeOn(
+    rectified: RectifiedCanvas,
+    face: NonNullable<typeof target>,
+  ): ReturnType<typeof holeSizeCheck> | null {
     const checked = timeStage('hole-size check');
     try {
-      const caliberMm = markState.caliberMm;
-      const read = (atMm: number) =>
-        holeDiametersMm(rectified, proposalFaceOf(face, atMm), (canvas, proposalFace) =>
-          holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined),
-        );
-      return holesTooSmall(read(caliberMm), read(caliberMm / 2), caliberMm);
+      return holeSizeCheck(rectified, face, markState.caliberMm, (canvas, proposalFace) =>
+        holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined),
+      );
     } catch (error: unknown) {
       if (__DEV__) console.warn('hole-size check failed', error);
-      return false;
+      return null;
     } finally {
       checked();
     }
@@ -478,26 +484,25 @@ export default function ScanScreen() {
    * as suggested marks. The whole-canvas maps go to OpenCV and the rest runs
    * in yielding batches, so the marking screen paints and takes taps while it
    * works — the reducer skips a proposal that lands on a mark the shooter
-   * placed meanwhile.
+   * placed meanwhile. `candidates` are the hole-size guard's run on this
+   * canvas at this calibre, which the detector then need not repeat.
    */
-  function suggestHoles(rectified: RectifiedCanvas, face: NonNullable<typeof target>) {
+  function suggestHoles(
+    rectified: RectifiedCanvas,
+    face: NonNullable<typeof target>,
+    candidates?: readonly HoleCandidate[],
+  ) {
     const run = (proposalRun.current += 1);
     setSuggested('pending');
-    void proposeHolesAsync(
-      rectified,
-      {
-        caliberMm: markState.caliberMm,
-        blackRadiusMm: face.referenceDiameterMm / 2,
-        maxRadiusMm: Math.max(...face.rings.map((ring) => ring.diameterMm / 2)),
-        ringRadiiMm: face.rings.map((ring) => ring.diameterMm / 2),
-      },
-      {
-        ops: nativeMapOps ?? undefined,
-        // Experiment flag; 0 = the default, confident suggestions only.
-        fillTo: isFlagEnabled('suggestFillToSeries') ? markState.maxMarks : 0,
-      },
-    )
+    const timed = timeStage('hole suggestions');
+    void proposeHolesAsync(rectified, proposalFaceOf(face, markState.caliberMm), {
+      ops: nativeMapOps ?? undefined,
+      // Experiment flag; 0 = the default, confident suggestions only.
+      fillTo: isFlagEnabled('suggestFillToSeries') ? markState.maxMarks : 0,
+      candidates,
+    })
       .then((proposals) => {
+        timed();
         if (proposalRun.current !== run) return;
         // Far more holes than the series holds means the detector does not
         // understand this photo (measured on real targets it proposes about

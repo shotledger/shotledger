@@ -941,6 +941,9 @@ export async function proposeHolesAsync(
     readonly batch?: number;
     /** Fill up to this many proposals from the next-best candidates; 0 = off. */
     readonly fillTo?: number;
+    /** `holeCandidates` already run on this canvas and face; the detector is
+     *  then skipped. */
+    readonly candidates?: readonly HoleCandidate[];
   } = {},
 ): Promise<HoleProposal[]> {
   const ops = options.ops ?? pureMapOps;
@@ -949,15 +952,19 @@ export async function proposeHolesAsync(
   if (canvas.data.length < canvas.size * canvas.size) return [];
   const yieldToScreen = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
   await yieldToScreen();
-  const maps = computeMaps(canvas, face, ops);
-  const peaks = findPeaks(maps, ops);
-  const candidates: HoleCandidate[] = [];
-  for (let i = 0; i < peaks.length; i += batch) {
-    await yieldToScreen();
-    for (const peak of peaks.slice(i, i + batch)) {
-      const features = featuresAt(canvas, peak.x, peak.y, maps, face);
-      candidates.push({ ...peak, features, probability: holeProposalProbability(features) });
+  let candidates = options.candidates;
+  if (!candidates) {
+    const maps = computeMaps(canvas, face, ops);
+    const peaks = findPeaks(maps, ops);
+    const found: HoleCandidate[] = [];
+    for (let i = 0; i < peaks.length; i += batch) {
+      await yieldToScreen();
+      for (const peak of peaks.slice(i, i + batch)) {
+        const features = featuresAt(canvas, peak.x, peak.y, maps, face);
+        found.push({ ...peak, features, probability: holeProposalProbability(features) });
+      }
     }
+    candidates = found;
   }
   return selectProposals(
     canvas,
