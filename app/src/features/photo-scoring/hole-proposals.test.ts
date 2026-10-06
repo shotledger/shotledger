@@ -8,7 +8,9 @@ import {
   gaussianKernel,
   holeCandidates,
   holeProposalProbability,
+  type MapOps,
   proposeHoles,
+  proposeHolesAsync,
   type ProposalFace,
   selectProposals,
 } from './hole-proposals';
@@ -224,3 +226,16 @@ it('does not fill a candidate that sits on one already kept', () => {
   const out = selectProposals(canvas, face, [top, twin], HOLE_PROPOSAL_THRESHOLD, 3);
   expect(out).toHaveLength(1);
 });
+
+it('proposes the same holes from candidates already found, without running the maps', async () => {
+  const face = faceOf();
+  const ranMaps = (): never => {
+    throw new Error('the maps ran');
+  };
+  const noMaps: MapOps = { halfResolution: ranMaps, blurLaplacian: ranMaps, maxFilter: ranMaps };
+  const canvas = canvasOf(fixture.scenarios[0]!);
+  const fresh = await proposeHolesAsync(canvas, face);
+  expect(fresh.length).toBeGreaterThan(0);
+  const candidates = holeCandidates(canvas, face);
+  expect(await proposeHolesAsync(canvas, face, { ops: noMaps, candidates })).toEqual(fresh);
+}, 30_000);

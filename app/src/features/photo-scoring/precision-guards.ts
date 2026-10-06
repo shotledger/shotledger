@@ -88,6 +88,26 @@ export function holesTooSmall(
 }
 
 /**
+ * The hole-size guard on a canvas: `holesTooSmall` with the half-calibre run
+ * skipped when the calibre's run reads a hole, since that abstains anyway.
+ * `candidates` are the calibre's run, the same computation as the
+ * suggestions pass on this canvas, which reuses them.
+ */
+export function holeSizeCheck(
+  canvas: RectifiedCanvas,
+  face: TargetFaceDefinition,
+  caliberMm: number,
+  candidatesOf: (canvas: RectifiedCanvas, face: ProposalFace) => readonly HoleCandidate[],
+): { readonly tooSmall: boolean; readonly candidates: readonly HoleCandidate[] } {
+  const full = proposalFaceOf(face, caliberMm);
+  const candidates = candidatesOf(canvas, full);
+  const fullMm = holeDiametersMm(canvas, full, () => candidates);
+  if (fullMm.length > 0) return { tooSmall: false, candidates };
+  const halfMm = holeDiametersMm(canvas, proposalFaceOf(face, caliberMm / 2), candidatesOf);
+  return { tooSmall: holesTooSmall(fullMm, halfMm, caliberMm), candidates };
+}
+
+/**
  * The perspective guard: true when the lock's projective denominator at a
  * corner of the photo is outside PERSPECTIVE_GUARD of its value at the target
  * centre, or changes sign there (the horizon crosses the photo). No hand-held

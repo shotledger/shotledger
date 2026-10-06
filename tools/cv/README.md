@@ -88,8 +88,10 @@ CV_MIL_SETS=sets.tsv CV_MIL_OUT=milsnabb.jsonl [CV_MIL_SHARD=i/n] [CV_MIL_CROPS=
 
 # the precision close-up lock's three milsnabb guards (precision-guards.ts) and
 # the X-line reading behind the face question (`asks`), on the same sets and
-# crops (crops.ts), with chooseLock's pick against the disc lock; about 4 s per
-# image the close-up lock passes, so shard it
+# crops (crops.ts), with chooseLock's pick against the disc lock; `msGuard` is
+# the hole-size check as the app runs it, `reused` whether the suggestions from
+# its candidates match a fresh run; several seconds per image the close-up lock
+# passes, so shard it
 CV_GUARD_SETS=sets.tsv CV_GUARD_OUT=guards.jsonl [CV_GUARD_SHARD=i/n] [CV_GUARD_CROPS=1] \
     [CV_GUARD_DUMP=<dir>] pnpm exec vitest run -c tools/cv/vitest.config.ts guards.eval
 ```
