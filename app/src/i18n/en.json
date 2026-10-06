@@ -1096,6 +1096,7 @@
     "reasonCenterInFrame": "The center of the target is outside the photo.",
     "reasonZoneContrast": "No black zone was found against the card.",
     "reasonProfileScore": "The ring lines could not be found.",
+    "reasonRingDrift": "The rings found drift off the printed ring lines, as when the target is read at the wrong size.",
     "reasonMilsnabbLock": "The rings match a milsnabb target, not this session's precision face.",
     "reasonPerspective": "The rings only match at a slant no photo of a flat target has, as when a milsnabb target is read as a precision face.",
     "reasonHoleSize": "The holes look half the size this caliber makes, as when a milsnabb target is read as a precision face.",

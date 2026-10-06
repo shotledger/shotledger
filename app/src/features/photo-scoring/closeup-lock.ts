@@ -1109,21 +1109,31 @@ function circleMedian(lines: CloseupImage, inv: readonly number[], R: number): n
   return n / 360 < 0.3 ? null : median(v.subarray(0, n));
 }
 
-function workRingOffset(lines: CloseupImage, workToMm: readonly number[]): number | null {
+/**
+ * Per ring at `radii` mm that is mostly in frame, the radial offset (mm)
+ * within ±`win` at which `along` (the line response along the circle) peaks;
+ * the worst of them. Null when no ring is in frame.
+ */
+function worstLineOffset(
+  lines: CloseupImage,
+  workToMm: readonly number[],
+  radii: readonly number[],
+  win: number,
+  along: typeof circleMean,
+): number | null {
   const inv = invertHomography(asHomography(workToMm));
   if (!inv) return null;
-  const win = 3;
   const step = 0.1;
   const nOff = Math.round((2 * win) / step);
   let worst = 0;
   let n = 0;
-  for (const R of [25, 50, 75]) {
-    if (circleMean(lines, inv, R) === null) continue;
+  for (const R of radii) {
+    if (along(lines, inv, R) === null) continue;
     let best = -Infinity;
     let bo = 0;
     for (let i = 0; i <= nOff; i += 1) {
       const o = -win + i * step;
-      const v = circleMean(lines, inv, R + o) ?? -1;
+      const v = along(lines, inv, R + o) ?? -1;
       if (v > best) {
         best = v;
         bo = o;
@@ -1133,6 +1143,10 @@ function workRingOffset(lines: CloseupImage, workToMm: readonly number[]): numbe
     n += 1;
   }
   return n ? worst : null;
+}
+
+function workRingOffset(lines: CloseupImage, workToMm: readonly number[]): number | null {
+  return worstLineOffset(lines, workToMm, [25, 50, 75], 3, circleMean);
 }
 
 /**
@@ -1172,6 +1186,29 @@ export function xRingReading(work: CloseupWork, toMm: Homography): XRingReading 
   const gaps = [at(6.25), at(18.75)].filter((v): v is number => v !== null);
   if (x === null || ten === null || gaps.length === 0) return null;
   return { x, ten, gap: gaps.reduce((s, v) => s + v, 0) / gaps.length };
+}
+
+/** The 9 and 8 lines. Within 12 mm of either there is no other printed line;
+ *  the 10's line is not used, because the X ring is 12.5 mm inside it. */
+const DRIFT_RADII_MM = [50, 75] as const;
+const DRIFT_WINDOW_MM = 12;
+
+/**
+ * `ringOffsetMm` for a lock that may be far off: the 9 and 8 lines only,
+ * searched almost half a step either side, read as the median along the
+ * circle so that holes and patches do not pull the peak. A lock at the wrong
+ * scale drifts off the lines with radius; the disc lock's gate reads this.
+ */
+export function ringDriftMm(work: CloseupWork, toMm: Homography): number | null {
+  const fromWork = invertHomography(work.toWork);
+  if (!fromWork) return null;
+  return worstLineOffset(
+    work.lines,
+    mul3(toMm, fromWork),
+    DRIFT_RADII_MM,
+    DRIFT_WINDOW_MM,
+    circleMedian,
+  );
 }
 
 function isHalfPeriod(lines: CloseupImage, workToMm: readonly number[]): boolean {

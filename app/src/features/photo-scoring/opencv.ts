@@ -218,7 +218,12 @@ export interface RunGeometryOptions extends DiscLockOptions {
 export function runGeometry(options: RunGeometryOptions): GeometryPipelineResult {
   const arena = new Arena();
   try {
-    return runDiscLock(nativeDiscOps(arena), grayFromBase64(arena, options.base64), options);
+    return runDiscLock(
+      nativeDiscOps(arena),
+      grayFromBase64(arena, options.base64),
+      options,
+      nativeCloseupOps,
+    );
   } finally {
     arena.releaseAll();
   }

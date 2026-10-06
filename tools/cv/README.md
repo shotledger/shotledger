@@ -76,8 +76,8 @@ CV_EVAL_IN=<pgm-dir> CV_DISC_OUT=disc.jsonl \
     pnpm exec vitest run -c tools/cv/vitest.config.ts disc.eval
 node tools/cv/eval/diff.mts disc base.jsonl disc.jsonl [--key canvasToMm]
 
-# both locks per photo, chooseLock's pick, and the close-up's scale against
-# the disc lock's
+# both locks per photo, chooseLock's pick, the close-up's scale against the
+# disc lock's, and the disc lock's ring drift (its gate's scale check)
 CV_EVAL_IN=<pgm-dir> CV_REAL_OUT=real.jsonl \
     pnpm exec vitest run -c tools/cv/vitest.config.ts closeup-real
 

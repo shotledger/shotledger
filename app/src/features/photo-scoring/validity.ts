@@ -23,10 +23,13 @@ export interface GeometryMetrics {
   readonly zoneContrastGray: number;
   /** Stage-3 objective normalized by the radial profile's own MAD. */
   readonly profileScore: number;
+  /** How far the 9 and 8 lines sit from the fit's rings (closeup-lock.ts
+   *  `ringDriftMm`); null when neither is in frame. */
+  readonly ringDriftMm: number | null;
 }
 
 export type ValidityReason =
-  'axisRatio' | 'zoneFraction' | 'centerInFrame' | 'zoneContrast' | 'profileScore';
+  'axisRatio' | 'zoneFraction' | 'centerInFrame' | 'zoneContrast' | 'profileScore' | 'ringDrift';
 
 export interface ValidityResult {
   readonly valid: boolean;
@@ -49,6 +52,9 @@ export const GEOMETRY_THRESHOLDS = {
   /** A flat, structureless radial profile. Normalized, so this is an
    *  absolute threshold rather than a proxy for photo contrast. */
   minProfileScore: 20,
+  /** A fit at the wrong scale: its rings drift off the printed lines with
+   *  radius. Correct fits stay within 3.6 mm on the corpus (spec §2). */
+  maxRingDriftMm: 4.5,
 } as const;
 
 /**
@@ -67,6 +73,10 @@ export function checkGeometryValidity(metrics: GeometryMetrics): ValidityResult 
   if (!metrics.centerInFrame) reasons.push('centerInFrame');
   if (!(metrics.zoneContrastGray >= t.minZoneContrastGray)) reasons.push('zoneContrast');
   if (!(metrics.profileScore >= t.minProfileScore)) reasons.push('profileScore');
+  // Null when neither line is in frame: nothing to hold the fit to.
+  if (metrics.ringDriftMm !== null && !(metrics.ringDriftMm <= t.maxRingDriftMm)) {
+    reasons.push('ringDrift');
+  }
 
   return { valid: reasons.length === 0, reasons };
 }

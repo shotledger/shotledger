@@ -6,6 +6,7 @@ import {
   closeupWorkImage,
   lockCloseupWork,
   passesCloseupGate,
+  ringDriftMm,
   ringOffsetMm,
 } from './closeup-lock';
 import { applyHomography, type Homography } from './corners';
@@ -32,12 +33,19 @@ function imageOf(s: Scenario) {
 }
 
 // The pure lock takes a second or two per 1024 px scene, so each runs once.
-const results = new Map<string, { lock: CloseupLock | null; offsetOfOwn: number | null }>();
+const results = new Map<
+  string,
+  {
+    lock: CloseupLock | null;
+    offsetOfOwn: number | null;
+    work: ReturnType<typeof closeupWorkImage>;
+  }
+>();
 beforeAll(() => {
   for (const s of fixture.scenarios) {
     const work = closeupWorkImage(imageOf(s), undefined, fixture.workLongSide);
     const lock = lockCloseupWork(work);
-    results.set(s.name, { lock, offsetOfOwn: lock ? ringOffsetMm(work, lock.toMm) : null });
+    results.set(s.name, { lock, offsetOfOwn: lock ? ringOffsetMm(work, lock.toMm) : null, work });
   }
 }, 120_000);
 
@@ -113,6 +121,24 @@ it('measures a lock with the same yardstick its gate used', () => {
     const { lock, offsetOfOwn } = results.get(s.name)!;
     if (lock) expect([s.name, offsetOfOwn]).toEqual([s.name, lock.ringOffsetMm]);
   }
+});
+
+describe('ringDriftMm', () => {
+  const scaled = (h: Homography, k: number): Homography =>
+    h.map((v, i) => (i < 6 ? v * k : v)) as unknown as Homography;
+
+  it('reads a lock on the lines as on the lines', () => {
+    const { lock, work } = results.get('centred')!;
+    expect(ringDriftMm(work, lock!.toMm)).toBeLessThanOrEqual(0.5);
+  });
+
+  it('reads a lock at the wrong scale as far off, past what the ±3 mm yardstick can say', () => {
+    const { lock, work } = results.get('centred')!;
+    for (const k of [0.88, 1.15]) {
+      expect(ringDriftMm(work, scaled(lock!.toMm, k))).toBeGreaterThan(4.5);
+      expect(ringOffsetMm(work, scaled(lock!.toMm, k))).toBeLessThanOrEqual(3);
+    }
+  });
 });
 
 describe('chooseLock', () => {
