@@ -25,8 +25,8 @@ export function Shell({
 }) {
   const { t } = useTranslation();
   const pages = [
-    { id: 'statistics', label: t('stats.title'), icon: <ChartIcon /> },
-    { id: 'account', label: t('web.account.title'), icon: <UserIcon /> },
+    { id: 'statistics', label: t('stats.title'), icon: <ChartIcon />, groupStart: false },
+    { id: 'account', label: t('web.account.title'), icon: <UserIcon />, groupStart: true },
   ] as const;
 
   return (
@@ -38,8 +38,8 @@ export function Shell({
         </div>
         <nav aria-label={t('web.shell.menu')}>
           <ul>
-            {pages.map(({ id, label, icon }) => (
-              <li key={id}>
+            {pages.map(({ id, label, icon, groupStart }) => (
+              <li key={id} className={groupStart ? 'group-start' : undefined}>
                 <a href={`#${id}`} aria-current={page === id ? 'page' : undefined}>
                   {icon}
                   {label}

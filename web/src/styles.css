@@ -417,6 +417,12 @@ button.destructive {
   gap: 2px;
 }
 
+.sidebar li.group-start {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .sidebar a {
   display: flex;
   align-items: center;
@@ -568,6 +574,13 @@ button.destructive {
 
   .sidebar ul {
     display: flex;
+  }
+
+  .sidebar li.group-start {
+    margin: 0 0 0 4px;
+    padding: 0 0 0 4px;
+    border-top: none;
+    border-left: 1px solid var(--border);
   }
 
   .version {
