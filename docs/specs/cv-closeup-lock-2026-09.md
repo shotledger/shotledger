@@ -251,7 +251,54 @@ table above. `milsnabb-lock.test.ts` draws that close-up.
 size, because the lock put milsnabb's X and 10 (25 and 50 mm) on precision's 10
 and 9 at the true scale. No hole size can tell those apart.
 
-**Still open: #526.** Of the 12 crops of the 10 that are left, 5 read holes
+**Left for #526** (next section). Of the 12 crops of the 10 that are left, 5 read holes
 at the full calibre, 6 have no hole the detector finds, and 1 reads a single
 hole at half the calibre, above the cut. Their perspective stays within
 0.55–1.52. Without holes, nothing in the ring lines tells them apart.
+
+## 2026-10-06: asking for the face when the X line is missing
+
+Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb
+prints nothing inside its X. When the lock puts milsnabb's X and 10 on
+precision's 10 and 9, no line runs where the lock puts the X.
+
+`xRingReading` (`closeup-lock.ts`) takes the median of the lock's thin-line
+response (`CloseupWork.lines`) round the 12.5 mm circle, round the 10 at
+25 mm, and in the black at 6.25 and 18.75 mm (the gaps, averaged). The median,
+because a ring line runs the whole way round. `xLineMissing`
+(`precision-guards.ts`) calls the line missing when the X reads under
+**0.15 × the 10** and under **1.5 × the gaps**. It abstains when any of them
+is mostly out of frame.
+
+It is not a guard. Pasters over a shot-out precision centre hide the thin X
+line on most of the circle, and that reads the same as a milsnabb crop: no
+threshold refuses no precision image and still catches the crops. So
+`scan.tsx` asks instead. After the three guards pass on a close-up lock, a
+missing X line asks the shooter "Which target is this?", Precision or
+Military Rapid Fire. The answer is kept per session, in memory
+(`face-answers.ts`), so the question comes at most once per session while the
+app runs; later photos whose X line is missing take the same answer without
+asking. A milsnabb answer refuses the close-up lock as the milsnabb guard
+does: the disc lock when it passes, otherwise the milsnabb reason.
+
+Measured with `tools/cv/eval/guards.eval.ts` (`xRing`, `xMissing`, `asks`) on
+the sets of the guards section. Counted are images where the app uses the
+precision close-up lock and no guard refuses it.
+
+| Milsnabb images        | Left after the guards | Asked |
+| ---------------------- | --------------------: | ----: |
+| Whole photos           |                     1 |     0 |
+| Crop of the 10         |                    12 |    12 |
+| Crop of the 9–10       |                     0 |     0 |
+| Wider crop of the 9–10 |                     0 |     0 |
+| Centre out of frame    |                    19 |     1 |
+| **Total**              |                    32 |    13 |
+
+**Precision.** Of the 1,231 precision images where the close-up lock is used
+and no guard refuses it, 21 are asked (1.7 %): no whole photo, and 21 crops
+cut from 4 photos. Over all 1,270 precision images whose close-up lock passes
+its gate, whichever lock the app then picks, the X line reads missing on 29
+(2.3 %, from 11 photos). These are the paster-covered centres.
+
+The centre-out-of-frame crops are still open: there the 12.5 mm circle lands
+on other lines, or out of frame.
