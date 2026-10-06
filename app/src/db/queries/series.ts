@@ -1,5 +1,5 @@
 import { getProgram } from '@shotledger/shared';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import { series, sessions } from '../schema';
 import type { Database } from '../types';
@@ -127,6 +127,28 @@ export function updateSeries(
     .where(and(eq(series.id, id), isNull(series.deletedAt)))
     .run();
   return getSeries(db, id);
+}
+
+/**
+ * Rewrites every live series' photo URI through `rewrite`, keeping the rows it
+ * returns unchanged. Returns how many changed. At start-up this moves photos
+ * saved into the picker's cache out of it (#652).
+ */
+export function rewriteSeriesPhotoUris(db: Database, rewrite: (uri: string) => string): number {
+  const rows = db
+    .select({ id: series.id, photoUri: series.photoUri })
+    .from(series)
+    .where(and(isNotNull(series.photoUri), isNull(series.deletedAt)))
+    .all();
+  let changed = 0;
+  for (const row of rows) {
+    if (row.photoUri === null) continue;
+    const uri = rewrite(row.photoUri);
+    if (uri === row.photoUri) continue;
+    updateSeries(db, row.id, { photoUri: uri });
+    changed += 1;
+  }
+  return changed;
 }
 
 /**

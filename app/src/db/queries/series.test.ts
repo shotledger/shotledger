@@ -8,6 +8,7 @@ import {
   addSeries,
   getSeries,
   listSeriesForSession,
+  rewriteSeriesPhotoUris,
   setSeriesSighter,
   softDeleteSeries,
   swapSeriesPositions,
@@ -226,5 +227,22 @@ describe('sighters in a fixed-format session', () => {
     addSeries(db, { sessionId: fixedId, position: 1, isSighter: true });
     const other = addSeries(db, { sessionId: fixedId, position: 2 });
     expect(setSeriesSighter(db, other.id, true)?.isSighter).toBe(1);
+  });
+});
+
+describe('rewriteSeriesPhotoUris', () => {
+  it('rewrites the photos the function changes and leaves the rest', () => {
+    const cached = addSeries(db, { sessionId, position: 1, photoUri: 'file:///cache/a.jpeg' });
+    const kept = addSeries(db, { sessionId, position: 2, photoUri: 'file:///docs/b.jpeg' });
+    const none = addSeries(db, { sessionId, position: 3 });
+    const gone = addSeries(db, { sessionId, position: 4, photoUri: 'file:///cache/c.jpeg' });
+    softDeleteSeries(db, gone.id);
+
+    const changed = rewriteSeriesPhotoUris(db, (uri) => uri.replace('/cache/', '/docs/'));
+
+    expect(changed).toBe(1);
+    expect(getSeries(db, cached.id)?.photoUri).toBe('file:///docs/a.jpeg');
+    expect(getSeries(db, kept.id)?.photoUri).toBe('file:///docs/b.jpeg');
+    expect(getSeries(db, none.id)?.photoUri).toBeNull();
   });
 });

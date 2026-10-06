@@ -37,6 +37,7 @@ import {
 } from '@/features/session/celebration';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
+import { keepSeriesPhoto } from '@/platform/series-photos';
 import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -120,10 +121,11 @@ export default function SeriesEntryScreen() {
       return;
     }
     if (!uri) return;
-    setPhotoUri(uri);
     // An unsaved series has no row to patch — the picked photo rides along
-    // with the row Save creates.
-    if (row) updateSeries(db, row.id, { photoUri: uri });
+    // with the row Save creates, and leaves the picker's cache then.
+    const kept = row ? keepSeriesPhoto(uri) : uri;
+    setPhotoUri(kept);
+    if (row) updateSeries(db, row.id, { photoUri: kept });
   }
 
   function onSave() {
@@ -146,7 +148,7 @@ export default function SeriesEntryScreen() {
           position,
           isFinal,
           isSighter,
-          photoUri,
+          photoUri: photoUri && keepSeriesPhoto(photoUri),
         }).id;
       } catch (error) {
         if (error instanceof SighterLimitExceededError) {
