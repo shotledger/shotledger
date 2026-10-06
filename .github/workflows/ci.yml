@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+  # The release workflow runs the same checks on the commit it tags.
+  workflow_call:
 
 # A force-push supersedes the run it interrupts; letting that run finish only
 # spends Actions minutes on a commit nobody will merge.
