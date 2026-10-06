@@ -5,12 +5,13 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@expo/ui": "57.0.21",
-    "@react-native-community/datetimepicker": "9.2.1",
-    "@react-native-community/slider": "5.2.1",
+    "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-community/slider": "5.2.0",
     "@react-native-ml-kit/text-recognition": "2.0.0",
     "@shotledger/shared": "workspace:*",
     "drizzle-orm": "0.45.3",
     "expo": "~57.0.18",
+    "expo-asset": "~57.0.18",
     "expo-audio": "~57.0.4",
     "expo-calendar": "~57.0.2",
     "expo-constants": "~57.0.16",
@@ -77,5 +78,23 @@
     "lint": "expo lint",
     "test": "jest"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "jest",
+        "@types/jest",
+        "@types/react",
+        "typescript"
+      ]
+    },
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@react-native-ml-kit/text-recognition",
+          "ringer-mode"
+        ]
+      }
+    }
+  }
 }
