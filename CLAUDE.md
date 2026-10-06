@@ -141,6 +141,7 @@ Loaded automatically when you work in that folder:
 - `shared/CLAUDE.md` — the evidence-first layers for scoring and friends
 - `backend/CLAUDE.md` — Workers tests, sync end-to-end, no deploys
 - `docs/CLAUDE.md` — manual structure and the three docs gates
+- `web/CLAUDE.md` — the read-only web app: shared strings, running it
 
 Running, driving or building the app (web, emulator, Maestro, a phone
 APK): the `run-app` skill.
