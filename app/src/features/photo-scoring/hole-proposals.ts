@@ -8,7 +8,7 @@
 //
 // Pure JS on the gray `RectifiedCanvas` that `runGeometry` already hands out,
 // like tap-snap, so it runs in a unit test and on the web. On a device the
-// three whole-canvas operations go to OpenCV through `MapOps`
+// whole-canvas operations go to OpenCV through `MapOps`
 // (hole-proposals-native.ts); the global maps run at half resolution
 // (2 px/mm), the per-candidate features read the full canvas.
 //
@@ -315,7 +315,8 @@ function downsample2(canvas: RectifiedCanvas): Img {
   return { data: out, width: w, height: h };
 }
 
-interface Component {
+/** A connected component's bounding box and pixel count. */
+export interface Component {
   readonly x: number;
   readonly y: number;
   readonly w: number;
@@ -467,20 +468,20 @@ function median(values: Float64Array): number {
   return (lower + upper) / 2;
 }
 
-function validMask(half: Img): Uint8Array {
+function validMask(half: Img, ops: MapOps): Uint8Array {
   const { data, width: w, height: h } = half;
   const white = new Uint8Array(w * h);
   for (let i = 0; i < white.length; i += 1) white[i] = (data[i] as number) >= PAD_WHITE ? 1 : 0;
-  const { labels, stats } = label8(white, w, h);
-  const bad = new Uint8Array(w * h);
+  const { labels, stats } = ops.components(white, w, h);
+  const badId = new Uint8Array(stats.length);
   for (let id = 1; id < stats.length; id += 1) {
     const s = stats[id] as Component;
     if (s.area < PAD_MIN_AREA) continue;
-    if (s.x === 0 || s.y === 0 || s.x + s.w >= w || s.y + s.h >= h) {
-      for (let i = 0; i < labels.length; i += 1) if (labels[i] === id) bad[i] = 1;
-    }
+    if (s.x === 0 || s.y === 0 || s.x + s.w >= w || s.y + s.h >= h) badId[id] = 1;
   }
-  const grown = dilateSquare(bad, w, h, PAD_GROW);
+  const bad = new Uint8Array(w * h);
+  for (let i = 0; i < bad.length; i += 1) bad[i] = badId[labels[i] as number] as number;
+  const grown = ops.dilate(bad, w, h, PAD_GROW);
   for (let i = 0; i < grown.length; i += 1) grown[i] = grown[i] ? 0 : 1;
   return grown;
 }
@@ -498,14 +499,15 @@ function ringDistanceMm(rMm: number, face: ProposalFace): number {
 }
 
 /**
- * The three whole-canvas operations, so a device can hand them to OpenCV.
+ * The whole-canvas operations, so a device can hand them to OpenCV.
  *
- * Under Hermes the pure versions below cost about two minutes on a 2100 px
- * canvas (measured on the emulator) — the same arithmetic in OpenCV is well
- * under a second. Everything else in the stage stays in JS on both paths, so
- * the native path differs from the reference only by what OpenCV's own
- * `GaussianBlur`, `Laplacian`, `resize` and `dilate` compute in float64, which
- * is the arithmetic the Python reference runs to begin with.
+ * Under Hermes the pure blurs cost about two minutes on a 2100 px canvas
+ * (measured on the emulator) — the same arithmetic in OpenCV is well under a
+ * second. The rest of the stage stays in JS on both paths, so the native path
+ * differs from the reference only by what OpenCV's own `GaussianBlur`,
+ * `Laplacian`, `resize` and `dilate` compute in float64, which is the
+ * arithmetic the Python reference runs to begin with. The mask operations
+ * (components, dilate, erode) are exact, so they match bit for bit.
  */
 export interface MapOps {
   /** 2x2 block means, row-major, `floor(size / 2)` square. */
@@ -520,6 +522,17 @@ export interface MapOps {
     height: number,
     radius: number,
   ) => Float64Array;
+  /** 8-connected components of a 0/1 mask: a label per pixel (0 = background)
+   *  and each label's box. Only the partition counts, not the numbering. */
+  readonly components: (
+    mask: Uint8Array,
+    width: number,
+    height: number,
+  ) => { readonly labels: Int32Array; readonly stats: readonly Component[] };
+  /** Square dilation of a 0/1 mask, outside the image ignored. */
+  readonly dilate: (mask: Uint8Array, width: number, height: number, radius: number) => Uint8Array;
+  /** Square erosion of a 0/1 mask, outside the image counting as 0. */
+  readonly erode: (mask: Uint8Array, width: number, height: number, radius: number) => Uint8Array;
 }
 
 /** The reference implementation, pure JS. */
@@ -528,6 +541,9 @@ export const pureMapOps: MapOps = {
   blurLaplacian: (img, sigma) =>
     laplacian4({ data: blur(img, sigma), width: img.width, height: img.height }),
   maxFilter,
+  components: label8,
+  dilate: dilateSquare,
+  erode: erodeSquare,
 };
 
 /** Row-major float image, exported for the native `MapOps`. */
@@ -570,7 +586,7 @@ function canvasMapsOf(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps):
 function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): CanvasMaps {
   const half = ops.halfResolution(canvas);
   const { width: w, height: h } = half;
-  const valid = validMask(half);
+  const valid = validMask(half, ops);
   const black = new Uint8Array(w * h);
   const inzone = new Uint8Array(w * h);
   const rmm = new Float64Array(w * h);
@@ -635,8 +651,8 @@ function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: Map
       struct[i] =
         Math.abs((half.data[i] as number) - bg) > GLYPH_DELTA && zone[i] && !lines[i] ? 1 : 0;
     }
-    struct = erodeSquare(dilateSquare(struct, w, h, 1), w, h, 1);
-    const { labels, stats } = label8(struct, w, h);
+    struct = ops.erode(ops.dilate(struct, w, h, 1), w, h, 1);
+    const { labels, stats } = ops.components(struct, w, h);
     const ext = new Float64Array(stats.length);
     for (let id = 1; id < stats.length; id += 1) {
       const s = stats[id] as Component;

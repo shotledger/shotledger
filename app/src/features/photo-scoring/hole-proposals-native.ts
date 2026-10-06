@@ -1,10 +1,11 @@
 // The hole-proposal stage's whole-canvas maps on react-native-fast-opencv.
 //
 // `hole-proposals.ts` is the reference and runs everywhere; this file only
-// replaces its three whole-canvas operations with OpenCV's, which compute the
-// same thing in float64 — a Gaussian blur with the same kernel, the same
-// 4-neighbour Laplacian, a box maximum — in well under a second where the
-// pure loops take about two minutes under Hermes (measured on the emulator).
+// replaces its whole-canvas operations with OpenCV's, which compute the same
+// thing — a Gaussian blur with the same kernel, the same 4-neighbour
+// Laplacian, a box maximum in float64, and the 0/1 mask components and
+// morphology exactly — in well under a second where the pure loops take
+// seconds to minutes under Hermes (measured on the emulator).
 // Same integration facts as opencv.ts: pixels cross the bridge as whole
 // buffers, so each operation copies its result out once.
 import type { Mat } from 'react-native-fast-opencv';
@@ -15,10 +16,17 @@ import {
   Mat as MatClass,
   OpenCV,
   Point,
+  Scalar,
   Size,
 } from 'react-native-fast-opencv';
 
-import { gaussianKernel, type MapImage, type MapOps, pureMapOps } from './hole-proposals';
+import {
+  type Component,
+  gaussianKernel,
+  type MapImage,
+  type MapOps,
+  pureMapOps,
+} from './hole-proposals';
 
 /** Every Mat created here is released in one place, as opencv.ts does. */
 function withArena<T>(work: (keep: <M extends { release(): void }>(m: M) => M) => T): T {
@@ -42,6 +50,34 @@ function withArena<T>(work: (keep: <M extends { release(): void }>(m: M) => M) =
 
 function floatMat(keep: <M extends { release(): void }>(m: M) => M, img: MapImage): Mat {
   return keep(MatClass.createFromBuffer('float64', img.height, img.width, 1, img.data));
+}
+
+/** A square 0/1 morphology on an 8-bit Mat; outside the image is 0. */
+function morphology(
+  op: 'dilate' | 'erode',
+  mask: Uint8Array,
+  width: number,
+  height: number,
+  radius: number,
+): Uint8Array {
+  return withArena((keep) => {
+    const src = keep(MatClass.createFromBuffer('uint8', height, width, 1, mask));
+    const side = 2 * radius + 1;
+    const kernel = keep(
+      MatClass.createFromBuffer('uint8', side, side, 1, new Uint8Array(side * side).fill(1)),
+    );
+    const dst = keep(MatClass.create(1, 1, DataTypes.CV_8U));
+    OpenCV[op](
+      src,
+      dst,
+      kernel,
+      keep(Point.create(-1, -1)),
+      1,
+      BorderTypes.BORDER_CONSTANT,
+      keep(Scalar.create(0)),
+    );
+    return Uint8Array.from(dst.toBuffer('uint8').buffer);
+  });
 }
 
 function copyOut(mat: Mat): Float64Array {
@@ -110,4 +146,28 @@ export const nativeMapOps: MapOps = {
       );
       return copyOut(dst);
     }),
+  components: (mask, width, height) =>
+    withArena((keep) => {
+      const src = keep(MatClass.createFromBuffer('uint8', height, width, 1, mask));
+      const labels = keep(MatClass.create(1, 1, DataTypes.CV_8U));
+      const stats = keep(MatClass.create(1, 1, DataTypes.CV_8U));
+      const centroids = keep(MatClass.create(1, 1, DataTypes.CV_8U));
+      // 8-connected, 32-bit labels: OpenCV's defaults, as label8.
+      const { value: count } = OpenCV.connectedComponentsWithStats(src, labels, stats, centroids);
+      const box = stats.toBuffer('int32').buffer;
+      const boxes: Component[] = [];
+      for (let id = 0; id < count; id += 1) {
+        const at = 5 * id;
+        boxes.push({
+          x: box[at] as number,
+          y: box[at + 1] as number,
+          w: box[at + 2] as number,
+          h: box[at + 3] as number,
+          area: box[at + 4] as number,
+        });
+      }
+      return { labels: Int32Array.from(labels.toBuffer('int32').buffer), stats: boxes };
+    }),
+  dilate: (mask, width, height, radius) => morphology('dilate', mask, width, height, radius),
+  erode: (mask, width, height, radius) => morphology('erode', mask, width, height, radius),
 };
