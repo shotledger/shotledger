@@ -10,8 +10,8 @@ closes (the session token is in `sessionStorage`, the rows in memory).
   string under the `web` namespace in both files.
 - **Numbers come from `shared/src/analytics-rows`**, the same composition the
   phone runs. `src/stats-inputs.ts` maps the snake_case wire rows onto it.
-  What is not synced (`session_tags`, `settings`) cannot show here: no tag
-  filter, no guldserie tile.
+  Tags and the birth year come from the synced `session_tags` and `settings`
+  rows; tag names resolve through `shared/src/tags/canonical.ts`.
 - **Pages are hash routes** in `src/shell/shell.tsx` (`Page`, `pages`); the
   shell is plain CSS and inline SVG icons, no UI or router dependency.
 - `pnpm typecheck:web` is in `pnpm check`; tests are vitest (`web/src/**/*.test.ts`).

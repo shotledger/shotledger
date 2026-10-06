@@ -12,6 +12,13 @@ const change = (tableName: SyncTableName, rowId: string, seq: number, payload: u
   updatedAt: '2026-10-01T00:00:00.000Z',
 });
 
+describe('WEB_TABLES', () => {
+  it('W1 pulls the synced tag links and settings', () => {
+    expect(WEB_TABLES).toContain('session_tags');
+    expect(WEB_TABLES).toContain('settings');
+  });
+});
+
 describe('pullAll', () => {
   it('asks every table from cursor 0, follows hasMore, and drops tombstones', async () => {
     const requests: PullRequest[] = [];

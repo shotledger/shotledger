@@ -41,7 +41,7 @@ function Choice<T extends string | number | null>({
   );
 }
 
-/** The phone's filter form, minus tags: session tags are not synced. */
+/** The phone's filter form, minus tags (the tag control is a later #301 layer). */
 export function Filters({
   state,
   options,

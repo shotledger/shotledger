@@ -13,6 +13,8 @@ export const WEB_TABLES = [
   'firearms',
   'licenses',
   'ammo_lots',
+  'session_tags',
+  'settings',
 ] as const satisfies readonly SyncTableName[];
 
 export type WebTable = (typeof WEB_TABLES)[number];

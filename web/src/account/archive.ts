@@ -14,16 +14,14 @@ import {
   type LicenseExport,
 } from '@shotledger/shared/src/json-export';
 import { parseSyncPhotoUri } from '@shotledger/shared/src/sync-client/photo-uri';
+import { tagNamesBySession } from '@shotledger/shared/src/tags/canonical';
 
-import { liveRows } from '../stats-inputs';
+import { liveRows, tagRecords } from '../stats-inputs';
 import type { PulledTables } from '../pull';
 import { createZip, type ZipEntry } from './zip';
 
-/**
- * Session tags are not synced (docs/specs/sync-protocol-spec.md §1), so every
- * session's `tags` is empty here; the phone's own export carries them.
- */
 export function sessionsJson(tables: PulledTables, appVersion: string, generatedAt?: string) {
+  const { tags, links } = tagRecords(tables);
   return exportSessionsToJson(
     sessionExportsFromRows({
       sessions: liveRows<ExportSessionRow>(tables.sessions),
@@ -32,6 +30,7 @@ export function sessionsJson(tables: PulledTables, appVersion: string, generated
       stations: liveRows<ExportStationRow>(tables.falt_stations),
       firearms: liveRows<ExportFirearmRow>(tables.firearms),
       ammoLots: liveRows<ExportAmmoLotRow>(tables.ammo_lots),
+      tagsBySession: tagNamesBySession(tags, links),
     }),
     {
       appVersion,

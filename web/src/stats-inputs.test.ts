@@ -47,6 +47,8 @@ function tables(): PulledTables {
     firearms: table([]),
     licenses: table([]),
     ammo_lots: table([]),
+    session_tags: new Map(),
+    settings: new Map(),
   };
 }
 
@@ -75,5 +77,50 @@ describe('statsInputs', () => {
 
   it('skips a row whose payload is soft-deleted', () => {
     expect(statsInputs(tables()).sessionNames.has('gone')).toBe(false);
+  });
+});
+
+// docs/specs/sync-tags-settings-spec.md W2/W3.
+describe('synced tags and birth year', () => {
+  const link = (id: string, tagId: string, deletedAt: string | null = null) => ({
+    id,
+    session_id: 's1',
+    tag_id: tagId,
+    deleted_at: deletedAt,
+  });
+
+  it('W2 gives a tagged session its tag ids once, on the canonical tag, ignoring tombstones', () => {
+    const pulled = tables();
+    pulled.tags = table([
+      { id: 't1', name: 'Club', deleted_at: null },
+      { id: 't2', name: 'Club', deleted_at: null },
+      { id: 't3', name: 'Cup', deleted_at: null },
+    ]);
+    pulled.session_tags = table([link('l1', 't2'), link('l2', 't1'), link('l3', 't3', 'x')]);
+    const inputs = statsInputs(pulled);
+    expect(inputs.series[0]?.tagIds).toEqual(['t1']);
+    expect(inputs.sessions[0]?.tagIds).toEqual(['t1']);
+    expect(inputs.tags).toEqual([
+      { id: 't1', name: 'Club' },
+      { id: 't3', name: 'Cup' },
+    ]);
+  });
+
+  it('W3 reads birthYear from its settings row', () => {
+    const pulled = tables();
+    pulled.settings = table([{ id: 'birthYear', value: '1958', deleted_at: null }]);
+    expect(statsInputs(pulled).birthYear).toBe(1958);
+  });
+
+  it.each([
+    ['absent', []],
+    ['null', [{ id: 'birthYear', value: 'null', deleted_at: null }]],
+    ['unparsable', [{ id: 'birthYear', value: '{', deleted_at: null }]],
+    ['not a number', [{ id: 'birthYear', value: '"1958"', deleted_at: null }]],
+    ['deleted', [{ id: 'birthYear', value: '1958', deleted_at: 'x' }]],
+  ])('W3 birthYear is null when %s', (_label, rows) => {
+    const pulled = tables();
+    pulled.settings = table(rows);
+    expect(statsInputs(pulled).birthYear).toBeNull();
   });
 });
