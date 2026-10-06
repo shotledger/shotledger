@@ -11,6 +11,10 @@ import {
   PullResponseSchema,
   PushRequestSchema,
   PushResponseSchema,
+  isSyncableSettingRow,
+  isSyncedSettingKey,
+  SYNC_TABLE_NAMES,
+  SYNCED_SETTING_KEYS,
   SyncTableNameSchema,
 } from './protocol';
 
@@ -41,9 +45,10 @@ describe('SyncTableNameSchema', () => {
     }
   });
 
-  it('G2 rejects settings and session_tags (spec §1 exclusion)', () => {
-    expect(SyncTableNameSchema.safeParse('settings').success).toBe(false);
-    expect(SyncTableNameSchema.safeParse('session_tags').success).toBe(false);
+  // Excluded until the maintainer's 2026-10-06 ruling (spec §1); now synced.
+  it('G2 accepts settings and session_tags', () => {
+    expect(SyncTableNameSchema.safeParse('settings').success).toBe(true);
+    expect(SyncTableNameSchema.safeParse('session_tags').success).toBe(true);
   });
 
   it('G2b rejects an unknown table name (negative control)', () => {
@@ -242,5 +247,41 @@ describe('checkProtocolVersion', () => {
 
   it('V4 accepts a version newer than the server (forward compatibility is the server pull/push handler’s job, not this check)', () => {
     expect(checkProtocolVersion(PROTOCOL_VERSION + 1)).toEqual({ ok: true });
+  });
+});
+
+// docs/specs/sync-tags-settings-spec.md
+describe('session_tags and settings (sync-tags-settings spec)', () => {
+  it('P1 the table enum carries the two new tables, and a change for each parses', () => {
+    expect(SYNC_TABLE_NAMES).toContain('session_tags');
+    expect(SYNC_TABLE_NAMES).toContain('settings');
+    for (const tableName of ['session_tags', 'settings']) {
+      expect(ClientChangeSchema.safeParse({ ...validClientChange, tableName }).success).toBe(true);
+    }
+  });
+
+  it('P2 the settings allowlist is exactly the five account keys', () => {
+    expect([...SYNCED_SETTING_KEYS]).toEqual([
+      'birthYear',
+      'skillClass',
+      'competesInWomensClasses',
+      'complianceProfile',
+      'complianceProfileVariant',
+    ]);
+    for (const key of SYNCED_SETTING_KEYS) expect(isSyncedSettingKey(key)).toBe(true);
+    for (const key of ['backupFolder', 'flagOverrides', 'theme', 'language', '', 'BIRTHYEAR']) {
+      expect(isSyncedSettingKey(key)).toBe(false);
+    }
+  });
+
+  it('accepts a settings row only for an allowlisted key carried under its own id', () => {
+    expect(isSyncableSettingRow('birthYear', { id: 'birthYear', value: '1980' })).toBe(true);
+    expect(isSyncableSettingRow('birthYear', null)).toBe(true);
+    expect(isSyncableSettingRow('backupFolder', { id: 'backupFolder' })).toBe(false);
+    expect(isSyncableSettingRow('backupFolder', null)).toBe(false);
+    expect(isSyncableSettingRow('birthYear', { id: 'backupFolder' })).toBe(false);
+    expect(isSyncableSettingRow('birthYear', { value: '1980' })).toBe(false);
+    expect(isSyncableSettingRow('birthYear', 'birthYear')).toBe(false);
+    expect(isSyncableSettingRow('birthYear', undefined)).toBe(false);
   });
 });

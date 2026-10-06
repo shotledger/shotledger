@@ -90,7 +90,7 @@ describe('V1 /sync/pull refuses a malformed request with 400 invalid_request', (
     ['V1d empty tables', JSON.stringify({ protocolVersion: 1, tables: [] })],
     [
       'V1e unknown tableName',
-      JSON.stringify({ protocolVersion: 1, tables: [{ tableName: 'settings', cursor: 0 }] }),
+      JSON.stringify({ protocolVersion: 1, tables: [{ tableName: 'shot_marks', cursor: 0 }] }),
     ],
     [
       'V1f negative cursor',
@@ -123,7 +123,7 @@ describe('V2 /sync/push refuses a malformed request with 400 invalid_request and
     ],
     [
       'V2f unknown tableName',
-      () => JSON.stringify({ protocolVersion: 1, changes: [change({ tableName: 'settings' })] }),
+      () => JSON.stringify({ protocolVersion: 1, changes: [change({ tableName: 'shot_marks' })] }),
     ],
     [
       'V2g a payload alongside deletedAt',
@@ -151,7 +151,7 @@ describe('V2 /sync/push refuses a malformed request with 400 invalid_request and
       () =>
         JSON.stringify({
           protocolVersion: 1,
-          changes: [change(), change({ tableName: 'settings' })],
+          changes: [change(), change({ tableName: 'shot_marks' })],
         }),
     ],
   ];

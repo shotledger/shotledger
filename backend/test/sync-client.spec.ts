@@ -14,8 +14,10 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   APPLY_ORDER,
+  canonicalTags,
   createAccountApi,
   createHttpSyncTransport,
+  liveSessionTags,
   rowKey,
   runSyncCycle,
   type ChangeRow,
@@ -384,3 +386,157 @@ describe('account deletion', () => {
 function tokenOf(device: Device): string | null {
   return (device as unknown as { token: string | null }).token;
 }
+
+// docs/specs/sync-tags-settings-spec.md, E1–E8. The devices hold rows, not
+// SQLite, so tag names and links are read through the same shared resolver
+// the app and the web use.
+describe('session tags and account settings travel between devices', () => {
+  const T0 = '2026-10-06T10:00:00.000Z';
+  const tagRow = (id: string, name: string) => ({
+    id,
+    created_at: T0,
+    updated_at: T0,
+    deleted_at: null,
+    name,
+  });
+  const linkRow = (id: string, sessionId: string, tagId: string) => ({
+    id,
+    created_at: T0,
+    updated_at: T0,
+    deleted_at: null,
+    session_id: sessionId,
+    tag_id: tagId,
+  });
+  const settingRow = (id: string, value: string, at = T0) => ({
+    id,
+    value,
+    created_at: T0,
+    updated_at: at,
+    deleted_at: null,
+  });
+
+  function rowsOf(device: Device, table: SyncTableName) {
+    return [...device.rows.entries()]
+      .filter(([key]) => key.startsWith(`${table}:`))
+      .map(([, row]) => row);
+  }
+  function tagsOn(device: Device) {
+    return rowsOf(device, 'tags').map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      deletedAt: (row.deleted_at as string | null) ?? null,
+    }));
+  }
+  /** `session -> tag names`, as every reader resolves it. */
+  function taggedOn(device: Device) {
+    const names = new Map(canonicalTags(tagsOn(device)).map((t) => [t.id, t.name]));
+    const links = rowsOf(device, 'session_tags').map((row) => ({
+      sessionId: row.session_id as string,
+      tagId: row.tag_id as string,
+      deletedAt: (row.deleted_at as string | null) ?? null,
+    }));
+    return liveSessionTags(tagsOn(device), links)
+      .map(({ sessionId, tagId }) => `${sessionId}:${names.get(tagId)}`)
+      .sort();
+  }
+
+  async function sharedSessionAndTag() {
+    deviceA.write('sessions', sessionRow('s1', 'S1', T0));
+    deviceA.write('tags', tagRow('t1', 'KM'));
+    await deviceA.sync();
+    await deviceB.sync();
+  }
+
+  it('E1/E2 a tag added on A appears on B, and its removal follows', async () => {
+    await sharedSessionAndTag();
+    deviceA.write('session_tags', linkRow('l1', 's1', 't1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+
+    deviceA.softDelete('session_tags', 'l1', '2026-10-06T11:00:00.000Z');
+    await deviceA.sync();
+    await deviceB.sync();
+    expect(taggedOn(deviceB)).toEqual([]);
+  });
+
+  it('E3 both devices tag the same session offline: each shows it once', async () => {
+    await sharedSessionAndTag();
+    deviceA.write('session_tags', linkRow('la', 's1', 't1'));
+    deviceB.write('session_tags', linkRow('lb', 's1', 't1'));
+    await deviceA.sync();
+    await deviceB.sync();
+    await deviceA.sync();
+    expect(rowsOf(deviceA, 'session_tags')).toHaveLength(2);
+    expect(taggedOn(deviceA)).toEqual(['s1:KM']);
+    expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+  });
+
+  it('E4 add wins over a concurrent remove it never saw', async () => {
+    await sharedSessionAndTag();
+    deviceA.write('session_tags', linkRow('l1', 's1', 't1'));
+    await deviceA.sync();
+    // B is offline from here and links the same pair itself.
+    deviceB.write('session_tags', linkRow('l2', 's1', 't1'));
+    deviceA.softDelete('session_tags', 'l1', '2026-10-06T11:00:00.000Z');
+    await deviceA.sync();
+    await deviceB.sync();
+    await deviceA.sync();
+    expect(taggedOn(deviceA)).toEqual(['s1:KM']);
+    expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+  });
+
+  it('E5 birth year set on A reaches B; of two later edits the later push wins', async () => {
+    deviceA.write('settings', settingRow('birthYear', '1980'));
+    await deviceA.sync();
+    await deviceB.sync();
+    expect(deviceB.get('settings', 'birthYear')).toMatchObject({ value: '1980' });
+
+    deviceA.write('settings', settingRow('birthYear', '1985', '2026-10-06T12:00:00.000Z'));
+    deviceB.write('settings', settingRow('birthYear', '1990', '2026-10-06T11:00:00.000Z'));
+    await deviceA.sync();
+    await deviceB.sync();
+    await deviceA.sync();
+    // Server order, not the clock: B pushed last, with the older updated_at.
+    expect(deviceA.get('settings', 'birthYear')).toMatchObject({ value: '1990' });
+    expect(deviceB.get('settings', 'birthYear')).toMatchObject({ value: '1990' });
+  });
+
+  it('E6 a device-local setting pushed by a client without the trigger guard never reaches B', async () => {
+    deviceA.write('settings', settingRow('backupFolder', '"content://mine"'));
+    await expect(deviceA.sync()).rejects.toThrow(/400/);
+    await deviceB.sync();
+    expect(rowsOf(deviceB, 'settings')).toEqual([]);
+  });
+
+  it('E7 both devices create tag KM offline: both sync, and each shows one KM over both sessions', async () => {
+    deviceA.write('sessions', sessionRow('s1', 'S1', T0));
+    deviceA.write('sessions', sessionRow('s2', 'S2', T0));
+    await deviceA.sync();
+    await deviceB.sync();
+
+    deviceA.write('tags', tagRow('t-a', 'KM'));
+    deviceA.write('session_tags', linkRow('la', 's1', 't-a'));
+    deviceB.write('tags', tagRow('t-b', 'KM'));
+    deviceB.write('session_tags', linkRow('lb', 's2', 't-b'));
+    await expect(deviceA.sync()).resolves.toMatchObject({ status: 'ok' });
+    await expect(deviceB.sync()).resolves.toMatchObject({ status: 'ok' });
+    await expect(deviceA.sync()).resolves.toMatchObject({ status: 'ok' });
+
+    for (const device of [deviceA, deviceB]) {
+      expect(canonicalTags(tagsOn(device))).toEqual([{ id: 't-a', name: 'KM' }]);
+      expect(taggedOn(device)).toEqual(['s1:KM', 's2:KM']);
+    }
+  });
+
+  it('E8 a tag deleted on A and re-created by name syncs to B', async () => {
+    await sharedSessionAndTag();
+    deviceA.softDelete('tags', 't1', '2026-10-06T11:00:00.000Z');
+    deviceA.write('tags', tagRow('t2', 'KM'));
+    deviceA.write('session_tags', linkRow('l1', 's1', 't2'));
+    await deviceA.sync();
+    await deviceB.sync();
+    expect(canonicalTags(tagsOn(deviceB))).toEqual([{ id: 't2', name: 'KM' }]);
+    expect(taggedOn(deviceB)).toEqual(['s1:KM']);
+  });
+});

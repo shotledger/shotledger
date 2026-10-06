@@ -10,6 +10,8 @@ import type { ChangeRow, SyncTableName } from '../sync/protocol';
  * than silently never syncing.
  */
 export const APPLY_ORDER: readonly SyncTableName[] = [
+  // No foreign keys.
+  'settings',
   'firearms',
   'ammo_lots',
   'tags',
@@ -19,6 +21,7 @@ export const APPLY_ORDER: readonly SyncTableName[] = [
   'maintenance_events',
   'sight_settings',
   'sessions',
+  'session_tags',
   'series',
   'shots',
   // A fält station hangs off a session, like a series does.
