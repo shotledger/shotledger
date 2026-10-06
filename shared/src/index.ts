@@ -29,6 +29,7 @@ export * from './export/json-log';
 export * from './json-export';
 export * from './shotlog';
 export * from './tags';
+export * from './analytics-rows';
 export * from './sync';
 export * from './sync-client';
 export * from './timer';
