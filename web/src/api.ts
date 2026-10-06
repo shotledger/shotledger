@@ -5,6 +5,9 @@ import {
   AuthError,
   createAccountApi,
   createHttpSyncTransport,
+  createPhotoApi,
+  type AccountDevice,
+  type PhotoUsage,
   type HttpClientConfig,
 } from '@shotledger/shared/src/sync-client/http';
 
@@ -39,6 +42,7 @@ const config: HttpClientConfig = {
 
 const account = createAccountApi(config);
 const transport = createHttpSyncTransport(config);
+const photos = createPhotoApi(config);
 
 export function hasSession(): boolean {
   return memoryToken !== null;
@@ -74,4 +78,34 @@ export async function signOut(): Promise<void> {
 
 export function loadAccount(onProgress?: (rows: number) => void): Promise<PulledTables> {
   return pullAll(transport, PROTOCOL_VERSION, onProgress);
+}
+
+export async function currentEmail(): Promise<string | null> {
+  return (await account.currentUser())?.email ?? null;
+}
+
+export function listDevices(): Promise<AccountDevice[]> {
+  return account.listDevices();
+}
+
+export function revokeDevice(sessionToken: string): Promise<void> {
+  return account.revokeDevice(sessionToken);
+}
+
+export function photoUsage(): Promise<PhotoUsage> {
+  return photos.usage();
+}
+
+export function downloadPhoto(photoId: string): Promise<ArrayBuffer> {
+  return photos.download(photoId);
+}
+
+/** Counts per kind of server data. Once deleted, the session is gone too. */
+export async function deleteAccount(dryRun: boolean): Promise<Record<string, number>> {
+  const counts = await account.deleteAccount(dryRun);
+  if (!dryRun) {
+    memoryToken = null;
+    writeToken(null);
+  }
+  return counts;
 }

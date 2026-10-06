@@ -121,6 +121,7 @@ plugins:
             Webshooter: Webshooter
             Exporting sessions: Exportera pass
             Backup and restore: Säkerhetskopiering
+            Your account on the web: Ditt konto på webben
             Reference: Referens
             Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
@@ -153,6 +154,7 @@ nav:
           - Webshooter: guides/webshooter.md
       - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
+      - Your account on the web: guides/your-account-on-the-web.md
   - Reference:
       - Weapon group and class: reference/weapon-group-and-class.md
       - Glossary: reference/glossary.md

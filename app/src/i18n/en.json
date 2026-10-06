@@ -1329,9 +1329,40 @@
     }
   },
   "web": {
-    "signInIntro": "Sign in with your ShotLedger account to view your statistics. Nothing is kept once you close the tab.",
+    "signInIntro": "Sign in with your ShotLedger account to view your statistics and your account. Nothing is kept once you close the tab.",
     "loading_one": "Loading your logbook… {{count}} row",
     "loading_other": "Loading your logbook… {{count}} rows",
-    "loadFailed": "Could not load your logbook. Reload the page to try again."
+    "loadFailed": "Could not load your logbook. Reload the page to try again.",
+    "account": {
+      "title": "Account",
+      "loading": "Loading…",
+      "devicesTitle": "Signed-In Devices",
+      "devicesFailed": "Could not list your devices. Sign out and in again to see them.",
+      "deviceApp": "ShotLedger app on {{os}}",
+      "deviceBrowser": "{{browser}} on {{os}}",
+      "deviceUnknown": "Unknown device",
+      "thisBrowser": "This browser",
+      "deviceDates": "Signed in {{signedIn}} · last active {{lastActive}}",
+      "storageTitle": "Photo Storage",
+      "storageUsed": "{{used}} of {{limit}} used",
+      "storageFailed": "Could not read your photo storage.",
+      "downloadTitle": "Download Everything",
+      "downloadBody": "Your sessions as a ShotLedger JSON file and every uploaded target photo, in one zip. Session tags stay on your phone; they are not synced.",
+      "download": "Download",
+      "downloadProgress": "Downloading photos… {{done}} of {{total}}",
+      "downloadMissing_one": "{{count}} photo could not be downloaded. The zip lists it in missing.txt.",
+      "downloadMissing_other": "{{count}} photos could not be downloaded. The zip lists them in missing.txt.",
+      "downloadFailed": "The download failed. Try again.",
+      "deleteBody": "Deletes your account and everything synced to the server, including photos, and signs out every device. The logbook on your phone is kept. This cannot be undone.",
+      "deleteRows": "Synced Rows",
+      "deletePhotos": "Photos",
+      "deleteDevices": "Signed-In Devices",
+      "deleteFailed": "Could not delete the account. Try again.",
+      "deletedBody": "Your server data is gone. The logbook on your phone is untouched."
+    },
+    "shell": {
+      "menu": "Main",
+      "version": "Version"
+    }
   }
 }

@@ -9,12 +9,13 @@ That is the default and the intended way to use the app.
 
 ## What leaves the phone, and only if you ask
 
-| Feature                          | What is sent, and where                                                                                                                             |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sync** (optional)              | Your logbook, to the sync backend, so a second device can share it. Off unless you create an account.                                               |
-| **Webshooter**                   | Your Webshooter password once, then a token, direct from your phone to webshooter.se. Never through any ShotLedger server.                          |
-| **Range suggestions** (optional) | What you type in a session's Location field goes to a geocoding service; "Use my location" sends your coordinates to a map service. Off by default. |
-| **Backups**                      | Wherever you send the file. That is your choice entirely.                                                                                           |
+| Feature                          | What is sent, and where                                                                                                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sync** (optional)              | Your logbook, to the sync backend, so a second device can share it. Off unless you create an account.                                                                             |
+| **Web app** (optional)           | Nothing new: it reads what sync already stores, into the browser tab you sign in from, and keeps nothing after the tab closes. A download goes wherever your browser saves files. |
+| **Webshooter**                   | Your Webshooter password once, then a token, direct from your phone to webshooter.se. Never through any ShotLedger server.                                                        |
+| **Range suggestions** (optional) | What you type in a session's Location field goes to a geocoding service; "Use my location" sends your coordinates to a map service. Off by default.                               |
+| **Backups**                      | Wherever you send the file. That is your choice entirely.                                                                                                                         |
 
 ## What never leaves
 

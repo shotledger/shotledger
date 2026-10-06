@@ -12,6 +12,8 @@ closes (the session token is in `sessionStorage`, the rows in memory).
   phone runs. `src/stats-inputs.ts` maps the snake_case wire rows onto it.
   What is not synced (`session_tags`, `settings`) cannot show here: no tag
   filter, no guldserie tile.
+- **Pages are hash routes** in `src/shell/shell.tsx` (`Page`, `pages`); the
+  shell is plain CSS and inline SVG icons, no UI or router dependency.
 - `pnpm typecheck:web` is in `pnpm check`; tests are vitest (`web/src/**/*.test.ts`).
 
 ## Running it

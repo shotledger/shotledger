@@ -9,12 +9,13 @@ Det är standardläget och det sätt appen är tänkt att användas på.
 
 ## Vad som lämnar telefonen, och bara om du ber om det
 
-| Funktion                             | Vad som skickas, och vart                                                                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Synk** (valfritt)                  | Din loggbok, till synktjänsten, så att en andra enhet kan dela den. Avstängd om du inte skapar ett konto.                                                   |
-| **Webshooter**                       | Ditt Webshooter-lösenord en gång, därefter en token, direkt från telefonen till webshooter.se. Aldrig via någon ShotLedger-server.                          |
-| **Förslag på skjutbanor** (valfritt) | Det du skriver i passets platsfält går till en geokodningstjänst; "Använd min position" skickar dina koordinater till en karttjänst. Avstängt som standard. |
-| **Säkerhetskopior**                  | Dit du än skickar filen. Det är helt och hållet ditt val.                                                                                                   |
+| Funktion                             | Vad som skickas, och vart                                                                                                                                             |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Synk** (valfritt)                  | Din loggbok, till synktjänsten, så att en andra enhet kan dela den. Avstängd om du inte skapar ett konto.                                                             |
+| **Webbappen** (valfritt)             | Inget nytt: den läser det synken redan lagrar, in i fliken du loggar in från, och sparar inget när fliken stängs. En nedladdning hamnar där webbläsaren sparar filer. |
+| **Webshooter**                       | Ditt Webshooter-lösenord en gång, därefter en token, direkt från telefonen till webshooter.se. Aldrig via någon ShotLedger-server.                                    |
+| **Förslag på skjutbanor** (valfritt) | Det du skriver i passets platsfält går till en geokodningstjänst; "Använd min position" skickar dina koordinater till en karttjänst. Avstängt som standard.           |
+| **Säkerhetskopior**                  | Dit du än skickar filen. Det är helt och hållet ditt val.                                                                                                             |
 
 ## Vad som aldrig lämnar telefonen
 

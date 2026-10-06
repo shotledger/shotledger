@@ -25,7 +25,8 @@ function camelize<T>(payload: Record<string, unknown>): T {
 const live = (payload: Record<string, unknown>) =>
   payload.deleted_at === null || payload.deleted_at === undefined;
 
-function rowsOf<T>(table: Map<string, Record<string, unknown>>): T[] {
+/** A table's live rows, camelCased as the shared builders take them. */
+export function liveRows<T>(table: Map<string, Record<string, unknown>>): T[] {
   return [...table.values()].filter(live).map((payload) => camelize<T>(payload));
 }
 
@@ -42,16 +43,16 @@ export interface StatsInputs {
  * session carries a tag here and the web report offers no tag filter.
  */
 export function statsInputs(tables: PulledTables): StatsInputs {
-  const sessions = rowsOf<SessionRow & { name: string }>(tables.sessions);
-  const series = rowsOf<SeriesRow>(tables.series);
-  const shots = rowsOf<ShotRow>(tables.shots);
-  const faltStations = rowsOf<FaltStationRow>(tables.falt_stations);
+  const sessions = liveRows<SessionRow & { name: string }>(tables.sessions);
+  const series = liveRows<SeriesRow>(tables.series);
+  const shots = liveRows<ShotRow>(tables.shots);
+  const faltStations = liveRows<FaltStationRow>(tables.falt_stations);
   const sessionTags: never[] = [];
   return {
     series: buildAnalyticsSeries({ sessions, series, shots, sessionTags }),
     sessions: buildAnalyticsSessions({ sessions, faltStations, sessionTags }),
     falt: buildFaltAnalyticsSessions({ sessions, faltStations, sessionTags }),
-    tags: rowsOf<TagOption>(tables.tags).map(({ id, name }) => ({ id, name })),
+    tags: liveRows<TagOption>(tables.tags).map(({ id, name }) => ({ id, name })),
     sessionNames: new Map(sessions.map((session) => [session.id, session.name])),
   };
 }
