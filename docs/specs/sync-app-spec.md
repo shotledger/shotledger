@@ -162,10 +162,10 @@ Consequences that are deliberate, not oversights:
   `UPDATE ... SET deleted_at`, which the UPDATE trigger already catches.
   **Hard deletes are deliberately not captured** — the only hard-deleting
   code in the app is `wipeDemoData` (dev-only). Declared limit, §11.
-- `shot_marks`, `session_tags`, `settings` and the vault tables are **not**
-  synced: `SYNC_TABLE_NAMES` (protocol §1) does not list them, and inventing
-  a tenth table name the server's zod enum rejects would fail every push.
-  Declared limit, §11.
+- `shot_marks` and the vault tables are **not** synced: `SYNC_TABLE_NAMES`
+  (protocol §1) does not list them. `session_tags` and the allowlisted
+  `settings` keys do sync since 2026-10-06
+  (`docs/specs/sync-tags-settings-spec.md`). Declared limit, §11.
 
 ## 3. Ports (`shared/src/sync-client/ports.ts`)
 
@@ -451,9 +451,9 @@ D1, real better-auth, in-process) — the end-to-end requirement:
   triggers is possible but a hard-deleted row has no payload to send, so the
   correct fix is "the app never hard-deletes", which is already true outside
   the dev screen.
-- **`settings`, `session_tags`, `shot_marks` and the vault do not sync** —
-  the protocol's table enum excludes them (protocol spec §1, still marked
-  VERIFY for the maintainer). Photo _scoring marks_ therefore do not travel
+- **`shot_marks` and the vault do not sync**, nor do device-local settings
+  — the protocol's table enum excludes the former, the settings allowlist the
+  latter (`docs/specs/sync-tags-settings-spec.md`). Photo _scoring marks_ therefore do not travel
   with a synced session; the score does.
 - **One local write can be pushed twice as two changes** if it is edited
   again mid-push. Both are accepted; the later `seq` wins. Correct, slightly

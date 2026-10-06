@@ -26,8 +26,8 @@ export const MAX_PAYLOAD_BYTES = 16_384;
 
 /**
  * Tables that follow the id/updated_at/deleted_at sync convention
- * (docs/implementation-plan.md §3). `settings` and `session_tags` are
- * deliberately excluded — see spec §1.
+ * (docs/implementation-plan.md §3). `settings` syncs only the keys in
+ * SYNCED_SETTING_KEYS (docs/specs/sync-tags-settings-spec.md §2.3).
  */
 export const SYNC_TABLE_NAMES = [
   'firearms',
@@ -42,9 +42,41 @@ export const SYNC_TABLE_NAMES = [
   'maintenance_events',
   'tags',
   'sight_settings',
+  'session_tags',
+  'settings',
 ] as const;
 
 export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);
+
+/**
+ * The account settings that follow the user (ADR 0019); a settings row's id
+ * is its key. Every other key is device-local and never syncs. Kept in
+ * lock-step with the WHEN clause of the app's settings outbox triggers.
+ */
+export const SYNCED_SETTING_KEYS = [
+  'birthYear',
+  'skillClass',
+  'competesInWomensClasses',
+  'complianceProfile',
+  'complianceProfileVariant',
+] as const;
+
+const SYNCED_SETTINGS: ReadonlySet<string> = new Set(SYNCED_SETTING_KEYS);
+
+export function isSyncedSettingKey(id: string): boolean {
+  return SYNCED_SETTINGS.has(id);
+}
+
+/**
+ * Whether a `settings` row may sync: an allowlisted key, carried under its own
+ * id — the payload's id is what a device writes, so it is checked too. A
+ * tombstone carries no payload.
+ */
+export function isSyncableSettingRow(rowId: string, payload: unknown): boolean {
+  if (!isSyncedSettingKey(rowId)) return false;
+  if (payload === null) return true;
+  return typeof payload === 'object' && (payload as { id?: unknown }).id === rowId;
+}
 export type SyncTableName = z.infer<typeof SyncTableNameSchema>;
 
 const cursorSchema = z.number().int().nonnegative();

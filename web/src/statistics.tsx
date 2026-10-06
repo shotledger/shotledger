@@ -60,12 +60,7 @@ export function Statistics({ tables }: { tables: PulledTables }) {
   const inputs = useMemo(() => statsInputs(tables), [tables]);
   const options = useMemo(() => buildFilterOptions(inputs), [inputs]);
   const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
-  // Settings are not synced, so the age-reduced guldserie threshold cannot be
-  // known here; the tile stays off rather than counting on the wrong bar.
-  const data = useMemo(
-    () => composeAnalyticsReport(filter, { ...inputs, birthYear: null }),
-    [filter, inputs],
-  );
+  const data = useMemo(() => composeAnalyticsReport(filter, inputs), [filter, inputs]);
 
   if (!options.hasAnyData) {
     return (

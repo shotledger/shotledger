@@ -31,7 +31,9 @@ const SYNCED_TABLES = [
   'licenses',
   'maintenance_events',
   'series',
+  'session_tags',
   'sessions',
+  'settings',
   'shots',
   'sight_settings',
   'tags',
@@ -133,6 +135,29 @@ describe('the migration chain is the whole schema', () => {
         `sync_outbox_${table}_update`,
       ]).sort(),
     );
+  });
+
+  // docs/specs/sync-tags-settings-spec.md A1/N8: any unique index here wedges
+  // a pull when two devices write the same pair or name concurrently.
+  it('A1 has no unique index over a tag link pair or a tag name', () => {
+    const sqlite = freshDatabase();
+    const uniqueColumns = (table: string) =>
+      (
+        sqlite.prepare(`SELECT name, "unique" AS u FROM pragma_index_list(?)`).all(table) as {
+          name: string;
+          u: number;
+        }[]
+      )
+        .filter((index) => index.u === 1)
+        .map((index) =>
+          (
+            sqlite.prepare(`SELECT name FROM pragma_index_info(?)`).all(index.name) as {
+              name: string;
+            }[]
+          ).map((column) => column.name),
+        );
+    expect(uniqueColumns('session_tags')).toEqual([['id']]);
+    expect(uniqueColumns('tags')).toEqual([['id']]);
   });
 
   it('seeds the sync_control row the triggers read', () => {

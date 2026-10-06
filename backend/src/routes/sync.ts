@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import {
   checkProtocolVersion,
+  isSyncableSettingRow,
   MAX_PAYLOAD_BYTES,
   PROTOCOL_VERSION,
   PullRequestSchema,
@@ -96,6 +97,18 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
           maxPayloadBytes: MAX_PAYLOAD_BYTES,
         },
         413,
+      );
+    }
+
+    // Device-local settings never reach the server, from any client (ADR 0019).
+    const localSetting = parsed.data.changes.find(
+      (change) =>
+        change.tableName === 'settings' && !isSyncableSettingRow(change.rowId, change.payload),
+    );
+    if (localSetting) {
+      return c.json(
+        { error: 'setting_not_synced', clientChangeId: localSetting.clientChangeId },
+        400,
       );
     }
 

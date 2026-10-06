@@ -30,8 +30,7 @@ How much of your photo allowance the uploaded target photos use.
   format as [Exporting sessions](exporting-sessions.md). The phone imports it.
 - `photos/` — every uploaded target photo, one folder per session.
 
-Session tags are not in the file: tags are not synced, so they exist only on
-the phone that set them.
+Each session carries its tags, as in the phone's own export.
 
 A photo that cannot be downloaded does not stop the rest. The zip then lists
 it in `missing.txt`.

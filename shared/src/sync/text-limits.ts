@@ -61,4 +61,6 @@ export const TEXT_LIMITS = {
     notes: NOTE,
   },
   tags: { name: NAME },
+  // A synced setting's JSON value; every allowlisted one is a small scalar.
+  settings: { value: IDENTIFIER },
 } as const satisfies Partial<Record<SyncTableName, Record<string, number>>>;

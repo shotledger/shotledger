@@ -1,7 +1,8 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { settings } from '../schema';
 import type { Database } from '../types';
+import { nowIso } from '../util';
 
 // Keys are plain strings (no enum in schema); centralized here so callers
 // don't hand-roll key names. Values are JSON-encoded per §3.
@@ -59,7 +60,11 @@ export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];
 // pass a plain `string` — `SettingKey` remains the typed convenience for
 // the fixed keys above, not an exhaustive constraint on the column itself.
 export function getSetting<T>(db: Database, key: SettingKey | string, fallback: T): T {
-  const row = db.select().from(settings).where(eq(settings.key, key)).get();
+  const row = db
+    .select()
+    .from(settings)
+    .where(and(eq(settings.id, key), isNull(settings.deletedAt)))
+    .get();
   if (!row) return fallback;
   try {
     return JSON.parse(row.value) as T;
@@ -68,10 +73,13 @@ export function getSetting<T>(db: Database, key: SettingKey | string, fallback: 
   }
 }
 
+// Never tombstones: a synced setting's id is its key, so a tombstone would
+// stop it ever being set again on the account (ADR 0019). Null is a value.
 export function setSetting<T>(db: Database, key: SettingKey | string, value: T): void {
   const encoded = JSON.stringify(value);
+  const now = nowIso();
   db.insert(settings)
-    .values({ key, value: encoded })
-    .onConflictDoUpdate({ target: settings.key, set: { value: encoded } })
+    .values({ id: key, value: encoded, createdAt: now, updatedAt: now, deletedAt: null })
+    .onConflictDoUpdate({ target: settings.id, set: { value: encoded, updatedAt: now } })
     .run();
 }

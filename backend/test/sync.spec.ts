@@ -335,3 +335,92 @@ describe('S7 idempotent duplicate push', () => {
     expect(anotherAck.seq).toBe(firstAck.seq + 1);
   });
 });
+
+// docs/specs/sync-tags-settings-spec.md, scenarios B1–B4.
+describe('session_tags and settings', () => {
+  const pullAll = async (tableName: string, token = USER_A_TOKEN) =>
+    (
+      (await call('/sync/pull', { protocolVersion: 1, tables: [{ tableName, cursor: 0 }] }, token))
+        .body as { changes: { rowId: string; payload: Record<string, unknown> }[] }
+    ).changes;
+
+  const change = (seed: string, tableName: string, rowId: string, payload: object) => ({
+    clientChangeId: uuid(seed),
+    tableName,
+    rowId,
+    payload,
+    deletedAt: null,
+    updatedAt: '2026-10-06T00:00:00.000Z',
+  });
+
+  it('B1 a session_tags row round-trips', async () => {
+    const payload = { id: 'link-1', session_id: 's1', tag_id: 't1', deleted_at: null };
+    const push = await call('/sync/push', {
+      protocolVersion: 1,
+      changes: [change('b1', 'session_tags', 'link-1', payload)],
+    });
+    expect(push.status).toBe(200);
+    const rows = await pullAll('session_tags');
+    expect(rows.map((r) => [r.rowId, r.payload])).toEqual([['link-1', payload]]);
+  });
+
+  it('B2 an allowlisted setting round-trips under its key id', async () => {
+    const payload = { id: 'birthYear', value: '1980', deleted_at: null };
+    const push = await call('/sync/push', {
+      protocolVersion: 1,
+      changes: [change('b2', 'settings', 'birthYear', payload)],
+    });
+    expect(push.status).toBe(200);
+    expect((await pullAll('settings')).map((r) => [r.rowId, r.payload])).toEqual([
+      ['birthYear', payload],
+    ]);
+  });
+
+  it('B3 a non-allowlisted setting refuses the whole push, and nothing is stored', async () => {
+    const bad = change('b3-bad', 'settings', 'backupFolder', { id: 'backupFolder', value: '"x"' });
+    const push = await call('/sync/push', {
+      protocolVersion: 1,
+      changes: [change('b3-ok', 'firearms', 'firearm-1', { make: 'Anschutz' }), bad],
+    });
+    expect(push.status).toBe(400);
+    expect(push.body).toEqual({ error: 'setting_not_synced', clientChangeId: bad.clientChangeId });
+    expect(await pullAll('firearms')).toEqual([]);
+    expect(await pullAll('settings')).toEqual([]);
+  });
+
+  it('B3c a settings change whose payload id is not its row id is refused', async () => {
+    const bad = change('b3c', 'settings', 'birthYear', { id: 'backupFolder', value: '"x"' });
+    const push = await call('/sync/push', { protocolVersion: 1, changes: [bad] });
+    expect(push.status).toBe(400);
+    expect(push.body).toEqual({ error: 'setting_not_synced', clientChangeId: bad.clientChangeId });
+    expect(await pullAll('settings')).toEqual([]);
+  });
+
+  it('B3d an allowlisted setting tombstone is not refused by the allowlist', async () => {
+    const tomb = { ...change('b3d', 'settings', 'birthYear', {}), payload: null, deletedAt: 'x' };
+    expect((await call('/sync/push', { protocolVersion: 1, changes: [tomb] })).status).toBe(200);
+  });
+
+  it('B3b the allowlist check applies to settings only, not to a row id on another table', async () => {
+    const push = await call('/sync/push', {
+      protocolVersion: 1,
+      changes: [change('b3b', 'tags', 'backupFolder', { id: 'backupFolder', name: 'x' })],
+    });
+    expect(push.status).toBe(200);
+  });
+
+  it('B4 two devices write the same setting: the later push wins', async () => {
+    // Two devices of one account share a token's user id under the dev stub.
+    for (const [seed, value] of [
+      ['b4-a', '1980'],
+      ['b4-b', '1981'],
+    ] as const) {
+      await call('/sync/push', {
+        protocolVersion: 1,
+        changes: [change(seed, 'settings', 'birthYear', { id: 'birthYear', value })],
+      });
+    }
+    const rows = await pullAll('settings');
+    expect(rows.map((r) => r.payload.value)).toEqual(['1981']);
+  });
+});

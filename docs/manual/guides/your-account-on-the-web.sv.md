@@ -30,8 +30,7 @@ Hur mycket av ditt fotoutrymme de uppladdade tavelfotona använder.
   [Exportera pass](exporting-sessions.md). Telefonen kan importera den.
 - `photos/` — alla uppladdade tavelfoton, en mapp per pass.
 
-Passens taggar finns inte i filen: taggar synkas inte, så de finns bara i
-telefonen som satte dem.
+Varje pass har med sina taggar, som i telefonens egen export.
 
 Ett foto som inte går att hämta stoppar inte resten. Zip-filen listar det då i
 `missing.txt`.

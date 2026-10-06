@@ -11,8 +11,9 @@ import {
   type StatsSeries,
 } from '@shotledger/shared';
 
-import { faltStations, series, sessionTags, sessions, shots } from '../schema';
+import { faltStations, series, sessions, shots } from '../schema';
 import type { Database } from '../types';
+import { listLiveSessionTags } from './tags';
 
 const liveSessions = (db: Database) =>
   db.select().from(sessions).where(isNull(sessions.deletedAt)).all();
@@ -24,7 +25,7 @@ function loadAnalyticsSeries(db: Database): AnalyticsSeries[] {
     sessions: liveSessions(db),
     series: db.select().from(series).where(isNull(series.deletedAt)).all(),
     shots: db.select().from(shots).where(isNull(shots.deletedAt)).all(),
-    sessionTags: db.select().from(sessionTags).all(),
+    sessionTags: listLiveSessionTags(db),
   });
 }
 
@@ -42,7 +43,7 @@ export function listAnalyticsSessions(db: Database): AnalyticsSession[] {
   return buildAnalyticsSessions({
     sessions: liveSessions(db),
     faltStations: liveStations(db),
-    sessionTags: db.select().from(sessionTags).all(),
+    sessionTags: listLiveSessionTags(db),
   });
 }
 
@@ -51,6 +52,6 @@ export function listFaltAnalyticsSessions(db: Database): FaltAnalyticsSession[] 
   return buildFaltAnalyticsSessions({
     sessions: liveSessions(db),
     faltStations: liveStations(db),
-    sessionTags: db.select().from(sessionTags).all(),
+    sessionTags: listLiveSessionTags(db),
   });
 }

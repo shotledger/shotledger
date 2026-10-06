@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "66286bd8-5172-45fb-b1f1-a8742f347541",
+  "id": "fe93e089-3f50-4758-994f-a444ed1e52e2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ammo_lots": {
@@ -934,6 +934,34 @@
     "session_tags": {
       "name": "session_tags",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "session_id": {
           "name": "session_id",
           "type": "text",
@@ -949,7 +977,13 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "session_tags_session_tag_idx": {
+          "name": "session_tags_session_tag_idx",
+          "columns": ["session_id", "tag_id"],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "session_tags_session_id_sessions_id_fk": {
           "name": "session_tags_session_id_sessions_id_fk",
@@ -970,12 +1004,7 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "session_tags_session_id_tag_id_pk": {
-          "columns": ["session_id", "tag_id"],
-          "name": "session_tags_session_id_tag_id_pk"
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -1246,11 +1275,32 @@
     "settings": {
       "name": "settings",
       "columns": {
-        "key": {
-          "name": "key",
+        "id": {
+          "name": "id",
           "type": "text",
           "primaryKey": true,
           "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "value": {
@@ -1660,10 +1710,10 @@
         }
       },
       "indexes": {
-        "tags_name_unique": {
-          "name": "tags_name_unique",
+        "tags_name_idx": {
+          "name": "tags_name_idx",
           "columns": ["name"],
-          "isUnique": true
+          "isUnique": false
         }
       },
       "foreignKeys": {},

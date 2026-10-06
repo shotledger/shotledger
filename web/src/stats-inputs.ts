@@ -12,6 +12,12 @@ import {
 } from '@shotledger/shared/src/analytics-rows';
 import type { AnalyticsSeries, AnalyticsSession } from '@shotledger/shared/src/scoring/analytics';
 import type { FaltAnalyticsSession } from '@shotledger/shared/src/scoring/falt-analytics';
+import {
+  canonicalTags,
+  liveSessionTags,
+  type SessionTagRecord,
+  type TagRecord,
+} from '@shotledger/shared/src/tags/canonical';
 
 import type { PulledTables } from './pull';
 
@@ -36,23 +42,53 @@ export interface StatsInputs {
   falt: FaltAnalyticsSession[];
   tags: TagOption[];
   sessionNames: Map<string, string>;
+  birthYear: number | null;
 }
 
-/**
- * Session tags are not synced (docs/specs/sync-protocol-spec.md §1), so no
- * session carries a tag here and the web report offers no tag filter.
- */
+/** Tags and links as the shared resolver takes them (deleted ones included). */
+export function tagRecords(tables: PulledTables): {
+  tags: TagRecord[];
+  links: SessionTagRecord[];
+} {
+  return {
+    tags: [...tables.tags.values()].map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      deletedAt: (row.deleted_at as string | null | undefined) ?? null,
+    })),
+    links: [...tables.session_tags.values()].map((row) => ({
+      sessionId: row.session_id as string,
+      tagId: row.tag_id as string,
+      deletedAt: (row.deleted_at as string | null | undefined) ?? null,
+    })),
+  };
+}
+
+/** The synced birth year (a JSON number in its settings row), else null. */
+function birthYearOf(tables: PulledTables): number | null {
+  const row = tables.settings.get('birthYear');
+  if (!row || !live(row)) return null;
+  try {
+    const value: unknown = JSON.parse(row.value as string);
+    return typeof value === 'number' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export function statsInputs(tables: PulledTables): StatsInputs {
   const sessions = liveRows<SessionRow & { name: string }>(tables.sessions);
   const series = liveRows<SeriesRow>(tables.series);
   const shots = liveRows<ShotRow>(tables.shots);
   const faltStations = liveRows<FaltStationRow>(tables.falt_stations);
-  const sessionTags: never[] = [];
+  const { tags, links } = tagRecords(tables);
+  const sessionTags = liveSessionTags(tags, links);
   return {
     series: buildAnalyticsSeries({ sessions, series, shots, sessionTags }),
     sessions: buildAnalyticsSessions({ sessions, faltStations, sessionTags }),
     falt: buildFaltAnalyticsSessions({ sessions, faltStations, sessionTags }),
-    tags: liveRows<TagOption>(tables.tags).map(({ id, name }) => ({ id, name })),
+    tags: canonicalTags(tags),
     sessionNames: new Map(sessions.map((session) => [session.id, session.name])),
+    birthYear: birthYearOf(tables),
   };
 }

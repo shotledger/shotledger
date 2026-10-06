@@ -77,18 +77,15 @@ concrete definitions:
 - `session_tags` is an explicit `PRIMARY KEY(session_id, tag_id)` junction
   table; no `id`/`updated_at`/`deleted_at` shown.
 
-**Decision taken here:** the sync protocol's `SyncTableName` enum covers
-the nine tables that unambiguously carry the convention — `firearms`,
-`licenses`, `firearm_groups`, `ammo_lots`, `sessions`, `series`, `shots`,
-`maintenance_events`, `tags` — and **excludes** `settings` and
-`session_tags`. This is a deviation from "every table" in the literal
-sync-foundation sentence; it is the conservative reading (sync only tables
-that actually match the described shape) rather than a guess at how
-`settings`/`session_tags` should be retrofitted. **VERIFY with the
-maintainer**: whether `session_tags` needs sync at all (a client can
-recompute its own tag links locally if `tags` and `sessions` both sync and
-the link is re-derived — but that's a product decision, not this task's to
-make) and whether `settings` should sync per-device or per-user.
+**Decision taken here (2026-09):** the nine tables that carried the
+convention synced; `settings` and `session_tags` were excluded pending the
+maintainer.
+
+**Resolved 2026-10-06 by the maintainer's ruling** (ADR 0019,
+`docs/specs/sync-tags-settings-spec.md`): `session_tags` syncs, with its own
+UUIDv7 id per link and the common columns; `settings` syncs per user, only
+for the allowlist `SYNCED_SETTING_KEYS`, one row per key with the key as its
+id. Both are in `SYNC_TABLE_NAMES`.
 
 ## 2. Protocol design (`shared/src/sync/protocol.ts`)
 
@@ -99,7 +96,7 @@ All types are zod schemas; the inferred TS types are the wire contract.
   client below the minimum must be told to upgrade before any pull/push is
   processed (ADR guardrail: "a client older than the server's minimum
   supported version must upgrade before syncing").
-- `SyncTableName` — zod enum of the nine tables in §1.
+- `SyncTableName` — zod enum of the synced tables (§1; `SYNC_TABLE_NAMES`).
 - `PullRequestSchema` — `{ protocolVersion: number, tables: { tableName,
 cursor: nonnegative int }[] }` (min 1 entry). Array-of-entries rather
   than a keyed record: a zod `record()` over an enum key demands every key

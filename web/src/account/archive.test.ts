@@ -137,6 +137,26 @@ describe('sessionsJson', () => {
   });
 });
 
+describe('sessionsJson tags', () => {
+  it('W4 carries each session its live tag names, once each', () => {
+    const withTags = tables({
+      sessions: [session],
+      tags: [
+        { id: 't1', name: 'KM', deleted_at: null },
+        { id: 't2', name: 'KM', deleted_at: null },
+        { id: 't3', name: 'Cup', deleted_at: null },
+      ],
+      session_tags: [
+        { id: 'l1', session_id: 's1', tag_id: 't1', deleted_at: null },
+        { id: 'l2', session_id: 's1', tag_id: 't2', deleted_at: null },
+        { id: 'l3', session_id: 's1', tag_id: 't3', deleted_at: 'x' },
+      ],
+    });
+    const envelope = JSON.parse(sessionsJson(withTags, '1.2.3'));
+    expect(envelope.sessions[0].tags).toEqual(['KM']);
+  });
+});
+
 describe('archivePhotos', () => {
   it('lists uploaded photos of live rows under their session, and skips the rest', () => {
     expect(archivePhotos(pulled)).toEqual([
