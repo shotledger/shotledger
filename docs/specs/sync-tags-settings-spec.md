@@ -138,7 +138,8 @@ WHERE session_id = s AND tag_id = t AND deleted_at IS NULL` — every live
 - `statsInputs` feeds the live links into the three builders, and returns
   `birthYear` parsed from the `birthYear` settings row (null when absent or
   unparsable), which `statistics.tsx` passes instead of the hard-coded
-  `null` — so the guldserie tile appears on the web as on the phone.
+  `null` — so the report's guldserie count uses the shooter's threshold (the
+  web does not render that tile yet; revision 4).
 - `sessionsJson` (the account download) carries each session's tags, like
   the phone's export.
 - **Deferred:** the tag-filter control in `web/src/report/filters.tsx` and a
@@ -376,7 +377,7 @@ table>)` and `DELETE FROM <synced table>`, with a negative control. It
 - `web/CLAUDE.md`: the "What is not synced" line.
 - Manual, EN + SV: `reference/privacy.md` (the Sync row names the five
   account settings that follow the account), `guides/your-account-on-the-web.md`
-  (the download now carries tags; the report shows the guldserie tile).
+  (the download now carries tags).
 
 ## 6. Setup plan (what approving this authorizes)
 
@@ -399,7 +400,7 @@ table>)` and `DELETE FROM <synced table>`, with a negative control. It
   backend allowlist check, which Stryker does not
   cover; the docs gates (`mkdocs build --strict`, translation and anchor
   checks); a real-execution pass: two devices against `wrangler dev`, and
-  the web report in a browser showing a synced tag and the guldserie tile
+  the web report in a browser over a seeded account
   (screenshots under `~/tmp/screens-301/`, not attached anywhere).
 - **New dependencies:** none.
 
@@ -439,3 +440,8 @@ new build, sign in, and let sync restore.** Anything that was not synced
    constraints, so they could not show the tag-name wedge is gone.
    `analytics-rows/rows.ts` stays unchanged (link dedupe is in
    `liveSessionTags`, revision 1).
+4. **2026-10-06, during real execution.** The web Statistics page never
+   rendered the guldserie tile (only the phone does), so feeding the synced
+   birth year changes the report's `goldSeriesCount` but nothing visible on
+   the web. §2.6 and §5 corrected; the tile, like the tag filter, is a later
+   layer.
