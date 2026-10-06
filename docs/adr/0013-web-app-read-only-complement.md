@@ -1,6 +1,6 @@
 # ADR 0013: The web app is a separate read-only complement, not a third sync device
 
-Status: proposed (2026-09-18)
+Status: accepted (2026-10-06; proposed 2026-09-18)
 
 ## Context
 
