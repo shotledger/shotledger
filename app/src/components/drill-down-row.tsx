@@ -23,16 +23,20 @@ export interface DrillDownRowProps {
 /** Chevron drawn with react-native-svg (no icon-font dependency). */
 export function Chevron({ expanded = false, color }: { expanded?: boolean; color: string }) {
   return (
-    <Svg width={16} height={16} viewBox="0 0 16 16" accessibilityElementsHidden>
-      <Path
-        d={expanded ? 'M3 6 L8 11 L13 6' : 'M6 3 L11 8 L6 13'}
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
+    // aria-hidden on a View, which React Native maps per platform; on the Svg
+    // itself, web passed accessibilityElementsHidden to the DOM as unknown.
+    <View aria-hidden>
+      <Svg width={16} height={16} viewBox="0 0 16 16">
+        <Path
+          d={expanded ? 'M3 6 L8 11 L13 6' : 'M6 3 L11 8 L6 13'}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </View>
   );
 }
 

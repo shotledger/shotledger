@@ -101,8 +101,9 @@ export function ScatterPlot({
           fontSize={10}
           fill={theme.textSecondary}
           textAnchor="middle"
-          rotation={-90}
-          origin={`12, ${PAD_TOP + PLOT_HEIGHT / 2}`}
+          // An SVG rotate about the point, not rotation + origin: on web those
+          // become a transform-origin attribute React rejects.
+          transform={`rotate(-90 12 ${PAD_TOP + PLOT_HEIGHT / 2})`}
         >
           {yLabel}
         </SvgText>
