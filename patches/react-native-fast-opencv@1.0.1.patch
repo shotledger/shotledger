@@ -1,0 +1,15 @@
+diff --git a/cpp/structures/point2f/Point2fFactory.cpp b/cpp/structures/point2f/Point2fFactory.cpp
+index 4c1c9ad01c1e2dc1715e81175a3c89d4058d24b4..22384d7685ab825be55aab6ed4ed6bf31894ebd9 100644
+--- a/cpp/structures/point2f/Point2fFactory.cpp
++++ b/cpp/structures/point2f/Point2fFactory.cpp
+@@ -10,8 +10,8 @@ jsi::Value Point2fFactory::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+          propNameId,
+          2,
+          [](jsi::Runtime& rt, const jsi::Value& thisArg, const jsi::Value* args, size_t count) -> jsi::Value {
+-           auto x = static_cast<int>(args[0].asNumber());
+-           auto y = static_cast<int>(args[1].asNumber());
++           auto x = static_cast<float>(args[0].asNumber());
++           auto y = static_cast<float>(args[1].asNumber());
+            
+            cv::Point2f object(x, y);
+            
