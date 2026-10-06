@@ -154,6 +154,46 @@ The same statement, in user words, is in `docs/store-listing.md`.
   rail itself is under reconsideration — see `app/PRODUCT.md`'s Brand
   Commitments and issue #353.
 
+## iOS (not shipped yet)
+
+The iOS build is configured (`ios.bundleIdentifier` `app.shotledger`,
+permission prompts in English and Swedish via `app/locales/sv.json`) but has
+never been built. There is no Mac in the loop: every iOS build runs on EAS.
+
+One-time setup (maintainer only):
+
+- [ ] `cd app && eas init` to put the EAS project id in `app/app.json`
+      (`extra.eas.projectId`), if the Android steps above have not already.
+- [ ] Create an Expo access token and add it as the `EXPO_TOKEN` repository
+      secret.
+- [ ] For anything beyond the simulator (a device, TestFlight, the App
+      Store): an Apple Developer Program membership, $99 a year. An
+      individual account publishes under the holder's legal name.
+
+Builds:
+
+- **Simulator**, no Apple account needed: run the _iOS build_ workflow
+  (Actions → iOS build → Run workflow), or
+  `cd app && eas build --platform ios --profile simulator`. The EAS free
+  tier allows 15 iOS builds a month on a low-priority queue, which is why
+  the workflow is manual only.
+- **Device and TestFlight** need the Apple account and an iOS section in
+  the `preview` and `production` profiles of `app/eas.json`, added once the
+  account exists.
+
+Known risks before the first build:
+
+- `@react-native-ml-kit/text-recognition` pulls GoogleMLKit, whose pods
+  have shipped without an Apple-Silicon simulator slice. If the simulator
+  build fails there, simulator builds leave the OCR wrapper out.
+- `NATIVE_LICENSES` (`app/src/constants/native-licenses.ts`) lists the
+  Android artifacts only. Add the iOS pods' versions from the first build's
+  `Podfile.lock`.
+- App Store distribution of the AGPL app relies on the extra permission in
+  `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`, which requires the
+  full source to be available outside the store. Publish the source before
+  a public App Store release; TestFlight testing is not affected.
+
 ## Repo configuration
 
 `github.com/jimisola/shotledger`, private. Modeled on the skillsgateway

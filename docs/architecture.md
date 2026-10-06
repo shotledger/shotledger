@@ -39,7 +39,8 @@ ships first:
   (`app/src/platform/`).
 - No Android-only UI assumptions — the back button and FAB conventions
   are fine, hard-coded intents are not.
-- CI keeps an iOS build target compiling even before iOS ships.
+- CI runs on Linux only and does not compile iOS. An iOS simulator build
+  runs on EAS from the manual _iOS build_ workflow (`docs/release.md`, iOS).
 
 ## Related ADRs
 
