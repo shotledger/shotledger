@@ -901,25 +901,44 @@ function crop48(canvas: RectifiedCanvas, x0: number, y0: number): Uint8Array {
   return out;
 }
 
+/** A peak's features; with `blobOnly`, null when no blob is under it. */
 function featuresAt(
   canvas: RectifiedCanvas,
   x0: number,
   y0: number,
   maps: Maps,
   face: ProposalFace,
-): HoleProposalFeatures {
+  blobOnly?: false,
+): HoleProposalFeatures;
+function featuresAt(
+  canvas: RectifiedCanvas,
+  x0: number,
+  y0: number,
+  maps: Maps,
+  face: ProposalFace,
+  blobOnly: boolean,
+): HoleProposalFeatures | null;
+function featuresAt(
+  canvas: RectifiedCanvas,
+  x0: number,
+  y0: number,
+  maps: Maps,
+  face: ProposalFace,
+  blobOnly = false,
+): HoleProposalFeatures | null {
   const d = holeDiameterPx(canvas, face);
   const rMm = Math.hypot(x0 - canvas.centerXPx, y0 - canvas.centerYPx) / canvas.pxPerMm;
   const inBlack = rMm <= BLACK_ZONE_FRACTION * face.blackRadiusMm;
   const sgn = inBlack ? 1 : -1;
+  const { bins, normalized, bg, sign } = radialBins(canvas, x0, y0, d, inBlack);
+  const [bArea, bFill, bElong, bTouch] = blobShape(canvas, x0, y0, d, bg, sign);
+  if (blobOnly && bArea === 0) return null;
   const hf = holeFeatures({ data: crop48(canvas, x0, y0), size: HOLE_CROP_PX });
   const hi = Math.floor(y0 / HALF) * maps.half.width + Math.floor(x0 / HALF);
   // a hole in the black zone is bright, so its Laplacian is negative
   const log1 = -sgn * (maps.logs.s1[hi] as number);
   const log2 = -sgn * (maps.logs.s2[hi] as number);
   const log05 = -sgn * (maps.logs.s05[hi] as number);
-  const { bins, normalized, bg, sign } = radialBins(canvas, x0, y0, d, inBlack);
-  const [bArea, bFill, bElong, bTouch] = blobShape(canvas, x0, y0, d, bg, sign);
   return {
     orient_entropy: hf.orientEntropy,
     hf_energy: hf.hfEnergy,
@@ -996,15 +1015,23 @@ function refineCenter(
   return { x: cx, y: cy };
 }
 
+/** Which peaks `holeCandidates` returns. */
+export interface CandidateScope {
+  /** Only the peaks with a blob under them (`b_area` > 0), for a reader that
+   *  drops the rest; those skip the crop features and edge straightness. */
+  readonly blobOnly?: boolean;
+}
+
 /**
- * Every peak with its features and probability, unfiltered — what the
- * lock-step fixture and the evaluation consume.
+ * Every peak with its features and probability, unfiltered unless `scope`
+ * says so — what the lock-step fixture and the evaluation consume.
  */
 export function holeCandidates(
   canvas: RectifiedCanvas,
   face: ProposalFace,
   ops: MapOps = pureMapOps,
   timings?: DetectorTimings,
+  scope: CandidateScope = {},
 ): HoleCandidate[] {
   if (canvas.size < 4 || canvas.pxPerMm <= 0) return [];
   if (canvas.data.length < canvas.size * canvas.size) return [];
@@ -1013,10 +1040,11 @@ export function holeCandidates(
   const t1 = performance.now();
   const peaks = findPeaks(maps, ops);
   const t2 = performance.now();
-  const found = peaks.map((peak) => {
-    const features = featuresAt(canvas, peak.x, peak.y, maps, face);
-    return { ...peak, features, probability: holeProposalProbability(features) };
-  });
+  const found: HoleCandidate[] = [];
+  for (const peak of peaks) {
+    const features = featuresAt(canvas, peak.x, peak.y, maps, face, scope.blobOnly ?? false);
+    if (features) found.push({ ...peak, features, probability: holeProposalProbability(features) });
+  }
   if (timings) {
     Object.assign(timings, {
       mapsMs: t1 - t0,

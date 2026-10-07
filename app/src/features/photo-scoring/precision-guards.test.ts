@@ -2,7 +2,7 @@ import { SPSF_PISTOL_25M_PRECISION } from '@shotledger/shared';
 
 import fixture from './closeup-lock.fixtures.json';
 import { closeupWorkImage, type XRingReading, xRingReading } from './closeup-lock';
-import { holeCandidates, type ProposalFace } from './hole-proposals';
+import { type CandidateScope, holeCandidates, type ProposalFace } from './hole-proposals';
 import { MILSNABB_GATE, type MilsnabbLock } from './milsnabb-lock';
 import {
   faceDecision,
@@ -330,11 +330,13 @@ describe('holeSizeCheck on a synthetic canvas', () => {
   const face = SPSF_PISTOL_25M_PRECISION;
   const counting = () => {
     const calls: number[] = [];
-    const candidatesOf = (canvas: RectifiedCanvas, f: ProposalFace) => {
+    const scopes: CandidateScope[] = [];
+    const candidatesOf = (canvas: RectifiedCanvas, f: ProposalFace, scope: CandidateScope) => {
       calls.push(f.caliberMm);
-      return holeCandidates(canvas, f);
+      scopes.push(scope);
+      return holeCandidates(canvas, f, undefined, undefined, scope);
     };
-    return { calls, candidatesOf };
+    return { calls, scopes, candidatesOf };
   };
   const eager = (canvas: RectifiedCanvas) => {
     const at = (caliberMm: number) =>
@@ -359,5 +361,25 @@ describe('holeSizeCheck on a synthetic canvas', () => {
     expect(calls).toEqual([CALIBER, CALIBER / 2]);
     expect(check.halfRun).toBe(true);
     expect(check.tooSmall).toBe(eager(canvas));
+  });
+
+  it('skips blobless peaks in the half-calibre run only, keeping every peak for the suggestions', () => {
+    const canvas = canvasAt(2);
+    const { scopes, candidatesOf } = counting();
+    const check = holeSizeCheck(canvas, face, CALIBER, candidatesOf);
+    expect(scopes).toEqual([{}, { blobOnly: true }]);
+    expect(check.candidates).toEqual(holeCandidates(canvas, proposalFaceOf(face, CALIBER)));
+  });
+
+  it('returns with blobOnly exactly the peaks with a blob, features unchanged', () => {
+    const canvas = canvasAt(2);
+    const half = proposalFaceOf(face, CALIBER / 2);
+    const every = holeCandidates(canvas, half);
+    const withBlob = every.filter((c) => c.features.b_area > 0);
+    expect(withBlob.length).toBeGreaterThan(0);
+    expect(withBlob.length).toBeLessThan(every.length);
+    expect(holeCandidates(canvas, half, undefined, undefined, { blobOnly: true })).toEqual(
+      withBlob,
+    );
   });
 });
