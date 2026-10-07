@@ -161,7 +161,12 @@ export function App() {
         />
       )}
       {state.kind === 'ready' && page === 'settings' && (
-        <Settings tables={state.tables} refresh={refresh} />
+        <Settings
+          key={generation}
+          tables={state.tables}
+          refresh={refresh}
+          onReauthenticated={onReauthenticated}
+        />
       )}
       {state.kind === 'ready' && page === 'account' && (
         <Account

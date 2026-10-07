@@ -11,13 +11,15 @@ import type {
 } from '@shotledger/shared/src/sync-client/settings-edit';
 
 import type { HeldRequest } from '../entry/save';
+import type { ReauthOutcome } from '../reauth';
 
 export type SaveStatus =
   | { kind: 'idle' }
   | { kind: 'saving' }
   | { kind: 'invalid'; errors: SettingsError[] }
   | { kind: 'saved'; refreshed: boolean }
-  | { kind: 'failed'; error: SyncErrorKey }
+  /** `unconfirmed`: the server answered, but not with an ack per change sent. */
+  | { kind: 'failed'; error: SyncErrorKey; unconfirmed?: true }
   /** The held request belongs to another account than the one signed in now. */
   | { kind: 'accountChanged' };
 
@@ -61,7 +63,13 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
   if (held !== null) {
     changes = held.changes;
   } else {
-    const built = deps.build();
+    let built: SettingsResult;
+    try {
+      built = deps.build();
+    } catch {
+      // Nothing was sent, so there is nothing to hold (R9).
+      return { status: { kind: 'failed', error: 'unknown' }, held: null };
+    }
     if (!built.ok) return { status: { kind: 'invalid', errors: built.errors }, held: null };
     if (built.changes.length === 0) return IDLE;
     changes = built.changes;
@@ -69,9 +77,13 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
 
   const outcome = await deps.push(changes);
   if (outcome.kind === 'failed') {
+    // A lost response, or an answer that does not match, may mean it landed (R10).
+    const mayHaveLanded = HELD_ON.has(outcome.error) || outcome.unconfirmed === true;
     return {
-      status: { kind: 'failed', error: outcome.error },
-      held: HELD_ON.has(outcome.error) ? { changes, userId } : null,
+      status: outcome.unconfirmed
+        ? { kind: 'failed', error: outcome.error, unconfirmed: true }
+        : { kind: 'failed', error: outcome.error },
+      held: mayHaveLanded ? { changes, userId } : null,
     };
   }
   const refreshed = await deps.refresh();
@@ -82,17 +94,35 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
   return { status: { kind: 'saved', refreshed }, held: null };
 }
 
-/** An edit makes the held request stale: the next Save builds a new one. */
+/** Saved, but the page still shows the values from before the save (R11). */
+const needsReload = (state: SaveState): boolean =>
+  state.status.kind === 'saved' && !state.status.refreshed;
+
+/**
+ * An edit makes the held request stale: the next Save builds a new one. A
+ * save the page could not refresh after stays until reload: its baseline is
+ * stale, so a second Save would push the same keys again (R11).
+ */
 export function afterEdit(state: SaveState): SaveState {
-  return state.status.kind === 'saving' ? state : IDLE;
+  return state.status.kind === 'saving' || needsReload(state) ? state : IDLE;
+}
+
+/**
+ * After the inline sign-in. The same account: the signed-out notice goes and
+ * a held request stays for Retry. Another account: App reloads the logbook
+ * and remounts this page, so nothing here survives anyway (R12).
+ */
+export function afterSignIn(state: SaveState, outcome: ReauthOutcome): SaveState {
+  return outcome === 'same' ? { status: { kind: 'idle' }, held: state.held } : IDLE;
 }
 
 export function saveBlocked(
   online: boolean,
   state: SaveState,
   changed: boolean,
-): 'offline' | 'saving' | 'unchanged' | null {
+): 'offline' | 'saving' | 'reload' | 'unchanged' | null {
   if (!online) return 'offline';
   if (state.status.kind === 'saving') return 'saving';
+  if (needsReload(state)) return 'reload';
   return changed ? null : 'unchanged';
 }

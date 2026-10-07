@@ -1400,7 +1400,8 @@
       "savedReload": "Sparat. Ladda om sidan för att se ändringen i statistiken.",
       "failedNetwork": "Kunde inte nå servern. Dina ändringar finns kvar.",
       "failedOutdated": "Sidan är inaktuell. Ladda om sidan och gör sedan ändringarna igen.",
-      "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan."
+      "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan.",
+      "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt."
     }
   }
 }

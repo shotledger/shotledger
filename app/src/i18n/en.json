@@ -1400,7 +1400,8 @@
       "savedReload": "Saved. Reload the page to see the change in Statistics.",
       "failedNetwork": "Could not reach the server. Your changes are still here.",
       "failedOutdated": "This page is out of date. Reload the page, then make your changes again.",
-      "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save."
+      "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save.",
+      "failedUnconfirmed": "The server answered, but not as expected. Your changes are still here; Retry sends them again."
     }
   }
 }

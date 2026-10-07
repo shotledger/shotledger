@@ -10,7 +10,9 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { currentUserId, pushRows } from '../api';
-import { SignInAgain, useOnline } from '../entry/entry';
+import { useOnline } from '../entry/entry';
+import type { ReauthOutcome } from '../reauth';
+import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
 import {
   birthYearChoices,
@@ -22,7 +24,15 @@ import {
   ownershipFacts,
   shownProfile,
 } from './model';
-import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
+import {
+  afterEdit,
+  afterSignIn,
+  IDLE,
+  save,
+  saveBlocked,
+  submitRequest,
+  type SaveState,
+} from './save';
 
 // The phone's labels for its profile picker (Settings → Compliance).
 const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
@@ -64,6 +74,7 @@ function statusText(t: TFunction, state: SaveState): string | null {
     case 'saved':
       return status.refreshed ? t('web.settings.saved') : t('web.settings.savedReload');
     case 'failed':
+      if (status.unconfirmed) return t('web.settings.failedUnconfirmed');
       if (status.error === 'network') return t('web.settings.failedNetwork');
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.settings.failedOutdated');
@@ -80,9 +91,12 @@ function statusText(t: TFunction, state: SaveState): string | null {
 export function Settings({
   tables,
   refresh,
+  onReauthenticated,
 }: {
   tables: PulledTables;
   refresh: () => Promise<boolean>;
+  /** Another account remounts this page with that account's tables (R12). */
+  onReauthenticated: (userId: string) => ReauthOutcome;
 }) {
   const { t, i18n } = useTranslation();
   const online = useOnline();
@@ -98,7 +112,6 @@ export function Settings({
   const form = draft.opened === opened ? draft.form : opened;
   const [state, setState] = useState<SaveState>(IDLE);
   const [confirming, setConfirming] = useState(false);
-  const [signedInAgain, setSignedInAgain] = useState(false);
 
   const edit = (next: Partial<AccountSettings>) => {
     setDraft({ opened, form: { ...form, ...next } });
@@ -118,7 +131,6 @@ export function Settings({
     const held = submitRequest(state);
     setConfirming(false);
     setState({ status: { kind: 'saving' }, held: null });
-    setSignedInAgain(false);
     void save(
       {
         currentUserId,
@@ -133,7 +145,15 @@ export function Settings({
         refresh,
       },
       held,
-    ).then(setState);
+    )
+      .then(setState)
+      // save() catches what it calls; this is the last guard against "saving" forever (R9).
+      .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
+  };
+
+  const onSignedIn = (userId: string) => {
+    const outcome = onReauthenticated(userId);
+    setState((was) => afterSignIn(was, outcome));
   };
 
   const onSubmit = (event: FormEvent) => {
@@ -148,7 +168,7 @@ export function Settings({
   const failedWith = state.status.kind === 'failed' ? state.status.error : null;
 
   return (
-    <div className="settings">
+    <div>
       <form className="settings" onSubmit={onSubmit} noValidate>
         <fieldset className="settings-fields" disabled={saving}>
           <section className="card">
@@ -262,9 +282,7 @@ export function Settings({
         )}
       </form>
       {/* Outside the settings form: a form cannot nest in another. */}
-      {failedWith === 'unauthenticated' && !signedInAgain && (
-        <SignInAgain onSignedIn={() => setSignedInAgain(true)} />
-      )}
+      {failedWith === 'unauthenticated' && <SignInAgain onSignedIn={onSignedIn} />}
     </div>
   );
 }

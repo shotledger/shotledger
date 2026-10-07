@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   afterEdit,
+  afterSignIn,
   IDLE,
   save,
   saveBlocked,
@@ -168,6 +169,52 @@ describe('the held request (R8, as #669 R13/R14)', () => {
       held: null,
     });
     expect(fresh.build).not.toHaveBeenCalled();
+  });
+});
+
+describe('review fixes (R9–R12)', () => {
+  const held = { changes: CHANGES, userId: 'user-a' };
+
+  it('U9 a build that throws fails the save instead of leaving it saving (R9)', async () => {
+    const d = deps(
+      { kind: 'saved' },
+      {
+        build: vi.fn((): SettingsResult => {
+          throw new TypeError('crypto.randomUUID is not a function');
+        }),
+      },
+    );
+    expect(await save(d, null)).toEqual({
+      status: { kind: 'failed', error: 'unknown' },
+      held: null,
+    });
+    expect(d.push).not.toHaveBeenCalled();
+  });
+
+  it('U10 an answer that does not match the request is held for Retry (R10)', async () => {
+    const d = deps({ kind: 'failed', error: 'unknown', unconfirmed: true });
+    expect(await save(d, null)).toEqual({
+      status: { kind: 'failed', error: 'unknown', unconfirmed: true },
+      held,
+    });
+    // A plain unknown failure holds nothing.
+    expect((await save(deps({ kind: 'failed', error: 'unknown' }), null)).held).toBeNull();
+  });
+
+  it('U11 saved without a refresh keeps Save off until reload, edits included (R11)', () => {
+    const stale: SaveState = { status: { kind: 'saved', refreshed: false }, held: null };
+    expect(saveBlocked(true, stale, true)).toBe('reload');
+    expect(afterEdit(stale)).toBe(stale);
+    const fresh: SaveState = { status: { kind: 'saved', refreshed: true }, held: null };
+    expect(saveBlocked(true, fresh, true)).toBeNull();
+    expect(afterEdit(fresh)).toEqual(IDLE);
+  });
+
+  it('U12 signing in again as the same account clears the notice and keeps the held request (R12)', () => {
+    const signedOut: SaveState = { status: { kind: 'failed', error: 'unauthenticated' }, held };
+    expect(afterSignIn(signedOut, 'same')).toEqual({ status: { kind: 'idle' }, held });
+    // Another account: App reloads and remounts the page; nothing is kept.
+    expect(afterSignIn(signedOut, 'switched')).toEqual(IDLE);
   });
 });
 
