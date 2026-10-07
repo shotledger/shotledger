@@ -66,6 +66,14 @@ export function SlidersIcon() {
   );
 }
 
+export function ListChecksIcon() {
+  return (
+    <svg {...base}>
+      <path d="M3 6l2 2 3-3M3 13l2 2 3-3M11 6h10M11 13h10M11 20h10M4 20h.01" />
+    </svg>
+  );
+}
+
 export function UserIcon() {
   return (
     <svg {...base}>
