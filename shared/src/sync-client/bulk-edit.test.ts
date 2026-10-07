@@ -8,7 +8,14 @@ import {
   type ClientChange,
 } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
-import { buildBulkEdit, type BulkAction, type BulkContext, type BulkResult } from './bulk-edit';
+import {
+  buildBulkEdit,
+  buildCounterCorrection,
+  type BulkAction,
+  type BulkContext,
+  type BulkResult,
+  type CounterPlan,
+} from './bulk-edit';
 import { applyRank } from './order';
 import type { Payload } from './rows';
 
@@ -359,6 +366,17 @@ describe('buildBulkEdit — firearm', () => {
     expect(one('s1')).toBe(50 + 21);
     expect(one('s2')).toBe(50 + 12);
     expect(one('s3')).toBe(50 + 4);
+    // A total-only series with no stored count is the session's own
+    // discipline's series length: ten for air pistol, not Precision's five.
+    const air = logbook();
+    const sessions = new Map(air.sessions);
+    sessions.set('sa', session('sa', { discipline_id: 'issf-air-pistol', firearm_id: 'f1' }));
+    const series = new Map(air.series);
+    series.set('ra', seriesRow('ra', 'sa', { is_total_override: 1 }));
+    const airPistol = okOf(
+      build({ kind: 'setFirearm', firearmId: 'f3' }, ['sa'], { ...air, sessions, series }),
+    );
+    expect(payloadOf(airPistol.changes, 'firearms', 'f3')!.round_count).toBe(50 + 10);
     // A counter that is not a number counts as 0, as the phone's column default.
     const blank = okOf(
       build({ kind: 'setFirearm', firearmId: 'f3' }, ['s3'], {
@@ -524,6 +542,138 @@ describe('buildBulkEdit — selection and limits', () => {
       const ranks = changes.map((c) => applyRank(c.tableName));
       expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
     }
+  });
+});
+
+describe('buildBulkEdit — what Apply keeps for afterwards (R5, R6)', () => {
+  it('K18 a firearm change carries its counter plan; Add Tag names its tag; the others carry neither', () => {
+    const moved = okOf(build({ kind: 'setFirearm', firearmId: 'f3' }, ['s1', 's3', 's4', 's5']));
+    expect(moved.counters).toEqual({
+      moves: [
+        { sessionId: 's1', rounds: 21, from: 'f1', to: 'f3' },
+        { sessionId: 's3', rounds: 4, from: 'f2', to: 'f3' },
+        { sessionId: 's4', rounds: 0, from: null, to: 'f3' },
+        { sessionId: 's5', rounds: 2, from: null, to: 'f3' },
+      ],
+      original: { f1: [100, 15], f2: [5, 2], f3: [50, 0] },
+    });
+    expect(moved.tagId).toBeNull();
+    const existing = okOf(build({ kind: 'addTag', name: 'KM' }, ['s2']));
+    expect([existing.tagId, existing.counters]).toEqual(['t1', null]);
+    const fresh = okOf(build({ kind: 'addTag', name: 'New' }, ['s2']));
+    expect(fresh.tagId).toBe(fresh.changes[0]!.rowId);
+    for (const action of [
+      { kind: 'removeTag', name: 'KM' },
+      { kind: 'setLocation', location: 'Z' },
+    ] as const) {
+      expect(okOf(build(action, ['s1'])).tagId).toBeNull();
+      expect(okOf(build(action, ['s1'])).counters).toBeNull();
+    }
+  });
+});
+
+describe('buildCounterCorrection (R5)', () => {
+  const deps = { newChangeId: () => '00000000-0000-4000-8000-0000000000aa', now: () => NOW };
+  // The verifier's case: s1 (3 rounds) and s2 (2) move from f1 to f2.
+  const plan: CounterPlan = {
+    moves: [
+      { sessionId: 's1', rounds: 3, from: 'f1', to: 'f2' },
+      { sessionId: 's2', rounds: 2, from: 'f1', to: 'f2' },
+    ],
+    original: { f1: [100, 7], f2: [10, 10] },
+  };
+  const none = new Set<string>();
+  const written = byId(firearm('f1', 95, 2), firearm('f2', 15, 15));
+
+  it('K19 a refused session takes its rounds back off the target and back onto the source', () => {
+    const changes = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s2']), firearms: none },
+      written,
+      deps,
+    );
+    expect(changes).toEqual([
+      {
+        clientChangeId: '00000000-0000-4000-8000-0000000000aa',
+        tableName: 'firearms',
+        rowId: 'f1',
+        payload: { ...firearm('f1', 97, 4), updated_at: NOW },
+        deletedAt: null,
+        updatedAt: NOW,
+      },
+      {
+        clientChangeId: '00000000-0000-4000-8000-0000000000aa',
+        tableName: 'firearms',
+        rowId: 'f2',
+        payload: { ...firearm('f2', 13, 13), updated_at: NOW },
+        deletedAt: null,
+        updatedAt: NOW,
+      },
+    ]);
+    // Every session refused: both firearms go back to what was pulled.
+    const all = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s1', 's2']), firearms: none },
+      written,
+      deps,
+    );
+    expect(all.map((c) => [c.rowId, (c.payload as Payload).round_count])).toEqual([
+      ['f1', 100],
+      ['f2', 10],
+    ]);
+  });
+
+  it('K19 a change another device made in between survives; the floor is the one the phone uses', () => {
+    const moved = byId(firearm('f1', 95, 2, { make: 'Renamed' }), firearm('f2', 40, 15));
+    const changes = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s2']), firearms: none },
+      moved,
+      deps,
+    );
+    expect(changes.map((c) => c.payload)).toEqual([
+      { ...firearm('f1', 97, 4, { make: 'Renamed' }), updated_at: NOW },
+      { ...firearm('f2', 38, 13), updated_at: NOW },
+    ]);
+    // The source was floored at 0 with or without s2: nothing to give back.
+    const low: CounterPlan = { ...plan, original: { f1: [1, 0], f2: [10, 10] } };
+    const floored = buildCounterCorrection(
+      low,
+      { sessions: new Set(['s2']), firearms: none },
+      byId(firearm('f1', 0, 0), firearm('f2', 15, 15)),
+      deps,
+    );
+    expect(floored.map((c) => c.rowId)).toEqual(['f2']);
+    // A fresh counter that would go below zero stops at zero.
+    const drained = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s2']), firearms: none },
+      byId(firearm('f2', 1, 0, { round_count: 'n/a' })),
+      deps,
+    );
+    expect(drained.map((c) => c.payload)).toEqual([
+      { ...firearm('f2', 0, 0, { round_count: 0 }), updated_at: NOW },
+    ]);
+  });
+
+  it('K20 nothing to take back: no refused session, a refused or deleted firearm row', () => {
+    expect(buildCounterCorrection(plan, { sessions: none, firearms: none }, written, deps)).toEqual(
+      [],
+    );
+    const refusedTarget = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s2']), firearms: new Set(['f2']) },
+      written,
+      deps,
+    );
+    expect(refusedTarget.map((c) => c.rowId)).toEqual(['f1']);
+    const gone = buildCounterCorrection(
+      plan,
+      { sessions: new Set(['s2']), firearms: none },
+      byId(firearm('f1', 95, 2, { deleted_at: OLD })),
+      deps,
+    );
+    expect(gone).toEqual([]);
   });
 });
 
@@ -708,6 +858,62 @@ describe('buildBulkEdit — property', () => {
         }
         for (const [id, [total, since]] of expected) {
           expect(after.firearms.get(id)).toMatchObject({
+            round_count: total,
+            rounds_since_maintenance: since,
+          });
+        }
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it('K21 a push with refused sessions, then its correction, leaves the counters the phone would have for the sessions that landed', () => {
+    const firearmWorld = fc.tuple(
+      worldArb,
+      fc.constantFrom(null, 'f1', 'f2', 'f3'),
+      fc.array(fc.nat({ max: 14 })),
+    );
+    fc.assert(
+      fc.property(firearmWorld, ([{ context, selection }, target, refusedPicks]) => {
+        const action: BulkAction = { kind: 'setFirearm', firearmId: target };
+        const result = buildBulkEdit(action, selection, context, makeDeps());
+        if (!result.ok) return;
+        const refused = new Set(refusedPicks.map((n) => `s${n}`));
+        // The server refuses those session rows and applies everything else.
+        const landedChanges = result.changes.filter(
+          (c) => !(c.tableName === 'sessions' && refused.has(c.rowId)),
+        );
+        const after = applied(context, landedChanges);
+        const correction = buildCounterCorrection(
+          result.counters!,
+          { sessions: refused, firearms: new Set() },
+          after.firearms,
+          makeDeps(),
+        );
+        const corrected = applied(after, correction);
+
+        // The phone's walk over the sessions that landed only.
+        const expected = new Map<string, [number, number]>(
+          [...context.firearms].map(([id, f]) => [
+            id,
+            [f.round_count as number, f.rounds_since_maintenance as number],
+          ]),
+        );
+        for (const id of new Set(selection)) {
+          const row = context.sessions.get(id);
+          if (!isLive(row) || refused.has(id) || row.firearm_id === target) continue;
+          const rounds = roundsOf(context, id);
+          for (const [firearmId, delta] of [
+            [row.firearm_id as string | null, -rounds],
+            [target, rounds],
+          ] as const) {
+            if (firearmId === null || !isLive(context.firearms.get(firearmId))) continue;
+            const [total, since] = expected.get(firearmId)!;
+            expected.set(firearmId, [Math.max(0, total + delta), Math.max(0, since + delta)]);
+          }
+        }
+        for (const [id, [total, since]] of expected) {
+          expect(corrected.firearms.get(id)).toMatchObject({
             round_count: total,
             rounds_since_maintenance: since,
           });

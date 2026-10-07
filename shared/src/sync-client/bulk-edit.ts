@@ -44,7 +44,16 @@ export interface BulkSummary {
 }
 
 export type BulkResult =
-  { ok: true; changes: ClientChange[]; summary: BulkSummary } | { ok: false; errors: BulkError[] };
+  | {
+      ok: true;
+      changes: ClientChange[];
+      summary: BulkSummary;
+      /** A firearm change's counter plan, for a correction after a refusal (R5). */
+      counters: CounterPlan | null;
+      /** The tag Add Tag links, to check it is still live afterwards (R6). */
+      tagId: string | null;
+    }
+  | { ok: false; errors: BulkError[] };
 
 /** One row to write: a payload, or null for a tombstone. */
 interface Write {
@@ -57,6 +66,8 @@ interface Write {
 interface Planned {
   writes: Write[];
   changed: number;
+  counters?: CounterPlan;
+  tagId?: string;
 }
 
 /** Present in the pull (server tombstones are dropped) and not soft-deleted. */
@@ -115,7 +126,7 @@ function addTag(
       },
     });
   }
-  return { writes, changed };
+  return { writes, changed, tagId };
 }
 
 /** As removeSessionTag: every live link to any tag of the name, live or not. */
@@ -135,27 +146,84 @@ function removeTag(name: string, sessions: Payload[], context: BulkContext): Pla
   return { writes, changed: touched.size };
 }
 
-/** The session's rounds by the one volume rule, as the phone's sessionVolumeRounds. */
-function roundsOf(session: Payload, context: BulkContext): number {
-  const series: VolumeSeries[] = [];
+const countBy = (rows: Payload[], key: string): Map<unknown, number> => {
+  const counts = new Map<unknown, number>();
+  for (const row of rows) counts.set(row[key], (counts.get(row[key]) ?? 0) + 1);
+  return counts;
+};
+
+/**
+ * Each session's rounds by the one volume rule, as the phone's
+ * sessionVolumeRounds. The tables are indexed once, so a season of sessions
+ * stays linear in its shots.
+ */
+function volumeIndex(context: BulkContext): (session: Payload) => number {
+  const shotsBySeries = countBy(liveRows(context.shots), 'series_id');
+  const stationsBySession = countBy(liveRows(context.faltStations), 'session_id');
+  const seriesBySession = new Map<unknown, VolumeSeries[]>();
   for (const s of liveRows(context.series)) {
-    if (s.session_id !== session.id) continue;
-    series.push({
-      shotCount: liveRows(context.shots).filter((h) => h.series_id === s.id).length,
+    const bucket = seriesBySession.get(s.session_id) ?? [];
+    bucket.push({
+      shotCount: shotsBySeries.get(s.id) ?? 0,
       totalOnly: s.is_total_override === 1,
       overrideShotCount: (s.total_override_shot_count as number | null | undefined) ?? null,
     });
+    seriesBySession.set(s.session_id, bucket);
   }
-  return sessionVolume({
-    series,
-    extraRounds: (session.extra_rounds as number | null | undefined) ?? null,
-    stationCount: liveRows(context.faltStations).filter((st) => st.session_id === session.id)
-      .length,
-    seriesLength: disciplineSeriesLength(session.discipline_id as string),
-  });
+  return (session) =>
+    sessionVolume({
+      series: seriesBySession.get(session.id) ?? [],
+      extraRounds: (session.extra_rounds as number | null | undefined) ?? null,
+      stationCount: stationsBySession.get(session.id) ?? 0,
+      seriesLength: disciplineSeriesLength(session.discipline_id as string),
+    });
 }
 
 const counter = (value: unknown): number => (typeof value === 'number' ? value : 0);
+
+/**
+ * What a firearm change does to the counters (B2), kept with the request so a
+ * refused session's share can be taken back afterwards (R5).
+ */
+export interface CounterPlan {
+  /** One per moved session; `from`/`to` are null when that firearm is not live. */
+  moves: { sessionId: string; rounds: number; from: string | null; to: string | null }[];
+  /** Each touched firearm's pulled [round_count, rounds_since_maintenance]. */
+  original: Record<string, [number, number]>;
+}
+
+/**
+ * The counters after the given moves, for every firearm they touch with a
+ * non-zero sum. In one action a firearm is only a source or only the target,
+ * so one floor over the sum equals the phone's floor per session.
+ */
+export function countersAfter(
+  plan: CounterPlan,
+  moves: CounterPlan['moves'] = plan.moves,
+): Map<string, [number, number]> {
+  const delta = new Map<string, number>();
+  const add = (firearmId: string | null, rounds: number) => {
+    if (firearmId !== null) delta.set(firearmId, (delta.get(firearmId) ?? 0) + rounds);
+  };
+  for (const move of moves) {
+    add(move.from, -move.rounds);
+    add(move.to, move.rounds);
+  }
+  const result = new Map<string, [number, number]>();
+  for (const [firearmId, rounds] of delta) {
+    if (rounds === 0) continue;
+    const [total, since] = plan.original[firearmId]!;
+    result.set(firearmId, [Math.max(0, total + rounds), Math.max(0, since + rounds)]);
+  }
+  return result;
+}
+
+const withCounters = (pulled: Payload, [total, since]: [number, number], now: string) => ({
+  ...pulled,
+  round_count: total,
+  rounds_since_maintenance: since,
+  updated_at: now,
+});
 
 /** As updateSession with a new firearmId: the session's rounds move with it (B2). */
 function setFirearm(
@@ -163,13 +231,18 @@ function setFirearm(
   sessions: Payload[],
   context: BulkContext,
   now: string,
-): Planned {
+): Planned & { counters: CounterPlan } {
+  const roundsOf = volumeIndex(context);
+  const counters: CounterPlan = { moves: [], original: {} };
   // A firearm that is no longer live is not moved, as applyRoundCountDelta.
-  const live = new Set<string | null>(liveRows(context.firearms).map((f) => f.id as string));
-  const delta = new Map<string, number>();
-  const move = (firearmId: string | null, rounds: number) => {
-    if (!live.has(firearmId)) return;
-    delta.set(firearmId!, (delta.get(firearmId!) ?? 0) + rounds);
+  const liveFirearm = (firearmId: string | null): string | null => {
+    const row = firearmId === null ? undefined : context.firearms.get(firearmId);
+    if (!isLive(row)) return null;
+    counters.original[firearmId!] = [
+      counter(row.round_count),
+      counter(row.rounds_since_maintenance),
+    ];
+    return firearmId;
   };
   const sessionWrites: Write[] = [];
   for (const s of sessions) {
@@ -180,26 +253,62 @@ function setFirearm(
       rowId: s.id as string,
       payload: edited(s, 'firearm_id', target, now),
     });
-    const rounds = roundsOf(s, context);
-    move(before, -rounds);
-    move(target, rounds);
-  }
-  const firearmWrites: Write[] = [];
-  for (const [firearmId, rounds] of delta) {
-    if (rounds === 0) continue;
-    const pulled = context.firearms.get(firearmId)!;
-    firearmWrites.push({
-      tableName: 'firearms',
-      rowId: firearmId,
-      payload: {
-        ...pulled,
-        round_count: Math.max(0, counter(pulled.round_count) + rounds),
-        rounds_since_maintenance: Math.max(0, counter(pulled.rounds_since_maintenance) + rounds),
-        updated_at: now,
-      },
+    counters.moves.push({
+      sessionId: s.id as string,
+      rounds: roundsOf(s),
+      from: liveFirearm(before),
+      to: liveFirearm(target),
     });
   }
-  return { writes: [...firearmWrites, ...sessionWrites], changed: sessionWrites.length };
+  const firearmWrites: Write[] = [...countersAfter(counters)].map(([firearmId, values]) => ({
+    tableName: 'firearms',
+    rowId: firearmId,
+    payload: withCounters(context.firearms.get(firearmId)!, values, now),
+  }));
+  return { writes: [...firearmWrites, ...sessionWrites], changed: sessionWrites.length, counters };
+}
+
+/**
+ * After a push in which the server refused some moved sessions: the firearm
+ * rows that take their share back out of the counters (R5). Each touched
+ * firearm is rebuilt from its fresh pull, moved by the difference between
+ * the counters without the refused sessions and the counters the push wrote,
+ * so a change another device made in between survives. A firearm whose own
+ * row was refused, or that is no longer live, is left alone. Empty when
+ * nothing needs taking back.
+ */
+export function buildCounterCorrection(
+  plan: CounterPlan,
+  refused: { sessions: ReadonlySet<string>; firearms: ReadonlySet<string> },
+  freshFirearms: ReadonlyMap<string, Payload>,
+  deps: Pick<EntryDeps, 'newChangeId' | 'now'>,
+): ClientChange[] {
+  const written = countersAfter(plan);
+  const landed = countersAfter(
+    plan,
+    plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),
+  );
+  const now = deps.now();
+  const changes: ClientChange[] = [];
+  for (const [firearmId, [total, since]] of written) {
+    const fresh = freshFirearms.get(firearmId);
+    if (refused.firearms.has(firearmId) || !isLive(fresh)) continue;
+    const [wantTotal, wantSince] = landed.get(firearmId) ?? plan.original[firearmId]!;
+    if (wantTotal === total && wantSince === since) continue;
+    const values: [number, number] = [
+      Math.max(0, counter(fresh.round_count) + wantTotal - total),
+      Math.max(0, counter(fresh.rounds_since_maintenance) + wantSince - since),
+    ];
+    changes.push({
+      clientChangeId: deps.newChangeId(),
+      tableName: 'firearms',
+      rowId: firearmId,
+      payload: withCounters(fresh, values, now),
+      deletedAt: null,
+      updatedAt: now,
+    });
+  }
+  return changes;
 }
 
 function setLocation(location: string | null, sessions: Payload[], now: string): Planned {
@@ -268,7 +377,7 @@ export function buildBulkEdit(
 
   const sessions = ids.map((id) => context.sessions.get(id)).filter(isLive);
   const now = deps.now();
-  const { writes, changed } = plan(action, sessions, context, deps, now);
+  const { writes, changed, counters, tagId } = plan(action, sessions, context, deps, now);
   if (writes.length === 0) return { ok: false, errors: [{ kind: 'nothingToChange' }] };
   if (writes.length > PUSH_BATCH_MAX) {
     return {
@@ -294,5 +403,7 @@ export function buildBulkEdit(
       unchanged: sessions.length - changed,
       missing: ids.length - sessions.length,
     },
+    counters: counters ?? null,
+    tagId: tagId ?? null,
   };
 }
