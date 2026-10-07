@@ -305,7 +305,8 @@ button.destructive {
   color: var(--danger);
 }
 
-.account {
+.account,
+.settings {
   display: grid;
   gap: 16px;
   max-width: 720px;
@@ -680,6 +681,27 @@ a.button {
   display: grid;
   gap: 4px;
   font-size: 13px;
+}
+
+.settings .card {
+  display: grid;
+  gap: 12px;
+}
+
+.settings .card h2,
+.settings .card p {
+  margin: 0;
+}
+
+fieldset.field {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+fieldset.field legend {
+  padding: 0;
+  margin-bottom: 4px;
 }
 
 .field.check,

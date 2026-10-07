@@ -1394,6 +1394,12 @@
       "errorDateTime": "Ange datum och tid.",
       "accountChanged": "Du är nu inloggad på ett annat konto, så passet skickades inte. Kontrollera serierna och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Serierna finns kvar; Försök igen skickar samma pass igen."
+    },
+    "settings": {
+      "saved": "Sparat.",
+      "savedReload": "Sparat. Ladda om sidan för att se ändringen i statistiken.",
+      "failedNetwork": "Kunde inte nå servern. Dina ändringar finns kvar.",
+      "failedOutdated": "Sidan är inaktuell. Ladda om sidan och gör sedan ändringarna igen."
     }
   }
 }

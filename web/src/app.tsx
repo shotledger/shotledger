@@ -10,6 +10,7 @@ import { routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
 import { NO_PICKS, picksOf, withPicks, type Picks } from './sessions/picks';
 import { Sessions } from './sessions/sessions';
+import { Settings } from './settings/settings';
 import { SignIn } from './sign-in';
 import { Statistics } from './statistics';
 import { installTheme } from './theme';
@@ -158,6 +159,9 @@ export function App() {
           refresh={refresh}
           onReauthenticated={onReauthenticated}
         />
+      )}
+      {state.kind === 'ready' && page === 'settings' && (
+        <Settings tables={state.tables} refresh={refresh} />
       )}
       {state.kind === 'ready' && page === 'account' && (
         <Account
