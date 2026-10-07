@@ -1,14 +1,10 @@
 // Bulk Edit: retag, change the firearm on, or move many sessions with one
-// push (docs/specs/web-bulk-edit-spec.md §3.2). The list logic is in
-// model.ts, what an Apply does in apply.ts; this file only renders.
+// push (docs/specs/web-bulk-edit-spec.md §3.2). The list is model.ts, the
+// request request.ts, what an Apply does apply.ts and what the page then
+// says messages.ts; this file only renders and wires.
 import { rankRecentLocations } from '@shotledger/shared/src/locations/recent-locations';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
-import {
-  buildBulkEdit,
-  type BulkAction,
-  type BulkError,
-} from '@shotledger/shared/src/sync-client/bulk-edit';
-import type { TFunction } from 'i18next';
+import type { BulkAction } from '@shotledger/shared/src/sync-client/bulk-edit';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
@@ -18,8 +14,8 @@ import { loadTables, pushEntry } from '../api';
 import { locationUsage, SignInAgain, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
 import { afterEdit, apply, applyBlocked, IDLE, type ApplyState } from './apply';
+import { statusMessages, type Message } from './messages';
 import {
-  bulkContext,
   bulkRows,
   filterRows,
   firearmLabel,
@@ -28,58 +24,7 @@ import {
   targetIds,
   type BulkFilter,
 } from './model';
-
-type ActionKind = BulkAction['kind'];
-
-/** The firearm picker's "not chosen yet", distinct from None. */
-const UNCHOSEN = 'unchosen';
-const NONE = '';
-
-function errorText(t: TFunction, error: BulkError): string {
-  switch (error.kind) {
-    case 'noSessions':
-      return t('web.bulk.errorNoSessions');
-    case 'blankTag':
-      return t('web.bulk.errorBlankTag');
-    case 'tooLong':
-      return t('web.entry.errorTooLong', {
-        field: error.field === 'tag' ? t('web.bulk.tag') : t('session.location'),
-        max: error.max,
-      });
-    case 'unknownFirearm':
-      return t('web.entry.errorUnknownFirearm');
-    case 'nothingToChange':
-      return t('web.bulk.errorNothing');
-    case 'tooManyChanges':
-      return t('web.bulk.errorTooMany', { needed: error.needed, max: error.max });
-  }
-}
-
-function statusLines(t: TFunction, state: ApplyState): string[] {
-  const { status } = state;
-  switch (status.kind) {
-    case 'applying':
-      return [t('web.bulk.applying')];
-    case 'applied': {
-      const { summary } = status;
-      const lines = [t('web.bulk.applied', { count: summary.changed })];
-      if (summary.unchanged > 0) lines.push(t('web.bulk.unchanged', { count: summary.unchanged }));
-      if (summary.missing > 0) lines.push(t('web.bulk.missing', { count: summary.missing }));
-      if (status.refused > 0) lines.push(t('web.bulk.refused', { count: status.refused }));
-      if (!status.refreshed) lines.push(t('web.bulk.reload'));
-      return lines;
-    }
-    case 'failed':
-      if (status.error === 'network') return [t('web.bulk.failedNetwork')];
-      if (status.error === 'unauthenticated') return [t('web.bulk.failedSignedOut')];
-      if (status.error === 'versionUnsupported') return [t('web.bulk.failedOutdated')];
-      return [t('web.entry.failed')];
-    case 'invalid':
-      return status.errors.map((error) => errorText(t, error));
-    case 'idle':
-      return [];
-  }
-}
+import { applyDeps, bulkRequest, INITIAL_FORM, UNCHOSEN, type BulkForm } from './request';
 
 export function BulkEdit({
   tables,
@@ -92,11 +37,7 @@ export function BulkEdit({
   const online = useOnline();
   const [filter, setFilter] = useState<BulkFilter>(NO_FILTER);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const [kind, setKind] = useState<ActionKind>('addTag');
-  const [tagName, setTagName] = useState('');
-  const [removeName, setRemoveName] = useState('');
-  const [firearm, setFirearm] = useState(UNCHOSEN);
-  const [location, setLocation] = useState('');
+  const [form, setForm] = useState<BulkForm>(INITIAL_FORM);
   const [state, setState] = useState<ApplyState>(IDLE);
   const [signedInAgain, setSignedInAgain] = useState(false);
 
@@ -122,67 +63,44 @@ export function BulkEdit({
   );
   const places = rankRecentLocations(
     useMemo(() => locationUsage(tables.sessions), [tables]),
-    location,
+    form.location,
   );
 
-  // Any change to what Apply would send makes a held request stale.
+  // Any change to what Apply would send makes a held edit stale.
   const edit = (change: () => void) => {
     change();
     setState(afterEdit);
   };
+  const set = <K extends keyof BulkForm>(key: K, value: BulkForm[K]) =>
+    edit(() => setForm((current) => ({ ...current, [key]: value })));
 
-  const action: BulkAction | null =
-    kind === 'addTag'
-      ? { kind, name: tagName }
-      : kind === 'removeTag'
-        ? removeName === ''
-          ? null
-          : { kind, name: removeName }
-        : kind === 'setFirearm'
-          ? firearm === UNCHOSEN
-            ? null
-            : { kind, firearmId: firearm === NONE ? null : firearm }
-          : { kind, location };
-
+  const request = bulkRequest(form, selected, shown);
   const blocked = applyBlocked(online, state);
   const runApply = (held: ApplyState['held']) => {
-    if (blocked !== null || (held === null && action === null)) return;
+    const retrying = held !== null;
+    if (retrying ? blocked === 'offline' || blocked === 'applying' : blocked !== null) return;
+    if (!retrying && request === null) return;
     setState({ status: { kind: 'applying' }, held: null });
-    void apply(
-      {
-        loadContext: async () =>
-          bulkContext(
-            await loadTables(
-              kind === 'setFirearm'
-                ? [
-                    'sessions',
-                    'tags',
-                    'session_tags',
-                    'firearms',
-                    'series',
-                    'shots',
-                    'falt_stations',
-                  ]
-                : ['sessions', 'tags', 'session_tags', 'firearms'],
-            ),
-          ),
-        build: (context) =>
-          buildBulkEdit(action!, targets, context, {
-            newId: uuidv7,
-            newChangeId: () => crypto.randomUUID(),
-            now: () => new Date().toISOString(),
-          }),
-        push: pushEntry,
-        refresh,
-      },
-      held,
-    ).then((next) => {
-      setState(next);
-      if (next.status.kind === 'applied') {
-        setSelected(new Set());
-        setSignedInAgain(false);
-      }
-    });
+    const io = {
+      loadTables,
+      push: pushEntry,
+      refresh,
+      newId: uuidv7,
+      newChangeId: () => crypto.randomUUID(),
+      now: () => new Date().toISOString(),
+    };
+    void apply(applyDeps(request, io), held)
+      .catch((): ApplyState => ({
+        status: { kind: 'failed', error: 'unknown', stage: 'edit' },
+        held,
+      }))
+      .then((next) => {
+        setState(next);
+        if (next.status.kind === 'applied') {
+          setSelected(new Set());
+          setSignedInAgain(false);
+        }
+      });
   };
 
   const allShownSelected = shown.length > 0 && targets.length === shown.length;
@@ -207,11 +125,16 @@ export function BulkEdit({
       }),
     );
 
-  const clearsLocation = kind === 'setLocation' && location.trim() === '';
+  const clearsLocation = form.kind === 'setLocation' && form.location.trim() === '';
   const applyLabel = t(clearsLocation ? 'web.bulk.applyClearLocation' : 'web.bulk.apply', {
     count: targets.length,
   });
-  const lines = statusLines(t, state);
+  const text = (message: Message) =>
+    t(message.key, {
+      ...message.params,
+      ...(message.fieldKey ? { field: t(message.fieldKey) } : {}),
+    });
+  const lines = statusMessages(state).map(text);
   const failedWith = state.status.kind === 'failed' ? state.status.error : null;
 
   return (
@@ -253,8 +176,8 @@ export function BulkEdit({
         <label className="field">
           {t('web.bulk.action')}
           <select
-            value={kind}
-            onChange={(event) => edit(() => setKind(event.target.value as ActionKind))}
+            value={form.kind}
+            onChange={(event) => set('kind', event.target.value as BulkAction['kind'])}
           >
             <option value="addTag">{t('web.bulk.actionAddTag')}</option>
             <option value="removeTag">{t('web.bulk.actionRemoveTag')}</option>
@@ -262,15 +185,15 @@ export function BulkEdit({
             <option value="setLocation">{t('web.bulk.actionLocation')}</option>
           </select>
         </label>
-        {kind === 'addTag' && (
+        {form.kind === 'addTag' && (
           <label className="field">
             {t('web.bulk.tag')}
             <input
-              value={tagName}
+              value={form.tagName}
               list="bulk-tags"
               placeholder={t('session.tagPlaceholder')}
               maxLength={TEXT_LIMITS.tags.name}
-              onChange={(event) => edit(() => setTagName(event.target.value))}
+              onChange={(event) => set('tagName', event.target.value)}
             />
             <datalist id="bulk-tags">
               {allTags.map((name) => (
@@ -279,12 +202,12 @@ export function BulkEdit({
             </datalist>
           </label>
         )}
-        {kind === 'removeTag' && (
+        {form.kind === 'removeTag' && (
           <label className="field">
             {t('web.bulk.tag')}
             <select
-              value={tagsOnTargets.includes(removeName) ? removeName : ''}
-              onChange={(event) => edit(() => setRemoveName(event.target.value))}
+              value={tagsOnTargets.includes(form.removeName) ? form.removeName : ''}
+              onChange={(event) => set('removeName', event.target.value)}
             >
               <option value="" disabled>
                 {t('web.bulk.choose')}
@@ -297,17 +220,14 @@ export function BulkEdit({
             </select>
           </label>
         )}
-        {kind === 'setFirearm' && (
+        {form.kind === 'setFirearm' && (
           <label className="field">
             {t('session.firearm')}
-            <select
-              value={firearm}
-              onChange={(event) => edit(() => setFirearm(event.target.value))}
-            >
+            <select value={form.firearm} onChange={(event) => set('firearm', event.target.value)}>
               <option value={UNCHOSEN} disabled>
                 {t('web.bulk.choose')}
               </option>
-              <option value={NONE}>{t('session.none')}</option>
+              <option value="">{t('session.none')}</option>
               {firearms.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.label}
@@ -316,15 +236,15 @@ export function BulkEdit({
             </select>
           </label>
         )}
-        {kind === 'setLocation' && (
+        {form.kind === 'setLocation' && (
           <label className="field">
             {t('session.location')}
             <input
-              value={location}
+              value={form.location}
               list="bulk-locations"
               placeholder={t('session.locationPlaceholder')}
               maxLength={TEXT_LIMITS.sessions.location}
-              onChange={(event) => edit(() => setLocation(event.target.value))}
+              onChange={(event) => set('location', event.target.value)}
             />
             <datalist id="bulk-locations">
               {places.map((place) => (
@@ -338,9 +258,8 @@ export function BulkEdit({
             type="submit"
             disabled={
               blocked !== null ||
-              targets.length === 0 ||
-              action === null ||
-              (kind === 'removeTag' && !tagsOnTargets.includes(removeName))
+              request === null ||
+              (form.kind === 'removeTag' && !tagsOnTargets.includes(form.removeName))
             }
           >
             {applyLabel}
@@ -349,7 +268,7 @@ export function BulkEdit({
             <button
               type="button"
               className="secondary"
-              disabled={blocked !== null}
+              disabled={blocked === 'offline' || blocked === 'applying'}
               onClick={() => runApply(state.held)}
             >
               {t('web.entry.retry')}
