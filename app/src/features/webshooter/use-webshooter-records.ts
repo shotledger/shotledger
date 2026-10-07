@@ -2,13 +2,7 @@
 // over local data (imported + manual), no network (§B.4).
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import {
-  faltPbCoverage,
-  faltPersonalBests,
-  parseFaltPbGroupKey,
-  poangfaltPoints,
-  type FaltResultMode,
-} from '@shotledger/shared';
+import { faltPbCoverage } from '@shotledger/shared';
 import {
   personalBests,
   bestNSeries,
@@ -26,13 +20,15 @@ import {
 } from '@shotledger/shared/src/integrations/webshooter/stats/yearOverYear';
 
 import { db } from '@/db/client';
-import { listSessions } from '@/db/queries/sessions';
+import { faltPbRows, type FaltPbRow } from '@/db/queries/falt-pb-rows';
 import { listFaltAnalyticsSessions } from '@/db/queries/stats';
 import {
   countAllSessions,
   listCompetitionResultsForStats,
   listFreeformSessionsForPb,
 } from '@/db/queries/webshooter-stats';
+
+export type { FaltPbRow };
 
 export interface OfficialPbRow {
   groupKey: string;
@@ -45,21 +41,6 @@ export interface FreeformPbRow {
   best5Tenths: number | null;
   best10Tenths: number | null;
   bestSessionTenths: number | null;
-}
-
-export interface FaltPbRow {
-  groupKey: string;
-  disciplineId: string;
-  weaponGroupId: string | null;
-  mode: FaltResultMode;
-  stationCount: number;
-  sessionId: string;
-  sessionName: string;
-  startedAt: string;
-  hits: number;
-  figuresHit: number;
-  /** The poängfält sum — what a poängfält row shows. */
-  points: number;
 }
 
 export interface YoYGroupRow {
@@ -106,19 +87,7 @@ function computeRecords(): WebshooterRecordsData {
   }));
 
   const faltSessions = listFaltAnalyticsSessions(db);
-  const nameById = new Map(listSessions(db).map((session) => [session.id, session.name] as const));
-  const faltPbs: FaltPbRow[] = [...faltPersonalBests(faltSessions)]
-    .map(([groupKey, pb]) => ({
-      groupKey,
-      ...parseFaltPbGroupKey(groupKey),
-      sessionId: pb.sessionId,
-      sessionName: nameById.get(pb.sessionId) ?? pb.sessionId,
-      startedAt: pb.startedAt,
-      hits: pb.result.hits,
-      figuresHit: pb.result.figuresHit,
-      points: poangfaltPoints(pb.result),
-    }))
-    .sort((a, b) => a.groupKey.localeCompare(b.groupKey));
+  const faltPbs = faltPbRows(db, faltSessions);
 
   const yoyMap = yearStats(competitionResults);
   const yearOverYear: YoYGroupRow[] = [...yoyMap.entries()].map(([groupKey, byYear]) => {

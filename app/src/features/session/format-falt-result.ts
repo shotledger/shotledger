@@ -1,12 +1,14 @@
 // One rendering of a fält result for every screen that shows one (#513): a
-// poängfält round reads as a points sum (D.6.11 p. 95), any other as hits in
-// figures.
+// poängfält round reads as a points sum (D.6.11 p. 95), any other as hits and
+// figures, each beside what was possible (#670).
 import type { TFunction } from 'i18next';
 import type { FaltResultMode } from '@shotledger/shared';
 
 export interface FaltResultSummary {
   mode: FaltResultMode;
   hits: number;
+  /** Six per scoring station (`faltSessionResult`). */
+  hitsPossible: number;
   figuresHit: number;
   poangfaltPoints: number;
   /** The round's figures, when every scoring station recorded a count (#607). */
@@ -26,24 +28,26 @@ export function faltSummaryOf(
   return {
     mode: faltModeOf(storedMode),
     hits: result.hits,
+    hitsPossible: result.hitsPossible,
     figuresHit: result.figuresHit,
     poangfaltPoints: result.poangfaltPoints,
     figureCount: result.figureCount ?? null,
   };
 }
 
-/** "47 points", "26 hits in 22 figures", or "26 hits in 22 of 24 figures". */
+/** "47 points", "26 (30) hits / 22 figures", or "26 (30) hits / 22 (24) figures". */
 export function formatFaltResult(t: TFunction, result: FaltResultSummary): string {
   if (result.mode === 'poangfalt') {
     return t('session.poangfaltTotal', { points: result.poangfaltPoints });
   }
+  const values = {
+    hits: result.hits,
+    hitsPossible: result.hitsPossible,
+    figures: result.figuresHit,
+  };
   return result.figureCount == null
-    ? t('session.faltTotal', { hits: result.hits, figures: result.figuresHit })
-    : t('session.faltTotalOf', {
-        hits: result.hits,
-        figures: result.figuresHit,
-        figureCount: result.figureCount,
-      });
+    ? t('session.faltTotal', values)
+    : t('session.faltTotalOf', { ...values, figureCount: result.figureCount });
 }
 
 /** One station as its row reads: "6/3 of 4, 12p of 20p" (#567). */
