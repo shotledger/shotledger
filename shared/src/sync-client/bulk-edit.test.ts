@@ -686,7 +686,7 @@ describe('buildBulkEdit — property', () => {
           }
         }
         // The counters equal the phone's one-session-at-a-time walk.
-        const expected = new Map(
+        const expected = new Map<string, [number, number]>(
           [...context.firearms].map(([id, f]) => [
             id,
             [f.round_count as number, f.rounds_since_maintenance as number],
