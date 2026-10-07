@@ -873,6 +873,7 @@ fieldset.field legend {
 
 .user-menu {
   position: relative;
+  min-width: 0;
 }
 
 .user-menu-trigger {
@@ -881,7 +882,7 @@ fieldset.field legend {
   gap: 8px;
   padding: 6px 12px;
   font-size: 14px;
-  max-width: 280px;
+  max-width: min(280px, 100%);
 }
 
 .truncate {
@@ -973,6 +974,7 @@ fieldset.field legend {
 
   .sidebar ul {
     display: flex;
+    flex-wrap: wrap;
   }
 
   .sidebar li.group-start {
