@@ -278,3 +278,19 @@ duplicate offline after the merge is resolved (its edit is rejected as
   `shared/src/sync-client/*.ts`), Stryker on the new module, fast-check (K17),
   the backend Workers pool (W1–W4), the docs gates.
 - **New dependencies:** none.
+
+## 8. Revisions
+
+Added during implementation; none loosens a scenario or a Must NOT.
+
+- **R1 (scope).** `web/src/entry/entry.tsx` exports three helpers it already
+  had (`SignInAgain`, `useOnline`, `locationUsage`) so the Bulk Edit page
+  reuses them instead of copying them; their behaviour is unchanged.
+- **R2 (scope).** `web/src/styles.css`: at phone width the menu now wraps,
+  because a fourth menu item pushed the page wider than the screen.
+- **R3 (gauntlet).** `scripts/manual-mutation-web-bulk.mjs` (new) runs hand
+  mutants against the K17 property alone, the phone twin test and the page
+  modules, which are outside Stryker's list.
+- **R4.** The firearm rows are written in the order the sessions first touch
+  them, not sorted by id; the change list is in `APPLY_ORDER` by
+  construction, so the builder no longer sorts it (K16 pins the order).
