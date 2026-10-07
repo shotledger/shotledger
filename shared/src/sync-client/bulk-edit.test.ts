@@ -659,6 +659,16 @@ describe('buildCounterCorrection (R5)', () => {
       deps,
     );
     expect(floored.map((c) => c.rowId)).toEqual(['f2']);
+    // Only the since-maintenance counter differs (the total was floored either
+    // way): it is still corrected.
+    const sinceOnly: CounterPlan = { ...plan, original: { f1: [1, 10], f2: [10, 10] } };
+    const corrected = buildCounterCorrection(
+      sinceOnly,
+      { sessions: new Set(['s2']), firearms: none },
+      byId(firearm('f1', 0, 5), firearm('f2', 15, 15)),
+      deps,
+    );
+    expect(corrected[0]!.payload).toEqual({ ...firearm('f1', 0, 7), updated_at: NOW });
     // A fresh counter that would go below zero stops at zero.
     const drained = buildCounterCorrection(
       plan,
