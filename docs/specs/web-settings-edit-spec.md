@@ -281,3 +281,14 @@ Appended after an independent review of PR #672 (2026-10-07):
   (`SettingsDeps.defaultProfile`).
 - **R7 (new B8).** A pulled column this build does not know survives the
   rewrite of a settings row (pins `newSettingRow`'s spread).
+
+Appended after rebasing onto #669's review fixes (8860a12):
+
+- **R8 (C8, as #669 R13/R14; new U7, U8).** A held request carries the id of
+  the account it was built for. Save checks the signed-in account first: a
+  different account drops the held request and says so
+  (`web.settings.accountChanged`), so a Retry after signing in as someone
+  else pushes nothing; no valid session keeps it held. While a request is
+  held, the one action button reads **Retry** and resends it unchanged,
+  without asking the birth-year question again. `web/src/settings/*.ts` joins
+  the Stryker `mutate` list and with it the 100% coverage gate.

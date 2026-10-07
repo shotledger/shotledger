@@ -52,7 +52,9 @@ device to device, the same ones as on the phone:
 Change what you need, then **Save**. Changing a birth year that was already
 set asks first, as on the phone. Your phones pick the change up on their next
 sync. If the save does not reach the server, your changes stay on the page
-and **Retry** sends them again; nothing is saved after the tab closes.
+and **Retry** sends them again; nothing is saved after the tab closes. If
+you have signed in to another account meanwhile, they are not sent there:
+check them and save again.
 
 Everything else in the phone's Settings — language, theme, Optional Fields,
 timers, backups — belongs to each phone and is not on the web.

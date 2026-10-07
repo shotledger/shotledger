@@ -1,17 +1,17 @@
 # Evidence report — editing account and compliance settings on the web (Tier 3)
 
 Spec: [`web-settings-edit-spec.md`](web-settings-edit-spec.md), including its
-§7 Revisions R1–R7. R4–R7 answer an independent review of PR #672; the
-numbers below are from the fresh run after them.
+§7 Revisions R1–R8. R4–R7 answer an independent review of PR #672; R8
+follows #669's review fixes after the rebase onto `8860a12`. The numbers
+below are from the fresh run after R8.
 
 - **Spec approval: not obtained.** The run that wrote the spec could not get
   the maintainer's approval first-hand, so the correlation-breaking review has
-  not happened. Key choices C1–C8 and revisions R1–R7 are listed in the PR for
+  not happened. Key choices C1–C8 and revisions R1–R8 are listed in the PR for
   approval after the fact. Confidence is correspondingly lower.
-- **Source state:** commit `e65666d` (the last code change; the spec
+- **Source state:** commit `178eb04` (the last code change; the spec
   revisions and this report are docs committed on top). Branch
-  `feat/web-edit-settings`, on `feat/web-series-entry-impl` (#669) at
-  `d6e1168`.
+  `feat/web-edit-settings`, on `feat/web-series-entry-impl` (#669) at `8860a12`.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2; backend vitest 4.1.11 with
   `@cloudflare/vitest-plugin`); Node 24.12.0.
@@ -20,7 +20,8 @@ numbers below are from the fresh run after them.
 - **Independent verification:** one round, by a fresh-context verifier
   relayed through the coordinator, on `39b8391`. Two confirmed findings
   (R4, R5) and three plausible ones (R6, R7, a manual sentence) were fixed.
-  The fixed state `e65666d` has not been re-verified: declared downgrade.
+  Neither the R4–R7 state nor R8 (`178eb04`) has been re-verified: declared
+  downgrade.
 
 ## Failure model (Tier 3)
 
@@ -50,7 +51,7 @@ numbers below are from the fresh run after them.
 | A1–A3                                                            | `app/src/db/queries/web-settings.test.ts`                                             | pass   |
 | W1–W4                                                            | `backend/test/web-settings.spec.ts` (Workers pool, real D1 + better-auth)             | pass   |
 | U1–U3, U4 (nothing changed)                                      | `web/src/settings/model.test.ts`                                                      | pass   |
-| U4, U5, U6 (per R2); empty build (R4)                            | `web/src/settings/save.test.ts`                                                       | pass   |
+| U4, U5, U6 (per R2); empty build (R4); U7, U8 (R8)               | `web/src/settings/save.test.ts`                                                       | pass   |
 | N1 no browser storage                                            | `save.test.ts` › N1 grep gate                                                         | pass   |
 | N2 settings only, allowlisted                                    | B4, B7                                                                                | pass   |
 | N3 no tombstone, no null                                         | B5, B7                                                                                | pass   |
@@ -62,18 +63,18 @@ numbers below are from the fresh run after them.
 
 ## Gauntlet (final fresh run, after the last code edit)
 
-| Layer                                           | Command                                                                                                                       | Result                                                                                       |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                  | exit 0; vitest 2993 tests passed; jest 61 suites, 698 tests passed; i18n 1235 keys, 0 issues |
-| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                                        | 100% statements 3409/3409, branches 2121/2121, functions 781/781, lines 2907/2907            |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                            | 15 files, 157 tests passed (W1–W4 included)                                                  |
-| Mutation                                        | `npx stryker run --mutate settings-edit.ts,rows.ts` (after R4–R7); earlier the same plus `eligibility.ts,profile-registry.ts` | 129 killed, 2 survived: 98.47% (both equivalent, below); earlier run 97.58%                  |
-| Property-based                                  | B7 (fast-check, 300 runs)                                                                                                     | pass                                                                                         |
-| Property suite alone                            | 4 hand mutants, `-t B7`                                                                                                       | 4/4 killed (below)                                                                           |
-| Suite health                                    | `npx vitest run --sequence.shuffle <the changed suites>` × 3                                                                  | 191 tests passed each time                                                                   |
-| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                                                                  | 21 passed, 0 failed, 0 SVCs missing tests                                                    |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                        | built; 24 translated pages current; no dangling anchors                                      |
-| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                                                          | no dependency added or removed; no new network, storage or env use                           |
+| Layer                                           | Command                                                                                                                                                                                                                           | Result                                                                                                                                                                                                 |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tests + types + lint + format + i18n + licenses | `pnpm check` (vitest TZ pinned to America/Sao_Paulo by #669)                                                                                                                                                                      | exit 0; vitest 3005 tests passed; jest 61 suites, 698 tests passed; i18n 1237 keys, 0 issues                                                                                                           |
+| Coverage (gated)                                | `pnpm check` (100% threshold; `web/src/entry/*.ts` and now `web/src/settings/*.ts` in scope)                                                                                                                                      | 100% statements 3552/3552, branches 2237/2237, functions 834/834, lines 3027/3027                                                                                                                      |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                                                                                                                | 15 files, 157 tests passed (W1–W4 included)                                                                                                                                                            |
+| Mutation                                        | `npx stryker run --mutate web/src/settings/model.ts,web/src/settings/save.ts,shared/src/sync-client/settings-edit.ts` (after R8); earlier `settings-edit.ts,rows.ts` 98.47%, and with `eligibility.ts,profile-registry.ts` 97.58% | 206 killed, 3 survived: 98.56%; the `model.ts` survivor (a missing `weapon_type`) was then killed by a U1 case, proven against the mutant; the two `settings-edit.ts` survivors are equivalent (below) |
+| Property-based                                  | B7 (fast-check, 300 runs)                                                                                                                                                                                                         | pass                                                                                                                                                                                                   |
+| Property suite alone                            | 4 hand mutants, `-t B7`                                                                                                                                                                                                           | 4/4 killed (below)                                                                                                                                                                                     |
+| Suite health                                    | `npx vitest run --sequence.shuffle <settings, entry and sync-client suites>` × 3                                                                                                                                                  | 183 tests passed each time                                                                                                                                                                             |
+| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                                                                                                                                                                      | 21 passed, 0 failed, 0 SVCs missing tests                                                                                                                                                              |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                                                                                                            | built; 24 translated pages current; no dangling anchors                                                                                                                                                |
+| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                                                                                                                                                              | no dependency added or removed; no new network, storage or env use                                                                                                                                     |
 
 **Survivors.** After R4–R7 two remain in the new code, both equivalent
 (R4's rewrite removed the third, `?? 'none'`). From the earlier run:
@@ -144,6 +145,13 @@ and stores `"none"` (R6); Sweden saved, then a case picked and the profile
 switched back to None → saved, profile `"none"`, no case row (R4); the form
 fieldset is disabled while a held push is in flight and enabled after (R5).
 The original 16 checks pass again on a fresh account.
+
+After R8 (`scratchpad/s301/drive-r8.mjs`, two fresh accounts A and B), all
+PASS: a push lost in flight holds A's request; A's session revoked elsewhere
+→ "You have been signed out…", the button reads **Retry**, the inline
+sign-in shows; signing in there as B and pressing Retry → "You are now
+signed in to another account, so your changes were not sent…", no
+`/sync/push` sent, B's class unchanged, A's class unchanged.
 
 ## Layers not run as specified
 
