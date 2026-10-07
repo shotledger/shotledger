@@ -73,13 +73,12 @@ function firstRingDiscipline(regulationId: string): string {
   return (rings.find((d) => d.federation !== 'generic') ?? rings[0]!).id;
 }
 
-/** The events on offer, ranked against an empty profile (C6). */
-export function eventsFor(form: Pick<EntryForm, 'regulationId' | 'disciplineId' | 'date'>) {
-  const year = Number(form.date.slice(0, 4)) || new Date().getFullYear();
+/** The events on offer, ranked against an empty profile (C6), as the phone ranks them this year. */
+export function eventsFor(form: Pick<EntryForm, 'regulationId' | 'disciplineId'>) {
   return rankEventsForShooter(
     EMPTY_PROFILE,
     form.disciplineId,
-    year,
+    new Date().getFullYear(),
     effectiveRegulationIds([form.regulationId]),
   );
 }
@@ -218,7 +217,7 @@ export function startedAtIso(date: string, time: string): string | null {
 
 /** Blank or not a positive whole number falls back to the default, as on the phone. */
 function chosenSeriesLength(text: string): number | null {
-  const parsed = Number(text.trim());
+  const parsed = Number(text);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 

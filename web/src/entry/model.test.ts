@@ -34,10 +34,23 @@ describe('the Enter Series form', () => {
     const form = initialForm(NOW);
     expect(form).toMatchObject({
       type: 'training',
+      regulationId: 'spsf',
+      disciplineId: 'spsf-precision',
       date: '2026-10-07',
       time: '18:45',
       programId: null,
+      name: '',
+      location: '',
+      competitionLevel: 'forening',
+      isChampionship: false,
+      competitionName: '',
+      weaponGroup: null,
       shooterClass: null,
+      eventId: null,
+      firearmId: null,
+      ammoLotId: null,
+      decimalScoring: false,
+      seriesLengthText: '5',
     });
     expect(form.rows.map((r) => [r.text, r.isSighter])).toEqual([['', false]]);
     expect(ringDisciplines(form.regulationId).map((d) => d.id)).toContain(form.disciplineId);
@@ -78,6 +91,19 @@ describe('the Enter Series form', () => {
     expect(free.rows.every((r) => !r.isSighter)).toBe(true);
     // Blank rows past the first are not kept in free format.
     expect(free.rows).toHaveLength(2);
+    // Typed rows keep their keys, so focus and React state stay with them.
+    expect(free.rows.map((r) => r.key)).toEqual(form.rows.slice(0, 2).map((r) => r.key));
+  });
+
+  it('free format drops trailing rows holding only spaces, and keeps one blank row', () => {
+    const form = {
+      ...initialForm(NOW),
+      rows: [
+        { key: 5, text: ' ', isSighter: false },
+        { key: 6, text: '  ', isSighter: false },
+      ],
+    };
+    expect(withProgram(form, null).rows).toEqual([{ key: 5, text: ' ', isSighter: false }]);
   });
 
   it('allows one sighter row in free format, none to tick in a fixed one', () => {
@@ -94,6 +120,11 @@ describe('the Enter Series form', () => {
     expect(startedAtIso('2026-10-07', '18:45')).toBe(new Date(2026, 9, 7, 18, 45).toISOString());
     expect(startedAtIso('', '18:45')).toBeNull();
     expect(startedAtIso('2026-13-45', '18:45')).toBeNull();
+    // What Date would otherwise parse: a bare year, seconds, a UTC marker.
+    expect(startedAtIso('2026', '18:45')).toBeNull();
+    expect(startedAtIso('2026-10-07', '18:45:30')).toBeNull();
+    expect(startedAtIso('2026-10-07', '18:45Z')).toBeNull();
+    expect(startedAtIso('2026-10-07', '')).toBeNull();
   });
 
   it('builds the draft the shared builder takes', () => {
@@ -134,8 +165,6 @@ describe('the Enter Series form', () => {
     expect(issf.eventId).toBe(eventsFor(issf)[0]?.id ?? null);
     expect(eventsFor(issf).length).toBeGreaterThan(0);
     expect(withDiscipline(spsf, 'spsf-milsnabb').weaponGroup).toBeNull();
-    // A blank date still ranks events, against this year.
-    expect(eventsFor({ ...issf, date: '' })).toEqual(eventsFor(issf));
   });
 
   it('decimal scoring is offered only where the discipline allows it, and reset by a program', () => {
@@ -164,12 +193,13 @@ describe('the Enter Series form', () => {
       ...free,
       rows: Array.from({ length: 15 }, (_, i) => ({
         key: 1000 + i,
-        text: i === 13 ? '10 9' : '',
+        text: i === 13 ? '10 9' : i === 1 ? '10' : i === 14 ? '   ' : '',
         isSighter: i === 13,
       })),
     };
     const fixed = withProgram(typed, competition.programId);
     expect(fixed.rows).toHaveLength(14);
+    expect(fixed.rows[1]).toMatchObject({ key: 1001, text: '10' });
     expect(fixed.rows[13]).toEqual({ key: 1013, text: '10 9', isSighter: false });
   });
 

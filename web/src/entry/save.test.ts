@@ -198,6 +198,13 @@ describe('saving an entry', () => {
       firearmRejected: true,
     });
     expect(rejected.refresh).toHaveBeenCalledTimes(1);
+
+    // Only a firearm rejection is the firearm message; any one of several is.
+    const row = (tableName: 'firearms' | 'sessions') => ({ tableName, rowId: 'r', reason: 'x' });
+    const other = deps({ kind: 'partlyRejected', rejected: [row('sessions')] });
+    expect((await save(other, null)).status).toMatchObject({ firearmRejected: false });
+    const mixed = deps({ kind: 'partlyRejected', rejected: [row('sessions'), row('firearms')] });
+    expect((await save(mixed, null)).status).toMatchObject({ firearmRejected: true });
   });
 });
 
