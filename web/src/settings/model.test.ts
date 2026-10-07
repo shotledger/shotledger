@@ -73,7 +73,7 @@ describe('the settings form', () => {
       explicit: false,
       reasonId: 'ownsHandgun',
     });
-    expect(ownershipFacts(new Map([['f', { id: 'f', weapon_type: null, is_own: 0 }]]))).toEqual([
+    expect(ownershipFacts(new Map([['f', { id: 'f', is_own: 0 }]]))).toEqual([
       { weaponType: null, isOwn: false },
     ]);
     // No profile stored: the cases are the shown default's.

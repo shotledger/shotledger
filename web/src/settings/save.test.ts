@@ -7,7 +7,15 @@ import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push
 import type { SettingsResult } from '@shotledger/shared/src/sync-client/settings-edit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { afterEdit, IDLE, save, saveBlocked, type SaveDeps, type SaveState } from './save';
+import {
+  afterEdit,
+  IDLE,
+  save,
+  saveBlocked,
+  submitRequest,
+  type SaveDeps,
+  type SaveState,
+} from './save';
 
 const CHANGES: ClientChange[] = [
   {
@@ -23,6 +31,7 @@ const CHANGES: ClientChange[] = [
 function deps(outcome: PushOutcome, overrides: Partial<SaveDeps> = {}) {
   const built: SettingsResult = { ok: true, changes: CHANGES };
   return {
+    currentUserId: vi.fn(() => Promise.resolve<string | null>('user-a')),
     build: vi.fn(() => built),
     push: vi.fn(() => Promise.resolve(outcome)),
     refresh: vi.fn(() => Promise.resolve(true)),
@@ -44,7 +53,10 @@ describe('saving settings', () => {
     for (const error of ['network', 'unauthenticated'] as const) {
       const d = deps({ kind: 'failed', error });
       const failed = await save(d, null);
-      expect(failed).toEqual({ status: { kind: 'failed', error }, held: CHANGES });
+      expect(failed).toEqual({
+        status: { kind: 'failed', error },
+        held: { changes: CHANGES, userId: 'user-a' },
+      });
       expect(d.refresh).not.toHaveBeenCalled();
 
       const retry = deps({ kind: 'saved' });
@@ -105,6 +117,57 @@ describe('saving settings', () => {
       held: null,
     });
     expect(d.push).not.toHaveBeenCalled();
+  });
+});
+
+describe('the held request (R8, as #669 R13/R14)', () => {
+  const held = { changes: CHANGES, userId: 'user-a' };
+
+  it('U7 while a request is held, every submit resends it rather than building another', async () => {
+    const failed: SaveState = { status: { kind: 'failed', error: 'network' }, held };
+    expect(submitRequest(failed)).toBe(held);
+    expect(submitRequest(IDLE)).toBeNull();
+    const again = deps({ kind: 'saved' });
+    await save(again, submitRequest(failed));
+    expect(again.build).not.toHaveBeenCalled();
+    expect(vi.mocked(again.push).mock.calls[0]![0]).toBe(CHANGES);
+  });
+
+  it('U8 a held request is never sent to another account', async () => {
+    const other = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.resolve('user-b')) },
+    );
+    expect(await save(other, held)).toEqual({ status: { kind: 'accountChanged' }, held: null });
+    expect(other.push).not.toHaveBeenCalled();
+
+    // Still signed out, or no answer: keep holding it for a later Retry.
+    const signedOut = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.resolve(null)) },
+    );
+    expect(await save(signedOut, held)).toEqual({
+      status: { kind: 'failed', error: 'unauthenticated' },
+      held,
+    });
+    const unreachable = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.reject(new Error('offline'))) },
+    );
+    expect(await save(unreachable, held)).toEqual({
+      status: { kind: 'failed', error: 'network' },
+      held,
+    });
+    expect(signedOut.push).not.toHaveBeenCalled();
+    expect(unreachable.push).not.toHaveBeenCalled();
+
+    // A fresh save while signed out builds nothing.
+    const fresh = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve(null)) });
+    expect(await save(fresh, null)).toEqual({
+      status: { kind: 'failed', error: 'unauthenticated' },
+      held: null,
+    });
+    expect(fresh.build).not.toHaveBeenCalled();
   });
 });
 

@@ -1399,7 +1399,8 @@
       "saved": "Saved.",
       "savedReload": "Saved. Reload the page to see the change in Statistics.",
       "failedNetwork": "Could not reach the server. Your changes are still here.",
-      "failedOutdated": "This page is out of date. Reload the page, then make your changes again."
+      "failedOutdated": "This page is out of date. Reload the page, then make your changes again.",
+      "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save."
     }
   }
 }

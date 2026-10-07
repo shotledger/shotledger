@@ -9,7 +9,7 @@ import type { TFunction } from 'i18next';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { pushRows } from '../api';
+import { currentUserId, pushRows } from '../api';
 import { SignInAgain, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
 import {
@@ -22,7 +22,7 @@ import {
   ownershipFacts,
   shownProfile,
 } from './model';
-import { afterEdit, IDLE, save, saveBlocked, type SaveState } from './save';
+import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
 
 // The phone's labels for its profile picker (Settings → Compliance).
 const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
@@ -68,6 +68,8 @@ function statusText(t: TFunction, state: SaveState): string | null {
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.settings.failedOutdated');
       return t('web.entry.failed');
+    case 'accountChanged':
+      return t('web.settings.accountChanged');
     case 'invalid':
       return t('web.entry.failed');
     case 'idle':
@@ -112,11 +114,14 @@ export function Settings({
   const changed = hasChanges(opened, form, fallback);
   const blocked = saveBlocked(online, state, changed);
 
-  const runSave = (held: SaveState['held']) => {
+  const runSave = () => {
+    const held = submitRequest(state);
     setConfirming(false);
     setState({ status: { kind: 'saving' }, held: null });
+    setSignedInAgain(false);
     void save(
       {
+        currentUserId,
         build: () =>
           buildSettingsChanges(opened, form, tables.settings, {
             newChangeId: () => crypto.randomUUID(),
@@ -128,17 +133,15 @@ export function Settings({
         refresh,
       },
       held,
-    ).then((next) => {
-      setState(next);
-      if (next.status.kind === 'saved') setSignedInAgain(false);
-    });
+    ).then(setState);
   };
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (blocked !== null) return;
-    if (needsBirthYearConfirm(opened, form)) setConfirming(true);
-    else runSave(null);
+    // A held request was confirmed when it was built; resend it as it is.
+    if (state.held === null && needsBirthYearConfirm(opened, form)) setConfirming(true);
+    else runSave();
   };
 
   const message = statusText(t, state);
@@ -220,19 +223,10 @@ export function Settings({
         </fieldset>
 
         <section className="entry-actions">
+          {/* While a request is held, the one action resends it (R8). */}
           <button type="submit" disabled={blocked !== null}>
-            {t('common.save')}
+            {state.held === null ? t('common.save') : t('web.entry.retry')}
           </button>
-          {state.held !== null && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={blocked === 'offline' || blocked === 'saving'}
-              onClick={() => runSave(state.held)}
-            >
-              {t('web.entry.retry')}
-            </button>
-          )}
           <div className="entry-status" role="status">
             {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}
             {message && (
@@ -253,7 +247,7 @@ export function Settings({
               })}
             </p>
             <div className="actions">
-              <button type="button" onClick={() => runSave(null)}>
+              <button type="button" onClick={runSave}>
                 {t('settings.birthYearChangeConfirm')}
               </button>
               <button
