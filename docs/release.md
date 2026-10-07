@@ -52,23 +52,35 @@ deployed environments in `backend/wrangler.jsonc`, `staging` and
 `production`, each with its own D1 database and R2 bucket. The top level of
 that file is local development and the test suite only, and Wrangler does
 not inherit its `vars` or bindings into a named environment. No secret is
-committed anywhere: locally the Worker uses a built-in dev placeholder, and
-a deployed env refuses to start (every auth request answers `500`, logged
-as `AuthConfigError`) when `BETTER_AUTH_SECRET` is missing, shorter than 32
-characters or the dev placeholder, or `BETTER_AUTH_URL` is unset. Try every
-step on `staging` first; for production, repeat it with `production`.
+committed anywhere. Locally the Worker uses a built-in dev placeholder and
+then answers only `localhost`, `127.0.0.1` and `[::1]`, so the top level
+deployed by mistake serves nothing. A deployed env refuses to start (every
+auth request answers `500`, logged as `AuthConfigError`) when
+`BETTER_AUTH_SECRET` is missing, shorter than 32 characters or the dev
+placeholder, or when `BETTER_AUTH_URL` is not an `https://` origin or is
+still the `REPLACE_ME.invalid` placeholder. Try every step on `staging`
+first; for production, repeat it with `production`.
 
-What the deployed config already does: better-auth takes its base URL and
-its extra trusted origins (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated;
-the app's `app://` scheme is always trusted) from the env's `vars`; its
-rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
-(`rate_limit`), with better-auth's default limits; `workers_dev` and
-`preview_urls` are off, so only the custom domain serves the env; the web
-app's responses carry a Content Security Policy and the other security
-headers in `web/public/_headers`, and the Worker's own routes send
-`Cache-Control: no-store` and `X-Content-Type-Options: nosniff`; and
-neither the backend nor better-auth logs request bodies, tokens or query
-parameters.
+What the deployed config already does:
+
+- better-auth takes its base URL and its extra trusted origins
+  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `app://`
+  scheme is always trusted) from the env's `vars`.
+- Its rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
+  (`rate_limit`). Sign-in and sign-up allow 5 attempts per 60 seconds per
+  address; other auth endpoints keep better-auth's defaults; paths that are
+  not endpoints are not counted. A cron trigger every 15 minutes deletes
+  rows whose window has passed.
+- `workers_dev` and `preview_urls` are off, so only the custom domain
+  serves the env.
+- The web app's responses carry a Content Security Policy and the other
+  security headers in `web/public/_headers`. The Worker's own routes send
+  `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, and
+  photos also a sandboxing CSP; photo uploads accept JPEG, PNG and WebP
+  only.
+- Logged errors carry their name and message, but a failed database
+  query's bound parameters (`params: …`) are redacted, both in the
+  Worker's error handler and in better-auth's logger.
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
@@ -94,8 +106,8 @@ parameters.
       deployable.
 - [ ] Smoke-test the env: the web app loads at `/` with no CSP errors in
       the browser console, sign-in works from the web and from a dev build
-      of the app pointed at the env, and the fourth sign-in attempt within
-      10 seconds from one address is refused with `429`.
+      of the app pointed at the env, and the sixth sign-in attempt within
+      60 seconds from one address is refused with `429`.
 - [ ] Point the app at production: set `expo.extra.apiBaseUrl` in
       `app/app.json` (or `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to
       the production origin. The default is the `https://api.shotledger.app`
