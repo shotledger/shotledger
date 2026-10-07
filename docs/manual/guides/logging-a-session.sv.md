@@ -172,6 +172,9 @@ Varje foto du tar dyker också upp i galleriet under **Verktyg → Foton**, där
 kan filtrera på gren, vapen och vapengrupp. Håll fingret på ett foto för att
 dela, kopiera eller spara det.
 
+Ett foto vars fil inte längre finns på telefonen visas som saknat, i galleriet
+och på sin serie. **Byt foto** på serien lägger till det igen.
+
 ## Passrapport
 
 **⋮ → Passrapport** gör en PDF av passet och lämnar över den till

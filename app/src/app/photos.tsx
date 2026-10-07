@@ -32,7 +32,7 @@ import {
 } from '@/features/photos/filter';
 import { disciplineLabel, formatLocalDate } from '@/features/session/labels';
 import { shareExistingFile } from '@/platform/share-file';
-import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
+import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
 import { localDayStartIso } from '@/features/dates/local-day';
 
@@ -101,7 +101,7 @@ export default function PhotosScreen() {
 
   async function onShare(photo: GalleryPhoto) {
     const uri = resolveSeriesPhotoUri(photo.photoUri);
-    if (!uri) return;
+    if (!uri || seriesPhotoGone(photo.photoUri)) return;
     await shareExistingFile(uri, 'image/jpeg', 'public.jpeg');
   }
 
@@ -146,7 +146,8 @@ export default function PhotosScreen() {
             </ThemedText>
             <View style={styles.grid}>
               {group.photos.map((photo) => {
-                const uri = resolveSeriesPhotoUri(photo.photoUri);
+                const gone = seriesPhotoGone(photo.photoUri);
+                const uri = gone ? null : resolveSeriesPhotoUri(photo.photoUri);
                 return (
                   <Pressable
                     key={photo.seriesId}
@@ -167,10 +168,10 @@ export default function PhotosScreen() {
                     {uri ? (
                       <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
                     ) : (
-                      // Synced from another device and not downloaded yet.
+                      // Gone from this device, or synced and not downloaded yet.
                       <View style={[styles.thumb, styles.missing]}>
                         <ThemedText type="small" themeColor="textSecondary">
-                          {t('photos.notDownloaded')}
+                          {t(gone ? 'photos.missing' : 'photos.notDownloaded')}
                         </ThemedText>
                       </View>
                     )}

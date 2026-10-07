@@ -744,6 +744,8 @@
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
     "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
+    "photoGoneBody": "The photo file is no longer on this device. Add it again from the series with Replace Photo.",
+    "photoGone": "Photo missing",
     "scoredFromPhoto": "Scored from Photo",
     "scoredManually": "Entered Manually",
     "sighterScore": "{{score}}*",
@@ -1264,6 +1266,7 @@
     "emptyTitle": "No Photos Yet",
     "emptyBody": "Photos you attach to a series, or take when scoring from a photo, collect here.",
     "notDownloaded": "Not downloaded",
+    "missing": "Missing",
     "openLabel": "Open the photo from {{session}}, series {{position}}",
     "allOf": "All"
   },

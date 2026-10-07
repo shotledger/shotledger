@@ -173,6 +173,9 @@ Every photo you take also appears in the gallery under **Tools → Photos**,
 where you can filter by discipline, firearm and weapon group. Press and hold a
 photo to share, copy or save it.
 
+A photo whose file is no longer on the phone shows as missing, in the gallery
+and on its series. **Replace Photo** on the series adds it again.
+
 ## Session report
 
 **⋮ → Session Report** makes a PDF of the session and hands it to the share

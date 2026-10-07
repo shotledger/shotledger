@@ -38,11 +38,13 @@ import {
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { keepSeriesPhoto } from '@/platform/series-photos';
-import { resolveSeriesPhotoUri } from '@/platform/sync-photos';
+import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
+import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
 export default function SeriesEntryScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const router = useRouter();
   const { id, pos, final } = useLocalSearchParams<{
     id: string;
@@ -219,7 +221,21 @@ export default function SeriesEntryScreen() {
           onPress={() => router.push(`/session/${id}/photo?pos=${position}`)}
           testID="series-photo-thumb"
         >
-          <Image source={{ uri: photoUri }} style={styles.thumb} contentFit="cover" />
+          {seriesPhotoGone(photoUri) ? (
+            <View
+              style={[
+                styles.thumb,
+                styles.thumbMissing,
+                { backgroundColor: theme.backgroundElement },
+              ]}
+            >
+              <ThemedText type="small" themeColor="textSecondary" testID="series-photo-missing">
+                {t('session.photoGone')}
+              </ThemedText>
+            </View>
+          ) : (
+            <Image source={{ uri: photoUri }} style={styles.thumb} contentFit="cover" />
+          )}
         </Pressable>
       )}
 
@@ -254,6 +270,7 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: Radius.medium,
   },
+  thumbMissing: { alignItems: 'center', justifyContent: 'center', padding: Spacing.two },
   header: {
     gap: Spacing.two,
   },
