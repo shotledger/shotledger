@@ -11,8 +11,9 @@ const api = (status: number, body: unknown = {}) =>
 
 describe('currentUser', () => {
   it('R20 a live session answers its user', async () => {
-    await expect(api(200, { user: { id: 'u1', email: 'a@example.invalid' } }).currentUser())
-      .resolves.toEqual({ userId: 'u1', email: 'a@example.invalid' });
+    await expect(
+      api(200, { user: { id: 'u1', email: 'a@example.invalid' } }).currentUser(),
+    ).resolves.toEqual({ userId: 'u1', email: 'a@example.invalid' });
   });
 
   it('R20 a refused session reads as signed out', async () => {
@@ -24,10 +25,12 @@ describe('currentUser', () => {
   it.each([500, 503, 408, 429])(
     'R20 an HTTP %i from get-session is a network failure, not a sign-out',
     async (status) => {
-      const error = await api(status).currentUser().then(
-        () => null,
-        (thrown: unknown) => thrown,
-      );
+      const error = await api(status)
+        .currentUser()
+        .then(
+          () => null,
+          (thrown: unknown) => thrown,
+        );
       expect(error).not.toBeNull();
       expect(classifySyncError(error)).toBe('network');
     },
