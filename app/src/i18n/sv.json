@@ -1350,7 +1350,7 @@
       "storageUsed": "{{used}} av {{limit}} används",
       "storageFailed": "Kunde inte läsa din fotolagring.",
       "downloadTitle": "Ladda ner allt",
-      "downloadBody": "Dina pass som en ShotLedger-JSON-fil och alla uppladdade tavelfoton, i en zip. Passens taggar finns kvar i telefonen; de synkas inte.",
+      "downloadBody": "Dina pass som en ShotLedger-JSON-fil och alla uppladdade tavelfoton, i en zip.",
       "download": "Ladda ner",
       "downloadProgress": "Hämtar foton… {{done}} av {{total}}",
       "downloadMissing_one": "{{count}} foto kunde inte hämtas. Zip-filen listar det i missing.txt.",
