@@ -203,6 +203,16 @@ describe('building the push', () => {
         errors: [{ key, kind: 'notAllowed' }],
       });
     }
+    // A case with no profile at all: no profile offers it.
+    const noProfile: AccountSettings = { ...SET, complianceProfile: null };
+    expect(
+      buildSettingsChanges(
+        noProfile,
+        { ...noProfile, complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
+        new Map(),
+        deps(),
+      ),
+    ).toEqual({ ok: false, errors: [{ key: 'complianceProfileVariant', kind: 'notAllowed' }] });
     // The edges of the range are allowed.
     for (const birthYear of [2016, 1926]) {
       expect(buildSettingsChanges(SET, { ...SET, birthYear }, new Map(), deps()).ok).toBe(true);
