@@ -11,6 +11,7 @@
 import type { Mat } from 'react-native-fast-opencv';
 import {
   BorderTypes,
+  CmpTypes,
   DataTypes,
   InterpolationFlags,
   Mat as MatClass,
@@ -170,4 +171,10 @@ export const nativeMapOps: MapOps = {
     }),
   dilate: (mask, width, height, radius) => morphology('dilate', mask, width, height, radius),
   erode: (mask, width, height, radius) => morphology('erode', mask, width, height, radius),
+  atLeast: (img, value) =>
+    withArena((keep) => {
+      const dst = keep(MatClass.create(1, 1, DataTypes.CV_8U));
+      OpenCV.compare(floatMat(keep, img), keep(Scalar.create(value)), dst, CmpTypes.CMP_GE);
+      return Uint8Array.from(dst.toBuffer('uint8').buffer);
+    }),
 };

@@ -328,6 +328,16 @@ emulator, the scoring zone, black zone, glyph map and MAD sample came out
 identical pixel for pixel to the pure path, and the per-canvas maps took
 1.9 s against 3.5 s and 3.9 s against 6.7 s in the same runs.
 
+The remaining passes then went down from about a dozen to five: the padding
+test (`MapOps.atLeast`, OpenCV's `compare`) moved native; the zone medians come
+from a histogram of quarter steps, exact because the half-resolution canvas
+holds 2x2 means of bytes; the ring lines are found in the radius loop; and both
+zones share one pass for their thresholds and one for their extents.
+Candidates are bit for bit those of the previous code on 16 corpus canvases at
+three calibres, and the native maps match the pure ones pixel for pixel on the
+emulator. There, the maps of a run at the calibre took 1.67–1.74 s against
+2.39–2.48 s, interleaved on one corpus close-up.
+
 ## 2026-10-06: asking for the face when the X line is missing
 
 Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb
