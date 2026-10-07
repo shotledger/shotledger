@@ -168,16 +168,16 @@ A **Bulk Edit** page in the menu (`#bulk`), after Enter Series.
   Sessions** builds and pushes.
 - **Outcome** (`web.bulk.*`), following #669 §3.5:
 
-| Outcome                     | Message                                               | Kept                         |
-| --------------------------- | ----------------------------------------------------- | ---------------------------- |
-| applied                     | Changed N sessions (M already were, K no longer here) | selection cleared            |
-| applied, some refused       | … and R changes were refused (deleted elsewhere)      | selection cleared            |
-| applied, refresh failed     | … Reload the page to see it                           | selection cleared            |
-| network                     | Could not reach the server: **Retry**                 | selection, request held      |
-| unauthenticated             | Signed out: sign in again (inline), then **Retry**    | selection, request held      |
-| versionUnsupported, unknown | This page is out of date / Could not save             | selection                    |
-| offline                     | You are offline. Saving needs a connection            | Apply disabled               |
-| builder error               | per error (blank tag, too long, too many, …)          | selection; nothing sent      |
+| Outcome                     | Message                                               | Kept                    |
+| --------------------------- | ----------------------------------------------------- | ----------------------- |
+| applied                     | Changed N sessions (M already were, K no longer here) | selection cleared       |
+| applied, some refused       | … and R changes were refused (deleted elsewhere)      | selection cleared       |
+| applied, refresh failed     | … Reload the page to see it                           | selection cleared       |
+| network                     | Could not reach the server: **Retry**                 | selection, request held |
+| unauthenticated             | Signed out: sign in again (inline), then **Retry**    | selection, request held |
+| versionUnsupported, unknown | This page is out of date / Could not save             | selection               |
+| offline                     | You are offline. Saving needs a connection            | Apply disabled          |
+| builder error               | per error (blank tag, too long, too many, …)          | selection; nothing sent |
 
 After a push that answered (applied or partly refused), the account is
 pulled again (`refresh`), so every page shows server truth. Changing the
