@@ -12,6 +12,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   buildBulkEdit,
+  buildCounterCorrection,
   createAccountApi,
   createHttpSyncTransport,
   pushChanges,
@@ -292,5 +293,74 @@ describe('the web bulk edit path', () => {
     const rows = await pullAll(deviceB.transport);
     expect(rows.get('sessions:s1')?.payload).toMatchObject({ location: 'Range B' });
     expect(rows.get('sessions:s2')?.deletedAt).toBe('2026-10-07T09:00:00.000Z');
+  });
+
+  it('W5 a moved session refused by the server: the correction takes its rounds back, and a resent correction moves nothing twice', async () => {
+    // s1 (3 rounds) and s2 (2) move from f1 (100) to f2 (10); device B
+    // deletes s2 between the web's pull and its push.
+    const result = buildBulkEdit(
+      { kind: 'setFirearm', firearmId: 'f2' },
+      ['s1', 's2'],
+      await webContext(web.transport),
+      { newId: uuid(7), newChangeId: uuid(4), now: () => NOW },
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    await deviceB.transport.push({
+      protocolVersion: PROTOCOL_VERSION,
+      changes: [
+        {
+          clientChangeId: uuid(4)(),
+          tableName: 'sessions',
+          rowId: 's2',
+          payload: null,
+          deletedAt: '2026-10-07T09:00:00.000Z',
+          updatedAt: '2026-10-07T09:00:00.000Z',
+        },
+      ],
+    });
+    const outcome = await pushChanges(web.transport, PROTOCOL_VERSION, result.changes);
+    expect(outcome).toEqual({
+      kind: 'partlyRejected',
+      rejected: [{ tableName: 'sessions', rowId: 's2', reason: 'tombstoned' }],
+    });
+    // Without the correction the counters count s2 as moved.
+    expect((await pullAll(deviceB.transport)).get('firearms:f2')?.payload).toMatchObject({
+      round_count: 15,
+    });
+
+    const fresh = (await webContext(web.transport)).firearms;
+    const correction = buildCounterCorrection(
+      result.counters!,
+      { sessions: new Set(['s2']), firearms: new Set() },
+      fresh,
+      { newChangeId: uuid(4), now: () => NOW },
+    );
+    expect(correction.map((c) => c.rowId)).toEqual(['f1', 'f2']);
+    await expect(pushChanges(web.transport, PROTOCOL_VERSION, correction)).resolves.toEqual({
+      kind: 'saved',
+    });
+    const counters = async () => {
+      const rows = await pullAll(deviceB.transport);
+      return ['f1', 'f2'].map((id) => {
+        const payload = rows.get(`firearms:${id}`)?.payload as Record<string, unknown>;
+        return [payload.round_count, payload.rounds_since_maintenance];
+      });
+    };
+    // Only s1's 3 rounds moved.
+    expect(await counters()).toEqual([
+      [97, 97],
+      [13, 13],
+    ]);
+
+    // Retry after a lost answer resends the identical correction: duplicate, no change.
+    const replay = await web.transport.push({
+      protocolVersion: PROTOCOL_VERSION,
+      changes: correction,
+    });
+    expect(replay.acks.map((ack) => ack.status)).toEqual(['duplicate', 'duplicate']);
+    expect(await counters()).toEqual([
+      [97, 97],
+      [13, 13],
+    ]);
   });
 });
