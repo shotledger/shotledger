@@ -1,15 +1,19 @@
 # Evidence report — web bulk edit (Tier 3)
 
 Spec: [`web-bulk-edit-spec.md`](web-bulk-edit-spec.md), including its §8
-Revisions R1–R4.
+Revisions R1–R11.
+
+> **Round 2 is the current evidence.** An independent verifier failed round 1
+> (the sections before "Round 2" are round 1's, kept as history). Round
+> 2 fixes what it found (R5–R11) and is reported in
+> [Round 2](#round-2-after-the-independent-verifier-r5r11) with fresh numbers.
 
 - **Spec approval: not obtained (autonomous run).** The spec was written,
   committed and implemented in one run; the key choices B1–B10 and the
   revisions are listed in the PR for the maintainer. Confidence is
   correspondingly lower: nobody but the author has read the contract.
-- **Source state:** commit `41f55c7` (the code and the mutation script; the
-  spec revisions and this report are committed on top). Branch
-  `feat/web-bulk-edit`, on `feat/web-series-entry-impl` at `d6e1168` (#669).
+- **Source state (round 1):** commit `41f55c7`. Branch `feat/web-bulk-edit`,
+  on `feat/web-series-entry-impl` at `d6e1168` (#669).
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2 / native 7.0.2;
   backend vitest 4.1.11 with `@cloudflare/vitest-plugin`).
@@ -17,8 +21,11 @@ Revisions R1–R4.
 --testTimeout=60000`; `npx stryker run --mutate
 shared/src/sync-client/bulk-edit.ts`; `node
 scripts/manual-mutation-web-bulk.mjs`.
-- **Independent verification:** not performed. Declared downgrade: the
-  adversarial pass was the author's own.
+- **Independent verification:** round 1 **failed** (one confirmed bug, two
+  confirmed gate/test gaps, three plausible findings, one wording finding),
+  graded by the coordinator. Round 2 fixes all seven; round 2's source state
+  has **not** been re-verified, so it is a declared downgrade to `not
+performed` for that state.
 
 ## Failure model (Tier 3)
 
@@ -137,3 +144,62 @@ here; #669's evidence report has the same limit.
 - The browser check found the narrow-width overflow (R2).
 - `pnpm check` first failed on a type error in the K17 oracle (a tuple map
   typed too loosely); fixed in the test, no assertion changed.
+
+## Round 2 (after the independent verifier, R5–R11)
+
+- **Source state:** commit `b62b3ec` (code, tests and the mutation script;
+  this report is committed on top). Still on #669 at `d6e1168`; #669's
+  parallel fix had not been pushed when this ran.
+- **Spec approval:** still not obtained; R5–R11 are flagged in the PR. R5
+  changes B3: a refused moved session now costs a second push.
+
+### Findings → fixes
+
+| Verifier finding                                                     | Fix                                                                       | Evidence                                                            |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| CONFIRMED: counters move for a refused session (f2 15, should be 13) | R5 counter plan + correction, built once, resent identically on Retry     | K18–K21, W5 (real Worker: 97/13, replay `duplicate`), R5 page tests |
+| CONFIRMED gate gap: table list and targets in the component untested | R8 `request.ts` (form → action, tables, targets, deps), `messages.ts`     | `request.test.ts`, `messages.test.ts`; hand mutants killed (below)  |
+| CONFIRMED test gap: discipline series length → literal 5 survived    | R9 air-pistol total-only fixture in K9                                    | hand mutant "always counts five" killed                             |
+| PLAUSIBLE: a throwing builder hangs the page in "applying"           | R7 caught → "Could not save"; the component's promise also has a `.catch` | R7 test                                                             |
+| PLAUSIBLE: quadratic volume count (4.1 s, 300 sessions / 36k shots)  | shots, series, stations indexed once                                      | one-off timing on the same shape: 10.5 ms (probe not committed)     |
+| PLAUSIBLE: Add Tag reports success on a tag deleted meanwhile        | R6 tag liveness checked after the push; the page says so                  | R6 tests                                                            |
+| Docs: B4's "seconds" untrue with Retry; counter overwrite undersold  | R10 B4 and the manual reworded                                            | review                                                              |
+| (found by the R5 browser check) a refused session counted as changed | R11                                                                       | U7/R5 expectations                                                  |
+
+### Gauntlet (fresh, at `b62b3ec`)
+
+| Layer                                           | Command                                                                | Result                                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                           | exit 0; vitest 173 files, 3022 tests; jest 698; i18n 1268 keys, 0 issues; 97 packages |
+| Coverage (gated)                                | `pnpm check`                                                           | 100% statements 3500/3500, branches 2180/2180, functions 797/797, lines 2981/2981     |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                     | 15 files, 158 tests passed (W1–W5)                                                    |
+| Mutation (tool)                                 | `npx stryker run --mutate shared/src/sync-client/bulk-edit.ts`         | 280 killed, 1 survived: 99.64% (equivalent, below)                                    |
+| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-bulk.mjs`                            | 19/19 killed, incl. 2 against K21 alone and the verifier's three surviving mutants    |
+| Property-based                                  | K17, K21 (500 runs each)                                               | pass                                                                                  |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`   | 6 files, 60 tests passed                                                              |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check` | built; 25 translated pages current; no dangling anchors                               |
+
+**The surviving mutant is equivalent:** in `setFirearm`'s `liveFirearm`,
+`firearmId === null ? undefined : context.firearms.get(firearmId)` →
+`false ? … : context.firearms.get(firearmId)`. `Map.get(null)` on a map keyed
+by string ids returns `undefined`, the same as the guarded branch.
+
+### Real execution (round 2)
+
+Same `wrangler dev` (port 8801) and synthetic account. Two sessions moved
+from the second gun to the first; the push was held in DevTools while
+another client deleted one of them, then let through. Page: "Changed 1
+session. 1 change was refused: deleted on another device. Their rounds were
+taken back out of the firearms' round counts." Counters 40 → 30 and 360 →
+370: only the surviving session's 10 rounds moved. (The first run of this
+check said "Changed 2 sessions"; that is R11.) Screenshot
+`09-refused-corrected.png` in the session scratchpad.
+
+### Known limits (round 2)
+
+- Between the edit and its correction the counters are briefly wrong (two
+  transactions, R5). Closing the tab while the correction waits for Retry
+  leaves them wrong; the page says the counts still need correcting.
+- The firearm rows are absolute values: a phone saving series on the same
+  firearm between the web's pull and its push (or its Retry) loses those
+  rounds, or the web loses its move (B4 as reworded in R10). Not prevented.
