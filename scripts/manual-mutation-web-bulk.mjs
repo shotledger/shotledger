@@ -23,8 +23,8 @@ const MUTANTS = [
   {
     name: 'property: a counter can go below zero',
     file: BUILDER,
-    find: 'round_count: Math.max(0, counter(pulled.round_count) + rounds),',
-    replace: 'round_count: counter(pulled.round_count) + rounds,',
+    find: 'result.set(firearmId, [Math.max(0, total + rounds), Math.max(0, since + rounds)]);',
+    replace: 'result.set(firearmId, [total + rounds, Math.max(0, since + rounds)]);',
     ...PROPERTY,
   },
   {
@@ -44,14 +44,14 @@ const MUTANTS = [
   {
     name: 'property: a source firearm keeps its rounds',
     file: BUILDER,
-    find: '    move(before, -rounds);\n',
+    find: '    add(move.from, -move.rounds);\n',
     replace: '',
     ...PROPERTY,
   },
   {
     name: 'twin: a source firearm keeps its rounds',
     file: BUILDER,
-    find: '    move(before, -rounds);\n',
+    find: '    add(move.from, -move.rounds);\n',
     replace: '',
     ...TWIN,
   },
