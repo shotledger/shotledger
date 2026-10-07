@@ -485,6 +485,10 @@
     "licensesJsTitle": "JavaScript Packages",
     "repoLink": "GitHub Repository"
   },
+  "evaluation": {
+    "expiredTitle": "Evaluation Build Expired",
+    "expiredBody": "This evaluation build of ShotLedger expired on {{date}}. Ask for a new build to keep using the app."
+  },
   "jsonExport": {
     "sectionTitle": "Sessions Export",
     "exportTitle": "Export Sessions",

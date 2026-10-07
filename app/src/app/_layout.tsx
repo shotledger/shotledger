@@ -8,6 +8,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { db } from '@/db/client';
 import { MigrationGate } from '@/db/migration-gate';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
+import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
@@ -183,8 +184,10 @@ function ThemedApp() {
   return (
     <ThemeProvider value={navigationTheme}>
       <AnimatedSplashOverlay />
-      <SyncTriggers />
-      <RootStack />
+      <EvaluationGate>
+        <SyncTriggers />
+        <RootStack />
+      </EvaluationGate>
     </ThemeProvider>
   );
 }

@@ -485,6 +485,10 @@
     "licensesJsTitle": "JavaScript-paket",
     "repoLink": "GitHub-repo"
   },
+  "evaluation": {
+    "expiredTitle": "Utvärderingsversionen har gått ut",
+    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen."
+  },
   "jsonExport": {
     "sectionTitle": "Passexport",
     "exportTitle": "Exportera pass",
