@@ -62,6 +62,7 @@ const form = (overrides: Partial<BulkForm>): BulkForm => ({ ...INITIAL_FORM, ...
 function io(overrides: Partial<BulkIo> = {}) {
   let n = 0;
   return {
+    currentUserId: vi.fn(() => Promise.resolve<string | null>('u1')),
     loadTables: vi.fn((_only: readonly WebTable[]) => Promise.resolve(LOGBOOK)),
     push: vi.fn(() => Promise.resolve({ kind: 'saved' as const })),
     refresh: vi.fn(() => Promise.resolve(true)),
@@ -140,6 +141,7 @@ describe('the request the page sends (R8)', () => {
     const built = deps.build(context);
     expect(built.ok && built.changes.map((c) => c.rowId)).toEqual(['c', 'b']);
     expect(deps.push).toBe(fake.push);
+    expect(deps.currentUserId).toBe(fake.currentUserId);
     expect(deps.refresh).toBe(fake.refresh);
   });
 
@@ -171,5 +173,10 @@ describe('the request the page sends (R8)', () => {
     expect(fake.loadTables).toHaveBeenCalledWith(['tags']);
     expect(await deps.tagLive('t2')).toBe(false);
     expect(await deps.tagLive('t9')).toBe(false);
+    // A payload without deleted_at is live.
+    const bare = io({
+      loadTables: vi.fn(() => Promise.resolve(tables({ tags: [{ id: 't3', name: 'X' }] }))),
+    });
+    expect(await applyDeps(null, bare).tagLive('t3')).toBe(true);
   });
 });

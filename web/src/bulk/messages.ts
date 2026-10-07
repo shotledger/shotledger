@@ -67,6 +67,8 @@ export function statusMessages(state: ApplyState): Message[] {
         ? [{ key: 'web.bulk.correctionPending' }, reason]
         : [reason];
     }
+    case 'accountChanged':
+      return [{ key: 'web.bulk.accountChanged' }];
     case 'invalid':
       return status.errors.map(errorMessage);
     case 'idle':

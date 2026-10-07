@@ -73,6 +73,7 @@ export function bulkRequest(
 }
 
 export interface BulkIo {
+  currentUserId: () => Promise<string | null>;
   loadTables: (only: readonly WebTable[]) => Promise<PulledTables>;
   push: (changes: readonly ClientChange[]) => Promise<PushOutcome>;
   refresh: () => Promise<boolean>;
@@ -88,6 +89,7 @@ const isLive = (row: Record<string, unknown> | undefined) =>
 export function applyDeps(request: BulkRequest | null, io: BulkIo): ApplyDeps {
   const ids = { newId: io.newId, newChangeId: io.newChangeId, now: io.now };
   return {
+    currentUserId: io.currentUserId,
     loadContext: async () => bulkContext(await io.loadTables(request!.tables)),
     build: (context) => buildBulkEdit(request!.action, request!.targets, context, ids),
     push: io.push,

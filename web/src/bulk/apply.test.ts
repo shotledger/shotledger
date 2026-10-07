@@ -16,6 +16,7 @@ import {
   apply,
   applyBlocked,
   IDLE,
+  submitRequest,
   type ApplyDeps,
   type ApplyState,
   type Built,
@@ -77,6 +78,7 @@ function deps(outcomes: PushOutcome | PushOutcome[], overrides: Partial<ApplyDep
   const queue = Array.isArray(outcomes) ? [...outcomes] : [outcomes];
   return {
     loadContext: vi.fn(() => Promise.resolve(CONTEXT)),
+    currentUserId: vi.fn(() => Promise.resolve<string | null>('u1')),
     build: vi.fn(() => ok()),
     push: vi.fn(() => Promise.resolve(queue.length > 1 ? queue.shift()! : queue[0]!)),
     loadFirearms: vi.fn(() => Promise.resolve(FIREARMS)),
@@ -117,12 +119,15 @@ describe('applying a bulk edit', () => {
       status: { kind: 'failed', error: 'network', stage: 'correction' },
       held: {
         stage: 'correction',
-        built: { changes: MOVE, summary: SUMMARY, counters: PLAN, tagId: null },
+        built: { changes: MOVE, summary: SUMMARY, counters: PLAN, tagId: null, userId: 'u1' },
         refused: { sessions: new Set(['s2']), firearms: new Set(), count: 1 },
         changes: null,
       },
     };
-    expect(applyBlocked(true, correcting)).toBe('correcting');
+    // A held request does not block: the one action resends it (R12).
+    expect(applyBlocked(true, correcting)).toBeNull();
+    expect(submitRequest(correcting)).toBe(correcting.held);
+    expect(submitRequest(IDLE)).toBeNull();
   });
 
   it('U6 a network failure holds the request; Retry resends the identical request', async () => {
@@ -132,7 +137,7 @@ describe('applying a bulk edit', () => {
       status: { kind: 'failed', error: 'network', stage: 'edit' },
       held: {
         stage: 'edit',
-        built: { changes: CHANGES, summary: SUMMARY, counters: null, tagId: null },
+        built: { changes: CHANGES, summary: SUMMARY, counters: null, tagId: null, userId: 'u1' },
       },
     });
     expect(failing.refresh).not.toHaveBeenCalled();
@@ -219,7 +224,13 @@ describe('applying a bulk edit', () => {
   });
 
   it('U8 an edit drops a held edit, but not a pending correction and not while applying', () => {
-    const built: Built = { changes: CHANGES, summary: SUMMARY, counters: null, tagId: null };
+    const built: Built = {
+      changes: CHANGES,
+      summary: SUMMARY,
+      counters: null,
+      tagId: null,
+      userId: 'u1',
+    };
     expect(
       afterEdit({
         status: { kind: 'failed', error: 'network', stage: 'edit' },
@@ -228,6 +239,7 @@ describe('applying a bulk edit', () => {
     ).toBe(IDLE);
     const applying = { status: { kind: 'applying' as const }, held: null };
     expect(afterEdit(applying)).toBe(applying);
+    expect(afterEdit(IDLE)).toBe(IDLE);
     const correcting: ApplyState = {
       status: { kind: 'failed', error: 'network', stage: 'correction' },
       held: {
@@ -344,6 +356,82 @@ describe('correcting the counters after a refused session (R5)', () => {
     );
     expect(retry.correct).toHaveBeenCalledTimes(1);
     expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);
+  });
+});
+
+describe('a held request goes only to its own account (R12)', () => {
+  const held = async () => (await apply(deps({ kind: 'failed', error: 'network' }), null)).held;
+
+  it('R12 another account signed in: the held request is dropped and nothing is sent', async () => {
+    const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
+    expect(await apply(other, await held())).toEqual({
+      status: { kind: 'accountChanged' },
+      held: null,
+    });
+    expect(other.push).not.toHaveBeenCalled();
+  });
+
+  it('R12 still signed out, or the server unreachable: the request stays held, nothing is sent', async () => {
+    const request = await held();
+    const signedOut = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.resolve(null)) },
+    );
+    expect(await apply(signedOut, request)).toEqual({
+      status: { kind: 'failed', error: 'unauthenticated', stage: 'edit' },
+      held: request,
+    });
+    const unreachable = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) },
+    );
+    expect(await apply(unreachable, request)).toEqual({
+      status: { kind: 'failed', error: 'network', stage: 'edit' },
+      held: request,
+    });
+    expect(signedOut.push).not.toHaveBeenCalled();
+    expect(unreachable.push).not.toHaveBeenCalled();
+  });
+
+  it('R12 a fresh Apply with the server unreachable builds nothing', async () => {
+    const unreachable = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) },
+    );
+    expect(await apply(unreachable, null)).toEqual({
+      status: { kind: 'failed', error: 'network', stage: 'edit' },
+      held: null,
+    });
+    expect(unreachable.loadContext).not.toHaveBeenCalled();
+  });
+
+  it('R12 a fresh Apply while signed out builds nothing', async () => {
+    const signedOut = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.resolve(null)) },
+    );
+    expect(await apply(signedOut, null)).toEqual({
+      status: { kind: 'failed', error: 'unauthenticated', stage: 'edit' },
+      held: null,
+    });
+    expect(signedOut.loadContext).not.toHaveBeenCalled();
+  });
+
+  it('R12 a pending correction keeps its stage while signed out, and goes to no other account', async () => {
+    const d = deps([s2Refused, { kind: 'failed', error: 'network' }], moving());
+    const pending = (await apply(d, null)).held;
+    const signedOut = deps(
+      { kind: 'saved' },
+      { currentUserId: vi.fn(() => Promise.resolve(null)) },
+    );
+    expect((await apply(signedOut, pending)).status).toEqual({
+      kind: 'failed',
+      error: 'unauthenticated',
+      stage: 'correction',
+    });
+    const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
+    expect((await apply(other, pending)).status).toEqual({ kind: 'accountChanged' });
+    expect(other.push).not.toHaveBeenCalled();
   });
 });
 

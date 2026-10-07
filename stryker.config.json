@@ -30,6 +30,7 @@
     "shared/src/dates/**/*.ts",
     "web/src/entry/*.ts",
     "web/src/reauth.ts",
+    "web/src/bulk/*.ts",
     "web/src/settings/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",

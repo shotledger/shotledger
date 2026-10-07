@@ -1426,6 +1426,7 @@
       "corrected": "Their rounds were taken back out of the firearms' round counts.",
       "tagGone": "The tag was deleted on another device, so it does not show on these sessions.",
       "correctionPending": "The change was saved, but the round counts still include the refused sessions. Retry to correct them.",
+      "accountChanged": "You are now signed in to another account, so the held change was not sent. Check the selection, then apply.",
       "failedNetwork": "Could not reach the server. Your selection is still here.",
       "failedSignedOut": "You have been signed out. Sign in again, then retry.",
       "failedOutdated": "This page is out of date. Reload the page.",

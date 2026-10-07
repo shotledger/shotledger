@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
 
 import { disciplineLabel, formatLocalDate } from '../../../app/src/features/session/labels';
-import { loadTables, pushEntry } from '../api';
+import { currentUserId, loadTables, pushEntry } from '../api';
 import { locationUsage, SignInAgain, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
-import { afterEdit, apply, applyBlocked, IDLE, type ApplyState } from './apply';
+import { afterEdit, apply, applyBlocked, IDLE, submitRequest, type ApplyState } from './apply';
 import { statusMessages, type Message } from './messages';
 import {
   bulkRows,
@@ -76,12 +76,14 @@ export function BulkEdit({
 
   const request = bulkRequest(form, selected, shown);
   const blocked = applyBlocked(online, state);
-  const runApply = (held: ApplyState['held']) => {
-    const retrying = held !== null;
-    if (retrying ? blocked === 'offline' || blocked === 'applying' : blocked !== null) return;
-    if (!retrying && request === null) return;
+  const runApply = () => {
+    // While a request is held, the one action resends it (R12).
+    const held = submitRequest(state);
+    if (blocked !== null || (held === null && request === null)) return;
     setState({ status: { kind: 'applying' }, held: null });
+    setSignedInAgain(false);
     const io = {
+      currentUserId,
       loadTables,
       push: pushEntry,
       refresh,
@@ -170,7 +172,7 @@ export function BulkEdit({
         className="card bulk-action"
         onSubmit={(event) => {
           event.preventDefault();
-          runApply(null);
+          runApply();
         }}
       >
         <label className="field">
@@ -258,22 +260,13 @@ export function BulkEdit({
             type="submit"
             disabled={
               blocked !== null ||
-              request === null ||
-              (form.kind === 'removeTag' && !tagsOnTargets.includes(form.removeName))
+              (state.held === null &&
+                (request === null ||
+                  (form.kind === 'removeTag' && !tagsOnTargets.includes(form.removeName))))
             }
           >
-            {applyLabel}
+            {state.held === null ? applyLabel : t('web.entry.retry')}
           </button>
-          {state.held !== null && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={blocked === 'offline' || blocked === 'applying'}
-              onClick={() => runApply(state.held)}
-            >
-              {t('web.entry.retry')}
-            </button>
-          )}
         </div>
         <div className="entry-status bulk-status" role="status">
           {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}

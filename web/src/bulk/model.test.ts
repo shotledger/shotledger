@@ -84,6 +84,20 @@ describe('the bulk list', () => {
       ],
     });
     expect(ids(bulkRows(reversed))).toEqual(['c', 'b']);
+    // A payload without deleted_at, location or firearm_id: live, both null.
+    const bare = tables({
+      sessions: [
+        {
+          id: 'z',
+          name: 'Bare',
+          discipline_id: 'spsf-precision',
+          started_at: '2026-01-01T10:00:00.000Z',
+        },
+      ],
+    });
+    expect(bulkRows(bare)).toEqual([
+      expect.objectContaining({ id: 'z', location: null, firearmId: null, firearm: null }),
+    ]);
   });
 
   it('U2 From/To by local day, inclusive; Search matches name, location or a tag', () => {
@@ -97,6 +111,9 @@ describe('the bulk list', () => {
     expect(ids(filterRows(rows, { ...NO_FILTER, search: ' club ' }))).toEqual(['b']);
     expect(ids(filterRows(rows, { ...NO_FILTER, search: 'NORTH' }))).toEqual(['a']);
     expect(ids(filterRows(rows, { ...NO_FILTER, search: 'km' }))).toEqual(['c', 'a']);
+    // A session with no location still matches by name, and no other way.
+    expect(ids(filterRows(rows, { ...NO_FILTER, search: 'session c' }))).toEqual(['c']);
+    expect(ids(filterRows(rows, { ...NO_FILTER, search: 'null' }))).toEqual([]);
   });
 
   it('U3 the target is the selected sessions that are shown, in list order', () => {
@@ -110,6 +127,12 @@ describe('the bulk list', () => {
     expect(tagNamesOn(rows, ['a'])).toEqual(['KM', 'Season']);
     expect(tagNamesOn(rows, ['b', 'c'])).toEqual(['KM']);
     expect(tagNamesOn(rows, [])).toEqual([]);
+    // Sorted across sessions, whatever order the sessions come in.
+    const row = (id: string, tags: string[]) => ({ ...rows[0]!, id, tags });
+    expect(tagNamesOn([row('x', ['Season']), row('y', ['Club'])], ['x', 'y'])).toEqual([
+      'Club',
+      'Season',
+    ]);
   });
 
   it('the pulled tables map onto the builder context one to one', () => {

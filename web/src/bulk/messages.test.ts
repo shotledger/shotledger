@@ -67,6 +67,7 @@ describe('what the page says', () => {
 
   it('applying, idle and invalid', () => {
     expect(keys({ kind: 'applying' })).toEqual(['web.bulk.applying']);
+    expect(keys({ kind: 'accountChanged' })).toEqual(['web.bulk.accountChanged']);
     expect(keys({ kind: 'idle' })).toEqual([]);
     expect(
       at({ kind: 'invalid', errors: [{ kind: 'blankTag' }, { kind: 'nothingToChange' }] }),

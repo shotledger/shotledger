@@ -35,7 +35,9 @@ export type ApplyStatus =
       error: SyncErrorKey;
       /** `correction`: the edit landed, the counters still need correcting. */
       stage: 'edit' | 'correction';
-    };
+    }
+  /** The held request belongs to another account than the one signed in now (R12). */
+  | { kind: 'accountChanged' };
 
 /** A built request and what the page needs after it lands. */
 export interface Built {
@@ -43,6 +45,8 @@ export interface Built {
   summary: BulkSummary;
   counters: CounterPlan | null;
   tagId: string | null;
+  /** The account it was built for; a held request goes to no other (R12). */
+  userId: string;
 }
 
 export interface Refused {
@@ -64,6 +68,8 @@ export interface ApplyState {
 export const IDLE: ApplyState = { status: { kind: 'idle' }, held: null };
 
 export interface ApplyDeps {
+  /** The signed-in user's id; null when the session is no longer valid. */
+  currentUserId: () => Promise<string | null>;
   /** Pulls the rows the edit is built from afresh (B4). */
   loadContext: () => Promise<BulkContext>;
   build: (context: BulkContext) => BulkResult;
@@ -151,8 +157,28 @@ async function applyEdit(deps: ApplyDeps, built: Built): Promise<ApplyState> {
   return finish(deps, built, refused, false);
 }
 
+/**
+ * What a submit sends: the held request while there is one, so no key or
+ * button builds a second request beside one that may have landed (R12, as
+ * #669's R13). Null means build a fresh one.
+ */
+export function submitRequest(state: ApplyState): Held | null {
+  return state.held;
+}
+
 /** Apply with `held` null builds a fresh request; Retry passes the held one. */
 export async function apply(deps: ApplyDeps, held: Held | null): Promise<ApplyState> {
+  let userId: string | null;
+  try {
+    userId = await deps.currentUserId();
+  } catch (error: unknown) {
+    return failed(classifySyncError(error), held?.stage ?? 'edit', held);
+  }
+  if (userId === null) return failed('unauthenticated', held?.stage ?? 'edit', held);
+  // Another account: its rows are not this one's to resend (as #669's R14).
+  if (held !== null && held.built.userId !== userId) {
+    return { status: { kind: 'accountChanged' }, held: null };
+  }
   if (held?.stage === 'correction') return correctCounters(deps, held);
   if (held?.stage === 'edit') return applyEdit(deps, held.built);
 
@@ -171,7 +197,7 @@ export async function apply(deps: ApplyDeps, held: Held | null): Promise<ApplySt
   }
   if (!result.ok) return { status: { kind: 'invalid', errors: result.errors }, held: null };
   const { changes, summary, counters, tagId } = result;
-  return applyEdit(deps, { changes, summary, counters, tagId });
+  return applyEdit(deps, { changes, summary, counters, tagId, userId });
 }
 
 /** An edit makes a held request stale; a pending correction is never dropped. */
@@ -180,12 +206,7 @@ export function afterEdit(state: ApplyState): ApplyState {
   return IDLE;
 }
 
-export function applyBlocked(
-  online: boolean,
-  state: ApplyState,
-): 'offline' | 'applying' | 'correcting' | null {
+export function applyBlocked(online: boolean, state: ApplyState): 'offline' | 'applying' | null {
   if (!online) return 'offline';
-  if (state.status.kind === 'applying') return 'applying';
-  // A new edit would drop the pending correction: only Retry goes on.
-  return state.held?.stage === 'correction' ? 'correcting' : null;
+  return state.status.kind === 'applying' ? 'applying' : null;
 }

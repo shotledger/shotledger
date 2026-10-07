@@ -60,19 +60,19 @@ export function bulkRows(tables: PulledTables): BulkRow[] {
       tags: tagNames.get(id) ?? [],
     });
   }
-  return rows.sort((a, b) =>
-    a.startedAt === b.startedAt ? (a.id < b.id ? 1 : -1) : a.startedAt < b.startedAt ? 1 : -1,
-  );
+  // Ids are unique, so the key orders every pair: newest first, then larger id.
+  const key = (row: BulkRow) => `${row.startedAt}\u0000${row.id}`;
+  return rows.sort((a, b) => (key(a) < key(b) ? 1 : -1));
 }
 
 export function filterRows(rows: readonly BulkRow[], filter: BulkFilter): BulkRow[] {
   const needle = filter.search.trim().toLowerCase();
+  // An open From ('') sorts before every day; an empty needle matches every text.
   return rows.filter((row) => {
-    if (filter.from !== '' && row.day < filter.from) return false;
+    if (row.day < filter.from) return false;
     if (filter.to !== '' && row.day > filter.to) return false;
-    if (needle === '') return true;
-    return [row.name, row.location ?? '', ...row.tags].some((value) =>
-      value.toLowerCase().includes(needle),
+    return [row.name, row.location, ...row.tags].some(
+      (value) => value !== null && value.toLowerCase().includes(needle),
     );
   });
 }
