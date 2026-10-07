@@ -14,6 +14,11 @@ closes (the session token is in `sessionStorage`, the rows in memory).
   rows; tag names resolve through `shared/src/tags/canonical.ts`.
 - **Pages are hash routes** in `src/shell/shell.tsx` (`Page`, `pages`); the
   shell is plain CSS and inline SVG icons, no UI or router dependency.
+- **The CSP is strict** (`public/_headers`): no inline `<style>` or
+  `<script>`, no `eval`. Style through `styles.css`, a `style` prop or a
+  constructed sheet (`theme.ts`). Check a change in a browser against
+  `wrangler dev` (below) for console CSP errors; `vite` dev does not send
+  the headers.
 - `pnpm typecheck:web` is in `pnpm check`; tests are vitest (`web/src/**/*.test.ts`).
 
 ## Running it

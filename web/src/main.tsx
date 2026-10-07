@@ -1,3 +1,6 @@
+// First: zod must be jitless before any schema is defined (the CSP has no 'unsafe-eval').
+import '@shotledger/shared/src/zod-jitless';
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 

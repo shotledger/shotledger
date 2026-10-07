@@ -9,9 +9,11 @@ function declarations(palette: Record<string, string>): string {
     .join(' ');
 }
 
+// A constructed sheet rather than a <style> element, which the CSP
+// (web/public/_headers, no 'unsafe-inline') would block.
 export function installTheme(): void {
-  const style = document.createElement('style');
-  style.textContent = `:root { ${declarations(Colors.light)} }
-@media (prefers-color-scheme: dark) { :root { ${declarations(Colors.dark)} } }`;
-  document.head.append(style);
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(`:root { ${declarations(Colors.light)} }
+@media (prefers-color-scheme: dark) { :root { ${declarations(Colors.dark)} } }`);
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 }
