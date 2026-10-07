@@ -34,7 +34,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '../../../app/src/features/session/labels';
-import { loadTables, pushEntry, signIn, type SignInError } from '../api';
+import { currentUserId, loadTables, pushEntry, signIn, type SignInError } from '../api';
 import type { PulledTables } from '../pull';
 import {
   addRow,
@@ -55,7 +55,7 @@ import {
   withType,
   type EntryForm,
 } from './model';
-import { afterEdit, IDLE, save, saveBlocked, type SaveState } from './save';
+import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
 
 type Rows = Map<string, Record<string, unknown>>;
 
@@ -90,20 +90,21 @@ function locationUsage(sessions: Rows): LocationUsage[] {
   return [...byLocation.values()];
 }
 
-function errorText(t: TFunction, error: EntryError): string {
+/** `rowLabel` names a 1-based form row as the page labels it. */
+function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => string): string {
   switch (error.kind) {
     case 'series':
       return error.error.kind === 'comma'
-        ? t('web.entry.errorComma', { row: error.row })
+        ? t('web.entry.errorComma', { row: rowLabel(error.row) })
         : t('web.entry.errorToken', {
-            row: error.row,
+            row: rowLabel(error.row),
             token: error.error.token,
             position: error.error.position,
           });
     case 'tooManyShots':
-      return t('web.entry.errorTooManyShots', { row: error.row, max: error.max });
+      return t('web.entry.errorTooManyShots', { row: rowLabel(error.row), max: error.max });
     case 'secondSighter':
-      return t('web.entry.errorSecondSighter', { row: error.row });
+      return t('web.entry.errorSecondSighter', { row: rowLabel(error.row) });
     case 'tooLong': {
       const field = {
         name: t('session.name'),
@@ -136,6 +137,8 @@ function statusText(t: TFunction, state: SaveState): string | null {
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.entry.failedOutdated');
       return t('web.entry.failed');
+    case 'accountChanged':
+      return t('web.entry.accountChanged');
     case 'idle':
     case 'invalid':
       return null;
@@ -258,16 +261,22 @@ export function Entry({
 
   const blocked = saveBlocked(online, state);
   const errors = state.status.kind === 'invalid' ? state.status.errors : [];
+  const rowLabel = (row: number) =>
+    form.rows[row - 1]?.isSighter
+      ? t('session.sighter')
+      : t('session.seriesTitle', { position: row });
   const rowErrors = new Map<number, string>();
   const formErrors: string[] = [];
   for (const error of errors) {
-    if ('row' in error) rowErrors.set(error.row, errorText(t, error));
-    else formErrors.push(errorText(t, error));
+    if ('row' in error) rowErrors.set(error.row, errorText(t, error, rowLabel));
+    else formErrors.push(errorText(t, error, rowLabel));
   }
 
-  const runSave = (held: SaveState['held']) => {
+  const runSave = () => {
+    const held = submitRequest(state);
     if (blocked !== null || startedAt === null) return;
     setState({ status: { kind: 'saving' }, held: null });
+    setSignedInAgain(false);
     void save(
       {
         loadContext: async () => {
@@ -284,6 +293,7 @@ export function Entry({
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
           }),
+        currentUserId,
         push: pushEntry,
         refresh,
       },
@@ -299,12 +309,12 @@ export function Entry({
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    runSave(null);
+    runSave();
   };
   const onFormKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
-      runSave(state.held);
+      runSave();
     }
   };
   const onRowKeyDown = (event: KeyboardEvent, index: number) => {
@@ -560,9 +570,7 @@ export function Entry({
         <section className="card series-rows">
           {form.rows.map((row, index) => {
             const summary = rowSummary(row.text, mode);
-            const label = row.isSighter
-              ? t('session.sighter')
-              : t('session.seriesTitle', { position: index + 1 });
+            const label = rowLabel(index + 1);
             const rowError = rowErrors.get(index + 1);
             return (
               <div key={row.key} className="series-row">
@@ -629,19 +637,10 @@ export function Entry({
         </section>
 
         <section className="entry-actions">
+          {/* While a request is held, the one action resends it (R13). */}
           <button type="submit" disabled={blocked !== null || startedAt === null}>
-            {t('common.save')}
+            {state.held === null ? t('common.save') : t('web.entry.retry')}
           </button>
-          {state.held !== null && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={blocked !== null}
-              onClick={() => runSave(state.held)}
-            >
-              {t('web.entry.retry')}
-            </button>
-          )}
           <div className="entry-status" role="status">
             {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}
             {startedAt === null && <p className="danger">{t('web.entry.errorDateTime')}</p>}

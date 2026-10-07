@@ -92,6 +92,11 @@ export function pushEntry(changes: readonly ClientChange[]): Promise<PushOutcome
   return pushChanges(transport, PROTOCOL_VERSION, changes);
 }
 
+/** Null when the stored token is no longer a valid session. */
+export async function currentUserId(): Promise<string | null> {
+  return (await account.currentUser())?.userId ?? null;
+}
+
 export async function currentEmail(): Promise<string | null> {
   return (await account.currentUser())?.email ?? null;
 }
