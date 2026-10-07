@@ -292,3 +292,24 @@ Appended after rebasing onto #669's review fixes (8860a12):
   held, the one action button reads **Retry** and resends it unchanged,
   without asking the birth-year question again. `web/src/settings/*.ts` joins
   the Stryker `mutate` list and with it the 100% coverage gate.
+
+Appended after rebasing onto #669's full-review fixes (`caffb4d`) and the
+full review of PR #672:
+
+- **R9 (new U9).** A build that throws (for example `crypto.randomUUID`
+  missing on a non-secure origin) fails the save with "Could not save"
+  instead of leaving the page in "saving"; the page also guards the promise,
+  as #669's R18.
+- **R10 (new U10).** An answer whose acks do not match the request
+  (`pushChanges` → `failed` with `unconfirmed`) may have landed, so the
+  request is held for Retry with its own message, as #669's R19.
+- **R11 (new U11).** Saved but the refresh failed: Save stays disabled, edits
+  included, until the page is reloaded, so the stale baseline cannot push the
+  same keys a second time.
+- **R12 (new U12; replaces R8's account check as the main guard).** The page
+  uses the shared inline sign-in (`web/src/sign-in-again.tsx`) and App's
+  `onReauthenticated`. The same account clears the signed-out notice and
+  keeps a held request; another account reloads the logbook and remounts the
+  page (`key={generation}`), so nothing built from the old account's rows can
+  be pushed to the new one. R8's held-request check stays as defence in depth.
+  The page wrapper no longer repeats the form's `settings` class.

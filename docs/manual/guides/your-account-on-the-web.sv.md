@@ -54,8 +54,8 @@ mellan enheter, samma som på telefonen:
 redan var satt får du bekräfta först, som på telefonen. Telefonerna får
 ändringen vid nästa synk. Om sparningen inte når servern finns ändringarna
 kvar på sidan och **Försök igen** skickar dem på nytt; ingenting sparas när
-fliken stängs. Har du loggat in på ett annat konto under tiden skickas de
-inte dit: kontrollera dem och spara igen.
+fliken stängs. Loggar du in igen som ett annat konto visar sidan det kontots
+inställningar, och dina osparade ändringar skickas inte dit.
 
 Allt annat i telefonens Inställningar — språk, tema, valfria fält, timrar,
 säkerhetskopior — hör till varje telefon och finns inte på webben.
