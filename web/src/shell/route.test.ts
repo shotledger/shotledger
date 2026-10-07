@@ -7,6 +7,7 @@ describe('routeFromHash', () => {
     ['', { page: 'statistics', sessionId: null }],
     ['#statistics', { page: 'statistics', sessionId: null }],
     ['#account', { page: 'account', sessionId: null }],
+    ['#entry', { page: 'entry', sessionId: null }],
     ['#sessions', { page: 'sessions', sessionId: null }],
     ['#sessions/', { page: 'sessions', sessionId: null }],
     ['#sessions/abc-123', { page: 'sessions', sessionId: 'abc-123' }],

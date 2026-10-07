@@ -654,6 +654,94 @@ a.button {
   text-decoration: none;
 }
 
+.entry {
+  display: grid;
+  gap: 16px;
+  max-width: 960px;
+}
+
+.entry-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.field.check,
+.series-row .check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.series-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.series-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 110px 100px;
+  align-items: center;
+  gap: 12px;
+}
+
+.series-row .shots {
+  font:
+    16px ui-monospace,
+    monospace;
+  letter-spacing: 0.02em;
+}
+
+.series-row [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.row-summary {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.row-error {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 12px;
+}
+
+.entry-status p {
+  margin: 8px 0 0;
+}
+
+.inline-sign-in {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .series-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .row-summary {
+    text-align: left;
+  }
+}
+
 .shell {
   display: flex;
   min-height: 100vh;

@@ -62,4 +62,31 @@ describe('pullAll', () => {
     expect(tables.tags.get('t1')).toEqual({ id: 't1', name: 'Club' });
     expect(progress).toEqual([3, 4]);
   });
+
+  it('asks only the tables it is given', async () => {
+    const requests: PullRequest[] = [];
+    const tables = await pullAll(
+      {
+        pull: (request) => {
+          requests.push(request);
+          return Promise.resolve({
+            protocolVersion: 1,
+            changes: [change('firearms', 'f1', 1, { id: 'f1' })],
+            nextCursors: [{ tableName: 'firearms', cursor: 1, hasMore: false }],
+          });
+        },
+      },
+      1,
+      undefined,
+      ['firearms', 'firearm_groups'],
+    );
+    expect(requests.map((r) => r.tables)).toEqual([
+      [
+        { tableName: 'firearms', cursor: 0 },
+        { tableName: 'firearm_groups', cursor: 0 },
+      ],
+    ]);
+    expect([...tables.firearms.keys()]).toEqual(['f1']);
+    expect(tables.sessions.size).toBe(0);
+  });
 });

@@ -1,0 +1,150 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import type { ClientChange } from '@shotledger/shared/src/sync';
+import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
+import type { EntryContext, EntryResult } from '@shotledger/shared/src/sync-client/session-entry';
+import { describe, expect, it, vi } from 'vitest';
+
+import { afterEdit, IDLE, save, saveBlocked, type SaveDeps, type SaveState } from './save';
+
+const CHANGES: ClientChange[] = [
+  {
+    clientChangeId: '00000000-0000-4000-8000-000000000001',
+    tableName: 'sessions',
+    rowId: 's1',
+    payload: { id: 's1' },
+    deletedAt: null,
+    updatedAt: '2026-10-07T10:00:00.000Z',
+  },
+];
+const CONTEXT: EntryContext = { firearms: new Map(), firearmGroups: [], ammoLots: new Map() };
+
+function deps(outcome: PushOutcome, overrides: Partial<SaveDeps> = {}) {
+  const built: EntryResult = { ok: true, sessionId: 's1', changes: CHANGES };
+  return {
+    loadContext: vi.fn(() => Promise.resolve(CONTEXT)),
+    build: vi.fn(() => built),
+    push: vi.fn(() => Promise.resolve(outcome)),
+    refresh: vi.fn(() => Promise.resolve(true)),
+    ...overrides,
+  } satisfies SaveDeps;
+}
+
+describe('saving an entry', () => {
+  it('U1 offline disables Save and names the reason', () => {
+    expect(saveBlocked(false, IDLE)).toBe('offline');
+    expect(saveBlocked(true, IDLE)).toBeNull();
+    expect(saveBlocked(true, { status: { kind: 'saving' }, held: null })).toBe('saving');
+    expect(saveBlocked(false, { status: { kind: 'saving' }, held: null })).toBe('offline');
+  });
+
+  it('U2 a failed save keeps the draft and holds the request; Retry resends the identical request', async () => {
+    const failing = deps({ kind: 'failed', error: 'network' });
+    const failed = await save(failing, null);
+    expect(failed).toEqual({ status: { kind: 'failed', error: 'network' }, held: CHANGES });
+    expect(failing.refresh).not.toHaveBeenCalled();
+
+    const retrying = deps({ kind: 'saved' });
+    const retried = await save(retrying, failed.held);
+    expect(retrying.push).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(retrying.push).mock.calls[0]![0]).toBe(CHANGES);
+    // A retry sends what was held; it neither pulls nor builds again.
+    expect(retrying.loadContext).not.toHaveBeenCalled();
+    expect(retrying.build).not.toHaveBeenCalled();
+    expect(retried.status).toEqual({ kind: 'saved', refreshed: true, firearmRejected: false });
+  });
+
+  it('U2 a signed-out failure holds the request too; the others do not', async () => {
+    expect((await save(deps({ kind: 'failed', error: 'unauthenticated' }), null)).held).toBe(
+      CHANGES,
+    );
+    for (const error of ['versionUnsupported', 'payloadTooLarge', 'unknown'] as const) {
+      expect(await save(deps({ kind: 'failed', error }), null)).toEqual({
+        status: { kind: 'failed', error },
+        held: null,
+      });
+    }
+  });
+
+  it('U2 nothing retries on its own (N2)', async () => {
+    const failing = deps({ kind: 'failed', error: 'network' });
+    await save(failing, null);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(failing.push).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failed pull before the build sends nothing and holds nothing', async () => {
+    const failing = deps(
+      { kind: 'saved' },
+      {
+        loadContext: vi.fn(() => Promise.reject(new Error('offline'))),
+      },
+    );
+    expect(await save(failing, null)).toEqual({
+      status: { kind: 'failed', error: 'network' },
+      held: null,
+    });
+    expect(failing.push).not.toHaveBeenCalled();
+  });
+
+  it('an invalid entry sends nothing', async () => {
+    const errors = [{ kind: 'unknownFirearm' as const }];
+    const invalid = deps(
+      { kind: 'saved' },
+      { build: vi.fn(() => ({ ok: false as const, errors })) },
+    );
+    expect(await save(invalid, null)).toEqual({ status: { kind: 'invalid', errors }, held: null });
+    expect(invalid.push).not.toHaveBeenCalled();
+    expect(invalid.build).toHaveBeenCalledWith(CONTEXT);
+  });
+
+  it('U3 editing the draft after a failure drops the held request', () => {
+    const failed: SaveState = { status: { kind: 'failed', error: 'network' }, held: CHANGES };
+    expect(afterEdit(failed)).toEqual(IDLE);
+    const saving: SaveState = { status: { kind: 'saving' }, held: null };
+    expect(afterEdit(saving)).toBe(saving);
+  });
+
+  it('U4 a save refreshes the logbook and clears the draft; a failed refresh says "reload"', async () => {
+    const ok = deps({ kind: 'saved' });
+    expect(await save(ok, null)).toEqual({
+      status: { kind: 'saved', refreshed: true, firearmRejected: false },
+      held: null,
+    });
+    expect(ok.refresh).toHaveBeenCalledTimes(1);
+
+    const stale = deps({ kind: 'saved' }, { refresh: vi.fn(() => Promise.resolve(false)) });
+    expect((await save(stale, null)).status).toEqual({
+      kind: 'saved',
+      refreshed: false,
+      firearmRejected: false,
+    });
+
+    const rejected = deps({
+      kind: 'partlyRejected',
+      rejected: [{ tableName: 'firearms', rowId: 'f1', reason: 'tombstoned' }],
+    });
+    expect((await save(rejected, null)).status).toEqual({
+      kind: 'saved',
+      refreshed: true,
+      firearmRejected: true,
+    });
+    expect(rejected.refresh).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('N1 no shooting data in browser storage', () => {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const sources = readdirSync(dir).filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f));
+
+  it('the entry modules never touch localStorage, sessionStorage or IndexedDB', () => {
+    expect(sources.length).toBeGreaterThanOrEqual(3);
+    for (const file of sources) {
+      expect(readFileSync(path.join(dir, file), 'utf8')).not.toMatch(
+        /localStorage|sessionStorage|indexedDB/i,
+      );
+    }
+  });
+});

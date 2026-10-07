@@ -1,9 +1,9 @@
-// Reads the whole account through /sync/pull from cursor 0 and keeps the
-// live rows in memory. The web app never pushes and stores nothing after the
-// tab closes (ADR 0013).
+// Reads the account through /sync/pull from cursor 0 and keeps the live rows
+// in memory; nothing is stored after the tab closes (ADR 0013). Writes go
+// through entry/ (ADR 0019).
 import type { PullRequest, PullResponse, SyncTableName } from '@shotledger/shared/src/sync';
 
-/** The tables the Statistics report and the account download read. */
+/** The tables the pages read: Statistics, the account download, Enter Series. */
 export const WEB_TABLES = [
   'sessions',
   'series',
@@ -11,6 +11,7 @@ export const WEB_TABLES = [
   'falt_stations',
   'tags',
   'firearms',
+  'firearm_groups',
   'licenses',
   'ammo_lots',
   'session_tags',
@@ -30,9 +31,11 @@ export async function pullAll(
   transport: PullTransport,
   protocolVersion: number,
   onProgress?: (rowsSoFar: number) => void,
+  /** A subset to pull; the other tables come back empty. */
+  only: readonly WebTable[] = WEB_TABLES,
 ): Promise<PulledTables> {
   const tables = Object.fromEntries(WEB_TABLES.map((name) => [name, new Map()])) as PulledTables;
-  let cursors: PullRequest['tables'] = WEB_TABLES.map((tableName) => ({ tableName, cursor: 0 }));
+  let cursors: PullRequest['tables'] = only.map((tableName) => ({ tableName, cursor: 0 }));
   let rows = 0;
 
   while (cursors.length > 0) {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Account } from './account/account';
 import { currentEmail, hasSession, loadAccount, signOut } from './api';
+import { Entry } from './entry/entry';
 import { type PulledTables } from './pull';
 import { routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
@@ -81,6 +82,17 @@ export function App() {
     [tables],
   );
 
+  // After a save: pull again in place, so the page stays and every page
+  // shows server truth (spec §3.5).
+  const refresh = () =>
+    loadAccount().then(
+      (fresh) => {
+        setState({ kind: 'ready', tables: fresh });
+        return true;
+      },
+      () => false,
+    );
+
   const onSignOut = () => {
     setPicks(NO_PICKS);
     void signOut().then(() => setState({ kind: 'signedOut' }));
@@ -117,6 +129,9 @@ export function App() {
         />
       )}
       {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
+      {state.kind === 'ready' && page === 'entry' && (
+        <Entry tables={state.tables} refresh={refresh} />
+      )}
       {state.kind === 'ready' && page === 'account' && (
         <Account
           tables={state.tables}

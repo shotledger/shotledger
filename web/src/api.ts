@@ -1,6 +1,7 @@
 // Same-origin calls to the Worker (ADR 0013). The token lives in
 // sessionStorage, so it goes when the tab does.
-import { PROTOCOL_VERSION } from '@shotledger/shared/src/sync';
+import { PROTOCOL_VERSION, type ClientChange } from '@shotledger/shared/src/sync';
+import { pushChanges, type PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 import {
   AuthError,
   createAccountApi,
@@ -12,7 +13,7 @@ import {
 } from '@shotledger/shared/src/sync-client/http';
 
 import { createFetchPhoto } from './photo-fetch';
-import { pullAll, type PulledTables } from './pull';
+import { pullAll, type PulledTables, type WebTable } from './pull';
 
 const TOKEN_KEY = 'shotledger.token';
 
@@ -79,6 +80,16 @@ export async function signOut(): Promise<void> {
 
 export function loadAccount(onProgress?: (rows: number) => void): Promise<PulledTables> {
   return pullAll(transport, PROTOCOL_VERSION, onProgress);
+}
+
+/** Only the given tables, from cursor 0. */
+export function loadTables(only: readonly WebTable[]): Promise<PulledTables> {
+  return pullAll(transport, PROTOCOL_VERSION, undefined, only);
+}
+
+/** One request, never retried here (ADR 0019); Retry is the user's. */
+export function pushEntry(changes: readonly ClientChange[]): Promise<PushOutcome> {
+  return pushChanges(transport, PROTOCOL_VERSION, changes);
 }
 
 export async function currentEmail(): Promise<string | null> {

@@ -1368,6 +1368,30 @@
       "missing": "Saknas",
       "loadFailed": "Kunde inte laddas",
       "retry": "Försök igen"
+    },
+    "entry": {
+      "title": "Mata in serier",
+      "time": "Tid",
+      "rowSummary": "{{total}} · {{innerTens}} X",
+      "retry": "Försök igen",
+      "saving": "Sparar…",
+      "saved": "Sparat.",
+      "savedReload": "Sparat. Ladda om sidan för att se det i statistiken.",
+      "savedFirearmRejected": "Sparat, men vapnet har tagits bort på en annan enhet, så dess skottantal ändrades inte.",
+      "failedNetwork": "Kunde inte nå servern. Dina serier finns kvar.",
+      "failedSignedOut": "Du har loggats ut. Logga in igen och spara sedan på nytt.",
+      "failedOutdated": "Sidan är inaktuell. Kopiera dina serier och ladda sedan om sidan.",
+      "failed": "Kunde inte spara.",
+      "offline": "Du är offline. För att spara krävs en anslutning.",
+      "errorToken": "Serie {{row}}: ”{{token}}” (skott {{position}}) är inget skott.",
+      "errorComma": "Serie {{row}}: skilj skotten åt med mellanslag.",
+      "errorTooManyShots": "Serie {{row}}: högst {{max}} skott.",
+      "errorSecondSighter": "Serie {{row}}: bara en provserie.",
+      "errorTooLong": "{{field}}: högst {{max}} tecken.",
+      "errorUnknownFirearm": "Vapnet finns inte längre i loggboken. Välj ett annat.",
+      "errorUnknownAmmoLot": "Ammunitionspartiet finns inte längre i loggboken. Välj ett annat.",
+      "errorTooManyChanges": "För många skott för att spara på en gång. Dela upp passet i två.",
+      "errorDateTime": "Ange datum och tid."
     }
   }
 }
