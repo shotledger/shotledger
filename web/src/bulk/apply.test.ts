@@ -58,7 +58,12 @@ const CONTEXT: BulkContext = {
 const FIREARMS = new Map([['f2', { id: 'f2', round_count: 15 }]]);
 
 const ok = (
-  overrides: { changes?: ClientChange[]; counters?: CounterPlan; tagId?: string } = {},
+  overrides: {
+    changes?: ClientChange[];
+    counters?: CounterPlan;
+    tagId?: string;
+    summary?: typeof SUMMARY;
+  } = {},
 ): BulkResult => ({
   ok: true,
   changes: CHANGES,
@@ -96,7 +101,11 @@ const s2Refused: PushOutcome = {
   kind: 'partlyRejected',
   rejected: [{ tableName: 'sessions', rowId: 's2', reason: 'tombstoned' }],
 };
-const moving = () => ({ build: vi.fn(() => ok({ changes: MOVE, counters: PLAN })) });
+// Two sessions move; the refused one is taken off the changed count (R11).
+const MOVED = { changed: 2, unchanged: 0, missing: 0 };
+const moving = () => ({
+  build: vi.fn(() => ok({ changes: MOVE, counters: PLAN, summary: MOVED })),
+});
 
 describe('applying a bulk edit', () => {
   it('U5 offline blocks Apply and names the reason; so does applying and a pending correction', () => {
@@ -198,7 +207,9 @@ describe('applying a bulk edit', () => {
       ],
     });
     // No counter plan (a location or tag edit): nothing to correct.
-    expect((await apply(partly, null)).status).toEqual(applied({ refused: 2 }));
+    expect((await apply(partly, null)).status).toEqual(
+      applied({ refused: 2, summary: { ...SUMMARY, changed: 0 } }),
+    );
     expect(partly.refresh).toHaveBeenCalledTimes(1);
     expect(partly.loadFirearms).not.toHaveBeenCalled();
     expect(partly.push).toHaveBeenCalledTimes(1);
@@ -234,7 +245,7 @@ describe('correcting the counters after a refused session (R5)', () => {
   it('R5 a refused moved session: the firearms are pulled afresh and the correction pushed', async () => {
     const d = deps([s2Refused, { kind: 'saved' }], moving());
     expect(await apply(d, null)).toEqual({
-      status: applied({ refused: 1, corrected: true }),
+      status: applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
       held: null,
     });
     expect(d.push).toHaveBeenCalledTimes(2);
@@ -281,11 +292,15 @@ describe('correcting the counters after a refused session (R5)', () => {
       },
       moving(),
     );
-    expect((await apply(firearmOnly, null)).status).toEqual(applied({ refused: 1 }));
+    expect((await apply(firearmOnly, null)).status).toEqual(
+      applied({ refused: 1, summary: MOVED }),
+    );
     expect(firearmOnly.loadFirearms).not.toHaveBeenCalled();
 
     const floored = deps([s2Refused], { ...moving(), correct: vi.fn(() => []) });
-    expect((await apply(floored, null)).status).toEqual(applied({ refused: 1 }));
+    expect((await apply(floored, null)).status).toEqual(
+      applied({ refused: 1, summary: { ...MOVED, changed: 1 } }),
+    );
     expect(floored.push).toHaveBeenCalledTimes(1);
   });
 
@@ -298,7 +313,7 @@ describe('correcting the counters after a refused session (R5)', () => {
 
     const retry = deps({ kind: 'saved' });
     expect(await apply(retry, first.held)).toEqual({
-      status: applied({ refused: 1, corrected: true }),
+      status: applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
       held: null,
     });
     expect(retry.push).toHaveBeenCalledTimes(1);
@@ -325,7 +340,7 @@ describe('correcting the counters after a refused session (R5)', () => {
 
     const retry = deps({ kind: 'saved' });
     expect((await apply(retry, first.held)).status).toEqual(
-      applied({ refused: 1, corrected: true }),
+      applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
     );
     expect(retry.correct).toHaveBeenCalledTimes(1);
     expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);

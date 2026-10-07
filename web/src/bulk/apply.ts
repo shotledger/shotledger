@@ -92,14 +92,16 @@ const failed = (error: SyncErrorKey, stage: 'edit' | 'correction', held: Held | 
 async function finish(
   deps: ApplyDeps,
   built: Built,
-  refused: number,
+  refused: Refused,
   corrected: boolean,
 ): Promise<ApplyState> {
   // An unanswered check is not evidence the tag went: say nothing then.
   const tagGone = built.tagId !== null && !(await deps.tagLive(built.tagId).catch(() => true));
   const refreshed = await deps.refresh();
+  // A refused session row is a session that did not change.
+  const summary = { ...built.summary, changed: built.summary.changed - refused.sessions.size };
   return {
-    status: { kind: 'applied', summary: built.summary, refused, corrected, tagGone, refreshed },
+    status: { kind: 'applied', summary, refused: refused.count, corrected, tagGone, refreshed },
     held: null,
   };
 }
@@ -120,13 +122,13 @@ async function correctCounters(
     } catch (error: unknown) {
       return failed(classifySyncError(error), 'correction', held);
     }
-    if (changes.length === 0) return finish(deps, held.built, held.refused.count, false);
+    if (changes.length === 0) return finish(deps, held.built, held.refused, false);
   }
   const outcome = await deps.push(changes);
   if (outcome.kind === 'failed') {
     return failed(outcome.error, 'correction', { ...held, changes });
   }
-  return finish(deps, held.built, held.refused.count, true);
+  return finish(deps, held.built, held.refused, true);
 }
 
 async function applyEdit(deps: ApplyDeps, built: Built): Promise<ApplyState> {
@@ -146,7 +148,7 @@ async function applyEdit(deps: ApplyDeps, built: Built): Promise<ApplyState> {
   if (built.counters !== null && refused.sessions.size > 0) {
     return correctCounters(deps, { stage: 'correction', built, refused, changes: null });
   }
-  return finish(deps, built, refused.count, false);
+  return finish(deps, built, refused, false);
 }
 
 /** Apply with `held` null builds a fresh request; Retry passes the held one. */

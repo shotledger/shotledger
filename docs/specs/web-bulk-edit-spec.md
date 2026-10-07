@@ -356,6 +356,9 @@ Added after an independent verifier failed the first version (2026-10-07).
   seconds between that pull and the push"; with Retry it runs from the first
   pull to the Retry, and the firearm counters are the rows it matters most
   for. B4 and the manual now say so.
+- **R11 (found by the browser check of R5).** "Changed N sessions" counted a
+  refused session as changed. The count now leaves out every session row the
+  server refused.
 - Also: the volume count indexes shots, series and stations once per Apply
   (it re-filtered the whole shots table per series: about 4 s for 300
   sessions and 36 000 shots; now about 10 ms).
