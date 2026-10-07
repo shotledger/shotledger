@@ -36,6 +36,13 @@ export type SkillClass = '1' | '2' | '3';
 /** The skill classes a shooter can pick, in order (Settings → Personal). */
 export const SKILL_CLASSES: readonly SkillClass[] = ['1', '2', '3'];
 
+/** The birth years Settings offers, newest first: ages 10 to 100. */
+export function birthYearOptions(currentYear: number): number[] {
+  const years: number[] = [];
+  for (let year = currentYear - 10; year >= currentYear - 100; year--) years.push(year);
+  return years;
+}
+
 export interface ShooterProfile {
   /** Year only — both federations define age categories by year, not by date. */
   birthYear: number | null;
