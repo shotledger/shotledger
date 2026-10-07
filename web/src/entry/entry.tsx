@@ -136,7 +136,8 @@ function statusText(t: TFunction, state: SaveState): string | null {
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.entry.failedOutdated');
       return t('web.entry.failed');
-    default:
+    case 'idle':
+    case 'invalid':
       return null;
   }
 }
@@ -192,13 +193,13 @@ export function Entry({
   const [state, setState] = useState<SaveState>(IDLE);
   const [signedInAgain, setSignedInAgain] = useState(false);
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
-  const [focusKey, setFocusKey] = useState<number | null>(null);
-
+  // A row added by Enter exists only after the next render.
+  const pendingFocus = useRef<number | null>(null);
   useEffect(() => {
-    if (focusKey === null) return;
-    rowInputs.current.get(focusKey)?.focus();
-    setFocusKey(null);
-  }, [focusKey]);
+    if (pendingFocus.current === null) return;
+    rowInputs.current.get(pendingFocus.current)?.focus();
+    pendingFocus.current = null;
+  });
 
   const edit = (next: EntryForm) => {
     setForm(next);
@@ -310,8 +311,14 @@ export function Entry({
     if (event.key !== 'Enter' || event.ctrlKey || event.metaKey || event.shiftKey) return;
     event.preventDefault();
     const next = onRowEnter(form, index);
-    if (next.form !== form) edit(next.form);
-    if (next.focus !== null) setFocusKey(next.form.rows[next.focus]!.key);
+    if (next.focus === null) return;
+    const key = next.form.rows[next.focus]!.key;
+    if (next.form === form) {
+      rowInputs.current.get(key)?.focus();
+    } else {
+      pendingFocus.current = key;
+      edit(next.form);
+    }
   };
 
   const message = statusText(t, state);
