@@ -1,0 +1,164 @@
+import { describe, expect, it } from 'vitest';
+
+import { newSeriesRow, newSessionRow, newShotRow, withRoundsAdded } from './rows';
+
+const NOW = '2026-10-07T10:00:00.000Z';
+
+describe('new rows', () => {
+  it('R1 a session row carries every column with the app defaults', () => {
+    const row = newSessionRow('s1', NOW, {
+      name: 'Training — 7 Oct 2026',
+      type: 'competition',
+      disciplineId: 'spsf-precision',
+      programId: 'spsf-precision-standard',
+      competitionLevel: 'krets',
+      isChampionship: true,
+      competitionName: 'KM',
+      weaponGroup: 'spsf:C',
+      shooterClass: '2',
+      eventId: null,
+      firearmId: 'f1',
+      ammoLotId: 'a1',
+      startedAt: '2026-10-06T08:30:00.000Z',
+      location: 'Range',
+      decimalScoring: true,
+      seriesLength: 6,
+    });
+    expect(row).toEqual({
+      id: 's1',
+      created_at: NOW,
+      updated_at: NOW,
+      deleted_at: null,
+      name: 'Training — 7 Oct 2026',
+      type: 'competition',
+      kind: 'series',
+      series_entry_mode: 'ask',
+      discipline_id: 'spsf-precision',
+      program_id: 'spsf-precision-standard',
+      competition_level: 'krets',
+      is_championship: 1,
+      competition_name: 'KM',
+      weapon_group: 'spsf:C',
+      shooter_class: '2',
+      event_id: null,
+      firearm_id: 'f1',
+      ammo_lot_id: 'a1',
+      started_at: '2026-10-06T08:30:00.000Z',
+      location: 'Range',
+      notes: null,
+      ten_count: null,
+      inner_ten_count: null,
+      decimal_scoring: 1,
+      series_length: 6,
+      falt_result_mode: null,
+      extra_rounds: null,
+      external_source: null,
+      external_ref: null,
+      external_synced_at: null,
+      webshooter_competition_id: null,
+      official_placement: null,
+      official_standardmedalj: null,
+    });
+    const plain = newSessionRow('s2', NOW, {
+      name: 'n',
+      type: 'training',
+      disciplineId: 'generic-rings',
+      programId: null,
+      competitionLevel: null,
+      isChampionship: false,
+      competitionName: null,
+      weaponGroup: null,
+      shooterClass: null,
+      eventId: 'e1',
+      firearmId: null,
+      ammoLotId: null,
+      startedAt: NOW,
+      location: null,
+      decimalScoring: false,
+      seriesLength: null,
+    });
+    expect(plain).toMatchObject({ is_championship: 0, decimal_scoring: 0, event_id: 'e1' });
+  });
+
+  it('R2 a series row carries every column with the app defaults', () => {
+    expect(newSeriesRow('r1', NOW, { sessionId: 's1', position: 2, isSighter: true })).toEqual({
+      id: 'r1',
+      created_at: NOW,
+      updated_at: NOW,
+      deleted_at: null,
+      session_id: 's1',
+      position: 2,
+      is_sighter: 1,
+      is_final: 0,
+      photo_uri: null,
+      photo_geometry: null,
+      is_total_override: 0,
+      total_override_tenths: null,
+      total_override_shot_count: null,
+      note: null,
+    });
+    expect(
+      newSeriesRow('r2', NOW, { sessionId: 's1', position: 1, isSighter: false }),
+    ).toMatchObject({ is_sighter: 0 });
+  });
+
+  it('R3 a shot row: is_inner_ten_decimal 0; a value outside 0..109 throws RangeError', () => {
+    expect(
+      newShotRow('h1', NOW, { seriesId: 'r1', position: 3, valueTenths: 104, isInnerTen: true }),
+    ).toEqual({
+      id: 'h1',
+      created_at: NOW,
+      updated_at: NOW,
+      deleted_at: null,
+      series_id: 'r1',
+      position: 3,
+      value_tenths: 104,
+      is_inner_ten: 1,
+      is_inner_ten_decimal: 0,
+    });
+    const at = (valueTenths: number) => () =>
+      newShotRow('h', NOW, { seriesId: 'r', position: 1, valueTenths, isInnerTen: false });
+    expect(at(0)()).toMatchObject({ value_tenths: 0, is_inner_ten: 0 });
+    expect(at(109)()).toMatchObject({ value_tenths: 109 });
+    expect(at(-1)).toThrow(/value_tenths must be an integer 0..109/);
+    expect(at(110)).toThrow(RangeError);
+    expect(at(9.5)).toThrow(RangeError);
+  });
+});
+
+describe('withRoundsAdded', () => {
+  const pulled = {
+    id: 'f1',
+    make: 'Pardini',
+    round_count: 100,
+    rounds_since_maintenance: 7,
+    updated_at: '2026-01-01T00:00:00.000Z',
+    a_column_from_a_newer_build: 'kept',
+  };
+
+  it('R4 adds n to both counters, sets updated_at and keeps unknown keys', () => {
+    expect(withRoundsAdded(pulled, 10, NOW)).toEqual({
+      ...pulled,
+      round_count: 110,
+      rounds_since_maintenance: 17,
+      updated_at: NOW,
+    });
+    // The pulled payload is not mutated.
+    expect(pulled.round_count).toBe(100);
+  });
+
+  it('R4 a missing counter counts from zero', () => {
+    expect(withRoundsAdded({ id: 'f2' }, 3, NOW)).toEqual({
+      id: 'f2',
+      round_count: 3,
+      rounds_since_maintenance: 3,
+      updated_at: NOW,
+    });
+  });
+
+  it('R5 withRoundsAdded with n = 0 returns null (no firearm row pushed)', () => {
+    expect(withRoundsAdded(pulled, 0, NOW)).toBeNull();
+    expect(() => withRoundsAdded(pulled, -1, NOW)).toThrow(/non-negative integer, got -1/);
+    expect(() => withRoundsAdded(pulled, 1.5, NOW)).toThrow(RangeError);
+  });
+});

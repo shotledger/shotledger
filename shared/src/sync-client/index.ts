@@ -7,4 +7,7 @@ export * from './backoff';
 export * from './status';
 export * from './photo-queue';
 export * from './photo-uri';
+export * from './rows';
+export * from './session-entry';
+export * from './direct-push';
 export * from './http';
