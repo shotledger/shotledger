@@ -46,7 +46,9 @@ mellan enheter, samma som på telefonen:
   (telefonens Inställningar → Personligt).
 - **Efterlevnad**: profilen och, för Sverige, det aktivitetskrav som gäller
   dig (telefonens Inställningar → Efterlevnad). Har du inte valt något krav
-  visar sidan det som räknats fram från dina vapen, som telefonen gör.
+  visar sidan det som räknats fram från dina vapen, som telefonen gör. Har
+  du inte valt någon profil än visar sidan den som hör till webbläsarens
+  språk (Sverige för svenska); väljer du en sparas den.
 
 Ändra det du behöver och tryck på **Spara**. Ändrar du ett födelseår som
 redan var satt får du bekräfta först, som på telefonen. Telefonerna får

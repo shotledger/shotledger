@@ -1,13 +1,14 @@
 # Evidence report — editing account and compliance settings on the web (Tier 3)
 
 Spec: [`web-settings-edit-spec.md`](web-settings-edit-spec.md), including its
-§7 Revisions R1–R3.
+§7 Revisions R1–R7. R4–R7 answer an independent review of PR #672; the
+numbers below are from the fresh run after them.
 
 - **Spec approval: not obtained.** The run that wrote the spec could not get
   the maintainer's approval first-hand, so the correlation-breaking review has
-  not happened. Key choices C1–C8 and revisions R1–R3 are listed in the PR for
+  not happened. Key choices C1–C8 and revisions R1–R7 are listed in the PR for
   approval after the fact. Confidence is correspondingly lower.
-- **Source state:** commit `26c54bb` (the last code change; the spec
+- **Source state:** commit `e65666d` (the last code change; the spec
   revisions and this report are docs committed on top). Branch
   `feat/web-edit-settings`, on `feat/web-series-entry-impl` (#669) at
   `d6e1168`.
@@ -16,8 +17,10 @@ Spec: [`web-settings-edit-spec.md`](web-settings-edit-spec.md), including its
   `@cloudflare/vitest-plugin`); Node 24.12.0.
 - **Entry point:** `pnpm check`; `cd backend && npx vitest run
 --testTimeout=60000`; `npx stryker run --mutate <the four modules below>`.
-- **Independent verification:** not performed. Declared downgrade: the
-  adversarial pass was the author's own.
+- **Independent verification:** one round, by a fresh-context verifier
+  relayed through the coordinator, on `39b8391`. Two confirmed findings
+  (R4, R5) and three plausible ones (R6, R7, a manual sentence) were fixed.
+  The fixed state `e65666d` has not been re-verified: declared downgrade.
 
 ## Failure model (Tier 3)
 
@@ -36,42 +39,44 @@ Spec: [`web-settings-edit-spec.md`](web-settings-edit-spec.md), including its
 
 ## Spec → test mapping
 
-| Scenario                           | Test                                                                                  | Status |
-| ---------------------------------- | ------------------------------------------------------------------------------------- | ------ |
-| O1, O2                             | `shared/src/disciplines/eligibility.test.ts` › O1, O2                                 | pass   |
-| O3                                 | `shared/src/compliance/profile-registry.test.ts` › O3                                 | pass   |
-| R1–R4                              | `shared/src/sync-client/settings-edit.test.ts` › R1…R4                                | pass   |
-| B1–B6 (B5 per R1)                  | `settings-edit.test.ts` › B1…B6                                                       | pass   |
-| B7 property (fast-check, 100 runs) | `settings-edit.test.ts` › B7                                                          | pass   |
-| A1–A3                              | `app/src/db/queries/web-settings.test.ts`                                             | pass   |
-| W1–W4                              | `backend/test/web-settings.spec.ts` (Workers pool, real D1 + better-auth)             | pass   |
-| U1–U3, U4 (nothing changed)        | `web/src/settings/model.test.ts`                                                      | pass   |
-| U4, U5, U6 (per R2)                | `web/src/settings/save.test.ts`                                                       | pass   |
-| N1 no browser storage              | `save.test.ts` › N1 grep gate                                                         | pass   |
-| N2 settings only, allowlisted      | B4, B7                                                                                | pass   |
-| N3 no tombstone, no null           | B5, B7                                                                                | pass   |
-| N4 no outbox, no auto retry        | U5 (push only on Save/Retry); `save.ts` has no timer                                  | pass   |
-| N5 no endpoint/protocol/dep change | W1 (real `/sync/push`); diff touches no `backend/src`, no `package.json`, no lockfile | pass   |
-| N6 phone unchanged                 | O1–O3; `pnpm typecheck:app`; jest 698/698                                             | pass   |
-| N7 no shooting-data table          | B4, B7 (`tableName` always `settings`)                                                | pass   |
-| Browser checks                     | headless Chromium over CDP against `wrangler dev`; see below                          | pass   |
+| Scenario                                                         | Test                                                                                  | Status |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------ |
+| O1, O2                                                           | `shared/src/disciplines/eligibility.test.ts` › O1, O2                                 | pass   |
+| O3                                                               | `shared/src/compliance/profile-registry.test.ts` › O3                                 | pass   |
+| R1–R4                                                            | `shared/src/sync-client/settings-edit.test.ts` › R1…R4                                | pass   |
+| B1–B6 (B5 per R1)                                                | `settings-edit.test.ts` › B1…B6                                                       | pass   |
+| B7 property (fast-check, 300 runs; reaches `none` and unset, R4) | `settings-edit.test.ts` › B7                                                          | pass   |
+| B8 (R7), B9 (R4), B10 (R6)                                       | `settings-edit.test.ts` › B8, B9, B10                                                 | pass   |
+| A1–A3                                                            | `app/src/db/queries/web-settings.test.ts`                                             | pass   |
+| W1–W4                                                            | `backend/test/web-settings.spec.ts` (Workers pool, real D1 + better-auth)             | pass   |
+| U1–U3, U4 (nothing changed)                                      | `web/src/settings/model.test.ts`                                                      | pass   |
+| U4, U5, U6 (per R2); empty build (R4)                            | `web/src/settings/save.test.ts`                                                       | pass   |
+| N1 no browser storage                                            | `save.test.ts` › N1 grep gate                                                         | pass   |
+| N2 settings only, allowlisted                                    | B4, B7                                                                                | pass   |
+| N3 no tombstone, no null                                         | B5, B7                                                                                | pass   |
+| N4 no outbox, no auto retry                                      | U5 (push only on Save/Retry); `save.ts` has no timer                                  | pass   |
+| N5 no endpoint/protocol/dep change                               | W1 (real `/sync/push`); diff touches no `backend/src`, no `package.json`, no lockfile | pass   |
+| N6 phone unchanged                                               | O1–O3; `pnpm typecheck:app`; jest 698/698                                             | pass   |
+| N7 no shooting-data table                                        | B4, B7 (`tableName` always `settings`)                                                | pass   |
+| Browser checks                                                   | headless Chromium over CDP against `wrangler dev`; see below                          | pass   |
 
 ## Gauntlet (final fresh run, after the last code edit)
 
-| Layer                                           | Command                                                                                | Result                                                                                       |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                           | exit 0; vitest 2989 tests passed; jest 61 suites, 698 tests passed; i18n 1235 keys, 0 issues |
-| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                 | 100% statements 3407/3407, branches 2118/2118, functions 780/780, lines 2904/2904            |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                     | 15 files, 157 tests passed (W1–W4 included)                                                  |
-| Mutation                                        | `npx stryker run --mutate settings-edit.ts,rows.ts,eligibility.ts,profile-registry.ts` | 241 killed, 1 timeout, 6 survived: 97.58% (break 95); classified below                       |
-| Property-based                                  | B7 (fast-check, 100 runs)                                                              | pass                                                                                         |
-| Property suite alone                            | 4 hand mutants, `-t B7`                                                                | 4/4 killed (below)                                                                           |
-| Suite health                                    | `npx vitest run --sequence.shuffle <the changed suites>` × 3                           | 187 tests passed each time                                                                   |
-| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                           | 21 passed, 0 failed, 0 SVCs missing tests                                                    |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                 | built; 24 translated pages current; no dangling anchors                                      |
-| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                   | no dependency added or removed; no new network, storage or env use                           |
+| Layer                                           | Command                                                                                                                       | Result                                                                                       |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                  | exit 0; vitest 2993 tests passed; jest 61 suites, 698 tests passed; i18n 1235 keys, 0 issues |
+| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                                        | 100% statements 3409/3409, branches 2121/2121, functions 781/781, lines 2907/2907            |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                            | 15 files, 157 tests passed (W1–W4 included)                                                  |
+| Mutation                                        | `npx stryker run --mutate settings-edit.ts,rows.ts` (after R4–R7); earlier the same plus `eligibility.ts,profile-registry.ts` | 129 killed, 2 survived: 98.47% (both equivalent, below); earlier run 97.58%                  |
+| Property-based                                  | B7 (fast-check, 300 runs)                                                                                                     | pass                                                                                         |
+| Property suite alone                            | 4 hand mutants, `-t B7`                                                                                                       | 4/4 killed (below)                                                                           |
+| Suite health                                    | `npx vitest run --sequence.shuffle <the changed suites>` × 3                                                                  | 191 tests passed each time                                                                   |
+| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                                                                  | 21 passed, 0 failed, 0 SVCs missing tests                                                    |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                        | built; 24 translated pages current; no dangling anchors                                      |
+| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                                                          | no dependency added or removed; no new network, storage or env use                           |
 
-**Survivors.** Three are in the new code and equivalent:
+**Survivors.** After R4–R7 two remain in the new code, both equivalent
+(R4's rewrite removed the third, `?? 'none'`). From the earlier run:
 
 - `settings-edit.ts:50` `row === undefined` → `false`: `isSyncableSettingRow`
   already returns false for an `undefined` payload, so the branch is taken
@@ -96,6 +101,9 @@ Three are in lines this change did not touch and were not introduced by it:
 | M2 `value: String(value)` instead of JSON text     | killed |
 | M3 a change carries `deletedAt: now` (a tombstone) | killed |
 | M4 a valid skill class is refused (fail-closed)    | killed |
+
+After R4, removing the drop clause (a case under a profile with none) turns
+B7 alone red, and removing `newSettingRow`'s `...pulled` spread turns B8 red.
 
 **Negative controls.** N1: appending `// localStorage` to `save.ts` turned
 the gate red; restored, green. A2 passed on first run against the existing
@@ -130,6 +138,13 @@ not the repo.
    showed 1985 after its refresh.
 8. Swedish UI at 390 px wide: no horizontal scroll (`scrollWidth` 390).
 
+After R4–R7, on fresh synthetic accounts (`scratchpad/s301/drive-r4.mjs`),
+all PASS: with no profile stored, choosing the shown **None** enables Save
+and stores `"none"` (R6); Sweden saved, then a case picked and the profile
+switched back to None → saved, profile `"none"`, no case row (R4); the form
+fieldset is disabled while a held push is in flight and enabled after (R5).
+The original 16 checks pass again on a fresh account.
+
 ## Layers not run as specified
 
 - **SUBSTITUTED:** mutation ran on the four changed shared modules, not the
@@ -153,6 +168,10 @@ The phone's apply path is exercised on better-sqlite3, not expo-sqlite (A2).
   overwritten only if the user sets that field (C7).
 
 ## Honest notes
+
+- The independent review found R4: a reachable edit sequence (case, then
+  None) that the build refused with a message that explained nothing, and
+  B5 asserted that refusal. The author's adversarial pass missed it.
 
 - The coverage gate failed once (99.95% branches): the "case with no profile
   stored" branch had no test. Added as B5's R1 example, proven against a

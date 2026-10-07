@@ -259,3 +259,25 @@ Appended during implementation. None loosens a constraint.
 - **R3 (scope).** A fourth menu item made the phone-width menu and the
   account button overflow the screen. `web/src/styles.css` lets the narrow
   menu wrap and the account button truncate; no other page changes.
+
+Appended after an independent review of PR #672 (2026-10-07):
+
+- **R4 (B5 narrowed, new B9).** A case changed under a profile that offers
+  no cases is **dropped from the build, not refused**: pick a case, switch to
+  None, Save used to refuse the whole save with an unexplained "Could not
+  save". Now the profile is saved and the case row is left as it was. B5's
+  "case under None" example moves to B9. B7's generator now also produces
+  profile `none` and an unset profile, so a regression is caught. The web's
+  change detection agrees with the build, so a dropped case alone does not
+  enable Save, and a build with no changes sends nothing.
+- **R5 (C8).** The form is locked while a save is in flight, so an edit can
+  no longer be overwritten by the refresh that follows. The web's language is
+  fixed at page load (`web/src/i18n.ts`, no switcher), and the opened values
+  no longer depend on it (R6), so no language change can reset the draft.
+- **R6 (C3 changed, new B10).** An unset profile stays unset in the form; the
+  page shows the locale default beside it. Choosing a profile — the shown
+  default included — writes it, as tapping it does on the phone. A case is
+  checked against the shown default while no profile is stored
+  (`SettingsDeps.defaultProfile`).
+- **R7 (new B8).** A pulled column this build does not know survives the
+  rewrite of a settings row (pins `newSettingRow`'s spread).
