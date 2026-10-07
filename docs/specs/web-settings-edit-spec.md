@@ -246,3 +246,16 @@ device's edit of another key survives.
   the backend Workers pool for W1–W4, `pnpm check`, the docs gates. No new
   gauntlet files.
 - **New dependencies:** none.
+
+## 7. Revisions
+
+Appended during implementation. None loosens a constraint.
+
+- **R1 (B5 widened).** Changing the case while no profile is stored at all
+  is refused too. The coverage gate found that branch untested; the example
+  was added to B5 and watched failing against a mutant first.
+- **R2 (U6 refined).** A rejected settings ack refreshes the account before
+  the page says "Could not save", so the page shows what the server holds.
+- **R3 (scope).** A fourth menu item made the phone-width menu and the
+  account button overflow the screen. `web/src/styles.css` lets the narrow
+  menu wrap and the account button truncate; no other page changes.
