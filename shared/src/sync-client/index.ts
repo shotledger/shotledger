@@ -12,3 +12,4 @@ export * from './account-settings';
 export * from './session-entry';
 export * from './direct-push';
 export * from './http';
+export * from './settings-edit';

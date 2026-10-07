@@ -134,3 +134,19 @@ export function withRoundsAdded(pulled: Payload, n: number, now: string): Payloa
     updated_at: now,
   };
 }
+
+/**
+ * A synced setting's whole row, as the phone's setSetting writes it: `value`
+ * is the JSON text, `created_at` survives from the pulled row (spread, so a
+ * column this build does not know survives too), never a tombstone.
+ */
+export function newSettingRow(key: string, value: unknown, now: string, pulled?: Payload): Payload {
+  return {
+    ...pulled,
+    id: key,
+    value: JSON.stringify(value),
+    created_at: typeof pulled?.created_at === 'string' ? pulled.created_at : now,
+    updated_at: now,
+    deleted_at: null,
+  };
+}
