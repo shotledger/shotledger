@@ -13,8 +13,11 @@ import { StyleSheet, Switch, View } from 'react-native';
 import {
   buildProgramSkeleton,
   decimalAllowed,
+  defaultProgramFor,
   defaultSessionName,
+  derivedWeaponGroup,
   disciplinesForRegulations,
+  firstDisciplineFor,
   programsForDiscipline,
   requireDiscipline,
   DISCIPLINES,
@@ -69,48 +72,13 @@ import { Spacing } from '@/theme/tokens';
 
 const NO_PROGRAM = 'none';
 
-/**
- * A competition is the case the fixed format exists for, so it preselects it
- * (#348); training starts free and fills in as it goes. Both are overridable.
- */
-function defaultProgramFor(type: SessionType, disciplineId: string): string {
-  if (type !== 'competition') return NO_PROGRAM;
-  return programsForDiscipline(disciplineId)[0]?.id ?? NO_PROGRAM;
+// The defaults themselves live in shared/ so the web cannot drift from them.
+function initialProgramFor(type: SessionType, disciplineId: string): string {
+  return defaultProgramFor(type, disciplineId) ?? NO_PROGRAM;
 }
 
-/**
- * The discipline to land on when a regelverk is picked: the first that
- * belongs to a federation at all. Generic disciplines survive every filter
- * and sort first, so without this a shooter choosing SvSF would land on free
- * training against a ring target. Not "the regelverk's OWN federation":
- * SvSF's own discipline is snabbluftpistol, and the shooter who enabled SvSF
- * is far more likely shooting luftpistol — an ISSF definition, listed first.
- */
-function firstDisciplineFor(regulationId: string): string | undefined {
-  const available = disciplinesForRegulations([regulationId]);
-  return (available.find((d) => d.federation !== 'generic') ?? available[0])?.id;
-}
-
-/**
- * The vapengrupp a training session takes from the gun instead of asking for
- * it (maintainer, 2026-09-13: "the weapon group and class are not relevant for
- * practise. only relevant when competing").
- *
- * Derived, never nulled: `goldSeriesThreshold` reads the weapon group, and
- * practice series count towards the märkesprov, so a training session that
- * stopped carrying one would silently stop counting.
- *
- * `isDefaultForGroup` marks the go-to firearm FOR a group rather than the
- * primary group OF a firearm, so it is used only to break a tie. When it
- * cannot, this returns null and the caller keeps showing the picker rather
- * than guessing.
- */
-function derivedWeaponGroup(firearmId: string | null): string | null {
-  if (firearmId === null) return null;
-  const rows = listFirearmGroups(db, firearmId);
-  if (rows.length === 1) return rows[0]!.groupId;
-  const marked = rows.filter((row) => row.isDefaultForGroup === 1);
-  return marked.length === 1 ? marked[0]!.groupId : null;
+function weaponGroupFromFirearm(firearmId: string | null): string | null {
+  return firearmId === null ? null : derivedWeaponGroup(listFirearmGroups(db, firearmId));
 }
 
 /**
@@ -184,7 +152,7 @@ export default function NewSessionScreen() {
     firstDisciplineFor(regulationId) ?? DISCIPLINES[0]?.id ?? 'spsf-precision';
   const [disciplineId, setDisciplineId] = useState<string>(disciplineIdInitial);
   const [programId, setProgramId] = useState<string>(() =>
-    defaultProgramFor(type, disciplineIdInitial),
+    initialProgramFor(type, disciplineIdInitial),
   );
   const [level, setLevel] = useState<CompetitionLevel>('forening');
   const [isChampionship, setIsChampionship] = useState(false);
@@ -255,7 +223,7 @@ export default function NewSessionScreen() {
   // weapon group then comes from the gun exactly as in training (#569).
   const asksGroup = isCompetition && tracked.weaponGroups;
   const asksClass = isCompetition && tracked.shooterClass;
-  const derivedGroup = asksGroup ? null : derivedWeaponGroup(firearmId);
+  const derivedGroup = asksGroup ? null : weaponGroupFromFirearm(firearmId);
   // The one case training still asks: a gun IS chosen but sits in several
   // groups with no tie broken. Nulling it there would cost the shooter their
   // märke count on a gun the app knows about. With no firearm chosen there is
@@ -284,12 +252,12 @@ export default function NewSessionScreen() {
 
   function onSelectType(nextType: SessionType) {
     setType(nextType);
-    setProgramId(defaultProgramFor(nextType, disciplineId));
+    setProgramId(initialProgramFor(nextType, disciplineId));
   }
 
   function onSelectDiscipline(nextId: string, underRegulationId: string = regulationId) {
     setDisciplineId(nextId);
-    setProgramId(defaultProgramFor(type, nextId));
+    setProgramId(initialProgramFor(type, nextId));
     setWeaponGroup(null);
     setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
     setDecimalScoring(false);
