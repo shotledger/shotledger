@@ -411,3 +411,31 @@ fixes. **Each needs the maintainer's OK.**
 - B7 is unchanged: #676 (the phone fix that would make the web and phone
   agree) is still open; once it merges, P1's B7 case flips to agreement and
   the deviation text goes.
+
+Added after a second independent verifier failed the counter correction
+(2026-10-07). **Each needs the maintainer's OK; R21 replaces part of R5.**
+
+- **R21 (High, replaces R5's source half).** R5 put a refused session's
+  rounds back onto its source firearm. A session can only be refused as
+  `tombstoned`, and the app deletes one only through
+  `deleteSessionAndSeries`, which itself backs the rounds out of the source
+  and pushes that firearm with the tombstones, before the web's push. The
+  web's source row (pulled before, minus every move) lands over it and is
+  already right, so the old correction counted the deleted session twice
+  (verifier V1: f1 97, should be 95; V2 with floors: 1, should be 0). Now a
+  correction only takes a refused session's rounds off its **target**. K21,
+  W5 and P6 now model the deleting device as the phone behaves (P6 runs the
+  phone's own `deleteSessionAndSeries`); the old behaviour fails all three.
+- **R22.** The correction rewrites a target only if that row is still
+  exactly as the push wrote it (its `updated_at` is the push's,
+  `CounterPlan.writtenAt`). If another device wrote it since, its true
+  count cannot be known from here (verifier V3: a stale phone wrote 15, the
+  truth is 18, a delta would give 13), so it is left alone and the page asks
+  to check it with Adjust Round Count (K22, W7).
+- **R23.** An edit that drops a held firearm change (a lost response whose
+  refusals were never read), or another account meeting one, now says the
+  round counts may need checking instead of dropping it silently. Keeping
+  the held edit across edits, as #669 does for blank rows, does not fit: any
+  edit of the bulk form changes what would be sent.
+- **R24.** The account is checked again just before a correction is built;
+  another account drops it with the R15 message.
