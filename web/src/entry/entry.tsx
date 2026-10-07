@@ -34,7 +34,9 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '../../../app/src/features/session/labels';
-import { currentUserId, loadTables, pushEntry, signIn, type SignInError } from '../api';
+import { currentUserId, loadTables, pushEntry } from '../api';
+import type { ReauthOutcome } from '../reauth';
+import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
 import {
   addRow,
@@ -47,6 +49,7 @@ import {
   onRowEnter,
   ringDisciplines,
   rowSummary,
+  sendsTheSame,
   startedAtIso,
   toDraft,
   withDiscipline,
@@ -136,6 +139,7 @@ function statusText(t: TFunction, state: SaveState): string | null {
       if (status.error === 'network') return t('web.entry.failedNetwork');
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.entry.failedOutdated');
+      if (status.unconfirmed) return t('web.entry.failedUnconfirmed');
       return t('web.entry.failed');
     case 'accountChanged':
       return t('web.entry.accountChanged');
@@ -145,56 +149,20 @@ function statusText(t: TFunction, state: SaveState): string | null {
   }
 }
 
-function SignInAgain({ onSignedIn }: { onSignedIn: () => void }) {
-  const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<SignInError | null>(null);
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    void signIn(email, password).then((failure) => {
-      setError(failure);
-      if (failure === null) onSignedIn();
-    });
-  };
-  return (
-    <form className="inline-sign-in" onSubmit={onSubmit}>
-      <input
-        type="email"
-        autoComplete="username"
-        placeholder={t('account.emailPlaceholder')}
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        required
-      />
-      <input
-        type="password"
-        autoComplete="current-password"
-        placeholder={t('account.passwordPlaceholder')}
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        required
-      />
-      <button type="submit" className="secondary">
-        {t('account.signIn')}
-      </button>
-      {error && <p className="danger">{t(`account.error.${error}`)}</p>}
-    </form>
-  );
-}
-
 export function Entry({
   tables,
   refresh,
+  onReauthenticated,
 }: {
   tables: PulledTables;
   refresh: () => Promise<boolean>;
+  /** App reloads the logbook when another account signed in (R22). */
+  onReauthenticated: (userId: string) => ReauthOutcome;
 }) {
   const { t, i18n } = useTranslation();
   const online = useOnline();
   const [form, setForm] = useState<EntryForm>(() => initialForm(new Date()));
   const [state, setState] = useState<SaveState>(IDLE);
-  const [signedInAgain, setSignedInAgain] = useState(false);
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
   // A row added by Enter exists only after the next render.
   const pendingFocus = useRef<number | null>(null);
@@ -206,7 +174,9 @@ export function Entry({
 
   const edit = (next: EntryForm) => {
     setForm(next);
-    setState(afterEdit);
+    // Only blank rows added (Enter, Add Series): the held request still holds (R21).
+    const unchanged = sendsTheSame(form, next);
+    setState((was) => afterEdit(was, { sendsTheSame: unchanged }));
   };
   const set = <K extends keyof EntryForm>(key: K, value: EntryForm[K]) =>
     edit({ ...form, [key]: value });
@@ -276,7 +246,6 @@ export function Entry({
     const held = submitRequest(state);
     if (blocked !== null || startedAt === null) return;
     setState({ status: { kind: 'saving' }, held: null });
-    setSignedInAgain(false);
     void save(
       {
         loadContext: async () => {
@@ -298,13 +267,20 @@ export function Entry({
         refresh,
       },
       held,
-    ).then((next) => {
-      setState(next);
-      if (next.status.kind === 'saved') {
-        setForm(initialForm(new Date()));
-        setSignedInAgain(false);
-      }
-    });
+    )
+      .then((next) => {
+        setState(next);
+        if (next.status.kind === 'saved') setForm(initialForm(new Date()));
+      })
+      // save() catches what it calls; this is the last guard against "saving" forever (R18).
+      .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
+  };
+
+  // The same account signed in again: only the signed-out notice goes.
+  const onSignedIn = (userId: string) => {
+    if (onReauthenticated(userId) === 'same') {
+      setState((was) => ({ status: { kind: 'idle' }, held: was.held }));
+    }
   };
 
   const onSubmit = (event: FormEvent) => {
@@ -337,328 +313,329 @@ export function Entry({
   return (
     <div className="entry">
       <form className="entry" onSubmit={onSubmit} onKeyDown={onFormKeyDown} noValidate>
-        <section className="card entry-fields">
-          <label className="field">
-            {t('session.type')}
-            <select
-              value={form.type}
-              onChange={(event) => edit(withType(form, event.target.value as EntryForm['type']))}
-            >
-              <option value="training">{t('sessionType.training')}</option>
-              <option value="competition">{t('sessionType.competition')}</option>
-            </select>
-          </label>
-          <label className="field">
-            {t('session.regulation')}
-            <select
-              value={form.regulationId}
-              onChange={(event) => edit(withRegulation(form, event.target.value))}
-            >
-              {REGULATIONS.map((regulation) => (
-                <option key={regulation.id} value={regulation.id}>
-                  {regulation.shortName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            {t('session.discipline')}
-            <select
-              value={form.disciplineId}
-              onChange={(event) => edit(withDiscipline(form, event.target.value))}
-            >
-              {ringDisciplines(form.regulationId).map((d) => (
-                <option key={d.id} value={d.id}>
-                  {disciplineLabel(t, d.id)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {programs.length > 0 && (
+        {/* Nothing changes under a save in flight (R23). */}
+        <fieldset className="entry-fieldset" disabled={state.status.kind === 'saving'}>
+          <section className="card entry-fields">
             <label className="field">
-              {t('session.matchFormat')}
+              {t('session.type')}
               <select
-                value={form.programId ?? ''}
-                onChange={(event) => edit(withProgram(form, event.target.value || null))}
+                value={form.type}
+                onChange={(event) => edit(withType(form, event.target.value as EntryForm['type']))}
               >
-                <option value="">{t('session.freeFormat')}</option>
-                {programs.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {matchFormatLabel(t, p.id, programs.length)}
+                <option value="training">{t('sessionType.training')}</option>
+                <option value="competition">{t('sessionType.competition')}</option>
+              </select>
+            </label>
+            <label className="field">
+              {t('session.regulation')}
+              <select
+                value={form.regulationId}
+                onChange={(event) => edit(withRegulation(form, event.target.value))}
+              >
+                {REGULATIONS.map((regulation) => (
+                  <option key={regulation.id} value={regulation.id}>
+                    {regulation.shortName}
                   </option>
                 ))}
               </select>
             </label>
-          )}
-          <label className="field">
-            {t('session.date')}
-            <input
-              type="date"
-              value={form.date}
-              onChange={(event) => set('date', event.target.value)}
-              required
-            />
-          </label>
-          <label className="field">
-            {t('web.entry.time')}
-            <input
-              type="time"
-              value={form.time}
-              onChange={(event) => set('time', event.target.value)}
-              required
-            />
-          </label>
-          <label className="field">
-            {t('session.name')}
-            <input
-              value={form.name}
-              placeholder={defaultName}
-              maxLength={TEXT_LIMITS.sessions.name}
-              onChange={(event) => set('name', event.target.value)}
-            />
-          </label>
-          <label className="field">
-            {t('session.location')}
-            <input
-              value={form.location}
-              list="entry-locations"
-              placeholder={t('session.locationPlaceholder')}
-              maxLength={TEXT_LIMITS.sessions.location}
-              onChange={(event) => set('location', event.target.value)}
-            />
-            <datalist id="entry-locations">
-              {suggestions.map((place) => (
-                <option key={place} value={place} />
-              ))}
-            </datalist>
-          </label>
-          {isCompetition && (
-            <>
+            <label className="field">
+              {t('session.discipline')}
+              <select
+                value={form.disciplineId}
+                onChange={(event) => edit(withDiscipline(form, event.target.value))}
+              >
+                {ringDisciplines(form.regulationId).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {disciplineLabel(t, d.id)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {programs.length > 0 && (
               <label className="field">
-                {t('session.competitionLevel')}
+                {t('session.matchFormat')}
                 <select
-                  value={form.competitionLevel}
-                  onChange={(event) =>
-                    set('competitionLevel', event.target.value as CompetitionLevel)
-                  }
+                  value={form.programId ?? ''}
+                  onChange={(event) => edit(withProgram(form, event.target.value || null))}
                 >
-                  {COMPETITION_LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {t(`competitionLevel.${level}`)}
+                  <option value="">{t('session.freeFormat')}</option>
+                  {programs.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {matchFormatLabel(t, p.id, programs.length)}
                     </option>
                   ))}
                 </select>
               </label>
+            )}
+            <label className="field">
+              {t('session.date')}
+              <input
+                type="date"
+                value={form.date}
+                onChange={(event) => set('date', event.target.value)}
+                required
+              />
+            </label>
+            <label className="field">
+              {t('web.entry.time')}
+              <input
+                type="time"
+                value={form.time}
+                onChange={(event) => set('time', event.target.value)}
+                required
+              />
+            </label>
+            <label className="field">
+              {t('session.name')}
+              <input
+                value={form.name}
+                placeholder={defaultName}
+                maxLength={TEXT_LIMITS.sessions.name}
+                onChange={(event) => set('name', event.target.value)}
+              />
+            </label>
+            <label className="field">
+              {t('session.location')}
+              <input
+                value={form.location}
+                list="entry-locations"
+                placeholder={t('session.locationPlaceholder')}
+                maxLength={TEXT_LIMITS.sessions.location}
+                onChange={(event) => set('location', event.target.value)}
+              />
+              <datalist id="entry-locations">
+                {suggestions.map((place) => (
+                  <option key={place} value={place} />
+                ))}
+              </datalist>
+            </label>
+            {isCompetition && (
+              <>
+                <label className="field">
+                  {t('session.competitionLevel')}
+                  <select
+                    value={form.competitionLevel}
+                    onChange={(event) =>
+                      set('competitionLevel', event.target.value as CompetitionLevel)
+                    }
+                  >
+                    {COMPETITION_LEVELS.map((level) => (
+                      <option key={level} value={level}>
+                        {t(`competitionLevel.${level}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field check">
+                  <input
+                    type="checkbox"
+                    checked={form.isChampionship}
+                    onChange={(event) => set('isChampionship', event.target.checked)}
+                  />
+                  {t('session.championship')}
+                </label>
+                <label className="field">
+                  {t('session.competitionName')}
+                  <input
+                    value={form.competitionName}
+                    placeholder={t('session.competitionNamePlaceholder')}
+                    maxLength={TEXT_LIMITS.sessions.competition_name}
+                    onChange={(event) => set('competitionName', event.target.value)}
+                  />
+                </label>
+              </>
+            )}
+            {showGroupPicker && (
+              <label className="field">
+                {t('session.weaponGroup')}
+                <select
+                  value={form.weaponGroup ?? ''}
+                  onChange={(event) => set('weaponGroup', event.target.value || null)}
+                >
+                  <option value="">{t('session.none')}</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {isCompetition && classes.length > 0 && (
+              <label className="field">
+                {t('session.shooterClass')}
+                <select
+                  value={form.shooterClass ?? ''}
+                  onChange={(event) => set('shooterClass', event.target.value || null)}
+                >
+                  <option value="">{t('session.none')}</option>
+                  {classes.map((code) => (
+                    <option key={code} value={code}>
+                      {formatShooterClass(code)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {isCompetition && events.length > 0 && (
+              <label className="field">
+                {t('session.event')}
+                <select
+                  value={form.eventId ?? ''}
+                  onChange={(event) => set('eventId', event.target.value || null)}
+                >
+                  <option value="">{t('session.none')}</option>
+                  {events.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {t(`eventCategory.${categoryKey(e.category)}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="field">
+              {t('session.firearm')}
+              <select
+                value={form.firearmId ?? ''}
+                onChange={(event) => set('firearmId', event.target.value || null)}
+              >
+                <option value="">{t('session.none')}</option>
+                {firearms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              {t('session.ammoLot')}
+              <select
+                value={form.ammoLotId ?? ''}
+                onChange={(event) => set('ammoLotId', event.target.value || null)}
+              >
+                <option value="">{t('session.none')}</option>
+                {ammoLots.map((lot) => (
+                  <option key={lot.id} value={lot.id}>
+                    {lot.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {decimalShown(form) && (
               <label className="field check">
                 <input
                   type="checkbox"
-                  checked={form.isChampionship}
-                  onChange={(event) => set('isChampionship', event.target.checked)}
+                  checked={form.decimalScoring}
+                  onChange={(event) => set('decimalScoring', event.target.checked)}
                 />
-                {t('session.championship')}
+                {t('session.decimalScoring')}
               </label>
-              <label className="field">
-                {t('session.competitionName')}
-                <input
-                  value={form.competitionName}
-                  placeholder={t('session.competitionNamePlaceholder')}
-                  maxLength={TEXT_LIMITS.sessions.competition_name}
-                  onChange={(event) => set('competitionName', event.target.value)}
-                />
-              </label>
-            </>
-          )}
-          {showGroupPicker && (
-            <label className="field">
-              {t('session.weaponGroup')}
-              <select
-                value={form.weaponGroup ?? ''}
-                onChange={(event) => set('weaponGroup', event.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {isCompetition && classes.length > 0 && (
-            <label className="field">
-              {t('session.shooterClass')}
-              <select
-                value={form.shooterClass ?? ''}
-                onChange={(event) => set('shooterClass', event.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {classes.map((code) => (
-                  <option key={code} value={code}>
-                    {formatShooterClass(code)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {isCompetition && events.length > 0 && (
-            <label className="field">
-              {t('session.event')}
-              <select
-                value={form.eventId ?? ''}
-                onChange={(event) => set('eventId', event.target.value || null)}
-              >
-                <option value="">{t('session.none')}</option>
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {t(`eventCategory.${categoryKey(e.category)}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="field">
-            {t('session.firearm')}
-            <select
-              value={form.firearmId ?? ''}
-              onChange={(event) => set('firearmId', event.target.value || null)}
-            >
-              <option value="">{t('session.none')}</option>
-              {firearms.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            {t('session.ammoLot')}
-            <select
-              value={form.ammoLotId ?? ''}
-              onChange={(event) => set('ammoLotId', event.target.value || null)}
-            >
-              <option value="">{t('session.none')}</option>
-              {ammoLots.map((lot) => (
-                <option key={lot.id} value={lot.id}>
-                  {lot.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {decimalShown(form) && (
-            <label className="field check">
-              <input
-                type="checkbox"
-                checked={form.decimalScoring}
-                onChange={(event) => set('decimalScoring', event.target.checked)}
-              />
-              {t('session.decimalScoring')}
-            </label>
-          )}
-          {form.programId === null && (
-            <label className="field">
-              {t('session.seriesLength')}
-              <input
-                inputMode="numeric"
-                value={form.seriesLengthText}
-                placeholder={String(discipline.defaultSeriesLength)}
-                onChange={(event) => set('seriesLengthText', event.target.value)}
-              />
-            </label>
-          )}
-        </section>
-
-        <section className="card series-rows">
-          {form.rows.map((row, index) => {
-            const summary = rowSummary(row.text, mode);
-            const label = rowLabel(index + 1);
-            const rowError = rowErrors.get(index + 1);
-            return (
-              <div key={row.key} className="series-row">
-                <label htmlFor={`row-${row.key}`}>{label}</label>
-                <input
-                  id={`row-${row.key}`}
-                  ref={(element) => {
-                    if (element) rowInputs.current.set(row.key, element);
-                    else rowInputs.current.delete(row.key);
-                  }}
-                  className="shots"
-                  value={row.text}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-invalid={rowError !== undefined || !summary.ok}
-                  onKeyDown={(event) => onRowKeyDown(event, index)}
-                  onChange={(event) =>
-                    edit({
-                      ...form,
-                      rows: form.rows.map((r, i) =>
-                        i === index ? { ...r, text: event.target.value } : r,
-                      ),
-                    })
-                  }
-                />
-                <span className="row-summary">
-                  {summary.ok && summary.shots > 0
-                    ? t('web.entry.rowSummary', {
-                        total: tenthsToScore(summary.totalTenths).toFixed(
-                          mode === 'decimal' ? 1 : 0,
-                        ),
-                        innerTens: summary.innerTens,
-                      })
-                    : ''}
-                </span>
-                {!fixed && (
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      tabIndex={-1}
-                      checked={row.isSighter}
-                      disabled={!canMarkSighter(form, index)}
-                      onChange={(event) =>
-                        edit({
-                          ...form,
-                          rows: form.rows.map((r, i) =>
-                            i === index ? { ...r, isSighter: event.target.checked } : r,
-                          ),
-                        })
-                      }
-                    />
-                    {t('session.sighter')}
-                  </label>
-                )}
-                {rowError && <p className="danger row-error">{rowError}</p>}
-              </div>
-            );
-          })}
-          <div>
-            <button type="button" className="secondary" onClick={() => edit(addRow(form))}>
-              {t('session.addSeries')}
-            </button>
-          </div>
-        </section>
-
-        <section className="entry-actions">
-          {/* While a request is held, the one action resends it (R13). */}
-          <button type="submit" disabled={blocked !== null || startedAt === null}>
-            {state.held === null ? t('common.save') : t('web.entry.retry')}
-          </button>
-          <div className="entry-status" role="status">
-            {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}
-            {startedAt === null && <p className="danger">{t('web.entry.errorDateTime')}</p>}
-            {message && (
-              <p className={state.status.kind === 'failed' ? 'danger' : 'muted'}>{message}</p>
             )}
-            {formErrors.map((text) => (
-              <p key={text} className="danger">
-                {text}
-              </p>
-            ))}
-          </div>
-        </section>
+            {form.programId === null && (
+              <label className="field">
+                {t('session.seriesLength')}
+                <input
+                  inputMode="numeric"
+                  value={form.seriesLengthText}
+                  placeholder={String(discipline.defaultSeriesLength)}
+                  onChange={(event) => set('seriesLengthText', event.target.value)}
+                />
+              </label>
+            )}
+          </section>
+
+          <section className="card series-rows">
+            {form.rows.map((row, index) => {
+              const summary = rowSummary(row.text, mode);
+              const label = rowLabel(index + 1);
+              const rowError = rowErrors.get(index + 1);
+              return (
+                <div key={row.key} className="series-row">
+                  <label htmlFor={`row-${row.key}`}>{label}</label>
+                  <input
+                    id={`row-${row.key}`}
+                    ref={(element) => {
+                      if (element) rowInputs.current.set(row.key, element);
+                      else rowInputs.current.delete(row.key);
+                    }}
+                    className="shots"
+                    value={row.text}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-invalid={rowError !== undefined || !summary.ok}
+                    onKeyDown={(event) => onRowKeyDown(event, index)}
+                    onChange={(event) =>
+                      edit({
+                        ...form,
+                        rows: form.rows.map((r, i) =>
+                          i === index ? { ...r, text: event.target.value } : r,
+                        ),
+                      })
+                    }
+                  />
+                  <span className="row-summary">
+                    {summary.ok && summary.shots > 0
+                      ? t('web.entry.rowSummary', {
+                          total: tenthsToScore(summary.totalTenths).toFixed(
+                            mode === 'decimal' ? 1 : 0,
+                          ),
+                          innerTens: summary.innerTens,
+                        })
+                      : ''}
+                  </span>
+                  {!fixed && (
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        tabIndex={-1}
+                        checked={row.isSighter}
+                        disabled={!canMarkSighter(form, index)}
+                        onChange={(event) =>
+                          edit({
+                            ...form,
+                            rows: form.rows.map((r, i) =>
+                              i === index ? { ...r, isSighter: event.target.checked } : r,
+                            ),
+                          })
+                        }
+                      />
+                      {t('session.sighter')}
+                    </label>
+                  )}
+                  {rowError && <p className="danger row-error">{rowError}</p>}
+                </div>
+              );
+            })}
+            <div>
+              <button type="button" className="secondary" onClick={() => edit(addRow(form))}>
+                {t('session.addSeries')}
+              </button>
+            </div>
+          </section>
+
+          <section className="entry-actions">
+            {/* While a request is held, the one action resends it (R13). */}
+            <button type="submit" disabled={blocked !== null || startedAt === null}>
+              {state.held === null ? t('common.save') : t('web.entry.retry')}
+            </button>
+            <div className="entry-status" role="status">
+              {blocked === 'offline' && <p className="danger">{t('web.entry.offline')}</p>}
+              {startedAt === null && <p className="danger">{t('web.entry.errorDateTime')}</p>}
+              {message && (
+                <p className={state.status.kind === 'failed' ? 'danger' : 'muted'}>{message}</p>
+              )}
+              {formErrors.map((text) => (
+                <p key={text} className="danger">
+                  {text}
+                </p>
+              ))}
+            </div>
+          </section>
+        </fieldset>
       </form>
       {/* Outside the entry form: a form cannot nest in another. */}
-      {failedWith === 'unauthenticated' && !signedInAgain && (
-        <SignInAgain onSignedIn={() => setSignedInAgain(true)} />
-      )}
+      {failedWith === 'unauthenticated' && <SignInAgain onSignedIn={onSignedIn} />}
     </div>
   );
 }

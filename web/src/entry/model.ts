@@ -178,6 +178,25 @@ export function withRegulation(form: EntryForm, regulationId: string): EntryForm
   return withDiscipline(form, firstRingDiscipline(regulationId), regulationId);
 }
 
+/**
+ * Whether `next` builds the same session as `prev`: only blank, unmarked rows
+ * appended, which the builder drops. Enter and Add Series then keep a held
+ * request instead of silently discarding it (R21).
+ */
+export function sendsTheSame(prev: EntryForm, next: EntryForm): boolean {
+  const { rows: before, ...fieldsBefore } = prev;
+  const { rows: after, ...fieldsAfter } = next;
+  if (after.length < before.length) return false;
+  const keys = Object.keys(fieldsBefore) as (keyof typeof fieldsBefore)[];
+  return (
+    keys.every((key) => fieldsBefore[key] === fieldsAfter[key]) &&
+    before.every(
+      (row, i) => row.text === after[i]!.text && row.isSighter === after[i]!.isSighter,
+    ) &&
+    after.slice(before.length).every((row) => row.text.trim() === '' && !row.isSighter)
+  );
+}
+
 export function addRow(form: EntryForm): EntryForm {
   return { ...form, rows: [...form.rows, newRow()] };
 }

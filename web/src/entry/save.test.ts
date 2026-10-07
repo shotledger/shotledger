@@ -80,6 +80,30 @@ describe('saving an entry', () => {
     }
   });
 
+  it('U9 an answer whose acks do not match what was sent holds the request (R19)', async () => {
+    const unconfirmed = deps({ kind: 'failed', error: 'unknown', unconfirmed: true });
+    expect(await save(unconfirmed, null)).toEqual({
+      status: { kind: 'failed', error: 'unknown', unconfirmed: true },
+      held: { changes: CHANGES, userId: 'user-a' },
+    });
+  });
+
+  it('U10 a build that throws fails the save instead of leaving it saving (R18)', async () => {
+    const throwing = deps(
+      { kind: 'saved' },
+      {
+        build: vi.fn((): EntryResult => {
+          throw new TypeError('crypto.randomUUID is not a function');
+        }),
+      },
+    );
+    expect(await save(throwing, null)).toEqual({
+      status: { kind: 'failed', error: 'unknown' },
+      held: null,
+    });
+    expect(throwing.push).not.toHaveBeenCalled();
+  });
+
   it('U2 nothing retries on its own (N2)', async () => {
     const failing = deps({ kind: 'failed', error: 'network' });
     await save(failing, null);
@@ -171,6 +195,15 @@ describe('saving an entry', () => {
     expect(afterEdit(failed)).toEqual(IDLE);
     const saving: SaveState = { status: { kind: 'saving' }, held: null };
     expect(afterEdit(saving)).toBe(saving);
+  });
+
+  it('U12 an edit that changes nothing that was sent keeps the held request (R21)', () => {
+    const failed: SaveState = {
+      status: { kind: 'failed', error: 'network' },
+      held: { changes: CHANGES, userId: 'user-a' },
+    };
+    expect(afterEdit(failed, { sendsTheSame: true })).toBe(failed);
+    expect(afterEdit(failed, { sendsTheSame: false })).toEqual(IDLE);
   });
 
   it('U4 a save refreshes the logbook and clears the draft; a failed refresh says "reload"', async () => {

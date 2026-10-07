@@ -29,6 +29,7 @@
     "shared/src/firearms/**/*.ts",
     "shared/src/dates/**/*.ts",
     "web/src/entry/*.ts",
+    "web/src/reauth.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
     "!shared/src/shotlog/fixtures.ts"

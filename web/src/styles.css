@@ -660,6 +660,15 @@ a.button {
   max-width: 960px;
 }
 
+.entry-fieldset {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
 .entry-fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

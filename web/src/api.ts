@@ -59,12 +59,31 @@ export async function signIn(email: string, password: string): Promise<SignInErr
     writeToken(session.token);
     return null;
   } catch (error: unknown) {
-    // Mirrors the app's mapping (features/account/use-account.ts).
-    if (error instanceof AuthError) {
-      if ([400, 401, 403, 422].includes(error.status)) return 'invalidCredentials';
-      return error.status >= 500 ? 'network' : 'unknown';
-    }
-    return 'network';
+    return signInError(error);
+  }
+}
+
+// Mirrors the app's mapping (features/account/use-account.ts).
+function signInError(error: unknown): SignInError {
+  if (error instanceof AuthError) {
+    if ([400, 401, 403, 422].includes(error.status)) return 'invalidCredentials';
+    return error.status >= 500 ? 'network' : 'unknown';
+  }
+  return 'network';
+}
+
+/** The inline sign-in on a writing page: the new user's id, or why not. */
+export async function signInAgain(
+  email: string,
+  password: string,
+): Promise<{ userId: string } | { error: SignInError }> {
+  try {
+    const session = await account.signIn(email, password);
+    memoryToken = session.token;
+    writeToken(session.token);
+    return { userId: session.userId };
+  } catch (error: unknown) {
+    return { error: signInError(error) };
   }
 }
 
@@ -97,8 +116,9 @@ export async function currentUserId(): Promise<string | null> {
   return (await account.currentUser())?.userId ?? null;
 }
 
-export async function currentEmail(): Promise<string | null> {
-  return (await account.currentUser())?.email ?? null;
+/** The signed-in user, for the shell and for telling accounts apart (R22). */
+export function currentAccount(): Promise<{ userId: string; email: string } | null> {
+  return account.currentUser();
 }
 
 export function listDevices(): Promise<AccountDevice[]> {

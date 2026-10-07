@@ -16,7 +16,8 @@ export type SaveStatus =
   | { kind: 'saving' }
   | { kind: 'invalid'; errors: EntryError[] }
   | { kind: 'saved'; refreshed: boolean; firearmRejected: boolean }
-  | { kind: 'failed'; error: SyncErrorKey }
+  /** `unconfirmed`: the server answered, but not with an ack per change sent. */
+  | { kind: 'failed'; error: SyncErrorKey; unconfirmed?: true }
   /** The held request belongs to another account than the one signed in now. */
   | { kind: 'accountChanged' };
 
@@ -50,7 +51,8 @@ const HELD_ON: ReadonlySet<SyncErrorKey> = new Set(['network', 'unauthenticated'
 /**
  * What a submit sends: the held request while there is one, so no key or
  * button can build a second copy of a session that may have landed (R13).
- * Null means build a fresh one.
+ * Null means build a fresh one. Kept as a function: it is the seam U7 tests
+ * the page's submit wiring through (the page itself has no React tests).
  */
 export function submitRequest(state: SaveState): HeldRequest | null {
   return state.held;
@@ -79,16 +81,26 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
     } catch (error: unknown) {
       return { status: { kind: 'failed', error: classifySyncError(error) }, held: null };
     }
-    const built = deps.build(context);
+    let built: EntryResult;
+    try {
+      built = deps.build(context);
+    } catch {
+      // Nothing was sent, so there is nothing to hold (R18).
+      return { status: { kind: 'failed', error: 'unknown' }, held: null };
+    }
     if (!built.ok) return { status: { kind: 'invalid', errors: built.errors }, held: null };
     changes = built.changes;
   }
 
   const outcome = await deps.push(changes);
   if (outcome.kind === 'failed') {
+    // A lost response, or an answer that does not match, may mean it landed.
+    const mayHaveLanded = HELD_ON.has(outcome.error) || outcome.unconfirmed === true;
     return {
-      status: { kind: 'failed', error: outcome.error },
-      held: HELD_ON.has(outcome.error) ? { changes, userId } : null,
+      status: outcome.unconfirmed
+        ? { kind: 'failed', error: outcome.error, unconfirmed: true }
+        : { kind: 'failed', error: outcome.error },
+      held: mayHaveLanded ? { changes, userId } : null,
     };
   }
   const firearmRejected =
@@ -99,8 +111,11 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
 }
 
 /** An edit makes the held request stale: the next Save builds a new one. */
-export function afterEdit(state: SaveState): SaveState {
-  return state.status.kind === 'saving' ? state : IDLE;
+export function afterEdit(
+  state: SaveState,
+  { sendsTheSame }: { sendsTheSame: boolean } = { sendsTheSame: false },
+): SaveState {
+  return state.status.kind === 'saving' || sendsTheSame ? state : IDLE;
 }
 
 export function saveBlocked(online: boolean, state: SaveState): 'offline' | 'saving' | null {

@@ -12,6 +12,7 @@ import {
   onRowEnter,
   ringDisciplines,
   rowSummary,
+  sendsTheSame,
   startedAtIso,
   toDraft,
   withDiscipline,
@@ -201,6 +202,27 @@ describe('the Enter Series form', () => {
     expect(fixed.rows).toHaveLength(14);
     expect(fixed.rows[1]).toMatchObject({ key: 1001, text: '10' });
     expect(fixed.rows[13]).toEqual({ key: 1013, text: '10 9', isSighter: false });
+  });
+
+  it('U12 appending blank rows sends the same session; any other edit does not (R21)', () => {
+    const form = { ...initialForm(NOW), rows: [{ key: 1, text: '10 9', isSighter: false }] };
+    expect(sendsTheSame(form, addRow(form))).toBe(true);
+    expect(sendsTheSame(form, onRowEnter(form, 0).form)).toBe(true);
+    expect(sendsTheSame(form, addRow(addRow(form)))).toBe(true);
+    expect(sendsTheSame(form, form)).toBe(true);
+    // Typed into the new row, typed into an old row, a field, a sighter mark.
+    const added = addRow(form);
+    const typedNew = {
+      ...added,
+      rows: added.rows.map((r, i) => (i === 1 ? { ...r, text: '9' } : r)),
+    };
+    expect(sendsTheSame(form, typedNew)).toBe(false);
+    expect(sendsTheSame(form, { ...form, rows: [{ ...form.rows[0]!, text: '10' }] })).toBe(false);
+    expect(sendsTheSame(form, { ...addRow(form), name: 'x' })).toBe(false);
+    const sighter = { ...added, rows: added.rows.map((r, i) => ({ ...r, isSighter: i === 1 })) };
+    expect(sendsTheSame(form, sighter)).toBe(false);
+    // A removed row is not an addition.
+    expect(sendsTheSame(addRow(form), form)).toBe(false);
   });
 
   it('a form with no rows gets one blank row back', () => {
