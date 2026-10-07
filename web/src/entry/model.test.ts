@@ -4,7 +4,11 @@ import { describe, expect, it } from 'vitest';
 import {
   addRow,
   canMarkSighter,
+  decimalShown,
+  eventsFor,
   initialForm,
+  isFixed,
+  modeOf,
   onRowEnter,
   ringDisciplines,
   rowSummary,
@@ -12,6 +16,7 @@ import {
   toDraft,
   withDiscipline,
   withProgram,
+  withRegulation,
   withType,
 } from './model';
 
@@ -118,5 +123,74 @@ describe('the Enter Series form', () => {
       shots: 3,
     });
     expect(rowSummary('10 a', 'integer')).toMatchObject({ ok: false });
+  });
+
+  it('a new regulation or discipline drops the weapon group and lands on its events', () => {
+    const spsf = { ...initialForm(NOW), weaponGroup: 'spsf:C' };
+    const issf = withRegulation(spsf, 'issf');
+    expect(issf.regulationId).toBe('issf');
+    expect(issf.weaponGroup).toBeNull();
+    expect(ringDisciplines('issf').map((d) => d.id)).toContain(issf.disciplineId);
+    expect(issf.eventId).toBe(eventsFor(issf)[0]?.id ?? null);
+    expect(eventsFor(issf).length).toBeGreaterThan(0);
+    expect(withDiscipline(spsf, 'spsf-milsnabb').weaponGroup).toBeNull();
+    // A blank date still ranks events, against this year.
+    expect(eventsFor({ ...issf, date: '' })).toEqual(eventsFor(issf));
+  });
+
+  it('decimal scoring is offered only where the discipline allows it, and reset by a program', () => {
+    const generic = withDiscipline(initialForm(NOW), 'generic-rings');
+    expect(decimalShown(generic)).toBe(true);
+    const decimal = { ...generic, decimalScoring: true };
+    expect(modeOf(decimal)).toBe('decimal');
+    expect(toDraft(decimal, '').decimalScoring).toBe(true);
+    expect(withProgram(decimal, null).decimalScoring).toBe(false);
+
+    // A choice left over where it is not offered never reaches the draft.
+    const precision = { ...initialForm(NOW), decimalScoring: true };
+    expect(decimalShown(precision)).toBe(false);
+    expect(toDraft(precision, '').decimalScoring).toBe(false);
+    expect(modeOf(precision)).toBe('integer');
+  });
+
+  it('switching to a fixed format keeps typed rows past its skeleton, as ordinary series', () => {
+    const competition = withDiscipline(
+      withType(initialForm(NOW), 'competition'),
+      'issf-standard-pistol',
+      'issf',
+    );
+    const free = withProgram(competition, null);
+    const typed = {
+      ...free,
+      rows: Array.from({ length: 15 }, (_, i) => ({
+        key: 1000 + i,
+        text: i === 13 ? '10 9' : '',
+        isSighter: i === 13,
+      })),
+    };
+    const fixed = withProgram(typed, competition.programId);
+    expect(fixed.rows).toHaveLength(14);
+    expect(fixed.rows[13]).toEqual({ key: 1013, text: '10 9', isSighter: false });
+  });
+
+  it('a form with no rows gets one blank row back', () => {
+    const empty = { ...initialForm(NOW), rows: [] };
+    expect(withProgram(empty, null).rows.map((r) => r.text)).toEqual(['']);
+  });
+
+  it('a regulation with no federation discipline lands on the first ring discipline', () => {
+    const none = withRegulation(initialForm(NOW), 'none');
+    expect(none.disciplineId).toBe(ringDisciplines('none')[0]!.id);
+    expect(withRegulation(initialForm(NOW), 'spsf').disciplineId).toBe('spsf-precision');
+  });
+
+  it('the draft: no start time when the inputs are incomplete, no series length under a program', () => {
+    const form = initialForm(NOW);
+    expect(toDraft({ ...form, date: '' }, '').startedAt).toBe('');
+    const program = withType(form, 'competition');
+    expect(program.programId).not.toBeNull();
+    expect(toDraft({ ...program, seriesLengthText: '7' }, '').seriesLength).toBeNull();
+    // An id this build does not know lays out nothing.
+    expect(isFixed({ programId: 'no-such-program' })).toBe(false);
   });
 });

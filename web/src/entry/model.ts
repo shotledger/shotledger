@@ -12,10 +12,7 @@ import {
   type Discipline,
   type ShooterProfile,
 } from '@shotledger/shared/src/disciplines';
-import {
-  defaultProgramFor,
-  firstDisciplineFor,
-} from '@shotledger/shared/src/disciplines/session-defaults';
+import { defaultProgramFor } from '@shotledger/shared/src/disciplines/session-defaults';
 import { effectiveRegulationIds, REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import type { ScoringMode } from '@shotledger/shared/src/scoring/entry';
 import { parseSeriesText, type SeriesTextError } from '@shotledger/shared/src/scoring/series-text';
@@ -70,10 +67,10 @@ export function ringDisciplines(regulationId: string): readonly Discipline[] {
   return disciplinesForRegulations([regulationId]).filter((d) => d.scoring === 'rings');
 }
 
+/** `firstDisciplineFor`'s rule, over the ring disciplines only. */
 function firstRingDiscipline(regulationId: string): string {
-  const first = firstDisciplineFor(regulationId);
   const rings = ringDisciplines(regulationId);
-  return rings.find((d) => d.id === first)?.id ?? rings[0]!.id;
+  return (rings.find((d) => d.federation !== 'generic') ?? rings[0]!).id;
 }
 
 /** The events on offer, ranked against an empty profile (C6). */
