@@ -27,9 +27,9 @@ One row per series. Type the shots with a space between them:
 `x` works as well as `X`, and `10,4` as well as `10.4`. Each row shows its
 total and its inner tens as you type.
 
-- **Enter** moves to the next row, and in the last row adds one.
+- **Enter** moves to the next row; in free format, Enter in the last row adds one.
 - **Tab** and **Shift+Tab** move between the fields.
-- **Ctrl+Enter** (**Cmd+Enter** on a Mac) saves.
+- **Ctrl+Enter** (**Cmd+Enter** on a Mac) does what the button below the rows does.
 
 With **Full Match** chosen, the rows are laid out as the program's series,
 sighters included, as on the phone. In free format, tick **Sighter** on the
@@ -42,8 +42,11 @@ at all. Your phone gets it at its next sync, and a chosen firearm's round count
 goes up by the shots, sighters included.
 
 Saving needs a connection. If the server cannot be reached, your series stay
-on the page and **Retry** sends exactly the same session again, so it is never
-saved twice. Closing the tab before that drops what you typed; nothing is kept
-in the browser.
+on the page and **Save** becomes **Retry**, which sends exactly the same
+session again, so it is not saved twice. Changing anything first drops that
+copy: the next **Save** sends the session anew, and if the first attempt did
+arrive, it is then saved twice. Signing in to another account in between drops
+it too, so it is never sent to the wrong account. Closing the tab drops what
+you typed; nothing is kept in the browser.
 
 To change or delete a session afterwards, use the phone.

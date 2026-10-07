@@ -27,9 +27,9 @@ En rad per serie. Skriv skotten med mellanslag emellan:
 `x` fungerar lika bra som `X`, och `10,4` lika bra som `10.4`. Varje rad visar
 sin summa och sina innertior medan du skriver.
 
-- **Enter** går till nästa rad, och lägger till en i sista raden.
+- **Enter** går till nästa rad; i fritt format lägger Enter i sista raden till en rad.
 - **Tab** och **Skift+Tab** flyttar mellan fälten.
-- **Ctrl+Enter** (**Cmd+Enter** på Mac) sparar.
+- **Ctrl+Enter** (**Cmd+Enter** på Mac) gör det knappen under raderna gör.
 
 Med **Hela matchen** vald läggs raderna ut som programmets serier, provserier
 inräknade, som i telefonen. I fritt format kryssar du **Provserie** på den rad
@@ -42,8 +42,11 @@ alls. Telefonen får det vid nästa synk, och ett valt vapens skottantal ökar m
 skotten, provserier inräknade.
 
 För att spara krävs en anslutning. Om servern inte går att nå finns serierna
-kvar på sidan, och **Försök igen** skickar exakt samma pass igen, så det
-sparas aldrig två gånger. Stänger du fliken innan dess försvinner det du
-skrivit; ingenting sparas i webbläsaren.
+kvar på sidan och **Spara** blir **Försök igen**, som skickar exakt samma pass
+igen, så det sparas inte två gånger. Ändrar du något först släpps den kopian:
+nästa **Spara** skickar passet på nytt, och kom det första försöket fram
+sparas det då två gånger. Loggar du in på ett annat konto emellan släpps den
+också, så den skickas aldrig till fel konto. Stänger du fliken försvinner det
+du skrivit; ingenting sparas i webbläsaren.
 
 Ändra eller ta bort ett pass i efterhand gör du i telefonen.

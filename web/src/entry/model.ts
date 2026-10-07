@@ -93,7 +93,8 @@ export function initialForm(now: Date): EntryForm {
     type: 'training',
     regulationId,
     disciplineId,
-    programId: defaultProgramFor('training', disciplineId),
+    // Training preselects no program (defaultProgramFor).
+    programId: null,
     date,
     time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
     name: '',

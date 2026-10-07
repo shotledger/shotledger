@@ -395,3 +395,30 @@ relayed rather than first-hand.
 - **R12 (A2 harness).** A phone firearm payload carries `is_own` as a
   boolean, which expo-sqlite binds as 1/0 and better-sqlite3 refuses. A2 binds
   it the device's way before applying; the web's own rows carry no booleans.
+
+Added after an independent review of #669 (2026-10-07):
+
+- **R13 (C2 closed a hole).** After a lost response the Save button and
+  every submit (Enter in a field, Ctrl/Cmd+Enter) built a new request with
+  fresh ids, which could store the session twice and move the firearm counter
+  twice. Now, while a request is held, the one action button reads **Retry**
+  and every submit resends the held request (`submitRequest`); only an edit
+  drops it (U3). The network message names Retry. Scenario **U7** added.
+- **R14 (new).** A held request is bound to the user id it was built for.
+  Each Save first reads the signed-in user: another user → `accountChanged`,
+  the request is dropped and nothing is sent; still signed out, or the server
+  unreachable → the request stays held. A fresh Save while signed out builds
+  nothing (this replaces how R10 detected it). Scenario **U8** added.
+- **R15 (new).** vitest runs with `TZ=America/Sao_Paulo` (UTC−3, no DST),
+  pinned in `vitest.config.ts`, because in UTC — what CI runs — local time and
+  UTC agree and a local-time bug passes unseen. `started-at.test.ts` asserts
+  the offset and the conversion. The whole suite passes under it.
+- **R16 (gauntlet widened).** `web/src/entry/*.ts` (the page model and the
+  save controller) join the Stryker `mutate` list, and so the 100% coverage
+  gate. To make that honest: events are ranked for the current year, as on
+  the phone (with an empty profile the year changes nothing), and the first
+  ring discipline applies `firstDisciplineFor`'s rule itself over ring
+  disciplines only.
+- **R17.** A row error names the row as the page labels it (“Sighter” or
+  “Series N”), not always “Series N”. The manual no longer says Enter adds a
+  row in a fixed format, nor that a session is never saved twice.
