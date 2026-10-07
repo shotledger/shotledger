@@ -41,12 +41,16 @@ som är provserie. **Lägg till serie** lägger till en rad.
 alls. Telefonen får det vid nästa synk, och ett valt vapens skottantal ökar med
 skotten, provserier inräknade.
 
-För att spara krävs en anslutning. Om servern inte går att nå finns serierna
-kvar på sidan och **Spara** blir **Försök igen**, som skickar exakt samma pass
-igen, så det sparas inte två gånger. Ändrar du något först släpps den kopian:
-nästa **Spara** skickar passet på nytt, och kom det första försöket fram
-sparas det då två gånger. Loggar du in på ett annat konto emellan släpps den
-också, så den skickas aldrig till fel konto. Stänger du fliken försvinner det
-du skrivit; ingenting sparas i webbläsaren.
+För att spara krävs en anslutning. Om servern inte går att nå, eller svarar så
+att det är oklart om passet kom fram, finns serierna kvar på sidan och
+**Spara** blir **Försök igen**, som skickar exakt samma pass igen, så det
+sparas inte två gånger. En tom rad till behåller den kopian; ändrar du något
+annat släpps den, och nästa **Spara** skickar passet på nytt, så kom det
+första försöket fram sparas det då två gånger.
+
+Är du utloggad loggar du in igen på sidan. Loggar du in på ett annat konto
+laddas det kontot i stället och det du skrivit töms, så inget från ett konto
+sparas i det andra. Stänger du fliken försvinner det du skrivit; ingenting
+sparas i webbläsaren.
 
 Ändra eller ta bort ett pass i efterhand gör du i telefonen.

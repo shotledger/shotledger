@@ -41,12 +41,16 @@ one row that is a sighter series. **Add Series** adds a row.
 at all. Your phone gets it at its next sync, and a chosen firearm's round count
 goes up by the shots, sighters included.
 
-Saving needs a connection. If the server cannot be reached, your series stay
-on the page and **Save** becomes **Retry**, which sends exactly the same
-session again, so it is not saved twice. Changing anything first drops that
-copy: the next **Save** sends the session anew, and if the first attempt did
-arrive, it is then saved twice. Signing in to another account in between drops
-it too, so it is never sent to the wrong account. Closing the tab drops what
-you typed; nothing is kept in the browser.
+Saving needs a connection. If the server cannot be reached, or answers in a
+way that leaves it unclear whether the session arrived, your series stay on
+the page and **Save** becomes **Retry**, which sends exactly the same session
+again, so it is not saved twice. Adding an empty row keeps that copy; changing
+anything else drops it, and the next **Save** sends the session anew, so if
+the first attempt did arrive it is then saved twice.
+
+If you are signed out, sign in again on the page. Signing in to another
+account loads that account instead, and what you typed is cleared, so nothing
+from one account is saved to the other. Closing the tab drops what you typed;
+nothing is kept in the browser.
 
 To change or delete a session afterwards, use the phone.

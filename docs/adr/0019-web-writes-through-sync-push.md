@@ -76,6 +76,14 @@ device; the web re-pulls rather than retrying.
   later push wins the whole row. A phone that edited a session offline can
   overwrite a web bulk edit of that session's other fields. Accepted, as it
   already is between two phones.
+- Keyboard entry keeps a firearm's round counter in step by rewriting the
+  whole firearm row, stamped with the browser's clock in `updated_at`. The
+  winner is still decided by server order, not by that timestamp (protocol
+  R3), so a wrong browser clock only shows as a wrong edit time. The real
+  cost is the race: a phone's increment to the same firearm between the web's
+  pull and its push is overwritten, or the web's by a phone that pushes later,
+  and the counter is off by one session's rounds until corrected on the
+  phone. Accepted, as between two phones.
 - A web edit that fails in flight is lost with the tab; the user redoes it.
   That is the price of "no browser outbox".
 - Same-name tag copies stay on disk until something merges them. A web

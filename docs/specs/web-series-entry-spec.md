@@ -422,3 +422,39 @@ Added after an independent review of #669 (2026-10-07):
 - **R17.** A row error names the row as the page labels it (“Sighter” or
   “Series N”), not always “Series N”. The manual no longer says Enter adds a
   row in a fixed format, nor that a session is never saved twice.
+
+Added after the full PR review of #669 (maintainer: fix all findings):
+
+- **R18 (no wedge).** A build that throws (for example `crypto.randomUUID`
+  missing on a non-secure origin) ends the save as `failed: unknown` with
+  nothing held, since nothing was sent; the page also catches a rejected save.
+  Scenario **U10**.
+- **R19 (C2 widened).** A 2xx answer whose acks do not match the sent changes
+  (D5) now also says `unconfirmed`: the server did process the push, so the
+  page holds the request for Retry, with its own message. Scenario **U9**; D5
+  asserts the flag.
+- **R20.** `currentUser()` throws a `network` error for a 5xx, 408 or 429 from
+  get-session instead of reading as signed out; a refused session still reads
+  as null. Tested in `shared/src/sync-client/http/current-user.test.ts`. The
+  phone's caller catches and behaves as before.
+- **R21 (C2 refined).** Enter and Add Series append blank rows, which the
+  builder drops, so they keep a held request (`sendsTheSame`). Any other edit
+  still drops it (U3). Scenario **U12**.
+- **R22 (shared, for every writing page).** The inline sign-in is one shared
+  component (`web/src/sign-in-again.tsx`). App compares the user who signed in
+  with the one the logbook was loaded for (`web/src/reauth.ts`): the same user
+  only clears the page's signed-out notice; anyone else sends App through its
+  normal loading path (tables and email fetched again) and remounts every page
+  under a new generation, dropping its state. So a Save after signing in as
+  another account builds from that account's tables, never the old one's.
+  R14's check stays as the second line. `reauth.ts` joins the gates.
+- **R23.** The form is disabled while a save is in flight, so what is shown is
+  what was sent.
+- **R24 (documented, ADR 0019).** The firearm row carries the browser clock in
+  `updated_at`. Server order decides the winner, not that timestamp; the cost
+  is the overwrite race with a phone between pull and push.
+- **R25.** `submitRequest` stays as the seam U7 tests the page's submit wiring
+  through. Not done, by choice: reading a non-firearm rejection as a failure
+  (only a tombstoned row can be rejected and every other row is new, so it is
+  unreachable, and it would say "could not save" over a stored session); and
+  capping the chosen series length (the phone accepts the same values).
