@@ -96,7 +96,7 @@ export function App() {
       )}
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
       {state.kind === 'ready' && page === 'sessions' && (
-        <Sessions tables={state.tables} sessionId={route.sessionId} />
+        <Sessions tables={state.tables} sessionId={route.sessionId} compare={route.compare} />
       )}
       {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
       {state.kind === 'ready' && page === 'account' && (

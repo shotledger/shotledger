@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PulledTables } from '../pull';
-import { browseSessions, seriesSections, type BrowseSeries } from './browse';
+import {
+  browseSessions,
+  photoOwners,
+  photoRefOf,
+  seriesSections,
+  sessionPhotoIds,
+  type BrowseSeries,
+} from './browse';
 
 const table = (rows: Record<string, unknown>[]) =>
   new Map(rows.map((row) => [row.id as string, row]));
@@ -89,9 +96,10 @@ function tables(): PulledTables {
       session('gone', { started_at: '2026-10-04T10:00:00.000Z', deleted_at: '2026-10-05' }),
     ]),
     series: table([
-      series('r1', 'ring', 1, { is_sighter: 1 }),
-      series('r2', 'ring', 2),
+      series('r1', 'ring', 1, { is_sighter: 1, photo_uri: 'shotledger-photo:ph-r1' }),
+      series('r2', 'ring', 2, { photo_uri: 'file:///data/user/0/photos/r2.jpg' }),
       series('r3', 'ring', 3, {
+        photo_uri: 'shotledger-photo:ph-r3',
         is_total_override: 1,
         total_override_tenths: 450,
         total_override_shot_count: 5,
@@ -110,7 +118,13 @@ function tables(): PulledTables {
     falt_stations: table([
       station('st1', 1, { hits: 5, figures_hit: 3, figure_count: 4 }),
       station('st2', 2, { hits: 6, figures_hit: 6, figure_count: 6, is_scratched: 1 }),
-      station('st3', 3, { hits: 4, figures_hit: 2, figure_count: 3, note: 'Wind' }),
+      station('st3', 3, {
+        hits: 4,
+        figures_hit: 2,
+        figure_count: 3,
+        note: 'Wind',
+        photo_uri: 'shotledger-photo:ph-st3',
+      }),
     ]),
     tags: table([{ id: 't1', name: 'Club', color: null, deleted_at: null }]),
     firearms: table([{ id: 'f1', make: 'Acme', model: 'Target', deleted_at: null }]),
@@ -199,11 +213,60 @@ describe('browseSessions', () => {
       [3, false, 'Wind'],
     ]);
   });
+
+  it('tells an uploaded photo from one still on the phone and from none', () => {
+    expect(byId('ring').series.map((s) => s.photo)).toEqual([
+      { kind: 'uploaded', photoId: 'ph-r1' },
+      { kind: 'local' },
+      { kind: 'uploaded', photoId: 'ph-r3' },
+    ]);
+    expect(byId('helm').series.map((s) => s.photo)).toEqual([null, null]);
+    expect(byId('falt').stations.map((s) => s.photo)).toEqual([
+      null,
+      null,
+      { kind: 'uploaded', photoId: 'ph-st3' },
+    ]);
+  });
+});
+
+describe('photoRefOf', () => {
+  it.each([
+    ['shotledger-photo:abc', { kind: 'uploaded', photoId: 'abc' }],
+    ['shotledger-photo:', { kind: 'local' }],
+    ['file:///x.jpg', { kind: 'local' }],
+    ['', null],
+    [null, null],
+    [undefined, null],
+  ])('%s', (uri, ref) => {
+    expect(photoRefOf(uri)).toEqual(ref);
+  });
+});
+
+describe('photoOwners and sessionPhotoIds', () => {
+  const sessions = browseSessions(tables());
+  const owners = photoOwners(sessions);
+
+  it('indexes every uploaded photo by id with its series or station', () => {
+    expect([...owners.keys()].sort()).toEqual(['ph-r1', 'ph-r3', 'ph-st3']);
+    const r3 = owners.get('ph-r3')!;
+    expect(r3.session.id).toBe('ring');
+    expect('series' in r3 && r3.series.totalTenths).toBe(450);
+    const st3 = owners.get('ph-st3')!;
+    expect('station' in st3 && st3.station.position).toBe(3);
+  });
+
+  it("lists a session's uploaded photos in detail order, skipping local ones", () => {
+    const byId = (id: string) => sessions.find((s) => s.id === id)!;
+    expect(sessionPhotoIds(byId('ring'))).toEqual(['ph-r1', 'ph-r3']);
+    expect(sessionPhotoIds(byId('helm'))).toEqual([]);
+    expect(sessionPhotoIds(byId('falt'))).toEqual(['ph-st3']);
+  });
 });
 
 describe('seriesSections', () => {
   const row = (position: number, isFinal: boolean): BrowseSeries => ({
     position,
+    photo: null,
     isSighter: false,
     isFinal,
     shots: [],

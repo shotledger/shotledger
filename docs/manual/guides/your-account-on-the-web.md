@@ -16,7 +16,20 @@ screen the discipline, location and tags are left out.
 
 Open a session's name to read it: its series and shots, the totals, notes,
 firearm, ammo lot and tags, or for a fält session its stations. Nothing can be
-changed there. Target photos are not shown on the web yet.
+changed there.
+
+### Target photos
+
+A series or station with an uploaded target photo shows it beside its shots.
+A photo the phone has not uploaded yet shows as **Not uploaded**. Shot marks
+are not drawn on the web.
+
+To see photos side by side, tick **Compare** under each one you want, or use
+**Select All Photos** for every photo in the session. You can pick photos from
+several sessions. Then choose **Compare Photos**: the photos are shown large in
+a grid, each with its series or station result and session. **Remove** takes
+one out, and **Clear** empties the selection. The selection is forgotten when
+you reload or close the tab.
 
 ## Signed-in devices
 

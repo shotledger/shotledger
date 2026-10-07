@@ -29,6 +29,7 @@ import {
   type SessionResults,
 } from '@shotledger/shared/src/scoring/totals';
 import { totalOnlyShotCount } from '@shotledger/shared/src/scoring/volume';
+import { isLocalPhotoUri, parseSyncPhotoUri } from '@shotledger/shared/src/sync-client/photo-uri';
 import { tagNamesBySession } from '@shotledger/shared/src/tags/canonical';
 
 import { faltSessionResultOf } from '../../../app/src/features/session/falt-session-result';
@@ -39,8 +40,22 @@ import {
 import type { PulledTables } from '../pull';
 import { liveRows, tagRecords } from '../stats-inputs';
 
+/** An uploaded photo by id, one still only on the phone, or none. */
+export type PhotoRef = { kind: 'uploaded'; photoId: string } | { kind: 'local' } | null;
+
+export function photoRefOf(uri: string | null | undefined): PhotoRef {
+  const photoId = parseSyncPhotoUri(uri);
+  if (photoId !== null) return { kind: 'uploaded', photoId };
+  return isLocalPhotoUri(uri) ? { kind: 'local' } : null;
+}
+
+export interface BrowseStation extends StationExport {
+  photo: PhotoRef;
+}
+
 export interface BrowseSeries {
   position: number;
+  photo: PhotoRef;
   isSighter: boolean;
   isFinal: boolean;
   shots: EntryShot[];
@@ -52,7 +67,7 @@ export interface BrowseSeries {
 
 export interface BrowseSession extends Omit<SessionExport, 'series'> {
   series: BrowseSeries[];
-  stations: StationExport[];
+  stations: BrowseStation[];
   results: SessionResults;
   stageSubtotals: StageSubtotal[];
   seriesAverageTenths: number | null;
@@ -62,9 +77,24 @@ export interface BrowseSession extends Omit<SessionExport, 'series'> {
   falt: FaltResultSummary | null;
 }
 
-function browseSession(session: SessionExport, storedInnerTens: number | null): BrowseSession {
+/** Photo uris by `<sessionId>#<position>`; the export leaves them out. */
+type PhotoUris = Map<string, string | null>;
+
+function photoUris(rows: { sessionId: string; position: number; photoUri?: string | null }[]) {
+  return new Map(rows.map((row) => [`${row.sessionId}#${row.position}`, row.photoUri ?? null]));
+}
+
+function browseSession(
+  session: SessionExport,
+  storedInnerTens: number | null,
+  seriesPhotos: PhotoUris,
+  stationPhotos: PhotoUris,
+): BrowseSession {
+  const photoAt = (uris: PhotoUris, position: number) =>
+    photoRefOf(uris.get(`${session.id}#${position}`));
   const series: BrowseSeries[] = session.series.map((row) => ({
     position: row.position,
+    photo: photoAt(seriesPhotos, row.position),
     isSighter: row.isSighter,
     isFinal: row.isFinal,
     shots: row.shots.map(({ valueTenths, isInnerTen }) => ({ valueTenths, isInnerTen })),
@@ -92,6 +122,10 @@ function browseSession(session: SessionExport, storedInnerTens: number | null): 
   return {
     ...session,
     series,
+    stations: session.stations.map((row) => ({
+      ...row,
+      photo: photoAt(stationPhotos, row.position),
+    })),
     results: sessionResults(forResults),
     stageSubtotals: program ? stageSubtotals(programStages(program), series) : [],
     seriesAverageTenths: seriesAverageTenths(forResults),
@@ -129,11 +163,16 @@ export function browseSessions(tables: PulledTables): BrowseSession[] {
   );
   const storedInnerTens = new Map(sessionRows.map((row) => [row.id, row.innerTenCount ?? null]));
   const { tags, links } = tagRecords(tables);
+  type WithPhoto = { photoUri?: string | null };
+  const seriesRows = liveRows<ExportSeriesRow & WithPhoto>(tables.series);
+  const stationRows = liveRows<ExportStationRow & WithPhoto>(tables.falt_stations);
+  const seriesPhotos = photoUris(seriesRows);
+  const stationPhotos = photoUris(stationRows);
   return sessionExportsFromRows({
     sessions: sessionRows,
-    series: liveRows<ExportSeriesRow>(tables.series),
+    series: seriesRows,
     shots: liveRows<ExportShotRow>(tables.shots),
-    stations: liveRows<ExportStationRow>(tables.falt_stations),
+    stations: stationRows,
     firearms: liveRows<ExportFirearmRow>(tables.firearms),
     ammoLots: liveRows<ExportAmmoLotRow>(tables.ammo_lots),
     tagsBySession: tagNamesBySession(tags, links),
@@ -141,5 +180,37 @@ export function browseSessions(tables: PulledTables): BrowseSession[] {
     .sort(
       (a, b) => b.startedAt.localeCompare(a.startedAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
     )
-    .map((session) => browseSession(session, storedInnerTens.get(session.id) ?? null));
+    .map((session) =>
+      browseSession(session, storedInnerTens.get(session.id) ?? null, seriesPhotos, stationPhotos),
+    );
+}
+
+/** An uploaded photo with the series or station it belongs to. */
+export type PhotoOwner =
+  | { photoId: string; session: BrowseSession; series: BrowseSeries }
+  | { photoId: string; session: BrowseSession; station: BrowseStation };
+
+/** Every uploaded photo by id, for resolving a pick. */
+export function photoOwners(sessions: readonly BrowseSession[]): Map<string, PhotoOwner> {
+  const owners = new Map<string, PhotoOwner>();
+  for (const session of sessions) {
+    for (const series of session.series) {
+      if (series.photo?.kind === 'uploaded') {
+        owners.set(series.photo.photoId, { photoId: series.photo.photoId, session, series });
+      }
+    }
+    for (const station of session.stations) {
+      if (station.photo?.kind === 'uploaded') {
+        owners.set(station.photo.photoId, { photoId: station.photo.photoId, session, station });
+      }
+    }
+  }
+  return owners;
+}
+
+/** The session's uploaded photo ids, in the order the detail lists them. */
+export function sessionPhotoIds(session: BrowseSession): string[] {
+  return [...session.series, ...session.stations].flatMap((row) =>
+    row.photo?.kind === 'uploaded' ? [row.photo.photoId] : [],
+  );
 }
