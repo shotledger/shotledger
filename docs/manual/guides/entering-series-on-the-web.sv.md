@@ -1,0 +1,49 @@
+# Mata in serier på webben
+
+Med synk påslagen kan webbappen ta emot ett helt pass från tangentbordet: en
+tävling du inte loggade på skjutbanan, eller en sida ur en gammal
+pappersloggbok. Logga in och öppna **Mata in serier** i menyn till vänster.
+
+## Fyll i passet
+
+Fälten är telefonens formulär för nytt pass: typ, reglemente, gren,
+matchupplägg, datum och tid, namn och plats, sedan tävlingsfälten, vapen och
+ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda börjar
+på nu.
+
+Fältskjutning finns inte här; mata in den i telefonen.
+
+## Skriv serierna
+
+En rad per serie. Skriv skotten med mellanslag emellan:
+
+| Skriv      | Betyder                    |
+| ---------- | -------------------------- |
+| `0` – `10` | ringvärdet                 |
+| `X`        | en innertia (X), värd 10   |
+| `10.4`     | decimalräkning: 10,4       |
+| `X.6`      | decimalräkning: inner 10,6 |
+
+`x` fungerar lika bra som `X`, och `10,4` lika bra som `10.4`. Varje rad visar
+sin summa och sina innertior medan du skriver.
+
+- **Enter** går till nästa rad, och lägger till en i sista raden.
+- **Tab** och **Skift+Tab** flyttar mellan fälten.
+- **Ctrl+Enter** (**Cmd+Enter** på Mac) sparar.
+
+Med **Hela matchen** vald läggs raderna ut som programmets serier, provserier
+inräknade, som i telefonen. I fritt format kryssar du **Provserie** på den rad
+som är provserie. **Lägg till serie** lägger till en rad.
+
+## Spara
+
+**Spara** skickar hela passet på en gång; det sparas antingen helt eller inte
+alls. Telefonen får det vid nästa synk, och ett valt vapens skottantal ökar med
+skotten, provserier inräknade.
+
+För att spara krävs en anslutning. Om servern inte går att nå finns serierna
+kvar på sidan, och **Försök igen** skickar exakt samma pass igen, så det
+sparas aldrig två gånger. Stänger du fliken innan dess försvinner det du
+skrivit; ingenting sparas i webbläsaren.
+
+Ändra eller ta bort ett pass i efterhand gör du i telefonen.

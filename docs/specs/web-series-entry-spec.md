@@ -2,8 +2,8 @@
 
 > Old-coder SPEC for layer 2 of #301 (web write paths). Evidence report, once
 > written: `docs/specs/web-series-entry-evidence.md`. Decision record: ADR 0019
-> (web writes by pushing rows through `/sync/push`; written in the parallel
-> layer-1 PR).
+> (web writes by pushing rows through `/sync/push`; accepted, merged with
+> layer 1 in #647).
 >
 > **Approval status: approval relayed by the orchestrator session on
 > 2026-10-06 ("approved your spec as is, C1–C9 unchanged"); not received
@@ -21,9 +21,9 @@
   call in `api.ts`, `firearm_groups` in `WEB_TABLES`), app tests that apply
   web-built rows to the phone's real schema, one backend round-trip spec,
   `docs/manual/` EN + SV, `app/src/i18n/{en,sv}.json` (`web.entry.*`).
-- **Not in scope:** anything that needs `session_tags` or `settings` to sync
-  (the parallel layer-1 PR). This layer reads and writes only tables that sync
-  today.
+- **Not in scope:** reading or writing `session_tags` or `settings`. Layer 1
+  (#647, ADR 0019) has since made both sync, but this layer still neither
+  reads nor writes them (N6); tags and profile prefill are later changes.
 
 ## 1. Settled inputs (maintainer, 2026-10-06; not re-asked)
 
@@ -93,12 +93,13 @@ the session is edited or deleted on the phone, as today.
 **C6. Where the profile-dependent defaults come from.** The phone prefills the
 shooter class and ranks ISSF events from the shooter profile (birth year,
 skill class, women's classes), filters disciplines to the enabled regulations,
-and can switch the vapengrupp and klass pickers off (Optional Fields). All of
-that lives in device-local settings, which do not sync in this layer. So the
-web offers every regulation, ranks events against an empty profile, preselects
-no klass, and always asks vapengrupp and klass for a competition (both may be
-left empty, as on the phone). When layer 1's synced settings land, a later
-change can prefill from them.
+and can switch the vapengrupp and klass pickers off (Optional Fields). The
+enabled regulations and the Optional Fields switches are device-local and
+never sync. The profile (birth year, skill class, women's classes) does sync
+since layer 1, but this layer does not read `settings` (N6). So the web offers
+every regulation, ranks events against an empty profile, preselects no klass,
+and always asks vapengrupp and klass for a competition (both may be left
+empty, as on the phone). A later change can prefill from the synced profile.
 
 **C7. Dependency: `uuidv7` in `web/package.json`.** New rows need UUIDv7 ids
 (implementation plan §2 lists the `uuidv7` package). The app already depends on
@@ -169,7 +170,8 @@ plus `n` and `updated_at`.
 
 - Scoring mode = `scoringModeFor(discipline, program, decimalChosen)`.
   Series length = `program.shotsPerSeries ?? chosen ?? discipline default`
-  (`resolveSeriesLength`). `series_length` is stored only in free format,
+  (the order of the app's `resolveSeriesLength`, which stays in `app/`).
+  `series_length` is stored only in free format,
   `decimal_scoring` only where the toggle is shown — both as on the phone.
 - Competition-only fields are `null` (`is_championship: 0`) on training.
   Training's vapengrupp comes from the firearm (`derivedWeaponGroup`), else
@@ -305,7 +307,8 @@ Feature: the page model (web/src/entry/*.test.ts, the web package's pure-module 
   Scenario: U6 Enter in the last free-format row adds a row; in a fixed-format skeleton it does not
 ```
 
-Browser checks (not automated; screenshots under `~/tmp/screens-301-web/`):
+Browser checks (not automated; screenshots in the session scratchpad, never
+in the repo):
 type a 6-series precision competition by keyboard only, save, see it in
 Statistics; save while offline (DevTools); save after revoking the session
 from another tab.
@@ -328,8 +331,9 @@ from another tab.
 
 ## 6. Setup plan
 
-- **Isolation:** worktree `~/tmp/sl-301-web`, branch `feat/web-series-entry`
-  from `origin/main`. The main checkout is shared with other sessions.
+- **Isolation:** worktree `~/tmp/sl-301-entry`, branch
+  `feat/web-series-entry-impl` from `origin/main` (it took over from a stalled
+  session's `~/tmp/sl-301-web`, which never pushed). The main checkout is shared with other sessions.
 - **Git:** this spec is committed once approved; then one checkpoint commit per
   green layer (series text, rows, entry, push, web page, docs). All are
   DCO-signed Conventional Commits with explicit paths.
@@ -342,3 +346,52 @@ from another tab.
 - **New dependencies:** `uuidv7@1.2.1` in `web/package.json` only (C7). It is
   already in the lockfile, so the license list does not change. I will
   re-run the generator to confirm.
+
+## 7. Revisions
+
+Appended by the session that took the work over (2026-10-07). None loosens a
+constraint; each needs the maintainer's OK, since the approval above was
+relayed rather than first-hand.
+
+- **R1 (text only).** "Not in scope", C6, the ADR 0019 pointer, the
+  isolation line and the screenshot location are made true for current main:
+  layer 1 (#647) has merged and `session_tags` and `settings` sync. This layer
+  still neither reads nor writes them (N6), so the web still ranks events
+  against an empty profile.
+- **R2.** `resolveSeriesLength` lives in `app/`, not `shared/`. The builder
+  applies the same order (program, choice, discipline) itself; E9 pins it.
+- **R3 (C8 widened).** A third pure helper moves with the two:
+  `firstDisciplineFor`, the discipline a regulation lands on, so the web's
+  regulation picker cannot drift either. Scenario **H3** added.
+- **R4 (E14 widened).** An ammo lot that is not among the pulled rows is
+  refused too (`unknownAmmoLot`), as the firearm is: the phone's
+  `sessions.ammo_lot_id` is a foreign key, and an id it has never seen fails
+  its apply transaction.
+- **R5 (D2 refined).** A `duplicate` ack that carries a `reason` replays an
+  earlier rejection, so it reads as `partlyRejected`, not `saved`. A Retry
+  after a lost response whose firearm row was rejected reports the same thing
+  the first answer would have.
+- **R6 (E13 made enforceable).** An entry that would need more than
+  `PUSH_BATCH_MAX` changes is refused (`tooManyChanges`) rather than split,
+  since C2 makes one Save one request.
+- **R7 (T7 made precise).** The oracle is written independently of the
+  parser: a token is valid iff it is the keypad spelling of one shot (one
+  value key; or a value key, `.`/`,`, a digit key), and every accepted token
+  equals what `pressKey` commits for those keys.
+- **R8.** A program with no `structure` (Precision, Magnumprecision) lays out
+  no skeleton, so its rows behave as free format: sighter box, one sighter,
+  blank rows dropped. This is what the phone's `addSeries` guard does. Blank
+  rows typed past a fixed skeleton are dropped as well.
+- **R9.** The draft carries `defaultName`; a blank name falls back to it, as
+  the phone's `name.trim() || defaultName` does.
+- **R10 (§3.5, signed out).** Before building, Save pulls the firearms (C1).
+  If that pull answers 401, nothing was built or sent, so nothing is held; the
+  page says to sign in and save again. If the push itself answers 401, the
+  request is held and **Retry** is offered, as specified. A failed pull of any
+  other kind reports the push error keys, with nothing held. The inline
+  sign-in form sits outside the entry form (forms cannot nest).
+- **R11 (W4).** "Revoked" is exercised by signing the web token out, which
+  revokes that session server side.
+- **R12 (A2 harness).** A phone firearm payload carries `is_own` as a
+  boolean, which expo-sqlite binds as 1/0 and better-sqlite3 refuses. A2 binds
+  it the device's way before applying; the web's own rows carry no booleans.

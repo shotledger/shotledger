@@ -123,6 +123,7 @@ plugins:
             Exporting sessions: Exportera pass
             Backup and restore: Säkerhetskopiering
             Your account on the web: Ditt konto på webben
+            Entering series on the web: Mata in serier på webben
             Reference: Referens
             Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
@@ -157,6 +158,7 @@ nav:
       - Exporting sessions: guides/exporting-sessions.md
       - Backup and restore: guides/backup-and-restore.md
       - Your account on the web: guides/your-account-on-the-web.md
+      - Entering series on the web: guides/entering-series-on-the-web.md
   - Reference:
       - Weapon group and class: reference/weapon-group-and-class.md
       - Glossary: reference/glossary.md
