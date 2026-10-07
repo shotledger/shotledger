@@ -5,8 +5,8 @@ Revisions R1–R11.
 
 > **Round 2 is the current evidence.** An independent verifier failed round 1
 > (the sections before "Round 2" are round 1's, kept as history). Round
-> 2 fixes what it found (R5–R11) and is reported in
-> [Round 2](#round-2-after-the-independent-verifier-r5r11) with fresh numbers.
+> 2 fixes what it found (R5–R12) and is reported in
+> [Round 2](#round-2-after-the-independent-verifier-r5r12) with fresh numbers.
 
 - **Spec approval: not obtained (autonomous run).** The spec was written,
   committed and implemented in one run; the key choices B1–B10 and the
@@ -69,6 +69,7 @@ performed` for that state.
 | Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                 | 100% statements 3468/3468, branches 2153/2153, functions 792/792, lines 2953/2953        |
 | Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                     | 15 files, 157 tests passed (W1–W4 included)                                              |
 | Mutation (tool)                                 | `npx stryker run --mutate shared/src/sync-client/bulk-edit.ts`         | 238 killed, 0 survived, 0 no coverage: 100.00%                                           |
+| Mutation (tool, page modules)                   | `npx stryker run --mutate 'web/src/bulk/*.ts,!web/src/bulk/*.test.ts'` | 398 killed, 2 survived: 99.50% (equivalent, below)                                       |
 | Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-bulk.mjs`                            | 11/11 killed: 4 against the K17 property alone, 3 against the phone twin, 4 page mutants |
 | Property-based                                  | K17 (500 runs)                                                         | pass                                                                                     |
 | Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`   | 4 files, 35 tests passed                                                                 |
@@ -145,12 +146,13 @@ here; #669's evidence report has the same limit.
 - `pnpm check` first failed on a type error in the K17 oracle (a tuple map
   typed too loosely); fixed in the test, no assertion changed.
 
-## Round 2 (after the independent verifier, R5–R11)
+## Round 2 (after the independent verifier, R5–R12)
 
-- **Source state:** commit `b62b3ec` (code, tests and the mutation script;
-  this report is committed on top). Still on #669 at `d6e1168`; #669's
-  parallel fix had not been pushed when this ran.
-- **Spec approval:** still not obtained; R5–R11 are flagged in the PR. R5
+- **Source state:** commit `3e0c9ea` (code, tests and the mutation script;
+  the docs and this report are committed on top), rebased onto #669 at
+  `8860a12` (its held-request and user-binding fix, R13/R14, which R12
+  mirrors; vitest now runs in `America/Sao_Paulo`).
+- **Spec approval:** still not obtained; R5–R12 are flagged in the PR. R5
   changes B3: a refused moved session now costs a second push.
 
 ### Findings → fixes
@@ -165,24 +167,30 @@ here; #669's evidence report has the same limit.
 | PLAUSIBLE: Add Tag reports success on a tag deleted meanwhile        | R6 tag liveness checked after the push; the page says so                  | R6 tests                                                            |
 | Docs: B4's "seconds" untrue with Retry; counter overwrite undersold  | R10 B4 and the manual reworded                                            | review                                                              |
 | (found by the R5 browser check) a refused session counted as changed | R11                                                                       | U7/R5 expectations                                                  |
+| (coordinator) mirror #669's held-request and user binding            | R12 `Built.userId`, `accountChanged`, one Apply/Retry button              | R12 tests in `apply.test.ts`                                        |
 
-### Gauntlet (fresh, at `b62b3ec`)
+### Gauntlet (fresh, at `3e0c9ea`)
 
-| Layer                                           | Command                                                                | Result                                                                                |
-| ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                           | exit 0; vitest 173 files, 3022 tests; jest 698; i18n 1268 keys, 0 issues; 97 packages |
-| Coverage (gated)                                | `pnpm check`                                                           | 100% statements 3500/3500, branches 2180/2180, functions 797/797, lines 2981/2981     |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                     | 15 files, 158 tests passed (W1–W5)                                                    |
-| Mutation (tool)                                 | `npx stryker run --mutate shared/src/sync-client/bulk-edit.ts`         | 280 killed, 1 survived: 99.64% (equivalent, below)                                    |
-| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-bulk.mjs`                            | 19/19 killed, incl. 2 against K21 alone and the verifier's three surviving mutants    |
-| Property-based                                  | K17, K21 (500 runs each)                                               | pass                                                                                  |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`   | 6 files, 60 tests passed                                                              |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check` | built; 25 translated pages current; no dangling anchors                               |
+| Layer                                           | Command                                                                | Result                                                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                           | exit 0; vitest 174 files, 3037 tests; jest 698; i18n 1270 keys, 0 issues; 97 packages                             |
+| Coverage (gated)                                | `pnpm check`                                                           | 100% statements 3755/3755, branches 2370/2370, functions 873/873, lines 3190/3190 (now incl. `web/src/bulk/*.ts`) |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                     | 15 files, 158 tests passed (W1–W5)                                                                                |
+| Mutation (tool)                                 | `npx stryker run --mutate shared/src/sync-client/bulk-edit.ts`         | 280 killed, 1 survived: 99.64% (equivalent, below)                                                                |
+| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-bulk.mjs`                            | 19/19 killed, incl. 2 against K21 alone and the verifier's three surviving mutants                                |
+| Property-based                                  | K17, K21 (500 runs each)                                               | pass                                                                                                              |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`   | 6 files, 65 tests passed                                                                                          |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check` | built; 25 translated pages current; no dangling anchors                                                           |
 
-**The surviving mutant is equivalent:** in `setFirearm`'s `liveFirearm`,
-`firearmId === null ? undefined : context.firearms.get(firearmId)` →
-`false ? … : context.firearms.get(firearmId)`. `Map.get(null)` on a map keyed
-by string ids returns `undefined`, the same as the guarded branch.
+**The three surviving mutants are equivalent.** In `bulk-edit.ts`'s
+`liveFirearm` and `model.ts`'s `bulkRows`, `firearmId === null ? undefined :
+…get(firearmId)` → `false ? … : …get(firearmId)`: `Map.get(null)` on a map
+keyed by string ids is `undefined`, as the guarded branch. In `bulkRows`'s
+sort, `<` → `<=`: the keys include the unique id, so no two are equal. The
+first page-module run had 12 survivors; 3 were redundant guards in
+`filterRows` (rewritten without them) and 6 were gaps (a payload without
+`deleted_at`/`location`/`firearm_id`, the cross-session tag sort,
+`afterEdit(IDLE)`), now tested.
 
 ### Real execution (round 2)
 

@@ -39,10 +39,13 @@ takes its rounds back out of the round counts, so they count only the
 sessions that moved. A tag deleted on another device in the meantime does
 not show on the sessions; the page says that too.
 
-Applying needs a connection. If the server cannot be reached, **Retry** sends
-exactly the same change again, so nothing is changed twice. Closing the tab
-before that drops the change. If the round counts still need correcting,
-**Retry** does that, and nothing else can be applied until it has.
+Applying needs a connection. If the server cannot be reached, the button
+becomes **Retry**, which sends exactly the same change again, so nothing is
+changed twice. Changing the selection or the change first drops that copy,
+and the next **Apply** reads your logbook again. Signing in to another account
+in between drops it too, so it is never sent to the wrong account. Closing the
+tab drops the change. If the round counts still need correcting, **Retry**
+does that, and nothing else can be applied until it has.
 
 Apply reads your logbook again just before it sends, but a change made on
 your phone at the same moment can still be lost, and so can the web's: the

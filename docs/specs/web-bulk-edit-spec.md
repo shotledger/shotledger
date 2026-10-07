@@ -359,6 +359,16 @@ Added after an independent verifier failed the first version (2026-10-07).
 - **R11 (found by the browser check of R5).** "Changed N sessions" counted a
   refused session as changed. The count now leaves out every session row the
   server refused.
+- **R12 (aligned with #669's R13/R14).** A held request is bound to the user
+  id it was built for (`Built.userId`). Each Apply first reads the signed-in
+  user: another user → `accountChanged`, the held edit or correction is
+  dropped and nothing is sent; signed out or the server unreachable → it stays
+  held. While a request is held, the one action button reads **Retry** and
+  every submit resends it (`submitRequest`); only an edit of the form or the
+  selection drops a held edit (a pending correction is never dropped by an
+  edit). The separate Retry button is gone. `web/src/bulk/*.ts` joins
+  `stryker.config.json`'s list, so the 100% coverage gate and Stryker cover
+  the page modules as #669 does for `web/src/entry/`.
 - Also: the volume count indexes shots, series and stations once per Apply
   (it re-filtered the whole shots table per series: about 4 s for 300
   sessions and 36 000 shots; now about 10 ms).

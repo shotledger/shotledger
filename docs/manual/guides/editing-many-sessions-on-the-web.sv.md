@@ -39,11 +39,13 @@ tillbaka dess skott från skottantalen, så att de bara räknar passen som
 flyttades. En tagg som under tiden tagits bort på en annan enhet syns inte på
 passen; det säger sidan också.
 
-Att tillämpa kräver en anslutning. Om servern inte går att nå skickar
-**Försök igen** exakt samma ändring igen, så att inget ändras två gånger. Om
-du stänger fliken innan dess försvinner ändringen. Om skottantalen fortfarande
-behöver rättas gör **Försök igen** det, och inget annat kan tillämpas förrän
-det är gjort.
+Att tillämpa kräver en anslutning. Om servern inte går att nå blir knappen
+**Försök igen**, som skickar exakt samma ändring igen, så att inget ändras två
+gånger. Ändrar du urvalet eller ändringen först släpps den kopian, och nästa
+tillämpning läser loggboken på nytt. Loggar du in på ett annat konto emellan
+släpps den också, så att den aldrig skickas till fel konto. Om du stänger
+fliken försvinner ändringen. Om skottantalen fortfarande behöver rättas gör
+**Försök igen** det, och inget annat kan tillämpas förrän det är gjort.
 
 Sidan läser loggboken på nytt precis innan den skickar, men en ändring som
 görs i telefonen i samma stund kan ändå gå förlorad, och likaså webbens: den
