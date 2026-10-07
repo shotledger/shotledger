@@ -190,6 +190,8 @@ export interface CounterPlan {
   moves: { sessionId: string; rounds: number; from: string | null; to: string | null }[];
   /** Each touched firearm's pulled [round_count, rounds_since_maintenance]. */
   original: Record<string, [number, number]>;
+  /** The updated_at the push writes on each firearm row (R22). */
+  writtenAt: string;
 }
 
 /**
@@ -233,7 +235,7 @@ function setFirearm(
   now: string,
 ): Planned & { counters: CounterPlan } {
   const roundsOf = volumeIndex(context);
-  const counters: CounterPlan = { moves: [], original: {} };
+  const counters: CounterPlan = { moves: [], original: {}, writtenAt: now };
   // A firearm that is no longer live is not moved, as applyRoundCountDelta.
   const liveFirearm = (firearmId: string | null): string | null => {
     const row = firearmId === null ? undefined : context.firearms.get(firearmId);
@@ -268,47 +270,58 @@ function setFirearm(
   return { writes: [...firearmWrites, ...sessionWrites], changed: sessionWrites.length, counters };
 }
 
+/** The firearm rows of a correction, and the targets it would not touch (R22). */
+export interface CounterCorrection {
+  changes: ClientChange[];
+  /** Targets another device wrote after the push: left as they are, to check by hand. */
+  unverified: string[];
+}
+
 /**
  * After a push in which the server refused some moved sessions: the firearm
- * rows that take their share back out of the counters (R5). Each touched
- * firearm is rebuilt from its fresh pull, moved by the difference between
- * the counters without the refused sessions and the counters the push wrote,
- * so a change another device made in between survives. A firearm whose own
- * row was refused, or that is no longer live, is left alone. Empty when
- * nothing needs taking back.
+ * rows that take those sessions' rounds back off their **target** (R5, R21).
+ * A refused session was deleted on another device, and deleting a session
+ * backs its rounds out of its own firearm and pushes that row
+ * (deleteSessionAndSeries) before the refusal, so the source row the web
+ * wrote over it (pulled before, minus every move) is already right. Only a
+ * target still exactly as the push wrote it is corrected; one another device
+ * wrote since is named in `unverified` instead: rewriting it would lose that
+ * write, and its rounds can no longer be known (R22). A target
+ * whose own row was refused, or that is gone, is left alone.
  */
 export function buildCounterCorrection(
   plan: CounterPlan,
   refused: { sessions: ReadonlySet<string>; firearms: ReadonlySet<string> },
   freshFirearms: ReadonlyMap<string, Payload>,
   deps: Pick<EntryDeps, 'newChangeId' | 'now'>,
-): ClientChange[] {
+): CounterCorrection {
   const written = countersAfter(plan);
   const landed = countersAfter(
     plan,
-    plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),
+    plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),
   );
   const now = deps.now();
-  const changes: ClientChange[] = [];
-  for (const [firearmId, [total, since]] of written) {
+  const result: CounterCorrection = { changes: [], unverified: [] };
+  for (const [firearmId, [total]] of written) {
     const fresh = freshFirearms.get(firearmId);
     if (refused.firearms.has(firearmId) || !isLive(fresh)) continue;
-    const [wantTotal, wantSince] = landed.get(firearmId) ?? plan.original[firearmId]!;
-    if (wantTotal === total && wantSince === since) continue;
-    const values: [number, number] = [
-      Math.max(0, counter(fresh.round_count) + wantTotal - total),
-      Math.max(0, counter(fresh.rounds_since_maintenance) + wantSince - since),
-    ];
-    changes.push({
+    // A source is the same either way; only a target can differ, and it only gains.
+    const want = landed.get(firearmId) ?? plan.original[firearmId]!;
+    if (want[0] === total) continue;
+    if (fresh.updated_at !== plan.writtenAt) {
+      result.unverified.push(firearmId);
+      continue;
+    }
+    result.changes.push({
       clientChangeId: deps.newChangeId(),
       tableName: 'firearms',
       rowId: firearmId,
-      payload: withCounters(fresh, values, now),
+      payload: withCounters(fresh, want, now),
       deletedAt: null,
       updatedAt: now,
     });
   }
-  return changes;
+  return result;
 }
 
 function setLocation(location: string | null, sessions: Payload[], now: string): Planned {

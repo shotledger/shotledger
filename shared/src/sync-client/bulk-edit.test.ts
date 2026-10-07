@@ -571,6 +571,7 @@ describe('buildBulkEdit — what Apply keeps for afterwards (R5, R6)', () => {
         { sessionId: 's5', rounds: 2, from: null, to: 'f3' },
       ],
       original: { f1: [100, 15], f2: [5, 2], f3: [50, 0] },
+      writtenAt: NOW,
     });
     expect(moved.tagId).toBeNull();
     const existing = okOf(build({ kind: 'addTag', name: 'KM' }, ['s2']));
@@ -587,8 +588,9 @@ describe('buildBulkEdit — what Apply keeps for afterwards (R5, R6)', () => {
   });
 });
 
-describe('buildCounterCorrection (R5)', () => {
+describe('buildCounterCorrection (R5, R21, R22)', () => {
   const deps = { newChangeId: () => '00000000-0000-4000-8000-0000000000aa', now: () => NOW };
+  const WRITTEN = '2026-10-07T09:59:00.000Z';
   // The verifier's case: s1 (3 rounds) and s2 (2) move from f1 to f2.
   const plan: CounterPlan = {
     moves: [
@@ -596,109 +598,109 @@ describe('buildCounterCorrection (R5)', () => {
       { sessionId: 's2', rounds: 2, from: 'f1', to: 'f2' },
     ],
     original: { f1: [100, 7], f2: [10, 10] },
+    writtenAt: WRITTEN,
   };
   const none = new Set<string>();
-  const written = byId(firearm('f1', 95, 2), firearm('f2', 15, 15));
+  /** A firearm row as the web's push wrote it. */
+  const asWritten = (id: string, total: number, since: number, fields: Payload = {}) =>
+    firearm(id, total, since, { updated_at: WRITTEN, ...fields });
+  const written = byId(asWritten('f1', 95, 2), asWritten('f2', 15, 15));
 
-  it('K19 a refused session takes its rounds back off the target and back onto the source', () => {
-    const changes = buildCounterCorrection(
-      plan,
-      { sessions: new Set(['s2']), firearms: none },
-      written,
-      deps,
-    );
-    expect(changes).toEqual([
-      {
-        clientChangeId: '00000000-0000-4000-8000-0000000000aa',
-        tableName: 'firearms',
-        rowId: 'f1',
-        payload: { ...firearm('f1', 97, 4), updated_at: NOW },
-        deletedAt: null,
-        updatedAt: NOW,
-      },
-      {
-        clientChangeId: '00000000-0000-4000-8000-0000000000aa',
-        tableName: 'firearms',
-        rowId: 'f2',
-        payload: { ...firearm('f2', 13, 13), updated_at: NOW },
-        deletedAt: null,
-        updatedAt: NOW,
-      },
-    ]);
-    // Every session refused: both firearms go back to what was pulled.
+  it('K19 a refused session takes its rounds back off the target only; its source is left as written (R21)', () => {
+    // The device that deleted s2 backed its rounds out of f1 itself and pushed
+    // f1; the web's f1 (pulled before, minus both moves) landed after it and
+    // is already right. Only f2 counted s2's rounds wrongly.
+    expect(
+      buildCounterCorrection(plan, { sessions: new Set(['s2']), firearms: none }, written, deps),
+    ).toEqual({
+      changes: [
+        {
+          clientChangeId: '00000000-0000-4000-8000-0000000000aa',
+          tableName: 'firearms',
+          rowId: 'f2',
+          payload: { ...asWritten('f2', 13, 13), updated_at: NOW },
+          deletedAt: null,
+          updatedAt: NOW,
+        },
+      ],
+      unverified: [],
+    });
+    // Every session refused: the target goes back to what was pulled.
     const all = buildCounterCorrection(
       plan,
       { sessions: new Set(['s1', 's2']), firearms: none },
       written,
       deps,
     );
-    expect(all.map((c) => [c.rowId, (c.payload as Payload).round_count])).toEqual([
-      ['f1', 100],
+    expect(all.changes.map((c) => [c.rowId, (c.payload as Payload).round_count])).toEqual([
       ['f2', 10],
     ]);
+    // Moved to None: there is no target, so nothing to take back (V2's shape).
+    const toNone: CounterPlan = {
+      moves: plan.moves.map((m) => ({ ...m, to: null })),
+      original: { f1: [4, 1] },
+      writtenAt: WRITTEN,
+    };
+    expect(
+      buildCounterCorrection(
+        toNone,
+        { sessions: new Set(['s2']), firearms: none },
+        byId(asWritten('f1', 0, 0)),
+        deps,
+      ),
+    ).toEqual({ changes: [], unverified: [] });
   });
 
-  it('K19 a change another device made in between survives; the floor is the one the phone uses', () => {
-    const moved = byId(firearm('f1', 95, 2, { make: 'Renamed' }), firearm('f2', 40, 15));
-    const changes = buildCounterCorrection(
+  it('K19 the corrected row keeps the columns it was written with', () => {
+    const renamed = byId(asWritten('f1', 95, 2), asWritten('f2', 15, 15, { notes: 'kept' }));
+    const { changes } = buildCounterCorrection(
       plan,
       { sessions: new Set(['s2']), firearms: none },
-      moved,
+      renamed,
       deps,
     );
     expect(changes.map((c) => c.payload)).toEqual([
-      { ...firearm('f1', 97, 4, { make: 'Renamed' }), updated_at: NOW },
-      { ...firearm('f2', 38, 13), updated_at: NOW },
-    ]);
-    // The source was floored at 0 with or without s2: nothing to give back.
-    const low: CounterPlan = { ...plan, original: { f1: [1, 0], f2: [10, 10] } };
-    const floored = buildCounterCorrection(
-      low,
-      { sessions: new Set(['s2']), firearms: none },
-      byId(firearm('f1', 0, 0), firearm('f2', 15, 15)),
-      deps,
-    );
-    expect(floored.map((c) => c.rowId)).toEqual(['f2']);
-    // Only the since-maintenance counter differs (the total was floored either
-    // way): it is still corrected.
-    const sinceOnly: CounterPlan = { ...plan, original: { f1: [1, 10], f2: [10, 10] } };
-    const corrected = buildCounterCorrection(
-      sinceOnly,
-      { sessions: new Set(['s2']), firearms: none },
-      byId(firearm('f1', 0, 5), firearm('f2', 15, 15)),
-      deps,
-    );
-    expect(corrected[0]!.payload).toEqual({ ...firearm('f1', 0, 7), updated_at: NOW });
-    // A fresh counter that would go below zero stops at zero.
-    const drained = buildCounterCorrection(
-      plan,
-      { sessions: new Set(['s2']), firearms: none },
-      byId(firearm('f2', 1, 0, { round_count: 'n/a' })),
-      deps,
-    );
-    expect(drained.map((c) => c.payload)).toEqual([
-      { ...firearm('f2', 0, 0, { round_count: 0 }), updated_at: NOW },
+      { ...asWritten('f2', 13, 13, { notes: 'kept' }), updated_at: NOW },
     ]);
   });
 
-  it('K20 nothing to take back: no refused session, a refused or deleted firearm row', () => {
+  it('K20 nothing to take back: no refused session, a refused or deleted target row', () => {
     expect(buildCounterCorrection(plan, { sessions: none, firearms: none }, written, deps)).toEqual(
-      [],
+      { changes: [], unverified: [] },
     );
-    const refusedTarget = buildCounterCorrection(
-      plan,
-      { sessions: new Set(['s2']), firearms: new Set(['f2']) },
-      written,
-      deps,
-    );
-    expect(refusedTarget.map((c) => c.rowId)).toEqual(['f1']);
-    const gone = buildCounterCorrection(
-      plan,
-      { sessions: new Set(['s2']), firearms: none },
-      byId(firearm('f1', 95, 2, { deleted_at: OLD })),
-      deps,
-    );
-    expect(gone).toEqual([]);
+    expect(
+      buildCounterCorrection(
+        plan,
+        { sessions: new Set(['s2']), firearms: new Set(['f2']) },
+        written,
+        deps,
+      ),
+    ).toEqual({ changes: [], unverified: [] });
+    expect(
+      buildCounterCorrection(
+        plan,
+        { sessions: new Set(['s2']), firearms: none },
+        byId(asWritten('f2', 15, 15, { deleted_at: OLD })),
+        deps,
+      ),
+    ).toEqual({ changes: [], unverified: [] });
+  });
+
+  it('K22 a target another device wrote after the push is not corrected but named to check (R22)', () => {
+    // V3: a stale phone pushed f2 = 15 (its 10 + 5 new rounds) after the web's push.
+    for (const fresh of [
+      asWritten('f2', 15, 15, { updated_at: '2026-10-07T10:00:05.000Z' }),
+      asWritten('f2', 20, 20, { updated_at: '2026-10-07T10:00:05.000Z' }),
+    ]) {
+      expect(
+        buildCounterCorrection(
+          plan,
+          { sessions: new Set(['s2']), firearms: none },
+          byId(asWritten('f1', 95, 2), fresh),
+          deps,
+        ),
+      ).toEqual({ changes: [], unverified: ['f2'] });
+    }
   });
 });
 
@@ -892,50 +894,78 @@ describe('buildBulkEdit — property', () => {
     );
   });
 
-  it('K21 a push with refused sessions, then its correction, leaves the counters the phone would have for the sessions that landed', () => {
+  it('K21 another device deletes some moved sessions before the push; push, then correction, leave the counters the phone would have (R21)', () => {
     const firearmWorld = fc.tuple(
       worldArb,
       fc.constantFrom(null, 'f1', 'f2', 'f3'),
       fc.array(fc.nat({ max: 14 })),
     );
+    const floorAdd = (row: Payload, delta: number): Payload => ({
+      ...row,
+      round_count: Math.max(0, (row.round_count as number) + delta),
+      rounds_since_maintenance: Math.max(0, (row.rounds_since_maintenance as number) + delta),
+      updated_at: '2026-10-07T09:59:30.000Z',
+    });
     fc.assert(
-      fc.property(firearmWorld, ([{ context, selection }, target, refusedPicks]) => {
+      fc.property(firearmWorld, ([{ context, selection }, target, picks]) => {
         const action: BulkAction = { kind: 'setFirearm', firearmId: target };
         const result = buildBulkEdit(action, selection, context, makeDeps());
         if (!result.ok) return;
-        const refused = new Set(refusedPicks.map((n) => `s${n}`));
-        // The server refuses those session rows and applies everything else.
-        const landedChanges = result.changes.filter(
-          (c) => !(c.tableName === 'sessions' && refused.has(c.rowId)),
+        const moved = new Set(
+          result.changes.filter((c) => c.tableName === 'sessions').map((c) => c.rowId),
         );
-        const after = applied(context, landedChanges);
+        // Only a session in the push can be refused.
+        const refused = new Set(picks.map((n) => `s${n}`).filter((id) => moved.has(id)));
+
+        // 1. The other device deletes them as deleteSessionAndSeries does: the
+        //    session's rounds come off its firearm, and both rows are pushed.
+        const server = {
+          ...context,
+          sessions: new Map(context.sessions),
+          firearms: new Map(context.firearms),
+        };
+        for (const id of refused) {
+          const source = context.sessions.get(id)!.firearm_id as string | null;
+          const row = source === null ? undefined : server.firearms.get(source);
+          if (isLive(row)) server.firearms.set(source!, floorAdd(row, -roundsOf(context, id)));
+          server.sessions.delete(id);
+        }
+        // 2. The web's push lands after it: the refused session rows are
+        //    rejected as tombstoned, everything else applies.
+        const after = applied(
+          server,
+          result.changes.filter((c) => !(c.tableName === 'sessions' && refused.has(c.rowId))),
+        );
+        // 3. The correction, built from the firearms pulled afresh.
         const correction = buildCounterCorrection(
           result.counters!,
           { sessions: refused, firearms: new Set() },
           after.firearms,
           makeDeps(),
         );
-        const corrected = applied(after, correction);
+        expect(correction.unverified).toEqual([]);
+        const corrected = applied(after, correction.changes);
 
-        // The phone's walk over the sessions that landed only.
+        // The phone's truth: the deletions first, then each surviving move.
         const expected = new Map<string, [number, number]>(
           [...context.firearms].map(([id, f]) => [
             id,
             [f.round_count as number, f.rounds_since_maintenance as number],
           ]),
         );
-        for (const id of new Set(selection)) {
-          const row = context.sessions.get(id);
-          if (!isLive(row) || refused.has(id) || row.firearm_id === target) continue;
+        const step = (firearmId: string | null, delta: number) => {
+          if (firearmId === null || !isLive(context.firearms.get(firearmId))) return;
+          const [total, since] = expected.get(firearmId)!;
+          expected.set(firearmId, [Math.max(0, total + delta), Math.max(0, since + delta)]);
+        };
+        for (const id of refused) {
+          step(context.sessions.get(id)!.firearm_id as string | null, -roundsOf(context, id));
+        }
+        for (const id of moved) {
+          if (refused.has(id)) continue;
           const rounds = roundsOf(context, id);
-          for (const [firearmId, delta] of [
-            [row.firearm_id as string | null, -rounds],
-            [target, rounds],
-          ] as const) {
-            if (firearmId === null || !isLive(context.firearms.get(firearmId))) continue;
-            const [total, since] = expected.get(firearmId)!;
-            expected.set(firearmId, [Math.max(0, total + delta), Math.max(0, since + delta)]);
-          }
+          step(context.sessions.get(id)!.firearm_id as string | null, -rounds);
+          step(target, rounds);
         }
         for (const [id, [total, since]] of expected) {
           expect(corrected.firearms.get(id)).toMatchObject({
