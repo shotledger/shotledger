@@ -45,7 +45,9 @@ gånger. Ändrar du urvalet eller ändringen först släpps den kopian, och näs
 tillämpning läser loggboken på nytt. Loggar du in på ett annat konto emellan
 släpps den också, så att den aldrig skickas till fel konto. Om du stänger
 fliken försvinner ändringen. Om skottantalen fortfarande behöver rättas gör
-**Försök igen** det, och inget annat kan tillämpas förrän det är gjort.
+**Försök igen** det, och inget annat kan tillämpas förrän det är gjort. Går de
+inte att rätta, eller loggar ett annat konto in först, säger sidan det; rätta
+då antalen med **Justera antal skott** i telefonen.
 
 Sidan läser loggboken på nytt precis innan den skickar, men en ändring som
 görs i telefonen i samma stund kan ändå gå förlorad, och likaså webbens: den

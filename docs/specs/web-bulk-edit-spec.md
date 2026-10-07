@@ -372,3 +372,42 @@ Added after an independent verifier failed the first version (2026-10-07).
 - Also: the volume count indexes shots, series and stations once per Apply
   (it re-filtered the whole shots table per series: about 4 s for 300
   sessions and 36 000 shots; now about 10 ms).
+
+Added after a full PR review (2026-10-07), on #669 rebased to its re-sign-in
+fixes. **Each needs the maintainer's OK.**
+
+- **R13 (Medium).** Add Tag with no live target session (every ticked one
+  deleted elsewhere, or after signing in as another account, when every
+  listed id is missing) wrote a new tag row on its own, so a typed name
+  could appear as a stray tag in the other account. Now the tag is created
+  only when at least one link is written; otherwise `nothingToChange` (K13).
+- **R14.** A push whose acks do not match (#669's `unconfirmed`, R19 there)
+  may have landed: the edit, or the correction, is held for Retry and the
+  page says the server answered unexpectedly.
+- **R15 (adopts #669's R22).** The page uses the shared `SignInAgain`; a
+  sign-in as the same account only clears the notice and keeps a held
+  request, anyone else makes App reload the logbook and remount the page
+  (`key={generation}`). An Apply that finds another account signed in
+  (`accountChanged`) hands App the new user the same way, instead of
+  leaving the old account's sessions listed. When the request dropped was a
+  pending **correction**, the message says the other account's round counts
+  still count the refused sessions and points to Adjust Round Count on the
+  phone; that message is carried across the remount in memory
+  (`web/src/bulk/carry.ts`).
+- **R16.** A correction whose rebuild throws (an unreadable fresh firearm
+  row) is given up after `MAX_CORRECTION_ATTEMPTS` (3) tries, with a message
+  pointing to Adjust Round Count, instead of blocking every Apply forever. An
+  unanswered firearm pull is not an attempt.
+- **R17.** "Changed N sessions" also leaves out refused new links (Add Tag on
+  a session deleted meanwhile), not only refused session rows.
+- **R18.** A built correction is held before it is sent, so even a push that
+  throws leaves the identical correction for Retry; it is never rebuilt, so
+  the refused rounds are never taken off twice.
+- **R19 (as #669's R23).** All controls sit in a fieldset disabled while an
+  Apply runs, so the selection on screen is the one being sent; the focus
+  returns to where it was afterwards.
+- **R20.** `submitRequest` stays as the seam the submit wiring is tested
+  through, as #669 keeps its own (R25 there).
+- B7 is unchanged: #676 (the phone fix that would make the web and phone
+  agree) is still open; once it merges, P1's B7 case flips to agreement and
+  the deviation text goes.

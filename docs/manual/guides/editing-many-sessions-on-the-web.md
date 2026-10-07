@@ -45,7 +45,9 @@ changed twice. Changing the selection or the change first drops that copy,
 and the next **Apply** reads your logbook again. Signing in to another account
 in between drops it too, so it is never sent to the wrong account. Closing the
 tab drops the change. If the round counts still need correcting, **Retry**
-does that, and nothing else can be applied until it has.
+does that, and nothing else can be applied until it has. If they cannot be
+corrected, or another account signs in first, the page says so; correct the
+counts with **Adjust Round Count** on the phone.
 
 Apply reads your logbook again just before it sends, but a change made on
 your phone at the same moment can still be lost, and so can the web's: the
