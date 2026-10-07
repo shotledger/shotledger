@@ -450,6 +450,21 @@ describe('buildBulkEdit — location', () => {
 });
 
 describe('buildBulkEdit — selection and limits', () => {
+  it('K13 Add Tag with no live target session writes nothing, not even a new tag (R13)', () => {
+    // As after signing in as another account: every listed id is missing.
+    for (const name of ['Brand New', 'KM']) {
+      expect(build({ kind: 'addTag', name }, ['nope', 'sDel'])).toEqual({
+        ok: false,
+        errors: [{ kind: 'nothingToChange' }],
+      });
+    }
+    // Every live target already tagged: no new tag row either (the name exists).
+    expect(build({ kind: 'addTag', name: 'KM' }, ['s1'])).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+  });
+
   it('K13 selected sessions that are not live are counted missing and not written', () => {
     const { changes, summary } = okOf(
       build({ kind: 'setLocation', location: 'Elsewhere' }, ['s1', 'nope', 'sDel']),

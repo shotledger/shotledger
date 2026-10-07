@@ -92,6 +92,14 @@ function addTag(
 ): Planned {
   const liveTags = liveRows(context.tags);
   const named = new Set(liveTags.filter((t) => t.name === name).map((t) => t.id as string));
+  const tagged = new Set(
+    liveRows(context.sessionTags)
+      .filter((l) => named.has(l.tag_id as string))
+      .map((l) => l.session_id as string),
+  );
+  const untagged = sessions.filter((s) => !tagged.has(s.id as string));
+  // No link to write, no tag to create: a stray tag is not an edit (R13).
+  if (untagged.length === 0) return { writes: [], changed: 0 };
   const writes: Write[] = [];
   // The canonical tag: the live one with the smallest id (canonicalTags).
   let tagId = [...named].sort()[0];
@@ -103,15 +111,7 @@ function addTag(
       payload: { id: tagId, created_at: now, updated_at: now, deleted_at: null, name },
     });
   }
-  const tagged = new Set(
-    liveRows(context.sessionTags)
-      .filter((l) => named.has(l.tag_id as string))
-      .map((l) => l.session_id as string),
-  );
-  let changed = 0;
-  for (const s of sessions) {
-    if (tagged.has(s.id as string)) continue;
-    changed += 1;
+  for (const s of untagged) {
     const id = deps.newId();
     writes.push({
       tableName: 'session_tags',
@@ -126,7 +126,7 @@ function addTag(
       },
     });
   }
-  return { writes, changed, tagId };
+  return { writes, changed: untagged.length, tagId };
 }
 
 /** As removeSessionTag: every live link to any tag of the name, live or not. */
