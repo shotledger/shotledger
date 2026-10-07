@@ -1,7 +1,7 @@
 # Evidence report — web bulk edit (Tier 3)
 
 Spec: [`web-bulk-edit-spec.md`](web-bulk-edit-spec.md), including its §8
-Revisions R1–R20.
+Revisions R1–R24.
 
 > **Round 2 is the current evidence.** An independent verifier failed round 1
 > (the sections before "Round 2" are round 1's, kept as history). Round
@@ -248,3 +248,35 @@ only `rounds_since_maintenance` differs (the total floored either way). A K19
 case was added at `a4a1743` and fails against that mutant (2 failed), then
 passes restored; `bulk-edit.test.ts` 23/23. The rest of the gauntlet ran at
 `97b650b`, one test-only commit earlier.
+
+## Round 4 (after the second independent verifier, R21–R24)
+
+- **Source state:** commit `f156260` on #669 at `caffb4d`. Not re-verified
+  independently; spec approval still not obtained.
+- **Verifier findings:** CONFIRMED 1 (a refused session's rounds were put
+  back onto its source, which the deleting device had already backed out)
+  → R21; PLAUSIBLE 2 (a delta on a target another device rewrote) → R22;
+  PLAUSIBLE 3 (a dropped held firearm change said nothing) → R23; PLAUSIBLE
+  4 (account not re-checked before a correction) → R24.
+- **Model fixed in the tests, not only the code.** K21, W5 and P6 used to
+  have the deleting device push only the tombstone; now it backs the rounds
+  out of the source and pushes that firearm with the tombstones, as
+  `deleteSessionAndSeries` does (P6 runs the phone's own function). The old
+  source re-add fails K21 alone, P6 alone, and W5–W7 (3 failed), each run
+  against that mutant and then restored.
+- **Verifier cases on the real Worker:** V1 → W5 (f1 95/95, f2 13/13, a
+  resent correction `duplicate`); V2 → W6 (f1 0/0, no correction); V3 → W7
+  (no correction, f2 named to check, left at 15).
+
+| Layer                                           | Command                                                                                                    | Result                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                               | exit 0; vitest 177 files, 3064 tests; jest 698; i18n 1277 keys                    |
+| Coverage                                        | `pnpm check`                                                                                               | 100% statements 3808/3808, branches 2418/2418, functions 885/885, lines 3236/3236 |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                         | 15 files, 160 tests (W1–W7)                                                       |
+| Mutation (tool)                                 | `npx stryker run --mutate 'shared/src/sync-client/bulk-edit.ts,web/src/bulk/*.ts,!web/src/bulk/*.test.ts'` | 787 killed, 4 survived (99.49%), all equivalent                                   |
+| Mutation (hand)                                 | `node scripts/manual-mutation-web-bulk.mjs`                                                                | 24/24 killed, incl. the R21 source re-add against K21 alone and P6 alone          |
+| Docs gates                                      | `mkdocs build --strict`; translation check; anchor check                                                   | built; 25 pages current; no dangling anchors                                      |
+
+The four survivors: the two `Map.get(null)` guards and the unique-key sort
+(as before), and `unverified: []` on a correction not yet built, which is
+always replaced by the build's own list before it is read.
