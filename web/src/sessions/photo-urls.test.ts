@@ -1,13 +1,14 @@
+import { PhotoHttpError } from '@shotledger/shared/src/sync-client/http';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createPhotoUrls } from './photo-urls';
+import { createPhotoUrls, photoFailure } from './photo-urls';
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function setup(fail: Set<string> = new Set(), graceMs = 0) {
-  const download = vi.fn(async (photoId: string) => {
+  const download = vi.fn(async (photoId: string, _signal: AbortSignal) => {
     if (fail.has(photoId)) throw new Error('404');
-    return new TextEncoder().encode(photoId).buffer as ArrayBuffer;
+    return new Blob([photoId], { type: 'image/png' });
   });
   let next = 0;
   const createUrl = vi.fn(() => `blob:${++next}`);
@@ -113,5 +114,62 @@ describe('createPhotoUrls', () => {
     failed.release();
     await tick();
     expect(revokeUrl).not.toHaveBeenCalled();
+  });
+
+  it('passes the blob through as downloaded', async () => {
+    const { createUrl, lease } = setup();
+    await lease('p1').url;
+    expect((createUrl.mock.calls[0] as unknown as [Blob])[0].type).toBe('image/png');
+  });
+
+  it('aborts a download nothing waits for once the grace period ends', async () => {
+    let signal: AbortSignal | undefined;
+    const lease = createPhotoUrls(
+      (_id, s) => {
+        signal = s;
+        return new Promise<Blob>((_, reject) =>
+          s.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))),
+        );
+      },
+      () => 'blob:x',
+      () => undefined,
+      0,
+    );
+    const viewer = lease('p1');
+    viewer.url.catch(() => undefined);
+    expect(signal!.aborted).toBe(false);
+    viewer.release();
+    await tick();
+    expect(signal!.aborted).toBe(true);
+  });
+
+  it('does not abort while another viewer still waits', async () => {
+    let signal: AbortSignal | undefined;
+    const lease = createPhotoUrls(
+      (_id, s) => {
+        signal = s;
+        return new Promise<Blob>(() => undefined);
+      },
+      () => 'blob:x',
+      () => undefined,
+      0,
+    );
+    const a = lease('p1');
+    lease('p1');
+    a.release();
+    await tick();
+    expect(signal!.aborted).toBe(false);
+  });
+});
+
+describe('photoFailure', () => {
+  it.each([
+    [new PhotoHttpError(404, ''), 'missing'],
+    [new PhotoHttpError(500, ''), 'error'],
+    [new PhotoHttpError(401, ''), 'error'],
+    [new TypeError('Failed to fetch'), 'error'],
+    ['odd', 'error'],
+  ])('%s', (error, failure) => {
+    expect(photoFailure(error)).toBe(failure);
   });
 });

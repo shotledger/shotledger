@@ -609,6 +609,20 @@ a.button {
   margin: 0;
 }
 
+.compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.photo-error {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 4px;
+}
+
 .compare-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));

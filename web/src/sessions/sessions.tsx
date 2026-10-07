@@ -9,7 +9,7 @@ import {
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { partitionTags } from '@shotledger/shared/src/tags/machine-tag';
 import type { TFunction } from 'i18next';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatShotValue } from '../../../app/src/components/shot-value';
@@ -63,16 +63,19 @@ export function Sessions({
   tables,
   sessionId,
   compare = false,
+  picked,
+  onPicked,
 }: {
   tables: PulledTables;
   sessionId: string | null;
   compare?: boolean;
+  /** The photos picked to compare; the App keeps them across pages. */
+  picked: readonly string[];
+  onPicked: (next: readonly string[]) => void;
 }) {
   const sessions = useMemo(() => browseSessions(tables), [tables]);
   const owners = useMemo(() => photoOwners(sessions), [sessions]);
-  // The photos picked to compare, in the order they were picked.
-  const [picked, setPicked] = useState<string[]>([]);
-  const picks = useMemo(() => ({ picked, setPicked }), [picked]);
+  const picks = useMemo(() => ({ picked, setPicked: onPicked }), [picked, onPicked]);
 
   let view;
   if (compare) view = <Compare owners={owners} />;

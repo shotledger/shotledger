@@ -6,11 +6,12 @@ import { useTranslation } from 'react-i18next';
 
 import { formatSessionDate } from '../../../app/src/features/home/format-session-date';
 import { formatStation } from '../../../app/src/features/session/format-falt-result';
-import { downloadPhoto } from '../api';
+import { fetchPhoto } from '../api';
 import type { PhotoOwner, PhotoRef } from './browse';
-import { createPhotoUrls } from './photo-urls';
+import { createPhotoUrls, photoFailure, type PhotoFailure } from './photo-urls';
+import { addPicks, removePick, togglePick } from './picks';
 
-const leasePhoto = createPhotoUrls(downloadPhoto);
+const leasePhoto = createPhotoUrls(fetchPhoto);
 
 /** True once the element has come near the viewport, so photos load as they scroll in. */
 function useSeen(ref: RefObject<HTMLElement | null>): boolean {
@@ -30,28 +31,35 @@ function useSeen(ref: RefObject<HTMLElement | null>): boolean {
   return seen;
 }
 
-type Loaded = { photoId: string; url: string } | { photoId: string; failed: true };
+type Loaded =
+  | { photoId: string; attempt: number; url: string }
+  | { photoId: string; attempt: number; failed: PhotoFailure };
 
-function usePhotoUrl(photoId: string, seen: boolean): Loaded | null {
+/** The photo's URL or why it failed; `retry` asks for it again. */
+function usePhotoUrl(photoId: string, seen: boolean) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!seen) return;
     const lease = leasePhoto(photoId);
     let current = true;
     lease.url.then(
       (url) => {
-        if (current) setLoaded({ photoId, url });
+        if (current) setLoaded({ photoId, attempt, url });
       },
-      () => {
-        if (current) setLoaded({ photoId, failed: true });
+      (error: unknown) => {
+        if (current) setLoaded({ photoId, attempt, failed: photoFailure(error) });
       },
     );
     return () => {
       current = false;
       lease.release();
     };
-  }, [photoId, seen]);
-  return loaded?.photoId === photoId ? loaded : null;
+  }, [photoId, seen, attempt]);
+  return {
+    loaded: loaded?.photoId === photoId && loaded.attempt === attempt ? loaded : null,
+    retry: () => setAttempt((n) => n + 1),
+  };
 }
 
 export function Photo({
@@ -81,14 +89,22 @@ function UploadedPhoto({
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
-  const loaded = usePhotoUrl(photoId, useSeen(ref));
+  const { loaded, retry } = usePhotoUrl(photoId, useSeen(ref));
   return (
     <div
       ref={ref}
       className={`${className}${loaded && 'url' in loaded ? '' : ' photo-empty muted'}`}
     >
       {loaded && 'url' in loaded && <img src={loaded.url} alt={alt} />}
-      {loaded && 'failed' in loaded && t('photos.missing')}
+      {loaded && 'failed' in loaded && loaded.failed === 'missing' && t('web.photos.missing')}
+      {loaded && 'failed' in loaded && loaded.failed === 'error' && (
+        <span className="photo-error">
+          {t('web.photos.loadFailed')}
+          <button type="button" className="secondary small" onClick={retry}>
+            {t('web.photos.retry')}
+          </button>
+        </span>
+      )}
     </div>
   );
 }
@@ -97,7 +113,7 @@ function UploadedPhoto({
 
 interface Picks {
   picked: readonly string[];
-  setPicked: (next: string[]) => void;
+  setPicked: (next: readonly string[]) => void;
 }
 
 const PicksContext = createContext<Picks>({ picked: [], setPicked: () => undefined });
@@ -118,9 +134,7 @@ export function RowPhoto({ photo, alt }: { photo: PhotoRef; alt: string }) {
           <input
             type="checkbox"
             checked={isPicked}
-            onChange={() =>
-              setPicked(isPicked ? picked.filter((id) => id !== photoId) : [...picked, photoId])
-            }
+            onChange={() => setPicked(togglePick(picked, photoId))}
           />
           {t('web.photos.compare')}
         </label>
@@ -140,7 +154,7 @@ export function PickAll({ photoIds }: { photoIds: readonly string[] }) {
       type="button"
       className="secondary small"
       disabled={missing.length === 0}
-      onClick={() => setPicked([...picked, ...missing])}
+      onClick={() => setPicked(addPicks(picked, photoIds))}
     >
       {t('web.photos.pickAll')}
     </button>
@@ -193,7 +207,14 @@ export function Compare({ owners }: { owners: Map<string, PhotoOwner> }) {
       <a className="back" href="#sessions">
         ← {t('web.sessions.back')}
       </a>
-      <h2>{t('web.photos.compareTitle')}</h2>
+      <div className="compare-head">
+        <h2>{t('web.photos.compareTitle')}</h2>
+        {picked.length > 0 && (
+          <button type="button" className="secondary small" onClick={() => setPicked([])}>
+            {t('web.photos.clearAll')}
+          </button>
+        )}
+      </div>
       {shown.length === 0 ? (
         <p className="muted">{t('web.photos.noneSelected')}</p>
       ) : (
@@ -221,7 +242,7 @@ export function Compare({ owners }: { owners: Map<string, PhotoOwner> }) {
                     <button
                       type="button"
                       className="secondary small"
-                      onClick={() => setPicked(picked.filter((id) => id !== owner.photoId))}
+                      onClick={() => setPicked(removePick(picked, owner.photoId))}
                     >
                       {t('common.remove')}
                     </button>

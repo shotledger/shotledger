@@ -1363,7 +1363,11 @@
       "picked_one": "{{count}} photo selected",
       "picked_other": "{{count}} photos selected",
       "compareTitle": "Compare Photos",
-      "noneSelected": "No photos selected."
+      "noneSelected": "No photos selected.",
+      "clearAll": "Clear All",
+      "missing": "Missing",
+      "loadFailed": "Could not load",
+      "retry": "Retry"
     }
   }
 }

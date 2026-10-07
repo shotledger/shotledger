@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Account } from './account/account';
@@ -6,6 +6,7 @@ import { currentEmail, hasSession, loadAccount, signOut } from './api';
 import { type PulledTables } from './pull';
 import { routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
+import { NO_PICKS, picksOf, withPicks, type Picks } from './sessions/picks';
 import { Sessions } from './sessions/sessions';
 import { SignIn } from './sign-in';
 import { Statistics } from './statistics';
@@ -70,7 +71,18 @@ export function App() {
     };
   }, [signedIn]);
 
+  // Kept across pages; tied to the loaded tables, so another account starts empty.
+  const [picks, setPicks] = useState<Picks>(NO_PICKS);
+  const tables = state.kind === 'ready' ? state.tables : null;
+  const onPicked = useCallback(
+    (ids: readonly string[]) => {
+      if (tables) setPicks(withPicks(tables, ids));
+    },
+    [tables],
+  );
+
   const onSignOut = () => {
+    setPicks(NO_PICKS);
     void signOut().then(() => setState({ kind: 'signedOut' }));
   };
 
@@ -96,11 +108,23 @@ export function App() {
       )}
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
       {state.kind === 'ready' && page === 'sessions' && (
-        <Sessions tables={state.tables} sessionId={route.sessionId} compare={route.compare} />
+        <Sessions
+          tables={state.tables}
+          sessionId={route.sessionId}
+          compare={route.compare}
+          picked={picksOf(picks, state.tables)}
+          onPicked={onPicked}
+        />
       )}
       {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
       {state.kind === 'ready' && page === 'account' && (
-        <Account tables={state.tables} onDeleted={() => setState({ kind: 'deleted' })} />
+        <Account
+          tables={state.tables}
+          onDeleted={() => {
+            setPicks(NO_PICKS);
+            setState({ kind: 'deleted' });
+          }}
+        />
       )}
     </Shell>
   );
