@@ -144,6 +144,8 @@ function keypadReplay(tokens: readonly string[], mode: ScoringMode): readonly En
 
 const nearToken = fc.oneof(
   fc.constantFrom('0', '5', '9', '10', 'X', 'x', '10.4', 'X.6', '9,8', '0.0', '10.9', 'x,1'),
+  // Near misses, so a parser that accepts one is caught every run.
+  fc.constantFrom('11', '010', '00', 'XX', 'X10', '10.10', '11.0', '9.', '.5', '-1', '10,'),
   fc.string({ unit: fc.constantFrom(...'0123456789xX.,-a'), minLength: 1, maxLength: 5 }),
 );
 
