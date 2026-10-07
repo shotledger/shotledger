@@ -223,6 +223,14 @@ describe('the Enter Series form', () => {
     expect(sendsTheSame(form, sighter)).toBe(false);
     // A removed row is not an addition.
     expect(sendsTheSame(addRow(form), form)).toBe(false);
+    // Two typed rows, the second changed; a sighter mark on an old row; spaces only.
+    const two = { ...form, rows: [...form.rows, { key: 2, text: '9 9', isSighter: false }] };
+    const secondChanged = { ...two, rows: [two.rows[0]!, { ...two.rows[1]!, text: '9 8' }] };
+    expect(sendsTheSame(two, secondChanged)).toBe(false);
+    const marked = { ...two, rows: [{ ...two.rows[0]!, isSighter: true }, two.rows[1]!] };
+    expect(sendsTheSame(two, marked)).toBe(false);
+    const spaces = { ...form, rows: [...form.rows, { key: 3, text: '   ', isSighter: false }] };
+    expect(sendsTheSame(form, spaces)).toBe(true);
   });
 
   it('a form with no rows gets one blank row back', () => {

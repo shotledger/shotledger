@@ -192,9 +192,9 @@ describe('saving an entry', () => {
       status: { kind: 'failed', error: 'network' },
       held: { changes: CHANGES, userId: 'user-a' },
     };
-    expect(afterEdit(failed)).toEqual(IDLE);
+    expect(afterEdit(failed, { sendsTheSame: false })).toEqual(IDLE);
     const saving: SaveState = { status: { kind: 'saving' }, held: null };
-    expect(afterEdit(saving)).toBe(saving);
+    expect(afterEdit(saving, { sendsTheSame: false })).toBe(saving);
   });
 
   it('U12 an edit that changes nothing that was sent keeps the held request (R21)', () => {

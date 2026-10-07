@@ -113,7 +113,7 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
 /** An edit makes the held request stale: the next Save builds a new one. */
 export function afterEdit(
   state: SaveState,
-  { sendsTheSame }: { sendsTheSame: boolean } = { sendsTheSame: false },
+  { sendsTheSame }: { sendsTheSame: boolean },
 ): SaveState {
   return state.status.kind === 'saving' || sendsTheSame ? state : IDLE;
 }
