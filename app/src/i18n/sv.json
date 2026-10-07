@@ -1363,6 +1363,11 @@
       "deleteFailed": "Kunde inte radera kontot. Försök igen.",
       "deletedBody": "Dina serverdata är borta. Loggboken i telefonen är orörd."
     },
+    "log": {
+      "title": "Skjutlogg",
+      "period": "Period",
+      "print": "Skriv ut"
+    },
     "shell": {
       "menu": "Huvudmeny",
       "version": "Version"

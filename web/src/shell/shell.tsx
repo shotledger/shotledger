@@ -4,13 +4,13 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { version } from '../../../app/package.json';
-import { BrandMark, ChartIcon, UserIcon } from './icons';
+import { BrandMark, ChartIcon, PrinterIcon, UserIcon } from './icons';
 import { UserMenu } from './user-menu';
 
-export type Page = 'statistics' | 'account';
+export type Page = 'statistics' | 'log' | 'account';
 
 export const pageFromHash = (hash: string): Page =>
-  hash === '#account' ? 'account' : 'statistics';
+  hash === '#account' ? 'account' : hash === '#log' ? 'log' : 'statistics';
 
 export function Shell({
   page,
@@ -26,6 +26,7 @@ export function Shell({
   const { t } = useTranslation();
   const pages = [
     { id: 'statistics', label: t('stats.title'), icon: <ChartIcon />, groupStart: false },
+    { id: 'log', label: t('web.log.title'), icon: <PrinterIcon />, groupStart: false },
     { id: 'account', label: t('web.account.title'), icon: <UserIcon />, groupStart: true },
   ] as const;
 

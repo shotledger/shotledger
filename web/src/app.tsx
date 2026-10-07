@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Account } from './account/account';
+import { ActivityLog } from './activity-log';
 import { currentEmail, hasSession, loadAccount, signOut } from './api';
 import { type PulledTables } from './pull';
 import { pageFromHash, Shell, type Page } from './shell/shell';
@@ -90,6 +91,7 @@ export function App() {
       )}
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
       {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
+      {state.kind === 'ready' && page === 'log' && <ActivityLog tables={state.tables} />}
       {state.kind === 'ready' && page === 'account' && (
         <Account tables={state.tables} onDeleted={() => setState({ kind: 'deleted' })} />
       )}

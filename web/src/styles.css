@@ -553,7 +553,52 @@ button.destructive {
   white-space: nowrap;
 }
 
+.log-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* A sheet of paper whatever the theme: the log's own styles assume white. */
+.log-sheet {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  min-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* The browser's Print menu, which bypasses the Ctrl+P handler: the sheet alone. */
+@media print {
+  .sidebar,
+  .topbar,
+  .log-controls,
+  .match-count {
+    display: none;
+  }
+
+  main {
+    padding: 0;
+  }
+
+  .log-layout {
+    display: block;
+  }
+
+  .log-sheet {
+    max-width: none;
+    border: none;
+  }
+}
+
 @media (max-width: 720px) {
+  .log-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .shell {
     flex-direction: column;
   }

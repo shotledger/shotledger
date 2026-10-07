@@ -8,6 +8,15 @@ Sign in with the email and password of your sync account, then open
 **Account** in the menu on the left. Closing the tab signs you out of this
 browser and leaves nothing behind.
 
+## Printing the shooting log
+
+**Shooting Log** in the menu shows the same club log the phone exports as a
+PDF, the one you hand to the förening (see
+[License activity](license-activity.md#getting-it-out)). Pick a **From** and
+**To** date; leave one empty for no limit at that end. **Print**, or Ctrl+P,
+opens the browser's print dialog for the log alone, where you can print it or
+save it as a PDF.
+
 ## Signed-in devices
 
 Every phone and browser signed in to the account, with when it signed in and

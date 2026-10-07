@@ -8,6 +8,15 @@ Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
 här webbläsaren och ingenting lämnas kvar.
 
+## Skriva ut skjutloggen
+
+**Skjutlogg** i menyn visar samma föreningslogg som telefonen exporterar som
+PDF, den du lämnar till föreningen (se
+[Skjutaktivitet](license-activity.md#att-fa-ut-det)). Välj ett **Från**- och
+ett **Till**-datum; lämna ett tomt för att inte begränsa den änden. **Skriv
+ut**, eller Ctrl+P, öppnar webbläsarens utskriftsdialog för bara loggen, där
+du kan skriva ut den eller spara den som PDF.
+
 ## Inloggade enheter
 
 Alla telefoner och webbläsare som är inloggade på kontot, med när de loggade

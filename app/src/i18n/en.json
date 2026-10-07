@@ -1363,6 +1363,11 @@
       "deleteFailed": "Could not delete the account. Try again.",
       "deletedBody": "Your server data is gone. The logbook on your phone is untouched."
     },
+    "log": {
+      "title": "Shooting Log",
+      "period": "Period",
+      "print": "Print"
+    },
     "shell": {
       "menu": "Main",
       "version": "Version"

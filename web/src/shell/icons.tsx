@@ -59,3 +59,13 @@ export function SignOutIcon() {
     </svg>
   );
 }
+
+export function PrinterIcon() {
+  return (
+    <svg {...base}>
+      <path d="M6 9V3h12v6" />
+      <rect x={3} y={9} width={18} height={8} rx={2} />
+      <path d="M6 14h12v7H6z" />
+    </svg>
+  );
+}
