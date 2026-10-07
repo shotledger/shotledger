@@ -67,8 +67,9 @@ och en med frågan den svarar på. Tryck på en för att gå direkt dit.
   på en värmekarta, med en rad om huruvida poängen du tappar mest är en
   siktjustering eller mest spridning. Se
   [Vad träffbildens siffror betyder](../explanation/group-figures.md#over-flera-pass).
-- **Export** som PDF eller JSON. JSON-filen bär med sig filtret —
-  provserieinställningen inräknad — vid sidan av siffrorna.
+- **Exportera JSON**: de matchade passen och sammanfattningen som data. Filen
+  bär med sig filtret — provserieinställningen inräknad — vid sidan av
+  siffrorna.
 
 Ett filter på **Skott per serie** utelämnar fältpass: en fältomgång har
 stationer, inte serier, och har alltså ingen serielängd att matcha.

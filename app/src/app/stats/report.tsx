@@ -4,7 +4,7 @@
 // filter the /stats form pushed in as a route param — nothing is stored.
 import type { TFunction } from 'i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { tenthsToScore } from '@shotledger/shared';
@@ -21,11 +21,7 @@ import { ThemedText } from '@/components/themed-text';
 import { TimeSeriesChart } from '@/components/time-series-chart';
 import { CHART_LINE_COLORS, groupByDiscipline } from '@/components/time-series-chart-math';
 import { useResolvedThemeName } from '@/hooks/use-theme';
-import {
-  EXPORT_FORMATS,
-  useReportExport,
-  type ExportFormat,
-} from '@/features/export/use-report-export';
+import { useReportExport } from '@/features/export/use-report-export';
 import { disciplineLabel } from '@/features/session/labels';
 import {
   decodeAnalyticsFilter,
@@ -90,8 +86,7 @@ export default function StatsReportScreen() {
   const params = useLocalSearchParams<{ filter?: string }>();
   const filter = useMemo(() => decodeAnalyticsFilter(params.filter), [params.filter]);
   const data: AnalyticsReportData = useAnalyticsReport(filter);
-  const [pickingFormat, setPickingFormat] = useState(false);
-  const { exportAs, statusText } = useReportExport(t, i18n.language);
+  const { exportJson, statusText } = useReportExport(t);
   const themeName = useResolvedThemeName();
   const scrollRef = useRef<ScrollView>(null);
   const contentRef = useRef<View>(null);
@@ -145,10 +140,6 @@ export default function StatsReportScreen() {
     range.toIso ? localDayOf(range.toIso) : null,
     filter.disciplineId,
   );
-  const formatLabel: Record<ExportFormat, string> = {
-    pdf: t('compliance.exportPdf'),
-    json: t('stats.exportJson'),
-  };
   // One line per discipline: a precision session (max 350) and a milsnabb
   // session (max 600) on one axis produce a saw-tooth that says nothing about
   // either (#349).
@@ -490,39 +481,22 @@ export default function StatsReportScreen() {
           )}
 
           <View style={styles.section} ref={exportRef}>
-            {pickingFormat ? (
-              <Card testID="stats-export-formats">
-                <ThemedText type="smallBold">{t('stats.exportFormatTitle')}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('stats.exportScopeNote')}
-                </ThemedText>
-                {EXPORT_FORMATS.map((format) => (
-                  <DrillDownRow
-                    key={format}
-                    title={formatLabel[format]}
-                    subtitle={t(`stats.exportHint.${format}`)}
-                    testID={`stats-export-${format}`}
-                    onPress={() => {
-                      setPickingFormat(false);
-                      void exportAs(format, {
-                        filter,
-                        range,
-                        sessionIds: data.sessionIds,
-                        totals: data.totals,
-                        records: data.records,
-                      });
-                    }}
-                  />
-                ))}
-                <PrimaryButton label={t('common.cancel')} onPress={() => setPickingFormat(false)} />
-              </Card>
-            ) : (
-              <PrimaryButton
-                testID="stats-export"
-                label={t('stats.export')}
-                onPress={() => setPickingFormat(true)}
-              />
-            )}
+            <PrimaryButton
+              testID="stats-export"
+              label={t('stats.exportJson')}
+              onPress={() =>
+                void exportJson({
+                  filter,
+                  range,
+                  sessionIds: data.sessionIds,
+                  totals: data.totals,
+                  records: data.records,
+                })
+              }
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('stats.exportHint')}
+            </ThemedText>
 
             {statusText && (
               <ThemedText type="small" themeColor="textSecondary" testID="stats-export-status">

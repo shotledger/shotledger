@@ -18,7 +18,11 @@ The feature set it complements:
 | Group                | Features                                                                                                                |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Account and recovery | sign in; list signed-in devices and revoke; storage usage; download everything (sessions JSON + photos); delete account |
-| Read-only viewing    | statistics; föreningsintyg activity-log print; browse sessions (list + detail); target photos side by side              |
+| Read-only viewing    | statistics; browse sessions (list + detail); target photos side by side                                                 |
+
+The föreningsintyg activity-log print was dropped from this set on
+2026-10-07, on the web and on the phone (#679): the log is worth nothing
+without the club's attestation, and that happens in the paper logbook.
 
 There are **no write paths for now**; keyboard entry, bulk edit and editing
 settings from the browser are deferred to #301.
@@ -52,8 +56,7 @@ nothing after the tab closes.
    every machine signed in from, possibly a shared one. A viewer that keeps
    nothing keeps the manual's privacy promise without qualification.
 4. **B is cheap where it matters.** Every selected feature's logic is already
-   pure functions in `shared/`; `pdf-log.ts` already emits HTML, so
-   `window.print()` serves the föreningsintyg print. What B rewrites is the
+   pure functions in `shared/`. What B rewrites is the
    `app/src/db/queries/` glue over `/sync/pull` arrays — on the order of fifty
    lines per adapter — and six read-only screens.
 

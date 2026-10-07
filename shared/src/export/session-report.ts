@@ -1,7 +1,7 @@
 // Pure HTML builder for the per-session report (#499): a header, a session
 // summary (results plus every scoring mark on one target), then one compact
 // card per series with its target, marks, shot values and group figures. expo-print turns it into a PDF on the app side; nothing here
-// imports RN, so it is testable with plain vitest, like pdf-log.ts.
+// imports RN, so it is testable with plain vitest.
 //
 // Shared does no i18n: every label and formatted value comes from the caller.
 import { analyzeGroup } from '../scoring/group';

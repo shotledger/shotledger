@@ -54,51 +54,10 @@ som behöver rättas.
 
 ## Att få ut det
 
-**Inställningar → Säkerhetskopiering och data** exporterar allt. **PDF-exporten**
-av föreningsloggen är den du lämnar till föreningen, och **JSON-exporten** bär
-samma pass som data.
+Appen räknar dina pass; den tar inte fram loggen du lämnar till föreningen.
+En rad i den loggen är ett bevis först när någon från föreningen har skrivit
+under den, och det görs i föreningens loggbok på papper — därför finns ingen
+PDF av loggen att skriva ut. Låt loggboken skrivas under efter hand, och
+använd appen för att se var du står.
 
-PDF:en följer den förtryckta personliga skytteloggen en förening delar ut,
-kolumn för kolumn:
-
-| Kolumn           | Vad den innehåller                         |
-| ---------------- | ------------------------------------------ |
-| Datum            | när du sköt                                |
-| Plats            | banan                                      |
-| Skytteaktivitet  | gren, och om det var träning eller tävling |
-| Använt vapen     | vapnet på passet, eller _Ej angivet_       |
-| Uppg. styrkta av | **lämnas tom, skrivs under för hand**      |
-
-Ovanför tabellen står en kort sammanfattning: tomma rader för ditt namn och
-personnummer, perioden loggen omfattar, vapnet om du exporterat för ett, hur
-många pass och hur många skott, och datumet den skapades. De två tomma raderna är
-pappersblankettens egna, att fylla i för hand — appen lagrar ingendera, för
-ingendera är uppgifter den behöver. Varje siffra där är märkt, så att den som
-läser loggen utan att ha varit med på banan ser vad varje tal betyder.
-**Skott** är varje skott du sköt under de passen — provserier, extraskott och
-serier importerade som en summa inräknade, och sex för varje fältstation, även
-en struken — samma antal som Loggade skott ([hur avlossade skott
-räknas](../explanation/how-shots-are-counted.md)).
-
-**Skytteaktivitet** anger tävlingens namn när passet hade ett, sedan grenen och
-sedan din vapengrupp och klass — "Pistol-SM · Fält · C" i stället för bara
-"Fält". Så läser raderna i en ifylld pappersloggbok, och det är det som gör att
-den som signerar raden känner igen dagen.
-
-Två av dem är värda en förklaring.
-
-**Använt vapen** finns där för att det är vapnets namn som visar aktivitet
-_med ett visst vapen_ — vilket är det kraven för ytterligare enhandsvapen och
-för förnyelse vilar på. Ett pass utan angivet vapen står som _Ej angivet_ i
-stället för att falla bort: en sexmånadersperiod som tyst tappar rader tappar
-pass som faktiskt räknades.
-
-**Uppg. styrkta av** är medvetet tom. I en föreningslogg blir en rad ett bevis
-när någon skriver under den, och det kan bara en människa göra. Appen skriver
-ut den linjerade kolumnen och lämnar den i fred.
-
-!!! note
-
-    Appen känner inte till ditt namn — den har ingen anledning att spara det —
-    så loggen skriver ut en tom rad att fylla i för hand, precis som
-    signaturkolumnen.
+**Inställningar → Säkerhetskopiering och data** exporterar alla pass som data.

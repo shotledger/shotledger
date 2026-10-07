@@ -20,7 +20,6 @@ import {
   sessionVolumeRounds,
   sessionVolumes,
   totalVolumeRounds,
-  totalVolumeRoundsFor,
   withSessionVolumeDelta,
 } from './volume';
 
@@ -124,18 +123,15 @@ describe('sessionVolumes (A1)', () => {
     expect(sessionVolumes(db)).toEqual(new Map([[id, 0]]));
   });
 
-  it('sums only the sessions asked for', () => {
-    const a = session({ extraRounds: 3 });
-    const b = session({ extraRounds: 4 });
+  it('sums every live session', () => {
+    session({ extraRounds: 3 });
+    session({ extraRounds: 4 });
     session({ extraRounds: 100 });
-    expect(totalVolumeRoundsFor(db, [a, b])).toBe(7);
-    expect(totalVolumeRoundsFor(db, [a, 'unknown'])).toBe(3);
-    expect(totalVolumeRoundsFor(db, [])).toBe(0);
     expect(totalVolumeRounds(db)).toBe(107);
   });
 });
 
-describe('every figure counts a total-only series (A2–A4)', () => {
+describe('every figure counts a total-only series (A2–A3)', () => {
   it('A2: Home Shots Logged', () => {
     const id = session();
     shotSeries(id, 1, 5);
@@ -151,15 +147,6 @@ describe('every figure counts a total-only series (A2–A4)', () => {
     totalOnly(id, 2, 5);
     totalOnly(session({ ammoLotId: other }), 1, 5);
     expect(getAmmoLotUsage(db, lot)).toEqual({ sessionCount: 1, shotCount: 12 });
-  });
-
-  it('A4: the shooting log’s sessions — sighters, extra rounds, total-only series and stations', () => {
-    const id = session({ extraRounds: 4 });
-    shotSeries(id, 1, 5, true);
-    shotSeries(id, 2, 5);
-    totalOnly(id, 3, 5);
-    addStation(db, { sessionId: id, position: 1, hits: 5, figuresHit: 3 });
-    expect(totalVolumeRoundsFor(db, [id])).toBe(4 + 5 + 5 + 5 + 6);
   });
 });
 

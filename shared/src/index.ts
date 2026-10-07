@@ -23,7 +23,6 @@ export * from './firearms';
 export * from './ammo';
 export * from './calibers';
 export * from './compliance';
-export * from './export/pdf-log';
 export * from './export/session-report';
 export * from './export/json-log';
 export * from './json-export';

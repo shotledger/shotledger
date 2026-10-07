@@ -152,15 +152,10 @@
     "faltFiguresHit": "Träffade figurer",
     "chartFaltHitsPerStation": "Träffar per station",
     "export": "Exportera",
-    "exportFormatTitle": "Välj format",
     "exportJson": "Exportera JSON",
     "exportDone": "Export delad",
     "exportFailed": "Exporten misslyckades",
-    "exportHint": {
-      "pdf": "En utskrivbar skjutjournal över de matchade passen.",
-      "json": "De matchade passen och den beräknade sammanfattningen som strukturerad data."
-    },
-    "exportScopeNote": "Endast dina egna data — inget hämtas någon annanstans ifrån.",
+    "exportHint": "De matchade passen och den beräknade sammanfattningen som strukturerad data.",
     "typeComparisonTitle": "Träning mot tävling",
     "typeComparisonHint": "Lika mot lika: en gren och en serielängd per tabell, och bara där båda har serier.",
     "typeComparisonGroup": "{{discipline}} · serier om {{count}} skott",
@@ -215,7 +210,7 @@
       "sighter": "Förutsäger provserien tävlingsresultatet?",
       "charts": "Blir jag bättre över tid?",
       "distribution": "Vilka ringar hamnar skotten i?",
-      "export": "PDF eller JSON"
+      "export": "Som JSON"
     }
   },
   "firearms": {
@@ -606,23 +601,9 @@
     "criterionUnattributed_one": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
     "criterionUnattributed_other": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
     "criterionNotAttested": "Appen har räknat passen, men kan inte styrka dem. I en klubblogg blir en rad ett underlag först när någon har signerat den.",
-    "exportPdf": "Exportera PDF",
-    "pdfTitle": "Skjutlogg (föreningsintyg)",
-    "pdfPeriodLabel": "{{from}} – {{to}}",
     "pdfNow": "idag",
     "pdfGeneratedAt": "Genererad {{date}}",
-    "pdfShooterBlank": "Personlig skyttelogg för: ______________________________",
-    "pdfColActivity": "Skytteaktivitet",
-    "pdfColFirearm": "Använt vapen",
-    "pdfColAttestedBy": "Uppg. styrkta av",
-    "pdfNoFirearm": "Ej angivet",
-    "pdfAttestationNote": "Kolumnen ”Uppg. styrkta av” lämnas tom med flit: i en föreningslogg räknas en rad som bevis först när någon skrivit under den, och det kan bara en människa göra.",
-    "pdfColDate": "Datum",
-    "pdfColLocation": "Plats",
-    "pdfEmpty": "Inga pass under perioden.",
-    "pdfTotals": "Pass: {{sessions}} · Skott: {{shots}}",
-    "pdfPersonalIdBlank": "Personnummer: ______________________________",
-    "pdfNoLocation": "Ej angiven"
+    "pdfNoFirearm": "Ej angivet"
   },
   "session": {
     "newTitle": "Nytt pass",

@@ -1,6 +1,6 @@
 // Share cards: pure layout-data builders for the session and
 // series share images. All labels arrive pre-localized (the caller resolves
-// i18n/date formatting, same split as shared/src/export/pdf-log.ts) — these
+// i18n/date formatting, same split as shared/src/export/session-report.ts) — these
 // functions only shape the data: drop sighters from the series list, and
 // turn a blank opt-in note into `null` so the renderer can skip the line.
 // Never derive shooter identity or location here (CLAUDE.md rule 7).

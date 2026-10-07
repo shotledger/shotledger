@@ -2,9 +2,9 @@
 
 Flera skärmar visar hur många skott du har skjutit: **Loggade skott** på
 startsidan och i statistikrapporten, en ammunitionssats åtgång, ett vapens
-**Antal skjutna skott** och **Skott sedan underhåll**, skytteloggens
-**Skott**, JSON-rapporten och antalet som visas innan du importerar en fil. De
-räknar alla på samma sätt, så de stämmer alltid med varandra.
+**Antal skjutna skott** och **Skott sedan underhåll**, JSON-rapporten och
+antalet som visas innan du importerar en fil. De räknar alla på samma sätt,
+så de stämmer alltid med varandra.
 
 ## Vad som räknas
 
