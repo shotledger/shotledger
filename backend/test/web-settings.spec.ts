@@ -88,6 +88,7 @@ function webEdit(
     newChangeId: changeId,
     now: () => NOW,
     currentYear: 2026,
+    defaultProfile: 'none',
   });
   if (!result.ok) throw new Error(JSON.stringify(result.errors));
   return result.changes;

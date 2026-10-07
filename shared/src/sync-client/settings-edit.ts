@@ -35,6 +35,8 @@ export interface SettingsDeps {
   newChangeId: () => string;
   now: () => string;
   currentYear: number;
+  /** The profile the page shows when none is stored (the phone's locale default). */
+  defaultProfile: ProfileSelection;
 }
 
 const isBirthYear = (value: unknown): value is number => Number.isInteger(value);
@@ -73,12 +75,18 @@ export function readAccountSettings(rows: ReadonlyMap<string, Payload>): Account
   };
 }
 
+/** The cases offered under the profile `after` shows. */
+const casesOf = (after: AccountSettings, deps: SettingsDeps): string[] =>
+  getProfileDefinition(after.complianceProfile ?? deps.defaultProfile)?.variants.map(
+    (variant) => variant.id,
+  ) ?? [];
+
 /** Whether `after[key]` is a value the phone's Settings could have written. */
-function allowed(key: SyncedSettingKey, after: AccountSettings, currentYear: number): boolean {
+function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDeps): boolean {
   const value = after[key];
   switch (key) {
     case 'birthYear':
-      return birthYearOptions(currentYear).includes(value as number);
+      return birthYearOptions(deps.currentYear).includes(value as number);
     case 'skillClass':
       return isSkillClass(value);
     case 'competesInWomensClasses':
@@ -86,18 +94,15 @@ function allowed(key: SyncedSettingKey, after: AccountSettings, currentYear: num
     case 'complianceProfile':
       return isProfile(value);
     case 'complianceProfileVariant':
-      return (
-        getProfileDefinition(after.complianceProfile ?? 'none')?.variants.some(
-          (variant) => variant.id === value,
-        ) ?? false
-      );
+      return casesOf(after, deps).includes(value as string);
   }
 }
 
 /**
  * One whole settings row per key whose value changed, in
  * SYNCED_SETTING_KEYS order. Unchanged keys are neither checked nor pushed;
- * one disallowed value refuses the whole build.
+ * one disallowed value refuses the whole build. A case changed under a
+ * profile that offers none is dropped: its picker is hidden there (spec R4).
  */
 export function buildSettingsChanges(
   before: AccountSettings,
@@ -105,9 +110,13 @@ export function buildSettingsChanges(
   pulled: ReadonlyMap<string, Payload>,
   deps: SettingsDeps,
 ): SettingsResult {
-  const changed = SYNCED_SETTING_KEYS.filter((key) => before[key] !== after[key]);
+  const changed = SYNCED_SETTING_KEYS.filter(
+    (key) =>
+      before[key] !== after[key] &&
+      (key !== 'complianceProfileVariant' || casesOf(after, deps).length > 0),
+  );
   const errors: SettingsError[] = changed
-    .filter((key) => !allowed(key, after, deps.currentYear))
+    .filter((key) => !allowed(key, after, deps))
     .map((key) => ({ key, kind: 'notAllowed' }));
   if (errors.length > 0) return { ok: false, errors };
 

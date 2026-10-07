@@ -27,12 +27,13 @@ const row = (id: string, value: string): Payload => ({
 
 const rows = (...list: Payload[]) => new Map(list.map((r) => [String(r.id), r]));
 
-function deps(): SettingsDeps {
+function deps(defaultProfile: SettingsDeps['defaultProfile'] = 'none'): SettingsDeps {
   let n = 0;
   return {
     newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
     now: () => NOW,
     currentYear: 2026,
+    defaultProfile,
   };
 }
 
@@ -191,11 +192,6 @@ describe('building the push', () => {
       [{ complianceProfile: null }, 'complianceProfile'],
       [{ complianceProfileVariant: 'retired' }, 'complianceProfileVariant'],
       [{ complianceProfileVariant: null }, 'complianceProfileVariant'],
-      // A case under 'none', which offers none.
-      [
-        { complianceProfile: 'none', complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
-        'complianceProfileVariant',
-      ],
     ];
     for (const [edit, key] of refused) {
       expect(buildSettingsChanges(SET, { ...SET, ...edit }, new Map(), deps()), key).toEqual({
@@ -203,14 +199,14 @@ describe('building the push', () => {
         errors: [{ key, kind: 'notAllowed' }],
       });
     }
-    // A case with no profile at all: no profile offers it.
+    // With no profile stored, the case is checked against the shown default.
     const noProfile: AccountSettings = { ...SET, complianceProfile: null };
     expect(
       buildSettingsChanges(
         noProfile,
-        { ...noProfile, complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
+        { ...noProfile, complianceProfileVariant: 'retired' },
         new Map(),
-        deps(),
+        deps('se'),
       ),
     ).toEqual({ ok: false, errors: [{ key: 'complianceProfileVariant', kind: 'notAllowed' }] });
     // The edges of the range are allowed.
@@ -236,42 +232,108 @@ describe('building the push', () => {
     expect(result.changes.map((c) => c.rowId)).toEqual(['skillClass']);
   });
 
+  it('B8 a pulled column this build does not know survives the rewrite', () => {
+    const pulled = rows({ ...row('skillClass', '"2"'), device_note: 'kept' });
+    const result = buildSettingsChanges(SET, { ...SET, skillClass: '3' }, pulled, deps());
+    expect(result.ok && result.changes[0]!.payload).toEqual({
+      id: 'skillClass',
+      value: '"3"',
+      created_at: CREATED,
+      updated_at: NOW,
+      deleted_at: null,
+      device_note: 'kept',
+    });
+  });
+
+  it('B9 a case changed under a profile that offers none is dropped, not refused (R4)', () => {
+    // Pick a case, then switch to None: the phone would keep the case row as it was.
+    const result = buildSettingsChanges(
+      SET,
+      { ...SET, complianceProfile: 'none', complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
+      new Map(),
+      deps(),
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    expect(result.changes.map((c) => c.rowId)).toEqual(['complianceProfile']);
+    // No profile stored and a default that offers no cases: dropped too.
+    const noProfile: AccountSettings = { ...SET, complianceProfile: null };
+    expect(
+      buildSettingsChanges(
+        noProfile,
+        { ...noProfile, complianceProfileVariant: 'anything' },
+        new Map(),
+        deps('none'),
+      ),
+    ).toEqual({ ok: true, changes: [] });
+  });
+
+  it('B10 with no profile stored, a case under the shown default is written; choosing the default writes it (R6)', () => {
+    const noProfile: AccountSettings = { ...UNSET };
+    const withCase = buildSettingsChanges(
+      noProfile,
+      { ...noProfile, complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
+      new Map(),
+      deps('se'),
+    );
+    expect(withCase.ok && withCase.changes.map((c) => c.rowId)).toEqual([
+      'complianceProfileVariant',
+    ]);
+    const chosen = buildSettingsChanges(
+      noProfile,
+      { ...noProfile, complianceProfile: 'se' },
+      new Map(),
+      deps('se'),
+    );
+    expect(chosen.ok && chosen.changes.map((c) => (c.payload as Payload).value)).toEqual(['"se"']);
+  });
+
   it('B7 property: exactly the differing keys are pushed, each value round-trips', () => {
     const variants = PROFILE_SELECTIONS.flatMap(
       (selection) => getProfileDefinition(selection)?.variants.map((v) => v.id) ?? [],
     );
-    const settings = fc
-      .record({
-        birthYear: fc.constantFrom(...birthYearOptions(2026)),
-        skillClass: fc.constantFrom(...SKILL_CLASSES),
-        competesInWomensClasses: fc.boolean(),
-        complianceProfile: fc.constantFrom(...PROFILE_SELECTIONS),
-        complianceProfileVariant: fc.constantFrom(...variants),
-      })
-      // A case is only valid under a profile that offers it.
-      .filter(
-        (s) =>
-          getProfileDefinition(s.complianceProfile)?.variants.some(
-            (v) => v.id === s.complianceProfileVariant,
-          ) ?? false,
-      );
+    const offers = (profile: AccountSettings['complianceProfile']) =>
+      getProfileDefinition(profile ?? 'none')?.variants.map((v) => v.id) ?? [];
+    const settings = (profiles: AccountSettings['complianceProfile'][]) =>
+      fc
+        .record({
+          birthYear: fc.constantFrom(...birthYearOptions(2026)),
+          skillClass: fc.constantFrom(...SKILL_CLASSES),
+          competesInWomensClasses: fc.boolean(),
+          complianceProfile: fc.constantFrom(...profiles),
+          complianceProfileVariant: fc.constantFrom(...variants),
+        })
+        // A profile that offers cases holds one of them; under one that offers
+        // none (including no profile, with default 'none') any stale case may sit.
+        .filter((s) => {
+          const ids = offers(s.complianceProfile);
+          return ids.length === 0 || ids.includes(s.complianceProfileVariant);
+        });
     fc.assert(
-      fc.property(settings, settings, (before, after) => {
-        const result = buildSettingsChanges(before, after, new Map(), deps());
-        if (!result.ok) return false;
-        const differing = SYNCED_SETTING_KEYS.filter((key) => before[key] !== after[key]);
-        expect(result.changes.map((c) => c.rowId)).toEqual(differing);
-        for (const change of result.changes) {
-          expect(change.deletedAt).toBeNull();
-          expect(change.payload).not.toBeNull();
-          const payload = change.payload as Payload;
-          expect(payload.deleted_at).toBeNull();
-          expect(JSON.parse(payload.value as string)).toEqual(
-            after[change.rowId as keyof AccountSettings],
+      fc.property(
+        settings([...PROFILE_SELECTIONS, null]),
+        settings([...PROFILE_SELECTIONS]),
+        (before, after) => {
+          const result = buildSettingsChanges(before, after, new Map(), deps());
+          if (!result.ok) return false;
+          const differing = SYNCED_SETTING_KEYS.filter(
+            (key) =>
+              before[key] !== after[key] &&
+              (key !== 'complianceProfileVariant' || offers(after.complianceProfile).length > 0),
           );
-        }
-        return true;
-      }),
+          expect(result.changes.map((c) => c.rowId)).toEqual(differing);
+          for (const change of result.changes) {
+            expect(change.deletedAt).toBeNull();
+            expect(change.payload).not.toBeNull();
+            const payload = change.payload as Payload;
+            expect(payload.deleted_at).toBeNull();
+            expect(JSON.parse(payload.value as string)).toEqual(
+              after[change.rowId as keyof AccountSettings],
+            );
+          }
+          return true;
+        },
+      ),
+      { numRuns: 300 },
     );
   });
 });
