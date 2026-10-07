@@ -34,11 +34,22 @@ telefonen får den vid nästa synk. Sidan säger sedan hur många pass som
 ändrades och hur många som redan var så.
 
 Ett pass som under tiden tagits bort på en annan enhet lämnas utanför, och
-sidan säger det.
+sidan säger det. Om det skulle flyttas till ett annat vapen drar sidan sedan
+tillbaka dess skott från skottantalen, så att de bara räknar passen som
+flyttades. En tagg som under tiden tagits bort på en annan enhet syns inte på
+passen; det säger sidan också.
 
 Att tillämpa kräver en anslutning. Om servern inte går att nå skickar
 **Försök igen** exakt samma ändring igen, så att inget ändras två gånger. Om
-du stänger fliken innan dess försvinner ändringen.
+du stänger fliken innan dess försvinner ändringen. Om skottantalen fortfarande
+behöver rättas gör **Försök igen** det, och inget annat kan tillämpas förrän
+det är gjort.
+
+Sidan läser loggboken på nytt precis innan den skickar, men en ändring som
+görs i telefonen i samma stund kan ändå gå förlorad, och likaså webbens: den
+senare sparningen av ett pass eller ett vapen vinner. Det gäller framför allt
+skottantal. Att spara serier i telefonen medan ett vapenbyte väntar på
+**Försök igen** kan tappa de skotten ur antalet, så låt webben bli klar först.
 
 En ändring kan röra högst 500 rader. Behövs fler säger sidan hur många, och
 du markerar färre pass och tillämpar två gånger.

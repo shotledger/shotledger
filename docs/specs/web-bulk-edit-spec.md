@@ -76,12 +76,19 @@ them would leave half a bulk edit with no single request to retry.
 
 **B4. Rows are rebuilt from a fresh pull.** Apply first pulls `sessions`,
 `tags`, `session_tags` and `firearms` again (and `series`, `shots` and
-`falt_stations` for a firearm change), then builds the edit from those rows,
-so the window in which another device's edit can be overwritten is the
-seconds between that pull and the push. A session edit spreads the pulled
-payload and changes one column plus `updated_at`, so a column this build
-does not know survives. A phone that edited the same session offline can
-still overwrite the web's edit, or the reverse (ADR 0019, consequences).
+`falt_stations` for a firearm change), then builds the edit from those rows.
+A session edit spreads the pulled payload and changes one column plus
+`updated_at`, so a column this build does not know survives. _(Reworded in
+R10.)_ The pull narrows the window, it does not close it: another device's
+edit to the same row between that pull and the push is overwritten, and a
+**Retry** resends the request built at the first Apply, so after a Retry the
+window runs from that first pull to the Retry, however long the user took.
+The firearm rows are absolute counters, so this matters most for them: a
+phone that adds rounds to a firearm (saving a series) between the web's pull
+and its push loses those rounds when the web's firearm row lands, and the
+web loses its move when the phone's row lands later. Same per-row
+last-write-wins as two phones (ADR 0019, consequences); no layer here
+prevents it.
 
 **B5. A session deleted elsewhere drops out.** A selected session that is no
 longer live after the fresh pull is left out and counted as "no longer in
@@ -294,3 +301,61 @@ Added during implementation; none loosens a scenario or a Must NOT.
 - **R4.** The firearm rows are written in the order the sessions first touch
   them, not sorted by id; the change list is in `APPLY_ORDER` by
   construction, so the builder no longer sorts it (K16 pins the order).
+
+Added after an independent verifier failed the first version (2026-10-07).
+**Each needs the maintainer's OK; R5 changes B3's "one Apply is one push".**
+
+- **R5 (counter correction; fixes a confirmed bug).** The firearm rows carry
+  absolute counters summed over every moved session. When the server refused
+  one of those sessions (`tombstoned`), the firearm rows still landed, so the
+  counters moved for a session that never moved (verifier's case: 3 + 2
+  rounds onto a firearm at 10, the 2-round session refused → 15, should be
+  13). Now the builder also returns its **counter plan** (each move and each
+  firearm's pulled counters). After a push whose acks refuse a moved session,
+  Apply pulls the firearms afresh and pushes a **correction**: each touched
+  firearm, rebuilt from its fresh row, moved by _(counters without the
+  refused sessions) − (counters the push wrote)_, both floored as the phone
+  floors (`buildCounterCorrection`). A change another device made to that
+  firearm in between survives; a firearm whose own row was refused, or that
+  is gone, is left alone.
+  - **Idempotent under Retry:** the correction is built once and held; a
+    lost answer is retried by resending the identical correction (the
+    server answers `duplicate`), never by building it again. It is built
+    only after the edit's acks arrived, so a Retry of a lost edit (which
+    replays the refusals as `duplicate` with their reason) builds it the
+    first time, not a second time.
+  - A held correction cannot be dropped by editing the form; Apply stays off
+    until Retry has sent it. Closing the tab first leaves the counters
+    counting the refused sessions; the page says so while it waits.
+  - **Trade-off:** the edit and its correction are two transactions. Between
+    them the counters are briefly wrong. The alternative (pushing the
+    sessions first and the firearms only after their acks) makes every
+    firearm change two requests and the counters lag on every one; this way
+    only a refusal costs a second request.
+  - Scenarios **K18** (the plan), **K19/K20** (the correction), **K21**
+    (property: edit with random refusals, then correction = the phone's walk
+    over the sessions that landed), **W5** (the verifier's case on the real
+    Worker, including a resent correction), **R5** cases in
+    `web/src/bulk/apply.test.ts`, and the page message (`messages.test.ts`).
+- **R6 (tag deleted meanwhile).** Add Tag returns the tag it links. After an
+  answered push, Apply pulls `tags` and, when that tag is no longer live,
+  the page says the tag was deleted on another device and so does not show.
+  An unanswered check says nothing. (Refusing up front is not possible: the
+  links are separate rows and land regardless.)
+- **R7 (no hang).** A builder that throws (for example a negative stored
+  shot count) ends in "Could not save", not in a page stuck on "Saving…".
+- **R8 (page wiring tested).** The form → action, the re-pulled table list
+  and the targets moved out of the component into `web/src/bulk/request.ts`,
+  and the outcome → message mapping into `messages.ts`, both with tests, so
+  dropping `shots` or `falt_stations` from the re-pull, or sending every
+  selected session instead of the shown ones, fails a test.
+- **R9 (test gap).** K9 adds an air-pistol total-only series with no stored
+  count (10 rounds), so a builder that used Precision's 5 for every
+  discipline fails.
+- **R10 (B4 reworded, wording only).** B4 said the overwrite window was "the
+  seconds between that pull and the push"; with Retry it runs from the first
+  pull to the Retry, and the firearm counters are the rows it matters most
+  for. B4 and the manual now say so.
+- Also: the volume count indexes shots, series and stations once per Apply
+  (it re-filtered the whole shots table per series: about 4 s for 300
+  sessions and 36 000 shots; now about 10 ms).

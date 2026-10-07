@@ -34,11 +34,21 @@ at all, and your phone gets it at its next sync. The page then says how many
 sessions changed, and how many already were that way.
 
 A session that was deleted on another device in the meantime is left out,
-and the page says so.
+and the page says so. If it had been moved to another firearm, the page then
+takes its rounds back out of the round counts, so they count only the
+sessions that moved. A tag deleted on another device in the meantime does
+not show on the sessions; the page says that too.
 
 Applying needs a connection. If the server cannot be reached, **Retry** sends
 exactly the same change again, so nothing is changed twice. Closing the tab
-before that drops the change.
+before that drops the change. If the round counts still need correcting,
+**Retry** does that, and nothing else can be applied until it has.
+
+Apply reads your logbook again just before it sends, but a change made on
+your phone at the same moment can still be lost, and so can the web's: the
+later save of a session or a firearm wins. This matters most for round
+counts. Saving series on the phone while a firearm change is waiting for
+**Retry** can lose those rounds from the count, so let the web finish first.
 
 One change can touch at most 500 rows. If it needs more, the page says how
 many, and you tick fewer sessions and apply twice.
