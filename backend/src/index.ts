@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import { betterAuthAuthenticator } from './auth';
 import { createAuth } from './auth/better-auth';
+import { logSafeErrors } from './lib/errors';
 import { createAccountRoutes } from './routes/account';
 import { createPhotoRoutes } from './routes/photos';
 import { createSyncRoutes } from './routes/sync';
@@ -23,5 +24,7 @@ app.route(
 
 app.route('/photos', createPhotoRoutes());
 app.route('/account', createAccountRoutes());
+
+app.onError(logSafeErrors);
 
 export default app;
