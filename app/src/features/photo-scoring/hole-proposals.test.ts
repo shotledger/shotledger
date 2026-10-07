@@ -248,6 +248,7 @@ it('proposes the same holes from candidates already found, without running the m
     halfResolution: ranMaps,
     blurLaplacian: ranMaps,
     maxFilter: ranMaps,
+    atLeast: ranMaps,
     components: ranMaps,
     dilate: ranMaps,
     erode: ranMaps,

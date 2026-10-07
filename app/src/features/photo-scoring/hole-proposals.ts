@@ -468,11 +468,11 @@ function median(values: Float64Array): number {
   return (lower + upper) / 2;
 }
 
-function validMask(half: Img, ops: MapOps): Uint8Array {
-  const { data, width: w, height: h } = half;
-  const white = new Uint8Array(w * h);
-  for (let i = 0; i < white.length; i += 1) white[i] = (data[i] as number) >= PAD_WHITE ? 1 : 0;
-  const { labels, stats } = ops.components(white, w, h);
+/** The warp's white padding, grown so its edge cannot pose as a hole edge:
+ *  nonzero where a pixel is not valid. */
+function paddingMask(half: Img, ops: MapOps): Uint8Array {
+  const { width: w, height: h } = half;
+  const { labels, stats } = ops.components(ops.atLeast(half, PAD_WHITE), w, h);
   const badId = new Uint8Array(stats.length);
   for (let id = 1; id < stats.length; id += 1) {
     const s = stats[id] as Component;
@@ -481,9 +481,25 @@ function validMask(half: Img, ops: MapOps): Uint8Array {
   }
   const bad = new Uint8Array(w * h);
   for (let i = 0; i < bad.length; i += 1) bad[i] = badId[labels[i] as number] as number;
-  const grown = ops.dilate(bad, w, h, PAD_GROW);
-  for (let i = 0; i < grown.length; i += 1) grown[i] = grown[i] ? 0 : 1;
-  return grown;
+  return ops.dilate(bad, w, h, PAD_GROW);
+}
+
+/**
+ * numpy's median of the values a histogram of quarter steps counts, `hist[q]`
+ * being how many equal q / 4. The half-resolution canvas holds 2x2 means of
+ * bytes, so every value is a quarter step and this is the exact median.
+ */
+function quarterMedian(hist: Int32Array, count: number): number {
+  const nth = (k: number) => {
+    let seen = 0;
+    for (let q = 0; q < hist.length; q += 1) {
+      seen += hist[q] as number;
+      if (seen > k) return q / 4;
+    }
+    return (hist.length - 1) / 4;
+  };
+  const mid = count >> 1;
+  return count % 2 === 1 ? nth(mid) : (nth(mid - 1) + nth(mid)) / 2;
 }
 
 // ---------------------------------------------------------------- the stage
@@ -529,6 +545,8 @@ export interface MapOps {
     width: number,
     height: number,
   ) => { readonly labels: Int32Array; readonly stats: readonly Component[] };
+  /** Nonzero where `img` is at least `value`. */
+  readonly atLeast: (img: Img, value: number) => Uint8Array;
   /** Square dilation of a 0/1 mask, outside the image ignored. */
   readonly dilate: (mask: Uint8Array, width: number, height: number, radius: number) => Uint8Array;
   /** Square erosion of a 0/1 mask, outside the image counting as 0. */
@@ -541,6 +559,11 @@ export const pureMapOps: MapOps = {
   blurLaplacian: (img, sigma) =>
     laplacian4({ data: blur(img, sigma), width: img.width, height: img.height }),
   maxFilter,
+  atLeast: (img, value) => {
+    const out = new Uint8Array(img.data.length);
+    for (let i = 0; i < out.length; i += 1) out[i] = (img.data[i] as number) >= value ? 1 : 0;
+    return out;
+  },
   components: label8,
   dilate: dilateSquare,
   erode: erodeSquare,
@@ -586,10 +609,16 @@ function canvasMapsOf(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps):
 function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: MapOps): CanvasMaps {
   const half = ops.halfResolution(canvas);
   const { width: w, height: h } = half;
-  const valid = validMask(half, ops);
+  const padding = paddingMask(half, ops);
   const black = new Uint8Array(w * h);
   const inzone = new Uint8Array(w * h);
-  const rmm = new Float64Array(w * h);
+  // Only the rings within reach of a pixel's whole-millimetre bucket are
+  // tested for the ring-line mask, which is at most two.
+  const lines = new Uint8Array(w * h);
+  const buckets: number[][] = [];
+  for (let mm = 0; mm <= Math.ceil(face.maxRadiusMm) + 1; mm += 1) {
+    buckets.push(face.ringRadiiMm.filter((rr) => Math.abs(rr - mm) <= LINE_HALF_WIDTH_MM + 1));
+  }
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {
       // a half-res pixel is measured at the centre of its 2x2 block
@@ -597,9 +626,16 @@ function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: Map
       const fy = y * HALF + (HALF - 1) / 2;
       const r = Math.hypot(fx - canvas.centerXPx, fy - canvas.centerYPx) / canvas.pxPerMm;
       const i = y * w + x;
-      rmm[i] = r;
       black[i] = r <= BLACK_ZONE_FRACTION * face.blackRadiusMm ? 1 : 0;
-      inzone[i] = r <= face.maxRadiusMm && valid[i] ? 1 : 0;
+      inzone[i] = r <= face.maxRadiusMm && !padding[i] ? 1 : 0;
+      const near = buckets[Math.floor(r)];
+      if (!near) continue;
+      for (let k = 0; k < near.length; k += 1) {
+        if (Math.abs(r - (near[k] as number)) <= LINE_HALF_WIDTH_MM) {
+          lines[i] = 1;
+          break;
+        }
+      }
     }
   }
   // The MAD over every MAD_STRIDE-th pixel in each direction of the scoring
@@ -610,54 +646,54 @@ function computeCanvasMaps(canvas: RectifiedCanvas, face: ProposalFace, ops: Map
     for (let x = 0; x < w; x += MAD_STRIDE) if (inzone[y * w + x]) sampled.push(y * w + x);
   }
 
-  // printed-glyph extent map
-  // Only the rings within reach of a pixel's whole-millimetre bucket are
-  // tested, which is at most two; the test itself is unchanged.
-  const lines = new Uint8Array(w * h);
-  const buckets: number[][] = [];
-  for (let mm = 0; mm <= Math.ceil(face.maxRadiusMm) + 1; mm += 1) {
-    buckets.push(face.ringRadiiMm.filter((rr) => Math.abs(rr - mm) <= LINE_HALF_WIDTH_MM + 1));
+  // printed-glyph extent map, per zone (0 = the black, 1 = the paper)
+  const data = half.data;
+  const hist = [new Int32Array(1021), new Int32Array(1021)] as const;
+  const counts = [0, 0];
+  let quarters = true;
+  for (let i = 0; i < data.length; i += 1) {
+    if (!inzone[i]) continue;
+    const z = black[i] ? 0 : 1;
+    const q = (data[i] as number) * 4;
+    if (q !== Math.floor(q) || q < 0 || q > 1020) quarters = false;
+    else (hist[z] as Int32Array)[q] = ((hist[z] as Int32Array)[q] as number) + 1;
+    counts[z] = (counts[z] as number) + 1;
   }
-  for (let i = 0; i < lines.length; i += 1) {
-    const r = rmm[i] as number;
-    const near = buckets[Math.floor(r)];
-    if (!near) continue;
-    for (let k = 0; k < near.length; k += 1) {
-      if (Math.abs(r - (near[k] as number)) <= LINE_HALF_WIDTH_MM) {
-        lines[i] = 1;
-        break;
-      }
+  const bgOf = (z: 0 | 1): number => {
+    if (quarters) return quarterMedian(hist[z], counts[z] as number);
+    const values = new Float64Array(counts[z] as number);
+    let c = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      if (inzone[i] && (black[i] ? 0 : 1) === z) values[c++] = data[i] as number;
     }
+    return median(values);
+  };
+  const zones = ([0, 1] as const).filter((z) => (counts[z] as number) >= 100);
+  const bg = [0, 0];
+  for (const z of zones) bg[z] = bgOf(z);
+  const struct = [new Uint8Array(w * h), new Uint8Array(w * h)] as const;
+  for (let i = 0; i < data.length; i += 1) {
+    if (!inzone[i] || lines[i]) continue;
+    const z = black[i] ? 0 : 1;
+    if (Math.abs((data[i] as number) - (bg[z] as number)) > GLYPH_DELTA) struct[z][i] = 1;
   }
   // Extents in px: dividing by the hole diameter later gives the same values
   // as dividing each extent first, max and division both being monotone.
-  const glyph = new Float64Array(w * h);
-  for (const useBlack of [true, false]) {
-    const zone = new Uint8Array(w * h);
-    let zoneCount = 0;
-    for (let i = 0; i < zone.length; i += 1) {
-      if (inzone[i] && (black[i] === 1) === useBlack) {
-        zone[i] = 1;
-        zoneCount += 1;
-      }
-    }
-    if (zoneCount < 100) continue;
-    const values = new Float64Array(zoneCount);
-    let c = 0;
-    for (let i = 0; i < zone.length; i += 1) if (zone[i]) values[c++] = half.data[i] as number;
-    const bg = median(values);
-    let struct: Uint8Array = new Uint8Array(w * h);
-    for (let i = 0; i < struct.length; i += 1) {
-      struct[i] =
-        Math.abs((half.data[i] as number) - bg) > GLYPH_DELTA && zone[i] && !lines[i] ? 1 : 0;
-    }
-    struct = ops.erode(ops.dilate(struct, w, h, 1), w, h, 1);
-    const { labels, stats } = ops.components(struct, w, h);
+  const extents = zones.map((z) => {
+    const { labels, stats } = ops.components(
+      ops.erode(ops.dilate(struct[z], w, h, 1), w, h, 1),
+      w,
+      h,
+    );
     const ext = new Float64Array(stats.length);
     for (let id = 1; id < stats.length; id += 1) {
       const s = stats[id] as Component;
       ext[id] = Math.max(s.w, s.h);
     }
+    return { labels, ext };
+  });
+  const glyph = new Float64Array(w * h);
+  for (const { labels, ext } of extents) {
     for (let i = 0; i < glyph.length; i += 1) {
       const v = ext[labels[i] as number] as number;
       if (v > (glyph[i] as number)) glyph[i] = v;
