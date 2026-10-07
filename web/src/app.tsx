@@ -170,7 +170,12 @@ export function App() {
         />
       )}
       {state.kind === 'ready' && page === 'bulk' && (
-        <BulkEdit tables={state.tables} refresh={refresh} />
+        <BulkEdit
+          key={generation}
+          tables={state.tables}
+          refresh={refresh}
+          onReauthenticated={onReauthenticated}
+        />
       )}
       {state.kind === 'ready' && page === 'account' && (
         <Account

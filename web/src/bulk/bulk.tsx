@@ -5,15 +5,26 @@
 import { rankRecentLocations } from '@shotledger/shared/src/locations/recent-locations';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
 import type { BulkAction } from '@shotledger/shared/src/sync-client/bulk-edit';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
 
 import { disciplineLabel, formatLocalDate } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushEntry } from '../api';
-import { locationUsage, SignInAgain, useOnline } from '../entry/entry';
+import { locationUsage, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
-import { afterEdit, apply, applyBlocked, IDLE, submitRequest, type ApplyState } from './apply';
+import type { ReauthOutcome } from '../reauth';
+import { SignInAgain } from '../sign-in-again';
+import {
+  accountChanged,
+  afterEdit,
+  apply,
+  applyBlocked,
+  IDLE,
+  submitRequest,
+  type ApplyState,
+} from './apply';
+import { carry, clearCarried, peekCarried } from './carry';
 import { statusMessages, type Message } from './messages';
 import {
   bulkRows,
@@ -29,17 +40,30 @@ import { applyDeps, bulkRequest, INITIAL_FORM, UNCHOSEN, type BulkForm } from '.
 export function BulkEdit({
   tables,
   refresh,
+  onReauthenticated,
 }: {
   tables: PulledTables;
   refresh: () => Promise<boolean>;
+  /** App reloads and remounts the pages when another account signs in (R22 of #669). */
+  onReauthenticated: (userId: string) => ReauthOutcome;
 }) {
   const { t, i18n } = useTranslation();
   const online = useOnline();
   const [filter, setFilter] = useState<BulkFilter>(NO_FILTER);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [form, setForm] = useState<BulkForm>(INITIAL_FORM);
-  const [state, setState] = useState<ApplyState>(IDLE);
-  const [signedInAgain, setSignedInAgain] = useState(false);
+  // A dropped correction is said on the remount after an account switch (R15).
+  const [state, setState] = useState<ApplyState>(() => peekCarried() ?? IDLE);
+  useEffect(clearCarried, []);
+  const applying = state.status.kind === 'applying';
+  // Disabling the controls for an Apply takes the focus; give it back (R19).
+  const focusAfterApply = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (applying || focusAfterApply.current === null) return;
+    const element = focusAfterApply.current;
+    focusAfterApply.current = null;
+    if (element.isConnected) element.focus();
+  }, [applying]);
 
   const rows = useMemo(() => bulkRows(tables), [tables]);
   const shown = useMemo(() => filterRows(rows, filter), [rows, filter]);
@@ -80,8 +104,9 @@ export function BulkEdit({
     // While a request is held, the one action resends it (R12).
     const held = submitRequest(state);
     if (blocked !== null || (held === null && request === null)) return;
+    focusAfterApply.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setState({ status: { kind: 'applying' }, held: null });
-    setSignedInAgain(false);
     const io = {
       currentUserId,
       loadTables,
@@ -97,12 +122,25 @@ export function BulkEdit({
         held,
       }))
       .then((next) => {
-        setState(next);
-        if (next.status.kind === 'applied') {
-          setSelected(new Set());
-          setSignedInAgain(false);
+        // Another account holds the token: App reloads its logbook (R15).
+        if (next.status.kind === 'accountChanged') {
+          carry(next);
+          if (onReauthenticated(next.status.userId) === 'switched') return;
+          clearCarried();
         }
+        setState(next);
+        if (next.status.kind === 'applied') setSelected(new Set());
       });
+  };
+
+  const onSignedIn = (userId: string) => {
+    const held = state.held;
+    if (held !== null && held.built.userId !== userId) carry(accountChanged(held, userId));
+    if (onReauthenticated(userId) === 'same') {
+      clearCarried();
+      // The same account: only the signed-out notice goes; a held request stays.
+      setState((was) => ({ status: { kind: 'idle' }, held: was.held }));
+    }
   };
 
   const allShownSelected = shown.length > 0 && targets.length === shown.length;
@@ -140,7 +178,9 @@ export function BulkEdit({
   const failedWith = state.status.kind === 'failed' ? state.status.error : null;
 
   return (
-    <div className="bulk">
+    // Every control is off while an Apply runs, so the page cannot show a
+    // selection other than the one being sent (R19).
+    <fieldset className="bulk" disabled={applying}>
       <section className="card bulk-filter">
         <label className="field">
           {t('period.from')}
@@ -285,9 +325,7 @@ export function BulkEdit({
         </div>
       </form>
       {/* Outside the action form: a form cannot nest in another. */}
-      {failedWith === 'unauthenticated' && !signedInAgain && (
-        <SignInAgain onSignedIn={() => setSignedInAgain(true)} />
-      )}
+      {failedWith === 'unauthenticated' && <SignInAgain onSignedIn={onSignedIn} />}
 
       <section className="card bulk-list">
         <p className="muted">
@@ -340,6 +378,6 @@ export function BulkEdit({
           </div>
         )}
       </section>
-    </div>
+    </fieldset>
   );
 }

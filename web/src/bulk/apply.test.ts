@@ -12,7 +12,9 @@ import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  accountChanged,
   afterEdit,
+  MAX_CORRECTION_ATTEMPTS,
   apply,
   applyBlocked,
   IDLE,
@@ -120,8 +122,9 @@ describe('applying a bulk edit', () => {
       held: {
         stage: 'correction',
         built: { changes: MOVE, summary: SUMMARY, counters: PLAN, tagId: null, userId: 'u1' },
-        refused: { sessions: new Set(['s2']), firearms: new Set(), count: 1 },
+        refused: { sessions: new Set(['s2']), firearms: new Set(), perSession: 1, count: 1 },
         changes: null,
+        attempts: 0,
       },
     };
     // A held request does not block: the one action resends it (R12).
@@ -204,16 +207,23 @@ describe('applying a bulk edit', () => {
   });
 
   it('U7 an answered push refreshes; refused changes are counted; a failed refresh says reload', async () => {
-    const partly = deps({
-      kind: 'partlyRejected',
-      rejected: [
-        { tableName: 'sessions', rowId: 's1', reason: 'tombstoned' },
-        { tableName: 'session_tags', rowId: 'l2', reason: 'tombstoned' },
-      ],
-    });
-    // No counter plan (a location or tag edit): nothing to correct.
+    const three = { changed: 3, unchanged: 0, missing: 0 };
+    const partly = deps(
+      {
+        kind: 'partlyRejected',
+        rejected: [
+          { tableName: 'sessions', rowId: 's1', reason: 'tombstoned' },
+          { tableName: 'session_tags', rowId: 'l2', reason: 'tombstoned' },
+          { tableName: 'tags', rowId: 't9', reason: 'tombstoned' },
+        ],
+      },
+      { build: vi.fn(() => ok({ summary: three })) },
+    );
+    // No counter plan (a location or tag edit): nothing to correct. A refused
+    // session row and a refused new link each stand for one unchanged session
+    // (R17); the tag row does not.
     expect((await apply(partly, null)).status).toEqual(
-      applied({ refused: 2, summary: { ...SUMMARY, changed: 0 } }),
+      applied({ refused: 3, summary: { ...three, changed: 1 } }),
     );
     expect(partly.refresh).toHaveBeenCalledTimes(1);
     expect(partly.loadFirearms).not.toHaveBeenCalled();
@@ -245,8 +255,9 @@ describe('applying a bulk edit', () => {
       held: {
         stage: 'correction',
         built,
-        refused: { sessions: new Set(), firearms: new Set(), count: 1 },
+        refused: { sessions: new Set(), firearms: new Set(), perSession: 0, count: 1 },
         changes: CORRECTION,
+        attempts: 0,
       },
     };
     expect(afterEdit(correcting)).toBe(correcting);
@@ -264,7 +275,7 @@ describe('correcting the counters after a refused session (R5)', () => {
     expect(vi.mocked(d.push).mock.calls[1]![0]).toBe(CORRECTION);
     expect(d.correct).toHaveBeenCalledWith(
       PLAN,
-      { sessions: new Set(['s2']), firearms: new Set(), count: 1 },
+      { sessions: new Set(['s2']), firearms: new Set(), perSession: 1, count: 1 },
       FIREARMS,
     );
     // The refresh shows the corrected counters.
@@ -291,7 +302,7 @@ describe('correcting the counters after a refused session (R5)', () => {
     await apply(d, null);
     expect(d.correct).toHaveBeenCalledWith(
       PLAN,
-      { sessions: new Set(['s2']), firearms: new Set(['f2']), count: 2 },
+      { sessions: new Set(['s2']), firearms: new Set(['f2']), perSession: 1, count: 2 },
       FIREARMS,
     );
   });
@@ -365,7 +376,7 @@ describe('a held request goes only to its own account (R12)', () => {
   it('R12 another account signed in: the held request is dropped and nothing is sent', async () => {
     const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
     expect(await apply(other, await held())).toEqual({
-      status: { kind: 'accountChanged' },
+      status: { kind: 'accountChanged', userId: 'u2', correctionDropped: false },
       held: null,
     });
     expect(other.push).not.toHaveBeenCalled();
@@ -430,8 +441,92 @@ describe('a held request goes only to its own account (R12)', () => {
       stage: 'correction',
     });
     const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
-    expect((await apply(other, pending)).status).toEqual({ kind: 'accountChanged' });
+    // R15: the message says the other account's counters still need correcting.
+    expect((await apply(other, pending)).status).toEqual({
+      kind: 'accountChanged',
+      userId: 'u2',
+      correctionDropped: true,
+    });
     expect(other.push).not.toHaveBeenCalled();
+  });
+});
+
+describe('review fixes (R14, R16, R18)', () => {
+  const unconfirmed: PushOutcome = { kind: 'failed', error: 'unknown', unconfirmed: true };
+
+  it('R14 an unconfirmed answer may mean it landed: the edit is held and the page says so', async () => {
+    const d = deps(unconfirmed);
+    const first = await apply(d, null);
+    expect(first.status).toEqual({
+      kind: 'failed',
+      error: 'unknown',
+      stage: 'edit',
+      unconfirmed: true,
+    });
+    expect(first.held).toMatchObject({ stage: 'edit', built: { changes: CHANGES } });
+  });
+
+  it('R14 an unconfirmed correction stays held, flagged, as built', async () => {
+    const d = deps([s2Refused, unconfirmed], moving());
+    const first = await apply(d, null);
+    expect(first.status).toEqual({
+      kind: 'failed',
+      error: 'unknown',
+      stage: 'correction',
+      unconfirmed: true,
+    });
+    expect(first.held).toMatchObject({ stage: 'correction', changes: CORRECTION });
+  });
+
+  it('R16 a correction whose build keeps throwing is given up after MAX_CORRECTION_ATTEMPTS', async () => {
+    const throwing = () =>
+      deps(s2Refused, {
+        ...moving(),
+        correct: vi.fn((): ClientChange[] => {
+          throw new RangeError('round_count is not a number');
+        }),
+      });
+    let state = await apply(throwing(), null);
+    for (let attempt = 1; attempt < MAX_CORRECTION_ATTEMPTS; attempt += 1) {
+      expect(state.status).toEqual({ kind: 'failed', error: 'unknown', stage: 'correction' });
+      expect(state.held).toMatchObject({ stage: 'correction', changes: null, attempts: attempt });
+      state = await apply(throwing(), state.held);
+    }
+    expect(state).toEqual({ status: { kind: 'correctionAbandoned' }, held: null });
+    expect(MAX_CORRECTION_ATTEMPTS).toBe(3);
+  });
+
+  it('R16 an unanswered firearm pull is not an attempt', async () => {
+    const d = deps(s2Refused, {
+      ...moving(),
+      loadFirearms: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    });
+    expect((await apply(d, null)).held).toMatchObject({ attempts: 0 });
+  });
+
+  it('R18 a correction push that throws keeps the built correction; Retry resends it, never rebuilds', async () => {
+    const d = deps(s2Refused, moving());
+    let calls = 0;
+    d.push = vi.fn(() => {
+      calls += 1;
+      return calls === 1 ? Promise.resolve(s2Refused) : Promise.reject(new Error('late'));
+    });
+    const first = await apply(d, null);
+    expect(first.status).toEqual({ kind: 'failed', error: 'unknown', stage: 'correction' });
+    expect(first.held).toMatchObject({ stage: 'correction', changes: CORRECTION });
+
+    const retry = deps({ kind: 'saved' });
+    await apply(retry, first.held);
+    expect(retry.correct).not.toHaveBeenCalled();
+    expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);
+  });
+
+  it('R15 accountChanged names the account and whether a correction was dropped', () => {
+    expect(accountChanged(null, 'u2').status).toEqual({
+      kind: 'accountChanged',
+      userId: 'u2',
+      correctionDropped: false,
+    });
   });
 });
 

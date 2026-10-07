@@ -153,7 +153,7 @@ describe('the request the page sends (R8)', () => {
     expect(firearms).toBe(LOGBOOK.firearms);
     const correction = deps.correct(
       { moves: [{ sessionId: 's', rounds: 4, from: null, to: 'f1' }], original: { f1: [10, 0] } },
-      { sessions: new Set(['s']), firearms: new Set(), count: 1 },
+      { sessions: new Set(['s']), firearms: new Set(), perSession: 1, count: 1 },
       new Map([['f1', { id: 'f1', round_count: 14, rounds_since_maintenance: 4 }]]),
     );
     expect(correction.map((c) => c.payload)).toEqual([

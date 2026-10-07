@@ -67,7 +67,23 @@ describe('what the page says', () => {
 
   it('applying, idle and invalid', () => {
     expect(keys({ kind: 'applying' })).toEqual(['web.bulk.applying']);
-    expect(keys({ kind: 'accountChanged' })).toEqual(['web.bulk.accountChanged']);
+    expect(keys({ kind: 'accountChanged', userId: 'u2', correctionDropped: false })).toEqual([
+      'web.bulk.accountChanged',
+    ]);
+    // R15: a dropped correction leaves the other account's counters wrong; say so.
+    expect(keys({ kind: 'accountChanged', userId: 'u2', correctionDropped: true })).toEqual([
+      'web.bulk.accountChanged',
+      'web.bulk.correctionDropped',
+    ]);
+    // R16
+    expect(keys({ kind: 'correctionAbandoned' })).toEqual(['web.bulk.correctionAbandoned']);
+    // R14: an unconfirmed answer is said as such, in either stage.
+    expect(keys({ kind: 'failed', error: 'unknown', stage: 'edit', unconfirmed: true })).toEqual([
+      'web.bulk.failedUnconfirmed',
+    ]);
+    expect(
+      keys({ kind: 'failed', error: 'unknown', stage: 'correction', unconfirmed: true }),
+    ).toEqual(['web.bulk.correctionPending', 'web.bulk.failedUnconfirmed']);
     expect(keys({ kind: 'idle' })).toEqual([]);
     expect(
       at({ kind: 'invalid', errors: [{ kind: 'blankTag' }, { kind: 'nothingToChange' }] }),

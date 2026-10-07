@@ -61,14 +61,22 @@ export function statusMessages(state: ApplyState): Message[] {
       return lines;
     }
     case 'failed': {
-      const reason = { key: FAILED[status.error] ?? 'web.entry.failed' };
+      const reason = {
+        key: status.unconfirmed
+          ? 'web.bulk.failedUnconfirmed'
+          : (FAILED[status.error] ?? 'web.entry.failed'),
+      };
       // The edit is on the server; only the counters are left to correct.
       return status.stage === 'correction'
         ? [{ key: 'web.bulk.correctionPending' }, reason]
         : [reason];
     }
     case 'accountChanged':
-      return [{ key: 'web.bulk.accountChanged' }];
+      return status.correctionDropped
+        ? [{ key: 'web.bulk.accountChanged' }, { key: 'web.bulk.correctionDropped' }]
+        : [{ key: 'web.bulk.accountChanged' }];
+    case 'correctionAbandoned':
+      return [{ key: 'web.bulk.correctionAbandoned' }];
     case 'invalid':
       return status.errors.map(errorMessage);
     case 'idle':
