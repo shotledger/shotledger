@@ -16,9 +16,9 @@ describe('better-auth logging on a failed query', () => {
 
     const ctx = createExecutionContext();
     const response = await app.fetch(
-      new Request('https://example.com/api/auth/sign-up/email', {
+      new Request('https://localhost/api/auth/sign-up/email', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', origin: 'https://example.com' },
+        headers: { 'content-type': 'application/json', origin: 'https://localhost' },
         body: JSON.stringify({
           email: 'someone@example.com',
           name: 'Test User',

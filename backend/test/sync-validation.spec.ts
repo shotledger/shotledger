@@ -23,7 +23,7 @@ app.route(
 );
 
 async function post(path: string, rawBody: string) {
-  const request = new Request(`https://example.com${path}`, {
+  const request = new Request(`https://localhost${path}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: 'Bearer user-v' },
     body: rawBody,

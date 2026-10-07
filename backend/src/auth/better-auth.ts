@@ -27,8 +27,42 @@ function deployedConfig(env: Env): { secret: string; baseURL: string } {
   if (secret.length < 32) {
     throw new AuthConfigError('BETTER_AUTH_SECRET is missing or shorter than 32 characters');
   }
-  if (!env.BETTER_AUTH_URL) throw new AuthConfigError('BETTER_AUTH_URL is not set');
-  return { secret, baseURL: env.BETTER_AUTH_URL };
+  // `.invalid` is the REPLACE_ME placeholder in wrangler.jsonc.
+  let url: URL | undefined;
+  try {
+    url = new URL(env.BETTER_AUTH_URL ?? '');
+  } catch {
+    url = undefined;
+  }
+  if (!url || url.protocol !== 'https:' || url.hostname.endsWith('.invalid')) {
+    throw new AuthConfigError('BETTER_AUTH_URL is not set to an https origin');
+  }
+  return { secret, baseURL: url.origin };
+}
+
+const AUTH_BASE_PATH = '/api/auth';
+
+/** Per client IP. The longest window any rule uses; the purge cron keeps rows this long. */
+const SIGN_IN_UP_RULE = { window: 60, max: 5 };
+export const RATE_LIMIT_LONGEST_WINDOW_MS = 60_000;
+
+/** Whether `path` (below /api/auth) is one of better-auth's endpoints; `:param` segments match any segment. */
+export function isAuthEndpoint(path: string, endpointPaths: readonly string[]): boolean {
+  const segments = path.split('/');
+  return endpointPaths.some((endpoint) => {
+    const parts = endpoint.split('/');
+    return (
+      parts.length === segments.length &&
+      parts.every((part, i) => part.startsWith(':') || part === segments[i])
+    );
+  });
+}
+
+function authPathOf(request: Request): string {
+  const pathname = new URL(request.url).pathname.replace(/\/+$/, '');
+  return pathname.startsWith(`${AUTH_BASE_PATH}/`)
+    ? pathname.slice(AUTH_BASE_PATH.length)
+    : pathname;
 }
 
 function list(value: string | undefined): string[] {
@@ -58,16 +92,28 @@ export function createAuth(env: Env) {
   const { secret, baseURL } = deployed
     ? deployedConfig(env)
     : { secret: env.BETTER_AUTH_SECRET || DEV_SECRET, baseURL: env.BETTER_AUTH_URL || undefined };
-  return betterAuth({
+  // Filled in once the instance exists; the rate limiter reads it per request.
+  let endpointPaths: string[] = [];
+  const auth = betterAuth({
     database: drizzleAdapter(drizzle(env.DB), { provider: 'sqlite', schema: authSchema }),
     secret,
     baseURL,
     trustedOrigins: [...new Set([APP_ORIGIN, ...list(env.BETTER_AUTH_TRUSTED_ORIGINS)])],
     emailAndPassword: { enabled: true },
     // Per-isolate memory would not limit anything on Workers, so the
-    // counters live in D1 (`rate_limit`). The rules are better-auth's
-    // defaults: 100 requests per 10 s, sign-in/sign-up 3 per 10 s, per IP.
-    rateLimit: { enabled: deployed, storage: 'database' },
+    // counters live in D1 (`rate_limit`, purged by the cron in index.ts),
+    // one row per IP and path. Only real endpoints are counted, so a client
+    // cannot mint rows with made-up paths. Otherwise better-auth's defaults
+    // apply: 100 requests per 10 s; change-password/change-email 3 per 10 s.
+    rateLimit: {
+      enabled: deployed,
+      storage: 'database',
+      customRules: {
+        '/sign-in/email': SIGN_IN_UP_RULE,
+        '/sign-up/email': SIGN_IN_UP_RULE,
+        '/**': (request, current) => isAuthEndpoint(authPathOf(request), endpointPaths) && current,
+      },
+    },
     advanced: { ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] } },
     logger: redactingAuthLogger,
     // Otherwise its router console.errors an unexpected error whole, query
@@ -75,6 +121,10 @@ export function createAuth(env: Env) {
     onAPIError: { throw: true },
     plugins: [bearer()],
   });
+  endpointPaths = Object.values(auth.api as Record<string, { path?: string }>)
+    .map((endpoint) => endpoint.path)
+    .filter((path): path is string => typeof path === 'string');
+  return auth;
 }
 
 export type Auth = ReturnType<typeof createAuth>;

@@ -48,7 +48,7 @@ import {
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
-const BASE_URL = 'https://example.com';
+const BASE_URL = 'https://localhost';
 
 async function fetchApp(input: string, init?: RequestInit): Promise<Response> {
   const request = new Request(input, init);
