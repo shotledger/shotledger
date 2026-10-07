@@ -170,14 +170,24 @@ export function createAccountApi(config: HttpClientConfig) {
       await authRequest(config, '/sign-out', {}, config.getToken());
     },
 
-    /** `null` when the stored token is no longer a valid session. */
+    /**
+     * `null` when the stored token is no longer a valid session. A server
+     * that cannot answer (5xx, 408, 429) throws a `network` SyncHttpError
+     * instead: that is not a sign-out.
+     */
     async currentUser(): Promise<{ userId: string; email: string } | null> {
       const token = config.getToken();
       if (token === null) return null;
       const response = await config.fetchImpl(`${config.baseUrl}/api/auth/get-session`, {
         headers: { authorization: `Bearer ${token}`, origin: config.baseUrl },
       });
-      if (!response.ok) return null;
+      if (!response.ok) {
+        const errorKey = errorKeyForStatus(response.status);
+        if (errorKey === 'network') {
+          throw new SyncHttpError(response.status, errorKey, `get-session: ${response.status}`);
+        }
+        return null;
+      }
       const json = (await response.json()) as { user?: { id?: string; email?: string } } | null;
       if (!json?.user?.id) return null;
       return { userId: json.user.id, email: json.user.email ?? '' };

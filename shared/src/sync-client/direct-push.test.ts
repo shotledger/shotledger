@@ -119,11 +119,12 @@ describe('pushChanges', () => {
     ['unknown', [...CHANGES.slice(0, 2), change(5)].map((c) => ack(c, 'applied'))],
     ['repeated', [...CHANGES.slice(0, 2), CHANGES[0]!].map((c) => ack(c, 'applied'))],
     ['empty', []],
-  ])('D5 a %s ack → failed: unknown', async (_name, acks) => {
+  ])('D5 a %s ack → failed: unknown, unconfirmed (the server did answer)', async (_name, acks) => {
     const { transport } = answering(acks);
     await expect(pushChanges(transport, 1, CHANGES)).resolves.toEqual({
       kind: 'failed',
       error: 'unknown',
+      unconfirmed: true,
     });
   });
 

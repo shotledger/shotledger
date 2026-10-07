@@ -15,7 +15,9 @@ export interface RejectedChange {
 export type PushOutcome =
   | { kind: 'saved' }
   | { kind: 'partlyRejected'; rejected: RejectedChange[] }
-  | { kind: 'failed'; error: SyncErrorKey };
+  /** `unconfirmed`: the server answered with acks that do not match what was
+   * sent, so the push may have landed; the caller should hold it for Retry. */
+  | { kind: 'failed'; error: SyncErrorKey; unconfirmed?: true };
 
 /** A duplicate carrying a reason replays a rejection; it is not a save. */
 const isRejection = (ack: PushAck): boolean =>
@@ -36,11 +38,12 @@ export async function pushChanges(
   // Exactly one ack per sent change, or nothing is read as saved.
   // Equal counts and every sent id acked leave no room for a repeat.
   const byId = new Map(acks.map((ack) => [ack.clientChangeId, ack]));
-  if (acks.length !== changes.length) return { kind: 'failed', error: 'unknown' };
+  const unconfirmed = { kind: 'failed', error: 'unknown', unconfirmed: true } as const;
+  if (acks.length !== changes.length) return unconfirmed;
   const rejected: RejectedChange[] = [];
   for (const change of changes) {
     const ack = byId.get(change.clientChangeId);
-    if (ack === undefined) return { kind: 'failed', error: 'unknown' };
+    if (ack === undefined) return unconfirmed;
     if (isRejection(ack)) {
       rejected.push({
         tableName: change.tableName,
