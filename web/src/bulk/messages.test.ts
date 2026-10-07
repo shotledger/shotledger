@@ -11,6 +11,7 @@ const applied = (overrides: object = {}): ApplyStatus => ({
   summary: SUMMARY,
   refused: 0,
   corrected: false,
+  countsToCheck: false,
   tagGone: false,
   refreshed: true,
   ...overrides,
@@ -67,13 +68,26 @@ describe('what the page says', () => {
 
   it('applying, idle and invalid', () => {
     expect(keys({ kind: 'applying' })).toEqual(['web.bulk.applying']);
-    expect(keys({ kind: 'accountChanged', userId: 'u2', correctionDropped: false })).toEqual([
+    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'none' })).toEqual([
       'web.bulk.accountChanged',
     ]);
     // R15: a dropped correction leaves the other account's counters wrong; say so.
-    expect(keys({ kind: 'accountChanged', userId: 'u2', correctionDropped: true })).toEqual([
+    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'correction' })).toEqual([
       'web.bulk.accountChanged',
       'web.bulk.correctionDropped',
+    ]);
+    // R23: a dropped firearm change may have landed there; say so.
+    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'firearmChange' })).toEqual([
+      'web.bulk.accountChanged',
+      'web.bulk.firearmChangeDroppedOther',
+    ]);
+    expect(keys({ kind: 'firearmChangeDropped' })).toEqual(['web.bulk.firearmChangeDropped']);
+    // R22: a target not corrected is named.
+    expect(keys(applied({ refused: 1, corrected: true, countsToCheck: true }))).toEqual([
+      'web.bulk.applied',
+      'web.bulk.refused',
+      'web.bulk.corrected',
+      'web.bulk.countsToCheck',
     ]);
     // R16
     expect(keys({ kind: 'correctionAbandoned' })).toEqual(['web.bulk.correctionAbandoned']);

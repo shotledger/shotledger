@@ -152,11 +152,25 @@ describe('the request the page sends (R8)', () => {
     expect(fake.loadTables).toHaveBeenCalledWith(['firearms']);
     expect(firearms).toBe(LOGBOOK.firearms);
     const correction = deps.correct(
-      { moves: [{ sessionId: 's', rounds: 4, from: null, to: 'f1' }], original: { f1: [10, 0] } },
+      {
+        moves: [{ sessionId: 's', rounds: 4, from: null, to: 'f1' }],
+        original: { f1: [10, 0] },
+        writtenAt: '2026-10-07T09:59:00.000Z',
+      },
       { sessions: new Set(['s']), firearms: new Set(), perSession: 1, count: 1 },
-      new Map([['f1', { id: 'f1', round_count: 14, rounds_since_maintenance: 4 }]]),
+      new Map([
+        [
+          'f1',
+          {
+            id: 'f1',
+            round_count: 14,
+            rounds_since_maintenance: 4,
+            updated_at: '2026-10-07T09:59:00.000Z',
+          },
+        ],
+      ]),
     );
-    expect(correction.map((c) => c.payload)).toEqual([
+    expect(correction.changes.map((c) => c.payload)).toEqual([
       {
         id: 'f1',
         round_count: 10,

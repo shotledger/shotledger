@@ -10,6 +10,7 @@ import type {
   BulkError,
   BulkResult,
   BulkSummary,
+  CounterCorrection,
   CounterPlan,
 } from '@shotledger/shared/src/sync-client/bulk-edit';
 import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
@@ -27,6 +28,8 @@ export type ApplyStatus =
       refused: number;
       /** A correction took the refused sessions' rounds back out (R5). */
       corrected: boolean;
+      /** A target another device wrote meanwhile was not corrected: check it (R22). */
+      countsToCheck: boolean;
       /** Add Tag's tag was deleted on another device meanwhile (R6). */
       tagGone: boolean;
       refreshed: boolean;
@@ -41,12 +44,17 @@ export type ApplyStatus =
     }
   /**
    * The held request belongs to another account than the one signed in now
-   * (R12). `correctionDropped`: it was a correction, so the other account's
-   * counters still count the refused sessions (R15).
+   * (R12). `dropped`: what that means for the other account's counters (R15,
+   * R23): a correction left them counting the refused sessions; a firearm
+   * change may have landed with no correction read.
    */
-  | { kind: 'accountChanged'; userId: string; correctionDropped: boolean }
+  | { kind: 'accountChanged'; userId: string; dropped: Dropped }
+  /** A held firearm change was dropped by an edit: it may have landed (R23). */
+  | { kind: 'firearmChangeDropped' }
   /** A correction could not be built after MAX_CORRECTION_ATTEMPTS tries (R16). */
   | { kind: 'correctionAbandoned' };
+
+export type Dropped = 'none' | 'correction' | 'firearmChange';
 
 /** A built request and what the page needs after it lands. */
 export interface Built {
@@ -74,6 +82,8 @@ export type Held =
       built: Built;
       refused: Refused;
       changes: ClientChange[] | null;
+      /** Targets the built correction leaves alone, to check by hand (R22). */
+      unverified: readonly string[];
       /** Builds that threw; a deterministic throw must not hold forever (R16). */
       attempts: number;
     };
@@ -101,7 +111,7 @@ export interface ApplyDeps {
     plan: CounterPlan,
     refused: Refused,
     firearms: ReadonlyMap<string, Payload>,
-  ) => ClientChange[];
+  ) => CounterCorrection;
   /** Whether the tag is still live on the server. */
   tagLive: (tagId: string) => Promise<boolean>;
   /** Pulls the account again; false when that failed. */
@@ -130,6 +140,7 @@ async function finish(
   built: Built,
   refused: Refused,
   corrected: boolean,
+  countsToCheck = false,
 ): Promise<ApplyState> {
   // An unanswered check is not evidence the tag went: say nothing then.
   const tagGone = built.tagId !== null && !(await deps.tagLive(built.tagId).catch(() => true));
@@ -137,7 +148,15 @@ async function finish(
   // A refused session row, or a refused new link, is a session that did not change.
   const summary = { ...built.summary, changed: built.summary.changed - refused.perSession };
   return {
-    status: { kind: 'applied', summary, refused: refused.count, corrected, tagGone, refreshed },
+    status: {
+      kind: 'applied',
+      summary,
+      refused: refused.count,
+      corrected,
+      countsToCheck,
+      tagGone,
+      refreshed,
+    },
     held: null,
   };
 }
@@ -152,8 +171,17 @@ async function correctCounters(
   deps: ApplyDeps,
   held: Extract<Held, { stage: 'correction' }>,
 ): Promise<ApplyState> {
-  let changes = held.changes;
+  let { changes, unverified } = held;
   if (changes === null) {
+    // The account is checked again before anything is built for it (R24).
+    let userId: string | null;
+    try {
+      userId = await deps.currentUserId();
+    } catch (error: unknown) {
+      return failed(classifySyncError(error), 'correction', held);
+    }
+    if (userId === null) return failed('unauthenticated', 'correction', held);
+    if (userId !== held.built.userId) return accountChanged(held, userId);
     let firearms: ReadonlyMap<string, Payload>;
     try {
       firearms = await deps.loadFirearms();
@@ -161,7 +189,7 @@ async function correctCounters(
       return failed(classifySyncError(error), 'correction', held);
     }
     try {
-      changes = deps.correct(held.built.counters!, held.refused, firearms);
+      ({ changes, unverified } = deps.correct(held.built.counters!, held.refused, firearms));
     } catch {
       const attempts = held.attempts + 1;
       if (attempts >= MAX_CORRECTION_ATTEMPTS) {
@@ -169,9 +197,11 @@ async function correctCounters(
       }
       return failed('unknown', 'correction', { ...held, attempts });
     }
-    if (changes.length === 0) return finish(deps, held.built, held.refused, false);
+    if (changes.length === 0) {
+      return finish(deps, held.built, held.refused, false, unverified.length > 0);
+    }
   }
-  const holding = { ...held, changes };
+  const holding = { ...held, changes, unverified };
   let outcome: PushOutcome;
   try {
     outcome = await deps.push(changes);
@@ -181,7 +211,7 @@ async function correctCounters(
   if (outcome.kind === 'failed') {
     return failed(outcome.error, 'correction', holding, outcome.unconfirmed);
   }
-  return finish(deps, held.built, held.refused, true);
+  return finish(deps, held.built, held.refused, true, unverified.length > 0);
 }
 
 async function applyEdit(deps: ApplyDeps, built: Built): Promise<ApplyState> {
@@ -208,6 +238,7 @@ async function applyEdit(deps: ApplyDeps, built: Built): Promise<ApplyState> {
       built,
       refused,
       changes: null,
+      unverified: [],
       attempts: 0,
     });
   }
@@ -224,13 +255,20 @@ export function submitRequest(state: ApplyState): Held | null {
   return state.held;
 }
 
+/** What dropping this held request leaves unknown about the counters (R15, R23). */
+function droppedBy(held: Held | null): Dropped {
+  if (held === null) return 'none';
+  if (held.stage === 'correction') return 'correction';
+  return held.built.counters === null ? 'none' : 'firearmChange';
+}
+
 /** The status when a held request meets another account (R12, R15). */
 export function accountChanged(held: Held | null, userId: string): ApplyState {
   return {
     status: {
       kind: 'accountChanged',
       userId,
-      correctionDropped: held?.stage === 'correction',
+      dropped: droppedBy(held),
     },
     held: null,
   };
@@ -268,9 +306,16 @@ export async function apply(deps: ApplyDeps, held: Held | null): Promise<ApplySt
   return applyEdit(deps, { changes, summary, counters, tagId, userId });
 }
 
-/** An edit makes a held request stale; a pending correction is never dropped. */
+/**
+ * An edit makes a held edit stale; a pending correction is never dropped. A
+ * dropped firearm change may have landed with its refusals never read, so
+ * the page says the counts may need checking (R23).
+ */
 export function afterEdit(state: ApplyState): ApplyState {
   if (state.status.kind === 'applying' || state.held?.stage === 'correction') return state;
+  if (droppedBy(state.held) === 'firearmChange') {
+    return { status: { kind: 'firearmChangeDropped' }, held: null };
+  }
   return IDLE;
 }
 

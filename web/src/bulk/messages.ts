@@ -38,6 +38,12 @@ const FAILED: Record<string, string> = {
   versionUnsupported: 'web.bulk.failedOutdated',
 };
 
+/** What the other account's counters still need after a dropped request (R15, R23). */
+const DROPPED = {
+  correction: 'web.bulk.correctionDropped',
+  firearmChange: 'web.bulk.firearmChangeDroppedOther',
+} as const;
+
 export function statusMessages(state: ApplyState): Message[] {
   const { status } = state;
   switch (status.kind) {
@@ -56,6 +62,7 @@ export function statusMessages(state: ApplyState): Message[] {
         lines.push({ key: 'web.bulk.refused', params: { count: status.refused } });
       }
       if (status.corrected) lines.push({ key: 'web.bulk.corrected' });
+      if (status.countsToCheck) lines.push({ key: 'web.bulk.countsToCheck' });
       if (status.tagGone) lines.push({ key: 'web.bulk.tagGone' });
       if (!status.refreshed) lines.push({ key: 'web.bulk.reload' });
       return lines;
@@ -72,9 +79,11 @@ export function statusMessages(state: ApplyState): Message[] {
         : [reason];
     }
     case 'accountChanged':
-      return status.correctionDropped
-        ? [{ key: 'web.bulk.accountChanged' }, { key: 'web.bulk.correctionDropped' }]
-        : [{ key: 'web.bulk.accountChanged' }];
+      return status.dropped === 'none'
+        ? [{ key: 'web.bulk.accountChanged' }]
+        : [{ key: 'web.bulk.accountChanged' }, { key: DROPPED[status.dropped] }];
+    case 'firearmChangeDropped':
+      return [{ key: 'web.bulk.firearmChangeDropped' }];
     case 'correctionAbandoned':
       return [{ key: 'web.bulk.correctionAbandoned' }];
     case 'invalid':

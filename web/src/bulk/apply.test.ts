@@ -6,6 +6,7 @@ import type { ClientChange } from '@shotledger/shared/src/sync';
 import type {
   BulkContext,
   BulkResult,
+  CounterCorrection,
   CounterPlan,
 } from '@shotledger/shared/src/sync-client/bulk-edit';
 import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
@@ -47,6 +48,7 @@ const PLAN: CounterPlan = {
     { sessionId: 's2', rounds: 2, from: 'f1', to: 'f2' },
   ],
   original: { f1: [100, 0], f2: [10, 10] },
+  writtenAt: '2026-10-07T10:00:00.000Z',
 };
 const empty = () => new Map<string, Record<string, unknown>>();
 const CONTEXT: BulkContext = {
@@ -84,7 +86,7 @@ function deps(outcomes: PushOutcome | PushOutcome[], overrides: Partial<ApplyDep
     build: vi.fn(() => ok()),
     push: vi.fn(() => Promise.resolve(queue.length > 1 ? queue.shift()! : queue[0]!)),
     loadFirearms: vi.fn(() => Promise.resolve(FIREARMS)),
-    correct: vi.fn(() => CORRECTION),
+    correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: [] })),
     tagLive: vi.fn(() => Promise.resolve(true)),
     refresh: vi.fn(() => Promise.resolve(true)),
     ...overrides,
@@ -96,6 +98,7 @@ const applied = (overrides: object = {}) => ({
   summary: SUMMARY,
   refused: 0,
   corrected: false,
+  countsToCheck: false,
   tagGone: false,
   refreshed: true,
   ...overrides,
@@ -124,6 +127,7 @@ describe('applying a bulk edit', () => {
         built: { changes: MOVE, summary: SUMMARY, counters: PLAN, tagId: null, userId: 'u1' },
         refused: { sessions: new Set(['s2']), firearms: new Set(), perSession: 1, count: 1 },
         changes: null,
+        unverified: [],
         attempts: 0,
       },
     };
@@ -257,6 +261,7 @@ describe('applying a bulk edit', () => {
         built,
         refused: { sessions: new Set(), firearms: new Set(), perSession: 0, count: 1 },
         changes: CORRECTION,
+        unverified: [],
         attempts: 0,
       },
     };
@@ -320,7 +325,10 @@ describe('correcting the counters after a refused session (R5)', () => {
     );
     expect(firearmOnly.loadFirearms).not.toHaveBeenCalled();
 
-    const floored = deps([s2Refused], { ...moving(), correct: vi.fn(() => []) });
+    const floored = deps([s2Refused], {
+      ...moving(),
+      correct: vi.fn((): CounterCorrection => ({ changes: [], unverified: [] })),
+    });
     expect((await apply(floored, null)).status).toEqual(
       applied({ refused: 1, summary: { ...MOVED, changed: 1 } }),
     );
@@ -376,7 +384,7 @@ describe('a held request goes only to its own account (R12)', () => {
   it('R12 another account signed in: the held request is dropped and nothing is sent', async () => {
     const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
     expect(await apply(other, await held())).toEqual({
-      status: { kind: 'accountChanged', userId: 'u2', correctionDropped: false },
+      status: { kind: 'accountChanged', userId: 'u2', dropped: 'none' },
       held: null,
     });
     expect(other.push).not.toHaveBeenCalled();
@@ -445,7 +453,7 @@ describe('a held request goes only to its own account (R12)', () => {
     expect((await apply(other, pending)).status).toEqual({
       kind: 'accountChanged',
       userId: 'u2',
-      correctionDropped: true,
+      dropped: 'correction',
     });
     expect(other.push).not.toHaveBeenCalled();
   });
@@ -482,7 +490,7 @@ describe('review fixes (R14, R16, R18)', () => {
     const throwing = () =>
       deps(s2Refused, {
         ...moving(),
-        correct: vi.fn((): ClientChange[] => {
+        correct: vi.fn((): CounterCorrection => {
           throw new RangeError('round_count is not a number');
         }),
       });
@@ -525,7 +533,86 @@ describe('review fixes (R14, R16, R18)', () => {
     expect(accountChanged(null, 'u2').status).toEqual({
       kind: 'accountChanged',
       userId: 'u2',
-      correctionDropped: false,
+      dropped: 'none',
+    });
+  });
+});
+
+describe('verifier round 4 (R22, R23, R24)', () => {
+  it('R22 a target not corrected because another device wrote it is said; the rest is corrected', async () => {
+    const partly = deps([s2Refused, { kind: 'saved' }], {
+      ...moving(),
+      correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: ['f3'] })),
+    });
+    expect((await apply(partly, null)).status).toEqual(
+      applied({
+        refused: 1,
+        corrected: true,
+        countsToCheck: true,
+        summary: { ...MOVED, changed: 1 },
+      }),
+    );
+    const none = deps([s2Refused], {
+      ...moving(),
+      correct: vi.fn((): CounterCorrection => ({ changes: [], unverified: ['f2'] })),
+    });
+    expect((await apply(none, null)).status).toEqual(
+      applied({ refused: 1, countsToCheck: true, summary: { ...MOVED, changed: 1 } }),
+    );
+    expect(none.push).toHaveBeenCalledTimes(1);
+  });
+
+  it('R22 a held correction resends and still reports its unverified targets', async () => {
+    const d = deps([s2Refused, { kind: 'failed', error: 'network' }], {
+      ...moving(),
+      correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: ['f3'] })),
+    });
+    const first = await apply(d, null);
+    expect(first.held).toMatchObject({ changes: CORRECTION, unverified: ['f3'] });
+    const retry = deps({ kind: 'saved' });
+    expect((await apply(retry, first.held)).status).toMatchObject({ countsToCheck: true });
+  });
+
+  it('R23 an edit that drops a held firearm change says the counts may need checking', async () => {
+    const held = (await apply(deps({ kind: 'failed', error: 'network' }, moving()), null)).held;
+    expect(
+      afterEdit({ status: { kind: 'failed', error: 'network', stage: 'edit' }, held }),
+    ).toEqual({ status: { kind: 'firearmChangeDropped' }, held: null });
+    // Another account: the same, said for that account.
+    const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
+    expect((await apply(other, held)).status).toEqual({
+      kind: 'accountChanged',
+      userId: 'u2',
+      dropped: 'firearmChange',
+    });
+  });
+
+  it('R24 the account is checked again before a correction is built', async () => {
+    const switching = (next: Promise<string | null>) => {
+      const ids = [Promise.resolve<string | null>('u1'), next];
+      return deps([s2Refused], {
+        ...moving(),
+        currentUserId: vi.fn(() => ids.shift()!),
+      });
+    };
+    const other = switching(Promise.resolve('u2'));
+    expect(await apply(other, null)).toEqual({
+      status: { kind: 'accountChanged', userId: 'u2', dropped: 'correction' },
+      held: null,
+    });
+    expect(other.loadFirearms).not.toHaveBeenCalled();
+    expect(other.push).toHaveBeenCalledTimes(1);
+
+    const signedOut = switching(Promise.resolve(null));
+    const out = await apply(signedOut, null);
+    expect(out.status).toEqual({ kind: 'failed', error: 'unauthenticated', stage: 'correction' });
+    expect(out.held).toMatchObject({ stage: 'correction', changes: null });
+
+    const unreachable = switching(Promise.reject(new TypeError('Failed to fetch')));
+    expect((await apply(unreachable, null)).status).toEqual({
+      kind: 'failed',
+      error: 'network',
+      stage: 'correction',
     });
   });
 });
