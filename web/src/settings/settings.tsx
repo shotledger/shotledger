@@ -15,10 +15,12 @@ import type { PulledTables } from '../pull';
 import {
   birthYearChoices,
   caseView,
+  defaultProfile,
   hasChanges,
   initialSettings,
   needsBirthYearConfirm,
   ownershipFacts,
+  shownProfile,
 } from './model';
 import { afterEdit, IDLE, save, saveBlocked, type SaveState } from './save';
 
@@ -83,10 +85,8 @@ export function Settings({
   const { t, i18n } = useTranslation();
   const online = useOnline();
   // What the page opened with; a refresh after a save opens it afresh.
-  const opened = useMemo(
-    () => initialSettings(tables.settings, i18n.language),
-    [tables, i18n.language],
-  );
+  const opened = useMemo(() => initialSettings(tables.settings), [tables]);
+  const fallback = defaultProfile(i18n.language);
   const facts = useMemo(() => ownershipFacts(tables.firearms), [tables]);
   const [draft, setDraft] = useState<{ opened: AccountSettings; form: AccountSettings }>({
     opened,
@@ -106,7 +106,9 @@ export function Settings({
 
   const currentYear = new Date().getFullYear();
   const years = birthYearChoices(currentYear, form.birthYear);
-  const view = caseView(form, facts);
+  const view = caseView(form, facts, fallback);
+  // Nothing can change while a save is in flight: its refresh replaces the form.
+  const saving = state.status.kind === 'saving';
   const changed = hasChanges(opened, form);
   const blocked = saveBlocked(online, state, changed);
 
@@ -120,6 +122,7 @@ export function Settings({
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
             currentYear,
+            defaultProfile: fallback,
           }),
         push: pushRows,
         refresh,
@@ -144,75 +147,77 @@ export function Settings({
   return (
     <div className="settings">
       <form className="settings" onSubmit={onSubmit} noValidate>
-        <section className="card">
-          <h2>{t('settings.personal')}</h2>
-          <label className="field">
-            {t('settings.birthYear')}
-            <select
-              value={form.birthYear ?? ''}
-              onChange={(event) => edit({ birthYear: Number(event.target.value) })}
-            >
-              {form.birthYear === null && (
-                <option value="" disabled>
-                  {t('settings.birthYearPlaceholder')}
-                </option>
-              )}
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </label>
-          <fieldset className="field">
-            <legend>{t('settings.skillClass')}</legend>
-            <Choices
-              options={SKILL_CLASSES.map((value) => ({ value, label: value }))}
-              value={form.skillClass}
-              onChange={(skillClass) => edit({ skillClass })}
-            />
-          </fieldset>
-          <label className="field check">
-            <input
-              type="checkbox"
-              checked={form.competesInWomensClasses}
-              onChange={(event) => edit({ competesInWomensClasses: event.target.checked })}
-            />
-            {t('settings.womensClasses')}
-          </label>
-        </section>
-
-        <section className="card">
-          <h2>{t('compliance.settingsTitle')}</h2>
-          <Choices
-            options={PROFILE_SELECTIONS.map((value) => ({
-              value,
-              label: t(PROFILE_LABEL_KEYS[value]),
-            }))}
-            value={form.complianceProfile}
-            onChange={(complianceProfile) => edit({ complianceProfile })}
-          />
-          {view.variantId !== null && view.variantIds.length > 1 && (
+        <fieldset className="settings-fields" disabled={saving}>
+          <section className="card">
+            <h2>{t('settings.personal')}</h2>
+            <label className="field">
+              {t('settings.birthYear')}
+              <select
+                value={form.birthYear ?? ''}
+                onChange={(event) => edit({ birthYear: Number(event.target.value) })}
+              >
+                {form.birthYear === null && (
+                  <option value="" disabled>
+                    {t('settings.birthYearPlaceholder')}
+                  </option>
+                )}
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
             <fieldset className="field">
-              <legend>{t('compliance.caseTitle')}</legend>
+              <legend>{t('settings.skillClass')}</legend>
               <Choices
-                options={view.variantIds.map((id) => ({
-                  value: id,
-                  label: t(`compliance.case.${id}`),
-                }))}
-                value={view.variantId}
-                onChange={(complianceProfileVariant) => edit({ complianceProfileVariant })}
+                options={SKILL_CLASSES.map((value) => ({ value, label: value }))}
+                value={form.skillClass}
+                onChange={(skillClass) => edit({ skillClass })}
               />
-              <p className="muted">{t(`compliance.caseHint.${view.variantId}`)}</p>
-              <p className="muted">
-                {t(view.explicit ? 'compliance.caseExplicit' : 'compliance.caseDerived')}
-              </p>
-              {!view.explicit && view.reasonId && (
-                <p className="muted">{t(`compliance.caseReason.${view.reasonId}`)}</p>
-              )}
             </fieldset>
-          )}
-        </section>
+            <label className="field check">
+              <input
+                type="checkbox"
+                checked={form.competesInWomensClasses}
+                onChange={(event) => edit({ competesInWomensClasses: event.target.checked })}
+              />
+              {t('settings.womensClasses')}
+            </label>
+          </section>
+
+          <section className="card">
+            <h2>{t('compliance.settingsTitle')}</h2>
+            <Choices
+              options={PROFILE_SELECTIONS.map((value) => ({
+                value,
+                label: t(PROFILE_LABEL_KEYS[value]),
+              }))}
+              value={shownProfile(form, fallback)}
+              onChange={(complianceProfile) => edit({ complianceProfile })}
+            />
+            {view.variantId !== null && view.variantIds.length > 1 && (
+              <fieldset className="field">
+                <legend>{t('compliance.caseTitle')}</legend>
+                <Choices
+                  options={view.variantIds.map((id) => ({
+                    value: id,
+                    label: t(`compliance.case.${id}`),
+                  }))}
+                  value={view.variantId}
+                  onChange={(complianceProfileVariant) => edit({ complianceProfileVariant })}
+                />
+                <p className="muted">{t(`compliance.caseHint.${view.variantId}`)}</p>
+                <p className="muted">
+                  {t(view.explicit ? 'compliance.caseExplicit' : 'compliance.caseDerived')}
+                </p>
+                {!view.explicit && view.reasonId && (
+                  <p className="muted">{t(`compliance.caseReason.${view.reasonId}`)}</p>
+                )}
+              </fieldset>
+            )}
+          </section>
+        </fieldset>
 
         <section className="entry-actions">
           <button type="submit" disabled={blocked !== null}>

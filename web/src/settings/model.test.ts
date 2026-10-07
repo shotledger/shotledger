@@ -8,10 +8,12 @@ import { describe, expect, it } from 'vitest';
 import {
   birthYearChoices,
   caseView,
+  defaultProfile,
   hasChanges,
   initialSettings,
   needsBirthYearConfirm,
   ownershipFacts,
+  shownProfile,
 } from './model';
 
 const row = (id: string, value: string) => ({
@@ -40,15 +42,19 @@ describe('the settings form', () => {
       row('complianceProfile', '"none"'),
       row('complianceProfileVariant', `"${SE_FIRST_HANDGUN_VARIANT}"`),
     );
-    expect(initialSettings(stored, 'sv')).toEqual({
+    expect(initialSettings(stored)).toEqual({
       birthYear: 1980,
       skillClass: '2',
       competesInWomensClasses: true,
       complianceProfile: 'none',
       complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
     });
-    expect(initialSettings(new Map(), 'sv').complianceProfile).toBe('se');
-    expect(initialSettings(new Map(), 'en').complianceProfile).toBe('none');
+    // An unset profile stays unset in the form (R6); the page shows the default.
+    const unset = initialSettings(new Map());
+    expect(unset.complianceProfile).toBeNull();
+    expect(shownProfile(unset, defaultProfile('sv'))).toBe('se');
+    expect(shownProfile(unset, defaultProfile('en'))).toBe('none');
+    expect(shownProfile(SET, 'none')).toBe('se');
 
     // No stored case: the phone's derivation from the firearms, marked as proposed.
     const facts = ownershipFacts(
@@ -61,7 +67,7 @@ describe('the settings form', () => {
       { weaponType: 'pistol', isOwn: true },
       { weaponType: 'rifle', isOwn: true },
     ]);
-    expect(caseView(SET, facts)).toEqual({
+    expect(caseView(SET, facts, 'none')).toEqual({
       variantIds: [SE_FIRST_HANDGUN_VARIANT, SE_EXISTING_HANDGUN_VARIANT],
       variantId: SE_EXISTING_HANDGUN_VARIANT,
       explicit: false,
@@ -70,20 +76,23 @@ describe('the settings form', () => {
     expect(ownershipFacts(new Map([['f', { id: 'f', weapon_type: null, is_own: 0 }]]))).toEqual([
       { weaponType: null, isOwn: false },
     ]);
+    // No profile stored: the cases are the shown default's.
+    expect(caseView(unset, facts, 'se').variantId).toBe(SE_EXISTING_HANDGUN_VARIANT);
+    expect(caseView(unset, facts, 'none').variantIds).toEqual([]);
     // A stored case is the shooter's own.
     expect(
-      caseView({ ...SET, complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT }, facts),
+      caseView({ ...SET, complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT }, facts, 'none'),
     ).toMatchObject({ variantId: SE_FIRST_HANDGUN_VARIANT, explicit: true, reasonId: null });
   });
 
   it('U2 the case picker is offered only when the profile has more than one case', () => {
-    expect(caseView({ ...SET, complianceProfile: 'none' }, [])).toEqual({
+    expect(caseView({ ...SET, complianceProfile: 'none' }, [], 'se')).toEqual({
       variantIds: [],
       variantId: null,
       explicit: false,
       reasonId: null,
     });
-    expect(caseView(SET, []).variantIds.length).toBeGreaterThan(1);
+    expect(caseView(SET, [], 'none').variantIds.length).toBeGreaterThan(1);
   });
 
   it('U3 changing an already-set birth year needs confirmation; setting it the first time does not', () => {
@@ -104,6 +113,9 @@ describe('the settings form', () => {
     ]) {
       expect(hasChanges(SET, { ...SET, ...edit })).toBe(true);
     }
+    // Choosing the shown default when none is stored is a change (R6).
+    const unset = { ...SET, complianceProfile: null };
+    expect(hasChanges(unset, { ...unset, complianceProfile: 'se' })).toBe(true);
   });
 
   it('the birth year list is the phone’s, plus a stored year that has aged out of it', () => {

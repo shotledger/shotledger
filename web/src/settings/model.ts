@@ -1,7 +1,10 @@
 // The Settings page's form (docs/specs/web-settings-edit-spec.md §3.2). Pure.
 // Defaults and the case derivation are the phone's own (spec C3).
 import type { FirearmOwnershipFact } from '@shotledger/shared/src/compliance';
-import { getProfileDefinition } from '@shotledger/shared/src/compliance/profile-registry';
+import {
+  getProfileDefinition,
+  type ProfileSelection,
+} from '@shotledger/shared/src/compliance/profile-registry';
 import { birthYearOptions } from '@shotledger/shared/src/disciplines/eligibility';
 import { SYNCED_SETTING_KEYS } from '@shotledger/shared/src/sync';
 import {
@@ -14,13 +17,21 @@ import { resolveComplianceCase } from '../../../app/src/features/compliance/reso
 
 type Rows = ReadonlyMap<string, Record<string, unknown>>;
 
-/** The stored settings, with an unset profile shown as the phone's default. */
-export function initialSettings(rows: Rows, language: string): AccountSettings {
-  const stored = readAccountSettings(rows);
-  return {
-    ...stored,
-    complianceProfile: stored.complianceProfile ?? resolveDefaultProfileSelection(language),
-  };
+/**
+ * The stored settings. An unset profile stays null, so choosing the default
+ * the page shows writes it, as tapping it does on the phone (spec R6).
+ */
+export function initialSettings(rows: Rows): AccountSettings {
+  return readAccountSettings(rows);
+}
+
+/** The profile shown when none is stored: the phone's locale default. */
+export function defaultProfile(language: string): ProfileSelection {
+  return resolveDefaultProfileSelection(language);
+}
+
+export function shownProfile(form: AccountSettings, fallback: ProfileSelection): ProfileSelection {
+  return form.complianceProfile ?? fallback;
 }
 
 /** What the phone's listFirearmOwnershipFacts reads, from the pulled rows. */
@@ -40,8 +51,12 @@ export interface CaseView {
   reasonId: string | null;
 }
 
-export function caseView(form: AccountSettings, facts: readonly FirearmOwnershipFact[]): CaseView {
-  const selection = form.complianceProfile ?? 'none';
+export function caseView(
+  form: AccountSettings,
+  facts: readonly FirearmOwnershipFact[],
+  fallback: ProfileSelection,
+): CaseView {
+  const selection = shownProfile(form, fallback);
   const resolved = resolveComplianceCase(selection, form.complianceProfileVariant, facts);
   return {
     variantIds: getProfileDefinition(selection)?.variants.map((v) => v.id) ?? [],
