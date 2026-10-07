@@ -9,7 +9,7 @@ import {
   type StatsSeries,
 } from '@shotledger/shared';
 
-import type { FaltResultSummary } from '@/features/session/format-falt-result';
+import type { FaltResultSummary } from '../session/format-falt-result';
 
 /** Conventional "average" glyph (U+2300 DIAMETER SIGN) for the row subtitle. */
 export const AVERAGE_SYMBOL = '⌀';

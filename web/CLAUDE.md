@@ -11,9 +11,13 @@ closes (the session token is in `sessionStorage`, the rows in memory).
 - **Numbers come from `shared/src/analytics-rows`**, the same composition the
   phone runs. `src/stats-inputs.ts` maps the snake_case wire rows onto it.
   Tags and the birth year come from the synced `session_tags` and `settings`
-  rows; tag names resolve through `shared/src/tags/canonical.ts`.
-- **Pages are hash routes** in `src/shell/shell.tsx` (`Page`, `pages`); the
-  shell is plain CSS and inline SVG icons, no UI or router dependency.
+  rows; tag names resolve through `shared/src/tags/canonical.ts`. Sessions
+  (`src/sessions/browse.ts`) join through the export's `sessionExportsFromRows`
+  and score with `shared/src/scoring`. App code without a react-native import
+  (labels, formatters) is imported directly rather than restated.
+- **Pages are hash routes** (`src/shell/route.ts`, `pages` in
+  `src/shell/shell.tsx`); the shell is plain CSS and inline SVG icons, no UI
+  or router dependency.
 - **The CSP is strict** (`public/_headers`): no inline `<style>` or
   `<script>`, no `eval`. Style through `styles.css`, a `style` prop or a
   constructed sheet (`theme.ts`). Check a change in a browser against

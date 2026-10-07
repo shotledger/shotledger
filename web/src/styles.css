@@ -375,6 +375,135 @@ button.destructive {
   gap: 8px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
+.session-table th,
+.session-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.session-table thead th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.session-table tbody th {
+  font-weight: 600;
+}
+
+.session-table .number {
+  text-align: right;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.sessions a,
+.session-detail a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.sessions a:hover,
+.session-detail a:hover {
+  text-decoration: underline;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tags li,
+.session-table .badge,
+.series-head .badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: normal;
+  background: var(--background-selected);
+}
+
+.session-detail {
+  display: grid;
+  gap: 16px;
+  max-width: 900px;
+}
+
+.session-detail .counts:last-child {
+  margin-bottom: 0;
+}
+
+.session-detail header p {
+  margin: 0 0 8px;
+}
+
+.notes {
+  white-space: pre-wrap;
+  margin: 12px 0 0;
+}
+
+.series-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.series-list > li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.series-list > li:last-child {
+  border-bottom: none;
+}
+
+.series-head {
+  display: flex;
+  align-items: center;
+}
+
+.series-total {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.shots li {
+  min-width: 36px;
+  padding: 4px 8px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.station-note {
+  margin: 4px 0 0;
+}
+
 .shell {
   display: flex;
   min-height: 100vh;
@@ -563,6 +692,7 @@ button.destructive {
     width: auto;
     height: auto;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     border-right: none;
     border-bottom: 1px solid var(--border);
@@ -583,7 +713,8 @@ button.destructive {
     border-left: 1px solid var(--border);
   }
 
-  .version {
+  .version,
+  .session-table .optional {
     display: none;
   }
 

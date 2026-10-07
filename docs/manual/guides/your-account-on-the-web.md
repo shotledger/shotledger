@@ -1,12 +1,22 @@
 # Your account on the web
 
-If you use sync, the ShotLedger web app lets you reach your account from any
-browser, including when your phone is lost or broken. It reads what sync has
-already stored and changes nothing in your logbook.
+If you use sync, the ShotLedger web app lets you reach your account and your
+sessions from any browser, including when your phone is lost or broken. It
+reads what sync has already stored and changes nothing in your logbook.
 
 Sign in with the email and password of your sync account, then open
 **Account** in the menu on the left. Closing the tab signs you out of this
 browser and leaves nothing behind.
+
+## Sessions
+
+**Sessions** in the menu lists every synced session, newest first, with its
+date, discipline and match format, location, result and tags. On a narrow
+screen the discipline, location and tags are left out.
+
+Open a session's name to read it: its series and shots, the totals, notes,
+firearm, ammo lot and tags, or for a fält session its stations. Nothing can be
+changed there. Target photos are not shown on the web yet.
 
 ## Signed-in devices
 

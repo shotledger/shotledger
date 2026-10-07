@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Account } from './account/account';
 import { currentEmail, hasSession, loadAccount, signOut } from './api';
 import { type PulledTables } from './pull';
-import { pageFromHash, Shell, type Page } from './shell/shell';
+import { routeFromHash, type Route } from './shell/route';
+import { Shell } from './shell/shell';
+import { Sessions } from './sessions/sessions';
 import { SignIn } from './sign-in';
 import { Statistics } from './statistics';
 import { installTheme } from './theme';
@@ -23,11 +25,15 @@ export function App() {
   const [state, setState] = useState<State>(() =>
     hasSession() ? { kind: 'loading', rows: 0 } : { kind: 'signedOut' },
   );
-  const [page, setPage] = useState<Page>(() => pageFromHash(window.location.hash));
+  const [route, setRoute] = useState<Route>(() => routeFromHash(window.location.hash));
+  const { page } = route;
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const onHashChange = () => setPage(pageFromHash(window.location.hash));
+    const onHashChange = () => {
+      setRoute(routeFromHash(window.location.hash));
+      window.scrollTo(0, 0);
+    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
@@ -89,6 +95,9 @@ export function App() {
         <p className="muted">{t('web.loading', { count: state.rows })}</p>
       )}
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
+      {state.kind === 'ready' && page === 'sessions' && (
+        <Sessions tables={state.tables} sessionId={route.sessionId} />
+      )}
       {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
       {state.kind === 'ready' && page === 'account' && (
         <Account tables={state.tables} onDeleted={() => setState({ kind: 'deleted' })} />

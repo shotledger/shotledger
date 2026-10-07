@@ -1317,7 +1317,7 @@
     }
   },
   "web": {
-    "signInIntro": "Sign in with your ShotLedger account to view your statistics and your account. Nothing is kept once you close the tab.",
+    "signInIntro": "Sign in with your ShotLedger account to view your sessions, your statistics and your account. Nothing is kept once you close the tab.",
     "loading_one": "Loading your logbook… {{count}} row",
     "loading_other": "Loading your logbook… {{count}} rows",
     "loadFailed": "Could not load your logbook. Reload the page to try again.",
@@ -1351,6 +1351,10 @@
     "shell": {
       "menu": "Main",
       "version": "Version"
+    },
+    "sessions": {
+      "back": "All Sessions",
+      "notFound": "This session is not in your logbook."
     }
   }
 }
