@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PulledTables } from '../pull';
-import { browseSessions } from './browse';
+import { browseSessions, seriesSections, type BrowseSeries } from './browse';
 
 const table = (rows: Record<string, unknown>[]) =>
   new Map(rows.map((row) => [row.id as string, row]));
@@ -129,6 +129,18 @@ describe('browseSessions', () => {
     expect(sessions.map((s) => s.id)).toEqual(['falt', 'helm', 'ring']);
   });
 
+  it('orders sessions started at the same time by id, whatever order they arrive in', () => {
+    const at = '2026-10-01T10:00:00.000Z';
+    const rows = ['z', 'a', 'm'].map((id) => session(id, { started_at: at }));
+    const later = session('b', { started_at: '2026-10-02T10:00:00.000Z' });
+    for (const order of [[...rows, later], [later, ...rows].reverse()]) {
+      const ids = browseSessions({ ...tables(), sessions: table(order), series: new Map() }).map(
+        (s) => s.id,
+      );
+      expect(ids).toEqual(['b', 'a', 'm', 'z']);
+    }
+  });
+
   it('resolves the firearm, ammo lot and tags by name', () => {
     expect(byId('ring')).toMatchObject({
       firearm: 'Acme Target',
@@ -141,10 +153,10 @@ describe('browseSessions', () => {
 
   it('scores a ring session as the detail screen does: sighters out, stored totals in', () => {
     const ring = byId('ring');
-    expect(ring.series.map((s) => [s.position, s.totalTenths, s.isTotalOverride])).toEqual([
-      [1, 170, false],
-      [2, 190, false],
-      [3, 450, true],
+    expect(ring.series.map((s) => [s.position, s.totalTenths, s.shots.length])).toEqual([
+      [1, 170, 2],
+      [2, 190, 2],
+      [3, 450, 0],
     ]);
     expect(ring.series[0]!.shots.map((s) => s.valueTenths)).toEqual([90, 80]);
     expect(ring.results).toEqual({
@@ -185,5 +197,37 @@ describe('browseSessions', () => {
       [2, true, null],
       [3, false, 'Wind'],
     ]);
+  });
+});
+
+describe('seriesSections', () => {
+  const row = (position: number, isFinal: boolean): BrowseSeries => ({
+    position,
+    isSighter: false,
+    isFinal,
+    shots: [],
+    totalTenths: 0,
+    stage: null,
+  });
+  const shape = (series: BrowseSeries[]) =>
+    seriesSections(series).map((s) => [s.title, s.series.map((r) => r.position)]);
+
+  it('leaves a session without a final untitled', () => {
+    expect(shape([row(1, false), row(2, false)])).toEqual([[null, [1, 2]]]);
+  });
+
+  it('splits qualification and final', () => {
+    expect(shape([row(1, false), row(2, true)])).toEqual([
+      ['main', [1]],
+      ['final', [2]],
+    ]);
+  });
+
+  it('shows no empty qualification when only final series exist', () => {
+    expect(shape([row(1, true)])).toEqual([['final', [1]]]);
+  });
+
+  it('gives no section for no series', () => {
+    expect(shape([])).toEqual([]);
   });
 });

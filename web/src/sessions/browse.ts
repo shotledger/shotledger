@@ -46,7 +46,6 @@ export interface BrowseSeries {
   shots: EntryShot[];
   /** The shots' sum, or the stored total of an imported series with no shots. */
   totalTenths: number;
-  isTotalOverride: boolean;
   /** The program stage (helmatch delmoment) the series belongs to, else null. */
   stage: string | null;
 }
@@ -72,7 +71,6 @@ function browseSession(session: SessionExport, storedInnerTens: number | null): 
     totalTenths: row.totalOverride
       ? row.totalOverride.tenths
       : row.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
-    isTotalOverride: row.totalOverride !== null,
     stage: seriesStage(session.programId, row.position),
   }));
 
@@ -106,6 +104,24 @@ function browseSession(session: SessionExport, storedInnerTens: number | null): 
   };
 }
 
+export interface SeriesSection {
+  /** Titled only when a final splits the session in two. */
+  title: 'main' | 'final' | null;
+  series: BrowseSeries[];
+}
+
+/** The detail's series groups; an empty group is left out. */
+export function seriesSections(series: readonly BrowseSeries[]): SeriesSection[] {
+  const main = series.filter((row) => !row.isFinal);
+  const final = series.filter((row) => row.isFinal);
+  if (final.length === 0) return main.length === 0 ? [] : [{ title: null, series: main }];
+  const sections: SeriesSection[] = [
+    { title: 'main', series: main },
+    { title: 'final', series: final },
+  ];
+  return sections.filter((section) => section.series.length > 0);
+}
+
 /** Every live session, newest first. */
 export function browseSessions(tables: PulledTables): BrowseSession[] {
   const sessionRows = liveRows<ExportSessionRow & { innerTenCount?: number | null }>(
@@ -122,6 +138,8 @@ export function browseSessions(tables: PulledTables): BrowseSession[] {
     ammoLots: liveRows<ExportAmmoLotRow>(tables.ammo_lots),
     tagsBySession: tagNamesBySession(tags, links),
   })
-    .reverse()
+    .sort(
+      (a, b) => b.startedAt.localeCompare(a.startedAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    )
     .map((session) => browseSession(session, storedInnerTens.get(session.id) ?? null));
 }

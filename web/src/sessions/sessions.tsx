@@ -21,9 +21,10 @@ import {
 } from '../../../app/src/features/session/format-falt-result';
 import { disciplineLabel, matchFormatLabel } from '../../../app/src/features/session/labels';
 import type { PulledTables } from '../pull';
-import { browseSessions, type BrowseSeries, type BrowseSession } from './browse';
+import { browseSessions, seriesSections, type BrowseSeries, type BrowseSession } from './browse';
 
 const DASH = '–';
+const SECTION_TITLES = { main: 'session.mainSection', final: 'session.finalSection' } as const;
 
 /** The list's result cell: a fält result, else the ring total, else nothing scored. */
 function resultLabel(t: TFunction, session: BrowseSession): string {
@@ -224,9 +225,6 @@ function RingResult({ session }: { session: BrowseSession }) {
     ) : null;
   }
 
-  const main = session.series.filter((series) => !series.isFinal);
-  const final = session.series.filter((series) => series.isFinal);
-
   return (
     <>
       <section className="card tiles">
@@ -260,14 +258,14 @@ function RingResult({ session }: { session: BrowseSession }) {
         <ExtraRounds session={session} />
       </section>
 
-      {final.length > 0 ? (
-        <>
-          <SeriesList title={t('session.mainSection')} series={main} session={session} />
-          <SeriesList title={t('session.finalSection')} series={final} session={session} />
-        </>
-      ) : (
-        <SeriesList series={main} session={session} />
-      )}
+      {seriesSections(session.series).map(({ title, series }) => (
+        <SeriesList
+          key={title ?? 'all'}
+          title={title === null ? undefined : t(SECTION_TITLES[title])}
+          series={series}
+          session={session}
+        />
+      ))}
     </>
   );
 }
