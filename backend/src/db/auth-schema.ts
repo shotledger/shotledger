@@ -93,6 +93,15 @@ export const verification = sqliteTable(
   (table) => [index('verification_identifier_idx').on(table.identifier)],
 );
 
+// better-auth's `rateLimit` model, added by `rateLimit.storage: 'database'`
+// (src/auth/better-auth.ts). Its `incrementOne` needs the `id` column.
+export const rateLimit = sqliteTable('rate_limit', {
+  id: text('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  count: integer('count').notNull(),
+  lastRequest: integer('last_request').notNull(),
+});
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

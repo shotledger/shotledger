@@ -1,4 +1,10 @@
+// The top level is local development and the vitest pool only. `staging` and
+// `production` are deployed with `--env` (`pnpm deploy:staging`,
+// `pnpm deploy:production`, docs/release.md). Wrangler does not inherit
+// `vars`, `d1_databases` or `r2_buckets` into a named env, so the dev secret
+// below can never reach a deployed Worker.
 {
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "shotledger-backend",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-25",
@@ -8,12 +14,13 @@
   // The read-only web app (ADR 0013), served same-origin so sign-in needs no
   // CORS. Build it first: `pnpm --filter @shotledger/web build`. The Worker
   // answers its own routes; everything else falls back to the app's page.
+  // Its security headers are in web/public/_headers.
   "assets": {
     "directory": "../web/dist",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/sync/*", "/photos/*", "/account/*"],
   },
-  // Local/test-only for this task — never deployed (no real database_id).
+  // Local/test-only — never deployed (no real database_id).
   // See docs/specs/sync-protocol-spec.md §5.
   "d1_databases": [
     {
@@ -31,10 +38,65 @@
       "bucket_name": "shotledger-photos-dev",
     },
   ],
-  // Dev/test-only placeholder value — production secret is provisioned via
-  // `wrangler secret put BETTER_AUTH_SECRET` by the maintainer, never
-  // committed here (docs/specs/backend-auth-photos-spec.md §2).
   "vars": {
+    "ENVIRONMENT": "development",
+    // Dev/test-only; a deployed env gets the real one from
+    // `wrangler secret put BETTER_AUTH_SECRET --env <name>`.
     "BETTER_AUTH_SECRET": "dev-placeholder-secret-never-use-in-production",
+  },
+  // TODO(maintainer): create each env's resources and replace every
+  // REPLACE_ME below; a deploy with a placeholder fails. The hostnames are
+  // the maintainer's decision, so the routes stay commented out until then.
+  "env": {
+    "staging": {
+      // "routes": [{ "pattern": "REPLACE_ME", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "shotledger-sync-staging",
+          "database_id": "REPLACE_ME-staging-d1-id",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "PHOTOS",
+          "bucket_name": "shotledger-photos-staging",
+        },
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "app://",
+      },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET"],
+      },
+    },
+    "production": {
+      // "routes": [{ "pattern": "REPLACE_ME", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "shotledger-sync",
+          "database_id": "REPLACE_ME-production-d1-id",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "PHOTOS",
+          "bucket_name": "shotledger-photos",
+        },
+      ],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "app://",
+      },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET"],
+      },
+    },
   },
 }

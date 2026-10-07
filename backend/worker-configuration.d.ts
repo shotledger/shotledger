@@ -11,6 +11,10 @@ declare namespace Cloudflare {
     // Dev/test-only placeholder — production value is a `wrangler secret`,
     // never committed (docs/specs/backend-auth-photos-spec.md §2).
     BETTER_AUTH_SECRET: string;
+    ENVIRONMENT: 'development' | 'staging' | 'production';
+    // Set in the deployed envs only (backend/wrangler.jsonc).
+    BETTER_AUTH_URL?: string;
+    BETTER_AUTH_TRUSTED_ORIGINS?: string;
   }
 }
 interface Env extends Cloudflare.Env {}

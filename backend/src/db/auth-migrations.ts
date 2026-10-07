@@ -58,6 +58,12 @@ export const AUTH_MIGRATIONS: D1Migration[] = [
         updated_at INTEGER NOT NULL
       )`,
       `CREATE INDEX verification_identifier_idx ON verification (identifier)`,
+      `CREATE TABLE rate_limit (
+        id TEXT PRIMARY KEY,
+        key TEXT NOT NULL UNIQUE,
+        count INTEGER NOT NULL,
+        last_request INTEGER NOT NULL
+      )`,
     ],
   },
 ];

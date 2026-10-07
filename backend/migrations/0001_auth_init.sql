@@ -54,3 +54,11 @@ CREATE TABLE verification (
 );
 
 CREATE INDEX verification_identifier_idx ON verification (identifier);
+
+-- better-auth's rate limiter with `storage: 'database'`; keyed by client IP and path.
+CREATE TABLE rate_limit (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  count INTEGER NOT NULL,
+  last_request INTEGER NOT NULL
+);
