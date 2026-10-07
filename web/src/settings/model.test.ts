@@ -103,7 +103,7 @@ describe('the settings form', () => {
   });
 
   it('U4 (part) nothing changed is detected per key', () => {
-    expect(hasChanges(SET, { ...SET })).toBe(false);
+    expect(hasChanges(SET, { ...SET }, 'none')).toBe(false);
     for (const edit of [
       { birthYear: 1981 },
       { skillClass: '3' as const },
@@ -111,11 +111,26 @@ describe('the settings form', () => {
       { complianceProfile: 'none' as const },
       { complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT },
     ]) {
-      expect(hasChanges(SET, { ...SET, ...edit })).toBe(true);
+      expect(hasChanges(SET, { ...SET, ...edit }, 'none')).toBe(true);
     }
     // Choosing the shown default when none is stored is a change (R6).
     const unset = { ...SET, complianceProfile: null };
-    expect(hasChanges(unset, { ...unset, complianceProfile: 'se' })).toBe(true);
+    expect(hasChanges(unset, { ...unset, complianceProfile: 'se' }, 'se')).toBe(true);
+    // A case changed under a profile with none is not a change: Save stays off (R4).
+    expect(
+      hasChanges(
+        SET,
+        { ...SET, complianceProfile: 'none', complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT },
+        'none',
+      ),
+    ).toBe(true);
+    const none = { ...SET, complianceProfile: 'none' as const };
+    expect(
+      hasChanges(none, { ...none, complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT }, 'se'),
+    ).toBe(false);
+    expect(
+      hasChanges(unset, { ...unset, complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT }, 'none'),
+    ).toBe(false);
   });
 
   it('the birth year list is the phone’s, plus a stored year that has aged out of it', () => {

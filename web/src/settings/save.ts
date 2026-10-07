@@ -43,6 +43,7 @@ export async function save(
   if (changes === null) {
     const built = deps.build();
     if (!built.ok) return { status: { kind: 'invalid', errors: built.errors }, held: null };
+    if (built.changes.length === 0) return IDLE;
     changes = built.changes;
   }
 

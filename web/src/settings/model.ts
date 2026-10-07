@@ -66,8 +66,17 @@ export function caseView(
   };
 }
 
-export function hasChanges(before: AccountSettings, after: AccountSettings): boolean {
-  return SYNCED_SETTING_KEYS.some((key) => before[key] !== after[key]);
+/** As buildSettingsChanges counts them: a case under a profile with none is not one (R4). */
+export function hasChanges(
+  before: AccountSettings,
+  after: AccountSettings,
+  fallback: ProfileSelection,
+): boolean {
+  const offersCases =
+    (getProfileDefinition(shownProfile(after, fallback))?.variants.length ?? 0) > 0;
+  return SYNCED_SETTING_KEYS.some(
+    (key) => before[key] !== after[key] && (key !== 'complianceProfileVariant' || offersCases),
+  );
 }
 
 /** As on the phone: only changing a year already set is confirmed (spec C5). */

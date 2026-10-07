@@ -108,6 +108,18 @@ describe('saving settings', () => {
   });
 });
 
+describe('an empty build', () => {
+  it('sends nothing and goes back to idle (R4)', async () => {
+    const d = deps(
+      { kind: 'saved' },
+      { build: vi.fn((): SettingsResult => ({ ok: true, changes: [] })) },
+    );
+    expect(await save(d, null)).toEqual(IDLE);
+    expect(d.push).not.toHaveBeenCalled();
+    expect(d.refresh).not.toHaveBeenCalled();
+  });
+});
+
 describe('N1 no settings in browser storage', () => {
   const dir = path.dirname(fileURLToPath(import.meta.url));
 

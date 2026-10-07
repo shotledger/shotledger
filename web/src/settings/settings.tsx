@@ -109,7 +109,7 @@ export function Settings({
   const view = caseView(form, facts, fallback);
   // Nothing can change while a save is in flight: its refresh replaces the form.
   const saving = state.status.kind === 'saving';
-  const changed = hasChanges(opened, form);
+  const changed = hasChanges(opened, form, fallback);
   const blocked = saveBlocked(online, state, changed);
 
   const runSave = (held: SaveState['held']) => {
