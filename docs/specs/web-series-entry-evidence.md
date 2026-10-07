@@ -1,13 +1,13 @@
 # Evidence report — web series entry and the web write client (Tier 3)
 
 Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
-§7 Revisions R1–R17.
+§7 Revisions R1–R25.
 
 - **Spec approval:** relayed, not first-hand. An orchestrator session relayed
-  "approved your spec as is, C1–C9 unchanged" on 2026-10-06. Revisions R1–R17
+  "approved your spec as is, C1–C9 unchanged" on 2026-10-06. Revisions R1–R25
   were added by the session that took the work over and have **not** been
   approved; the PR lists them for the maintainer.
-- **Source state:** commit `73aecb6` (the code after the review fixes; this
+- **Source state:** commit `5368276` (the code after both review rounds; this
   report is committed on top of it). Branch `feat/web-series-entry-impl`, from `origin/main` at
   `5edc3cf`.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
@@ -61,17 +61,17 @@ Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
 
 ## Gauntlet (final fresh run, after the last code edit)
 
-| Layer                                           | Command                                                                              | Result                                                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                         | exit 0; vitest 168 files, 2972 tests passed; jest 698 passed                                                            |
-| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                               | 100% statements 3457/3457, branches 2165/2165, functions 803/803, lines 2944/2944 (now incl. `web/src/entry/*.ts`, R16) |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                   | 14 files, 153 tests passed (W1–W4 included)                                                                             |
-| Mutation                                        | `npx stryker run --mutate <the five shared modules + web/src/entry/{model,save}.ts>` | 629 killed + 1 timeout, 5 survived, 0 no-coverage: 99.21% (all 5 equivalent, below)                                     |
-| Property-based                                  | T6 (500 runs × 2 modes), T7 (1000 runs × 2 modes)                                    | pass                                                                                                                    |
-| Property suite alone                            | 3 hand mutants of the token grammar, `-t property`                                   | 3/3 killed (after R7's near-miss tokens were added; before that, accepting `11` survived)                               |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`                 | 22 files, 218 tests passed                                                                                              |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`               | built, 24 translated pages current, no dangling anchors                                                                 |
-| Supply chain                                    | `pnpm licenses:check`                                                                | 97 packages, invariants hold; `uuidv7@1.2.1` was already in the lockfile (C7), no new package                           |
+| Layer                                           | Command                                                                                                  | Result                                                                                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                             | exit 0; vitest 170 files, 2985 tests passed; jest 698 passed                                                                        |
+| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                   | 100% statements 3473/3473, branches 2182/2182, functions 808/808, lines 2958/2958 (incl. `web/src/entry/*.ts`, `web/src/reauth.ts`) |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                       | 14 files, 153 tests passed (W1–W4 included)                                                                                         |
+| Mutation                                        | `npx stryker run --mutate <the five shared modules + web/src/entry/{model,save}.ts + web/src/reauth.ts>` | 686 killed + 1 timeout, 5 survived, 0 no-coverage: 99.28% (all 5 equivalent, below)                                                 |
+| Property-based                                  | T6 (500 runs × 2 modes), T7 (1000 runs × 2 modes)                                                        | pass                                                                                                                                |
+| Property suite alone                            | 3 hand mutants of the token grammar, `-t property`                                                       | 3/3 killed (after R7's near-miss tokens were added; before that, accepting `11` survived)                                           |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`                                     | 24 files, 231 tests passed                                                                                                          |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                   | built, 24 translated pages current, no dangling anchors                                                                             |
+| Supply chain                                    | `pnpm licenses:check`                                                                                    | 97 packages, invariants hold; `uuidv7@1.2.1` was already in the lockfile (C7), no new package                                       |
 
 **The five surviving mutants are equivalent.** Four in `web/src/entry/model.ts`:
 `newRow`'s `lastKey += 1` → `-= 1` (keys stay unique, which is all a key
@@ -106,7 +106,7 @@ driven over CDP. Screenshots are in the session scratchpad, not the repo.
 
 ## Layers not run as specified
 
-- **SUBSTITUTED:** mutation ran on the seven new modules (`--mutate`), not the
+- **SUBSTITUTED:** mutation ran on the eight new modules (`--mutate`), not the
   whole `stryker.config.json` list; the other modules are unchanged.
   Cannot detect: a weakened test elsewhere, which this change does not touch.
 - **SUBSTITUTED:** suite health is one shuffled run (seed 301) of the new
@@ -149,6 +149,36 @@ by the coordinating session, and their fixes:
   account's session into another. Fixed (R14), U8.
 - **Minor docs:** Enter in a fixed format, "never saved twice", and row errors
   naming a sighter row "Series N". Fixed (R17).
+
+## Full PR review (round 2) and what changed
+
+The maintainer asked for every finding of the full review of #669 to be fixed
+(state `8860a12`). Each is a revision in the spec:
+
+- **R22 (Medium):** after the inline sign-in the page kept the old account's
+  logbook under the new token. Now App reloads through its loading path and
+  remounts every page when another user signs in; the same user only clears
+  the notice. Pure decision in `web/src/reauth.ts` (tests R22, gated). Browser:
+  signed out, signed in inline as a second synthetic account → the shell shows
+  that account, the firearm list is its (empty) one, the typed row is cleared.
+- **R18 (Medium):** a throwing build left the page "saving". Caught in
+  `save()` (U10) and once more in the page.
+- **R19:** an ack mismatch is `unconfirmed` and held (U9, D5).
+- **R21:** Enter / Add Series keep a held request (U12, `sendsTheSame`).
+  Browser: lost response, Enter in the last row → a new row, button still
+  Retry, Retry saved once.
+- **R23:** the form is disabled while saving. Browser: fieldset disabled while
+  a push was held back, enabled after. Disabling took the focus, so the page
+  now gives it back; found in the browser, not by a test.
+- **R20:** a 5xx/408/429 from get-session is a network failure (tests in
+  `http/current-user.test.ts`; the first draft of that test passed vacuously,
+  because `classifySyncError(null)` is `network` — it now asserts a throw).
+- **R24:** documented in ADR 0019. The finding's premise that a slow browser
+  clock makes a phone discard the update is not how the protocol works: the
+  winner is decided by server order (R3), so the clock only shows as an edit
+  time. The overwrite race is the real cost, and is what the ADR records.
+- **R25:** `submitRequest` kept as the tested seam; findings 9 and 10 not done,
+  with reasons.
 
 ## Honest notes
 
