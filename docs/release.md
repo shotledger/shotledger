@@ -51,18 +51,24 @@ One Worker serves both the sync API and the read-only web app (ADR 0013):
 deployed environments in `backend/wrangler.jsonc`, `staging` and
 `production`, each with its own D1 database and R2 bucket. The top level of
 that file is local development and the test suite only, and Wrangler does
-not inherit its `vars` or bindings into a named environment, so its dev
-`BETTER_AUTH_SECRET` cannot reach a deployed Worker. Try every step on
-`staging` first; for production, repeat it with `production`.
+not inherit its `vars` or bindings into a named environment. No secret is
+committed anywhere: locally the Worker uses a built-in dev placeholder, and
+a deployed env refuses to start (every auth request answers `500`, logged
+as `AuthConfigError`) when `BETTER_AUTH_SECRET` is missing, shorter than 32
+characters or the dev placeholder, or `BETTER_AUTH_URL` is unset. Try every
+step on `staging` first; for production, repeat it with `production`.
 
 What the deployed config already does: better-auth takes its base URL and
 its extra trusted origins (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated;
 the app's `app://` scheme is always trusted) from the env's `vars`; its
 rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
-(`rate_limit`), with better-auth's default limits; the web app's responses
-carry a Content Security Policy and the other security headers in
-`web/public/_headers`; and neither the backend nor better-auth logs request
-bodies, tokens or query parameters.
+(`rate_limit`), with better-auth's default limits; `workers_dev` and
+`preview_urls` are off, so only the custom domain serves the env; the web
+app's responses carry a Content Security Policy and the other security
+headers in `web/public/_headers`, and the Worker's own routes send
+`Cache-Control: no-store` and `X-Content-Type-Options: nosniff`; and
+neither the backend nor better-auth logs request bodies, tokens or query
+parameters.
 
 - [ ] **Decide the hostname(s).** That decision is the maintainer's and is
       not recorded anywhere yet; nothing in the repo assumes one.
@@ -77,9 +83,8 @@ bodies, tokens or query parameters.
       `wrangler d1 migrations apply` with `--remote --env staging`).
 - [ ] `wrangler secret put BETTER_AUTH_SECRET --env staging`, typing the
       value at the prompt. The value lives under
-      `~/cloud/agents/secrets/shotledger/`, one per env; never the
-      `dev-placeholder-secret-never-use-in-production` value, which the
-      Worker refuses outside local development. Each env declares the
+      `~/cloud/agents/secrets/shotledger/`, one per env, at least 32
+      characters (`openssl rand -base64 32`). Each env declares the
       secret in `secrets.required`, so a deploy without it stops. A secret
       put deploys at once, and creates the Worker if it does not exist yet.
 - [ ] `cd backend && pnpm deploy:staging`. The script builds `web/dist`
