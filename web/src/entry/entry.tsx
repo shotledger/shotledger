@@ -166,10 +166,21 @@ export function Entry({
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
   // A row added by Enter exists only after the next render.
   const pendingFocus = useRef<number | null>(null);
+  // Disabling the form for a save takes the focus; give it back afterwards,
+  // so Enter and Ctrl+Enter keep working from the keyboard.
+  const focusAfterSave = useRef<HTMLElement | null>(null);
+  const saving = state.status.kind === 'saving';
   useEffect(() => {
-    if (pendingFocus.current === null) return;
-    rowInputs.current.get(pendingFocus.current)?.focus();
-    pendingFocus.current = null;
+    if (pendingFocus.current !== null) {
+      rowInputs.current.get(pendingFocus.current)?.focus();
+      pendingFocus.current = null;
+    }
+    if (!saving && focusAfterSave.current !== null) {
+      const element = focusAfterSave.current;
+      focusAfterSave.current = null;
+      if (element.isConnected) element.focus();
+      else rowInputs.current.values().next().value?.focus();
+    }
   });
 
   const edit = (next: EntryForm) => {
@@ -245,6 +256,8 @@ export function Entry({
   const runSave = () => {
     const held = submitRequest(state);
     if (blocked !== null || startedAt === null) return;
+    focusAfterSave.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setState({ status: { kind: 'saving' }, held: null });
     void save(
       {
@@ -314,7 +327,7 @@ export function Entry({
     <div className="entry">
       <form className="entry" onSubmit={onSubmit} onKeyDown={onFormKeyDown} noValidate>
         {/* Nothing changes under a save in flight (R23). */}
-        <fieldset className="entry-fieldset" disabled={state.status.kind === 'saving'}>
+        <fieldset className="entry-fieldset" disabled={saving}>
           <section className="card entry-fields">
             <label className="field">
               {t('session.type')}
