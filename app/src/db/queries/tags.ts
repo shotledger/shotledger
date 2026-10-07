@@ -38,14 +38,14 @@ export function getOrCreateTag(db: Database, name: string) {
   return getTagByName(db, name) ?? createTag(db, name);
 }
 
-/** Ids of every tag, live or not, sharing this tag's name. */
-function sameNameIds(db: Database, tagId: string): string[] {
+/** Ids of every tag sharing this tag's name: live or not, or only the live ones. */
+function sameNameIds(db: Database, tagId: string, liveOnly = false): string[] {
   const tag = db.select().from(tags).where(eq(tags.id, tagId)).get();
   if (!tag) return [tagId];
   return db
     .select({ id: tags.id })
     .from(tags)
-    .where(eq(tags.name, tag.name))
+    .where(and(eq(tags.name, tag.name), liveOnly ? isNull(tags.deletedAt) : undefined))
     .all()
     .map((row) => row.id);
 }
@@ -59,20 +59,23 @@ export function softDeleteTag(db: Database, id: string) {
     .run();
 }
 
-function liveLinks(db: Database, sessionId: string, tagId: string) {
+function liveLinks(db: Database, sessionId: string, tagIds: string[]) {
   return and(
     eq(sessionTags.sessionId, sessionId),
-    inArray(sessionTags.tagId, sameNameIds(db, tagId)),
+    inArray(sessionTags.tagId, tagIds),
     isNull(sessionTags.deletedAt),
   );
 }
 
-/** No-op when the session already carries a tag of this name. */
+/**
+ * No-op when the session already carries a live tag of this name; a link to
+ * a deleted copy does not count, as readers drop it.
+ */
 export function addSessionTag(db: Database, sessionId: string, tagId: string) {
   const existing = db
     .select()
     .from(sessionTags)
-    .where(liveLinks(db, sessionId, tagId))
+    .where(liveLinks(db, sessionId, sameNameIds(db, tagId, true)))
     .get();
   if (existing) return;
   const now = nowIso();
@@ -86,7 +89,7 @@ export function removeSessionTag(db: Database, sessionId: string, tagId: string)
   const now = nowIso();
   db.update(sessionTags)
     .set({ deletedAt: now, updatedAt: now })
-    .where(liveLinks(db, sessionId, tagId))
+    .where(liveLinks(db, sessionId, sameNameIds(db, tagId)))
     .run();
 }
 

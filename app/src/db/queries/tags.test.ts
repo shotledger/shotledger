@@ -216,6 +216,35 @@ describe('synced tag links and duplicate tag names', () => {
     expect(listTags(db)).toEqual([expect.objectContaining({ id: again.id, name: 'KM' })]);
   });
 
+  it('re-adding a re-created tag links it, though a link to the deleted copy is still live', () => {
+    const s = session();
+    const old = getOrCreateTag(db, 'Club night');
+    addSessionTag(db, s, old.id);
+    softDeleteTag(db, old.id);
+    const again = getOrCreateTag(db, 'Club night');
+    db.delete(syncOutbox).run();
+    addSessionTag(db, s, again.id);
+    const added = links().filter((l) => l.tagId === again.id);
+    expect(added).toEqual([expect.objectContaining({ sessionId: s, deletedAt: null })]);
+    expect(outboxFor('session_tags').map((e) => e.rowId)).toEqual([added[0]!.id]);
+    expect(listTagsForSession(db, s)).toEqual([
+      expect.objectContaining({ id: again.id, name: 'Club night' }),
+    ]);
+    expect(listTagsBySession(db).get(s)).toEqual(['Club night']);
+  });
+
+  it('untagging a re-created tag also tombstones the link to its deleted copy', () => {
+    const s = session();
+    const old = getOrCreateTag(db, 'Club night');
+    addSessionTag(db, s, old.id);
+    softDeleteTag(db, old.id);
+    const again = getOrCreateTag(db, 'Club night');
+    addSessionTag(db, s, again.id);
+    removeSessionTag(db, s, again.id);
+    expect(links().filter((l) => l.deletedAt === null)).toEqual([]);
+    expect(listTagsForSession(db, s)).toEqual([]);
+  });
+
   it('two live copies of a name list as one tag, on the earliest id', () => {
     const km = getOrCreateTag(db, 'KM');
     const later = copyOf('KM', 'ffffffff-ffff-7fff-bfff-ffffffffffff');
