@@ -2,12 +2,15 @@ import { Hono } from 'hono';
 
 import { betterAuthAuthenticator } from './auth';
 import { createAuth } from './auth/better-auth';
+import { apiResponseHeaders, WORKER_PATHS } from './lib/api-headers';
 import { logSafeErrors } from './lib/errors';
 import { createAccountRoutes } from './routes/account';
 import { createPhotoRoutes } from './routes/photos';
 import { createSyncRoutes } from './routes/sync';
 
 const app = new Hono<{ Bindings: Env }>();
+
+for (const path of WORKER_PATHS) app.use(path, apiResponseHeaders);
 
 app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 

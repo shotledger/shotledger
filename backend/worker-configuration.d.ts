@@ -8,11 +8,10 @@ declare namespace Cloudflare {
   interface Env {
     DB: D1Database;
     PHOTOS: R2Bucket;
-    // Dev/test-only placeholder — production value is a `wrangler secret`,
-    // never committed (docs/specs/backend-auth-photos-spec.md §2).
-    BETTER_AUTH_SECRET: string;
     ENVIRONMENT: 'development' | 'staging' | 'production';
-    // Set in the deployed envs only (backend/wrangler.jsonc).
+    // Set in the deployed envs only (backend/wrangler.jsonc): the secret is a
+    // `wrangler secret`, never committed (docs/specs/backend-auth-photos-spec.md §2).
+    BETTER_AUTH_SECRET?: string;
     BETTER_AUTH_URL?: string;
     BETTER_AUTH_TRUSTED_ORIGINS?: string;
   }

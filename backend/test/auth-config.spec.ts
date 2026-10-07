@@ -4,9 +4,9 @@ import {
   env,
   waitOnExecutionContext,
 } from 'cloudflare:test';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createAuth } from '../src/auth/better-auth';
+import { AuthConfigError, createAuth, DEV_SECRET } from '../src/auth/better-auth';
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
@@ -85,10 +85,47 @@ describe('better-auth origins', () => {
   });
 });
 
-describe('the dev secret', () => {
-  it('is refused outside local development', () => {
-    expect(() =>
-      createAuth({ ...deployedEnv, BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET }),
-    ).toThrow(/dev placeholder/);
+describe('a deployed env without its own config', () => {
+  it.each([
+    ['the dev placeholder secret', { BETTER_AUTH_SECRET: DEV_SECRET }, /dev placeholder/],
+    ['no secret', { BETTER_AUTH_SECRET: undefined }, /missing or shorter/],
+    ['an empty secret', { BETTER_AUTH_SECRET: '' }, /missing or shorter/],
+    ['a 31-character secret', { BETTER_AUTH_SECRET: 'x'.repeat(31) }, /missing or shorter/],
+    ['no BETTER_AUTH_URL', { BETTER_AUTH_URL: undefined }, /BETTER_AUTH_URL/],
+  ])('refuses to start with %s', (_label, override, message) => {
+    expect(() => createAuth({ ...deployedEnv, ...override })).toThrow(AuthConfigError);
+    expect(() => createAuth({ ...deployedEnv, ...override })).toThrow(message);
+  });
+
+  it('answers 500 and logs why', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const response = await fetchApp(
+      { ...deployedEnv, BETTER_AUTH_SECRET: undefined },
+      '/api/auth/get-session',
+      {},
+    );
+    expect(response.status).toBe(500);
+    expect(logged.mock.calls.flat().join(' ')).toContain(
+      'AuthConfigError: BETTER_AUTH_SECRET is missing',
+    );
+    logged.mockRestore();
+  });
+
+  it('local development needs no secret', () => {
+    expect(env.BETTER_AUTH_SECRET).toBeUndefined();
+    expect(() => createAuth(env)).not.toThrow();
+  });
+});
+
+describe("the Worker's own responses", () => {
+  it.each([
+    ['GET', '/api/auth/get-session'],
+    ['POST', '/sync/pull'],
+    ['GET', '/photos/usage'],
+    ['POST', '/account/delete'],
+  ])('%s %s is not cached or sniffed', async (method, path) => {
+    const response = await fetchApp(env, path, { method });
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   });
 });
