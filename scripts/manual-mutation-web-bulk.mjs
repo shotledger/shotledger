@@ -80,7 +80,7 @@ const MUTANTS = [
   {
     name: 'property K21: the correction takes nothing back',
     file: BUILDER,
-    find: 'plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),',
+    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
     replace: 'plan.moves,',
     tests: ['shared/src/sync-client/bulk-edit.test.ts'],
     only: 'K21',
@@ -89,9 +89,32 @@ const MUTANTS = [
     name: 'property K21: every session refused leaves the counters as written',
     file: BUILDER,
     find: '?? plan.original[firearmId]!;',
-    replace: '?? [total, since];',
+    replace: '?? written.get(firearmId)!;',
     tests: ['shared/src/sync-client/bulk-edit.test.ts'],
     only: 'K21',
+  },
+  {
+    name: "property K21 (R21): a refused session's rounds go back onto its source too",
+    file: BUILDER,
+    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
+    replace: 'plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),',
+    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
+    only: 'K21',
+  },
+  {
+    name: "twin P6 (R21): a refused session's rounds go back onto its source too",
+    file: BUILDER,
+    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
+    replace: 'plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),',
+    tests: ['app/src/db/queries/web-bulk.test.ts'],
+    only: 'P6',
+  },
+  {
+    name: 'builder (R22): a target another device wrote is corrected anyway',
+    file: BUILDER,
+    find: 'if (fresh.updated_at !== plan.writtenAt) {',
+    replace: 'if (false) {',
+    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
   },
   {
     name: 'page: a lost response drops the request instead of holding it',
@@ -103,8 +126,9 @@ const MUTANTS = [
   {
     name: 'page: Retry rebuilds a held correction',
     file: 'web/src/bulk/apply.ts',
-    find: '  let changes = held.changes;\n',
-    replace: '  let changes: ClientChange[] | null = null;\n',
+    find: '  let { changes, unverified } = held;\n',
+    replace:
+      '  let { changes, unverified } = { ...held, changes: null as ClientChange[] | null };\n',
     tests: ['web/src/bulk/apply.test.ts'],
   },
   {
@@ -112,6 +136,20 @@ const MUTANTS = [
     file: 'web/src/bulk/apply.ts',
     find: 'if (built.counters !== null && refused.sessions.size > 0) {',
     replace: 'if (false) {',
+    tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: 'page (R23): a dropped held firearm change is not said',
+    file: 'web/src/bulk/apply.ts',
+    find: "if (droppedBy(state.held) === 'firearmChange') {",
+    replace: 'if (false) {',
+    tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: 'page (R24): the account is not checked again before a correction',
+    file: 'web/src/bulk/apply.ts',
+    find: 'if (userId !== held.built.userId) return accountChanged(held, userId);',
+    replace: '',
     tests: ['web/src/bulk/apply.test.ts'],
   },
   {
