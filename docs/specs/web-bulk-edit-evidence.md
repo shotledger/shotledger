@@ -1,7 +1,7 @@
 # Evidence report — web bulk edit (Tier 3)
 
 Spec: [`web-bulk-edit-spec.md`](web-bulk-edit-spec.md), including its §8
-Revisions R1–R11.
+Revisions R1–R20.
 
 > **Round 2 is the current evidence.** An independent verifier failed round 1
 > (the sections before "Round 2" are round 1's, kept as history). Round
@@ -211,3 +211,40 @@ check said "Changed 2 sessions"; that is R11.) Screenshot
 - The firearm rows are absolute values: a phone saving series on the same
   firearm between the web's pull and its push (or its Retry) loses those
   rounds, or the web loses its move (B4 as reworded in R10). Not prevented.
+
+## Round 3 (after the full PR review, R13–R20)
+
+- **Source state:** commit `a4a1743`, rebased onto #669 at `caffb4d` (its
+  shared re-sign-in, `unconfirmed` flag and fieldset fixes). Not
+  independently re-verified.
+- **Spec approval:** still not obtained; B1–B10 and R1–R20 await the
+  maintainer. B7 unchanged: #676 is still open.
+
+| Review finding                                     | Fix                                                    | Evidence                                                     |
+| -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| 1 Add Tag with no live target creates a stray tag  | R13                                                    | K13 (seen failing before the fix)                            |
+| 2 re-sign-in; a dropped correction not said        | R15 shared `SignInAgain`, App remount, carried message | `apply.test.ts` R12/R15, `messages.test.ts`, `carry.test.ts` |
+| 3 a correction whose rebuild throws blocks forever | R16 give up after 3 attempts                           | `apply.test.ts` R16                                          |
+| 4 a late throw could rebuild a correction          | R18 held before it is sent                             | `apply.test.ts` R18                                          |
+| 5 refused links counted as changed                 | R17                                                    | U7                                                           |
+| 6 edits during Apply                               | R19 fieldset + focus                                   | page wiring (no React tests; checked by typecheck and lint)  |
+| 7 `submitRequest`                                  | R20 kept as the seam                                   | review                                                       |
+| (#669) unconfirmed push                            | R14 held for Retry                                     | `apply.test.ts` R14, `messages.test.ts`                      |
+
+### Gauntlet (fresh)
+
+| Layer                                           | Command                                                                                                    | Result                                                                                                                                                                               |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tests + types + lint + format + i18n + licenses | `pnpm check` (at `97b650b`)                                                                                | exit 0; vitest 177 files, 3058 tests (`seed.test.ts` included; it had timed out once under a load of ~40 from other sessions, and passed 20/20 alone then); jest 698; i18n 1274 keys |
+| Coverage                                        | `pnpm check`                                                                                               | 100% statements 3788/3788, branches 2400/2400, functions 884/884, lines 3220/3220                                                                                                    |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                         | 15 files, 158 tests                                                                                                                                                                  |
+| Mutation (tool)                                 | `npx stryker run --mutate 'shared/src/sync-client/bulk-edit.ts,web/src/bulk/*.ts,!web/src/bulk/*.test.ts'` | 740 killed, 4 survived (99.46%)                                                                                                                                                      |
+| Mutation (hand)                                 | `node scripts/manual-mutation-web-bulk.mjs`                                                                | 19/19 killed                                                                                                                                                                         |
+| Docs gates                                      | `mkdocs build --strict`; translation check; anchor check                                                   | built; 25 pages current; no dangling anchors                                                                                                                                         |
+
+Of the 4 survivors, 3 are the equivalent ones of round 2 (`Map.get(null)`
+guards twice, the unique-key sort). The fourth was real: a correction where
+only `rounds_since_maintenance` differs (the total floored either way). A K19
+case was added at `a4a1743` and fails against that mutant (2 failed), then
+passes restored; `bulk-edit.test.ts` 23/23. The rest of the gauntlet ran at
+`97b650b`, one test-only commit earlier.
