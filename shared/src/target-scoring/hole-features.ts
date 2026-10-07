@@ -122,40 +122,114 @@ function toFloat(crop: GrayCrop): Float64Array | null {
 function separable(
   src: Float64Array,
   n: number,
-  rowKernel: readonly number[],
-  colKernel: readonly number[],
+  rowKernel: Kernel,
+  colKernel: Kernel,
 ): Float64Array {
-  const pass = (input: Float64Array, kernel: readonly number[], alongX: boolean) => {
-    const radius = (kernel.length - 1) / 2;
-    const out = new Float64Array(n * n);
-    for (let y = 0; y < n; y += 1) {
-      for (let x = 0; x < n; x += 1) {
-        let sum = 0;
-        for (let d = -radius; d <= radius; d += 1) {
-          const index = alongX ? y * n + reflectIndex(x + d, n) : reflectIndex(y + d, n) * n + x;
-          sum += (kernel[d + radius] as number) * (input[index] as number);
-        }
-        out[y * n + x] = sum;
-      }
-    }
-    return out;
-  };
-  return pass(pass(src, rowKernel, true), colKernel, false);
+  return pass(pass(src, n, rowKernel, true), n, colKernel, false);
 }
 
-function convolve3(src: Float64Array, n: number, kernel: readonly number[]): Float64Array {
+/** A 3- or 5-tap kernel, the only sizes used here. */
+type Kernel = readonly [number, number, number] | readonly [number, number, number, number, number];
+
+/**
+ * One 1-D pass along x or y. Inside the border the taps are written out, and
+ * the border reads `reflectedTaps`: without a JIT (Hermes) the per-tap loop
+ * and lookup were most of the cost. Either way the products are summed from
+ * 0 in tap order, so the result is the same to the bit.
+ */
+function pass(input: Float64Array, n: number, kernel: Kernel, alongX: boolean): Float64Array {
+  const radius = (kernel.length - 1) / 2;
+  const taps = reflectedTaps(n, radius);
+  // Position p on line `line` is at `line * across + p * s`.
+  const s = alongX ? 1 : n;
+  const across = alongX ? n : 1;
+  const [k0, k1, k2, k3 = 0, k4 = 0] = kernel;
   const out = new Float64Array(n * n);
-  for (let y = 0; y < n; y += 1) {
-    for (let x = 0; x < n; x += 1) {
-      let sum = 0;
-      for (let ky = -1; ky <= 1; ky += 1) {
-        const sy = reflectIndex(y + ky, n);
-        for (let kx = -1; kx <= 1; kx += 1) {
-          const sx = reflectIndex(x + kx, n);
-          sum += (kernel[(ky + 1) * 3 + (kx + 1)] as number) * (src[sy * n + sx] as number);
-        }
+  const edge = (base: number, p: number) => {
+    let sum = 0;
+    for (let k = 0; k < kernel.length; k += 1) {
+      sum += (kernel[k] as number) * (input[base + (taps[k * n + p] as number) * s] as number);
+    }
+    out[base + p * s] = sum;
+  };
+  for (let line = 0; line < n; line += 1) {
+    const base = line * across;
+    // A crop under 2 * radius + 1 px is all border.
+    for (let p = 0; p < radius; p += 1) edge(base, p);
+    for (let p = Math.max(radius, n - radius); p < n; p += 1) edge(base, p);
+    const end = base + (n - radius) * s;
+    if (radius === 1) {
+      for (let i = base + s; i < end; i += s) {
+        out[i] =
+          0 +
+          k0 * (input[i - s] as number) +
+          k1 * (input[i] as number) +
+          k2 * (input[i + s] as number);
       }
-      out[y * n + x] = sum;
+    } else {
+      for (let i = base + 2 * s; i < end; i += s) {
+        out[i] =
+          0 +
+          k0 * (input[i - 2 * s] as number) +
+          k1 * (input[i - s] as number) +
+          k2 * (input[i] as number) +
+          k3 * (input[i + s] as number) +
+          k4 * (input[i + 2 * s] as number);
+      }
+    }
+  }
+  return out;
+}
+
+/** `reflectIndex(p + k - radius, n)` at `[k * n + p]`, for every tap k and position p. */
+function reflectedTaps(n: number, radius: number): Int32Array {
+  const taps = new Int32Array((2 * radius + 1) * n);
+  for (let k = 0; k <= 2 * radius; k += 1) {
+    for (let p = 0; p < n; p += 1) taps[k * n + p] = reflectIndex(p + k - radius, n);
+  }
+  return taps;
+}
+
+/** A 3×3 convolution, written out inside the border as `pass` is. */
+function convolve3(
+  src: Float64Array,
+  n: number,
+  kernel: readonly [number, number, number, number, number, number, number, number, number],
+): Float64Array {
+  const taps = reflectedTaps(n, 1);
+  const [k0, k1, k2, k3, k4, k5, k6, k7, k8] = kernel;
+  const out = new Float64Array(n * n);
+  const edge = (y: number, x: number) => {
+    let sum = 0;
+    for (let ky = 0; ky < 3; ky += 1) {
+      const row = (taps[ky * n + y] as number) * n;
+      for (let kx = 0; kx < 3; kx += 1) {
+        sum +=
+          (kernel[ky * 3 + kx] as number) * (src[row + (taps[kx * n + x] as number)] as number);
+      }
+    }
+    out[y * n + x] = sum;
+  };
+  for (let y = 0; y < n; y += 1) {
+    if (y === 0 || y === n - 1) {
+      for (let x = 0; x < n; x += 1) edge(y, x);
+      continue;
+    }
+    edge(y, 0);
+    edge(y, n - 1);
+    const end = y * n + n - 1;
+    for (let i = y * n + 1; i < end; i += 1) {
+      out[i] =
+        0 +
+        k0 * (src[i - n - 1] as number) +
+        k1 * (src[i - n] as number) +
+        k2 * (src[i - n + 1] as number) +
+        k3 * (src[i - 1] as number) +
+        k4 * (src[i] as number) +
+        k5 * (src[i + 1] as number) +
+        k6 * (src[i + n - 1] as number) +
+        k7 * (src[i + n] as number) +
+        k8 * (src[i + n + 1] as number);
     }
   }
   return out;

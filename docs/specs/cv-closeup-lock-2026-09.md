@@ -338,6 +338,24 @@ three calibres, and the native maps match the pure ones pixel for pixel on the
 emulator. There, the maps of a run at the calibre took 1.67–1.74 s against
 2.39–2.48 s, interleaved on one corpus close-up.
 
+**The per-candidate features** were next: about 9 ms a peak on the phone,
+so 2.7–3.3 s for the half-calibre run's 310 peaks. Node without a JIT
+(`--jitless`) takes about as long a peak, and there `holeFeatures` was three
+quarters of it: its 3- and 5-tap convolutions looked up the border reflection
+for every pixel and tap. They now look it up once per pass and write the taps
+out inside the border, summed in the same order, so the values are the same to
+the bit (`hole-features.test.ts` pins them against the old code). The radial
+profile picks its bin without a loop over all five, and the 48 px crop
+reflects each column once. On 184 corpus canvases (the guarded canvases of the
+photos whose half-calibre run happens), candidates came out `isDeepStrictEqual`
+to `main`'s at 5.6, 2.8 and 9.65 mm, and the lock-step fixtures regenerate
+unchanged. `--jitless`, interleaved with `main` on 12 of those canvases:
+
+| Features, per peak |  `main` | This change |
+| ------------------ | ------: | ----------: |
+| run at 5.6 mm      | 14.1 ms |      7.7 ms |
+| run at 2.8 mm      |  9.9 ms |      4.7 ms |
+
 ## 2026-10-06: asking for the face when the X line is missing
 
 Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb
