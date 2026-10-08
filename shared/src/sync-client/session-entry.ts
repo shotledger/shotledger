@@ -104,8 +104,8 @@ function checkLength(
 
 /**
  * `YYYY-MM-DDTHH:mm:ss.sssZ`, exactly what `toISOString` writes for a
- * four-digit year: the web's `startedAtIso` and the phone both write that, and
- * `started_at` is compared as a string. Spec R28.
+ * four-digit year: the web's `startedAtIso` and the phone's session form both
+ * write that, and `started_at` is compared as a string. Spec R28.
  */
 function isUtcIsoTimestamp(value: string): boolean {
   const time = Date.parse(value);

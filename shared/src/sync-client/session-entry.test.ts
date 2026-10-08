@@ -574,6 +574,8 @@ describe('buildSessionEntry', () => {
     ['a date alone', '2026-10-09'],
     ['whole seconds', '2026-10-09T08:15:00Z'],
     ['an offset other than Z', '2026-10-09T10:15:00.000+02:00'],
+    // 24 characters, so only a check past the seconds refuses it.
+    ['a 24-character offset spelling', '2026-10-09T08:15:00+0000'],
     ['an extended year', '+010000-01-01T00:00:00.000Z'],
   ])('E15 a startedAt that is %s is refused', (_, startedAt) => {
     expect(build(draft({ startedAt }))).toEqual({

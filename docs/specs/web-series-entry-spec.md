@@ -299,8 +299,8 @@ Feature: entry → changes (shared/src/sync-client/session-entry.test.ts)
   Scenario: E14 a firearm that is not among the pulled rows is refused
   Scenario: E15 a startedAt that is not a UTC timestamp in toISOString's shape is refused (R28)
     Then each of "", "garbage", "2026-13-09T08:15:00.000Z", "2026-02-30T08:15:00.000Z",
-         "2026-10-09", "2026-10-09T08:15:00Z", "2026-10-09T10:15:00.000+02:00" and
-         "+010000-01-01T00:00:00.000Z" is refused with invalidStartedAt, nothing built,
+         "2026-10-09", "2026-10-09T08:15:00Z", "2026-10-09T10:15:00.000+02:00",
+         "2026-10-09T08:15:00+0000" and "+010000-01-01T00:00:00.000Z" is refused with invalidStartedAt, nothing built,
          collected with the other errors
     And "2026-10-09T08:15:00.000Z" is stored as started_at unchanged
 

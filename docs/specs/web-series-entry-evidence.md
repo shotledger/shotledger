@@ -24,10 +24,10 @@ Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
 - **Entry point:** `pnpm check` (types, i18n, licenses, lint, format, vitest
   with the 100% coverage gate, jest); `cd backend && npx vitest run`;
   `pnpm mutation` (or the `--mutate` subset below).
-- **Independent verification:** not performed against the final source
-  state `395f80f`. Round 2 verified `9570009` and returned `passed`; R28,
-  added after it, is unverified until round 3, which the maintainer has
-  approved. See _Independent verification_ below.
+- **Independent verification:** round 3 verified `0bbaf53` (the code of
+  `395f80f` plus this report) and returned `passed`. Its two description
+  findings were fixed afterwards in a test case and a source comment, with no
+  change to behaviour. See _Independent verification_ below.
 
 ## Failure model (Tier 3)
 
@@ -303,14 +303,15 @@ The maintainer asked for every finding of the full review of #669 to be fixed
 
 ## Independent verification
 
-- Verifier: Claude Code, Fable 5.1; fresh context; given the repo @
-  `9570009` + the task contract + the SPEC + the entry point. Not given the
+- Verifier: Claude Code, Fable 5.1; fresh context each round; given the
+  repo @ `9570009` (round 2) or `0bbaf53` (round 3) + the task contract + the
+  SPEC + the entry point. Not given the
   builder's conversation. Correlation broken: task context. Not broken:
   model.
 - Rounds: 3 approved (the default cap is two; the maintainer approved a
   third on 2026-10-09). Round 1 (`d6e1168`): findings above, under
   _Independent review (round 1)_. Round 2 (`9570009`) verdict: `passed`.
-  Round 3: pending.
+  Round 3 (`0bbaf53`) verdict: `passed`.
 - Attacked in round 2: the run (the entry point reproduced from
   `9570009`); spec vs contract; test-gaming (15 mutants of its own, and the
   10 Stryker survivors proved equivalent); checker coverage (N1, A1, A2 and
@@ -333,9 +334,23 @@ The maintainer asked for every finding of the full review of #669 to be fixed
   - **Change to make now** (the maintainer's grade): 2. the builder took
     `startedAt: ''`, which only the page kept out. Guard added in the
     builder (R28, E15, `395f80f`). A code change, so it needs round 3.
+- Attacked in round 3: the run (reproduced from `0bbaf53`, every number
+  identical); spec vs contract (R28's accepted form against every writer of
+  `started_at`, 24 adversarial spellings and a 200 000-instant random sweep:
+  the accepted set is exactly `toISOString`'s output for a four-digit year);
+  test-gaming (9 mutants of its own: 6 killed, 2 proved equivalent, 1 not
+  equivalent, below); checker coverage (N1 and the i18n gate fed known-bad
+  input, both failed); the mapping in both directions.
+- Round 3 findings, graded by the maintainer as **description / mapping**,
+  fixed and disclosed, no new round:
+  1. E15's refused spellings all differ before the seconds or in length, so a
+     guard comparing only up to the seconds survived the suite while
+     accepting `2026-10-09T08:15:00+0000`. The shipped guard refuses it; the
+     case is now in E15, and that mutant, planted by hand, fails it alone.
+  2. The comment above `isUtcIsoTimestamp` said "the phone" writes this
+     shape; the phone's database also holds `…:ssZ` values from the ShotLog
+     import. Reworded to the phone's session form, as R28 already said.
 - Canary: not run.
-- Fixed after the last verified state, therefore unverified: R28 (the
-  start-time guard in `buildSessionEntry` and its `case` in `entry.tsx`),
-  and the 501-change test. Independent verification is not performed
-  against the final source state `395f80f`; round 2 verified `9570009`
-  and returned `passed`.
+- Fixed after the last verified state, therefore unverified: the E15 case
+  and the comment above (a test and a comment; the guard's code is the one
+  round 3 verified).
