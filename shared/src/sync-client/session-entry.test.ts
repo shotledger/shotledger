@@ -540,6 +540,18 @@ describe('buildSessionEntry', () => {
     expect(changesOf(exact)).toHaveLength(PUSH_BATCH_MAX);
   });
 
+  it('E13 one change over PUSH_BATCH_MAX is refused', () => {
+    // 1 session + 50 series + 450 shots = PUSH_BATCH_MAX + 1.
+    const over = draft({
+      seriesLength: 10,
+      series: Array.from({ length: 50 }, () => ({ text: '1 1 1 1 1 1 1 1 1', isSighter: false })),
+    });
+    expect(build(over)).toEqual({
+      ok: false,
+      errors: [{ kind: 'tooManyChanges', max: PUSH_BATCH_MAX }],
+    });
+  });
+
   it('E14 a firearm or ammo lot that is not among the pulled rows is refused', () => {
     expect(build(draft({ firearmId: 'f9' }))).toEqual({
       ok: false,
