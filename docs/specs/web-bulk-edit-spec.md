@@ -5,9 +5,10 @@
 > Evidence report: `docs/specs/web-bulk-edit-evidence.md`. Decision record:
 > ADR 0019 (web writes push whole rows through `/sync/push`).
 >
-> **Approval status: not yet approved by the maintainer.** Written and built
-> in one autonomous run; the key choices below are listed in the PR for
-> approval.
+> **Approval status: approved first-hand by the maintainer on 2026-10-08**,
+> after an independent review: B1–B6 and B8–B10, B7 as amended in R27,
+> R1–R4, R6–R15 and R17–R20, with the changes recorded as R25–R29. R5, R16,
+> R18 and R21–R24 (the counter correction) are withdrawn.
 
 - **Tier: 3.** It rewrites synced rows of many sessions in one request. A
   wrong payload does not fail on the web: it fails, or silently corrupts, on
@@ -94,7 +95,7 @@ prevents it.
 longer live after the fresh pull is left out and counted as "no longer in
 your logbook". A session deleted between that pull and the push is refused by
 the server (`tombstoned`); the rest lands and the page says how many changes
-were refused.
+were refused (and, for a firearm change, which round counts to check: R25).
 
 **B6. Already as asked is not a change.** A session that already carries the
 tag, already has the firearm or already is at the location writes no row and
@@ -105,13 +106,11 @@ characters) and links the name's canonical tag (the live tag with that name
 and the smallest id, `canonicalTags`); when no live tag has the name, the
 push creates one (`tags` row, UUIDv7), ahead of the links. A session counts as
 already tagged when it has a live link to a live tag of that name — what
-every reader shows. Remove Tag offers the names on the selected sessions and
-tombstones every live link of a selected session to any tag of that name,
-live or deleted, as `removeSessionTag` does.
-_Deviation noted:_ the phone's `addSessionTag` also counts a link to a
-_deleted_ tag of the same name as "already tagged", so on the phone re-adding
-a deleted-then-recreated name is a silent no-op that shows nothing. The web
-follows what the reader shows instead. P1 pins the cases where both agree.
+every reader shows, and what the phone's `addSessionTag` counts since #676.
+Remove Tag offers the names on the selected sessions and tombstones every
+live link of a selected session to any tag of that name, live or deleted, as
+`removeSessionTag` does. P1 pins that both agree, a name whose only tag was
+deleted included.
 
 **B8. Location: trimmed, blank clears.** As the phone's session edit: the
 typed text is trimmed, a blank one stores `null`, at most 200 characters.
@@ -178,13 +177,16 @@ A **Bulk Edit** page in the menu (`#bulk`), after Enter Series.
 | Outcome                     | Message                                               | Kept                    |
 | --------------------------- | ----------------------------------------------------- | ----------------------- |
 | applied                     | Changed N sessions (M already were, K no longer here) | selection cleared       |
-| applied, some refused       | … and R changes were refused (deleted elsewhere)      | selection cleared       |
+| applied, some refused       | … and R changes were refused (deleted elsewhere)¹     | selection cleared       |
 | applied, refresh failed     | … Reload the page to see it                           | selection cleared       |
 | network                     | Could not reach the server: **Retry**                 | selection, request held |
 | unauthenticated             | Signed out: sign in again (inline), then **Retry**    | selection, request held |
 | versionUnsupported, unknown | This page is out of date / Could not save             | selection               |
 | offline                     | You are offline. Saving needs a connection            | Apply disabled          |
 | builder error               | per error (blank tag, too long, too many, …)          | selection; nothing sent |
+
+¹ A firearm change with a refused session also names the firearms whose round
+counts to check with Adjust Round Count on the phone (R25).
 
 After a push that answered (applied or partly refused), the account is
 pulled again (`refresh`), so every page shows server truth. Changing the
@@ -214,9 +216,10 @@ Feature: bulk builder (shared/src/sync-client/bulk-edit.test.ts)
   Scenario: K15 over PUSH_BATCH_MAX changes → tooManyChanges(max, needed), exactly 500 is allowed
   Scenario: K16 every change parses with ClientChangeSchema, ids fresh, rowId = id, updatedAt = now, in APPLY_ORDER
   Scenario: K17 property: for any selection over a random logbook, the built edit applied to that logbook yields every selected live session in the asked state and touches no other session
+  Scenario: K23 a firearm change names its target and each moved session's live source; Add Tag names its tag; the others carry neither (R6, R25)
 
 Feature: on the phone's schema (app/src/db/queries/web-bulk.test.ts, vitest + better-sqlite3)
-  Scenario: P1 add tag: web changes applied with applyChangesSync give the same listTagsForSession as getOrCreateTag + addSessionTag on a twin
+  Scenario: P1 add tag: web changes applied with applyChangesSync give the same listTagsForSession as getOrCreateTag + addSessionTag on a twin, a name whose only tag was deleted included
   Scenario: P2 remove tag: same as removeSessionTag on a twin
   Scenario: P3 change firearm: same sessions and same firearm counters as updateSession on a twin
   Scenario: P4 change location: same as updateSession on a twin
@@ -237,6 +240,7 @@ Feature: page model (web/src/bulk/*.test.ts)
   Scenario: U6 a network or sign-out failure holds the request; Retry resends it identically; a builder error sends nothing
   Scenario: U7 an answered push refreshes; a failed refresh says reload
   Scenario: U8 an edit drops the held request
+  Scenario: R25 a refused moved session: one push, no correction; the target and the refused sessions' known sources are named to check
 ```
 
 Browser checks (not automated; screenshots in the session scratchpad, never
@@ -303,40 +307,10 @@ Added during implementation; none loosens a scenario or a Must NOT.
   construction, so the builder no longer sorts it (K16 pins the order).
 
 Added after an independent verifier failed the first version (2026-10-07).
-**Each needs the maintainer's OK; R5 changes B3's "one Apply is one push".**
+Approved 2026-10-08, except R5.
 
-- **R5 (counter correction; fixes a confirmed bug).** The firearm rows carry
-  absolute counters summed over every moved session. When the server refused
-  one of those sessions (`tombstoned`), the firearm rows still landed, so the
-  counters moved for a session that never moved (verifier's case: 3 + 2
-  rounds onto a firearm at 10, the 2-round session refused → 15, should be
-  13). Now the builder also returns its **counter plan** (each move and each
-  firearm's pulled counters). After a push whose acks refuse a moved session,
-  Apply pulls the firearms afresh and pushes a **correction**: each touched
-  firearm, rebuilt from its fresh row, moved by _(counters without the
-  refused sessions) − (counters the push wrote)_, both floored as the phone
-  floors (`buildCounterCorrection`). A change another device made to that
-  firearm in between survives; a firearm whose own row was refused, or that
-  is gone, is left alone.
-  - **Idempotent under Retry:** the correction is built once and held; a
-    lost answer is retried by resending the identical correction (the
-    server answers `duplicate`), never by building it again. It is built
-    only after the edit's acks arrived, so a Retry of a lost edit (which
-    replays the refusals as `duplicate` with their reason) builds it the
-    first time, not a second time.
-  - A held correction cannot be dropped by editing the form; Apply stays off
-    until Retry has sent it. Closing the tab first leaves the counters
-    counting the refused sessions; the page says so while it waits.
-  - **Trade-off:** the edit and its correction are two transactions. Between
-    them the counters are briefly wrong. The alternative (pushing the
-    sessions first and the firearms only after their acks) makes every
-    firearm change two requests and the counters lag on every one; this way
-    only a refusal costs a second request.
-  - Scenarios **K18** (the plan), **K19/K20** (the correction), **K21**
-    (property: edit with random refusals, then correction = the phone's walk
-    over the sessions that landed), **W5** (the verifier's case on the real
-    Worker, including a resent correction), **R5** cases in
-    `web/src/bulk/apply.test.ts`, and the page message (`messages.test.ts`).
+- **R5 (withdrawn 2026-10-08, replaced by R25).** A second push correcting
+  the firearm counters after a refused moved session.
 - **R6 (tag deleted meanwhile).** Add Tag returns the tag it links. After an
   answered push, Apply pulls `tags` and, when that tag is no longer live,
   the page says the tag was deleted on another device and so does not show.
@@ -356,17 +330,16 @@ Added after an independent verifier failed the first version (2026-10-07).
   seconds between that pull and the push"; with Retry it runs from the first
   pull to the Retry, and the firearm counters are the rows it matters most
   for. B4 and the manual now say so.
-- **R11 (found by the browser check of R5).** "Changed N sessions" counted a
+- **R11 (found by a browser check).** "Changed N sessions" counted a
   refused session as changed. The count now leaves out every session row the
   server refused.
 - **R12 (aligned with #669's R13/R14).** A held request is bound to the user
   id it was built for (`Built.userId`). Each Apply first reads the signed-in
-  user: another user → `accountChanged`, the held edit or correction is
-  dropped and nothing is sent; signed out or the server unreachable → it stays
-  held. While a request is held, the one action button reads **Retry** and
-  every submit resends it (`submitRequest`); only an edit of the form or the
-  selection drops a held edit (a pending correction is never dropped by an
-  edit). The separate Retry button is gone. `web/src/bulk/*.ts` joins
+  user: another user → `accountChanged`, the held edit is dropped and nothing
+  is sent; signed out or the server unreachable → it stays held. While a
+  request is held, the one action button reads **Retry** and every submit
+  resends it (`submitRequest`); only an edit of the form or the selection
+  drops a held edit. The separate Retry button is gone. `web/src/bulk/*.ts` joins
   `stryker.config.json`'s list, so the 100% coverage gate and Stryker cover
   the page modules as #669 does for `web/src/entry/`.
 - Also: the volume count indexes shots, series and stations once per Apply
@@ -374,7 +347,7 @@ Added after an independent verifier failed the first version (2026-10-07).
   sessions and 36 000 shots; now about 10 ms).
 
 Added after a full PR review (2026-10-07), on #669 rebased to its re-sign-in
-fixes. **Each needs the maintainer's OK.**
+fixes. Approved 2026-10-08, except R16 and R18.
 
 - **R13 (Medium).** Add Tag with no live target session (every ticked one
   deleted elsewhere, or after signing in as another account, when every
@@ -382,60 +355,67 @@ fixes. **Each needs the maintainer's OK.**
   could appear as a stray tag in the other account. Now the tag is created
   only when at least one link is written; otherwise `nothingToChange` (K13).
 - **R14.** A push whose acks do not match (#669's `unconfirmed`, R19 there)
-  may have landed: the edit, or the correction, is held for Retry and the
-  page says the server answered unexpectedly.
+  may have landed: the edit is held for Retry and the page says the server
+  answered unexpectedly.
 - **R15 (adopts #669's R22).** The page uses the shared `SignInAgain`; a
   sign-in as the same account only clears the notice and keeps a held
   request, anyone else makes App reload the logbook and remount the page
   (`key={generation}`). An Apply that finds another account signed in
   (`accountChanged`) hands App the new user the same way, instead of
-  leaving the old account's sessions listed. When the request dropped was a
-  pending **correction**, the message says the other account's round counts
-  still count the refused sessions and points to Adjust Round Count on the
-  phone; that message is carried across the remount in memory
-  (`web/src/bulk/carry.ts`).
-- **R16.** A correction whose rebuild throws (an unreadable fresh firearm
-  row) is given up after `MAX_CORRECTION_ATTEMPTS` (3) tries, with a message
-  pointing to Adjust Round Count, instead of blocking every Apply forever. An
-  unanswered firearm pull is not an attempt.
+  leaving the old account's sessions listed. Its message (the held change
+  was not sent) is carried across the remount in memory
+  (`web/src/bulk/carry.ts`). (Its extra line for a dropped correction went
+  with R5: R26.)
+- **R16 (withdrawn 2026-10-08 with R5).** Giving up a correction whose
+  build kept throwing.
 - **R17.** "Changed N sessions" also leaves out refused new links (Add Tag on
   a session deleted meanwhile), not only refused session rows.
-- **R18.** A built correction is held before it is sent, so even a push that
-  throws leaves the identical correction for Retry; it is never rebuilt, so
-  the refused rounds are never taken off twice.
+- **R18 (withdrawn 2026-10-08 with R5).** Holding a built correction before
+  it was sent.
 - **R19 (as #669's R23).** All controls sit in a fieldset disabled while an
   Apply runs, so the selection on screen is the one being sent; the focus
   returns to where it was afterwards.
 - **R20.** `submitRequest` stays as the seam the submit wiring is tested
   through, as #669 keeps its own (R25 there).
-- B7 is unchanged: #676 (the phone fix that would make the web and phone
-  agree) is still open; once it merges, P1's B7 case flips to agreement and
-  the deviation text goes.
 
 Added after a second independent verifier failed the counter correction
-(2026-10-07). **Each needs the maintainer's OK; R21 replaces part of R5.**
+(2026-10-07). All withdrawn 2026-10-08 with R5.
 
-- **R21 (High, replaces R5's source half).** R5 put a refused session's
-  rounds back onto its source firearm. A session can only be refused as
-  `tombstoned`, and the app deletes one only through
-  `deleteSessionAndSeries`, which itself backs the rounds out of the source
-  and pushes that firearm with the tombstones, before the web's push. The
-  web's source row (pulled before, minus every move) lands over it and is
-  already right, so the old correction counted the deleted session twice
-  (verifier V1: f1 97, should be 95; V2 with floors: 1, should be 0). Now a
-  correction only takes a refused session's rounds off its **target**. K21,
-  W5 and P6 now model the deleting device as the phone behaves (P6 runs the
-  phone's own `deleteSessionAndSeries`); the old behaviour fails all three.
-- **R22.** The correction rewrites a target only if that row is still
-  exactly as the push wrote it (its `updated_at` is the push's,
-  `CounterPlan.writtenAt`). If another device wrote it since, its true
-  count cannot be known from here (verifier V3: a stale phone wrote 15, the
-  truth is 18, a delta would give 13), so it is left alone and the page asks
-  to check it with Adjust Round Count (K22, W7).
-- **R23.** An edit that drops a held firearm change (a lost response whose
-  refusals were never read), or another account meeting one, now says the
-  round counts may need checking instead of dropping it silently. Keeping
-  the held edit across edits, as #669 does for blank rows, does not fit: any
-  edit of the bulk form changes what would be sent.
-- **R24.** The account is checked again just before a correction is built;
-  another account drops it with the R15 message.
+- **R21 (withdrawn, see R25).** A correction taking a refused session's rounds
+  off its target only.
+- **R22 (withdrawn, see R25).** Correcting a target only when its row was
+  still as the push wrote it.
+- **R23 (withdrawn, see R26).** A warning when an edit dropped a held
+  firearm change.
+- **R24 (withdrawn, see R26).** Re-checking the account before a correction.
+
+The maintainer's rulings, after an independent review (2026-10-08).
+
+- **R25 (replaces R5, R21, R22).** No counter correction. When the acks of a
+  Change Firearm refuse any moved session (`refused.sessions` non-empty), the
+  web writes nothing more and shows one line naming the firearms whose round
+  counts to check with Adjust Round Count on the phone: the target, then each
+  refused session's source when it was a live firearm in the pull. This is
+  parity with the phone, which on a `tombstoned` ack only records the
+  tombstone (`shared/src/sync-client/engine.ts`) and never corrects counters.
+  B3 holds again without exception: one action is one push. The builder
+  returns `firearms: { target, sources }` instead of a counter plan; a
+  firearm the page no longer has a row for is left out of the line, and with
+  none left there is no line. R11, R12, R14 and R17 are unchanged. Scenarios
+  K23 and R25 (`apply.test.ts`, `messages.test.ts`); K18–K22, P6 and W5–W7
+  are gone with the correction.
+- **R26 (replaces R23, R24 and R15's correction line).** An edit of the form
+  or the selection drops a held request, a firearm change included, without
+  a warning: the next Apply pulls afresh, so a change that did land is seen
+  as already made. Another account meeting a held request gets only
+  `accountChanged` ("the held change was not sent"). `carry.ts` stays: it
+  carries that message across R15's remount.
+- **R27 (B7).** #676 made the phone's `addSessionTag` count only live links
+  to live tags of the name, as the web does. P1's B7 case now asserts that
+  both add the tag and show it; the deviation note is gone.
+- **R28 (rebase).** `backend/test/web-bulk.spec.ts` uses
+  `https://localhost`, the origin better-auth accepts since #677, as the
+  other web specs do.
+- **R29 (rebase, R1).** `web/src/entry/entry.tsx` exports two helpers
+  (`useOnline`, `locationUsage`); the sign-in is #669's shared
+  `web/src/sign-in-again.tsx` (R15).

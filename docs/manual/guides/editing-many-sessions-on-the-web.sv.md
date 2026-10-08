@@ -34,23 +34,18 @@ telefonen får den vid nästa synk. Sidan säger sedan hur många pass som
 ändrades och hur många som redan var så.
 
 Ett pass som under tiden tagits bort på en annan enhet lämnas utanför, och
-sidan säger det. Om det skulle flyttas till ett annat vapen drar sidan sedan
-tillbaka dess skott från skottantalen, så att de bara räknar passen som
-flyttades. Om en annan enhet ändrade vapnet under tiden lämnar sidan dess
-antal orört och ber dig kontrollera det med **Justera antal skott** i
-telefonen. En tagg som under tiden tagits bort på en annan enhet syns inte på
-passen; det säger sidan också.
+sidan säger det. Om det höll på att flyttas till ett annat vapen kan
+skottantalen fortfarande räkna med det, så sidan namnger vapnen vars antal du
+bör kontrollera med **Justera antal skott** i telefonen. En tagg som under
+tiden tagits bort på en annan enhet syns inte på passen; det säger sidan
+också.
 
 Att tillämpa kräver en anslutning. Om servern inte går att nå blir knappen
 **Försök igen**, som skickar exakt samma ändring igen, så att inget ändras två
 gånger. Ändrar du urvalet eller ändringen först släpps den kopian, och nästa
-tillämpning läser loggboken på nytt; var kopian ett vapenbyte ber sidan dig
-kontrollera skottantalen. Loggar du in på ett annat konto emellan
+tillämpning läser loggboken på nytt. Loggar du in på ett annat konto emellan
 släpps den också, så att den aldrig skickas till fel konto. Om du stänger
-fliken försvinner ändringen. Om skottantalen fortfarande behöver rättas gör
-**Försök igen** det, och inget annat kan tillämpas förrän det är gjort. Går de
-inte att rätta, eller loggar ett annat konto in först, säger sidan det; rätta
-då antalen med **Justera antal skott** i telefonen.
+fliken försvinner ändringen.
 
 Sidan läser loggboken på nytt precis innan den skickar, men en ändring som
 görs i telefonen i samma stund kan ändå gå förlorad, och likaså webbens: den

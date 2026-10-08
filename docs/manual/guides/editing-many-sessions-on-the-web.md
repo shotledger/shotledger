@@ -34,23 +34,18 @@ at all, and your phone gets it at its next sync. The page then says how many
 sessions changed, and how many already were that way.
 
 A session that was deleted on another device in the meantime is left out,
-and the page says so. If it had been moved to another firearm, the page then
-takes its rounds back out of the round counts, so they count only the
-sessions that moved. If another device changed that firearm in the
-meantime, the page leaves its count alone and asks you to check it with
-**Adjust Round Count** on the phone. A tag deleted on another device in the
-meantime does not show on the sessions; the page says that too.
+and the page says so. If it was being moved to another firearm, the round
+counts can still include it, so the page names the firearms whose counts to
+check with **Adjust Round Count** on the phone. A tag deleted on another
+device in the meantime does not show on the sessions; the page says that
+too.
 
 Applying needs a connection. If the server cannot be reached, the button
 becomes **Retry**, which sends exactly the same change again, so nothing is
 changed twice. Changing the selection or the change first drops that copy,
-and the next **Apply** reads your logbook again; if the copy was a firearm
-change, the page asks you to check the round counts. Signing in to another
-account in between drops it too, so it is never sent to the wrong account. Closing the
-tab drops the change. If the round counts still need correcting, **Retry**
-does that, and nothing else can be applied until it has. If they cannot be
-corrected, or another account signs in first, the page says so; correct the
-counts with **Adjust Round Count** on the phone.
+and the next **Apply** reads your logbook again. Signing in to another
+account in between drops it too, so it is never sent to the wrong account.
+Closing the tab drops the change.
 
 Apply reads your logbook again just before it sends, but a change made on
 your phone at the same moment can still be lost, and so can the web's: the
