@@ -1,7 +1,7 @@
 # Evidence report — web series entry and the web write client (Tier 3)
 
 Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
-§7 Revisions R1–R27.
+§7 Revisions R1–R28.
 
 - **Spec approval:** first-hand, by the maintainer on 2026-10-08: C1–C3 and
   C7–C9 as written; C4 and C5 as deferrals, with follow-up issues #688 (fält
@@ -9,22 +9,25 @@ Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
   session), #691 (photo upload from the web) and #692 (edit and delete a
   session on the web); C6 changed (prefill from the synced profile); R1–R25
   approved, R15 changed to `Europe/Stockholm`. R26 (the C6 change as built)
-  and R27 (the rebase) were written after that approval and await the
-  maintainer's look.
-- **Source state:** the code at `feat(web): prefill Enter Series from the
-synced profile` on branch `feat/web-series-entry-impl`, rebased onto
-  `origin/main` at `7cde3bf` (#694 merged, so vitest runs in
-  `Europe/Stockholm`); this report and the spec are committed on top of it.
+  and R27 (the rebase), written after that, were approved on 2026-10-08 too,
+  as the spec header records. R28 (the start-time guard) was ordered by the
+  maintainer on 2026-10-09 when grading verification round 2; the exact
+  accepted form is the builder's decision under that instruction (spec R28).
+- **Source state:** code at `395f80f` on branch `feat/web-series-entry-impl`,
+  whose base is `origin/main` at `7cde3bf` (#694 merged, so vitest runs in
+  `Europe/Stockholm`); the commits after it change only this report.
+  Verification round 2 saw `9570009`; the code since then is `87ac95c` (one
+  test) and `395f80f` (R28).
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2 / native 7.0.2;
   backend vitest 4.1.11 with `@cloudflare/vitest-plugin` 1.3.6).
 - **Entry point:** `pnpm check` (types, i18n, licenses, lint, format, vitest
   with the 100% coverage gate, jest); `cd backend && npx vitest run`;
   `pnpm mutation` (or the `--mutate` subset below).
-- **Independent verification:** one round, on the state before the review
-  fixes (`d6e1168`): findings below. Neither the fixed state nor the rebased
-  state with the profile prefill has been re-verified, so it is a declared
-  downgrade for those states.
+- **Independent verification:** not performed against the final source
+  state `395f80f`. Round 2 verified `9570009` and returned `passed`; R28,
+  added after it, is unverified until round 3, which the maintainer has
+  approved. See _Independent verification_ below.
 
 ## Failure model (Tier 3)
 
@@ -36,7 +39,8 @@ synced profile` on branch `feat/web-series-entry-impl`, rebased onto
 | A lost response, retried, saves the session twice                 | W2 (replay → all `duplicate`, no new rows); U2; U7 (R13); browser check 3                             |
 | The firearm counter drifts from what the phone would have written | E11, R4/R5, A2 (100 → 110), W1 (+12 incl. sighters), browser check 6                                  |
 | A foreign key the phone does not have (firearm, ammo lot)         | E14 (both refused before sending)                                                                     |
-| A request the server refuses for size                             | E13 (≤ `PUSH_BATCH_MAX`, every payload ≤ `MAX_PAYLOAD_BYTES`)                                         |
+| A request the server refuses for size                             | E13 (500 changes fit, 501 refused; every payload ≤ `MAX_PAYLOAD_BYTES`)                               |
+| A session stored with an empty or malformed `started_at`          | E15 (R28): the builder refuses it, whatever the page does                                             |
 | Shooting data left in the browser                                 | N1 grep gate (negative control below)                                                                 |
 | An automatic retry loop                                           | U2 "nothing retries on its own"; no timer in `save.ts`                                                |
 | The phone's new-session form changes behaviour                    | H1–H5 pin the moved helpers; app typecheck; jest suite                                                |
@@ -52,7 +56,7 @@ synced profile` on branch `feat/web-series-entry-impl`, rebased onto
 | T7 parse ⇔ keypad (fast-check, 1000, R7)   | `series-text.test.ts` › T7                                                                                           | pass   |
 | R1–R5                                      | `shared/src/sync-client/rows.test.ts`                                                                                | pass   |
 | A1–A3                                      | `app/src/db/queries/web-rows.test.ts`                                                                                | pass   |
-| E1–E14                                     | `shared/src/sync-client/session-entry.test.ts` (E2–E4, E9–E13 have several cases each)                               | pass   |
+| E1–E15 (E15 per R28)                       | `shared/src/sync-client/session-entry.test.ts` (E2–E4, E9–E13, E15 have several cases each)                          | pass   |
 | H1–H5 (H3 per R3, H4–H5 per R26)           | `shared/src/disciplines/session-defaults.test.ts`                                                                    | pass   |
 | O1, O3 (R26)                               | `eligibility.test.ts`, `compliance/profile-registry.test.ts`                                                         | pass   |
 | P1–P4 (R26)                                | `shared/src/sync-client/account-settings.test.ts`                                                                    | pass   |
@@ -60,6 +64,10 @@ synced profile` on branch `feat/web-series-entry-impl`, rebased onto
 | D1–D6 (D2 per R5)                          | `shared/src/sync-client/direct-push.test.ts`                                                                         | pass   |
 | W1–W4                                      | `backend/test/web-write.spec.ts` (Workers pool, real D1 + better-auth)                                               | pass   |
 | U1–U4, U7 (R13), U8 (R14)                  | `web/src/entry/save.test.ts`                                                                                         | pass   |
+| U9 (R19), U10 (R18)                        | `web/src/entry/save.test.ts`                                                                                         | pass   |
+| U12 (R21)                                  | `web/src/entry/save.test.ts` (the held request) and `web/src/entry/model.test.ts` (`sendsTheSame`)                   | pass   |
+| R20                                        | `shared/src/sync-client/http/current-user.test.ts`                                                                   | pass   |
+| R22                                        | `web/src/reauth.test.ts`                                                                                             | pass   |
 | U5, U6; local time, CET and CEST (R15)     | `web/src/entry/model.test.ts`, `web/src/entry/started-at.test.ts`                                                    | pass   |
 | N1 no browser storage                      | `save.test.ts` › N1 grep gate                                                                                        | pass   |
 | N2 no outbox, no auto retry                | U2 (push count stays 1), D6                                                                                          | pass   |
@@ -72,19 +80,38 @@ synced profile` on branch `feat/web-series-entry-impl`, rebased onto
 
 ## Gauntlet (final fresh run, after the last code edit)
 
+Run on 2026-10-09 at `395f80f`, after the last code edit (R28).
+
 | Layer                                           | Command                                                                                                                                 | Result                                                                                                                                                                 |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                            | exit 0; vitest 180 files, 3062 tests passed; jest 714 passed                                                                                                           |
-| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                                                  | 100% statements 3538/3538, branches 2203/2203, functions 824/824, lines 3011/3011 (incl. `web/src/entry/*.ts`, `web/src/reauth.ts`, `account-settings.ts`)             |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                            | exit 0; vitest 180 files, 3073 tests passed; jest 714 passed                                                                                                           |
+| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                                                  | 100% statements 3542/3542, branches 2208/2208, functions 825/825, lines 3014/3014 (incl. `web/src/entry/*.ts`, `web/src/reauth.ts`, `account-settings.ts`)             |
 | Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                      | 18 files, 192 tests passed (W1–W4 included)                                                                                                                            |
-| Mutation (this round)                           | `npx stryker run --mutate shared/src/sync-client/account-settings.ts,shared/src/disciplines/session-defaults.ts,web/src/entry/model.ts` | 274 killed + 1 timeout, 7 survived, 0 no-coverage: 97.52% (all 7 equivalent, below)                                                                                    |
+| Mutation (R28 round)                            | `npx stryker run --mutate shared/src/sync-client/session-entry.ts`                                                                      | 219 killed, 0 timeout, 0 survived, 0 no-coverage: 100%. The only module whose code changed; `entry.tsx` (one `case`) is outside the gates, as every `.tsx`             |
+| Mutation (prefill round, 2026-10-08)            | `npx stryker run --mutate shared/src/sync-client/account-settings.ts,shared/src/disciplines/session-defaults.ts,web/src/entry/model.ts` | 274 killed + 1 timeout, 7 survived, 0 no-coverage: 97.52% (all 7 equivalent, below)                                                                                    |
 | Mutation (before the rebase)                    | `npx stryker run --mutate <the five shared modules + web/src/entry/{model,save}.ts + web/src/reauth.ts>`                                | 686 killed + 1 timeout, 5 survived, 0 no-coverage: 99.28% (all 5 equivalent, below); those modules other than `model.ts` and `session-defaults.ts` are unchanged since |
+| Mutation, not run                               | `shared/src/disciplines/eligibility.ts`, `shared/src/compliance/profile-registry.ts`                                                    | each gained only a module-level lookup table (`SKILL_CLASSES`, `PROFILE_SELECTIONS`), which `ignoreStatic` skips; O1 and O3 pin every value                            |
 | Property-based                                  | T6 (500 runs × 2 modes), T7 (1000 runs × 2 modes)                                                                                       | pass                                                                                                                                                                   |
 | Property suite alone                            | 3 hand mutants of the token grammar, `-t property`                                                                                      | 3/3 killed (after R7's near-miss tokens were added; before that, accepting `11` survived)                                                                              |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <the PR's suites>`                                                               | 33 files, 340 tests passed                                                                                                                                             |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 shared/src/sync-client/session-entry.test.ts web/src/entry`                      | 4 files, 67 tests passed (this round); the earlier round's shuffled run of the PR's suites: 33 files, 340 tests passed                                                 |
 | Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                  | built, 25 translated pages current, no dangling anchors                                                                                                                |
-| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                                                                            | exit 0; 21 tests passed, 0 failed, 0 SVCs missing tests                                                                                                                |
+| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status` (after `pnpm check`, since Stryker overwrites the JUnit file)                              | exit 0; 21 tests passed, 0 failed, 0 SVCs missing tests                                                                                                                |
 | Supply chain                                    | `pnpm licenses:check`                                                                                                                   | 97 packages, invariants hold; `uuidv7@1.2.1` was already in the lockfile (C7), no new package                                                                          |
+
+**R28's tests, watched failing.** Before the guard, the eight E15 refusal
+cases and the "collected with the other errors" case failed (9 failed, 23
+passed); the valid-timestamp case passed, since it pins what the builder
+already did, and Stryker's `length === 24` → `!== 24` mutant is the one it
+kills. The 501-change E13 case pins existing behaviour, so it was proved with
+a throwaway mutant instead: with `changes.length > PUSH_BATCH_MAX + 1` it was
+the only test of the file to fail (1 failed, 21 passed); restored, 22 passed.
+
+**The accepted start time (R28).** `YYYY-MM-DDTHH:mm:ss.sssZ`, 24 characters,
+that survives `new Date(s).toISOString() === s`. That is what the web's
+`startedAtIso` writes (`Date.prototype.toISOString`) and what the phone's
+new-session form writes (`new Date().toISOString()`). An offset other than
+`Z`, whole seconds without milliseconds, a date alone, a rolled-over date
+(`2026-02-30`) and a six-digit extended year are refused, not normalized.
 
 **The five surviving mutants are equivalent.** Four in `web/src/entry/model.ts`:
 `newRow`'s `lastKey += 1` → `-= 1` (keys stay unique, which is all a key
@@ -149,15 +176,20 @@ three synthetic accounts seeded through `/sync/push`). Screenshots are in
 ## Layers not run as specified
 
 - **SUBSTITUTED:** mutation ran on the eight new modules (`--mutate`), not the
-  whole `stryker.config.json` list; the other modules are unchanged. This
-  round re-ran it on the three gauntlet modules it touched, after the
-  first rebase; the second rebase (onto `7cde3bf`, a typescript-eslint bump
-  and #694) changed no code under test. Cannot detect: a weakened test
-  elsewhere, which this change does not touch.
+  whole `stryker.config.json` list; the other modules are unchanged. Each
+  later round re-ran it on the gauntlet modules it touched: the prefill round
+  on three, after the first rebase (the second rebase, onto `7cde3bf`, a
+  typescript-eslint bump and #694, changed no code under test); the R28
+  round on `session-entry.ts`. Cannot detect: a weakened test elsewhere,
+  which this change does not touch.
 - **SUBSTITUTED:** suite health is one shuffled run (seed 301) of the new
   suites, not every suite. Cannot detect order dependence elsewhere.
 - **N-A:** the browser checks in §4 are manual by design; they ran headless
   rather than in a desktop browser.
+- **NOT RE-RUN:** the browser checks, for R28. The page already kept an
+  incomplete date out (Save disabled, `runSave` returns early), so the new
+  `invalidStartedAt` message cannot be reached through the page; what a user
+  sees does not change, and the manual needs no change.
 
 ## Structural blind spot
 
@@ -168,8 +200,15 @@ R12). A difference in how expo-sqlite binds a value would not show here.
 
 - A firearm row tombstoned on another device before the web's push is
   rejected (W3) while the session still names it. A device that never had
-  that firearm row applies the tombstone as a no-op and then the session's
-  foreign key fails. Two phones share this; it is not new with the web.
+  that firearm row applies the tombstone as a no-op, and the session then
+  names a firearm that device does not have. The phone does not enforce
+  foreign keys: SQLite leaves them off unless a connection turns them on, and
+  only test code does (`app/src/db/test-db.ts`, `migrations.test.ts`);
+  `app/src/db/client.ts` does not, and expo-sqlite 57.0.3's build flags do
+  not change the default (`defer_foreign_keys` in the apply transaction is
+  then a no-op). So the session applies with a dangling firearm reference
+  rather than failing; how each screen shows that has not been checked on a
+  device. Two phones share this; it is not new with the web.
 - The firearm counter can be overwritten by a phone that edited the same
   firearm offline (C1, ADR 0019 consequences).
 - Edit and delete of a saved session stay on the phone (C5, #692).
@@ -202,7 +241,7 @@ by the coordinating session, and their fixes:
 - **Minor docs:** Enter in a fixed format, "never saved twice", and row errors
   naming a sighter row "Series N". Fixed (R17).
 
-## Full PR review (round 2) and what changed
+## Full PR review (after verifier round 1) and what changed
 
 The maintainer asked for every finding of the full review of #669 to be fixed
 (state `8860a12`). Each is a revision in the spec:
@@ -256,5 +295,47 @@ The maintainer asked for every finding of the full review of #669 to be fixed
 - Lint found an effect that set state (focus handling); rewritten without it.
 - Mutation found redundant branches in the builder and push reader; they
   were simplified rather than tested around, and four assertions were added
-  (error messages, the exact `PUSH_BATCH_MAX` boundary, a blank name, a
-  one-shot series length).
+  (error messages, the `PUSH_BATCH_MAX` boundary from below, a blank name, a
+  one-shot series length). That E13 case pinned 500 changes fitting, not 501
+  being refused, so a `> PUSH_BATCH_MAX + 1` mutant survived; this report
+  claimed the exact boundary until verification round 2 found it. The 501
+  case is now pinned.
+
+## Independent verification
+
+- Verifier: Claude Code, Fable 5.1; fresh context; given the repo @
+  `9570009` + the task contract + the SPEC + the entry point. Not given the
+  builder's conversation. Correlation broken: task context. Not broken:
+  model.
+- Rounds: 3 approved (the default cap is two; the maintainer approved a
+  third on 2026-10-09). Round 1 (`d6e1168`): findings above, under
+  _Independent review (round 1)_. Round 2 (`9570009`) verdict: `passed`.
+  Round 3: pending.
+- Attacked in round 2: the run (the entry point reproduced from
+  `9570009`); spec vs contract; test-gaming (15 mutants of its own, and the
+  10 Stryker survivors proved equivalent); checker coverage (N1, A1, A2 and
+  R15 fed known-bad input, each failed); the mapping in both directions.
+- Findings, graded by the maintainer:
+  - **Description / mapping**, fixed and disclosed, no new round:
+    1. E13 pinned 500 changes, not 501, so a `> PUSH_BATCH_MAX + 1` mutant
+       survived; this report said the exact boundary was pinned. A 501-change
+       case now pins it (`87ac95c`), and _Honest notes_ says what was
+       claimed.
+    2. _Known limits_ said a device lacking the firearm row fails the
+       session's foreign key. The phone does not enforce foreign keys;
+       reworded to what happens, unverified on a device.
+    3. Text: the mutation line omitted `eligibility.ts` and
+       `profile-registry.ts` (now a row with the reason); the approval line
+       said R26/R27 awaited the maintainer while the spec header recorded
+       approval (both now say approved 2026-10-08); the mapping lacked U9,
+       U10 and U12 (added, with R20 and R22); the source state was named by
+       a commit message (now by SHA).
+  - **Change to make now** (the maintainer's grade): 2. the builder took
+    `startedAt: ''`, which only the page kept out. Guard added in the
+    builder (R28, E15, `395f80f`). A code change, so it needs round 3.
+- Canary: not run.
+- Fixed after the last verified state, therefore unverified: R28 (the
+  start-time guard in `buildSessionEntry` and its `case` in `entry.tsx`),
+  and the 501-change test. Independent verification is not performed
+  against the final source state `395f80f`; round 2 verified `9570009`
+  and returned `passed`.
