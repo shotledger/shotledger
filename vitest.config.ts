@@ -9,6 +9,10 @@ const gauntletExclude = stryker.mutate
   .filter((glob) => glob.startsWith('!'))
   .map((glob) => glob.slice(1));
 
+// The users' zone, with daylight saving. CI runs in UTC, where local time and
+// UTC agree and a local-day bug passes unseen.
+process.env.TZ = 'Europe/Stockholm';
+
 export default defineConfig({
   test: {
     include: [
