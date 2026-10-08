@@ -1,6 +1,13 @@
 // New-session defaults shared by the phone's form and the web's Enter Series
 // page, so the two cannot drift (docs/specs/web-series-entry-spec.md C8).
-import { disciplinesForRegulations, programsForDiscipline } from './index';
+import { effectiveRegulationIds } from '../regulations/registry';
+import type { EventDefinition } from './entries';
+import { rankEventsForShooter, spsfEligibleClasses, type ShooterProfile } from './eligibility';
+import {
+  disciplinesForRegulations,
+  programsForDiscipline,
+  shooterClassesForDiscipline,
+} from './index';
 
 /**
  * A competition is the case the fixed format exists for, so it preselects it
@@ -46,4 +53,51 @@ export function derivedWeaponGroup(links: readonly FirearmGroupLink[]): string |
   if (links.length === 1) return links[0]!.groupId;
   const marked = links.filter((link) => link.isDefaultForGroup === 1);
   return marked.length === 1 ? marked[0]!.groupId : null;
+}
+
+/**
+ * The events a discipline offers under the regelverk being logged: ISSF's
+ * own, or ISSF's plus SvSF's national classes when SvSF is picked. Ranked for
+ * the shooter in `year`, never filtered (see rankEventsForShooter).
+ */
+export function eventsUnder(
+  regulationId: string,
+  disciplineId: string,
+  profile: ShooterProfile,
+  year: number,
+): readonly EventDefinition[] {
+  return rankEventsForShooter(profile, disciplineId, year, effectiveRegulationIds([regulationId]));
+}
+
+/**
+ * The event to preselect: the first one the shooter is eligible for, or null
+ * for a discipline that has no events (every SPSF and generic one).
+ */
+export function preferredEventId(
+  regulationId: string,
+  disciplineId: string,
+  profile: ShooterProfile,
+  year: number,
+): string | null {
+  return eventsUnder(regulationId, disciplineId, profile, year)[0]?.id ?? null;
+}
+
+/**
+ * Every klass the discipline's federation defines, the shooter's own first.
+ * Eligibility decides the order, never what is on offer (maintainer,
+ * 2026-09-12): a club evening can put anyone in any class. The chosen gun
+ * narrows "own": Jun/Dam/Vet exist only in vapengrupp C.
+ */
+export function shooterClassesInOrder(
+  disciplineId: string,
+  profile: ShooterProfile,
+  year: number,
+  weaponGroup: string | null,
+): string[] {
+  const all = shooterClassesForDiscipline(disciplineId);
+  const eligible: readonly string[] = spsfEligibleClasses(profile, year, weaponGroup);
+  return [
+    ...eligible.filter((klass) => all.includes(klass)),
+    ...all.filter((klass) => !eligible.includes(klass)),
+  ];
 }

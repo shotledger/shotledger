@@ -21,14 +21,13 @@ import {
   programsForDiscipline,
   requireDiscipline,
   DISCIPLINES,
-  shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
   formatShooterClass,
   categoryKey,
   defaultShooterClass,
-  rankEventsForShooter,
-  spsfEligibleClasses,
-  type EventDefinition,
+  eventsUnder,
+  preferredEventId,
+  shooterClassesInOrder,
   type ShooterProfile,
   type SkillClass,
   TEXT_LIMITS,
@@ -43,11 +42,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
-import {
-  effectiveRegulationIds,
-  findRegulation,
-  type Regulation,
-} from '@shotledger/shared/src/regulations/registry';
+import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
@@ -79,36 +74,6 @@ function initialProgramFor(type: SessionType, disciplineId: string): string {
 
 function weaponGroupFromFirearm(firearmId: string | null): string | null {
   return firearmId === null ? null : derivedWeaponGroup(listFirearmGroups(db, firearmId));
-}
-
-/**
- * The events a discipline offers under the regelverk being logged: ISSF's
- * own, or ISSF's plus SvSF's national classes when SvSF is picked. Ranked,
- * not filtered by eligibility (see rankEventsForShooter).
- */
-function eventsUnder(
-  regulationId: string,
-  disciplineId: string,
-  profile: ShooterProfile,
-): readonly EventDefinition[] {
-  return rankEventsForShooter(
-    profile,
-    disciplineId,
-    new Date().getFullYear(),
-    effectiveRegulationIds([regulationId]),
-  );
-}
-
-/**
- * The event to preselect: the first one the shooter is eligible for, or null
- * for a discipline that has no events (every SPSF and generic one).
- */
-function preferredEventId(
-  regulationId: string,
-  disciplineId: string,
-  profile: ShooterProfile,
-): string | null {
-  return eventsUnder(regulationId, disciplineId, profile)[0]?.id ?? null;
 }
 
 export default function NewSessionScreen() {
@@ -165,7 +130,7 @@ export default function NewSessionScreen() {
   // ISSF puts the category on the EVENT, where SPSF puts it on the klass, so
   // a session carries one or the other and never both.
   const [eventId, setEventId] = useState<string | null>(() =>
-    preferredEventId(regulationId, disciplineIdInitial, shooterProfile),
+    preferredEventId(regulationId, disciplineIdInitial, shooterProfile, new Date().getFullYear()),
   );
   const [firearmId, setFirearmId] = useState<string | null>(null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(null);
@@ -193,14 +158,14 @@ export default function NewSessionScreen() {
   // Ranked, not filtered: a club evening can put anyone in any event, exactly
   // as it can in any klass. Empty for an SPSF or generic discipline, which is
   // what hides the picker rather than showing an empty one.
-  const events = eventsUnder(regulationId, disciplineId, shooterProfile);
-  const allClasses = shooterClassesForDiscipline(disciplineId);
+  const events = eventsUnder(regulationId, disciplineId, shooterProfile, new Date().getFullYear());
   // The chosen gun narrows it: Jun/Dam/Vet exist only in vapengrupp C.
-  const eligible = spsfEligibleClasses(shooterProfile, new Date().getFullYear(), weaponGroup);
-  const classes = [
-    ...eligible.filter((klass) => allClasses.includes(klass)),
-    ...allClasses.filter((klass) => !eligible.includes(klass)),
-  ];
+  const classes = shooterClassesInOrder(
+    disciplineId,
+    shooterProfile,
+    new Date().getFullYear(),
+    weaponGroup,
+  );
   const showDecimalToggle =
     kind === 'series' && discipline.scoring === 'rings' && decimalAllowed(discipline, program);
   // Fält is scored in hits on figures, so it is the one place this is asked.
@@ -232,7 +197,7 @@ export default function NewSessionScreen() {
   // every session that has not picked a gun yet, which is most of them.
   const showGroupPicker =
     groups.length > 0 && (asksGroup || (firearmId !== null && derivedGroup === null));
-  const showClassPicker = allClasses.length > 0 && asksClass;
+  const showClassPicker = classes.length > 0 && asksClass;
   const showEventPicker = events.length > 0 && isCompetition;
 
   const firearms = useMemo(() => listFirearms(db), []);
@@ -259,7 +224,9 @@ export default function NewSessionScreen() {
     setDisciplineId(nextId);
     setProgramId(initialProgramFor(type, nextId));
     setWeaponGroup(null);
-    setEventId(preferredEventId(underRegulationId, nextId, shooterProfile));
+    setEventId(
+      preferredEventId(underRegulationId, nextId, shooterProfile, new Date().getFullYear()),
+    );
     setDecimalScoring(false);
     setSeriesLengthText(String(requireDiscipline(nextId).defaultSeriesLength));
   }
