@@ -11,6 +11,7 @@ import {
   type HttpClientConfig,
 } from '@shotledger/shared/src/sync-client/http';
 
+import { createFetchPhoto } from './photo-fetch';
 import { pullAll, type PulledTables } from './pull';
 
 const TOKEN_KEY = 'shotledger.token';
@@ -99,6 +100,9 @@ export function photoUsage(): Promise<PhotoUsage> {
 export function downloadPhoto(photoId: string): Promise<ArrayBuffer> {
   return photos.download(photoId);
 }
+
+/** A photo for display: typed, and abortable when nothing shows it any more. */
+export const fetchPhoto = createFetchPhoto(config.fetchImpl, config.baseUrl, config.getToken);
 
 /** Counts per kind of server data. Once deleted, the session is gone too. */
 export async function deleteAccount(dryRun: boolean): Promise<Record<string, number>> {

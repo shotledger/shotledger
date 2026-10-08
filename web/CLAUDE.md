@@ -23,6 +23,8 @@ closes (the session token is in `sessionStorage`, the rows in memory).
   constructed sheet (`theme.ts`). Check a change in a browser against
   `wrangler dev` (below) for console CSP errors; `vite` dev does not send
   the headers.
+- Photos need the bearer header, so an `<img>` cannot fetch them: lease a blob
+  URL from `src/sessions/photo-urls.ts`, which shares and revokes them.
 - `pnpm typecheck:web` is in `pnpm check`; tests are vitest (`web/src/**/*.test.ts`).
 
 ## Running it

@@ -1355,6 +1355,19 @@
     "sessions": {
       "back": "All Sessions",
       "notFound": "This session is not in your logbook."
+    },
+    "photos": {
+      "notUploaded": "Not uploaded",
+      "compare": "Compare",
+      "pickAll": "Select All Photos",
+      "picked_one": "{{count}} photo selected",
+      "picked_other": "{{count}} photos selected",
+      "compareTitle": "Compare Photos",
+      "noneSelected": "No photos selected.",
+      "clearAll": "Clear All",
+      "missing": "Missing",
+      "loadFailed": "Could not load",
+      "retry": "Retry"
     }
   }
 }

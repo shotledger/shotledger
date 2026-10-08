@@ -21,7 +21,15 @@ import {
 } from '../../../app/src/features/session/format-falt-result';
 import { disciplineLabel, matchFormatLabel } from '../../../app/src/features/session/labels';
 import type { PulledTables } from '../pull';
-import { browseSessions, seriesSections, type BrowseSeries, type BrowseSession } from './browse';
+import {
+  browseSessions,
+  photoOwners,
+  seriesSections,
+  sessionPhotoIds,
+  type BrowseSeries,
+  type BrowseSession,
+} from './browse';
+import { Compare, PickAll, PickBar, PicksProvider, RowPhoto } from './photos';
 
 const DASH = '–';
 const SECTION_TITLES = { main: 'session.mainSection', final: 'session.finalSection' } as const;
@@ -54,13 +62,32 @@ function Tags({ names }: { names: readonly string[] }) {
 export function Sessions({
   tables,
   sessionId,
+  compare = false,
+  picked,
+  onPicked,
 }: {
   tables: PulledTables;
   sessionId: string | null;
+  compare?: boolean;
+  /** The photos picked to compare; the App keeps them across pages. */
+  picked: readonly string[];
+  onPicked: (next: readonly string[]) => void;
 }) {
   const sessions = useMemo(() => browseSessions(tables), [tables]);
-  if (sessionId === null) return <SessionList sessions={sessions} />;
-  return <SessionDetail session={sessions.find((s) => s.id === sessionId) ?? null} />;
+  const owners = useMemo(() => photoOwners(sessions), [sessions]);
+  const picks = useMemo(() => ({ picked, setPicked: onPicked }), [picked, onPicked]);
+
+  let view;
+  if (compare) view = <Compare owners={owners} />;
+  else if (sessionId === null) view = <SessionList sessions={sessions} />;
+  else view = <SessionDetail session={sessions.find((s) => s.id === sessionId) ?? null} />;
+
+  return (
+    <PicksProvider value={picks}>
+      {view}
+      {!compare && <PickBar />}
+    </PicksProvider>
+  );
 }
 
 function SessionList({ sessions }: { sessions: BrowseSession[] }) {
@@ -179,6 +206,7 @@ function SessionDetail({ session }: { session: BrowseSession | null }) {
         <h2>{session.name}</h2>
         <p className="muted">{meta.join(' · ')}</p>
         <Tags names={[...tags.own, ...tags.machine]} />
+        <PickAll photoIds={sessionPhotoIds(session)} />
       </header>
 
       <section className="card">
@@ -288,21 +316,27 @@ function SeriesList({
         {series.map((row) => {
           const total = tenthsToScore(row.totalTenths);
           return (
-            <li key={row.position}>
-              <div className="series-head">
-                <strong>{t('session.seriesTitle', { position: row.position })}</strong>
-                {row.isSighter && <span className="badge">{t('session.sighter')}</span>}
-                <span className="series-total">
-                  {row.isSighter ? t('session.sighterScore', { score: total }) : total}
-                </span>
+            <li key={row.position} className="series-row">
+              <div>
+                <div className="series-head">
+                  <strong>{t('session.seriesTitle', { position: row.position })}</strong>
+                  {row.isSighter && <span className="badge">{t('session.sighter')}</span>}
+                  <span className="series-total">
+                    {row.isSighter ? t('session.sighterScore', { score: total }) : total}
+                  </span>
+                </div>
+                {row.shots.length > 0 && (
+                  <ul className="shots">
+                    {row.shots.map((shot, index) => (
+                      <li key={index}>{formatShotValue(shot, mode)}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              {row.shots.length > 0 && (
-                <ul className="shots">
-                  {row.shots.map((shot, index) => (
-                    <li key={index}>{formatShotValue(shot, mode)}</li>
-                  ))}
-                </ul>
-              )}
+              <RowPhoto
+                photo={row.photo}
+                alt={t('session.seriesTitle', { position: row.position })}
+              />
             </li>
           );
         })}
@@ -323,14 +357,20 @@ function FaltResult({ session }: { session: BrowseSession }) {
         <section className="card">
           <ol className="series-list">
             {session.stations.map((station) => (
-              <li key={station.position}>
-                <div className="series-head">
-                  <strong>{t('station.title', { position: station.position })}</strong>
-                  {station.isScratched && <span className="badge">{t('station.scratched')}</span>}
-                  {station.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
-                  <span className="series-total">{formatStation(t, station)}</span>
+              <li key={station.position} className="series-row">
+                <div>
+                  <div className="series-head">
+                    <strong>{t('station.title', { position: station.position })}</strong>
+                    {station.isScratched && <span className="badge">{t('station.scratched')}</span>}
+                    {station.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
+                    <span className="series-total">{formatStation(t, station)}</span>
+                  </div>
+                  {station.note && <p className="muted station-note">{station.note}</p>}
                 </div>
-                {station.note && <p className="muted station-note">{station.note}</p>}
+                <RowPhoto
+                  photo={station.photo}
+                  alt={t('station.title', { position: station.position })}
+                />
               </li>
             ))}
           </ol>

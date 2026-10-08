@@ -1355,6 +1355,19 @@
     "sessions": {
       "back": "Alla pass",
       "notFound": "Passet finns inte i loggboken."
+    },
+    "photos": {
+      "notUploaded": "Inte uppladdat",
+      "compare": "Jämför",
+      "pickAll": "Välj alla foton",
+      "picked_one": "{{count}} foto valt",
+      "picked_other": "{{count}} foton valda",
+      "compareTitle": "Jämför foton",
+      "noneSelected": "Inga foton valda.",
+      "clearAll": "Rensa alla",
+      "missing": "Saknas",
+      "loadFailed": "Kunde inte laddas",
+      "retry": "Försök igen"
     }
   }
 }

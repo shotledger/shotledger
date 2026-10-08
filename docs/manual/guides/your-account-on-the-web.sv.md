@@ -17,7 +17,23 @@ plats och taggar.
 
 Öppna ett pass genom dess namn för att läsa det: serier och skott, summorna,
 anteckningar, vapen, ammunitionsparti och taggar, eller stationerna för ett
-fältpass. Ingenting kan ändras där. Tavelfoton visas inte på webben än.
+fältpass. Ingenting kan ändras där.
+
+### Tavelfoton
+
+En serie eller station med ett uppladdat tavelfoto visar det bredvid skotten.
+Ett foto som telefonen inte har laddat upp än visas som **Inte uppladdat**, och
+ett som inte längre finns på servern som **Saknas**. Om ett foto inte gick att
+ladda, till exempel för att anslutningen bröts, visas **Kunde inte laddas** med
+knappen **Försök igen**. Skottmarkeringar ritas inte på webben.
+
+För att se foton sida vid sida kryssar du i **Jämför** under varje foto du vill
+ha med, eller använder **Välj alla foton** för alla foton i passet. Du kan välja
+foton från flera pass, och urvalet finns kvar medan du besöker Statistik eller
+Konto. Välj sedan **Jämför foton**: fotona visas stora i ett rutnät, vart och
+ett med seriens eller stationens resultat och passet. **Ta bort** tar bort ett
+foto; **Rensa**, eller **Rensa alla** i jämförelsen, tömmer urvalet. Urvalet
+glöms när du loggar ut, laddar om eller stänger fliken.
 
 ## Inloggade enheter
 
