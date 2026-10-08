@@ -1,12 +1,23 @@
 # Ditt konto på webben
 
-Om du använder synk kan du nå ditt konto från vilken webbläsare som helst med
-ShotLedgers webbapp, även när telefonen är borttappad eller trasig. Den läser
-det som synken redan har sparat och ändrar ingenting i loggboken.
+Om du använder synk kan du nå ditt konto och dina pass från vilken
+webbläsare som helst med ShotLedgers webbapp, även när telefonen är
+borttappad eller trasig. Den läser det som synken redan har sparat och ändrar
+ingenting i loggboken.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
 här webbläsaren och ingenting lämnas kvar.
+
+## Pass
+
+**Pass** i menyn listar alla synkade pass, det senaste först, med datum, gren
+och matchformat, plats, resultat och taggar. På en smal skärm utelämnas gren,
+plats och taggar.
+
+Öppna ett pass genom dess namn för att läsa det: serier och skott, summorna,
+anteckningar, vapen, ammunitionsparti och taggar, eller stationerna för ett
+fältpass. Ingenting kan ändras där. Tavelfoton visas inte på webben än.
 
 ## Inloggade enheter
 

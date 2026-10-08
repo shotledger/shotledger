@@ -1,9 +1,12 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { EntryShot } from '@shotledger/shared';
 
+import { formatShotValue } from '@/components/shot-value';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
+
+export { formatShotValue };
 
 export interface ShotChipsProps {
   shots: readonly (EntryShot | null)[];
@@ -13,21 +16,6 @@ export interface ShotChipsProps {
   selectedIndex?: number;
   onSelect?: (index: number) => void;
   testIDPrefix?: string;
-}
-
-/**
- * Chip text (spec Amendment A2 §A2.3). An inner ten is the only shot that
- * does not print as a plain number: integer mode prints `X`, decimal mode
- * parenthesises the value, so `(10.9)` is a centrumtia and `10.9` is not.
- */
-export function formatShotValue(shot: EntryShot | null, mode: 'integer' | 'decimal'): string {
-  if (!shot) return '–';
-  if (mode === 'decimal') {
-    const value = (shot.valueTenths / 10).toFixed(1);
-    return shot.isInnerTen ? `(${value})` : value;
-  }
-  if (shot.isInnerTen) return 'X';
-  return String(shot.valueTenths / 10);
 }
 
 /** The per-shot chip row a series is entered into — fills left to right. */

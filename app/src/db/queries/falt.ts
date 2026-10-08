@@ -1,14 +1,12 @@
 // Fält stations (docs/specs/falt-stations-spec.md). A station is not a series:
 // see the table's comment in schema.ts for why it has its own table.
 import { and, eq, isNull } from 'drizzle-orm';
-import {
-  faltResult,
-  poangfaltPoints,
-  scoringStations,
-  SHOTS_PER_STATION,
-  type FaltStationEntry,
-} from '@shotledger/shared';
+import { SHOTS_PER_STATION } from '@shotledger/shared';
 
+import {
+  faltSessionResultOf,
+  type FaltSessionResult,
+} from '../../features/session/falt-session-result';
 import { faltStations } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
@@ -177,55 +175,19 @@ export function tombstoneStation(db: Database, id: string): void {
     .run();
 }
 
-export interface FaltSessionResult {
-  stationCount: number;
-  hits: number;
-  figuresHit: number;
-  /** Poängmål points over the scoring stations; null when none carried one. */
-  ringedFigurePoints: number | null;
-  /** One point per hit plus one per hit figure (D.6.11 p. 95). */
-  poangfaltPoints: number;
-  /** What those poängmål could have given, for an "X of Y" reading; null when none. */
-  pointsMax: number | null;
-  /** Figures over the scoring stations; null unless every one of them recorded a count (#607). */
-  figureCount: number | null;
-  /** Six per scoring station (D.6.4 p. 91): the "(XT)" in "X (XT) hits" (#670). */
-  hitsPossible: number;
-}
+export type { FaltSessionResult };
 
 /** A session's fält result, over the stations that actually score. */
 export function faltSessionResult(db: Database, sessionId: string): FaltSessionResult {
-  const rows = listStationsForSession(db, sessionId);
-  const entries: FaltStationEntry[] = rows.map((row) => ({
-    hits: row.hits,
-    figuresHit: row.figuresHit,
-    points: row.points,
-    isScratched: row.isScratched === 1,
-    isShootOff: row.isShootOff === 1,
-  }));
-
-  const scoring = scoringStations(entries);
-  const result = faltResult(scoring);
-
-  // The max is summed over the same stations the points came from, so an
-  // excluded station takes its poängmål with it in both directions.
-  let pointsMax: number | null = null;
-  rows.forEach((row) => {
-    if (row.isScratched === 1 || row.isShootOff === 1) return;
-    if (row.pointsMax != null) pointsMax = (pointsMax ?? 0) + row.pointsMax;
-  });
-
-  const scoringRows = rows.filter((row) => row.isScratched !== 1 && row.isShootOff !== 1);
-  const figureCount =
-    scoringRows.length > 0 && scoringRows.every((row) => row.figureCount != null)
-      ? scoringRows.reduce((sum, row) => sum + row.figureCount!, 0)
-      : null;
-
-  return {
-    ...result,
-    poangfaltPoints: poangfaltPoints(result),
-    pointsMax,
-    figureCount,
-    hitsPossible: result.stationCount * SHOTS_PER_STATION,
-  };
+  return faltSessionResultOf(
+    listStationsForSession(db, sessionId).map((row) => ({
+      hits: row.hits,
+      figuresHit: row.figuresHit,
+      figureCount: row.figureCount,
+      points: row.points,
+      pointsMax: row.pointsMax,
+      isScratched: row.isScratched === 1,
+      isShootOff: row.isShootOff === 1,
+    })),
+  );
 }

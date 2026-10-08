@@ -1317,7 +1317,7 @@
     }
   },
   "web": {
-    "signInIntro": "Logga in med ditt ShotLedger-konto för att se din statistik och ditt konto. Inget sparas när du stänger fliken.",
+    "signInIntro": "Logga in med ditt ShotLedger-konto för att se dina pass, din statistik och ditt konto. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
     "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen.",
@@ -1351,6 +1351,10 @@
     "shell": {
       "menu": "Huvudmeny",
       "version": "Version"
+    },
+    "sessions": {
+      "back": "Alla pass",
+      "notFound": "Passet finns inte i loggboken."
     }
   }
 }

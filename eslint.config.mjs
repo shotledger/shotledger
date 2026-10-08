@@ -151,6 +151,35 @@ export default tseslint.config(
     },
   },
   {
+    // App files the web app imports by relative path: they must stay free of
+    // react-native, Expo and the `@/` alias. A relative import here must
+    // point at a file on this list too.
+    files: [
+      'app/src/components/shot-value.ts',
+      'app/src/components/time-series-chart-math.ts',
+      'app/src/features/home/format-session-date.ts',
+      'app/src/features/home/home-session-row.ts',
+      'app/src/features/session/falt-session-result.ts',
+      'app/src/features/session/format-falt-result.ts',
+      'app/src/features/session/labels.ts',
+      'app/src/theme/colors.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!@shotledger/shared(/|$)|i18next$|\\.)',
+              message:
+                'web/ imports this file: only @shotledger/shared, i18next and listed app files (eslint.config.mjs).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Node-run tooling scripts and jest mocks (not bundled by Metro).
     files: [
       'scripts/**/*.mjs',
