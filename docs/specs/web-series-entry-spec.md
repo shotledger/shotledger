@@ -297,6 +297,12 @@ Feature: entry → changes (shared/src/sync-client/session-entry.test.ts)
   Scenario: E12 a text field over TEXT_LIMITS is refused, naming the field
   Scenario: E13 every change parses with ClientChangeSchema, ids fresh, rowId = payload.id, ≤ PUSH_BATCH_MAX, each payload ≤ MAX_PAYLOAD_BYTES
   Scenario: E14 a firearm that is not among the pulled rows is refused
+  Scenario: E15 a startedAt that is not a UTC timestamp in toISOString's shape is refused (R28)
+    Then each of "", "garbage", "2026-13-09T08:15:00.000Z", "2026-02-30T08:15:00.000Z",
+         "2026-10-09", "2026-10-09T08:15:00Z", "2026-10-09T10:15:00.000+02:00" and
+         "+010000-01-01T00:00:00.000Z" is refused with invalidStartedAt, nothing built,
+         collected with the other errors
+    And "2026-10-09T08:15:00.000Z" is stored as started_at unchanged
 
 Feature: moved helpers (shared/src/disciplines/*.test.ts)
   Scenario: H1 defaultProgramFor: competition preselects the first program, training none
@@ -531,3 +537,28 @@ Added after the maintainer's first-hand review (2026-10-08):
   Series, then Account; `#entry` joins `web/src/shell/route.ts`; a refresh
   after a save carries the photo picks over to the re-pulled tables, which
   would otherwise drop them.
+
+Added after the maintainer graded independent verification round 2
+(2026-10-09):
+
+- **R28 (new, the maintainer: add a guard now).** `buildSessionEntry` refuses
+  a `startedAt` that is not a UTC timestamp in the exact shape
+  `Date.prototype.toISOString()` writes for a four-digit year,
+  `YYYY-MM-DDTHH:mm:ss.sssZ` (24 characters, for example
+  `2026-10-09T08:15:00.000Z`), checked by round trip:
+  `new Date(s).toISOString() === s`. A new `EntryError`
+  `{ kind: 'invalidStartedAt' }`, collected like `unknownFirearm`; the page
+  shows it as `web.entry.errorDateTime`. Before this only the page kept an
+  empty value out (Save disabled, `runSave` returns early), while
+  `toDraft` passes `''` for an incomplete date. The web's `startedAtIso` and
+  the phone's new-session form both write `new Date().toISOString()`, so both
+  pass. Refused, by decision: an offset other than `Z` (the web converts to
+  UTC before building; a value with an offset means a caller skipped that,
+  and storing it would break the string ordering every `started_at`
+  comparison relies on), whole seconds without milliseconds, a date alone,
+  an impossible date that `Date` rolls over (`2026-02-30`), and the six-digit
+  extended years `toISOString` writes outside 0000–9999 (they sort wrongly as
+  strings, and the form's date field cannot produce them). Scenario **E15**.
+  The accepted form is the builder's decision under the maintainer's
+  instruction; the guard is unverified until verification round 3, which the
+  maintainer approved beyond the cap of two.
