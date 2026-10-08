@@ -1,5 +1,8 @@
 const { jestClassNameTemplate, reqstoolTestName } = require('../scripts/reqstool-stem.js');
 
+// Same zone as vitest.config.ts: CI runs in UTC, where a local-day bug passes unseen.
+process.env.TZ = 'Europe/Stockholm';
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',
