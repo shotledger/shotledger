@@ -5,13 +5,13 @@ import {
   buildSettingsChanges,
   newSettingRow,
   readAccountSettings,
+  resolveComplianceCase,
   SE_EXISTING_HANDGUN_VARIANT,
   type ChangeRow,
 } from '@shotledger/shared';
 import { getTableColumns } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveComplianceCase } from '../../features/compliance/resolve-case';
 import { settings, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';

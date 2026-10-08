@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import {
   getProfile,
   getProfileDefinition,
+  resolveComplianceCase,
+  resolveDefaultProfileSelection,
   type FirearmOwnershipFact,
   type JurisdictionProfile,
   type ProfileSelection,
@@ -17,8 +19,6 @@ import {
 import { db } from '@/db/client';
 import { listFirearmOwnershipFacts } from '@/db/queries/firearms';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
-import { resolveDefaultProfileSelection } from './profile';
-import { resolveComplianceCase } from './resolve-case';
 
 export interface ComplianceProfileState {
   selection: ProfileSelection;

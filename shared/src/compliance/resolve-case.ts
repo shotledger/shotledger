@@ -4,9 +4,9 @@
 import {
   getProfileDefinition,
   resolveDefaultVariantIdFor,
-  type FirearmOwnershipFact,
   type ProfileSelection,
-} from '@shotledger/shared';
+} from './profile-registry';
+import type { FirearmOwnershipFact } from './types';
 
 export interface ResolvedComplianceCase {
   /** The case to apply; null when no profile is selected. */

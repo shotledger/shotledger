@@ -5,6 +5,8 @@ export * from './firearm-criteria';
 export * from './license-activity';
 export * from './indicators';
 export * from './profile-registry';
+export * from './default-profile';
+export * from './resolve-case';
 export {
   SE_PROFILE,
   SE_FIRST_HANDGUN_VARIANT,

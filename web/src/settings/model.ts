@@ -1,19 +1,18 @@
 // The Settings page's form (docs/specs/web-settings-edit-spec.md §3.2). Pure.
 // Defaults and the case derivation are the phone's own (spec C3).
-import type { FirearmOwnershipFact } from '@shotledger/shared/src/compliance';
 import {
   getProfileDefinition,
+  resolveComplianceCase,
+  resolveDefaultProfileSelection,
+  type FirearmOwnershipFact,
   type ProfileSelection,
-} from '@shotledger/shared/src/compliance/profile-registry';
+} from '@shotledger/shared/src/compliance';
 import { birthYearOptions } from '@shotledger/shared/src/disciplines/eligibility';
 import { SYNCED_SETTING_KEYS } from '@shotledger/shared/src/sync';
 import {
   readAccountSettings,
   type AccountSettings,
 } from '@shotledger/shared/src/sync-client/account-settings';
-
-import { resolveDefaultProfileSelection } from '../../../app/src/features/compliance/profile';
-import { resolveComplianceCase } from '../../../app/src/features/compliance/resolve-case';
 
 type Rows = ReadonlyMap<string, Record<string, unknown>>;
 

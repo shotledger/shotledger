@@ -1,11 +1,12 @@
+import { describe, expect, it } from 'vitest';
+
 import {
   SE_EXISTING_HANDGUN_VARIANT,
   SE_FIRST_HANDGUN_VARIANT,
   SE_REASON_NO_FIREARMS,
   SE_REASON_NO_HANDGUN_ON_FILE,
   SE_REASON_OWNS_HANDGUN,
-} from '@shotledger/shared';
-
+} from './profiles/se';
 import { resolveComplianceCase } from './resolve-case';
 
 const ownedPistol = { weaponType: 'pistol', isOwn: true };
