@@ -1,6 +1,6 @@
 // A status the Bulk Edit page hands to its own next mount (R15). When another
-// account signs in, App remounts the page and its state goes; what the user
-// must still hear (a dropped correction) is carried across, in memory only.
+// account signs in, App remounts the page and its state goes; that the held
+// change was not sent is carried across, in memory only.
 import type { ApplyState } from './apply';
 
 let carried: ApplyState | null = null;

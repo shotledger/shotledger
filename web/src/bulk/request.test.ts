@@ -145,41 +145,6 @@ describe('the request the page sends (R8)', () => {
     expect(deps.refresh).toBe(fake.refresh);
   });
 
-  it('R8 a correction pulls the firearms afresh and is built by the shared builder', async () => {
-    const fake = io();
-    const deps = applyDeps(null, fake);
-    const firearms = await deps.loadFirearms();
-    expect(fake.loadTables).toHaveBeenCalledWith(['firearms']);
-    expect(firearms).toBe(LOGBOOK.firearms);
-    const correction = deps.correct(
-      {
-        moves: [{ sessionId: 's', rounds: 4, from: null, to: 'f1' }],
-        original: { f1: [10, 0] },
-        writtenAt: '2026-10-07T09:59:00.000Z',
-      },
-      { sessions: new Set(['s']), firearms: new Set(), perSession: 1, count: 1 },
-      new Map([
-        [
-          'f1',
-          {
-            id: 'f1',
-            round_count: 14,
-            rounds_since_maintenance: 4,
-            updated_at: '2026-10-07T09:59:00.000Z',
-          },
-        ],
-      ]),
-    );
-    expect(correction.changes.map((c) => c.payload)).toEqual([
-      {
-        id: 'f1',
-        round_count: 10,
-        rounds_since_maintenance: 0,
-        updated_at: '2026-10-07T10:00:00.000Z',
-      },
-    ]);
-  });
-
   it('R6 the tag check pulls the tags and reads liveness', async () => {
     const fake = io();
     const deps = applyDeps(null, fake);

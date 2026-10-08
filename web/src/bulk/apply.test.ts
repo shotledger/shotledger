@@ -6,8 +6,7 @@ import type { ClientChange } from '@shotledger/shared/src/sync';
 import type {
   BulkContext,
   BulkResult,
-  CounterCorrection,
-  CounterPlan,
+  FirearmMove,
 } from '@shotledger/shared/src/sync-client/bulk-edit';
 import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 import { describe, expect, it, vi } from 'vitest';
@@ -15,7 +14,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   accountChanged,
   afterEdit,
-  MAX_CORRECTION_ATTEMPTS,
   apply,
   applyBlocked,
   IDLE,
@@ -40,16 +38,9 @@ const MOVE: ClientChange[] = [
   change(4, 'sessions', 's1'),
   change(5, 'sessions', 's2'),
 ];
-const CORRECTION: ClientChange[] = [change(6, 'firearms', 'f2')];
 const SUMMARY = { changed: 1, unchanged: 2, missing: 1 };
-const PLAN: CounterPlan = {
-  moves: [
-    { sessionId: 's1', rounds: 3, from: 'f1', to: 'f2' },
-    { sessionId: 's2', rounds: 2, from: 'f1', to: 'f2' },
-  ],
-  original: { f1: [100, 0], f2: [10, 10] },
-  writtenAt: '2026-10-07T10:00:00.000Z',
-};
+// s1 and s2 move from f1 and f3 onto f2.
+const MOVED_FIREARMS: FirearmMove = { target: 'f2', sources: { s1: 'f1', s2: 'f3' } };
 const empty = () => new Map<string, Record<string, unknown>>();
 const CONTEXT: BulkContext = {
   sessions: empty(),
@@ -60,12 +51,11 @@ const CONTEXT: BulkContext = {
   shots: empty(),
   faltStations: empty(),
 };
-const FIREARMS = new Map([['f2', { id: 'f2', round_count: 15 }]]);
 
 const ok = (
   overrides: {
     changes?: ClientChange[];
-    counters?: CounterPlan;
+    firearms?: FirearmMove;
     tagId?: string;
     summary?: typeof SUMMARY;
   } = {},
@@ -73,7 +63,7 @@ const ok = (
   ok: true,
   changes: CHANGES,
   summary: SUMMARY,
-  counters: null,
+  firearms: null,
   tagId: null,
   ...overrides,
 });
@@ -85,8 +75,6 @@ function deps(outcomes: PushOutcome | PushOutcome[], overrides: Partial<ApplyDep
     currentUserId: vi.fn(() => Promise.resolve<string | null>('u1')),
     build: vi.fn(() => ok()),
     push: vi.fn(() => Promise.resolve(queue.length > 1 ? queue.shift()! : queue[0]!)),
-    loadFirearms: vi.fn(() => Promise.resolve(FIREARMS)),
-    correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: [] })),
     tagLive: vi.fn(() => Promise.resolve(true)),
     refresh: vi.fn(() => Promise.resolve(true)),
     ...overrides,
@@ -97,8 +85,7 @@ const applied = (overrides: object = {}) => ({
   kind: 'applied',
   summary: SUMMARY,
   refused: 0,
-  corrected: false,
-  countsToCheck: false,
+  firearmsToCheck: [],
   tagGone: false,
   refreshed: true,
   ...overrides,
@@ -110,30 +97,23 @@ const s2Refused: PushOutcome = {
 };
 // Two sessions move; the refused one is taken off the changed count (R11).
 const MOVED = { changed: 2, unchanged: 0, missing: 0 };
-const moving = () => ({
-  build: vi.fn(() => ok({ changes: MOVE, counters: PLAN, summary: MOVED })),
+const moving = (firearms: FirearmMove = MOVED_FIREARMS) => ({
+  build: vi.fn(() => ok({ changes: MOVE, firearms, summary: MOVED })),
 });
 
 describe('applying a bulk edit', () => {
-  it('U5 offline blocks Apply and names the reason; so does applying and a pending correction', () => {
+  it('U5 offline blocks Apply and names the reason; so does applying', () => {
     expect(applyBlocked(false, IDLE)).toBe('offline');
     expect(applyBlocked(true, IDLE)).toBeNull();
     expect(applyBlocked(true, { status: { kind: 'applying' }, held: null })).toBe('applying');
     expect(applyBlocked(false, { status: { kind: 'applying' }, held: null })).toBe('offline');
-    const correcting: ApplyState = {
-      status: { kind: 'failed', error: 'network', stage: 'correction' },
-      held: {
-        stage: 'correction',
-        built: { changes: MOVE, summary: SUMMARY, counters: PLAN, tagId: null, userId: 'u1' },
-        refused: { sessions: new Set(['s2']), firearms: new Set(), perSession: 1, count: 1 },
-        changes: null,
-        unverified: [],
-        attempts: 0,
-      },
+    const holding: ApplyState = {
+      status: { kind: 'failed', error: 'network' },
+      held: { changes: MOVE, summary: SUMMARY, firearms: null, tagId: null, userId: 'u1' },
     };
     // A held request does not block: the one action resends it (R12).
-    expect(applyBlocked(true, correcting)).toBeNull();
-    expect(submitRequest(correcting)).toBe(correcting.held);
+    expect(applyBlocked(true, holding)).toBeNull();
+    expect(submitRequest(holding)).toBe(holding.held);
     expect(submitRequest(IDLE)).toBeNull();
   });
 
@@ -141,11 +121,8 @@ describe('applying a bulk edit', () => {
     const failing = deps({ kind: 'failed', error: 'network' });
     const failed = await apply(failing, null);
     expect(failed).toEqual({
-      status: { kind: 'failed', error: 'network', stage: 'edit' },
-      held: {
-        stage: 'edit',
-        built: { changes: CHANGES, summary: SUMMARY, counters: null, tagId: null, userId: 'u1' },
-      },
+      status: { kind: 'failed', error: 'network' },
+      held: { changes: CHANGES, summary: SUMMARY, firearms: null, tagId: null, userId: 'u1' },
     });
     expect(failing.refresh).not.toHaveBeenCalled();
     expect(failing.build).toHaveBeenCalledWith(CONTEXT);
@@ -162,10 +139,10 @@ describe('applying a bulk edit', () => {
 
   it('U6 a signed-out failure holds the request too; the others do not', async () => {
     const signedOut = await apply(deps({ kind: 'failed', error: 'unauthenticated' }), null);
-    expect(signedOut.held?.built.changes).toBe(CHANGES);
+    expect(signedOut.held?.changes).toBe(CHANGES);
     for (const error of ['versionUnsupported', 'payloadTooLarge', 'unknown'] as const) {
       expect(await apply(deps({ kind: 'failed', error }), null)).toEqual({
-        status: { kind: 'failed', error, stage: 'edit' },
+        status: { kind: 'failed', error },
         held: null,
       });
     }
@@ -187,7 +164,7 @@ describe('applying a bulk edit', () => {
       { loadContext: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) },
     );
     expect(await apply(unreachable, null)).toEqual({
-      status: { kind: 'failed', error: 'network', stage: 'edit' },
+      status: { kind: 'failed', error: 'network' },
       held: null,
     });
     expect(unreachable.build).not.toHaveBeenCalled();
@@ -204,7 +181,7 @@ describe('applying a bulk edit', () => {
       },
     );
     expect(await apply(throwing, null)).toEqual({
-      status: { kind: 'failed', error: 'unknown', stage: 'edit' },
+      status: { kind: 'failed', error: 'unknown' },
       held: null,
     });
     expect(throwing.push).not.toHaveBeenCalled();
@@ -223,96 +200,70 @@ describe('applying a bulk edit', () => {
       },
       { build: vi.fn(() => ok({ summary: three })) },
     );
-    // No counter plan (a location or tag edit): nothing to correct. A refused
-    // session row and a refused new link each stand for one unchanged session
-    // (R17); the tag row does not.
+    // A location or tag edit: no firearm to name. A refused session row and a
+    // refused new link each stand for one unchanged session (R17); the tag row
+    // does not.
     expect((await apply(partly, null)).status).toEqual(
       applied({ refused: 3, summary: { ...three, changed: 1 } }),
     );
     expect(partly.refresh).toHaveBeenCalledTimes(1);
-    expect(partly.loadFirearms).not.toHaveBeenCalled();
     expect(partly.push).toHaveBeenCalledTimes(1);
 
     const stale = deps({ kind: 'saved' }, { refresh: vi.fn(() => Promise.resolve(false)) });
     expect((await apply(stale, null)).status).toEqual(applied({ refreshed: false }));
   });
 
-  it('U8 an edit drops a held edit, but not a pending correction and not while applying', () => {
+  it('U8 an edit drops a held request, but not while applying', () => {
     const built: Built = {
-      changes: CHANGES,
+      changes: MOVE,
       summary: SUMMARY,
-      counters: null,
+      firearms: MOVED_FIREARMS,
       tagId: null,
       userId: 'u1',
     };
-    expect(
-      afterEdit({
-        status: { kind: 'failed', error: 'network', stage: 'edit' },
-        held: { stage: 'edit', built },
-      }),
-    ).toBe(IDLE);
+    // A held firearm change too: a fresh Apply pulls again before it builds (R26).
+    expect(afterEdit({ status: { kind: 'failed', error: 'network' }, held: built })).toBe(IDLE);
     const applying = { status: { kind: 'applying' as const }, held: null };
     expect(afterEdit(applying)).toBe(applying);
     expect(afterEdit(IDLE)).toBe(IDLE);
-    const correcting: ApplyState = {
-      status: { kind: 'failed', error: 'network', stage: 'correction' },
-      held: {
-        stage: 'correction',
-        built,
-        refused: { sessions: new Set(), firearms: new Set(), perSession: 0, count: 1 },
-        changes: CORRECTION,
-        unverified: [],
-        attempts: 0,
-      },
-    };
-    expect(afterEdit(correcting)).toBe(correcting);
   });
 });
 
-describe('correcting the counters after a refused session (R5)', () => {
-  it('R5 a refused moved session: the firearms are pulled afresh and the correction pushed', async () => {
-    const d = deps([s2Refused, { kind: 'saved' }], moving());
+describe('a refused moved session (R25)', () => {
+  it("R25 one push, no correction: the target and the refused sessions' sources are named to check", async () => {
+    const d = deps(s2Refused, moving());
     expect(await apply(d, null)).toEqual({
-      status: applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
+      status: applied({
+        refused: 1,
+        firearmsToCheck: ['f2', 'f3'],
+        summary: { ...MOVED, changed: 1 },
+      }),
       held: null,
     });
-    expect(d.push).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(d.push).mock.calls[1]![0]).toBe(CORRECTION);
-    expect(d.correct).toHaveBeenCalledWith(
-      PLAN,
-      { sessions: new Set(['s2']), firearms: new Set(), perSession: 1, count: 1 },
-      FIREARMS,
-    );
-    // The refresh shows the corrected counters.
+    expect(d.push).toHaveBeenCalledTimes(1);
     expect(d.refresh).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(d.refresh).mock.invocationCallOrder[0]!).toBeGreaterThan(
-      vi.mocked(d.push).mock.invocationCallOrder[1]!,
-    );
   });
 
-  it('R5 a refused firearm row is passed on, so its counters are left alone', async () => {
-    const d = deps(
-      [
-        {
-          kind: 'partlyRejected',
-          rejected: [
-            { tableName: 'firearms', rowId: 'f2', reason: 'tombstoned' },
-            { tableName: 'sessions', rowId: 's2', reason: 'tombstoned' },
-          ],
-        },
-        { kind: 'saved' },
-      ],
-      moving(),
+  it('R25 None as the target, or a source that was not live: only the known firearms are named', async () => {
+    const toNone = deps(s2Refused, moving({ target: null, sources: { s1: 'f1', s2: 'f3' } }));
+    expect((await apply(toNone, null)).status).toMatchObject({ firearmsToCheck: ['f3'] });
+    const unknownSource = deps(s2Refused, moving({ target: 'f2', sources: { s1: 'f1' } }));
+    expect((await apply(unknownSource, null)).status).toMatchObject({ firearmsToCheck: ['f2'] });
+    const both = deps(
+      {
+        kind: 'partlyRejected',
+        rejected: [
+          { tableName: 'sessions', rowId: 's1', reason: 'tombstoned' },
+          { tableName: 'sessions', rowId: 's2', reason: 'tombstoned' },
+        ],
+      },
+      moving({ target: 'f2', sources: { s1: 'f1', s2: 'f1' } }),
     );
-    await apply(d, null);
-    expect(d.correct).toHaveBeenCalledWith(
-      PLAN,
-      { sessions: new Set(['s2']), firearms: new Set(['f2']), perSession: 1, count: 2 },
-      FIREARMS,
-    );
+    // Each firearm once, the target first.
+    expect((await apply(both, null)).status).toMatchObject({ firearmsToCheck: ['f2', 'f1'] });
   });
 
-  it('R5 a firearm refusal alone, or nothing to take back, sends no correction', async () => {
+  it('R25 nothing to check without a refused session, or without a firearm change', async () => {
     const firearmOnly = deps(
       {
         kind: 'partlyRejected',
@@ -323,58 +274,27 @@ describe('correcting the counters after a refused session (R5)', () => {
     expect((await apply(firearmOnly, null)).status).toEqual(
       applied({ refused: 1, summary: MOVED }),
     );
-    expect(firearmOnly.loadFirearms).not.toHaveBeenCalled();
+    const landed = deps({ kind: 'saved' }, moving());
+    expect((await apply(landed, null)).status).toEqual(applied({ summary: MOVED }));
+    // A refused session on a location edit names no firearm.
+    expect((await apply(deps(s2Refused), null)).status).toMatchObject({ firearmsToCheck: [] });
+  });
 
-    const floored = deps([s2Refused], {
-      ...moving(),
-      correct: vi.fn((): CounterCorrection => ({ changes: [], unverified: [] })),
-    });
-    expect((await apply(floored, null)).status).toEqual(
-      applied({ refused: 1, summary: { ...MOVED, changed: 1 } }),
+  it('R25 a lost answer holds the firearm change; Retry resends it and reads the refusals then', async () => {
+    const first = await apply(deps({ kind: 'failed', error: 'network' }, moving()), null);
+    expect(first.held).toMatchObject({ changes: MOVE, firearms: MOVED_FIREARMS });
+    const retry = deps(
+      {
+        kind: 'partlyRejected',
+        rejected: [{ tableName: 'sessions', rowId: 's1', reason: 'tombstoned' }],
+      },
+      moving(),
     );
-    expect(floored.push).toHaveBeenCalledTimes(1);
-  });
-
-  it('R5 a lost correction is held as built; Retry resends it identically and never rebuilds it', async () => {
-    const d = deps([s2Refused, { kind: 'failed', error: 'network' }], moving());
-    const first = await apply(d, null);
-    expect(first.status).toEqual({ kind: 'failed', error: 'network', stage: 'correction' });
-    expect(first.held).toMatchObject({ stage: 'correction', changes: CORRECTION });
-    expect(d.refresh).not.toHaveBeenCalled();
-
-    const retry = deps({ kind: 'saved' });
-    expect(await apply(retry, first.held)).toEqual({
-      status: applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
-      held: null,
+    expect((await apply(retry, first.held)).status).toMatchObject({
+      firearmsToCheck: ['f2', 'f1'],
     });
-    expect(retry.push).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);
-    expect(retry.loadFirearms).not.toHaveBeenCalled();
-    expect(retry.correct).not.toHaveBeenCalled();
-    expect(retry.loadContext).not.toHaveBeenCalled();
-  });
-
-  it('R5 a correction stays held whatever the failure, since the edit already landed', async () => {
-    const d = deps([s2Refused, { kind: 'failed', error: 'versionUnsupported' }], moving());
-    expect((await apply(d, null)).held?.stage).toBe('correction');
-  });
-
-  it('R5 an unanswered firearm pull holds the unbuilt correction; Retry builds and sends it', async () => {
-    const d = deps(s2Refused, {
-      ...moving(),
-      loadFirearms: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
-    });
-    const first = await apply(d, null);
-    expect(first.status).toEqual({ kind: 'failed', error: 'network', stage: 'correction' });
-    expect(first.held).toMatchObject({ stage: 'correction', changes: null });
-    expect(d.push).toHaveBeenCalledTimes(1);
-
-    const retry = deps({ kind: 'saved' });
-    expect((await apply(retry, first.held)).status).toEqual(
-      applied({ refused: 1, corrected: true, summary: { ...MOVED, changed: 1 } }),
-    );
-    expect(retry.correct).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);
+    expect(retry.build).not.toHaveBeenCalled();
+    expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(MOVE);
   });
 });
 
@@ -384,7 +304,7 @@ describe('a held request goes only to its own account (R12)', () => {
   it('R12 another account signed in: the held request is dropped and nothing is sent', async () => {
     const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
     expect(await apply(other, await held())).toEqual({
-      status: { kind: 'accountChanged', userId: 'u2', dropped: 'none' },
+      status: { kind: 'accountChanged', userId: 'u2' },
       held: null,
     });
     expect(other.push).not.toHaveBeenCalled();
@@ -397,7 +317,7 @@ describe('a held request goes only to its own account (R12)', () => {
       { currentUserId: vi.fn(() => Promise.resolve(null)) },
     );
     expect(await apply(signedOut, request)).toEqual({
-      status: { kind: 'failed', error: 'unauthenticated', stage: 'edit' },
+      status: { kind: 'failed', error: 'unauthenticated' },
       held: request,
     });
     const unreachable = deps(
@@ -405,7 +325,7 @@ describe('a held request goes only to its own account (R12)', () => {
       { currentUserId: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) },
     );
     expect(await apply(unreachable, request)).toEqual({
-      status: { kind: 'failed', error: 'network', stage: 'edit' },
+      status: { kind: 'failed', error: 'network' },
       held: request,
     });
     expect(signedOut.push).not.toHaveBeenCalled();
@@ -418,7 +338,7 @@ describe('a held request goes only to its own account (R12)', () => {
       { currentUserId: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) },
     );
     expect(await apply(unreachable, null)).toEqual({
-      status: { kind: 'failed', error: 'network', stage: 'edit' },
+      status: { kind: 'failed', error: 'network' },
       held: null,
     });
     expect(unreachable.loadContext).not.toHaveBeenCalled();
@@ -430,189 +350,31 @@ describe('a held request goes only to its own account (R12)', () => {
       { currentUserId: vi.fn(() => Promise.resolve(null)) },
     );
     expect(await apply(signedOut, null)).toEqual({
-      status: { kind: 'failed', error: 'unauthenticated', stage: 'edit' },
+      status: { kind: 'failed', error: 'unauthenticated' },
       held: null,
     });
     expect(signedOut.loadContext).not.toHaveBeenCalled();
   });
 
-  it('R12 a pending correction keeps its stage while signed out, and goes to no other account', async () => {
-    const d = deps([s2Refused, { kind: 'failed', error: 'network' }], moving());
-    const pending = (await apply(d, null)).held;
-    const signedOut = deps(
-      { kind: 'saved' },
-      { currentUserId: vi.fn(() => Promise.resolve(null)) },
-    );
-    expect((await apply(signedOut, pending)).status).toEqual({
-      kind: 'failed',
-      error: 'unauthenticated',
-      stage: 'correction',
-    });
+  it('R12 a held firearm change goes to no other account, and nothing more is said (R26)', async () => {
+    const held = (await apply(deps({ kind: 'failed', error: 'network' }, moving()), null)).held;
     const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
-    // R15: the message says the other account's counters still need correcting.
-    expect((await apply(other, pending)).status).toEqual({
-      kind: 'accountChanged',
-      userId: 'u2',
-      dropped: 'correction',
-    });
+    expect(await apply(other, held)).toEqual(accountChanged('u2'));
     expect(other.push).not.toHaveBeenCalled();
   });
 });
 
-describe('review fixes (R14, R16, R18)', () => {
-  const unconfirmed: PushOutcome = { kind: 'failed', error: 'unknown', unconfirmed: true };
-
+describe('an unconfirmed answer (R14)', () => {
   it('R14 an unconfirmed answer may mean it landed: the edit is held and the page says so', async () => {
-    const d = deps(unconfirmed);
-    const first = await apply(d, null);
-    expect(first.status).toEqual({
-      kind: 'failed',
-      error: 'unknown',
-      stage: 'edit',
-      unconfirmed: true,
-    });
-    expect(first.held).toMatchObject({ stage: 'edit', built: { changes: CHANGES } });
+    const first = await apply(deps({ kind: 'failed', error: 'unknown', unconfirmed: true }), null);
+    expect(first.status).toEqual({ kind: 'failed', error: 'unknown', unconfirmed: true });
+    expect(first.held).toMatchObject({ changes: CHANGES });
   });
 
-  it('R14 an unconfirmed correction stays held, flagged, as built', async () => {
-    const d = deps([s2Refused, unconfirmed], moving());
-    const first = await apply(d, null);
-    expect(first.status).toEqual({
-      kind: 'failed',
-      error: 'unknown',
-      stage: 'correction',
-      unconfirmed: true,
-    });
-    expect(first.held).toMatchObject({ stage: 'correction', changes: CORRECTION });
-  });
-
-  it('R16 a correction whose build keeps throwing is given up after MAX_CORRECTION_ATTEMPTS', async () => {
-    const throwing = () =>
-      deps(s2Refused, {
-        ...moving(),
-        correct: vi.fn((): CounterCorrection => {
-          throw new RangeError('round_count is not a number');
-        }),
-      });
-    let state = await apply(throwing(), null);
-    for (let attempt = 1; attempt < MAX_CORRECTION_ATTEMPTS; attempt += 1) {
-      expect(state.status).toEqual({ kind: 'failed', error: 'unknown', stage: 'correction' });
-      expect(state.held).toMatchObject({ stage: 'correction', changes: null, attempts: attempt });
-      state = await apply(throwing(), state.held);
-    }
-    expect(state).toEqual({ status: { kind: 'correctionAbandoned' }, held: null });
-    expect(MAX_CORRECTION_ATTEMPTS).toBe(3);
-  });
-
-  it('R16 an unanswered firearm pull is not an attempt', async () => {
-    const d = deps(s2Refused, {
-      ...moving(),
-      loadFirearms: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
-    });
-    expect((await apply(d, null)).held).toMatchObject({ attempts: 0 });
-  });
-
-  it('R18 a correction push that throws keeps the built correction; Retry resends it, never rebuilds', async () => {
-    const d = deps(s2Refused, moving());
-    let calls = 0;
-    d.push = vi.fn(() => {
-      calls += 1;
-      return calls === 1 ? Promise.resolve(s2Refused) : Promise.reject(new Error('late'));
-    });
-    const first = await apply(d, null);
-    expect(first.status).toEqual({ kind: 'failed', error: 'unknown', stage: 'correction' });
-    expect(first.held).toMatchObject({ stage: 'correction', changes: CORRECTION });
-
-    const retry = deps({ kind: 'saved' });
-    await apply(retry, first.held);
-    expect(retry.correct).not.toHaveBeenCalled();
-    expect(vi.mocked(retry.push).mock.calls[0]![0]).toBe(CORRECTION);
-  });
-
-  it('R15 accountChanged names the account and whether a correction was dropped', () => {
-    expect(accountChanged(null, 'u2').status).toEqual({
-      kind: 'accountChanged',
-      userId: 'u2',
-      dropped: 'none',
-    });
-  });
-});
-
-describe('verifier round 4 (R22, R23, R24)', () => {
-  it('R22 a target not corrected because another device wrote it is said; the rest is corrected', async () => {
-    const partly = deps([s2Refused, { kind: 'saved' }], {
-      ...moving(),
-      correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: ['f3'] })),
-    });
-    expect((await apply(partly, null)).status).toEqual(
-      applied({
-        refused: 1,
-        corrected: true,
-        countsToCheck: true,
-        summary: { ...MOVED, changed: 1 },
-      }),
-    );
-    const none = deps([s2Refused], {
-      ...moving(),
-      correct: vi.fn((): CounterCorrection => ({ changes: [], unverified: ['f2'] })),
-    });
-    expect((await apply(none, null)).status).toEqual(
-      applied({ refused: 1, countsToCheck: true, summary: { ...MOVED, changed: 1 } }),
-    );
-    expect(none.push).toHaveBeenCalledTimes(1);
-  });
-
-  it('R22 a held correction resends and still reports its unverified targets', async () => {
-    const d = deps([s2Refused, { kind: 'failed', error: 'network' }], {
-      ...moving(),
-      correct: vi.fn((): CounterCorrection => ({ changes: CORRECTION, unverified: ['f3'] })),
-    });
-    const first = await apply(d, null);
-    expect(first.held).toMatchObject({ changes: CORRECTION, unverified: ['f3'] });
-    const retry = deps({ kind: 'saved' });
-    expect((await apply(retry, first.held)).status).toMatchObject({ countsToCheck: true });
-  });
-
-  it('R23 an edit that drops a held firearm change says the counts may need checking', async () => {
-    const held = (await apply(deps({ kind: 'failed', error: 'network' }, moving()), null)).held;
-    expect(
-      afterEdit({ status: { kind: 'failed', error: 'network', stage: 'edit' }, held }),
-    ).toEqual({ status: { kind: 'firearmChangeDropped' }, held: null });
-    // Another account: the same, said for that account.
-    const other = deps({ kind: 'saved' }, { currentUserId: vi.fn(() => Promise.resolve('u2')) });
-    expect((await apply(other, held)).status).toEqual({
-      kind: 'accountChanged',
-      userId: 'u2',
-      dropped: 'firearmChange',
-    });
-  });
-
-  it('R24 the account is checked again before a correction is built', async () => {
-    const switching = (next: Promise<string | null>) => {
-      const ids = [Promise.resolve<string | null>('u1'), next];
-      return deps([s2Refused], {
-        ...moving(),
-        currentUserId: vi.fn(() => ids.shift()!),
-      });
-    };
-    const other = switching(Promise.resolve('u2'));
-    expect(await apply(other, null)).toEqual({
-      status: { kind: 'accountChanged', userId: 'u2', dropped: 'correction' },
+  it('R15 accountChanged names the account', () => {
+    expect(accountChanged('u2')).toEqual({
+      status: { kind: 'accountChanged', userId: 'u2' },
       held: null,
-    });
-    expect(other.loadFirearms).not.toHaveBeenCalled();
-    expect(other.push).toHaveBeenCalledTimes(1);
-
-    const signedOut = switching(Promise.resolve(null));
-    const out = await apply(signedOut, null);
-    expect(out.status).toEqual({ kind: 'failed', error: 'unauthenticated', stage: 'correction' });
-    expect(out.held).toMatchObject({ stage: 'correction', changes: null });
-
-    const unreachable = switching(Promise.reject(new TypeError('Failed to fetch')));
-    expect((await apply(unreachable, null)).status).toEqual({
-      kind: 'failed',
-      error: 'network',
-      stage: 'correction',
     });
   });
 });

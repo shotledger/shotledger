@@ -2,8 +2,7 @@
 // (docs/specs/web-bulk-edit-spec.md). Stryker covers bulk-edit.ts against its
 // whole suite; this checks what that score cannot show: that the K17 property
 // alone kills real builder bugs, that the phone twin test (P1–P4) catches a
-// builder that drifts from the phone, and the web page modules, which are
-// outside Stryker's list.
+// builder that drifts from the phone, and named bugs in the page modules.
 //
 // FAILS CLOSED. Each suite must pass unmutated first; a mutant whose pattern
 // does not match exactly once, a file that does not restore, or a run that
@@ -23,8 +22,8 @@ const MUTANTS = [
   {
     name: 'property: a counter can go below zero',
     file: BUILDER,
-    find: 'result.set(firearmId, [Math.max(0, total + rounds), Math.max(0, since + rounds)]);',
-    replace: 'result.set(firearmId, [total + rounds, Math.max(0, since + rounds)]);',
+    find: 'round_count: Math.max(0, counter(pulled.round_count) + rounds),',
+    replace: 'round_count: counter(pulled.round_count) + rounds,',
     ...PROPERTY,
   },
   {
@@ -44,14 +43,14 @@ const MUTANTS = [
   {
     name: 'property: a source firearm keeps its rounds',
     file: BUILDER,
-    find: '    add(move.from, -move.rounds);\n',
+    find: '    move(before, -rounds);\n',
     replace: '',
     ...PROPERTY,
   },
   {
     name: 'twin: a source firearm keeps its rounds',
     file: BUILDER,
-    find: '    add(move.from, -move.rounds);\n',
+    find: '    move(before, -rounds);\n',
     replace: '',
     ...TWIN,
   },
@@ -78,45 +77,6 @@ const MUTANTS = [
     tests: ['shared/src/sync-client/bulk-edit.test.ts'],
   },
   {
-    name: 'property K21: the correction takes nothing back',
-    file: BUILDER,
-    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
-    replace: 'plan.moves,',
-    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
-    only: 'K21',
-  },
-  {
-    name: 'property K21: every session refused leaves the counters as written',
-    file: BUILDER,
-    find: '?? plan.original[firearmId]!;',
-    replace: '?? written.get(firearmId)!;',
-    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
-    only: 'K21',
-  },
-  {
-    name: "property K21 (R21): a refused session's rounds go back onto its source too",
-    file: BUILDER,
-    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
-    replace: 'plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),',
-    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
-    only: 'K21',
-  },
-  {
-    name: "twin P6 (R21): a refused session's rounds go back onto its source too",
-    file: BUILDER,
-    find: 'plan.moves.map((move) => (refused.sessions.has(move.sessionId) ? { ...move, to: null } : move)),',
-    replace: 'plan.moves.filter((move) => !refused.sessions.has(move.sessionId)),',
-    tests: ['app/src/db/queries/web-bulk.test.ts'],
-    only: 'P6',
-  },
-  {
-    name: 'builder (R22): a target another device wrote is corrected anyway',
-    file: BUILDER,
-    find: 'if (fresh.updated_at !== plan.writtenAt) {',
-    replace: 'if (false) {',
-    tests: ['shared/src/sync-client/bulk-edit.test.ts'],
-  },
-  {
     name: 'page: a lost response drops the request instead of holding it',
     file: 'web/src/bulk/apply.ts',
     find: "new Set(['network', 'unauthenticated'])",
@@ -124,33 +84,39 @@ const MUTANTS = [
     tests: ['web/src/bulk/apply.test.ts'],
   },
   {
-    name: 'page: Retry rebuilds a held correction',
+    name: 'page: Retry rebuilds the held request instead of resending it',
     file: 'web/src/bulk/apply.ts',
-    find: '  let { changes, unverified } = held;\n',
-    replace:
-      '  let { changes, unverified } = { ...held, changes: null as ClientChange[] | null };\n',
-    tests: ['web/src/bulk/apply.test.ts'],
-  },
-  {
-    name: 'page: a refused moved session is not corrected',
-    file: 'web/src/bulk/apply.ts',
-    find: 'if (built.counters !== null && refused.sessions.size > 0) {',
-    replace: 'if (false) {',
-    tests: ['web/src/bulk/apply.test.ts'],
-  },
-  {
-    name: 'page (R23): a dropped held firearm change is not said',
-    file: 'web/src/bulk/apply.ts',
-    find: "if (droppedBy(state.held) === 'firearmChange') {",
-    replace: 'if (false) {',
-    tests: ['web/src/bulk/apply.test.ts'],
-  },
-  {
-    name: 'page (R24): the account is not checked again before a correction',
-    file: 'web/src/bulk/apply.ts',
-    find: 'if (userId !== held.built.userId) return accountChanged(held, userId);',
+    find: '  if (held !== null) return applyEdit(deps, held);\n',
     replace: '',
     tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: 'page (R12): a held request goes to another account',
+    file: 'web/src/bulk/apply.ts',
+    find: 'if (held !== null && held.userId !== userId) return accountChanged(userId);',
+    replace: '',
+    tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: 'page (R25): a refused moved session names no firearm to check',
+    file: 'web/src/bulk/apply.ts',
+    find: 'if (firearms === null || refused.size === 0) return [];',
+    replace: 'return [];',
+    tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: "page (R25): the refused sessions' sources are not named",
+    file: 'web/src/bulk/apply.ts',
+    find: 'if (source !== undefined) ids.add(source);',
+    replace: '',
+    tests: ['web/src/bulk/apply.test.ts'],
+  },
+  {
+    name: 'page (R25): the firearms to check are not said',
+    file: 'web/src/bulk/messages.ts',
+    find: 'if (firearms.length > 0) {',
+    replace: 'if (false) {',
+    tests: ['web/src/bulk/messages.test.ts'],
   },
   {
     name: 'page: the request leaves out fält stations',
@@ -172,13 +138,6 @@ const MUTANTS = [
     find: 'const targets = targetIds(selected, shown);',
     replace: 'const targets = [...selected];',
     tests: ['web/src/bulk/request.test.ts'],
-  },
-  {
-    name: 'page: a failed correction is said as a plain failure',
-    file: 'web/src/bulk/messages.ts',
-    find: "return status.stage === 'correction'",
-    replace: 'return false',
-    tests: ['web/src/bulk/messages.test.ts'],
   },
   {
     name: 'page: the To day is exclusive',

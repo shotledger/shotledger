@@ -52,7 +52,7 @@ export function BulkEdit({
   const [filter, setFilter] = useState<BulkFilter>(NO_FILTER);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [form, setForm] = useState<BulkForm>(INITIAL_FORM);
-  // A dropped correction is said on the remount after an account switch (R15).
+  // An Apply that met another account says so on the remount (R15).
   const [state, setState] = useState<ApplyState>(() => peekCarried() ?? IDLE);
   useEffect(clearCarried, []);
   const applying = state.status.kind === 'applying';
@@ -118,7 +118,7 @@ export function BulkEdit({
     };
     void apply(applyDeps(request, io), held)
       .catch((): ApplyState => ({
-        status: { kind: 'failed', error: 'unknown', stage: 'edit' },
+        status: { kind: 'failed', error: 'unknown' },
         held,
       }))
       .then((next) => {
@@ -135,7 +135,7 @@ export function BulkEdit({
 
   const onSignedIn = (userId: string) => {
     const held = state.held;
-    if (held !== null && held.built.userId !== userId) carry(accountChanged(held, userId));
+    if (held !== null && held.userId !== userId) carry(accountChanged(userId));
     if (onReauthenticated(userId) === 'same') {
       clearCarried();
       // The same account: only the signed-out notice goes; a held request stays.
@@ -173,8 +173,15 @@ export function BulkEdit({
     t(message.key, {
       ...message.params,
       ...(message.fieldKey ? { field: t(message.fieldKey) } : {}),
+      ...(message.firearms
+        ? { firearms: new Intl.ListFormat(i18n.language).format(message.firearms) }
+        : {}),
     });
-  const lines = statusMessages(state).map(text);
+  const firearmName = (id: string) => {
+    const row = tables.firearms.get(id);
+    return row === undefined ? null : firearmLabel(row);
+  };
+  const lines = statusMessages(state, firearmName).map(text);
   const failedWith = state.status.kind === 'failed' ? state.status.error : null;
 
   return (

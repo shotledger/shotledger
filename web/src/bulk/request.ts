@@ -2,11 +2,7 @@
 // sessions, the tables it re-pulls, and the I/O apply.ts runs it with (R8).
 // Kept out of the component so every piece is tested.
 import type { ClientChange } from '@shotledger/shared/src/sync';
-import {
-  buildBulkEdit,
-  buildCounterCorrection,
-  type BulkAction,
-} from '@shotledger/shared/src/sync-client/bulk-edit';
+import { buildBulkEdit, type BulkAction } from '@shotledger/shared/src/sync-client/bulk-edit';
 import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 
 import type { PulledTables, WebTable } from '../pull';
@@ -93,8 +89,6 @@ export function applyDeps(request: BulkRequest | null, io: BulkIo): ApplyDeps {
     loadContext: async () => bulkContext(await io.loadTables(request!.tables)),
     build: (context) => buildBulkEdit(request!.action, request!.targets, context, ids),
     push: io.push,
-    loadFirearms: async () => (await io.loadTables(['firearms'])).firearms,
-    correct: (plan, refused, firearms) => buildCounterCorrection(plan, refused, firearms, ids),
     tagLive: async (tagId) => isLive((await io.loadTables(['tags'])).tags.get(tagId)),
     refresh: io.refresh,
   };

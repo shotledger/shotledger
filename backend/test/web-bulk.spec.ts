@@ -12,7 +12,6 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   buildBulkEdit,
-  buildCounterCorrection,
   createAccountApi,
   createHttpSyncTransport,
   pushChanges,
@@ -27,7 +26,7 @@ import {
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
-const BASE_URL = 'https://example.com';
+const BASE_URL = 'https://localhost';
 const PASSWORD = 'correct horse battery staple';
 const NOW = '2026-10-07T10:00:00.000Z';
 const OLD = '2026-01-01T00:00:00.000Z';
@@ -293,133 +292,5 @@ describe('the web bulk edit path', () => {
     const rows = await pullAll(deviceB.transport);
     expect(rows.get('sessions:s1')?.payload).toMatchObject({ location: 'Range B' });
     expect(rows.get('sessions:s2')?.deletedAt).toBe('2026-10-07T09:00:00.000Z');
-  });
-
-  // --- R21/R22: a session refused because device B deleted it, the way the
-  // phone's deleteSessionAndSeries does: its rounds come off its firearm and
-  // that firearm row is pushed with the tombstones, before the web's push.
-
-  const DELETED_AT = '2026-10-07T09:00:00.000Z';
-  const tombstone = (tableName: SyncTableName, rowId: string) => ({
-    clientChangeId: uuid(4)(),
-    tableName,
-    rowId,
-    payload: null,
-    deletedAt: DELETED_AT,
-    updatedAt: DELETED_AT,
-  });
-  const firearmRow = (id: string, total: number, since: number, updatedAt: string) => ({
-    clientChangeId: uuid(4)(),
-    tableName: 'firearms' as const,
-    rowId: id,
-    payload: {
-      ...firearm(id, total),
-      rounds_since_maintenance: since,
-      updated_at: updatedAt,
-    },
-    deletedAt: null,
-    updatedAt,
-  });
-  /** Device B deletes s2 (2 rounds) as the phone does, f1 already backed out. */
-  const deleteS2 = (f1: [number, number]) =>
-    deviceB.transport.push({
-      protocolVersion: PROTOCOL_VERSION,
-      changes: [
-        firearmRow('f1', f1[0], f1[1], DELETED_AT),
-        tombstone('shots', 'h4'),
-        tombstone('shots', 'h5'),
-        tombstone('series', 'r2'),
-        tombstone('sessions', 's2'),
-      ],
-    });
-  const counters = async () => {
-    const rows = await pullAll(deviceB.transport);
-    return ['f1', 'f2'].map((id) => {
-      const payload = rows.get(`firearms:${id}`)?.payload as Record<string, unknown>;
-      return [payload.round_count, payload.rounds_since_maintenance];
-    });
-  };
-  const moveBoth = async (firearmId: string | null) => {
-    const result = buildBulkEdit(
-      { kind: 'setFirearm', firearmId },
-      ['s1', 's2'],
-      await webContext(web.transport),
-      { newId: uuid(7), newChangeId: uuid(4), now: () => NOW },
-    );
-    if (!result.ok) throw new Error(JSON.stringify(result.errors));
-    return result;
-  };
-  const correctionFor = async (result: Awaited<ReturnType<typeof moveBoth>>) =>
-    buildCounterCorrection(
-      result.counters!,
-      { sessions: new Set(['s2']), firearms: new Set() },
-      (await webContext(web.transport)).firearms,
-      { newChangeId: uuid(4), now: () => NOW },
-    );
-
-  it('W5 (V1) s2 deleted on device B between pull and push: only the target gives back its rounds; a resent correction moves nothing twice', async () => {
-    // s1 (3 rounds) and s2 (2) move from f1 (100) to f2 (10).
-    const result = await moveBoth('f2');
-    await deleteS2([98, 98]);
-    await expect(pushChanges(web.transport, PROTOCOL_VERSION, result.changes)).resolves.toEqual({
-      kind: 'partlyRejected',
-      rejected: [{ tableName: 'sessions', rowId: 's2', reason: 'tombstoned' }],
-    });
-    // The web's f1 (100 - 5) landed over device B's 98 and is right; f2 counts s2.
-    expect(await counters()).toEqual([
-      [95, 95],
-      [15, 15],
-    ]);
-
-    const correction = await correctionFor(result);
-    expect(correction.unverified).toEqual([]);
-    expect(correction.changes.map((c) => c.rowId)).toEqual(['f2']);
-    await expect(pushChanges(web.transport, PROTOCOL_VERSION, correction.changes)).resolves.toEqual(
-      { kind: 'saved' },
-    );
-    // What the phone would hold: s2 deleted (f1 98), then s1 moved (95 / 13).
-    expect(await counters()).toEqual([
-      [95, 95],
-      [13, 13],
-    ]);
-
-    const replay = await web.transport.push({
-      protocolVersion: PROTOCOL_VERSION,
-      changes: correction.changes,
-    });
-    expect(replay.acks.map((ack) => ack.status)).toEqual(['duplicate']);
-    expect(await counters()).toEqual([
-      [95, 95],
-      [13, 13],
-    ]);
-  });
-
-  it("W6 (V2) moved to None with floors: nothing to give back, the counters are the phone's", async () => {
-    // f1 at [4, 1]; s1 (3) and s2 (2) move off it to no firearm.
-    await deviceB.transport.push({
-      protocolVersion: PROTOCOL_VERSION,
-      changes: [firearmRow('f1', 4, 1, '2026-01-02T00:00:00.000Z')],
-    });
-    const result = await moveBoth(null);
-    await deleteS2([2, 0]);
-    await pushChanges(web.transport, PROTOCOL_VERSION, result.changes);
-    expect(await correctionFor(result)).toEqual({ changes: [], unverified: [] });
-    // The phone: delete s2 → [2, 0]; move s1 off → [0, 0].
-    expect((await counters())[0]).toEqual([0, 0]);
-  });
-
-  it('W7 (V3) a stale phone overwrote the target after the push: no correction, the target is named to check', async () => {
-    const result = await moveBoth('f2');
-    await deleteS2([98, 98]);
-    await pushChanges(web.transport, PROTOCOL_VERSION, result.changes);
-    // A phone that never pulled the web's move adds 5 rounds to its 10.
-    await deviceB.transport.push({
-      protocolVersion: PROTOCOL_VERSION,
-      changes: [firearmRow('f2', 15, 15, '2026-10-07T10:00:05.000Z')],
-    });
-    const correction = await correctionFor(result);
-    expect(correction).toEqual({ changes: [], unverified: ['f2'] });
-    // Left as the phone wrote it (the true 18 cannot be known from here).
-    expect((await counters())[1]).toEqual([15, 15]);
   });
 });

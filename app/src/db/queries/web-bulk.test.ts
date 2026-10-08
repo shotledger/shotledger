@@ -5,7 +5,6 @@
 import {
   APPLY_ORDER,
   buildBulkEdit,
-  buildCounterCorrection,
   type BulkAction,
   type BulkContext,
   type ChangeRow,
@@ -208,13 +207,13 @@ describe('a web bulk edit applied on the phone equals the phone editing session 
     ]);
   });
 
-  it('P1 add tag: a name whose only tag was deleted — the web shows it, the phone does not (B7)', () => {
+  it('P1 add tag: a name whose only tag was deleted — both add it and show it (B7)', () => {
     const s2 = ids.sessions[1]!;
     webEdit({ kind: 'addTag', name: 'Gone' }, [s2]);
     addSessionTag(phone, s2, getOrCreateTag(phone, 'Gone').id);
     expect(listTagsForSession(web, s2).map((t) => t.name)).toEqual(['Gone']);
-    // The phone's addSessionTag counts its link to the deleted Gone as "tagged".
-    expect(listTagsForSession(phone, s2)).toEqual([]);
+    expect(listTagsForSession(phone, s2).map((t) => t.name)).toEqual(['Gone']);
+    expect(snapshot(web, ids)).toEqual(snapshot(phone, ids));
   });
 
   it('P2 remove tag: the same tags as removeSessionTag', () => {
@@ -257,81 +256,6 @@ describe('a web bulk edit applied on the phone equals the phone editing session 
       }
       expect(snapshot(web, ids)).toEqual(snapshot(phone, ids));
     }
-  });
-
-  it("P6 a moved session deleted on the phone mid-push: push, refusal, correction leave the phone's counters (R21)", () => {
-    const [s1, s2, s3] = ids.sessions as [string, string, string];
-    // The web pulls and builds before the phone deletes s2.
-    const result = buildBulkEdit(
-      { kind: 'setFirearm', firearmId: ids.f3 },
-      [s1, s2, s3],
-      pulled(web),
-      {
-        newId: uuidv7,
-        newChangeId: () => crypto.randomUUID(),
-        now: () => new Date().toISOString(),
-      },
-    );
-    if (!result.ok) throw new Error(JSON.stringify(result.errors));
-
-    // The phone deletes s2 with its own function, then pushes what it queued
-    // (the backed-out firearm and the tombstones): that lands first.
-    deleteSessionAndSeries(phone, s2);
-    const queued = phone.select().from(syncOutbox).all();
-    expect(queued.map((row) => row.tableName)).toContain('firearms');
-    applyChangesSync(
-      web,
-      asApplied(
-        queued.map((row, index) => {
-          const snapshot = readRowSync(
-            phone,
-            row.tableName as (typeof APPLY_ORDER)[number],
-            row.rowId,
-          )!;
-          return {
-            tableName: row.tableName as (typeof APPLY_ORDER)[number],
-            rowId: row.rowId,
-            seq: 2000 + index,
-            payload: snapshot.payload,
-            deletedAt: null,
-            updatedAt: snapshot.updatedAt,
-          };
-        }),
-      ),
-    );
-    // The web's push: s2's row is refused as tombstoned, the rest lands.
-    const toRows = (changes: typeof result.changes, from: number) =>
-      asApplied(
-        changes.map((change, index) => ({
-          tableName: change.tableName,
-          rowId: change.rowId,
-          seq: from + index,
-          payload: change.payload,
-          deletedAt: change.deletedAt,
-          updatedAt: change.updatedAt,
-        })),
-      );
-    applyChangesSync(
-      web,
-      toRows(
-        result.changes.filter((c) => !(c.tableName === 'sessions' && c.rowId === s2)),
-        3000,
-      ),
-    );
-    // The correction, from the firearms as the web now pulls them.
-    const correction = buildCounterCorrection(
-      result.counters!,
-      { sessions: new Set([s2]), firearms: new Set() },
-      pulled(web).firearms,
-      { newChangeId: () => crypto.randomUUID(), now: () => new Date().toISOString() },
-    );
-    expect(correction.unverified).toEqual([]);
-    applyChangesSync(web, toRows(correction.changes, 4000));
-
-    // The phone's own truth: s2 deleted, then s1 and s3 moved one by one.
-    updateSession(phone, s1, { firearmId: ids.f3 });
-    updateSession(phone, s3, { firearmId: ids.f3 });
-    expect(snapshot(web, ids)).toEqual(snapshot(phone, ids));
   });
 
   it('P5 nothing applied is re-queued (the outbox stays empty after apply)', () => {

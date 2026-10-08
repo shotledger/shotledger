@@ -1,5 +1,5 @@
 // What the Bulk Edit page says after an Apply, as i18n keys (spec §3.2,
-// R5–R7). Pure, so every outcome's wording is tested.
+// R6, R7, R25). Pure, so every outcome's wording is tested.
 import type { BulkError } from '@shotledger/shared/src/sync-client/bulk-edit';
 
 import type { ApplyState } from './apply';
@@ -9,6 +9,8 @@ export interface Message {
   params?: Record<string, string | number>;
   /** A field label to translate and pass as `field`. */
   fieldKey?: string;
+  /** Firearm names to join as a list in the reader's language and pass as `firearms`. */
+  firearms?: string[];
 }
 
 export function errorMessage(error: BulkError): Message {
@@ -38,13 +40,11 @@ const FAILED: Record<string, string> = {
   versionUnsupported: 'web.bulk.failedOutdated',
 };
 
-/** What the other account's counters still need after a dropped request (R15, R23). */
-const DROPPED = {
-  correction: 'web.bulk.correctionDropped',
-  firearmChange: 'web.bulk.firearmChangeDroppedOther',
-} as const;
-
-export function statusMessages(state: ApplyState): Message[] {
+/** `firearmName` is null for a firearm the page no longer has a row for. */
+export function statusMessages(
+  state: ApplyState,
+  firearmName: (firearmId: string) => string | null,
+): Message[] {
   const { status } = state;
   switch (status.kind) {
     case 'applying':
@@ -61,31 +61,30 @@ export function statusMessages(state: ApplyState): Message[] {
       if (status.refused > 0) {
         lines.push({ key: 'web.bulk.refused', params: { count: status.refused } });
       }
-      if (status.corrected) lines.push({ key: 'web.bulk.corrected' });
-      if (status.countsToCheck) lines.push({ key: 'web.bulk.countsToCheck' });
+      const firearms = status.firearmsToCheck
+        .map((id) => firearmName(id))
+        .filter((name): name is string => name !== null);
+      if (firearms.length > 0) {
+        lines.push({
+          key: 'web.bulk.checkRoundCounts',
+          params: { count: firearms.length },
+          firearms,
+        });
+      }
       if (status.tagGone) lines.push({ key: 'web.bulk.tagGone' });
       if (!status.refreshed) lines.push({ key: 'web.bulk.reload' });
       return lines;
     }
-    case 'failed': {
-      const reason = {
-        key: status.unconfirmed
-          ? 'web.bulk.failedUnconfirmed'
-          : (FAILED[status.error] ?? 'web.entry.failed'),
-      };
-      // The edit is on the server; only the counters are left to correct.
-      return status.stage === 'correction'
-        ? [{ key: 'web.bulk.correctionPending' }, reason]
-        : [reason];
-    }
+    case 'failed':
+      return [
+        {
+          key: status.unconfirmed
+            ? 'web.bulk.failedUnconfirmed'
+            : (FAILED[status.error] ?? 'web.entry.failed'),
+        },
+      ];
     case 'accountChanged':
-      return status.dropped === 'none'
-        ? [{ key: 'web.bulk.accountChanged' }]
-        : [{ key: 'web.bulk.accountChanged' }, { key: DROPPED[status.dropped] }];
-    case 'firearmChangeDropped':
-      return [{ key: 'web.bulk.firearmChangeDropped' }];
-    case 'correctionAbandoned':
-      return [{ key: 'web.bulk.correctionAbandoned' }];
+      return [{ key: 'web.bulk.accountChanged' }];
     case 'invalid':
       return status.errors.map(errorMessage);
     case 'idle':

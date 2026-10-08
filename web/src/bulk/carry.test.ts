@@ -6,8 +6,8 @@ import { carry, clearCarried, peekCarried } from './carry';
 describe('a status carried across a remount (R15)', () => {
   it('R15 is read until cleared, and only the last one is kept', () => {
     expect(peekCarried()).toBeNull();
-    const first = accountChanged(null, 'u2');
-    const second = accountChanged(null, 'u3');
+    const first = accountChanged('u2');
+    const second = accountChanged('u3');
     carry(first);
     carry(second);
     expect(peekCarried()).toBe(second);

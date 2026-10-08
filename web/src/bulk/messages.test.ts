@@ -4,14 +4,15 @@ import type { ApplyStatus } from './apply';
 import { errorMessage, statusMessages } from './messages';
 
 const SUMMARY = { changed: 3, unchanged: 0, missing: 0 };
-const at = (status: ApplyStatus) => statusMessages({ status, held: null });
+const NAMES: Record<string, string> = { f1: 'Pistol A', f2: 'Pistol B' };
+const name = (id: string) => NAMES[id] ?? null;
+const at = (status: ApplyStatus) => statusMessages({ status, held: null }, name);
 const keys = (status: ApplyStatus) => at(status).map((m) => m.key);
 const applied = (overrides: object = {}): ApplyStatus => ({
   kind: 'applied',
   summary: SUMMARY,
   refused: 0,
-  corrected: false,
-  countsToCheck: false,
+  firearmsToCheck: [],
   tagGone: false,
   refreshed: true,
   ...overrides,
@@ -40,64 +41,47 @@ describe('what the page says', () => {
     ]);
   });
 
-  it('R5 a correction after refused sessions is said; R6 a deleted tag is said', () => {
-    expect(keys(applied({ refused: 1, corrected: true }))).toEqual([
+  it('R25 a refused moved session names the firearms to check, by name; R6 a deleted tag is said', () => {
+    expect(at(applied({ refused: 1, firearmsToCheck: ['f2', 'f1'] }))).toEqual([
+      { key: 'web.bulk.applied', params: { count: 3 } },
+      { key: 'web.bulk.refused', params: { count: 1 } },
+      {
+        key: 'web.bulk.checkRoundCounts',
+        params: { count: 2 },
+        firearms: ['Pistol B', 'Pistol A'],
+      },
+    ]);
+    // A firearm the page has no row for is left out; none left, no line.
+    expect(at(applied({ refused: 1, firearmsToCheck: ['f9', 'f1'] }))[2]).toEqual({
+      key: 'web.bulk.checkRoundCounts',
+      params: { count: 1 },
+      firearms: ['Pistol A'],
+    });
+    expect(keys(applied({ refused: 1, firearmsToCheck: ['f9'] }))).toEqual([
       'web.bulk.applied',
       'web.bulk.refused',
-      'web.bulk.corrected',
     ]);
     expect(keys(applied({ tagGone: true }))).toEqual(['web.bulk.applied', 'web.bulk.tagGone']);
   });
 
-  it('R5 a failed correction says the edit is saved and the counts still need correcting', () => {
-    expect(keys({ kind: 'failed', error: 'network', stage: 'correction' })).toEqual([
-      'web.bulk.correctionPending',
-      'web.bulk.failedNetwork',
-    ]);
-    expect(keys({ kind: 'failed', error: 'network', stage: 'edit' })).toEqual([
-      'web.bulk.failedNetwork',
-    ]);
-    expect(keys({ kind: 'failed', error: 'unauthenticated', stage: 'edit' })).toEqual([
+  it('a failure says why', () => {
+    expect(keys({ kind: 'failed', error: 'network' })).toEqual(['web.bulk.failedNetwork']);
+    expect(keys({ kind: 'failed', error: 'unauthenticated' })).toEqual([
       'web.bulk.failedSignedOut',
     ]);
-    expect(keys({ kind: 'failed', error: 'versionUnsupported', stage: 'edit' })).toEqual([
+    expect(keys({ kind: 'failed', error: 'versionUnsupported' })).toEqual([
       'web.bulk.failedOutdated',
     ]);
-    expect(keys({ kind: 'failed', error: 'unknown', stage: 'edit' })).toEqual(['web.entry.failed']);
-  });
-
-  it('applying, idle and invalid', () => {
-    expect(keys({ kind: 'applying' })).toEqual(['web.bulk.applying']);
-    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'none' })).toEqual([
-      'web.bulk.accountChanged',
-    ]);
-    // R15: a dropped correction leaves the other account's counters wrong; say so.
-    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'correction' })).toEqual([
-      'web.bulk.accountChanged',
-      'web.bulk.correctionDropped',
-    ]);
-    // R23: a dropped firearm change may have landed there; say so.
-    expect(keys({ kind: 'accountChanged', userId: 'u2', dropped: 'firearmChange' })).toEqual([
-      'web.bulk.accountChanged',
-      'web.bulk.firearmChangeDroppedOther',
-    ]);
-    expect(keys({ kind: 'firearmChangeDropped' })).toEqual(['web.bulk.firearmChangeDropped']);
-    // R22: a target not corrected is named.
-    expect(keys(applied({ refused: 1, corrected: true, countsToCheck: true }))).toEqual([
-      'web.bulk.applied',
-      'web.bulk.refused',
-      'web.bulk.corrected',
-      'web.bulk.countsToCheck',
-    ]);
-    // R16
-    expect(keys({ kind: 'correctionAbandoned' })).toEqual(['web.bulk.correctionAbandoned']);
-    // R14: an unconfirmed answer is said as such, in either stage.
-    expect(keys({ kind: 'failed', error: 'unknown', stage: 'edit', unconfirmed: true })).toEqual([
+    expect(keys({ kind: 'failed', error: 'unknown' })).toEqual(['web.entry.failed']);
+    // R14: an unconfirmed answer is said as such.
+    expect(keys({ kind: 'failed', error: 'unknown', unconfirmed: true })).toEqual([
       'web.bulk.failedUnconfirmed',
     ]);
-    expect(
-      keys({ kind: 'failed', error: 'unknown', stage: 'correction', unconfirmed: true }),
-    ).toEqual(['web.bulk.correctionPending', 'web.bulk.failedUnconfirmed']);
+  });
+
+  it('applying, idle, another account and invalid', () => {
+    expect(keys({ kind: 'applying' })).toEqual(['web.bulk.applying']);
+    expect(keys({ kind: 'accountChanged', userId: 'u2' })).toEqual(['web.bulk.accountChanged']);
     expect(keys({ kind: 'idle' })).toEqual([]);
     expect(
       at({ kind: 'invalid', errors: [{ kind: 'blankTag' }, { kind: 'nothingToChange' }] }),
