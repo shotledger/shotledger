@@ -565,4 +565,35 @@ describe('buildSessionEntry', () => {
       ammo_lot_id: 'a1',
     });
   });
+
+  it.each([
+    ['empty', ''],
+    ['garbage', 'garbage'],
+    ['a month that does not exist', '2026-13-09T08:15:00.000Z'],
+    ['a day that Date rolls over', '2026-02-30T08:15:00.000Z'],
+    ['a date alone', '2026-10-09'],
+    ['whole seconds', '2026-10-09T08:15:00Z'],
+    ['an offset other than Z', '2026-10-09T10:15:00.000+02:00'],
+    ['an extended year', '+010000-01-01T00:00:00.000Z'],
+  ])('E15 a startedAt that is %s is refused', (_, startedAt) => {
+    expect(build(draft({ startedAt }))).toEqual({
+      ok: false,
+      errors: [{ kind: 'invalidStartedAt' }],
+    });
+  });
+
+  it('E15 an invalid startedAt is collected with the other errors', () => {
+    const result = build(draft({ startedAt: '', firearmId: 'gone' }));
+    expect(result.ok || result.errors.map((e) => e.kind)).toEqual([
+      'unknownFirearm',
+      'invalidStartedAt',
+    ]);
+  });
+
+  it("E15 a UTC timestamp in toISOString's shape is stored unchanged", () => {
+    const startedAt = '2026-10-09T08:15:00.000Z';
+    expect(session(changesOf(build(draft({ startedAt }))))).toMatchObject({
+      started_at: startedAt,
+    });
+  });
 });

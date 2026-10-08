@@ -121,6 +121,8 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorUnknownFirearm');
     case 'unknownAmmoLot':
       return t('web.entry.errorUnknownAmmoLot');
+    case 'invalidStartedAt':
+      return t('web.entry.errorDateTime');
     case 'tooManyChanges':
       return t('web.entry.errorTooManyChanges');
     case 'hitsDiscipline':

@@ -35,7 +35,7 @@ export interface SessionEntryDraft {
   type: 'training' | 'competition';
   disciplineId: string;
   programId: string | null;
-  /** UTC ISO-8601. */
+  /** UTC, in `toISOString`'s shape (`isUtcIsoTimestamp`). */
   startedAt: string;
   name: string;
   /** Used when `name` is blank, as the phone does. */
@@ -77,6 +77,7 @@ export type EntryError =
   | { kind: 'secondSighter'; row: number }
   | { kind: 'unknownFirearm' }
   | { kind: 'unknownAmmoLot' }
+  | { kind: 'invalidStartedAt' }
   | { kind: 'tooManyChanges'; max: number };
 
 export type EntryResult =
@@ -99,6 +100,16 @@ function checkLength(
   max: number,
 ): void {
   if (value !== null && value.length > max) errors.push({ kind: 'tooLong', field, max });
+}
+
+/**
+ * `YYYY-MM-DDTHH:mm:ss.sssZ`, exactly what `toISOString` writes for a
+ * four-digit year: the web's `startedAtIso` and the phone both write that, and
+ * `started_at` is compared as a string. Spec R28.
+ */
+function isUtcIsoTimestamp(value: string): boolean {
+  const time = Date.parse(value);
+  return value.length === 24 && !Number.isNaN(time) && new Date(time).toISOString() === value;
 }
 
 function weaponGroupFor(draft: SessionEntryDraft, context: EntryContext): string | null {
@@ -186,6 +197,7 @@ export function buildSessionEntry(
   if (draft.ammoLotId !== null && !context.ammoLots.has(draft.ammoLotId)) {
     errors.push({ kind: 'unknownAmmoLot' });
   }
+  if (!isUtcIsoTimestamp(draft.startedAt)) errors.push({ kind: 'invalidStartedAt' });
   if (errors.length > 0) return { ok: false, errors };
 
   const now = deps.now();
