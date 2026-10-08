@@ -191,6 +191,7 @@ describe('browseSessions', () => {
       figuresHit: 5,
       poangfaltPoints: 14,
       figureCount: 7,
+      hitsPossible: 12,
     });
     expect(falt.stations.map((s) => [s.position, s.isScratched, s.note])).toEqual([
       [1, false, null],
