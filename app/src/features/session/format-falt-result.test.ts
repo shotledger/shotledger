@@ -1,35 +1,58 @@
-import type { TFunction } from 'i18next';
+import i18next, { type TFunction } from 'i18next';
+
+import en from '@/i18n/en.json';
+import sv from '@/i18n/sv.json';
 
 import { faltModeOf, formatFaltResult, formatStation } from './format-falt-result';
 
-const t = ((key: string, options: Record<string, number>) =>
-  ({
-    'session.poangfaltTotal': `${options.points} points`,
-    'session.faltTotal': `${options.hits} hits in ${options.figures} figures`,
-    'session.faltTotalOf': `${options.hits} hits in ${options.figures} of ${options.figureCount} figures`,
-  })[key]) as unknown as TFunction;
+const i18n = i18next.createInstance();
+let t: TFunction;
+let tSv: TFunction;
 
-const result = { hits: 41, figuresHit: 34, poangfaltPoints: 75 };
+beforeAll(async () => {
+  await i18n.init({
+    resources: { en: { translation: en }, sv: { translation: sv } },
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: { escapeValue: false },
+    returnNull: false,
+  });
+  t = i18n.getFixedT('en');
+  tSv = i18n.getFixedT('sv');
+});
+
+// Eight scoring stations: 48 hits possible.
+const result = { hits: 41, hitsPossible: 48, figuresHit: 34, poangfaltPoints: 75 };
 
 describe('formatFaltResult', () => {
   it('a poängfält round reads as its points sum', () => {
     expect(formatFaltResult(t, { ...result, mode: 'poangfalt' })).toBe('75 points');
+    expect(formatFaltResult(tSv, { ...result, mode: 'poangfalt' })).toBe('75 poäng');
   });
 
-  it('a fält round reads as hits in figures', () => {
-    expect(formatFaltResult(t, { ...result, mode: 'falt' })).toBe('41 hits in 34 figures');
+  it('a fält round reads as hits of possible, then figures hit (#670)', () => {
+    expect(formatFaltResult(t, { ...result, mode: 'falt' })).toBe('41 (48) hits / 34 figures');
+    expect(formatFaltResult(tSv, { ...result, mode: 'falt' })).toBe('41 (48) träff / 34 figurer');
   });
 
-  it('a fält round with a figure count reads as hits in figures of the count (#607)', () => {
+  it('a fält round with a figure count adds it beside the figures hit (#607, #670)', () => {
     expect(formatFaltResult(t, { ...result, mode: 'falt', figureCount: 40 })).toBe(
-      '41 hits in 34 of 40 figures',
+      '41 (48) hits / 34 (40) figures',
+    );
+    expect(formatFaltResult(tSv, { ...result, mode: 'falt', figureCount: 40 })).toBe(
+      '41 (48) träff / 34 (40) figurer',
     );
   });
 
-  it('a fält round without a figure count keeps the plain reading (#607)', () => {
+  it('a fält round without a figure count keeps the plain figures (#607)', () => {
     expect(formatFaltResult(t, { ...result, mode: 'falt', figureCount: null })).toBe(
-      '41 hits in 34 figures',
+      '41 (48) hits / 34 figures',
     );
+  });
+
+  it('a round with no scoring station reads as nothing possible', () => {
+    const empty = { hits: 0, hitsPossible: 0, figuresHit: 0, poangfaltPoints: 0 };
+    expect(formatFaltResult(t, { ...empty, mode: 'falt' })).toBe('0 (0) hits / 0 figures');
   });
 
   it('a poängfält round ignores the figure count', () => {

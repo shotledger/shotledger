@@ -140,6 +140,7 @@ describe('faltSessionResult (spec P3)', () => {
       poangfaltPoints: 15,
       pointsMax: 10,
       figureCount: null,
+      hitsPossible: 12,
     });
   });
 
@@ -152,7 +153,18 @@ describe('faltSessionResult (spec P3)', () => {
       poangfaltPoints: 0,
       pointsMax: null,
       figureCount: null,
+      hitsPossible: 0,
     });
+  });
+
+  it('counts six possible hits per scoring station only (#670)', () => {
+    addStation(db, { sessionId, position: 1, hits: 6, figuresHit: 3 });
+    addStation(db, { sessionId, position: 2, hits: 5, figuresHit: 5 });
+    addStation(db, { sessionId, position: 3, hits: 2, figuresHit: 1 });
+    addStation(db, { sessionId, position: 4, hits: 4, figuresHit: 2, isScratched: true });
+    addStation(db, { sessionId, position: 5, hits: 6, figuresHit: 6, isShootOff: true });
+
+    expect(faltSessionResult(db, sessionId).hitsPossible).toBe(18);
   });
 
   it('sums the figure count when every scoring station has one (#607)', () => {

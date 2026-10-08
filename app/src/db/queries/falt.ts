@@ -189,6 +189,8 @@ export interface FaltSessionResult {
   pointsMax: number | null;
   /** Figures over the scoring stations; null unless every one of them recorded a count (#607). */
   figureCount: number | null;
+  /** Six per scoring station (D.6.4 p. 91): the "(XT)" in "X (XT) hits" (#670). */
+  hitsPossible: number;
 }
 
 /** A session's fält result, over the stations that actually score. */
@@ -224,5 +226,6 @@ export function faltSessionResult(db: Database, sessionId: string): FaltSessionR
     poangfaltPoints: poangfaltPoints(result),
     pointsMax,
     figureCount,
+    hitsPossible: result.stationCount * SHOTS_PER_STATION,
   };
 }

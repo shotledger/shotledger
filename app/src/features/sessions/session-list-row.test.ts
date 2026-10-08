@@ -15,17 +15,29 @@ const session = {
 
 describe('buildSessionListRow', () => {
   it('L1: a fält session carries its hits and figures', () => {
-    const falt = { mode: 'falt' as const, hits: 26, figuresHit: 22, poangfaltPoints: 48 };
+    const falt = {
+      mode: 'falt' as const,
+      hits: 26,
+      hitsPossible: 30,
+      figuresHit: 22,
+      poangfaltPoints: 48,
+    };
     const row = buildSessionListRow(session, [], [], falt);
     expect(row.falt).toEqual(falt);
   });
 
   it('#513: a poängfält session carries its mode and points sum', () => {
-    const falt = faltSummaryOf('poangfalt', { hits: 41, figuresHit: 34, poangfaltPoints: 75 });
+    const falt = faltSummaryOf('poangfalt', {
+      hits: 41,
+      hitsPossible: 48,
+      figuresHit: 34,
+      poangfaltPoints: 75,
+    });
     const row = buildSessionListRow(session, [], [], falt);
     expect(row.falt).toEqual({
       mode: 'poangfalt',
       hits: 41,
+      hitsPossible: 48,
       figuresHit: 34,
       poangfaltPoints: 75,
       figureCount: null,
@@ -35,6 +47,7 @@ describe('buildSessionListRow', () => {
   it('#607: a fält session carries its figure count', () => {
     const falt = faltSummaryOf('falt', {
       hits: 26,
+      hitsPossible: 30,
       figuresHit: 22,
       poangfaltPoints: 48,
       figureCount: 24,
@@ -42,8 +55,23 @@ describe('buildSessionListRow', () => {
     expect(buildSessionListRow(session, [], [], falt).falt?.figureCount).toBe(24);
   });
 
+  it('#670: a fält session carries its possible hits', () => {
+    const falt = faltSummaryOf('falt', {
+      hits: 26,
+      hitsPossible: 30,
+      figuresHit: 22,
+      poangfaltPoints: 48,
+    });
+    expect(buildSessionListRow(session, [], [], falt).falt?.hitsPossible).toBe(30);
+  });
+
   it('#513: a fält session with no stored mode reads as fält', () => {
-    const falt = faltSummaryOf(null, { hits: 26, figuresHit: 22, poangfaltPoints: 48 });
+    const falt = faltSummaryOf(null, {
+      hits: 26,
+      hitsPossible: 30,
+      figuresHit: 22,
+      poangfaltPoints: 48,
+    });
     expect(buildSessionListRow(session, [], [], falt).falt?.mode).toBe('falt');
   });
 

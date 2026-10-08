@@ -75,10 +75,12 @@ Hit**, and **Figures**, how many figures the station had. Five hits in three of
 four figures reads **5/3 of 4**: you missed one shot or put two in the same
 figure, and one figure went untouched. Leave Figures at **–** if you don't
 know it; the station then reads **5/3**. The session total shows
-"26 hits in 22 figures", or one sum in point field, where every hit is a point
-and every figure hit is another. When every station has its figures recorded,
-the total adds them up: "26 hits in 22 of 24 figures". Home and the sessions
-list show the result the same way.
+"26 (30) hits / 22 figures": your hits, with the hits possible — six per
+station — in brackets. Scratched and shoot-off stations count for neither. In
+point field it is one sum instead, where every hit is a point and every figure
+hit is another. When every station has its figures recorded, the total adds
+them up the same way: "26 (30) hits / 22 (24) figures". Home, the sessions
+list and Records show the result the same way.
 
 Where the organiser put out a **ringed figure**, type the points you scored
 under **Points**, and what the figure was worth after "of" if you know it. A

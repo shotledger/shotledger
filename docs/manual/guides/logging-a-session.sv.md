@@ -74,10 +74,12 @@ Varje station är sex skott. På en skärm trycker du **Träff** (0–6),
 träff i tre av fyra figurer skrivs **5/3 av 4**: du missade ett skott eller
 satte två i samma figur, och en figur blev orörd. Låt Figurer stå på **–** om du
 inte vet; stationen skrivs då **5/3**. Passets resultat visar
-"26 träff i 22 figurer", eller en summa i poängfält, där varje träff ger en
-poäng och varje träffad figur ytterligare en. När varje station har sina
-figurer ifyllda räknas de ihop i resultatet: "26 träff i 22 av 24 figurer".
-Hem och passlistan visar resultatet på samma sätt.
+"26 (30) träff / 22 figurer": dina träff, med möjliga träff — sex per station —
+inom parentes. Strukna stationer och särskjutning räknas inte. I poängfält är
+det i stället en summa, där varje träff ger en poäng och varje träffad figur
+ytterligare en. När varje station har sina figurer ifyllda räknas de ihop på
+samma sätt: "26 (30) träff / 22 (24) figurer". Hem, passlistan och Rekord
+visar resultatet på samma sätt.
 
 Där arrangören satt ut en **ringad figur** skriver du poängen du fick under
 **Poäng**, och vad figuren var värd efter "av" om du vet det. En station med
