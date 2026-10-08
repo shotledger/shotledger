@@ -45,6 +45,8 @@ the native build script by default.
 ## Deployment
 
 `wrangler.jsonc` contains **placeholders only**: no real D1 id, no real
-bucket, a dummy auth secret. Production bindings and secrets are provisioned
-by the maintainer with `wrangler` outside this repo. Agents never run
-`wrangler deploy`.
+bucket, a dummy auth secret. Its top level is local development; the
+`staging` and `production` envs are filled in, given their secret and
+deployed by the maintainer with `pnpm deploy:staging` /
+`pnpm deploy:production`, which build `web/dist` first (`docs/release.md`).
+Agents never run `wrangler deploy`.

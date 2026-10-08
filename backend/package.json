@@ -4,7 +4,10 @@
   "private": true,
   "license": "Elastic-2.0",
   "scripts": {
-    "deploy": "wrangler deploy",
+    "deploy:staging": "pnpm --filter @shotledger/web build && wrangler deploy --env staging",
+    "deploy:production": "pnpm --filter @shotledger/web build && wrangler deploy --env production",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
+    "db:migrate:production": "wrangler d1 migrations apply DB --remote --env production",
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",

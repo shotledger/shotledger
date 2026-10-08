@@ -353,7 +353,7 @@ describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
   );
 
   async function call(path: string, body: unknown): Promise<unknown> {
-    const request = new Request(`https://example.com${path}`, {
+    const request = new Request(`https://localhost${path}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${USER}` },
       body: JSON.stringify(body),

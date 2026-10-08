@@ -11,7 +11,7 @@ import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
 async function fetchApp(input: string, init?: RequestInit) {
-  const request = new Request(`https://example.com${input}`, init);
+  const request = new Request(`https://localhost${input}`, init);
   const ctx = createExecutionContext();
   const response = await app.fetch(request, env, ctx);
   await waitOnExecutionContext(ctx);
@@ -22,7 +22,7 @@ async function fetchApp(input: string, init?: RequestInit) {
 async function signUp(email: string): Promise<string> {
   const response = await fetchApp('/api/auth/sign-up/email', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: 'https://example.com' },
+    headers: { 'content-type': 'application/json', origin: 'https://localhost' },
     body: JSON.stringify({ email, name: 'Test User', password: 'correct horse battery staple' }),
   });
   expect(response.status).toBe(200);
@@ -162,6 +162,33 @@ describe('photo upload', () => {
     const buffer = new Uint8Array(await response.arrayBuffer());
     expect(buffer).toEqual(payload);
   });
+
+  it('a photo is served sandboxed, uncached and unsniffed', async () => {
+    const token = await signUp('p7b@example.com');
+    await upload(token, 'photo-7b', bytes(42));
+
+    const response = await fetchApp('/photos/photo-7b', { headers: authHeaders(token) });
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    expect(response.headers.get('content-security-policy')).toBe("default-src 'none'; sandbox");
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it.each(['image/svg+xml', 'text/html', 'application/octet-stream', ''])(
+    'refuses an upload typed %j with 415, and nothing is stored',
+    async (contentType) => {
+      const token = await signUp('p-type@example.com');
+      const response = await fetchApp('/photos/upload/photo-type', {
+        method: 'POST',
+        headers: authHeaders(token, { 'content-type': contentType, 'content-length': '10' }),
+        body: bytes(10),
+      });
+      expect(response.status).toBe(415);
+      expect(await response.json()).toEqual({ error: 'unsupported_media_type' });
+      const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM photos').first<{ n: number }>();
+      expect(row?.n).toBe(0);
+    },
+  );
 
   it('P8 GET as a different authenticated user is 404', async () => {
     const owner = await signUp('p8-owner@example.com');

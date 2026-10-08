@@ -14,6 +14,9 @@ export interface PhotoEnv {
   Variables: { userId: string };
 }
 
+/** Raster images only: no image/svg+xml, which can carry script. */
+const PHOTO_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 function r2Key(userId: string, photoId: string): string {
   return `${userId}/${photoId}`;
 }
@@ -40,6 +43,12 @@ export function createPhotoRoutes(
     const photoId = c.req.param('photoId');
     const userId = c.get('userId');
     const db: Db = createDb(c.env.DB);
+
+    // It is echoed back on download; the app sends image/jpeg.
+    const contentType = (c.req.header('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
+    if (!PHOTO_CONTENT_TYPES.has(contentType)) {
+      return c.json({ error: 'unsupported_media_type' }, 415);
+    }
 
     const contentLengthHeader = c.req.header('content-length');
     if (!contentLengthHeader) {
@@ -77,7 +86,6 @@ export function createPhotoRoutes(
       return c.json({ error: 'photo_too_large' }, 413);
     }
 
-    const contentType = c.req.header('content-type') ?? 'application/octet-stream';
     await c.env.PHOTOS.put(r2Key(userId, photoId), buffer, {
       httpMetadata: { contentType },
     });

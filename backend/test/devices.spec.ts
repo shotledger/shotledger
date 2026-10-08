@@ -13,7 +13,7 @@ import { createAccountApi, createHttpSyncTransport, PROTOCOL_VERSION } from '@sh
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
-const BASE_URL = 'https://example.com';
+const BASE_URL = 'https://localhost';
 const PASSWORD = 'correct horse battery staple';
 
 /** A bearer token is the session token plus its signature. */

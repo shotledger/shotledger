@@ -42,7 +42,7 @@ function uuid(seed: string): string {
 
 /** `token: null` means "send no Authorization header at all". */
 async function call(path: string, body: unknown, token: string | null = USER_A_TOKEN) {
-  const request = new Request(`https://example.com${path}`, {
+  const request = new Request(`https://localhost${path}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

@@ -9,9 +9,26 @@ function declarations(palette: Record<string, string>): string {
     .join(' ');
 }
 
-export function installTheme(): void {
-  const style = document.createElement('style');
-  style.textContent = `:root { ${declarations(Colors.light)} }
-@media (prefers-color-scheme: dark) { :root { ${declarations(Colors.dark)} } }`;
-  document.head.append(style);
+/**
+ * The CSP (web/public/_headers, no 'unsafe-inline') blocks a <style>
+ * element, so this goes through the CSSOM: a constructed sheet where the
+ * browser has `adoptedStyleSheets`, else the properties on <html> itself,
+ * swapped when the colour scheme changes.
+ */
+export function installTheme(doc: Document = document, win: Window = window): void {
+  if ('adoptedStyleSheets' in doc && typeof CSSStyleSheet !== 'undefined') {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(`:root { ${declarations(Colors.light)} }
+@media (prefers-color-scheme: dark) { :root { ${declarations(Colors.dark)} } }`);
+    doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, sheet];
+    return;
+  }
+  const dark = win.matchMedia('(prefers-color-scheme: dark)');
+  const apply = () => {
+    for (const [key, value] of Object.entries(dark.matches ? Colors.dark : Colors.light)) {
+      doc.documentElement.style.setProperty(`--${kebab(key)}`, value);
+    }
+  };
+  apply();
+  dark.addEventListener('change', apply);
 }

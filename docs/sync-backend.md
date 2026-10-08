@@ -107,7 +107,21 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
   separate.
 - `pnpm mutation` — Stryker, now including `shared/src/sync/*.ts` and
   `backend/src/lib/{quota,rate-limit,authz}.ts`.
-- Never deploy from this task: `backend/wrangler.jsonc`'s `d1_databases`
-  and `r2_buckets` entries use placeholder ids and are local/test-only;
-  `vars.BETTER_AUTH_SECRET` is a labeled dev placeholder — production value
-  is a `wrangler secret`, provisioned by the maintainer, never committed.
+- Never deploy from this task. The top level of `backend/wrangler.jsonc` is
+  local/test-only: its `d1_databases` and `r2_buckets` use placeholder ids,
+  and `vars.ENVIRONMENT` is `development`, where `createAuth` falls back to
+  its built-in `DEV_SECRET` and the Worker answers local hosts only; no
+  secret is in the config. The deployed envs,
+  `env.staging` and `env.production`, carry `REPLACE_ME` placeholders for
+  the maintainer to fill, set `ENVIRONMENT`, `BETTER_AUTH_URL` and
+  `BETTER_AUTH_TRUSTED_ORIGINS` as `vars`, and require `BETTER_AUTH_SECRET`
+  as a `wrangler secret`. Outside `development`, `createAuth` throws
+  `AuthConfigError` on a missing, short (under 32 characters) or dev secret
+  and on a `BETTER_AUTH_URL` that is missing, not `https:` or the
+  `.invalid` placeholder, and better-auth's rate limiter is on, keyed by
+  `CF-Connecting-IP`, stored in D1 (`rate_limit`), counting real endpoints
+  only, and purged by the env's cron trigger. The deploy steps are in
+  `docs/release.md`.
+- Photo uploads accept `image/jpeg`, `image/png` and `image/webp` only
+  (`415 unsupported_media_type` otherwise); a photo is served with
+  `Content-Security-Policy: default-src 'none'; sandbox`.

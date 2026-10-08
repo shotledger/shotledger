@@ -46,20 +46,71 @@ Sync is opt-in and the app is fully functional without it, so these steps
 are only needed before a build that should offer accounts. `wrangler
 deploy` is forbidden to agents; every command below is the maintainer's.
 
-- [ ] Create the real D1 database and R2 bucket, then replace the
-      placeholder `database_id` and `bucket_name` in
-      `backend/wrangler.jsonc`. The committed values are deliberately
-      unusable.
-- [ ] `cd backend && wrangler d1 migrations apply <db> --remote` to apply
-      `backend/migrations/` (sync, auth, photo schemas).
-- [ ] `wrangler secret put BETTER_AUTH_SECRET` — **never** the
-      `dev-placeholder-secret-never-use-in-production` value in
-      `wrangler.jsonc`'s `vars`, which exists only so the local test suite
-      can run. The real value lives under `~/cloud/agents/secrets/shotledger/`.
-- [ ] `wrangler deploy`, then point the app at it: set
-      `expo.extra.apiBaseUrl` in `app/app.json` (or
-      `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to the deployed
-      hostname. The default is the `https://api.shotledger.app`
+One Worker serves both the sync API and the read-only web app (ADR 0013):
+`wrangler deploy` uploads `web/dist` as its static assets. There are two
+deployed environments in `backend/wrangler.jsonc`, `staging` and
+`production`, each with its own D1 database and R2 bucket. The top level of
+that file is local development and the test suite only, and Wrangler does
+not inherit its `vars` or bindings into a named environment. No secret is
+committed anywhere. Locally the Worker uses a built-in dev placeholder and
+then answers only `localhost`, `127.0.0.1` and `[::1]`, so the top level
+deployed by mistake serves nothing. A deployed env refuses to start (every
+auth request answers `500`, logged as `AuthConfigError`) when
+`BETTER_AUTH_SECRET` is missing, shorter than 32 characters or the dev
+placeholder, or when `BETTER_AUTH_URL` is not an `https://` origin or is
+still the `REPLACE_ME.invalid` placeholder. Try every step on `staging`
+first; for production, repeat it with `production`.
+
+What the deployed config already does:
+
+- better-auth takes its base URL and its extra trusted origins
+  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `app://`
+  scheme is always trusted) from the env's `vars`.
+- Its rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
+  (`rate_limit`). Sign-in and sign-up allow 5 attempts per 60 seconds per
+  address; other auth endpoints keep better-auth's defaults; paths that are
+  not endpoints are not counted. A cron trigger every 15 minutes deletes
+  rows whose window has passed.
+- `workers_dev` and `preview_urls` are off, so only the custom domain
+  serves the env.
+- The web app's responses carry a Content Security Policy and the other
+  security headers in `web/public/_headers`. The Worker's own routes send
+  `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, and
+  photos also a sandboxing CSP; photo uploads accept JPEG, PNG and WebP
+  only.
+- Logged errors carry their name and message, but a failed database
+  query's bound parameters (`params: …`) are redacted, both in the
+  Worker's error handler and in better-auth's logger.
+
+- [ ] **Decide the hostname(s).** That decision is the maintainer's and is
+      not recorded anywhere yet; nothing in the repo assumes one.
+- [ ] Create the env's D1 database and R2 bucket, then in its
+      `env.<name>` block of `backend/wrangler.jsonc` replace the
+      `REPLACE_ME` `database_id`, check the `bucket_name`, set
+      `BETTER_AUTH_URL` to the env's origin (`https://<hostname>`), and
+      uncomment its `routes` entry with the hostname. A deploy with a
+      `REPLACE_ME` value left in fails.
+- [ ] `cd backend && pnpm db:migrate:staging` to apply
+      `backend/migrations/` to the env's D1 database (the script runs
+      `wrangler d1 migrations apply` with `--remote --env staging`).
+- [ ] `wrangler secret put BETTER_AUTH_SECRET --env staging`, typing the
+      value at the prompt. The value lives under
+      `~/cloud/agents/secrets/shotledger/`, one per env, at least 32
+      characters (`openssl rand -base64 32`). Each env declares the
+      secret in `secrets.required`, so a deploy without it stops. A secret
+      put deploys at once, and creates the Worker if it does not exist yet.
+- [ ] `cd backend && pnpm deploy:staging`. The script builds `web/dist`
+      (`pnpm --filter @shotledger/web build`) and then runs
+      `wrangler deploy --env staging`, so a stale web build cannot ship. There is
+      deliberately no plain `deploy` script: the top level is not
+      deployable.
+- [ ] Smoke-test the env: the web app loads at `/` with no CSP errors in
+      the browser console, sign-in works from the web and from a dev build
+      of the app pointed at the env, and the sixth sign-in attempt within
+      60 seconds from one address is refused with `429`.
+- [ ] Point the app at production: set `expo.extra.apiBaseUrl` in
+      `app/app.json` (or `EXPO_PUBLIC_API_BASE_URL` for a one-off build) to
+      the production origin. The default is the `https://api.shotledger.app`
       placeholder, which does not resolve.
 - [ ] Play Console **Data safety** form now has real answers to give: with
       sync enabled the app collects an email address and the logbook rows

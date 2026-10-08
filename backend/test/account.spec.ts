@@ -10,7 +10,7 @@ import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
 
 async function fetchApp(input: string, init?: RequestInit) {
-  const request = new Request(`https://example.com${input}`, init);
+  const request = new Request(`https://localhost${input}`, init);
   const ctx = createExecutionContext();
   const response = await app.fetch(request, env, ctx);
   await waitOnExecutionContext(ctx);
@@ -20,7 +20,7 @@ async function fetchApp(input: string, init?: RequestInit) {
 async function signUp(email: string): Promise<string> {
   const response = await fetchApp('/api/auth/sign-up/email', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: 'https://example.com' },
+    headers: { 'content-type': 'application/json', origin: 'https://localhost' },
     body: JSON.stringify({ email, name: 'Test User', password: 'correct horse battery staple' }),
   });
   expect(response.status).toBe(200);
