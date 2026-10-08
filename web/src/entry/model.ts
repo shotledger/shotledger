@@ -4,16 +4,21 @@
 import {
   buildProgramSkeleton,
   decimalAllowed,
+  defaultShooterClass,
   disciplinesForRegulations,
   getProgram,
-  rankEventsForShooter,
   requireDiscipline,
   scoringModeFor,
   type Discipline,
   type ShooterProfile,
 } from '@shotledger/shared/src/disciplines';
-import { defaultProgramFor } from '@shotledger/shared/src/disciplines/session-defaults';
-import { effectiveRegulationIds, REGULATIONS } from '@shotledger/shared/src/regulations/registry';
+import {
+  defaultProgramFor,
+  eventsUnder,
+  preferredEventId,
+  shooterClassesInOrder,
+} from '@shotledger/shared/src/disciplines/session-defaults';
+import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import type { ScoringMode } from '@shotledger/shared/src/scoring/entry';
 import { parseSeriesText, type SeriesTextError } from '@shotledger/shared/src/scoring/series-text';
 import type { SessionEntryDraft } from '@shotledger/shared/src/sync-client/session-entry';
@@ -50,14 +55,11 @@ export interface EntryForm {
   decimalScoring: boolean;
   seriesLengthText: string;
   rows: Row[];
+  /** The synced profile the klass and event defaults come from (C6); not stored. */
+  profile: ShooterProfile;
+  /** The year eligibility is judged in: the year the form opened, as on the phone. */
+  eligibilityYear: number;
 }
-
-// The profile settings are not read in this layer (spec C6).
-const EMPTY_PROFILE: ShooterProfile = {
-  birthYear: null,
-  skillClass: null,
-  competesInWomensClasses: false,
-};
 
 let lastKey = 0;
 const newRow = (text = '', isSighter = false): Row => ({ key: (lastKey += 1), text, isSighter });
@@ -73,19 +75,29 @@ function firstRingDiscipline(regulationId: string): string {
   return (rings.find((d) => d.federation !== 'generic') ?? rings[0]!).id;
 }
 
-/** The events on offer, ranked against an empty profile (C6), as the phone ranks them this year. */
-export function eventsFor(form: Pick<EntryForm, 'regulationId' | 'disciplineId'>) {
-  return rankEventsForShooter(
-    EMPTY_PROFILE,
+type Defaults = Pick<EntryForm, 'regulationId' | 'disciplineId' | 'profile' | 'eligibilityYear'>;
+
+/** The events on offer, ranked for the shooter as the phone ranks them (C6). */
+export function eventsFor(form: Defaults) {
+  return eventsUnder(form.regulationId, form.disciplineId, form.profile, form.eligibilityYear);
+}
+
+const preferredEvent = (form: Defaults) =>
+  preferredEventId(form.regulationId, form.disciplineId, form.profile, form.eligibilityYear);
+
+/** Every klass of the discipline, the shooter's own first (C6). */
+export function classesFor(form: Defaults & Pick<EntryForm, 'weaponGroup'>): string[] {
+  return shooterClassesInOrder(
     form.disciplineId,
-    new Date().getFullYear(),
-    effectiveRegulationIds([form.regulationId]),
+    form.profile,
+    form.eligibilityYear,
+    form.weaponGroup,
   );
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export function initialForm(now: Date): EntryForm {
+export function initialForm(now: Date, profile: ShooterProfile): EntryForm {
   const regulationId = REGULATIONS[0]!.id;
   const disciplineId = firstRingDiscipline(regulationId);
   const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -103,15 +115,18 @@ export function initialForm(now: Date): EntryForm {
     isChampionship: false,
     competitionName: '',
     weaponGroup: null,
-    shooterClass: null,
+    // Prefilled from the profile, as the phone does; kept across later changes.
+    shooterClass: defaultShooterClass(profile, now.getFullYear()),
     eventId: null,
     firearmId: null,
     ammoLotId: null,
     decimalScoring: false,
     seriesLengthText: String(requireDiscipline(disciplineId).defaultSeriesLength),
     rows: [newRow()],
+    profile,
+    eligibilityYear: now.getFullYear(),
   };
-  return { ...form, eventId: eventsFor(form)[0]?.id ?? null };
+  return { ...form, eventId: preferredEvent(form) };
 }
 
 const programOf = (form: Pick<EntryForm, 'programId'>) =>
@@ -169,7 +184,7 @@ export function withDiscipline(
     seriesLengthText: String(requireDiscipline(disciplineId).defaultSeriesLength),
   };
   return withProgram(
-    { ...next, eventId: eventsFor(next)[0]?.id ?? null },
+    { ...next, eventId: preferredEvent(next) },
     defaultProgramFor(form.type, disciplineId),
   );
 }

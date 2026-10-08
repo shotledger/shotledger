@@ -1,9 +1,16 @@
-import { buildProgramSkeleton, getProgram } from '@shotledger/shared/src/disciplines';
+import {
+  buildProgramSkeleton,
+  getProgram,
+  shooterClassesForDiscipline,
+  type ShooterProfile,
+} from '@shotledger/shared/src/disciplines';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import { describe, expect, it } from 'vitest';
 
 import {
   addRow,
   canMarkSighter,
+  classesFor,
   decimalShown,
   eventsFor,
   initialForm,
@@ -23,6 +30,14 @@ import {
 
 const NOW = new Date(2026, 9, 7, 18, 45);
 
+const NO_PROFILE: ShooterProfile = {
+  birthYear: null,
+  skillClass: null,
+  competesInWomensClasses: false,
+};
+// Born 1964, klass 2, enters the women's classes: Dam2 and VetY are hers too.
+const HER: ShooterProfile = { birthYear: 1964, skillClass: '2', competesInWomensClasses: true };
+
 describe('the Enter Series form', () => {
   it('U5 the discipline options exclude hits disciplines', () => {
     const spsf = ringDisciplines('spsf').map((d) => d.id);
@@ -32,7 +47,7 @@ describe('the Enter Series form', () => {
   });
 
   it('starts on now, in the first regulation, a training session with one free row', () => {
-    const form = initialForm(NOW);
+    const form = initialForm(NOW, NO_PROFILE);
     expect(form).toMatchObject({
       type: 'training',
       regulationId: 'spsf',
@@ -58,7 +73,7 @@ describe('the Enter Series form', () => {
   });
 
   it('U6 Enter in the last free-format row adds a row; in a fixed-format skeleton it does not', () => {
-    const free = initialForm(NOW);
+    const free = initialForm(NOW, NO_PROFILE);
     const entered = onRowEnter(free, 0);
     expect(entered.form.rows).toHaveLength(2);
     expect(entered.focus).toBe(1);
@@ -69,7 +84,7 @@ describe('the Enter Series form', () => {
 
     const standard = getProgram('issf-standard-pistol')!;
     const fixed = withDiscipline(
-      withType(initialForm(NOW), 'competition'),
+      withType(initialForm(NOW, NO_PROFILE), 'competition'),
       'issf-standard-pistol',
       'issf',
     );
@@ -84,7 +99,7 @@ describe('the Enter Series form', () => {
   });
 
   it('keeps typed text across a re-layout and drops skeleton sighters in free format', () => {
-    let form = withType(initialForm(NOW), 'competition');
+    let form = withType(initialForm(NOW, NO_PROFILE), 'competition');
     form = withDiscipline(form, 'issf-standard-pistol', 'issf');
     form = { ...form, rows: form.rows.map((r, i) => (i === 1 ? { ...r, text: '10 9' } : r)) };
     const free = withProgram(form, null);
@@ -98,7 +113,7 @@ describe('the Enter Series form', () => {
 
   it('free format drops trailing rows holding only spaces, and keeps one blank row', () => {
     const form = {
-      ...initialForm(NOW),
+      ...initialForm(NOW, NO_PROFILE),
       rows: [
         { key: 5, text: ' ', isSighter: false },
         { key: 6, text: '  ', isSighter: false },
@@ -108,7 +123,7 @@ describe('the Enter Series form', () => {
   });
 
   it('allows one sighter row in free format, none to tick in a fixed one', () => {
-    const form = addRow(initialForm(NOW));
+    const form = addRow(initialForm(NOW, NO_PROFILE));
     expect(canMarkSighter(form, 0)).toBe(true);
     const marked = { ...form, rows: form.rows.map((r, i) => ({ ...r, isSighter: i === 0 })) };
     expect(canMarkSighter(marked, 0)).toBe(true);
@@ -130,7 +145,7 @@ describe('the Enter Series form', () => {
 
   it('builds the draft the shared builder takes', () => {
     const form = {
-      ...initialForm(NOW),
+      ...initialForm(NOW, NO_PROFILE),
       seriesLengthText: ' 7 ',
       name: ' Evening ',
       rows: [{ key: 1, text: '10 9', isSighter: false }],
@@ -158,7 +173,7 @@ describe('the Enter Series form', () => {
   });
 
   it('a new regulation or discipline drops the weapon group and lands on its events', () => {
-    const spsf = { ...initialForm(NOW), weaponGroup: 'spsf:C' };
+    const spsf = { ...initialForm(NOW, NO_PROFILE), weaponGroup: 'spsf:C' };
     const issf = withRegulation(spsf, 'issf');
     expect(issf.regulationId).toBe('issf');
     expect(issf.weaponGroup).toBeNull();
@@ -169,7 +184,7 @@ describe('the Enter Series form', () => {
   });
 
   it('decimal scoring is offered only where the discipline allows it, and reset by a program', () => {
-    const generic = withDiscipline(initialForm(NOW), 'generic-rings');
+    const generic = withDiscipline(initialForm(NOW, NO_PROFILE), 'generic-rings');
     expect(decimalShown(generic)).toBe(true);
     const decimal = { ...generic, decimalScoring: true };
     expect(modeOf(decimal)).toBe('decimal');
@@ -177,7 +192,7 @@ describe('the Enter Series form', () => {
     expect(withProgram(decimal, null).decimalScoring).toBe(false);
 
     // A choice left over where it is not offered never reaches the draft.
-    const precision = { ...initialForm(NOW), decimalScoring: true };
+    const precision = { ...initialForm(NOW, NO_PROFILE), decimalScoring: true };
     expect(decimalShown(precision)).toBe(false);
     expect(toDraft(precision, '').decimalScoring).toBe(false);
     expect(modeOf(precision)).toBe('integer');
@@ -185,7 +200,7 @@ describe('the Enter Series form', () => {
 
   it('switching to a fixed format keeps typed rows past its skeleton, as ordinary series', () => {
     const competition = withDiscipline(
-      withType(initialForm(NOW), 'competition'),
+      withType(initialForm(NOW, NO_PROFILE), 'competition'),
       'issf-standard-pistol',
       'issf',
     );
@@ -205,7 +220,10 @@ describe('the Enter Series form', () => {
   });
 
   it('U12 appending blank rows sends the same session; any other edit does not (R21)', () => {
-    const form = { ...initialForm(NOW), rows: [{ key: 1, text: '10 9', isSighter: false }] };
+    const form = {
+      ...initialForm(NOW, NO_PROFILE),
+      rows: [{ key: 1, text: '10 9', isSighter: false }],
+    };
     expect(sendsTheSame(form, addRow(form))).toBe(true);
     expect(sendsTheSame(form, onRowEnter(form, 0).form)).toBe(true);
     expect(sendsTheSame(form, addRow(addRow(form)))).toBe(true);
@@ -234,23 +252,81 @@ describe('the Enter Series form', () => {
   });
 
   it('a form with no rows gets one blank row back', () => {
-    const empty = { ...initialForm(NOW), rows: [] };
+    const empty = { ...initialForm(NOW, NO_PROFILE), rows: [] };
     expect(withProgram(empty, null).rows.map((r) => r.text)).toEqual(['']);
   });
 
   it('a regulation with no federation discipline lands on the first ring discipline', () => {
-    const none = withRegulation(initialForm(NOW), 'none');
+    const none = withRegulation(initialForm(NOW, NO_PROFILE), 'none');
     expect(none.disciplineId).toBe(ringDisciplines('none')[0]!.id);
-    expect(withRegulation(initialForm(NOW), 'spsf').disciplineId).toBe('spsf-precision');
+    expect(withRegulation(initialForm(NOW, NO_PROFILE), 'spsf').disciplineId).toBe(
+      'spsf-precision',
+    );
   });
 
   it('the draft: no start time when the inputs are incomplete, no series length under a program', () => {
-    const form = initialForm(NOW);
+    const form = initialForm(NOW, NO_PROFILE);
     expect(toDraft({ ...form, date: '' }, '').startedAt).toBe('');
     const program = withType(form, 'competition');
     expect(program.programId).not.toBeNull();
     expect(toDraft({ ...program, seriesLengthText: '7' }, '').seriesLength).toBeNull();
     // An id this build does not know lays out nothing.
     expect(isFixed({ programId: 'no-such-program' })).toBe(false);
+  });
+});
+
+describe('prefill from the synced profile (C6)', () => {
+  const competition = (profile: ShooterProfile) =>
+    withType(initialForm(NOW, profile), 'competition');
+
+  it('F1 a set profile preselects the klass, ranks the klasser and the ISSF events', () => {
+    const form = initialForm(NOW, HER);
+    expect(form.shooterClass).toBe('2');
+    expect(classesFor(form).slice(0, 3)).toEqual(['2', 'Dam2', 'VetY']);
+    // The klass is kept across a discipline and a type change, as on the phone.
+    expect(competition(HER).shooterClass).toBe('2');
+    expect(withDiscipline(form, 'spsf-milsnabb').shooterClass).toBe('2');
+    // A gun group narrows hers: Dam and Vet exist in vapengrupp C only.
+    expect(classesFor({ ...form, weaponGroup: 'spsf:A' }).slice(0, 2)).toEqual(['2', '1']);
+    // ISSF: the event she is eligible for comes first, and is preselected.
+    const issf = withDiscipline(withRegulation(competition(HER), 'issf'), 'issf-air-pistol');
+    expect(eventsFor(issf).map((event) => event.id)[0]).toBe('issf-air-pistol:women:open');
+    expect(issf.eventId).toBe('issf-air-pistol:women:open');
+    // Eligibility is judged in the year of `now`, as the phone judges it this year.
+    const junior: ShooterProfile = { ...NO_PROFILE, birthYear: 2010 };
+    expect(initialForm(NOW, junior).shooterClass).toBe('Jun');
+    expect(initialForm(new Date(2060, 0, 1), junior).shooterClass).toBeNull();
+  });
+
+  it('F2 an unset profile preselects no klass and keeps every list in its own order', () => {
+    const form = initialForm(NOW, NO_PROFILE);
+    expect(form.shooterClass).toBeNull();
+    expect(classesFor(form)).toEqual(shooterClassesForDiscipline('spsf-precision'));
+    const issf = withDiscipline(withRegulation(competition(NO_PROFILE), 'issf'), 'issf-air-pistol');
+    expect(issf.eventId).toBe('issf-air-pistol:men:open');
+  });
+
+  it('F3 unrecognised synced values prefill nothing, as if unset', () => {
+    const row = (id: string, value: string) =>
+      [id, { id, value, created_at: '', updated_at: '', deleted_at: null }] as const;
+    const garbled = readAccountSettings(
+      new Map([
+        row('birthYear', '"1964"'),
+        row('skillClass', '"4"'),
+        row('competesInWomensClasses', '1'),
+      ]),
+    );
+    const form = initialForm(NOW, garbled);
+    expect(form.shooterClass).toBeNull();
+    expect(classesFor(form)).toEqual(shooterClassesForDiscipline('spsf-precision'));
+    // And a well-formed one is read: the same rows, written as the phone writes them.
+    const read = readAccountSettings(
+      new Map([
+        row('birthYear', '1964'),
+        row('skillClass', '"2"'),
+        row('competesInWomensClasses', 'true'),
+      ]),
+    );
+    expect(initialForm(NOW, read).shooterClass).toBe('2');
   });
 });

@@ -7,7 +7,6 @@ import {
   formatShooterClass,
   programsForDiscipline,
   requireDiscipline,
-  shooterClassesForDiscipline,
   weaponGroupsForDiscipline,
 } from '@shotledger/shared/src/disciplines';
 import { derivedWeaponGroup } from '@shotledger/shared/src/disciplines/session-defaults';
@@ -18,6 +17,7 @@ import {
 import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import {
   buildSessionEntry,
   type EntryError,
@@ -41,6 +41,7 @@ import type { PulledTables } from '../pull';
 import {
   addRow,
   canMarkSighter,
+  classesFor,
   decimalShown,
   eventsFor,
   initialForm,
@@ -161,7 +162,9 @@ export function Entry({
 }) {
   const { t, i18n } = useTranslation();
   const online = useOnline();
-  const [form, setForm] = useState<EntryForm>(() => initialForm(new Date()));
+  // The synced profile prefills the klass and ranks the events, as on the phone (C6).
+  const profile = useMemo(() => readAccountSettings(tables.settings), [tables]);
+  const [form, setForm] = useState<EntryForm>(() => initialForm(new Date(), profile));
   const [state, setState] = useState<SaveState>(IDLE);
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
   // A row added by Enter exists only after the next render.
@@ -195,7 +198,7 @@ export function Entry({
   const discipline = requireDiscipline(form.disciplineId);
   const programs = programsForDiscipline(form.disciplineId);
   const groups = weaponGroupsForDiscipline(form.disciplineId);
-  const classes = shooterClassesForDiscipline(form.disciplineId);
+  const classes = classesFor(form);
   const events = eventsFor(form);
   const mode = modeOf(form);
   const fixed = isFixed(form);
@@ -283,7 +286,7 @@ export function Entry({
     )
       .then((next) => {
         setState(next);
-        if (next.status.kind === 'saved') setForm(initialForm(new Date()));
+        if (next.status.kind === 'saved') setForm(initialForm(new Date(), profile));
       })
       // save() catches what it calls; this is the last guard against "saving" forever (R18).
       .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
