@@ -356,6 +356,18 @@ unchanged. `--jitless`, interleaved with `main` on 12 of those canvases:
 | run at 5.6 mm      | 14.1 ms |      7.7 ms |
 | run at 2.8 mm      |  9.9 ms |      4.7 ms |
 
+The guard reads only candidates with a blob under the peak, and about one
+peak in five of the half-calibre run has none. That run now drops those peaks
+after the blob shape (`holeCandidates`' `blobOnly`), before `holeFeatures` and
+the edge straightness. The calibre's run keeps every peak, because the
+suggestions reuse those candidates. On the same 184 canvases, every guard
+verdict and half-run decision is the same as before, the calibre's candidates
+are the same, and the half-calibre run's are exactly the previous run's with
+`b_area` above 0 (`isDeepStrictEqual`); 20 % of the 42,667 half-calibre peaks
+are dropped. Under `--jitless`, interleaved on the same 12 canvases, the
+features of the run at 2.8 mm took 14.3 s in all against 17.5 s: 3.8 ms
+against 4.7 ms a peak.
+
 ## 2026-10-06: asking for the face when the X line is missing
 
 Issue #526. Precision prints an X ring at 12.5 mm inside its 10; milsnabb

@@ -135,7 +135,9 @@ function guardRow(cv: Cv, image: GrayImage, name: string, known?: DiscRun) {
   }
   // The hole-size guard as scan.tsx runs it.
   const tg = performance.now();
-  const holeSize = holeSizeCheck(canvas, FACE, CALIBER_MM, (c, f) => holeCandidates(c, f));
+  const holeSize = holeSizeCheck(canvas, FACE, CALIBER_MM, (c, f, scope) =>
+    holeCandidates(c, f, undefined, undefined, scope),
+  );
   const msGuard = Math.round(performance.now() - tg);
   const face = proposalFaceOf(FACE, CALIBER_MM);
   // The suggestions from the guard's candidates, as scan.tsx places them,

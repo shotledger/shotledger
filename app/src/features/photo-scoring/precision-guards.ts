@@ -8,6 +8,7 @@ import type { XRingReading } from './closeup-lock';
 import type { Homography } from './corners';
 
 import {
+  type CandidateScope,
   type HoleCandidate,
   HOLE_PROPOSAL_THRESHOLD,
   MERGE_RADIUS_D,
@@ -42,20 +43,28 @@ export function proposalFaceOf(face: TargetFaceDefinition, caliberMm: number): P
   };
 }
 
+/** `holeCandidates` on a canvas, as the caller runs it (native maps on a
+ *  device); `scope` goes through to it. */
+export type CandidatesOf = (
+  canvas: RectifiedCanvas,
+  face: ProposalFace,
+  scope: CandidateScope,
+) => readonly HoleCandidate[];
+
 /**
  * The diameters (mm) of the holes the proposals find through the lock at the
  * calibre given, best first, one per hole. A hole's diameter is its blob's
  * area as a disc's: the probabilities saturate, the blob does not. A
- * candidate with no blob under its peak is skipped.
+ * candidate with no blob under its peak is skipped, so none is asked for.
  */
 export function holeDiametersMm(
   canvas: RectifiedCanvas,
   face: ProposalFace,
-  candidatesOf: (canvas: RectifiedCanvas, face: ProposalFace) => readonly HoleCandidate[],
+  candidatesOf: CandidatesOf,
 ): number[] {
   const d = face.caliberMm * canvas.pxPerMm;
   const kept: HoleCandidate[] = [];
-  for (const c of candidatesOf(canvas, face)
+  for (const c of candidatesOf(canvas, face, { blobOnly: true })
     .filter((c) => c.probability >= HOLE_SIZE_GUARD.minProbability && c.features.b_area > 0)
     .sort((a, b) => b.probability - a.probability)) {
     if (kept.some((k) => Math.hypot(c.x - k.x, c.y - k.y) < MERGE_RADIUS_D * d)) continue;
@@ -90,14 +99,15 @@ export function holesTooSmall(
 /**
  * The hole-size guard on a canvas: `holesTooSmall` with the half-calibre run
  * skipped when the calibre's run reads a hole, since that abstains anyway.
- * `candidates` are the calibre's run, the same computation as the
- * suggestions pass on this canvas, which reuses them.
+ * `candidates` are the calibre's run, every peak, the same computation as
+ * the suggestions pass on this canvas, which reuses them; only the
+ * half-calibre run skips the peaks with no blob.
  */
 export function holeSizeCheck(
   canvas: RectifiedCanvas,
   face: TargetFaceDefinition,
   caliberMm: number,
-  candidatesOf: (canvas: RectifiedCanvas, face: ProposalFace) => readonly HoleCandidate[],
+  candidatesOf: CandidatesOf,
 ): {
   readonly tooSmall: boolean;
   readonly candidates: readonly HoleCandidate[];
@@ -105,7 +115,7 @@ export function holeSizeCheck(
   readonly halfRun: boolean;
 } {
   const full = proposalFaceOf(face, caliberMm);
-  const candidates = candidatesOf(canvas, full);
+  const candidates = candidatesOf(canvas, full, {});
   const fullMm = holeDiametersMm(canvas, full, () => candidates);
   if (fullMm.length > 0) return { tooSmall: false, candidates, halfRun: false };
   const halfMm = holeDiametersMm(canvas, proposalFaceOf(face, caliberMm / 2), candidatesOf);

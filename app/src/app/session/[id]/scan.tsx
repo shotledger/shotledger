@@ -505,12 +505,23 @@ export default function ScanScreen() {
     const runs: string[] = [];
     let halfRun = false;
     try {
-      const check = holeSizeCheck(rectified, face, markState.caliberMm, (canvas, proposalFace) => {
-        const timings = {} as DetectorTimings;
-        const found = holeCandidates(canvas, proposalFace, nativeMapOps ?? undefined, timings);
-        runs.push(`${proposalFace.caliberMm} mm: ${detectorReading(timings)}`);
-        return found;
-      });
+      const check = holeSizeCheck(
+        rectified,
+        face,
+        markState.caliberMm,
+        (canvas, proposalFace, scope) => {
+          const timings = {} as DetectorTimings;
+          const found = holeCandidates(
+            canvas,
+            proposalFace,
+            nativeMapOps ?? undefined,
+            timings,
+            scope,
+          );
+          runs.push(`${proposalFace.caliberMm} mm: ${detectorReading(timings)}`);
+          return found;
+        },
+      );
       halfRun = check.halfRun;
       return check;
     } catch (error: unknown) {
