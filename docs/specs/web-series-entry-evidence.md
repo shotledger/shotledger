@@ -1,15 +1,20 @@
 # Evidence report — web series entry and the web write client (Tier 3)
 
 Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
-§7 Revisions R1–R25.
+§7 Revisions R1–R27.
 
-- **Spec approval:** relayed, not first-hand. An orchestrator session relayed
-  "approved your spec as is, C1–C9 unchanged" on 2026-10-06. Revisions R1–R25
-  were added by the session that took the work over and have **not** been
-  approved; the PR lists them for the maintainer.
-- **Source state:** commit `5368276` (the code after both review rounds; this
-  report is committed on top of it). Branch `feat/web-series-entry-impl`, from `origin/main` at
-  `5edc3cf`.
+- **Spec approval:** first-hand, by the maintainer on 2026-10-08: C1–C3 and
+  C7–C9 as written; C4 and C5 as deferrals, with follow-up issues #688 (fält
+  entry), #689 (rounds-only and final series), #690 (tags on a new web
+  session), #691 (photo upload from the web) and #692 (edit and delete a
+  session on the web); C6 changed (prefill from the synced profile); R1–R25
+  approved, R15 changed to `Europe/Stockholm`. R26 (the C6 change as built)
+  and R27 (the rebase) were written after that approval and await the
+  maintainer's look.
+- **Source state:** the code at `feat(web): prefill Enter Series from the
+synced profile` on branch `feat/web-series-entry-impl`, rebased onto
+  `origin/main` at `7cde3bf` (#694 merged, so vitest runs in
+  `Europe/Stockholm`); this report and the spec are committed on top of it.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2 / native 7.0.2;
   backend vitest 4.1.11 with `@cloudflare/vitest-plugin` 1.3.6).
@@ -17,8 +22,9 @@ Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
   with the 100% coverage gate, jest); `cd backend && npx vitest run`;
   `pnpm mutation` (or the `--mutate` subset below).
 - **Independent verification:** one round, on the state before the review
-  fixes (`d6e1168`): findings below. The fixed state (`73aecb6`) has **not**
-  been re-verified, so it is a declared downgrade for that state.
+  fixes (`d6e1168`): findings below. Neither the fixed state nor the rebased
+  state with the profile prefill has been re-verified, so it is a declared
+  downgrade for those states.
 
 ## Failure model (Tier 3)
 
@@ -33,45 +39,52 @@ Spec: [`web-series-entry-spec.md`](web-series-entry-spec.md), including its
 | A request the server refuses for size                             | E13 (≤ `PUSH_BATCH_MAX`, every payload ≤ `MAX_PAYLOAD_BYTES`)                                         |
 | Shooting data left in the browser                                 | N1 grep gate (negative control below)                                                                 |
 | An automatic retry loop                                           | U2 "nothing retries on its own"; no timer in `save.ts`                                                |
-| The phone's new-session form changes behaviour                    | H1–H3 pin the moved helpers; app typecheck; jest suite                                                |
+| The phone's new-session form changes behaviour                    | H1–H5 pin the moved helpers; app typecheck; jest suite                                                |
+| The web prefills a klass or event the phone would not             | H4, H5 (the phone's own functions), F1–F3; browser check 8                                            |
+| A malformed synced setting breaks the form or prefills garbage    | P3, P4, F3 (reads as unset); browser check 8 (garbled account)                                        |
 
 ## Spec → test mapping
 
-| Scenario                                   | Test                                                                                   | Status |
-| ------------------------------------------ | -------------------------------------------------------------------------------------- | ------ |
-| T1–T5                                      | `shared/src/scoring/series-text.test.ts` › T1…T5                                       | pass   |
-| T6 format∘parse identity (fast-check, 500) | `series-text.test.ts` › T6                                                             | pass   |
-| T7 parse ⇔ keypad (fast-check, 1000, R7)   | `series-text.test.ts` › T7                                                             | pass   |
-| R1–R5                                      | `shared/src/sync-client/rows.test.ts`                                                  | pass   |
-| A1–A3                                      | `app/src/db/queries/web-rows.test.ts`                                                  | pass   |
-| E1–E14                                     | `shared/src/sync-client/session-entry.test.ts` (E2–E4, E9–E13 have several cases each) | pass   |
-| H1–H3 (H3 per R3)                          | `shared/src/disciplines/session-defaults.test.ts`                                      | pass   |
-| D1–D6 (D2 per R5)                          | `shared/src/sync-client/direct-push.test.ts`                                           | pass   |
-| W1–W4                                      | `backend/test/web-write.spec.ts` (Workers pool, real D1 + better-auth)                 | pass   |
-| U1–U4, U7 (R13), U8 (R14)                  | `web/src/entry/save.test.ts`                                                           | pass   |
-| U5, U6; local time in a non-UTC zone (R15) | `web/src/entry/model.test.ts`, `web/src/entry/started-at.test.ts`                      | pass   |
-| N1 no browser storage                      | `save.test.ts` › N1 grep gate                                                          | pass   |
-| N2 no outbox, no auto retry                | U2 (push count stays 1), D6                                                            | pass   |
-| N3 no new endpoint / protocol              | E13 (`PushRequestSchema`), W1 (real `/sync/push`)                                      | pass   |
-| N4 no `NOT NULL` as `null`                 | A1, A2                                                                                 | pass   |
-| N5 only session, series, shots, firearm    | E1, E11, W1 (exact table list)                                                         | pass   |
-| N6 no `session_tags` / `settings`          | review: `web/src/entry/` and the builders read neither (grep)                          | pass   |
-| N7 phone unchanged                         | H1–H3; `pnpm typecheck:app`; jest 698/698                                              | pass   |
-| Browser checks                             | headless Chromium over CDP against `wrangler dev`; see below                           | pass   |
+| Scenario                                   | Test                                                                                                                 | Status |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------ |
+| T1–T5                                      | `shared/src/scoring/series-text.test.ts` › T1…T5                                                                     | pass   |
+| T6 format∘parse identity (fast-check, 500) | `series-text.test.ts` › T6                                                                                           | pass   |
+| T7 parse ⇔ keypad (fast-check, 1000, R7)   | `series-text.test.ts` › T7                                                                                           | pass   |
+| R1–R5                                      | `shared/src/sync-client/rows.test.ts`                                                                                | pass   |
+| A1–A3                                      | `app/src/db/queries/web-rows.test.ts`                                                                                | pass   |
+| E1–E14                                     | `shared/src/sync-client/session-entry.test.ts` (E2–E4, E9–E13 have several cases each)                               | pass   |
+| H1–H5 (H3 per R3, H4–H5 per R26)           | `shared/src/disciplines/session-defaults.test.ts`                                                                    | pass   |
+| O1, O3 (R26)                               | `eligibility.test.ts`, `compliance/profile-registry.test.ts`                                                         | pass   |
+| P1–P4 (R26)                                | `shared/src/sync-client/account-settings.test.ts`                                                                    | pass   |
+| F1–F3 prefill (C6 as changed)              | `web/src/entry/model.test.ts` › prefill from the synced profile                                                      | pass   |
+| D1–D6 (D2 per R5)                          | `shared/src/sync-client/direct-push.test.ts`                                                                         | pass   |
+| W1–W4                                      | `backend/test/web-write.spec.ts` (Workers pool, real D1 + better-auth)                                               | pass   |
+| U1–U4, U7 (R13), U8 (R14)                  | `web/src/entry/save.test.ts`                                                                                         | pass   |
+| U5, U6; local time, CET and CEST (R15)     | `web/src/entry/model.test.ts`, `web/src/entry/started-at.test.ts`                                                    | pass   |
+| N1 no browser storage                      | `save.test.ts` › N1 grep gate                                                                                        | pass   |
+| N2 no outbox, no auto retry                | U2 (push count stays 1), D6                                                                                          | pass   |
+| N3 no new endpoint / protocol              | E13 (`PushRequestSchema`), W1 (real `/sync/push`)                                                                    | pass   |
+| N4 no `NOT NULL` as `null`                 | A1, A2                                                                                                               | pass   |
+| N5 only session, series, shots, firearm    | E1, E11, W1 (exact table list)                                                                                       | pass   |
+| N6 `settings` read only, no `session_tags` | E1 (exact tables built); grep: `settings` appears in `web/src/entry/` only as `readAccountSettings(tables.settings)` | pass   |
+| N7 phone unchanged                         | H1–H5; `pnpm typecheck:app`; jest 714/714                                                                            | pass   |
+| Browser checks                             | headless Chromium over CDP against `wrangler dev`; see below                                                         | pass   |
 
 ## Gauntlet (final fresh run, after the last code edit)
 
-| Layer                                           | Command                                                                                                  | Result                                                                                                                              |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                             | exit 0; vitest 170 files, 2985 tests passed; jest 698 passed                                                                        |
-| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                   | 100% statements 3473/3473, branches 2182/2182, functions 808/808, lines 2958/2958 (incl. `web/src/entry/*.ts`, `web/src/reauth.ts`) |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                       | 14 files, 153 tests passed (W1–W4 included)                                                                                         |
-| Mutation                                        | `npx stryker run --mutate <the five shared modules + web/src/entry/{model,save}.ts + web/src/reauth.ts>` | 686 killed + 1 timeout, 5 survived, 0 no-coverage: 99.28% (all 5 equivalent, below)                                                 |
-| Property-based                                  | T6 (500 runs × 2 modes), T7 (1000 runs × 2 modes)                                                        | pass                                                                                                                                |
-| Property suite alone                            | 3 hand mutants of the token grammar, `-t property`                                                       | 3/3 killed (after R7's near-miss tokens were added; before that, accepting `11` survived)                                           |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <new suites>`                                     | 24 files, 231 tests passed                                                                                                          |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                   | built, 24 translated pages current, no dangling anchors                                                                             |
-| Supply chain                                    | `pnpm licenses:check`                                                                                    | 97 packages, invariants hold; `uuidv7@1.2.1` was already in the lockfile (C7), no new package                                       |
+| Layer                                           | Command                                                                                                                                 | Result                                                                                                                                                                 |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                            | exit 0; vitest 180 files, 3062 tests passed; jest 714 passed                                                                                                           |
+| Coverage (gated)                                | `pnpm check` (`vitest run --coverage`, 100% threshold)                                                                                  | 100% statements 3538/3538, branches 2203/2203, functions 824/824, lines 3011/3011 (incl. `web/src/entry/*.ts`, `web/src/reauth.ts`, `account-settings.ts`)             |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                      | 18 files, 192 tests passed (W1–W4 included)                                                                                                                            |
+| Mutation (this round)                           | `npx stryker run --mutate shared/src/sync-client/account-settings.ts,shared/src/disciplines/session-defaults.ts,web/src/entry/model.ts` | 274 killed + 1 timeout, 7 survived, 0 no-coverage: 97.52% (all 7 equivalent, below)                                                                                    |
+| Mutation (before the rebase)                    | `npx stryker run --mutate <the five shared modules + web/src/entry/{model,save}.ts + web/src/reauth.ts>`                                | 686 killed + 1 timeout, 5 survived, 0 no-coverage: 99.28% (all 5 equivalent, below); those modules other than `model.ts` and `session-defaults.ts` are unchanged since |
+| Property-based                                  | T6 (500 runs × 2 modes), T7 (1000 runs × 2 modes)                                                                                       | pass                                                                                                                                                                   |
+| Property suite alone                            | 3 hand mutants of the token grammar, `-t property`                                                                                      | 3/3 killed (after R7's near-miss tokens were added; before that, accepting `11` survived)                                                                              |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <the PR's suites>`                                                               | 33 files, 340 tests passed                                                                                                                                             |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                  | built, 25 translated pages current, no dangling anchors                                                                                                                |
+| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status`                                                                                            | exit 0; 21 tests passed, 0 failed, 0 SVCs missing tests                                                                                                                |
+| Supply chain                                    | `pnpm licenses:check`                                                                                                                   | 97 packages, invariants hold; `uuidv7@1.2.1` was already in the lockfile (C7), no new package                                                                          |
 
 **The five surviving mutants are equivalent.** Four in `web/src/entry/model.ts`:
 `newRow`'s `lastKey += 1` → `-= 1` (keys stay unique, which is all a key
@@ -83,6 +96,18 @@ string only the looser regex admits is one `new Date` rejects, probed:
 never returns an empty list, because the generic disciplines survive every
 filter (ADR 0011), so `available[0]` is always defined. The line moved
 verbatim from the phone.
+
+The fresh run of this round has those same five (`firstDisciplineFor`'s
+`?.`, and `model.ts`'s four, at their new line numbers) and two more, in
+`account-settings.ts`, the reader moved down from #672, where its evidence
+classed them the same way: `row === undefined` → `false`
+(`isSyncableSettingRow` already answers false for an `undefined` payload, so
+the branch is taken either way; the check stays for the type narrowing), and
+`catch { return undefined; }` → `catch {}` (the function then falls off its
+end, which returns `undefined` too). The new shared helpers (`eventsUnder`,
+`preferredEventId`, `shooterClassesInOrder`) and the prefill in `model.ts`
+leave no survivor. `SKILL_CLASSES` and `PROFILE_SELECTIONS` are lookup tables
+under `ignoreStatic`; O1 and O3 pin every value.
 
 ## Real execution (browser checks)
 
@@ -104,11 +129,31 @@ driven over CDP. Screenshots are in the session scratchpad, not the repo.
    (`spsf:C`), firearm `round_count` 0 → 5.
 7. Swedish UI renders (`Serie 1`, `Provserie`).
 
+Re-run after the rebase and the profile prefill (2026-10-08), same set-up
+(`wrangler dev` on port 8797, the built web app, headless Chrome over CDP;
+three synthetic accounts seeded through `/sync/push`). Screenshots are in
+`~/tmp/sl-301-entry-shots/`, outside the repo.
+
+8. Prefill. An account whose synced profile is born 1964, klass 2, women's
+   classes: training shows no Class field; Competition preselects **2** and
+   lists `2, Dam2, VetY, 1, 3, Jun, Dam1, Dam3, VetÄ`; Weapon Group A
+   reorders it to `2, 1, 3, …`; ISSF → Air Pistol preselects the women's open
+   event and lists it first. An account with no profile, and one whose
+   synced values are malformed (`"1964"` as a string, klass `"4"`), both
+   preselect no klass, list the klasser in the federation's order and
+   preselect the men's open event.
+9. A competition typed and saved there answers "Saved."; the menu reads
+   Sessions, Statistics, Enter Series, Account, and Sessions lists the new
+   session (48p).
+
 ## Layers not run as specified
 
 - **SUBSTITUTED:** mutation ran on the eight new modules (`--mutate`), not the
-  whole `stryker.config.json` list; the other modules are unchanged.
-  Cannot detect: a weakened test elsewhere, which this change does not touch.
+  whole `stryker.config.json` list; the other modules are unchanged. This
+  round re-ran it on the three gauntlet modules it touched, after the
+  first rebase; the second rebase (onto `7cde3bf`, a typescript-eslint bump
+  and #694) changed no code under test. Cannot detect: a weakened test
+  elsewhere, which this change does not touch.
 - **SUBSTITUTED:** suite health is one shuffled run (seed 301) of the new
   suites, not every suite. Cannot detect order dependence elsewhere.
 - **N-A:** the browser checks in §4 are manual by design; they ran headless
@@ -127,7 +172,14 @@ R12). A difference in how expo-sqlite binds a value would not show here.
   foreign key fails. Two phones share this; it is not new with the web.
 - The firearm counter can be overwritten by a phone that edited the same
   firearm offline (C1, ADR 0019 consequences).
-- Edit and delete of a saved session stay on the phone (C5).
+- Edit and delete of a saved session stay on the phone (C5, #692).
+- The preselected klass is kept when the discipline changes, so a
+  competition under an ISSF discipline (no klass picker) stores the klass
+  beside its event. The phone does the same today; mirrored here (R26), not
+  changed.
+- Eligibility is judged in the year the form opened, not the year of the
+  session's date, as on the phone (whose sessions are always "now"). A past
+  session typed on the web can therefore be ranked for this year's age.
 
 ## Independent review (round 1) and what changed
 
@@ -181,6 +233,18 @@ The maintainer asked for every finding of the full review of #669 to be fixed
   with reasons.
 
 ## Honest notes
+
+- The rebase onto main (Sessions page, target photos, the Cloudflare
+  preparation) took judgement in three places the gates then caught: a
+  closing brace lost between main's styles and the entry styles (Prettier's
+  CSS parse), a comma between the `web.photos` and `web.entry` i18n blocks
+  (JSON parse), and `web-write.spec.ts` still calling `https://example.com`,
+  which main's auth configuration now refuses (W1–W4 failed with a sign-up
+  500 until it used `https://localhost`, as main's other specs do). Each was
+  folded into the commit it belongs to.
+- The Sessions page keys its photo picks to the tables object, so the
+  refresh after a save would have dropped them; the refresh now carries the
+  picks over (R27). No test pins it; it was found by reading the merge.
 
 - While fixing R13 a `git checkout` used to restore a throwaway mutant reverted
   the uncommitted rewrite of `save.ts`; it was rewritten and committed before

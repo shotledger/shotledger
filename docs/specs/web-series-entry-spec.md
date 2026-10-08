@@ -451,8 +451,9 @@ Added after an independent review of #669 (2026-10-07):
   nothing (this replaces how R10 detected it). Scenario **U8** added.
 - **R15 (changed by the maintainer, 2026-10-08).** vitest runs in
   `Europe/Stockholm`, the users' zone, with daylight saving, pinned in
-  `vitest.config.ts` with the same block #694 adds, because in UTC — what CI
-  runs — local time and UTC agree and a local-time bug passes unseen.
+  `vitest.config.ts` by #694 (merged), because in UTC — what CI runs — local
+  time and UTC agree and a local-time bug passes unseen; this layer's own pin
+  is gone.
   `started-at.test.ts` asserts the offset and the conversion for a winter
   date (CET, UTC+1) and a summer one (CEST, UTC+2). The whole suite passes
   under it. (The first draft pinned `America/Sao_Paulo`, UTC−3 with no DST.)
