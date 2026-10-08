@@ -23,13 +23,12 @@ const row = (id: string, value: string): Payload => ({
 
 const rows = (...list: Payload[]) => new Map(list.map((r) => [String(r.id), r]));
 
-function deps(defaultProfile: SettingsDeps['defaultProfile'] = 'none'): SettingsDeps {
+function deps(): SettingsDeps {
   let n = 0;
   return {
     newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
     now: () => NOW,
     currentYear: 2026,
-    defaultProfile,
   };
 }
 
@@ -146,16 +145,6 @@ describe('building the push', () => {
         errors: [{ key, kind: 'notAllowed' }],
       });
     }
-    // With no profile stored, the case is checked against the shown default.
-    const noProfile: AccountSettings = { ...SET, complianceProfile: null };
-    expect(
-      buildSettingsChanges(
-        noProfile,
-        { ...noProfile, complianceProfileVariant: 'retired' },
-        new Map(),
-        deps('se'),
-      ),
-    ).toEqual({ ok: false, errors: [{ key: 'complianceProfileVariant', kind: 'notAllowed' }] });
     // The edges of the range are allowed.
     for (const birthYear of [2016, 1926]) {
       expect(buildSettingsChanges(SET, { ...SET, birthYear }, new Map(), deps()).ok).toBe(true);
@@ -202,36 +191,48 @@ describe('building the push', () => {
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     expect(result.changes.map((c) => c.rowId)).toEqual(['complianceProfile']);
-    // No profile stored and a default that offers no cases: dropped too.
-    const noProfile: AccountSettings = { ...SET, complianceProfile: null };
-    expect(
-      buildSettingsChanges(
-        noProfile,
-        { ...noProfile, complianceProfileVariant: 'anything' },
-        new Map(),
-        deps('none'),
-      ),
-    ).toEqual({ ok: true, changes: [] });
   });
 
-  it('B10 with no profile stored, a case under the shown default is written; choosing the default writes it (R6)', () => {
+  it('B10 with no profile stored, a changed case is dropped; choosing a profile writes it (R13)', () => {
     const noProfile: AccountSettings = { ...UNSET };
-    const withCase = buildSettingsChanges(
+    // Even a case Sweden offers: the web cannot know the phone's default profile.
+    for (const complianceProfileVariant of [SE_EXISTING_HANDGUN_VARIANT, 'anything']) {
+      expect(
+        buildSettingsChanges(
+          noProfile,
+          { ...noProfile, complianceProfileVariant },
+          new Map(),
+          deps(),
+        ),
+        complianceProfileVariant,
+      ).toEqual({ ok: true, changes: [] });
+    }
+    // Beside another change, only that change is written.
+    const withYear = buildSettingsChanges(
       noProfile,
-      { ...noProfile, complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
+      { ...noProfile, birthYear: 1980, complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT },
       new Map(),
-      deps('se'),
+      deps(),
     );
-    expect(withCase.ok && withCase.changes.map((c) => c.rowId)).toEqual([
-      'complianceProfileVariant',
-    ]);
+    expect(withYear.ok && withYear.changes.map((c) => c.rowId)).toEqual(['birthYear']);
     const chosen = buildSettingsChanges(
       noProfile,
       { ...noProfile, complianceProfile: 'se' },
       new Map(),
-      deps('se'),
+      deps(),
     );
     expect(chosen.ok && chosen.changes.map((c) => (c.payload as Payload).value)).toEqual(['"se"']);
+    // A profile and its case chosen together are both written.
+    const both = buildSettingsChanges(
+      noProfile,
+      { ...noProfile, complianceProfile: 'se', complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT },
+      new Map(),
+      deps(),
+    );
+    expect(both.ok && both.changes.map((c) => c.rowId)).toEqual([
+      'complianceProfile',
+      'complianceProfileVariant',
+    ]);
   });
 
   it('B7 property: exactly the differing keys are pushed, each value round-trips', () => {
@@ -239,7 +240,7 @@ describe('building the push', () => {
       (selection) => getProfileDefinition(selection)?.variants.map((v) => v.id) ?? [],
     );
     const offers = (profile: AccountSettings['complianceProfile']) =>
-      getProfileDefinition(profile ?? 'none')?.variants.map((v) => v.id) ?? [];
+      profile === null ? [] : (getProfileDefinition(profile)?.variants.map((v) => v.id) ?? []);
     const settings = (profiles: AccountSettings['complianceProfile'][]) =>
       fc
         .record({
@@ -250,7 +251,7 @@ describe('building the push', () => {
           complianceProfileVariant: fc.constantFrom(...variants),
         })
         // A profile that offers cases holds one of them; under one that offers
-        // none (including no profile, with default 'none') any stale case may sit.
+        // none, or no profile at all, any stale case may sit.
         .filter((s) => {
           const ids = offers(s.complianceProfile);
           return ids.length === 0 || ids.includes(s.complianceProfileVariant);

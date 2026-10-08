@@ -58,7 +58,6 @@ describe('web-built settings rows on the phone schema', () => {
           newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
           now: () => NOW,
           currentYear: 2026,
-          defaultProfile: 'none',
         },
       );
       if (!result.ok) throw new Error(JSON.stringify(result.errors));

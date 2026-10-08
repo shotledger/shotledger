@@ -24,8 +24,6 @@ export interface SettingsDeps {
   newChangeId: () => string;
   now: () => string;
   currentYear: number;
-  /** The profile the page shows when none is stored (the phone's locale default). */
-  defaultProfile: ProfileSelection;
 }
 
 const isSkillClass = (value: unknown): value is SkillClass =>
@@ -33,11 +31,14 @@ const isSkillClass = (value: unknown): value is SkillClass =>
 const isProfile = (value: unknown): value is ProfileSelection =>
   PROFILE_SELECTIONS.includes(value as ProfileSelection);
 
-/** The cases offered under the profile `after` shows. */
-const casesOf = (after: AccountSettings, deps: SettingsDeps): string[] =>
-  getProfileDefinition(after.complianceProfile ?? deps.defaultProfile)?.variants.map(
-    (variant) => variant.id,
-  ) ?? [];
+/**
+ * The cases a stored profile offers. None while no profile is stored: the
+ * phone then uses its language's default, which the web cannot know (R13).
+ */
+export const offeredCases = (profile: ProfileSelection | null): string[] =>
+  profile === null
+    ? []
+    : (getProfileDefinition(profile)?.variants.map((variant) => variant.id) ?? []);
 
 /** Whether `after[key]` is a value the phone's Settings could have written. */
 function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDeps): boolean {
@@ -52,7 +53,7 @@ function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDe
     case 'complianceProfile':
       return isProfile(value);
     case 'complianceProfileVariant':
-      return casesOf(after, deps).includes(value as string);
+      return offeredCases(after.complianceProfile).includes(value as string);
   }
 }
 
@@ -60,7 +61,8 @@ function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDe
  * One whole settings row per key whose value changed, in
  * SYNCED_SETTING_KEYS order. Unchanged keys are neither checked nor pushed;
  * one disallowed value refuses the whole build. A case changed under a
- * profile that offers none is dropped: its picker is hidden there (spec R4).
+ * profile that offers none, or no profile, is dropped: its picker is hidden
+ * there (spec R4, R13).
  */
 export function buildSettingsChanges(
   before: AccountSettings,
@@ -71,7 +73,7 @@ export function buildSettingsChanges(
   const changed = SYNCED_SETTING_KEYS.filter(
     (key) =>
       before[key] !== after[key] &&
-      (key !== 'complianceProfileVariant' || casesOf(after, deps).length > 0),
+      (key !== 'complianceProfileVariant' || offeredCases(after.complianceProfile).length > 0),
   );
   const errors: SettingsError[] = changed
     .filter((key) => !allowed(key, after, deps))
