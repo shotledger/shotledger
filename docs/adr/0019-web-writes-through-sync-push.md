@@ -56,14 +56,14 @@ A push replaces a whole row; there is no field-level patch. So the web
 writer pulls, edits the pulled payload, and pushes full rows, parents before
 children, in as few requests as `PUSH_BATCH_MAX` allows.
 
-| Web action                       | Rows pushed                                                                                    |
-| -------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Retag sessions                   | a new `session_tags` row per added link; a tombstone per removed link id                       |
-| Fix a firearm link over a season | each affected `sessions` row with the new `firearm_id`                                         |
-| Merge duplicate ammo lots        | every `sessions` row on the duplicate repointed to the kept lot, then the duplicate tombstoned |
-| Move sessions between locations  | each `sessions` row with the new `location`                                                    |
-| Edit account/compliance settings | one `settings` row per changed key                                                             |
-| Keyboard series entry            | new `sessions`, `series` and `shots` rows                                                      |
+| Web action                       | Rows pushed                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Retag sessions                   | a new `session_tags` row per added link; a tombstone per removed link id                                                                         |
+| Fix a firearm link over a season | each affected `sessions` row with the new `firearm_id`, and each affected `firearms` row with its round counters moved by those sessions' rounds |
+| Merge duplicate ammo lots        | every `sessions` row on the duplicate repointed to the kept lot, then the duplicate tombstoned                                                   |
+| Move sessions between locations  | each `sessions` row with the new `location`                                                                                                      |
+| Edit account/compliance settings | one `settings` row per changed key                                                                                                               |
+| Keyboard series entry            | new `sessions`, `series` and `shots` rows, and the chosen `firearms` row with its round counters moved by the new shots                          |
 
 A `rejected` ack (`tombstoned`) means the row was deleted on another
 device; the web re-pulls rather than retrying.

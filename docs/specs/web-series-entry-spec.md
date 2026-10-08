@@ -11,6 +11,10 @@
 > web session), #691 (photo upload from the web) and #692 (edit and delete a
 > session on the web); **C6 changed** (prefill from the synced profile, see
 > C6 and R26); R1–R25 approved, **R15 changed** to `Europe/Stockholm`.
+>
+> On the points raised after the rework (2026-10-08): R26 and R27 approved;
+> the klass kept on an ISSF competition stays as the phone does it; ranking
+> by the year the form opened in, as the phone does, is accepted.
 
 - **Tier: 3.** It writes to the account's server rows through the sync
   protocol. A wrong payload does not fail on the web: it fails on every phone
@@ -519,7 +523,8 @@ Added after the maintainer's first-hand review (2026-10-08):
   discipline changes. That also means a competition under a discipline with
   no klass picker (ISSF) stores the preselected klass beside its event; the
   phone does the same today, although its form's comment says a session
-  carries one or the other. Mirrored, not changed here; raised on the PR.
+  carries one or the other. Mirrored; the maintainer ruled to keep it as the
+  phone does (2026-10-08).
   Scenarios **H4**, **H5**, **O1**, **O3**, **P1–P4**, **F1–F3** added.
 - **R27 (rebase).** Rebased onto main after the read-only Sessions page and
   target photos (#661, #665): the menu reads Sessions, Statistics, Enter
