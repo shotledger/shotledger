@@ -377,4 +377,5 @@ Appended after rebasing onto #669's rulings round (`a0c61f5`):
   `settings-edit.ts` keeps only the build and imports the reader; the
   duplicate definitions and tests are gone. `#settings` joins
   `web/src/shell/route.ts` (#669 R27), and the menu reads Sessions,
-  Statistics, Enter Series, Settings, then Account.
+  Statistics, Enter Series, Settings, then Account. W1–W4 sign in at
+  `https://localhost`, the origin better-auth now trusts locally (#677).
