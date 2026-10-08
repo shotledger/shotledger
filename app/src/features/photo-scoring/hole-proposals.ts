@@ -766,7 +766,6 @@ function radialBins(canvas: RectifiedCanvas, x0: number, y0: number, d: number, 
   const bgValues: number[] = [];
   const sums = [0, 0, 0, 0, 0];
   const counts = [0, 0, 0, 0, 0];
-  const edges = [0, 0.25, 0.5, 0.75, 1.0, 1.5];
   let total = 0;
   let count = 0;
   for (let y = ya; y < yb; y += 1) {
@@ -775,13 +774,14 @@ function radialBins(canvas: RectifiedCanvas, x0: number, y0: number, d: number, 
       total += v;
       count += 1;
       const rr = Math.hypot(x - x0, y - y0) / d;
-      if (rr >= 1.5 && rr <= 2.5) bgValues.push(v);
-      for (let b = 0; b < 5; b += 1) {
-        if (rr >= (edges[b] as number) && rr < (edges[b + 1] as number)) {
-          sums[b] = (sums[b] as number) + v;
-          counts[b] = (counts[b] as number) + 1;
-        }
+      if (rr >= 1.5) {
+        if (rr <= 2.5) bgValues.push(v);
+        continue;
       }
+      // bins [0, 0.25), [0.25, 0.5), [0.5, 0.75), [0.75, 1), [1, 1.5) of d
+      const b = rr < 0.5 ? (rr < 0.25 ? 0 : 1) : rr < 0.75 ? 2 : rr < 1 ? 3 : 4;
+      sums[b] = (sums[b] as number) + v;
+      counts[b] = (counts[b] as number) + 1;
     }
   }
   const bg = bgValues.length > 10 ? median(Float64Array.from(bgValues)) : total / count;
@@ -891,11 +891,12 @@ export function edgeStraightness(
 function crop48(canvas: RectifiedCanvas, x0: number, y0: number): Uint8Array {
   const n = HOLE_CROP_PX;
   const out = new Uint8Array(n * n);
+  const cols = new Int32Array(n);
+  for (let x = 0; x < n; x += 1) cols[x] = reflectIndex(x0 - n / 2 + x, canvas.size);
   for (let y = 0; y < n; y += 1) {
     const row = reflectIndex(y0 - n / 2 + y, canvas.size) * canvas.size;
-    for (let x = 0; x < n; x += 1) {
-      out[y * n + x] = canvas.data[row + reflectIndex(x0 - n / 2 + x, canvas.size)] as number;
-    }
+    for (let x = 0; x < n; x += 1)
+      out[y * n + x] = canvas.data[row + (cols[x] as number)] as number;
   }
   return out;
 }

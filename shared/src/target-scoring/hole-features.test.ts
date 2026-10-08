@@ -143,6 +143,63 @@ describe('holeFeatures', () => {
     }
   });
 
+  it('keeps the per-pixel convolutions it replaced, to the bit, border and interior', () => {
+    // Values from the version that looked up the reflection per pixel and tap
+    // (#648). Sizes 3 and 4 are all border for the 5-tap blur.
+    const pins: Record<number, HoleFeatures> = {
+      3: {
+        orientEntropy: 0.99906883551325,
+        hfEnergy: 25.159554017685505,
+        laplacianVar: 629.9115724721262,
+        gradMean: 0.3112792027236498,
+        centerDeviation: 0.08366013071895424,
+        stdDev: 0.16732026143790849,
+      },
+      4: {
+        orientEntropy: 1.8583699293821825,
+        hfEnergy: 43.89167338323244,
+        laplacianVar: 995.0824202229909,
+        gradMean: 0.5496351684062729,
+        centerDeviation: 0.12279411764705883,
+        stdDev: 0.23020943421688994,
+      },
+      5: {
+        orientEntropy: 2.103865356431646,
+        hfEnergy: 32.70028838818003,
+        laplacianVar: 813.3432003075741,
+        gradMean: 0.8970625192545731,
+        centerDeviation: 0.15027450980392157,
+        stdDev: 0.22386550584197276,
+      },
+      6: {
+        orientEntropy: 2.3154717434924397,
+        hfEnergy: 43.81739722194897,
+        laplacianVar: 1095.155661877436,
+        gradMean: 0.7332767480726563,
+        centerDeviation: 0.07745098039215687,
+        stdDev: 0.21910028297504244,
+      },
+      48: {
+        orientEntropy: 2.7344267341221586,
+        hfEnergy: 19.324726550692848,
+        laplacianVar: 439.74885307466747,
+        gradMean: 0.6419842754002243,
+        centerDeviation: 0.010227736928104775,
+        stdDev: 0.16223814192731636,
+      },
+    };
+    for (const [size, expected] of Object.entries(pins)) {
+      const n = Number(size);
+      const data = new Uint8Array(n * n);
+      let s = n;
+      for (let i = 0; i < data.length; i += 1) {
+        s = (s * 1103515245 + 12345) % 2147483648;
+        data[i] = s % 256;
+      }
+      expect(holeFeatures({ data, size: n })).toStrictEqual(expected);
+    }
+  });
+
   it('does measure the smallest crop a 3x3 kernel fits on', () => {
     // The boundary the size guard is written against: 3 is in, 2 is out.
     const features = holeFeatures({
