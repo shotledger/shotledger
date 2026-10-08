@@ -713,6 +713,48 @@ fieldset.field legend {
   margin-bottom: 4px;
 }
 
+/* Radio groups drawn as the .choices pills; the input stays for the keyboard. */
+.radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.radios label {
+  position: relative;
+}
+
+.radios input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radios span {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  color: var(--primary);
+}
+
+.radios input:checked + span {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.radios input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.radios input:disabled + span {
+  opacity: 0.5;
+}
+
 .field.check,
 .series-row .check {
   display: flex;

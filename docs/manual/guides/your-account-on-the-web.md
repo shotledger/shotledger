@@ -46,8 +46,8 @@ device to device, the same ones as on the phone:
 - **Compliance**: the profile, and for Sweden the activity requirement that
   applies to you (the phone's Settings → Compliance). With no requirement
   chosen, the page shows the one worked out from your firearms, as the phone
-  does. With no profile chosen yet, it shows the one for your browser's
-  language (Sweden for Swedish); choosing one stores it.
+  does. With no profile chosen yet, none is marked and your phone uses the
+  one for its language; choose one here to store it for every device.
 
 Change what you need, then **Save**. Changing a birth year that was already
 set asks first, as on the phone. Your phones pick the change up on their next

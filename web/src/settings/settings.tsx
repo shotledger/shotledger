@@ -6,7 +6,7 @@ import { SKILL_CLASSES } from '@shotledger/shared/src/disciplines/eligibility';
 import { buildSettingsChanges } from '@shotledger/shared/src/sync-client/settings-edit';
 import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { currentUserId, pushRows } from '../api';
@@ -17,12 +17,10 @@ import type { PulledTables } from '../pull';
 import {
   birthYearChoices,
   caseView,
-  defaultProfile,
   hasChanges,
   initialSettings,
   needsBirthYearConfirm,
   ownershipFacts,
-  shownProfile,
 } from './model';
 import {
   afterEdit,
@@ -40,27 +38,32 @@ const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
   se: 'compliance.profileSe',
 };
 
-function Choices<T extends string>({
+/** An exclusive choice: native radios, so the arrow keys move it (spec R15). */
+function RadioGroup<T extends string>({
+  labelledBy,
   options,
   value,
   onChange,
 }: {
+  labelledBy: string;
   options: readonly { value: T; label: string }[];
   value: T | null;
   onChange: (next: T) => void;
 }) {
+  const name = useId();
   return (
-    <div className="choices">
+    <div className="radios" role="radiogroup" aria-labelledby={labelledBy}>
       {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className={option.value === value ? '' : 'secondary'}
-          aria-pressed={option.value === value}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
+        <label key={option.value}>
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            checked={option.value === value}
+            onChange={() => onChange(option.value)}
+          />
+          <span>{option.label}</span>
+        </label>
       ))}
     </div>
   );
@@ -98,11 +101,11 @@ export function Settings({
   /** Another account remounts this page with that account's tables (R12). */
   onReauthenticated: (userId: string) => ReauthOutcome;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const ids = useId();
   const online = useOnline();
   // What the page opened with; a refresh after a save opens it afresh.
   const opened = useMemo(() => initialSettings(tables.settings), [tables]);
-  const fallback = defaultProfile(i18n.language);
   const facts = useMemo(() => ownershipFacts(tables.firearms), [tables]);
   const [draft, setDraft] = useState<{ opened: AccountSettings; form: AccountSettings }>({
     opened,
@@ -121,10 +124,10 @@ export function Settings({
 
   const currentYear = new Date().getFullYear();
   const years = birthYearChoices(currentYear, form.birthYear);
-  const view = caseView(form, facts, fallback);
+  const view = caseView(form, facts);
   // Nothing can change while a save is in flight: its refresh replaces the form.
   const saving = state.status.kind === 'saving';
-  const changed = hasChanges(opened, form, fallback);
+  const changed = hasChanges(opened, form);
   const blocked = saveBlocked(online, state, changed);
 
   const runSave = () => {
@@ -139,7 +142,6 @@ export function Settings({
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
             currentYear,
-            defaultProfile: fallback,
           }),
         push: pushRows,
         refresh,
@@ -192,8 +194,9 @@ export function Settings({
               </select>
             </label>
             <fieldset className="field">
-              <legend>{t('settings.skillClass')}</legend>
-              <Choices
+              <legend id={`${ids}-class`}>{t('settings.skillClass')}</legend>
+              <RadioGroup
+                labelledBy={`${ids}-class`}
                 options={SKILL_CLASSES.map((value) => ({ value, label: value }))}
                 value={form.skillClass}
                 onChange={(skillClass) => edit({ skillClass })}
@@ -210,19 +213,24 @@ export function Settings({
           </section>
 
           <section className="card">
-            <h2>{t('compliance.settingsTitle')}</h2>
-            <Choices
+            <h2 id={`${ids}-profile`}>{t('compliance.settingsTitle')}</h2>
+            <RadioGroup
+              labelledBy={`${ids}-profile`}
               options={PROFILE_SELECTIONS.map((value) => ({
                 value,
                 label: t(PROFILE_LABEL_KEYS[value]),
               }))}
-              value={shownProfile(form, fallback)}
+              value={form.complianceProfile}
               onChange={(complianceProfile) => edit({ complianceProfile })}
             />
+            {form.complianceProfile === null && (
+              <p className="muted">{t('web.settings.profileUnset')}</p>
+            )}
             {view.variantId !== null && view.variantIds.length > 1 && (
               <fieldset className="field">
-                <legend>{t('compliance.caseTitle')}</legend>
-                <Choices
+                <legend id={`${ids}-case`}>{t('compliance.caseTitle')}</legend>
+                <RadioGroup
+                  labelledBy={`${ids}-case`}
                   options={view.variantIds.map((id) => ({
                     value: id,
                     label: t(`compliance.case.${id}`),

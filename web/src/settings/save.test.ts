@@ -243,3 +243,15 @@ describe('N1 no settings in browser storage', () => {
     }
   });
 });
+
+describe('N8 no imports from the phone app', () => {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+
+  it('the settings modules import the phone’s logic from shared/, never from app/src', () => {
+    const sources = readdirSync(dir).filter((f) => /\.tsx?$/.test(f));
+    expect(sources.length).toBeGreaterThanOrEqual(4);
+    for (const file of sources) {
+      expect(readFileSync(path.join(dir, file), 'utf8'), file).not.toMatch(/app\/src\//);
+    }
+  });
+});
