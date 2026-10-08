@@ -7,8 +7,7 @@ Rules that apply everywhere are in the root `CLAUDE.md`.
   not start until it exists: `pnpm --filter @shotledger/web build` first. The
   tests do not need it.
 - `pnpm test` (in `backend/`) runs the Cloudflare Workers vitest suite. It
-  is not part of the root `pnpm check`; CI runs it as its own step. It stays
-  on vitest 4 until `@cloudflare/vitest-plugin` supports 5.
+  is not part of the root `pnpm check`; CI runs it as its own step.
 - On this sandbox the Workers pool is slow enough that
   `test/sync.spec.ts`'s 205-row pagination case can exceed the default 5 s
   timeout. That is the sandbox, not a regression: confirm with
