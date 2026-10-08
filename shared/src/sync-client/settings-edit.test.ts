@@ -7,12 +7,8 @@ import { birthYearOptions, SKILL_CLASSES } from '../disciplines/eligibility';
 import { ClientChangeSchema, isSyncableSettingRow, SYNCED_SETTING_KEYS } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
 import type { Payload } from './rows';
-import {
-  buildSettingsChanges,
-  readAccountSettings,
-  type AccountSettings,
-  type SettingsDeps,
-} from './settings-edit';
+import type { AccountSettings } from './account-settings';
+import { buildSettingsChanges, type SettingsDeps } from './settings-edit';
 
 const NOW = '2026-10-07T10:00:00.000Z';
 const CREATED = '2026-01-01T00:00:00.000Z';
@@ -52,55 +48,6 @@ const SET: AccountSettings = {
   complianceProfile: 'se',
   complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
 };
-
-describe('reading the pulled settings rows', () => {
-  it('R1 each key’s JSON text is decoded', () => {
-    const pulled = rows(
-      row('birthYear', '1980'),
-      row('skillClass', '"2"'),
-      row('competesInWomensClasses', 'true'),
-      row('complianceProfile', '"se"'),
-      row('complianceProfileVariant', `"${SE_FIRST_HANDGUN_VARIANT}"`),
-    );
-    expect(readAccountSettings(pulled)).toEqual(SET);
-  });
-
-  it('R2 absent rows read as unset: null, null, false, null, null', () => {
-    expect(readAccountSettings(new Map())).toEqual(UNSET);
-  });
-
-  it('R3 unparsable, wrong-typed and unknown values read as unset (C7)', () => {
-    const cases: [string, string][] = [
-      ['birthYear', '"1980"'],
-      ['birthYear', '1980.5'],
-      ['birthYear', 'null'],
-      ['birthYear', '{'],
-      ['skillClass', '"4"'],
-      ['skillClass', '2'],
-      ['competesInWomensClasses', '"true"'],
-      ['competesInWomensClasses', '1'],
-      ['complianceProfile', '"xx"'],
-      ['complianceProfile', 'true'],
-      ['complianceProfileVariant', '7'],
-      ['complianceProfileVariant', 'not json'],
-    ];
-    for (const [key, value] of cases) {
-      expect(readAccountSettings(rows(row(key, value))), `${key} ${value}`).toEqual(UNSET);
-    }
-    // A value that is not a string at all.
-    expect(readAccountSettings(rows({ ...row('birthYear', ''), value: 1980 }))).toEqual(UNSET);
-    // A stored case is kept as-is; whether it applies is the profile's call.
-    expect(readAccountSettings(rows(row('complianceProfileVariant', '"retired"')))).toEqual({
-      ...UNSET,
-      complianceProfileVariant: 'retired',
-    });
-  });
-
-  it('R4 a row whose payload id is not its key is ignored', () => {
-    const pulled = new Map([['birthYear', row('skillClass', '1980')]]);
-    expect(readAccountSettings(pulled)).toEqual(UNSET);
-  });
-});
 
 describe('building the push', () => {
   it('B1 nothing changed → no changes', () => {

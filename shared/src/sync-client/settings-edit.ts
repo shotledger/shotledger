@@ -1,27 +1,16 @@
-// The five synced account settings, read from pulled rows and turned into
-// the changes one web Save pushes (docs/specs/web-settings-edit-spec.md §3.1).
-// Pure: change ids and the clock are injected. Allowed values are the
-// phone's own lists, never restated here.
+// The changes one web Save pushes for the five synced account settings
+// (docs/specs/web-settings-edit-spec.md §3.1); the reader is
+// account-settings.ts. Pure: change ids and the clock are injected. Allowed
+// values are the phone's own lists, never restated here.
 import {
   getProfileDefinition,
   PROFILE_SELECTIONS,
   type ProfileSelection,
 } from '../compliance/profile-registry';
 import { birthYearOptions, SKILL_CLASSES, type SkillClass } from '../disciplines/eligibility';
-import { isSyncableSettingRow, SYNCED_SETTING_KEYS, type ClientChange } from '../sync/protocol';
+import { SYNCED_SETTING_KEYS, type ClientChange } from '../sync/protocol';
+import type { AccountSettings, SyncedSettingKey } from './account-settings';
 import { newSettingRow, type Payload } from './rows';
-
-export type SyncedSettingKey = (typeof SYNCED_SETTING_KEYS)[number];
-
-export interface AccountSettings {
-  birthYear: number | null;
-  skillClass: SkillClass | null;
-  competesInWomensClasses: boolean;
-  /** null: no choice stored; the caller shows the phone's default. */
-  complianceProfile: ProfileSelection | null;
-  /** null: no choice stored; the case is derived from the firearms. */
-  complianceProfileVariant: string | null;
-}
 
 export interface SettingsError {
   key: SyncedSettingKey;
@@ -39,41 +28,10 @@ export interface SettingsDeps {
   defaultProfile: ProfileSelection;
 }
 
-const isBirthYear = (value: unknown): value is number => Number.isInteger(value);
 const isSkillClass = (value: unknown): value is SkillClass =>
   SKILL_CLASSES.includes(value as SkillClass);
 const isProfile = (value: unknown): value is ProfileSelection =>
   PROFILE_SELECTIONS.includes(value as ProfileSelection);
-const isString = (value: unknown): value is string => typeof value === 'string';
-
-/** The stored JSON value of a live, well-formed row; undefined otherwise. */
-function decoded(rows: ReadonlyMap<string, Payload>, key: SyncedSettingKey): unknown {
-  const row = rows.get(key);
-  if (row === undefined || !isSyncableSettingRow(key, row) || !isString(row.value)) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(row.value) as unknown;
-  } catch {
-    return undefined;
-  }
-}
-
-/** Anything the phone would not have written reads as unset (spec C7). */
-export function readAccountSettings(rows: ReadonlyMap<string, Payload>): AccountSettings {
-  const birthYear = decoded(rows, 'birthYear');
-  const skillClass = decoded(rows, 'skillClass');
-  const womens = decoded(rows, 'competesInWomensClasses');
-  const profile = decoded(rows, 'complianceProfile');
-  const variant = decoded(rows, 'complianceProfileVariant');
-  return {
-    birthYear: isBirthYear(birthYear) ? birthYear : null,
-    skillClass: isSkillClass(skillClass) ? skillClass : null,
-    competesInWomensClasses: womens === true,
-    complianceProfile: isProfile(profile) ? profile : null,
-    complianceProfileVariant: isString(variant) ? variant : null,
-  };
-}
 
 /** The cases offered under the profile `after` shows. */
 const casesOf = (after: AccountSettings, deps: SettingsDeps): string[] =>

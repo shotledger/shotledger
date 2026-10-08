@@ -4,7 +4,7 @@
 import { PROFILE_SELECTIONS, type ProfileSelection } from '@shotledger/shared/src/compliance';
 import { SKILL_CLASSES } from '@shotledger/shared/src/disciplines/eligibility';
 import { buildSettingsChanges } from '@shotledger/shared/src/sync-client/settings-edit';
-import type { AccountSettings } from '@shotledger/shared/src/sync-client/settings-edit';
+import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -2,7 +2,7 @@ import {
   SE_EXISTING_HANDGUN_VARIANT,
   SE_FIRST_HANDGUN_VARIANT,
 } from '@shotledger/shared/src/compliance/profiles/se';
-import type { AccountSettings } from '@shotledger/shared/src/sync-client/settings-edit';
+import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import { describe, expect, it } from 'vitest';
 
 import {

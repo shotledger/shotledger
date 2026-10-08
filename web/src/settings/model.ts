@@ -10,7 +10,7 @@ import { SYNCED_SETTING_KEYS } from '@shotledger/shared/src/sync';
 import {
   readAccountSettings,
   type AccountSettings,
-} from '@shotledger/shared/src/sync-client/settings-edit';
+} from '@shotledger/shared/src/sync-client/account-settings';
 
 import { resolveDefaultProfileSelection } from '../../../app/src/features/compliance/profile';
 import { resolveComplianceCase } from '../../../app/src/features/compliance/resolve-case';
