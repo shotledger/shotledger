@@ -68,8 +68,8 @@ each with the question it answers. Tap one to scroll straight to it.
   photo: their holes on one heat map, with a line on whether the points you
   lose are mostly a sight adjustment or mostly spread. See
   [What the group figures mean](../explanation/group-figures.md#across-sessions).
-- **Export** as PDF or JSON. The JSON carries the filter — sighter setting
-  included — alongside the numbers.
+- **Export JSON**: the matched sessions and the summary as data. The file
+  carries the filter — sighter setting included — alongside the numbers.
 
 A **Shots per Series** filter leaves fält sessions out: a fält round has
 stations, not series, so it has no series length to match.

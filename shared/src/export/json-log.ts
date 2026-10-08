@@ -1,7 +1,7 @@
 // JSON export of a generated analytics report (maintainer request: "for
 // exports to PDF I would like to have JSON available as well"). Pure
 // shaping — no I/O, no RN — so it is plain-vitest testable, like its
-// sibling pdf-log.ts.
+// sibling session-report.ts.
 //
 // The shape is a documented, stable contract: `format` + `version` are the
 // first two keys so a consumer can dispatch on them, scores are in display

@@ -79,7 +79,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 | Forms         | react-hook-form + zod                                 | zod schemas live next to features                                                                  |
 | i18n          | i18next + react-i18next + expo-localization           |                                                                                                    |
 | Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
-| PDF           | expo-print (HTML → PDF)                               | FAP 551-3 export                                                                                   |
+| PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                     |
 | E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
@@ -591,6 +591,10 @@ from §6.5 automatically).
       completed föreningsintyg the maintainer supplied, which stay outside
       the working tree. Two columns were added and two dropped as a result —
       the reasoning is in the `pdf-log.ts` doc-comment.
+      **Dropped 2026-10-07 (#679)**, with the web print (#663, #277): the log
+      is worth nothing without the club's attestation, and that happens in
+      the paper logbook. `pdf-log.ts`, `use-pdf-export.ts` and the
+      Statistics report's PDF format are gone; the report exports JSON only.
 - [x] FAP 551-3 activity numbers settled and the two cases modeled
       (branch `fix/compliance-fap551-numbers`) — window 6 months;
       **12** activities for FAP 551-3 5 § (no handgun for target shooting

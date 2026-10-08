@@ -2,9 +2,9 @@
 
 Several screens tell you how many shots you have fired: **Shots Logged** on
 Home and in the Statistics report, an ammunition lot's usage, a firearm's
-**Rounds Fired** and **Rounds Since Maintenance**, the shooting log's
-**Shots**, the JSON report and the count shown before you import a file. They
-all count the same way, so they always agree.
+**Rounds Fired** and **Rounds Since Maintenance**, the JSON report and the
+count shown before you import a file. They all count the same way, so they
+always agree.
 
 ## What counts
 

@@ -55,51 +55,10 @@ says what to fix.
 
 ## Getting it out
 
-**Settings → Backup & Data** exports everything. A club-log **PDF export** is
-what you hand to the förening, and a **JSON export** carries the same sessions
-as data.
+The app counts your sessions; it does not produce the log you hand to the
+förening. A row on that log is evidence only once someone from the club has
+signed it, and that happens in the club's paper logbook — so there is no PDF
+of the log to print. Keep the logbook signed as you go, and use the app to
+see where you stand.
 
-The PDF follows the preprinted personal shooting log a club issues, column for
-column:
-
-| Column            | What it holds                                         |
-| ----------------- | ----------------------------------------------------- |
-| Date              | when you shot                                         |
-| Place             | the range                                             |
-| Shooting activity | discipline and whether it was training or competition |
-| Firearm used      | the firearm on the session, or _Not recorded_         |
-| Attested by       | **left blank, to be signed by hand**                  |
-
-Above the table is a short summary: blank lines for your name and personal ID
-number, the period the log covers, the firearm if you exported for one, how many
-sessions and how many shots, and the date it was generated. The two blanks are
-the paper form's own, to be written in by hand — the app stores neither, because
-neither is data it needs. Every figure there is labelled, so a reader who was not
-with you at the range can tell what each number is. **Shots** is every shot
-you fired in those sessions — sighters, extra rounds and series imported as a
-total included, and six for every fält station, a scratched one too — the same
-count as Shots Logged ([how shots fired are
-counted](../explanation/how-shots-are-counted.md)).
-
-**Shooting activity** names the competition when the session had one, then the
-discipline, then your weapon group and class — "Pistol-SM · Fält · C" rather
-than just "Fält". That is how rows read in a completed paper log, and it is what
-lets whoever signs the row recognise the day.
-
-Two of those are worth explaining.
-
-**Firearm used** is there because naming the firearm is what shows activity
-_with a particular gun_ — which is what the additional-handgun and renewal
-criteria turn on. A session with no firearm recorded says _Not recorded_
-rather than being dropped: a six-month window that quietly loses rows loses
-sessions that did count.
-
-**Attested by** is deliberately empty. On a club log a row becomes evidence
-when someone signs it, and only a person can do that. The app prints the ruled
-column and leaves it alone.
-
-!!! note
-
-    The app does not know your name — it has no reason to store it — so the
-    log prints a blank line for you to write it on, the same as the signature
-    column.
+**Settings → Backup & Data** exports every session as data.

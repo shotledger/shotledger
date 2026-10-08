@@ -49,8 +49,7 @@ Nothing is saved as a stale document; it is always computed fresh from
 what matches right now.
 
 **Built for Swedish shooters.** A rolling License Activity view tracks your
-logged sessions against the FAP 551-3 licensing requirement, and exports
-a PDF formatted for license applications and föreningsintyg.
+logged sessions against the FAP 551-3 licensing requirement.
 
 **Your data is yours.** Everything lives on your device in a local
 database. CSV export and import are always available — no lock-in, no
@@ -95,8 +94,7 @@ som ett inaktuellt dokument; allt räknas fram på nytt utifrån det som
 matchar just nu.
 
 **Byggd för svenska skyttar.** En rullande licensaktivitet följer
-dina loggade pass mot FAP 551-3:s aktivitetskrav och exporterar en PDF
-formaterad för licensansökningar och föreningsintyg.
+dina loggade pass mot FAP 551-3:s aktivitetskrav.
 
 **Din data är din.** Allt lagras lokalt på din enhet. CSV-export och
 -import finns alltid tillgängligt — ingen inlåsning, inget obligatoriskt

@@ -1,5 +1,5 @@
 // Platform wrapper for PDF export (§4 M6, expo-print). The HTML content
-// itself is a pure function (shared/src/export/pdf-log.ts, snapshot-tested);
+// itself is a pure function (shared/src/export/session-report.ts, snapshot-tested);
 // this module is the thin best-effort layer that turns it into a file and
 // opens the share sheet — cross-platform (expo-print/expo-sharing), no
 // Android-only module. Degrades to a silent no-op on web, where neither

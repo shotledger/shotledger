@@ -1,7 +1,7 @@
 // Rounds fired, read from the database and counted by the one shared rule,
 // `sessionVolume` (#512). Every volume figure in the app comes from here, and
 // every firearm-counter movement is a difference of two of them.
-import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import {
   disciplineSeriesLength,
   sessionVolume,
@@ -86,12 +86,6 @@ export function totalVolumeRounds(db: Database, where?: SQL): number {
   let total = 0;
   for (const volume of sessionVolumes(db, where).values()) total += volume;
   return total;
-}
-
-/** Rounds fired across the given sessions; deleted or unknown ids count 0. */
-export function totalVolumeRoundsFor(db: Database, sessionIds: readonly string[]): number {
-  if (sessionIds.length === 0) return 0;
-  return totalVolumeRounds(db, inArray(sessions.id, [...sessionIds]));
 }
 
 /** One live session's rounds fired; 0 for a deleted or unknown session. */

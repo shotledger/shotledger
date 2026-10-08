@@ -109,8 +109,8 @@ requirements:
     description: >-
       The app shall count six rounds for every recorded fält station — scratched
       and särskjutning stations included — wherever it reports rounds fired: the
-      shots-logged total, the statistics report, the JSON report and the
-      shooting log, the import preview and the firearm and ammunition counters.
+      shots-logged total, the statistics report, the JSON report, the import
+      preview and the firearm and ammunition counters.
     rationale: >-
       Six shots are fired at every station (SHB 2026 D.6.4 p. 91), and a
       scratched or särskjutning station's rounds were still fired, the same
@@ -177,8 +177,8 @@ requirements:
       series, sighters included, the stored shot count of a series saved as a
       total only, the session's extra rounds and six per fält station, and
       shall use that count for the shots-logged total, ammunition lot usage,
-      the firearm round counters, the statistics and JSON reports, the import
-      preview and the shooting log.
+      the firearm round counters, the statistics and JSON reports and the
+      import preview.
     rationale: >-
       Six figures with six rules disagreed, and the shooting log — offered as
       evidence of activity — left out sighters and extra rounds that were
