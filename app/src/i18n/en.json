@@ -1350,7 +1350,7 @@
       "storageUsed": "{{used}} of {{limit}} used",
       "storageFailed": "Could not read your photo storage.",
       "downloadTitle": "Download Everything",
-      "downloadBody": "Your sessions as a ShotLedger JSON file and every uploaded target photo, in one zip. Session tags stay on your phone; they are not synced.",
+      "downloadBody": "Your sessions as a ShotLedger JSON file and every uploaded target photo, in one zip.",
       "download": "Download",
       "downloadProgress": "Downloading photos… {{done}} of {{total}}",
       "downloadMissing_one": "{{count}} photo could not be downloaded. The zip lists it in missing.txt.",
