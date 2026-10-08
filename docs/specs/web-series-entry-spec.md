@@ -409,10 +409,13 @@ Added after an independent review of #669 (2026-10-07):
   the request is dropped and nothing is sent; still signed out, or the server
   unreachable → the request stays held. A fresh Save while signed out builds
   nothing (this replaces how R10 detected it). Scenario **U8** added.
-- **R15 (new).** vitest runs with `TZ=America/Sao_Paulo` (UTC−3, no DST),
-  pinned in `vitest.config.ts`, because in UTC — what CI runs — local time and
-  UTC agree and a local-time bug passes unseen. `started-at.test.ts` asserts
-  the offset and the conversion. The whole suite passes under it.
+- **R15 (changed by the maintainer, 2026-10-08).** vitest runs in
+  `Europe/Stockholm`, the users' zone, with daylight saving, pinned in
+  `vitest.config.ts` with the same block #694 adds, because in UTC — what CI
+  runs — local time and UTC agree and a local-time bug passes unseen.
+  `started-at.test.ts` asserts the offset and the conversion for a winter
+  date (CET, UTC+1) and a summer one (CEST, UTC+2). The whole suite passes
+  under it. (The first draft pinned `America/Sao_Paulo`, UTC−3 with no DST.)
 - **R16 (gauntlet widened).** `web/src/entry/*.ts` (the page model and the
   save controller) join the Stryker `mutate` list, and so the 100% coverage
   gate. To make that honest: events are ranked for the current year, as on

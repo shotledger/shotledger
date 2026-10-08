@@ -3,10 +3,6 @@ import { defineConfig } from 'vitest/config';
 import { reqstoolTestName, vitestClassnameTemplate } from './scripts/reqstool-stem.js';
 import stryker from './stryker.config.json' with { type: 'json' };
 
-// A zone with an offset, set before any worker starts: in UTC (CI) local time
-// and UTC agree, so a local-time bug passes unseen. UTC-3, no DST.
-process.env.TZ = 'America/Sao_Paulo';
-
 // One list of gauntlet modules: Stryker's `mutate`, negations last.
 const gauntletInclude = stryker.mutate.filter((glob) => !glob.startsWith('!'));
 const gauntletExclude = stryker.mutate
