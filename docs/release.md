@@ -143,6 +143,38 @@ Produces an installable `.apk` for ad-hoc sharing (e.g. sideloading to a
 test device) without going through Play Console at all. Useful for
 milestone demos before a store submission is warranted.
 
+## Evaluation builds (outside testers)
+
+An evaluation build is a sideloaded APK that stops working on a set date.
+Build it with the standalone release build from the `run-app` skill
+(`.claude/skills/run-app/references/emulator.md`), with the expiry in the
+environment:
+
+```bash
+cd app && pnpm exec expo prebuild --platform android --no-install
+cd android && EXPO_PUBLIC_EVAL_EXPIRES_AT=2026-11-30 ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+```
+
+- **The value** is `YYYY-MM-DD` (midnight UTC) or a full ISO 8601 date-time
+  with `Z` or an offset. From that instant on, launching the app, or
+  returning to it, shows a blocking "Evaluation Build Expired" screen that
+  tells the tester to ask for a new build. The tester's data stays on the
+  phone; a new build signed with the same key installs over it.
+- **A malformed value fails open:** the build runs with no expiry at all.
+  Check the date before handing the APK out.
+- **Clock rollback:** the app keeps the latest time it has seen in
+  SecureStore (localStorage on web) and compares against that, so setting
+  the clock back neither reopens an expired build nor rewinds the window.
+  This defeats only the casual case. Clearing the app's data and setting the
+  clock back before the next launch beats it, and so does patching the
+  bundle; it is an honest-user gate, not enforcement.
+- **There is no EAS profile for it.** The date changes with every build, so
+  it does not belong in `eas.json`.
+- **Never for a Play build.** No profile in `app/eas.json` sets
+  `EXPO_PUBLIC_EVAL_EXPIRES_AT`, so the `production` build has no expiry;
+  keep it that way, and never export the variable in a shell that runs
+  `eas build`.
+
 ## CI and build budget
 
 **GitHub Actions**, private repo: macOS minutes are limited (2,000 min/mo

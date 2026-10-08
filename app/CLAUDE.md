@@ -68,6 +68,8 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
   COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
 - `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release
   build. **Never set it for a Play build — it ships a wipe button.**
+- `EXPO_PUBLIC_EVAL_EXPIRES_AT=<ISO date>` makes an evaluation build that
+  blocks itself after that date (`docs/release.md`). Never for a Play build.
 
 ## Sync backend URL
 

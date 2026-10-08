@@ -46,6 +46,10 @@ export type FlagName = keyof typeof FLAGS;
 
 export const DEV_TOOLS_ENABLED = FLAGS.devTools.build;
 
+// An evaluation build's expiry, ISO 8601 (features/evaluation/expiry.ts).
+// Unset in every Play build: no profile in eas.json sets it.
+export const EVAL_EXPIRES_AT: string | undefined = process.env.EXPO_PUBLIC_EVAL_EXPIRES_AT;
+
 export function isFlagEnabled(name: FlagName): boolean {
   const overrides = DEV_TOOLS_ENABLED ? getFlagOverrides(db) : {};
   return resolveFlag(FLAGS[name], overrides[name], DEV_TOOLS_ENABLED);
