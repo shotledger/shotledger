@@ -6,9 +6,10 @@
 > per user for an allowlist of five keys). Builds on layer 2 (#669, the web
 > write client, `docs/specs/web-series-entry-spec.md`).
 >
-> **Approval status: not yet approved by the maintainer.** The run that wrote
-> this spec could not obtain approval first-hand; the key choices in §2 are
-> listed in the PR for approval after the fact.
+> **Approval status:** approved first-hand by the maintainer on 2026-10-08
+> (C1–C8, R1–R12), with three changes recorded as R13–R15: an unset profile is
+> not pre-highlighted (C3, R6), the phone's two compliance functions move to
+> `shared/` (C4), and the pickers are radio groups (§3.2).
 
 - **Tier: 3.** It writes synced `settings` rows. A malformed row is not
   caught on the web: it reaches every phone on the account. A value the
@@ -16,8 +17,8 @@
   not know) changes what the phone's compliance status and class defaults
   say, silently.
 - **Scope:** `shared/src/sync-client/{rows,settings-edit}.ts` (a settings row
-  builder; read and build for the five keys), three option lists moved to
-  `shared/` (§2 C4), `web/src/settings/` (a Settings page), `web/src/api.ts`
+  builder; the build for the five keys, on #669's reader), three option lists
+  and two compliance functions moved to `shared/` (§2 C4), `web/src/settings/` (a Settings page), `web/src/api.ts`
   (the push call renamed for both writers), `web/src/shell/`, app tests that
   apply web-built settings rows to the phone's real schema, one backend
   round-trip spec, `docs/manual/` EN + SV, `app/src/i18n/{en,sv}.json`
@@ -61,13 +62,13 @@ No re-pull before Save: a settings row has nothing to merge, so a fresh pull
 would not change what is pushed.
 
 **C3. Unset values show the phone's defaults and are not written.** When no
-profile is stored, the page shows the phone's locale default
-(`resolveDefaultProfileSelection`, here from the browser's language). When no
-case is stored, it shows the case the phone derives from the firearms
+case is stored, the page shows the case the phone derives from the firearms
 (`resolveComplianceCase`, from the pulled firearms) and says it was proposed,
-with the phone's reason. Neither default is written unless the user changes
-it — the phone's rule that a derivation never authors a choice. Both functions
-are the phone's own, imported from `app/src/features/compliance/`.
+with the phone's reason. It is not written unless the user changes it — the
+phone's rule that a derivation never authors a choice. _Changed by R13:_ when
+no profile is stored, no profile is highlighted and the case section shows
+nothing; one line says no profile is chosen and the phone uses its
+language's default. The function is the phone's own, in `shared/` (R14).
 
 **C4. Option lists come from one place.** The phone's allowed values are
 inline in its screens today. They move to `shared/` unchanged and both the
@@ -81,7 +82,11 @@ phone and the web import them:
   `shared/src/compliance/profile-registry.ts`.
 
 Profile cases come from `getProfileDefinition(...).variants`, as on the phone.
-No value is restated in `web/`.
+No value is restated in `web/`. _Completed by R14:_ the phone's
+`resolveDefaultProfileSelection` and `resolveComplianceCase` move to
+`shared/src/compliance/` too. The reader of the five keys,
+`readAccountSettings`, is #669's (`shared/src/sync-client/account-settings.ts`,
+#669 R26).
 
 **C5. Changing a set birth year asks first.** As on the phone, changing a
 birth year that was already set is confirmed before saving, with the phone's
@@ -96,8 +101,9 @@ once set it can only be changed to another allowed value.
 **C7. A stored value the web does not recognise reads as unset.** Unparsable
 JSON, a wrong type, a skill class outside `SKILL_CLASSES`, a profile outside
 `PROFILE_SELECTIONS` or a birth year that is not an integer shows as unset
-(the phone's fallbacks: `null`, `false`). It is overwritten only if the user
-sets that field. A stored case is kept as-is: whether it applies is the
+(the phone's fallbacks: `null`, `false`; `readAccountSettings` in
+`shared/src/sync-client/account-settings.ts`, #669's P1–P4). It is
+overwritten only if the user sets that field. A stored case is kept as-is: whether it applies is the
 profile's call (`resolveComplianceCase` treats a retired one as unset).
 A birth year that is a valid integer but has aged out of the picker's range is
 shown, kept in the list, and not written unless changed.
@@ -115,6 +121,7 @@ some client tombstoned the row, which no ShotLedger client does) reads as
 ### 3.1 Shared, pure (`shared/src/sync-client/settings-edit.ts`, `rows.ts`)
 
 ```ts
+// shared/src/sync-client/account-settings.ts (#669)
 interface AccountSettings {
   birthYear: number | null;
   skillClass: SkillClass | null;
@@ -123,9 +130,15 @@ interface AccountSettings {
   complianceProfileVariant: string | null;      // null = no choice stored
 }
 readAccountSettings(rows: ReadonlyMap<string, Payload>): AccountSettings
+
+// settings-edit.ts
 buildSettingsChanges(before, after, pulled, { newChangeId, now, currentYear })
   → { ok: true; changes: ClientChange[] } | { ok: false; errors: SettingsError[] }
 newSettingRow(key, value, now, pulled?): Payload            // rows.ts
+
+// shared/src/compliance/ (moved from the phone, R14)
+resolveDefaultProfileSelection(locale: string): ProfileSelection
+resolveComplianceCase(selection, storedVariantId, facts): ResolvedComplianceCase
 ```
 
 - `readAccountSettings` applies C7. A row whose payload `id` is not its key
@@ -136,20 +149,24 @@ newSettingRow(key, value, now, pulled?): Payload            // rows.ts
   build (`{ key, kind: 'notAllowed' }`), nothing built:
   birth year ∈ `birthYearOptions(currentYear)`; skill class ∈ `SKILL_CLASSES`;
   women's classes a boolean; profile ∈ `PROFILE_SELECTIONS`; case ∈ the
-  variants of `after`'s profile (the stored one, else the locale default
-  the caller resolved). Changing a value to `null` is refused (C6).
+  variants of `after`'s profile. A case changed under a profile that offers
+  no cases, or with no profile stored, is dropped, not refused (R4, R13).
+  Changing a value to `null` is refused (C6).
 - Each change: fresh `clientChangeId`, `tableName: 'settings'`,
   `rowId = key`, `deletedAt: null`, `updatedAt = now`.
 
 ### 3.2 Web (`web/src/settings/`)
 
-- `model.ts` (pure): the form = `AccountSettings` with the profile resolved
-  (C3); the shown case and whether it was proposed, from
-  `resolveComplianceCase`; `changedKeys`; `needsBirthYearConfirm`.
+- `model.ts` (pure): the form = `AccountSettings` as stored (an unset
+  profile stays unset, R13); the shown case and whether it was proposed, from
+  `resolveComplianceCase`, nothing while no profile is stored;
+  `hasChanges`; `needsBirthYearConfirm`.
 - `save.ts`: Save/Retry as #669's `entry/save.ts` (C8), without the
   context pull.
 - `settings.tsx`: renders. Birth year a `<select>`, class and profile and case
-  as radio groups, women's classes a checkbox. Save is disabled while nothing
+  as radio groups (native `<input type="radio">` under a `role="radiogroup"`
+  named by its heading, so the arrow keys move the choice; R15), women's
+  classes a checkbox. Save is disabled while nothing
   changed, while saving, and offline.
 
 ## 4. Scenarios
@@ -162,14 +179,16 @@ Feature: option lists (shared, vitest)
   Scenario: O2 birthYearOptions(2026) runs 2016 down to 1926, 91 years
   Scenario: O3 PROFILE_SELECTIONS is none, then every registered profile
 
-Feature: reading the pulled rows (shared/src/sync-client/settings-edit.test.ts)
-  Scenario: R1 each key's JSON text is decoded
-    Given rows birthYear "1980", skillClass "\"2\"", competesInWomensClasses "true",
-          complianceProfile "\"se\"", complianceProfileVariant "\"<a se case>\""
-    Then readAccountSettings returns exactly those values
-  Scenario: R2 absent rows read as unset: null, null, false, null, null
-  Scenario: R3 unparsable, wrong-typed and unknown values read as unset (C7)
-  Scenario: R4 a row whose payload id is not its key is ignored
+Feature: reading the pulled rows (moved to #669 as P1–P4,
+         shared/src/sync-client/account-settings.test.ts; R16)
+  Scenario: R1 each key's JSON text is decoded                        → P1
+  Scenario: R2 absent rows read as unset: null, null, false, null, null → P2
+  Scenario: R3 unparsable, wrong-typed and unknown values read as unset (C7) → P3
+  Scenario: R4 a row whose payload id is not its key is ignored        → P4
+
+Feature: the phone's compliance functions, moved (shared/src/compliance/*.test.ts; R14)
+  Scenario: D1 the default profile is Sweden for a Swedish locale, None otherwise
+  Scenario: C1–C6 resolveComplianceCase, the phone's tests moved unchanged
 
 Feature: building the push (shared/src/sync-client/settings-edit.test.ts)
   Scenario: B1 nothing changed → no changes
@@ -206,8 +225,8 @@ Feature: round trip (backend/test/web-settings.spec.ts, Workers pool, real D1)
   Scenario: W4 a revoked session token → unauthenticated, and nothing is stored
 
 Feature: the page model (web/src/settings/*.test.ts)
-  Scenario: U1 the form opens on the stored values; an unset profile shows the
-              browser-language default; an unset case shows the derived case as proposed
+  Scenario: U1 the form opens on the stored values; an unset profile stays unset
+              and shows no case (R13); an unset case shows the derived case as proposed
   Scenario: U2 the case picker is offered only when the profile has more than one case
   Scenario: U3 changing an already-set birth year needs confirmation; setting it the first time does not
   Scenario: U4 Save is blocked offline, while saving, and when nothing changed
@@ -232,6 +251,8 @@ device's edit of another key survives.
 - **N6** The phone's behaviour does not change: the moved lists keep the
   phone's values (O1–O3), and `pnpm check` stays green.
 - **N7** No shooting-data table is written.
+- **N8** `web/src/settings/` imports nothing from `app/src/` (R14; grep gate
+  beside N1).
 
 ## 6. Setup plan
 
@@ -313,3 +334,47 @@ full review of PR #672:
   page (`key={generation}`), so nothing built from the old account's rows can
   be pushed to the new one. R8's held-request check stays as defence in depth.
   The page wrapper no longer repeats the form's `settings` class.
+
+Approved first-hand by the maintainer on 2026-10-08 (C1–C8, R1–R12), with
+three changes from an independent review:
+
+- **R13 (C3 and R6 changed; B10, U1, U2 changed).** With no profile stored,
+  the profile picker highlights nothing, and one muted line says no profile
+  is chosen and the phone uses its language's default
+  (`web.settings.profileUnset`). The browser's language is no longer used:
+  it is not the phone's, so the web could show None where a Swedish phone
+  shows Sweden. The case section shows nothing until a profile is chosen,
+  because the cases depend on a profile the web cannot know. Choosing a
+  profile still writes it (R6 stands). `buildSettingsChanges` loses
+  `SettingsDeps.defaultProfile`: a case is checked against `after`'s stored
+  profile only, and a case changed with no profile stored is dropped, as
+  under a profile with no cases (R4). B10 now pins that drop and that
+  choosing a profile writes it; B5 loses its "checked against the shown
+  default" example.
+- **R14 (C4 completed; new D1, N8).** The phone's pure
+  `resolveDefaultProfileSelection` (`app/src/features/compliance/profile.ts`)
+  and `resolveComplianceCase` (`…/resolve-case.ts`) move unchanged to
+  `shared/src/compliance/default-profile.ts` and `resolve-case.ts`, exported
+  from `@shotledger/shared`. Their jest tests (C1–C6) move with them to
+  vitest unchanged, and D1 is new (the function had no test). The phone's
+  `useComplianceProfile` hook stays in `app/` and imports both. The web
+  imports `resolveComplianceCase` from `shared/`; after R13 it no longer
+  calls `resolveDefaultProfileSelection`. N8 gates that
+  `web/src/settings/` imports nothing from `app/src/`.
+- **R15 (§3.2).** The class, profile and case pickers are radio groups:
+  native radio inputs, styled as the earlier pills, inside a
+  `role="radiogroup"` named by the field's heading. Tab enters the group at
+  the chosen option (the first when none is), and the arrow keys move the
+  choice, which is an edit like a click. No rendering test (the web package
+  tests pure modules); checked in the browser.
+
+Appended after rebasing onto #669's rulings round (`a0c61f5`):
+
+- **R16 (scope; R1–R4 moved).** #669 R26 moved the read half of this
+  module — `readAccountSettings`, `AccountSettings`, `SyncedSettingKey`,
+  `SKILL_CLASSES`, `PROFILE_SELECTIONS` — to
+  `shared/src/sync-client/account-settings.ts`, with R1–R4 as its P1–P4.
+  `settings-edit.ts` keeps only the build and imports the reader; the
+  duplicate definitions and tests are gone. `#settings` joins
+  `web/src/shell/route.ts` (#669 R27), and the menu reads Sessions,
+  Statistics, Enter Series, Settings, then Account.
