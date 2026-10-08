@@ -5,9 +5,12 @@
 > (web writes by pushing rows through `/sync/push`; accepted, merged with
 > layer 1 in #647).
 >
-> **Approval status: approval relayed by the orchestrator session on
-> 2026-10-06 ("approved your spec as is, C1–C9 unchanged"); not received
-> first-hand from the maintainer.**
+> **Approval status: the maintainer approved first-hand on 2026-10-08:**
+> C1–C3 and C7–C9 as written; C4 and C5 as deferrals, with follow-up issues
+> #688 (fält entry), #689 (rounds-only and final series), #690 (tags on a new
+> web session), #691 (photo upload from the web) and #692 (edit and delete a
+> session on the web); **C6 changed** (prefill from the synced profile, see
+> C6 and R26); R1–R25 approved, **R15 changed** to `Europe/Stockholm`.
 
 - **Tier: 3.** It writes to the account's server rows through the sync
   protocol. A wrong payload does not fail on the web: it fails on every phone
@@ -15,15 +18,17 @@
   transaction roll back on every later cycle, so that phone's sync wedges until
   the row is fixed on the server.
 - **Scope:** `shared/src/scoring/series-text.ts` (new),
-  `shared/src/sync-client/{rows,session-entry,direct-push}.ts` (new),
-  `shared/src/disciplines/` (two helpers moved out of the phone's new-session
-  screen, unchanged in behaviour), `web/src/` (an Enter Series page, the push
-  call in `api.ts`, `firearm_groups` in `WEB_TABLES`), app tests that apply
-  web-built rows to the phone's real schema, one backend round-trip spec,
-  `docs/manual/` EN + SV, `app/src/i18n/{en,sv}.json` (`web.entry.*`).
-- **Not in scope:** reading or writing `session_tags` or `settings`. Layer 1
-  (#647, ADR 0019) has since made both sync, but this layer still neither
-  reads nor writes them (N6); tags and profile prefill are later changes.
+  `shared/src/sync-client/{rows,session-entry,direct-push,account-settings}.ts`
+  (new), `shared/src/disciplines/` (helpers moved out of the phone's
+  new-session screen, unchanged in behaviour; R3, R26), `web/src/` (an Enter
+  Series page, the push call in `api.ts`, `firearm_groups` in `WEB_TABLES`),
+  app tests that apply web-built rows to the phone's real schema, one backend
+  round-trip spec, `docs/manual/` EN + SV, `app/src/i18n/{en,sv}.json`
+  (`web.entry.*`).
+- **Not in scope:** writing `session_tags` or `settings`, and reading
+  `session_tags` (tags on a new web session are #690). The web reads the
+  synced profile from `settings` to prefill the form (C6, as changed by the
+  maintainer); it never writes a settings row (N6).
 
 ## 1. Settled inputs (maintainer, 2026-10-06; not re-asked)
 
@@ -31,7 +36,8 @@
    `/sync/push`, online only. No browser database, no outbox, the same per-row
    last-write-wins as a second phone (ADR 0019).
 2. This layer must not depend on layer 1: only tables already in
-   `SYNC_TABLE_NAMES`.
+   `SYNC_TABLE_NAMES`. (Layer 1, #647, has since merged; the maintainer's C6
+   change of 2026-10-08 makes this layer read its `settings` rows.)
 3. Keyboard entry: type `10 9 X 10 9`, Tab to the next series.
 
 ## 2. Key choices (for approval)
@@ -84,22 +90,31 @@ a **ring** discipline, with ordinary and sighter series. Not offered: fält
 final series, photos, tags. The form asks for the fields the phone's
 new-session form asks for (§3.1).
 
-**C5. Edit and delete are deferred to a later layer.** The web has no sessions
-list or session page yet (the "browse sessions" item on #277), so there is
-nowhere to select a session to edit or delete. Building that page is larger
-than this layer. Before Save, the whole entry is freely editable. After Save,
-the session is edited or deleted on the phone, as today.
+**C5. Edit and delete are deferred to a later layer (#692).** The web now has
+a read-only Sessions page (list and detail), so a session can be found there;
+the deferral is about scope. Editing or deleting rewrites rows a phone may
+have changed since the web pulled them, which needs its own design for that
+race; this layer only ever writes new rows (and the firearm's counter, C1).
+Before Save, the whole entry is freely editable. After Save, the session is
+edited or deleted on the phone, as today.
 
-**C6. Where the profile-dependent defaults come from.** The phone prefills the
-shooter class and ranks ISSF events from the shooter profile (birth year,
-skill class, women's classes), filters disciplines to the enabled regulations,
-and can switch the vapengrupp and klass pickers off (Optional Fields). The
-enabled regulations and the Optional Fields switches are device-local and
-never sync. The profile (birth year, skill class, women's classes) does sync
-since layer 1, but this layer does not read `settings` (N6). So the web offers
-every regulation, ranks events against an empty profile, preselects no klass,
-and always asks vapengrupp and klass for a competition (both may be left
-empty, as on the phone). A later change can prefill from the synced profile.
+**C6. Where the profile-dependent defaults come from (changed by the
+maintainer, 2026-10-08).** The phone prefills the shooter class and ranks
+ISSF events and klasser from the shooter profile (birth year, skill class,
+women's classes), filters disciplines to the enabled regulations, and can
+switch the vapengrupp and klass pickers off (Optional Fields). The profile
+syncs since layer 1, so the web prefills from the account's synced profile
+exactly as the phone does from its local one: it preselects the klass
+(`defaultShooterClass`), lists the klasser with the shooter's own first
+(`shooterClassesInOrder`) and ranks and preselects the ISSF event
+(`eventsUnder`, `preferredEventId`), all judged in the year the form opened.
+These are the phone's own functions, moved to `shared/` (R26). The profile is
+read by `readAccountSettings`: an unset or unrecognised value reads as unset
+(the phone's fallbacks), and an unset profile gives the earlier behaviour —
+no klass preselected, every list in its own order. The enabled regulations
+and the Optional Fields switches stay device-local and never sync, so the web
+still offers every regulation and always asks vapengrupp and klass for a
+competition (both may be left empty, as on the phone).
 
 **C7. Dependency: `uuidv7` in `web/package.json`.** New rows need UUIDv7 ids
 (implementation plan §2 lists the `uuidv7` package). The app already depends on
@@ -282,6 +297,19 @@ Feature: entry → changes (shared/src/sync-client/session-entry.test.ts)
 Feature: moved helpers (shared/src/disciplines/*.test.ts)
   Scenario: H1 defaultProgramFor: competition preselects the first program, training none
   Scenario: H2 derivedWeaponGroup: one group, else the one default-marked, else null
+  Scenario: H4 eventsUnder / preferredEventId: ranked for the shooter under the regelverk
+            logged (SvSF adds its national classes), never filtered; none for SPSF; judged
+            in the year given
+  Scenario: H5 shooterClassesInOrder: every klass of the discipline, the shooter's own first,
+            narrowed by the vapengrupp; none for a discipline without klasser
+  Scenario: O1 SKILL_CLASSES is 1, 2, 3 (eligibility.test.ts)
+  Scenario: O3 PROFILE_SELECTIONS is none, then every registered profile (profile-registry.test.ts)
+
+Feature: the synced profile (shared/src/sync-client/account-settings.test.ts)
+  Scenario: P1 each key's JSON text is decoded
+  Scenario: P2 absent rows read as unset: null, null, false, null, null
+  Scenario: P3 unparsable, wrong-typed and unknown values read as unset
+  Scenario: P4 a row whose payload id is not its key is ignored
 
 Feature: push outcome (shared/src/sync-client/direct-push.test.ts)
   Scenario: D1 all applied → saved
@@ -305,6 +333,16 @@ Feature: the page model (web/src/entry/*.test.ts, the web package's pure-module 
   Scenario: U4 a save refreshes the logbook and clears the draft; a failed refresh says "reload"
   Scenario: U5 the discipline options exclude hits disciplines
   Scenario: U6 Enter in the last free-format row adds a row; in a fixed-format skeleton it does not
+
+Feature: prefill from the synced profile (web/src/entry/model.test.ts, C6)
+  Scenario: F1 a set profile preselects the klass, ranks the klasser and the ISSF events
+    Given a shooter born 1964, klass 2, entering the women's classes
+    Then the klass is 2, the klasser start 2, Dam2, VetY (2, 1 under vapengrupp A),
+         the klass survives a type and a discipline change,
+         and ISSF air pistol preselects women:open
+    And a shooter born 2010 gets Jun in 2026 and nothing in 2060
+  Scenario: F2 an unset profile preselects no klass and keeps every list in its own order
+  Scenario: F3 unrecognised synced values prefill nothing, as if unset
 ```
 
 Browser checks (not automated; screenshots in the session scratchpad, never
@@ -325,7 +363,9 @@ from another tab.
 - **N4** No `NOT NULL` column is ever pushed as `null` (A1, A2).
 - **N5** No row other than the new session, its series and shots, and the
   chosen firearm is written (E1, E11).
-- **N6** No dependency on `session_tags` or `settings`.
+- **N6** No dependency on `session_tags`, and `settings` is only read: the
+  synced profile, through `readAccountSettings` (C6). No settings row is ever
+  written (E1, N5).
 - **N7** The phone's behaviour does not change: the moved helpers keep their
   tests, and `pnpm check` stays green.
 
@@ -355,9 +395,9 @@ relayed rather than first-hand.
 
 - **R1 (text only).** "Not in scope", C6, the ADR 0019 pointer, the
   isolation line and the screenshot location are made true for current main:
-  layer 1 (#647) has merged and `session_tags` and `settings` sync. This layer
-  still neither reads nor writes them (N6), so the web still ranks events
-  against an empty profile.
+  layer 1 (#647) has merged and `session_tags` and `settings` sync. As
+  first written this layer read neither, ranking events against an empty
+  profile; the maintainer's C6 change (R26) has it read the synced profile.
 - **R2.** `resolveSeriesLength` lives in `app/`, not `shared/`. The builder
   applies the same order (program, choice, discipline) itself; E9 pins it.
 - **R3 (C8 widened).** A third pure helper moves with the two:
@@ -461,3 +501,27 @@ Added after the full PR review of #669 (maintainer: fix all findings):
   (only a tombstoned row can be rejected and every other row is new, so it is
   unreachable, and it would say "could not save" over a stored session); and
   capping the chosen series length (the phone accepts the same values).
+
+Added after the maintainer's first-hand review (2026-10-08):
+
+- **R26 (C6 changed).** The web prefills from the synced profile (C6). The
+  phone's private `eventsUnder` and `preferredEventId` and its inline klass
+  ordering move to `shared/src/disciplines/session-defaults.ts` (the last as
+  `shooterClassesInOrder`), taking the year as a parameter; the phone calls
+  them with this year, so its behaviour does not change (N7). The reader
+  `readAccountSettings` (with `SKILL_CLASSES` and `PROFILE_SELECTIONS`) is the
+  read half of the web settings page's module (#672), moved down to
+  `shared/src/sync-client/account-settings.ts` so that page reuses it.
+  `EntryForm` carries the profile and the year it opened in
+  (`eligibilityYear`), so the model stays pure; R16's "current year" is that
+  year. As on the phone, the preselected klass is kept when the type or the
+  discipline changes. That also means a competition under a discipline with
+  no klass picker (ISSF) stores the preselected klass beside its event; the
+  phone does the same today, although its form's comment says a session
+  carries one or the other. Mirrored, not changed here; raised on the PR.
+  Scenarios **H4**, **H5**, **O1**, **O3**, **P1–P4**, **F1–F3** added.
+- **R27 (rebase).** Rebased onto main after the read-only Sessions page and
+  target photos (#661, #665): the menu reads Sessions, Statistics, Enter
+  Series, then Account; `#entry` joins `web/src/shell/route.ts`; a refresh
+  after a save carries the photo picks over to the re-pulled tables, which
+  would otherwise drop them.

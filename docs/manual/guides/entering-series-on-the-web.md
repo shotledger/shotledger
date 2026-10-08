@@ -11,6 +11,15 @@ match format, date and time, name and location, then the competition fields,
 firearm and ammo lot. Date and time are when you shot, in this computer's time
 zone; both start at now.
 
+Your class and ISSF event start from the profile you set in **Settings →
+Personal** on the phone, which sync carries to the account: your birth year,
+class and the women's classes switch. Your own class is preselected and listed
+first, and the events you can enter come first, as on the phone. With no
+profile set, nothing is preselected. The regulations you enabled and
+**Settings → Optional Fields** stay on the phone, so the web offers every
+regulation and always asks for the weapon group and class in a competition.
+See [Weapon group and class](../reference/weapon-group-and-class.md).
+
 Fält is not offered here; enter it on the phone.
 
 ## Type the series

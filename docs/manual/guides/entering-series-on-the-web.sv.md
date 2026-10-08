@@ -11,6 +11,15 @@ matchupplägg, datum och tid, namn och plats, sedan tävlingsfälten, vapen och
 ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda börjar
 på nu.
 
+Klass och ISSF-gren utgår från profilen du har angett under **Inställningar →
+Personligt** i telefonen, som synken för över till kontot: födelseår, klass
+och brytaren för damklasser. Din egen klass är förvald och står först, och de
+grenar du får delta i kommer först, som i telefonen. Utan profil är ingenting
+förvalt. Reglementena du har slagit på och **Inställningar → Valfria fält**
+stannar i telefonen, så webben erbjuder alla reglementen och frågar alltid
+efter vapengrupp och klass i en tävling. Se
+[Vapengrupp och klass](../reference/weapon-group-and-class.md).
+
 Fältskjutning finns inte här; mata in den i telefonen.
 
 ## Skriv serierna

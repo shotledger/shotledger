@@ -13,7 +13,8 @@ one writer and goes through `shared/src/sync-client/{session-entry,direct-push}.
 - **Numbers come from `shared/src/analytics-rows`**, the same composition the
   phone runs. `src/stats-inputs.ts` maps the snake_case wire rows onto it.
   Tags and the birth year come from the synced `session_tags` and `settings`
-  rows; tag names resolve through `shared/src/tags/canonical.ts`. Sessions
+  rows; tag names resolve through `shared/src/tags/canonical.ts`; the synced
+  profile reads through `shared/src/sync-client/account-settings.ts`. Sessions
   (`src/sessions/browse.ts`) join through the export's `sessionExportsFromRows`
   and score with `shared/src/scoring`. App code without a react-native import
   (labels, formatters) is imported directly rather than restated.
