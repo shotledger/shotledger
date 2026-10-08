@@ -1,17 +1,17 @@
 # Evidence report — web bulk edit (Tier 3)
 
 Spec: [`web-bulk-edit-spec.md`](web-bulk-edit-spec.md), including its §8
-Revisions R1–R24.
+Revisions R1–R29 (R5, R16, R18 and R21–R24 withdrawn).
 
-> **Round 2 is the current evidence.** An independent verifier failed round 1
-> (the sections before "Round 2" are round 1's, kept as history). Round
-> 2 fixes what it found (R5–R12) and is reported in
-> [Round 2](#round-2-after-the-independent-verifier-r5r12) with fresh numbers.
+> **Round 5 is the current evidence:**
+> [Round 5](#round-5-the-maintainers-rulings-r25r29). Rounds 1–4 are kept as
+> history; what they say about the counter correction no longer describes
+> the code.
 
-- **Spec approval: not obtained (autonomous run).** The spec was written,
-  committed and implemented in one run; the key choices B1–B10 and the
-  revisions are listed in the PR for the maintainer. Confidence is
-  correspondingly lower: nobody but the author has read the contract.
+- **Spec approval: approved first-hand by the maintainer on 2026-10-08**,
+  after an independent review: B1–B6 and B8–B10, B7 as amended (R27),
+  R1–R4, R6–R15 and R17–R20, with the changes recorded as R25–R29; R5, R16,
+  R18 and R21–R24 withdrawn. Rounds 1–4 ran before that approval.
 - **Source state (round 1):** commit `41f55c7`. Branch `feat/web-bulk-edit`,
   on `feat/web-series-entry-impl` at `d6e1168` (#669).
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
@@ -124,10 +124,6 @@ here; #669's evidence report has the same limit.
 
 ## Known limits
 
-- B7 deviation, pinned by P1's second case: when a session's only link to a
-  name is to a _deleted_ tag, the web adds the tag and shows it; the phone's
-  `addSessionTag` counts the dead link and shows nothing. The web follows
-  what readers show.
 - A phone that edited the same session or firearm offline can overwrite the
   web's edit, or the reverse (ADR 0019 consequences; B4 narrows the window
   to the seconds between the fresh pull and the push).
@@ -152,7 +148,7 @@ here; #669's evidence report has the same limit.
   the docs and this report are committed on top), rebased onto #669 at
   `8860a12` (its held-request and user-binding fix, R13/R14, which R12
   mirrors; vitest now runs in `America/Sao_Paulo`).
-- **Spec approval:** still not obtained; R5–R12 are flagged in the PR. R5
+- **Spec approval (at the time):** not obtained; R5–R12 were flagged in the PR. R5
   changes B3: a refused moved session now costs a second push.
 
 ### Findings → fixes
@@ -217,8 +213,8 @@ check said "Changed 2 sessions"; that is R11.) Screenshot
 - **Source state:** commit `a4a1743`, rebased onto #669 at `caffb4d` (its
   shared re-sign-in, `unconfirmed` flag and fieldset fixes). Not
   independently re-verified.
-- **Spec approval:** still not obtained; B1–B10 and R1–R20 await the
-  maintainer. B7 unchanged: #676 is still open.
+- **Spec approval (at the time):** not obtained; B1–B10 and R1–R20 awaited
+  the maintainer. B7 unchanged: #676 is still open.
 
 | Review finding                                     | Fix                                                    | Evidence                                                     |
 | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
@@ -252,7 +248,7 @@ passes restored; `bulk-edit.test.ts` 23/23. The rest of the gauntlet ran at
 ## Round 4 (after the second independent verifier, R21–R24)
 
 - **Source state:** commit `f156260` on #669 at `caffb4d`. Not re-verified
-  independently; spec approval still not obtained.
+  independently; spec approval not obtained at the time.
 - **Verifier findings:** CONFIRMED 1 (a refused session's rounds were put
   back onto its source, which the deleting device had already backed out)
   → R21; PLAUSIBLE 2 (a delta on a target another device rewrote) → R22;
@@ -280,3 +276,86 @@ passes restored; `bulk-edit.test.ts` 23/23. The rest of the gauntlet ran at
 The four survivors: the two `Map.get(null)` guards and the unique-key sort
 (as before), and `unverified: []` on a correction not yet built, which is
 always replaced by the build's own list before it is read.
+
+## Round 5 (the maintainer's rulings, R25–R29)
+
+- **Source state:** code and tests at `6b1aca0b`, docs at `f527aea1`, this
+  report on top. Branch `feat/web-bulk-edit` rebased onto #669 at
+  `a0c61f59` (`git rebase --onto a0c61f59 caffb4d1`); the only conflict was
+  the menu, which now takes its `Page` from `web/src/shell/route.ts`
+  (`#bulk` added there and to `route.test.ts`).
+- **Independent verification: not performed** for this state, a declared
+  downgrade. The maintainer's rulings followed an independent review of
+  round 4; nothing in round 5 adds behaviour beyond the one message.
+
+### What changed
+
+| Ruling                                              | Change                                                                                                                           | Evidence                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Drop the counter correction (R5, R16, R18, R21–R24) | `CounterPlan`, `countersAfter`, `buildCounterCorrection`, the correction stage, `MAX_CORRECTION_ATTEMPTS`, their strings removed | K18–K22, P6, W5–W7 and their 9 hand mutants removed; one push per action (U6, R25 tests)   |
+| Name the firearms to check instead (R25)            | builder returns `firearms: { target, sources }`; `applied.firearmsToCheck`; one line naming them                                 | K23; R25 cases in `apply.test.ts`; `messages.test.ts`; 3 new hand mutants; browser check 6 |
+| No warning on a dropped held change (R26)           | `afterEdit` drops any held request silently; `accountChanged` has no `dropped`                                                   | U8, R12 cases; `carry.ts` kept for the generic `accountChanged` line across the remount    |
+| B7 agrees with the phone (R27)                      | P1's B7 case asserts both show the tag; the deviation note is gone                                                               | `web-bulk.test.ts` P1 (passes on main's `addSessionTag` since #676)                        |
+| Rebase (R28, R29)                                   | backend spec origin `https://localhost`; R1 now exports two helpers                                                              | W1–W4 fail with `https://example.com` (4 failed), pass with `https://localhost`            |
+
+Lines removed by the rework commit (`git show --numstat 6b1aca0b`): source
+(`bulk-edit.ts`, `web/src/bulk/*.ts{,x}`) +137 / −360; tests +137 / −842;
+i18n +4 / −14; the hand-mutant script +23 / −64.
+
+### Gauntlet (fresh, after the last code edit)
+
+| Layer                                           | Command                                                                                                    | Result                                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                               | exit 0; vitest 187 files, 3125 tests; jest 714; i18n 1270 keys, 0 issues; 97 packages |
+| Coverage (gated)                                | `pnpm check`                                                                                               | 100% statements 3808/3808, branches 2393/2393, functions 893/893, lines 3234/3234     |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                         | 19 files, 196 tests passed (W1–W4)                                                    |
+| Mutation (tool)                                 | `npx stryker run --mutate 'shared/src/sync-client/bulk-edit.ts,web/src/bulk/*.ts,!web/src/bulk/*.test.ts'` | 630 killed, 3 survived, 0 no coverage: 99.53% (all equivalent, below)                 |
+| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-bulk.mjs`                                                                | 19/19 killed (7 unmutated suites pass first)                                          |
+| Property-based                                  | K17 (500 runs)                                                                                             | pass                                                                                  |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=301 <the bulk suites>`                                  | 7 files, 62 tests passed                                                              |
+| Traceability                                    | `pnpm reqstool:tags && pnpm reqstool:status`                                                               | exit 0; 21 tests passed, 0 failed; 0 SVCs missing tests                               |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                     | built; 26 translated pages current; no dangling anchors                               |
+
+**The three survivors are equivalent.** `bulk-edit.ts`'s `live`:
+`firearmId !== null && …` → `true && …`: `Map.get(null)` on a map keyed by
+string ids is `undefined`, so `isLive` is false either way. `model.ts`'s
+`bulkRows`: the same `Map.get(null)` guard, and the sort's `<` → `<=`, whose
+keys include the unique id, so no two are equal.
+
+### Real execution (round 5)
+
+`wrangler dev` on port 8801 with a fresh local D1, the built web app served
+by the Worker, headless Chrome driven over CDP, one synthetic account
+(`@example.invalid`; two firearms, nine sessions of 10 shots, 2025 and
+2026). Screenshots in `~/tmp/sl-301-bulk-shots/`, not in the repo or the PR.
+
+1. Filter 2025 (4 shown), select all, Add Tag "Season 2025" (new) →
+   "Changed 4 sessions."; the server holds 4 live links to it.
+2. All 9 selected, Remove Tag "Season 2025" → "Changed 4 sessions. 5
+   already were that way."; 0 live links remain.
+3. Filter 2026 (5 shown), Change Firearm to Pistol B → "Changed 5
+   sessions."; counters A 400 → 350, B 0 → 50.
+4. Search "outdoor" (2 shown), Change Location "Forest range" → "Changed 2
+   sessions."; 2 sessions at Forest range.
+5. Filter Jan–Mar 2026 (2 shown, on B), Change Firearm to Pistol A, with the
+   push held (CDP `Fetch`) while the other device deleted one of them the
+   phone's way (B backed out to 40, then the tombstones), then let through →
+   "Changed 1 session. 1 change was refused: deleted on another device.
+   Check the round counts of Training Pistol A and Training Pistol B with
+   Adjust Round Count on the phone." One push; counters A 370, B 30.
+
+### Known limits (round 5)
+
+- **A refused moved session stays counted on the target** (step 5: A is 370,
+  the phone's truth 360). The web writes no correction, as the phone writes
+  none for its own refused push; the page names the target and the refused
+  sessions' known sources, and the user corrects the count with Adjust
+  Round Count. A firearm the page has no row for is not named. Closing the
+  tab before reading the message leaves the count unexplained.
+- A held firearm change dropped by an edit, or by another account signing
+  in, is not mentioned (R26). If it did land, the next Apply sees those
+  sessions as already moved; if its answer had refused a session, that
+  refusal is not reported.
+- The firearm rows are absolute values: a phone saving series on the same
+  firearm between the web's pull and its push (or its Retry) loses those
+  rounds, or the web loses its move (B4). Not prevented.
