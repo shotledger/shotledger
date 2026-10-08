@@ -4,7 +4,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, Switch } from 'react-native';
+import { Pressable, StyleSheet, Switch } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -78,7 +78,7 @@ export default function DevScreen() {
   }, [refresh]);
 
   return (
-    <Screen scroll={false}>
+    <Screen>
       <ScreenTitle>{t('dev.title')}</ScreenTitle>
 
       <Pressable
@@ -195,19 +195,16 @@ export default function DevScreen() {
 
       <ThemedText type="smallBold">{t('dev.sessionsCount', { count: sessions.length })}</ThemedText>
 
-      <FlatList
-        data={sessions}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView style={styles.list}>
+        {sessions.map((item) => (
+          <ThemedView key={item.id} type="backgroundElement" style={styles.row}>
             <ThemedText type="small">{item.name}</ThemedText>
             <ThemedText type="small">
               {item.type} · {item.disciplineId} · {item.startedAt.slice(0, 10)}
             </ThemedText>
           </ThemedView>
-        )}
-      />
+        ))}
+      </ThemedView>
     </Screen>
   );
 }
