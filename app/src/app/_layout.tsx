@@ -18,6 +18,9 @@ import { AppSettingsProvider } from '@/state/app-settings';
 
 void SplashScreen.preventAutoHideAsync();
 
+// A deep link (app://dev, a session) lands on top of the tabs, so Back goes Home.
+export const unstable_settings = { initialRouteName: '(tabs)' };
+
 // Hosts the (tabs) group inside a Stack alongside modal-stacked session
 // routes and dev routes — fixes the M1-reported gap where non-tab routes
 // had no host (the root layout rendered only the tab navigator).
