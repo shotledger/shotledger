@@ -11,20 +11,17 @@ numbers below are from the fresh run after R16.
   (C1–C8, R1–R12), with three changes recorded as R13–R15 (unset profile not
   pre-highlighted; the two compliance functions moved to `shared/`; real
   radio groups).
-- **Source state:** commit `bf70d4dd` (the last code change; this report is
-  docs committed on top). Branch `feat/web-edit-settings`, on
-  `feat/web-series-entry-impl` (#669) at `a0c61f5`.
+- **Source state:** commit `72588676` (branch `feat/web-edit-settings`, on
+  `feat/web-series-entry-impl` (#669) at `d546999a`). This PR's own code is
+  that of `bf70d4dd`; the rebase brought in only #669's verification fixes.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2; backend vitest 4.1.11 with
   `@cloudflare/vitest-plugin`); Node 26.10.0.
 - **Entry point:** `pnpm check`; `cd backend && npx vitest run
 --testTimeout=60000`; `npx stryker run --mutate <the four modules below>`.
-- **Independent verification:** one round, by a fresh-context verifier
-  relayed through the coordinator, on `39b8391`. Two confirmed findings
-  (R4, R5) and three plausible ones (R6, R7, a manual sentence) were fixed.
-  A full review then found R9–R12, and an independent review before approval
-  the three changes R13–R15. None of the fixed states (R4–R16, last
-  `bf70d4dd`) has been re-verified: declared downgrade.
+- **Independent verification:** round 2 verified `72588676` and returned
+  `passed`; its description findings were fixed in this report afterwards.
+  See _Independent verification_ below.
 
 ## Failure model (Tier 3)
 
@@ -69,18 +66,18 @@ numbers below are from the fresh run after R16.
 
 ## Gauntlet (final fresh run, after the last code edit)
 
-| Layer                                           | Command                                                                                                                                                                                 | Result                                                                                                  |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check` (vitest TZ pinned to Europe/Stockholm by #669)                                                                                                                             | exit 0; vitest 186 files, 3102 tests passed; jest 62 suites, 708 tests passed; i18n 1238 keys, 0 issues |
-| Coverage (gated)                                | `pnpm check` (100% threshold; `web/src/entry/*.ts`, `web/src/reauth.ts`, `web/src/settings/*.ts` and `shared/src/compliance/**` in scope)                                               | 100% statements 3633/3633, branches 2278/2278, functions 853/853, lines 3091/3091                       |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                                                                      | 19 files, 196 tests passed (W1–W4 included)                                                             |
-| Mutation                                        | `npx stryker run --mutate shared/src/sync-client/settings-edit.ts,shared/src/compliance/default-profile.ts,shared/src/compliance/resolve-case.ts,web/src/settings/model.ts` (after R16) | 127 killed, 3 survived, all equivalent (below): 97.69%; `default-profile.ts` 6/6                        |
-| Property-based                                  | B7 (fast-check, 300 runs)                                                                                                                                                               | pass                                                                                                    |
-| Property suite alone                            | 4 hand mutants, `-t B7` (before R13; B7's assertions unchanged since)                                                                                                                   | 4/4 killed (below)                                                                                      |
-| Suite health                                    | `npx vitest run --sequence.shuffle shared/src/sync-client shared/src/compliance web/src app/src/db/queries/web-settings.test.ts` × 3                                                    | 443 tests passed each time                                                                              |
-| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status` (after a fresh `pnpm check`)                                                                                                               | 21 passed, 0 failed, 0 SVCs missing tests                                                               |
-| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                                                                  | built; 25 translated pages current; no dangling anchors                                                 |
-| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                                                                                                                    | no dependency added or removed; no new network, storage or env use                                      |
+| Layer                                           | Command                                                                                                                                                                                 | Result                                                                                                                                    |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Tests + types + lint + format + i18n + licenses | `pnpm check` (vitest TZ pinned to Europe/Stockholm by #669)                                                                                                                             | exit 0; vitest 186 files, 3114 tests passed; jest 62 suites, 708 tests passed; i18n 1238 keys, 0 issues (at `72588676`, verifier's rerun) |
+| Coverage (gated)                                | `pnpm check` (100% threshold; `web/src/entry/*.ts`, `web/src/reauth.ts`, `web/src/settings/*.ts` and `shared/src/compliance/**` in scope)                                               | 100% statements 3637/3637, branches 2283/2283, functions 854/854, lines 3094/3094 (at `72588676`)                                         |
+| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                                                                      | 19 files, 196 tests passed (W1–W4 included)                                                                                               |
+| Mutation                                        | `npx stryker run --mutate shared/src/sync-client/settings-edit.ts,shared/src/compliance/default-profile.ts,shared/src/compliance/resolve-case.ts,web/src/settings/model.ts` (after R16) | 127 killed, 3 survived, all equivalent (below): 97.69%; `default-profile.ts` 6/6                                                          |
+| Property-based                                  | B7 (fast-check, 300 runs)                                                                                                                                                               | pass                                                                                                                                      |
+| Property suite alone                            | 4 hand mutants, `-t B7` (before R13; B7's assertions unchanged since)                                                                                                                   | 4/4 killed (below)                                                                                                                        |
+| Suite health                                    | `npx vitest run --sequence.shuffle shared/src/sync-client shared/src/compliance web/src app/src/db/queries/web-settings.test.ts` × 3                                                    | 443 tests passed each time                                                                                                                |
+| reqstool                                        | `pnpm reqstool:tags && pnpm reqstool:status` (after a fresh `pnpm check`)                                                                                                               | 21 passed, 0 failed, 0 SVCs missing tests                                                                                                 |
+| Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                                                                  | built; 25 translated pages current; no dangling anchors                                                                                   |
+| Supply chain                                    | `pnpm licenses:check` (in `pnpm check`); diff review                                                                                                                                    | no dependency added or removed; no new network, storage or env use                                                                        |
 
 **Survivors.** Three, all equivalent; each rests on
 `getProfileDefinition(null)` finding no profile, as `'none'` does:
@@ -240,3 +237,38 @@ The phone's apply path is exercised on better-sqlite3, not expo-sqlite (A2).
   has better-auth trust only its configured origins, and this spec still
   signed in from `https://example.com`. It now uses `https://localhost`, as
   the other backend specs do (R16).
+
+## Independent verification
+
+- Verifier: Claude Code, Fable 5.1; fresh context; given the repo @
+  `72588676` + the task contract + the SPEC + the entry point. Not given the
+  builder's conversation. Correlation broken: task context. Not broken:
+  model.
+- Rounds: 2 (cap 2). Round 1 (`39b8391`): the findings recorded above
+  (R4–R7). Round 2 (`72588676`) verdict: `passed`.
+- Attacked in round 2: the run (every gate reproduced from `72588676`);
+  spec vs contract (the web's rows and behaviour against the phone's
+  `personal.tsx`, `compliance.tsx`, `use-compliance-profile.ts`,
+  `setSetting`/`getSetting` and `applyOne`; two devices, Retry, account
+  switch, a default written as a choice, the moved functions); test-gaming
+  (14 hand mutants, all killed, and Stryker on the seven touched gauntlet
+  modules: 387 mutants, 382 killed, 1 timeout, 4 survived, all proved
+  equivalent, 98.97%); a throwaway jsdom probe of the render layer (R13
+  nothing highlighted and the hint line, R15 labelled radio groups, the
+  birth-year confirmation, Retry without asking again, the form lock); the
+  N1 and N8 gates fed known-bad input (both fail); the mapping in both
+  directions (complete).
+- Findings, graded by the maintainer as description, fixed and disclosed,
+  no new round:
+  1. This report named the pre-rebase state (`bf70d4dd` on `a0c61f5`) and
+     its numbers; it now names `72588676` with the rerun numbers.
+  2. The mutation row above covers four modules; the diff also touches
+     `rows.ts`, `save.ts` and `eligibility.ts`. The verifier ran them:
+     `rows.ts` 50/50, `save.ts` 111/111, `eligibility.ts` one survivor
+     (`isJunior`) that predates this PR and is equivalent.
+  3. The spec's "C1–C6" and `firearm-ownership-evidence.md`'s "C1–C5" do not
+     disagree: that report predates C6, which #333 added. The moved file
+     holds six.
+- Canary: not run.
+- Fixed after the last verified state, therefore unverified: none (only
+  this report changed).
