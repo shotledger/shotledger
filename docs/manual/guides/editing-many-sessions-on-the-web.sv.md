@@ -24,8 +24,9 @@ sedan filtrerade bort lämnas orörda.
 | Byt plats      | Sätter platsen. En tom plats rensar den                                         |
 
 **Byt vapen** flyttar skottantalen med passen, som när du ändrar ett pass i
-telefonen: varje pass skott, provskott inräknade, dras från det gamla vapnets
-skottantal och läggs på det nyas.
+telefonen: varje pass skott (provskott inräknade), dess oräknade extraskott och
+sex skott för varje fältstation dras från det gamla vapnets skottantal och
+läggs på det nyas.
 
 ## Tillämpa
 

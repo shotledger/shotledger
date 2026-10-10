@@ -108,9 +108,11 @@ push creates one (`tags` row, UUIDv7), ahead of the links. A session counts as
 already tagged when it has a live link to a live tag of that name — what
 every reader shows, and what the phone's `addSessionTag` counts since #676.
 Remove Tag offers the names on the selected sessions and tombstones every
-live link of a selected session to any tag of that name, live or deleted, as
-`removeSessionTag` does. P1 pins that both agree, a name whose only tag was
-deleted included.
+live link of a selected session to any pulled tag of that name. The phone's
+`removeSessionTag` also tombstones a link to a _deleted_ tag of that name; the
+web never holds a deleted tag (its pull drops tombstones), so such a link stays
+live. No reader shows it: `liveSessionTags` drops it, and since #676
+`addSessionTag` ignores it (R30).
 
 **B8. Location: trimmed, blank clears.** As the phone's session edit: the
 typed text is trimmed, a blank one stores `null`, at most 200 characters.
@@ -203,7 +205,7 @@ Feature: bulk builder (shared/src/sync-client/bulk-edit.test.ts)
   Scenario: K2 add a new tag name: one tags row first, then the links to it
   Scenario: K3 a session with a live link to a live tag of that name is unchanged; a link to a deleted tag does not count
   Scenario: K4 the tag name is trimmed; blank → blankTag; over 120 → tooLong(tag)
-  Scenario: K5 remove a tag: a tombstone per live link to any tag of that name (live or deleted), none for other sessions
+  Scenario: K5 remove a tag: a tombstone per live link to any pulled tag of that name, none for other sessions
   Scenario: K6 remove a tag no selected session has → nothingToChange
   Scenario: K7 change firearm: each moved session is its pulled payload with firearm_id changed and updated_at now; unknown keys survive
   Scenario: K8 change firearm moves the counters: source −volume, target +volume, summed per firearm, floored at 0, both counters
@@ -419,3 +421,17 @@ The maintainer's rulings, after an independent review (2026-10-08).
 - **R29 (rebase, R1).** `web/src/entry/entry.tsx` exports two helpers
   (`useOnline`, `locationUsage`); the sign-in is #669's shared
   `web/src/sign-in-again.tsx` (R15).
+
+Added after independent verification round 3 (2026-10-09), graded by the
+maintainer on 2026-10-10 (description, no new round):
+
+- **R30 (B7 reworded).** B7 said Remove Tag tombstones links to deleted tags
+  of the name, as the phone does. The web never pulls a deleted tag, so it
+  cannot; K5 and P2 built that context by hand. B7 and K5 now say what the
+  web does, and why no reader can see the difference.
+- **R31 (accepted limit, the maintainer's ruling: document only).** A target
+  firearm deleted on another device between the fresh pull and the push: its
+  counter row is refused (`tombstoned`) while the moved sessions land on it,
+  and since no session was refused, no firearm is named. The sessions then
+  point at a deleted firearm on every device. Not prevented and not
+  reported; the manual does not promise otherwise.

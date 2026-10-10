@@ -125,8 +125,8 @@ here; #669's evidence report has the same limit.
 ## Known limits
 
 - A phone that edited the same session or firearm offline can overwrite the
-  web's edit, or the reverse (ADR 0019 consequences; B4 narrows the window
-  to the seconds between the fresh pull and the push).
+  web's edit, or the reverse (ADR 0019 consequences; B4 narrows the window,
+  which with a Retry runs from the first pull to the Retry, R10).
 - Merging duplicate ammo lots is not in this layer (spec §6).
 - A firearm deleted on another device between the fresh pull and the push is
   refused (`tombstoned`) while the sessions moved onto it land; they then name
@@ -284,9 +284,9 @@ always replaced by the build's own list before it is read.
   `a0c61f59` (`git rebase --onto a0c61f59 caffb4d1`); the only conflict was
   the menu, which now takes its `Page` from `web/src/shell/route.ts`
   (`#bulk` added there and to `route.test.ts`).
-- **Independent verification: not performed** for this state, a declared
-  downgrade. The maintainer's rulings followed an independent review of
-  round 4; nothing in round 5 adds behaviour beyond the one message.
+- **Independent verification:** since performed. The branch was rebased
+  again onto #669 at `d546999a` (#669's verification fixes only) and
+  verified at `2eb4c5e6`; see _Independent verification (round 3)_ below.
 
 ### What changed
 
@@ -359,3 +359,41 @@ by the Worker, headless Chrome driven over CDP, one synthetic account
 - The firearm rows are absolute values: a phone saving series on the same
   firearm between the web's pull and its push (or its Retry) loses those
   rounds, or the web loses its move (B4). Not prevented.
+
+## Independent verification (round 3)
+
+- Verifier: Claude Code, Fable 5.1; fresh context; given the repo @
+  `2eb4c5e6` (on #669 at `d546999a`) + the task contract (with the
+  maintainer's rulings) + the SPEC + the entry point. Not given the
+  builder's conversation. Correlation broken: task context. Not broken:
+  model.
+- Rounds: 3 (cap 2; the maintainer approved a third on 2026-10-09). Rounds 1
+  and 2 failed (above). Round 3 verdict: `passed`.
+- Numbers at `2eb4c5e6`: `pnpm check` exit 0, vitest 187 files / 3137
+  tests, jest 714; backend 19 files / 196 tests (W1–W4 by name); Stryker
+  630 killed, 3 survived (99.53%, the three equivalent survivors above);
+  `manual-mutation-web-bulk.mjs` 19/19; reqstool 21 tests, 0 SVCs missing.
+- Attacked: the run; spec vs contract (each action against the phone's
+  `getOrCreateTag`, `addSessionTag`, `removeSessionTag`, `updateSession`,
+  `applyRoundCountDelta`, `sessionVolumes` and `sync-store.applyOne`; the
+  server's `changeStatements`; the 500 limit; account switch; the
+  refused-session message; i18n); test-gaming (20 mutants of its own, all
+  killed); checker coverage (the N1 gate and the manual-mutation script
+  fed known-bad input, both fail); the mapping in both directions. No
+  correction path is left: one push per `applyEdit`.
+- Findings, graded by the maintainer on 2026-10-10, fixed and disclosed,
+  no new round:
+  1. B7/K5 claimed links to deleted tags are removed; the web never pulls a
+     deleted tag (R30).
+  2. A target firearm deleted between pull and push is not named (R31):
+     documented as an accepted limit, by the maintainer's ruling.
+  3. Round 5 named #669 at `a0c61f59`; the verified tip sits on
+     `d546999a` (3137 tests rather than 3125).
+  4. Wording: _Known limits_ still said "the seconds between the fresh pull
+     and the push" (retracted by R10); the manual said only shots move with
+     a firearm change, leaving out extra rounds and fält stations.
+     Note: the since-maintenance floor is pinned by K8/K17's independent
+     oracle, not by the phone twin P3 alone, whose seed never reaches 0.
+- Canary: not run.
+- Fixed after the last verified state, therefore unverified: none in code;
+  the spec, this report and the manual only.

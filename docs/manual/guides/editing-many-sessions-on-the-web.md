@@ -24,8 +24,9 @@ ticked and then filtered away are left alone.
 | Change Location | Sets the location. An empty location clears it                                  |
 
 **Change Firearm** moves the round counts with the sessions, as editing one
-session on the phone does: each session's shots, sighters included, come off
-the old firearm's round count and go on the new one's.
+session on the phone does: each session's shots (sighters included), its
+unscored extra rounds and six rounds for every fält station come off the old
+firearm's round count and go on the new one's.
 
 ## Apply
 
