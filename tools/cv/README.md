@@ -115,6 +115,19 @@ CV_SCORE_RUN=holes.jsonl CV_SCORE_MARKS=marks.txt [CV_SCORE_CSV=candidates.csv] 
 node tools/cv/eval/diff.mts holes base.jsonl holes.jsonl
 ```
 
+`hole-size-timing.eval.ts` times the hole-size check on close-up canvases
+(`CV_PREP_LOCK=closeup` above) per detector stage, as the `[scan-timing] hole
+detector` lines on a phone do, and separates the time spent in the map
+operations a phone runs in OpenCV. Under `--jitless` the per-peak features cost
+about what they cost on a phone; the map operations do not.
+`CV_TIMING_HALVE=1` also runs it on the canvas at half size.
+
+```bash
+CV_TIMING_IN=<canvas-dir> CV_TIMING_OUT=timing.jsonl [CV_TIMING_HALVE=1] \
+    pnpm exec vitest run -c tools/cv/vitest.config.ts [--execArgv=--jitless] hole-size-timing
+node tools/cv/eval/hole-size-timing.mts timing.jsonl
+```
+
 ## `fit/`: hand marks and the two hole models
 
 Ground truth is **hole centres, not candidate labels**: labelling the
