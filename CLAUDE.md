@@ -87,8 +87,10 @@ sync. Android first — **all code must stay iOS-compatible**.
    `weaponGroup`. Keeping them Swedish as "terms of art" was **rejected**.
    **One carve-out:** a name keeps the spelling of the thing it names, so
    the app never contradicts the document it cites —
-   - a federation's official discipline name (`milsnabb`,
-     `falt`/fältskjutning, ISSF's "25m Centre Fire Pistol");
+   - a federation's official discipline name in identifiers and Swedish
+     text (`milsnabb`, `falt`/fältskjutning, ISSF's "25m Centre Fire
+     Pistol"). The English label translates a Swedish one ("Military Rapid
+     Fire", "Field Shooting"; maintainer's ruling, 2026-10-11);
    - a document's field label (`vapenId`, from `VapenID` on the licence
      card);
    - **stored ids and column names** (`spsf-milsnabb`,

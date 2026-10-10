@@ -3,7 +3,7 @@
   "federation": "SPSF",
   "name": {
     "sv": "Fältskjutning",
-    "en": "Fältskjutning"
+    "en": "Field Shooting"
   },
   "defaultSeriesLength": 6,
   "scoring": "hits",

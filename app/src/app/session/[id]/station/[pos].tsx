@@ -13,6 +13,7 @@ import { Alert, StyleSheet, Switch, View } from 'react-native';
 import { SHOTS_PER_STATION } from '@shotledger/shared';
 
 import { Card } from '@/components/card';
+import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -47,7 +48,12 @@ function parseCount(text: string): number | null {
 export default function StationEntryScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos } = useLocalSearchParams<{ id: string; pos: string; new?: string }>();
+  const { id, pos, shootOff } = useLocalSearchParams<{
+    id: string;
+    pos: string;
+    new?: string;
+    shootOff?: string;
+  }>();
   const position = Number(pos);
 
   const row =
@@ -61,7 +67,9 @@ export default function StationEntryScreen() {
     row?.pointsMax == null ? '' : String(row.pointsMax),
   );
   const [isScratched, setIsScratched] = useState(row?.isScratched === 1);
-  const [isShootOff, setIsShootOff] = useState(row?.isShootOff === 1);
+  // Set by the round, not here: Start Shoot-off makes this and every later
+  // station a shoot-off (#715).
+  const isShootOff = row ? row.isShootOff === 1 : shootOff === '1';
 
   // The constraints are expressed by what the controls offer, not by
   // validating after the fact: a figure cannot be hit more times than shots
@@ -141,6 +149,7 @@ export default function StationEntryScreen() {
   return (
     <Screen>
       <ThemedText type="subtitle">{t('station.title', { position })}</ThemedText>
+      {isShootOff && <Chip label={t('station.shootOff')} testID="station-shoot-off" />}
 
       <Card>
         <ThemedText type="smallBold">{t('station.hits')}</ThemedText>
@@ -203,24 +212,20 @@ export default function StationEntryScreen() {
         )}
       </Card>
 
-      <Card>
-        <View style={styles.switchRow}>
-          <ThemedText type="small">{t('station.scratched')}</ThemedText>
-          <Switch
-            value={isScratched}
-            onValueChange={setIsScratched}
-            testID="station-scratched-toggle"
-          />
-        </View>
-        <View style={styles.switchRow}>
-          <ThemedText type="small">{t('station.shootOff')}</ThemedText>
-          <Switch
-            value={isShootOff}
-            onValueChange={setIsShootOff}
-            testID="station-shootoff-toggle"
-          />
-        </View>
-      </Card>
+      {/* A station is known to be scratched only afterwards, so the switch is
+          offered when editing one, not when entering it (#715). */}
+      {row && (
+        <Card>
+          <View style={styles.switchRow}>
+            <ThemedText type="small">{t('station.scratched')}</ThemedText>
+            <Switch
+              value={isScratched}
+              onValueChange={setIsScratched}
+              testID="station-scratched-toggle"
+            />
+          </View>
+        </Card>
+      )}
 
       <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
       {row && (

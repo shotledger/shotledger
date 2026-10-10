@@ -499,7 +499,8 @@ export default function SessionDetailScreen() {
         ) : null}
       </View>
 
-      <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />
+      {/* A fält round needs neither the stopwatch nor sight settings (#715). */}
+      {!isFaltSession && <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />}
 
       <WebshooterSessionBadge session={session} />
 

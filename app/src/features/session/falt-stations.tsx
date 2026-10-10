@@ -15,6 +15,7 @@ import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
 import { Spacing } from '@/theme/tokens';
 
+import { canStartShootOff, nextStationIsShootOff } from './falt-shoot-off';
 import { formatFaltResult, formatStation } from './format-falt-result';
 
 function load(sessionId: string) {
@@ -61,6 +62,9 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
   const { stations, result } = data;
 
   const nextPosition = (stations[stations.length - 1]?.position ?? 0) + 1;
+  const nextShootOff = nextStationIsShootOff(stations);
+  const stationHref = (shootOff: boolean) =>
+    `/session/${sessionId}/station/${nextPosition}?new=1${shootOff ? '&shootOff=1' : ''}`;
 
   return (
     <>
@@ -129,9 +133,16 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
       <Card>
         <PrimaryButton
           label={t('session.addStation')}
-          onPress={() => router.push(`/session/${sessionId}/station/${nextPosition}?new=1`)}
+          onPress={() => router.push(stationHref(nextShootOff))}
           testID="add-station"
         />
+        {canStartShootOff(stations) && (
+          <PrimaryButton
+            label={t('session.startShootOff')}
+            onPress={() => router.push(stationHref(true))}
+            testID="start-shoot-off"
+          />
+        )}
       </Card>
     </>
   );
