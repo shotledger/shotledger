@@ -8,6 +8,7 @@ import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/p
 import { TEXT_LIMITS } from '../sync/text-limits';
 import type { Payload } from './rows';
 import type { EntryDeps } from './session-entry';
+import { canonicalTagId, newSessionTagRow, newTagRow } from './tag-rows';
 
 export type BulkAction =
   | { kind: 'addTag'; name: string }
@@ -101,29 +102,17 @@ function addTag(
   // No link to write, no tag to create: a stray tag is not an edit (R13).
   if (untagged.length === 0) return { writes: [], changed: 0 };
   const writes: Write[] = [];
-  // The canonical tag: the live one with the smallest id (canonicalTags).
-  let tagId = [...named].sort()[0];
+  let tagId = canonicalTagId(context.tags.values(), name);
   if (tagId === undefined) {
     tagId = deps.newId();
-    writes.push({
-      tableName: 'tags',
-      rowId: tagId,
-      payload: { id: tagId, created_at: now, updated_at: now, deleted_at: null, name },
-    });
+    writes.push({ tableName: 'tags', rowId: tagId, payload: newTagRow(tagId, now, name) });
   }
   for (const s of untagged) {
     const id = deps.newId();
     writes.push({
       tableName: 'session_tags',
       rowId: id,
-      payload: {
-        id,
-        created_at: now,
-        updated_at: now,
-        deleted_at: null,
-        session_id: s.id,
-        tag_id: tagId,
-      },
+      payload: newSessionTagRow(id, now, s.id as string, tagId),
     });
   }
   return { writes, changed: untagged.length, tagId };
