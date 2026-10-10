@@ -6,7 +6,7 @@ pappersloggbok. Logga in och öppna **Mata in serier** i menyn till vänster.
 
 ## Fyll i passet
 
-Fälten är telefonens formulär för nytt pass: typ, reglemente, gren,
+Fälten är telefonens formulär för nytt pass: typ, loggning, reglemente, gren,
 matchupplägg, datum och tid, namn och plats, sedan tävlingsfälten, vapen och
 ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda börjar
 på nu.
@@ -20,7 +20,15 @@ stannar i telefonen, så webben erbjuder alla reglementen och frågar alltid
 efter vapengrupp och klass i en tävling. Se
 [Vapengrupp och klass](../reference/weapon-group-and-class.md).
 
-Fältskjutning finns inte här; mata in den i telefonen.
+Serier i fältskjutning finns inte här; mata in dem i telefonen. Ett
+fältpass som bara loggar antal skott går att mata in här.
+
+## Bara antal skott
+
+Välj **Bara antal skott** under **Loggning** för att föra in hur många skott
+du sköt, utan serier. Passets fält finns kvar; **Avlossade skott** ersätter
+matchupplägget och serieraderna. Lämna fältet tomt om du inte vet antalet.
+Annat än ett heltal avvisas innan något skickas.
 
 ## Skriv serierna
 
@@ -44,11 +52,19 @@ Med **Hela matchen** vald läggs raderna ut som programmets serier, provserier
 inräknade, som i telefonen. I fritt format kryssar du **Provserie** på den rad
 som är provserie. **Lägg till serie** lägger till en rad.
 
+### En final
+
+I precision med **Hela matchen** vald visas **Starta final** när en serie har
+ett skott. Den lägger till en rad under **Final**, och varje rad som läggs
+till efter den hör till finalen, som kan ha en egen provserie. Finalen räknas
+för sig, skild från grundomgången, som i telefonen. Töms finalens rader
+försvinner den igen.
+
 ## Spara
 
 **Spara** skickar hela passet på en gång; det sparas antingen helt eller inte
 alls. Telefonen får det vid nästa synk, och ett valt vapens skottantal ökar med
-skotten, provserier inräknade.
+skotten, provserier och final inräknade, eller med de avlossade skotten.
 
 För att spara krävs en anslutning. Om servern inte går att nå, eller svarar så
 att det är oklart om passet kom fram, finns serierna kvar på sidan och

@@ -6,8 +6,8 @@ Sign in, then open **Enter Series** in the menu on the left.
 
 ## Fill in the session
 
-The fields are the phone's new-session form: type, regulation, discipline,
-match format, date and time, name and location, then the competition fields,
+The fields are the phone's new-session form: type, logging, regulation,
+discipline, match format, date and time, name and location, then the competition fields,
 firearm and ammo lot. Date and time are when you shot, in this computer's time
 zone; both start at now.
 
@@ -20,7 +20,15 @@ profile set, nothing is preselected. The regulations you enabled and
 regulation and always asks for the weapon group and class in a competition.
 See [Weapon group and class](../reference/weapon-group-and-class.md).
 
-Fält is not offered here; enter it on the phone.
+Fält series are not offered here; enter them on the phone. A fält session
+logged as rounds only can be entered here.
+
+## Rounds only
+
+Set **Logging** to **Rounds Only** to record how many rounds you fired, with
+no series. The session fields stay; **Rounds Fired** takes the place of the
+match format and the series rows. Leave it empty if you do not know the
+count. Anything but a whole number is refused before anything is sent.
 
 ## Type the series
 
@@ -44,11 +52,20 @@ With **Full Match** chosen, the rows are laid out as the program's series,
 sighters included, as on the phone. In free format, tick **Sighter** on the
 one row that is a sighter series. **Add Series** adds a row.
 
+### A final
+
+In precision with **Full Match** chosen, **Start Final** appears once a series
+has a shot. It adds a row under **Final**, and every row added after it
+belongs to the final, which can have a sighter series of its own. The final is
+totalled apart from the qualification, as on the phone. Emptying the final's
+rows removes it again.
+
 ## Save
 
 **Save** sends the whole session at once; it is either saved completely or not
 at all. Your phone gets it at its next sync, and a chosen firearm's round count
-goes up by the shots, sighters included.
+goes up by the shots, sighters and the final included, or by the rounds
+fired.
 
 Saving needs a connection. If the server cannot be reached, or answers in a
 way that leaves it unclear whether the session arrived, your series stay on
