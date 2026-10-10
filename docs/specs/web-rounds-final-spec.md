@@ -253,3 +253,18 @@ Sessions page show it; refuse `2.5` rounds.
   100% coverage gate of `pnpm check` applies to them; `pnpm mutation` scoped
   to the changed modules; the backend Workers pool; the app's vitest.
 - **New dependencies:** none.
+
+## 10. Revisions
+
+Appended during the build; none loosens a constraint.
+
+- **R1 (AP2's oracle).** `loadSessionDetail` reads the app's global database
+  client, which the vitest harness does not have. AP2 instead builds the same
+  session on a second phone database through `addSeries` and
+  `saveSeriesShots`, requires the web's series and shots to equal those, and
+  runs `sessionResults` — the function `loadSessionDetail` calls — over them.
+- **R2 (FS3 widened).** The final gate reads `supportsFinal` alone, as
+  `canStartFinal` does; a test pins that the one program with a final lays
+  out no skeleton, so the phone's "not a fixed format" condition is implied.
+- **R3 (RO7 widened).** An unknown discipline throws, as `buildSessionEntry`
+  does.
