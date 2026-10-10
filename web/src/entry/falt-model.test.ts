@@ -99,11 +99,13 @@ describe('the fält page model', () => {
       { ...stations, resultMode: 'poangfalt' },
       'Competition — 7 Oct',
     );
-    const { programId, decimalScoring, seriesLength, series, ...session } = toDraft(
-      form,
-      'Competition — 7 Oct',
-    );
-    void [programId, decimalScoring, seriesLength, series];
+    const {
+      programId: _programId,
+      decimalScoring: _decimalScoring,
+      seriesLength: _seriesLength,
+      series: _series,
+      ...session
+    } = toDraft(form, 'Competition — 7 Oct');
     expect(draft).toEqual({
       ...session,
       faltResultMode: 'poangfalt',
@@ -147,6 +149,15 @@ describe('the fält page model', () => {
     expect(faltSendsTheSame(form, withStation(addStation(form), 1, { isShootOff: true }))).toBe(
       false,
     );
+    expect(faltSendsTheSame(form, withStation(addStation(form), 1, { pointsText: '1' }))).toBe(
+      false,
+    );
+    expect(faltSendsTheSame(form, withStation(addStation(form), 1, { pointsMaxText: 'x' }))).toBe(
+      false,
+    );
+    // An edit to any station counts, not only the first.
+    const two = addStation(form);
+    expect(faltSendsTheSame(two, withHits(two, 1, 2))).toBe(false);
     // Removing a station is never the same.
     expect(faltSendsTheSame(addStation(form), form)).toBe(false);
   });

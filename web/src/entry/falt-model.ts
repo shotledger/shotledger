@@ -103,10 +103,7 @@ export function withFigureCount(
 }
 
 /** The entered numbers of a row, keyless. */
-const entered = ({ key, ...station }: StationRow) => {
-  void key;
-  return station;
-};
+const entered = ({ key: _key, ...station }: StationRow) => station;
 
 const blankRow = (row: StationRow) =>
   isBlankStation({ ...row, points: null }) && row.pointsText === '' && row.pointsMaxText === '';
@@ -129,11 +126,13 @@ export function faltSendsTheSame(prev: FaltForm, next: FaltForm): boolean {
 
 /** The session fields exactly as the series form passes them, with the stations. */
 export function toFaltDraft(form: EntryForm, falt: FaltForm, defaultName: string): FaltEntryDraft {
-  const { programId, decimalScoring, seriesLength, series, ...session } = toDraft(
-    form,
-    defaultName,
-  );
-  void [programId, decimalScoring, seriesLength, series];
+  const {
+    programId: _programId,
+    decimalScoring: _decimalScoring,
+    seriesLength: _seriesLength,
+    series: _series,
+    ...session
+  } = toDraft(form, defaultName);
   return {
     ...session,
     faltResultMode: falt.resultMode,

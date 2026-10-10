@@ -32,6 +32,8 @@ describe('stationProblem', () => {
     expect(stationProblem(station({ hits: 1, figuresHit: 1, figureCount: 1 }))).toBeNull();
     expect(stationProblem(station({ points: 0 }))).toBeNull();
     expect(stationProblem(station({ points: 4 }))).toBeNull();
+    // A max is only checked against points; the phone saves no max without them.
+    expect(stationProblem(station({ pointsMax: -1 }))).toBeNull();
 
     expect(stationProblem(station({ hits: 7 }))).toBe(
       'station 3: hits must be an integer 0-6, got 7',
@@ -114,6 +116,7 @@ describe('stationPoints', () => {
     expect(stationPoints('12', '20')).toEqual({ ok: true, points: 12, pointsMax: 20 });
     expect(stationPoints(' 12 ', ' 20 ')).toEqual({ ok: true, points: 12, pointsMax: 20 });
     expect(stationPoints('0', '')).toEqual({ ok: true, points: 0, pointsMax: null });
+    expect(stationPoints('12', '')).toEqual({ ok: true, points: 12, pointsMax: null });
     expect(stationPoints('10', '10')).toEqual({ ok: true, points: 10, pointsMax: 10 });
     expect(stationPoints('', '20')).toEqual({ ok: true, points: null, pointsMax: null });
 

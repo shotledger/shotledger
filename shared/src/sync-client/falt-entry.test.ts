@@ -212,6 +212,12 @@ describe('buildFaltEntry', () => {
     expect(changes.some((c) => c.tableName === 'series' || c.tableName === 'shots')).toBe(false);
   });
 
+  it('FE1 a blank name falls back to the default, as on the phone', () => {
+    expect(session(changesOf(build(draft({ name: '   ' }))))).toMatchObject({
+      name: 'Training — 6 Oct 2026',
+    });
+  });
+
   it('FE2 the chosen result mode is stored', () => {
     expect(session(changesOf(build(draft({ faltResultMode: 'poangfalt' }))))).toMatchObject({
       falt_result_mode: 'poangfalt',
