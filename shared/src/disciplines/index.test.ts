@@ -803,7 +803,7 @@ describe('fältskjutning: a hits discipline (issue #315, spec D1-D7 / N1)', () =
       allowsDecimal: false,
     });
     expect(falt.targetFace).toBeUndefined();
-    expect(falt.name).toEqual({ sv: 'Fältskjutning', en: 'Fältskjutning' });
+    expect(falt.name).toEqual({ sv: 'Fältskjutning', en: 'Field Shooting' });
     // A, A optisk, B, C, R -- R exists here where precision has none
     // (D.4 pp. 82-86; C.5.1.1.2 p. 69).
     expect(weaponGroupsForDiscipline('spsf-falt').map((g) => g.id)).toEqual([

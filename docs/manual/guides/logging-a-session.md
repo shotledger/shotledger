@@ -66,9 +66,10 @@ That is the rule inside a session. Across sessions it changes — see
 ## Field shooting
 
 Field shooting is not scored in rings, so it is logged in **stations** instead
-of series. Pick **Fältskjutning** as the discipline — the app keeps the Swedish name in
-English too, because that is what the rule book calls the event and the session asks one
-extra question: whether the competition is run as **field** or **point field**.
+of series. Pick **Field Shooting** as the discipline (_fältskjutning_ in the
+rule book) and the session asks one extra question: whether the competition is
+run as **field** or **point field**. A field shooting session has no stopwatch
+or sights buttons.
 
 Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
 Hit**, and **Figures**, how many figures the station had. Five hits in three of
@@ -90,12 +91,16 @@ ring scheme in field shooting — organisers choose — so the app asks rather
 than assumes. Those points never add to your result; they only separate two
 shooters who are otherwise equal.
 
-Two switches take a station out of the result without erasing it:
+Two kinds of station stay in the round without counting towards the result:
 
 - **Scratched** — the station was annulled, for a broken rule or a safety
-  breach. It stays in the round, struck through, and counts for nothing.
+  breach. You learn that afterwards, so the switch is on the station when you
+  open it again to edit it, not when you first enter it. It stays in the round,
+  struck through, and counts for nothing.
 - **Shoot-off** — shot to separate equal results. It decides placement, never
-  the score you recorded.
+  the score you recorded. Tap **Start Shoot-off** under the stations: the next
+  station, and every station you add after it, is a shoot-off station, the way
+  **Start Final** works in a ring session.
 
 Both still count the six rounds you fired towards your firearm's round counter
 and your ammunition, because you fired them.
@@ -115,7 +120,7 @@ confirm before the series and its shots are removed.
 
 ## The stopwatch and sights
 
-Two buttons sit above the series list:
+Two buttons sit above the series list (not in a field shooting session):
 
 - **Stopwatch** — opens over the session. It keeps running when you close it,
   because it is timing your session rather than the panel. The buttons work

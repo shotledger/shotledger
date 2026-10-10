@@ -64,10 +64,9 @@ Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 ## Fältskjutning
 
 Fältskjutning räknas inte i ringar, så den loggas i **stationer** i stället
-för serier. Välj **Fältskjutning** som gren — namnet står kvar på svenska även när appen
-körs på engelska, eftersom det är så regelboken kallar grenen — så ställer
-passet en extra fråga:
-om tävlingen skjuts som **fält** eller **poängfält**.
+för serier. Välj **Fältskjutning** som gren (på engelska _Field Shooting_) så
+ställer passet en extra fråga: om tävlingen skjuts som **fält** eller
+**poängfält**. Ett fältpass har inga knappar för tidtagarur eller sikte.
 
 Varje station är sex skott. På en skärm trycker du **Träff** (0–6),
 **Träffade figurer** och **Figurer**, hur många figurer stationen hade. Fem
@@ -89,12 +88,16 @@ fast ringsystem — arrangören väljer — så appen frågar i stället för at
 Poängen läggs aldrig till resultatet; de skiljer bara två skyttar som annars
 är lika.
 
-Två reglage tar bort en station ur resultatet utan att radera den:
+Två slags stationer ligger kvar i ronden utan att räknas i resultatet:
 
 - **Struken** — stationen annullerades, för ett regelbrott eller ett
-  säkerhetsfel. Den ligger kvar i ronden, överstruken, och räknas inte.
+  säkerhetsfel. Det får du veta efteråt, så reglaget finns på stationen när du
+  öppnar den igen för att ändra den, inte när du först matar in den. Den ligger
+  kvar i ronden, överstruken, och räknas inte.
 - **Särskjutning** — skjuts för att skilja lika resultat. Den avgör placering,
-  aldrig det resultat du noterat.
+  aldrig det resultat du noterat. Tryck **Starta särskjutning** under
+  stationerna: nästa station, och varje station du lägger till efter den, är en
+  särskjutningsstation, så som **Starta final** fungerar i ett ringpass.
 
 Båda räknar ändå de sex skotten mot vapnets skotträknare och din ammunition,
 eftersom du sköt dem.
@@ -114,7 +117,7 @@ bekräfta innan serien och dess skott tas bort.
 
 ## Tidtagaruret och siktet
 
-Två knappar sitter ovanför serielistan:
+Två knappar sitter ovanför serielistan (inte i ett fältpass):
 
 - **Tidtagarur** — öppnas ovanpå passet. Det fortsätter gå när du stänger det,
   eftersom det tar tid på ditt pass och inte på panelen. Knapparna fungerar

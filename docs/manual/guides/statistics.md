@@ -47,10 +47,10 @@ each with the question it answers. Tap one to scroll straight to it.
   and the labels name the year whenever the range crosses one. Past eight
   disciplines the chart says how many it left out rather than giving two of
   them the same colour.
-- **Fältskjutning**, when the report holds fält sessions: stations, hits,
+- **Field Shooting**, when the report holds fält sessions: stations, hits,
   figures hit, the hit rate (hits out of six per station) and a chart of hits
   per station over time. Only stations that count are in it — a scratched or
-  särskjutning station is not part of a result. Pick _Fältskjutning_ as the
+  särskjutning station is not part of a result. Pick _Field Shooting_ as the
   discipline and the ring cards above are left out, since none of them can say
   anything about a fält round.
 - **Training vs Competition**, when **Session Type** is _All_: training and

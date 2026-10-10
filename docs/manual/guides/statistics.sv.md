@@ -46,7 +46,7 @@ och en med frågan den svarar på. Tryck på en för att gå direkt dit.
   ovanpå varandra, vilket är sanningen om dem — och etiketterna anger året så
   snart perioden korsar ett årsskifte. Bortom åtta grenar säger diagrammet hur
   många det utelämnat i stället för att ge två av dem samma färg.
-- **Fältskjutning**, när rapporten innehåller fältpass: stationer, träffar,
+- **Fältskjutning** (på engelska _Field Shooting_), när rapporten innehåller fältpass: stationer, träffar,
   träffade figurer, träffandelen (träffar av sex per station) och ett diagram
   över träffar per station över tid. Bara stationer som räknas finns med — en
   struken station eller en särskjutningsstation är inte del av ett resultat.
