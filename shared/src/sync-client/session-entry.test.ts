@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildProgramSkeleton, getProgram } from '../disciplines';
+import { buildProgramSkeleton, getProgram, PROGRAMS } from '../disciplines';
 import { TEXT_LIMITS } from '../sync/text-limits';
 import {
   ClientChangeSchema,
@@ -597,5 +597,116 @@ describe('buildSessionEntry', () => {
     expect(session(changesOf(build(draft({ startedAt }))))).toMatchObject({
       started_at: startedAt,
     });
+  });
+});
+
+describe('final series (docs/specs/web-rounds-final-spec.md)', () => {
+  const precision = (series: SessionEntryDraft['series']) =>
+    draft({ disciplineId: 'spsf-precision', programId: 'spsf-precision', series });
+
+  it('FS1 main rows then final rows: positions run on, is_final marks the final, every shot moves the firearm', () => {
+    const changes = changesOf(
+      build({
+        ...precision([
+          { text: '10 9 8 7 6', isSighter: false },
+          { text: '10 10', isSighter: false },
+          { text: '9 9 9 9 9', isSighter: false, isFinal: true },
+          { text: 'X 10 10', isSighter: false, isFinal: true },
+        ]),
+        firearmId: 'f1',
+      }),
+    );
+    const series = payloads(changes, 'series');
+    expect(series.map((s) => [s.position, s.is_final, s.is_sighter])).toEqual([
+      [1, 0, 0],
+      [2, 0, 0],
+      [3, 1, 0],
+      [4, 1, 0],
+    ]);
+    expect(payloads(changes, 'shots')).toHaveLength(15);
+    expect(payloads(changes, 'firearms')[0]).toMatchObject({
+      round_count: 115,
+      rounds_since_maintenance: 19,
+    });
+  });
+
+  it('FS2 one sighter per section: a main and a final sighter pass, a second final sighter is refused', () => {
+    const series = payloads(
+      changesOf(
+        build(
+          precision([
+            { text: '9 9', isSighter: true },
+            { text: '10 9', isSighter: false },
+            { text: '8 8', isSighter: true, isFinal: true },
+            { text: '10', isSighter: false, isFinal: true },
+          ]),
+        ),
+      ),
+      'series',
+    );
+    expect(series.map((s) => [s.is_sighter, s.is_final])).toEqual([
+      [1, 0],
+      [0, 0],
+      [1, 1],
+      [0, 1],
+    ]);
+    expect(
+      build(
+        precision([
+          { text: '10 9', isSighter: false },
+          { text: '8 8', isSighter: true, isFinal: true },
+          { text: '7', isSighter: true, isFinal: true },
+        ]),
+      ),
+    ).toEqual({ ok: false, errors: [{ kind: 'secondSighter', row: 3 }] });
+    expect(
+      build(
+        precision([
+          { text: '9', isSighter: true },
+          { text: '8', isSighter: true },
+        ]),
+      ),
+    ).toEqual({ ok: false, errors: [{ kind: 'secondSighter', row: 2 }] });
+  });
+
+  it('FS3 no program with a final is laid out, so Start Final is never hidden by a fixed format', () => {
+    const withFinal = PROGRAMS.filter((program) => program.supportsFinal);
+    expect(withFinal.map((program) => program.id)).toEqual(['spsf-precision']);
+    expect(withFinal.every((program) => buildProgramSkeleton(program).length === 0)).toBe(true);
+  });
+
+  it.each([
+    ['free format', 'spsf-precision', null],
+    ['a program without a final', 'spsf-magnumprecision', 'spsf-magnumprecision'],
+    ['a fixed format', 'spsf-milsnabb', 'spsf-milsnabb'],
+  ])('FS3 a final row in %s throws RangeError', (_, disciplineId, programId) => {
+    const series = [
+      { text: '10', isSighter: false },
+      { text: '9', isSighter: false, isFinal: true },
+    ];
+    expect(() => build(draft({ disciplineId, programId, series }))).toThrow(
+      new RangeError(`a final series needs a program with a final, got ${programId}`),
+    );
+  });
+
+  it('FS4 a blank final row is dropped like any blank row; a blank final sighter is kept', () => {
+    const series = payloads(
+      changesOf(
+        build(
+          precision([
+            { text: '10 9', isSighter: false },
+            { text: '', isSighter: true, isFinal: true },
+            { text: '  ', isSighter: false, isFinal: true },
+            { text: '9', isSighter: false, isFinal: true },
+          ]),
+        ),
+      ),
+      'series',
+    );
+    expect(series.map((s) => [s.position, s.is_sighter, s.is_final])).toEqual([
+      [1, 0, 0],
+      [2, 1, 1],
+      [3, 0, 1],
+    ]);
   });
 });
