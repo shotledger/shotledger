@@ -10,6 +10,7 @@ import {
   toRoundsDraft,
   withKind,
 } from './kinds';
+import { initialFalt } from './falt-model';
 import {
   addRow,
   canMarkSighter,
@@ -56,22 +57,21 @@ describe('rounds-only and final series on the Enter Series form', () => {
     });
   });
 
-  it('WK2 the discipline options: ring disciplines for series, every discipline for rounds', () => {
+  it('WK2 the discipline options: every discipline of the regulation for either kind (R5, #688)', () => {
     const series = disciplineOptions(fresh()).map((d) => d.id);
     expect(series).toContain('spsf-precision');
-    expect(series).not.toContain('spsf-falt');
+    expect(series).toContain('spsf-falt');
     const rounds = disciplineOptions(withKind(fresh(), 'rounds')).map((d) => d.id);
-    expect(rounds).toContain('spsf-falt');
-    expect(rounds).toEqual(expect.arrayContaining(series));
-    expect(rounds).toHaveLength(series.length + 1);
+    expect(rounds).toEqual(series);
   });
 
-  it('WK3 back to series from fält moves to the first ring discipline', () => {
+  it('WK3 back to series keeps the discipline, fält included (R5, #688)', () => {
     const falt = withDiscipline(withKind(fresh(), 'rounds'), 'spsf-falt');
     expect(withKind(falt, 'series')).toMatchObject({
       kind: 'series',
-      disciplineId: 'spsf-precision',
+      disciplineId: 'spsf-falt',
       regulationId: 'spsf',
+      roundsFired: '',
     });
     const milsnabb = withDiscipline(withKind(fresh(), 'rounds'), 'spsf-milsnabb');
     expect(withKind(milsnabb, 'series').disciplineId).toBe('spsf-milsnabb');
@@ -200,6 +200,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
     };
     const rounds = buildEntry(
       { ...withKind(fresh(), 'rounds'), roundsFired: '60' },
+      initialFalt(),
       'd',
       context,
       deps,
@@ -207,7 +208,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
     expect(rounds.ok && rounds.changes.map((c) => c.payload)).toEqual([
       expect.objectContaining({ kind: 'rounds', extra_rounds: 60 }),
     ]);
-    const series = buildEntry(typed(fresh(), '10'), 'd', context, deps);
+    const series = buildEntry(typed(fresh(), '10'), initialFalt(), 'd', context, deps);
     expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
       'sessions',
       'series',
@@ -231,6 +232,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
     };
     const series = buildEntry(
       { ...typed(fresh(), '10'), tags: ['km', 'Club'] },
+      initialFalt(),
       'd',
       context,
       deps,
@@ -247,6 +249,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
     expect(links[0]!.payload).toEqual(expect.objectContaining({ tag_id: 't1' }));
     const rounds = buildEntry(
       { ...withKind(fresh(), 'rounds'), roundsFired: '60', tags: ['KM'] },
+      initialFalt(),
       'd',
       context,
       deps,

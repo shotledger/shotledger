@@ -280,3 +280,9 @@ Appended during the build; none loosens a constraint.
   session screen now uses `parseRoundsFired` and refuses what the web refuses.
   A final with nothing shot is dropped (FS5), and a final with no scored main
   series is refused, `finalWithoutMain` (FS6).
+- **R5 (#688, the web fält entry).** Fält series are now entered on the web as
+  stations (`docs/specs/web-falt-entry-spec.md`), so C5's last sentence no
+  longer holds: the discipline list is every discipline of the regulation for
+  either kind, and back to Scored Series keeps the discipline, fält included.
+  WK2 and WK3 are rewritten to that rule; a rounds-only fält session is still
+  a rounds session.

@@ -1,13 +1,9 @@
 // Rounds-only sessions and final series on the Enter Series form
 // (docs/specs/web-rounds-final-spec.md C3, C5), mirroring the phone's
 // new-session Logging picker and the session detail's Start Final. Pure.
-import {
-  disciplinesForRegulations,
-  getProgram,
-  requireDiscipline,
-  type Discipline,
-} from '@shotledger/shared/src/disciplines';
+import { getProgram, type Discipline } from '@shotledger/shared/src/disciplines';
 import { withEntryTags } from '@shotledger/shared/src/sync-client/entry-tags';
+import { buildFaltEntry } from '@shotledger/shared/src/sync-client/falt-entry';
 import {
   buildRoundsEntry,
   type RoundsEntryDraft,
@@ -20,34 +16,26 @@ import {
   type EntryResult,
 } from '@shotledger/shared/src/sync-client/session-entry';
 
+import { entryDisciplines, isFaltForm, toFaltDraft, type FaltForm } from './falt-model';
 import {
   addRow,
   modeOf,
-  ringDisciplines,
   rowSummary,
   toDraft,
   withProgram,
-  withRegulation,
   type EntryForm,
   type SessionKind,
 } from './model';
 
-/** Fält is logged as rounds only here; its series are entered on the phone (#688). */
-export function disciplineOptions(
-  form: Pick<EntryForm, 'kind' | 'regulationId'>,
-): readonly Discipline[] {
-  return form.kind === 'rounds'
-    ? disciplinesForRegulations([form.regulationId])
-    : ringDisciplines(form.regulationId);
+/** Every discipline of the regelverk, fält included, for either kind, as on the phone (#688). */
+export function disciplineOptions(form: Pick<EntryForm, 'regulationId'>): readonly Discipline[] {
+  return entryDisciplines(form.regulationId);
 }
 
 /** The phone's onSelectKind: rounds take no program and no decimal scoring. */
 export function withKind(form: EntryForm, kind: SessionKind): EntryForm {
   if (kind === 'rounds') return withProgram({ ...form, kind }, null);
-  const series = { ...form, kind, roundsFired: '' };
-  return requireDiscipline(form.disciplineId).scoring === 'rings'
-    ? series
-    : withRegulation(series, form.regulationId);
+  return { ...form, kind, roundsFired: '' };
 }
 
 /** A final is offered by a program that has one (SPSF Precision), as on the phone. */
@@ -99,16 +87,30 @@ export function toRoundsDraft(form: EntryForm, defaultName: string): RoundsEntry
 /** What Save pulls afresh: the entry's context and the account's tags. */
 export type TaggedContext = EntryContext & { tags: ReadonlyMap<string, Payload> };
 
-/** What Save builds: a rounds session or the typed series, its tags in the same push (C2). */
+/** The entry Save builds, before its tags: rounds, fält stations or the typed series. */
+function buildUntagged(
+  form: EntryForm,
+  falt: FaltForm,
+  defaultName: string,
+  context: EntryContext,
+  deps: EntryDeps,
+): EntryResult {
+  if (form.kind === 'rounds') {
+    return buildRoundsEntry(toRoundsDraft(form, defaultName), context, deps);
+  }
+  return isFaltForm(form)
+    ? buildFaltEntry(toFaltDraft(form, falt, defaultName), context, deps)
+    : buildSessionEntry(toDraft(form, defaultName), context, deps);
+}
+
+/** What Save builds, its tags in the same push (web-entry-tags-spec C2). */
 export function buildEntry(
   form: EntryForm,
+  falt: FaltForm,
   defaultName: string,
   context: TaggedContext,
   deps: EntryDeps,
 ): EntryResult {
-  const entry =
-    form.kind === 'rounds'
-      ? buildRoundsEntry(toRoundsDraft(form, defaultName), context, deps)
-      : buildSessionEntry(toDraft(form, defaultName), context, deps);
+  const entry = buildUntagged(form, falt, defaultName, context, deps);
   return withEntryTags(entry, form.tags, context.tags, deps);
 }
