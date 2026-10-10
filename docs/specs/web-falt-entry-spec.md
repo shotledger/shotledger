@@ -273,4 +273,20 @@ round count moved by 24.
 
 ## 8. Revisions
 
-(none yet)
+Appended during the same autonomous run; none loosens a constraint.
+
+- **R1 (wording).** The blank-row mark reads "Not saved: nothing entered."
+  ("Sparas inte: inget ifyllt."), not "Not saved: blank".
+- **R2 (found in the browser).** `.series-rows { display: grid }` beat the
+  `hidden` attribute, so the series rows stayed visible under the stations;
+  `.series-rows[hidden]` now hides them. The station table's points fields
+  overflowed their column and now fit it.
+- **R3 (Stryker).** Tests added where mutants survived: a max without points
+  is not checked (S1), points with a blank max parse (S4), a blank name falls
+  back to the default (FE1), an edit to any station but the first and an
+  appended row with points text both drop a held request (UF4). Three
+  survivors are equivalent; the evidence report argues each.
+- **R4 (difference from the phone, by layout).** The phone shows "Points
+  can't be more than the max" as soon as the fields disagree; the web shows a
+  row's points error after Save, with the other entry errors, as #669 does for
+  a series row.
