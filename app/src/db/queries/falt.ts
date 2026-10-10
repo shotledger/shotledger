@@ -1,7 +1,7 @@
 // Fält stations (docs/specs/falt-stations-spec.md). A station is not a series:
 // see the table's comment in schema.ts for why it has its own table.
 import { and, eq, isNull } from 'drizzle-orm';
-import { SHOTS_PER_STATION } from '@shotledger/shared';
+import { stationProblem, type EnterableStation } from '@shotledger/shared';
 
 import {
   faltSessionResultOf,
@@ -31,52 +31,10 @@ export interface AddStationInput {
 
 export type StationRow = typeof faltStations.$inferSelect;
 
-/**
- * Rejects numbers no station could have produced — but only for a station
- * that still scores. A scratched station is a record of what went wrong, and
- * forcing it to be arithmetically possible would lose exactly the evidence it
- * exists to keep.
- */
-function assertEnterable(input: {
-  position: number;
-  hits: number;
-  figuresHit: number;
-  figureCount?: number | null;
-  points?: number | null;
-  pointsMax?: number | null;
-  isScratched?: boolean;
-}): void {
-  if (input.isScratched) return;
-  const where = `station ${input.position}`;
-  const { hits, figuresHit } = input;
-  if (!Number.isInteger(hits) || hits < 0 || hits > SHOTS_PER_STATION) {
-    throw new RangeError(`${where}: hits must be an integer 0-${SHOTS_PER_STATION}, got ${hits}`);
-  }
-  if (!Number.isInteger(figuresHit) || figuresHit < 0 || figuresHit > hits) {
-    throw new RangeError(`${where}: figuresHit must be an integer 0-${hits}, got ${figuresHit}`);
-  }
-  if (hits > 0 && figuresHit === 0) {
-    throw new RangeError(`${where}: ${hits} hits cannot be spread over 0 figures`);
-  }
-  const { figureCount } = input;
-  if (
-    figureCount != null &&
-    (!Number.isInteger(figureCount) || figureCount < 1 || figureCount > SHOTS_PER_STATION)
-  ) {
-    throw new RangeError(
-      `${where}: figureCount must be an integer 1-${SHOTS_PER_STATION} or null, got ${figureCount}`,
-    );
-  }
-  if (figureCount != null && figuresHit > figureCount) {
-    throw new RangeError(`${where}: ${figuresHit} figures hit of ${figureCount}`);
-  }
-  const { points, pointsMax } = input;
-  if (points != null && (!Number.isInteger(points) || points < 0)) {
-    throw new RangeError(`${where}: points must be a non-negative integer or null, got ${points}`);
-  }
-  if (pointsMax != null && points != null && points > pointsMax) {
-    throw new RangeError(`${where}: ${points} points on a poängmål worth ${pointsMax}`);
-  }
+/** Throws on numbers no station could have produced (`stationProblem`). */
+function assertEnterable(input: EnterableStation): void {
+  const problem = stationProblem(input);
+  if (problem !== null) throw new RangeError(problem);
 }
 
 export function addStation(db: Database, input: AddStationInput): StationRow {
