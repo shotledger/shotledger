@@ -4,6 +4,7 @@ import { ISSF_JUNIOR_MAX_AGE } from './entries';
 import {
   defaultShooterClass,
   isJunior,
+  SKILL_CLASSES,
   spsfEligibleClasses,
   type ShooterProfile,
 } from './eligibility';
@@ -147,4 +148,10 @@ it('offers the klasser the shooter holds, and none that vapengrupp C does not al
   expect(spsfEligibleClasses(her, 2026, 'spsf:A')).toEqual(['2']);
   // A klass carrying a skill level is only hers at HER level — never Dam 3.
   expect(spsfEligibleClasses(her, 2026, 'spsf:C')).not.toContain('Dam3');
+});
+
+describe('option lists the phone and the web share', () => {
+  it('O1 SKILL_CLASSES is 1, 2, 3', () => {
+    expect(SKILL_CLASSES).toEqual(['1', '2', '3']);
+  });
 });

@@ -1,6 +1,7 @@
 // Same-origin calls to the Worker (ADR 0013). The token lives in
 // sessionStorage, so it goes when the tab does.
-import { PROTOCOL_VERSION } from '@shotledger/shared/src/sync';
+import { PROTOCOL_VERSION, type ClientChange } from '@shotledger/shared/src/sync';
+import { pushChanges, type PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 import {
   AuthError,
   createAccountApi,
@@ -12,7 +13,7 @@ import {
 } from '@shotledger/shared/src/sync-client/http';
 
 import { createFetchPhoto } from './photo-fetch';
-import { pullAll, type PulledTables } from './pull';
+import { pullAll, type PulledTables, type WebTable } from './pull';
 
 const TOKEN_KEY = 'shotledger.token';
 
@@ -58,12 +59,31 @@ export async function signIn(email: string, password: string): Promise<SignInErr
     writeToken(session.token);
     return null;
   } catch (error: unknown) {
-    // Mirrors the app's mapping (features/account/use-account.ts).
-    if (error instanceof AuthError) {
-      if ([400, 401, 403, 422].includes(error.status)) return 'invalidCredentials';
-      return error.status >= 500 ? 'network' : 'unknown';
-    }
-    return 'network';
+    return signInError(error);
+  }
+}
+
+// Mirrors the app's mapping (features/account/use-account.ts).
+function signInError(error: unknown): SignInError {
+  if (error instanceof AuthError) {
+    if ([400, 401, 403, 422].includes(error.status)) return 'invalidCredentials';
+    return error.status >= 500 ? 'network' : 'unknown';
+  }
+  return 'network';
+}
+
+/** The inline sign-in on a writing page: the new user's id, or why not. */
+export async function signInAgain(
+  email: string,
+  password: string,
+): Promise<{ userId: string } | { error: SignInError }> {
+  try {
+    const session = await account.signIn(email, password);
+    memoryToken = session.token;
+    writeToken(session.token);
+    return { userId: session.userId };
+  } catch (error: unknown) {
+    return { error: signInError(error) };
   }
 }
 
@@ -81,8 +101,24 @@ export function loadAccount(onProgress?: (rows: number) => void): Promise<Pulled
   return pullAll(transport, PROTOCOL_VERSION, onProgress);
 }
 
-export async function currentEmail(): Promise<string | null> {
-  return (await account.currentUser())?.email ?? null;
+/** Only the given tables, from cursor 0. */
+export function loadTables(only: readonly WebTable[]): Promise<PulledTables> {
+  return pullAll(transport, PROTOCOL_VERSION, undefined, only);
+}
+
+/** One request, never retried here (ADR 0019); Retry is the user's. */
+export function pushEntry(changes: readonly ClientChange[]): Promise<PushOutcome> {
+  return pushChanges(transport, PROTOCOL_VERSION, changes);
+}
+
+/** Null when the stored token is no longer a valid session. */
+export async function currentUserId(): Promise<string | null> {
+  return (await account.currentUser())?.userId ?? null;
+}
+
+/** The signed-in user, for the shell and for telling accounts apart (R22). */
+export function currentAccount(): Promise<{ userId: string; email: string } | null> {
+  return account.currentUser();
 }
 
 export function listDevices(): Promise<AccountDevice[]> {

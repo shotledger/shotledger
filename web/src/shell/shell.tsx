@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { version } from '../../../app/package.json';
-import { BrandMark, ChartIcon, ListIcon, UserIcon } from './icons';
+import { BrandMark, ChartIcon, KeyboardIcon, ListIcon, UserIcon } from './icons';
 import type { Page } from './route';
 import { UserMenu } from './user-menu';
 
@@ -23,6 +23,7 @@ export function Shell({
   const pages = [
     { id: 'sessions', label: t('sessions.title'), icon: <ListIcon />, groupStart: false },
     { id: 'statistics', label: t('stats.title'), icon: <ChartIcon />, groupStart: false },
+    { id: 'entry', label: t('web.entry.title'), icon: <KeyboardIcon />, groupStart: false },
     { id: 'account', label: t('web.account.title'), icon: <UserIcon />, groupStart: true },
   ] as const;
 

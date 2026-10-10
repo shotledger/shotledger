@@ -2,7 +2,8 @@
 
 If you use sync, the ShotLedger web app lets you reach your account and your
 sessions from any browser, including when your phone is lost or broken. It
-reads what sync has already stored and changes nothing in your logbook.
+reads what sync has already stored; the one thing it adds to your logbook is a
+session you type in under [Entering series on the web](entering-series-on-the-web.md).
 
 Sign in with the email and password of your sync account, then open
 **Account** in the menu on the left. Closing the tab signs you out of this

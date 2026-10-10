@@ -56,14 +56,14 @@ A push replaces a whole row; there is no field-level patch. So the web
 writer pulls, edits the pulled payload, and pushes full rows, parents before
 children, in as few requests as `PUSH_BATCH_MAX` allows.
 
-| Web action                       | Rows pushed                                                                                    |
-| -------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Retag sessions                   | a new `session_tags` row per added link; a tombstone per removed link id                       |
-| Fix a firearm link over a season | each affected `sessions` row with the new `firearm_id`                                         |
-| Merge duplicate ammo lots        | every `sessions` row on the duplicate repointed to the kept lot, then the duplicate tombstoned |
-| Move sessions between locations  | each `sessions` row with the new `location`                                                    |
-| Edit account/compliance settings | one `settings` row per changed key                                                             |
-| Keyboard series entry            | new `sessions`, `series` and `shots` rows                                                      |
+| Web action                       | Rows pushed                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Retag sessions                   | a new `session_tags` row per added link; a tombstone per removed link id                                                                         |
+| Fix a firearm link over a season | each affected `sessions` row with the new `firearm_id`, and each affected `firearms` row with its round counters moved by those sessions' rounds |
+| Merge duplicate ammo lots        | every `sessions` row on the duplicate repointed to the kept lot, then the duplicate tombstoned                                                   |
+| Move sessions between locations  | each `sessions` row with the new `location`                                                                                                      |
+| Edit account/compliance settings | one `settings` row per changed key                                                                                                               |
+| Keyboard series entry            | new `sessions`, `series` and `shots` rows, and the chosen `firearms` row with its round counters moved by the new shots                          |
 
 A `rejected` ack (`tombstoned`) means the row was deleted on another
 device; the web re-pulls rather than retrying.
@@ -76,6 +76,14 @@ device; the web re-pulls rather than retrying.
   later push wins the whole row. A phone that edited a session offline can
   overwrite a web bulk edit of that session's other fields. Accepted, as it
   already is between two phones.
+- Keyboard entry keeps a firearm's round counter in step by rewriting the
+  whole firearm row, stamped with the browser's clock in `updated_at`. The
+  winner is still decided by server order, not by that timestamp (protocol
+  R3), so a wrong browser clock only shows as a wrong edit time. The real
+  cost is the race: a phone's increment to the same firearm between the web's
+  pull and its push is overwritten, or the web's by a phone that pushes later,
+  and the counter is off by one session's rounds until corrected on the
+  phone. Accepted, as between two phones.
 - A web edit that fails in flight is lost with the tab; the user redoes it.
   That is the price of "no browser outbox".
 - Same-name tag copies stay on disk until something merges them. A web

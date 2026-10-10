@@ -33,6 +33,9 @@ import {
 /** SPSF skill classes. The 1u/1b/1s variants of 1 are deliberately not offered. */
 export type SkillClass = '1' | '2' | '3';
 
+/** The skill classes a shooter can pick, in order (Settings → Personal). */
+export const SKILL_CLASSES: readonly SkillClass[] = ['1', '2', '3'];
+
 export interface ShooterProfile {
   /** Year only — both federations define age categories by year, not by date. */
   birthYear: number | null;

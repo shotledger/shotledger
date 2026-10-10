@@ -2,8 +2,9 @@
 
 Om du använder synk kan du nå ditt konto och dina pass från vilken
 webbläsare som helst med ShotLedgers webbapp, även när telefonen är
-borttappad eller trasig. Den läser det som synken redan har sparat och ändrar
-ingenting i loggboken.
+borttappad eller trasig. Den läser det som synken redan har sparat; det enda
+den lägger till i loggboken är ett pass du skriver in under
+[Mata in serier på webben](entering-series-on-the-web.md).
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den

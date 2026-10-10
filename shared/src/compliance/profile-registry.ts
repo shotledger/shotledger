@@ -16,6 +16,12 @@ const PROFILES: Record<JurisdictionProfileId, JurisdictionProfileDefinition> = {
   se: SE_PROFILE,
 };
 
+/** What Settings → Compliance offers: no profile, then each registered one. */
+export const PROFILE_SELECTIONS: readonly ProfileSelection[] = [
+  'none',
+  ...(Object.keys(PROFILES) as JurisdictionProfileId[]),
+];
+
 /**
  * The profile as declared, variants included — for the Settings picker.
  * `'none'` has no definition, same rule as `getProfile`.

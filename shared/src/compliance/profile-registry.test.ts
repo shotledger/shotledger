@@ -4,6 +4,7 @@ import { GENERIC_WEAPON_GROUPS, SPSF_WEAPON_GROUPS } from '../disciplines/groups
 import {
   getProfile,
   getProfileDefinition,
+  PROFILE_SELECTIONS,
   resolveDefaultVariantId,
   resolveDefaultVariantIdFor,
 } from './profile-registry';
@@ -158,6 +159,15 @@ describe('resolveDefaultVariantId', () => {
     expect(profile.variantId).toBe(SE_FIRST_HANDGUN_VARIANT);
     for (const rule of profile.rules) {
       expect(rule.requiredActivities).toBe(SE_FIRST_HANDGUN_REQUIRED_ACTIVITIES);
+    }
+  });
+});
+
+describe('PROFILE_SELECTIONS', () => {
+  it('O3 PROFILE_SELECTIONS is none, then every registered profile', () => {
+    expect(PROFILE_SELECTIONS).toEqual(['none', 'se']);
+    for (const selection of PROFILE_SELECTIONS.slice(1)) {
+      expect(getProfileDefinition(selection)?.id).toBe(selection);
     }
   });
 });

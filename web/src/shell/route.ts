@@ -1,6 +1,6 @@
-// Hash routes: `#statistics`, `#account`, `#sessions`, `#sessions/<id>` and
-// `#compare` (the picked photos, under Sessions).
-export type Page = 'sessions' | 'statistics' | 'account';
+// Hash routes: `#statistics`, `#entry`, `#account`, `#sessions`,
+// `#sessions/<id>` and `#compare` (the picked photos, under Sessions).
+export type Page = 'sessions' | 'statistics' | 'entry' | 'account';
 
 export interface Route {
   page: Page;
@@ -11,6 +11,7 @@ export interface Route {
 
 export function routeFromHash(hash: string): Route {
   if (hash === '#account') return { page: 'account', sessionId: null };
+  if (hash === '#entry') return { page: 'entry', sessionId: null };
   if (hash === '#sessions') return { page: 'sessions', sessionId: null };
   if (hash === '#compare') return { page: 'sessions', sessionId: null, compare: true };
   if (hash.startsWith('#sessions/')) {

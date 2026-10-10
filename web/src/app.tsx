@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Account } from './account/account';
-import { currentEmail, hasSession, loadAccount, signOut } from './api';
+import { currentAccount, hasSession, loadAccount, signOut } from './api';
+import { Entry } from './entry/entry';
 import { type PulledTables } from './pull';
+import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
 import { routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
 import { NO_PICKS, picksOf, withPicks, type Picks } from './sessions/picks';
@@ -29,6 +31,7 @@ export function App() {
   const [route, setRoute] = useState<Route>(() => routeFromHash(window.location.hash));
   const { page } = route;
   const [email, setEmail] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<LoadedAccount>({ userId: null, generation: 0 });
 
   useEffect(() => {
     const onHashChange = () => {
@@ -58,18 +61,33 @@ export function App() {
   }, [loading]);
 
   const signedIn = state.kind !== 'signedOut' && state.kind !== 'deleted';
+  const { generation } = loaded;
   useEffect(() => {
     if (!signedIn) return;
     let current = true;
-    void currentEmail()
+    void currentAccount()
       .catch(() => null)
-      .then((value) => {
-        if (current) setEmail(value);
+      .then((user) => {
+        if (!current) return;
+        setEmail(user?.email ?? null);
+        if (user) setLoaded((was) => ({ ...was, userId: user.userId }));
       });
     return () => {
       current = false;
     };
-  }, [signedIn]);
+  }, [signedIn, generation]);
+
+  // The inline sign-in on a writing page (R22): another account reloads the
+  // logbook and remounts the pages, so nothing of the old one stays on screen.
+  const onReauthenticated = (userId: string): ReauthOutcome => {
+    const { outcome, next } = afterReauth(loaded, userId);
+    if (outcome === 'switched') {
+      setLoaded(next);
+      setEmail(null);
+      setState({ kind: 'loading', rows: 0 });
+    }
+    return outcome;
+  };
 
   // Kept across pages; tied to the loaded tables, so another account starts empty.
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
@@ -80,6 +98,19 @@ export function App() {
     },
     [tables],
   );
+
+  // After a save: pull again in place, so the page stays and every page
+  // shows server truth (spec §3.5).
+  const refresh = () =>
+    loadAccount().then(
+      (fresh) => {
+        setState({ kind: 'ready', tables: fresh });
+        // The same account's tables, pulled again: the photo picks carry over.
+        setPicks((was) => (was.owner === tables ? withPicks(fresh, was.ids) : was));
+        return true;
+      },
+      () => false,
+    );
 
   const onSignOut = () => {
     setPicks(NO_PICKS);
@@ -109,6 +140,7 @@ export function App() {
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
       {state.kind === 'ready' && page === 'sessions' && (
         <Sessions
+          key={generation}
           tables={state.tables}
           sessionId={route.sessionId}
           compare={route.compare}
@@ -116,9 +148,20 @@ export function App() {
           onPicked={onPicked}
         />
       )}
-      {state.kind === 'ready' && page === 'statistics' && <Statistics tables={state.tables} />}
+      {state.kind === 'ready' && page === 'statistics' && (
+        <Statistics key={generation} tables={state.tables} />
+      )}
+      {state.kind === 'ready' && page === 'entry' && (
+        <Entry
+          key={generation}
+          tables={state.tables}
+          refresh={refresh}
+          onReauthenticated={onReauthenticated}
+        />
+      )}
       {state.kind === 'ready' && page === 'account' && (
         <Account
+          key={generation}
           tables={state.tables}
           onDeleted={() => {
             setPicks(NO_PICKS);
