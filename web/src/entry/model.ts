@@ -62,6 +62,8 @@ export interface EntryForm {
   decimalScoring: boolean;
   seriesLengthText: string;
   rows: Row[];
+  /** Tag names, in the order added; linked when the push is built (tags.ts). */
+  tags: readonly string[];
   /** The synced profile the klass and event defaults come from (C6); not stored. */
   profile: ShooterProfile;
   /** The year eligibility is judged in: the year the form opened, as on the phone. */
@@ -132,6 +134,7 @@ export function initialForm(now: Date, profile: ShooterProfile): EntryForm {
     decimalScoring: false,
     seriesLengthText: String(requireDiscipline(disciplineId).defaultSeriesLength),
     rows: [newRow()],
+    tags: [],
     profile,
     eligibilityYear: now.getFullYear(),
   };

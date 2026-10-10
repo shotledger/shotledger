@@ -18,6 +18,7 @@ import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
 import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
+import { withEntryTags } from '@shotledger/shared/src/sync-client/entry-tags';
 import type { EntryError } from '@shotledger/shared/src/sync-client/session-entry';
 import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
@@ -57,6 +58,8 @@ import {
   type EntryForm,
 } from './model';
 import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
+import { addTag, removeTag } from './tags';
+import { TagsField } from './tags-field';
 
 type Rows = Map<string, Record<string, unknown>>;
 
@@ -113,6 +116,7 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
         name: t('session.name'),
         competitionName: t('session.competitionName'),
         location: t('session.location'),
+        tag: t('session.tags'),
       }[error.field];
       return t('web.entry.errorTooLong', { field, max: error.max });
     }
@@ -269,19 +273,24 @@ export function Entry({
     void save(
       {
         loadContext: async () => {
-          const fresh = await loadTables(['firearms', 'firearm_groups', 'ammo_lots']);
+          const fresh = await loadTables(['firearms', 'firearm_groups', 'ammo_lots', 'tags']);
           return {
             firearms: fresh.firearms,
             firearmGroups: fresh.firearm_groups.values(),
             ammoLots: fresh.ammo_lots,
+            tags: fresh.tags,
           };
         },
-        build: (context) =>
-          buildEntry(form, defaultName, context, {
+        build: (context) => {
+          const deps = {
             newId: uuidv7,
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
-          }),
+          };
+          // The tags travel in the session's one push (web-entry-tags-spec C2).
+          const entry = buildEntry(form, defaultName, context, deps);
+          return withEntryTags(entry, form.tags, context.tags, deps);
+        },
         currentUserId,
         push: pushRows,
         refresh,
@@ -637,6 +646,13 @@ export function Entry({
               <StartFinalButton form={form} edit={edit} />
             </div>
           </section>
+
+          <TagsField
+            tags={tables.tags}
+            chosen={form.tags}
+            onAdd={(typed) => edit(addTag(form, typed))}
+            onRemove={(name) => edit(removeTag(form, name))}
+          />
 
           <section className="entry-actions">
             {/* While a request is held, the one action resends it (R13). */}

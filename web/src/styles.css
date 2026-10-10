@@ -806,6 +806,36 @@ fieldset.field legend {
   font-size: 13px;
 }
 
+.entry-tags {
+  display: grid;
+  gap: 8px;
+}
+
+.entry-tags .tags li {
+  padding: 0;
+  background: none;
+}
+
+.entry-tags .tags button {
+  padding: 2px 10px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--background-selected);
+  color: var(--text);
+}
+
+.entry-tag-add {
+  display: flex;
+  gap: 8px;
+  max-width: 420px;
+}
+
+.entry-tag-add input {
+  flex: 1;
+  min-width: 0;
+}
+
 .entry-actions {
   display: flex;
   flex-wrap: wrap;
