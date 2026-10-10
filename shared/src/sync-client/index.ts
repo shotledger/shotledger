@@ -13,6 +13,7 @@ export * from './rounds-entry';
 export * from './session-entry';
 export * from './tag-rows';
 export * from './entry-tags';
+export * from './falt-entry';
 export * from './direct-push';
 export * from './bulk-edit';
 export * from './http';
