@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
 
 import { disciplineLabel, formatLocalDate } from '../../../app/src/features/session/labels';
-import { currentUserId, loadTables, pushEntry } from '../api';
+import { currentUserId, loadTables, pushRows } from '../api';
 import { locationUsage, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
@@ -110,7 +110,7 @@ export function BulkEdit({
     const io = {
       currentUserId,
       loadTables,
-      push: pushEntry,
+      push: pushRows,
       refresh,
       newId: uuidv7,
       newChangeId: () => crypto.randomUUID(),
