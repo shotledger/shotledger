@@ -78,7 +78,7 @@ export function useOnline(): boolean {
   return online;
 }
 
-function locationUsage(sessions: Rows): LocationUsage[] {
+export function locationUsage(sessions: Rows): LocationUsage[] {
   const byLocation = new Map<string, LocationUsage>();
   for (const row of sessions.values()) {
     const location = typeof row.location === 'string' ? row.location : '';

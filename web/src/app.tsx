@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Account } from './account/account';
 import { currentAccount, hasSession, loadAccount, signOut } from './api';
+import { BulkEdit } from './bulk/bulk';
 import { Entry } from './entry/entry';
 import { type PulledTables } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
@@ -162,6 +163,14 @@ export function App() {
       )}
       {state.kind === 'ready' && page === 'settings' && (
         <Settings
+          key={generation}
+          tables={state.tables}
+          refresh={refresh}
+          onReauthenticated={onReauthenticated}
+        />
+      )}
+      {state.kind === 'ready' && page === 'bulk' && (
+        <BulkEdit
           key={generation}
           tables={state.tables}
           refresh={refresh}
