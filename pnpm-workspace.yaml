@@ -51,9 +51,6 @@ minimumReleaseAgeExclude:
   - pretty-format@30.5.1
   - expo-sharing@57.0.17
   - expo-secure-store@57.0.3
-  - '@cloudflare/vitest-plugin@1.4.0'
-  - miniflare@5.20261006.1-alpha
-  - wrangler@4.149.0
 patchedDependencies:
   # Vitest 5 matches testNamePattern against the suite chain joined with ' > ',
   # but the runner still builds test ids and the filter regex with a single
