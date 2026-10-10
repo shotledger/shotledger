@@ -836,6 +836,11 @@ fieldset.field legend {
   min-width: 0;
 }
 
+/* Its display: grid would otherwise beat the hidden attribute (fält entry). */
+.series-rows[hidden] {
+  display: none;
+}
+
 .falt-stations {
   display: grid;
   gap: 12px;
@@ -855,6 +860,13 @@ fieldset.field legend {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px 12px;
+}
+
+.station-row input:not([type='checkbox']),
+.station-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .station-row[aria-invalid='true'] {
