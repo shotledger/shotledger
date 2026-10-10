@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ISSF_JUNIOR_MAX_AGE } from './entries';
 import {
+  birthYearOptions,
   defaultShooterClass,
   isJunior,
   SKILL_CLASSES,
@@ -153,5 +154,13 @@ it('offers the klasser the shooter holds, and none that vapengrupp C does not al
 describe('option lists the phone and the web share', () => {
   it('O1 SKILL_CLASSES is 1, 2, 3', () => {
     expect(SKILL_CLASSES).toEqual(['1', '2', '3']);
+  });
+
+  it('O2 birthYearOptions(2026) runs 2016 down to 1926, 91 years', () => {
+    const years = birthYearOptions(2026);
+    expect(years).toHaveLength(91);
+    expect(years[0]).toBe(2016);
+    expect(years[90]).toBe(1926);
+    expect(years.every((year, i) => i === 0 || year === years[i - 1]! - 1)).toBe(true);
   });
 });

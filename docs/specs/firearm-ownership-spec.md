@@ -160,7 +160,7 @@ No new dependencies. No new tooling. Files touched, by path:
 | Q4  | `listFirearmOwnershipFacts`                | one `{ weaponType, isOwn }` per non-deleted firearm |
 | Q5  | a soft-deleted firearm                     | absent from the facts                               |
 
-### App case resolution — `C` (`app/src/features/compliance/resolve-case.test.ts`)
+### App case resolution — `C` (`shared/src/compliance/resolve-case.test.ts`)
 
 | #   | Stored choice / firearms                                                         | Expected                        |
 | --- | -------------------------------------------------------------------------------- | ------------------------------- |

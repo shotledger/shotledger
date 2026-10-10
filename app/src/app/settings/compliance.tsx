@@ -2,7 +2,7 @@
 // föreningsintyg PDF are worked out under, and which case within it applies to
 // this shooter (for `se`: FAP 551-3 5 § vs 6 §). The app proposes a case from
 // the firearms; picking one here overrides that for good (issue #286).
-import type { ProfileSelection } from '@shotledger/shared';
+import { PROFILE_SELECTIONS, type ProfileSelection } from '@shotledger/shared';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,11 @@ import { ScreenTitle } from '@/components/screen-title';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
+
+const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
+  none: 'compliance.profileNone',
+  se: 'compliance.profileSe',
+};
 
 export default function ComplianceSettingsScreen() {
   const { t } = useTranslation();
@@ -33,10 +38,10 @@ export default function ComplianceSettingsScreen() {
 
       <Card>
         <SegmentedControl
-          options={[
-            { value: 'none' as ProfileSelection, label: t('compliance.profileNone') },
-            { value: 'se' as ProfileSelection, label: t('compliance.profileSe') },
-          ]}
+          options={PROFILE_SELECTIONS.map((value) => ({
+            value,
+            label: t(PROFILE_LABEL_KEYS[value]),
+          }))}
           value={selection}
           onChange={setSelection}
           testID="compliance-profile-picker"

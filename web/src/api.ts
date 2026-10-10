@@ -107,7 +107,7 @@ export function loadTables(only: readonly WebTable[]): Promise<PulledTables> {
 }
 
 /** One request, never retried here (ADR 0019); Retry is the user's. */
-export function pushEntry(changes: readonly ClientChange[]): Promise<PushOutcome> {
+export function pushRows(changes: readonly ClientChange[]): Promise<PushOutcome> {
   return pushChanges(transport, PROTOCOL_VERSION, changes);
 }
 

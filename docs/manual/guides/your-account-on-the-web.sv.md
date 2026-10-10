@@ -2,9 +2,10 @@
 
 Om du använder synk kan du nå ditt konto och dina pass från vilken
 webbläsare som helst med ShotLedgers webbapp, även när telefonen är
-borttappad eller trasig. Den läser det som synken redan har sparat; det enda
-den lägger till i loggboken är ett pass du skriver in under
-[Mata in serier på webben](entering-series-on-the-web.md).
+borttappad eller trasig. Den läser det som synken redan har sparat. Den ändrar
+bara två saker: ett pass du skriver in under
+[Mata in serier på webben](entering-series-on-the-web.md), och inställningarna
+nedan.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
@@ -35,6 +36,29 @@ Konto. Välj sedan **Jämför foton**: fotona visas stora i ett rutnät, vart oc
 ett med seriens eller stationens resultat och passet. **Ta bort** tar bort ett
 foto; **Rensa**, eller **Rensa alla** i jämförelsen, tömmer urvalet. Urvalet
 glöms när du loggar ut, laddar om eller stänger fliken.
+
+## Inställningar
+
+**Inställningar** i menyn innehåller de inställningar som följer ditt konto
+mellan enheter, samma som på telefonen:
+
+- **Personligt**: Födelseår, Din klass och Damklasser och damgrenar
+  (telefonens Inställningar → Personligt).
+- **Efterlevnad**: profilen och, för Sverige, det aktivitetskrav som gäller
+  dig (telefonens Inställningar → Efterlevnad). Har du inte valt något krav
+  visar sidan det som räknats fram från dina vapen, som telefonen gör. Har
+  du inte valt någon profil än är ingen markerad, och telefonen använder den
+  som hör till dess språk; välj en här för att spara den för alla enheter.
+
+Ändra det du behöver och tryck på **Spara**. Ändrar du ett födelseår som
+redan var satt får du bekräfta först, som på telefonen. Telefonerna får
+ändringen vid nästa synk. Om sparningen inte når servern finns ändringarna
+kvar på sidan och **Försök igen** skickar dem på nytt; ingenting sparas när
+fliken stängs. Loggar du in igen som ett annat konto visar sidan det kontots
+inställningar, och dina osparade ändringar skickas inte dit.
+
+Allt annat i telefonens Inställningar — språk, tema, valfria fält, timrar,
+säkerhetskopior — hör till varje telefon och finns inte på webben.
 
 ## Inloggade enheter
 

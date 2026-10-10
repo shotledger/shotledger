@@ -34,7 +34,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '../../../app/src/features/session/labels';
-import { currentUserId, loadTables, pushEntry } from '../api';
+import { currentUserId, loadTables, pushRows } from '../api';
 import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
@@ -63,7 +63,7 @@ import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } fro
 
 type Rows = Map<string, Record<string, unknown>>;
 
-function useOnline(): boolean {
+export function useOnline(): boolean {
   const [online, setOnline] = useState(() => navigator.onLine);
   useEffect(() => {
     const up = () => setOnline(true);
@@ -281,7 +281,7 @@ export function Entry({
             now: () => new Date().toISOString(),
           }),
         currentUserId,
-        push: pushEntry,
+        push: pushRows,
         refresh,
       },
       held,

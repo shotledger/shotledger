@@ -305,7 +305,8 @@ button.destructive {
   color: var(--danger);
 }
 
-.account {
+.account,
+.settings {
   display: grid;
   gap: 16px;
   max-width: 720px;
@@ -682,6 +683,78 @@ a.button {
   font-size: 13px;
 }
 
+.settings-fields {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.settings .card {
+  display: grid;
+  gap: 12px;
+}
+
+.settings .card h2,
+.settings .card p {
+  margin: 0;
+}
+
+fieldset.field {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+fieldset.field legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+/* Radio groups drawn as the .choices pills; the input stays for the keyboard. */
+.radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.radios label {
+  position: relative;
+}
+
+.radios input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radios span {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  color: var(--primary);
+}
+
+.radios input:checked + span {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.radios input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.radios input:disabled + span {
+  opacity: 0.5;
+}
+
 .field.check,
 .series-row .check {
   display: flex;
@@ -851,6 +924,7 @@ a.button {
 
 .user-menu {
   position: relative;
+  min-width: 0;
 }
 
 .user-menu-trigger {
@@ -859,7 +933,7 @@ a.button {
   gap: 8px;
   padding: 6px 12px;
   font-size: 14px;
-  max-width: 280px;
+  max-width: min(280px, 100%);
 }
 
 .truncate {
@@ -951,6 +1025,7 @@ a.button {
 
   .sidebar ul {
     display: flex;
+    flex-wrap: wrap;
   }
 
   .sidebar li.group-start {

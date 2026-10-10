@@ -11,7 +11,11 @@ import {
   type BadgeGroup,
   type BadgeGrade,
 } from '@shotledger/shared';
-import type { SkillClass } from '@shotledger/shared/src/disciplines/eligibility';
+import {
+  birthYearOptions as birthYearRange,
+  SKILL_CLASSES,
+  type SkillClass,
+} from '@shotledger/shared/src/disciplines/eligibility';
 import { Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +32,6 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { Spacing } from '@/theme/tokens';
-
-/** 1, 2, 3 — the 1u/1b/1s variants are deliberately not offered (SHB F.2.5). */
-const SKILL_CLASS_OPTIONS: readonly SkillClass[] = ['1', '2', '3'];
 
 export default function PersonalSettingsScreen() {
   const { t } = useTranslation();
@@ -78,15 +79,16 @@ export default function PersonalSettingsScreen() {
     );
   }
 
-  // Newest first, spanning ages 10-100 — plausible for a shooting license.
   const currentYear = new Date().getFullYear();
-  const birthYearOptions = useMemo<SearchablePickerOption<number>[]>(() => {
-    const options: SearchablePickerOption<number>[] = [];
-    for (let year = currentYear - 10; year >= currentYear - 100; year--) {
-      options.push({ value: year, label: String(year), testID: `birth-year-option-${year}` });
-    }
-    return options;
-  }, [currentYear]);
+  const birthYearOptions = useMemo<SearchablePickerOption<number>[]>(
+    () =>
+      birthYearRange(currentYear).map((year) => ({
+        value: year,
+        label: String(year),
+        testID: `birth-year-option-${year}`,
+      })),
+    [currentYear],
+  );
 
   const markeThresholds = useMemo(
     () => allBadgeThresholds({ birthYear, year: currentYear }),
@@ -140,7 +142,7 @@ export default function PersonalSettingsScreen() {
             Jun, Vet Y and Vet Ä are all year-based in both federations. */}
         <OptionPicker
           label={t('settings.skillClass')}
-          options={SKILL_CLASS_OPTIONS.map((value) => ({ value, label: value }))}
+          options={SKILL_CLASSES.map((value) => ({ value, label: value }))}
           value={skillClass}
           onChange={onChangeSkillClass}
         />

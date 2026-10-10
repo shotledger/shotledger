@@ -3,8 +3,10 @@
 ADR 0013: a separate complement over `/sync/pull`, served same-origin by the
 Worker, keeping nothing after the tab closes (the session token is in
 `sessionStorage`, the rows in memory). ADR 0019: it writes only by pushing
-whole rows through `/sync/push`, online, with no outbox; `src/entry/` is the
-one writer and goes through `shared/src/sync-client/{session-entry,direct-push}.ts`.
+whole rows through `/sync/push`, online, with no outbox. The writers are
+`src/entry/` (series) and `src/settings/` (the synced settings); both go
+through `shared/src/sync-client/` (`session-entry.ts`, `settings-edit.ts`,
+`direct-push.ts`).
 
 - **Strings and colours are the app's.** `src/i18n.ts` imports
   `app/src/i18n/{en,sv}.json` and `src/theme.ts` imports

@@ -51,7 +51,7 @@ revised spec, not approval of it.
 | V5    | `… > V5: a profile that declares no derivation falls back to its defaultVariantId`         |
 | V6    | `… > V6: the derived case feeds getProfile and lands on the 6 § numbers`                   |
 | V7    | `… > V7: an explicit variant id is unaffected by the facts — getProfile never sees them`   |
-| C1–C5 | `resolveComplianceCase > C1…C5` (`app/src/features/compliance/resolve-case.test.ts`, jest) |
+| C1–C5 | `resolveComplianceCase > C1…C5` (`shared/src/compliance/resolve-case.test.ts`, vitest)     |
 | Q1    | `isOwn (FAP 551-3 input, issue #286) > Q1: defaults to own when the caller states nothing` |
 | Q2    | `… > Q2: round-trips true and false`                                                       |
 | Q3    | `… > Q3: updateFirearm persists it without touching the other columns`                     |
