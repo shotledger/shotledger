@@ -6,9 +6,10 @@
   built in one run; its key choices C1–C7 are listed in the PR for the
   maintainer. Confidence is correspondingly lower: the spec is the artifact
   to review after the fact.
-- **Source state:** code at `cf54fab1` on `feat/web-falt-entry` (based on
-  PR #669's head, `7212205a`). The commits after it change only
-  `docs/specs/`.
+- **Source state:** code at `403bf7d1` on `feat/web-falt-entry`, rebased onto
+  `main` at `1487e954` (with #669, #672 and #674 merged). The commits after it
+  change only documentation. Every number below is from runs on that rebased
+  state.
 - **Toolchain:** Node v26.10.0, vitest 5.0.3, Stryker 10.0.0, versions pinned
   by `pnpm-lock.yaml`.
 - **Entry point:** `pnpm check` (types, lint, format, i18n, licenses, vitest
@@ -65,15 +66,15 @@ behaviour rests on S1–S5 pinning the rules it used to hold inline and on
 
 | Layer                  | Command                                                                                                                                          | Result                                                                                                                        |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tests (vitest)         | `pnpm check`                                                                                                                                     | 184 files, 3103 passed, 0 failed                                                                                              |
-| Tests (jest, app)      | `pnpm check`                                                                                                                                     | 63 suites, 714 passed                                                                                                         |
+| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3206 passed, 0 failed                                                                                              |
+| Tests (jest, app)      | `pnpm check`                                                                                                                                     | 62 suites, 708 passed                                                                                                         |
 | Types                  | `pnpm check` (`typecheck`, `typecheck:app`, `typecheck:web`)                                                                                     | 0 errors                                                                                                                      |
 | Lint + format          | `pnpm check` (`lint`, `format`)                                                                                                                  | 0 problems                                                                                                                    |
 | Coverage               | `pnpm check` (`vitest run --coverage`, threshold 100 on the `mutate` list)                                                                       | 100% statements, branches, functions, lines; the new `falt-station.ts`, `falt-entry.ts`, `falt-model.ts` each 100/100/100/100 |
 | Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 4` | 365 killed / 368 (99.18%); 3 survivors, all equivalent (below)                                                                |
-| Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                               | 19 files, 194 passed (WF1, WF2 among them)                                                                                    |
-| i18n                   | `pnpm i18n:check`                                                                                                                                | 1234 keys each, 0 issues                                                                                                      |
-| Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                         | 25 pages current; no dangling anchors; built                                                                                  |
+| Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                               | 21 files, 202 passed (WF1, WF2 among them)                                                                                    |
+| i18n                   | `pnpm i18n:check`                                                                                                                                | 1280 keys each, 0 issues                                                                                                      |
+| Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                         | 26 pages current; no dangling anchors; built                                                                                  |
 | Real execution         | the page against `wrangler dev` (below)                                                                                                          | saved and pulled back as specified                                                                                            |
 | Supply chain           | —                                                                                                                                                | no dependency added or removed; the license list is unchanged                                                                 |
 
