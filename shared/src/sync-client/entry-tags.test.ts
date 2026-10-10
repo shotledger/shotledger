@@ -5,11 +5,7 @@ import { ClientChangeSchema, PUSH_BATCH_MAX, type ClientChange } from '../sync/p
 import { TEXT_LIMITS } from '../sync/text-limits';
 import { withEntryTags } from './entry-tags';
 import type { Payload } from './rows';
-import {
-  buildSessionEntry,
-  type EntryResult,
-  type SessionEntryDraft,
-} from './session-entry';
+import { buildSessionEntry, type EntryResult, type SessionEntryDraft } from './session-entry';
 
 const NOW = '2026-10-10T08:00:00.000Z';
 

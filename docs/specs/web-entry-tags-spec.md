@@ -89,10 +89,11 @@ tables and add a message, as bulk edit does.
 
 ### 3.1 Row builders (`shared/src/sync-client/tag-rows.ts`, pure)
 
-- `newTagRow(id, now, name)` → `{ id, created_at: now, updated_at: now,
-  deleted_at: null, name }`, the phone's `createTag`.
-- `newSessionTagRow(id, now, sessionId, tagId)` → `{ id, created_at,
-  updated_at, deleted_at: null, session_id, tag_id }`.
+- `newTagRow(id, now, name)` → the common columns (`created_at` =
+  `updated_at` = `now`, `deleted_at` null) and `name`, the phone's
+  `createTag`.
+- `newSessionTagRow(id, now, sessionId, tagId)` → the common columns,
+  `session_id` and `tag_id`.
 - `canonicalTagId(tags, name)` → the smallest id among the live pulled tags
   whose name is exactly `name`, else `undefined` (`canonicalTags`' rule; the
   phone's `getTagByName` orders by id).
@@ -109,12 +110,12 @@ pulled live `tags` rows by id:
 - `entry` not ok → returned unchanged.
 - Each name trimmed; blanks dropped; duplicates (after trimming) kept once,
   first occurrence wins.
-- A name over `TEXT_LIMITS.tags.name` → `{ ok: false, errors: [{ kind:
-  'tooLong', field: 'tag', max: 120 }] }`, once however many names are long.
+- A name over `TEXT_LIMITS.tags.name` → not ok, with one error
+  `{ kind: 'tooLong', field: 'tag', max: 120 }` however many names are long.
 - Per name: `canonicalTagId`, else a new `tags` row with `deps.newId()`; then a
   `session_tags` row with `deps.newId()` linking `entry.sessionId` to it.
-- Each new change: a fresh `clientChangeId`, `deletedAt: null`, `updatedAt =
-  now` (one `deps.now()` per call), `rowId = payload.id`.
+- Each new change: a fresh `clientChangeId`, `deletedAt: null`,
+  `updatedAt = now` (one `deps.now()` per call), `rowId = payload.id`.
 - The result's changes are stably ordered by `applyRank` (so `tags` precede
   `sessions`, `session_tags` follow it and precede `series`).
 - More than `PUSH_BATCH_MAX` changes in total → `tooManyChanges`.
@@ -207,15 +208,15 @@ CSP errors.
 
 ## 6. Failure model
 
-| Mode                                                       | Caught by                                    |
-| ---------------------------------------------------------- | -------------------------------------------- |
-| a link before its tag or session in the push → FK failure  | N3 (order), A2 (the phone's FK apply)        |
-| a duplicate tag created for an existing name               | N1, A3, N10                                  |
-| two links for one name (double count in readers)           | N4, N10                                      |
-| a payload missing a column → wedges the phone              | G1, G2, A1                                   |
-| Retry builds fresh tag ids → a second tag row              | #669 U7 (held request resent), W2            |
-| an extracted builder changes bulk edit's rows              | K1–K23, the bulk app test P1–P5              |
-| a tag deleted elsewhere between pull and push              | not caught (C5, known limit)                 |
+| Mode                                                      | Caught by                             |
+| --------------------------------------------------------- | ------------------------------------- |
+| a link before its tag or session in the push → FK failure | N3 (order), A2 (the phone's FK apply) |
+| a duplicate tag created for an existing name              | N1, A3, N10                           |
+| two links for one name (double count in readers)          | N4, N10                               |
+| a payload missing a column → wedges the phone             | G1, G2, A1                            |
+| Retry builds fresh tag ids → a second tag row             | #669 U7 (held request resent), W2     |
+| an extracted builder changes bulk edit's rows             | K1–K23, the bulk app test P1–P5       |
+| a tag deleted elsewhere between pull and push             | not caught (C5, known limit)          |
 
 ## 7. Setup plan
 
@@ -232,4 +233,6 @@ CSP errors.
 
 ## 8. Revisions
 
-- (none yet)
+- **R1 (text only).** §3.1 and §3.2 reworded so that no inline code span
+  wraps a line (the formatter broke them); §6's table reformatted. No
+  behaviour changed.

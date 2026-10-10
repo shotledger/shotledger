@@ -61,12 +61,20 @@ totalled apart from the qualification, as on the phone. A final with no shot
 in it is not saved, so emptying its rows removes it again. A final needs at
 least one scored series before it; with none, Save says so and sends nothing.
 
+## Tag it
+
+Under the rows, **Tags** takes a tag name: type it and press **Add** or
+Enter. Your account's tags are offered as you type; a name you have not used
+before becomes a new tag, as on the phone. Case does not matter: with a tag
+`KM`, typing `km` adds `KM`. Click a tag to take it off again. Text left in
+the field when you save is not added.
+
 ## Save
 
-**Save** sends the whole session at once; it is either saved completely or not
-at all. Your phone gets it at its next sync, and a chosen firearm's round count
-goes up by the shots, sighters and the final included, or by the rounds
-fired.
+**Save** sends the whole session at once, its tags included; it is either
+saved completely or not at all. Your phone gets it at its next sync, and a
+chosen firearm's round count goes up by the shots, sighters and the final
+included, or by the rounds fired.
 
 Saving needs a connection. If the server cannot be reached, or answers in a
 way that leaves it unclear whether the session arrived, your series stay on

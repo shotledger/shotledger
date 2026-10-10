@@ -61,11 +61,20 @@ för sig, skild från grundomgången, som i telefonen. En final utan skott spara
 inte, så töms finalens rader försvinner den igen. En final kräver minst en
 poängsatt serie före den; saknas en säger **Spara** det och skickar ingenting.
 
+## Tagga det
+
+Under raderna tar **Taggar** ett taggnamn: skriv det och tryck **Lägg till**
+eller Enter. Kontots taggar föreslås medan du skriver; ett namn du inte använt
+förut blir en ny tagg, som i telefonen. Stora och små bokstäver spelar ingen
+roll: finns taggen `KM` lägger `km` till `KM`. Klicka på en tagg för att ta
+bort den igen. Text som står kvar i fältet när du sparar läggs inte till.
+
 ## Spara
 
-**Spara** skickar hela passet på en gång; det sparas antingen helt eller inte
-alls. Telefonen får det vid nästa synk, och ett valt vapens skottantal ökar med
-skotten, provserier och final inräknade, eller med de avlossade skotten.
+**Spara** skickar hela passet på en gång, taggarna med; det sparas antingen
+helt eller inte alls. Telefonen får det vid nästa synk, och ett valt vapens
+skottantal ökar med skotten, provserier och final inräknade, eller med de
+avlossade skotten.
 
 För att spara krävs en anslutning. Om servern inte går att nå, eller svarar så
 att det är oklart om passet kom fram, finns serierna kvar på sidan och
