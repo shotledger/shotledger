@@ -226,6 +226,10 @@ describe('buildRoundsEntry', () => {
     });
   });
 
+  it('RO7 an unknown discipline throws, as buildSessionEntry does', () => {
+    expect(() => build(draft({ disciplineId: 'gone' }))).toThrow('Unknown discipline: gone');
+  });
+
   it('RO7 a fält discipline is accepted, with no fält result mode', () => {
     expect(sessionOf(changesOf(build(draft({ disciplineId: 'spsf-falt' }))))).toMatchObject({
       kind: 'rounds',

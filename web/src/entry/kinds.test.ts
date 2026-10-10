@@ -84,6 +84,8 @@ describe('rounds-only and final series on the Enter Series form', () => {
     expect(finalOffered(withType(withDiscipline(fresh(), 'spsf-milsnabb'), 'competition'))).toBe(
       false,
     );
+    // A program id this build does not know offers nothing.
+    expect(finalOffered({ ...precision(), programId: 'gone' })).toBe(false);
     // Rounds Only drops the program; a program set behind it does not count.
     expect(finalOffered({ ...precision(), kind: 'rounds' })).toBe(false);
   });
@@ -112,6 +114,10 @@ describe('rounds-only and final series on the Enter Series form', () => {
     expect(entered.focus).toBe(2);
     expect(finals(entered.form)).toEqual([false, true, true]);
     expect(finals(addRow(precision()))).toEqual([false, false]);
+    // The section follows the last row, not any other.
+    const later = startFinal(addRow(typed(precision(), '10 9')));
+    expect(finals(addRow(later))).toEqual([false, false, true, true]);
+    expect(finals(addRow({ ...precision(), rows: [] }))).toEqual([false]);
   });
 
   it('WK7 one sighter per section: the final has its own', () => {
