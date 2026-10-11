@@ -51,6 +51,8 @@ A firearm accumulates:
   Deleting a session backs its rounds out again. **Adjust Round Count** on the
   firearm corrects a counter that is off.
 - **Maintenance** — cleanings and work done, with the round count at the time.
+  Each entry shows its date and the note you wrote; a round-count adjustment
+  shows its reason.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
 

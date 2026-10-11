@@ -51,7 +51,8 @@ Till ett vapen samlas:
   ett pass räknas dess skott bort igen. **Justera antal skott** på vapnet rättar
   en räknare som visar fel.
 - **Underhåll** — rengöringar och utfört arbete, med skottantalet vid
-  tillfället.
+  tillfället. Varje post visar datum och anteckningen du skrev; en justering
+  av skottantalet visar sin anledning.
 - **Siktesinställningar**, med namn, så att "inomhus 25 m" och "fält ute" blir
   två lägen du kan ta fram i stället för något du ska minnas.
 
