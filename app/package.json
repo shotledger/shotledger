@@ -9,7 +9,7 @@
     "@react-native-community/slider": "5.2.0",
     "@react-native-ml-kit/text-recognition": "2.0.0",
     "@shotledger/shared": "workspace:*",
-    "drizzle-orm": "0.45.3",
+    "drizzle-orm": "0.45.4",
     "expo": "~57.0.18",
     "expo-asset": "~57.0.18",
     "expo-audio": "~57.0.4",
