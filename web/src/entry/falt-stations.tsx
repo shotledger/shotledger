@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { formatFaltResult } from '../../../app/src/features/session/format-falt-result';
 import {
   addStation,
+  canStartShootOff,
   faltPreview,
+  startShootOff,
   withFigureCount,
   withHits,
   withStation,
@@ -42,7 +44,10 @@ export function FaltStations({
         const rowError = rowErrors.get(index + 1);
         return (
           <fieldset key={row.key} className="station-row" aria-invalid={rowError !== undefined}>
-            <legend>{t('station.title', { position: index + 1 })}</legend>
+            <legend>
+              {t('station.title', { position: index + 1 })}
+              {row.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
+            </legend>
             <label className="field">
               {t('station.hits')}
               <select
@@ -125,16 +130,6 @@ export function FaltStations({
               />
               {t('station.scratched')}
             </label>
-            <label className="field check">
-              <input
-                type="checkbox"
-                checked={row.isShootOff}
-                onChange={(event) =>
-                  onEdit(withStation(falt, index, { isShootOff: event.target.checked }))
-                }
-              />
-              {t('station.shootOff')}
-            </label>
             {preview.rows[index] === 'blank' && (
               <p className="muted station-note">{t('web.entry.stationBlank')}</p>
             )}
@@ -142,10 +137,15 @@ export function FaltStations({
           </fieldset>
         );
       })}
-      <div>
+      <div className="actions">
         <button type="button" className="secondary" onClick={() => onEdit(addStation(falt))}>
           {t('session.addStation')}
         </button>
+        {canStartShootOff(falt) && (
+          <button type="button" className="secondary" onClick={() => onEdit(startShootOff(falt))}>
+            {t('session.startShootOff')}
+          </button>
+        )}
       </div>
     </section>
   );

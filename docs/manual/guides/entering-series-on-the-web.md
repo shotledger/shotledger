@@ -66,10 +66,14 @@ figures (**Field**) or as one sum (**Point field**).
 
 Each station has the phone's station fields: **Hits**, **Figures Hit**,
 **Figures** (how many were set out), **Points** and **Max Points** for a
-ringed figure, **Scratched** and **Shoot-off**. Figures Hit offers only what
-the hits and figures allow. The total above the stations counts the stations
-that will be saved, leaving out scratched and shoot-off ones, as the phone
-does. **Add Station** adds a row.
+ringed figure, and **Scratched**. Figures Hit offers only what the hits and
+figures allow. The total above the stations counts the stations that will be
+saved, leaving out scratched and shoot-off ones, as the phone does. **Add
+Station** adds a row.
+
+**Start Shoot-off** adds a shoot-off station, marked **Shoot-off**, and every
+station you add after it is a shoot-off station too. A shoot-off station with
+nothing entered is not saved.
 
 A station with nothing entered is not saved, and the stations after it move
 up a number. A station where every shot missed is saved once you set its

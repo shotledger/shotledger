@@ -223,6 +223,8 @@ Feature: the page model (web/src/entry/falt-model.test.ts)
   Scenario: UF4 Add Station keeps a held request; any other station or mode edit drops it
   Scenario: UF5 the running result counts only the stations that will be saved, in the chosen mode
   Scenario: UF6 a fresh fält form: one blank station, Field
+  Scenario: UF7 Start Shoot-off: every station after it is a shoot-off, as on the phone
+  Scenario: UF8 a shoot-off station is saved with its numbers, and dropped when left empty
 ```
 
 Browser checks (not automated; screenshots under
@@ -290,3 +292,12 @@ Appended during the same autonomous run; none loosens a constraint.
   can't be more than the max" as soon as the fields disagree; the web shows a
   row's points error after Save, with the other entry errors, as #669 does for
   a series row.
+- **R5 (maintainer's ruling on the phone, #715/#717).** The per-station
+  Shoot-off checkbox is gone. As on the phone, **Start Shoot-off** (shown once
+  there is a station and no shoot-off yet) appends a shoot-off station, every
+  station added after it is one too, and a shoot-off row carries a Shoot-off
+  badge. A started shoot-off row with nothing else entered is blank (C3) and
+  is not saved, as backing out of the phone's station screen saves nothing.
+  Scratched stays on every row: unlike the phone, every web row is still
+  being edited. UF7 and UF8 cover it; UF4 now checks that a blank started
+  shoot-off keeps a held request.

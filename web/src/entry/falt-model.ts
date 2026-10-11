@@ -49,7 +49,7 @@ export function isFaltForm(form: Pick<EntryForm, 'disciplineId'>): boolean {
 }
 
 let lastKey = 0;
-const newStation = (): StationRow => ({
+const newStation = (isShootOff = false): StationRow => ({
   key: (lastKey += 1),
   hits: 0,
   figuresHit: 0,
@@ -57,7 +57,7 @@ const newStation = (): StationRow => ({
   pointsText: '',
   pointsMaxText: '',
   isScratched: false,
-  isShootOff: false,
+  isShootOff,
 });
 
 /** Vanlig fält is the default, as on the phone: poängfält is the rarer form. */
@@ -65,8 +65,22 @@ export function initialFalt(): FaltForm {
   return { resultMode: 'falt', stations: [newStation()] };
 }
 
+// Once a shoot-off starts, every station after it is one, as on the phone
+// (app/src/features/session/falt-shoot-off.ts). The last station decides.
+export function nextStationIsShootOff(falt: FaltForm): boolean {
+  return falt.stations.at(-1)?.isShootOff === true;
+}
+
+export function canStartShootOff(falt: FaltForm): boolean {
+  return falt.stations.length > 0 && !nextStationIsShootOff(falt);
+}
+
 export function addStation(falt: FaltForm): FaltForm {
-  return { ...falt, stations: [...falt.stations, newStation()] };
+  return { ...falt, stations: [...falt.stations, newStation(nextStationIsShootOff(falt))] };
+}
+
+export function startShootOff(falt: FaltForm): FaltForm {
+  return { ...falt, stations: [...falt.stations, newStation(true)] };
 }
 
 export function withStation(
@@ -102,11 +116,19 @@ export function withFigureCount(
   });
 }
 
-/** The entered numbers of a row, keyless. */
-const entered = ({ key: _key, ...station }: StationRow) => station;
+const nothingEntered = (row: Omit<StationRow, 'key'>) =>
+  isBlankStation({ ...row, points: null, isShootOff: false }) &&
+  row.pointsText === '' &&
+  row.pointsMaxText === '';
 
-const blankRow = (row: StationRow) =>
-  isBlankStation({ ...row, points: null }) && row.pointsText === '' && row.pointsMaxText === '';
+/**
+ * The entered numbers of a row, keyless. A shoot-off row with nothing else in
+ * it is blank: on the phone, backing out of a started shoot-off saves nothing.
+ */
+const entered = ({ key: _key, ...station }: StationRow) =>
+  station.isShootOff && nothingEntered(station) ? { ...station, isShootOff: false } : station;
+
+const blankRow = (row: StationRow) => nothingEntered(entered(row));
 
 /**
  * Whether `next` builds the same session as `prev`: only blank stations

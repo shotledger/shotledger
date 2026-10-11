@@ -4,11 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   addStation,
+  canStartShootOff,
   entryDisciplines,
   faltPreview,
   faltSendsTheSame,
   initialFalt,
   isFaltForm,
+  nextStationIsShootOff,
+  startShootOff,
   toFaltDraft,
   withFigureCount,
   withHits,
@@ -146,9 +149,12 @@ describe('the fält page model', () => {
     expect(faltSendsTheSame(form, { ...form, resultMode: 'poangfalt' })).toBe(false);
     // An appended station that is not blank would be saved.
     expect(faltSendsTheSame(form, withHits(addStation(form), 1, 1))).toBe(false);
-    expect(faltSendsTheSame(form, withStation(addStation(form), 1, { isShootOff: true }))).toBe(
+    expect(faltSendsTheSame(form, withHits(startShootOff(form), 1, 1))).toBe(false);
+    expect(faltSendsTheSame(form, withStation(startShootOff(form), 1, { isScratched: true }))).toBe(
       false,
     );
+    // A started shoot-off with nothing in it is blank, so it sends the same.
+    expect(faltSendsTheSame(form, startShootOff(form))).toBe(true);
     expect(faltSendsTheSame(form, withStation(addStation(form), 1, { pointsText: '1' }))).toBe(
       false,
     );
@@ -206,5 +212,38 @@ describe('the fält page model', () => {
     const keys = addStation(addStation(form)).stations.map((s) => s.key);
     expect(new Set(keys).size).toBe(3);
     expect(initialFalt().stations[0]!.key).not.toBe(form.stations[0]!.key);
+  });
+
+  it('UF7 Start Shoot-off: every station after it is a shoot-off, as on the phone', () => {
+    const form = falt({ hits: 6, figuresHit: 3, figureCount: 3 });
+    expect(nextStationIsShootOff(form)).toBe(false);
+    expect(canStartShootOff(form)).toBe(true);
+    expect(addStation(form).stations[1]!.isShootOff).toBe(false);
+    expect(canStartShootOff({ ...form, stations: [] })).toBe(false);
+
+    const shootOff = startShootOff(form);
+    expect(shootOff.stations.map((s) => s.isShootOff)).toEqual([false, true]);
+    expect(nextStationIsShootOff(shootOff)).toBe(true);
+    expect(canStartShootOff(shootOff)).toBe(false);
+    expect(addStation(shootOff).stations.map((s) => s.isShootOff)).toEqual([false, true, true]);
+  });
+
+  it('UF8 a shoot-off station is saved with its numbers, and dropped when left empty', () => {
+    const form = withHits(startShootOff(falt({ hits: 6, figuresHit: 3, figureCount: 3 })), 1, 4);
+    const left = startShootOff(falt({ hits: 6, figuresHit: 3, figureCount: 3 }));
+    expect(faltPreview(form).rows).toEqual(['saved', 'saved']);
+    expect(faltPreview(left).rows).toEqual(['saved', 'blank']);
+    // The shoot-off counts toward no result, as on the phone.
+    expect(faltPreview(form).result).toMatchObject({ stationCount: 1, hits: 6 });
+
+    const session = withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-falt');
+    expect(toFaltDraft(session, form, 'x').stations.map((s) => s.isShootOff)).toEqual([
+      false,
+      true,
+    ]);
+    expect(toFaltDraft(session, left, 'x').stations[1]).toMatchObject({
+      hits: 0,
+      isShootOff: false,
+    });
   });
 });
