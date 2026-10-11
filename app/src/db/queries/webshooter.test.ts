@@ -273,7 +273,8 @@ describe('importResultRow — fresh import', () => {
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     // No final section -> 1 round -> +5.
     expect(getSession(db, sessionId)?.extraRounds).toBe(5);
@@ -283,7 +284,8 @@ describe('importResultRow — fresh import', () => {
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     expect(getSession(db, sessionId)?.firearmId).toBe(firearm.id);
     // Seven total-only series of five (#512, one-volume-figure-spec A8) plus
@@ -291,7 +293,7 @@ describe('importResultRow — fresh import', () => {
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
   });
 
-  it('never overwrites an already-assigned firearm when applying sighter rounds', () => {
+  it('never overwrites an already-assigned firearm on re-import', () => {
     const original = createFirearm(db, { make: 'Original', model: 'Gun' });
     const other = createFirearm(db, { make: 'Other', model: 'Gun' });
     const first = importResultRow(db, resultRow(), COMPETITION, {
@@ -303,7 +305,8 @@ describe('importResultRow — fresh import', () => {
     importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,
       linkToSessionId: first.sessionId,
-      applySighterRoundsForFirearmId: other.id,
+      firearmId: other.id,
+      addSighterRounds: true,
     });
     expect(getSession(db, first.sessionId)?.firearmId).toBe(original.id);
     // Every round lands on the ALREADY-linked firearm (never `other`): the
@@ -312,12 +315,25 @@ describe('importResultRow — fresh import', () => {
     expect(getFirearm(db, other.id)?.roundCount).toBe(0);
   });
 
+  it('assigns the chosen firearm without sighter rounds unless they are confirmed (§A.7)', () => {
+    const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
+    const { sessionId } = importResultRow(db, resultRow(), COMPETITION, {
+      program: PRECISION,
+      firearmId: firearm.id,
+    });
+    expect(getSession(db, sessionId)?.firearmId).toBe(firearm.id);
+    expect(getSession(db, sessionId)?.extraRounds ?? null).toBeNull();
+    // The seven total-only series of five only.
+    expect(getFirearm(db, firearm.id)?.roundCount).toBe(35);
+  });
+
   it('applies +10 sighter rounds for a two-round championship (finals present, §A.7)', () => {
     const row = resultRow({ results_finals: [station({ stations_id: 1, finals: 1, points: 50 })] });
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const { sessionId } = importResultRow(db, row, COMPETITION, {
       program: PRECISION,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     expect(getSession(db, sessionId)?.extraRounds).toBe(10);
   });
@@ -328,7 +344,8 @@ describe('importResultRow — total-only series are volume (one-volume-figure-sp
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const first = importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
 
@@ -347,7 +364,8 @@ describe('importResultRow — total-only series are volume (one-volume-figure-sp
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     importResultRow(db, faltRow(), FALT_COMPETITION, {
       program: FALT,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     // Four stations (the shoot-off included) of six, plus five sighter rounds.
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(29);
@@ -357,7 +375,8 @@ describe('importResultRow — total-only series are volume (one-volume-figure-sp
     const firearm = createFirearm(db, { make: 'Test', model: 'Gun' });
     const first = importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,
-      applySighterRoundsForFirearmId: firearm.id,
+      firearmId: firearm.id,
+      addSighterRounds: true,
     });
     importResultRow(db, resultRow(), COMPETITION, {
       program: PRECISION,

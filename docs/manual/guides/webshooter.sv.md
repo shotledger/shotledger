@@ -74,6 +74,13 @@ resultatform tävlingen använde. Ett fältresultat vars stationssiffror inte ka
 ha hänt, som sju träffar på en station, visas som ej importerbart i stället för
 att rättas.
 
+En tävlings resultat listar alla som sköt den, men granskningen visar bara
+**dina egna starter**, ett kort per vapengrupp och klass. Välj på varje kort
+vilket **Vapen** du sköt med: dess skottantal räknar då med de importerade
+skotten. Webshooter registrerar inte provskott, så **Lägg till provskott**
+lägger till dem (5 per omgång) när du använde dem; det är av tills du slår på
+det.
+
 Att kontrollera det kostar en förfrågan per tävling, så appen söker igenom
 **ett år i taget**, minns vad den hittade, och söker inte om vid varje besök.
 Varje skärm visar när dess uppgifter senast hämtades, och **Uppdatera** är hur

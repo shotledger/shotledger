@@ -70,6 +70,12 @@ kept but left out of the total — and show as the result mode the competition
 used. A fält result whose station numbers could not have happened, such as
 seven hits on one station, is shown as not importable rather than corrected.
 
+A competition's results list everyone who shot it, but the review lists only
+**your own starts**, one card per weapon group and class. On each, pick the
+**Firearm** you shot it with: its round counter then includes the imported
+shots. Webshooter does not record sighters, so **Add Sighter Rounds** adds them
+(5 per round) when you used them; it is off unless you turn it on.
+
 Checking that costs one request per competition, so the app scans **one year at
 a time**, remembers what it found, and does not re-scan on every visit. Each
 screen shows when its data was last fetched, and **Refresh** is how you ask for

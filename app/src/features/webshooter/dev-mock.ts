@@ -7,7 +7,7 @@
 // `webshooterMock` flag (constants/flags.ts, flipped from /dev).
 import type { HttpClient } from '@shotledger/shared/src/integrations/webshooter/api/httpClient';
 import {
-  authUserSchema,
+  authUserResponseSchema,
   competitionDetailResponseSchema,
   competitionsResponseSchema,
   patrolsResponseSchema,
@@ -139,6 +139,37 @@ const MOCK_FALT_RESULTS: ResultRow[] = [
     ],
     results_distinguish: [{ ...mockStation(290, 0, 4, 2), distinguish: 1 as const }],
   },
+  // The same shooter's second start, in another weapon group.
+  {
+    ...MOCK_RESULTS[0]!,
+    id: 3,
+    competitions_id: 9002,
+    signups_id: 5555,
+    placement: 9,
+    std_medal: null,
+    weaponclass: { ...MOCK_SIGNUP.weaponclass!, id: 1, weapongroups_id: 1, classname: 'A3' },
+    results: [201, 202, 203, 204, 205, 206].map((id) => mockStation(id, 0, 5, 3)),
+    results_finals: [],
+    results_distinguish: [],
+  },
+  // Another shooter in the same class: the results list everyone, and this
+  // row must never be offered for import.
+  {
+    ...MOCK_RESULTS[0]!,
+    id: 4,
+    competitions_id: 9002,
+    signups_id: 5556,
+    placement: 1,
+    std_medal: null,
+    signup: {
+      ...MOCK_SIGNUP,
+      id: 5556,
+      user: { ...MOCK_SIGNUP.user!, fullname: 'Other Mock', shooting_card_number: '88888' },
+    },
+    results: [201, 202, 203, 204, 205, 206].map((id) => mockStation(id, 0, 6, 4)),
+    results_finals: [],
+    results_distinguish: [],
+  },
 ];
 
 const MOCK_PATROLS: Patrol[] = [
@@ -201,10 +232,9 @@ export function createDevMockHttpClient(): HttpClient {
           signups: { data: [MOCK_SIGNUP], current_page: 1, last_page: 1, total: 1 },
         }) as never;
       }
-      if (path === 'authenticate/user') {
-        return authUserSchema.parse({
-          shooting_card_number: MOCK_CARD_NUMBER,
-          fullname: 'Mock Shooter',
+      if (path === '/authenticate/user') {
+        return authUserResponseSchema.parse({
+          user: { shooting_card_number: MOCK_CARD_NUMBER, fullname: 'Mock Shooter' },
         }) as never;
       }
       throw new Error(`Dev mock Webshooter client: unhandled path '${path}'`);

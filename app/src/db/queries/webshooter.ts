@@ -185,11 +185,15 @@ export interface ImportResultRowOptions {
    */
   linkToSessionId?: string;
   /**
-   * §A.7: apply the +5-rounds-per-round sighter suggestion to the linked
-   * firearm's round counter. Default off — the importer cannot know
-   * whether the shooter actually used their sighter allowance.
+   * The firearm this start was shot with. Assigned only when the session has
+   * none yet: a re-import never clobbers a user-entered value (§A.3).
    */
-  applySighterRoundsForFirearmId?: string | null;
+  firearmId?: string | null;
+  /**
+   * §A.7: add the +5-rounds-per-round sighter suggestion. Default off — the
+   * importer cannot know whether the shooter used their sighter allowance.
+   */
+  addSighterRounds?: boolean;
   sighterRoundsPerRound?: number;
 }
 
@@ -326,24 +330,19 @@ export function importResultRow(
     replaceOverrideSeries(db, sessionId, row);
   }
 
-  if (options.applySighterRoundsForFirearmId) {
-    const session = getSession(db, sessionId);
-    // setSessionExtraRounds only moves a firearm's round counters when the
-    // session already carries a firearmId (round-count.ts's own contract) —
-    // a Webshooter import never sets one (Webshooter has no concept of
-    // firearm), so the chosen firearm is assigned here, as an enrichment
-    // field: never overwriting one the user already picked (§A.3's
-    // "never clobber a user-entered value" rule extends to this write too).
-    if (session && !session.firearmId) {
-      // Also moves the rounds already written above onto it (#512).
-      updateSession(db, sessionId, { firearmId: options.applySighterRoundsForFirearmId });
-    }
-    const roundsCount = countDistinctRounds(row);
-    const currentExtra = session?.extraRounds ?? 0;
+  // Assigning the firearm also moves the rounds already written above onto
+  // it (#512).
+  if (options.firearmId && !getSession(db, sessionId)?.firearmId) {
+    updateSession(db, sessionId, { firearmId: options.firearmId });
+  }
+
+  if (options.addSighterRounds) {
+    const currentExtra = getSession(db, sessionId)?.extraRounds ?? 0;
     setSessionExtraRounds(
       db,
       sessionId,
-      currentExtra + (options.sighterRoundsPerRound ?? SIGHTER_ROUNDS_PER_ROUND) * roundsCount,
+      currentExtra +
+        (options.sighterRoundsPerRound ?? SIGHTER_ROUNDS_PER_ROUND) * countDistinctRounds(row),
     );
   }
 

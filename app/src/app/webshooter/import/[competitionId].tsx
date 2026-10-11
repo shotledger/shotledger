@@ -6,7 +6,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -48,7 +48,9 @@ export default function WebshooterImportReviewScreen() {
   const { competitionId } = useLocalSearchParams<{ competitionId: string }>();
   const id = Number(competitionId);
   const { candidates, loading, error, load, confirmImport } = useWebshooterReview(id);
-  const [applySighterFirearmId, setApplySighterFirearmId] = useState<string | null>(null);
+  // Per start: each is one weapon group and class, shot with its own firearm.
+  const [firearmByRow, setFirearmByRow] = useState<Record<number, string>>({});
+  const [sightersByRow, setSightersByRow] = useState<Record<number, boolean>>({});
   const firearms = listFirearms(db);
 
   useEffect(() => {
@@ -65,7 +67,8 @@ export default function WebshooterImportReviewScreen() {
           : undefined;
     await confirmImport(item, {
       linkToSessionId,
-      applySighterRoundsForFirearmId: applySighterFirearmId,
+      firearmId: firearmByRow[item.row.id] ?? null,
+      addSighterRounds: sightersByRow[item.row.id] === true,
     });
     Alert.alert(t('webshooter.importConfirmedTitle'));
     void load({ forceRefresh: true });
@@ -81,15 +84,6 @@ export default function WebshooterImportReviewScreen() {
         </ThemedText>
       )}
 
-      {firearms.length > 0 && (
-        <OptionPicker
-          label={t('webshooter.sighterRoundsFirearmLabel')}
-          options={firearms.map((f) => ({ value: f.id, label: `${f.make} ${f.model}` }))}
-          value={applySighterFirearmId}
-          onChange={setApplySighterFirearmId}
-        />
-      )}
-
       {!loading && candidates.length === 0 && (
         <EmptyState title={t('webshooter.noResultsTitle')} body={t('webshooter.noResultsBody')} />
       )}
@@ -97,6 +91,8 @@ export default function WebshooterImportReviewScreen() {
       <View style={styles.list}>
         {candidates.map((item) => {
           const importable = item.candidate.verdict.kind !== 'not-importable';
+          // A re-import already had its sighter rounds offered once.
+          const reimport = item.candidate.verdict.kind === 'exact-duplicate';
           return (
             <Card key={item.row.id}>
               <ThemedText type="smallBold">{item.candidate.competitionName}</ThemedText>
@@ -114,13 +110,35 @@ export default function WebshooterImportReviewScreen() {
                   })}
                 </ThemedText>
               )}
+              {importable && firearms.length > 0 && (
+                <OptionPicker
+                  label={t('session.firearm')}
+                  options={firearms.map((f) => ({
+                    value: f.id,
+                    label: `${f.make} ${f.model}`,
+                    testID: `webshooter-firearm-${item.row.id}-${f.id}`,
+                  }))}
+                  value={firearmByRow[item.row.id] ?? null}
+                  onChange={(firearmId) =>
+                    setFirearmByRow((prev) => ({ ...prev, [item.row.id]: firearmId }))
+                  }
+                />
+              )}
+              {importable && !reimport && (
+                <View style={styles.switchRow}>
+                  <ThemedText type="small">{t('webshooter.addSighterRounds')}</ThemedText>
+                  <Switch
+                    value={sightersByRow[item.row.id] === true}
+                    onValueChange={(on) =>
+                      setSightersByRow((prev) => ({ ...prev, [item.row.id]: on }))
+                    }
+                    testID={`webshooter-sighters-${item.row.id}`}
+                  />
+                </View>
+              )}
               {importable && (
                 <PrimaryButton
-                  label={
-                    item.candidate.verdict.kind === 'exact-duplicate'
-                      ? t('webshooter.reimport')
-                      : t('webshooter.import')
-                  }
+                  label={reimport ? t('webshooter.reimport') : t('webshooter.import')}
                   onPress={() => void onConfirm(item)}
                   testID={`webshooter-confirm-${item.row.id}`}
                 />
@@ -135,6 +153,12 @@ export default function WebshooterImportReviewScreen() {
 
 const styles = StyleSheet.create({
   list: {
+    gap: Spacing.two,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.two,
   },
 });
