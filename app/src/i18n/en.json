@@ -662,6 +662,8 @@
     "backspace": "Delete",
     "keypadHintDecimal": "Two taps per shot: ring, then tenth",
     "seriesAverage": "Avg/Series",
+    "stageStatsTitle": "Per Stage",
+    "stageSeriesCount": "Series",
     "innerTenCount": "X (Inner Tens)",
     "innerTenAverage": "Avg X/Series",
     "extraRounds": "Extra Rounds (not scored)",

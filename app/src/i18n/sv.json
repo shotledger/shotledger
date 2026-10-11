@@ -662,6 +662,8 @@
     "backspace": "Radera",
     "keypadHintDecimal": "Två tryck per skott: ring, sedan tiondel",
     "seriesAverage": "Snitt/serie",
+    "stageStatsTitle": "Per delmoment",
+    "stageSeriesCount": "Serier",
     "innerTenCount": "X (innertior)",
     "innerTenAverage": "Snitt X/serie",
     "extraRounds": "Extra skott (räknas ej i statistik)",

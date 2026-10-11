@@ -150,9 +150,13 @@ eftersom de bedöms var för sig.
 **Hela matchen** i nationell helmatch kommer som tre delmoment om fyra serier:
 **A · Precision** på precisionstavlan, **B · Snabbskjutning** på
 snabbskjutningstavlan och **C · Figurskjutning** på figurtavlan med 18, 16, 14
-och 12 sekunder. Före A och före B finns en provserie, före C ingen.
-Sammanställningen visar varje delmoments delsumma ovanför totalen, högst 200
-vardera och 600 totalt.
+och 12 sekunder. Före A och före B finns en provserie, före C ingen. Totalen är
+högst 600, 200 för varje delmoment.
+
+Under sammanställningen visar **Per delmoment** varje delmoment på en egen rad:
+hur många av dess serier som räknas, dess total och dess snitt per serie.
+Provserier räknas aldrig, och ett delmoment du inte skjutit än visar 0 och ett
+streck. Ett program utan delmoment visar den inte.
 
 När två av dina helmatchresultat är lika går högst C före, därefter högst B —
 regelbokens ordning. A används aldrig. Rekord och statistikrapportens bästa

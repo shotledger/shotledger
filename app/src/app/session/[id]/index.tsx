@@ -525,11 +525,6 @@ export default function SessionDetailScreen() {
       {!isFaltSession && (
         <Card style={styles.metricCard}>
           {metricRows([
-            ...detail.stageSubtotals.map((subtotal) => ({
-              label: t(`stage.${session.programId}.${subtotal.stage}`),
-              value: String(tenthsToScore(subtotal.totalTenths)),
-              testID: `result-stage-${subtotal.stage}`,
-            })),
             ...(results.hasFinal
               ? [
                   {
@@ -572,6 +567,61 @@ export default function SessionDetailScreen() {
               {row.map((tile) => (
                 <MetricTile key={tile.testID} {...tile} />
               ))}
+            </View>
+          ))}
+        </Card>
+      )}
+
+      {!isFaltSession && detail.stageStats.length > 0 && (
+        <Card style={styles.metricCard} testID="stage-stats">
+          <View style={styles.stageRow}>
+            <ThemedText type="smallBold" style={styles.stageLabel}>
+              {t('session.stageStatsTitle')}
+            </ThemedText>
+            {[t('session.stageSeriesCount'), t('session.total'), t('session.seriesAverage')].map(
+              (heading) => (
+                <ThemedText
+                  key={heading}
+                  type="small"
+                  themeColor="textSecondary"
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  style={[styles.stageFigure, styles.metricLabel]}
+                >
+                  {heading}
+                </ThemedText>
+              ),
+            )}
+          </View>
+          {detail.stageStats.map((stage) => (
+            <View key={stage.stage} style={styles.stageRow}>
+              <ThemedText type="small" style={styles.stageLabel} numberOfLines={1}>
+                {t(`stage.${session.programId}.${stage.stage}`)}
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={styles.stageFigure}
+                testID={`result-stage-${stage.stage}-series`}
+              >
+                {String(stage.seriesCount)}
+              </ThemedText>
+              <ThemedText
+                type="smallBold"
+                style={styles.stageFigure}
+                testID={`result-stage-${stage.stage}`}
+              >
+                {String(tenthsToScore(stage.totalTenths))}
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={styles.stageFigure}
+                testID={`result-stage-${stage.stage}-average`}
+              >
+                {stage.averageTenths === null
+                  ? '\u2013'
+                  : tenthsToScore(stage.averageTenths).toFixed(1)}
+              </ThemedText>
             </View>
           ))}
         </Card>
@@ -975,6 +1025,20 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontSize: 11,
     lineHeight: 14,
+  },
+  stageRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.two,
+    paddingVertical: Spacing.half,
+  },
+  stageLabel: {
+    flex: 1,
+    minWidth: 0,
+  },
+  stageFigure: {
+    width: 64,
+    textAlign: 'right',
   },
   seriesWrapper: {
     // Swipeable measures its own children — keep the row's own vertical
