@@ -106,6 +106,8 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorTooManyShots', { row: rowLabel(error.row), max: error.max });
     case 'secondSighter':
       return t('web.entry.errorSecondSighter', { row: rowLabel(error.row) });
+    case 'finalWithoutMain':
+      return t('web.entry.errorFinalWithoutMain');
     case 'tooLong': {
       const field = {
         name: t('session.name'),
@@ -121,7 +123,7 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
     case 'invalidStartedAt':
       return t('web.entry.errorDateTime');
     case 'invalidRounds':
-      return t('web.entry.errorRounds');
+      return t('session.roundsFiredInvalid');
     case 'tooManyChanges':
       return t('web.entry.errorTooManyChanges');
     case 'hitsDiscipline':

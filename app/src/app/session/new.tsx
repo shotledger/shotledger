@@ -43,6 +43,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
+import { parseRoundsFired } from '@shotledger/shared/src/sync-client/rounds-entry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
@@ -198,6 +199,9 @@ export default function NewSessionScreen() {
   const showGroupPicker =
     groups.length > 0 && (asksGroup || (firearmId !== null && derivedGroup === null));
   const showClassPicker = classes.length > 0 && asksClass;
+  // The web's rule, so both store the same count for the same text.
+  const parsedRounds = parseRoundsFired(roundsFired);
+  const roundsInvalid = kind === 'rounds' && !parsedRounds.ok;
   const showEventPicker = events.length > 0 && isCompetition;
 
   const firearms = useMemo(() => listFirearms(db), []);
@@ -261,6 +265,7 @@ export default function NewSessionScreen() {
   }
 
   function onCreate() {
+    if (roundsInvalid) return;
     const session = createSession(db, {
       name: name.trim() || defaultName,
       type,
@@ -289,11 +294,8 @@ export default function NewSessionScreen() {
     // A rounds session's shot count IS extra_rounds: rounds fired but never
     // scored (spec A1 §A1.3). It goes through the round-count path so the
     // firearm counter moves with it — never through createSession.
-    if (kind === 'rounds') {
-      const parsed = roundsFired.trim() === '' ? null : Number(roundsFired.trim());
-      if (parsed !== null && Number.isInteger(parsed) && parsed >= 0) {
-        setSessionExtraRounds(db, session.id, parsed);
-      }
+    if (kind === 'rounds' && parsedRounds.ok && parsedRounds.rounds !== null) {
+      setSessionExtraRounds(db, session.id, parsedRounds.rounds);
     }
 
     // A fixed-format program pre-creates its series skeleton (§6.3).
@@ -621,6 +623,11 @@ export default function NewSessionScreen() {
             placeholder="0"
             testID="rounds-fired"
           />
+          {roundsInvalid && (
+            <ThemedText type="small" themeColor="danger" testID="rounds-fired-error">
+              {t('session.roundsFiredInvalid')}
+            </ThemedText>
+          )}
         </Card>
       )}
 

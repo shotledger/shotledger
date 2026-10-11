@@ -709,4 +709,30 @@ describe('final series (docs/specs/web-rounds-final-spec.md)', () => {
       [3, 0, 1],
     ]);
   });
+
+  it('FS5 a final with nothing shot is not saved, even with a blank final sighter', () => {
+    const series = payloads(
+      changesOf(
+        build(
+          precision([
+            { text: '10 9', isSighter: false },
+            { text: '', isSighter: true, isFinal: true },
+            { text: '', isSighter: false, isFinal: true },
+          ]),
+        ),
+      ),
+      'series',
+    );
+    expect(series.map((s) => [s.position, s.is_sighter, s.is_final])).toEqual([[1, 0, 0]]);
+  });
+
+  it.each([
+    ['no main rows left', [{ text: '', isSighter: false }]],
+    ['only a main sighter', [{ text: '9 9', isSighter: true }]],
+  ])('FS6 a final with %s is refused', (_, main) => {
+    expect(build(precision([...main, { text: '10 9', isSighter: false, isFinal: true }]))).toEqual({
+      ok: false,
+      errors: [{ kind: 'finalWithoutMain' }],
+    });
+  });
 });

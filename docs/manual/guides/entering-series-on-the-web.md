@@ -57,8 +57,9 @@ one row that is a sighter series. **Add Series** adds a row.
 In precision with **Full Match** chosen, **Start Final** appears once a series
 has a shot. It adds a row under **Final**, and every row added after it
 belongs to the final, which can have a sighter series of its own. The final is
-totalled apart from the qualification, as on the phone. Emptying the final's
-rows removes it again.
+totalled apart from the qualification, as on the phone. A final with no shot
+in it is not saved, so emptying its rows removes it again. A final needs at
+least one scored series before it; with none, Save says so and sends nothing.
 
 ## Save
 

@@ -57,8 +57,9 @@ som är provserie. **Lägg till serie** lägger till en rad.
 I precision med **Hela matchen** vald visas **Starta final** när en serie har
 ett skott. Den lägger till en rad under **Final**, och varje rad som läggs
 till efter den hör till finalen, som kan ha en egen provserie. Finalen räknas
-för sig, skild från grundomgången, som i telefonen. Töms finalens rader
-försvinner den igen.
+för sig, skild från grundomgången, som i telefonen. En final utan skott sparas
+inte, så töms finalens rader försvinner den igen. En final kräver minst en
+poängsatt serie före den; saknas en säger **Spara** det och skickar ingenting.
 
 ## Spara
 

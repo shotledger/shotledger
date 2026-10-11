@@ -41,8 +41,10 @@ leaves `extra_rounds` null; a non-negative integer goes through
 `setSessionExtraRounds`, which stores it in `extra_rounds` and moves the
 firearm's `round_count` and `rounds_since_maintenance` by the change in
 `sessionVolume` (`withSessionVolumeDelta`) — here by the rounds fired, so `0`
-stores 0 and moves nothing. Any other text is ignored silently: the session
-is created with `extra_rounds` null. The discipline list is
+stores 0 and moves nothing. `Number()` decides what counts as an integer, so
+`1e2` stores 100, `0x10` 16, and `+5` and `5.0` store 5; text it cannot read
+(`abc`, `2.5`, `-3`) is ignored silently, with `extra_rounds` null. (Before
+R4; the phone now uses C4's rule.) The discipline list is
 `disciplinesForRegulations` — every discipline, fält included. The other
 fields (type, name, location, competition fields, vapengrupp, klass, event,
 firearm, ammo lot) are asked and stored as for a series session.
@@ -95,11 +97,12 @@ program supports a final, and a final is scored in the session's mode. The
 issue brief's "decimal scoring" therefore has nothing to mirror; it is a
 question for the maintainer (§8), not something this layer invents.
 
-**C4. The web refuses Rounds Fired text the phone would silently ignore.**
-Blank stays "none" (`extra_rounds` null), and a whole number of digits is
-stored. Anything else — `-3`, `2.5`, `abc`, `1e2`, or a number above
-`Number.MAX_SAFE_INTEGER` — is refused (`invalidRounds`) with nothing sent,
-where the phone would create the session without its count.
+**C4. Rounds Fired is plain digits, on the web and the phone.** Blank stays
+"none" (`extra_rounds` null), and a whole number of digits is stored. Anything
+else — `-3`, `2.5`, `abc`, `1e2`, `0x10`, `+5`, or a number above
+`Number.MAX_SAFE_INTEGER` — is refused (`invalidRounds`) with nothing sent.
+One function, `parseRoundsFired`, decides for both; the phone shows the same
+error and does not create the session (maintainer, 2026-10-11).
 _Alternative:_ mirror the phone and drop the count silently. Not recommended:
 on a page whose purpose is to type a record in, losing what was typed without
 a word is the worse failure, and what is stored for every accepted value is
@@ -179,6 +182,8 @@ Feature: final rows (shared/src/sync-client/session-entry.test.ts)
   Scenario: FS2 one sighter per section: a main sighter and a final sighter both pass; a second final sighter is refused
   Scenario: FS3 a final row with a program that has no final (free format, Magnumprecision, a fixed format) throws RangeError
   Scenario: FS4 a blank final row is dropped like any blank row; a blank final sighter is kept
+  Scenario: FS5 a final with nothing shot is not saved, its blank sighter included
+  Scenario: FS6 a final without a scored main series (none left, or only a sighter) is refused
 
 Feature: the form (web/src/entry/kinds.test.ts)
   Scenario: WK1 withKind('rounds') clears program and decimal; back to 'series' clears roundsFired and keeps no program
@@ -233,14 +238,15 @@ Sessions page show it; refuse `2.5` rounds.
 | a phone moved the counter offline | last write wins on the firearm row             | ADR 0019, #669 C1 (as is) |
 | lost response                     | request held, Retry resends it                 | #669 C2, R13, unchanged   |
 | a final where none is offered     | build throws → `failed: unknown`, nothing sent | FS3, R18                  |
+| a final with nothing shot         | the final is not saved                         | FS5                       |
+| a final with no main round        | nothing sent, the error shown                  | FS6                       |
 
 ## 8. Questions for the maintainer
 
 1. **Decimal finals.** The phone's only final is SPSF Precision's, integer.
    Should ISSF finals (decimal, 10.9) exist at all? That is a phone change
    first (a program with `supportsFinal`, its rules from the ISSF rule book).
-2. **C4.** Refuse unreadable Rounds Fired on the web (recommended), or ignore
-   it silently as the phone does? And should the phone refuse it too?
+2. ~~**C4.**~~ Answered 2026-10-11: plain digits only, on the phone too (R4).
 
 ## 9. Setup plan
 
@@ -268,3 +274,9 @@ Appended during the build; none loosens a constraint.
   out no skeleton, so the phone's "not a fixed format" condition is implied.
 - **R3 (RO7 widened).** An unknown discipline throws, as `buildSessionEntry`
   does.
+- **R4 (maintainer, 2026-10-11, verification F1, F3, F4).** C4 rests on a
+  corrected premise: the phone stored `1e2`, `0x10` and `+5` as numbers, not
+  dropped them. The ruling is plain digits everywhere, so the phone's new
+  session screen now uses `parseRoundsFired` and refuses what the web refuses.
+  A final with nothing shot is dropped (FS5), and a final with no scored main
+  series is refused, `finalWithoutMain` (FS6).

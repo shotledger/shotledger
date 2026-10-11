@@ -77,6 +77,7 @@ export type EntryError =
   | { kind: 'series'; row: number; error: SeriesTextError }
   | { kind: 'tooManyShots'; row: number; max: number }
   | { kind: 'secondSighter'; row: number }
+  | { kind: 'finalWithoutMain' }
   | { kind: 'unknownFirearm' }
   | { kind: 'unknownAmmoLot' }
   | { kind: 'invalidStartedAt' }
@@ -173,7 +174,7 @@ export function buildSessionEntry(
     throw new RangeError(`a final series needs a program with a final, got ${draft.programId}`);
   }
 
-  const kept: KeptSeries[] = [];
+  const typed: KeptSeries[] = [];
   // One sighter per section, main and final, as the phone's addSeries allows.
   const sighterSections = new Set<boolean>();
   const rowCount = Math.max(skeleton.length, draft.series.length);
@@ -198,8 +199,16 @@ export function buildSessionEntry(
     // A blank ordinary row is dropped; the skeleton and a sighter are kept,
     // as the phone pre-creates or keeps them.
     if (entry || isSighter || parsed.shots.length > 0) {
-      kept.push({ isSighter, isFinal, shots: parsed.shots });
+      typed.push({ isSighter, isFinal, shots: parsed.shots });
     }
+  }
+
+  // A final with nothing shot is not saved; one without a scored main round
+  // is refused. A kept ordinary row has shots: blank ones were dropped above.
+  const finalShot = typed.some((s) => s.isFinal && s.shots.length > 0);
+  const kept = finalShot ? typed : typed.filter((s) => !s.isFinal);
+  if (finalShot && !kept.some((s) => !s.isFinal && !s.isSighter)) {
+    errors.push({ kind: 'finalWithoutMain' });
   }
 
   let pulledFirearm: Payload | undefined;
