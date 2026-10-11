@@ -6,10 +6,12 @@ Spec: [`web-rounds-final-spec.md`](web-rounds-final-spec.md).
   built in one run; its key choices C1–C5 and the questions in its §8 are
   listed in the PR for the maintainer. Confidence is lower accordingly: the
   correlation-breaking review of the spec has not happened.
-- **Independent verification: not performed.** A declared downgrade: no
-  second agent or reviewer has checked this source state.
-- **Source state:** branch `feat/web-rounds-final-689` from `origin/main`
-  `1487e954`.
+- **Independent verification: round 1 `passed` at `fffb8406`** (no code
+  defect; findings F1–F6 in the spec, manual and report). The maintainer's
+  rulings on F1, F3 and F4 then changed code (spec R4), so **this source state
+  is not independently verified**: a declared downgrade.
+- **Source state:** branch `feat/web-rounds-final-689`, rebased onto
+  `origin/main` `b17cb181`.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, TypeScript 6.0.2; backend vitest 5.0.3 with the Workers
   pool).
@@ -52,11 +54,11 @@ shared/src/sync-client/rounds-entry.ts,shared/src/sync-client/session-entry.ts,s
 
 | Layer                                           | Command                                                                | Result                                                                                 |
 | ----------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                           | exit 0; vitest 196 files, 3225 tests passed; jest 708 passed; i18n 1278 keys, 0 issues |
-| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`)                                 | statements 3974/3974, branches 2551/2551, functions 938/938, lines 3374/3374           |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                           | exit 0; vitest 196 files, 3229 tests passed; jest 712 passed; i18n 1280 keys, 0 issues |
+| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`)                                 | statements 3981/3981, branches 2561/2561, functions 941/941, lines 3378/3378           |
 | Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                     | 21 files, 202 tests passed (WR1, WR2 and #669's W1–W4 included)                        |
-| Mutation (tool)                                 | `npx stryker run --mutate <the five modules above>`                    | 681 killed + 1 timeout, 5 survived, 0 no coverage: 99.27% (all 5 equivalent, below)    |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=689 <the 8 suites>` | 8 files, 122 tests passed                                                              |
+| Mutation (tool)                                 | `npx stryker run --mutate <the five modules above>`                    | 706 killed + 1 timeout, 5 survived, 0 no coverage: 99.30% (all 5 equivalent, below)    |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=689 <the 8 suites>` | 8 files, 126 tests passed                                                              |
 | Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check` | built; 26 translated pages current; no dangling anchors                                |
 | Supply chain                                    | `pnpm licenses:check`; the diff                                        | 97 packages, invariants hold; no dependency, `package.json` or lockfile change         |
 | Property-based                                  | not added                                                              | N-A: the rounds parser is a regex plus a range check, covered by RO2's boundary table  |
@@ -109,7 +111,14 @@ repo, and are not attached.
 ## Downgrades and deviations
 
 - **Spec approval:** not obtained (autonomous run), see the header.
-- **Independent verification:** not performed.
+- **Independent verification:** round 1 passed at `fffb8406`; the R4 changes
+  after it are not independently verified (declared downgrade). Its F2 (C5's
+  wording) and F5 (the issue's "decimal") are description findings left to
+  the maintainer; F6 (stale numbers) is this refresh.
+- **Real execution after R4:** the phone side in the app's web preview (`1e2`
+  in Rounds Fired shows the error and Create Session does nothing; `100`
+  creates a session with 100 extra rounds). The web form's two new error
+  paths are covered by FS5/FS6 and were not re-driven in a browser.
 - **SUBSTITUTED:** mutation ran on the five changed modules (`--mutate`), not
   the whole `pnpm mutation` list; nothing else in that list changed.
 - **N-A:** `kind-fields.tsx` and `entry.tsx` are outside the gates, as every
