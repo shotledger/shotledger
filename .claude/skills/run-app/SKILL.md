@@ -24,6 +24,7 @@ daemon (`./gradlew --stop`). Never kill another session's.
 | A repeatable e2e flow                        | Maestro       | `references/maestro.md`              |
 | An APK to install on a phone                 | Release build | `references/emulator.md` (last part) |
 | Screen does not match the source             | —             | `references/troubleshooting.md`      |
+| WebShooter import, starts or records         | Any, mocked   | `references/webshooter-mock.md`      |
 
 ## Web preview
 

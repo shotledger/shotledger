@@ -847,7 +847,7 @@
     "reviewTitle": "Review Results",
     "noResultsTitle": "No Results",
     "noResultsBody": "This competition has no results for your card number yet.",
-    "sighterRoundsFirearmLabel": "Add Sighter Rounds To",
+    "addSighterRounds": "Add Sighter Rounds",
     "verdictNew": "New",
     "verdictExactDuplicate": "Already Imported",
     "verdictProbableMatch": "Possible Match with an Existing Session",

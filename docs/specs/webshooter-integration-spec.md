@@ -238,10 +238,14 @@ omission would under-count rounds fired on the linked firearm.
 - [ ] The importer proposes, per round of the imported competition (one
       per round for championship two-round format, §6.3), an
       `extra_rounds` adjustment: **+5 rounds** (one 5-shot sighter series
-      per SHB F.6.6.2 / J.6.6.2), surfaced as a confirmation checkbox
-      ("Add 5 sighter rounds to <firearm> round count?") — default
-      unchecked, since the importer cannot know whether the shooter
-      actually used their sighter allowance.
+      per SHB F.6.6.2 / J.6.6.2), surfaced as a confirmation toggle on
+      each start in the review UI — default off, since the importer cannot
+      know whether the shooter actually used their sighter allowance. A
+      re-import does not offer it again.
+- [ ] The firearm is chosen per start, independently of the toggle: a start
+      is one weapon group and class, shot with one firearm, and starts in two
+      weapon groups of one competition are usually two firearms (#725). It is
+      assigned only to a session that has none (§A.3).
 - [ ] Confirming applies the round-count/ammo-usage increment (same
       mechanism as §4 M4's per-shot increment) **without** creating a
       `series` row — there is no score, position, or override total to
