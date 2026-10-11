@@ -65,10 +65,11 @@ export function initialFalt(): FaltForm {
   return { resultMode: 'falt', stations: [newStation()] };
 }
 
-const nothingEntered = (row: Omit<StationRow, 'key'>) =>
-  isBlankStation({ ...row, points: null, isShootOff: false }) &&
-  row.pointsText === '' &&
-  row.pointsMaxText === '';
+/** Blank as Save reads it: points parsed as the builder parses them. */
+const nothingEntered = (row: Omit<StationRow, 'key'>) => {
+  const points = stationPoints(row.pointsText, row.pointsMaxText);
+  return points.ok && isBlankStation({ ...row, points: points.points, isShootOff: false });
+};
 
 /**
  * The entered numbers of a row, keyless. A shoot-off row with nothing else in
@@ -82,7 +83,23 @@ const blankRow = (row: StationRow) => nothingEntered(entered(row));
 // Once a shoot-off starts, every station after it is one, as on the phone
 // (app/src/features/session/falt-shoot-off.ts). The last station that will be
 // saved decides: a blank row is the phone's station screen backed out of.
-const lastKept = (falt: FaltForm) => falt.stations.filter((row) => !blankRow(row)).at(-1);
+const lastKept = (falt: FaltForm) =>
+  shootOffRows(falt)
+    .filter((row) => !blankRow(row))
+    .at(-1);
+
+/**
+ * The rows with the phone's rule applied: every saved row after the first
+ * saved shoot-off is one, whatever order the rows were filled in.
+ */
+export function shootOffRows(falt: FaltForm): StationRow[] {
+  let started = false;
+  return falt.stations.map((row) => {
+    if (blankRow(row)) return row;
+    started ||= row.isShootOff;
+    return { ...row, isShootOff: started };
+  });
+}
 
 export function nextStationIsShootOff(falt: FaltForm): boolean {
   return lastKept(falt)?.isShootOff === true;
@@ -152,10 +169,11 @@ export function faltSendsTheSame(prev: FaltForm, next: FaltForm): boolean {
   if (prev.resultMode !== next.resultMode || next.stations.length < prev.stations.length) {
     return false;
   }
+  const before = shootOffRows(prev);
+  const after = shootOffRows(next);
   return (
-    prev.stations.every(
-      (row, i) => JSON.stringify(entered(row)) === JSON.stringify(entered(next.stations[i]!)),
-    ) && next.stations.slice(prev.stations.length).every(blankRow)
+    before.every((row, i) => JSON.stringify(entered(row)) === JSON.stringify(entered(after[i]!))) &&
+    after.slice(before.length).every(blankRow)
   );
 }
 
@@ -171,7 +189,7 @@ export function toFaltDraft(form: EntryForm, falt: FaltForm, defaultName: string
   return {
     ...session,
     faltResultMode: falt.resultMode,
-    stations: falt.stations.map(entered),
+    stations: shootOffRows(falt).map(entered),
   };
 }
 
@@ -186,7 +204,7 @@ export interface FaltPreview {
 
 export function faltPreview(falt: FaltForm): FaltPreview {
   const saved: FaltResultStation[] = [];
-  const rows = falt.stations.map((row, index): StationStatus => {
+  const rows = shootOffRows(falt).map((row, index): StationStatus => {
     const points = stationPoints(row.pointsText, row.pointsMaxText);
     if (!points.ok) return 'invalid';
     const station = { ...entered(row), points: points.points, pointsMax: points.pointsMax };

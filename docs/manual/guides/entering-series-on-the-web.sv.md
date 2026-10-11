@@ -72,10 +72,10 @@ och utelämnar strukna stationer och särskjutning, som i telefonen. **Lägg til
 station** lägger till en rad.
 
 När en station har något ifyllt gör **Starta särskjutning** nästa station
-till en särskjutningsstation, märkt **Särskjutning**. Varje station du lägger
-till efter en ifylld särskjutningsstation är också en. En
-särskjutningsstation där inget är ifyllt sparas inte, och stationen efter den
-är en vanlig station.
+till en särskjutningsstation, märkt **Särskjutning**. Från den första ifyllda
+särskjutningsstationen och framåt är varje station en särskjutningsstation. En
+särskjutningsstation där inget är ifyllt sparas inte och startar inte
+särskjutningen.
 
 En station där inget är ifyllt sparas inte, och stationerna efter den flyttas
 upp ett nummer. En station där alla skott missade sparas när du har fyllt i

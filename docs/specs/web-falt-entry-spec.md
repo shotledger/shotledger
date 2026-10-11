@@ -226,6 +226,7 @@ Feature: the page model (web/src/entry/falt-model.test.ts)
   Scenario: UF7 Start Shoot-off: every station after a saved shoot-off is one, as on the phone
   Scenario: UF8 a shoot-off station is saved with its numbers, and dropped when left empty
   Scenario: UF9 only a station that will be saved counts: blank rows are the phone backed out of
+  Scenario: UF10 no ordinary station after a saved shoot-off, whatever order the rows are filled in
 ```
 
 Browser checks (not automated; screenshots under
@@ -250,15 +251,15 @@ round count moved by 24.
 
 ## 6. Failure model
 
-| Way this hurts                                     | Caught by                                        |
-| -------------------------------------------------- | ------------------------------------------------ |
-| A column missing or null where the phone needs one | AF1, AF2                                         |
-| An impossible station crashes the phone's screens  | FE6, AF2 (`faltSessionResult`)                   |
-| The firearm counter moves by the wrong amount      | FE7, AF2 (against `sessionVolumeRounds`)         |
-| A retry stores the session twice                   | reused `save.ts` (#669 U2, U7), WF2              |
-| The web drifts from the phone's station rules      | C2's move: one implementation, S1–S5, N6         |
-| A station silently renumbered                      | C3, the "Not saved: blank" mark, UF5             |
-| The web's shoot-off state drifts from the phone's  | R5, R6: the last saved station decides; UF7, UF9 |
+| Way this hurts                                     | Caught by                                               |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| A column missing or null where the phone needs one | AF1, AF2                                                |
+| An impossible station crashes the phone's screens  | FE6, AF2 (`faltSessionResult`)                          |
+| The firearm counter moves by the wrong amount      | FE7, AF2 (against `sessionVolumeRounds`)                |
+| A retry stores the session twice                   | reused `save.ts` (#669 U2, U7), WF2                     |
+| The web drifts from the phone's station rules      | C2's move: one implementation, S1–S5, N6                |
+| A station silently renumbered                      | C3, the "Not saved: blank" mark, UF5                    |
+| The web's shoot-off state drifts from the phone's  | R5–R7: the phone's rule over saved rows; UF7, UF9, UF10 |
 
 ## 7. Setup plan
 
@@ -317,3 +318,12 @@ Appended during the same autonomous run; none loosens a constraint.
   comes from the route, so the station is not blank); the web drops such a
   row, as it does a blank ordinary one. Either is defensible; the web has no
   per-row Save to tell "pressed Save" from "backed out".
+- **R7 (independent verification round 2).** Every row stays editable on the
+  web, so rows can be filled out of order: a shoot-off left blank, an
+  ordinary station after it, then the shoot-off filled would have saved an
+  ordinary station after a shoot-off. Now the phone's rule is applied over
+  the saved rows at Save, in the preview and on the badge: every saved row
+  after the first saved shoot-off is one. "Blank" is also read the way Save
+  reads it, points parsed by `stationPoints`, so a max without points or a
+  space in Points is blank everywhere (it had been blank to Save but not to
+  Start Shoot-off). UF10 covers both.

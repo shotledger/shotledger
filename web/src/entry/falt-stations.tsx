@@ -10,6 +10,7 @@ import {
   addStation,
   canStartShootOff,
   faltPreview,
+  shootOffRows,
   startShootOff,
   withFigureCount,
   withHits,
@@ -32,6 +33,7 @@ export function FaltStations({
 }) {
   const { t } = useTranslation();
   const preview = faltPreview(falt);
+  const shootOff = shootOffRows(falt).map((row) => row.isShootOff);
 
   return (
     <section className="card falt-stations">
@@ -46,7 +48,7 @@ export function FaltStations({
           <fieldset key={row.key} className="station-row" aria-invalid={rowError !== undefined}>
             <legend>
               {t('station.title', { position: index + 1 })}
-              {row.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
+              {shootOff[index] && <span className="badge">{t('station.shootOff')}</span>}
             </legend>
             <label className="field">
               {t('station.hits')}

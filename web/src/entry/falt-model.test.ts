@@ -1,4 +1,4 @@
-// docs/specs/web-falt-entry-spec.md UF1–UF9.
+// docs/specs/web-falt-entry-spec.md UF1–UF10.
 import type { ShooterProfile } from '@shotledger/shared/src/disciplines';
 import { describe, expect, it } from 'vitest';
 
@@ -11,6 +11,7 @@ import {
   initialFalt,
   isFaltForm,
   nextStationIsShootOff,
+  shootOffRows,
   startShootOff,
   toFaltDraft,
   withFigureCount,
@@ -290,5 +291,32 @@ describe('the fält page model', () => {
       hits: 0,
       isShootOff: false,
     });
+  });
+
+  it('UF10 no ordinary station after a saved shoot-off, whatever order the rows are filled in', () => {
+    const session = withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-falt');
+    // Shoot-off left blank, an ordinary station after it, then the shoot-off filled.
+    const left = startShootOff(falt({ hits: 6, figuresHit: 3, figureCount: 3 }));
+    const outOfOrder = withHits(withHits(addStation(left), 2, 5), 1, 4);
+    expect(shootOffRows(outOfOrder).map((s) => s.isShootOff)).toEqual([false, true, true]);
+    expect(toFaltDraft(session, outOfOrder, 'x').stations.map((s) => s.isShootOff)).toEqual([
+      false,
+      true,
+      true,
+    ]);
+    expect(faltPreview(outOfOrder).result).toMatchObject({ stationCount: 1, hits: 6 });
+    expect(nextStationIsShootOff(outOfOrder)).toBe(true);
+    // The rule changing a row's flag is an edit that drops a held request.
+    expect(faltSendsTheSame(withHits(addStation(left), 2, 5), outOfOrder)).toBe(false);
+
+    // Blank is what Save drops: a max without points, or a space, is nothing entered.
+    const maxOnly = falt({ pointsMaxText: '10' });
+    expect(faltPreview(maxOnly).rows).toEqual(['blank']);
+    expect(canStartShootOff(maxOnly)).toBe(false);
+    const spaced = withStation(left, 1, { pointsText: ' ' });
+    expect(faltPreview(spaced).rows).toEqual(['saved', 'blank']);
+    expect(toFaltDraft(session, spaced, 'x').stations[1]).toMatchObject({ isShootOff: false });
+    // Points that do not parse are not blank: the row is refused, not dropped.
+    expect(faltPreview(falt({ pointsText: 'x' })).rows).toEqual(['invalid']);
   });
 });

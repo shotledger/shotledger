@@ -72,9 +72,9 @@ saved, leaving out scratched and shoot-off ones, as the phone does. **Add
 Station** adds a row.
 
 Once a station has something entered, **Start Shoot-off** makes the next
-station a shoot-off station, marked **Shoot-off**. Every station you add after
-a filled-in shoot-off station is one too. A shoot-off station with nothing
-entered is not saved, and the station after it is an ordinary one.
+station a shoot-off station, marked **Shoot-off**. From the first filled-in
+shoot-off station on, every station is a shoot-off station. A shoot-off
+station with nothing entered is not saved and does not start the shoot-off.
 
 A station with nothing entered is not saved, and the stations after it move
 up a number. A station where every shot missed is saved once you set its
