@@ -55,7 +55,7 @@ every session field, and the two pages would drift.
 
 **C2. A station row mirrors the phone's station screen, control for control.**
 Hits (0–6), Figures Hit, Figures (the figures set out: – or 1–6), Points
-`of` Max Points, Scratched, Shoot-off. Figures Hit offers only the values the
+`of` Max Points, Scratched (Shoot-off is not a row control: see R5, R6). Figures Hit offers only the values the
 phone offers (1..min(hits, figures) when there are hits, else 0), and changing
 Hits or Figures clamps it the way the phone does. The rules are the phone's
 own, moved into `shared/src/scoring/falt-station.ts` and imported back by the
@@ -221,10 +221,11 @@ Feature: the page model (web/src/entry/falt-model.test.ts)
   Scenario: UF2 changing Hits or Figures clamps Figures Hit (clampFiguresHit)
   Scenario: UF3 toFaltDraft carries the session fields as toDraft does, with the stations and the mode
   Scenario: UF4 Add Station keeps a held request; any other station or mode edit drops it
-  Scenario: UF5 the running result counts only the stations that will be saved, in the chosen mode
+  Scenario: UF5 the running result counts only the stations that will be saved
   Scenario: UF6 a fresh fält form: one blank station, Field
-  Scenario: UF7 Start Shoot-off: every station after it is a shoot-off, as on the phone
+  Scenario: UF7 Start Shoot-off: every station after a saved shoot-off is one, as on the phone
   Scenario: UF8 a shoot-off station is saved with its numbers, and dropped when left empty
+  Scenario: UF9 only a station that will be saved counts: blank rows are the phone backed out of
 ```
 
 Browser checks (not automated; screenshots under
@@ -249,14 +250,15 @@ round count moved by 24.
 
 ## 6. Failure model
 
-| Way this hurts                                     | Caught by                                |
-| -------------------------------------------------- | ---------------------------------------- |
-| A column missing or null where the phone needs one | AF1, AF2                                 |
-| An impossible station crashes the phone's screens  | FE6, AF2 (`faltSessionResult`)           |
-| The firearm counter moves by the wrong amount      | FE7, AF2 (against `sessionVolumeRounds`) |
-| A retry stores the session twice                   | reused `save.ts` (#669 U2, U7), WF2      |
-| The web drifts from the phone's station rules      | C2's move: one implementation, S1–S5, N6 |
-| A station silently renumbered                      | C3, the "Not saved: blank" mark, UF5     |
+| Way this hurts                                     | Caught by                                        |
+| -------------------------------------------------- | ------------------------------------------------ |
+| A column missing or null where the phone needs one | AF1, AF2                                         |
+| An impossible station crashes the phone's screens  | FE6, AF2 (`faltSessionResult`)                   |
+| The firearm counter moves by the wrong amount      | FE7, AF2 (against `sessionVolumeRounds`)         |
+| A retry stores the session twice                   | reused `save.ts` (#669 U2, U7), WF2              |
+| The web drifts from the phone's station rules      | C2's move: one implementation, S1–S5, N6         |
+| A station silently renumbered                      | C3, the "Not saved: blank" mark, UF5             |
+| The web's shoot-off state drifts from the phone's  | R5, R6: the last saved station decides; UF7, UF9 |
 
 ## 7. Setup plan
 
@@ -301,3 +303,17 @@ Appended during the same autonomous run; none loosens a constraint.
   Scratched stays on every row: unlike the phone, every web row is still
   being edited. UF7 and UF8 cover it; UF4 now checks that a blank started
   shoot-off keeps a held request.
+- **R6 (independent verification round 1, F1 and F2).** R5 counted blank rows
+  as stations, which the phone never does. Now only a row that will be saved
+  counts: Start Shoot-off needs one, as the phone needs a saved station, and
+  it is hidden while the last row is a shoot-off. A shoot-off left blank no
+  longer makes the next station a shoot-off. Start Shoot-off on a trailing
+  blank row turns that row into the shoot-off instead of adding another. UF7
+  is narrowed to a saved shoot-off; UF9 covers the blank rows. UF5's title
+  drops "in the chosen mode": `faltPreview` takes no mode, and the mode is
+  applied only by the page when it formats the result.
+- **Open for the maintainer (verification F3).** On the phone, Save on a new
+  shoot-off station with nothing entered saves a 0-hit shoot-off (the flag
+  comes from the route, so the station is not blank); the web drops such a
+  row, as it does a blank ordinary one. Either is defensible; the web has no
+  per-row Save to tell "pressed Save" from "backed out".

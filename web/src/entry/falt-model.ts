@@ -65,21 +65,48 @@ export function initialFalt(): FaltForm {
   return { resultMode: 'falt', stations: [newStation()] };
 }
 
+const nothingEntered = (row: Omit<StationRow, 'key'>) =>
+  isBlankStation({ ...row, points: null, isShootOff: false }) &&
+  row.pointsText === '' &&
+  row.pointsMaxText === '';
+
+/**
+ * The entered numbers of a row, keyless. A shoot-off row with nothing else in
+ * it is blank: on the phone, backing out of a started shoot-off saves nothing.
+ */
+const entered = ({ key: _key, ...station }: StationRow) =>
+  station.isShootOff && nothingEntered(station) ? { ...station, isShootOff: false } : station;
+
+const blankRow = (row: StationRow) => nothingEntered(entered(row));
+
 // Once a shoot-off starts, every station after it is one, as on the phone
-// (app/src/features/session/falt-shoot-off.ts). The last station decides.
+// (app/src/features/session/falt-shoot-off.ts). The last station that will be
+// saved decides: a blank row is the phone's station screen backed out of.
+const lastKept = (falt: FaltForm) => falt.stations.filter((row) => !blankRow(row)).at(-1);
+
 export function nextStationIsShootOff(falt: FaltForm): boolean {
-  return falt.stations.at(-1)?.isShootOff === true;
+  return lastKept(falt)?.isShootOff === true;
 }
 
+/** Offered once a station will be saved and no shoot-off has started. */
 export function canStartShootOff(falt: FaltForm): boolean {
-  return falt.stations.length > 0 && !nextStationIsShootOff(falt);
+  return (
+    lastKept(falt) !== undefined &&
+    !nextStationIsShootOff(falt) &&
+    falt.stations.at(-1)?.isShootOff !== true
+  );
 }
 
 export function addStation(falt: FaltForm): FaltForm {
   return { ...falt, stations: [...falt.stations, newStation(nextStationIsShootOff(falt))] };
 }
 
+/** A trailing blank row becomes the shoot-off station; otherwise one is appended. */
 export function startShootOff(falt: FaltForm): FaltForm {
+  const last = falt.stations.at(-1);
+  if (last !== undefined && blankRow(last)) {
+    return withStation(falt, falt.stations.length - 1, { isShootOff: true });
+  }
   return { ...falt, stations: [...falt.stations, newStation(true)] };
 }
 
@@ -115,20 +142,6 @@ export function withFigureCount(
     figuresHit: clampFiguresHit(row.figuresHit, row.hits, figureCount),
   });
 }
-
-const nothingEntered = (row: Omit<StationRow, 'key'>) =>
-  isBlankStation({ ...row, points: null, isShootOff: false }) &&
-  row.pointsText === '' &&
-  row.pointsMaxText === '';
-
-/**
- * The entered numbers of a row, keyless. A shoot-off row with nothing else in
- * it is blank: on the phone, backing out of a started shoot-off saves nothing.
- */
-const entered = ({ key: _key, ...station }: StationRow) =>
-  station.isShootOff && nothingEntered(station) ? { ...station, isShootOff: false } : station;
-
-const blankRow = (row: StationRow) => nothingEntered(entered(row));
 
 /**
  * Whether `next` builds the same session as `prev`: only blank stations

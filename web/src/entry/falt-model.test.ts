@@ -1,4 +1,4 @@
-// docs/specs/web-falt-entry-spec.md UF1–UF6.
+// docs/specs/web-falt-entry-spec.md UF1–UF9.
 import type { ShooterProfile } from '@shotledger/shared/src/disciplines';
 import { describe, expect, it } from 'vitest';
 
@@ -53,7 +53,7 @@ describe('the fält page model', () => {
     expect(withType(fält, 'competition').programId).toBeNull();
   });
 
-  it('UF2 changing Hits or Figures clamps Figures Hit as the phone does', () => {
+  it('UF2 changing Hits or Figures clamps Figures Hit (clampFiguresHit)', () => {
     let form = falt({ hits: 5, figuresHit: 4 });
     form = withHits(form, 0, 2);
     expect(form.stations[0]).toMatchObject({ hits: 2, figuresHit: 2 });
@@ -214,7 +214,7 @@ describe('the fält page model', () => {
     expect(initialFalt().stations[0]!.key).not.toBe(form.stations[0]!.key);
   });
 
-  it('UF7 Start Shoot-off: every station after it is a shoot-off, as on the phone', () => {
+  it('UF7 Start Shoot-off: every station after a saved shoot-off is one, as on the phone', () => {
     const form = falt({ hits: 6, figuresHit: 3, figureCount: 3 });
     expect(nextStationIsShootOff(form)).toBe(false);
     expect(canStartShootOff(form)).toBe(true);
@@ -226,11 +226,51 @@ describe('the fält page model', () => {
     const lone = withStation(form, 0, { isShootOff: true });
     expect(nextStationIsShootOff(lone)).toBe(true);
 
-    const shootOff = startShootOff(form);
+    const shootOff = withHits(startShootOff(form), 1, 4);
     expect(shootOff.stations.map((s) => s.isShootOff)).toEqual([false, true]);
     expect(nextStationIsShootOff(shootOff)).toBe(true);
     expect(canStartShootOff(shootOff)).toBe(false);
     expect(addStation(shootOff).stations.map((s) => s.isShootOff)).toEqual([false, true, true]);
+  });
+
+  it('UF9 only a station that will be saved counts: blank rows are the phone backed out of', () => {
+    // A fresh form has no station yet, as the phone has none before its first Save.
+    expect(canStartShootOff(initialFalt())).toBe(false);
+    expect(canStartShootOff(addStation(falt({ hits: 6, figuresHit: 3 })))).toBe(true);
+
+    // A started shoot-off left blank is not saved, so the next station is ordinary.
+    const left = startShootOff(falt({ hits: 6, figuresHit: 3, figureCount: 3 }));
+    expect(canStartShootOff(left)).toBe(false);
+    expect(nextStationIsShootOff(left)).toBe(false);
+    // The last row decides whether the button shows, not the second.
+    expect(canStartShootOff(addStation(left))).toBe(true);
+    const after = withHits(addStation(left), 2, 5);
+    expect(after.stations.map((s) => s.isShootOff)).toEqual([false, true, false]);
+    const session = withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-falt');
+    expect(toFaltDraft(session, after, 'x').stations.map((s) => s.isShootOff)).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    expect(faltPreview(after).rows).toEqual(['saved', 'blank', 'saved']);
+
+    // A trailing blank row becomes the shoot-off instead of a second blank row.
+    const blankTail = addStation(falt({ hits: 6, figuresHit: 3, figureCount: 3 }));
+    const started = startShootOff(blankTail);
+    expect(started.stations).toHaveLength(2);
+    expect(started.stations[1]).toMatchObject({
+      key: blankTail.stations[1]!.key,
+      isShootOff: true,
+    });
+    const threeTail = addStation(withHits(blankTail, 1, 2));
+    expect(startShootOff(threeTail).stations.map((s) => s.isShootOff)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(startShootOff({ ...blankTail, stations: [] }).stations).toMatchObject([
+      { isShootOff: true },
+    ]);
   });
 
   it('UF8 a shoot-off station is saved with its numbers, and dropped when left empty', () => {

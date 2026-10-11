@@ -71,9 +71,11 @@ figurerna tillåter. Summan ovanför stationerna räknar de stationer som sparas
 och utelämnar strukna stationer och särskjutning, som i telefonen. **Lägg till
 station** lägger till en rad.
 
-**Starta särskjutning** lägger till en särskjutningsstation, märkt
-**Särskjutning**, och varje station du lägger till efter den är också en
-särskjutningsstation. En särskjutningsstation där inget är ifyllt sparas inte.
+När en station har något ifyllt gör **Starta särskjutning** nästa station
+till en särskjutningsstation, märkt **Särskjutning**. Varje station du lägger
+till efter en ifylld särskjutningsstation är också en. En
+särskjutningsstation där inget är ifyllt sparas inte, och stationen efter den
+är en vanlig station.
 
 En station där inget är ifyllt sparas inte, och stationerna efter den flyttas
 upp ett nummer. En station där alla skott missade sparas när du har fyllt i
