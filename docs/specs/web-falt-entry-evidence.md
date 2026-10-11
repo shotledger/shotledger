@@ -6,16 +6,17 @@
   built in one run; its key choices C1–C7 are listed in the PR for the
   maintainer. Confidence is correspondingly lower: the spec is the artifact
   to review after the fact.
-- **Source state:** code at `403bf7d1` on `feat/web-falt-entry`, rebased onto
-  `main` at `1487e954` (with #669, #672 and #674 merged). The commits after it
-  change only documentation. Every number below is from runs on that rebased
-  state.
+- **Source state:** code at `10cc66ec` on `feat/web-falt-entry`, on `main` at
+  `8be414cc` (with #669, #672, #674, #717 and #719 merged). The commits after
+  it change only this report. Every number below is from a fresh run on that
+  state. (An earlier version of this report named `403bf7d1`, a pre-rebase
+  commit, and its numbers; verification round 1 caught it, F6.)
 - **Toolchain:** Node v26.10.0, vitest 5.0.3, Stryker 10.0.0, versions pinned
   by `pnpm-lock.yaml`.
 - **Entry point:** `pnpm check` (types, lint, format, i18n, licenses, vitest
   with the 100% coverage gate, jest), plus the commands in the gauntlet table.
-- **Independent verification: not performed.** A declared downgrade: no
-  second model or reviewer saw any state of this change.
+- **Independent verification:** round 1 `failed` at `284c26a1`; see
+  [Independent verification](#independent-verification).
 
 ## Spec → test mapping
 
@@ -49,6 +50,9 @@
 | UF4 held request kept only for Add Station       | › UF4                                                             | pass   |
 | UF5 running result over saved stations           | › UF5                                                             | pass   |
 | UF6 fresh form                                   | › UF6                                                             | pass   |
+| UF7 shoot-off continues after a saved shoot-off  | › UF7                                                             | pass   |
+| UF8 shoot-off saved, or dropped when empty       | › UF8                                                             | pass   |
+| UF9 only a station that will be saved counts     | › UF9                                                             | pass   |
 | Must NOT N1 no browser storage                   | #669's `web/src/entry/save.test.ts` › N1 greps every entry module | pass   |
 | Must NOT N2 no endpoint/protocol change          | FE11, WF1; no backend source changed                              | pass   |
 | Must NOT N3 no NOT NULL as null                  | AF1, AF2                                                          | pass   |
@@ -66,14 +70,14 @@ behaviour rests on S1–S5 pinning the rules it used to hold inline and on
 
 | Layer                  | Command                                                                                                                                          | Result                                                                                                                        |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3206 passed, 0 failed                                                                                              |
-| Tests (jest, app)      | `pnpm check`                                                                                                                                     | 62 suites, 708 passed                                                                                                         |
+| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3209 passed, 0 failed                                                                                              |
+| Tests (jest, app)      | `pnpm check`                                                                                                                                     | 63 suites, 712 passed                                                                                                         |
 | Types                  | `pnpm check` (`typecheck`, `typecheck:app`, `typecheck:web`)                                                                                     | 0 errors                                                                                                                      |
 | Lint + format          | `pnpm check` (`lint`, `format`)                                                                                                                  | 0 problems                                                                                                                    |
 | Coverage               | `pnpm check` (`vitest run --coverage`, threshold 100 on the `mutate` list)                                                                       | 100% statements, branches, functions, lines; the new `falt-station.ts`, `falt-entry.ts`, `falt-model.ts` each 100/100/100/100 |
-| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 4` | 365 killed / 368 (99.18%); 3 survivors, all equivalent (below)                                                                |
+| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 2` | 404 killed / 408 (99.03%); 4 survivors, all equivalent (below)                                                                |
 | Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                               | 21 files, 202 passed (WF1, WF2 among them)                                                                                    |
-| i18n                   | `pnpm i18n:check`                                                                                                                                | 1280 keys each, 0 issues                                                                                                      |
+| i18n                   | `pnpm i18n:check`                                                                                                                                | 1281 keys each, 0 issues                                                                                                      |
 | Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                         | 26 pages current; no dangling anchors; built                                                                                  |
 | Real execution         | the page against `wrangler dev` (below)                                                                                                          | saved and pulled back as specified                                                                                            |
 | Supply chain           | —                                                                                                                                                | no dependency added or removed; the license list is unchanged                                                                 |
@@ -89,6 +93,10 @@ behaviour rests on S1–S5 pinning the rules it used to hold inline and on
 - `falt-model.ts` `faltPreview`: `position: index + 1` → `index - 1`. The
   position only names the station in `stationProblem`'s message, and
   `faltPreview` reads only whether there is one.
+- `falt-model.ts` `canStartShootOff`: `stations.at(-1)?.isShootOff` →
+  `stations.at(-1).isShootOff`. The optional chain matters only for an empty
+  list, and then `lastKept(falt) !== undefined` is already false and
+  short-circuits the `&&` before it is reached.
 
 ## Real execution
 
@@ -106,6 +114,16 @@ row and saved nothing. No console errors (CSP included). Screenshots are
 local only (`~/tmp/web-falt-entry-shots/`). The first run found the series
 rows still showing under the stations (spec R2); fixed and re-checked.
 
+Re-run at `10cc66ec` for Start Shoot-off (R5, R6), same account: a fresh fält
+form offered only Add Station. With station 1 filled (6 hits, 3 figures),
+Start Shoot-off appeared; it added station 2 with the Shoot-off badge and
+hid itself. Add Station then gave an ordinary station 3 (station 2 left
+blank, marked "Not saved: nothing entered."). Station 3 got 5 hits on 2
+figures; Save said "Saved." A pull returned two `falt_stations` for the
+session, positions 1 and 2, both `is_shoot_off` 0. An earlier run at
+`f064d096` saved a filled shoot-off as position 2 with `is_shoot_off` 1. No
+console errors.
+
 ## Layers not run as specified
 
 - **N-A:** property-based tests: the change parses no free text beyond
@@ -121,7 +139,34 @@ rows still showing under the stations (spec R2); fixed and re-checked.
 
 ## Dismissed review findings
 
-None — no review has happened yet.
+None.
+
+## Independent verification
+
+- Verifier: Claude Code / Claude (Opus family); fresh context; given repo @
+  `284c26a1` + task contract (#688 and the #715/#717 ruling) + SPEC + entry
+  point. Not given the builder's conversation. Correlation broken: task
+  context. Not broken: model.
+- Rounds: 1 (cap 2). Round 1 verdict: `failed`.
+- Attacked: the run (all numbers reproduced), spec vs contract (the phone's
+  station screen and shoot-off rule), test-gaming (an invented "blank rows
+  decide the shoot-off" mutant), checker coverage (N1 grep, coverage include),
+  mapping both ways.
+- Findings, with the builder's proposed grade (the maintainer grades):
+  - F1, F2 behavioural: blank rows counted as stations, so Start Shoot-off
+    showed on a fresh form and an abandoned shoot-off made every later
+    station one. Fixed in `10cc66ec` (R6, UF9).
+  - F3 spec gap, for the maintainer: the phone's Save on an untouched new
+    shoot-off station saves a 0-hit shoot-off; the web drops the row. Open in
+    the spec's revisions.
+  - F4 mapping: UF5 claimed "in the chosen mode"; the title now drops it.
+  - F5, F7 description: test titles and the test header, and C2 listing a
+    Shoot-off row control. Fixed.
+  - F6 description: this report named a pre-rebase state. Fixed; the numbers
+    above are a fresh run.
+- Canary: not run.
+- Fixed after the last verified state, therefore unverified: F1, F2 (R6),
+  F4, F5, F6, F7.
 
 ## Structural blind spot
 
@@ -131,6 +176,7 @@ it calls and on the one browser run above.
 
 ## Honest notes
 
-- Spec revisions R1–R4, all from this run.
+- Spec revisions R1–R4 from the build, R5 from the maintainer's phone ruling,
+  R6 from verification round 1.
 - The first browser check failed on layout (R2), the only defect found
   outside the test suite.
