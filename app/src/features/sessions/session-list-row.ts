@@ -20,6 +20,7 @@ export function buildSessionListRow(
     disciplineId: string;
     firearmId?: string | null;
     extraRounds?: number | null;
+    innerTenCount?: number | null;
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],

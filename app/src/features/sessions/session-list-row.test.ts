@@ -75,6 +75,14 @@ describe('buildSessionListRow', () => {
     expect(buildSessionListRow(session, [], [], falt).falt?.mode).toBe('falt');
   });
 
+  it("#733: uses the session's stored inner-ten count when it has one", () => {
+    const row = buildSessionListRow(
+      { ...session, disciplineId: 'spsf-precision', innerTenCount: 4 },
+      [],
+    );
+    expect(row.innerTenCount).toBe(4);
+  });
+
   it('L1: a ring session carries none', () => {
     const row = buildSessionListRow({ ...session, disciplineId: 'spsf-precision' }, []);
     expect(row.falt).toBeNull();

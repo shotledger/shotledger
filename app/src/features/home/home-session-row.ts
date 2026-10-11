@@ -3,13 +3,13 @@
 // in the native expo-sqlite client (see use-home-data.test.ts).
 import {
   seriesAverageTenths,
-  sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
   type StatsSeries,
 } from '@shotledger/shared';
 
 import type { FaltResultSummary } from '../session/format-falt-result';
+import { sessionInnerTens } from '../session/session-inner-tens';
 
 /** Conventional "average" glyph (U+2300 DIAMETER SIGN) for the row subtitle. */
 export const AVERAGE_SYMBOL = '⌀';
@@ -37,7 +37,7 @@ export interface HomeSessionRow {
   falt: FaltResultSummary | null;
   /** Mean of the session's scored series, in display points. `null` when none. */
   seriesAverage: number | null;
-  /** Inner tens (Swedish: innertior) in the session's scored series. */
+  /** Inner tens (Swedish: innertior): the same figure session detail shows. */
   innerTenCount: number;
   /** Tag names, already sorted; empty when the session has none. */
   tags: readonly string[];
@@ -77,6 +77,7 @@ export function buildHomeSessionRow(
     type: 'training' | 'competition';
     startedAt: string;
     extraRounds?: number | null;
+    innerTenCount?: number | null;
   },
   sessionSeries: readonly StatsSeries[],
   tags: readonly string[] = [],
@@ -91,7 +92,7 @@ export function buildHomeSessionRow(
     total: tenthsToScore(sessionResults(sessionSeries).totalTenths),
     falt,
     seriesAverage: average === null ? null : tenthsToScore(average),
-    innerTenCount: sessionInnerTenCount(sessionSeries),
+    innerTenCount: sessionInnerTens(session.innerTenCount, sessionSeries),
     tags,
     shape: deriveSessionShapeFromContent(sessionSeries, session.extraRounds ?? null),
   };
