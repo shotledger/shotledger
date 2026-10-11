@@ -2,10 +2,9 @@
 
 Spec: [`web-rounds-final-spec.md`](web-rounds-final-spec.md).
 
-- **Spec approval: not obtained (autonomous run).** The spec was written and
-  built in one run; its key choices C1–C5 and the questions in its §8 are
-  listed in the PR for the maintainer. Confidence is lower accordingly: the
-  correlation-breaking review of the spec has not happened.
+- **Spec approval: obtained after the build** (maintainer, 2026-10-11): C1,
+  C2, C3 and C5 as written, C4 as revised in R4. The spec was written and
+  built in one run, so the approval came after the code, not before it.
 - **Independent verification: round 1 `passed` at `fffb8406`** (no code
   defect; findings F1–F6 in the spec, manual and report). The maintainer's
   rulings on F1, F3 and F4 then changed code (spec R4), so **this source state
@@ -110,7 +109,7 @@ repo, and are not attached.
 
 ## Downgrades and deviations
 
-- **Spec approval:** not obtained (autonomous run), see the header.
+- **Spec approval:** obtained after the build, see the header.
 - **Independent verification:** round 1 passed at `fffb8406`; the R4 changes
   after it are not independently verified (declared downgrade). Its F2 (C5's
   wording) and F5 (the issue's "decimal") are description findings left to
