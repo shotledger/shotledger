@@ -162,3 +162,43 @@ describe('withRoundsAdded', () => {
     expect(() => withRoundsAdded(pulled, 1.5, NOW)).toThrow(RangeError);
   });
 });
+
+describe('rounds-only and final rows (docs/specs/web-rounds-final-spec.md)', () => {
+  const fields = {
+    name: 'n',
+    type: 'training' as const,
+    disciplineId: 'spsf-precision',
+    programId: null,
+    competitionLevel: null,
+    isChampionship: false,
+    competitionName: null,
+    weaponGroup: null,
+    shooterClass: null,
+    eventId: null,
+    firearmId: null,
+    ammoLotId: null,
+    startedAt: NOW,
+    location: null,
+    decimalScoring: false,
+    seriesLength: null,
+  };
+
+  it("K1 a session row takes kind and extra_rounds; absent, they default to 'series' and null", () => {
+    expect(newSessionRow('s', NOW, { ...fields, kind: 'rounds', extraRounds: 60 })).toMatchObject({
+      kind: 'rounds',
+      extra_rounds: 60,
+    });
+    expect(newSessionRow('s', NOW, { ...fields, extraRounds: 0 })).toMatchObject({
+      kind: 'series',
+      extra_rounds: 0,
+    });
+    expect(newSessionRow('s', NOW, fields)).toMatchObject({ kind: 'series', extra_rounds: null });
+  });
+
+  it('K2 a series row takes is_final; absent, it is 0', () => {
+    const base = { sessionId: 's', position: 3, isSighter: false };
+    expect(newSeriesRow('r', NOW, { ...base, isFinal: true })).toMatchObject({ is_final: 1 });
+    expect(newSeriesRow('r', NOW, { ...base, isFinal: false })).toMatchObject({ is_final: 0 });
+    expect(newSeriesRow('r', NOW, base)).toMatchObject({ is_final: 0 });
+  });
+});

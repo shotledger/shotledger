@@ -26,16 +26,23 @@ import type { SessionEntryDraft } from '@shotledger/shared/src/sync-client/sessi
 import type { CompetitionLevel } from '../../../app/src/features/session/labels';
 
 export type SessionType = 'training' | 'competition';
+/** Scored series, or rounds fired only (docs/specs/web-rounds-final-spec.md). */
+export type SessionKind = 'series' | 'rounds';
 
 export interface Row {
   /** Stable React key; not stored. */
   key: number;
   text: string;
   isSighter: boolean;
+  /** A row of the final; absent is the main round. */
+  isFinal?: boolean;
 }
 
 export interface EntryForm {
   type: SessionType;
+  kind: SessionKind;
+  /** Rounds Only: the count as typed. */
+  roundsFired: string;
   regulationId: string;
   disciplineId: string;
   programId: string | null;
@@ -103,6 +110,8 @@ export function initialForm(now: Date, profile: ShooterProfile): EntryForm {
   const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const form: EntryForm = {
     type: 'training',
+    kind: 'series',
+    roundsFired: '',
     regulationId,
     disciplineId,
     // Training preselects no program (defaultProgramFor).
@@ -145,6 +154,9 @@ export const isFixed = (form: Pick<EntryForm, 'programId'>) => skeletonOf(form).
  * free one drops trailing blank rows and every sighter mark.
  */
 function layoutRows(form: EntryForm): EntryForm {
+  // A program without a final turns final rows into ordinary ones.
+  const ordinary = (row: Row): Row =>
+    row.isFinal && programOf(form)?.supportsFinal !== true ? { ...row, isFinal: false } : row;
   const skeleton = skeletonOf(form);
   if (skeleton.length > 0) {
     const laid = skeleton.map((entry, i) => ({
@@ -155,10 +167,10 @@ function layoutRows(form: EntryForm): EntryForm {
     const past = form.rows
       .slice(skeleton.length)
       .filter((row) => row.text.trim() !== '')
-      .map((row) => ({ ...row, isSighter: false }));
+      .map((row) => ({ ...ordinary(row), isSighter: false }));
     return { ...form, rows: [...laid, ...past] };
   }
-  const rows = form.rows.map((row) => ({ ...row, isSighter: false }));
+  const rows = form.rows.map((row) => ({ ...ordinary(row), isSighter: false }));
   while (rows.length > 1 && rows.at(-1)!.text.trim() === '') rows.pop();
   return { ...form, rows: rows.length > 0 ? rows : [newRow()] };
 }
@@ -212,8 +224,10 @@ export function sendsTheSame(prev: EntryForm, next: EntryForm): boolean {
   );
 }
 
+/** After Start Final, a new row is a final row, as on the phone. */
 export function addRow(form: EntryForm): EntryForm {
-  return { ...form, rows: [...form.rows, newRow()] };
+  const row = form.rows.at(-1)?.isFinal ? { ...newRow(), isFinal: true } : newRow();
+  return { ...form, rows: [...form.rows, row] };
 }
 
 /**
@@ -232,7 +246,10 @@ export function onRowEnter(
 /** One sighter per section in free format (§6.3); a skeleton decides its own. */
 export function canMarkSighter(form: EntryForm, index: number): boolean {
   if (isFixed(form)) return false;
-  return form.rows.every((row, i) => i === index || !row.isSighter);
+  const final = form.rows[index]!.isFinal === true;
+  return form.rows.every(
+    (row, i) => i === index || !row.isSighter || (row.isFinal === true) !== final,
+  );
 }
 
 export function decimalShown(form: EntryForm): boolean {
@@ -275,7 +292,11 @@ export function toDraft(form: EntryForm, defaultName: string): SessionEntryDraft
     ammoLotId: form.ammoLotId,
     decimalScoring: decimalShown(form) && form.decimalScoring,
     seriesLength: programOf(form) ? null : chosenSeriesLength(form.seriesLengthText),
-    series: form.rows.map(({ text, isSighter }) => ({ text, isSighter })),
+    series: form.rows.map(({ text, isSighter, isFinal }) => ({
+      text,
+      isSighter,
+      isFinal: isFinal === true,
+    })),
   };
 }
 

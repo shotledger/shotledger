@@ -26,6 +26,9 @@ export interface SessionFields {
   location: string | null;
   decimalScoring: boolean;
   seriesLength: number | null;
+  /** Absent is a series session; a rounds session carries its count in extraRounds. */
+  kind?: 'series' | 'rounds';
+  extraRounds?: number | null;
 }
 
 const common = (id: string, now: string) => ({
@@ -40,7 +43,7 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     ...common(id, now),
     name: fields.name,
     type: fields.type,
-    kind: 'series',
+    kind: fields.kind ?? 'series',
     series_entry_mode: 'ask',
     discipline_id: fields.disciplineId,
     program_id: fields.programId,
@@ -60,7 +63,7 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     decimal_scoring: fields.decimalScoring ? 1 : 0,
     series_length: fields.seriesLength,
     falt_result_mode: null,
-    extra_rounds: null,
+    extra_rounds: fields.extraRounds ?? null,
     external_source: null,
     external_ref: null,
     external_synced_at: null,
@@ -74,6 +77,7 @@ export interface SeriesFields {
   sessionId: string;
   position: number;
   isSighter: boolean;
+  isFinal?: boolean;
 }
 
 export function newSeriesRow(id: string, now: string, fields: SeriesFields): Payload {
@@ -82,7 +86,7 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     session_id: fields.sessionId,
     position: fields.position,
     is_sighter: fields.isSighter ? 1 : 0,
-    is_final: 0,
+    is_final: fields.isFinal ? 1 : 0,
     photo_uri: null,
     photo_geometry: null,
     is_total_override: 0,

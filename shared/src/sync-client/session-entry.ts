@@ -29,6 +29,8 @@ export interface SeriesDraft {
   text: string;
   /** Read in free format only; a fixed format's skeleton decides. */
   isSighter: boolean;
+  /** A final series (docs/specs/web-rounds-final-spec.md C3); absent is the main round. */
+  isFinal?: boolean;
 }
 
 export interface SessionEntryDraft {
@@ -75,9 +77,11 @@ export type EntryError =
   | { kind: 'series'; row: number; error: SeriesTextError }
   | { kind: 'tooManyShots'; row: number; max: number }
   | { kind: 'secondSighter'; row: number }
+  | { kind: 'finalWithoutMain' }
   | { kind: 'unknownFirearm' }
   | { kind: 'unknownAmmoLot' }
   | { kind: 'invalidStartedAt' }
+  | { kind: 'invalidRounds' }
   | { kind: 'tooManyChanges'; max: number };
 
 export type EntryResult =
@@ -85,15 +89,16 @@ export type EntryResult =
 
 interface KeptSeries {
   isSighter: boolean;
+  isFinal: boolean;
   shots: EntryShot[];
 }
 
-const blankToNull = (value: string): string | null => {
+export const blankToNull = (value: string): string | null => {
   const trimmed = value.trim();
   return trimmed === '' ? null : trimmed;
 };
 
-function checkLength(
+export function checkLength(
   errors: EntryError[],
   field: 'name' | 'competitionName' | 'location',
   value: string | null,
@@ -107,12 +112,15 @@ function checkLength(
  * four-digit year: the web's `startedAtIso` and the phone's session form both
  * write that, and `started_at` is compared as a string. Spec R28.
  */
-function isUtcIsoTimestamp(value: string): boolean {
+export function isUtcIsoTimestamp(value: string): boolean {
   const time = Date.parse(value);
   return value.length === 24 && !Number.isNaN(time) && new Date(time).toISOString() === value;
 }
 
-function weaponGroupFor(draft: SessionEntryDraft, context: EntryContext): string | null {
+export function weaponGroupFor(
+  draft: Pick<SessionEntryDraft, 'type' | 'firearmId' | 'weaponGroup'>,
+  context: EntryContext,
+): string | null {
   if (draft.type === 'competition') return draft.weaponGroup;
   // No firearm matches no rows, and derives nothing.
   const links = [...context.firearmGroups]
@@ -161,9 +169,14 @@ export function buildSessionEntry(
   const mode = scoringModeFor(discipline, program, draft.decimalScoring);
   const skeleton = program ? buildProgramSkeleton(program) : [];
   const fixed = skeleton.length > 0;
+  // Only where the phone offers Start Final (no program with one is laid out).
+  if (program?.supportsFinal !== true && draft.series.some((row) => row.isFinal)) {
+    throw new RangeError(`a final series needs a program with a final, got ${draft.programId}`);
+  }
 
-  const kept: KeptSeries[] = [];
-  let sighters = 0;
+  const typed: KeptSeries[] = [];
+  // One sighter per section, main and final, as the phone's addSeries allows.
+  const sighterSections = new Set<boolean>();
   const rowCount = Math.max(skeleton.length, draft.series.length);
   for (let index = 0; index < rowCount; index += 1) {
     // Past the typed rows only the skeleton remains, so `entry` is set there.
@@ -178,15 +191,24 @@ export function buildSessionEntry(
     if (parsed.shots.length > seriesLength) {
       errors.push({ kind: 'tooManyShots', row: index + 1, max: seriesLength });
     }
+    const isFinal = row?.isFinal === true;
     if (!fixed && isSighter) {
-      sighters += 1;
-      if (sighters > 1) errors.push({ kind: 'secondSighter', row: index + 1 });
+      if (sighterSections.has(isFinal)) errors.push({ kind: 'secondSighter', row: index + 1 });
+      sighterSections.add(isFinal);
     }
     // A blank ordinary row is dropped; the skeleton and a sighter are kept,
     // as the phone pre-creates or keeps them.
     if (entry || isSighter || parsed.shots.length > 0) {
-      kept.push({ isSighter, shots: parsed.shots });
+      typed.push({ isSighter, isFinal, shots: parsed.shots });
     }
+  }
+
+  // A final with nothing shot is not saved; one without a scored main round
+  // is refused. A kept ordinary row has shots: blank ones were dropped above.
+  const finalShot = typed.some((s) => s.isFinal && s.shots.length > 0);
+  const kept = finalShot ? typed : typed.filter((s) => !s.isFinal);
+  if (finalShot && !kept.some((s) => !s.isFinal && !s.isSighter)) {
+    errors.push({ kind: 'finalWithoutMain' });
   }
 
   let pulledFirearm: Payload | undefined;
@@ -251,7 +273,12 @@ export function buildSessionEntry(
     const seriesId = deps.newId();
     add(
       'series',
-      newSeriesRow(seriesId, now, { sessionId, position: index + 1, isSighter: series.isSighter }),
+      newSeriesRow(seriesId, now, {
+        sessionId,
+        position: index + 1,
+        isSighter: series.isSighter,
+        isFinal: series.isFinal,
+      }),
     );
     series.shots.forEach((shot, shotIndex) => {
       shotRows.push(newShotRow(deps.newId(), now, { seriesId, position: shotIndex + 1, ...shot }));

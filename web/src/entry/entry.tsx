@@ -18,10 +18,7 @@ import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
 import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
-import {
-  buildSessionEntry,
-  type EntryError,
-} from '@shotledger/shared/src/sync-client/session-entry';
+import type { EntryError } from '@shotledger/shared/src/sync-client/session-entry';
 import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +35,8 @@ import { currentUserId, loadTables, pushRows } from '../api';
 import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
+import { KindPicker, RoundsFiredField, SectionHeading, StartFinalButton } from './kind-fields';
+import { buildEntry, disciplineOptions } from './kinds';
 import {
   addRow,
   canMarkSighter,
@@ -48,11 +47,9 @@ import {
   isFixed,
   modeOf,
   onRowEnter,
-  ringDisciplines,
   rowSummary,
   sendsTheSame,
   startedAtIso,
-  toDraft,
   withDiscipline,
   withProgram,
   withRegulation,
@@ -109,6 +106,8 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorTooManyShots', { row: rowLabel(error.row), max: error.max });
     case 'secondSighter':
       return t('web.entry.errorSecondSighter', { row: rowLabel(error.row) });
+    case 'finalWithoutMain':
+      return t('web.entry.errorFinalWithoutMain');
     case 'tooLong': {
       const field = {
         name: t('session.name'),
@@ -123,6 +122,8 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorUnknownAmmoLot');
     case 'invalidStartedAt':
       return t('web.entry.errorDateTime');
+    case 'invalidRounds':
+      return t('session.roundsFiredInvalid');
     case 'tooManyChanges':
       return t('web.entry.errorTooManyChanges');
     case 'hitsDiscipline':
@@ -205,6 +206,7 @@ export function Entry({
   const mode = modeOf(form);
   const fixed = isFixed(form);
   const isCompetition = form.type === 'competition';
+  const isSeries = form.kind === 'series';
 
   const firearms = useMemo(
     () =>
@@ -275,7 +277,7 @@ export function Entry({
           };
         },
         build: (context) =>
-          buildSessionEntry(toDraft(form, defaultName), context, {
+          buildEntry(form, defaultName, context, {
             newId: uuidv7,
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
@@ -344,6 +346,7 @@ export function Entry({
                 <option value="competition">{t('sessionType.competition')}</option>
               </select>
             </label>
+            <KindPicker form={form} edit={edit} />
             <label className="field">
               {t('session.regulation')}
               <select
@@ -363,14 +366,14 @@ export function Entry({
                 value={form.disciplineId}
                 onChange={(event) => edit(withDiscipline(form, event.target.value))}
               >
-                {ringDisciplines(form.regulationId).map((d) => (
+                {disciplineOptions(form).map((d) => (
                   <option key={d.id} value={d.id}>
                     {disciplineLabel(t, d.id)}
                   </option>
                 ))}
               </select>
             </label>
-            {programs.length > 0 && (
+            {isSeries && programs.length > 0 && (
               <label className="field">
                 {t('session.matchFormat')}
                 <select
@@ -540,7 +543,7 @@ export function Entry({
                 ))}
               </select>
             </label>
-            {decimalShown(form) && (
+            {isSeries && decimalShown(form) && (
               <label className="field check">
                 <input
                   type="checkbox"
@@ -550,7 +553,7 @@ export function Entry({
                 {t('session.decimalScoring')}
               </label>
             )}
-            {form.programId === null && (
+            {isSeries && form.programId === null && (
               <label className="field">
                 {t('session.seriesLength')}
                 <input
@@ -561,15 +564,17 @@ export function Entry({
                 />
               </label>
             )}
+            {!isSeries && <RoundsFiredField form={form} edit={edit} />}
           </section>
 
-          <section className="card series-rows">
+          <section className="card series-rows" hidden={!isSeries}>
             {form.rows.map((row, index) => {
               const summary = rowSummary(row.text, mode);
               const label = rowLabel(index + 1);
               const rowError = rowErrors.get(index + 1);
               return (
                 <div key={row.key} className="series-row">
+                  <SectionHeading form={form} index={index} />
                   <label htmlFor={`row-${row.key}`}>{label}</label>
                   <input
                     id={`row-${row.key}`}
@@ -629,6 +634,7 @@ export function Entry({
               <button type="button" className="secondary" onClick={() => edit(addRow(form))}>
                 {t('session.addSeries')}
               </button>
+              <StartFinalButton form={form} edit={edit} />
             </div>
           </section>
 

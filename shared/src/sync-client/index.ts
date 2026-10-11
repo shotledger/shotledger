@@ -9,6 +9,7 @@ export * from './photo-queue';
 export * from './photo-uri';
 export * from './rows';
 export * from './account-settings';
+export * from './rounds-entry';
 export * from './session-entry';
 export * from './direct-push';
 export * from './bulk-edit';

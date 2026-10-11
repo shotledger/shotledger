@@ -767,6 +767,16 @@ fieldset.field legend {
   gap: 8px;
 }
 
+/* Rounds Only has no series rows (docs/specs/web-rounds-final-spec.md). */
+.series-rows[hidden] {
+  display: none;
+}
+
+.series-row > h3 {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+}
+
 .series-row {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) 110px 100px;
