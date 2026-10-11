@@ -1070,7 +1070,12 @@ export default function FirearmDetailScreen() {
           </ThemedText>
         ) : (
           detail.maintenanceEvents.map((event) => (
-            <ListRow key={event.id} title={event.kind} subtitle={maintenanceEventLines(event)} />
+            <ListRow
+              key={event.id}
+              // `kind` is free text the user typed, except the one the app writes itself.
+              title={event.kind === 'adjustment' ? t('firearms.adjustmentEvent') : event.kind}
+              subtitle={maintenanceEventLines(event)}
+            />
           ))
         )}
 

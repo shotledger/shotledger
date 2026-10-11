@@ -337,6 +337,7 @@
     "maintenanceStatusRed": "Maintenance Due",
     "maintenanceStatusUnknown": "No Interval Set",
     "adjustRoundCount": "Adjust Round Count",
+    "adjustmentEvent": "Round Count Adjustment",
     "adjustDelta": "Adjustment (+/- rounds)",
     "adjustReason": "Reason",
     "adjustReasonPlaceholder": "Why is this being adjusted?",

@@ -337,6 +337,7 @@
     "maintenanceStatusRed": "Underhåll behövs",
     "maintenanceStatusUnknown": "Inget intervall angivet",
     "adjustRoundCount": "Justera antal skott",
+    "adjustmentEvent": "Justering av skottantal",
     "adjustDelta": "Justering (+/- skott)",
     "adjustReason": "Anledning",
     "adjustReasonPlaceholder": "Varför justeras detta?",
