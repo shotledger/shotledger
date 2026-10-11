@@ -6,7 +6,7 @@
   built in one run; its key choices C1–C7 are listed in the PR for the
   maintainer. Confidence is correspondingly lower: the spec is the artifact
   to review after the fact.
-- **Source state:** code at `10cc66ec` on `feat/web-falt-entry`, on `main` at
+- **Source state:** code at `37c5ce4b` on `feat/web-falt-entry`, on `main` at
   `8be414cc` (with #669, #672, #674, #717 and #719 merged). The commits after
   it change only this report. Every number below is from a fresh run on that
   state. (An earlier version of this report named `403bf7d1`, a pre-rebase
@@ -15,8 +15,11 @@
   by `pnpm-lock.yaml`.
 - **Entry point:** `pnpm check` (types, lint, format, i18n, licenses, vitest
   with the 100% coverage gate, jest), plus the commands in the gauntlet table.
-- **Independent verification:** round 1 `failed` at `284c26a1`; see
-  [Independent verification](#independent-verification).
+- **Independent verification: not performed against the final source state**
+  `37c5ce4b` (a declared downgrade). Two rounds, the cap, were performed: round
+  1 `failed` at `284c26a1`, round 2 `failed` at `8efed94c`. The fixes since are
+  disclosed in [Independent verification](#independent-verification) as
+  unverified.
 
 ## Spec → test mapping
 
@@ -53,6 +56,7 @@
 | UF7 shoot-off continues after a saved shoot-off  | › UF7                                                             | pass   |
 | UF8 shoot-off saved, or dropped when empty       | › UF8                                                             | pass   |
 | UF9 only a station that will be saved counts     | › UF9                                                             | pass   |
+| UF10 no ordinary station after a saved shoot-off | › UF10                                                            | pass   |
 | Must NOT N1 no browser storage                   | #669's `web/src/entry/save.test.ts` › N1 greps every entry module | pass   |
 | Must NOT N2 no endpoint/protocol change          | FE11, WF1; no backend source changed                              | pass   |
 | Must NOT N3 no NOT NULL as null                  | AF1, AF2                                                          | pass   |
@@ -70,12 +74,12 @@ behaviour rests on S1–S5 pinning the rules it used to hold inline and on
 
 | Layer                  | Command                                                                                                                                          | Result                                                                                                                        |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3209 passed, 0 failed                                                                                              |
+| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3210 passed, 0 failed                                                                                              |
 | Tests (jest, app)      | `pnpm check`                                                                                                                                     | 63 suites, 712 passed                                                                                                         |
 | Types                  | `pnpm check` (`typecheck`, `typecheck:app`, `typecheck:web`)                                                                                     | 0 errors                                                                                                                      |
 | Lint + format          | `pnpm check` (`lint`, `format`)                                                                                                                  | 0 problems                                                                                                                    |
 | Coverage               | `pnpm check` (`vitest run --coverage`, threshold 100 on the `mutate` list)                                                                       | 100% statements, branches, functions, lines; the new `falt-station.ts`, `falt-entry.ts`, `falt-model.ts` each 100/100/100/100 |
-| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 2` | 404 killed / 408 (99.03%); 4 survivors, all equivalent (below)                                                                |
+| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 2` | 408 killed / 412 (99.03%); 4 survivors, all equivalent (below)                                                                |
 | Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                               | 21 files, 202 passed (WF1, WF2 among them)                                                                                    |
 | i18n                   | `pnpm i18n:check`                                                                                                                                | 1281 keys each, 0 issues                                                                                                      |
 | Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                         | 26 pages current; no dangling anchors; built                                                                                  |
@@ -122,7 +126,11 @@ blank, marked "Not saved: nothing entered."). Station 3 got 5 hits on 2
 figures; Save said "Saved." A pull returned two `falt_stations` for the
 session, positions 1 and 2, both `is_shoot_off` 0. An earlier run at
 `f064d096` saved a filled shoot-off as position 2 with `is_shoot_off` 1. No
-console errors.
+console errors. Re-run at `37c5ce4b` for R7, filling out of order: station 1
+filled, Start Shoot-off, Add Station, station 3 filled (ordinary while station
+2 was blank), then station 2 filled; station 3's badge turned to Shoot-off and
+the total counted station 1 only. A pull returned positions 1–3 with
+`is_shoot_off` 0, 1, 1.
 
 ## Layers not run as specified
 
@@ -147,7 +155,8 @@ None.
   `284c26a1` + task contract (#688 and the #715/#717 ruling) + SPEC + entry
   point. Not given the builder's conversation. Correlation broken: task
   context. Not broken: model.
-- Rounds: 1 (cap 2). Round 1 verdict: `failed`.
+- Rounds: 2 (cap 2). Round 1 verdict: `failed` at `284c26a1`. Round 2
+  (a new context, at `8efed94c`) verdict: `failed`.
 - Attacked: the run (all numbers reproduced), spec vs contract (the phone's
   station screen and shoot-off rule), test-gaming (an invented "blank rows
   decide the shoot-off" mutant), checker coverage (N1 grep, coverage include),
@@ -164,9 +173,19 @@ None.
     Shoot-off row control. Fixed.
   - F6 description: this report named a pre-rebase state. Fixed; the numbers
     above are a fresh run.
+- Round 2 findings (proposed grades):
+  - F1 behavioural: rows filled out of order saved an ordinary station after
+    a shoot-off (`[0, 1, 0]`). Fixed in `37c5ce4b` (R7, UF10).
+  - F2, F3 behavioural: "blank" read the raw points text while Save parses
+    it, so a max without points or a space in Points disagreed between Save
+    and Start Shoot-off. Fixed in `37c5ce4b` (R7, UF10).
+  - D1 description: this report's mutant count read "404 / 408"; it was 408
+    killed of 412. Fixed.
+  - Mapping: the failure-model row overclaimed UF7 and UF9; UF10 now backs it.
 - Canary: not run.
-- Fixed after the last verified state, therefore unverified: F1, F2 (R6),
-  F4, F5, F6, F7.
+- Round 1's fixes were seen by round 2. Fixed after the last verified state
+  (`8efed94c`), therefore unverified: round 2's F1, F2, F3, D1 and the mapping
+  row. A third round needs the maintainer's approval.
 
 ## Structural blind spot
 
