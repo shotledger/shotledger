@@ -220,6 +220,11 @@ describe('the fält page model', () => {
     expect(canStartShootOff(form)).toBe(true);
     expect(addStation(form).stations[1]!.isShootOff).toBe(false);
     expect(canStartShootOff({ ...form, stations: [] })).toBe(false);
+    expect(nextStationIsShootOff({ ...form, stations: [] })).toBe(false);
+    expect(addStation({ ...form, stations: [] }).stations[0]!.isShootOff).toBe(false);
+    // The last station decides, not the second.
+    const lone = withStation(form, 0, { isShootOff: true });
+    expect(nextStationIsShootOff(lone)).toBe(true);
 
     const shootOff = startShootOff(form);
     expect(shootOff.stations.map((s) => s.isShootOff)).toEqual([false, true]);
