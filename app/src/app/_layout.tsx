@@ -7,11 +7,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { db } from '@/db/client';
 import { MigrationGate } from '@/db/migration-gate';
+import { setMaintenanceDueListener } from '@/db/queries/maintenance-due';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
 import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
 import '@/i18n';
+import { notifyMaintenanceDue } from '@/platform/notifications';
 import { keepSeriesPhoto } from '@/platform/series-photos';
 import { purgeRemovedVaultStorage } from '@/platform/vault-purge';
 import { AppSettingsProvider } from '@/state/app-settings';
@@ -200,6 +202,14 @@ export default function RootLayout() {
   useEffect(() => {
     void purgeRemovedVaultStorage();
   }, []);
+
+  useEffect(
+    () =>
+      setMaintenanceDueListener((firearm) => {
+        void notifyMaintenanceDue(`${firearm.make} ${firearm.model}`);
+      }),
+    [],
+  );
 
   return (
     // Required by react-native-gesture-handler (Swipeable et al. — first

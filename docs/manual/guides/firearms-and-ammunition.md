@@ -53,6 +53,12 @@ A firearm accumulates:
 - **Maintenance** — cleanings and work done, with the round count at the time.
   Each entry shows its date and the note you wrote; a round-count adjustment
   shows its reason.
+  Set a **Maintenance Interval** and the phone notifies you once when
+  **Rounds Since Maintenance** reaches it, whatever brought the rounds in: a
+  saved series, a rounds-only session, an import or **Adjust Round Count**. It
+  stays quiet after that until you log maintenance and the count reaches the
+  interval again. Rounds that arrive by sync, entered on the web or another
+  device, do not notify.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
 

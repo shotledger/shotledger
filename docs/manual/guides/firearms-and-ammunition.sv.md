@@ -53,6 +53,12 @@ Till ett vapen samlas:
 - **Underhåll** — rengöringar och utfört arbete, med skottantalet vid
   tillfället. Varje post visar datum och anteckningen du skrev; en justering
   av skottantalet visar sin anledning.
+  Anger du ett **Underhållsintervall** får du en notis i telefonen en gång när
+  **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en
+  sparad serie, ett pass med bara skottantal, en import eller **Justera antal
+  skott**. Sedan är det tyst tills du loggar underhåll och antalet når
+  intervallet igen. Skott som kommer in via synk, inmatade på webben eller på en
+  annan enhet, ger ingen notis.
 - **Siktesinställningar**, med namn, så att "inomhus 25 m" och "fält ute" blir
   två lägen du kan ta fram i stället för något du ska minnas.
 
