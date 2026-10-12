@@ -6,7 +6,7 @@ import { SKILL_CLASSES } from '@shotledger/shared/src/disciplines/eligibility';
 import { buildSettingsChanges } from '@shotledger/shared/src/sync-client/settings-edit';
 import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
-import { useId, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { currentUserId, pushRows } from '../api';
@@ -115,11 +115,23 @@ export function Settings({
   const form = draft.opened === opened ? draft.form : opened;
   const [state, setState] = useState<SaveState>(IDLE);
   const [confirming, setConfirming] = useState(false);
+  // The confirmation takes the focus when it opens, so a keyboard user lands on it.
+  const confirmButton = useRef<HTMLButtonElement>(null);
+  const birthYearSelect = useRef<HTMLSelectElement>(null);
+  useEffect(() => {
+    if (confirming) confirmButton.current?.focus();
+  }, [confirming]);
 
   const edit = (next: Partial<AccountSettings>) => {
     setDraft({ opened, form: { ...form, ...next } });
     setState(afterEdit);
     setConfirming(false);
+  };
+
+  // Back to the saved year, and the focus back to the field it came from.
+  const cancelBirthYear = () => {
+    edit({ birthYear: opened.birthYear });
+    birthYearSelect.current?.focus();
   };
 
   const currentYear = new Date().getFullYear();
@@ -178,6 +190,7 @@ export function Settings({
             <label className="field">
               {t('settings.birthYear')}
               <select
+                ref={birthYearSelect}
                 value={form.birthYear ?? ''}
                 onChange={(event) => edit({ birthYear: Number(event.target.value) })}
               >
@@ -267,6 +280,12 @@ export function Settings({
             className="card"
             role="alertdialog"
             aria-label={t('settings.birthYearChangeTitle')}
+            onKeyDown={(event) => {
+              // Escape cancels, as the Cancel button does.
+              if (event.key !== 'Escape') return;
+              event.preventDefault();
+              cancelBirthYear();
+            }}
           >
             <p>
               {t('settings.birthYearChangeMessage', {
@@ -275,14 +294,10 @@ export function Settings({
               })}
             </p>
             <div className="actions">
-              <button type="button" onClick={runSave}>
+              <button type="button" ref={confirmButton} onClick={runSave}>
                 {t('settings.birthYearChangeConfirm')}
               </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => edit({ birthYear: opened.birthYear })}
-              >
+              <button type="button" className="secondary" onClick={cancelBirthYear}>
                 {t('common.cancel')}
               </button>
             </div>

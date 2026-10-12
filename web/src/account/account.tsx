@@ -7,7 +7,7 @@ import { deleteAccount, downloadPhoto, listDevices, photoUsage, revokeDevice } f
 import type { PulledTables } from '../pull';
 import { buildArchive, type ArchiveProgress } from './archive';
 import { deviceLabel } from './device-label';
-import { showDate } from '../dates';
+import { showDate, showDateTime } from '../dates';
 
 type Load<T> = { kind: 'loading' } | { kind: 'failed' } | { kind: 'ready'; value: T };
 
@@ -34,6 +34,8 @@ function useLoad<T>(load: () => Promise<T>): [Load<T>, () => void] {
 function useFormat() {
   const { i18n } = useTranslation();
   const date = (iso: string) => showDate(iso);
+  // To the minute: several sessions from one browser differ only in their times (QA #747).
+  const dateTime = (iso: string) => showDateTime(iso);
   // Binary units: the quota is a whole number of GiB.
   const bytes = (n: number) => {
     const gb = n >= 2 ** 30;
@@ -43,12 +45,12 @@ function useFormat() {
       maximumFractionDigits: 1,
     }).format(n / 2 ** (gb ? 30 : 20));
   };
-  return { date, bytes };
+  return { date, dateTime, bytes };
 }
 
 function Devices() {
   const { t } = useTranslation();
-  const { date } = useFormat();
+  const { dateTime } = useFormat();
   const [devices, reload] = useLoad(listDevices);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -89,8 +91,8 @@ function Devices() {
                     )}
                     <div className="muted">
                       {t('web.account.deviceDates', {
-                        signedIn: date(device.createdAt),
-                        lastActive: date(device.updatedAt),
+                        signedIn: dateTime(device.createdAt),
+                        lastActive: dateTime(device.updatedAt),
                       })}
                     </div>
                   </div>
