@@ -16,10 +16,10 @@ varje post förblir liten nog att synka. Om synken någon gång säger att en po
 är för stor — en importerad anteckning kan vara längre än appen låter dig
 skriva — kortar du postens anteckningar så fortsätter synken.
 
-Under det ligger passets etiketter. Etiketter som appen skrivit åt sig själv ser
+Under det ligger passets taggar. Taggar som appen skrivit åt sig själv ser
 ut som `shotlog:review` eller `shotledger:championship`, med ett prefix och ett
 kolon; de visas här men utelämnas på start- och loggbokslistorna, där dina egna
-etiketter annars trängs undan. Du kan fortfarande filtrera loggboken på dem.
+taggar annars trängs undan. Du kan fortfarande filtrera loggboken på dem.
 
 ## Att byta matchupplägg
 
@@ -230,7 +230,7 @@ Filtrera på valfri kombination av:
   fråga
 - **träning eller tävling**
 - **gren**
-- **etikett**
+- **tagg**
 - **vapen**, inklusive _Inget vapen angivet_ för pass där inget angetts
 
 Filtren smalnar av tillsammans, de vidgar inte: sätter du både _Tävling_ och

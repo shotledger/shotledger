@@ -1,5 +1,10 @@
 import type { TFunction } from 'i18next';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { getProgram, type Program } from '@shotledger/shared';
+
+import en from '@/i18n/en.json';
+import sv from '@/i18n/sv.json';
 
 import { matchFormatHint, matchFormatLabel } from './labels';
 
@@ -57,5 +62,31 @@ describe('matchFormatHint', () => {
 
   it('is null for a program that lays out nothing and has no final', () => {
     expect(matchFormatHint(t, program('spsf-magnumprecision'))).toBeNull();
+  });
+});
+
+// disciplineLabel falls back to the definition's English name, so a missing
+// key shows English in Swedish rather than failing anywhere visible.
+describe('discipline labels', () => {
+  const definitionsDir = path.resolve(__dirname, '../../../../shared/src/disciplines/definitions');
+  const ids = fs
+    .readdirSync(definitionsDir)
+    .filter((file) => file.endsWith('.json'))
+    .map(
+      (file) =>
+        (JSON.parse(fs.readFileSync(path.join(definitionsDir, file), 'utf-8')) as { id: string })
+          .id,
+    );
+
+  it('finds the definitions', () => {
+    expect(ids.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['en', en.discipline],
+    ['sv', sv.discipline],
+  ] as const)('every discipline definition has a label in %s.json', (_lang, labels) => {
+    const missing = ids.filter((id) => typeof (labels as Record<string, unknown>)[id] !== 'string');
+    expect(missing).toEqual([]);
   });
 });

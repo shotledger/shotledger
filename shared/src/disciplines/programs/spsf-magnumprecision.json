@@ -4,7 +4,7 @@
   "federation": "SPSF",
   "name": {
     "sv": "Magnumprecision",
-    "en": "Magnumprecision"
+    "en": "Magnum Precision"
   },
   "shotsPerSeries": 5,
   "scoring": "integer",
