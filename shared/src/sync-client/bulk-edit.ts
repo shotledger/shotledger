@@ -6,8 +6,10 @@ import { disciplineSeriesLength } from '../disciplines';
 import { sessionVolume, type VolumeSeries } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
+import { cleanTagName, sameTagName } from '../tags/canonical';
 import type { Payload } from './rows';
 import type { EntryDeps } from './session-entry';
+import { canonicalTagId, newSessionTagRow, newTagRow } from './tag-rows';
 
 export type BulkAction =
   | { kind: 'addTag'; name: string }
@@ -91,7 +93,10 @@ function addTag(
   now: string,
 ): Planned {
   const liveTags = liveRows(context.tags);
-  const named = new Set(liveTags.filter((t) => t.name === name).map((t) => t.id as string));
+  // Case and spacing ignored, as everywhere a name is added (findTag).
+  const named = new Set(
+    liveTags.filter((t) => sameTagName(t.name as string, name)).map((t) => t.id as string),
+  );
   const tagged = new Set(
     liveRows(context.sessionTags)
       .filter((l) => named.has(l.tag_id as string))
@@ -101,29 +106,17 @@ function addTag(
   // No link to write, no tag to create: a stray tag is not an edit (R13).
   if (untagged.length === 0) return { writes: [], changed: 0 };
   const writes: Write[] = [];
-  // The canonical tag: the live one with the smallest id (canonicalTags).
-  let tagId = [...named].sort()[0];
+  let tagId = canonicalTagId(context.tags.values(), name);
   if (tagId === undefined) {
     tagId = deps.newId();
-    writes.push({
-      tableName: 'tags',
-      rowId: tagId,
-      payload: { id: tagId, created_at: now, updated_at: now, deleted_at: null, name },
-    });
+    writes.push({ tableName: 'tags', rowId: tagId, payload: newTagRow(tagId, now, name) });
   }
   for (const s of untagged) {
     const id = deps.newId();
     writes.push({
       tableName: 'session_tags',
       rowId: id,
-      payload: {
-        id,
-        created_at: now,
-        updated_at: now,
-        deleted_at: null,
-        session_id: s.id,
-        tag_id: tagId,
-      },
+      payload: newSessionTagRow(id, now, s.id as string, tagId),
     });
   }
   return { writes, changed: untagged.length, tagId };
@@ -282,7 +275,7 @@ function plan(
 ): Planned {
   switch (action.kind) {
     case 'addTag':
-      return addTag(action.name.trim(), sessions, context, deps, now);
+      return addTag(cleanTagName(action.name), sessions, context, deps, now);
     case 'removeTag':
       return removeTag(action.name.trim(), sessions, context);
     case 'setFirearm':

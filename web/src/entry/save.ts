@@ -34,12 +34,13 @@ export interface SaveState {
 
 export const IDLE: SaveState = { status: { kind: 'idle' }, held: null };
 
-export interface SaveDeps {
+/** `C`: what loadContext pulls and build reads; the page adds the tags to it. */
+export interface SaveDeps<C extends EntryContext = EntryContext> {
   /** The signed-in user's id; null when the session is no longer valid. */
   currentUserId: () => Promise<string | null>;
   /** Pulls the firearms, their groups and the ammo lots afresh (C1). */
-  loadContext: () => Promise<EntryContext>;
-  build: (context: EntryContext) => EntryResult;
+  loadContext: () => Promise<C>;
+  build: (context: C) => EntryResult;
   push: (changes: readonly ClientChange[]) => Promise<PushOutcome>;
   /** Pulls the account again; false when that failed. */
   refresh: () => Promise<boolean>;
@@ -59,7 +60,10 @@ export function submitRequest(state: SaveState): HeldRequest | null {
 }
 
 /** Save with `held` null builds a fresh request; Retry passes the held one. */
-export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<SaveState> {
+export async function save<C extends EntryContext>(
+  deps: SaveDeps<C>,
+  held: HeldRequest | null,
+): Promise<SaveState> {
   let userId: string | null;
   try {
     userId = await deps.currentUserId();
@@ -75,7 +79,7 @@ export async function save(deps: SaveDeps, held: HeldRequest | null): Promise<Sa
   if (held !== null) {
     changes = held.changes;
   } else {
-    let context: EntryContext;
+    let context: C;
     try {
       context = await deps.loadContext();
     } catch (error: unknown) {

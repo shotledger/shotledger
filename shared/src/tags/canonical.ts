@@ -36,6 +36,35 @@ export function canonicalTags(tags: readonly TagRecord[]): CanonicalTag[] {
     .sort((a, b) => byBinary(a.name, b.name));
 }
 
+/** A typed tag name as it is stored: trimmed, each run of whitespace one space. */
+export function cleanTagName(typed: string): string {
+  return typed.trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Tag names ignore case and spacing when a name is looked up, on the phone
+ * and the web alike (maintainer's ruling, 2026-10-12): `KM`, `km` and ` Km `
+ * are one tag.
+ */
+export function sameTagName(a: string, b: string): boolean {
+  return cleanTagName(a).toLowerCase() === cleanTagName(b).toLowerCase();
+}
+
+/** The name `typed` resolves to among `names`: its own spelling, else the first that is the same tag. */
+export function findTagName(names: readonly string[], typed: string): string | undefined {
+  return names.find((name) => name === typed) ?? names.find((name) => sameTagName(name, typed));
+}
+
+/** The live canonical tag a typed name adds (getOrCreateTag and the web's Add Tag), if any. */
+export function findTag(tags: readonly TagRecord[], typed: string): CanonicalTag | undefined {
+  const live = canonicalTags(tags);
+  const name = findTagName(
+    live.map((tag) => tag.name),
+    typed,
+  );
+  return live.find((tag) => tag.name === name);
+}
+
 /** Tag id -> its name's canonical id, for every live tag. */
 function canonicalIdOf(tags: readonly TagRecord[]): Map<string, CanonicalTag> {
   const canonical = new Map(canonicalTags(tags).map((tag) => [tag.name, tag]));

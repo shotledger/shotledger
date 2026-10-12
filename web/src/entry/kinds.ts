@@ -7,10 +7,12 @@ import {
   requireDiscipline,
   type Discipline,
 } from '@shotledger/shared/src/disciplines';
+import { withEntryTags } from '@shotledger/shared/src/sync-client/entry-tags';
 import {
   buildRoundsEntry,
   type RoundsEntryDraft,
 } from '@shotledger/shared/src/sync-client/rounds-entry';
+import type { Payload } from '@shotledger/shared/src/sync-client/rows';
 import {
   buildSessionEntry,
   type EntryContext,
@@ -94,14 +96,19 @@ export function toRoundsDraft(form: EntryForm, defaultName: string): RoundsEntry
   };
 }
 
-/** What Save builds: a rounds session, or the typed series. */
+/** What Save pulls afresh: the entry's context and the account's tags. */
+export type TaggedContext = EntryContext & { tags: ReadonlyMap<string, Payload> };
+
+/** What Save builds: a rounds session or the typed series, its tags in the same push (C2). */
 export function buildEntry(
   form: EntryForm,
   defaultName: string,
-  context: EntryContext,
+  context: TaggedContext,
   deps: EntryDeps,
 ): EntryResult {
-  return form.kind === 'rounds'
-    ? buildRoundsEntry(toRoundsDraft(form, defaultName), context, deps)
-    : buildSessionEntry(toDraft(form, defaultName), context, deps);
+  const entry =
+    form.kind === 'rounds'
+      ? buildRoundsEntry(toRoundsDraft(form, defaultName), context, deps)
+      : buildSessionEntry(toDraft(form, defaultName), context, deps);
+  return withEntryTags(entry, form.tags, context.tags, deps);
 }

@@ -192,7 +192,12 @@ describe('rounds-only and final series on the Enter Series form', () => {
       newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
       now: () => '2026-10-10T17:00:00.000Z',
     };
-    const context = { firearms: new Map(), firearmGroups: [], ammoLots: new Map() };
+    const context = {
+      firearms: new Map(),
+      firearmGroups: [],
+      ammoLots: new Map(),
+      tags: new Map(),
+    };
     const rounds = buildEntry(
       { ...withKind(fresh(), 'rounds'), roundsFired: '60' },
       'd',
@@ -207,6 +212,48 @@ describe('rounds-only and final series on the Enter Series form', () => {
       'sessions',
       'series',
       'shots',
+    ]);
+  });
+
+  it('TU8 buildEntry carries the form tags in the one push, for series and rounds alike', () => {
+    let n = 0;
+    const deps = {
+      newId: () => `0199b000-0000-7000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      now: () => '2026-10-10T17:00:00.000Z',
+    };
+    const km = { id: 't1', name: 'KM', deleted_at: null };
+    const context = {
+      firearms: new Map(),
+      firearmGroups: [],
+      ammoLots: new Map(),
+      tags: new Map([['t1', km]]),
+    };
+    const series = buildEntry(
+      { ...typed(fresh(), '10'), tags: ['km', 'Club'] },
+      'd',
+      context,
+      deps,
+    );
+    expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
+      'tags',
+      'sessions',
+      'session_tags',
+      'session_tags',
+      'series',
+      'shots',
+    ]);
+    const links = series.ok ? series.changes.filter((c) => c.tableName === 'session_tags') : [];
+    expect(links[0]!.payload).toEqual(expect.objectContaining({ tag_id: 't1' }));
+    const rounds = buildEntry(
+      { ...withKind(fresh(), 'rounds'), roundsFired: '60', tags: ['KM'] },
+      'd',
+      context,
+      deps,
+    );
+    expect(rounds.ok && rounds.changes.map((c) => c.tableName)).toEqual([
+      'sessions',
+      'session_tags',
     ]);
   });
 

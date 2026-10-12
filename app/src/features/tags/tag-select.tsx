@@ -1,7 +1,7 @@
 // Tag selection at session creation. Existing tags are pills to toggle; the
 // text field adds a new one. Nothing is written to the database here — the
 // screen owns that, after the session row exists.
-import { TEXT_LIMITS } from '@shotledger/shared';
+import { cleanTagName, findTagName, sameTagName, TEXT_LIMITS } from '@shotledger/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -19,10 +19,9 @@ export interface TagSelectProps {
   onChange: (next: string[]) => void;
 }
 
-/** Case-insensitive membership, so "KM" and "km" never become two tags. */
+/** Membership under the shared rule (sameTagName), so "KM" and "km" never become two tags. */
 function indexOfTag(names: readonly string[], name: string): number {
-  const needle = name.toLocaleLowerCase();
-  return names.findIndex((entry) => entry.toLocaleLowerCase() === needle);
+  return names.findIndex((entry) => sameTagName(entry, name));
 }
 
 export function TagSelect({ known, selected, onChange }: TagSelectProps) {
@@ -39,12 +38,11 @@ export function TagSelect({ known, selected, onChange }: TagSelectProps) {
   }
 
   function commitDraft() {
-    const name = draft.trim().replace(/\s+/g, ' ');
+    const name = cleanTagName(draft);
     setDraft('');
     if (name === '' || indexOfTag(selected, name) !== -1) return;
     // Reuse the existing tag's spelling when this only differs in case.
-    const existing = known[indexOfTag(known, name)];
-    onChange([...selected, existing ?? name]);
+    onChange([...selected, findTagName(known, name) ?? name]);
   }
 
   return (

@@ -16,12 +16,12 @@ ticked and then filtered away are left alone.
 
 ## Choose the change
 
-| Change          | What it does                                                                    |
-| --------------- | ------------------------------------------------------------------------------- |
-| Add Tag         | Adds the tag to each session. A name you have not used before becomes a new tag |
-| Remove Tag      | Removes one of the ticked sessions' tags from each of them                      |
-| Change Firearm  | Sets the firearm, or **None**                                                   |
-| Change Location | Sets the location. An empty location clears it                                  |
+| Change          | What it does                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------- |
+| Add Tag         | Adds the tag to each session, case ignored (`km` adds `KM`). A name you have not used before becomes a new tag |
+| Remove Tag      | Removes one of the ticked sessions' tags from each of them                                                     |
+| Change Firearm  | Sets the firearm, or **None**                                                                                  |
+| Change Location | Sets the location. An empty location clears it                                                                 |
 
 **Change Firearm** moves the round counts with the sessions, as editing one
 session on the phone does: each session's shots (sighters included), its

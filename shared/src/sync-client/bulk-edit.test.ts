@@ -235,6 +235,25 @@ describe('buildBulkEdit — tags', () => {
     expect((gone.changes[0]!.payload as Payload).id).not.toBe('tGone');
   });
 
+  it('K24 Add Tag ignores case and spacing (web-entry-tags R2): `km` is the tag KM', () => {
+    // s1 already carries KM (t1b); s2 gets a link to the canonical t1, no new tag.
+    const km = okOf(build({ kind: 'addTag', name: ' km ' }, ['s1', 's2']));
+    expect(km.summary).toEqual({ changed: 1, unchanged: 1, missing: 0 });
+    expect(km.changes.map((c) => c.tableName)).toEqual(['session_tags']);
+    expect((km.changes[0]!.payload as Payload).tag_id).toBe('t1');
+    // A session carrying a case-variant copy counts as tagged.
+    const variant = okOf(
+      build({ kind: 'addTag', name: 'KM' }, ['s1', 's2'], {
+        ...logbook(),
+        tags: byId(tag('t1', 'KM'), tag('t1b', 'km')),
+      }),
+    );
+    expect(variant.changes.map((c) => (c.payload as Payload).session_id)).toEqual(['s2']);
+    // A new name is stored cleaned: spaces collapsed.
+    const fresh = okOf(build({ kind: 'addTag', name: 'Club  Night' }, ['s2']));
+    expect((fresh.changes[0]!.payload as Payload).name).toBe('Club Night');
+  });
+
   it('K4 the tag name is trimmed; blank → blankTag; over 120 → tooLong(tag)', () => {
     const trimmed = okOf(build({ kind: 'addTag', name: '  KM \t' }, ['s2']));
     expect((trimmed.changes[0]!.payload as Payload).tag_id).toBe('t1');

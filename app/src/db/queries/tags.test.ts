@@ -28,6 +28,30 @@ describe('getOrCreateTag', () => {
     expect(second.id).toBe(first.id);
     expect(listTags(db)).toHaveLength(1);
   });
+
+  // docs/specs/web-entry-tags-spec.md R2: the rule the web shares (findTag).
+  it('TP1 ignores case and spacing, reusing the existing tag and its spelling', () => {
+    const km = getOrCreateTag(db, 'KM');
+    expect(getOrCreateTag(db, 'km')).toEqual(km);
+    expect(getOrCreateTag(db, '  Km ')).toEqual(km);
+    expect(listTags(db).map((t) => t.name)).toEqual(['KM']);
+  });
+
+  it('TP2 stores a new name cleaned, and skips a deleted copy of the name', () => {
+    expect(getOrCreateTag(db, '  Club   Night ').name).toBe('Club Night');
+    const old = getOrCreateTag(db, 'Old');
+    softDeleteTag(db, old.id);
+    const again = getOrCreateTag(db, 'old');
+    expect(again.id).not.toBe(old.id);
+    expect(again.name).toBe('old');
+  });
+
+  it('TP3 prefers the exact spelling when two live tags differ only in case', () => {
+    const upper = createTag(db, 'KM');
+    const lower = createTag(db, 'km');
+    expect(getOrCreateTag(db, 'km').id).toBe(lower.id);
+    expect(getOrCreateTag(db, 'KM').id).toBe(upper.id);
+  });
 });
 
 describe('listTags / softDeleteTag', () => {

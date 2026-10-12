@@ -57,6 +57,8 @@ import {
   type EntryForm,
 } from './model';
 import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
+import { addTag, removeTag } from './tags';
+import { TagsField } from './tags-field';
 
 type Rows = Map<string, Record<string, unknown>>;
 
@@ -113,6 +115,7 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
         name: t('session.name'),
         competitionName: t('session.competitionName'),
         location: t('session.location'),
+        tag: t('session.tags'),
       }[error.field];
       return t('web.entry.errorTooLong', { field, max: error.max });
     }
@@ -269,11 +272,12 @@ export function Entry({
     void save(
       {
         loadContext: async () => {
-          const fresh = await loadTables(['firearms', 'firearm_groups', 'ammo_lots']);
+          const fresh = await loadTables(['firearms', 'firearm_groups', 'ammo_lots', 'tags']);
           return {
             firearms: fresh.firearms,
             firearmGroups: fresh.firearm_groups.values(),
             ammoLots: fresh.ammo_lots,
+            tags: fresh.tags,
           };
         },
         build: (context) =>
@@ -637,6 +641,13 @@ export function Entry({
               <StartFinalButton form={form} edit={edit} />
             </div>
           </section>
+
+          <TagsField
+            tags={tables.tags}
+            chosen={form.tags}
+            onAdd={(typed) => edit(addTag(form, typed, tables.tags))}
+            onRemove={(name) => edit(removeTag(form, name))}
+          />
 
           <section className="entry-actions">
             {/* While a request is held, the one action resends it (R13). */}

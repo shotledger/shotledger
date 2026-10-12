@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canonicalTags,
+  cleanTagName,
+  findTag,
+  findTagName,
   liveSessionTags,
+  sameTagName,
   tagNamesBySession,
   type SessionTagRecord,
   type TagRecord,
@@ -42,6 +46,70 @@ describe('canonicalTags', () => {
       { id: '1', name: 'km' },
       { id: '3', name: 'Ärm' },
     ]);
+  });
+});
+
+// docs/specs/web-entry-tags-spec.md §3.0 (R2), scenarios TN1–TN5: the one
+// lookup rule the phone and the web share.
+describe('tag name lookup', () => {
+  it('TN1 cleanTagName trims and makes each run of whitespace one space', () => {
+    expect(cleanTagName('  Club \t Night\n')).toBe('Club Night');
+    expect(cleanTagName('KM')).toBe('KM');
+    expect(cleanTagName('   ')).toBe('');
+  });
+
+  it('TN2 sameTagName ignores case and spacing, nothing else', () => {
+    expect(sameTagName('KM', 'km')).toBe(true);
+    expect(sameTagName(' Club  night', 'club Night ')).toBe(true);
+    expect(sameTagName('Ärm', 'äRM')).toBe(true);
+    expect(sameTagName('KM', 'KM2')).toBe(false);
+    expect(sameTagName('Club Night', 'ClubNight')).toBe(false);
+  });
+
+  it('TN3 findTagName: the own spelling first, else the first of another case, else none', () => {
+    expect(findTagName(['KM', 'km'], 'km')).toBe('km');
+    expect(findTagName(['KM', 'km'], 'Km')).toBe('KM');
+    expect(findTagName(['Cup', 'KM'], ' km ')).toBe('KM');
+    expect(findTagName(['Cup'], 'KM')).toBeUndefined();
+    expect(findTagName([], 'KM')).toBeUndefined();
+  });
+
+  it('TN4 findTag: the canonical live tag of the name in any case; deleted copies skipped', () => {
+    const tags = [tag('01b', 'KM'), tag('01a', 'KM'), tag('009', 'km', GONE), tag('01c', 'Cup')];
+    expect(findTag(tags, 'km')).toEqual({ id: '01a', name: 'KM' });
+    expect(findTag(tags, '  CUP ')).toEqual({ id: '01c', name: 'Cup' });
+    expect(findTag(tags, 'Club')).toBeUndefined();
+    expect(findTag([tag('01a', 'KM', GONE)], 'KM')).toBeUndefined();
+  });
+
+  it('TN5 findTag prefers the exact spelling when two live names differ only in case', () => {
+    const tags = [tag('2', 'km'), tag('1', 'KM')];
+    expect(findTag(tags, 'km')).toEqual({ id: '2', name: 'km' });
+    expect(findTag(tags, 'KM')).toEqual({ id: '1', name: 'KM' });
+    expect(findTag(tags, 'Km')).toEqual({ id: '1', name: 'KM' });
+  });
+
+  it('TN6 property: findTag finds a live tag exactly when one is the same tag', () => {
+    const tagArb = fc.array(
+      fc.record({
+        id: fc.constantFrom('a', 'b', 'c', 'd'),
+        name: fc.constantFrom('KM', 'km', 'Cup', 'Club Night', 'club  night'),
+        deletedAt: fc.constantFrom(null, GONE),
+      }),
+    );
+    const typedArb = fc.constantFrom('KM', ' km', 'cup', 'Club night', 'Zone', '');
+    fc.assert(
+      fc.property(tagArb, typedArb, (tags, typed) => {
+        const found = findTag(tags, typed);
+        const live = canonicalTags(tags);
+        const any = live.some((t) => sameTagName(t.name, typed));
+        expect(found !== undefined).toBe(any);
+        if (found !== undefined) {
+          expect(live).toContainEqual(found);
+          expect(sameTagName(found.name, typed)).toBe(true);
+        }
+      }),
+    );
   });
 });
 

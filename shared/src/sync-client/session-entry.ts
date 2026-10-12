@@ -73,7 +73,8 @@ export interface EntryDeps {
 /** `row` is the 1-based row on the form, not the stored position. */
 export type EntryError =
   | { kind: 'hitsDiscipline' }
-  | { kind: 'tooLong'; field: 'name' | 'competitionName' | 'location'; max: number }
+  /** `tag`: a tag name (entry-tags.ts). */
+  | { kind: 'tooLong'; field: 'name' | 'competitionName' | 'location' | 'tag'; max: number }
   | { kind: 'series'; row: number; error: SeriesTextError }
   | { kind: 'tooManyShots'; row: number; max: number }
   | { kind: 'secondSighter'; row: number }
