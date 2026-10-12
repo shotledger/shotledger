@@ -46,6 +46,42 @@ const AUTH_BASE_PATH = '/api/auth';
 const SIGN_IN_UP_RULE = { window: 60, max: 5 };
 export const RATE_LIMIT_LONGEST_WINDOW_MS = 60_000;
 
+/**
+ * A sign-in that asks not to be remembered (`rememberMe: false`, which the
+ * web app sends) lasts this long from sign-in and is never extended, so a
+ * tab closed without Sign Out stops working and leaves the device list.
+ * A phone's session keeps better-auth's 7 days, renewed by use.
+ */
+export const WEB_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+/** better-auth gives a not-remembered session 24 h; a phone's runs 7 days. */
+const NOT_REMEMBERED_MAX_SPAN_MS = 24 * 60 * 60 * 1000;
+
+export function isWebSession(session: { createdAt: Date; expiresAt: Date }): boolean {
+  return session.expiresAt.getTime() - session.createdAt.getTime() <= NOT_REMEMBERED_MAX_SPAN_MS;
+}
+
+type HookContext = { body?: unknown; context?: unknown } | null;
+
+function webSessionExpiry(
+  session: { createdAt: Date },
+  ctx: HookContext,
+): { data: { expiresAt: Date } } | undefined {
+  if ((ctx?.body as { rememberMe?: unknown } | undefined)?.rememberMe !== false) return undefined;
+  return { data: { expiresAt: new Date(session.createdAt.getTime() + WEB_SESSION_TTL_MS) } };
+}
+
+/** get-session has already put the session it found on the context. */
+function keepWebSessionExpiry(
+  update: { expiresAt?: Date },
+  ctx: HookContext,
+): { data: { expiresAt: Date } } | undefined {
+  const current = (ctx?.context as { session?: { session?: { createdAt: Date; expiresAt: Date } } })
+    ?.session?.session;
+  if (update.expiresAt === undefined || !current || !isWebSession(current)) return undefined;
+  return { data: { ...update, expiresAt: current.expiresAt } };
+}
+
 /** Whether `path` (below /api/auth) is one of better-auth's endpoints; `:param` segments match any segment. */
 export function isAuthEndpoint(path: string, endpointPaths: readonly string[]): boolean {
   const segments = path.split('/');
@@ -120,6 +156,13 @@ export function createAuth(env: Env) {
     // parameters included; thrown, it reaches `logSafeErrors` instead.
     onAPIError: { throw: true },
     plugins: [bearer()],
+    databaseHooks: {
+      session: {
+        create: { before: (session, ctx) => Promise.resolve(webSessionExpiry(session, ctx)) },
+        // get-session renews a session by moving its expiry; a web one keeps it.
+        update: { before: (update, ctx) => Promise.resolve(keepWebSessionExpiry(update, ctx)) },
+      },
+    },
   });
   endpointPaths = Object.values(auth.api as Record<string, { path?: string }>)
     .map((endpoint) => endpoint.path)

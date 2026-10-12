@@ -8,7 +8,9 @@ the settings below.
 
 Sign in with the email and password of your sync account, then open
 **Account** in the menu on the left. Closing the tab signs you out of this
-browser and leaves nothing behind.
+browser and leaves nothing behind: the sign-in lives only in that tab, with no
+cookie. The server ends it 12 hours after you signed in, or at once when you
+use **Sign Out**; a tab still open by then asks you to sign in again.
 
 ## Sessions
 
@@ -64,7 +66,7 @@ timers, backups — belongs to each phone and is not on the web.
 Every phone and browser signed in to the account, with when it signed in and
 when it was last active. **Sign Out** next to a device ends its session; that
 device has to sign in again before it can sync. Use it for a phone you no
-longer have.
+longer have. A browser leaves the list by itself 12 hours after it signed in.
 
 The list needs a recent sign-in. If it does not load, sign out of the web app
 and sign in again.

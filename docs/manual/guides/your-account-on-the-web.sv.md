@@ -9,7 +9,10 @@ nedan.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
-här webbläsaren och ingenting lämnas kvar.
+här webbläsaren och ingenting lämnas kvar: inloggningen finns bara i den
+fliken, utan någon kaka. Servern avslutar den 12 timmar efter att du loggade
+in, eller direkt när du använder **Logga ut**; en flik som fortfarande är öppen
+då ber dig logga in igen.
 
 ## Pass
 
@@ -65,7 +68,8 @@ säkerhetskopior — hör till varje telefon och finns inte på webben.
 Alla telefoner och webbläsare som är inloggade på kontot, med när de loggade
 in och när de senast var aktiva. **Logga ut** bredvid en enhet avslutar dess
 session; enheten måste logga in igen innan den kan synka. Använd det för en
-telefon du inte längre har.
+telefon du inte längre har. En webbläsare försvinner från listan av sig själv
+12 timmar efter att den loggade in.
 
 Listan kräver en ny inloggning. Om den inte visas, logga ut ur webbappen och
 logga in igen.

@@ -1,4 +1,5 @@
 import type { Auth } from './auth/better-auth';
+import { withoutCookies } from './lib/cookies';
 
 /**
  * `Authenticator` is the seam a real implementation slots into without
@@ -29,7 +30,7 @@ export const devBearerAuthenticator: Authenticator = {
 export function betterAuthAuthenticator(auth: Auth): Authenticator {
   return {
     async authenticate(request: Request): Promise<string | null> {
-      const session = await auth.api.getSession({ headers: request.headers });
+      const session = await auth.api.getSession({ headers: withoutCookies(request.headers) });
       return session?.user.id ?? null;
     },
   };

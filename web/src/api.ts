@@ -1,5 +1,6 @@
 // Same-origin calls to the Worker (ADR 0013). The token lives in
-// sessionStorage, so it goes when the tab does.
+// sessionStorage, so it goes when the tab does, and a sign-in here asks not
+// to be remembered, so the server ends it after a few hours as well.
 import { PROTOCOL_VERSION, type ClientChange } from '@shotledger/shared/src/sync';
 import { pushChanges, type PushOutcome } from '@shotledger/shared/src/sync-client/direct-push';
 import {
@@ -54,7 +55,7 @@ export type SignInError = 'invalidCredentials' | 'network' | 'unknown';
 
 export async function signIn(email: string, password: string): Promise<SignInError | null> {
   try {
-    const session = await account.signIn(email, password);
+    const session = await account.signIn(email, password, { remember: false });
     memoryToken = session.token;
     writeToken(session.token);
     return null;
@@ -78,7 +79,7 @@ export async function signInAgain(
   password: string,
 ): Promise<{ userId: string } | { error: SignInError }> {
   try {
-    const session = await account.signIn(email, password);
+    const session = await account.signIn(email, password, { remember: false });
     memoryToken = session.token;
     writeToken(session.token);
     return { userId: session.userId };

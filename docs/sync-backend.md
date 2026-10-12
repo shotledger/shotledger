@@ -84,7 +84,11 @@ backend/migrations/0002_photos_init.sql  photos/quota/rate-limit tables DDL
 - **Auth: better-auth on Workers + D1** via `@better-auth/drizzle-adapter`,
   email+password only. The `bearer()` plugin lets a mobile client send
   `Authorization: Bearer <sessionToken>` (from the `set-auth-token`
-  response header on sign-up/sign-in) instead of relying on cookies.
+  response header on sign-up/sign-in) instead of relying on cookies. No
+  client uses cookies: the Worker drops every `Set-Cookie` from `/api/auth`
+  and ignores an incoming `Cookie` (`backend/src/lib/cookies.ts`). A sign-in
+  with `rememberMe: false` (the web app's) lasts `WEB_SESSION_TTL_MS`, 12 h,
+  and is never renewed; a phone's keeps better-auth's 7 days, renewed by use.
   Account deletion (`POST /account/delete`) is a hand-written cascade over
   `sync_rows`/`photos`/`quota`/`rate_limit_windows`/`session`/`account`/`user`, not
   `auth.api.deleteUser` (which gates on an email-verification flow this

@@ -4,6 +4,7 @@ import { betterAuthAuthenticator } from './auth';
 import { createAuth, DEV_SECRET } from './auth/better-auth';
 import { purgeStaleAuthRateLimits } from './db/auth-rate-limit-purge';
 import { apiResponseHeaders, WORKER_PATHS } from './lib/api-headers';
+import { requestWithoutCookies, responseWithoutCookies } from './lib/cookies';
 import { logSafeErrors } from './lib/errors';
 import { createAccountRoutes } from './routes/account';
 import { createPhotoRoutes } from './routes/photos';
@@ -33,7 +34,10 @@ app.get('/', (c) => c.text('ShotLedger backend — hello world'));
 
 // better-auth's own handler serves sign-up/sign-in/sign-out/session
 // endpoints (docs/specs/backend-auth-photos-spec.md §2).
-app.on(['POST', 'GET'], '/api/auth/*', (c) => createAuth(c.env).handler(c.req.raw));
+// Bearer only: no cookie goes in or comes out (lib/cookies.ts).
+app.on(['POST', 'GET'], '/api/auth/*', async (c) =>
+  responseWithoutCookies(await createAuth(c.env).handler(requestWithoutCookies(c.req.raw))),
+);
 
 // Real auth on /sync (docs/specs/sync-app-spec.md §8) — nothing reachable
 // from this Worker trusts a bearer string as a user id.
