@@ -79,7 +79,8 @@ describe('a tagged web entry applied with applyChangesSync', () => {
       { firearms: new Map(), firearmGroups: [], ammoLots: new Map() },
       deps,
     );
-    const result = withEntryTags(entry, ['KM', ' Club '], pulled, deps);
+    // `km` in another case: the existing KM, under the shared rule (R2).
+    const result = withEntryTags(entry, ['km', ' Club '], pulled, deps);
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     sessionId = result.sessionId;
     const rows: ChangeRow[] = result.changes.map((change, index) => ({
@@ -117,7 +118,8 @@ describe('a tagged web entry applied with applyChangesSync', () => {
       disciplineId: 'spsf-precision',
       startedAt: '2026-10-06T17:00:00.000Z',
     }).id;
-    const phoneLinks = ['KM', 'Club'].map((name) => {
+    // The other spellings on the phone: the same tags (R2).
+    const phoneLinks = ['KM', 'club'].map((name) => {
       const tag = getOrCreateTag(db, name);
       addSessionTag(db, phoneSession, tag.id);
       return tag.id;

@@ -2,7 +2,13 @@
 // through shared/src/tags/canonical.ts, and a link is live while its
 // deleted_at is null.
 import { and, eq, inArray, isNull } from 'drizzle-orm';
-import { canonicalTags, liveSessionTags, tagNamesBySession } from '@shotledger/shared';
+import {
+  canonicalTags,
+  cleanTagName,
+  findTag,
+  liveSessionTags,
+  tagNamesBySession,
+} from '@shotledger/shared';
 
 import { sessionTags, tags } from '../schema';
 import type { Database } from '../types';
@@ -33,9 +39,14 @@ export function getTagByName(db: Database, name: string) {
     .get();
 }
 
-/** Returns the canonical live tag with this name, creating it if absent. */
+/**
+ * The canonical live tag of this name, case and spacing ignored (findTag, the
+ * rule the web shares); else a new tag of the cleaned name.
+ */
 export function getOrCreateTag(db: Database, name: string) {
-  return getTagByName(db, name) ?? createTag(db, name);
+  const found = findTag(allTags(db), name);
+  if (found === undefined) return createTag(db, cleanTagName(name));
+  return db.select().from(tags).where(eq(tags.id, found.id)).get()!;
 }
 
 /** Ids of every tag sharing this tag's name: live or not, or only the live ones. */

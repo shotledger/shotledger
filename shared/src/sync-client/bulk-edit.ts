@@ -6,6 +6,7 @@ import { disciplineSeriesLength } from '../disciplines';
 import { sessionVolume, type VolumeSeries } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
+import { cleanTagName, sameTagName } from '../tags/canonical';
 import type { Payload } from './rows';
 import type { EntryDeps } from './session-entry';
 import { canonicalTagId, newSessionTagRow, newTagRow } from './tag-rows';
@@ -92,7 +93,10 @@ function addTag(
   now: string,
 ): Planned {
   const liveTags = liveRows(context.tags);
-  const named = new Set(liveTags.filter((t) => t.name === name).map((t) => t.id as string));
+  // Case and spacing ignored, as everywhere a name is added (findTag).
+  const named = new Set(
+    liveTags.filter((t) => sameTagName(t.name as string, name)).map((t) => t.id as string),
+  );
   const tagged = new Set(
     liveRows(context.sessionTags)
       .filter((l) => named.has(l.tag_id as string))
@@ -271,7 +275,7 @@ function plan(
 ): Planned {
   switch (action.kind) {
     case 'addTag':
-      return addTag(action.name.trim(), sessions, context, deps, now);
+      return addTag(cleanTagName(action.name), sessions, context, deps, now);
     case 'removeTag':
       return removeTag(action.name.trim(), sessions, context);
     case 'setFirearm':

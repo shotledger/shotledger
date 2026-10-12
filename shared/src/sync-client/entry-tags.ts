@@ -1,17 +1,22 @@
 // The tags of a web-entered session, added to the entry's one push
 // (docs/specs/web-entry-tags-spec.md §3.2). As the phone's getOrCreateTag +
-// addSessionTag: a name links its canonical live tag, else a new one.
+// addSessionTag: a name links its canonical live tag, case ignored, else a new one.
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
+import { cleanTagName, sameTagName } from '../tags/canonical';
 import { applyRank } from './order';
 import type { Payload } from './rows';
 import type { EntryDeps, EntryResult } from './session-entry';
 import { canonicalTagId, newSessionTagRow, newTagRow } from './tag-rows';
 
-/** Trimmed, blanks dropped, each name once in the order first given. */
-const distinctNames = (names: readonly string[]): string[] => [
-  ...new Set(names.map((name) => name.trim()).filter((name) => name !== '')),
-];
+/** Cleaned, blanks dropped, each tag once (case ignored) as first spelled. */
+function distinctNames(names: readonly string[]): string[] {
+  const result: string[] = [];
+  for (const name of names.map(cleanTagName)) {
+    if (name !== '' && !result.some((kept) => sameTagName(kept, name))) result.push(name);
+  }
+  return result;
+}
 
 export function withEntryTags(
   entry: EntryResult,

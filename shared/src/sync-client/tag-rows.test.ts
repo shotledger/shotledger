@@ -49,11 +49,19 @@ describe('tag rows (docs/specs/web-entry-tags-spec.md §3.1)', () => {
       expect(canonicalTagId([{ id: 't1', name: 'KM' }], 'KM')).toBe('t1');
     });
 
-    it('matches the exact string: another case or padding is another name', () => {
-      const tags = [tag('t1', 'KM')];
-      expect(canonicalTagId(tags, 'km')).toBeUndefined();
-      expect(canonicalTagId(tags, ' KM')).toBeUndefined();
+    it('ignores case and spacing (R2): another case or padding is the same tag', () => {
+      const tags = [tag('t1', 'KM'), tag('t0', 'Club', NOW)];
+      expect(canonicalTagId(tags, 'km')).toBe('t1');
+      expect(canonicalTagId(tags, ' Km ')).toBe('t1');
+      expect(canonicalTagId(tags, 'club')).toBeUndefined();
+      expect(canonicalTagId(tags, 'KM2')).toBeUndefined();
       expect(canonicalTagId([], 'KM')).toBeUndefined();
+    });
+
+    it('prefers the exact spelling when two live names differ only in case (R2)', () => {
+      const tags = [tag('t1', 'KM'), tag('t2', 'km')];
+      expect(canonicalTagId(tags, 'km')).toBe('t2');
+      expect(canonicalTagId(tags, 'Km')).toBe('t1');
     });
   });
 });

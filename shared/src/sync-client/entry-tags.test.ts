@@ -131,12 +131,19 @@ describe('withEntryTags (docs/specs/web-entry-tags-spec.md §3.2)', () => {
     expect(payloads(changes, 'tags').map((t) => t.name)).toEqual(['Club', 'Zone']);
   });
 
-  it('N4 names are trimmed, blanks dropped, duplicates kept once, case kept distinct', () => {
-    const changes = changesOf(tagged(['  KM ', '', '   ', 'KM', 'km', 'Club', ' Club']).result);
-    expect(payloads(changes, 'tags').map((t) => t.name)).toEqual(['km', 'Club']);
+  it('N4 names are cleaned, blanks dropped, one per tag with case ignored (R2)', () => {
+    const changes = changesOf(
+      tagged(['  KM ', '', '   ', 'KM', 'km', 'Club  Night', ' club night', 'Zone']).result,
+    );
+    // `km` links the existing `KM`; the new tag keeps the first spelling, spaces collapsed.
+    expect(payloads(changes, 'tags').map((t) => t.name)).toEqual(['Club Night', 'Zone']);
     const links = payloads(changes, 'session_tags').map((l) => l.tag_id);
     expect(links).toHaveLength(3);
     expect(links[0]).toBe(KM.id);
+    // Only `km` typed: still the existing tag, no new row.
+    const lower = changesOf(tagged(['km']).result);
+    expect(payloads(lower, 'tags')).toEqual([]);
+    expect(payloads(lower, 'session_tags').map((l) => l.tag_id)).toEqual([KM.id]);
   });
 
   it('N5 a name over 120 characters is refused once; 120 is accepted', () => {
@@ -198,20 +205,27 @@ describe('withEntryTags (docs/specs/web-entry-tags-spec.md §3.2)', () => {
   });
 
   it('N10 property: each distinct name has one live link, to its canonical tag or one new tag', () => {
-    const name = fc.constantFrom('KM', 'km', ' KM', 'Club', 'Zone', '', ' ', 'Å');
+    const name = fc.constantFrom('KM', 'km', ' KM', 'Club', 'club', 'Zone', '', ' ', 'Å', 'å');
     fc.assert(
       fc.property(fc.array(name, { maxLength: 12 }), (names) => {
         const { result, sessionId } = tagged(names);
         const changes = changesOf(result);
         const created = payloads(changes, 'tags');
         const links = payloads(changes, 'session_tags');
-        const distinct = [...new Set(names.map((n) => n.trim()).filter((n) => n !== ''))];
+        // One per tag, case ignored, as first spelled (R2).
+        const distinct: string[] = [];
+        for (const n of names.map((n) => n.trim()).filter((n) => n !== '')) {
+          if (!distinct.some((d) => d.toLowerCase() === n.toLowerCase())) distinct.push(n);
+        }
         expect(links).toHaveLength(distinct.length);
-        expect(created.map((t) => t.name)).toEqual(distinct.filter((n) => n !== 'KM'));
+        const isKm = (n: string) => n.toLowerCase() === 'km';
+        expect(created.map((t) => t.name)).toEqual(distinct.filter((n) => !isKm(n)));
         const nameOf = new Map(
           [...created, KM, KM_COPY].map((t) => [t.id as string, t.name as string]),
         );
-        expect(links.map((l) => nameOf.get(l.tag_id as string))).toEqual(distinct);
+        expect(links.map((l) => nameOf.get(l.tag_id as string))).toEqual(
+          distinct.map((n) => (isKm(n) ? 'KM' : n)),
+        );
         for (const link of links) {
           expect(link.session_id).toBe(sessionId);
           expect(link.tag_id).not.toBe(KM_COPY.id);

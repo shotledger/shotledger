@@ -1,6 +1,7 @@
 // Whole-row payloads for tags and tag links, and the canonical tag of a name
 // (docs/specs/web-entry-tags-spec.md §3.1). Shared by the web's bulk edit and
 // series entry; the keys are the app's column names.
+import { findTag } from '../tags/canonical';
 import type { Payload } from './rows';
 
 const common = (id: string, now: string) => ({
@@ -24,13 +25,12 @@ export function newSessionTagRow(
   return { ...common(id, now), session_id: sessionId, tag_id: tagId };
 }
 
-/** The live tag of exactly this name with the smallest id (canonicalTags), if any. */
-export function canonicalTagId(tags: Iterable<Payload>, name: string): string | undefined {
-  let canonical: string | undefined;
-  for (const tag of tags) {
-    if (tag.name !== name || (tag.deleted_at !== null && tag.deleted_at !== undefined)) continue;
-    const id = tag.id as string;
-    if (canonical === undefined || id < canonical) canonical = id;
-  }
-  return canonical;
+/** The canonical live tag a typed name adds, case and spacing ignored (findTag), if any. */
+export function canonicalTagId(tags: Iterable<Payload>, typed: string): string | undefined {
+  const records = [...tags].map((tag) => ({
+    id: tag.id as string,
+    name: tag.name as string,
+    deletedAt: (tag.deleted_at as string | null | undefined) ?? null,
+  }));
+  return findTag(records, typed)?.id;
 }

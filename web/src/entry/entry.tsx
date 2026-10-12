@@ -18,7 +18,6 @@ import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
 import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
-import { withEntryTags } from '@shotledger/shared/src/sync-client/entry-tags';
 import type { EntryError } from '@shotledger/shared/src/sync-client/session-entry';
 import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
@@ -281,16 +280,12 @@ export function Entry({
             tags: fresh.tags,
           };
         },
-        build: (context) => {
-          const deps = {
+        build: (context) =>
+          buildEntry(form, defaultName, context, {
             newId: uuidv7,
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
-          };
-          // The tags travel in the session's one push (web-entry-tags-spec C2).
-          const entry = buildEntry(form, defaultName, context, deps);
-          return withEntryTags(entry, form.tags, context.tags, deps);
-        },
+          }),
         currentUserId,
         push: pushRows,
         refresh,
@@ -650,7 +645,7 @@ export function Entry({
           <TagsField
             tags={tables.tags}
             chosen={form.tags}
-            onAdd={(typed) => edit(addTag(form, typed))}
+            onAdd={(typed) => edit(addTag(form, typed, tables.tags))}
             onRemove={(name) => edit(removeTag(form, name))}
           />
 
