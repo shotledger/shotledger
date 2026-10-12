@@ -11,6 +11,12 @@ Bådadera betyder mest för ett pass du inte fyllt i själv: en import bär med 
 sitt eget datum och lägger sin förklaring — vilket vapen, varför ett pass är
 flaggat för granskning — i anteckningarna.
 
+Datum i hela appen, och på webben, skrivs som ditt språk och telefonens eller
+webbläsarens region skriver dem: svenska visar `12 okt 2026`, engelska på en
+svensk telefon `12 Oct 2026` och på en amerikansk `Oct 12, 2026`. Namnet som
+föreslås för ett nytt pass har samma datum och behåller det om du byter språk
+senare.
+
 Anteckningar rymmer upp till 2 000 tecken och övriga textfält färre, så att
 varje post förblir liten nog att synka. Om synken någon gång säger att en post
 är för stor — en importerad anteckning kan vara längre än appen låter dig

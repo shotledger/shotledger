@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { EVAL_EXPIRES_AT } from '@/constants/flags';
 import { getEvalHighWaterMark, setEvalHighWaterMark } from '@/platform/secure-store';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 import { evaluateEvaluationWindow, type EvaluationStatus } from './expiry';
 
@@ -46,10 +47,8 @@ export function EvaluationGate({ children }: { children: ReactNode }) {
 }
 
 function ExpiredScreen({ expiresAt }: { expiresAt: number }) {
-  const { t, i18n } = useTranslation();
-  const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'long' }).format(
-    new Date(expiresAt),
-  );
+  const { t } = useTranslation();
+  const date = useDateFormat().date(expiresAt);
 
   return (
     <Screen scroll={false}>

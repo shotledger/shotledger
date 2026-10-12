@@ -30,14 +30,15 @@ import {
   type PhotoFacet,
   type PhotoFacetSelection,
 } from '@/features/photos/filter';
-import { disciplineLabel, formatLocalDate } from '@/features/session/labels';
+import { disciplineLabel } from '@/features/session/labels';
 import { shareExistingFile } from '@/platform/share-file';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { Radius, Spacing } from '@/theme/tokens';
-import { localDayStartIso } from '@/features/dates/local-day';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 export default function PhotosScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [facets, setFacets] = useState<PhotoFacetSelection>({});
@@ -141,9 +142,7 @@ export default function PhotosScreen() {
         )}
         {groups.map((group) => (
           <Card key={group.day}>
-            <ThemedText type="smallBold">
-              {formatLocalDate(localDayStartIso(group.day), i18n.language)}
-            </ThemedText>
+            <ThemedText type="smallBold">{dates.day(group.day)}</ThemedText>
             <View style={styles.grid}>
               {group.photos.map((photo) => {
                 const gone = seriesPhotoGone(photo.photoUri);

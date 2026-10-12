@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
 
-import { disciplineLabel, formatLocalDate } from '../../../app/src/features/session/labels';
+import { disciplineLabel } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushRows } from '../api';
 import { locationUsage, useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
@@ -36,6 +36,7 @@ import {
   type BulkFilter,
 } from './model';
 import { applyDeps, bulkRequest, INITIAL_FORM, UNCHOSEN, type BulkForm } from './request';
+import { showDate } from '../dates';
 
 export function BulkEdit({
   tables,
@@ -372,7 +373,7 @@ export function BulkEdit({
                         onChange={() => toggle(row.id)}
                       />
                     </td>
-                    <td>{formatLocalDate(row.startedAt, i18n.language)}</td>
+                    <td>{showDate(row.startedAt)}</td>
                     <th scope="row">{row.name}</th>
                     <td>{disciplineLabel(t, row.disciplineId)}</td>
                     <td>{row.location ?? ''}</td>

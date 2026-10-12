@@ -46,7 +46,6 @@ import {
 } from '@/features/session/series-entry-choice';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { formatSessionDate } from '@/features/home/format-session-date';
 import { disciplineLabel, matchFormatLabel } from '@/features/session/labels';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
@@ -63,6 +62,7 @@ import { SwipeAction } from '@/components/swipe-action';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 type DetailView = 'series' | 'stats' | 'group';
 
@@ -77,7 +77,8 @@ interface EntryTarget {
 const GROUP_PLOT_SIZE = 300;
 
 export default function SessionDetailScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const theme = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -472,7 +473,7 @@ export default function SessionDetailScreen() {
         <ScreenTitle>{session.name}</ScreenTitle>
         <ThemedText type="small" themeColor="textSecondary">
           {[
-            formatSessionDate(session.startedAt, i18n.language),
+            dates.date(session.startedAt),
             t(`sessionType.${session.type}`),
             disciplineLabel(t, session.disciplineId),
             // The format locks at the first result (#475), so it has to be

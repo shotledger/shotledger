@@ -7,6 +7,7 @@ import { deleteAccount, downloadPhoto, listDevices, photoUsage, revokeDevice } f
 import type { PulledTables } from '../pull';
 import { buildArchive, type ArchiveProgress } from './archive';
 import { deviceLabel } from './device-label';
+import { showDate } from '../dates';
 
 type Load<T> = { kind: 'loading' } | { kind: 'failed' } | { kind: 'ready'; value: T };
 
@@ -32,8 +33,7 @@ function useLoad<T>(load: () => Promise<T>): [Load<T>, () => void] {
 
 function useFormat() {
   const { i18n } = useTranslation();
-  const date = (iso: string) =>
-    new Date(iso).toLocaleDateString(i18n.language, { dateStyle: 'medium' });
+  const date = (iso: string) => showDate(iso);
   // Binary units: the quota is a whole number of GiB.
   const bytes = (n: number) => {
     const gb = n >= 2 ** 30;

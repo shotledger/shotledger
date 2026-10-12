@@ -18,7 +18,8 @@ import {
 import { formatShotValue } from '@/components/shot-chips';
 import { db } from '@/db/client';
 import { listMarksForSeries } from '@/db/queries/shot-marks';
-import { formatSessionDate } from '@/features/home/format-session-date';
+import { displayLocale, formatDate } from '@/features/dates/format';
+import { deviceRegion } from '@/i18n';
 import { disciplineLabel } from '@/features/session/labels';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { loadSessionStats } from '@/features/session/use-session-stats';
@@ -32,6 +33,7 @@ export function buildSessionReportHtmlFor(
   const detail = loadSessionDetail(sessionId);
   const { session } = detail;
   if (!session) return null;
+  const locale = displayLocale(language, deviceRegion());
 
   const mm = (value: number) => t('photoScoring.millimeters', { value: value.toFixed(1) });
   const groupFigures = (marks: readonly SessionReportMark[]): SessionReportField[] => {
@@ -160,7 +162,7 @@ export function buildSessionReportHtmlFor(
     {
       title: session.name,
       fields: [
-        { label: t('session.date'), value: formatSessionDate(session.startedAt, language) },
+        { label: t('session.date'), value: formatDate(session.startedAt, locale) },
         { label: t('session.discipline'), value: disciplineLabel(t, session.disciplineId) },
         {
           label: t('session.firearm'),
@@ -172,7 +174,7 @@ export function buildSessionReportHtmlFor(
       plots,
       distribution,
       generatedAtLabel: t('compliance.pdfGeneratedAt', {
-        date: formatSessionDate(new Date().toISOString(), language),
+        date: formatDate(new Date(), locale),
       }),
       emptyLabel: t('session.noSeries'),
     },

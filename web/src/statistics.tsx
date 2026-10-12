@@ -31,6 +31,7 @@ import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
 import { Filters } from './report/filters';
 import { statsInputs } from './stats-inputs';
+import { showAxisDate, showDate } from './dates';
 
 const DASH = '–';
 const score = (tenths: number | null, digits = 1) =>
@@ -57,7 +58,7 @@ function Card({ title, wide, children }: { title: string; wide?: boolean; childr
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
 export function Statistics({ tables }: { tables: PulledTables }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const inputs = useMemo(() => statsInputs(tables), [tables]);
   const options = useMemo(() => buildFilterOptions(inputs), [inputs]);
   const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
@@ -72,14 +73,8 @@ export function Statistics({ tables }: { tables: PulledTables }) {
     );
   }
 
-  const formatDate = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(iso));
-  const formatShortDate = (iso: string, withYear: boolean) =>
-    new Intl.DateTimeFormat(i18n.language, {
-      month: 'short',
-      day: 'numeric',
-      ...(withYear ? { year: 'numeric' } : {}),
-    }).format(new Date(iso));
+  const formatDate = showDate;
+  const formatShortDate = showAxisDate;
   const colors = CHART_LINE_COLORS[prefersDark() ? 'dark' : 'light'];
   const label = (id: string) => disciplineLabel(t, id);
   const range = periodRange(filter);

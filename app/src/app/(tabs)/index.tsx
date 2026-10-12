@@ -20,7 +20,6 @@ import { db } from '@/db/client';
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
 import { useOverallLicenseActivity } from '@/features/compliance/use-license-activity';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
-import { formatSessionDate } from '@/features/home/format-session-date';
 import {
   filterSessionRowsByShape,
   formatSeriesAverage,
@@ -31,6 +30,7 @@ import {
 import { useHomeData } from '@/features/home/use-home-data';
 import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Radius, Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
   green: 'neutral',
@@ -43,7 +43,8 @@ function capitalize(value: string): string {
 }
 
 export default function HomeScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
     useHomeData();
@@ -152,7 +153,7 @@ export default function HomeScreen() {
                   testID={`home-session-${index}`}
                   title={session.name}
                   subtitle={[
-                    formatSessionDate(session.startedAt, i18n.language),
+                    dates.date(session.startedAt),
                     session.falt
                       ? formatFaltResult(t, session.falt)
                       : formatSessionTotal(session.total),

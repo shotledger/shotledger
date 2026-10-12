@@ -16,11 +16,13 @@ import { ThemedText } from '@/components/themed-text';
 import { apiBaseUrl } from '@/constants/backend';
 import { useAccount } from '@/features/account/use-account';
 import { useSync } from '@/features/sync/use-sync';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 type Mode = 'signIn' | 'signUp';
 
 export default function AccountScreen() {
   const { t } = useTranslation();
+  const dates = useDateFormat();
   const account = useAccount();
   const { status, syncNow } = useSync(account.signedIn);
 
@@ -49,9 +51,7 @@ export default function AccountScreen() {
   }
 
   const lastSynced =
-    status.lastSyncedAt === null
-      ? t('account.neverSynced')
-      : new Date(status.lastSyncedAt).toLocaleString();
+    status.lastSyncedAt === null ? t('account.neverSynced') : dates.dateTime(status.lastSyncedAt);
 
   return (
     <Screen>

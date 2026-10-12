@@ -11,6 +11,11 @@ follow underneath. Both matter most for a session you did not type in yourself:
 an import carries its own date and puts its explanation — which firearm, why a
 session is flagged for review — in the notes.
 
+Dates everywhere in the app, and on the web, read the way your language and
+your phone's or browser's region write them: English on a Swedish phone shows
+`12 Oct 2026`, on a US one `Oct 12, 2026`. A new session's suggested name uses
+the same date, and keeps it if you later change the language.
+
 Notes hold up to 2,000 characters and other text fields fewer, so that every
 entry stays small enough to sync. If sync ever reports that an entry is too
 large — an imported note can be longer than the app lets you type — shorten

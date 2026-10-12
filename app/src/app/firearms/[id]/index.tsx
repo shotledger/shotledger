@@ -34,7 +34,6 @@ import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
 import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
-import { formatLocalDate } from '@/features/session/labels';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -79,6 +78,7 @@ import {
 import { notifyMaintenanceDue, scheduleLicenseExpiryNotifications } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 /** Only groups a session can actually be logged under — see
  *  `selectableWeaponGroups`. */
@@ -109,7 +109,8 @@ const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
 };
 
 export default function FirearmDetailScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useComplianceProfile();
@@ -588,8 +589,8 @@ export default function FirearmDetailScreen() {
                   {t('compliance.criterionPeriod', {
                     done: period.activityCount,
                     required: criterion.requiredActivities,
-                    from: period.startIso.slice(0, 10),
-                    to: period.endIso.slice(0, 10),
+                    from: dates.date(period.startIso),
+                    to: dates.date(period.endIso),
                   })}
                 </ThemedText>
               ))}
@@ -949,7 +950,9 @@ export default function FirearmDetailScreen() {
             <ListRow
               key={license.id}
               title={license.licenseNumber ?? t('firearms.licenseTitle')}
-              subtitle={license.validUntil ?? t('firearms.tillsVidare')}
+              subtitle={
+                license.validUntil ? dates.day(license.validUntil) : t('firearms.tillsVidare')
+              }
               testID={`license-${license.id}`}
             />
           ))
@@ -1110,7 +1113,7 @@ export default function FirearmDetailScreen() {
               key={event.id}
               // `kind` is free text the user typed, except the one the app writes itself.
               title={event.kind === 'adjustment' ? t('firearms.adjustmentEvent') : event.kind}
-              subtitle={maintenanceEventLines(event)}
+              subtitle={maintenanceEventLines(event, dates.date)}
             />
           ))
         )}
@@ -1119,7 +1122,7 @@ export default function FirearmDetailScreen() {
           <>
             <ThemedText type="small">{t('firearms.eventDate')}</ThemedText>
             <PrimaryButton
-              label={formatLocalDate(eventPerformedAt, i18n.language)}
+              label={dates.date(eventPerformedAt)}
               onPress={() => setEventDatePickerOpen(true)}
               testID="event-date"
             />
