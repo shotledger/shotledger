@@ -81,6 +81,12 @@ One sync photo can back several series; it is stored once.
 | The sync session token (`expo-secure-store`)                           | A credential. A backup file is not a credential store; the user signs in again after a restore                                                                      |
 | A photo whose file has gone                                            | Counted in `counts.photosUnreadable` instead of failing the whole export. For a sync photo the server still holds it, so this is a gap in the bundle, not lost data |
 
+> **Reversed (issue #757).** A bundle now carries these four tables reset to a
+> fresh install's state, and a restore resets them again:
+> [`backup-sync-bookkeeping-spec.md`](./backup-sync-bookkeeping-spec.md). The
+> paragraph below is kept as the record of the earlier decision. Its assumption,
+> that a restore is always a same-account replace, did not hold.
+
 **The sync tables (`sync_outbox`, `sync_state`, `sync_control`, `photo_queue`)
 are included deliberately.** They live in the DB file, so excluding them would
 mean actively stripping them. Keeping them is correct: the outbox holds local

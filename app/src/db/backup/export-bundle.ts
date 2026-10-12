@@ -5,7 +5,7 @@
 // bundle paths, counted for the manifest, and serialized into the bundle.
 //
 // See docs/specs/backup-export-spec.md for what is deliberately left out
-// (caches, pre-restore bundles, keystore secrets) and why.
+// (caches, pre-restore bundles, keystore secrets, sync bookkeeping) and why.
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { eq, isNull, sql } from 'drizzle-orm';
 import Constants from 'expo-constants';
@@ -29,6 +29,7 @@ import {
 import { readPhotoBytes, readSyncPhotoBytes, vacuumIntoTempCopy } from '@/platform/backup-fs';
 
 import journalMeta from '../migrations/meta/_journal.json';
+import { resetSyncBookkeeping } from '../queries/sync-store';
 import * as schema from '../schema';
 
 export interface BuildBundleOptions {
@@ -148,6 +149,9 @@ export async function buildBackupBundle(
   const { copy, cleanup } = await vacuumIntoTempCopy(liveDb);
   try {
     const copyDb = drizzle(copy, { schema });
+    // This device's sync bookkeeping is not user data, and replayed elsewhere it
+    // overwrites newer edits (docs/specs/backup-sync-bookkeeping-spec.md).
+    resetSyncBookkeeping(copyDb);
 
     const photos: PhotoCollection =
       kind === 'database+photos'

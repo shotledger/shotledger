@@ -1,8 +1,9 @@
 // Glue layer for restore (mirrors export-bundle.ts). Restore is a full
 // replace, never a merge: validate the bundle, write an automatic
-// pre-restore backup, close the live connection, overwrite the DB file, then
-// restore any bundled photos and rewrite their paths. A bundle from any other
+// pre-restore backup, close the live connection, overwrite the DB file, reset
+// its sync bookkeeping, then restore any bundled photos and rewrite their paths. A bundle from any other
 // schema baseline than this build's is refused (`checkSchemaCompatibility`).
+import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import {
   type BackupManifest,
@@ -20,6 +21,7 @@ import {
 import {
   PRE_RESTORE_BACKUPS_DIR_NAME,
   closeLiveDatabase,
+  openDatabaseFile,
   replaceLiveDatabaseFile,
   restorePhotosAndRewritePaths,
   restoreSyncPhotos,
@@ -28,6 +30,8 @@ import {
 
 import { DATABASE_FILENAME } from '../client';
 import journalMeta from '../migrations/meta/_journal.json';
+import { resetSyncBookkeeping } from '../queries/sync-store';
+import * as schema from '../schema';
 import { buildBackupBundle } from './export-bundle';
 
 export interface RestorePreview {
@@ -80,6 +84,14 @@ export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): 
 
   closeLiveDatabase(liveDb);
   replaceLiveDatabaseFile(liveDb, dbEntry.data);
+  // Also covers a bundle written before export stripped this: the next sync
+  // re-pulls from cursor 0 and replays nothing.
+  const restored = openDatabaseFile(liveDb, DATABASE_FILENAME);
+  try {
+    resetSyncBookkeeping(drizzle(restored, { schema }));
+  } finally {
+    restored.closeSync();
+  }
   await restorePhotosAndRewritePaths(liveDb, DATABASE_FILENAME, photoEntries);
   restoreSyncPhotos(syncPhotoEntries);
 
