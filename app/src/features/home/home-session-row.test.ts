@@ -129,6 +129,29 @@ describe('formatSessionTotal', () => {
   });
 });
 
+describe('buildHomeSessionRow innerTenCount', () => {
+  // #733: a ShotLog import stores its count and has no shot flags to count.
+  it("uses the session's stored count when it has one", () => {
+    const row = buildHomeSessionRow({ ...session, innerTenCount: 7 }, [
+      series({ id: 'override', shots: [], totalOverride: { tenths: 470, shotCount: 5 } }),
+    ]);
+    expect(row.innerTenCount).toBe(7);
+  });
+
+  it('counts the shot flags when the session stores none', () => {
+    const shots = [
+      { valueTenths: 100, isInnerTen: true },
+      { valueTenths: 100, isInnerTen: true },
+      { valueTenths: 90, isInnerTen: false },
+    ];
+    expect(buildHomeSessionRow(session, [series({ id: 's1', shots })]).innerTenCount).toBe(2);
+    expect(
+      buildHomeSessionRow({ ...session, innerTenCount: null }, [series({ id: 's1', shots })])
+        .innerTenCount,
+    ).toBe(2);
+  });
+});
+
 describe('buildHomeSessionRow tags', () => {
   it('carries the tag names through, and defaults to none', () => {
     const session = {

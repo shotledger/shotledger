@@ -13,7 +13,6 @@ import {
   stageSubtotals,
   seriesAverageTenths,
   seriesInnerTenAverage,
-  sessionInnerTenCount,
   sessionResults,
   tenthsToScore,
   totalOnlyShotCount,
@@ -31,6 +30,7 @@ import { getFirearm } from '@/db/queries/firearms';
 import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
 import { resolveSeriesLength } from './series-length';
+import { sessionInnerTens } from './session-inner-tens';
 
 export interface SeriesRow {
   id: string;
@@ -188,11 +188,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     results,
     stageSubtotals: program ? stageSubtotals(programStages(program), seriesRows) : [],
     seriesAverageTenths: seriesAverageTenths(forResults),
-    // A stored counter wins where there are no shot flags to count: a
-    // ShotLog import is one total with no `shots` rows, so counting would
-    // always answer 0 and silently contradict the number ShotLog gave.
-    // Everywhere else it is null and the flags are the truth (schema.ts).
-    innerTenCount: session.innerTenCount ?? sessionInnerTenCount(forResults),
+    innerTenCount: sessionInnerTens(session.innerTenCount, forResults),
     innerTenAverage: seriesInnerTenAverage(forResults),
     seriesLength,
     guldThreshold,
