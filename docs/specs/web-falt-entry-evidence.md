@@ -4,87 +4,99 @@
 
 - **Spec approval: not obtained (autonomous run).** The spec was written and
   built in one run; its key choices C1–C7 are listed in the PR for the
-  maintainer. Confidence is correspondingly lower: the spec is the artifact
-  to review after the fact.
-- **Source state:** code at `37c5ce4b` on `feat/web-falt-entry`, on `main` at
-  `8be414cc` (with #669, #672, #674, #717 and #719 merged). The commits after
-  it change only this report. Every number below is from a fresh run on that
-  state. (An earlier version of this report named `403bf7d1`, a pre-rebase
-  commit, and its numbers; verification round 1 caught it, F6.)
+  maintainer. C3 has since been decided by the maintainer (R8); that answers
+  C3, it does not approve the spec. Confidence is correspondingly lower: the
+  spec is the artifact to review after the fact.
+- **Source state:** code at `352909b3` on `feat/web-falt-entry`, rebased onto
+  `main` at `41b1b7fe` (with #716 tags and #718 rounds-only merged; R9). The
+  commits after it change only the spec and this report. `pnpm check` ran
+  on that state; the backend suite, Stryker and the browser run ran on
+  `e8281cfb`, one rebase earlier, which differs only by main's #752 (phone
+  layout, including the station screen's insets) and #750 (a types bump);
+  no `shared/`, `web/` or `backend/` file differs. (Earlier versions named `403bf7d1` and
+  `37c5ce4b`, states that rebases replaced.)
 - **Toolchain:** Node v26.10.0, vitest 5.0.3, Stryker 10.0.0, versions pinned
   by `pnpm-lock.yaml`.
 - **Entry point:** `pnpm check` (types, lint, format, i18n, licenses, vitest
   with the 100% coverage gate, jest), plus the commands in the gauntlet table.
 - **Independent verification: not performed against the final source state**
-  `37c5ce4b` (a declared downgrade). Two rounds, the cap, were performed: round
+  `352909b3` (a declared downgrade). Two rounds, the cap, were performed: round
   1 `failed` at `284c26a1`, round 2 `failed` at `8efed94c`. The fixes since are
   disclosed in [Independent verification](#independent-verification) as
   unverified.
 
 ## Spec → test mapping
 
-| Scenario                                         | Test                                                              | Status |
-| ------------------------------------------------ | ----------------------------------------------------------------- | ------ |
-| S1 stationProblem                                | `shared/src/scoring/falt-station.test.ts` › S1                    | pass   |
-| S2 figuresHitRange                               | › S2                                                              | pass   |
-| S3 clampFiguresHit                               | › S3                                                              | pass   |
-| S4 stationPoints                                 | › S4                                                              | pass   |
-| S5 isBlankStation                                | › S5                                                              | pass   |
-| FE1 training entry, firearm +18, APPLY_ORDER     | `shared/src/sync-client/falt-entry.test.ts` › FE1 (two tests)     | pass   |
-| FE2 result mode stored                           | › FE2                                                             | pass   |
-| FE3 blank stations dropped, contiguous positions | › FE3                                                             | pass   |
-| FE4 every station column                         | › FE4 (two tests)                                                 | pass   |
-| FE5 bad points refused                           | › FE5                                                             | pass   |
-| FE6 impossible station refused, scratched kept   | › FE6                                                             | pass   |
-| FE7 six rounds per saved station                 | › FE7                                                             | pass   |
-| FE8 competition and training fields              | › FE8                                                             | pass   |
-| FE9 session-field errors collected               | › FE9                                                             | pass   |
-| FE10 ring discipline throws                      | › FE10                                                            | pass   |
-| FE11 schema-valid changes, PUSH_BATCH_MAX        | › FE11 (two tests)                                                | pass   |
-| FE12 no station → session alone                  | › FE12                                                            | pass   |
-| AF1 column parity                                | `app/src/db/queries/web-falt-rows.test.ts` › AF1                  | pass   |
-| AF2 applies on the phone, firearm 124            | › AF2                                                             | pass   |
-| AF3 outbox stays empty                           | › AF3                                                             | pass   |
-| WF1 round trip through the real Worker           | `backend/test/web-falt-write.spec.ts` › WF1                       | pass   |
-| WF2 resend answers duplicate, no new rows        | › WF2                                                             | pass   |
-| UF1 picker offers fält                           | `web/src/entry/falt-model.test.ts` › UF1                          | pass   |
-| UF2 Figures Hit clamps                           | › UF2                                                             | pass   |
-| UF3 toFaltDraft                                  | › UF3                                                             | pass   |
-| UF4 held request kept only for Add Station       | › UF4                                                             | pass   |
-| UF5 running result over saved stations           | › UF5                                                             | pass   |
-| UF6 fresh form                                   | › UF6                                                             | pass   |
-| UF7 shoot-off continues after a saved shoot-off  | › UF7                                                             | pass   |
-| UF8 shoot-off saved, or dropped when empty       | › UF8                                                             | pass   |
-| UF9 only a station that will be saved counts     | › UF9                                                             | pass   |
-| UF10 no ordinary station after a saved shoot-off | › UF10                                                            | pass   |
-| Must NOT N1 no browser storage                   | #669's `web/src/entry/save.test.ts` › N1 greps every entry module | pass   |
-| Must NOT N2 no endpoint/protocol change          | FE11, WF1; no backend source changed                              | pass   |
-| Must NOT N3 no NOT NULL as null                  | AF1, AF2                                                          | pass   |
-| Must NOT N4 only session, stations, firearm      | FE1, FE7, FE12                                                    | pass   |
-| Must NOT N5 no impossible scoring station        | FE6, S1                                                           | pass   |
-| Must NOT N6 phone behaviour unchanged            | `app/src/db/queries/falt.test.ts` unchanged, 20/20                | pass   |
-| Must NOT N7 #669 behaviour unchanged             | no existing test file changed; `pnpm check` green                 | pass   |
+| Scenario                                          | Test                                                                                                     | Status |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------ |
+| S1 stationProblem                                 | `shared/src/scoring/falt-station.test.ts` › S1                                                           | pass   |
+| S2 figuresHitRange                                | › S2                                                                                                     | pass   |
+| S3 clampFiguresHit                                | › S3                                                                                                     | pass   |
+| S4 stationPoints                                  | › S4                                                                                                     | pass   |
+| S5 isBlankStation                                 | › S5                                                                                                     | pass   |
+| S6 isUnenteredStation (R8)                        | › S6                                                                                                     | pass   |
+| FE1 training entry, firearm +18, APPLY_ORDER      | `shared/src/sync-client/falt-entry.test.ts` › FE1 (two tests)                                            | pass   |
+| FE2 result mode stored                            | › FE2                                                                                                    | pass   |
+| FE3 blank stations dropped, contiguous positions  | › FE3                                                                                                    | pass   |
+| FE4 every station column                          | › FE4 (two tests)                                                                                        | pass   |
+| FE5 bad points refused                            | › FE5                                                                                                    | pass   |
+| FE6 impossible station refused, scratched kept    | › FE6                                                                                                    | pass   |
+| FE7 six rounds per saved station                  | › FE7                                                                                                    | pass   |
+| FE8 competition and training fields               | › FE8                                                                                                    | pass   |
+| FE9 session-field errors collected                | › FE9                                                                                                    | pass   |
+| FE10 ring discipline throws                       | › FE10                                                                                                   | pass   |
+| FE11 schema-valid changes, PUSH_BATCH_MAX         | › FE11 (two tests)                                                                                       | pass   |
+| FE12 no station → session alone                   | › FE12                                                                                                   | pass   |
+| FE13 an all-miss station is saved (R8)            | › FE13                                                                                                   | pass   |
+| AF1 column parity                                 | `app/src/db/queries/web-falt-rows.test.ts` › AF1                                                         | pass   |
+| AF2 applies on the phone, firearm 130 (R8)        | › AF2                                                                                                    | pass   |
+| AF3 outbox stays empty                            | › AF3                                                                                                    | pass   |
+| WF1 round trip through the real Worker            | `backend/test/web-falt-write.spec.ts` › WF1                                                              | pass   |
+| WF2 resend answers duplicate, no new rows         | › WF2                                                                                                    | pass   |
+| UF1 picker offers fält                            | `web/src/entry/falt-model.test.ts` › UF1                                                                 | pass   |
+| UF2 Figures Hit clamps                            | › UF2                                                                                                    | pass   |
+| UF3 toFaltDraft                                   | › UF3                                                                                                    | pass   |
+| UF4 held request kept only for Add Station        | › UF4                                                                                                    | pass   |
+| UF5 running result over saved stations            | › UF5                                                                                                    | pass   |
+| UF6 fresh form                                    | › UF6                                                                                                    | pass   |
+| UF7 shoot-off continues after a saved shoot-off   | › UF7                                                                                                    | pass   |
+| UF8 shoot-off saved, or dropped when empty        | › UF8                                                                                                    | pass   |
+| UF9 only a station that will be saved counts      | › UF9                                                                                                    | pass   |
+| UF10 no ordinary station after a saved shoot-off  | › UF10                                                                                                   | pass   |
+| UF11 Hits 0 is a result, unchosen is blank (R8)   | › UF11                                                                                                   | pass   |
+| WK2, WK3 fält for either kind (R9)                | `web/src/entry/kinds.test.ts` › WK2, WK3                                                                 | pass   |
+| WK11 buildEntry: fält stations, rounds, tags (R9) | › WK11                                                                                                   | pass   |
+| Must NOT N1 no browser storage                    | #669's `web/src/entry/save.test.ts` › N1 greps every entry module                                        | pass   |
+| Must NOT N2 no endpoint/protocol change           | FE11, WF1; no backend source changed                                                                     | pass   |
+| Must NOT N3 no NOT NULL as null                   | AF1, AF2                                                                                                 | pass   |
+| Must NOT N4 only session, stations, firearm       | FE1, FE7, FE12                                                                                           | pass   |
+| Must NOT N5 no impossible scoring station         | FE6, S1                                                                                                  | pass   |
+| Must NOT N6 phone behaviour unchanged             | `app/src/db/queries/falt.test.ts` unchanged; `isBlankStation` and S5 unchanged (R8 adds a web-only rule) | pass   |
+| Must NOT N7 #669 behaviour unchanged              | #669's test files unchanged; `pnpm check` green. #718's WK2, WK3 rewritten by R9                         | pass   |
 
 The phone's station screen (`app/src/app/session/[id]/station/[pos].tsx`)
 now calls the moved rules; it has no automated test, so its unchanged
 behaviour rests on S1–S5 pinning the rules it used to hold inline and on
 `pnpm typecheck:app`. It was not run on the emulator.
 
-## Gauntlet (final fresh run, after the last code edit)
+## Gauntlet (final fresh run)
 
-| Layer                  | Command                                                                                                                                          | Result                                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tests (vitest)         | `pnpm check`                                                                                                                                     | 197 files, 3210 passed, 0 failed                                                                                              |
-| Tests (jest, app)      | `pnpm check`                                                                                                                                     | 63 suites, 712 passed                                                                                                         |
-| Types                  | `pnpm check` (`typecheck`, `typecheck:app`, `typecheck:web`)                                                                                     | 0 errors                                                                                                                      |
-| Lint + format          | `pnpm check` (`lint`, `format`)                                                                                                                  | 0 problems                                                                                                                    |
-| Coverage               | `pnpm check` (`vitest run --coverage`, threshold 100 on the `mutate` list)                                                                       | 100% statements, branches, functions, lines; the new `falt-station.ts`, `falt-entry.ts`, `falt-model.ts` each 100/100/100/100 |
-| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts" --concurrency 2` | 408 killed / 412 (99.03%); 4 survivors, all equivalent (below)                                                                |
-| Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                               | 21 files, 202 passed (WF1, WF2 among them)                                                                                    |
-| i18n                   | `pnpm i18n:check`                                                                                                                                | 1281 keys each, 0 issues                                                                                                      |
-| Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                         | 26 pages current; no dangling anchors; built                                                                                  |
-| Real execution         | the page against `wrangler dev` (below)                                                                                                          | saved and pulled back as specified                                                                                            |
-| Supply chain           | —                                                                                                                                                | no dependency added or removed; the license list is unchanged                                                                 |
+| Layer                  | Command                                                                                                                                                                 | Result                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Tests (vitest)         | `pnpm check`                                                                                                                                                            | 205 files, 3311 passed, 0 failed                                        |
+| Tests (jest, app)      | `pnpm check`                                                                                                                                                            | 66 suites, 726 passed                                                   |
+| Types                  | `pnpm check` (`typecheck`, `typecheck:app`, `typecheck:web`)                                                                                                            | 0 errors                                                                |
+| Lint + format          | `pnpm check` (`lint`, `format`)                                                                                                                                         | 0 problems                                                              |
+| Coverage               | `pnpm check` (`vitest run --coverage`, threshold 100 on the `mutate` list)                                                                                              | 100% statements (4191), branches (2727), functions (1008), lines (3557) |
+| Mutation               | `npx stryker run --mutate "shared/src/scoring/falt-station.ts,shared/src/sync-client/falt-entry.ts,web/src/entry/falt-model.ts,web/src/entry/kinds.ts" --concurrency 2` | 481 killed / 486 (98.97%); 5 survivors, all equivalent (below)          |
+| Backend (Workers pool) | `cd backend && npx vitest run --testTimeout=60000`                                                                                                                      | 23 files, 206 passed (WF1, WF2 among them)                              |
+| i18n                   | `pnpm i18n:check`                                                                                                                                                       | 1286 keys each, 0 issues                                                |
+| Docs                   | `node scripts/docs-translation-check.mjs`, `node scripts/docs-anchor-check.mjs`, `mkdocs build --strict`                                                                | 26 pages current; no dangling anchors; built                            |
+| Real execution         | the page against `wrangler dev` (below)                                                                                                                                 | saved and pushed as specified                                           |
+| Supply chain           | —                                                                                                                                                                       | no dependency added or removed; the license list is unchanged           |
+
+Per module (killed / mutants, from Stryker's table): `falt-station.ts`
+183/184, `falt-entry.ts` 107/107, `falt-model.ts` 131/134, `kinds.ts` 60/61.
 
 ### Surviving mutants, argued equivalent
 
@@ -101,10 +113,26 @@ behaviour rests on S1–S5 pinning the rules it used to hold inline and on
   `stations.at(-1).isShootOff`. The optional chain matters only for an empty
   list, and then `lastKept(falt) !== undefined` is already false and
   short-circuits the `&&` before it is reached.
+- `kinds.ts` `finalOffered`: `form.programId === null` → `false`. #718's
+  line, not changed here: `getProgram(null)` is undefined, so the result is
+  the same.
 
 ## Real execution
 
-`wrangler dev` on port 8797 serving the built web app, a synthetic account
+**R8 and R9 (state `e8281cfb`).** `wrangler dev` on port 8817 serving the web
+app built from this tree, local D1/R2, a synthetic account
+(`@example.test`). Headless Chromium: Fältskjutning chosen under Scored
+Series (offered there since R9). Station 1 had 6 hits on 3 of 3 figures.
+Station 2 had Hits **0** chosen and nothing else. Station 3 was left
+untouched, with Hits at "–". The total read "6 (12) hits / 3 figures"; only
+station 3 was marked "Not saved: nothing entered.". Save said "Saved.". The
+push carried two `falt_stations`: `[1, 6, 3, 3]` and `[2, 0, 0, null]`
+(position, hits, figures hit, figure count). The Sessions page showed the
+same result. No console errors. Screenshots in
+`/home/jimisola/tmp/qa/fix-shots/688/`, not in the repo; the server was
+stopped afterwards.
+
+**Before R8.** `wrangler dev` on port 8797 serving the built web app, a synthetic account
 (`@example.invalid`) seeded with one firearm at round count 100. A competition
 fält session typed in the page: station 1 six hits on three of four figures,
 station 2 five hits on two figures with 7 of 10 points, station 3 scratched,
@@ -183,6 +211,8 @@ None.
     killed of 412. Fixed.
   - Mapping: the failure-model row overclaimed UF7 and UF9; UF10 now backs it.
 - Canary: not run.
+- R8 (the maintainer's ruling on C3) and R9 (the rebase onto #716/#718) came
+  after both rounds and were seen by neither.
 - Round 1's fixes were seen by round 2. Fixed after the last verified state
   (`8efed94c`), therefore unverified: round 2's F1, F2, F3, D1 and the mapping
   row. A third round needs the maintainer's approval.
@@ -196,6 +226,12 @@ it calls and on the one browser run above.
 ## Honest notes
 
 - Spec revisions R1–R4 from the build, R5 from the maintainer's phone ruling,
-  R6 from verification round 1.
+  R6 from verification round 1, R7 from round 2, R8 from the maintainer's
+  ruling on C3, R9 from the rebase.
+- R8 changed assertions in FE3 (its fixture's default row is now Hits not
+  chosen), UF6, UF8 and AF2, because the rule they pinned changed. No
+  assertion was loosened: AF2 now also checks a saved all-miss station.
+- R9 rewrote #718's WK2 and WK3: they pinned "fält only as rounds", the
+  stopgap #718's own C5 tied to this PR.
 - The first browser check failed on layout (R2), the only defect found
   outside the test suite.
