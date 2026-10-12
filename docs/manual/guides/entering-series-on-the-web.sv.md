@@ -9,7 +9,8 @@ pappersloggbok. Logga in och öppna **Mata in serier** i menyn till vänster.
 Fälten är telefonens formulär för nytt pass: typ, loggning, reglemente, gren,
 matchupplägg, datum och tid, namn och plats, sedan tävlingsfälten, vapen och
 ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda börjar
-på nu.
+på nu. Ett datum före 1900 eller senare än i morgon avvisas, som ett skrivfel
+snarare än ett pass.
 
 Klass och ISSF-gren utgår från profilen du har angett under **Inställningar →
 Personligt** i telefonen, som synken för över till kontot: födelseår, klass
@@ -25,7 +26,8 @@ efter vapengrupp och klass i en tävling. Se
 Välj **Bara antal skott** under **Loggning** för att föra in hur många skott
 du sköt, utan serier. Passets fält finns kvar; **Avlossade skott** ersätter
 matchupplägget och serieraderna. Lämna fältet tomt om du inte vet antalet.
-Annat än ett heltal avvisas innan något skickas.
+Annat än ett heltal från 0 till 10 000 avvisas innan något skickas; telefonen
+tar samma intervall.
 
 ## Skriv serierna
 
@@ -38,11 +40,17 @@ En rad per serie. Skriv skotten med mellanslag emellan:
 | `10.4`     | decimalräkning: 10,4       |
 | `X.6`      | decimalräkning: inner 10,6 |
 
-`x` fungerar lika bra som `X`, och `10,4` lika bra som `10.4`. Varje rad visar
-sin summa och sina innertior medan du skriver.
+`x` fungerar lika bra som `X`, och `10,4` lika bra som `10.4`. Med
+decimalräkning behöver varje skott sin tiondel: skriv `9.0` för en nia, `0.0`
+för en bom och `X.0` för en innertia på linjen; en ensam `9` eller `X`
+avvisas, och meddelandet säger varför. Varje rad visar sin summa och sina
+innertior medan du skriver.
+
+Ett pass behöver minst ett skott: är alla rader tomma säger **Spara** det och
+skickar ingenting.
 
 - **Enter** går till nästa rad; i fritt format lägger Enter i sista raden till en rad.
-- **Tab** och **Skift+Tab** flyttar mellan fälten.
+- **Tab** och **Skift+Tab** flyttar mellan fälten, **Provserie** inräknad.
 - **Ctrl+Enter** (**Cmd+Enter** på Mac) gör det knappen under raderna gör.
 
 Med **Hela matchen** vald läggs raderna ut som programmets serier, provserier

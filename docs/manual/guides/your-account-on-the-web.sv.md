@@ -66,7 +66,8 @@ säkerhetskopior — hör till varje telefon och finns inte på webben.
 ## Inloggade enheter
 
 Alla telefoner och webbläsare som är inloggade på kontot, med när de loggade
-in och när de senast var aktiva. **Logga ut** bredvid en enhet avslutar dess
+in och när de senast var aktiva, på minuten, så att två inloggningar från samma
+webbläsare går att skilja åt. **Logga ut** bredvid en enhet avslutar dess
 session; enheten måste logga in igen innan den kan synka. Använd det för en
 telefon du inte längre har. En webbläsare försvinner från listan av sig själv
 12 timmar efter att den loggade in.

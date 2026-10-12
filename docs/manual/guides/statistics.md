@@ -73,3 +73,15 @@ each with the question it answers. Tap one to scroll straight to it.
 
 A **Shots per Series** filter leaves fält sessions out: a fält round has
 stations, not series, so it has no series length to match.
+
+## On the web
+
+With sync on, **Statistics** in the web app shows the same report from the
+same numbers. The filters sit in a column beside it and apply as you change
+them, so there is no **Generate Report**. They stay as you left them while you
+move between the web app's pages, and start afresh when you sign out or close
+the tab. A record's session name opens that session.
+
+The web report has no **Tags** filter, no **Export JSON** and no **Where Your
+Shots Land** heat map; use the phone for those. A custom range whose **From**
+is after its **To** matches nothing, and the page says so.

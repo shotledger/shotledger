@@ -9,7 +9,8 @@ Sign in, then open **Enter Series** in the menu on the left.
 The fields are the phone's new-session form: type, logging, regulation,
 discipline, match format, date and time, name and location, then the competition fields,
 firearm and ammo lot. Date and time are when you shot, in this computer's time
-zone; both start at now.
+zone; both start at now. A date before 1900 or later than tomorrow is refused,
+as a typo rather than a session.
 
 Your class and ISSF event start from the profile you set in **Settings →
 Personal** on the phone, which sync carries to the account: your birth year,
@@ -25,7 +26,8 @@ See [Weapon group and class](../reference/weapon-group-and-class.md).
 Set **Logging** to **Rounds Only** to record how many rounds you fired, with
 no series. The session fields stay; **Rounds Fired** takes the place of the
 match format and the series rows. Leave it empty if you do not know the
-count. Anything but a whole number is refused before anything is sent.
+count. Anything but a whole number from 0 to 10,000 is refused before anything
+is sent; the phone takes the same range.
 
 ## Type the series
 
@@ -38,11 +40,16 @@ One row per series. Type the shots with a space between them:
 | `10.4`     | decimal scoring: 10.4       |
 | `X.6`      | decimal scoring: inner 10.6 |
 
-`x` works as well as `X`, and `10,4` as well as `10.4`. Each row shows its
-total and its inner tens as you type.
+`x` works as well as `X`, and `10,4` as well as `10.4`. With decimal scoring
+every shot needs its tenth: type `9.0` for a nine, `0.0` for a miss and
+`X.0` for an inner ten on the line; a bare `9` or `X` is refused, and the
+message says so. Each row shows its total and its inner tens as you type.
+
+A session needs at least one shot: with every row empty, Save says so and
+sends nothing.
 
 - **Enter** moves to the next row; in free format, Enter in the last row adds one.
-- **Tab** and **Shift+Tab** move between the fields.
+- **Tab** and **Shift+Tab** move between the fields, **Sighter** included.
 - **Ctrl+Enter** (**Cmd+Enter** on a Mac) does what the button below the rows does.
 
 With **Full Match** chosen, the rows are laid out as the program's series,
