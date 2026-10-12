@@ -31,6 +31,7 @@ import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
 import { resolveSeriesLength } from './series-length';
 import { sessionInnerTens } from './session-inner-tens';
+import { stageStats, type StageStats } from './stage-stats';
 
 export interface SeriesRow {
   id: string;
@@ -58,6 +59,8 @@ export interface SessionDetail {
   results: SessionResults;
   /** One subtotal per program stage, in order — helmatch's A, B, C; empty for most. */
   stageSubtotals: StageSubtotal[];
+  /** Total, series count and average per program stage; empty for most. */
+  stageStats: StageStats[];
   /** Mean of the scored series' totals, in tenths — the header's "snitt/serie". */
   seriesAverageTenths: number | null;
   /** Innertior (centrumtia count) in the scored series (spec A-S7). */
@@ -93,6 +96,7 @@ const EMPTY: SessionDetail = {
   seriesRows: [],
   results: { beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false },
   stageSubtotals: [],
+  stageStats: [],
   seriesAverageTenths: null,
   innerTenCount: 0,
   innerTenAverage: null,
@@ -180,13 +184,22 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       : null,
   }));
   const results = sessionResults(forResults);
+  const stages = program ? programStages(program) : [];
 
   return {
     session,
     program,
     seriesRows,
     results,
-    stageSubtotals: program ? stageSubtotals(programStages(program), seriesRows) : [],
+    stageSubtotals: stageSubtotals(stages, seriesRows),
+    stageStats: stageStats(
+      stages,
+      forResults.map((entry, index) => ({
+        ...entry,
+        stage: seriesRows[index]!.stage,
+        totalTenths: seriesRows[index]!.totalTenths,
+      })),
+    ),
     seriesAverageTenths: seriesAverageTenths(forResults),
     innerTenCount: sessionInnerTens(session.innerTenCount, forResults),
     innerTenAverage: seriesInnerTenAverage(forResults),

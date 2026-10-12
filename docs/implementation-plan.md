@@ -776,6 +776,9 @@ shoots three faces, so program groups carry their own face (§6.3).
       Records' best session and the report's best session; a helmatch
       competition records its official standardmedalj by hand, since the
       medal is placement-only (C.5.1.1.7) and never computed.
+- [x] **Stats per stage** (#730). A staged program's session detail shows
+      each delmoment's scored series count, total and average per series,
+      sighters excluded; a program without stages shows nothing new.
 
 **Deferred to v2+:** all ISSF disciplines (10m air pistol, 25m pistol,
 25m standard, 50m pistol — defaults need VERIFY then). Community adds

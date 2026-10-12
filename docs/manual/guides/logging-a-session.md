@@ -153,8 +153,13 @@ For a championship format the total is split into **before final** and
 A **Full Match** of Nationell helmatch arrives as three parts of four series:
 **A · Precision** on the precision target, **B · Rapid Fire** on the rapid-fire
 target, and **C · Figure Shooting** on the figure target at 18, 16, 14 and 12
-seconds. A has a sighter before it and so has B; C has none. The summary shows
-each part's subtotal above the total, out of 200 each and 600 in all.
+seconds. A has a sighter before it and so has B; C has none. The total is out of
+600, 200 for each part.
+
+Under the summary, **Per Stage** shows each part on its own row: how many of its
+series are scored, its total and its average per series. Sighters never count,
+and a part you have not shot yet shows 0 and a dash. A program without parts
+does not show it.
 
 When two of your helmatch results are equal, the higher C ranks first, then the
 higher B — the rule book's order. A is never used. Records and the statistics
