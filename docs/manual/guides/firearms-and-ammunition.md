@@ -49,10 +49,12 @@ A firearm accumulates:
 - **Round count**, from the sessions you log against it — every shot fired,
   counted [the same way everywhere](../explanation/how-shots-are-counted.md).
   Deleting a session backs its rounds out again. **Adjust Round Count** on the
-  firearm corrects a counter that is off.
+  firearm corrects a counter that is off: a whole number of rounds, with a
+  minus sign to take rounds away, and a reason.
 - **Maintenance** — cleanings and work done, with the round count at the time.
   Each entry shows its date and the note you wrote; a round-count adjustment
-  shows its reason.
+  shows the amount it moved the counter by and its reason ("+10 · Club rental
+  rounds").
   Set a **Maintenance Interval** and the phone notifies you once when
   **Rounds Since Maintenance** reaches it, whatever brought the rounds in: a
   saved series, a rounds-only session, an import or **Adjust Round Count**. It

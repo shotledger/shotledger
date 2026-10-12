@@ -69,7 +69,7 @@ describe('adjustFirearmRoundCount', () => {
     const events = listMaintenanceEvents(db, firearm.id);
     expect(events).toHaveLength(1);
     expect(events[0]?.kind).toBe('adjustment');
-    expect(events[0]?.notes).toBe('Counted a box bought used');
+    expect(events[0]?.notes).toBe('+50 · Counted a box bought used');
     expect(events[0]?.roundCountAt).toBe(150);
   });
 
@@ -78,6 +78,13 @@ describe('adjustFirearmRoundCount', () => {
     const updated = adjustFirearmRoundCount(db, firearm.id, -50, 'correction');
     expect(updated?.roundCount).toBe(0);
     expect(updated?.roundsSinceMaintenance).toBe(0);
+  });
+
+  it('records the amount the counter actually moved, after clamping', () => {
+    const firearm = createFirearm(db, { make: 'A', model: '1' });
+    applyRoundCountDelta(db, firearm.id, 20);
+    adjustFirearmRoundCount(db, firearm.id, -50, 'correction');
+    expect(listMaintenanceEvents(db, firearm.id)[0]?.notes).toBe('\u221220 · correction');
   });
 
   it('returns undefined for an unknown firearm', () => {
