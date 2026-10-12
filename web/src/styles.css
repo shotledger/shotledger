@@ -182,6 +182,15 @@ h3 {
   border-bottom: 1px solid var(--border);
 }
 
+.record a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.record a:hover {
+  text-decoration: underline;
+}
+
 .record:last-child {
   border-bottom: none;
 }
@@ -440,6 +449,8 @@ button.destructive {
   display: grid;
   gap: 16px;
   max-width: 900px;
+  /* A long unbroken name or location wraps instead of widening the page. */
+  overflow-wrap: anywhere;
 }
 
 .session-detail .counts:last-child {
@@ -756,7 +767,7 @@ fieldset.field legend {
 }
 
 .field.check,
-.series-row .check {
+.series-rows .series-row .check {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -772,19 +783,20 @@ fieldset.field legend {
   display: none;
 }
 
-.series-row > h3 {
+.series-rows .series-row > h3 {
   grid-column: 1 / -1;
   margin: 8px 0 0;
 }
 
-.series-row {
+/* Scoped to Enter Series: the session detail's rows share the class name (QA #747). */
+.series-rows .series-row {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) 110px 100px;
   align-items: center;
   gap: 12px;
 }
 
-.series-row .shots {
+.series-rows .series-row .shots {
   font:
     16px ui-monospace,
     monospace;
@@ -959,7 +971,7 @@ fieldset.field legend {
 }
 
 @media (max-width: 720px) {
-  .series-row {
+  .series-rows .series-row {
     grid-template-columns: 72px minmax(0, 1fr);
   }
 
@@ -1138,6 +1150,25 @@ fieldset.field legend {
   outline: none;
 }
 
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--primary);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+main:focus {
+  outline: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1164,19 +1195,19 @@ fieldset.field legend {
   }
 
   .sidebar nav {
+    flex-basis: 100%;
     padding: 8px;
   }
 
+  /* Three even columns rather than a ragged wrap (QA #747). */
   .sidebar ul {
-    display: flex;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .sidebar li.group-start {
-    margin: 0 0 0 4px;
-    padding: 0 0 0 4px;
+    margin: 0;
+    padding: 0;
     border-top: none;
-    border-left: 1px solid var(--border);
   }
 
   .version,
