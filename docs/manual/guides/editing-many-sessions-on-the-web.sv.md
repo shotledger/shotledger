@@ -16,12 +16,12 @@ sedan filtrerade bort lämnas orörda.
 
 ## Välj ändring
 
-| Ändring        | Vad den gör                                                                     |
-| -------------- | ------------------------------------------------------------------------------- |
-| Lägg till tagg | Lägger till taggen på varje pass. Ett namn du inte använt förut blir en ny tagg |
-| Ta bort tagg   | Tar bort en av de markerade passens taggar från vart och ett av dem             |
-| Byt vapen      | Sätter vapnet, eller **Ingen**                                                  |
-| Byt plats      | Sätter platsen. En tom plats rensar den                                         |
+| Ändring        | Vad den gör                                                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Lägg till tagg | Lägger till taggen på varje pass, oavsett stora och små bokstäver (`km` lägger till `KM`). Ett namn du inte använt förut blir en ny tagg |
+| Ta bort tagg   | Tar bort en av de markerade passens taggar från vart och ett av dem                                                                      |
+| Byt vapen      | Sätter vapnet, eller **Ingen**                                                                                                           |
+| Byt plats      | Sätter platsen. En tom plats rensar den                                                                                                  |
 
 **Byt vapen** flyttar skottantalen med passen, som när du ändrar ett pass i
 telefonen: varje pass skott (provskott inräknade), dess oräknade extraskott och
