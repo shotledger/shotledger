@@ -37,6 +37,13 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     series: [],
     faltResultMode: null,
     stations: [],
+    kind: 'series',
+    tenCount: null,
+    innerTenCount: null,
+    externalSource: null,
+    externalRef: null,
+    officialPlacement: null,
+    officialStandardMedal: null,
     ...overrides,
   };
 }
@@ -104,10 +111,23 @@ describe('exportSessionsToJson', () => {
       'location',
       'notes',
       'extraRounds',
+      'tenCount',
+      'innerTenCount',
+      'externalSource',
+      'externalRef',
+      'officialPlacement',
+      'officialStandardMedal',
     ]) {
       expect(raw.sessions[0]).toHaveProperty(key);
       expect(raw.sessions[0]![key]).toBeNull();
     }
+  });
+
+  it('writes the session kind on every session (#756)', () => {
+    const raw = JSON.parse(
+      exportSessionsToJson([session(), session({ id: 's2', kind: 'rounds' })], OPTIONS),
+    ) as { sessions: SessionExport[] };
+    expect(raw.sessions.map((s) => s.kind)).toEqual(['series', 'rounds']);
   });
 
   it('C6: an empty tag list stays an array, not null', () => {

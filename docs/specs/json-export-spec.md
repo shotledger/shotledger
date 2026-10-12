@@ -129,6 +129,48 @@ session, reported as `invalid-firearm` / `invalid-license`.
 
 ---
 
+## 1.5 Revision 5 — what the file is for, and the fields it was dropping (issue #756)
+
+**What this file is for.** The sessions export is the _interchange_ format:
+every session with its series, shots and stations, and the firearms and
+licenses behind them, in a documented shape that something else can read and
+that merges into an install that already has data. Everything else — settings,
+photos, maintenance, the document vault — travels only in the backup bundle,
+which is the exact copy of the database (`backup-export-spec.md`). A field
+belongs here when losing it in export → wipe → import changes what a session
+_is_ or makes a later import misbehave.
+
+Three groups failed that test and were not carried:
+
+- **`kind`** (`series` | `rounds`). Without it the import fell back to the
+  column default, so a rounds-only session came back as a series session with
+  `extraRounds` set and no series.
+- **`tenCount`, `innerTenCount`.** A ShotLog session is one total-only series
+  with no shot rows; these columns are its only record of its tens and inner
+  tens.
+- **`externalSource`, `externalRef`, `officialPlacement`,
+  `officialStandardMedal`.** A WebShooter or ShotLog re-import matches on
+  `externalRef`; without it, every session that came back through this file
+  was imported a second time.
+
+All seven are **additive and optional on read**: an absent `kind` reads as
+`series`, the rest as `null`. **`formatVersion` stays 1** (CLAUDE.md hard rule
+8). The import writes them on create and on update alike — an update replaces
+the session with the file's copy, as it does every other field.
+
+`webshooterCompetitionId` and `externalSyncedAt` stay out: the first is the
+competition part of `externalRef`, the second is refresh bookkeeping for this
+device.
+
+New criteria, each a named test: every field round-trips with a non-default
+value (`import.test.ts`, and P21 now generates all seven); a session written
+without them imports as a `series` session with each one `null`; an out-of-range
+value rejects only its session; and in the app, export → wipe → import writes
+each column back as it was and leaves the refs where a WebShooter or ShotLog
+import looks for them (`round-trip.test.ts`).
+
+---
+
 ## 2. The file format
 
 ```json

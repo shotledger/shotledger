@@ -18,7 +18,7 @@ import { createAmmoLot } from '../queries/ammo-lots';
 import { createFirearm, listFirearms } from '../queries/firearms';
 import { addLicense, listLicenses } from '../queries/licenses';
 import { addSeries, listSeriesForSession } from '../queries/series';
-import { createSession, sumExtraRounds } from '../queries/sessions';
+import { createSession, listExternalRefs, sumExtraRounds } from '../queries/sessions';
 import { addShot, countVolumeRounds } from '../queries/shots';
 import { addSessionTag, getOrCreateTag, listTagsForSession } from '../queries/tags';
 import { listAllStatsSeries } from '../queries/stats';
@@ -399,5 +399,93 @@ describe('a series saved as a total only (#563)', () => {
     applyImport(db, groups, records);
 
     expect(listFirearms(db)[0]?.roundCount).toBe(10);
+  });
+});
+
+describe('kind, ten counts and external refs survive export, wipe and import (#756)', () => {
+  function seedImported(db: Database) {
+    const rounds = createSession(db, {
+      name: 'Inskjutning',
+      type: 'training',
+      kind: 'rounds',
+      disciplineId: 'precision',
+      startedAt: '2026-08-21T09:00:00.000Z',
+    });
+    db.update(sessions).set({ extraRounds: 40 }).where(eq(sessions.id, rounds.id)).run();
+    const shotlog = createSession(db, {
+      name: 'ShotLog-resultat',
+      type: 'training',
+      disciplineId: 'precision',
+      startedAt: '2026-08-22T09:00:00.000Z',
+      tenCount: 11,
+      innerTenCount: 4,
+      externalSource: 'shotlog',
+      externalRef: 'shotlog:test-ref-1',
+    });
+    addSeries(db, {
+      sessionId: shotlog.id,
+      position: 1,
+      isTotalOverride: true,
+      totalOverrideTenths: 4500,
+      totalOverrideShotCount: null,
+    });
+    const webshooter = createSession(db, {
+      name: 'Webshooter-tävling',
+      type: 'competition',
+      disciplineId: 'precision',
+      startedAt: '2026-08-23T09:00:00.000Z',
+      externalSource: 'webshooter',
+      externalRef: 'webshooter:100:200',
+      officialPlacement: 2,
+      officialStandardMedal: 'guld',
+    });
+    return { rounds, shotlog, webshooter };
+  }
+
+  const columns = (db: Database) =>
+    db
+      .select({
+        id: sessions.id,
+        kind: sessions.kind,
+        extraRounds: sessions.extraRounds,
+        tenCount: sessions.tenCount,
+        innerTenCount: sessions.innerTenCount,
+        externalSource: sessions.externalSource,
+        externalRef: sessions.externalRef,
+        officialPlacement: sessions.officialPlacement,
+        officialStandardMedal: sessions.officialStandardMedal,
+      })
+      .from(sessions)
+      .orderBy(sessions.startedAt)
+      .all();
+
+  it('writes each column back as it was', () => {
+    const db = createTestDb();
+    seedImported(db);
+    const before = columns(db);
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { errors, groups, records } = dryRunImport(db, json);
+    expect(errors).toEqual([]);
+    applyImport(db, groups, records);
+
+    expect(columns(db)).toEqual(before);
+    expect(before.map((s) => s.kind)).toEqual(['rounds', 'series', 'series']);
+  });
+
+  it('leaves the refs where a later WebShooter or ShotLog import looks for them', () => {
+    const db = createTestDb();
+    const { shotlog, webshooter } = seedImported(db);
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    expect(listExternalRefs(db).filter((r) => r.externalRef !== null)).toEqual([
+      { id: shotlog.id, externalRef: 'shotlog:test-ref-1' },
+      { id: webshooter.id, externalRef: 'webshooter:100:200' },
+    ]);
   });
 });

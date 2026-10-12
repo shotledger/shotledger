@@ -93,6 +93,13 @@ describe('sessionExportsFromRows', () => {
       extraRounds: 2,
       faltResultMode: 'poangfalt',
       type: 'competition',
+      kind: 'rounds',
+      tenCount: 9,
+      innerTenCount: 3,
+      externalSource: 'webshooter',
+      externalRef: 'webshooter:1:2',
+      officialPlacement: 4,
+      officialStandardMedal: 'brons',
     });
     expect(sessionExportsFromRows({ ...empty, sessions: [row] })).toEqual([
       {
@@ -120,8 +127,28 @@ describe('sessionExportsFromRows', () => {
         series: [],
         faltResultMode: 'poangfalt',
         stations: [],
+        kind: 'rounds',
+        tenCount: 9,
+        innerTenCount: 3,
+        externalSource: 'webshooter',
+        externalRef: 'webshooter:1:2',
+        officialPlacement: 4,
+        officialStandardMedal: 'brons',
       },
     ]);
+  });
+
+  it('exports a source without the #756 columns as a series session with them null', () => {
+    const [exported] = sessionExportsFromRows({ ...empty, sessions: [session()] });
+    expect(exported).toMatchObject({
+      kind: 'series',
+      tenCount: null,
+      innerTenCount: null,
+      externalSource: null,
+      externalRef: null,
+      officialPlacement: null,
+      officialStandardMedal: null,
+    });
   });
 
   it('reads booleans as well as 0/1, and a missing result mode as null', () => {

@@ -59,6 +59,8 @@ export interface SessionExport {
   id: string;
   name: string;
   type: 'training' | 'competition';
+  /** `series` logs scored series; `rounds` only a shot count in `extraRounds`. */
+  kind: 'series' | 'rounds';
   disciplineId: string;
   programId: string | null;
   competitionLevel: string | null;
@@ -78,6 +80,10 @@ export interface SessionExport {
   startedAt: string;
   location: string | null;
   notes: string | null;
+  /** Tens and inner tens stored on the session; set only where no shot rows
+   *  exist to count them from (a ShotLog import), `null` otherwise. */
+  tenCount: number | null;
+  innerTenCount: number | null;
   decimalScoring: boolean;
   /** Shots per series chosen at creation; `null` means the program's or discipline's. */
   seriesLength: number | null;
@@ -87,6 +93,12 @@ export interface SessionExport {
   /** How a fält round is reported; `null` on any other discipline. */
   faltResultMode: 'falt' | 'poangfalt' | null;
   stations: StationExport[];
+  /** Where an imported session came from (`webshooter`, `shotlog`), or `null`. */
+  externalSource: string | null;
+  /** The source's own key, which a re-import matches on to update rather than duplicate. */
+  externalRef: string | null;
+  officialPlacement: number | null;
+  officialStandardMedal: 'none' | 'brons' | 'silver' | 'guld' | null;
 }
 
 /** A firearm, as the envelope carries it. Everything the firearms table holds
@@ -253,6 +265,15 @@ export const sessionExportSchema = z.object({
   type: z
     .enum(['training', 'competition'])
     .describe('Whether the session was training or a competition.'),
+  // The fields below that default were added after v1 shipped: a file written
+  // without them must still import (rule 8 — additive, no version bump).
+  kind: z
+    .enum(['series', 'rounds'])
+    .default('series')
+    .describe(
+      'What the session records: `series` logs scored series, `rounds` only a number of ' +
+        'rounds fired, held in `extraRounds`, and never has series.',
+    ),
   disciplineId: z
     .string()
     .min(1)
@@ -316,6 +337,23 @@ export const sessionExportSchema = z.object({
   startedAt: z.iso.datetime().describe('When the session started, ISO 8601.'),
   location: z.string().nullable().describe('Where it was shot, as free text.'),
   notes: z.string().nullable().describe("The session's notes."),
+  tenCount: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .default(null)
+    .describe(
+      'Tens recorded for the session itself. Set only where there are no shots to count ' +
+        'them from (a ShotLog import); null otherwise.',
+    ),
+  innerTenCount: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .default(null)
+    .describe('Inner tens (X) recorded for the session itself, on the same terms as `tenCount`.'),
   decimalScoring: z
     .boolean()
     .describe('Whether scores are decimal. Affects how `valueTenths` reads, never what it stores.'),
@@ -346,6 +384,37 @@ export const sessionExportSchema = z.object({
   stations: z
     .array(stationSchema)
     .describe('The fält stations of this session, in order. Empty on any other discipline.'),
+  externalSource: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe(
+      'Where an imported session came from, e.g. `webshooter` or `shotlog`. Null on a ' +
+        'session logged in the app.',
+    ),
+  externalRef: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe(
+      "The source's own key for the session. A later import from that source matches on it " +
+        'to update the session rather than add a second one.',
+    ),
+  officialPlacement: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .default(null)
+    .describe('Placement in the official results, as the organizer published it, or null.'),
+  officialStandardMedal: z
+    .enum(['none', 'brons', 'silver', 'guld'])
+    .nullable()
+    .default(null)
+    .describe(
+      'Standardmedalj in the official results, or null when none was published. Separate ' +
+        'from the medal the app computes itself.',
+    ),
 });
 
 export const firearmExportSchema = z.object({

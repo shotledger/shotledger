@@ -64,6 +64,15 @@
             ],
             "description": "Whether the session was training or a competition."
           },
+          "kind": {
+            "default": "series",
+            "description": "What the session records: `series` logs scored series, `rounds` only a number of rounds fired, held in `extraRounds`, and never has series.",
+            "type": "string",
+            "enum": [
+              "series",
+              "rounds"
+            ]
+          },
           "disciplineId": {
             "type": "string",
             "minLength": 1,
@@ -156,6 +165,34 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "tenCount": {
+            "default": null,
+            "description": "Tens recorded for the session itself. Set only where there are no shots to count them from (a ShotLog import); null otherwise.",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "innerTenCount": {
+            "default": null,
+            "description": "Inner tens (X) recorded for the session itself, on the same terms as `tenCount`.",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "decimalScoring": {
@@ -402,12 +439,61 @@
               "additionalProperties": false
             },
             "description": "The fält stations of this session, in order. Empty on any other discipline."
+          },
+          "externalSource": {
+            "default": null,
+            "description": "Where an imported session came from, e.g. `webshooter` or `shotlog`. Null on a session logged in the app.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "externalRef": {
+            "default": null,
+            "description": "The source's own key for the session. A later import from that source matches on it to update the session rather than add a second one.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "officialPlacement": {
+            "default": null,
+            "description": "Placement in the official results, as the organizer published it, or null.",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "officialStandardMedal": {
+            "default": null,
+            "description": "Standardmedalj in the official results, or null when none was published. Separate from the medal the app computes itself.",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "brons",
+                  "silver",
+                  "guld"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "name",
           "type",
+          "kind",
           "disciplineId",
           "programId",
           "competitionLevel",
@@ -422,13 +508,19 @@
           "startedAt",
           "location",
           "notes",
+          "tenCount",
+          "innerTenCount",
           "decimalScoring",
           "seriesLength",
           "extraRounds",
           "tags",
           "series",
           "faltResultMode",
-          "stations"
+          "stations",
+          "externalSource",
+          "externalRef",
+          "officialPlacement",
+          "officialStandardMedal"
         ],
         "additionalProperties": false,
         "title": "Session"

@@ -38,6 +38,13 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     series: [],
     faltResultMode: null,
     stations: [],
+    kind: 'series',
+    tenCount: null,
+    innerTenCount: null,
+    externalSource: null,
+    externalRef: null,
+    officialPlacement: null,
+    officialStandardMedal: null,
     ...overrides,
   };
 }
@@ -374,3 +381,64 @@ function omit<T extends object>(value: T, key: keyof T): Omit<T, keyof T> {
   const { [key]: _dropped, ...rest } = value;
   return rest;
 }
+
+describe('importSessionsFromJson — kind, ten counts and external refs (#756)', () => {
+  const ADDED = [
+    'kind',
+    'tenCount',
+    'innerTenCount',
+    'externalSource',
+    'externalRef',
+    'officialPlacement',
+    'officialStandardMedal',
+  ] as const;
+
+  it('round-trips each field with a non-default value', () => {
+    const input = [
+      session({ id: 'rounds', kind: 'rounds', extraRounds: 50 }),
+      session({
+        id: 'shotlog',
+        tenCount: 12,
+        innerTenCount: 4,
+        externalSource: 'shotlog',
+        externalRef: 'shotlog:2026-01-01:1',
+      }),
+      session({
+        id: 'webshooter',
+        type: 'competition',
+        externalSource: 'webshooter',
+        externalRef: 'webshooter:123:456',
+        officialPlacement: 3,
+        officialStandardMedal: 'silver',
+      }),
+    ];
+    const result = importSessionsFromJson(exportSessionsToJson(input, OPTIONS)) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions).toEqual(input);
+  });
+
+  it('a session written without them imports as a series session with each one null', () => {
+    const bare: Record<string, unknown> = { ...session() };
+    for (const key of ADDED) delete bare[key];
+    const result = importSessionsFromJson(
+      exportSessionsToJson([bare as unknown as SessionExport], OPTIONS),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions).toEqual([session()]);
+  });
+
+  it.each([
+    ['kind', 'both'],
+    ['tenCount', -1],
+    ['innerTenCount', 1.5],
+    ['officialPlacement', -1],
+    ['officialStandardMedal', 'gold'],
+    ['externalRef', 7],
+  ])('rejects the session when %s is %j', (key, value) => {
+    const result = importSessionsFromJson(
+      exportSessionsToJson([{ ...session(), [key]: value }], OPTIONS),
+    ) as ImportResult;
+    expect(result.sessions).toEqual([]);
+    expect(result.errors).toEqual([{ code: 'invalid-session', sessionIndex: 0, message: key }]);
+  });
+});

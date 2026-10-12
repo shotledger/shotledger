@@ -1,7 +1,8 @@
 // The export envelope's contents built from plain table rows, so the phone
 // (SQLite) and the web app (`/sync/pull`, ADR 0013) write the same file.
 // Rows are camelCase as Drizzle returns them, SQLite booleans as 0/1.
-// Callers pass live rows only.
+// Callers pass live rows only. A column a source may not carry is optional
+// here and exports as its default.
 import { firearmDisplayName } from './plan';
 import type { FirearmExport, LicenseExport, SessionExport } from './types';
 
@@ -28,6 +29,13 @@ export interface ExportSessionRow {
   readonly seriesLength: number | null;
   readonly extraRounds: number | null;
   readonly faltResultMode: SessionExport['faltResultMode'] | undefined;
+  readonly kind?: SessionExport['kind'];
+  readonly tenCount?: number | null;
+  readonly innerTenCount?: number | null;
+  readonly externalSource?: string | null;
+  readonly externalRef?: string | null;
+  readonly officialPlacement?: number | null;
+  readonly officialStandardMedal?: SessionExport['officialStandardMedal'];
 }
 
 export interface ExportSeriesRow {
@@ -122,6 +130,7 @@ export function sessionExportsFromRows(rows: SessionExportRows): SessionExport[]
         id: session.id,
         name: session.name,
         type: session.type,
+        kind: session.kind ?? 'series',
         disciplineId: session.disciplineId,
         programId: session.programId,
         competitionLevel: session.competitionLevel,
@@ -136,6 +145,8 @@ export function sessionExportsFromRows(rows: SessionExportRows): SessionExport[]
         startedAt: session.startedAt,
         location: session.location,
         notes: session.notes,
+        tenCount: session.tenCount ?? null,
+        innerTenCount: session.innerTenCount ?? null,
         decimalScoring: Boolean(session.decimalScoring),
         seriesLength: session.seriesLength,
         extraRounds: session.extraRounds,
@@ -166,6 +177,10 @@ export function sessionExportsFromRows(rows: SessionExportRows): SessionExport[]
           isShootOff: Boolean(station.isShootOff),
           note: station.note,
         })),
+        externalSource: session.externalSource ?? null,
+        externalRef: session.externalRef ?? null,
+        officialPlacement: session.officialPlacement ?? null,
+        officialStandardMedal: session.officialStandardMedal ?? null,
       };
     });
 }
