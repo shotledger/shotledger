@@ -2,7 +2,6 @@
 // sidebar, applied live, and the report's sections in a grid. Every number
 // comes from composeAnalyticsReport, the function the phone uses.
 import {
-  DEFAULT_ANALYTICS_FILTER,
   buildFilterOptions,
   composeAnalyticsReport,
   periodRange,
@@ -17,7 +16,7 @@ import type {
 } from '@shotledger/shared/src/scoring/session-type-comparison';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import type { TFunction } from 'i18next';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -57,11 +56,19 @@ function Card({ title, wide, children }: { title: string; wide?: boolean; childr
 
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
-export function Statistics({ tables }: { tables: PulledTables }) {
+export function Statistics({
+  tables,
+  filter,
+  onFilterChange: setFilter,
+}: {
+  tables: PulledTables;
+  /** Held by the app, so it outlives a visit to another page. */
+  filter: AnalyticsFilterState;
+  onFilterChange: (next: AnalyticsFilterState) => void;
+}) {
   const { t } = useTranslation();
   const inputs = useMemo(() => statsInputs(tables), [tables]);
   const options = useMemo(() => buildFilterOptions(inputs), [inputs]);
-  const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
   const data = useMemo(() => composeAnalyticsReport(filter, inputs), [filter, inputs]);
 
   if (!options.hasAnyData) {
@@ -78,10 +85,11 @@ export function Statistics({ tables }: { tables: PulledTables }) {
   const colors = CHART_LINE_COLORS[prefersDark() ? 'dark' : 'light'];
   const label = (id: string) => disciplineLabel(t, id);
   const range = periodRange(filter);
-  const chart: ChartRenderer = (points, pick, formatValue) => {
+  const chart: ChartRenderer = (chartLabel, points, pick, formatValue) => {
     const grouped = groupByDiscipline(points, pick, label, colors);
     return (
       <LineChart
+        label={chartLabel}
         grouped={grouped}
         formatValue={formatValue}
         formatDate={formatShortDate}
@@ -123,6 +131,7 @@ export function Statistics({ tables }: { tables: PulledTables }) {
 }
 
 type ChartRenderer = <P extends DisciplinePoint>(
+  label: string,
   points: readonly P[],
   pick: (point: P) => number | null,
   formatValue: (value: number) => string,
@@ -147,9 +156,9 @@ function Sections({
         <span>
           {name}
           <br />
-          <span className="muted">
-            {entry.sessionName} · {formatDate(entry.startedAt)}
-          </span>
+          {/* Opens the session it came from, as the phone's record does. */}
+          <a href={`#sessions/${encodeURIComponent(entry.sessionId)}`}>{entry.sessionName}</a>
+          <span className="muted"> · {formatDate(entry.startedAt)}</span>
         </span>
         <strong>{value}</strong>
       </div>
@@ -224,6 +233,7 @@ function Sections({
           </div>
           <h3>{t('stats.chartFaltHitsPerStation')}</h3>
           {chart(
+            t('stats.chartFaltHitsPerStation'),
             data.falt.points,
             (p) => p.hitsPerStation,
             (v) => v.toFixed(1),
@@ -235,6 +245,7 @@ function Sections({
         <>
           <Card title={t('stats.chartSessionScore')} wide>
             {chart(
+              t('stats.chartSessionScore'),
               data.points,
               (p) => (p.scoredSeriesCount === 0 ? null : p.sessionTotalTenths),
               (v) => score(v, 0),
@@ -242,6 +253,7 @@ function Sections({
           </Card>
           <Card title={t('stats.chartSeriesMean')}>
             {chart(
+              t('stats.chartSeriesMean'),
               data.points,
               (p) => p.meanSeriesTotalTenths,
               (v) => score(v, 0),
@@ -249,6 +261,7 @@ function Sections({
           </Card>
           <Card title={t('stats.chartShotMean')}>
             {chart(
+              t('stats.chartShotMean'),
               data.points,
               (p) => p.meanShotTenths,
               (v) => score(v),
@@ -258,7 +271,7 @@ function Sections({
             {data.distribution.length === 0 ? (
               <p className="muted">{t('stats.distributionEmpty')}</p>
             ) : (
-              <BarChart buckets={data.distribution} />
+              <BarChart label={t('stats.distributionTitle')} buckets={data.distribution} />
             )}
           </Card>
           {data.typeComparison.length > 0 && <TypeComparison rows={data.typeComparison} t={t} />}
@@ -362,6 +375,7 @@ function SighterRelations({ entries, t }: { entries: readonly SighterRelation[];
           <div key={entry.disciplineId}>
             <h3>{disciplineLabel(t, entry.disciplineId)}</h3>
             <ScatterPlot
+              label={`${t('stats.sighterRelationTitle')}: ${disciplineLabel(t, entry.disciplineId)}`}
               points={entry.points.map((p) => ({
                 key: p.sessionId,
                 x: p.sighterMeanShotTenths,

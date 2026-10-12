@@ -1,3 +1,7 @@
+import {
+  DEFAULT_ANALYTICS_FILTER,
+  type AnalyticsFilterState,
+} from '@shotledger/shared/src/analytics-rows';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +11,7 @@ import { BulkEdit } from './bulk/bulk';
 import { Entry } from './entry/entry';
 import { type PulledTables } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
-import { routeFromHash, type Route } from './shell/route';
+import { replacementHash, routeFromHash, type Route } from './shell/route';
 import { Shell } from './shell/shell';
 import { NO_PICKS, picksOf, withPicks, type Picks } from './sessions/picks';
 import { Sessions } from './sessions/sessions';
@@ -31,9 +35,22 @@ export function App() {
     hasSession() ? { kind: 'loading', rows: 0 } : { kind: 'signedOut' },
   );
   const [route, setRoute] = useState<Route>(() => routeFromHash(window.location.hash));
+  // An address no page answers is shown as Statistics, so the bar says #statistics.
+  useEffect(() => {
+    const fix = () => {
+      const replacement = replacementHash(window.location.hash);
+      if (replacement !== null) window.history.replaceState(null, '', replacement);
+    };
+    fix();
+    window.addEventListener('hashchange', fix);
+    return () => window.removeEventListener('hashchange', fix);
+  }, []);
   const { page } = route;
   const [email, setEmail] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<LoadedAccount>({ userId: null, generation: 0 });
+  // The Statistics filters stay while you move between pages (statistics.md);
+  // signing out or in as another account starts them afresh.
+  const [statsFilter, setStatsFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -84,6 +101,7 @@ export function App() {
   const onReauthenticated = (userId: string): ReauthOutcome => {
     const { outcome, next } = afterReauth(loaded, userId);
     if (outcome === 'switched') {
+      setStatsFilter(DEFAULT_ANALYTICS_FILTER);
       setLoaded(next);
       setEmail(null);
       setState({ kind: 'loading', rows: 0 });
@@ -116,6 +134,7 @@ export function App() {
 
   const onSignOut = () => {
     setPicks(NO_PICKS);
+    setStatsFilter(DEFAULT_ANALYTICS_FILTER);
     void signOut().then(() => setState({ kind: 'signedOut' }));
   };
 
@@ -151,7 +170,12 @@ export function App() {
         />
       )}
       {state.kind === 'ready' && page === 'statistics' && (
-        <Statistics key={generation} tables={state.tables} />
+        <Statistics
+          key={generation}
+          tables={state.tables}
+          filter={statsFilter}
+          onFilterChange={setStatsFilter}
+        />
       )}
       {state.kind === 'ready' && page === 'entry' && (
         <Entry
@@ -183,6 +207,7 @@ export function App() {
           tables={state.tables}
           onDeleted={() => {
             setPicks(NO_PICKS);
+            setStatsFilter(DEFAULT_ANALYTICS_FILTER);
             setState({ kind: 'deleted' });
           }}
         />

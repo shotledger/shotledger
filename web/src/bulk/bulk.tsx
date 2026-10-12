@@ -206,6 +206,11 @@ export function BulkEdit({
             onChange={(event) => edit(() => setFilter({ ...filter, to: event.target.value }))}
           />
         </label>
+        {filter.from !== '' && filter.to !== '' && filter.from > filter.to && (
+          <p className="danger bulk-range" role="alert">
+            {t('web.rangeReversed')}
+          </p>
+        )}
         <label className="field">
           {t('sessions.searchLabel')}
           <input

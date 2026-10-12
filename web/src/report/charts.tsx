@@ -31,12 +31,15 @@ function useWidth<T extends HTMLElement>(fallback: number) {
 const PAD = { left: 48, right: 16, top: 12, bottom: 28 };
 
 export function LineChart({
+  label,
   grouped,
   formatValue,
   formatDate,
   emptyLabel,
   omittedLabel,
 }: {
+  /** The chart's accessible name: what it plots. */
+  label: string;
   grouped: GroupedLines;
   formatValue: (value: number) => string;
   formatDate: (iso: string, withYear: boolean) => string;
@@ -66,7 +69,7 @@ export function LineChart({
 
   return (
     <figure className="chart" ref={ref}>
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img">
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={label}>
         {ticks.map((tick) => (
           <g key={tick}>
             <line className="grid" x1={PAD.left} x2={WIDTH - PAD.right} y1={y(tick)} y2={y(tick)} />
@@ -113,10 +116,16 @@ export function LineChart({
   );
 }
 
-export function BarChart({ buckets }: { buckets: readonly { value: number; count: number }[] }) {
+export function BarChart({
+  label,
+  buckets,
+}: {
+  label: string;
+  buckets: readonly { value: number; count: number }[];
+}) {
   const max = Math.max(...buckets.map((b) => b.count), 1);
   return (
-    <div className="bars">
+    <div className="bars" role="img" aria-label={label}>
       {buckets.map((bucket) => (
         <div key={bucket.value} className="bar">
           <span className="bar-count">{bucket.count}</span>
@@ -129,11 +138,13 @@ export function BarChart({ buckets }: { buckets: readonly { value: number; count
 }
 
 export function ScatterPlot({
+  label,
   points,
   xLabel,
   yLabel,
   formatValue,
 }: {
+  label: string;
   points: readonly { key: string; x: number; y: number }[];
   xLabel: string;
   yLabel: string;
@@ -154,7 +165,7 @@ export function ScatterPlot({
   const sy = (v: number) => size - pad - ((v - y0) / (y1 - y0)) * (size - 2 * pad);
   return (
     <figure className="chart scatter">
-      <svg viewBox={`0 0 ${size} ${size}`} role="img">
+      <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
         <line className="grid" x1={pad} x2={size - pad} y1={size - pad} y2={size - pad} />
         <line className="grid" x1={pad} x2={pad} y1={pad} y2={size - pad} />
         <text className="axis" x={size / 2} y={size - 6} textAnchor="middle">
