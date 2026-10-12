@@ -5,6 +5,7 @@ import {
   clampFiguresHit,
   figuresHitRange,
   isBlankStation,
+  isUnenteredStation,
   stationPoints,
   stationProblem,
 } from './falt-station';
@@ -145,5 +146,24 @@ describe('isBlankStation', () => {
     expect(isBlankStation({ ...blank, points: 0 })).toBe(false);
     expect(isBlankStation({ ...blank, isScratched: true })).toBe(false);
     expect(isBlankStation({ ...blank, isShootOff: true })).toBe(false);
+  });
+});
+
+describe('isUnenteredStation', () => {
+  it('S6 only Hits not chosen with nothing else is unentered; 0 hits chosen is a result (R8)', () => {
+    const unentered = {
+      hits: null,
+      figureCount: null,
+      points: null,
+      isScratched: false,
+      isShootOff: false,
+    };
+    expect(isUnenteredStation(unentered)).toBe(true);
+    expect(isUnenteredStation({ ...unentered, hits: 0 })).toBe(false);
+    expect(isUnenteredStation({ ...unentered, hits: 3 })).toBe(false);
+    expect(isUnenteredStation({ ...unentered, figureCount: 4 })).toBe(false);
+    expect(isUnenteredStation({ ...unentered, points: 0 })).toBe(false);
+    expect(isUnenteredStation({ ...unentered, isScratched: true })).toBe(false);
+    expect(isUnenteredStation({ ...unentered, isShootOff: true })).toBe(false);
   });
 });

@@ -767,7 +767,7 @@ fieldset.field legend {
   gap: 8px;
 }
 
-/* Rounds Only has no series rows (docs/specs/web-rounds-final-spec.md). */
+/* Rounds Only and fält have no series rows; display: grid would beat hidden. */
 .series-rows[hidden] {
   display: none;
 }
@@ -834,11 +834,6 @@ fieldset.field legend {
 .entry-tag-add input {
   flex: 1;
   min-width: 0;
-}
-
-/* Its display: grid would otherwise beat the hidden attribute (fält entry). */
-.series-rows[hidden] {
-  display: none;
 }
 
 .falt-stations {

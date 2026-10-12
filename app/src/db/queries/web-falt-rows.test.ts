@@ -23,8 +23,9 @@ const columnNames = (table: SQLiteTable) =>
     .map((column) => column.name)
     .sort();
 
+// Nothing entered: Hits not chosen (web-falt-entry-spec R8).
 const station = (patch: Record<string, unknown> = {}) => ({
-  hits: 0,
+  hits: null,
   figuresHit: 0,
   figureCount: null,
   pointsText: '',
@@ -76,6 +77,8 @@ describe('web-built fält rows on the phone schema', () => {
           station({ hits: 6, figuresHit: 3, figureCount: 3 }),
           station({ hits: 4, figuresHit: 2, pointsText: '8', pointsMaxText: '10' }),
           station({ hits: 6, figuresHit: 6, isScratched: true }),
+          // Every shot missed, no figure count: a result the phone's own screen cannot make (R8).
+          station({ hits: 0 }),
           station({ hits: 5, figuresHit: 2, isShootOff: true }),
           station(),
         ],
@@ -147,24 +150,25 @@ describe('web-built fält rows on the phone schema', () => {
       [1, 6, 3, 3, null, null, 0, 0],
       [2, 4, 2, null, 8, 10, 0, 0],
       [3, 6, 6, null, null, null, 1, 0],
-      [4, 5, 2, null, null, null, 0, 1],
+      [4, 0, 0, null, null, null, 0, 0],
+      [5, 5, 2, null, null, null, 0, 1],
     ]);
-    // The scratched and the shoot-off stations stay out of the result.
+    // The scratched and the shoot-off stations stay out of the result; the all-miss one counts.
     expect(faltSessionResult(db, sessionId)).toMatchObject({
-      stationCount: 2,
+      stationCount: 3,
       hits: 10,
       figuresHit: 5,
       poangfaltPoints: 15,
       ringedFigurePoints: 8,
       pointsMax: 10,
       figureCount: null,
-      hitsPossible: 12,
+      hitsPossible: 18,
     });
-    // Four stations fired, six rounds each, as the phone's own volume counts them.
-    expect(sessionVolumeRounds(db, sessionId)).toBe(24);
+    // Five stations fired, six rounds each, as the phone's own volume counts them.
+    expect(sessionVolumeRounds(db, sessionId)).toBe(30);
     expect(getFirearm(db, firearmId)).toMatchObject({
-      roundCount: 124,
-      roundsSinceMaintenance: 24,
+      roundCount: 130,
+      roundsSinceMaintenance: 30,
     });
   });
 

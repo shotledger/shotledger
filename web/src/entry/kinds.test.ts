@@ -10,7 +10,7 @@ import {
   toRoundsDraft,
   withKind,
 } from './kinds';
-import { initialFalt } from './falt-model';
+import { initialFalt, withHits } from './falt-model';
 import {
   addRow,
   canMarkSighter,
@@ -255,6 +255,42 @@ describe('rounds-only and final series on the Enter Series form', () => {
       deps,
     );
     expect(rounds.ok && rounds.changes.map((c) => c.tableName)).toEqual([
+      'sessions',
+      'session_tags',
+    ]);
+  });
+
+  it('WK11 buildEntry builds fält stations for a fält series, rounds for a rounds-only fält, tags with both (R9)', () => {
+    let n = 0;
+    const deps = {
+      newId: () => `0199b000-0000-7000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      now: () => '2026-10-10T17:00:00.000Z',
+    };
+    const context = {
+      firearms: new Map(),
+      firearmGroups: [],
+      ammoLots: new Map(),
+      tags: new Map(),
+    };
+    const faltForm = { ...withDiscipline(fresh(), 'spsf-falt'), tags: ['KM'] };
+    const stations = withHits(initialFalt(), 0, 0);
+    const series = buildEntry(faltForm, stations, 'd', context, deps);
+    expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
+      'tags',
+      'sessions',
+      'session_tags',
+      'falt_stations',
+    ]);
+    const rounds = buildEntry(
+      { ...withKind(faltForm, 'rounds'), roundsFired: '30' },
+      stations,
+      'd',
+      context,
+      deps,
+    );
+    expect(rounds.ok && rounds.changes.map((c) => c.tableName)).toEqual([
+      'tags',
       'sessions',
       'session_tags',
     ]);

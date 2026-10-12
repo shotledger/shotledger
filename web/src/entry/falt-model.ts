@@ -9,7 +9,7 @@ import {
 import type { FaltResultMode } from '@shotledger/shared/src/scoring/falt';
 import {
   clampFiguresHit,
-  isBlankStation,
+  isUnenteredStation,
   stationPoints,
   stationProblem,
 } from '@shotledger/shared/src/scoring/falt-station';
@@ -25,7 +25,8 @@ import { toDraft, type EntryForm } from './model';
 export interface StationRow {
   /** Stable React key; not stored. */
   key: number;
-  hits: number;
+  /** null until chosen; 0 chosen is a station where every shot missed (R8). */
+  hits: number | null;
   figuresHit: number;
   figureCount: number | null;
   pointsText: string;
@@ -51,7 +52,7 @@ export function isFaltForm(form: Pick<EntryForm, 'disciplineId'>): boolean {
 let lastKey = 0;
 const newStation = (isShootOff = false): StationRow => ({
   key: (lastKey += 1),
-  hits: 0,
+  hits: null,
   figuresHit: 0,
   figureCount: null,
   pointsText: '',
@@ -68,7 +69,7 @@ export function initialFalt(): FaltForm {
 /** Blank as Save reads it: points parsed as the builder parses them. */
 const nothingEntered = (row: Omit<StationRow, 'key'>) => {
   const points = stationPoints(row.pointsText, row.pointsMaxText);
-  return points.ok && isBlankStation({ ...row, points: points.points, isShootOff: false });
+  return points.ok && isUnenteredStation({ ...row, points: points.points, isShootOff: false });
 };
 
 /**
@@ -139,11 +140,11 @@ export function withStation(
 }
 
 /** Hits changed: Figures Hit follows, as on the phone's station screen (C2). */
-export function withHits(falt: FaltForm, index: number, hits: number): FaltForm {
+export function withHits(falt: FaltForm, index: number, hits: number | null): FaltForm {
   const row = falt.stations[index]!;
   return withStation(falt, index, {
     hits,
-    figuresHit: clampFiguresHit(row.figuresHit, hits, row.figureCount),
+    figuresHit: clampFiguresHit(row.figuresHit, hits ?? 0, row.figureCount),
   });
 }
 
@@ -156,7 +157,7 @@ export function withFigureCount(
   const row = falt.stations[index]!;
   return withStation(falt, index, {
     figureCount,
-    figuresHit: clampFiguresHit(row.figuresHit, row.hits, figureCount),
+    figuresHit: clampFiguresHit(row.figuresHit, row.hits ?? 0, figureCount),
   });
 }
 
@@ -207,8 +208,14 @@ export function faltPreview(falt: FaltForm): FaltPreview {
   const rows = shootOffRows(falt).map((row, index): StationStatus => {
     const points = stationPoints(row.pointsText, row.pointsMaxText);
     if (!points.ok) return 'invalid';
-    const station = { ...entered(row), points: points.points, pointsMax: points.pointsMax };
-    if (isBlankStation(station)) return 'blank';
+    const kept = entered(row);
+    if (isUnenteredStation({ ...kept, points: points.points })) return 'blank';
+    const station = {
+      ...kept,
+      hits: kept.hits ?? 0,
+      points: points.points,
+      pointsMax: points.pointsMax,
+    };
     if (stationProblem({ position: index + 1, ...station }) !== null) return 'invalid';
     saved.push(station);
     return 'saved';

@@ -104,3 +104,18 @@ export function isBlankStation(station: {
     !station.isShootOff
   );
 }
+
+/**
+ * Nothing entered on a web station row, where Hits starts unchosen (`null`).
+ * A station whose every shot missed is a result, so 0 hits chosen keeps it
+ * (maintainer's ruling, 2026-10-12; web-falt-entry-spec R8).
+ */
+export function isUnenteredStation(station: {
+  hits: number | null;
+  figureCount: number | null;
+  points: number | null;
+  isScratched: boolean;
+  isShootOff: boolean;
+}): boolean {
+  return station.hits === null && isBlankStation({ ...station, hits: 0 });
+}

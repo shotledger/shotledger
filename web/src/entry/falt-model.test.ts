@@ -201,7 +201,7 @@ describe('the fält page model', () => {
     expect(form.resultMode).toBe('falt');
     expect(form.stations).toHaveLength(1);
     expect(form.stations[0]).toMatchObject({
-      hits: 0,
+      hits: null,
       figuresHit: 0,
       figureCount: null,
       pointsText: '',
@@ -288,9 +288,28 @@ describe('the fält page model', () => {
       true,
     ]);
     expect(toFaltDraft(session, left, 'x').stations[1]).toMatchObject({
-      hits: 0,
+      hits: null,
       isShootOff: false,
     });
+  });
+
+  it('UF11 a station where every shot missed is saved; Hits not chosen is nothing entered (R8)', () => {
+    // 0 hits chosen, nothing else: a result, counted in the total and the rounds.
+    const missed = withHits(falt({ hits: 6, figuresHit: 3, figureCount: 3 }, {}), 1, 0);
+    expect(faltPreview(missed).rows).toEqual(['saved', 'saved']);
+    expect(faltPreview(missed).result).toMatchObject({ stationCount: 2, hits: 6 });
+    // Choosing "–" again makes it nothing entered.
+    const cleared = withHits(missed, 1, null);
+    expect(cleared.stations[1]).toMatchObject({ hits: null, figuresHit: 0 });
+    expect(faltPreview(cleared).rows).toEqual(['saved', 'blank']);
+    // An all-miss row decides the shoot-off like any saved station.
+    expect(canStartShootOff(withHits(initialFalt(), 0, 0))).toBe(true);
+    expect(canStartShootOff(initialFalt())).toBe(false);
+    // Figures alone, with Hits not chosen, is 0 hits of those figures.
+    const figuresOnly = withFigureCount(initialFalt(), 0, 4);
+    expect(faltPreview(figuresOnly).rows).toEqual(['saved']);
+    const session = withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-falt');
+    expect(toFaltDraft(session, missed, 'x').stations[1]).toMatchObject({ hits: 0 });
   });
 
   it('UF10 no ordinary station after a saved shoot-off, whatever order the rows are filled in', () => {

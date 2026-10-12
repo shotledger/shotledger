@@ -33,8 +33,9 @@ function makeDeps() {
   };
 }
 
+// Nothing entered: Hits not chosen (R8).
 const station = (patch: Partial<StationDraft> = {}): StationDraft => ({
-  hits: 0,
+  hits: null,
   figuresHit: 0,
   figureCount: null,
   pointsText: '',
@@ -257,6 +258,38 @@ describe('buildFaltEntry', () => {
       [4, 0, null, 0, 1, null],
       [5, 0, null, 0, 0, 0],
     ]);
+  });
+
+  it('FE13 a station where every shot missed is saved; only one with nothing entered is dropped (R8)', () => {
+    const changes = changesOf(
+      build(
+        draft({
+          firearmId: 'f1',
+          stations: [
+            station({ hits: 0 }),
+            station(),
+            station({ hits: 0, isShootOff: true }),
+            station({ pointsMaxText: '20' }),
+          ],
+        }),
+      ),
+    );
+    expect(
+      stations(changes).map((r) => [
+        r.position,
+        r.hits,
+        r.figures_hit,
+        r.figure_count,
+        r.is_shoot_off,
+        r.points,
+        r.points_max,
+      ]),
+    ).toEqual([
+      [1, 0, 0, null, 0, null, null],
+      [2, 0, 0, null, 1, null, null],
+    ]);
+    // Six rounds per saved station, the all-miss ones included.
+    expect(payloads(changes, 'firearms')[0]).toMatchObject({ round_count: 112 });
   });
 
   it('FE4 the max is dropped when no points were entered', () => {

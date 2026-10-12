@@ -42,7 +42,7 @@ export function FaltStations({
         <strong>{formatFaltResult(t, { ...preview.result, mode: falt.resultMode })}</strong>
       </p>
       {falt.stations.map((row, index) => {
-        const figures = figuresHitRange(row.hits, row.figureCount);
+        const figures = figuresHitRange(row.hits ?? 0, row.figureCount);
         const rowError = rowErrors.get(index + 1);
         return (
           <fieldset key={row.key} className="station-row" aria-invalid={rowError !== undefined}>
@@ -53,9 +53,19 @@ export function FaltStations({
             <label className="field">
               {t('station.hits')}
               <select
-                value={row.hits}
-                onChange={(event) => onEdit(withHits(falt, index, Number(event.target.value)))}
+                value={row.hits ?? ''}
+                onChange={(event) =>
+                  onEdit(
+                    withHits(
+                      falt,
+                      index,
+                      event.target.value === '' ? null : Number(event.target.value),
+                    ),
+                  )
+                }
               >
+                {/* Not chosen yet: a row left so is not saved; 0 is every shot missed (R8). */}
+                <option value="">–</option>
                 {range(0, SHOTS_PER_STATION).map((n) => (
                   <option key={n} value={n}>
                     {n}

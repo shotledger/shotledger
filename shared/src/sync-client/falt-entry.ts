@@ -4,7 +4,7 @@
 // chosen; each station is what the phone's station screen saves.
 import { requireDiscipline } from '../disciplines';
 import type { FaltResultMode } from '../scoring/falt';
-import { isBlankStation, stationPoints, stationProblem } from '../scoring/falt-station';
+import { isUnenteredStation, stationPoints, stationProblem } from '../scoring/falt-station';
 import { sessionVolume } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
@@ -21,7 +21,8 @@ import {
 } from './session-entry';
 
 export interface StationDraft {
-  hits: number;
+  /** null: Hits not chosen. 0 chosen is a station where every shot missed (R8). */
+  hits: number | null;
   figuresHit: number;
   figureCount: number | null;
   pointsText: string;
@@ -78,7 +79,7 @@ type KeptStation = Omit<StationFields, 'sessionId' | 'position'>;
 
 /**
  * The stations the phone would have saved: points as its screen parses them,
- * blank ones never created, the rest numbered 1..n and possible (C2, C3).
+ * ones with nothing entered never created, the rest numbered 1..n and possible (C2, C3, R8).
  */
 function keptStations(stations: readonly StationDraft[], errors: EntryError[]): KeptStation[] {
   const kept: KeptStation[] = [];
@@ -90,7 +91,7 @@ function keptStations(stations: readonly StationDraft[], errors: EntryError[]): 
       return;
     }
     const entered: KeptStation = {
-      hits: draft.hits,
+      hits: draft.hits ?? 0,
       figuresHit: draft.figuresHit,
       figureCount: draft.figureCount,
       points: points.points,
@@ -98,7 +99,7 @@ function keptStations(stations: readonly StationDraft[], errors: EntryError[]): 
       isScratched: draft.isScratched,
       isShootOff: draft.isShootOff,
     };
-    if (isBlankStation(entered)) return;
+    if (isUnenteredStation({ ...entered, hits: draft.hits })) return;
     if (stationProblem({ position: row, ...entered }) !== null) {
       errors.push({ kind: 'invalidStation', row });
       return;
