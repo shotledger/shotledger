@@ -6,7 +6,10 @@
 > record: ADR 0019 (web writes by pushing rows through `/sync/push`).
 >
 > **Approval status: NOT approved — written and built in one autonomous run;
-> the key choices are listed in the PR for the maintainer.**
+> the key choices are listed in the PR for the maintainer.** C3 was decided
+> by the maintainer on 2026-10-12 (a station where every shot missed is a
+> result and is saved); R8 in §8 records it. That answers C3; it does not
+> approve this spec.
 
 - **Tier: 3.** It writes synced rows. A wrong payload fails on every phone
   that pulls it: a `null` in a `NOT NULL` column, or an unknown foreign key,
@@ -65,7 +68,11 @@ phone's error messages do not change.
 _Alternative:_ a compact typed syntax per station (`5/3 4 12/20`), faster
 from the keyboard but a second notation the phone does not have.
 
-**C3. A blank station is not saved, and the stations stay numbered 1..n.**
+**C3 — amended by R8 (maintainer's decision, 2026-10-12): a station where
+every shot missed is saved; only a station with nothing entered is blank.**
+The text below is the original proposal, kept for the record.
+
+**C3 (original). A blank station is not saved, and the stations stay numbered 1..n.**
 The phone's station screen creates nothing when Save is pressed on a new
 station with no hits, no figure count, no points and neither flag
 (`isBlankStation`). The web drops such rows and numbers the rest
@@ -181,6 +188,8 @@ Feature: station rules (shared/src/scoring/falt-station.test.ts)
   Scenario: S4 stationPoints: blank is null; "12"/"20" parse; "x", "1.5", "-1" and 12 of 10 are invalid;
            a max without points is dropped
   Scenario: S5 isBlankStation: only 0 hits, no figure count, no points and no flag is blank
+  Scenario: S6 (R8) isUnenteredStation: only Hits not chosen (null) with nothing else is unentered;
+           0 hits chosen is a result
 
 Feature: fält rows and builder (shared/src/sync-client/falt-entry.test.ts)
   Scenario: FE1 a training fält entry: firearm +18, session, 3 stations, in APPLY_ORDER
@@ -201,14 +210,18 @@ Feature: fält rows and builder (shared/src/sync-client/falt-entry.test.ts)
   Scenario: FE11 every change parses with ClientChangeSchema, ids fresh, rowId = payload.id;
            more than PUSH_BATCH_MAX changes is tooManyChanges
   Scenario: FE12 no station at all saves the session alone, as the phone can
+  Scenario: FE13 (R8) a station where every shot missed (Hits 0 chosen, no figure count) is saved,
+           a shoot-off one too, and moves the firearm six; one with nothing entered is dropped
 
 Feature: fält rows on the phone's schema (app/src/db/queries/web-falt-rows.test.ts)
   Scenario: AF1 column parity: newStationRow's keys equal falt_stations' columns, the session row's sessions'
   Scenario: AF2 a web-built fält entry applies on the phone
     Given a firearm with round_count 100
-    When a 4-station entry (one scratched, one shoot-off) built by buildFaltEntry is applied with applyChangesSync
-    Then getSession has falt_result_mode "poangfalt", listStationsForSession returns the four in order,
-         faltSessionResult equals the typed result, and the firearm's round_count is 124,
+    When a 5-station entry (one scratched, one all-miss with no figure count (R8), one shoot-off)
+         built by buildFaltEntry is applied with applyChangesSync
+    Then getSession has falt_result_mode "poangfalt", listStationsForSession returns the five in order,
+         faltSessionResult equals the typed result (the all-miss station counted), and the firearm's
+         round_count is 130,
          which equals 100 + sessionVolumeRounds (the phone's own count)
   Scenario: AF3 nothing applied is re-queued (the outbox stays empty)
 
@@ -227,6 +240,13 @@ Feature: the page model (web/src/entry/falt-model.test.ts)
   Scenario: UF8 a shoot-off station is saved with its numbers, and dropped when left empty
   Scenario: UF9 only a station that will be saved counts: blank rows are the phone backed out of
   Scenario: UF10 no ordinary station after a saved shoot-off, whatever order the rows are filled in
+  Scenario: UF11 (R8) a station where every shot missed is saved; Hits not chosen is nothing entered;
+           an all-miss row decides the shoot-off like any saved station; Figures alone is 0 hits of them
+
+Feature: the entry kinds (web/src/entry/kinds.test.ts, after the rebase onto #716/#718, R9)
+  Scenario: WK2 every discipline of the regulation, fält included, for either kind
+  Scenario: WK3 back to series keeps the discipline, fält included
+  Scenario: WK9, TU8 buildEntry builds rounds, fält stations or series, with the tags in the same push
 ```
 
 Browser checks (not automated; screenshots under
@@ -259,6 +279,7 @@ round count moved by 24.
 | A retry stores the session twice                   | reused `save.ts` (#669 U2, U7), WF2                     |
 | The web drifts from the phone's station rules      | C2's move: one implementation, S1–S5, N6                |
 | A station silently renumbered                      | C3, the "Not saved: blank" mark, UF5                    |
+| An all-miss station dropped as blank (R8)          | S6, FE13, UF11, AF2                                     |
 | The web's shoot-off state drifts from the phone's  | R5–R7: the phone's rule over saved rows; UF7, UF9, UF10 |
 
 ## 7. Setup plan
@@ -327,3 +348,23 @@ Appended during the same autonomous run; none loosens a constraint.
   reads it, points parsed by `stationPoints`, so a max without points or a
   space in Points is blank everywhere (it had been blank to Save but not to
   Start Shoot-off). UF10 covers both.
+- **R8 (maintainer's decision on C3, 2026-10-12).** A station where every
+  shot missed is a real result and is saved; only a station with nothing
+  entered at all is blank. On the web, **Hits** now starts unchosen ("–",
+  `hits: null` in `StationRow` and `StationDraft`), so choosing 0 is entering
+  a result: the station is saved as 0 hits, 0 figures hit and the figure
+  count as chosen (null if none), counts in the result and moves the firearm
+  six rounds. Figures alone, with Hits not chosen, is 0 hits of those figures,
+  as before. The shared `isUnenteredStation` (`falt-station.ts`) is the rule
+  the builder, the preview and Start Shoot-off read; the phone's
+  `isBlankStation` is unchanged (N6). This also settles verification F3 for
+  the web: a shoot-off row with Hits 0 chosen is a saved 0-hit shoot-off, and
+  one left untouched is blank. Changed: FE3's fixture default (`hits: null`),
+  UF6, UF8, AF2; new: S6, FE13, UF11.
+- **R9 (rebase onto main with #716 tags and #718 rounds-only).** Fält is built
+  in `kinds.ts`' `buildEntry` beside rounds and series, so its tags travel in
+  the same push. Fält is offered for Scored Series as well as Rounds Only, and
+  switching back to Scored Series keeps it (#718's WK2 and WK3 are rewritten;
+  `web-rounds-final-spec.md` R5 records it). A rounds-only fält session stays
+  a rounds session. The duplicate `.series-rows[hidden]` rule from R2 is
+  dropped: main already has it.
