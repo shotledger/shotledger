@@ -4,6 +4,7 @@ import { maintenanceEvents } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 import { getFirearm, updateFirearm } from './firearms';
+import { reportMaintenanceCounterMove } from './maintenance-due';
 
 export interface LogMaintenanceEventInput {
   firearmId: string;
@@ -76,6 +77,7 @@ export function adjustFirearmRoundCount(
   const roundCount = Math.max(0, firearm.roundCount + delta);
   const roundsSinceMaintenance = Math.max(0, firearm.roundsSinceMaintenance + delta);
   updateFirearm(db, firearmId, { roundCount, roundsSinceMaintenance });
+  reportMaintenanceCounterMove(firearm, firearm.roundsSinceMaintenance, roundsSinceMaintenance);
 
   const now = nowIso();
   const row = {
