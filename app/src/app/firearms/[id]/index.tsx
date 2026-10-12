@@ -51,6 +51,7 @@ import {
   updateSightSetting,
 } from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
+import { maintenanceEventLines } from '@/features/firearms/maintenance-event-lines';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
 import {
   SIGHT_CLICK_MAX,
@@ -1069,7 +1070,12 @@ export default function FirearmDetailScreen() {
           </ThemedText>
         ) : (
           detail.maintenanceEvents.map((event) => (
-            <ListRow key={event.id} title={event.kind} subtitle={event.performedAt.slice(0, 10)} />
+            <ListRow
+              key={event.id}
+              // `kind` is free text the user typed, except the one the app writes itself.
+              title={event.kind === 'adjustment' ? t('firearms.adjustmentEvent') : event.kind}
+              subtitle={maintenanceEventLines(event)}
+            />
           ))
         )}
 
