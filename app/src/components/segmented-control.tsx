@@ -50,7 +50,7 @@ export function SegmentedControl<T extends string>({
         accessibilityRole="button"
         accessibilityState={{ selected }}
         onPress={() => onChange(option.value)}
-        style={scrolls ? undefined : styles.segmentPressable}
+        style={scrolls ? styles.segmentPressableAuto : styles.segmentPressable}
       >
         <View
           // Remounted on every selection change, which is the whole point of
@@ -115,12 +115,18 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     padding: Spacing.half,
   },
+  // Grows to the track when the segments fit, so they share the width instead
+  // of bunching left.
   scrollContent: {
+    flexGrow: 1,
     flexDirection: 'row',
     gap: Spacing.half,
   },
   segmentPressable: {
     flex: 1,
+  },
+  segmentPressableAuto: {
+    flexGrow: 1,
   },
   segment: {
     // Material's 48dp minimum touch target, not a spacing value — it is
@@ -132,8 +138,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.small,
     alignItems: 'center',
   },
+  // Spacing.three clipped the fifth period option ("Anpassa") on a phone (#745).
   segmentAuto: {
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.two,
   },
   label: {
     textAlign: 'center',

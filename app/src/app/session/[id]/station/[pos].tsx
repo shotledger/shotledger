@@ -249,5 +249,7 @@ const styles = StyleSheet.create({
   },
   pointsField: {
     flex: 1,
+    // A web input's intrinsic width otherwise pushes the second field off screen.
+    minWidth: 0,
   },
 });

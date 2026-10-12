@@ -184,7 +184,9 @@ export default function SeriesEntryScreen() {
   }
 
   return (
-    <Screen>
+    <Screen
+      footer={<PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />}
+    >
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.title}>
           {t('session.seriesTitle', { position })}
@@ -254,7 +256,6 @@ export default function SeriesEntryScreen() {
         </Card>
       )}
 
-      <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />
       {isUnsaved && (
         <ThemedText type="small" themeColor="textSecondary" testID="unsaved-series-hint">
           {t('session.newSeriesHint')}

@@ -275,6 +275,11 @@
     "license": "MIT"
   },
   {
+    "name": "expo-status-bar",
+    "version": "57.0.1",
+    "license": "MIT"
+  },
+  {
     "name": "expo-symbols",
     "version": "57.0.3",
     "license": "MIT"

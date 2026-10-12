@@ -3,7 +3,7 @@
 // so a sheet of prose reuses that mechanism instead of adding a second one.
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,7 +18,20 @@ export interface BottomSheetProps {
   testID?: string;
 }
 
+/**
+ * A sheet's modal window always draws under both system bars, so the panel
+ * pads itself by the app window's bottom inset (`useSheetBottomInset`). A
+ * safe-area view inside the modal measured its own window instead and came
+ * out zero under Android's 3-button navigation bar (#745).
+ */
+export const SheetModalProps = { statusBarTranslucent: true, navigationBarTranslucent: true };
+
+export function useSheetBottomInset(): number {
+  return useSafeAreaInsets().bottom;
+}
+
 export function BottomSheet({ visible, onClose, title, children, testID }: BottomSheetProps) {
+  const bottomInset = useSheetBottomInset();
   return (
     <Modal
       visible={visible}
@@ -26,6 +39,7 @@ export function BottomSheet({ visible, onClose, title, children, testID }: Botto
       animationType="fade"
       onRequestClose={onClose}
       testID={testID}
+      {...SheetModalProps}
     >
       <View style={styles.root}>
         {/* A sibling of the panel, not its parent, so the panel is not a button inside a button. */}
@@ -35,8 +49,11 @@ export function BottomSheet({ visible, onClose, title, children, testID }: Botto
           accessibilityRole="button"
           testID={testID ? `${testID}-backdrop` : undefined}
         />
-        <SafeAreaView edges={['bottom']} pointerEvents="box-none">
-          <ThemedView type="backgroundElement" style={styles.panel}>
+        <View pointerEvents="box-none">
+          <ThemedView
+            type="backgroundElement"
+            style={[styles.panel, { paddingBottom: bottomInset }]}
+          >
             {title ? (
               <ThemedText type="smallBold" themeColor="textSecondary" style={styles.title}>
                 {title}
@@ -45,7 +62,7 @@ export function BottomSheet({ visible, onClose, title, children, testID }: Botto
             {children}
             <View style={styles.bottomSpacer} />
           </ThemedView>
-        </SafeAreaView>
+        </View>
       </View>
     </Modal>
   );
