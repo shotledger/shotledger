@@ -76,9 +76,10 @@ station a shoot-off station, marked **Shoot-off**. From the first filled-in
 shoot-off station on, every station is a shoot-off station. A shoot-off
 station with nothing entered is not saved and does not start the shoot-off.
 
-A station with nothing entered is not saved, and the stations after it move
-up a number. A station where every shot missed is saved once you set its
-**Figures**.
+**Hits** starts at **–**. A station with nothing entered is not saved, and
+the stations after it move up a number. For a station where every shot
+missed, choose **0** under Hits: it is saved and counts, as a station with 0
+hits.
 
 ## Tag it
 

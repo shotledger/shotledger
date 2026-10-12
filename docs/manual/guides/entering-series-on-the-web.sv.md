@@ -77,9 +77,10 @@ särskjutningsstationen och framåt är varje station en särskjutningsstation. 
 särskjutningsstation där inget är ifyllt sparas inte och startar inte
 särskjutningen.
 
-En station där inget är ifyllt sparas inte, och stationerna efter den flyttas
-upp ett nummer. En station där alla skott missade sparas när du har fyllt i
-**Figurer**.
+**Träff** börjar på **–**. En station där inget är ifyllt sparas inte, och
+stationerna efter den flyttas upp ett nummer. För en station där alla skott
+missade väljer du **0** under Träff: den sparas och räknas, som en station med
+0 träff.
 
 ## Tagga det
 
