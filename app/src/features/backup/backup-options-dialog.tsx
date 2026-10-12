@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
+import { SheetModalProps, useSheetBottomInset } from '@/components/bottom-sheet';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -37,6 +38,7 @@ export function BackupOptionsDialog({
 }: BackupOptionsDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const bottomInset = useSheetBottomInset();
 
   const [includePhotos, setIncludePhotos] = useState(DEFAULT_EXPORT_OPTIONS.includePhotos);
   const [destination, setDestination] = useState<BackupDestination>('share');
@@ -65,9 +67,10 @@ export function BackupOptionsDialog({
       transparent
       onRequestClose={cancel}
       testID="backup-options-dialog"
+      {...SheetModalProps}
     >
       <View style={styles.backdrop}>
-        <ThemedView type="background" style={styles.sheet}>
+        <ThemedView type="background" style={[styles.sheet, { paddingBottom: bottomInset }]}>
           <ScrollView
             contentContainerStyle={styles.sheetContent}
             keyboardShouldPersistTaps="handled"

@@ -49,6 +49,11 @@ export interface ScreenProps extends ViewProps {
   scrollRef?: Ref<ScrollView>;
   /** Ref to the content column, the ancestor a child can `measureLayout` against. */
   contentRef?: Ref<View>;
+  /**
+   * The screen's primary action, pinned below the scroll view and above the
+   * system bar, so it never needs a scroll to reach (#745).
+   */
+  footer?: ReactNode;
 }
 
 /**
@@ -65,6 +70,7 @@ export function Screen({
   safeBottom,
   scrollRef,
   contentRef,
+  footer,
   style,
   ...rest
 }: ScreenProps) {
@@ -97,6 +103,7 @@ export function Screen({
   const contentStyle = [
     scroll ? styles.scrollContent : styles.plainContent,
     fab ? styles.contentWithFab : null,
+    footer ? styles.contentWithFooter : null,
   ];
 
   return (
@@ -104,7 +111,9 @@ export function Screen({
       <SafeAreaView
         style={styles.safeArea}
         edges={
-          (safeBottom ?? !scroll) ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']
+          (safeBottom ?? (!scroll || footer != null))
+            ? ['top', 'left', 'right', 'bottom']
+            : ['top', 'left', 'right']
         }
       >
         {scroll ? (
@@ -119,6 +128,11 @@ export function Screen({
         ) : (
           <View style={contentStyle}>{inner}</View>
         )}
+        {footer ? (
+          <View style={styles.footer}>
+            <View style={styles.footerInner}>{footer}</View>
+          </View>
+        ) : null}
         {fab ? (
           <View pointerEvents="box-none" style={styles.fabLayer}>
             <Animated.View
@@ -150,6 +164,21 @@ const styles = StyleSheet.create({
   // of it instead of sitting under it (issue #62, reopened on Ammunition).
   contentWithFab: {
     paddingBottom: FabClearance,
+  },
+  // The footer already sits above the system bar; the scroll view needs no tab gap.
+  contentWithFooter: {
+    paddingBottom: Spacing.three,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
+  },
+  footerInner: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.two,
   },
   // The FAB is a sibling of the scroll view, not a child, so `bottom` resolves
   // against the viewport rather than the content box and the button neither

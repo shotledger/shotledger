@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -57,6 +58,10 @@ function RootStack() {
       />
       <Stack.Screen
         name="session/[id]/series/[pos]"
+        options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
+      />
+      <Stack.Screen
+        name="session/[id]/station/[pos]"
         options={{ presentation: 'modal', headerShown: true, title: t('session.detailTitle') }}
       />
       <Stack.Screen
@@ -188,6 +193,8 @@ function ThemedApp() {
 
   return (
     <ThemeProvider value={navigationTheme}>
+      {/* Follows the app's theme, not the device's: light icons on a light screen were unreadable (#745). */}
+      <StatusBar style={resolvedThemeName === 'dark' ? 'light' : 'dark'} />
       <AnimatedSplashOverlay />
       <EvaluationGate>
         <SyncTriggers />
