@@ -5,7 +5,6 @@
 // (issue #286).
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import {
   getProfile,
   getProfileDefinition,
@@ -19,6 +18,7 @@ import {
 import { db } from '@/db/client';
 import { listFirearmOwnershipFacts } from '@/db/queries/firearms';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
+import { detectDeviceLanguage } from '@/i18n';
 
 export interface ComplianceProfileState {
   selection: ProfileSelection;
@@ -35,9 +35,11 @@ export interface ComplianceProfileState {
   setVariantId: (next: string) => void;
 }
 
-function loadSelection(locale: string): ProfileSelection {
+// The default follows the device's language, not the app's: switching the
+// app to English must not hide the license-activity chip (#748).
+function loadSelection(): ProfileSelection {
   const stored = getSetting<ProfileSelection | null>(db, SETTINGS_KEYS.complianceProfile, null);
-  return stored ?? resolveDefaultProfileSelection(locale);
+  return stored ?? resolveDefaultProfileSelection(detectDeviceLanguage());
 }
 
 function loadVariantId(): string | null {
@@ -54,21 +56,18 @@ function loadOwnershipFacts(): FirearmOwnershipFact[] {
  * earlier already read, so a one-shot useState would go stale across tabs.
  */
 export function useComplianceProfile(): ComplianceProfileState {
-  const { i18n } = useTranslation();
-  const [selection, setSelectionState] = useState<ProfileSelection>(() =>
-    loadSelection(i18n.language),
-  );
+  const [selection, setSelectionState] = useState<ProfileSelection>(loadSelection);
   const [storedVariantId, setStoredVariantId] = useState<string | null>(loadVariantId);
   const [facts, setFacts] = useState<FirearmOwnershipFact[]>(loadOwnershipFacts);
 
   useFocusEffect(
     useCallback(() => {
-      setSelectionState(loadSelection(i18n.language));
+      setSelectionState(loadSelection());
       setStoredVariantId(loadVariantId());
       // On focus too: marking a firearm as one's own moves the derived
       // default, and this screen may have been mounted before that edit.
       setFacts(loadOwnershipFacts());
-    }, [i18n.language]),
+    }, []),
   );
 
   const setSelection = useCallback((next: ProfileSelection) => {

@@ -118,9 +118,6 @@ export function BackupCard() {
           ? t('backup.lastBackup', { date: new Date(lastBackupAt).toLocaleString() })
           : t('backup.neverBackedUp')}
       </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('backup.scopeNote')}
-      </ThemedText>
       {statusText ? (
         <ThemedText type="small" themeColor="textSecondary" testID="backup-status">
           {statusText}

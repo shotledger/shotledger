@@ -32,6 +32,7 @@ import {
 } from '@/features/stats/use-stats-data';
 import { ShotHeatmap } from '@/components/shot-heatmap';
 import { ZoomableView } from '@/components/zoomable-view';
+import { formatTotalScore } from '@/features/stats/format-total-score';
 import { SessionTypeComparisonCard } from '@/features/stats/session-type-comparison-card';
 import { SighterRelationCard } from '@/features/stats/sighter-relation-card';
 import { ReportSectionIndex } from '@/features/stats/report-section-index';
@@ -306,7 +307,7 @@ export default function StatsReportScreen() {
                   <StatTile
                     testID="stat-total-score"
                     label={t('stats.totalScore')}
-                    value={score(data.totals.sumTenths)}
+                    value={formatTotalScore(data.totals.sumTenths)}
                   />
                   <StatTile
                     testID="stat-series"

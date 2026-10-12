@@ -47,7 +47,7 @@ import {
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { formatSessionDate } from '@/features/home/format-session-date';
-import { matchFormatLabel } from '@/features/session/labels';
+import { disciplineLabel, matchFormatLabel } from '@/features/session/labels';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import { setSeriesPositions } from '@/db/queries/series';
@@ -97,7 +97,7 @@ export default function SessionDetailScreen() {
   // handlers, which are built during render.
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
 
-  const { session, seriesRows, results, tags, firearmName } = detail;
+  const { session, seriesRows, results, tags, firearmName, ammoLotName } = detail;
   // Falls back to the series list when the chosen view has nothing left to
   // show: the last series deleted, or the last photo marks removed.
   const shownView: DetailView =
@@ -474,6 +474,7 @@ export default function SessionDetailScreen() {
           {[
             formatSessionDate(session.startedAt, i18n.language),
             t(`sessionType.${session.type}`),
+            disciplineLabel(t, session.disciplineId),
             // The format locks at the first result (#475), so it has to be
             // readable somewhere afterwards.
             session.programId
@@ -486,6 +487,7 @@ export default function SessionDetailScreen() {
             formatGroupAndClass(session.weaponGroup, session.shooterClass),
             eventCategoryLabel,
             firearmName,
+            ammoLotName,
             session.competitionName,
           ]
             .filter(Boolean)

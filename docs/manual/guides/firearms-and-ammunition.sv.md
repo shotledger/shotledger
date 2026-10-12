@@ -58,7 +58,8 @@ Till ett vapen samlas:
   sparad serie, ett pass med bara skottantal, en import eller **Justera antal
   skott**. Sedan är det tyst tills du loggar underhåll och antalet når
   intervallet igen. Skott som kommer in via synk, inmatade på webben eller på en
-  annan enhet, ger ingen notis.
+  annan enhet, ger ingen notis. På Android har notiserna en egen kategori,
+  **Underhåll**, som du kan stänga av utan att stänga av resten.
 - **Siktesinställningar**, med namn, så att "inomhus 25 m" och "fält ute" blir
   två lägen du kan ta fram i stället för något du ska minnas.
 

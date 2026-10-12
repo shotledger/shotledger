@@ -17,6 +17,8 @@ export interface ActionSheetAction {
   disabled?: boolean;
   /** Marks the choice already in effect, for a sheet used as a picker. */
   selected?: boolean;
+  /** Leaves the sheet open, for an action that swaps in a confirmation. */
+  keepOpen?: boolean;
 }
 
 export interface ActionSheetProps {
@@ -27,45 +29,59 @@ export interface ActionSheetProps {
 }
 
 export function ActionSheet({ visible, onClose, title, actions }: ActionSheetProps) {
+  return (
+    <BottomSheet visible={visible} onClose={onClose} title={title} testID="action-sheet">
+      <ActionSheetRows actions={actions} onClose={onClose} />
+    </BottomSheet>
+  );
+}
+
+/**
+ * The rows alone, for a sheet that swaps them for other content without
+ * closing — iOS will not present a second modal while the first is dismissing.
+ */
+export function ActionSheetRows({
+  actions,
+  onClose,
+}: {
+  actions: readonly ActionSheetAction[];
+  onClose: () => void;
+}) {
   const theme = useTheme();
 
   function select(action: ActionSheetAction) {
     if (action.disabled) return;
-    onClose();
+    if (!action.keepOpen) onClose();
     action.onPress();
   }
 
-  return (
-    <BottomSheet visible={visible} onClose={onClose} title={title} testID="action-sheet">
-      {actions.map((action) => (
-        <Pressable
-          key={action.key}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: action.disabled }}
-          onPress={() => select(action)}
-          style={styles.row}
-          testID={`action-sheet-${action.key}`}
-        >
-          <ThemedText
-            type="default"
-            style={styles.rowLabel}
-            themeColor={
-              action.disabled
-                ? 'textSecondary'
-                : action.destructive
-                  ? 'danger'
-                  : action.selected
-                    ? 'primary'
-                    : undefined
-            }
-          >
-            {action.label}
-          </ThemedText>
-          {action.selected ? <CheckIcon color={theme.primary} size={20} /> : null}
-        </Pressable>
-      ))}
-    </BottomSheet>
-  );
+  return actions.map((action) => (
+    <Pressable
+      key={action.key}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: action.disabled }}
+      onPress={() => select(action)}
+      style={styles.row}
+      testID={`action-sheet-${action.key}`}
+    >
+      <ThemedText
+        type="default"
+        style={styles.rowLabel}
+        themeColor={
+          action.disabled
+            ? 'textSecondary'
+            : action.destructive
+              ? 'danger'
+              : action.selected
+                ? 'primary'
+                : undefined
+        }
+      >
+        {action.label}
+      </ThemedText>
+      {action.selected ? <CheckIcon color={theme.primary} size={20} /> : null}
+    </Pressable>
+  ));
 }
 
 const styles = StyleSheet.create({

@@ -58,7 +58,8 @@ A firearm accumulates:
   saved series, a rounds-only session, an import or **Adjust Round Count**. It
   stays quiet after that until you log maintenance and the count reaches the
   interval again. Rounds that arrive by sync, entered on the web or another
-  device, do not notify.
+  device, do not notify. On Android these notifications have their own
+  **Maintenance** category, which you can silence without silencing the rest.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
 

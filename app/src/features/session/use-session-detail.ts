@@ -26,6 +26,7 @@ import { db } from '@/db/client';
 import { getSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { listSeriesForSession } from '@/db/queries/series';
 import { listShotsForSeries } from '@/db/queries/shots';
+import { getAmmoLot } from '@/db/queries/ammo-lots';
 import { getFirearm } from '@/db/queries/firearms';
 import { getSession } from '@/db/queries/sessions';
 import { listTagsForSession } from '@/db/queries/tags';
@@ -88,6 +89,8 @@ export interface SessionDetail {
   tags: readonly string[];
   /** "Make Model" of the session's firearm, for the header. Null when none is set. */
   firearmName: string | null;
+  /** The session's ammo lot label, for the header. Null when none is set. */
+  ammoLotName: string | null;
 }
 
 const EMPTY: SessionDetail = {
@@ -109,6 +112,7 @@ const EMPTY: SessionDetail = {
   isFixedFormat: false,
   tags: [],
   firearmName: null,
+  ammoLotName: null,
 };
 
 export function loadSessionDetail(sessionId: string): SessionDetail {
@@ -215,6 +219,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
     isFixedFormat: program?.structure !== undefined,
     tags: listTagsForSession(db, session.id).map((tag) => tag.name),
     firearmName: firearm ? `${firearm.make} ${firearm.model}` : null,
+    ammoLotName: session.ammoLotId ? (getAmmoLot(db, session.ammoLotId)?.label ?? null) : null,
   };
 }
 

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Chip } from '@/components/chip';
+import { ConfirmSheet } from '@/components/confirm-sheet';
 import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
@@ -49,21 +50,15 @@ export default function HomeScreen() {
   const { profile } = useComplianceProfile();
   const { overall } = useOverallLicenseActivity(profile);
   const [shapeFilter, setShapeFilter] = useState<SessionShapeFilter>('all');
+  const [pendingDelete, setPendingDelete] = useState<HomeSessionRow | null>(null);
 
   const onNewSession = () => router.push('/session/new');
 
-  function onDeleteSession(session: HomeSessionRow) {
-    Alert.alert(t('common.deleteSessionConfirmTitle'), t('common.deleteSessionConfirmBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.deleteSession'),
-        style: 'destructive',
-        onPress: () => {
-          deleteSessionAndSeries(db, session.id);
-          refresh();
-        },
-      },
-    ]);
+  function onConfirmDelete() {
+    if (!pendingDelete) return;
+    deleteSessionAndSeries(db, pendingDelete.id);
+    setPendingDelete(null);
+    refresh();
   }
 
   const shapeFilterOptions = [
@@ -147,7 +142,7 @@ export default function HomeScreen() {
                     <SwipeAction
                       kind="delete"
                       label={t('common.deleteSession')}
-                      onPress={() => onDeleteSession(session)}
+                      onPress={() => setPendingDelete(session)}
                       testID={`home-session-${index}-delete`}
                     />
                   </View>
@@ -194,6 +189,17 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       )}
+      <ConfirmSheet
+        visible={pendingDelete !== null}
+        title={t('common.deleteSessionConfirmTitle')}
+        body={t('common.deleteSessionConfirmBody')}
+        confirmLabel={t('common.deleteSession')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={onConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+        destructive
+        testID="delete-session-confirm"
+      />
     </Screen>
   );
 }

@@ -50,9 +50,11 @@ describe('formatFaltResult', () => {
     );
   });
 
-  it('a round with no scoring station reads as nothing possible', () => {
+  it('a round with no scoring station says so instead of reading as nought', () => {
     const empty = { hits: 0, hitsPossible: 0, figuresHit: 0, poangfaltPoints: 0 };
-    expect(formatFaltResult(t, { ...empty, mode: 'falt' })).toBe('0 (0) hits / 0 figures');
+    expect(formatFaltResult(t, { ...empty, mode: 'falt' })).toBe('No stations');
+    expect(formatFaltResult(tSv, { ...empty, mode: 'falt' })).toBe('Inga stationer');
+    expect(formatFaltResult(t, { ...empty, mode: 'poangfalt' })).toBe('No stations');
   });
 
   it('a poängfält round ignores the figure count', () => {

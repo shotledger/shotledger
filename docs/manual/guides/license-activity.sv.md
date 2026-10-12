@@ -12,6 +12,9 @@ medvetet inte håller reda på finns i
 **Inställningar → Efterlevnad → Sverige (FAP 551-3)**. Lämnat på **Ingen** syns
 ingenting av detta — vilket är rätt läge utanför Sverige.
 
+Tills du väljer börjar en telefon med svenska som systemspråk på Sverige och
+alla andra på Ingen. Språket du väljer i appen ändrar inte det.
+
 Statusen visas sedan på startsidan och på varje vapen: hur många aktiviteter du
 loggat i perioden, och hur många som krävs.
 

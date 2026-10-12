@@ -97,11 +97,46 @@ it('carries on to the next entry after a success, within the same pass', async (
 
   expect(mockUpload).toHaveBeenCalledTimes(1);
   expect(mockDownload).toHaveBeenCalledWith('photo-b');
-  expect(mockWrite).toHaveBeenCalledTimes(1);
+  // The upload keeps its own bytes too, not only the download.
+  expect(mockWrite).toHaveBeenCalledTimes(2);
   expect(mockUpdateSeries).toHaveBeenCalledWith(mockClient.db, 'photo-a', {
     photoUri: toSyncPhotoUri('photo-a'),
   });
   expect(mockQueue).toEqual([]);
+});
+
+it('keeps the uploaded bytes where the marker resolves, so the photo stays on this device', async () => {
+  enqueue('a');
+
+  await runPhotoQueue();
+
+  expect(mockWrite).toHaveBeenCalledWith('photo-a', new Uint8Array([1, 2, 3]));
+  expect(mockWrite.mock.invocationCallOrder[0]).toBeLessThan(
+    mockUpdateSeries.mock.invocationCallOrder[0]!,
+  );
+});
+
+it('still swaps in the marker when keeping the local copy fails', async () => {
+  enqueue('a');
+  mockWrite.mockImplementation(() => {
+    throw new Error('disk full');
+  });
+
+  await runPhotoQueue();
+
+  expect(mockUpdateSeries).toHaveBeenCalledWith(mockClient.db, 'photo-a', {
+    photoUri: toSyncPhotoUri('photo-a'),
+  });
+  expect(mockQueue).toEqual([]);
+});
+
+it('does not keep a copy of a photo the server refused', async () => {
+  enqueue('a');
+  mockUpload.mockImplementationOnce(status(503));
+
+  await runPhotoQueue();
+
+  expect(mockWrite).not.toHaveBeenCalled();
 });
 
 it('ends the pass on a network failure without spending an attempt', async () => {

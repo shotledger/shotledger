@@ -74,6 +74,15 @@ async function runUpload(entry: PhotoQueueEntry): Promise<PhotoTaskOutcome> {
     ),
   );
 
+  // Keep what was uploaded where the marker resolves, so this device does not
+  // lose the photo until it downloads it back — and a backup made meanwhile
+  // still holds it. A failed write only costs that download.
+  try {
+    writeSyncPhoto(entry.photoId, bytes);
+  } catch {
+    // The download queued by the next reconcile restores it.
+  }
+
   // Swap the device-local path for the device-independent marker. This is a
   // normal local write, so the outbox trigger queues it and the other device
   // learns the photo exists.
