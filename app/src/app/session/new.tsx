@@ -43,7 +43,10 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
-import { parseRoundsFired } from '@shotledger/shared/src/sync-client/rounds-entry';
+import {
+  MAX_ROUNDS_FIRED,
+  parseRoundsFired,
+} from '@shotledger/shared/src/sync-client/rounds-entry';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getDefaultFirearmForGroup, listFirearmGroups } from '@/db/queries/firearm-groups';
@@ -623,7 +626,7 @@ export default function NewSessionScreen() {
           />
           {roundsInvalid && (
             <ThemedText type="small" themeColor="danger" testID="rounds-fired-error">
-              {t('session.roundsFiredInvalid')}
+              {t('session.roundsFiredInvalid', { max: MAX_ROUNDS_FIRED })}
             </ThemedText>
           )}
         </Card>

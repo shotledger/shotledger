@@ -74,12 +74,13 @@ describe('parseRoundsFired', () => {
     ['0', 0],
     [' 007 ', 7],
     ['60', 60],
-    ['9007199254740991', 9007199254740991],
+    ['10000', 10_000],
   ])('RO2 %j reads as %j', (text, expected) => {
     expect(parseRoundsFired(text)).toEqual({ ok: true, rounds: expected });
   });
 
-  it.each(['-3', '2.5', 'abc', '1e2', '0x10', '6 0', '9007199254740992'])(
+  // Over MAX_ROUNDS_FIRED is a typo (QA #747): 2147483648 once reached Statistics.
+  it.each(['-3', '2.5', 'abc', '1e2', '0x10', '6 0', '10001', '2147483648', '9007199254740992'])(
     'RO2 %j is invalid',
     (text) => {
       expect(parseRoundsFired(text)).toEqual({ ok: false });
@@ -220,6 +221,11 @@ describe('buildRoundsEntry', () => {
     expect(build(draft({ startedAt: '2026-10-09T08:15:00Z' }))).toEqual({
       ok: false,
       errors: [{ kind: 'invalidStartedAt' }],
+    });
+    // Out of range is refused as for a series entry (QA #747).
+    expect(build(draft({ startedAt: '1899-06-01T08:00:00.000Z' }))).toEqual({
+      ok: false,
+      errors: [{ kind: 'startedAtOutOfRange' }],
     });
     expect(sessionOf(changesOf(build(draft({ ammoLotId: 'a1' }))))).toMatchObject({
       ammo_lot_id: 'a1',

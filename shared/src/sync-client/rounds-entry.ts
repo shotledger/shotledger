@@ -10,7 +10,7 @@ import { newSessionRow, withRoundsAdded, type Payload } from './rows';
 import {
   blankToNull,
   checkLength,
-  isUtcIsoTimestamp,
+  startedAtError,
   weaponGroupFor,
   type EntryContext,
   type EntryDeps,
@@ -27,9 +27,12 @@ export type RoundsEntryDraft = Omit<
   roundsFired: string;
 };
 
+/** No session fires more (QA #747): a larger count is a typo that would skew Statistics. */
+export const MAX_ROUNDS_FIRED = 10_000;
+
 /**
- * Blank is no count, as on the phone; whole digits are the count. Anything
- * else is refused, where the phone drops it silently (spec C4).
+ * Blank is no count, as on the phone; whole digits up to MAX_ROUNDS_FIRED
+ * are the count. Anything else is refused, on the phone too (spec C4).
  */
 export function parseRoundsFired(
   text: string,
@@ -37,9 +40,7 @@ export function parseRoundsFired(
   const trimmed = text.trim();
   if (trimmed === '') return { ok: true, rounds: null };
   const rounds = Number(trimmed);
-  return /^\d+$/.test(trimmed) && Number.isSafeInteger(rounds)
-    ? { ok: true, rounds }
-    : { ok: false };
+  return /^\d+$/.test(trimmed) && rounds <= MAX_ROUNDS_FIRED ? { ok: true, rounds } : { ok: false };
 }
 
 export function buildRoundsEntry(
@@ -69,10 +70,11 @@ export function buildRoundsEntry(
   if (draft.ammoLotId !== null && !context.ammoLots.has(draft.ammoLotId)) {
     errors.push({ kind: 'unknownAmmoLot' });
   }
-  if (!isUtcIsoTimestamp(draft.startedAt)) errors.push({ kind: 'invalidStartedAt' });
+  const now = deps.now();
+  const startedAt = startedAtError(draft.startedAt, now);
+  if (startedAt) errors.push(startedAt);
   if (!parsed.ok || errors.length > 0) return { ok: false, errors };
 
-  const now = deps.now();
   const changes: ClientChange[] = [];
   const add = (tableName: SyncTableName, payload: Payload) =>
     changes.push({

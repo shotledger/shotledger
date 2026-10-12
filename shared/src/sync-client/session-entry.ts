@@ -90,6 +90,10 @@ export type EntryError =
   | { kind: 'unknownFirearm' }
   | { kind: 'unknownAmmoLot' }
   | { kind: 'invalidStartedAt' }
+  /** Before 1900, or more than a day from now (QA #747): a typo, not a session. */
+  | { kind: 'startedAtOutOfRange' }
+  /** Not one shot in any series (QA #747): saving would make an empty session. */
+  | { kind: 'nothingEntered' }
   | { kind: 'invalidRounds' }
   | { kind: 'tooManyChanges'; max: number }
   // Fält stations (falt-entry.ts): points that do not parse, or an impossible station.
@@ -138,6 +142,20 @@ export function checkLength(
 export function isUtcIsoTimestamp(value: string): boolean {
   const time = Date.parse(value);
   return value.length === 24 && !Number.isNaN(time) && new Date(time).toISOString() === value;
+}
+
+/** The earliest start a web entry accepts. */
+export const EARLIEST_STARTED_AT = '1900-01-01T00:00:00.000Z';
+/** How far past now a start may lie: a day covers every time zone. */
+const FUTURE_SLACK_MS = 24 * 60 * 60 * 1000;
+
+/** What is wrong with a start time, if anything: its shape, or a date out of range. */
+export function startedAtError(startedAt: string, now: string): EntryError | null {
+  if (!isUtcIsoTimestamp(startedAt)) return { kind: 'invalidStartedAt' };
+  const time = Date.parse(startedAt);
+  return time < Date.parse(EARLIEST_STARTED_AT) || time > Date.parse(now) + FUTURE_SLACK_MS
+    ? { kind: 'startedAtOutOfRange' }
+    : null;
 }
 
 export function weaponGroupFor(
@@ -240,6 +258,9 @@ export function buildSessionEntry(
   if (finalShot && !kept.some((s) => !s.isFinal && !s.isSighter)) {
     errors.push({ kind: 'finalWithoutMain' });
   }
+  // Only once every row read: a row error already says what to fix.
+  const rowErrors = errors.some((error) => 'row' in error);
+  if (!rowErrors && !typed.some((s) => s.shots.length > 0)) errors.push({ kind: 'nothingEntered' });
 
   let pulledFirearm: Payload | undefined;
   if (draft.firearmId !== null) {
@@ -249,10 +270,11 @@ export function buildSessionEntry(
   if (draft.ammoLotId !== null && !context.ammoLots.has(draft.ammoLotId)) {
     errors.push({ kind: 'unknownAmmoLot' });
   }
-  if (!isUtcIsoTimestamp(draft.startedAt)) errors.push({ kind: 'invalidStartedAt' });
+  const now = deps.now();
+  const startedAt = startedAtError(draft.startedAt, now);
+  if (startedAt) errors.push(startedAt);
   if (errors.length > 0) return { ok: false, errors };
 
-  const now = deps.now();
   const changes: ClientChange[] = [];
   const add = (tableName: SyncTableName, payload: Payload) =>
     changes.push({

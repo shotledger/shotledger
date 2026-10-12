@@ -164,8 +164,26 @@ describe('buildSessionEntry', () => {
     expect(payloads(withSighter, 'shots')).toHaveLength(1);
   });
 
-  it('E2 an entry with no rows at all is just a session', () => {
-    expect(changesOf(build(draft({ series: [] }))).map((c) => c.tableName)).toEqual(['sessions']);
+  it('E2 an entry with no shot in any row is refused: nothingEntered (QA #747)', () => {
+    for (const series of [[], rows('', '  '), [{ text: ' ', isSighter: true }]]) {
+      expect(build(draft({ series }))).toEqual({ ok: false, errors: [{ kind: 'nothingEntered' }] });
+    }
+    // A fixed format's blank skeleton is nothing entered too.
+    const air = getProgram('issf-air-pistol')!;
+    const blank = draft({
+      type: 'competition',
+      disciplineId: air.disciplineId,
+      programId: air.id,
+      series: [],
+    });
+    expect(build(blank)).toEqual({ ok: false, errors: [{ kind: 'nothingEntered' }] });
+    // A row that does not read says so instead.
+    expect(build(draft({ series: rows('11') }))).toMatchObject({
+      ok: false,
+      errors: [{ kind: 'series', row: 1 }],
+    });
+    // One shot in a sighter is something entered.
+    expect(build(draft({ series: [{ text: '9', isSighter: true }] })).ok).toBe(true);
   });
 
   const standard = getProgram('issf-standard-pistol')!;
@@ -420,13 +438,12 @@ describe('buildSessionEntry', () => {
     expect(session(changes)).toMatchObject({ firearm_id: 'f1' });
   });
 
-  it('E11 no firearm, or a firearm and 0 shots, push no firearm row', () => {
+  it('E11 no firearm pushes no firearm row; a firearm and 0 shots is nothing entered (QA #747)', () => {
     expect(payloads(changesOf(build(draft())), 'firearms')).toHaveLength(0);
-    const blank = changesOf(
-      build(draft({ firearmId: 'f1', series: [{ text: '', isSighter: true }] })),
-    );
-    expect(payloads(blank, 'firearms')).toHaveLength(0);
-    expect(session(blank)).toMatchObject({ firearm_id: 'f1' });
+    expect(build(draft({ firearmId: 'f1', series: [{ text: '', isSighter: true }] }))).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingEntered' }],
+    });
   });
 
   it('E12 a text field over TEXT_LIMITS is refused, naming the field', () => {
@@ -592,8 +609,27 @@ describe('buildSessionEntry', () => {
     ]);
   });
 
+  it('E16 a start before 1900 or more than a day from now is refused: startedAtOutOfRange (QA #747)', () => {
+    const at = (startedAt: string) => build(draft({ startedAt }));
+    expect(at('1899-12-31T23:59:59.999Z')).toEqual({
+      ok: false,
+      errors: [{ kind: 'startedAtOutOfRange' }],
+    });
+    expect(at('2999-01-01T00:00:00.000Z')).toEqual({
+      ok: false,
+      errors: [{ kind: 'startedAtOutOfRange' }],
+    });
+    // The bounds themselves: 1900-01-01 and exactly a day after now (NOW).
+    expect(at('1900-01-01T00:00:00.000Z').ok).toBe(true);
+    expect(at('2026-10-08T10:00:00.000Z').ok).toBe(true);
+    expect(at('2026-10-08T10:00:00.001Z')).toEqual({
+      ok: false,
+      errors: [{ kind: 'startedAtOutOfRange' }],
+    });
+  });
+
   it("E15 a UTC timestamp in toISOString's shape is stored unchanged", () => {
-    const startedAt = '2026-10-09T08:15:00.000Z';
+    const startedAt = '2026-10-06T08:15:00.000Z';
     expect(session(changesOf(build(draft({ startedAt }))))).toMatchObject({
       started_at: startedAt,
     });
