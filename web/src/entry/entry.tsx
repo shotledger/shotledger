@@ -18,6 +18,7 @@ import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
 import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
+import { MAX_ROUNDS_FIRED } from '@shotledger/shared/src/sync-client/rounds-entry';
 import type { EntryError } from '@shotledger/shared/src/sync-client/session-entry';
 import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
@@ -107,16 +108,22 @@ export function locationUsage(sessions: Rows): LocationUsage[] {
 }
 
 /** `rowLabel` names a 1-based form row as the page labels it. */
-function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => string): string {
+function errorText(
+  t: TFunction,
+  error: EntryError,
+  rowLabel: (row: number) => string,
+  decimal: boolean,
+): string {
   switch (error.kind) {
     case 'series':
-      return error.error.kind === 'comma'
-        ? t('web.entry.errorComma', { row: rowLabel(error.row) })
-        : t('web.entry.errorToken', {
-            row: rowLabel(error.row),
-            token: error.error.token,
-            position: error.error.position,
-          });
+      if (error.error.kind === 'comma')
+        return t('web.entry.errorComma', { row: rowLabel(error.row) });
+      // With decimals a bare ring ("9", "X") is not a shot: say what is (QA #747).
+      return t(decimal ? 'web.entry.errorTokenDecimal' : 'web.entry.errorToken', {
+        row: rowLabel(error.row),
+        token: error.error.token,
+        position: error.error.position,
+      });
     case 'tooManyShots':
       return t('web.entry.errorTooManyShots', { row: rowLabel(error.row), max: error.max });
     case 'secondSighter':
@@ -138,8 +145,12 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorUnknownAmmoLot');
     case 'invalidStartedAt':
       return t('web.entry.errorDateTime');
+    case 'startedAtOutOfRange':
+      return t('web.entry.errorDateRange');
+    case 'nothingEntered':
+      return t('web.entry.errorNothingEntered');
     case 'invalidRounds':
-      return t('session.roundsFiredInvalid');
+      return t('session.roundsFiredInvalid', { max: MAX_ROUNDS_FIRED });
     case 'tooManyChanges':
       return t('web.entry.errorTooManyChanges');
     case 'hitsDiscipline':
@@ -296,8 +307,9 @@ export function Entry({
   const rowErrors = new Map<number, string>();
   const formErrors: string[] = [];
   for (const error of errors) {
-    if ('row' in error) rowErrors.set(error.row, errorText(t, error, rowLabel));
-    else formErrors.push(errorText(t, error, rowLabel));
+    const text = errorText(t, error, rowLabel, mode === 'decimal');
+    if ('row' in error) rowErrors.set(error.row, text);
+    else formErrors.push(text);
   }
 
   const pickedBlobs = () => new Map([...photos.picks].map(([key, pick]) => [key, pick.blob]));
@@ -695,7 +707,6 @@ export function Entry({
                     <label className="check">
                       <input
                         type="checkbox"
-                        tabIndex={-1}
                         checked={row.isSighter}
                         disabled={!canMarkSighter(form, index)}
                         onChange={(event) =>
