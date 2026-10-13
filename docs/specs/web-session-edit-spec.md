@@ -789,17 +789,20 @@ keeps a held request on the edit page too (#669 R21).
 ### 10.5 Scenarios
 
 Numbering continues §4. Each maps 1:1 to a named test (id + title) and names
-the mutation that falsifies it.
+the mutation that falsifies it, except U16 (no code) and U17 (the unedited
+entry tests), which have no test of their own.
 
 ```gherkin
 Feature: station edit (shared/src/sync-client/session-edit.test.ts)
   Scenario: K26 a changed station: the fresh payload spread with hits, figures_hit, figure_count, points, points_max,
             is_scratched and updated_at replaced; photo_uri, note, is_shoot_off, position and unknown keys survive;
             an unchanged station writes nothing
-    Falsified by: spreading the opened payload; writing is_shoot_off from the draft; writing every opened station
+    Falsified by: writing is_shoot_off from the draft; writing every opened station (spreading the opened
+                  payload is equivalent: E20 refuses the write unless opened and fresh rows are equal)
   Scenario: K27 a new station: newStationRow at max(fresh live position) + 1, then +1 per new row in form order;
             a new row with nothing entered writes nothing; a 0-hit row is saved (R8)
-    Falsified by: numbering from the opened stations; renumbering 1..n; dropping a 0-hit row
+    Falsified by: renumbering 1..n; dropping a 0-hit row (numbering from the opened stations is equivalent,
+                  as K26's spread)
   Scenario: K28 a removed station: one tombstone; no other station row is written; positions of the rest unchanged
   Scenario: K29 an opened row with hits null, or one stationProblem rejects → invalidStation(row); bad points →
             stationPoints(row); nothing built; a scratched row with impossible numbers is accepted (as the phone)
@@ -962,10 +965,12 @@ Swedish UI. Phone read-back needs a device; the PR says what was not run.
     shows the outcome before saving. E15's "among those kept" therefore reads:
     the last station kept _when the new row was added_ decides.
   - **A stored station the edit did not change is neither checked nor
-    written.** A row whose controls still hold the opened values (text that
-    parses to the stored number counts as unchanged) skips `stationPoints`
-    and `stationProblem`, as unchanged dates and Rounds Fired do, so imported
-    data the phone would refuse no longer blocks or rewrites a name-only
-    save. Behavioural fix (`1b2097d`).
+    written.** A row whose controls still hold exactly the opened values
+    (Points and Points Max as the text the page opened them with) skips
+    `stationPoints` and `stationProblem`, as unchanged Rounds Fired does
+    (trimmed text against the stored number's text), so imported data the
+    phone would refuse no longer blocks or rewrites a name-only save. Text
+    retyped to the same number (`05` for 5) is an edit: it is checked, and
+    written only if a column's value differs. Behavioural fix (`1b2097d`).
   - **Scratched stays on new rows** (E15 as written, matching the entry page),
     although the phone offers it only on an existing station.

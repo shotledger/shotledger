@@ -1828,7 +1828,7 @@ describe('station edit (§10)', () => {
     });
   });
 
-  it('K26 the spread is the fresh row, not the opened one; an unchanged station writes nothing', () => {
+  it('K26 a changed station is a new object over the fresh row; an unchanged station writes nothing', () => {
     const context = faltBook();
     const opened = open('sF', context);
     // The opened snapshot is a copy; the fresh row is a distinct object with equal values.
@@ -1899,7 +1899,7 @@ describe('station edit (§10)', () => {
     expect(new Set(added.map((c) => c.rowId)).size).toBe(2);
   });
 
-  it('K27 the position counts the fresh pull: a station the phone tombstoned at the end still leaves its number taken', () => {
+  it('K27 the position counts the stored rows: a station tombstoned at the end in the same draft still leaves its number taken', () => {
     const context = faltBook();
     // The last live station is 4; 3 is a gap.
     const d = stationEdit(

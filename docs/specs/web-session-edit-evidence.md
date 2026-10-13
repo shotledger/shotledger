@@ -446,8 +446,8 @@ round-1 fix; `9ba0662` after it changed tests only).
       `:500` (the `'new'` kind is reached by the loop's `else`).
     - `web/src/edit/model.ts:112` (`nextKey` decrementing still gives unique
       keys).
-    - `falt-model.ts:80`: a stored row without hits cannot reach it, since
-      the page offers no unchosen Hits on one.
+    - `falt-model.ts:80`: a stored row's `hits` is never null
+      (`falt_stations.hits` is `notNull()`), so the branch is unreachable.
     - `falt-model.ts:133`: `?.` is guarded by `lastKept !== undefined`.
   - **Effectively equivalent** (1): `session-edit.ts:262`, the stored-null
     branch's `''` replaced by `"Stryker was here!"`. It diverges only when
@@ -487,9 +487,15 @@ driven with Playwright:
 - The pull→push window of E6 applies to stations as it does to series.
 - Shoot-off is order-dependent, as on the phone (`nextStationIsShootOff`):
   a new station after a kept shoot-off is one, whatever the rows before it.
-- A stored station the edit left unchanged is not re-checked against
+- A stored station left exactly as opened is not re-checked against
   `stationProblem` (§10.10), so older data the phone would now refuse stays
-  as it is until someone edits that row.
+  as it is until someone edits that row. Retyping a number to the same value
+  (`05` for 5) is an edit and is checked; so is Rounds Fired `012000` for a
+  stored 12000.
+- K26's "spreading the opened payload" and K27's "numbering from the opened
+  stations" falsifiers are equivalent mutants: E20 writes stations only when
+  the opened and fresh rows are equal. The K26/K27 tests that name them are
+  kept as documentation of intent.
 - U16 has no test (no code: #768 removed the hints); U17 is the unedited
   `falt-model.test.ts`.
 
@@ -507,4 +513,13 @@ driven with Playwright:
   tests in `dbdcbfb`…`9ba0662`, (2) `1b2097d` plus K26's per-column test;
   (3) spec text corrected, behaviour kept; (4) kept as E15 states;
   wording corrected above.
-- **Round 2**: pending.
+- **Round 2** at `73b9d71`, a fresh agent, same protocol: **passed**. Every
+  number reconciled (3643/3 with the sv-FI 3 reproduced on `origin/main`,
+  100% coverage, 785/69, backend 6, Stryker 1292/12 at 99.08%, docs gates).
+  Its own mutants were killed except three equivalent ones (below). Four
+  description/mapping findings, fixed and disclosed with no new round: (F1)
+  §10.10 said text parsing to the stored number counts as unchanged; the code
+  compares exact text, now stated; (F2) K26's opened-payload spread and K27's
+  opened-numbering falsifiers are equivalent under E20, and two test titles
+  overclaimed, now renamed; (F3) the `falt-model.ts:80` reason corrected;
+  (F4) §10.5 now says U16/U17 have no test. Canary not run.
