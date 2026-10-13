@@ -6,7 +6,6 @@ import EditFirearmScreen from '@/app/firearms/[id]/edit';
 import NewFirearmScreen from '@/app/firearms/new';
 import { createFirearm, getFirearm, listFirearms } from '@/db/queries/firearms';
 import type { Database } from '@/db/types';
-import { parseMaintenanceInterval } from '@/features/firearms/round-adjustment';
 import { renderWithProviders } from '@/test-utils/render';
 import { mockRouter, setSearchParams } from '@/test-utils/router-mock';
 import { resetTestDb } from '@/test-utils/test-db-client';
@@ -139,34 +138,33 @@ describe('New firearm', () => {
     expect(screen.getByText('Select a caliber')).toBeOnTheScreen();
   });
 
-  it('stores no interval for text that is not a number', async () => {
-    await renderWithProviders(<NewFirearmScreen />);
-
-    await type('Make', 'Acme');
-    await type('Model', 'Target 22');
-    await type('Maintenance Interval (rounds)', 'often');
-    await fireEvent.press(create());
-
-    expect(listFirearms(db)[0]!.maintenanceIntervalRounds).toBeNull();
-  });
-
-  // BUG: the detail screen refuses these intervals (parseMaintenanceInterval:
-  // a positive whole number), but this form stores them as typed. Flip to
-  // `it.each` once the form validates the same way.
-  it.failing.each(['-50', '1.5', '0'])(
-    'never stores an interval the detail screen would refuse (%s)',
+  it.each(['often', '-50', '1.5', '0'])(
+    'refuses an interval the detail screen would refuse (%s)',
     async (interval) => {
       await renderWithProviders(<NewFirearmScreen />);
 
       await type('Make', 'Acme');
       await type('Model', 'Target 22');
       await type('Maintenance Interval (rounds)', interval);
+      expect(
+        screen.getByText('Enter a whole number of rounds, or leave it empty.'),
+      ).toBeOnTheScreen();
       await fireEvent.press(create());
 
-      const stored = listFirearms(db)[0]?.maintenanceIntervalRounds ?? null;
-      expect(stored === null || parseMaintenanceInterval(String(stored)).ok).toBe(true);
+      expect(listFirearms(db)).toHaveLength(0);
     },
   );
+
+  it('stores a positive whole-number interval', async () => {
+    await renderWithProviders(<NewFirearmScreen />);
+
+    await type('Make', 'Acme');
+    await type('Model', 'Target 22');
+    await type('Maintenance Interval (rounds)', ' 500 ');
+    await fireEvent.press(create());
+
+    expect(listFirearms(db)[0]!.maintenanceIntervalRounds).toBe(500);
+  });
 });
 
 describe('Edit firearm', () => {
@@ -232,16 +230,13 @@ describe('Edit firearm', () => {
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
   });
 
-  // BUG: New Firearm refuses a blank make or model, but Edit saves one — the
-  // firearm is left with no name in every list. Flip to `it` once Save
-  // enforces the same requirement.
-  it.failing('refuses to save a blank make or model', async () => {
+  it.each(['Make', 'Model'])('refuses to save a blank %s', async (label) => {
     const firearm = seeded();
     await openEdit(firearm.id);
 
-    await type('Make', '');
+    await type(label, '  ');
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
-    expect(getFirearm(db, firearm.id)?.make).toBe('Acme');
+    expect(getFirearm(db, firearm.id)).toMatchObject({ make: 'Acme', model: 'Target 22' });
   });
 });

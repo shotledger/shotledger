@@ -55,7 +55,8 @@ A firearm accumulates:
   Each entry shows its date and the note you wrote; a round-count adjustment
   shows the amount it moved the counter by and its reason ("+10 · Club rental
   rounds").
-  Set a **Maintenance Interval** and the phone notifies you once when
+  Set a **Maintenance Interval** (a whole number of rounds) and the phone
+  notifies you once when
   **Rounds Since Maintenance** reaches it, whatever brought the rounds in: a
   saved series, a rounds-only session, an import or **Adjust Round Count**. It
   stays quiet after that until you log maintenance and the count reaches the

@@ -55,7 +55,8 @@ Till ett vapen samlas:
   tillfället. Varje post visar datum och anteckningen du skrev; en justering
   av skottantalet visar hur mycket räknaren flyttades och sin anledning ("+10 ·
   skott med klubbvapen").
-  Anger du ett **Underhållsintervall** får du en notis i telefonen en gång när
+  Anger du ett **Underhållsintervall** (ett heltal skott) får du en notis i
+  telefonen en gång när
   **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en
   sparad serie, ett pass med bara skottantal, en import eller **Justera antal
   skott**. Sedan är det tyst tills du loggar underhåll och antalet når

@@ -46,8 +46,11 @@ export default function EditFirearmScreen() {
     );
   }
 
+  // As on New Firearm: a firearm always has a make and a model.
+  const canSave = make.trim().length > 0 && model.trim().length > 0;
+
   function onSave() {
-    if (!firearm) return;
+    if (!firearm || !canSave) return;
     updateFirearm(db, firearm.id, {
       make: make.trim(),
       model: model.trim(),
@@ -130,7 +133,12 @@ export default function EditFirearmScreen() {
         />
       </Card>
 
-      <PrimaryButton label={t('firearms.save')} onPress={onSave} testID="save-firearm" />
+      <PrimaryButton
+        label={t('firearms.save')}
+        onPress={onSave}
+        disabled={!canSave}
+        testID="save-firearm"
+      />
     </Screen>
   );
 }
