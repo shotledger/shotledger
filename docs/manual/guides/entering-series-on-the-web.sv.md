@@ -142,4 +142,5 @@ laddas det kontot i stället och det du skrivit töms, så inget från ett konto
 sparas i det andra. Stänger du fliken försvinner det du skrivit; ingenting
 sparas i webbläsaren.
 
-Ändra eller ta bort ett pass i efterhand gör du i telefonen.
+Hur du ändrar eller tar bort ett pass i efterhand står i
+[Ändra ett pass på webben](editing-a-session-on-the-web.md).

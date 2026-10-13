@@ -2,14 +2,13 @@
 // (docs/specs/web-bulk-edit-spec.md §3.1). Pure: ids, change ids and the
 // clock are injected. Each action does, per selected session, what the
 // phone's own edit does (B1).
-import { disciplineSeriesLength } from '../disciplines';
-import { sessionVolume, type VolumeSeries } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
 import { cleanTagName, sameTagName } from '../tags/canonical';
-import type { Payload } from './rows';
+import { withRoundsMoved, type Payload } from './rows';
 import type { EntryDeps } from './session-entry';
 import { canonicalTagId, newSessionTagRow, newTagRow } from './tag-rows';
+import { isLiveRow as isLive, liveRowsIn as liveRows, volumeIndex } from './volume-rows';
 
 export type BulkAction =
   | { kind: 'addTag'; name: string }
@@ -72,13 +71,6 @@ interface Planned {
   tagId?: string;
 }
 
-/** Present in the pull (server tombstones are dropped) and not soft-deleted. */
-const isLive = (row: Payload | undefined): row is Payload =>
-  row !== undefined && (row.deleted_at === null || row.deleted_at === undefined);
-
-const liveRows = (rows: ReadonlyMap<string, Payload>): Payload[] =>
-  [...rows.values()].filter(isLive);
-
 const edited = (pulled: Payload, column: string, value: unknown, now: string): Payload => ({
   ...pulled,
   [column]: value,
@@ -139,41 +131,6 @@ function removeTag(name: string, sessions: Payload[], context: BulkContext): Pla
   return { writes, changed: touched.size };
 }
 
-const countBy = (rows: Payload[], key: string): Map<unknown, number> => {
-  const counts = new Map<unknown, number>();
-  for (const row of rows) counts.set(row[key], (counts.get(row[key]) ?? 0) + 1);
-  return counts;
-};
-
-/**
- * Each session's rounds by the one volume rule, as the phone's
- * sessionVolumeRounds. The tables are indexed once, so a season of sessions
- * stays linear in its shots.
- */
-function volumeIndex(context: BulkContext): (session: Payload) => number {
-  const shotsBySeries = countBy(liveRows(context.shots), 'series_id');
-  const stationsBySession = countBy(liveRows(context.faltStations), 'session_id');
-  const seriesBySession = new Map<unknown, VolumeSeries[]>();
-  for (const s of liveRows(context.series)) {
-    const bucket = seriesBySession.get(s.session_id) ?? [];
-    bucket.push({
-      shotCount: shotsBySeries.get(s.id) ?? 0,
-      totalOnly: s.is_total_override === 1,
-      overrideShotCount: (s.total_override_shot_count as number | null | undefined) ?? null,
-    });
-    seriesBySession.set(s.session_id, bucket);
-  }
-  return (session) =>
-    sessionVolume({
-      series: seriesBySession.get(session.id) ?? [],
-      extraRounds: (session.extra_rounds as number | null | undefined) ?? null,
-      stationCount: stationsBySession.get(session.id) ?? 0,
-      seriesLength: disciplineSeriesLength(session.discipline_id as string),
-    });
-}
-
-const counter = (value: unknown): number => (typeof value === 'number' ? value : 0);
-
 /** The firearms a Change Firearm writes counters to (R25). */
 export interface FirearmMove {
   /** The firearm the sessions move to; null for None. */
@@ -216,18 +173,8 @@ function setFirearm(
   // over the summed delta equals the phone's floor per session.
   const firearmWrites: Write[] = [];
   for (const [firearmId, rounds] of delta) {
-    if (rounds === 0) continue;
-    const pulled = context.firearms.get(firearmId)!;
-    firearmWrites.push({
-      tableName: 'firearms',
-      rowId: firearmId,
-      payload: {
-        ...pulled,
-        round_count: Math.max(0, counter(pulled.round_count) + rounds),
-        rounds_since_maintenance: Math.max(0, counter(pulled.rounds_since_maintenance) + rounds),
-        updated_at: now,
-      },
-    });
+    const payload = withRoundsMoved(context.firearms.get(firearmId)!, rounds, now);
+    if (payload !== null) firearmWrites.push({ tableName: 'firearms', rowId: firearmId, payload });
   }
   return { writes: [...firearmWrites, ...sessionWrites], changed: sessionWrites.length, firearms };
 }

@@ -1,5 +1,5 @@
-// Browse sessions: the logbook as a table, and one session read-only — the
-// phone's Sessions list and session detail, without anything that edits.
+// Browse sessions: the logbook as a table, and one session — the phone's
+// Sessions list and session detail. Editing and deleting are in edit/.
 import {
   categoryKey,
   findEvent,
@@ -19,6 +19,7 @@ import {
   formatStation,
 } from '../../../app/src/features/session/format-falt-result';
 import { disciplineLabel, matchFormatLabel } from '../../../app/src/features/session/labels';
+import { SessionActions, type SessionWriter } from '../edit/delete';
 import type { PulledTables } from '../pull';
 import {
   browseSessions,
@@ -65,6 +66,8 @@ export function Sessions({
   compare = false,
   picked,
   onPicked,
+  writer,
+  notice = [],
 }: {
   tables: PulledTables;
   sessionId: string | null;
@@ -72,6 +75,10 @@ export function Sessions({
   /** The photos picked to compare; the App keeps them across pages. */
   picked: readonly string[];
   onPicked: (next: readonly string[]) => void;
+  /** Edit and Delete on the detail; absent, the detail is read-only. */
+  writer?: SessionWriter;
+  /** What the last edit or delete said, shown where it landed. */
+  notice?: readonly string[];
 }) {
   const sessions = useMemo(() => browseSessions(tables), [tables]);
   const owners = useMemo(() => photoOwners(sessions), [sessions]);
@@ -80,10 +87,25 @@ export function Sessions({
   let view;
   if (compare) view = <Compare owners={owners} />;
   else if (sessionId === null) view = <SessionList sessions={sessions} />;
-  else view = <SessionDetail session={sessions.find((s) => s.id === sessionId) ?? null} />;
+  else {
+    view = (
+      <SessionDetail
+        session={sessions.find((s) => s.id === sessionId) ?? null}
+        tables={tables}
+        writer={writer}
+      />
+    );
+  }
 
   return (
     <PicksProvider value={picks}>
+      {notice.length > 0 && (
+        <div className="notice card" role="status">
+          {notice.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      )}
       {view}
       {!compare && <PickBar />}
     </PicksProvider>
@@ -167,7 +189,15 @@ function Tile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionDetail({ session }: { session: BrowseSession | null }) {
+function SessionDetail({
+  session,
+  tables,
+  writer,
+}: {
+  session: BrowseSession | null;
+  tables: PulledTables;
+  writer?: SessionWriter;
+}) {
   const { t } = useTranslation();
 
   if (!session) {
@@ -207,6 +237,15 @@ function SessionDetail({ session }: { session: BrowseSession | null }) {
         <p className="muted">{meta.join(' · ')}</p>
         <Tags names={[...tags.own, ...tags.machine]} />
         <PickAll photoIds={sessionPhotoIds(session)} />
+        {writer && (
+          <SessionActions
+            tables={tables}
+            sessionId={session.id}
+            name={session.name}
+            startedAt={session.startedAt}
+            writer={writer}
+          />
+        )}
       </header>
 
       <section className="card">

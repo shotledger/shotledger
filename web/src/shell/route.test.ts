@@ -15,6 +15,10 @@ describe('routeFromHash', () => {
     ['#sessions/abc-123', { page: 'sessions', sessionId: 'abc-123' }],
     ['#sessions/a%20b', { page: 'sessions', sessionId: 'a b' }],
     ['#sessions/%E0%A4%A', { page: 'sessions', sessionId: null }],
+    ['#sessions/abc-123/edit', { page: 'sessions', sessionId: 'abc-123', edit: true }],
+    ['#sessions/a%2Fb/edit', { page: 'sessions', sessionId: 'a/b', edit: true }],
+    ['#sessions//edit', { page: 'sessions', sessionId: null }],
+    ['#sessions/abc-123/other', { page: 'sessions', sessionId: 'abc-123' }],
     ['#compare', { page: 'sessions', sessionId: null, compare: true }],
     ['#unknown', { page: 'statistics', sessionId: null }],
   ])('%s', (hash, route) => {
