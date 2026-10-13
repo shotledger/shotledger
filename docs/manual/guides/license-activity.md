@@ -92,4 +92,5 @@ your account, whatever the report's filters are set to.
 It appears once a profile is chosen under **Settings → Compliance**, on the
 phone or on the web. The web cannot see your phone's language, so until you
 choose, it shows nothing. The web has no firearm pages yet, so a firearm's own
-criteria are on the phone only.
+criteria, and the date by which your next session keeps you on track, are on
+the phone only for now.

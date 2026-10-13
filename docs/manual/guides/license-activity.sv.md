@@ -90,4 +90,5 @@ konto, oavsett hur rapportens filter är inställda.
 Den syns när en profil är vald under **Inställningar → Efterlevnad**, på
 telefonen eller på webben. Webben kan inte se telefonens språk, så tills du
 väljer visas ingenting. Webben har ännu inga sidor för vapen, så ett vapens
-egna kriterier finns bara på telefonen.
+egna kriterier, och datumet då nästa pass senast ska skjutas för att du ska
+hålla dig i fas, finns än så länge bara på telefonen.
