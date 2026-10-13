@@ -165,6 +165,12 @@ shot ids:
 - the session no longer live → "This session was deleted on another device",
   nothing sent.
 
+Delete touches every row of the session (R10): the session row, every live
+series (its row and its set of live shot ids, a series added or removed
+meanwhile included) and every live fält station. Any of them changed →
+refused as stale, nothing sent, and **Reload** re-pulls the page, so the
+confirmation is asked again with the fresh rounds.
+
 Rows the action does not touch (a series the user did not change, a series a
 phone added meanwhile) do not block the save and are left as they are.
 What remains is the same per-row last-write-wins as two phones, over the
@@ -208,6 +214,7 @@ reject any change (`tombstoned`):
 | deleted                     | Deleted; back to the Sessions list, refreshed                | closed                         |
 | saved in part               | … but some changes were refused (deleted on another device)¹ | closed                         |
 | stale (E6)                  | Changed on another device since you opened it: **Reload**    | kept; nothing sent             |
+| stale delete (E6, R10)      | Changed on another device, nothing deleted: **Reload**       | detail kept; nothing sent      |
 | gone (E6)                   | Deleted on another device                                    | closed; nothing sent           |
 | nothing changed             | No changes to save                                           | kept; nothing sent             |
 | network                     | Could not reach the server: **Retry**                        | kept, request held             |
@@ -261,7 +268,7 @@ buildSessionEdit(draft, opened, fresh, deps) →
   { ok: true; changes; moved: FirearmMove[] }
   | { ok: false; errors: EditError[] }   // includes { kind: 'stale' } and { kind: 'gone' }
 
-buildSessionDelete(sessionId, fresh, deps) →
+buildSessionDelete(opened, fresh, deps) →   // opened since R10
   { ok: true; changes; moved: FirearmMove[] } | { ok: false; errors: EditError[] }
 ```
 
@@ -308,6 +315,8 @@ Feature: edit builder (shared/src/sync-client/session-edit.test.ts)
     Falsified by: building from the opened payload instead of the fresh one; dropping an unknown key
   Scenario: K2 name blank → current name; location and notes trimmed, blank → null; over TEXT_LIMITS → tooLong(field)
   Scenario: K3 started_at under the R28 guard: each of #669 E15's refused values → invalidStartedAt, nothing built
+  Scenario: K25 (R11) an edited start before 1900-01-01Z or more than 24 h after now → startedAtOutOfRange, nothing
+            built; the bounds themselves pass; a stored out-of-range date the draft does not change is not checked
   Scenario: K4 type, kind, discipline_id, program_id, decimal_scoring, series_length, series_entry_mode, extra_rounds,
             external_*, official_* are never changed, whatever the draft holds
   Scenario: K5 a re-entered series: a tombstone per live shot, new rows at 1..k with fresh ids; an unchanged text writes nothing
@@ -337,6 +346,11 @@ Feature: delete builder (same file)
   Scenario: K21 delete moves the firearm by −V_before floored; no firearm, a firearm not live, or V_before 0 → no firearm row
   Scenario: K22 delete leaves session_tags and every photo column alone
   Scenario: K23 delete of a session not live → gone; over 500 changes → tooManyChanges
+  Scenario: K24 (R10) delete stale: the session row, any series row, a series' live shot ids, a series added or
+            removed, or a fält station added, removed or changed since the page opened → stale, nothing built;
+            gone wins over stale; rows of other sessions and the firearm row do not make it stale
+    Falsified by: comparing only the session row; comparing only the series the page opened (a series added
+                  meanwhile passes); leaving stations out
 
 Feature: on the phone's schema (app/src/db/queries/web-edit.test.ts, vitest + better-sqlite3)
   Scenario: P1 session fields: web changes applied with applyChangesSync give the same getSession as updateSession on a twin
@@ -364,6 +378,8 @@ Feature: page model (web/src/edit/*.test.ts)
   Scenario: U7 saved in part names the firearm(s) to check with Adjust Round Count, only when a moved counter's row was refused
   Scenario: U8 Delete needs the confirmation; Cancel sends nothing
   Scenario: U9 a builder that throws ends in "Could not save", not a page stuck saving (#669 R18)
+  Scenario: U10 (R10) Delete stale → its own message and Reload; nothing was sent; Delete builds from the
+            snapshot the page showed
 ```
 
 Browser checks (not automated; screenshots under
@@ -483,3 +499,37 @@ after a dropped response changes nothing twice; the Swedish UI.
   beyond `gone`; the rounds its confirmation names come from the page's last
   pull, while the push moves the counter by the fresh count. Whether Delete
   should also refuse a changed session is the maintainer's call.
+  **Decided by the maintainer (2026-10-13): yes, see R10.**
+- **R10 (spec change, approved by the maintainer 2026-10-13): Delete gets
+  Save's stale check.** If the session row, or any of its series or their live
+  shots, changed on another device since the page opened it (Save's notion of
+  "changed": the row's columns and values, a series' set of live shot ids),
+  or a series was added or removed meanwhile, Delete sends nothing and offers
+  Reload, as Save does; "gone" stays as it was. Reason: the confirmation names
+  a round count from the page's last pull while the push moves the firearm's
+  counter by the fresh count, and a delete would remove series the user never
+  saw. `buildSessionDelete` takes the opened snapshot (§3.1), which now also
+  holds the session's live fält stations; a station added, removed or changed
+  meanwhile is stale too, by the same reason (each station is six rounds of
+  the count the confirmation names), an extension of the maintainer's wording
+  to the one other child table Delete tombstones. E6, E9 and §4 (K24, U10)
+  carry it. Delete's "Reload" re-pulls the account (the page's refresh), since
+  the detail page holds no form to refill.
+- **R11 (rebase onto main, #747): an edited date is held to the entry's
+  range.** Main's entry builders refuse a start before 1900 or more than a
+  day ahead (`startedAtError`, `startedAtOutOfRange`). A date the edit
+  changes is checked the same way; a stored date the edit does not change is
+  not checked, so a session the phone holds with an odd date can still have
+  its other fields edited.
+- **R12 (rebase onto main, #713, #714, #754): what main added since.**
+  - Fält sessions entered on the web (#713) are edited as E11 says for fält:
+    session fields and Delete, never stations; E11's reason "no station entry
+    exists on the web" is out of date, the cut stands (stations are edited on
+    the phone).
+  - Photos attached on web entry (#714): a series may now hold a photo and no
+    shot. It opens as a blank row; left blank it writes nothing; its photo
+    columns carry over as E10 says, and Delete leaves the photo on the server
+    as the phone's delete does. The edit form does not attach or remove a
+    photo.
+  - The delete confirmation's date uses the web's locale binding
+    (`web/src/dates.ts`, #754); the app's `formatSessionDate` it used is gone.
