@@ -23,8 +23,9 @@ Private for now. Licensing: see [`LICENSE`](LICENSE) and ADR 0017.
 
 ## Getting started
 
-Requires Node 26 (exact version in `.node-version`, which `fnm`, `mise` and
-CI read) and pnpm 12 (pinned in `package.json`).
+Requires Node 24, the current LTS (exact version in `.node-version`, which
+`fnm`, `mise`, CI and the cloud-session hook in `.claude/hooks/` read) and
+pnpm 12 (pinned in `package.json`).
 
 ```bash
 pnpm i
