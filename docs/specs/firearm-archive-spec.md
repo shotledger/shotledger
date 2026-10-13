@@ -1,5 +1,8 @@
 # Archive a firearm (#799)
 
+**Spec approval: approved** by the maintainer on 2026-10-13, including the
+licence-check rules below.
+
 A sold, returned or retired firearm leaves the active lists and the pickers;
 everything it owns stays. Tests: `app/src/db/queries/firearm-archive.test.ts`
 (ids below), `app/src/features/firearms/archive-firearm.test.ts`,
