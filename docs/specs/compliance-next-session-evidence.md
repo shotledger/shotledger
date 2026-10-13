@@ -52,7 +52,19 @@ All in `shared/src/compliance/lapse.test.ts` unless noted.
 
 ## Real execution
 
-Pending: the web preview could not load demo data in this container (a sync timeout on the browser database), so the screens are to be checked on the device.
+Web preview (`expo start --web` behind the COI proxy) with `/dev` demo data
+(37 sessions) and the profile set to Sweden:
+
+- Home: "On Track" and "Next session by Mar 31, 2027 to stay On Track."
+- A newly added pistol marked My Own: the License Activity card shows the same
+  line under the shooter rule (6 § case, 37 of 6); the Additional Handgun
+  criterion is not met (0 of 2 with this firearm), and no date is shown under
+  it (N3).
+
+Loading demo data needed `Atomics.pause` removed in the browser for this run:
+expo-sqlite's synchronous channel gives up after a million paused spins, which
+this container exceeds. A test-harness workaround, not an app change. Not yet
+checked on a physical phone.
 
 ## Honest limits
 
