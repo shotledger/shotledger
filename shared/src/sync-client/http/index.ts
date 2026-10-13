@@ -161,8 +161,18 @@ export function createAccountApi(config: HttpClientConfig) {
       return sessionFrom(response, json);
     },
 
-    async signIn(email: string, password: string): Promise<AccountSession> {
-      const { response, json } = await authRequest(config, '/sign-in/email', { email, password });
+    /**
+     * `remember: false` is a browser tab's sign-in: the server ends it after
+     * a fixed few hours instead of keeping it alive with use.
+     */
+    async signIn(
+      email: string,
+      password: string,
+      options: { remember?: boolean } = {},
+    ): Promise<AccountSession> {
+      const body =
+        options.remember === false ? { email, password, rememberMe: false } : { email, password };
+      const { response, json } = await authRequest(config, '/sign-in/email', body);
       return sessionFrom(response, json);
     },
 
