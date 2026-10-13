@@ -10,12 +10,15 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { ScreenTitle } from '@/components/screen-title';
 import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
+import { ConfirmSheet } from '@/components/confirm-sheet';
+import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { SecondaryButton } from '@/components/secondary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
-import { getAmmoLot, updateAmmoLot } from '@/db/queries/ammo-lots';
+import { getAmmoLot, listAmmoLots, mergeAmmoLots, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
@@ -58,6 +61,10 @@ export default function AmmoLotDetailScreen() {
   const [colMm, setColMm] = useState(lot?.colMm != null ? String(lot.colMm) : '');
   const [crimpMm, setCrimpMm] = useState(lot?.crimpMm != null ? String(lot.crimpMm) : '');
   const [notes, setNotes] = useState(lot?.notes ?? '');
+  // Merge Into Another Lot (docs/specs/ammo-lot-merge-spec.md M5).
+  const otherLots = useMemo(() => listAmmoLots(db).filter((other) => other.id !== id), [id]);
+  const [merging, setMerging] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<string | null>(null);
 
   const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
   const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
@@ -93,6 +100,14 @@ export default function AmmoLotDetailScreen() {
       crimpMm: isHandload ? numberOrNull(crimpMm) : null,
       notes: notes.trim() || null,
     });
+    router.back();
+  }
+
+  const target = otherLots.find((other) => other.id === mergeTarget);
+  function onConfirmMerge() {
+    if (!lot || !target) return;
+    mergeAmmoLots(db, lot.id, target.id);
+    setMergeTarget(null);
     router.back();
   }
 
@@ -243,6 +258,45 @@ export default function AmmoLotDetailScreen() {
       </Card>
 
       <PrimaryButton label={t('ammo.save')} onPress={onSave} testID="save-ammo" />
+
+      {otherLots.length > 0 &&
+        (merging ? (
+          <Card>
+            <OptionPicker
+              label={t('ammo.mergeInto')}
+              options={otherLots.map((other) => ({
+                value: other.id,
+                label: other.caliber
+                  ? t('ammo.lotWithCaliber', { label: other.label, caliber: other.caliber })
+                  : other.label,
+                testID: `merge-into-${other.label}`,
+              }))}
+              value={mergeTarget}
+              onChange={setMergeTarget}
+            />
+          </Card>
+        ) : (
+          <SecondaryButton
+            label={t('ammo.mergeInto')}
+            onPress={() => setMerging(true)}
+            testID="merge-ammo"
+          />
+        ))}
+      <ConfirmSheet
+        visible={target !== undefined}
+        title={t('ammo.mergeConfirmTitle')}
+        body={t('ammo.mergeConfirmBody', {
+          count: usage.sessionCount,
+          duplicate: lot.label,
+          kept: target?.label ?? '',
+        })}
+        confirmLabel={t('ammo.mergeConfirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={onConfirmMerge}
+        onCancel={() => setMergeTarget(null)}
+        destructive
+        testID="merge-ammo-confirm"
+      />
     </Screen>
   );
 }
