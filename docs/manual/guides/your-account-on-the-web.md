@@ -2,9 +2,11 @@
 
 If you use sync, the ShotLedger web app lets you reach your account and your
 sessions from any browser, including when your phone is lost or broken. It
-reads what sync has already stored. It changes only two things: a session you
-type in under [Entering series on the web](entering-series-on-the-web.md), and
-the settings below.
+reads what sync has already stored, and changes only what the phone could
+change itself: a session you
+[type in](entering-series-on-the-web.md),
+[edit or delete](editing-a-session-on-the-web.md), sessions you
+[edit in bulk](editing-many-sessions-on-the-web.md), and the settings below.
 
 Sign in with the email and password of your sync account, then open
 **Account** in the menu on the left. Closing the tab signs you out of this

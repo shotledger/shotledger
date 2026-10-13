@@ -5,7 +5,42 @@ shooters: training and competition logging, camera-based target scoring,
 and Swedish license compliance (FAP 551-3). Offline-first; no account
 required. Android first, kept iOS-compatible throughout.
 
-Private for now. Licensing: see [`LICENSE`](LICENSE) and ADR 0017.
+Private for now, and not yet released: the maintainer runs evaluation
+builds. Licensing: see [`LICENSE`](LICENSE) and ADR 0017. The user manual
+(EN + SV) is published at <https://jimisola.github.io/shotledger/>.
+
+## Features
+
+- **Session logging, shot by shot** — training and competition under SPSF,
+  ISSF and SvSF programs, full match or free format, with sighters, finals
+  and tags. Fältskjutning and poängfält are logged station by station, with
+  shoot-offs. A session can instead record only the rounds fired.
+- **Photo scoring** — photograph a paper target; the app solves the target
+  face's geometry, suggests the holes, and you confirm or correct them.
+  Group figures per series.
+- **Firearms and ammunition** — round counters, maintenance intervals and
+  notifications, handloads and ammunition lots, and a lot-versus-lot
+  comparison.
+- **License compliance** — the range activity Swedish firearm licensing asks
+  for (FAP 551-3), per firearm, with licenses and license-card scanning.
+- **Timers** — par time, interval and string drills with microphone shot
+  detection, and the SPSF fälttimer with its spoken range commands.
+- **Statistics** — filtered reports with charts, personal records, a PDF
+  session report and a shareable session card; every target photo in one
+  searchable list.
+- **External sites** — WebShooter: your starts, adding a start to the
+  calendar, and importing your competition results.
+- **Your data** — backup and restore (the app reloads itself
+  afterwards), JSON export and import with a published schema, and ShotLog
+  5.4 per-shot import (dev tools).
+- **Optional sync and web app** — an account syncs sessions, settings and
+  target photos through a Cloudflare Worker. The web app reads them and,
+  with the phone's own rules, enters, edits, deletes and bulk-edits sessions.
+- **Evaluation builds** — a 30-day APK for testers, with its expiry and terms
+  in About and Export still available once it has expired.
+
+English and Swedish throughout. Offline-first: the device's SQLite database is
+the source of truth; sync is opt-in.
 
 ## Where things are
 
@@ -14,6 +49,7 @@ Private for now. Licensing: see [`LICENSE`](LICENSE) and ADR 0017.
 | [`app/`](app/README.md)           | The React Native + Expo app: screens, local SQLite database, i18n, platform wrappers. `app/PRODUCT.md` says what the product is and why.                                         |
 | [`shared/`](shared/README.md)     | Pure TypeScript with no React Native imports: scoring, disciplines and regulations, compliance, exports, sync protocol. Used by the app and the backend.                         |
 | [`backend/`](backend/README.md)   | Optional Cloudflare Worker for account, sync and photo backup. Never deployed from this repo by an agent.                                                                        |
+| `web/`                            | The web app (Vite + React), served by the Worker: reads synced data and writes only through sync push, on par with the phone. `web/CLAUDE.md` has the rules.                     |
 | `docs/`                           | Architecture, ADRs, the implementation plan, verified rule-book references, evidence-first specs, release checklist, and the user manual.                                        |
 | `docs/manual/`                    | The **user** manual (EN + SV), published with MkDocs from `mkdocs.yml`. Gated by `mkdocs build --strict` and the translation-freshness script.                                   |
 | `scripts/`                        | Repo gates and generators run by `pnpm check` and by hand — see below.                                                                                                           |
@@ -40,11 +76,12 @@ is in `docs/sync-backend.md`.
 
 ## Checks
 
-`pnpm check` is what CI runs: TypeScript for every package, the i18n key
-gate, the license-list gate, the export-schema gate, ESLint, Prettier,
-Vitest and the app's Jest suite. Two documentation gates are separate
-because they need Python: `mkdocs build --strict` and
-`node scripts/docs-translation-check.mjs`.
+`pnpm check` is what CI runs: the Node version gate, TypeScript for every
+package (web included), the export-schema gate, the i18n key gate, the
+license-list gate, ESLint, Prettier, Vitest and the app's Jest suite. The
+three documentation gates are separate because the build needs Python:
+`mkdocs build --strict`, `pnpm docs:translations` and `pnpm docs:anchors`
+(see `docs/CLAUDE.md`).
 
 The modules the maintainer does not read line by line — scoring,
 compliance, CSV, sync — are developed evidence-first (see
@@ -56,6 +93,7 @@ gate. `pnpm gauntlet` runs every layer.
 
 | Script                                              | Run by                                         | What it guards                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `node-version-check.mjs`                            | `pnpm check`                                   | `engines.node` and the EAS `base` profile match `.node-version`, the one source for the Node version.   |
 | `i18n-check.mjs`                                    | `pnpm check`                                   | `en.json` and `sv.json` have identical keys, and every key is referenced from `app/src`.                |
 | `generate-licenses.mjs`                             | `pnpm check` (check), `pnpm licenses:generate` | The About screen's open-source list matches what Metro actually bundles.                                |
 | `generate-export-schema.mjs`                        | `pnpm check` (check), `pnpm schema:generate`   | The published JSON Schema for session exports is derived from the zod schema the app validates against. |
@@ -66,6 +104,12 @@ gate. `pnpm gauntlet` runs every layer.
 | `manual-mutation.mjs`                               | by hand                                        | Manual mutants for `shared/src/json-export`, recorded in its evidence report.                           |
 | `manual-mutation-sync-push.mjs`                     | by hand                                        | Manual mutants for the sync push batch in `backend/src/db/queries.ts`, which Stryker cannot reach.      |
 | `manual-mutation-backup-sync.mjs`                   | by hand                                        | Manual mutants for the sync-bookkeeping reset a backup and a restore run (`app/src/db`).                |
+| `manual-mutation-sync-tags-settings.mjs`            | by hand                                        | Manual mutants for synced tags and settings outside Stryker's reach (app queries, web, Worker route).   |
+| `manual-mutation-web-edit.mjs`                      | by hand                                        | Manual mutants for the web session edit, including its phone twin tests.                                |
+| `manual-mutation-web-bulk.mjs`                      | by hand                                        | Manual mutants for the web bulk edit, including its phone twin tests.                                   |
+| `mutate-volume.mjs`                                 | by hand                                        | Manual mutants for the app side of the one volume rule, which is outside Stryker's scope.               |
+| `build-eval.mjs`                                    | `pnpm build:eval`, by the maintainer           | Builds a 30-day evaluation APK; see `docs/release.md`.                                                  |
+| `reqstool-stem.js`                                  | the test runners                               | The test-name prefix reqstool matches JUnit results against (ADR 0015).                                 |
 | `i18n-check-negative-control.mjs`                   | by hand                                        | Proves the i18n gate can still fail (mutates the JSON, expects a nonzero exit, restores it).            |
 
 ### Mutation testing
@@ -81,7 +125,8 @@ slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 ## Working in this repo
 
 - Branch per change, Conventional Commits, every commit DCO-signed
-  (`git commit -s`). Never commit to `main`; merges are the maintainer's.
+  (`git commit -s`). Never commit to `main`; a merge needs the
+  maintainer's OK.
 - Secrets never enter the working tree. Real personal data never does
   either, in any form: fixtures are synthetic.
 - Regulatory values (scoring thresholds, class ages, activity counts) are
@@ -101,4 +146,5 @@ much.
 3. [`docs/adr/`](docs/adr/) — the decisions behind them.
 4. [`docs/implementation-plan.md`](docs/implementation-plan.md) — the
    execution spec, milestone by milestone.
-5. Issues #346–#355 — what is outstanding, one topic issue each.
+5. [Open issues](https://github.com/jimisola/shotledger/issues) — what is
+   outstanding.
