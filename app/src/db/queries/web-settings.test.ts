@@ -1,10 +1,11 @@
-// The web edits the five synced settings as whole rows
+// The web edits the synced settings as whole rows
 // (docs/specs/web-settings-edit-spec.md A1–A3). These apply them to the
 // phone's real schema, through the phone's real apply path.
 import {
   buildSettingsChanges,
   newSettingRow,
   readAccountSettings,
+  readFeatureVisibility,
   resolveComplianceCase,
   SE_EXISTING_HANDGUN_VARIANT,
   type ChangeRow,
@@ -52,6 +53,12 @@ describe('web-built settings rows on the phone schema', () => {
           competesInWomensClasses: true,
           complianceProfile: 'se',
           complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT,
+          // Two feature switches hidden (#801 S5); the other three unchanged.
+          showLicenseActivity: true,
+          showPhotos: false,
+          showTimer: true,
+          showSightSettings: true,
+          showAmmoLots: false,
         },
         pulled,
         {
@@ -61,7 +68,7 @@ describe('web-built settings rows on the phone schema', () => {
         },
       );
       if (!result.ok) throw new Error(JSON.stringify(result.errors));
-      expect(result.changes).toHaveLength(5);
+      expect(result.changes).toHaveLength(7);
       const pulledBack: ChangeRow[] = result.changes.map((change, index) => ({
         tableName: change.tableName,
         rowId: change.rowId,
@@ -86,6 +93,14 @@ describe('web-built settings rows on the phone schema', () => {
         variantId: SE_EXISTING_HANDGUN_VARIANT,
         isExplicit: true,
         reasonId: null,
+      });
+      // The phone's own reader hides exactly the two areas the web hid (#801 S5).
+      expect(readFeatureVisibility((key) => getSetting<unknown>(db, key, undefined))).toEqual({
+        licenseActivity: true,
+        photos: false,
+        timer: true,
+        sightSettings: true,
+        ammoLots: false,
       });
       // The phone's own row kept its created_at; only the value and stamp moved.
       const row = db.select().from(settings).all();

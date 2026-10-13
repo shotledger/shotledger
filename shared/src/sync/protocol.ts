@@ -52,7 +52,9 @@ export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);
 /**
  * The account settings that follow the user (ADR 0019); a settings row's id
  * is its key. Every other key is device-local and never syncs. Kept in
- * lock-step with the WHEN clause of the app's settings outbox triggers.
+ * lock-step with the WHEN clause of the app's settings outbox triggers. The
+ * `show*` keys are the feature switches (#801, FEATURE_SETTING_KEYS in
+ * shared/src/features/visibility.ts).
  */
 export const SYNCED_SETTING_KEYS = [
   'birthYear',
@@ -60,6 +62,11 @@ export const SYNCED_SETTING_KEYS = [
   'competesInWomensClasses',
   'complianceProfile',
   'complianceProfileVariant',
+  'showLicenseActivity',
+  'showPhotos',
+  'showTimer',
+  'showSightSettings',
+  'showAmmoLots',
 ] as const;
 
 const SYNCED_SETTINGS: ReadonlySet<string> = new Set(SYNCED_SETTING_KEYS);

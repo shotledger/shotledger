@@ -1,4 +1,4 @@
-// The changes one web Save pushes for the five synced account settings
+// The changes one web Save pushes for the synced account settings
 // (docs/specs/web-settings-edit-spec.md §3.1); the reader is
 // account-settings.ts. Pure: change ids and the clock are injected. Allowed
 // values are the phone's own lists, never restated here.
@@ -49,6 +49,11 @@ function allowed(key: SyncedSettingKey, after: AccountSettings, deps: SettingsDe
     case 'skillClass':
       return isSkillClass(value);
     case 'competesInWomensClasses':
+    case 'showLicenseActivity':
+    case 'showPhotos':
+    case 'showTimer':
+    case 'showSightSettings':
+    case 'showAmmoLots':
       return typeof value === 'boolean';
     case 'complianceProfile':
       return isProfile(value);

@@ -559,7 +559,7 @@ END;
 -- shared/src/sync/protocol.ts, ADR 0019); every other key is device-local.
 CREATE TRIGGER `sync_outbox_settings_insert` AFTER INSERT ON `settings`
 WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
-  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant', 'showLicenseActivity', 'showPhotos', 'showTimer', 'showSightSettings', 'showAmmoLots')
 BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
@@ -570,7 +570,7 @@ END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_settings_update` AFTER UPDATE ON `settings`
 WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
-  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant', 'showLicenseActivity', 'showPhotos', 'showTimer', 'showSightSettings', 'showAmmoLots')
 BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)

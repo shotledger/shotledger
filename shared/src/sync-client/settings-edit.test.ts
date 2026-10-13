@@ -38,6 +38,11 @@ const UNSET: AccountSettings = {
   competesInWomensClasses: false,
   complianceProfile: null,
   complianceProfileVariant: null,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
 };
 
 const SET: AccountSettings = {
@@ -46,6 +51,11 @@ const SET: AccountSettings = {
   competesInWomensClasses: true,
   complianceProfile: 'se',
   complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
 };
 
 describe('building the push', () => {
@@ -95,13 +105,18 @@ describe('building the push', () => {
     });
   });
 
-  it('B4 all five changed → five changes in SYNCED_SETTING_KEYS order, each valid', () => {
+  it('B4 all ten changed → ten changes in SYNCED_SETTING_KEYS order, each valid', () => {
     const after: AccountSettings = {
       birthYear: 1975,
       skillClass: '1',
       competesInWomensClasses: false,
       complianceProfile: 'se',
       complianceProfileVariant: SE_EXISTING_HANDGUN_VARIANT,
+      showLicenseActivity: false,
+      showPhotos: false,
+      showTimer: false,
+      showSightSettings: false,
+      showAmmoLots: false,
     };
     const before: AccountSettings = { ...SET, complianceProfile: 'none' };
     const result = buildSettingsChanges(before, after, new Map(), deps());
@@ -113,9 +128,14 @@ describe('building the push', () => {
       'false',
       '"se"',
       `"${SE_EXISTING_HANDGUN_VARIANT}"`,
+      'false',
+      'false',
+      'false',
+      'false',
+      'false',
     ]);
     const ids = new Set(result.changes.map((c) => c.clientChangeId));
-    expect(ids.size).toBe(5);
+    expect(ids.size).toBe(10);
     for (const change of result.changes) {
       expect(ClientChangeSchema.safeParse(change).success).toBe(true);
       expect(change.tableName).toBe('settings');
@@ -138,6 +158,11 @@ describe('building the push', () => {
       [{ complianceProfile: null }, 'complianceProfile'],
       [{ complianceProfileVariant: 'retired' }, 'complianceProfileVariant'],
       [{ complianceProfileVariant: null }, 'complianceProfileVariant'],
+      [{ showLicenseActivity: null as never }, 'showLicenseActivity'],
+      [{ showPhotos: 'false' as never }, 'showPhotos'],
+      [{ showTimer: 0 as never }, 'showTimer'],
+      [{ showSightSettings: undefined as never }, 'showSightSettings'],
+      [{ showAmmoLots: 'no' as never }, 'showAmmoLots'],
     ];
     for (const [edit, key] of refused) {
       expect(buildSettingsChanges(SET, { ...SET, ...edit }, new Map(), deps()), key).toEqual({
@@ -166,6 +191,18 @@ describe('building the push', () => {
     const result = buildSettingsChanges(aged, { ...aged, skillClass: '1' }, new Map(), deps());
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     expect(result.changes.map((c) => c.rowId)).toEqual(['skillClass']);
+  });
+
+  it('S3 a feature switch changed is one settings row valued true or false (#801)', () => {
+    const hide = buildSettingsChanges(SET, { ...SET, showPhotos: false }, new Map(), deps());
+    expect(hide.ok && hide.changes.map((c) => [c.rowId, (c.payload as Payload).value])).toEqual([
+      ['showPhotos', 'false'],
+    ]);
+    const hidden: AccountSettings = { ...SET, showTimer: false };
+    const show = buildSettingsChanges(hidden, { ...hidden, showTimer: true }, new Map(), deps());
+    expect(show.ok && show.changes.map((c) => [c.rowId, (c.payload as Payload).value])).toEqual([
+      ['showTimer', 'true'],
+    ]);
   });
 
   it('B8 a pulled column this build does not know survives the rewrite', () => {
@@ -249,6 +286,11 @@ describe('building the push', () => {
           competesInWomensClasses: fc.boolean(),
           complianceProfile: fc.constantFrom(...profiles),
           complianceProfileVariant: fc.constantFrom(...variants),
+          showLicenseActivity: fc.boolean(),
+          showPhotos: fc.boolean(),
+          showTimer: fc.boolean(),
+          showSightSettings: fc.boolean(),
+          showAmmoLots: fc.boolean(),
         })
         // A profile that offers cases holds one of them; under one that offers
         // none, or no profile at all, any stale case may sit.
