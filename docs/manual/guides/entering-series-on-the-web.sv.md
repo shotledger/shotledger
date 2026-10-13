@@ -46,7 +46,7 @@ för en bom och `X.0` för en innertia på linjen; en ensam `9` eller `X`
 avvisas, och meddelandet säger varför. Varje rad visar sin summa och sina
 innertior medan du skriver.
 
-Ett pass behöver minst ett skott: är alla rader tomma säger **Spara** det och
+Ett pass behöver minst ett skott eller foto: är alla rader tomma säger **Spara** det och
 skickar ingenting.
 
 - **Enter** går till nästa rad; i fritt format lägger Enter i sista raden till en rad.

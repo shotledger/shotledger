@@ -1417,7 +1417,7 @@
       "errorTooManyChanges": "För många skott för att spara på en gång. Dela upp passet i två.",
       "errorDateTime": "Ange datum och tid.",
       "errorDateRange": "Datumet måste ligga mellan 1900 och i dag.",
-      "errorNothingEntered": "Skriv minst ett skott innan du sparar.",
+      "errorNothingEntered": "Skriv minst ett skott, eller lägg till ett foto, innan du sparar.",
       "errorTokenDecimal": "{{row}}: ”{{token}}” (skott {{position}}) är inget skott. Med decimalräkning skriver du varje skott med tiondel, till exempel 9,8, 10,4 eller X,2.",
       "accountChanged": "Du är nu inloggad på ett annat konto, så passet skickades inte. Kontrollera serierna och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Serierna finns kvar; Försök igen skickar samma pass igen.",

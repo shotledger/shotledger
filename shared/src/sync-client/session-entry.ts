@@ -92,7 +92,7 @@ export type EntryError =
   | { kind: 'invalidStartedAt' }
   /** Before 1900, or more than a day from now (QA #747): a typo, not a session. */
   | { kind: 'startedAtOutOfRange' }
-  /** Not one shot in any series (QA #747): saving would make an empty session. */
+  /** Not one shot or photo in any series (QA #747): saving would make an empty session. */
   | { kind: 'nothingEntered' }
   | { kind: 'invalidRounds' }
   | { kind: 'tooManyChanges'; max: number }
@@ -260,7 +260,8 @@ export function buildSessionEntry(
   }
   // Only once every row read: a row error already says what to fix.
   const rowErrors = errors.some((error) => 'row' in error);
-  if (!rowErrors && !typed.some((s) => s.shots.length > 0)) errors.push({ kind: 'nothingEntered' });
+  if (!rowErrors && !typed.some((s) => s.shots.length > 0 || s.photoRow !== null))
+    errors.push({ kind: 'nothingEntered' });
 
   let pulledFirearm: Payload | undefined;
   if (draft.firearmId !== null) {

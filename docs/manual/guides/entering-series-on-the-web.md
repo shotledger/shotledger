@@ -45,7 +45,7 @@ every shot needs its tenth: type `9.0` for a nine, `0.0` for a miss and
 `X.0` for an inner ten on the line; a bare `9` or `X` is refused, and the
 message says so. Each row shows its total and its inner tens as you type.
 
-A session needs at least one shot: with every row empty, Save says so and
+A session needs at least one shot or photo: with every row empty, Save says so and
 sends nothing.
 
 - **Enter** moves to the next row; in free format, Enter in the last row adds one.
