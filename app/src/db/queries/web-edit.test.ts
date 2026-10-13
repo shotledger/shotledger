@@ -227,7 +227,8 @@ describe('a web session edit applied on the phone equals the phone editing it', 
   }
 
   function webDelete(sessionId: string) {
-    apply(web, changesOf(buildSessionDelete(sessionId, pulled(web), deps)));
+    const context = pulled(web);
+    apply(web, changesOf(buildSessionDelete(openedSession(sessionId, context)!, context, deps)));
   }
 
   const row = (id: string, text: string, isSighter = false, deleted = false) => ({

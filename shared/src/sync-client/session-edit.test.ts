@@ -241,6 +241,11 @@ describe('openedSession', () => {
     expect([...opened.series.keys()]).toEqual(['r1', 'r2', 'rF', 'rT']);
     expect(opened.series.get('r1')!.shots.map((s) => s.id)).toEqual(['x1', 'x2', 'x3', 'x4', 'x5']);
     expect(opened.series.get('rT')!.shots).toEqual([]);
+    expect(opened.stations).toEqual([]);
+  });
+
+  it('R10 holds the live fält stations of the session', () => {
+    expect(open('s2').stations.map((s) => s.id)).toEqual(['st1', 'st2', 'st3']);
   });
 
   it('is null for a session that is not live', () => {
@@ -411,6 +416,28 @@ describe('edit builder', () => {
       });
     }
     expect(changesOf(edit(draft('s1', { startedAt: '2026-05-02T06:30:00.000Z' })))).toHaveLength(1);
+  });
+
+  it('K25 an edited start before 1900 or more than a day ahead → startedAtOutOfRange, nothing built', () => {
+    // NOW is 2026-10-12T10:00:00.000Z.
+    for (const startedAt of ['1899-12-31T23:59:59.999Z', '2026-10-13T10:00:00.001Z']) {
+      expect(edit(draft('s1', { startedAt }))).toEqual({
+        ok: false,
+        errors: [{ kind: 'startedAtOutOfRange' }],
+      });
+    }
+    for (const startedAt of ['1900-01-01T00:00:00.000Z', '2026-10-13T10:00:00.000Z']) {
+      expect(
+        find(changesOf(edit(draft('s1', { startedAt }))), 'sessions', 's1')!.payload,
+      ).toMatchObject({ started_at: startedAt });
+    }
+  });
+
+  it('K25 a stored out-of-range start the draft does not change is not checked', () => {
+    const context = logbook();
+    const sessions = context.sessions as Map<string, Payload>;
+    sessions.set('s1', { ...sessions.get('s1')!, started_at: '1850-01-01T00:00:00.000Z' });
+    expect(changesOf(edit(draft('s1', { location: 'Range B' }), context))).toHaveLength(1);
   });
 
   it('K4 immutable and out-of-layer columns are never changed, whatever the draft holds', () => {
@@ -1205,7 +1232,9 @@ describe('K10 one move per firearm equals the phone', () => {
 });
 
 describe('delete builder', () => {
-  const del = (id: string, context = logbook()) => buildSessionDelete(id, context, makeDeps());
+  // The page opens from its last pull; Delete builds from a fresh one (R10).
+  const del = (id: string, context = logbook(), opened = open(id, context)) =>
+    buildSessionDelete(opened, context, makeDeps());
 
   it('K20 delete: tombstones for every live shot, series, fält station and the session; nothing else but the firearm', () => {
     const changes = changesOf(del('s1'));
@@ -1284,8 +1313,13 @@ describe('delete builder', () => {
   });
 
   it('K23 delete of a session not live → gone; over 500 changes → tooManyChanges', () => {
-    expect(del('sDel')).toEqual({ ok: false, errors: [{ kind: 'gone' }] });
-    expect(del('nope')).toEqual({ ok: false, errors: [{ kind: 'gone' }] });
+    const deleted = logbook();
+    const sessions = deleted.sessions as Map<string, Payload>;
+    sessions.set('s1', { ...sessions.get('s1')!, deleted_at: NOW });
+    expect(del('s1', deleted, open('s1'))).toEqual({ ok: false, errors: [{ kind: 'gone' }] });
+    const absent = logbook();
+    (absent.sessions as Map<string, Payload>).delete('s1');
+    expect(del('s1', absent, open('s1'))).toEqual({ ok: false, errors: [{ kind: 'gone' }] });
     const context = logbook();
     (context.sessions as Map<string, Payload>).set('big', session('big'));
     (context.series as Map<string, Payload>).set('bigR', series('bigR', 'big', 1));
@@ -1298,6 +1332,100 @@ describe('delete builder', () => {
       ok: false,
       errors: [{ kind: 'tooManyChanges', max: PUSH_BATCH_MAX, needed: PUSH_BATCH_MAX + 1 }],
     });
+  });
+});
+
+describe('K24 delete refuses what changed since the page opened (R10)', () => {
+  const STALE = { ok: false, errors: [{ kind: 'stale' }] };
+
+  /** Delete `id` as opened from the base logbook, over a fresh pull `change` altered. */
+  function delAfter(
+    id: string,
+    change: (fresh: { [K in keyof EditContext]: Map<string, Payload> }) => void,
+  ) {
+    const fresh = logbook() as { [K in keyof EditContext]: Map<string, Payload> };
+    change(fresh);
+    return buildSessionDelete(open(id), fresh, makeDeps());
+  }
+  const patch = (map: Map<string, Payload>, id: string, fields: Payload) =>
+    map.set(id, { ...map.get(id)!, ...fields });
+
+  it('K24 the session row changed → stale, nothing built', () => {
+    expect(delAfter('s1', (f) => patch(f.sessions, 's1', { notes: 'calm' }))).toEqual(STALE);
+    expect(delAfter('s1', (f) => patch(f.sessions, 's1', { updated_at: NOW }))).toEqual(STALE);
+    // A column only the fresh pull has.
+    expect(delAfter('s1', (f) => patch(f.sessions, 's1', { newer_column: 1 }))).toEqual(STALE);
+  });
+
+  it('K24 any series row or its live shot ids changed, a final and a total-only included → stale', () => {
+    for (const change of [
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
+        patch(f.series, 'r2', { is_sighter: 0 }),
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) => patch(f.series, 'rF', { note: 'x' }),
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
+        patch(f.series, 'rT', { total_override_shot_count: 9 }),
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
+        patch(f.shots, 'x1', { deleted_at: NOW }),
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
+        f.shots.set('y3', shot('y3', 'r2', 3, 60)),
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
+        f.shots.set('z4', shot('z4', 'rF', 4, 60)),
+    ]) {
+      expect(delAfter('s1', change)).toEqual(STALE);
+    }
+  });
+
+  it('K24 a series added or removed meanwhile → stale', () => {
+    expect(delAfter('s1', (f) => f.series.set('rNew', series('rNew', 's1', 6)))).toEqual(STALE);
+    expect(delAfter('s1', (f) => patch(f.series, 'r2', { deleted_at: NOW }))).toEqual(STALE);
+    expect(delAfter('s1', (f) => f.series.delete('r2'))).toEqual(STALE);
+    // A series with no shots, added meanwhile, still holds rounds the page never showed.
+    expect(delAfter('s3', (f) => f.series.set('n1', series('n1', 's3', 1)))).toEqual(STALE);
+  });
+
+  it('K24 a fält station added, removed or changed meanwhile → stale', () => {
+    expect(delAfter('s2', (f) => f.faltStations.set('st4', station('st4', 's2')))).toEqual(STALE);
+    expect(delAfter('s2', (f) => patch(f.faltStations, 'st1', { deleted_at: NOW }))).toEqual(STALE);
+    expect(delAfter('s2', (f) => f.faltStations.delete('st2'))).toEqual(STALE);
+    expect(delAfter('s2', (f) => patch(f.faltStations, 'st3', { position: 4 }))).toEqual(STALE);
+  });
+
+  it('K24 gone wins over stale', () => {
+    expect(
+      delAfter('s1', (f) => {
+        patch(f.series, 'r2', { is_sighter: 0 });
+        patch(f.sessions, 's1', { deleted_at: NOW });
+      }),
+    ).toEqual({ ok: false, errors: [{ kind: 'gone' }] });
+  });
+
+  it('K24 rows of other sessions and the firearm row do not make it stale; the move starts from the fresh counter', () => {
+    const result = delAfter('s1', (f) => {
+      patch(f.sessions, 's3', { notes: 'other' });
+      patch(f.series, 'h2', { is_sighter: 1 });
+      f.shots.set('k2', shot('k2', 'h2', 2, 80));
+      f.faltStations.set('st9', station('st9', 's2'));
+      patch(f.faltStations, 'st1', { position: 7 });
+      patch(f.firearms, 'f1', { round_count: 200 });
+      // A deleted row of the session changing again is not a live change.
+      patch(f.series, 'rGone', { note: 'still deleted' });
+      patch(f.shots, 'xDead', { updated_at: NOW });
+    });
+    expect(find(changesOf(result), 'firearms', 'f1')!.payload).toMatchObject({
+      round_count: 178,
+      rounds_since_maintenance: 0,
+    });
+    expect(changesOf(result)).toHaveLength(
+      changesOf(buildSessionDelete(open('s1'), logbook(), makeDeps())).length,
+    );
+  });
+
+  it('K24 the opened snapshot names the session: its id, not a fresh one, is deleted', () => {
+    const changes = changesOf(buildSessionDelete(open('s3'), logbook(), makeDeps()));
+    expect(changes.map((c) => [c.tableName, c.rowId])).toEqual([
+      ['firearms', 'f2'],
+      ['sessions', 's3'],
+    ]);
   });
 });
 

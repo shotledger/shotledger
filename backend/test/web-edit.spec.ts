@@ -254,7 +254,8 @@ describe('the web session edit path', () => {
   });
 
   it('W2 a delete, pushed over HTTP: device B pulls the tombstones and the firearm counters', async () => {
-    const changes = changesOf(buildSessionDelete('s1', await webContext(web.transport), deps()));
+    const context = await webContext(web.transport);
+    const changes = changesOf(buildSessionDelete(openedSession('s1', context)!, context, deps()));
     await expect(pushChanges(web.transport, PROTOCOL_VERSION, changes)).resolves.toEqual({
       kind: 'saved',
     });

@@ -16,7 +16,7 @@ import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/p
 import { TEXT_LIMITS } from '../sync/text-limits';
 import { applyRank } from './order';
 import { newSeriesRow, newShotRow, withRoundsMoved, type Payload } from './rows';
-import { blankToNull, isUtcIsoTimestamp, type EntryDeps } from './session-entry';
+import { blankToNull, startedAtError, type EntryDeps } from './session-entry';
 import { isLiveRow, liveRowsIn, sessionRoundsOf, volumeSeriesOf } from './volume-rows';
 
 /** The session fields the web edits (E2). */
@@ -74,6 +74,8 @@ export interface OpenedSession {
   session: Payload;
   /** Every live series of the session, by id. */
   series: ReadonlyMap<string, OpenedSeries>;
+  /** Every live fält station of the session: what Delete compares (R10). */
+  stations: readonly Payload[];
 }
 
 /** `row` is the 1-based row of `draft.series`. */
@@ -82,6 +84,7 @@ export type EditError =
   | { kind: 'gone' }
   | { kind: 'nothingToChange' }
   | { kind: 'invalidStartedAt' }
+  | { kind: 'startedAtOutOfRange' }
   | { kind: 'tooLong'; field: 'name' | 'competitionName' | 'location' | 'notes'; max: number }
   | { kind: 'unknownFirearm' }
   | { kind: 'unknownAmmoLot' }
@@ -139,6 +142,7 @@ export function openedSession(sessionId: string, context: EditContext): OpenedSe
         { row, shots: shots.get(row.id) ?? [] },
       ]),
     ),
+    stations: stationsOfSession(context, sessionId),
   };
 }
 
@@ -171,6 +175,7 @@ function sessionColumns(
   fields: Partial<EditableSessionFields>,
   session: Payload,
   context: EditContext,
+  now: string,
   errors: EditError[],
 ): Record<string, unknown> {
   const columns: Record<string, unknown> = {};
@@ -187,8 +192,11 @@ function sessionColumns(
     text('name', 'name', fields.name.trim() || (session.name as string));
   }
   if (fields.startedAt !== undefined) {
-    if (isUtcIsoTimestamp(fields.startedAt)) columns.started_at = fields.startedAt;
-    else errors.push({ kind: 'invalidStartedAt' });
+    // Only an edited date is held to the entry's range (R11).
+    const error = startedAtError(fields.startedAt, now);
+    if (error === null) columns.started_at = fields.startedAt;
+    else if (error.kind === 'invalidStartedAt') errors.push({ kind: 'invalidStartedAt' });
+    else errors.push({ kind: 'startedAtOutOfRange' });
   }
   if (fields.location !== undefined) text('location', 'location', blankToNull(fields.location));
   if (fields.notes !== undefined) text('notes', 'notes', blankToNull(fields.notes));
@@ -450,13 +458,13 @@ export function buildSessionEdit(
   const session = context.sessions.get(draft.sessionId);
   if (!isLiveRow(session)) return { ok: false, errors: [{ kind: 'gone' }] };
 
+  const now = deps.now();
   const errors: EditError[] = [];
-  const columns = sessionColumns(draft.fields, session, context, errors);
+  const columns = sessionColumns(draft.fields, session, context, now, errors);
   const plans = planSeries(draft, opened, context, errors);
   if (errors.length > 0) return { ok: false, errors };
   if (isStale(plans, opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };
 
-  const now = deps.now();
   const writes: Write[] = [];
   if (Object.keys(columns).length > 0) {
     writes.push({
@@ -536,14 +544,44 @@ export function buildSessionEdit(
   return finish([...firearmWrites(context, moves, now), ...writes], deps, now);
 }
 
+/** Same rows by id, each with the same columns and values. */
+function sameRows(a: readonly Payload[], b: readonly Payload[]): boolean {
+  const byId = new Map(b.map((row) => [row.id, row]));
+  return (
+    a.length === b.length &&
+    a.every((row) => {
+      const other = byId.get(row.id);
+      return other !== undefined && sameRow(row, other);
+    })
+  );
+}
+
+/**
+ * Anything Delete would remove that changed since the page opened (R10): the
+ * session row, any live series (its row, its live shot ids, one added or
+ * removed) and any live fält station.
+ */
+function isDeleteStale(opened: OpenedSession, context: EditContext): boolean {
+  const sessionId = opened.session.id as string;
+  if (!sameRow(opened.session, context.sessions.get(sessionId)!)) return true;
+  const was = [...opened.series.values()];
+  const wasRows = was.map((s) => s.row);
+  if (!sameRows(wasRows, seriesOfSession(context, sessionId))) return true;
+  const shots = shotsBySeries(context.shots);
+  if (was.some((s) => !sameIds(s.shots, shots.get(s.row.id) ?? []))) return true;
+  return !sameRows(opened.stations, stationsOfSession(context, sessionId));
+}
+
 /** Delete as deleteSessionAndSeries (E5): tombstones and the counter moved back. */
 export function buildSessionDelete(
-  sessionId: string,
+  opened: OpenedSession,
   context: EditContext,
   deps: EntryDeps,
 ): EditResult {
+  const sessionId = opened.session.id as string;
   const session = context.sessions.get(sessionId);
   if (!isLiveRow(session)) return { ok: false, errors: [{ kind: 'gone' }] };
+  if (isDeleteStale(opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };
   const now = deps.now();
   const shots = shotsBySeries(context.shots);
   const series = seriesOfSession(context, sessionId);
