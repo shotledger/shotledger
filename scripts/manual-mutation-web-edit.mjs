@@ -174,6 +174,36 @@ const MUTANTS = [
     tests: ['web/src/edit/messages.test.ts'],
   },
   {
+    name: 'builder (round-3 F2): Delete compares shot counts, not ids',
+    file: BUILDER,
+    find: '  if (was.some((s) => !sameIds(s.shots, shots.get(s.row.id) ?? []))) return true;',
+    replace:
+      '  if (was.some((s) => s.shots.length !== (shots.get(s.row.id) ?? []).length)) return true;',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'page (round-3 F1): Delete opens from the fresh pull, not what the page showed',
+    file: 'web/src/edit/request.ts',
+    find: '      : buildSessionDelete(shown, fresh, ids(io)),',
+    replace:
+      '      : buildSessionDelete(openedSession(sessionId, fresh) ?? shown, fresh, ids(io)),',
+    tests: ['web/src/edit/request.test.ts'],
+  },
+  {
+    name: 'page (round-3 F1): Delete Session sends without asking',
+    file: 'web/src/edit/save.ts',
+    find: "  return state.held === null ? 'ask' : 'resend';",
+    replace: "  return 'resend';",
+    tests: ['web/src/edit/save.test.ts'],
+  },
+  {
+    name: 'page (round-3 F1): Reload pulls nothing',
+    file: 'web/src/edit/save.ts',
+    find: '  void refresh();\n  return IDLE;',
+    replace: '  return IDLE;',
+    tests: ['web/src/edit/save.test.ts'],
+  },
+  {
     name: 'page: a lost response drops the request instead of holding it',
     file: 'web/src/edit/save.ts',
     find: "new Set(['network', 'unauthenticated'])",
