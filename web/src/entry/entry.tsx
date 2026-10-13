@@ -35,6 +35,7 @@ import { currentUserId, loadTables, pushRows, uploadPhoto } from '../api';
 import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
+import { DateField, TimeField } from '../fields/date-time-fields';
 import { KindPicker, RoundsFiredField, SectionHeading, StartFinalButton } from './kind-fields';
 import { buildEntry, disciplineOptions } from './kinds';
 import { faltSendsTheSame, initialFalt, isFaltForm, type FaltForm } from './falt-model';
@@ -470,24 +471,18 @@ export function Entry({
                 </select>
               </label>
             )}
-            <label className="field">
-              {t('session.date')}
-              <input
-                type="date"
-                value={form.date}
-                onChange={(event) => set('date', event.target.value)}
-                required
-              />
-            </label>
-            <label className="field">
-              {t('web.entry.time')}
-              <input
-                type="time"
-                value={form.time}
-                onChange={(event) => set('time', event.target.value)}
-                required
-              />
-            </label>
+            <DateField
+              label={t('session.date')}
+              value={form.date}
+              onChange={(date) => set('date', date)}
+              required
+            />
+            <TimeField
+              label={t('web.entry.time')}
+              value={form.time}
+              onChange={(time) => set('time', time)}
+              required
+            />
             <label className="field">
               {t('session.name')}
               <input

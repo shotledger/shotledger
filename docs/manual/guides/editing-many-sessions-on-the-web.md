@@ -9,7 +9,8 @@ another location. Sign in, then open **Bulk Edit** in the menu on the left.
 The page lists every session, newest first. Narrow the list with **From**,
 **To** and **Search** (a session's name, location or tags), then tick the
 sessions to change. The box at the top of the list ticks or clears every
-session shown.
+session shown. **From** and **To** take a date as on
+[Enter Series](entering-series-on-the-web.md), with the same calendar button.
 
 A change applies to the ticked sessions that the list shows. Sessions you
 ticked and then filtered away are left alone.

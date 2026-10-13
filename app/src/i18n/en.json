@@ -1341,6 +1341,16 @@
     "signInIntro": "Sign in with your ShotLedger account to view your sessions, your statistics and your account. Nothing is kept once you close the tab.",
     "loading_one": "Loading your logbook… {{count}} row",
     "loading_other": "Loading your logbook… {{count}} rows",
+    "dateField": {
+      "year": "YYYY",
+      "month": "MM",
+      "day": "DD",
+      "invalid": "Not a date. Enter it as {{format}}.",
+      "openCalendar": "Choose Date"
+    },
+    "timeField": {
+      "invalid": "Not a time. Enter it like {{example}}."
+    },
     "rangeReversed": "From is after To, so no session matches.",
     "loadFailed": "Could not load your logbook. Reload the page to try again.",
     "account": {

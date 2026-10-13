@@ -21,6 +21,7 @@ import { COMPETITION_LEVELS } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushRows } from '../api';
 import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
+import { DateField, TimeField } from '../fields/date-time-fields';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
 import { PhotoBadge, PhotoPanel } from '../sessions/photos';
@@ -249,14 +250,16 @@ export function SessionEdit({
         {/* Nothing changes under a save in flight (#669 R23). */}
         <fieldset className="entry-fieldset" disabled={working}>
           <section className="card entry-fields">
-            <label className="field">
-              {t('session.date')}
-              <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
-            </label>
-            <label className="field">
-              {t('web.entry.time')}
-              <input type="time" value={form.time} onChange={(e) => set('time', e.target.value)} />
-            </label>
+            <DateField
+              label={t('session.date')}
+              value={form.date}
+              onChange={(v) => set('date', v)}
+            />
+            <TimeField
+              label={t('web.entry.time')}
+              value={form.time}
+              onChange={(v) => set('time', v)}
+            />
             <label className="field">
               {t('session.name')}
               <input

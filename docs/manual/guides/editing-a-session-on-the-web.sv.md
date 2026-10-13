@@ -10,7 +10,8 @@ en plats eller ett vapen, eller skriva om en serie som blev fel. Logga in,
 datum och tid, namn, plats, anteckningar, tävlingsfälten för en tävling, vapen
 och ammunitionsparti. Ett tomt namn behåller passets namn; en tom plats eller
 anteckning rensar den. Ett nytt datum före 1900 eller senare än i morgon
-avvisas, som i Mata in serier. Typ, gren, matchformat och decimalräkning
+avvisas, som i Mata in serier, och datum och tid skrivs i samma format som där.
+Typ, gren, matchformat och decimalräkning
 bestäms när passet skapas och förblir som de är.
 
 Under fälten är varje serie i grundomgången en rad skott, skrivna som i
