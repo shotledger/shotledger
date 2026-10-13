@@ -24,7 +24,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
-import { listFirearms } from '@/db/queries/firearms';
+import { listActiveFirearms } from '@/db/queries/firearms';
 import { isShotlogRowImportable } from '@/db/queries/shotlog';
 import { useShotlogImport } from '@/features/shotlog/use-shotlog-import';
 import { disciplineLabel } from '@/features/session/labels';
@@ -90,7 +90,7 @@ export default function ShotlogImportScreen() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
-  const firearms = listFirearms(db);
+  const firearms = listActiveFirearms(db);
   const selectedCount = plan?.rows.filter((row) => row.selected).length ?? 0;
 
   function statusLabel(row: ShotlogPlanRow): string {

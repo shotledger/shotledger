@@ -365,7 +365,16 @@
     "sightWindageDecrease": "Decrease Windage",
     "sightWindageIncrease": "Increase Windage",
     "licenseNotRequired": "Not required",
-    "licenseNotRequiredBody": "An air weapon below the Swedish energy limit needs no licence. Add one anyway if yours does."
+    "licenseNotRequiredBody": "An air weapon below the Swedish energy limit needs no licence. Add one anyway if yours does.",
+    "archive": "Archive Firearm",
+    "archiveHint": "For a firearm you have sold, returned or retired. It leaves the list and the session form, and its sessions, licenses and maintenance are kept.",
+    "archiveConfirmTitle": "Archive This Firearm?",
+    "archiveConfirmBody": "It is hidden from your firearms and from new sessions, and its license reminders stop. Its sessions, statistics, licenses and maintenance stay. You can restore it at any time.",
+    "archivedTitle": "Archived",
+    "archivedBody": "Archived on {{date}}. It is hidden from your firearms and from new sessions. Its history is kept.",
+    "restore": "Restore Firearm",
+    "showArchived": "Show Archived ({{count}})",
+    "hideArchived": "Hide Archived"
   },
   "ammo": {
     "newLot": "New Ammo Lot",

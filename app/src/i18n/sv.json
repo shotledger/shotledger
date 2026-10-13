@@ -365,7 +365,16 @@
     "sightWindageDecrease": "Minska sida",
     "sightWindageIncrease": "Öka sida",
     "licenseNotRequired": "Krävs inte",
-    "licenseNotRequiredBody": "Ett effektbegränsat luftvapen kräver ingen licens. Lägg ändå till en om ditt vapen kräver det."
+    "licenseNotRequiredBody": "Ett effektbegränsat luftvapen kräver ingen licens. Lägg ändå till en om ditt vapen kräver det.",
+    "archive": "Arkivera vapen",
+    "archiveHint": "För ett vapen du har sålt, lämnat tillbaka eller slutat använda. Det försvinner från listan och från formuläret för nytt pass, och dess pass, licenser och underhåll finns kvar.",
+    "archiveConfirmTitle": "Arkivera det här vapnet?",
+    "archiveConfirmBody": "Det döljs bland dina vapen och när du startar ett pass, och påminnelserna om licensen upphör. Dess pass, statistik, licenser och underhåll finns kvar. Du kan återställa det när som helst.",
+    "archivedTitle": "Arkiverat",
+    "archivedBody": "Arkiverat {{date}}. Det döljs bland dina vapen och när du startar ett pass. Historiken finns kvar.",
+    "restore": "Återställ vapen",
+    "showArchived": "Visa arkiverade ({{count}})",
+    "hideArchived": "Dölj arkiverade"
   },
   "ammo": {
     "newLot": "Nytt ammunitionsparti",
