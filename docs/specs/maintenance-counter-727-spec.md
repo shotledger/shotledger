@@ -6,9 +6,9 @@
 > and the maintainer's ruling of 2026-10-13 (item 5 there: derive the figure
 > from `maintenance_events.round_count_at`).
 >
-> **Approval status:** awaiting the maintainer's approval. The draft PR
-> implements this text so the review can read both; nothing merges before
-> approval.
+> **Approval status:** approved first-hand by the maintainer on 2026-10-13
+> ("yes", project thread, 22:35 UTC), as written, including the defaults in
+> §1–§3.
 
 - **Tier: 3.** It changes the synced `firearms` row, every write path that
   moves a firearm's round counter (phone and web), the maintenance-due

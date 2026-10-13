@@ -1,7 +1,7 @@
 # Derived rounds since maintenance (#727, PR B) — evidence report
 
 Spec: [`maintenance-counter-727-spec.md`](./maintenance-counter-727-spec.md),
-**awaiting the maintainer's approval**. This report records what the
+**approved by the maintainer on 2026-10-13**. This report records what the
 implementation on the same branch was checked against.
 
 **Tier 3.** Source state: branch `feature/issue-727-derived-maintenance-counter`,
