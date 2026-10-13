@@ -14,7 +14,7 @@ ofta du vill.
 | **Provserier**      | Om provserier räknas med. Se [Hur provserier räknas](../explanation/how-sighters-count.sv.md).     |
 | **Gren**            | En gren, eller alla.                                                                               |
 | **Skott per serie** | Bara serier av den längden, så att femskottsserier och sexskottsserier aldrig blandas i ett snitt. |
-| **Etiketter**       | Pass som har någon av de etiketter du väljer.                                                      |
+| **Taggar**          | Pass som har någon av de taggar du väljer.                                                         |
 
 Rapporten upprepar alla filter högst upp, så en rapport du exporterat eller
 återvänt till säger fortfarande vad den handlar om.

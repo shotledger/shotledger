@@ -4,7 +4,7 @@
 skott och fältstation, plus vapnen och licenserna bakom dem.
 
 Det är inte samma sak som en [säkerhetskopia](backup-and-restore.md). En
-säkerhetskopia är hela appen — inställningar, foton, underhåll, etiketter — och
+säkerhetskopia är hela appen — inställningar, foton, underhåll, taggar — och
 finns för att du ska kunna få tillbaka telefonen som den var, genom att ersätta
 allt som finns på enheten. En passexport är skjutandet och utrustningen det
 gjordes med, i ett dokumenterat format, så att något annat kan läsa det och så

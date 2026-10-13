@@ -25,7 +25,7 @@ Air Pistol / Free Pistol / Sport Pistol / Standard Pistol / Rapid Fire Pistol / 
 grovpistol — ISSF:s sex pistolgrenar.
 
 National Combined Match / Figure Shooting
-: Nationell helmatch och figurskjutning under sina engelska namn i appen.
+: Nationell helmatch och figurskjutning på engelska.
 Figurskjutning finns både som delmoment C i helmatchen och som egen gren för
 träning. Figurtavlan räknas bara med knappsatsen — Skjuthandboken anger inga
 mått för fotoräkningen att utgå från.
@@ -39,8 +39,7 @@ Poängmål
 aldrig en del av resultatet.
 
 Rapid Fire Air Pistol
-: Snabbluftpistol — SvSF:s egen 10 m-gren, ingen ISSF-gren. Appen visar den
-under sitt engelska namn i grenlistan, som de andra grenarna.
+: Snabbluftpistol — SvSF:s egen 10 m-gren, ingen ISSF-gren.
 
 Särskjutning
 : Skjutning mellan lika resultat. Den avgör bara placering; resultatet du
