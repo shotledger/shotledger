@@ -12,8 +12,10 @@
 > for merge on 2026-10-12 (PR #710), taking the recommended option on each of
 > that PR's four questions. Revisions made while implementing are in §9.
 >
-> **Revision 2 (§10, #769): NOT approved.** It lifts E11's cuts for fält
-> stations and rounds-only sessions; E1–E12 and §9 are unchanged by it.
+> **Revision 2 (§10, #769): approved** by the maintainer on 2026-10-13: "do
+> as the phone", every §10.8 question answered with the phone's behaviour
+> (§10.10). It lifts E11's cuts for fält stations and rounds-only sessions;
+> E1–E12 and §9 are unchanged by it.
 
 - **Tier: 3.** It rewrites and tombstones synced rows a phone may have
   changed since the web pulled them, and moves a firearm's absolute round
@@ -539,8 +541,7 @@ after a dropped response changes nothing twice; the Swedish UI.
 
 ## 10. Revision 2 — fält stations and rounds (#769)
 
-> **Approval status: NOT approved.** Written for the maintainer's review
-> before any code. E1–E12 and §9 stand; this section lifts two of E11's cuts
+> **Approval status: approved** (2026-10-13, §10.10). E1–E12 and §9 stand; this section lifts two of E11's cuts
 > (fält stations; rounds-only sessions and extra rounds) and says what
 > replaces them. E11's other cuts (final and total-only series, match format,
 > series reorder, tags, undo) are unchanged. Evidence for this revision is
@@ -913,4 +914,14 @@ Swedish UI. Phone read-back needs a device; the PR says what was not run.
 
 ### 10.10 Revisions to revision 2
 
-- (none yet)
+- **Approval (2026-10-13).** The maintainer answered §10.8 with one rule:
+  do as the phone, parity as far as possible (now `app/PRODUCT.md`
+  principle 5 and root `CLAUDE.md` rule 11). So: Q1 result mode read-only
+  (E16); Q2 Rounds Fired on rounds-only sessions only (E17); Q3 a rounds-only
+  fält session shows both (E18); Q4 stored positions with gaps kept (E14);
+  Q5 the phone's detail Rounds Fired field adopting `parseRoundsFired` is a
+  separate phone issue, outside this scope (N9).
+- **#727 interaction.** If #727 drops `falt_stations.photo_uri`, K26's spread
+  needs no change (a missing key is simply absent). If it derives
+  `firearms.rounds_since_maintenance`, E19's counter move follows whichever
+  lands first.
