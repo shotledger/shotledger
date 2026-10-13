@@ -57,7 +57,6 @@ import { LocationField } from '@/features/location/location-field';
 import {
   COMPETITION_LEVELS,
   disciplineLabel,
-  formatLocalDate,
   matchFormatHint,
   matchFormatLabel,
   type CompetitionLevel,
@@ -65,6 +64,7 @@ import {
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { TagSelect } from '@/features/tags/tag-select';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 const NO_PROGRAM = 'none';
 
@@ -93,6 +93,7 @@ export default function NewSessionScreen() {
     [],
   );
   const { t, i18n } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
 
   const [type, setType] = useState<SessionType>('training');
@@ -215,7 +216,7 @@ export default function NewSessionScreen() {
   const startedAt = useMemo(() => new Date().toISOString(), []);
   const defaultName = defaultSessionName({
     typeLabel: t(`sessionType.${type}`),
-    dateLabel: formatLocalDate(startedAt, i18n.language),
+    dateLabel: dates.date(startedAt),
   });
   const name = nameOverride ?? defaultName;
 

@@ -4,12 +4,12 @@ import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { createContext, useContext, useEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { formatSessionDate } from '../../../app/src/features/home/format-session-date';
 import { formatStation } from '../../../app/src/features/session/format-falt-result';
 import { fetchPhoto } from '../api';
 import type { PhotoOwner, PhotoRef } from './browse';
 import { createPhotoUrls, photoFailure, type PhotoFailure } from './photo-urls';
 import { addPicks, removePick, togglePick } from './picks';
+import { showDate } from '../dates';
 
 const leasePhoto = createPhotoUrls(fetchPhoto);
 
@@ -195,7 +195,7 @@ function ownerLabel(t: ReturnType<typeof useTranslation>['t'], owner: PhotoOwner
 }
 
 export function Compare({ owners }: { owners: Map<string, PhotoOwner> }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { picked, setPicked } = useContext(PicksContext);
   const shown = picked.flatMap((id) => {
     const owner = owners.get(id);
@@ -221,7 +221,7 @@ export function Compare({ owners }: { owners: Map<string, PhotoOwner> }) {
         <div className="compare-grid">
           {shown.map((owner) => {
             const { title, result } = ownerLabel(t, owner);
-            const date = formatSessionDate(owner.session.startedAt, i18n.language);
+            const date = showDate(owner.session.startedAt);
             return (
               <figure key={owner.photoId} className="card">
                 <Photo

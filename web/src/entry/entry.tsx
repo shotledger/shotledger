@@ -27,7 +27,6 @@ import { uuidv7 } from 'uuidv7';
 import {
   COMPETITION_LEVELS,
   disciplineLabel,
-  formatLocalDate,
   matchFormatLabel,
   type CompetitionLevel,
 } from '../../../app/src/features/session/labels';
@@ -59,6 +58,7 @@ import {
 import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
 import { addTag, removeTag } from './tags';
 import { TagsField } from './tags-field';
+import { showDate } from '../dates';
 
 type Rows = Map<string, Record<string, unknown>>;
 
@@ -166,7 +166,7 @@ export function Entry({
   /** App reloads the logbook when another account signed in (R22). */
   onReauthenticated: (userId: string) => ReauthOutcome;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const online = useOnline();
   // The synced profile prefills the klass and ranks the events, as on the phone (C6).
   const profile = useMemo(() => readAccountSettings(tables.settings), [tables]);
@@ -247,7 +247,7 @@ export function Entry({
   const startedAt = startedAtIso(form.date, form.time);
   const defaultName = defaultSessionName({
     typeLabel: t(`sessionType.${form.type}`),
-    dateLabel: startedAt ? formatLocalDate(startedAt, i18n.language) : '',
+    dateLabel: startedAt ? showDate(startedAt) : '',
   });
 
   const blocked = saveBlocked(online, state);

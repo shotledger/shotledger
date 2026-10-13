@@ -14,11 +14,13 @@ import { ListRow } from '@/components/list-row';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 import { BackupOptionsDialog } from './backup-options-dialog';
 import { useBackupExportImport, type BackupExportOptions } from './use-backup-export-import';
 
 export function BackupCard() {
   const { t } = useTranslation();
+  const dates = useDateFormat();
   const theme = useTheme();
   const {
     exportBundle,
@@ -63,7 +65,7 @@ export function BackupCard() {
     Alert.alert(
       t('backup.restorePreviewTitle'),
       t('backup.restorePreviewBody', {
-        date: new Date(manifest.createdAt).toLocaleDateString(),
+        date: dates.dateTime(manifest.createdAt),
         sessions: manifest.counts.sessions,
         series: manifest.counts.series,
         shots: manifest.counts.shots,
@@ -115,7 +117,7 @@ export function BackupCard() {
       ) : null}
       <ThemedText type="small" themeColor="textSecondary" testID="backup-last-backup">
         {lastBackupAt
-          ? t('backup.lastBackup', { date: new Date(lastBackupAt).toLocaleString() })
+          ? t('backup.lastBackup', { date: dates.dateTime(lastBackupAt) })
           : t('backup.neverBackedUp')}
       </ThemedText>
       {statusText ? (

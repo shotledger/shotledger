@@ -25,7 +25,6 @@ import { TagChips } from '@/components/tag-chips';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { formatSeriesAverage, formatSessionTotal } from '@/features/home/home-session-row';
-import { formatSessionDate } from '@/features/home/format-session-date';
 import {
   EMPTY_SESSION_FILTER,
   filterSessionRows,
@@ -37,9 +36,11 @@ import { useSessionsList } from '@/features/sessions/use-sessions-list';
 import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 export default function SessionsListScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const { rows, disciplineIds, tagNames, firearms } = useSessionsList();
 
@@ -72,8 +73,7 @@ export default function SessionsListScreen() {
     [t],
   );
 
-  const formatDay = (day: string) =>
-    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(day));
+  const formatDay = dates.day;
 
   function set<K extends keyof SessionListFilter>(key: K, value: SessionListFilter[K]) {
     setFilter((current) => ({ ...current, [key]: value }));
@@ -248,7 +248,7 @@ export default function SessionsListScreen() {
             testID={`sessions-row-${index}`}
             title={item.name}
             subtitle={[
-              formatSessionDate(item.startedAt, i18n.language),
+              dates.date(item.startedAt),
               item.falt ? formatFaltResult(t, item.falt) : formatSessionTotal(item.total),
               item.seriesAverage === null ? null : formatSeriesAverage(item.seriesAverage),
               item.seriesAverage === null ? null : `${item.innerTenCount}X`,

@@ -16,6 +16,11 @@ export function detectDeviceLanguage(): SupportedLanguage {
   return code === 'sv' ? 'sv' : 'en';
 }
 
+/** The device's region ("SE"), which with the app language decides how dates read (#746). */
+export function deviceRegion(): string | null {
+  return Localization.getLocales()[0]?.regionCode ?? null;
+}
+
 if (!i18next.isInitialized) {
   void i18next.use(initReactI18next).init({
     resources: {

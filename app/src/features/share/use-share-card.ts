@@ -15,7 +15,8 @@ import {
   type SessionShareCardModel,
 } from '@/features/share/card-model';
 import { formatShotValue } from '@/components/shot-chips';
-import { disciplineLabel, formatLocalDate } from '@/features/session/labels';
+import { formatDate } from '@/features/dates/format';
+import { disciplineLabel } from '@/features/session/labels';
 import { type SessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 
 const APP_NAME = 'ShotLedger';
@@ -37,7 +38,7 @@ export function buildSessionShareCardModel(
 
   return buildSessionShareCard({
     appName: APP_NAME,
-    dateLabel: formatLocalDate(session.startedAt, locale),
+    dateLabel: formatDate(session.startedAt, locale),
     disciplineLabel: disciplineLabel(t, session.disciplineId),
     weaponLabel: formatGroupAndClass(session.weaponGroup, session.shooterClass) || null,
     firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
@@ -68,7 +69,7 @@ export function buildSeriesShareCardModel(
   if (!detail.session) return null;
   return buildSeriesShareCard({
     appName: APP_NAME,
-    dateLabel: formatLocalDate(detail.session.startedAt, locale),
+    dateLabel: formatDate(detail.session.startedAt, locale),
     disciplineLabel: disciplineLabel(t, detail.session.disciplineId),
     seriesLabel: t('session.seriesTitle', { position: row.position }),
     totalLabel: tenthsToScore(row.totalTenths).toFixed(1),

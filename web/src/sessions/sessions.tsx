@@ -13,7 +13,6 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatShotValue } from '../../../app/src/components/shot-value';
-import { formatSessionDate } from '../../../app/src/features/home/format-session-date';
 import { formatSessionTotal } from '../../../app/src/features/home/home-session-row';
 import {
   formatFaltResult,
@@ -30,6 +29,7 @@ import {
   type BrowseSession,
 } from './browse';
 import { Compare, PickAll, PickBar, PicksProvider, RowPhoto } from './photos';
+import { showDate } from '../dates';
 
 const DASH = '–';
 const SECTION_TITLES = { main: 'session.mainSection', final: 'session.finalSection' } as const;
@@ -91,7 +91,7 @@ export function Sessions({
 }
 
 function SessionList({ sessions }: { sessions: BrowseSession[] }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   if (sessions.length === 0) {
     return (
@@ -127,7 +127,7 @@ function SessionList({ sessions }: { sessions: BrowseSession[] }) {
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id}>
-                <td className="nowrap">{formatSessionDate(session.startedAt, i18n.language)}</td>
+                <td className="nowrap">{showDate(session.startedAt)}</td>
                 <th scope="row">
                   <a href={`#sessions/${encodeURIComponent(session.id)}`}>{session.name}</a>
                   {session.type === 'competition' && (
@@ -168,7 +168,7 @@ function Tile({ label, value }: { label: string; value: string }) {
 }
 
 function SessionDetail({ session }: { session: BrowseSession | null }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   if (!session) {
     return (
@@ -181,7 +181,7 @@ function SessionDetail({ session }: { session: BrowseSession | null }) {
 
   const event = session.eventId ? findEvent(session.eventId) : undefined;
   const meta = [
-    formatSessionDate(session.startedAt, i18n.language),
+    showDate(session.startedAt),
     t(`sessionType.${session.type}`),
     session.programId
       ? matchFormatLabel(t, session.programId, programsForDiscipline(session.disciplineId).length)

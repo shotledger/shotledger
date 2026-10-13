@@ -32,6 +32,7 @@ import {
 } from '@/features/stats/use-stats-data';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 const ALL = 'all-values';
 type TypeChoice = typeof ALL | 'training' | 'competition';
@@ -65,7 +66,8 @@ function FilterCard({
 }
 
 export default function StatsScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const [filter, setFilter] = useState<AnalyticsFilterState>(DEFAULT_ANALYTICS_FILTER);
   const [pickerOpen, setPickerOpen] = useState<'from' | 'to' | null>(null);
@@ -97,8 +99,7 @@ export default function StatsScreen() {
     [t],
   );
 
-  const formatDay = (day: string) =>
-    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(day));
+  const formatDay = dates.day;
 
   const disciplineValue = filter.disciplineId
     ? disciplineLabel(t, filter.disciplineId)

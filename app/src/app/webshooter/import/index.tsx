@@ -19,11 +19,13 @@ import { ThemedText } from '@/components/themed-text';
 import { useWebshooterCompetitions } from '@/features/webshooter/use-webshooter-import';
 import { useWebshooterMyCompetitions } from '@/features/webshooter/use-webshooter-my-competitions';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 const ALL_YEARS = 'all';
 
 export default function WebshooterImportBrowseScreen() {
   const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const { competitions, loading, error, load } = useWebshooterCompetitions();
   const [year, setYear] = useState<string>(ALL_YEARS);
@@ -116,7 +118,7 @@ export default function WebshooterImportBrowseScreen() {
             key={competition.id}
             title={competition.name}
             subtitle={[
-              competition.date,
+              dates.day(competition.date.slice(0, 10)),
               competition.contact_city,
               competition.alreadyImportable ? null : t('webshooter.resultsTypeNotSupported'),
             ]

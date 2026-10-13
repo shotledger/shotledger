@@ -28,9 +28,11 @@ import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { shareCardPng } from '@/platform/share-card';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 export default function ShareCardScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const theme = useTheme();
   const { id, series } = useLocalSearchParams<{ id: string; series?: string }>();
   const detail = useMemo(() => loadSessionDetail(id), [id]);
@@ -49,10 +51,10 @@ export default function ShareCardScreen() {
   const scale = previewWidth / SHARE_CARD_WIDTH;
 
   const sessionModel =
-    seriesPosition === null ? buildSessionShareCardModel(t, i18n.language, detail, note) : null;
+    seriesPosition === null ? buildSessionShareCardModel(t, dates.locale, detail, note) : null;
   const seriesModel =
     seriesPosition !== null && row
-      ? buildSeriesShareCardModel(t, i18n.language, detail, row, note)
+      ? buildSeriesShareCardModel(t, dates.locale, detail, row, note)
       : null;
 
   if (!detail.session || (seriesPosition !== null && !row)) {

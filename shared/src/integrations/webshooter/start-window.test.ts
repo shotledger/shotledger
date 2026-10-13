@@ -51,4 +51,11 @@ describe('formatStartWindow', () => {
       'not a time–2026-09-12 11:20:00',
     );
   });
+
+  it('shows the day and both times through the given format', () => {
+    const format = { day: (date: string) => `<${date}>`, time: (time: string) => `[${time}]` };
+    expect(formatStartWindow('2026-09-12 23:40:00', '2026-09-13 00:30:00', format)).toBe(
+      '<2026-09-12> [23:40]–[00:30]+1',
+    );
+  });
 });

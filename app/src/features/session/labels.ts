@@ -64,7 +64,3 @@ export function levelShortLabel(t: TFunction, level: string, isChampionship: boo
   const key = isChampionship ? `championshipShort.${level}` : `competitionLevelShort.${level}`;
   return t(key, { defaultValue: level });
 }
-
-export function formatLocalDate(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
-}

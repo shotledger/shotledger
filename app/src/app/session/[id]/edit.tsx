@@ -50,7 +50,6 @@ import {
 } from '@/db/queries/tags';
 import {
   COMPETITION_LEVELS,
-  formatLocalDate,
   matchFormatHint,
   matchFormatLabel,
   type CompetitionLevel,
@@ -58,6 +57,7 @@ import {
 import { withLocalDay } from '@/features/session/with-local-day';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 // The picker's value for Free Format, as on the new-session form.
 const FREE_FORMAT = 'none';
@@ -66,7 +66,8 @@ type OfficialMedalChoice = 'none' | 'brons' | 'silver';
 const OFFICIAL_MEDAL_CHOICES: readonly OfficialMedalChoice[] = ['none', 'brons', 'silver'];
 
 export default function EditSessionScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = getSession(db, id);
@@ -204,7 +205,7 @@ export default function EditSessionScreen() {
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
         <PrimaryButton
-          label={formatLocalDate(startedAt, i18n.language)}
+          label={dates.date(startedAt)}
           onPress={() => setDatePickerOpen(true)}
           testID="edit-date"
         />

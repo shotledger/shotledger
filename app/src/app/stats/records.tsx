@@ -22,11 +22,11 @@ import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { formatSessionDate } from '@/features/home/format-session-date';
 import { disciplineLabel } from '@/features/session/labels';
 import { formatFaltResult } from '@/features/session/format-falt-result';
 import { useWebshooterRecords, type FaltPbRow } from '@/features/webshooter/use-webshooter-records';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 function fmt(tenths: number | null): string {
   return tenths === null ? '–' : tenthsToScore(tenths).toFixed(1);
@@ -53,7 +53,8 @@ function CoverageLine({ coverage, testID }: { coverage: PbCoverage; testID: stri
 }
 
 export default function WebshooterRecordsScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
 
   // The group key is an id, not a label — "spsf-precision:spsf:A" is what the
@@ -153,7 +154,7 @@ export default function WebshooterRecordsScreen() {
                 key={row.groupKey}
                 testID={`records-falt-${row.groupKey}`}
                 title={faltGroupLabel(row)}
-                subtitle={`${row.sessionName} · ${formatSessionDate(row.startedAt, i18n.language)}`}
+                subtitle={`${row.sessionName} · ${dates.date(row.startedAt)}`}
                 value={formatFaltResult(t, { ...row, poangfaltPoints: row.points })}
                 onPress={() =>
                   router.push({ pathname: '/session/[id]', params: { id: row.sessionId } })

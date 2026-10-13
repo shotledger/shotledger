@@ -28,20 +28,32 @@ function parse(value: string): Parsed | null {
   };
 }
 
+/** How the day (`YYYY-MM-DD`) and a wall-clock time (`HH:mm`) are shown. */
+export interface StartWindowFormat {
+  day: (date: string) => string;
+  time: (time: string) => string;
+}
+
+const AS_STORED: StartWindowFormat = { day: (date) => date, time: (time) => time };
+
 /**
  * `2026-09-12 09:50–11:20`, or `2026-09-12 23:40–00:30+1` when the window
- * crosses midnight.
+ * crosses midnight; the app passes `format` to show both in the locale.
  *
  * Returns the inputs joined unchanged if either cannot be parsed: a start
  * time the shooter can read in an odd format beats a blank where a time
  * should be.
  */
-export function formatStartWindow(startLocal: string, endLocal: string): string {
+export function formatStartWindow(
+  startLocal: string,
+  endLocal: string,
+  format: StartWindowFormat = AS_STORED,
+): string {
   const start = parse(startLocal);
   const end = parse(endLocal);
   if (!start || !end) return `${startLocal}–${endLocal}`;
 
   const daysLater = end.dayNumber - start.dayNumber;
   const suffix = daysLater > 0 ? `+${daysLater}` : '';
-  return `${start.date} ${start.time}–${end.time}${suffix}`;
+  return `${format.day(start.date)} ${format.time(start.time)}–${format.time(end.time)}${suffix}`;
 }

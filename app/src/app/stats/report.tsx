@@ -44,6 +44,7 @@ import {
 import { useCrossSessionGroup } from '@/features/stats/use-cross-session-group';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf } from '@/features/dates/local-day';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 const DASH = '–';
 
@@ -82,7 +83,8 @@ function score(tenths: number | null): string {
 }
 
 export default function StatsReportScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const dates = useDateFormat();
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
   const filter = useMemo(() => decodeAnalyticsFilter(params.filter), [params.filter]);
@@ -122,17 +124,8 @@ export default function StatsReportScreen() {
     });
   };
 
-  const formatDate = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(iso));
-  // The year is named whenever the range crosses one. Without it a
-  // three-year log read "Dec 30 … Jun 23 … Sep 15" and no label said which
-  // year any of it was (#349).
-  const formatShortDate = (iso: string, withYear: boolean) =>
-    new Intl.DateTimeFormat(i18n.language, {
-      month: 'short',
-      day: 'numeric',
-      ...(withYear ? { year: 'numeric' } : {}),
-    }).format(new Date(iso));
+  const formatDate = dates.date;
+  const formatShortDate = dates.axis;
 
   const range = periodRange(filter);
   // Cross-session group: every photo-scored mark in the period, pooled.

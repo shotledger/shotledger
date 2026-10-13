@@ -19,9 +19,11 @@ import { formatStartWindow } from '@shotledger/shared/src/integrations/webshoote
 
 import { useWebshooterStarts } from '@/features/webshooter/use-webshooter-starts';
 import { Spacing } from '@/theme/tokens';
+import { useDateFormat } from '@/features/dates/use-date-format';
 
 export default function WebshooterStartsScreen() {
   const { t } = useTranslation();
+  const dates = useDateFormat();
   const { starts, loading, error, load, addToCalendar, errorDetail, skipped } =
     useWebshooterStarts();
   // One section open at a time: these lists are long, and two open at once
@@ -144,7 +146,7 @@ export default function WebshooterStartsScreen() {
                         : t('webshooter.patrolNumber', { number: mate.patrolNumber }),
                       mate.window === null
                         ? t('webshooter.notDrawnYet')
-                        : formatStartWindow(...(mate.window.split('|') as [string, string])),
+                        : formatStartWindow(...(mate.window.split('|') as [string, string]), dates),
                       t('webshooter.laneShort', { lane: mate.lane }),
                     ]
                       .filter(Boolean)
@@ -156,7 +158,7 @@ export default function WebshooterStartsScreen() {
               title={
                 start.patrolStart === null || start.patrolEnd === null
                   ? t('webshooter.notDrawnYet')
-                  : formatStartWindow(start.patrolStart, start.patrolEnd)
+                  : formatStartWindow(start.patrolStart, start.patrolEnd, dates)
               }
               subtitle={[
                 start.patrolNumber === null

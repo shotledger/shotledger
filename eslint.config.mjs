@@ -157,7 +157,7 @@ export default tseslint.config(
     files: [
       'app/src/components/shot-value.ts',
       'app/src/components/time-series-chart-math.ts',
-      'app/src/features/home/format-session-date.ts',
+      'app/src/features/dates/format.ts',
       'app/src/features/home/home-session-row.ts',
       'app/src/features/session/falt-session-result.ts',
       'app/src/features/session/format-falt-result.ts',
