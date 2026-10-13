@@ -1379,6 +1379,19 @@ describe('K24 delete refuses what changed since the page opened (R10)', () => {
     expect(delAfter('s1', (f) => f.series.set('rNew', series('rNew', 's1', 6)))).toEqual(STALE);
     expect(delAfter('s1', (f) => patch(f.series, 'r2', { deleted_at: NOW }))).toEqual(STALE);
     expect(delAfter('s1', (f) => f.series.delete('r2'))).toEqual(STALE);
+    // One removed and one added: the same count, other rows.
+    expect(
+      delAfter('s1', (f) => {
+        f.series.delete('r2');
+        f.series.set('rNew', series('rNew', 's1', 6));
+      }),
+    ).toEqual(STALE);
+    expect(
+      delAfter('s2', (f) => {
+        f.faltStations.delete('st2');
+        f.faltStations.set('st4', station('st4', 's2'));
+      }),
+    ).toEqual(STALE);
     // A series with no shots, added meanwhile, still holds rounds the page never showed.
     expect(delAfter('s3', (f) => f.series.set('n1', series('n1', 's3', 1)))).toEqual(STALE);
   });
