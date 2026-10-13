@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull, max } from 'drizzle-orm';
 
 import { maintenanceEvents } from '../schema';
 import type { Database } from '../types';
@@ -50,6 +50,27 @@ export function listMaintenanceEvents(db: Database, firearmId: string) {
       // UUIDv7 ids are time-ordered — see licenses.ts for the same convention.
       .orderBy(desc(maintenanceEvents.id))
       .all()
+  );
+}
+
+/**
+ * When each firearm was last maintained (#800): the latest `performed_at` of
+ * its live maintenance events, keyed by firearm id. A round-count adjustment
+ * is not maintenance, so it does not restart the time interval. A firearm
+ * never maintained is absent.
+ */
+export function lastMaintenanceAtByFirearm(db: Database): Map<string, string> {
+  const rows = db
+    .select({
+      firearmId: maintenanceEvents.firearmId,
+      performedAt: max(maintenanceEvents.performedAt),
+    })
+    .from(maintenanceEvents)
+    .where(and(isNull(maintenanceEvents.deletedAt), eq(maintenanceEvents.isAdjustment, 0)))
+    .groupBy(maintenanceEvents.firearmId)
+    .all();
+  return new Map(
+    rows.flatMap((row) => (row.performedAt === null ? [] : [[row.firearmId, row.performedAt]])),
   );
 }
 

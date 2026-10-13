@@ -13,6 +13,8 @@ import { resetTestDb } from '@/test-utils/test-db-client';
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 jest.mock('expo-router', () => require('@/test-utils/router-mock').expoRouterMock);
 jest.mock('@/db/client', () => require('@/test-utils/test-db-client').testDbClient);
+// Saving a months interval schedules its reminder (#800); keep the native module out.
+jest.mock('@/platform/notifications', () => ({ replaceMaintenanceTimeReminders: jest.fn() }));
 
 let db: Database;
 
@@ -164,6 +166,32 @@ describe('New firearm', () => {
     await fireEvent.press(create());
 
     expect(listFirearms(db)[0]!.maintenanceIntervalRounds).toBe(500);
+  });
+
+  it.each(['often', '0', '1.5', '121'])(
+    'refuses a months interval the detail screen would refuse (%s)',
+    async (months) => {
+      await renderWithProviders(<NewFirearmScreen />);
+
+      await type('Make', 'Acme');
+      await type('Model', 'Target 22');
+      await type('Maintenance Interval (months)', months);
+      expect(screen.getByTestId('new-firearm-interval-months-error')).toBeOnTheScreen();
+      await fireEvent.press(create());
+
+      expect(listFirearms(db)).toHaveLength(0);
+    },
+  );
+
+  it('stores a months interval (#800)', async () => {
+    await renderWithProviders(<NewFirearmScreen />);
+
+    await type('Make', 'Acme');
+    await type('Model', 'Target 22');
+    await type('Maintenance Interval (months)', '6');
+    await fireEvent.press(create());
+
+    expect(listFirearms(db)[0]!.maintenanceIntervalMonths).toBe(6);
   });
 });
 

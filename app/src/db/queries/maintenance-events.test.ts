@@ -5,6 +5,7 @@ import type { Database } from '../types';
 import { createFirearm, getFirearm } from './firearms';
 import {
   adjustFirearmRoundCount,
+  lastMaintenanceAtByFirearm,
   listMaintenanceEvents,
   logMaintenanceEvent,
   softDeleteMaintenanceEvent,
@@ -106,6 +107,44 @@ describe('listMaintenanceEvents', () => {
 
     const list = listMaintenanceEvents(db, firearm.id);
     expect(list.map((e) => e.id)).toEqual([e2.id]);
+  });
+});
+
+describe('lastMaintenanceAtByFirearm (#800)', () => {
+  it('is the latest live maintenance per firearm, ignoring adjustments and tombstones', () => {
+    const a = createFirearm(db, { make: 'A', model: '1' });
+    const b = createFirearm(db, { make: 'B', model: '2' });
+    const never = createFirearm(db, { make: 'C', model: '3' });
+    // Logged out of order: a backdated entry is not the latest.
+    logMaintenanceEvent(db, {
+      firearmId: a.id,
+      performedAt: '2026-03-01T10:00:00.000Z',
+      kind: 'cleaning',
+    });
+    logMaintenanceEvent(db, {
+      firearmId: a.id,
+      performedAt: '2026-01-01T10:00:00.000Z',
+      kind: 'cleaning',
+    });
+    const latestB = logMaintenanceEvent(db, {
+      firearmId: b.id,
+      performedAt: '2026-05-01T10:00:00.000Z',
+      kind: 'service',
+    });
+    logMaintenanceEvent(db, {
+      firearmId: b.id,
+      performedAt: '2026-02-01T10:00:00.000Z',
+      kind: 'cleaning',
+    });
+    softDeleteMaintenanceEvent(db, latestB.id);
+    // An adjustment is dated now, later than every entry above.
+    adjustFirearmRoundCount(db, a.id, 10, 'club rounds');
+    adjustFirearmRoundCount(db, never.id, 10, 'club rounds');
+
+    expect(Object.fromEntries(lastMaintenanceAtByFirearm(db))).toEqual({
+      [a.id]: '2026-03-01T10:00:00.000Z',
+      [b.id]: '2026-02-01T10:00:00.000Z',
+    });
   });
 });
 

@@ -25,6 +25,11 @@ jest.mock('@/platform/notifications', () => ({
   scheduleLicenseExpiryNotifications: (...args: unknown[]) => mockSchedule(...args),
 }));
 
+const mockRefreshMaintenance = jest.fn();
+jest.mock('./maintenance', () => ({
+  refreshMaintenanceTimeReminders: (...args: unknown[]) => mockRefreshMaintenance(...args),
+}));
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -39,6 +44,12 @@ describe('archiveFirearmAndReminders', () => {
       ['lic-old', [90, 30, 7]],
     ]);
   });
+
+  it('re-schedules maintenance time reminders, which leave out archived firearms (#800)', async () => {
+    mockListLicenses.mockReturnValue([]);
+    await archiveFirearmAndReminders('f1');
+    expect(mockRefreshMaintenance).toHaveBeenCalledWith({ request: false });
+  });
 });
 
 describe('restoreFirearmAndReminders', () => {
@@ -49,16 +60,18 @@ describe('restoreFirearmAndReminders', () => {
     expect(mockSchedule).toHaveBeenCalledWith('lic-new', 'Pardini SP', []);
   });
 
-  it('schedules nothing for a firearm with no licence', async () => {
+  it('schedules no licence reminder for a firearm with no licence, but its maintenance one', async () => {
     mockRestore.mockReturnValue({ id: 'f1', make: 'Pardini', model: 'SP' });
     mockLatestLicense.mockReturnValue(undefined);
     await restoreFirearmAndReminders('f1');
     expect(mockSchedule).not.toHaveBeenCalled();
+    expect(mockRefreshMaintenance).toHaveBeenCalledWith({ request: false });
   });
 
   it('does nothing more when the firearm is gone', async () => {
     mockRestore.mockReturnValue(undefined);
     await restoreFirearmAndReminders('f1');
     expect(mockLatestLicense).not.toHaveBeenCalled();
+    expect(mockRefreshMaintenance).not.toHaveBeenCalled();
   });
 });

@@ -162,7 +162,8 @@ One session, one scored series of three shots:
       "loadSystem": null,
       "notes": null,
       "roundCount": 1200,
-      "maintenanceIntervalRounds": 500
+      "maintenanceIntervalRounds": 500,
+      "maintenanceIntervalMonths": 6
     }
   ],
   "licenses": [
@@ -218,7 +219,8 @@ The envelope carries three more arrays beside `sessions`:
 
 - **`firearms`** — one entry per firearm, with everything the app stores about
   it: make, model, caliber, weapon type, whether it is your own, serial
-  number, VapenID, load system, notes, rounds fired and maintenance interval.
+  number, VapenID, load system, notes, rounds fired and maintenance intervals
+  (in rounds and in months).
 - **`licenses`** — one entry per **issued** license, each naming its firearm
   through `firearmId`. A renewal is its own entry rather than an edit of the
   old one, so the history is kept.

@@ -83,6 +83,7 @@ export interface ExportFirearmRow {
   readonly notes: string | null;
   readonly roundCount: number;
   readonly maintenanceIntervalRounds: number | null;
+  readonly maintenanceIntervalMonths: number | null;
   readonly archivedAt: string | null;
 }
 
@@ -211,6 +212,7 @@ export function firearmExportsFromRows(rows: readonly ExportFirearmRow[]): Firea
     notes: f.notes,
     roundCount: f.roundCount,
     maintenanceIntervalRounds: f.maintenanceIntervalRounds,
+    maintenanceIntervalMonths: f.maintenanceIntervalMonths,
     archivedAt: f.archivedAt ?? null,
   }));
 }
