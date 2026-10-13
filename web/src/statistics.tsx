@@ -26,6 +26,7 @@ import {
 } from '../../app/src/components/time-series-chart-math';
 import { disciplineLabel } from '../../app/src/features/session/labels';
 import { formatTotalScore } from '../../app/src/features/stats/format-total-score';
+import { overallLicenseActivity } from './license-activity';
 import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
 import { Filters } from './report/filters';
@@ -54,6 +55,30 @@ function Card({ title, wide, children }: { title: string; wide?: boolean; childr
   );
 }
 
+const ACTIVITY_LABEL = {
+  green: 'compliance.licenseActivityGreen',
+  amber: 'compliance.licenseActivityAmber',
+  red: 'compliance.licenseActivityRed',
+} as const;
+
+/**
+ * The phone's Home chip (`useOverallLicenseActivity`): the whole log, not the
+ * filtered report, so it sits above the filters. Primary when not on track.
+ */
+function LicenseActivityLine({ tables }: { tables: PulledTables }) {
+  const { t } = useTranslation();
+  const overall = useMemo(() => overallLicenseActivity(tables), [tables]);
+  if (overall === null) return null;
+  return (
+    <p className="license-activity">
+      {t('compliance.licenseActivityTitle')}{' '}
+      <span className={overall === 'green' ? 'badge' : 'badge alert'}>
+        {t(ACTIVITY_LABEL[overall])}
+      </span>
+    </p>
+  );
+}
+
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
 export function Statistics({
@@ -73,10 +98,13 @@ export function Statistics({
 
   if (!options.hasAnyData) {
     return (
-      <section className="card">
-        <h2>{t('stats.emptyTitle')}</h2>
-        <p className="muted">{t('stats.emptyBody')}</p>
-      </section>
+      <>
+        <LicenseActivityLine tables={tables} />
+        <section className="card">
+          <h2>{t('stats.emptyTitle')}</h2>
+          <p className="muted">{t('stats.emptyBody')}</p>
+        </section>
+      </>
     );
   }
 
@@ -104,29 +132,32 @@ export function Statistics({
   };
 
   return (
-    <div className="stats-layout">
-      <Filters state={filter} options={options} onChange={setFilter} />
-      <div className="report">
-        <p className="match-count">
-          {t('stats.matchCount', { count: data.totals.sessionCount })}
-          {range.fromIso && (
-            <span className="muted">
-              {' · '}
-              {formatDate(range.fromIso)} –{' '}
-              {range.toIso ? formatDate(range.toIso) : t('compliance.pdfNow')}
-            </span>
+    <>
+      <LicenseActivityLine tables={tables} />
+      <div className="stats-layout">
+        <Filters state={filter} options={options} onChange={setFilter} />
+        <div className="report">
+          <p className="match-count">
+            {t('stats.matchCount', { count: data.totals.sessionCount })}
+            {range.fromIso && (
+              <span className="muted">
+                {' · '}
+                {formatDate(range.fromIso)} –{' '}
+                {range.toIso ? formatDate(range.toIso) : t('compliance.pdfNow')}
+              </span>
+            )}
+          </p>
+          {!data.hasMatches ? (
+            <section className="card">
+              <h2>{t('stats.emptyFilteredTitle')}</h2>
+              <p className="muted">{t('stats.emptyFilteredBody')}</p>
+            </section>
+          ) : (
+            <Sections data={data} t={t} formatDate={formatDate} chart={chart} />
           )}
-        </p>
-        {!data.hasMatches ? (
-          <section className="card">
-            <h2>{t('stats.emptyFilteredTitle')}</h2>
-            <p className="muted">{t('stats.emptyFilteredBody')}</p>
-          </section>
-        ) : (
-          <Sections data={data} t={t} formatDate={formatDate} chart={chart} />
-        )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

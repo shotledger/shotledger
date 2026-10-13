@@ -71,6 +71,12 @@ describe('the settings form', () => {
     expect(ownershipFacts(new Map([['f', { id: 'f', is_own: 0 }]]))).toEqual([
       { weaponType: null, isOwn: false },
     ]);
+    // A deleted firearm is no fact, as the phone's query filters deleted_at.
+    expect(
+      ownershipFacts(
+        new Map([['f', { id: 'f', weapon_type: 'pistol', is_own: 1, deleted_at: '2026-02-01' }]]),
+      ),
+    ).toEqual([]);
     // No profile stored: no case, derived or stored, until a profile is chosen (R13).
     const noCase = { variantIds: [], variantId: null, explicit: false, reasonId: null };
     expect(caseView(unset, facts)).toEqual(noCase);

@@ -23,9 +23,10 @@ export function initialSettings(rows: Rows): AccountSettings {
   return readAccountSettings(rows);
 }
 
-/** What the phone's listFirearmOwnershipFacts reads, from the pulled rows. */
+/** What the phone's listFirearmOwnershipFacts reads, from the pulled rows: live firearms only. */
 export function ownershipFacts(firearms: Rows): FirearmOwnershipFact[] {
-  return [...firearms.values()].map((row) => ({
+  const live = [...firearms.values()].filter((row) => row.deleted_at == null);
+  return live.map((row) => ({
     weaponType: typeof row.weapon_type === 'string' ? row.weapon_type : null,
     isOwn: Boolean(row.is_own),
   }));

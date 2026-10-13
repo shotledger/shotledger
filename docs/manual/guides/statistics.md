@@ -82,6 +82,9 @@ them, so there is no **Generate Report**. They stay as you left them while you
 move between the web app's pages, and start afresh when you sign out or close
 the tab. A record's session name opens that session.
 
+Above the report sits your license-activity status, when a profile is chosen;
+see [License activity](license-activity.md#on-the-web).
+
 The web report has no **Tags** filter, no **Export JSON** and no **Where Your
 Shots Land** heat map; use the phone for those. A custom range whose **From**
 is after its **To** matches nothing, and the page says so. Its dates are typed

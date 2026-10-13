@@ -82,6 +82,9 @@ det finns ingen **Skapa rapport**. De står kvar som du lämnade dem medan du
 byter sida i webbappen, och börjar om när du loggar ut eller stänger fliken.
 Ett rekords passnamn öppnar passet.
 
+Ovanför rapporten står din status för skjutaktivitet, när en profil är vald;
+se [Skjutaktivitet](license-activity.md#pa-webben).
+
 Webbrapporten har inget filter på **Taggar**, ingen **Exportera JSON** och
 ingen värmekarta för **Var dina skott hamnar**; använd telefonen för dem. Ett
 eget intervall där **Från** ligger efter **Till** matchar ingenting, och sidan
