@@ -105,22 +105,22 @@ Edge offsets: `[windowMonths]` for a rule; `windowMonths × n` for
 Rule: 6 months, 6 required, both weights 1, `now = 2026-10-13T12:00Z` unless
 stated.
 
-| #   | Given                                                                    | Then                                                                             |
-| --- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| L1  | 5 sessions in the window (amber)                                         | `null`                                                                           |
-| L2  | exactly 6, oldest `2026-05-01T10:00Z`                                    | `2026-11-01T10:00:00.001Z`                                                       |
-| L3  | 9 sessions; the 6th newest at `2026-07-02T08:00Z`                        | `2027-01-02T08:00:00.001Z`; the three older ones do not move it                  |
-| L4  | weights training 1 / competition 2, required 2, one competition          | lapses when that competition leaves, not before                                  |
+| #   | Given                                                                    | Then                                                                            |
+| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| L1  | 5 sessions in the window (amber)                                         | `null`                                                                          |
+| L2  | exactly 6, oldest `2026-05-01T10:00Z`                                    | `2026-11-01T10:00:00.001Z`                                                      |
+| L3  | 9 sessions; the 6th newest at `2026-07-02T08:00Z`                        | `2027-01-02T08:00:00.001Z`; the three older ones do not move it                 |
+| L4  | weights training 1 / competition 2, required 2, one competition          | lapses when that competition leaves, not before                                 |
 | L5  | 1 month, required 1, one session `2026-03-01T12:00Z`, `now` `2026-03-15` | `2026-03-29T12:00:00.001Z` — the clamping, as `computeRuleLicenseActivity` does |
-| L6  | `requiredActivities: 0`                                                  | `null`                                                                           |
-| L7  | weapon-group rule; sessions in another group                             | they do not keep it met                                                          |
-| L8  | met now, and a future-dated session                                      | the future session counts from its instant on, exactly as the function does    |
-| C1  | criterion not met                                                        | `null`                                                                           |
-| C2  | additional handgun (6 mo, 2): two sessions with the firearm              | the older one's exit                                                             |
-| C3  | renewal (12 mo × 2, 4 each): 4 sessions per year                         | the first instant either year drops below 4                                      |
-| C4  | sessions with another firearm                                            | do not keep it met                                                               |
-| O1  | overall not green                                                        | `null`                                                                           |
-| O2  | two applicable rules, both green                                         | the earlier of their lapses                                                      |
+| L6  | `requiredActivities: 0`                                                  | `null`                                                                          |
+| L7  | weapon-group rule; sessions in another group                             | they do not keep it met                                                         |
+| L8  | met now, and a future-dated session                                      | the future session counts from its instant on, exactly as the function does     |
+| C1  | criterion not met                                                        | `null`                                                                          |
+| C2  | additional handgun (6 mo, 2): two sessions with the firearm              | the older one's exit                                                            |
+| C3  | renewal (12 mo × 2, 4 each): 4 sessions per year                         | the first instant either year drops below 4                                     |
+| C4  | sessions with another firearm                                            | do not keep it met                                                              |
+| O1  | overall not green                                                        | `null`                                                                          |
+| O2  | two applicable rules, both green                                         | the earlier of their lapses                                                     |
 
 Properties (fast-check, random sessions across ±3 years, random `now`, random
 1–24-month windows):

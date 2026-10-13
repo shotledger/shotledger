@@ -605,6 +605,8 @@
     },
     "criterionUnattributed_one": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
     "criterionUnattributed_other": "{{count}} pass under perioden saknar vapen och räknas därför inte till något av kriterierna.",
+    "nextSessionBy": "Nästa pass senast {{date}} för att ligga kvar i fas.",
+    "criterionNextSessionBy": "Nästa pass med det här vapnet senast {{date}} för att det ska förbli uppfyllt.",
     "criterionNotAttested": "Appen har räknat passen, men kan inte styrka dem. I en klubblogg blir en rad ett underlag först när någon har signerat den.",
     "pdfNow": "idag",
     "pdfGeneratedAt": "Genererad {{date}}",

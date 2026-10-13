@@ -605,6 +605,8 @@
     },
     "criterionUnattributed_one": "{{count}} session in the period records no firearm, so it counts towards neither.",
     "criterionUnattributed_other": "{{count}} sessions in the period record no firearm, so they count towards neither.",
+    "nextSessionBy": "Next session by {{date}} to stay On Track.",
+    "criterionNextSessionBy": "Next session with this firearm by {{date}} to keep it met.",
     "criterionNotAttested": "The app counted these sessions; it cannot attest them. On a club log a row becomes evidence once someone signs it.",
     "pdfNow": "today",
     "pdfGeneratedAt": "Generated {{date}}",

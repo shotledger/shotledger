@@ -34,6 +34,21 @@ pekar oftast på en uppgift som saknas på ett vapen snarare än på fallet sjä
 Vapen som saknar vapentyp, kaliber eller licens märks som **Ofullständig** på
 vapenfliken, och att fylla i dem kan flytta förslaget av sig självt.
 
+## Att veta när du ska skjuta nästa gång
+
+När ett krav är uppfyllt visar appen senast vilket datum du behöver logga nästa
+pass för att det ska förbli uppfyllt:
+
+- På **Hem**, under statusen: ”Nästa pass senast …”.
+- På ett vapen, under varje rad om skjutaktivitet och under varje uppfyllt
+  kriterium för föreningsintyget.
+
+Loggar du ett pass senast det datumet förblir kravet uppfyllt längre, och
+datumet flyttas till nästa pass som är på väg att falla ur perioden. När ett
+krav inte är uppfyllt visas inget datum. [Så räknas
+datumet](../explanation/license-activity.sv.md#datumet-for-nasta-pass) förklarar
+detaljerna.
+
 ## Att kontrollera ett vapens egna kriterier
 
 Två av blankettens rutor handlar om ett enskilt vapen i stället för om dig:

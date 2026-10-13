@@ -184,7 +184,7 @@ describe('computeRuleLapse', () => {
       scope: 'weaponGroups',
       weaponGroups: ['spsf:C'],
       requiredActivities: 1,
-    } as Partial<ComplianceRule>);
+    });
     const sessions = [
       at('2026-06-01T00:00:00Z', { weaponGroup: 'spsf:C' }),
       at('2026-10-01T00:00:00Z', { weaponGroup: 'spsf:B' }),
@@ -289,7 +289,7 @@ describe('computeOverallLapse', () => {
     scope: 'weaponGroups',
     weaponGroups: ['spsf:C'],
     requiredActivities: 1,
-  } as Partial<ComplianceRule>);
+  });
 
   it('O1: overall not green has no lapse', () => {
     const sessions = [at('2026-09-01T00:00:00Z', { weaponGroup: 'spsf:B' })];
@@ -346,7 +346,7 @@ describe('list helpers, aligned with what the firearm screen shows', () => {
       scope: 'weaponGroups',
       weaponGroups: ['spsf:C'],
       requiredActivities: 1,
-    } as Partial<ComplianceRule>);
+    });
     const sessions = [at('2026-09-01T00:00:00Z', { weaponGroup: 'spsf:B' })];
     expect(
       computeFirearmLicenseLapses(sessions, profile([shooterRule, groupRule]), ['spsf:C'], NOW),
@@ -456,7 +456,7 @@ describe('properties', () => {
           windowMonths: s.windowMonths,
           requiredActivities: s.requiredActivities,
           countsAs: { training: s.training, competition: s.competition },
-        } as Partial<ComplianceRule>);
+        });
         checkLapse(
           computeRuleLapse(sessions, r, now),
           now,

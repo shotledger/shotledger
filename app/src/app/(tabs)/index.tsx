@@ -18,6 +18,7 @@ import { SwipeAction } from '@/components/swipe-action';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
+import { nextSessionDeadline } from '@/features/compliance/next-session';
 import { useOverallLicenseActivity } from '@/features/compliance/use-license-activity';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import {
@@ -49,7 +50,7 @@ export default function HomeScreen() {
   const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
     useHomeData();
   const { profile } = useComplianceProfile();
-  const { overall } = useOverallLicenseActivity(profile);
+  const { overall, lapseIso } = useOverallLicenseActivity(profile);
   const [shapeFilter, setShapeFilter] = useState<SessionShapeFilter>('all');
   const [pendingDelete, setPendingDelete] = useState<HomeSessionRow | null>(null);
 
@@ -103,6 +104,11 @@ export default function HomeScreen() {
           label={t(`compliance.licenseActivity${capitalize(overall)}`)}
           tone={LICENSE_ACTIVITY_TONE[overall]}
         />
+      )}
+      {profile && lapseIso && (
+        <ThemedText type="small" themeColor="textSecondary" testID="home-next-session">
+          {t('compliance.nextSessionBy', { date: dates.date(nextSessionDeadline(lapseIso)) })}
+        </ThemedText>
       )}
 
       {latestSessions.length === 0 ? (
