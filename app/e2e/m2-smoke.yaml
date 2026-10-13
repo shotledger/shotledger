@@ -8,13 +8,13 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: 'Home'
     timeout: 20000
-- openLink: 'app://dev'
+- openLink: 'shotledger://dev'
 - extendedWaitUntil:
     visible: 'Dev'
     timeout: 10000
 - tapOn:
     id: 'load-demo-data'
-- openLink: 'app://'
+- openLink: 'shotledger://'
 - assertVisible: 'Home'
 - takeScreenshot: m2-smoke-home
 - tapOn: 'Statistics'

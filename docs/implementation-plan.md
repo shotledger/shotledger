@@ -343,7 +343,7 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
   passed against seeded demo data (screenshots under M2 report). One
   flow gotcha worth keeping: right after `launchApp`, `openLink` can
   race the JS bundle's linking listener and silently no-op, so the flow
-  waits for `Home` to be visible before opening `app://dev`.
+  waits for `Home` to be visible before opening `shotledger://dev`.
 
 ### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
 
@@ -548,7 +548,7 @@ and per-ammo-lot aggregates.
   entirely (navigation + assertions on visible numbers only, per the
   CLAUDE.md Maestro gotchas note) and adds a bounded non-failing settle
   wait plus a one-shot `openLink` retry for the known launchApp/openLink
-  race noted in the M2 report, which otherwise made the flow's `app://dev`
+  race noted in the M2 report, which otherwise made the flow's `shotledger://dev`
   step flaky on this sandboxed emulator.
 
 ### M6 — FAP 551-3 license activity + PDF (branch `feat/m6-compliance`)

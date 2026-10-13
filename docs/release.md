@@ -64,11 +64,12 @@ first; for production, repeat it with `production`.
 What the deployed config already does:
 
 - better-auth takes its base URL and its extra trusted origins
-  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `app://`
+  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `shotledger://`
   scheme is always trusted) from the env's `vars`.
 - Its rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
   (`rate_limit`). Sign-in and sign-up allow 5 attempts per 60 seconds per
-  address; other auth endpoints keep better-auth's defaults; paths that are
+  address; listing and revoking sessions 10; other auth endpoints keep
+  better-auth's defaults; paths that are
   not endpoints are not counted. A cron trigger every 15 minutes deletes
   rows whose window has passed.
 - `workers_dev` and `preview_urls` are off, so only the custom domain

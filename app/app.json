@@ -4,7 +4,7 @@
     "slug": "shotledger",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "shotledger",
     "runtimeVersion": {
       "policy": "appVersion"
     },
