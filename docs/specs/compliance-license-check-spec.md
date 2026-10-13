@@ -1,4 +1,4 @@
-# Licence check: met or not, and what is still needed — executable spec
+# License check: met or not, and what is still needed — executable spec
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md) and a new
 phone screen. Issue [#804](https://github.com/jimisola/shotledger/issues/804).
@@ -19,7 +19,7 @@ profile already declares (PM 551.24 p. 3).
 - `shared/src/compliance/lapse.ts` — the scan generalized to "first instant
   where", reused by the shortfall
 - `shared/src/compliance/shortfall.ts` (new) + test
-- `app/src/features/compliance/use-licence-check.ts` (new)
+- `app/src/features/compliance/license-check.ts` and `use-license-check.ts` (new)
 - `app/src/app/compliance.tsx` (new screen), `app/src/app/_layout.tsx`,
   `app/src/app/(tabs)/index.tsx` (the Home status opens it)
 - `app/src/i18n/{en,sv}.json`, `docs/manual/guides/license-activity{,.sv}.md`,
@@ -40,7 +40,7 @@ requirements by what the föreningsintyg is for:
 
 **Renewal**
 
-- "Förnyelse av tidsbegränsat tillstånd" for each firearm whose licence has an
+- "Förnyelse av tidsbegränsat tillstånd" for each firearm whose license has an
   end date (the existing proxy). None: one line saying no firearm has a
   time-limited permit on file.
 
@@ -120,5 +120,5 @@ Properties (fast-check, random sessions, `now`, 1–24 months, 1–3 windows):
 - **N1** Change any existing result; existing tests pass unchanged.
 - **N2** Introduce a regulatory value.
 - **N3** Claim a session logged now can fill a window that has already ended.
-- **N4** Show anything when the profile is None (the screen says the licence
+- **N4** Show anything when the profile is None (the screen says the license
   check is off and links to Settings → Compliance).

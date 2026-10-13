@@ -653,7 +653,7 @@ from §6.5 automatically).
       date an earlier, already-ended year can be met if the shooter keeps
       logging. Purpose is profile data (`FirearmComplianceRule.purpose`). No
       new regulatory value. Spec/evidence:
-      `docs/specs/compliance-licence-check-{spec,evidence}.md`.
+      `docs/specs/compliance-license-check-{spec,evidence}.md`.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop

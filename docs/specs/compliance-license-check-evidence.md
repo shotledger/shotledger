@@ -1,6 +1,6 @@
 # License check — evidence report
 
-Spec: [`compliance-licence-check-spec.md`](compliance-licence-check-spec.md).
+Spec: [`compliance-license-check-spec.md`](compliance-license-check-spec.md).
 Issue [#804](https://github.com/jimisola/shotledger/issues/804).
 
 **Spec approval: pending.** The PR does not merge before the maintainer

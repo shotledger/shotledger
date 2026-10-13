@@ -1,5 +1,5 @@
 // What a requirement that is not met still needs (#804). Spec:
-// docs/specs/compliance-licence-check-spec.md.
+// docs/specs/compliance-license-check-spec.md.
 import { computeFirearmCriterion } from './firearm-criteria';
 import { firstInstantWhere } from './scan';
 import type {
