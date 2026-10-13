@@ -43,7 +43,7 @@ Two ways it goes wrong:
   ```bash
   adb -s <serial> install -r -d app/android/app/build/outputs/apk/debug/app-debug.apk
   adb -s <serial> shell am start -a android.intent.action.VIEW \
-    -d "app://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A<metro-port>"
+    -d "shotledger://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A<metro-port>"
   ```
 
 Building the APK directly is often simpler and avoids both:

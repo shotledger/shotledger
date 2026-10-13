@@ -63,7 +63,8 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
 - `/dev` (`src/app/dev/index.tsx`) has "Load demo data" / "Wipe data";
   `/dev/components` is the component gallery. Both redirect to `/` outside
   dev builds (`src/app/dev/_layout.tsx`).
-- Deep link `app://dev` (the scheme is `app`; there is no `shotledger://`).
+- Deep link `shotledger://dev` (the scheme is `shotledger`, distinctive so no
+  other app can claim the redirects it will receive; #671).
 - On web the DB needs the page cross-origin isolated; Metro cannot send the
   COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
 - `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release
