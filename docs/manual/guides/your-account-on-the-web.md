@@ -64,7 +64,8 @@ timers, backups — belongs to each phone and is not on the web.
 ## Signed-in devices
 
 Every phone and browser signed in to the account, with when it signed in and
-when it was last active. **Sign Out** next to a device ends its session; that
+when it was last active, to the minute, so two sign-ins from one browser can be
+told apart. **Sign Out** next to a device ends its session; that
 device has to sign in again before it can sync. Use it for a phone you no
 longer have. A browser leaves the list by itself 12 hours after it signed in.
 

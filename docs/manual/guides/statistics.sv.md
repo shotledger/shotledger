@@ -73,3 +73,16 @@ och en med frågan den svarar på. Tryck på en för att gå direkt dit.
 
 Ett filter på **Skott per serie** utelämnar fältpass: en fältomgång har
 stationer, inte serier, och har alltså ingen serielängd att matcha.
+
+## På webben
+
+Med synk påslagen visar **Statistik** i webbappen samma rapport med samma
+siffror. Filtren står i en kolumn bredvid och gäller så fort du ändrar dem, så
+det finns ingen **Skapa rapport**. De står kvar som du lämnade dem medan du
+byter sida i webbappen, och börjar om när du loggar ut eller stänger fliken.
+Ett rekords passnamn öppnar passet.
+
+Webbrapporten har inget filter på **Taggar**, ingen **Exportera JSON** och
+ingen värmekarta för **Var dina skott hamnar**; använd telefonen för dem. Ett
+eget intervall där **Från** ligger efter **Till** matchar ingenting, och sidan
+säger det.

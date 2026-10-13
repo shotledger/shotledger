@@ -27,3 +27,11 @@ export function routeFromHash(hash: string): Route {
   }
   return { page: 'statistics', sessionId: null };
 }
+
+/**
+ * The hash to put in the address bar instead of `hash`, or null when it names
+ * a page: an unknown or empty hash shows Statistics, so it should say so.
+ */
+export function replacementHash(hash: string): string | null {
+  return routeFromHash(hash).page === 'statistics' && hash !== '#statistics' ? '#statistics' : null;
+}

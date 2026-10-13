@@ -16,6 +16,7 @@ import {
 import { parseSyncPhotoUri } from '@shotledger/shared/src/sync-client/photo-uri';
 import { tagNamesBySession } from '@shotledger/shared/src/tags/canonical';
 
+import { isSafePhotoId } from '../photo-fetch';
 import { liveRows, tagRecords } from '../stats-inputs';
 import type { PulledTables } from '../pull';
 import { createZip, type ZipEntry } from './zip';
@@ -74,9 +75,11 @@ export function archivePhotos(tables: PulledTables): ArchivePhoto[] {
     if (photoId === null || session === undefined || seen.has(photoId)) continue;
     seen.add(photoId);
     const folder = `${session.startedAt.slice(0, 10)} ${session.name}`.replace(unsafe, '_').trim();
+    // An unsafe id never reaches a path: it is replaced here and not fetched (buildArchive).
+    const name = photoId.replace(/[^A-Za-z0-9_-]/g, '_');
     photos.push({
       photoId,
-      path: `photos/${folder}/${owner.kind}-${owner.position}-${photoId}.jpg`,
+      path: `photos/${folder}/${owner.kind}-${owner.position}-${name}.jpg`,
     });
   }
   return photos.sort((a, b) => a.path.localeCompare(b.path));
@@ -107,6 +110,7 @@ export async function buildArchive(
   onProgress?.({ done: 0, total: photos.length });
   for (const [index, photo] of photos.entries()) {
     try {
+      if (!isSafePhotoId(photo.photoId)) throw new Error('unsafe photo id');
       entries.push({ name: photo.path, data: new Uint8Array(await downloadPhoto(photo.photoId)) });
     } catch {
       missing.push(photo.path);

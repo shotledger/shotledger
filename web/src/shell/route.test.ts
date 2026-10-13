@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { routeFromHash } from './route';
+import { replacementHash, routeFromHash } from './route';
 
 describe('routeFromHash', () => {
   it.each([
@@ -19,5 +19,24 @@ describe('routeFromHash', () => {
     ['#unknown', { page: 'statistics', sessionId: null }],
   ])('%s', (hash, route) => {
     expect(routeFromHash(hash)).toEqual(route);
+  });
+});
+
+describe('replacementHash (QA #747)', () => {
+  it('names #statistics for an address no page answers, and nothing for a page', () => {
+    expect(replacementHash('#unknown')).toBe('#statistics');
+    expect(replacementHash('')).toBe('#statistics');
+    expect(replacementHash('#statistics')).toBeNull();
+    for (const hash of [
+      '#account',
+      '#entry',
+      '#bulk',
+      '#settings',
+      '#sessions',
+      '#sessions/x',
+      '#compare',
+    ]) {
+      expect(replacementHash(hash)).toBeNull();
+    }
   });
 });

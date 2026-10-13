@@ -1,7 +1,7 @@
 import { PhotoHttpError } from '@shotledger/shared/src/sync-client/http';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFetchPhoto, imageType } from './photo-fetch';
+import { createFetchPhoto, imageType, isSafePhotoId } from './photo-fetch';
 
 describe('imageType', () => {
   it.each([
@@ -29,8 +29,9 @@ describe('createFetchPhoto', () => {
     const fetchImpl = vi.fn(async () => response(200, 'image/png'));
     const fetchPhoto = createFetchPhoto(fetchImpl, 'https://x.test', () => 'tok');
     const signal = new AbortController().signal;
-    const blob = await fetchPhoto('a/b', signal);
-    expect(fetchImpl).toHaveBeenCalledWith('https://x.test/photos/a%2Fb', {
+    // An id with a slash is refused before any fetch (QA #747; below).
+    const blob = await fetchPhoto('p-1', signal);
+    expect(fetchImpl).toHaveBeenCalledWith('https://x.test/photos/p-1', {
       headers: { authorization: 'Bearer tok' },
       signal,
     });
@@ -55,6 +56,27 @@ describe('createFetchPhoto', () => {
     );
     const error = await fetchPhoto('p').catch((e: unknown) => e);
     expect(error).toBeInstanceOf(PhotoHttpError);
+    expect((error as PhotoHttpError).status).toBe(404);
+  });
+});
+
+describe('isSafePhotoId (QA #747)', () => {
+  it('accepts the ids the apps make and nothing that could leave a path', () => {
+    expect(isSafePhotoId('0199b000-0000-7000-8000-000000000001')).toBe(true);
+    expect(isSafePhotoId('p_1')).toBe(true);
+    for (const id of ['', '../x', 'a/b', 'a%2Fb', 'a b', 'x'.repeat(129), 'é']) {
+      expect(isSafePhotoId(id)).toBe(false);
+    }
+  });
+
+  it('fetches nothing for an unsafe id, and fails as a missing photo', async () => {
+    const fetchImpl = vi.fn(async () => new Response('x'));
+    const error = await createFetchPhoto(
+      fetchImpl,
+      'https://x.test',
+      () => 'tok',
+    )('a%2Fb').catch((e: unknown) => e);
+    expect(fetchImpl).not.toHaveBeenCalled();
     expect((error as PhotoHttpError).status).toBe(404);
   });
 });

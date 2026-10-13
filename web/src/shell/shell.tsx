@@ -1,6 +1,6 @@
 // The page frame: menu pane on the left with the version at its foot, the
 // page title and the profile menu along the top.
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { version } from '../../../app/package.json';
@@ -28,6 +28,7 @@ export function Shell({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const main = useRef<HTMLElement>(null);
   const pages = [
     { id: 'sessions', label: t('sessions.title'), icon: <ListIcon />, groupStart: false },
     { id: 'statistics', label: t('stats.title'), icon: <ChartIcon />, groupStart: false },
@@ -39,6 +40,17 @@ export function Shell({
 
   return (
     <div className="shell">
+      {/* The hash is the route, so the link moves the focus instead of the address. */}
+      <a
+        className="skip-link"
+        href="#content"
+        onClick={(event) => {
+          event.preventDefault();
+          main.current?.focus();
+        }}
+      >
+        {t('web.shell.skipToContent')}
+      </a>
       <aside className="sidebar">
         <div className="brand">
           <BrandMark />
@@ -66,7 +78,9 @@ export function Shell({
           <h1>{pages.find(({ id }) => id === page)?.label}</h1>
           <UserMenu email={email} onSignOut={onSignOut} />
         </header>
-        <main>{children}</main>
+        <main id="content" ref={main} tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -84,6 +84,13 @@ export function Filters({
                 onChange={(event) => set({ customTo: event.target.value || null })}
               />
             </label>
+            {state.customFrom !== null &&
+              state.customTo !== null &&
+              state.customFrom > state.customTo && (
+                <p className="danger" role="alert">
+                  {t('web.rangeReversed')}
+                </p>
+              )}
           </div>
         )}
       </section>

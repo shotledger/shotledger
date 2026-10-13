@@ -174,6 +174,32 @@ describe('archivePhotos', () => {
   });
 });
 
+describe('photo ids in the archive (QA #747)', () => {
+  it('never lets an id leave its folder, and never fetches an unsafe one', async () => {
+    const crafted = tables({
+      sessions: [session],
+      series: [
+        series('r1', 1, 'shotledger-photo:../../evil'),
+        series('r2', 2, 'shotledger-photo:a%2Fb'),
+        series('r3', 3, 'shotledger-photo:p3'),
+      ],
+    });
+    const paths = archivePhotos(crafted).map((photo) => photo.path);
+    expect(paths).toEqual([
+      'photos/2026-05-01 Club night/series-1-______evil.jpg',
+      'photos/2026-05-01 Club night/series-2-a_2Fb.jpg',
+      'photos/2026-05-01 Club night/series-3-p3.jpg',
+    ]);
+    const fetched: string[] = [];
+    const { missing } = await buildArchive(crafted, '1.2.3', async (photoId) => {
+      fetched.push(photoId);
+      return new Uint8Array([1]).buffer;
+    });
+    expect(fetched).toEqual(['p3']);
+    expect(missing).toBe(2);
+  });
+});
+
 describe('buildArchive', () => {
   it('reports progress and lists a photo that failed instead of failing', async () => {
     const progress: string[] = [];
