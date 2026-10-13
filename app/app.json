@@ -5,6 +5,9 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "app",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",

@@ -81,6 +81,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 | Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
 | PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                     |
 | E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
+| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                              |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 
