@@ -483,7 +483,7 @@
     "licensesNativeNote": "Compiled into the app rather than bundled as JavaScript. Not all of these are open source, and the Android platform libraries the build links against are not listed.",
     "licensesJsTitle": "JavaScript Packages",
     "repoLink": "GitHub Repository",
-    "evaluationExpires": "Evaluation build, expires {{date}}."
+    "evaluationExpires": "Evaluation build for personal testing only; no other license is granted. Expires {{date}}."
   },
   "evaluation": {
     "expiredTitle": "Evaluation Build Expired",

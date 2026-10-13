@@ -213,6 +213,18 @@ cd android && EXPO_PUBLIC_EVAL_EXPIRES_AT=2026-11-30 ./gradlew assembleRelease -
   export. The tester's data stays on the phone; a new build signed with the
   same key installs over it. Settings → About shows the expiry date while the
   build is active.
+- **License terms:** an evaluation build is handed out under an
+  evaluation-only grant, not the AGPL, while the repository is private and
+  the maintainer is its sole copyright holder (ADR 0017). About says so;
+  repeat it in the hand-out message:
+
+  > ShotLedger evaluation build, for your personal testing only. No other
+  > license is granted; please don't pass the APK on. It stops working on
+  > <date>; ask me for a new build after that.
+
+  Once the repository is public, builds are AGPL like every other and this
+  grant no longer applies.
+
 - **A malformed value fails open:** the build runs with no expiry at all.
   Check the date before handing the APK out.
 - **Clock rollback:** the app keeps the latest time it has seen in

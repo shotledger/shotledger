@@ -5,6 +5,9 @@ the app is in Google Play. It is installed from an APK file rather than from
 the store, and it stops working on a date set when it was built. Settings →
 About shows that date.
 
+An evaluation build is yours to test, not to pass on: it is handed out for
+personal testing only, and no other license comes with it.
+
 ## When it stops
 
 From that date on, the app opens on an **Evaluation Build Expired** screen
