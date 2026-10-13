@@ -554,6 +554,16 @@ describe('edit builder', () => {
     ]);
   });
 
+  it('R12 a series with a photo and no shots, left empty, writes nothing', () => {
+    const context = logbook();
+    const series = context.series as Map<string, Payload>;
+    series.set('h1', { ...series.get('h1')!, photo_uri: 'shotledger-photo:p1' });
+    expect(edit(draft('sH', {}, [asDrafted('h1', '', true)]), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+  });
+
   it('K5 an emptied series keeps its row and loses its shots', () => {
     const changes = changesOf(edit(draft('s1', {}, [asDrafted('r1', '')])));
     expect(changes.filter((c) => c.tableName === 'shots').every((c) => c.payload === null)).toBe(
