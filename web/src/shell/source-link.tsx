@@ -1,6 +1,6 @@
 // AGPL-3.0 §13 (ADR 0017): a hosted web app offers its users the
-// Corresponding Source. Every page links to it: the sign-in page, the
-// menu pane's foot and, where a narrow screen hides that, the profile menu.
+// Corresponding Source. One link, in the profile menu, reachable from every
+// page at every width and out of the way otherwise (maintainer, 2026-10-13).
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 

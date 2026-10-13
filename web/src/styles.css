@@ -82,15 +82,6 @@ select {
   gap: 12px;
 }
 
-.sign-in-source {
-  text-align: center;
-  font-size: 12px;
-}
-
-.sign-in-source a {
-  color: inherit;
-}
-
 h3 {
   font-size: 14px;
   margin: 16px 0 8px;
@@ -1096,19 +1087,6 @@ fieldset.field legend {
     11px ui-monospace,
     monospace;
   color: var(--text-secondary);
-}
-
-.sidebar .version a {
-  display: inline;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  text-decoration: underline;
-}
-
-.sidebar .version a:hover {
-  background: none;
-  color: var(--text);
 }
 
 .shell-main {

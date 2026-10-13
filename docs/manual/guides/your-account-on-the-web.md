@@ -99,6 +99,5 @@ copy.
 
 ## Source code
 
-ShotLedger is free software. **Source Code**, at the foot of the menu on the
-left, in the profile menu at the top right, and under the sign-in form, opens
-the source code of the app and the web app it serves.
+ShotLedger is free software. **Source Code** in the profile menu at the top
+right opens the source code of the app and the web app.

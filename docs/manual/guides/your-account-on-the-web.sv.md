@@ -101,6 +101,5 @@ loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
 
 ## Källkod
 
-ShotLedger är fri programvara. **Källkod**, längst ner i menyn till vänster,
-i profilmenyn uppe till höger och under inloggningsformuläret, öppnar
-källkoden för appen och webbappen.
+ShotLedger är fri programvara. **Källkod** i profilmenyn uppe till höger
+öppnar källkoden för appen och webbappen.

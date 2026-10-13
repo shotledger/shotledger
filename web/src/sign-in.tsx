@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { signIn, type SignInError } from './api';
-import { SourceLink } from './shell/source-link';
 
 export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   const { t } = useTranslation();
@@ -47,9 +46,6 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
           {t('account.signIn')}
         </button>
       </form>
-      <p className="sign-in-source muted">
-        <SourceLink />
-      </p>
     </main>
   );
 }
