@@ -74,13 +74,37 @@ each with the question it answers. Tap one to scroll straight to it.
 A **Shots per Series** filter leaves fält sessions out: a fält round has
 stations, not series, so it has no series length to match.
 
+## One session against your usual form
+
+Open a session and switch from **Series** to **Stats**. Under the session's own
+figures, **Vs. Your Usual Form** sets this session against the 100 series you
+shot before it in the same discipline and class. Sighters are left out on both
+sides.
+
+- A line in words says how the session went: _About usual_, _Better than
+  usual_, _Clearly better than usual_, or the same for worse. See
+  [How "usual form" is worked out](../explanation/usual-form.md).
+- **Avg/Series** and **Avg/Shot** each have a bar. The grey mark is your usual
+  average and the coloured mark is today's; the further apart they are, the
+  further from usual you shot. The line below gives both numbers and the
+  difference.
+- **Expected Score** is what your usual series average adds up to over the
+  number of series you shot today, next to what you actually scored.
+- **Share of 10s** and **9 or Better** give the share of today's shots in each,
+  your usual share, and the difference between the two.
+
+With fewer than 100 earlier series, the comparison uses the ones there are and
+says how many. Below 20 it still shows the numbers but does not say how unusual
+the session was. With none, it says there is nothing to compare with yet.
+
 ## On the web
 
 With sync on, **Statistics** in the web app shows the same report from the
 same numbers. The filters sit in a column beside it and apply as you change
 them, so there is no **Generate Report**. They stay as you left them while you
 move between the web app's pages, and start afresh when you sign out or close
-the tab. A record's session name opens that session.
+the tab. A record's session name opens that session. A session's **Stats** view,
+with **Vs. Your Usual Form**, is on the phone only.
 
 Above the report sits your license-activity status, when a profile is chosen;
 see [License activity](license-activity.md#on-the-web).
