@@ -251,6 +251,11 @@
                   "type": "boolean",
                   "description": "Whether the series belongs to a championship final."
                 },
+                "isShootOff": {
+                  "default": false,
+                  "description": "A särskjutning series, shot to decide a placement. Scored like any other series.",
+                  "type": "boolean"
+                },
                 "shots": {
                   "type": "array",
                   "items": {
@@ -325,6 +330,7 @@
                 "position",
                 "isSighter",
                 "isFinal",
+                "isShootOff",
                 "shots",
                 "totalOverride"
               ],
@@ -450,7 +456,7 @@
           },
           "externalRef": {
             "default": null,
-            "description": "The source's own key for the session. A later import from that source matches on it to update the session rather than add a second one.",
+            "description": "The source's own key for the session, without a source prefix (`363:35937` from Webshooter, 16 hex from ShotLog). A later import from the same `externalSource` matches on it to update the session rather than add a second one.",
             "type": [
               "string",
               "null"

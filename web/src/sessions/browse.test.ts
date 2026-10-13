@@ -270,6 +270,7 @@ describe('seriesSections', () => {
     photo: null,
     isSighter: false,
     isFinal,
+    isShootOff: false,
     shots: [],
     totalTenths: 0,
     stage: null,

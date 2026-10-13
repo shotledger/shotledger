@@ -58,11 +58,19 @@ describe('importSessionsFromJson', () => {
     const input = [
       session({
         series: [
-          { position: 1, isSighter: true, isFinal: false, totalOverride: null, shots: [] },
+          {
+            position: 1,
+            isSighter: true,
+            isFinal: false,
+            isShootOff: false,
+            totalOverride: null,
+            shots: [],
+          },
           {
             position: 2,
             isSighter: false,
             isFinal: false,
+            isShootOff: false,
             totalOverride: null,
             shots: [{ position: 1, valueTenths: 100, isInnerTen: true }],
           },
@@ -191,6 +199,7 @@ describe('importSessionsFromJson', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
+          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 999, isInnerTen: false }],
         },
@@ -229,6 +238,7 @@ describe('toImportGroups', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
+          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 95, isInnerTen: false }],
         },

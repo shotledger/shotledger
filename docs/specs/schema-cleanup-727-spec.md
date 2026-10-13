@@ -5,7 +5,9 @@
 > (2026-10-11, 2026-10-12), the re-check of 2026-10-13, and the maintainer's
 > rulings in the project thread of 2026-10-13.
 >
-> **Approval status:** not yet approved.
+> **Approval status:** approved first-hand by the maintainer on 2026-10-13
+> ("approved", project thread, 17:43 UTC), covering §1–§3 and §6; §4 (PR B)
+> is an outline and gets its own approval.
 
 - **Tier: 3.** It changes the synced row format of four tables, the
   WebShooter/ShotLog dedupe keys, and the firearm maintenance counter that

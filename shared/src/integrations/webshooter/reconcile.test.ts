@@ -12,28 +12,35 @@ import {
 } from './reconcile';
 
 describe('buildExternalRef', () => {
-  it('builds the stable webshooter:<competition>:<signup> key', () => {
-    expect(buildExternalRef(9001, 55001)).toBe('webshooter:9001:55001');
+  it('R1 builds the stable <competition>:<signup> key, with no source prefix', () => {
+    expect(buildExternalRef(9001, 55001)).toBe('9001:55001');
   });
 
   it('accepts string ids too', () => {
-    expect(buildExternalRef('9001', '55001')).toBe('webshooter:9001:55001');
+    expect(buildExternalRef('9001', '55001')).toBe('9001:55001');
   });
 });
 
 describe('findExactMatch', () => {
   const sessions = [
-    { id: 's1', externalRef: 'webshooter:1:1' },
-    { id: 's2', externalRef: null },
-    { id: 's3', externalRef: 'webshooter:2:2' },
+    { id: 's1', externalSource: 'webshooter', externalRef: '1:1' },
+    { id: 's2', externalSource: null, externalRef: null },
+    { id: 's3', externalSource: 'webshooter', externalRef: '2:2' },
   ];
 
   it('finds the session with the matching externalRef', () => {
-    expect(findExactMatch(sessions, 'webshooter:2:2')).toEqual(sessions[2]);
+    expect(findExactMatch(sessions, '2:2')).toEqual(sessions[2]);
   });
 
   it('returns null when no session has that externalRef (fresh import, never a duplicate)', () => {
-    expect(findExactMatch(sessions, 'webshooter:9:9')).toBeNull();
+    expect(findExactMatch(sessions, '9:9')).toBeNull();
+  });
+
+  it('R3 never matches a ref from another source, even when the strings are equal', () => {
+    const fromShotlog = [{ id: 'x', externalSource: 'shotlog', externalRef: '2:2' }];
+    expect(findExactMatch(fromShotlog, '2:2')).toBeNull();
+    const unsourced = [{ id: 'y', externalSource: null, externalRef: '2:2' }];
+    expect(findExactMatch(unsourced, '2:2')).toBeNull();
   });
 
   it('never matches a null externalRef against a null query implicitly', () => {

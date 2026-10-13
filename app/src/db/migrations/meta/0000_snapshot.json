@@ -732,6 +732,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "is_adjustment": {
+          "name": "is_adjustment",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
@@ -907,12 +915,13 @@
           "notNull": false,
           "autoincrement": false
         },
-        "note": {
-          "name": "note",
-          "type": "text",
+        "is_shoot_off": {
+          "name": "is_shoot_off",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
@@ -1218,20 +1227,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "external_synced_at": {
-          "name": "external_synced_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "webshooter_competition_id": {
-          "name": "webshooter_competition_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "official_placement": {
           "name": "official_placement",
           "type": "integer",
@@ -1447,14 +1442,6 @@
         },
         "is_inner_ten": {
           "name": "is_inner_ten",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "is_inner_ten_decimal": {
-          "name": "is_inner_ten_decimal",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

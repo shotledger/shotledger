@@ -384,6 +384,9 @@ export default function SessionDetailScreen() {
           </ThemedText>
           <View style={styles.badges}>
             {row.isSighter && <Chip label={t('session.sighter')} />}
+            {row.isShootOff && (
+              <Chip label={t('station.shootOff')} testID={`series-shoot-off-${row.position}`} />
+            )}
             {row.timeLimitSeconds !== null && (
               <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
             )}
