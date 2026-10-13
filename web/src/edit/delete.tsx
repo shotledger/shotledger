@@ -2,7 +2,6 @@
 // §3.2, E5). Delete asks first, naming the session and the rounds its
 // firearm's count loses; only that confirmation sends, and it is refused when
 // the session changed elsewhere since this page pulled it (R10).
-import { openedSession } from '@shotledger/shared/src/sync-client/session-edit';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,13 +12,14 @@ import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
 import { firearmLabel, messageText, webIo, type Done } from './edit';
 import { statusMessages } from './messages';
-import { editContext } from './model';
 import { deleteDeps, deletePreview } from './request';
 import {
+  deleteClick,
   deleteStep,
   destination,
   editBlocked,
   IDLE,
+  reload,
   run,
   submitRequest,
   type DeleteStep,
@@ -64,11 +64,9 @@ export function SessionActions({
 
   const runDelete = () => {
     const held = submitRequest(state);
-    // The session as the confirmation showed it; the detail only renders a live one.
-    const shown = openedSession(sessionId, editContext(tables));
-    if (blocked !== null || shown === null) return;
+    if (blocked !== null) return;
     setState({ status: { kind: 'working', action: 'delete' }, held: null });
-    void run(deleteDeps(webIo(writer.refresh), shown), 'delete', held)
+    void run(deleteDeps(webIo(writer.refresh), tables, sessionId), 'delete', held)
       .then((next) => {
         setState(next);
         const hash = destination(sessionId, next.status);
@@ -82,11 +80,7 @@ export function SessionActions({
       .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
   };
 
-  // Pull the account again, so the detail and the next confirmation show what is there now.
-  const onReload = () => {
-    setState(IDLE);
-    void writer.refresh();
-  };
+  const onReload = () => setState(reload(writer.refresh));
 
   const onSignedIn = (userId: string) => {
     if (writer.onReauthenticated(userId) === 'same') {
@@ -109,7 +103,7 @@ export function SessionActions({
           type="button"
           className="destructive small"
           disabled={blocked !== null || step === 'asking'}
-          onClick={() => (state.held === null ? onStep('ask') : runDelete())}
+          onClick={() => (deleteClick(state) === 'ask' ? onStep('ask') : runDelete())}
         >
           {state.held === null ? t('common.deleteSession') : t('web.entry.retry')}
         </button>

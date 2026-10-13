@@ -6,6 +6,7 @@ import type { PushOutcome } from '@shotledger/shared/src/sync-client/direct-push
 import {
   buildSessionDelete,
   buildSessionEdit,
+  openedSession,
   type OpenedSession,
   type SessionEditDraft,
 } from '@shotledger/shared/src/sync-client/session-edit';
@@ -41,9 +42,17 @@ export function saveDeps(io: EditIo, opened: OpenedSession, draft: SessionEditDr
   return deps(io, (fresh) => buildSessionEdit(draft, opened, fresh, ids(io)));
 }
 
-/** `opened` is the session as the page showed it: Delete refuses what changed since (R10). */
-export function deleteDeps(io: EditIo, opened: OpenedSession): EditDeps {
-  return deps(io, (fresh) => buildSessionDelete(opened, fresh, ids(io)));
+/**
+ * Delete against the session as the page's `tables` show it now, which is what
+ * the confirmation named: Delete refuses what changed since (R10).
+ */
+export function deleteDeps(io: EditIo, tables: PulledTables, sessionId: string): EditDeps {
+  const shown = openedSession(sessionId, editContext(tables));
+  return deps(io, (fresh) =>
+    shown === null
+      ? { ok: false, errors: [{ kind: 'gone' }] }
+      : buildSessionDelete(shown, fresh, ids(io)),
+  );
 }
 
 /** What Delete's confirmation names (§3.2): the rounds the firearm's count loses. */

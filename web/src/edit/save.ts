@@ -174,6 +174,17 @@ export function destination(sessionId: string, status: EditStatus): string | nul
   return status.action === 'delete' ? '#sessions' : `#sessions/${encodeURIComponent(sessionId)}`;
 }
 
+/** Delete Session asks first; while a request is held it resends that one without asking (U8). */
+export function deleteClick(state: EditState): 'ask' | 'resend' {
+  return state.held === null ? 'ask' : 'resend';
+}
+
+/** Reload after a stale Delete: the account is pulled again and the page starts over (U10). */
+export function reload(refresh: () => Promise<boolean>): EditState {
+  void refresh();
+  return IDLE;
+}
+
 /** Delete asks first (§3.2): only a confirmation sends, and Cancel sends nothing (U8). */
 export type DeleteStep = 'closed' | 'asking';
 

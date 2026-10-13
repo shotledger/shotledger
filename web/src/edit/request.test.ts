@@ -100,7 +100,7 @@ describe('saveDeps and deleteDeps', () => {
 
   it('delete builds the tombstones and the counter move', async () => {
     const live = io();
-    const deps = deleteDeps(live, openedSession('s1', editContext(tables()))!);
+    const deps = deleteDeps(live, tables(), 's1');
     const built = deps.build(await deps.loadContext());
     if (!built.ok) throw new Error('expected ok');
     expect(built.changes.map((c: ClientChange) => [c.tableName, c.rowId])).toEqual([
@@ -121,15 +121,28 @@ describe('saveDeps and deleteDeps', () => {
 describe('U10 deleteDeps builds against the session as the page showed it (R10)', () => {
   it('a series added on another device since the page pulled → stale, nothing built', async () => {
     const live = io();
-    const shown = openedSession('s1', editContext(tables()))!;
     const fresh = tables();
     fresh.series.set('r2', { ...common('r2'), session_id: 's1', position: 2, is_sighter: 0 });
     live.loadTables.mockResolvedValue(fresh);
-    const deps = deleteDeps(live, shown);
+    // The page's tables are what the confirmation showed; the fresh pull differs.
+    const deps = deleteDeps(live, tables(), 's1');
     expect(deps.build(await deps.loadContext())).toEqual({
       ok: false,
       errors: [{ kind: 'stale' }],
     });
+  });
+});
+
+describe('deleteDeps with nothing to show', () => {
+  it('a session the page does not hold live builds nothing: gone', async () => {
+    const live = io();
+    for (const id of ['s4', 'nope']) {
+      const deps = deleteDeps(live, tables(), id);
+      expect(deps.build(await deps.loadContext())).toEqual({
+        ok: false,
+        errors: [{ kind: 'gone' }],
+      });
+    }
   });
 });
 

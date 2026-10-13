@@ -14,7 +14,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   afterEdit,
+  deleteClick,
   deleteStep,
+  reload,
   destination,
   editBlocked,
   IDLE,
@@ -310,6 +312,24 @@ describe('editBlocked', () => {
     expect(editBlocked(true, { status: { kind: 'working', action: 'delete' }, held: null })).toBe(
       'working',
     );
+  });
+});
+
+describe('deleteClick and reload (round-3 F1)', () => {
+  it('U8 Delete Session asks first; only a held request resends without asking', () => {
+    expect(deleteClick(IDLE)).toBe('ask');
+    expect(
+      deleteClick({ status: { kind: 'stale', action: 'delete', fresh: FRESH }, held: null }),
+    ).toBe('ask');
+    expect(deleteClick({ status: { kind: 'failed', error: 'network' }, held: held() })).toBe(
+      'resend',
+    );
+  });
+
+  it('U10 Reload pulls the account again and leaves the stale state', () => {
+    const refresh = vi.fn(async () => true);
+    expect(reload(refresh)).toBe(IDLE);
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });
 
