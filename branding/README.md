@@ -24,6 +24,6 @@ the others 512 px). Prefer the SVG.
   `#6E30CF`, "Shot" `#1A1325`. Dark ground: rings and "Ledger" `#B98CFF`,
   "Shot" `#F6EEE4`.
 
-Copies in use: `docs/manual/assets/` (the manual's header logo, favicon and
+Used in: the root `README.md`, `docs/manual/assets/` (the manual's header logo, favicon and
 home page) and `Wordmark` in `web/src/shell/icons.tsx` (the web app's menu
 pane, coloured from the theme).
