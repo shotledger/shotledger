@@ -54,6 +54,8 @@ mellan enheter, samma som på telefonen:
   visar sidan det som räknats fram från dina vapen, som telefonen gör. Har
   du inte valt någon profil än är ingen markerad, och telefonen använder den
   som hör till dess språk; välj en här för att spara den för alla enheter.
+- **Funktioner**: vilka delar av appen du visar (telefonens Inställningar →
+  Funktioner, se [Dölja funktioner du inte använder](hiding-features.md)).
 
 Ändra det du behöver och tryck på **Spara**. Ändrar du ett födelseår som
 redan var satt får du bekräfta först, som på telefonen. Telefonerna får
