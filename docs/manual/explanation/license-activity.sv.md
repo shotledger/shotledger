@@ -56,6 +56,23 @@ hela sexmånadersperioden: tolv aktiviteter någonstans under de sex månaderna
 uppfyller 5 §, oavsett om de var jämnt fördelade eller inte. Något visst antal
 varje kalendermånad krävs inte.
 
+## Datumet för nästa pass
+
+Perioden slutar alltid i dag, så varje dag kommer de äldsta passen i den närmare
+att falla ur. Loggar du inget mer förblir ett uppfyllt krav uppfyllt tills så
+många pass har fallit ur att antalet understiger det som krävs. Datumet appen
+visar är sista dagen innan det händer.
+
+Bara de pass som kravet räknar spelar roll: för ett vapens kriterium, pass
+loggade med det vapnet. För förnyelsekriteriet måste båda åren ligga kvar på
+fyra, så datumet kan komma från vilket år som helst.
+
+Datumet följer kalendern precis som antalet gör. En sexmånadersperiod som slutar
+den 31 oktober börjar den 1 maj, eftersom det inte finns någon 31 april; ett pass
+den 1 maj kan därför falla ur den 31 oktober i stället för den 1 november.
+Datumet kan alltså bli en dag eller två tidigare än om du räknar månader på
+fingrarna, aldrig senare.
+
 ## Vad som räknas, och vad det här inte är
 
 **Alla pass räknas, oavsett vad du sköt med.** 5 § och 6 § är krav på _dig_,
