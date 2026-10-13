@@ -1,6 +1,6 @@
 # Schema cleanup (#727) — executable specification
 
-> Old-coder SPEC. Evidence report, once written:
+> Old-coder SPEC. Evidence report:
 > `docs/specs/schema-cleanup-727-evidence.md`. Inputs: the two audits on #727
 > (2026-10-11, 2026-10-12), the re-check of 2026-10-13, and the maintainer's
 > rulings in the project thread of 2026-10-13.
