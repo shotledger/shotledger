@@ -70,7 +70,7 @@
       "vars": {
         "ENVIRONMENT": "staging",
         "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
-        "BETTER_AUTH_TRUSTED_ORIGINS": "app://",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],
@@ -100,7 +100,7 @@
       "vars": {
         "ENVIRONMENT": "production",
         "BETTER_AUTH_URL": "https://REPLACE_ME.invalid",
-        "BETTER_AUTH_TRUSTED_ORIGINS": "app://",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "shotledger://",
       },
       "secrets": {
         "required": ["BETTER_AUTH_SECRET"],

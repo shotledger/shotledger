@@ -1392,7 +1392,8 @@
     "shell": {
       "menu": "Huvudmeny",
       "skipToContent": "Hoppa till innehållet",
-      "version": "Version"
+      "version": "Version",
+      "sourceCode": "Källkod"
     },
     "sessions": {
       "back": "Alla pass",

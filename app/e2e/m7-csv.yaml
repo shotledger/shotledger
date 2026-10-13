@@ -26,7 +26,7 @@ appId: app.shotledger
       id: 'settle-before-open-link'
     timeout: 4000
     optional: true
-- openLink: 'app://dev'
+- openLink: 'shotledger://dev'
 - extendedWaitUntil:
     visible: 'Dev'
     timeout: 8000
@@ -35,13 +35,13 @@ appId: app.shotledger
     when:
       notVisible: 'Dev'
     commands:
-      - openLink: 'app://dev'
+      - openLink: 'shotledger://dev'
 - extendedWaitUntil:
     visible: 'Dev'
     timeout: 15000
 - tapOn:
     id: 'load-demo-data'
-- openLink: 'app://'
+- openLink: 'shotledger://'
 - extendedWaitUntil:
     visible: 'Home'
     timeout: 15000
@@ -67,13 +67,13 @@ appId: app.shotledger
 - takeScreenshot: m7-02-export-status
 
 # --- Dev menu: wipe data ---------------------------------------------------
-- openLink: 'app://dev'
+- openLink: 'shotledger://dev'
 - extendedWaitUntil:
     visible: 'Dev'
     timeout: 15000
 - tapOn:
     id: 'wipe-data'
-- openLink: 'app://'
+- openLink: 'shotledger://'
 - extendedWaitUntil:
     visible: 'Home'
     timeout: 15000
@@ -126,7 +126,7 @@ appId: app.shotledger
 - pressKey: Back
 
 # --- Home: reachable after the import attempt ------------------------------
-- openLink: 'app://'
+- openLink: 'shotledger://'
 - extendedWaitUntil:
     visible: 'Home'
     timeout: 15000

@@ -98,3 +98,9 @@ Ett foto som inte går att hämta stoppar inte resten. Zip-filen listar det då 
 inloggade enheter. **Radera** tar sedan bort kontot och allt på servern och
 loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
 ångra, så ladda ner allt först om du vill ha en kopia.
+
+## Källkod
+
+ShotLedger är fri programvara. **Källkod**, längst ner i menyn till vänster,
+i profilmenyn uppe till höger och under inloggningsformuläret, öppnar
+källkoden för appen och webbappen.

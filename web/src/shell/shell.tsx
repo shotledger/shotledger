@@ -14,6 +14,7 @@ import {
   UserIcon,
 } from './icons';
 import type { Page } from './route';
+import { SourceLink } from './source-link';
 import { UserMenu } from './user-menu';
 
 export function Shell({
@@ -71,6 +72,8 @@ export function Shell({
         <div className="version">
           <span className="sr-only">{t('web.shell.version')} </span>
           {version}
+          {' · '}
+          <SourceLink />
         </div>
       </aside>
       <div className="shell-main">
