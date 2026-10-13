@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # ready_for_review: a draft skips CI, so marking it ready has to start a run.
+    types: [opened, synchronize, reopened, ready_for_review]
   # The release workflow runs the same checks on the commit it tags.
   workflow_call:
 
@@ -13,6 +15,7 @@ concurrency:
 
 jobs:
   check:
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -28,6 +31,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Saved by ci-cache.yml on main; a PR's own saves are invisible to other PRs.
+      - uses: actions/cache/restore@v6.1.0
+        with:
+          path: node_modules/.cache/prettier
+          key: prettier-${{ github.run_id }}
+          restore-keys: prettier-
+
       - run: pnpm check
 
       # Not part of `pnpm check` (see CLAUDE.md, "Backend").
@@ -41,6 +51,9 @@ jobs:
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.14.8'
+          # pipx installs through pip, so its wheel cache serves reqstool too.
+          cache: pip
+          cache-dependency-path: .github/workflows/ci.yml
 
       # --python is load-bearing: pipx builds its venv with the interpreter pipx
       # itself was installed with (system 3.12 on ubuntu-latest), not with the

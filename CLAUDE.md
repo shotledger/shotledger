@@ -120,8 +120,9 @@ format, a limitation — SHALL update `docs/manual/` in the same pull request.
 Not a follow-up: the same PR. Documentation that lags the code is wrong,
 and a reader cannot tell which half to believe.
 
-CI also runs gates that `pnpm check` does not. Run the ones your change
-touches before pushing:
+CI skips draft PRs (Actions minutes are paid); it runs when the PR is
+marked ready. CI also runs gates that `pnpm check` does not. Run the ones
+your change touches before pushing:
 
 - docs: `docs/CLAUDE.md`
 - backend tests: `backend/CLAUDE.md`
