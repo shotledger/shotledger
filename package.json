@@ -10,7 +10,7 @@
     "typecheck": "tsc -b && tsc -p backend/test/tsconfig.json",
     "typecheck:app": "node scripts/ensure-expo-env.mjs && cd app && pnpm exec tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "format": "prettier --check .",
+    "format": "prettier --check --cache --cache-strategy content .",
     "i18n:check": "node scripts/i18n-check.mjs",
     "licenses:generate": "node scripts/generate-licenses.mjs",
     "licenses:check": "node scripts/generate-licenses.mjs --check",
