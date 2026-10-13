@@ -6,7 +6,10 @@ Spec: [`ammo-lot-merge-spec.md`](ammo-lot-merge-spec.md).
   in reply to "The code starts once you approve the spec"), M1–M9 as written.
   The spec has no revisions.
 - **Source state:** commit `ed2f613` on `feature/issue-784-merge-ammo-lots`.
-  The numbers below come from one run on that commit.
+  The numbers below come from one run on that commit. After merging `main`
+  (#779, the schema cleanup) the branch re-ran `pnpm check` (3739 tests,
+  coverage still 100%) and W1–W4 (4/4); nothing in the merge changes a
+  module under test here.
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (Node 24.21.0,
   vitest 5.0.3, Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2; backend
   vitest with `@cloudflare/vitest-plugin`).
