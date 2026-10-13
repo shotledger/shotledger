@@ -1348,6 +1348,8 @@
     }
   },
   "web": {
+    "statsFilters": "Filters",
+    "statsMeasure": "Measure",
     "signInIntro": "Sign in with your ShotLedger account to view your sessions, your statistics and your account. Nothing is kept once you close the tab.",
     "loading_one": "Loading your logbook… {{count}} row",
     "loading_other": "Loading your logbook… {{count}} rows",
@@ -1392,6 +1394,7 @@
     },
     "shell": {
       "menu": "Main",
+      "sidebar": "Sidebar",
       "skipToContent": "Skip to Content",
       "version": "Version",
       "sourceCode": "Source Code"

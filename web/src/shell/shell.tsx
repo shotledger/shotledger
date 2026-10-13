@@ -51,7 +51,7 @@ export function Shell({
       >
         {t('web.shell.skipToContent')}
       </a>
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label={t('web.shell.sidebar')}>
         <div className="brand">
           <BrandMark />
           ShotLedger
