@@ -404,8 +404,8 @@ export const sessionExportSchema = z.object({
     .default(null)
     .describe(
       "The source's own key for the session, without a source prefix (`363:35937` from " +
-        'Webshooter, 16 hex from ShotLog). A later import from the same `externalSource` ' +
-        'matches on it to update the session rather than add a second one.',
+        'Webshooter, the Session ID `S-0a1b2c3d` from ShotLog). A later import from the same ' +
+        '`externalSource` matches on it to update the session rather than add a second one.',
     ),
   officialPlacement: z
     .number()

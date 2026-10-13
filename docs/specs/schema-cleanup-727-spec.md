@@ -66,8 +66,9 @@ the ShotLog per-shot import, `sessions.kind` in Home, `series.is_total_override`
 
 - **R1** WebShooter: `buildExternalRef(363, 35937)` returns `'363:35937'`
   (was `'webshooter:363:35937'`).
-- **R2** ShotLog: `buildShotlogRef(row)` returns the 16 hex characters alone
-  (was `'shotlog:<hex>'`). Same hash, same inputs.
+- **R2** ShotLog: the ref carries no `shotlog:` prefix. _Superseded by #783,
+  which merged first: the ref is now ShotLog's own Session ID
+  (`S-0a1b2c3d`), unprefixed, and `ref.ts` is gone._
 - **R3** Every exact match compares `(external_source, external_ref)`, never
   the ref alone:
   - WebShooter reconcile (`reconcile.ts` `findExactMatch`): a session with

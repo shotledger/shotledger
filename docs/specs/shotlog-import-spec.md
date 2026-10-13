@@ -233,8 +233,7 @@ convention — the maintainer's least of all — is encoded anywhere.
 
 No new dependencies. No schema change, therefore **no Drizzle migration**:
 `sessions.external_source` / `external_ref` are plain `TEXT` columns and
-take `'shotlog'` / `'<hash>'` as-is (#727 dropped the `shotlog:` prefix
-from the ref; matches compare source and ref together).
+take `'shotlog'` / `'shotlog:<hash>'` as-is.
 
 ## 1. The format (as measured, not as guessed)
 
@@ -388,7 +387,7 @@ applied without the row being selected for import.
 
 ## 4. Stable reference — `shared/src/shotlog/ref.ts`
 
-`buildShotlogRef(row)` → `<16 hex>` (no prefix since #727), a 2×32-bit FNV-1a hash (two
+`buildShotlogRef(row)` → `shotlog:<16 hex>`, a 2×32-bit FNV-1a hash (two
 distinct offset bases over the same bytes, concatenated) of
 `datetime + '�' + name + '�' + totalScore`. Hand-rolled: no hash
 dependency exists in the workspace and `crypto.subtle` is async and absent

@@ -456,7 +456,7 @@
           },
           "externalRef": {
             "default": null,
-            "description": "The source's own key for the session, without a source prefix (`363:35937` from Webshooter, 16 hex from ShotLog). A later import from the same `externalSource` matches on it to update the session rather than add a second one.",
+            "description": "The source's own key for the session, without a source prefix (`363:35937` from Webshooter, the Session ID `S-0a1b2c3d` from ShotLog). A later import from the same `externalSource` matches on it to update the session rather than add a second one.",
             "type": [
               "string",
               "null"
