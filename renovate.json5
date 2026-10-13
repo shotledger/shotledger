@@ -16,6 +16,15 @@
 
   packageRules: [
     {
+      // One CI run a week instead of one per package. Security fixes ignore
+      // the schedule; majors stay separate PRs. Before the Expo rule so its
+      // `enabled: false` still wins.
+      description: 'Batch automerged updates weekly',
+      matchUpdateTypes: ['minor', 'patch', 'pin'],
+      groupName: 'non-major dependencies',
+      schedule: ['before 6am on monday'],
+    },
+    {
       // Expo SDK, React Native, and React versions are tightly coupled;
       // Renovate must not bump them independently. Upgrades happen
       // deliberately via `npx expo install --fix` on a dedicated branch.
