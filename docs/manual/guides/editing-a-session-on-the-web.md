@@ -61,9 +61,9 @@ check with **Adjust Round Count** on the phone.
 firearm's round count goes down by. Deleting removes its series, shots and
 fält stations too and cannot be undone. Its photos stay in your account.
 
-Delete reads the session again first. If anything in it (its fields, a
-series, a shot or a fält station) was changed, added or removed on another
-device since the page showed it, nothing is deleted and the page says so:
+Delete reads the session again first. If its fields, a series or a fält
+station were changed, added or removed on another device since the page
+showed it, or a series was retyped there, nothing is deleted and the page says so:
 **Reload** shows the session as it is now, and Delete Session asks again with
 the new round count. If it was already deleted on another device, nothing is
 sent either.

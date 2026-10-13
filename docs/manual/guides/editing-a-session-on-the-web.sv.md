@@ -62,9 +62,9 @@ med **Justera antal skott** i telefonen.
 skottantal minskar. Borttagningen tar också bort dess serier, skott och
 fältstationer och går inte att ångra. Dess foton finns kvar i kontot.
 
-Borttagningen läser passet igen först. Har något i det (dess fält, en serie,
-ett skott eller en fältstation) ändrats, lagts till eller tagits bort på en
-annan enhet sedan sidan visade det tas ingenting bort och sidan säger det:
+Borttagningen läser passet igen först. Har dess fält, en serie eller en
+fältstation ändrats, lagts till eller tagits bort på en annan enhet sedan
+sidan visade det, eller en serie skrivits om där, tas ingenting bort och sidan säger det:
 **Ladda om** visar passet som det är nu, och Ta bort pass frågar igen med det
 nya skottantalet. Har det redan tagits bort på en annan enhet skickas inte
 heller något.
