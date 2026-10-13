@@ -187,6 +187,7 @@ export function applyImport(
         loadSystem: firearm.loadSystem,
         notes: firearm.notes,
         maintenanceIntervalRounds: firearm.maintenanceIntervalRounds,
+        archivedAt: firearm.archivedAt,
       };
 
       // Any row with this id — tombstoned or not — means the id is taken, so

@@ -132,6 +132,7 @@ function document(id, description) {
             roundCount: 1200,
             maintenanceIntervalRounds: 500,
             roundsSinceMaintenance: 120,
+            archivedAt: null,
           },
         ],
         licenses: [

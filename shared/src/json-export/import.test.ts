@@ -292,6 +292,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     roundCount: 40,
     maintenanceIntervalRounds: null,
     roundsSinceMaintenance: 40,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',
@@ -383,6 +384,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       roundCount: 0,
       maintenanceIntervalRounds: null,
       roundsSinceMaintenance: 0,
+      archivedAt: null,
     });
   });
 });
