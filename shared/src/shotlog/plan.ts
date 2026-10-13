@@ -1,4 +1,4 @@
-// ShotLog import plan (docs/specs/shotlog-import-spec.md §6). Pure: parses,
+// ShotLog import plan (docs/specs/shotlog-import-spec.md §6, revision 2). Pure: parses,
 // classifies, dedups and proposes — never writes. The app layer shows the
 // result, lets the user edit the suggestions, and only then writes.
 import { classifyTags, suggestDisciplineFromName, suggestWeaponGroupFromName } from './classify';
@@ -10,15 +10,15 @@ import {
   markInFileDuplicates,
 } from './dedup';
 import { parseShotlogCsv } from './parse';
-import { buildShotlogRef } from './ref';
 import type {
   ShotlogExistingSession,
   ShotlogFirearm,
   ShotlogPlan,
   ShotlogPlanRow,
   ShotlogPlanSummary,
-  ShotlogRow,
   ShotlogRowStatus,
+  ShotlogSeries,
+  ShotlogSession,
   ShotlogSuggestion,
   ShotlogTagMapping,
   ShotlogWarning,
@@ -26,7 +26,6 @@ import type {
 
 export const SHOTLOG_TAG_PREFIX = 'shotlog:';
 export const DATE_UNKNOWN_TAG = `${SHOTLOG_TAG_PREFIX}date-unknown`;
-export const SIGHTER_TAG = `${SHOTLOG_TAG_PREFIX}includes-sighter`;
 export const FINAL_TAG = `${SHOTLOG_TAG_PREFIX}final`;
 export const DNF_TAG = `${SHOTLOG_TAG_PREFIX}dnf`;
 
@@ -39,7 +38,7 @@ export interface ShotlogPlanOptions {
   tagMapping?: ShotlogTagMapping;
   knownFirearms?: readonly ShotlogFirearm[];
   existingSessions?: readonly ShotlogExistingSession[];
-  /** Select zero-score rows by default. Off per §6 status 3. */
+  /** Select sessions with no series by default. Off per §6. */
   includeEmpty?: boolean;
 }
 
@@ -51,43 +50,41 @@ const EMPTY_SUMMARY_STATUSES: ShotlogRowStatus[] = [
   'probable-duplicate',
 ];
 
-/**
- * The generated note — what a human needs told, and nothing that is now data.
- *
- * The ten and inner-ten counts used to be written here, because a
- * total-override series carries no `shots` rows and every ten/inner-ten
- * statistic in `shared/src/scoring` counts shot flags, so there was nowhere
- * else to put them. Migration 0012 gave them columns on the session, so they
- * are no longer duplicated into prose that nothing can read back.
- */
-function buildNote(
-  row: ShotlogRow,
-  dateUncertain: boolean,
-  includesSighter: boolean,
-  dnf: boolean,
-): string {
+/** The generated note — what a human needs told, and nothing that is now data. */
+function buildNote(session: ShotlogSession, dateUncertain: boolean, dnf: boolean): string {
   const lines: string[] = [];
-  if (row.note !== '') lines.push(row.note);
-  if (includesSighter) lines.push('ShotLog: total includes a sighter series');
+  if (session.note !== '') lines.push(session.note);
   if (dnf) lines.push('ShotLog: did not finish');
   if (dateUncertain) lines.push('ShotLog: date unknown (bulk import)');
   return lines.join('\n');
 }
 
+/**
+ * A `sighter` tag role (ShotLog's `Warmup`) means the session's warm-up
+ * series is series 1 (maintainer 2026-10-13). A series the file itself marks
+ * `Sighting=Yes` wins, and a session never gets a second sighter.
+ */
+function applySighterRole(series: readonly ShotlogSeries[], sighterRole: boolean): ShotlogSeries[] {
+  const markFirst = sighterRole && !series.some((entry) => entry.isSighter);
+  return series.map((entry) =>
+    markFirst && entry.position === 1 ? { ...entry, isSighter: true } : entry,
+  );
+}
+
 function buildSuggestion(
-  row: ShotlogRow,
+  session: ShotlogSession,
   dateUncertain: boolean,
   tagMapping: ShotlogTagMapping,
   knownFirearms: readonly ShotlogFirearm[],
 ): { suggestion: ShotlogSuggestion; warnings: ShotlogWarning[] } {
-  const classification = classifyTags(row.tags, tagMapping, knownFirearms);
+  const classification = classifyTags(session.tags, tagMapping, knownFirearms);
 
-  const disciplineFromName = suggestDisciplineFromName(row.name);
+  const disciplineFromName = suggestDisciplineFromName(session.name);
   const disciplineId = classification.disciplineId ?? disciplineFromName;
   const disciplineSource =
     classification.disciplineId !== null ? 'tag' : disciplineFromName !== null ? 'name' : null;
 
-  const groupFromName = suggestWeaponGroupFromName(row.name);
+  const groupFromName = suggestWeaponGroupFromName(session.name);
   const weaponGroup = classification.weaponGroup ?? groupFromName?.weaponGroup ?? null;
   const weaponGroupSource =
     classification.weaponGroup !== null ? 'tag' : groupFromName !== null ? 'name' : null;
@@ -98,8 +95,8 @@ function buildSuggestion(
       ? classification.shooterClass
       : (groupFromName?.shooterClass ?? null);
 
+  // `final` stays a tag: which series form the final is not in the file.
   const tags = [...classification.passthroughTags];
-  if (classification.includesSighter) tags.push(SIGHTER_TAG);
   if (classification.hasFinal) tags.push(FINAL_TAG);
   if (classification.dnf) tags.push(DNF_TAG);
   if (dateUncertain) tags.push(DATE_UNKNOWN_TAG);
@@ -115,14 +112,10 @@ function buildSuggestion(
       shooterClass,
       firearmId: classification.firearmMatch?.id ?? null,
       firearmLabel: classification.firearmMatch === null ? classification.firearmLabel : null,
-      competitionName: classification.sessionType === 'competition' ? row.name : null,
+      competitionName: classification.sessionType === 'competition' ? session.name : null,
       tags,
-      note: buildNote(row, dateUncertain, classification.includesSighter, classification.dnf),
-      totalTenths: row.totalScore * 10,
-      innerTenCount: row.innerTenCount,
-      tenCount: row.tenCount,
-      includesSighter: classification.includesSighter,
-      isFinal: classification.hasFinal,
+      note: buildNote(session, dateUncertain, classification.dnf),
+      series: applySighterRole(session.series, classification.includesSighter),
       dnf: classification.dnf,
     },
   };
@@ -134,16 +127,28 @@ function summarize(rows: readonly ShotlogPlanRow[], errorCount: number): Shotlog
   ) as Record<ShotlogRowStatus, number>;
   const warningCounts: Partial<Record<ShotlogWarning, number>> = {};
   let dateUncertainCount = 0;
+  let seriesCount = 0;
+  let shotCount = 0;
 
   for (const row of rows) {
     byStatus[row.status] += 1;
+    seriesCount += row.suggestion.series.length;
+    for (const entry of row.suggestion.series) shotCount += entry.shots.length;
     if (row.dateUncertain) dateUncertainCount += 1;
     for (const warning of row.warnings) {
       warningCounts[warning] = (warningCounts[warning] ?? 0) + 1;
     }
   }
 
-  return { total: rows.length, byStatus, errorCount, dateUncertainCount, warningCounts };
+  return {
+    total: rows.length,
+    seriesCount,
+    shotCount,
+    byStatus,
+    errorCount,
+    dateUncertainCount,
+    warningCounts,
+  };
 }
 
 interface RowClassification {
@@ -154,11 +159,11 @@ interface RowClassification {
 /**
  * §6's status precedence, as a single early-return chain so each check is
  * load-bearing: an in-file duplicate is never matched against the database,
- * and "already imported" outranks "empty" so re-importing a zero-score row
+ * and "already imported" outranks "empty" so re-importing a session with no series
  * stays idempotent (spec §6, revision R1).
  */
 function classifyRow(
-  row: ShotlogRow,
+  session: ShotlogSession,
   ref: string,
   duplicateOfLine: number | null,
   suggestion: ShotlogSuggestion,
@@ -171,10 +176,10 @@ function classifyRow(
     return { status: 'exact-duplicate', matchedSessions: [{ id: exact.id, name: exact.name }] };
   }
 
-  if (row.totalScore === 0) return { status: 'empty', matchedSessions: [] };
+  if (session.series.length === 0) return { status: 'empty', matchedSessions: [] };
 
   const probable = findProbableDuplicates(existingSessions, {
-    datetime: row.datetime,
+    datetime: session.datetime,
     disciplineId: suggestion.disciplineId,
     weaponGroup: suggestion.weaponGroup,
   });
@@ -189,7 +194,7 @@ function classifyRow(
 }
 
 /**
- * Turns raw ShotLog CSV text into a reviewable plan. A header/empty-file
+ * Turns raw ShotLog CSV text into a reviewable plan, one row per session. A header/empty-file
  * failure yields an empty plan carrying the parse error, so the caller has
  * one shape to render either way.
  */
@@ -209,19 +214,24 @@ export function buildShotlogImportPlan(
   const knownFirearms = options.knownFirearms ?? [];
   const existingSessions = options.existingSessions ?? [];
   const includeEmpty = options.includeEmpty ?? false;
-  const tagMapping = options.tagMapping ?? buildDefaultTagMapping(parsed.rows);
+  const tagMapping = options.tagMapping ?? buildDefaultTagMapping(parsed.sessions);
 
-  const lostDates = findLostDateTimestamps(parsed.rows);
-  const duplicates = markInFileDuplicates(parsed.rows);
+  const lostDates = findLostDateTimestamps(parsed.sessions);
+  const duplicates = markInFileDuplicates(parsed.sessions);
 
-  const rows = parsed.rows.map((row): ShotlogPlanRow => {
-    const dateUncertain = lostDates.has(row.datetime);
-    const { suggestion, warnings } = buildSuggestion(row, dateUncertain, tagMapping, knownFirearms);
-    const ref = buildShotlogRef(row);
+  const rows = parsed.sessions.map((session): ShotlogPlanRow => {
+    const dateUncertain = lostDates.has(session.datetime);
+    const { suggestion, warnings } = buildSuggestion(
+      session,
+      dateUncertain,
+      tagMapping,
+      knownFirearms,
+    );
+    const ref = session.sessionId;
 
-    const duplicateOfLine = duplicates.get(row.line) ?? null;
+    const duplicateOfLine = duplicates.get(session.line) ?? null;
     const { status, matchedSessions } = classifyRow(
-      row,
+      session,
       ref,
       duplicateOfLine,
       suggestion,
@@ -229,13 +239,13 @@ export function buildShotlogImportPlan(
     );
 
     return {
-      line: row.line,
+      line: session.line,
       ref,
-      datetime: row.datetime,
-      name: row.name,
+      datetime: session.datetime,
+      name: session.name,
       status,
       dateUncertain,
-      warnings: [...row.warnings, ...warnings],
+      warnings: [...session.warnings, ...warnings],
       duplicateOfLine,
       matchedSessions,
       suggestion,

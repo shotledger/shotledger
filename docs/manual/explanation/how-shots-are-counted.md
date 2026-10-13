@@ -24,9 +24,11 @@ out of the ammunition box.
 
 ## When no shot count was saved
 
-A series imported from ShotLog is a total with no shot count. It counts as one
-full series of its discipline: five shots for precision, milsnabb,
-figurskjutning and helmatch, six for fält.
+A series imported from ShotLog's old one-row-per-session export is a total
+with no shot count. It counts as one full series of its discipline: five shots
+for precision, milsnabb, figurskjutning and helmatch, six for fält. Sessions
+imported from ShotLog 5.4's full export carry every shot, so they are counted
+like any other.
 
 ## Firearm counters and older imports
 

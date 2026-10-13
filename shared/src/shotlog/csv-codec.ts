@@ -24,8 +24,8 @@ export function stringifyRows(rows: readonly (readonly string[])[]): string {
  * both CRLF and bare LF line endings. Returns `[]` for empty input.
  */
 export function parseCsv(text: string): string[][] {
-  if (text.length === 0) return [];
-
+  // Empty input needs no early return: the loop never runs and the trailing
+  // guard below adds no row.
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';

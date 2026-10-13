@@ -1,21 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildDefaultTagMapping, collectShotlogTags, defaultTagRole, normalizeTag } from './tags';
-import type { ShotlogRow } from './types';
-
-function row(tags: readonly string[], line = 2): ShotlogRow {
-  return {
-    line,
-    datetime: '2026-05-04T09:00:00Z',
-    name: '',
-    sourceType: 'Practice',
-    totalScore: 0,
-    tenCount: 0,
-    innerTenCount: 0,
-    tags: [...tags],
-    note: '',
-    warnings: [],
-  };
+function row(tags: readonly string[]): { tags: string[] } {
+  return { tags: [...tags] };
 }
 
 describe('normalizeTag', () => {
@@ -121,7 +108,7 @@ describe('collectShotlogTags', () => {
   });
 
   it('counts each distinct tag once per row that carries it', () => {
-    const usage = collectShotlogTags([row(['Precision', 'Tävling']), row(['Precision'], 3)]);
+    const usage = collectShotlogTags([row(['Precision', 'Tävling']), row(['Precision'])]);
     expect(usage).toEqual([
       { key: 'precision', label: 'Precision', count: 2 },
       { key: 'tävling', label: 'Tävling', count: 1 },
@@ -129,7 +116,7 @@ describe('collectShotlogTags', () => {
   });
 
   it('folds case and spacing into one entry, keeping the first spelling', () => {
-    const usage = collectShotlogTags([row([' A  Opt ']), row(['a opt'], 3)]);
+    const usage = collectShotlogTags([row([' A  Opt ']), row(['a opt'])]);
     expect(usage).toEqual([{ key: 'a opt', label: 'A  Opt', count: 2 }]);
   });
 
@@ -140,11 +127,7 @@ describe('collectShotlogTags', () => {
   });
 
   it('orders by count, then alphabetically', () => {
-    const usage = collectShotlogTags([
-      row(['b', 'a', 'rare']),
-      row(['b', 'a'], 3),
-      row(['b', 'a'], 4),
-    ]);
+    const usage = collectShotlogTags([row(['b', 'a', 'rare']), row(['b', 'a']), row(['b', 'a'])]);
     expect(usage.map((entry) => entry.key)).toEqual(['a', 'b', 'rare']);
   });
 });
