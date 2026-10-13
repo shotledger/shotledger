@@ -79,7 +79,14 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so the shot timer can time your shots. The audio is analyzed live and never stored."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#6E30CF"
+        }
+      ]
     ],
     "extra": {
       "//": "Optional cloud sync backend. Public placeholder — override per build with EXPO_PUBLIC_API_BASE_URL, or point it at a local `wrangler dev`. Never a secret; the session token lives in SecureStore.",

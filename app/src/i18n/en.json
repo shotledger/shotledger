@@ -117,7 +117,6 @@
     "sectionPeriod": "Sessions",
     "sectionType": "Session Type",
     "sectionSighters": "Sighters",
-    "sectionSightersHint": "Outside a session a sighter is an ordinary series. Shots Logged always includes them.",
     "sightersInclude": "Include",
     "sightersExclude": "Exclude",
     "sectionDisciplineChoice": "Selected Discipline",
@@ -508,7 +507,6 @@
     "restoreSubtitle": "Pick a .shotledger file — this replaces everything on this device",
     "lastBackup": "Last backup: {{date}}",
     "neverBackedUp": "No backup yet",
-    "scopeNote": "A backup includes everything the app stores on this device.",
     "restorePreviewTitle": "Restore This Backup?",
     "restorePreviewBody": "From {{date}}: {{sessions}} session(s), {{series}} series, {{shots}} shot(s), {{firearms}} firearm(s){{photosNote}}. This REPLACES everything currently on this device — a backup of the current data is made first.",
     "restorePreviewPhotosNote": ", {{count}} photo(s)",
@@ -612,7 +610,6 @@
     "seriesTitle": "Series {{position}}",
     "type": "Type",
     "kind": "Logging",
-    "kindHint": "Chosen once: a session either logs scored series or just a number of rounds fired. It cannot be both.",
     "regulation": "Regulation",
     "discipline": "Discipline",
     "matchFormat": "Match Format",
@@ -748,6 +745,7 @@
     "faltTotal": "{{hits}} ({{hitsPossible}}) hits / {{figures}} figures",
     "faltTotalOf": "{{hits}} ({{hitsPossible}}) hits / {{figures}} ({{figureCount}}) figures",
     "poangfaltTotal": "{{points}} points",
+    "faltNoStations": "No stations",
     "seriesLength": "Shots per Series",
     "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
     "celebrationPerfect": "Perfect Series!",
@@ -767,6 +765,12 @@
   },
   "dev": {
     "title": "Dev",
+    "demoLoading": "Loading demo data…",
+    "demoLoaded_one": "Demo data loaded: {{count}} session.",
+    "demoLoaded_other": "Demo data loaded: {{count}} sessions.",
+    "demoWiping": "Wiping data…",
+    "demoWiped": "Data wiped.",
+    "demoFailed": "Failed: {{message}}",
     "componentsTitle": "Components",
     "sessionsCount": "{{count}} sessions",
     "flagsTitle": "Feature Flags",
@@ -1459,5 +1463,12 @@
       "failedUnconfirmed": "The server answered, but not as expected. Your changes are still here; Retry sends them again.",
       "profileUnset": "No profile chosen. Your phone uses the default for its language."
     }
+  },
+  "notifications": {
+    "channelMaintenance": "Maintenance",
+    "channelLicenseExpiry": "License Expiry",
+    "maintenanceDueBody": "Maintenance interval reached",
+    "licenseExpiresBody_one": "License expires in {{count}} day",
+    "licenseExpiresBody_other": "License expires in {{count}} days"
   }
 }

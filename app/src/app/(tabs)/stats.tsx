@@ -205,7 +205,7 @@ export default function StatsScreen() {
         />
       </FilterCard>
 
-      <FilterCard title={t('stats.sectionSighters')} hint={t('stats.sectionSightersHint')}>
+      <FilterCard title={t('stats.sectionSighters')}>
         <SegmentedControl
           testID="stats-sighters"
           options={[

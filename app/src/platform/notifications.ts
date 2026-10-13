@@ -9,6 +9,8 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import type { LicenseExpiryNotification } from '@shotledger/shared';
 
+import i18n from '@/i18n';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -30,16 +32,32 @@ async function ensurePermission(): Promise<boolean> {
   }
 }
 
+// Android files every notification under a channel the user can mute on its
+// own; without one, expo-notifications posts on its unnamed fallback channel.
+const MAINTENANCE_CHANNEL = 'maintenance';
+const LICENSE_EXPIRY_CHANNEL = 'license-expiry';
+
+/** Creates the channel, or renames it into the current language. */
+async function ensureChannel(id: string, nameKey: string): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync(id, {
+    name: i18n.t(nameKey),
+    importance: Notifications.AndroidImportance.DEFAULT,
+  });
+}
+
 /** Fires once, right away, when a firearm's rounds-since-maintenance crosses 100% (§4 M4). */
 export async function notifyMaintenanceDue(firearmLabel: string): Promise<void> {
   if (!(await ensurePermission())) return;
   try {
+    await ensureChannel(MAINTENANCE_CHANNEL, 'notifications.channelMaintenance');
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ShotLedger',
-        body: `${firearmLabel}: maintenance interval reached`,
+        title: firearmLabel,
+        body: i18n.t('notifications.maintenanceDueBody'),
       },
-      trigger: null, // fires immediately — the caller already confirmed the crossing
+      // No date: fires immediately — the caller already confirmed the crossing.
+      trigger: { channelId: MAINTENANCE_CHANNEL },
     });
   } catch {
     // best-effort: OS delivery failures are out of scope (§4 M4 "Done when").
@@ -61,15 +79,24 @@ export async function scheduleLicenseExpiryNotifications(
     notifications.map((n) => n.leadDays),
   );
   if (!(await ensurePermission())) return;
+  try {
+    await ensureChannel(LICENSE_EXPIRY_CHANNEL, 'notifications.channelLicenseExpiry');
+  } catch {
+    // best-effort — see notifyMaintenanceDue.
+  }
   for (const { leadDays, fireAt } of notifications) {
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: licenseNotificationId(licenseId, leadDays),
         content: {
-          title: 'ShotLedger',
-          body: `${firearmLabel}: license expires in ${leadDays} days`,
+          title: firearmLabel,
+          body: i18n.t('notifications.licenseExpiresBody', { count: leadDays }),
         },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt) },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: new Date(fireAt),
+          channelId: LICENSE_EXPIRY_CHANNEL,
+        },
       });
     } catch {
       // best-effort — see notifyMaintenanceDue.

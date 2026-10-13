@@ -117,7 +117,6 @@
     "sectionPeriod": "Pass",
     "sectionType": "Typ av pass",
     "sectionSighters": "Provserier",
-    "sectionSightersHint": "Utanför ett pass är en provserie en vanlig serie. Loggade skott räknas alltid med.",
     "sightersInclude": "Räkna med",
     "sightersExclude": "Räkna inte med",
     "sectionDisciplineChoice": "Vald gren",
@@ -508,7 +507,6 @@
     "restoreSubtitle": "Välj en .shotledger-fil — detta ersätter allt på den här enheten",
     "lastBackup": "Senaste säkerhetskopia: {{date}}",
     "neverBackedUp": "Ingen säkerhetskopia än",
-    "scopeNote": "En säkerhetskopia innehåller allt appen lagrar på den här enheten.",
     "restorePreviewTitle": "Återställ den här säkerhetskopian?",
     "restorePreviewBody": "Från {{date}}: {{sessions}} pass, {{series}} serier, {{shots}} skott, {{firearms}} vapen{{photosNote}}. Detta ERSÄTTER allt som finns på den här enheten – en säkerhetskopia av nuvarande data görs först.",
     "restorePreviewPhotosNote": ", {{count}} foto(n)",
@@ -612,7 +610,6 @@
     "seriesTitle": "Serie {{position}}",
     "type": "Typ",
     "kind": "Loggning",
-    "kindHint": "Väljs en gång: ett pass loggar antingen poängsatta serier eller bara ett antal avlossade skott. Det går inte att blanda.",
     "regulation": "Reglemente",
     "discipline": "Gren",
     "matchFormat": "Matchupplägg",
@@ -748,6 +745,7 @@
     "faltTotal": "{{hits}} ({{hitsPossible}}) träff / {{figures}} figurer",
     "faltTotalOf": "{{hits}} ({{hitsPossible}}) träff / {{figures}} ({{figureCount}}) figurer",
     "poangfaltTotal": "{{points}} poäng",
+    "faltNoStations": "Inga stationer",
     "seriesLength": "Skott per serie",
     "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
     "celebrationPerfect": "Perfekt serie!",
@@ -767,6 +765,12 @@
   },
   "dev": {
     "title": "Dev",
+    "demoLoading": "Laddar demodata…",
+    "demoLoaded_one": "Demodata inläst: {{count}} pass.",
+    "demoLoaded_other": "Demodata inläst: {{count}} pass.",
+    "demoWiping": "Raderar data…",
+    "demoWiped": "All data raderad.",
+    "demoFailed": "Misslyckades: {{message}}",
     "componentsTitle": "Komponenter",
     "sessionsCount": "{{count}} pass",
     "flagsTitle": "Funktionsflaggor",
@@ -1459,5 +1463,12 @@
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt.",
       "profileUnset": "Ingen profil vald. Telefonen använder standardvalet för sitt språk."
     }
+  },
+  "notifications": {
+    "channelMaintenance": "Underhåll",
+    "channelLicenseExpiry": "Licensens utgång",
+    "maintenanceDueBody": "Underhållsintervallet är nått",
+    "licenseExpiresBody_one": "Licensen går ut om {{count}} dag",
+    "licenseExpiresBody_other": "Licensen går ut om {{count}} dagar"
   }
 }

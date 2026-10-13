@@ -13,6 +13,10 @@ and what the app deliberately does not track, see
 **Settings → Compliance → Sweden (FAP 551-3)**. Left at **None**, none of this
 appears — which is the right state outside Sweden.
 
+Until you choose, a phone whose system language is Swedish starts on Sweden and
+any other starts on None. The language you pick inside the app does not change
+it.
+
 The status then appears on Home and on every firearm: how many activities you
 have logged in the window, and how many you need.
 

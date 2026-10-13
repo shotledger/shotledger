@@ -67,15 +67,40 @@ export default function DevScreen() {
     setAssistLog([]);
   }, []);
 
+  // Seeding is synchronous and takes seconds on web; the timeout lets the
+  // "loading" line paint before it blocks.
+  const [demoStatus, setDemoStatus] = useState<string | null>(null);
+  const runDemoAction = useCallback(
+    (busy: string, action: () => void, done: () => string) => {
+      setDemoStatus(busy);
+      setTimeout(() => {
+        try {
+          action();
+          refresh();
+          setDemoStatus(done());
+        } catch (error: unknown) {
+          setDemoStatus(t('dev.demoFailed', { message: String(error) }));
+        }
+      }, 50);
+    },
+    [refresh, t],
+  );
+
   const onLoadDemoData = useCallback(() => {
-    seedDemoData(db);
-    refresh();
-  }, [refresh]);
+    runDemoAction(
+      t('dev.demoLoading'),
+      () => seedDemoData(db),
+      () => t('dev.demoLoaded', { count: listSessions(db).length }),
+    );
+  }, [runDemoAction, t]);
 
   const onWipeData = useCallback(() => {
-    wipeDemoData(db);
-    refresh();
-  }, [refresh]);
+    runDemoAction(
+      t('dev.demoWiping'),
+      () => wipeDemoData(db),
+      () => t('dev.demoWiped'),
+    );
+  }, [runDemoAction, t]);
 
   return (
     <Screen>
@@ -105,6 +130,11 @@ export default function DevScreen() {
         />
         <PrimaryButton label={t('settings.wipeData')} onPress={onWipeData} testID="wipe-data" />
       </ThemedView>
+      {demoStatus ? (
+        <ThemedText type="small" themeColor="textSecondary" testID="demo-data-status">
+          {demoStatus}
+        </ThemedText>
+      ) : null}
 
       <ThemedText type="smallBold">{t('dev.flagsTitle')}</ThemedText>
       <Card>

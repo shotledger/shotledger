@@ -26,6 +26,7 @@ import {
   type DisciplinePoint,
 } from '../../app/src/components/time-series-chart-math';
 import { disciplineLabel } from '../../app/src/features/session/labels';
+import { formatTotalScore } from '../../app/src/features/stats/format-total-score';
 import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
 import { Filters } from './report/filters';
@@ -168,7 +169,7 @@ function Sections({
           <Tile label={t('stats.sessions')} value={String(totals.sessionCount)} />
           {data.showRingCards && (
             <>
-              <Tile label={t('stats.totalScore')} value={score(totals.sumTenths)} />
+              <Tile label={t('stats.totalScore')} value={formatTotalScore(totals.sumTenths)} />
               <Tile label={t('stats.seriesCount')} value={String(totals.scoredSeriesCount)} />
               <Tile label={t('stats.innerTens')} value={String(totals.innerTenCount)} />
               <Tile label={t('stats.tens')} value={String(totals.tenCount)} />

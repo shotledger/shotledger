@@ -78,7 +78,8 @@ inom parentes. Strukna stationer och särskjutning räknas inte. I poängfält �
 det i stället en summa, där varje träff ger en poäng och varje träffad figur
 ytterligare en. När varje station har sina figurer ifyllda räknas de ihop på
 samma sätt: "26 (30) träff / 22 (24) figurer". Hem, passlistan och Rekord
-visar resultatet på samma sätt.
+visar resultatet på samma sätt, och ett pass utan någon station som räknas ännu
+visar "Inga stationer".
 
 Där arrangören satt ut en **ringad figur** skriver du poängen du fick under
 **Poäng**, och vad figuren var värd efter "av" om du vet det. En station med

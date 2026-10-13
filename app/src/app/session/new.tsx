@@ -343,9 +343,6 @@ export default function NewSessionScreen() {
           value={kind}
           onChange={onSelectKind}
         />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.kindHint')}
-        </ThemedText>
       </Card>
 
       <Card>

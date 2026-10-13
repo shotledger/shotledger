@@ -37,6 +37,8 @@ export function faltSummaryOf(
 
 /** "47 points", "26 (30) hits / 22 figures", or "26 (30) hits / 22 (24) figures". */
 export function formatFaltResult(t: TFunction, result: FaltResultSummary): string {
+  // Nothing possible means no scoring station yet, not a result of nought.
+  if (result.hitsPossible === 0) return t('session.faltNoStations');
   if (result.mode === 'poangfalt') {
     return t('session.poangfaltTotal', { points: result.poangfaltPoints });
   }
