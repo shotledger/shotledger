@@ -492,7 +492,7 @@ button.destructive {
   font-variant-numeric: tabular-nums;
 }
 
-.shots {
+.shot-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -501,7 +501,7 @@ button.destructive {
   padding: 0;
 }
 
-.shots li {
+.shot-chips li {
   min-width: 36px;
   padding: 4px 8px;
   text-align: center;
@@ -1267,11 +1267,6 @@ main:focus {
 
 .edit-notes {
   grid-column: 1 / -1;
-}
-
-.edit-series .series-row input.shots {
-  margin: 0;
-  padding: 8px 10px;
 }
 
 .edit-notes textarea {

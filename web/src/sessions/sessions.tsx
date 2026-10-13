@@ -365,7 +365,7 @@ function SeriesList({
                   </span>
                 </div>
                 {row.shots.length > 0 && (
-                  <ul className="shots">
+                  <ul className="shot-chips">
                     {row.shots.map((shot, index) => (
                       <li key={index}>{formatShotValue(shot, mode)}</li>
                     ))}
