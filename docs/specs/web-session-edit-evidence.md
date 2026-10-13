@@ -22,7 +22,7 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 - **Source state:** branch `feat/692-web-session-edit`, squashed to one
   commit and rebased onto `origin/main` `12f781c9` on 2026-10-13 (the first
   two rounds ran on the earlier base `41b1b7fe`); R10–R12 are the commits on
-  top. The code and tests this report describes are at `cf5db122` (this
+  top. The code and tests this report describes are at `0514736e` (this
   report is committed on top).
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2 / native 7.0.2; backend
@@ -79,7 +79,7 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 | W1–W4                                     | `backend/test/web-edit.spec.ts` (Workers pool, real D1 + better-auth)                                                                                                       | pass   |
 | U1                                        | `web/src/edit/model.test.ts`                                                                                                                                                | pass   |
 | U2–U9                                     | `web/src/edit/save.test.ts`; U7 also `messages.test.ts`                                                                                                                     | pass   |
-| U10 (R10)                                 | `save.test.ts` › U10; `messages.test.ts` (staleDelete); `request.test.ts` › U10 deleteDeps builds against the shown snapshot                                                | pass   |
+| U10 (R10)                                 | `save.test.ts` › U10 and `deleteClick and reload`; `messages.test.ts` (staleDelete); `request.test.ts` › U10 and `deleteDeps with nothing to show`                          | pass   |
 | Delete preview (§3.2)                     | `web/src/edit/request.test.ts`                                                                                                                                              | pass   |
 | Route                                     | `web/src/shell/route.test.ts`                                                                                                                                               | pass   |
 | N1 no browser storage                     | `save.test.ts` › N1 grep gate over every `web/src/edit` source (one spelling: it would miss an alias, cookies, the Cache API or storage in an imported module)              | pass   |
@@ -90,24 +90,24 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 | N6 never written: tags, settings, photos… | K4 (whole-row equality), K22, K17 (table list); review: the builders write only `firearms`, `sessions`, `series`, `shots`, `falt_stations`; no photo call in `web/src/edit` | pass   |
 | N7 no write from a stale form             | K14                                                                                                                                                                         | pass   |
 | N8 no shot under a final or total-only    | K9                                                                                                                                                                          | pass   |
-| N9 the phone unchanged                    | no `app/src` source change (a test and i18n only); `pnpm typecheck:app`; jest 726/726                                                                                       | pass   |
+| N9 the phone unchanged                    | no `app/src` source change (a test and i18n only); `pnpm typecheck:app`; jest 785/785                                                                                       | pass   |
 | Browser checks                            | headless Chromium against `wrangler dev`; below                                                                                                                             | pass   |
 
 ## Gauntlet (final fresh run, after the last code edit)
 
 | Layer                                           | Command                                                                                                                                                                                                  | Result                                                                                            |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                                                                                             | exit 0; vitest 217 files, 3516 tests passed; jest 69 suites, 785 passed; i18n 1339 keys, 0 issues |
-| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`; `web/src/edit/*.ts` joined the list)                                                                                                                              | statements 4745/4745, branches 3148/3148, functions 1131/1131, lines 4013/4013                    |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                                                                                             | exit 0; vitest 217 files, 3519 tests passed; jest 69 suites, 785 passed; i18n 1339 keys, 0 issues |
+| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`; `web/src/edit/*.ts` joined the list)                                                                                                                              | statements 4749/4749, branches 3152/3152, functions 1133/1133, lines 4018/4018                    |
 | Backend                                         | `cd backend && pnpm test`                                                                                                                                                                                | 27 files, 223 tests passed (W1–W4 included)                                                       |
-| Mutation (tool)                                 | Stryker on the eight changed modules (entry point above)                                                                                                                                                 | 1291 killed, 6 survived, 0 no coverage: 99.54% (all 6 equivalent, below)                          |
-| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-edit.mjs`                                                                                                                                                              | 27/27 killed: 2 against K10 alone, 4 against K18 alone, 3 against the phone twin, 18 others       |
+| Mutation (tool)                                 | Stryker on the eight changed modules (entry point above)                                                                                                                                                 | 1306 killed, 6 survived, 0 no coverage: 99.54% (all 6 equivalent, below)                          |
+| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-edit.mjs`                                                                                                                                                              | 31/31 killed: 2 against K10 alone, 4 against K18 alone, 3 against the phone twin, 22 others       |
 | Property-based                                  | K10 (300 runs), K18 (400 runs)                                                                                                                                                                           | pass                                                                                              |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=692 shared/src/sync-client/{session-edit,rows,bulk-edit}.test.ts app/src/db/queries/web-{edit,bulk}.test.ts web/src/edit web/src/shell/route.test.ts` | 10 files, 174 tests passed                                                                        |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=692 shared/src/sync-client/{session-edit,rows,bulk-edit}.test.ts app/src/db/queries/web-{edit,bulk}.test.ts web/src/edit web/src/shell/route.test.ts` | 10 files, 177 tests passed                                                                        |
 | Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                                                                                   | built; 27 translated pages current; no dangling anchors                                           |
 | Supply chain                                    | `pnpm licenses:check`; the diff of `package.json` files and the lockfile                                                                                                                                 | 98 packages, invariants hold; no dependency change                                                |
 
-**Equivalent survivors** (line numbers at `cf5db122`). `session-edit.ts:396` and `bulk-edit.ts:152`
+**Equivalent survivors** (line numbers at `0514736e`). `session-edit.ts:396` and `bulk-edit.ts:152`
 (`firearmId !== null &&` → `true &&`): `Map.get(null)` is `undefined`, so the
 live check fails the same way. `session-edit.ts:265` (a junk entry in the plan
 list): it has no kind, so every step skips it. `session-edit.ts:329`
@@ -125,9 +125,13 @@ a series with no live shots) or removed from the code (a guard that could
 never fire in a fixed format, a branch on the same firearm that the summed
 move already covers).
 
-**Negative controls.** The N1 grep gate is the #669 gate pointed at
-`web/src/edit`; it requires at least six sources so an empty directory cannot
-pass it. Throwaway mutants before the hand-mutation script existed: the twin
+**Negative controls.** The N1 grep gate is a narrower cousin of #669's: it
+looks for the literal names `localStorage`, `sessionStorage` and `indexedDB`
+in `web/src/edit` (not #669's `BROWSER_STORAGE` pattern with its planted
+control), and it requires at least six sources so an empty directory cannot
+pass it. Round 3 showed it misses a built-up name, `caches` and
+`document.cookie`, and N2's timer gate misses `queueMicrotask`; the mapping
+rows say each guards one spelling. Throwaway mutants before the hand-mutation script existed: the twin
 test first let "delete leaves fält stations live" and "delete leaves shots
 live" pass, because its snapshot read nothing of a deleted session; the
 snapshot now reads a deleted session's series, stations and live shots, and
@@ -148,7 +152,7 @@ throwaway and hand mutants above and by Stryker.
 
 ## Real execution (browser checks)
 
-**At `8ec76b6c` (after the rebase, R10 and R11; `cf5db122` adds one test only):** `wrangler dev` on
+**At `8ec76b6c` (after the rebase, R10 and R11), and again at `0514736e` after round 3's fixes, 17/17 both times:** `wrangler dev` on
 127.0.0.1:8792, a fresh synthetic account (`edit-692-r3@example.test`, the
 QA seed: precision with photos, milsnabb competition, fält, rounds-only,
 decimal), the built web app, headless Chromium; "the phone" is a second
@@ -242,6 +246,19 @@ The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
   keypad re-entry on the phone (E10, P7).
 - `docs/implementation-plan.md` has no checkbox for the web writers; none
   was ticked.
+- The page components (`edit.tsx`, `delete.tsx`) have no automated test and
+  are outside the coverage list. After round 3, what they decide is in tested
+  modules (`deleteClick`, `reload`, `deleteDeps` opening from the page's
+  tables); the bindings themselves (which button calls which) rest on the
+  browser checks (4, 7, 15, 16).
+- A series that holds a photo and no shots (#714, #747) shows on the edit
+  form as an empty row with Delete Series, and nothing on the row says it has
+  a photo. Deleting it leaves the photo in the account with no live series,
+  as the phone's delete does, but the phone shows the photo first (round 3,
+  F4; for the maintainer).
+- The edit page does not say that fält stations or a rounds-only session's
+  rounds are changed on the phone; the manual and the spec (E11) do (round 3,
+  F5; for the maintainer).
 
 ## Honest notes
 
@@ -306,4 +323,49 @@ The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
 - **Third round approved by the maintainer on 2026-10-13**, together with
   the decision on R9 (R10). The approval is for one more round; a fourth
   is not run whatever round 3 finds.
-- **Round 3:** pending at the time of writing.
+- **Round 3 at `ee59581f`: `failed`** (the verifier's proposed grade; the
+  maintainer grades). Verifier: Claude Code subagent (Opus), fresh context,
+  its own detached worktree; given the task contract (the issue plus the
+  maintainer's approvals of E1–E12, round 3 and R10, and the rebase
+  instruction), the spec, the SHA and the entry point; this report only after
+  its blind record. It reproduced every number of the draft (pnpm check 3516,
+  coverage 4745/3148/1131/4013, jest 785, backend 27/223, Stryker 1291/6
+  with the six survivors judged equivalent blind, hand mutants 27/27, docs
+  gates, the shuffled run 174). Attacked: the run; spec vs contract (R10 as
+  worded, gone before stale, fält, rounds-only, unknown disciplines,
+  photo-only series, R11, main's later limits, the shot-text round trip in
+  both modes, payload comparison); 17 mutants of its own (13 killed, one
+  equivalent); the hand-mutation runner (fails closed on a survivor and on a
+  broken mutant); N1 and N2; the mapping both ways. It found no wrong
+  behaviour in the code; it failed the round on two gates that could not
+  fail:
+  - **F1 (behavioural if "a gate cannot fail"; else mapping):** Delete's
+    page wiring in `delete.tsx` was untested: asking first, the snapshot
+    passed to the builder, and Reload pulling again could each be broken
+    with every test green. Fixed: the three decisions moved into tested
+    modules (`deleteClick`, `reload` in `save.ts`; `deleteDeps` now opens the
+    snapshot from the page's tables itself), tests seen failing first (5),
+    and three hand mutants of the verifier's kind are killed. The component's
+    bindings remain untested (known limits).
+  - **F2 (behavioural, a gate):** K24 did not pin a shot replaced at the same
+    count (the phone's re-entry), so comparing counts instead of ids
+    survived. A K24 case for it now kills that mutant (the case passed at
+    once against the correct code; the hand mutant shows it can fail).
+  - **F3 (description):** this report called N1 "the #669 gate"; corrected
+    above. N1/N2's one-spelling limits stand as disclosed.
+  - **F4, F5 (SPEC gaps, for the maintainer):** a photo-only series looks
+    like an empty row; the edit page does not say what it leaves to the
+    phone. Not changed; listed in the known limits and the PR.
+  - **F6 (description):** the manual said Delete refuses when "a shot"
+    changed; only shot ids are compared. Reworded, EN and SV ("or a series
+    was retyped there").
+  - **Report defect:** N9's jest count was stale (726); now 785.
+  - Observation, not a defect: after a lost response that landed, editing
+    and saving again reports the user's own write as "changed on another
+    device"; it fails closed.
+- **Independent verification: not performed against the final source state
+  `0514736e`.** Three rounds were run (the default cap of two plus the one the
+  maintainer approved); the last verified state, `ee59581f`, returned
+  `failed`, and the fixes for F1, F2, F3, F6 and the report defect since are
+  not independently verified. No fourth round was run, as instructed. This
+  is a declared downgrade.
