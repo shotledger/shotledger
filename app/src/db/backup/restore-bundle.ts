@@ -55,9 +55,9 @@ function preRestoreBackupFilename(): string {
 /** Replaces the entire live database (and, for a database+photos bundle,
  * restores its photos) with the contents of `bytes`. Caller must have
  * already validated the bundle via `inspectBundle` and confirmed with the
- * user. Writes an automatic pre-restore backup first. Requires a full app
- * restart afterwards — see the "restart required" status the calling hook
- * surfaces (this module cannot reopen the closed `db` singleton itself). */
+ * user. Writes an automatic pre-restore backup first. The app must reload
+ * afterwards — this module cannot reopen the closed `db` singleton itself, so
+ * the Backup card calls `reloadApp` (`@/platform/app-reload`). */
 export async function restoreBundle(liveDb: SQLiteDatabase, bytes: Uint8Array): Promise<boolean> {
   // Re-validated here too: these bytes are what gets written, whatever the
   // caller inspected.

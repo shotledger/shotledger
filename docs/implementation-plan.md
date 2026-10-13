@@ -1143,8 +1143,8 @@ restates §0 rules 1–6 verbatim.
 > uncompressed container (`shared/src/backup/`) rather than a zip, since no
 > zip library exists in the lockfile and adding one needs the maintainer's
 > OK first (not yet asked). See the 2026-09-02 plan.md decisions-log entry
-> for the restore-requires-app-restart caveat (no `expo-updates` dependency
-> to reload the JS bundle in place).
+> for the restore-requires-app-restart caveat; since #780 the app reloads
+> itself via `expo`'s own `reloadAppAsync`, with no `expo-updates` dependency.
 
 > **Save to a user-chosen folder has since shipped** on `feat/save-to-folder`
 > (plan.md "Export destinations", second of share sheet → chosen folder →

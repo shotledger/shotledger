@@ -43,7 +43,8 @@ A file made by an older version that still had the Vault restores normally.
 The Vault part of it is ignored: that feature is gone, and nothing in the app
 can open it any more.
 
-Afterwards, close ShotLedger completely and reopen it.
+When the restore is done, ShotLedger restarts by itself to load the restored
+data.
 
 ### With sync turned on
 
