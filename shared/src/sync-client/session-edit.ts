@@ -506,8 +506,7 @@ function areStationsStale(
 ): boolean {
   const writes = plans.some((plan) => plan.kind !== 'keep' || plan.changed);
   return (
-    writes &&
-    !sameRows(opened.stations, stationsOfSession(context, opened.session.id as string))
+    writes && !sameRows(opened.stations, stationsOfSession(context, opened.session.id as string))
   );
 }
 
