@@ -26,9 +26,11 @@ Restore is a **full replace**: write an automatic pre-restore backup,
 close the live `expo-sqlite` connection, overwrite the database file on
 disk, restore photos into `Paths.document/backup-photos/`, rewrite their
 paths via a short-lived connection. The app cannot reopen its own closed
-database singleton without a JS-reload dependency it doesn't have (no
-`expo-updates`), so restore ends with a "close and reopen the app"
-prompt rather than a live reload.
+database singleton in place, so restore ends by reloading the JS app
+(`reloadAppAsync` from the `expo` package, behind
+`app/src/platform/app-reload.ts`). Originally this was a manual "close and
+reopen the app" prompt, on the mistaken belief that a reload needed
+`expo-updates`; issue #780 replaced it.
 
 Schema compatibility: the manifest records the tag and `when` of the last
 Drizzle journal entry at export, and restore refuses a bundle unless both
@@ -47,9 +49,8 @@ names and bytes after the last entry.
 - Bundles are uncompressed, so file size scales directly with photo
   count and database size; there is no compression win to give up if a
   zip library is later approved.
-- Restore always requires a manual "close and reopen the app" step —
-  tracked as a UX gap worth an `expo-updates` ask later, not solved
-  here.
+- Restore ends with an app reload the user confirms in one tap; no
+  `expo-updates` dependency (issue #780).
 - The container carries its own `BACKUP_CONTAINER_FORMAT_VERSION`,
   independent of the database schema. Before 1.0 a layout change edits the
   format in place (hard rule 8) rather than reading both shapes.

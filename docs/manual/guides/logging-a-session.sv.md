@@ -58,6 +58,14 @@ en sparad, och med telefonens inställning för minskade rörelser ser du bara
 texten. I passets serielista visas summan för en serie med full poäng på guld, med en
 extra ring för en perfekt serie.
 
+## Ett pass med bara skott
+
+Ett pass som bara loggar hur många skott du sköt har inga serier. Fältet
+**Extra skott (räknas ej i statistik)** tar antalet i stället: ett heltal från
+0 till 10 000, eller tomt för inget, som när du skapade passet och som på
+webben. Antalet sparas när du lämnar fältet, och vapnets skotträknare ändras
+med skillnaden. Allt annat sparas inte och visar ett fel tills du rättar det.
+
 ## Provserier
 
 Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot

@@ -21,7 +21,7 @@ import { AppSettingsProvider } from '@/state/app-settings';
 
 void SplashScreen.preventAutoHideAsync();
 
-// A deep link (app://dev, a session) lands on top of the tabs, so Back goes Home.
+// A deep link (shotledger://dev, a session) lands on top of the tabs, so Back goes Home.
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
 // Hosts the (tabs) group inside a Stack alongside modal-stacked session

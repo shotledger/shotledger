@@ -58,6 +58,15 @@ the phone's reduce-motion setting on you see only the text. In the session's
 series list, a full-score total is shown on gold, with an extra ring for a
 perfect series.
 
+## A session with rounds only
+
+A session created to log only the rounds you fired has no series. Its
+**Extra Rounds (not scored)** field takes the count instead: a whole number
+from 0 to 10 000, or empty for none, as when you created it and as on the web.
+The count is saved when you leave the field, and your firearm's round counter
+moves by the difference. Anything else is not saved and shows an error until
+you correct it.
+
 ## Sighters
 
 Mark a series as a **sighter** from the series menu, and it stops counting

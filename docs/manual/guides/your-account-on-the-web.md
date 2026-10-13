@@ -96,3 +96,8 @@ and signed-in devices. **Delete** then removes the account and everything on
 the server, and signs out every device. The logbook on your phone is not
 touched. This cannot be undone, so download everything first if you want a
 copy.
+
+## Source code
+
+ShotLedger is free software. **Source Code** in the profile menu at the top
+right opens the source code of the app and the web app.

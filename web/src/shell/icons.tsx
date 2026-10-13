@@ -100,3 +100,12 @@ export function SignOutIcon() {
     </svg>
   );
 }
+
+export function CodeIcon() {
+  return (
+    <svg {...base}>
+      <path d="M16 18l6-6-6-6" />
+      <path d="M8 6l-6 6 6 6" />
+    </svg>
+  );
+}

@@ -518,14 +518,14 @@
     "restorePreviewPhotosNote": ", {{count}} foto(n)",
     "restoreConfirmAction": "Återställ",
     "restoreRestartTitle": "Återställning klar",
-    "restoreRestartBody": "Stäng ShotLedger helt och öppna det igen för att se den återställda datan.",
-    "restoreRestartAction": "OK",
+    "restoreRestartBody": "ShotLedger startar om för att läsa in den återställda datan.",
+    "restoreRestartAction": "Starta om",
     "exportSuccess": "Säkerhetskopia exporterad",
     "exportFailed": "Export av säkerhetskopia misslyckades",
     "restoreCanceled": "Återställning avbruten",
     "restoreInvalid": "Den filen är inte en ShotLedger-säkerhetskopia",
     "restoreSchemaMismatch": "Den här säkerhetskopian gjordes med en annan version av appen och kan inte återställas med den här. Om den kommer från en nyare version, uppdatera appen och försök igen.",
-    "restoreSuccess": "Återställning klar — stäng och öppna appen igen",
+    "restoreSuccess": "Återställning klar — startar om",
     "restoreFailed": "Återställningen misslyckades",
     "saveToFolderSubtitle": "Skriv en kopia direkt till en mapp du väljer, utan delningsmenyn",
     "folderChosenSubtitle": "Sparar till din valda mapp med ett tryck",
@@ -671,6 +671,7 @@
     "innerTenAverage": "Snitt X/serie",
     "extraRounds": "Extra skott (räknas ej i statistik)",
     "extraRoundsHint": "Avlossade men opoängsatta skott — räknas bara mot skotträknare och ammunitionsåtgång",
+    "extraRoundsInvalid": "Extra skott måste vara ett heltal från 0 till {{max}}.",
     "sightsTitle": "Sikte",
     "roundsFired": "Avlossade skott",
     "roundsFiredHint": "Passets antal skott. Räknas mot skotträknare och ammunitionsåtgång; poängsätts aldrig.",
@@ -1392,7 +1393,8 @@
     "shell": {
       "menu": "Huvudmeny",
       "skipToContent": "Hoppa till innehållet",
-      "version": "Version"
+      "version": "Version",
+      "sourceCode": "Källkod"
     },
     "sessions": {
       "back": "Alla pass",
