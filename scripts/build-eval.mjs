@@ -1,6 +1,7 @@
 // Builds an evaluation APK (docs/release.md, "Evaluation builds"). The build
-// expires EVAL_DAYS days after it is built, 30 by default; an explicit
-// EXPO_PUBLIC_EVAL_EXPIRES_AT wins. Maintainer-run, never for a Play build.
+// expires EVAL_DAYS days after it is built, 30 by default. The script always
+// sets EXPO_PUBLIC_EVAL_EXPIRES_AT itself, so a value left exported in the
+// shell cannot leak in. Maintainer-run, never for a Play build.
 //
 //   node scripts/build-eval.mjs              # expires in 30 days
 //   EVAL_DAYS=14 node scripts/build-eval.mjs
@@ -25,7 +26,7 @@ function main() {
   const days = Number(raw);
   if (!Number.isInteger(days) || days < 1)
     throw new Error(`EVAL_DAYS must be a positive integer, got "${raw}".`);
-  const expiresAt = process.env.EXPO_PUBLIC_EVAL_EXPIRES_AT || expiryDate(new Date(), days);
+  const expiresAt = expiryDate(new Date(), days);
   const env = { ...process.env, EXPO_PUBLIC_EVAL_EXPIRES_AT: expiresAt };
 
   console.log(`Evaluation build, expires ${expiresAt}`);

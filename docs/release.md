@@ -200,9 +200,8 @@ An evaluation build is a sideloaded APK that stops working on a set date,
 **30 days after it is built** by default. From the repo root:
 
 ```bash
-pnpm build:eval                                      # expires in 30 days
-EVAL_DAYS=14 pnpm build:eval                         # another window
-EXPO_PUBLIC_EVAL_EXPIRES_AT=2026-11-30 pnpm build:eval   # an exact date
+pnpm build:eval                # expires in 30 days
+EVAL_DAYS=14 pnpm build:eval   # another window
 ```
 
 `scripts/build-eval.mjs` runs the standalone release build from the `run-app`
@@ -211,9 +210,10 @@ copies the APK to `shotledger-eval-expires-<date>.apk` at the repo root
 (gitignored) and prints the hand-out message. It refuses to run with
 `EXPO_PUBLIC_ENABLE_DEV_TOOLS` set.
 
-- **The date** is midnight UTC, the given number of days after today's UTC
-  date. An explicit `EXPO_PUBLIC_EVAL_EXPIRES_AT` is `YYYY-MM-DD` (midnight
-  UTC) or a full ISO 8601 date-time with `Z` or an offset. From that instant on, launching the app, or
+- **The date** is midnight UTC, `EVAL_DAYS` days after today's UTC date.
+  The script passes it to the app as `EXPO_PUBLIC_EVAL_EXPIRES_AT`
+  (`YYYY-MM-DD`, or a full ISO 8601 date-time with `Z` or an offset, if you
+  ever build by hand) and overrides any value already in the shell. From that instant on, launching the app, or
   returning to it, shows a blocking "Evaluation Build Expired" screen that
   tells the tester to ask for a new build and still offers the sessions
   export. The tester's data stays on the phone; a new build signed with the
@@ -232,7 +232,8 @@ copies the APK to `shotledger-eval-expires-<date>.apk` at the repo root
   grant no longer applies.
 
 - **A malformed value fails open:** the build runs with no expiry at all.
-  Check the date before handing the APK out.
+  The script always writes a valid date; this matters only for a hand-set
+  value.
 - **Clock rollback:** the app keeps the latest time it has seen in
   SecureStore (localStorage on web) and compares against that, so setting
   the clock back neither reopens an expired build nor rewinds the window.
