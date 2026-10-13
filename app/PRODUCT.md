@@ -153,6 +153,12 @@ scores against official results.
    When the two disagree, the phone is the reference and the web follows it;
    a phone behaviour that is itself wrong is fixed on the phone first, in its
    own issue. Maintainer's ruling, 2026-10-13 (#769).
+6. **No gamification.** The app records and explains; it does not reward.
+   No streaks, points, levels, achievements, training programs with
+   milestones, leaderboards or nudges to shoot more. Results the federations
+   themselves define (standard medals, the gold series threshold) are shown
+   because they are real outcomes in the rule book, not app-invented
+   rewards. Maintainer's ruling, 2026-10-13.
 
 ## Costs
 
