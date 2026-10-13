@@ -80,6 +80,23 @@ If you never handload, switch off **Settings → Optional Fields → Handloads**
 the handload switch and recipe leave the ammunition form. A lot that is already
 a handload keeps them.
 
+### Merging two lots that are the same
+
+When one lot was entered twice, open the copy you do not want and tap
+**Merge Into Another Lot** at the bottom, then the lot to keep. The app asks
+first, naming how many sessions move. Every session on the copy moves to the
+lot you keep, and the copy is deleted. A deleted session keeps its old lot.
+
+The lot you keep stays as it is: the copy's quantity and notes are not added
+to it, so correct the quantity by hand if it should change. A merge cannot be
+undone.
+
+With sync on, other devices get the merge at their next sync. A session saved
+on the copy on a device that had not synced yet still names the deleted copy
+and shows no ammunition lot; edit it and pick the lot you kept. An edit to
+the copy itself made on such a device is dropped. The web app can make the
+same merge: see [Editing many sessions on the web](editing-many-sessions-on-the-web.md#merge-ammo-lots).
+
 ### Power factor and muzzle energy
 
 Enter a bullet weight and a muzzle velocity and the app shows both:

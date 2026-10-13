@@ -1005,6 +1005,10 @@ fieldset.field legend {
   margin-top: 0;
 }
 
+.bulk-merge .bulk-action {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
 .bulk-merge fieldset {
   min-width: 0;
   margin: 0;

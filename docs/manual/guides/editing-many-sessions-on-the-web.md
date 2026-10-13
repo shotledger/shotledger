@@ -58,4 +58,14 @@ counts. Saving series on the phone while a firearm change is waiting for
 One change can touch at most 500 rows. If it needs more, the page says how
 many, and you tick fewer sessions and apply twice.
 
-Merging duplicate ammo lots is not here yet.
+## Merge ammo lots
+
+Below the list, **Merge Ammo Lots** does what **Merge Into Another Lot** does
+on the phone (see [Firearms and ammunition](firearms-and-ammunition.md)).
+Choose the **Duplicate** and the lot to **Keep**; each shows its caliber and
+how many sessions it has. **Merge** asks first, then moves every session on
+the duplicate to the kept lot and deletes the duplicate, in one change. The
+kept lot's quantity and notes stay as they are.
+
+Retry, signing in again and the 500-row limit work as above. A duplicate with
+more than 499 sessions is too big for one change: merge it on the phone.

@@ -80,6 +80,25 @@ gå att känna igen.
 Laddar du aldrig själv stänger du av **Inställningar → Valfria fält → Handladdning**, så försvinner reglaget Handladdning och receptet ur
 ammunitionsformuläret. En sats som redan är en handladdning behåller dem.
 
+### Slå ihop två partier som är samma
+
+När ett parti har lagts in två gånger öppnar du kopian du inte vill ha och
+trycker på **Slå ihop med ett annat parti** längst ned, och sedan på partiet
+du vill behålla. Appen frågar först och säger hur många pass som flyttas. Alla
+pass på kopian flyttas till partiet du behåller, och kopian tas bort. Ett
+borttaget pass behåller sitt gamla parti.
+
+Partiet du behåller lämnas som det är: kopians antal och anteckningar läggs
+inte till, så rätta antalet för hand om det ska ändras. En sammanslagning går
+inte att ångra.
+
+Med synk påslagen får andra enheter sammanslagningen vid nästa synk. Ett pass
+som sparats på kopian på en enhet som inte hunnit synka pekar fortfarande på
+den borttagna kopian och visar inget ammunitionsparti; ändra passet och välj
+partiet du behöll. En ändring av själva kopian som gjorts på en sådan enhet
+släpps. Webbappen kan göra samma sammanslagning: se
+[Ändra flera pass på webben](editing-many-sessions-on-the-web.md#merge-ammo-lots).
+
 ### Power factor och mynningsenergi
 
 Ange kulvikt och mynningshastighet så visar appen båda:
