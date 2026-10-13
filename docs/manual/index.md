@@ -1,4 +1,4 @@
-# ShotLedger
+# ![ShotLedger](assets/shotledger-horizontal-light.svg#only-light){ width="360" }![ShotLedger](assets/shotledger-horizontal-dark.svg#only-dark){ width="360" }
 
 A target-shooting logbook for pistol shooters, built around what actually
 happens at the range: a series is shot, its shots are tapped in, the next
