@@ -867,6 +867,13 @@ disciplines via PR once public.
       when a hits discipline is picked; a shots-per-series filter leaves fält
       out. Records keeps a fält best per vapengrupp, result mode and number
       of stations that counted, ranked in SHB's särskiljning order.
+- [x] **Hide the features you don't use** (#801, spec:
+      `docs/specs/feature-visibility-spec.md`). Settings → Features has a
+      switch each for license activity, target photos, timers, sight
+      settings and ammunition lots. Off removes the area's ways in on the
+      phone and the web; nothing is deleted, and a value already recorded
+      still shows. The switches are five synced settings (`show*`), so the
+      web and every phone agree.
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 
