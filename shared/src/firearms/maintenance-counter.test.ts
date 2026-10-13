@@ -41,7 +41,9 @@ describe('roundsSinceMaintenance (M2)', () => {
 
   it('treats a null deletedAt as live', () => {
     expect(
-      roundsSinceMaintenance(740, [event('a', '2026-09-01T10:00:00.000Z', 500, { deletedAt: null })]),
+      roundsSinceMaintenance(740, [
+        event('a', '2026-09-01T10:00:00.000Z', 500, { deletedAt: null }),
+      ]),
     ).toBe(240);
   });
 

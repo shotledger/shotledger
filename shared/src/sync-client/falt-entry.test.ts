@@ -74,7 +74,6 @@ const firearm = (id: string, roundCount = 100): Payload => ({
   make: 'Make',
   model: 'Model',
   round_count: roundCount,
-  rounds_since_maintenance: 4,
   updated_at: '2026-01-01T00:00:00.000Z',
 });
 
@@ -177,7 +176,6 @@ describe('buildFaltEntry', () => {
       id: 'f1',
       make: 'Make',
       round_count: 118,
-      rounds_since_maintenance: 22,
       updated_at: NOW,
     });
     const s = session(changes);
@@ -366,7 +364,6 @@ describe('buildFaltEntry', () => {
     );
     expect(payloads(changes, 'firearms')[0]).toMatchObject({
       round_count: 118,
-      rounds_since_maintenance: 22,
     });
 
     const noFirearm = changesOf(build(draft()));

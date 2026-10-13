@@ -379,7 +379,7 @@ export default function FirearmDetailScreen() {
   }
 
   function onSaveInterval() {
-    const previous = firearm!.roundsSinceMaintenance;
+    const previous = detail.roundsSinceMaintenance;
     const parsed = parseMaintenanceInterval(intervalValue);
     if (!parsed.ok) {
       setIntervalStatus('invalid');
@@ -531,7 +531,7 @@ export default function FirearmDetailScreen() {
           </View>
           <View>
             <ThemedText type="subtitle" testID="rounds-since-maintenance">
-              {firearm.roundsSinceMaintenance}
+              {detail.roundsSinceMaintenance}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {t('firearms.roundsSinceMaintenance')}

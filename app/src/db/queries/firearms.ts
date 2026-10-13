@@ -20,7 +20,6 @@ export interface CreateFirearmInput {
   notes?: string | null;
   roundCount?: number;
   maintenanceIntervalRounds?: number | null;
-  roundsSinceMaintenance?: number;
 }
 
 export function createFirearm(db: Database, input: CreateFirearmInput) {
@@ -41,7 +40,6 @@ export function createFirearm(db: Database, input: CreateFirearmInput) {
     notes: input.notes ?? null,
     roundCount: input.roundCount ?? 0,
     maintenanceIntervalRounds: input.maintenanceIntervalRounds ?? null,
-    roundsSinceMaintenance: input.roundsSinceMaintenance ?? 0,
     archivedAt: null,
   };
   db.insert(firearms).values(row).run();
