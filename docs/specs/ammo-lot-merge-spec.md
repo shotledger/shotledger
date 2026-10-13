@@ -6,7 +6,9 @@
 > Open questions it settles: `docs/specs/web-bulk-edit-spec.md` §6.
 > Evidence report: `docs/specs/ammo-lot-merge-evidence.md` (after code).
 >
-> **Approval status: not yet approved.**
+> **Approval status: approved by the maintainer on 2026-10-13** ("yes, do
+> that", in reply to "The code starts once you approve the spec"), M1–M9 as
+> written.
 
 - **Tier: 3.** It repoints synced `sessions` rows and tombstones a synced
   `ammo_lots` row that other devices reference. A wrong payload replicates to
