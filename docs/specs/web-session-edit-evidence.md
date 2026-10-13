@@ -1,18 +1,29 @@
 # Evidence report — editing and deleting a session on the web (Tier 3)
 
 Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
-§9 revisions R1–R9.
+§9 revisions R1–R12.
 
 - **Spec approval: approved first-hand by the maintainer on 2026-10-12**
   (PR #710: "the maintainer approved the spec (key choices E1–E12) for
   merge"), taking the recommended option on that PR's four questions. The
-  spec was approved before any code was written. R1–R9 were made during the build and the verification and are recorded in §9. R1–R3 and R5–R8 refine or correct the spec's own wording; R9 asks whether Delete needs a stale check; **R4 narrows E2** (a training session's
-  weapon group, class and event are not offered on the web, where the phone
-  offers a stored one) and needs the maintainer's ruling.
+  spec was approved before any code was written. R1–R9 were made during the
+  build and the first two verification rounds; R1–R3 and R5–R8 refine or
+  correct the spec's own wording. **R9 was decided by the maintainer on
+  2026-10-13 as R10** (Delete gets Save's stale check), a spec change the
+  maintainer approved first-hand; R10 extends the maintainer's wording to
+  fält stations, by the same reason (put to the maintainer in the PR).
+  **R11 and R12 were made by the builder after the rebase onto main and are
+  not separately approved**: R11 holds an edited date to the entry's range
+  (#747), R12 records how fält sessions entered on the web (#713) and photos
+  attached on web entry (#714) are handled. **R4 narrows E2** (a training
+  session's weapon group, class and event are not offered on the web, where
+  the phone offers a stored one) and still needs the maintainer's ruling.
 - **Independent verification:** see [the section below](#independent-verification).
-- **Source state:** branch `feat/692-web-session-edit` on `origin/main`
-  `41b1b7fe`; the code and tests this report describes are at `17055c28`
-  (this report is committed on top).
+- **Source state:** branch `feat/692-web-session-edit`, squashed to one
+  commit and rebased onto `origin/main` `12f781c9` on 2026-10-13 (the first
+  two rounds ran on the earlier base `41b1b7fe`); R10–R12 are the commits on
+  top. The code and tests this report describes are at `cf5db122` (this
+  report is committed on top).
 - **Toolchain:** pinned in `package.json` / `pnpm-lock.yaml` (vitest 5.0.3,
   Stryker 10.0.0, fast-check 4.10.2, TypeScript 6.0.2 / native 7.0.2; backend
   vitest with the Workers pool). No dependency changed.
@@ -29,7 +40,9 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 | §3.1 shared volume (R3) | `shared/src/sync-client/volume-rows.ts`, `withRoundsMoved` in `rows.ts`; `bulk-edit.ts` imports both |
 | §3.2 page               | `web/src/edit/` (`model.ts`, `save.ts`, `request.ts`, `messages.ts`, `edit.tsx`, `delete.tsx`)       |
 | §3.2 route              | `#sessions/<id>/edit` in `web/src/shell/route.ts`; Edit and Delete Session on the session detail     |
-| E9 strings              | `web.edit.*` in `app/src/i18n/{en,sv}.json` (20 keys each; existing keys reused where they fit)      |
+| E9 strings              | `web.edit.*` in `app/src/i18n/{en,sv}.json` (21 keys each; existing keys reused where they fit)      |
+| R10 Delete stale check  | `isDeleteStale` in `session-edit.ts`; `deleteDeps` takes the shown snapshot; Reload in `delete.tsx`  |
+| R11 date range          | `sessionColumns` calls the entry's `startedAtError` for an edited date                               |
 | Manual                  | `docs/manual/guides/editing-a-session-on-the-web{,.sv}.md`; the "use the phone" line now links it    |
 
 ## Failure model (Tier 3)
@@ -48,6 +61,8 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 | A page stuck on "Saving…"                                     | U9; `edit.tsx`/`delete.tsx` end every run with a `.catch` that sets `failed`                                                    |
 | A second sighter set on another device while the form is open | K7 (counted over the fresh pull, the draft's flag only for a series the save writes; R5, R8), in the draft shape the page sends |
 | A live shot left under a deleted series                       | K8, K18 (no live shot outlives its series), P4/P5 (live shots counted under deleted series), K20                                |
+| Delete from a stale view (series never shown, wrong count)    | K24 (session row, every series row and its live shot ids, one added, removed or swapped, every station); U10; browser 12–16     |
+| An implausible edited date reaches every phone                | K25 (R11), browser check 13                                                                                                     |
 
 ## Spec → test mapping
 
@@ -57,11 +72,14 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 | K10 property (fast-check, 300 runs)       | `session-edit.test.ts` › K10                                                                                                                                                | pass   |
 | K18 property (fast-check, 400 runs)       | `session-edit.test.ts` › K18 (an oracle written apart from the builder)                                                                                                     | pass   |
 | K20–K23                                   | `session-edit.test.ts` › delete builder                                                                                                                                     | pass   |
+| K24 (R10)                                 | `session-edit.test.ts` › K24 delete refuses what changed since the page opened; `openedSession` › R10 stations                                                              | pass   |
+| K25 (R11)                                 | `session-edit.test.ts` › edit builder › K25 (two cases)                                                                                                                     | pass   |
 | K11 counter move                          | also `rows.test.ts` › withRoundsMoved                                                                                                                                       | pass   |
 | P1–P7                                     | `app/src/db/queries/web-edit.test.ts` (two phone databases; P2+P3 is the firearm change and re-entry in one Save)                                                           | pass   |
 | W1–W4                                     | `backend/test/web-edit.spec.ts` (Workers pool, real D1 + better-auth)                                                                                                       | pass   |
 | U1                                        | `web/src/edit/model.test.ts`                                                                                                                                                | pass   |
 | U2–U9                                     | `web/src/edit/save.test.ts`; U7 also `messages.test.ts`                                                                                                                     | pass   |
+| U10 (R10)                                 | `save.test.ts` › U10; `messages.test.ts` (staleDelete); `request.test.ts` › U10 deleteDeps builds against the shown snapshot                                                | pass   |
 | Delete preview (§3.2)                     | `web/src/edit/request.test.ts`                                                                                                                                              | pass   |
 | Route                                     | `web/src/shell/route.test.ts`                                                                                                                                               | pass   |
 | N1 no browser storage                     | `save.test.ts` › N1 grep gate over every `web/src/edit` source (one spelling: it would miss an alias, cookies, the Cache API or storage in an imported module)              | pass   |
@@ -79,24 +97,28 @@ Spec: [`web-session-edit-spec.md`](web-session-edit-spec.md), including its
 
 | Layer                                           | Command                                                                                                                                                                                                  | Result                                                                                            |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                                                                                             | exit 0; vitest 207 files, 3387 tests passed; jest 66 suites, 726 passed; i18n 1303 keys, 0 issues |
-| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`; `web/src/edit/*.ts` joined the list)                                                                                                                              | statements 4453/4453, branches 2882/2882, functions 1061/1061, lines 3767/3767                    |
-| Backend                                         | `cd backend && npx vitest run --testTimeout=60000`                                                                                                                                                       | 23 files, 208 tests passed (W1–W4 included)                                                       |
-| Mutation (tool)                                 | Stryker on the eight changed modules (entry point above)                                                                                                                                                 | 1232 killed, 6 survived, 0 no coverage: 99.52% (all 6 equivalent, below)                          |
-| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-edit.mjs`                                                                                                                                                              | 17/17 killed: 2 against K10 alone, 4 against K18 alone, 3 against the phone twin, 8 others        |
+| Tests + types + lint + format + i18n + licenses | `pnpm check`                                                                                                                                                                                             | exit 0; vitest 217 files, 3516 tests passed; jest 69 suites, 785 passed; i18n 1339 keys, 0 issues |
+| Coverage (gated, 100%)                          | `pnpm check` (`vitest run --coverage`; `web/src/edit/*.ts` joined the list)                                                                                                                              | statements 4745/4745, branches 3148/3148, functions 1131/1131, lines 4013/4013                    |
+| Backend                                         | `cd backend && pnpm test`                                                                                                                                                                                | 27 files, 223 tests passed (W1–W4 included)                                                       |
+| Mutation (tool)                                 | Stryker on the eight changed modules (entry point above)                                                                                                                                                 | 1291 killed, 6 survived, 0 no coverage: 99.54% (all 6 equivalent, below)                          |
+| Mutation (hand, fails closed)                   | `node scripts/manual-mutation-web-edit.mjs`                                                                                                                                                              | 27/27 killed: 2 against K10 alone, 4 against K18 alone, 3 against the phone twin, 18 others       |
 | Property-based                                  | K10 (300 runs), K18 (400 runs)                                                                                                                                                                           | pass                                                                                              |
-| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=692 shared/src/sync-client/{session-edit,rows,bulk-edit}.test.ts app/src/db/queries/web-{edit,bulk}.test.ts web/src/edit web/src/shell/route.test.ts` | 10 files, 160 tests passed                                                                        |
+| Suite health                                    | `npx vitest run --sequence.shuffle --sequence.seed=692 shared/src/sync-client/{session-edit,rows,bulk-edit}.test.ts app/src/db/queries/web-{edit,bulk}.test.ts web/src/edit web/src/shell/route.test.ts` | 10 files, 174 tests passed                                                                        |
 | Docs gates                                      | `mkdocs build --strict`; `docs-translation-check`; `docs-anchor-check`                                                                                                                                   | built; 27 translated pages current; no dangling anchors                                           |
 | Supply chain                                    | `pnpm licenses:check`; the diff of `package.json` files and the lockfile                                                                                                                                 | 98 packages, invariants hold; no dependency change                                                |
 
-**Equivalent survivors.** `session-edit.ts:388` and `bulk-edit.ts:152`
+**Equivalent survivors** (line numbers at `cf5db122`). `session-edit.ts:396` and `bulk-edit.ts:152`
 (`firearmId !== null &&` → `true &&`): `Map.get(null)` is `undefined`, so the
-live check fails the same way. `session-edit.ts:257` (a junk entry in the plan
-list): it has no kind, so every step skips it. `session-edit.ts:321`
+live check fails the same way. `session-edit.ts:265` (a junk entry in the plan
+list): it has no kind, so every step skips it. `session-edit.ts:329`
 (`kind: 'keep'` → `""`): the build loop branches on `'new'` and `'delete'`
 only. `model.ts:96` (`lastKey -= 1`): the row keys stay unique either way.
 `save.ts:150` (`some` → `every`): the builder reports `stale` and `gone`
-alone. The other survivors of earlier runs were real and are now tested (an
+alone, for Delete too. The first run after R10 had a seventh survivor,
+`session-edit.ts:554` (`other !== undefined &&` → `true &&` in `sameRows`):
+real, since a series or station removed and another added at the same count
+would make Delete throw instead of answering stale; a K24 case for that swap
+now kills it. The other survivors of earlier runs were real and are now tested (an
 opened series with a bad token, a free-format match format, whole-ring
 scoring in a decimal discipline, a championship flag a field edit must keep,
 a series with no live shots) or removed from the code (a guard that could
@@ -114,11 +136,39 @@ shots live" alive against K18 alone; K18 now also holds that no live shot
 outlives its series, and it is killed.
 
 **RED.** The builder tests were run against a stub that throws before the
-builder was filled in: 49/49 failed. The phone twin, backend and page-module
+builder was filled in: 49/49 failed. For R10 and R11 the new and changed
+builder tests were run against the old builder first: 14 of 66 failed; two
+passed at once and were proven by hand mutants instead (K24 "gone wins over
+stale", killed by checking stale first; K25 "a stored date is not checked",
+killed by checking it). The web's U10 tests failed 4 of 53 first; the
+`request.test.ts` U10 case was written after the builder and was shown able
+to fail by a throwaway mutant (Delete opening from the fresh pull). The phone twin, backend and page-module
 tests were written after their code; each was shown able to fail by the
 throwaway and hand mutants above and by Stryker.
 
 ## Real execution (browser checks)
+
+**At `8ec76b6c` (after the rebase, R10 and R11; `cf5db122` adds one test only):** `wrangler dev` on
+127.0.0.1:8792, a fresh synthetic account (`edit-692-r3@example.test`, the
+QA seed: precision with photos, milsnabb competition, fält, rounds-only,
+decimal), the built web app, headless Chromium; "the phone" is a second
+token pushing through `/sync/push`. 17/17 checks passed, numbered here on
+from the earlier list:
+
+12. Edit a field and retype a photo series → saved, one push, the series
+    keeps `photo_uri`.
+13. A date in 1899 → "between 1900 and today", nothing sent.
+14. A fält session's edit has fields and no series rows.
+15. The phone changes the session's notes after the detail loaded → Delete
+    says nothing was deleted, nothing sent, the session still live;
+    **Reload** clears it, and Delete then goes through with the counter back
+    by 20 (500 → 480).
+16. A series added by the phone, and a fält station deleted by the phone,
+    each make Delete refuse with nothing sent.
+17. The Swedish message. Console: two 404s for the seed's deliberately
+    missing photo, no CSP error.
+
+**Earlier, at `c76e13c1`:**
 
 `wrangler dev` on 127.0.0.1:8792 with a fresh synthetic account per run
 (`edit-692-<run>@example.test`; two firearms, a competition with a sighter,
@@ -164,6 +214,20 @@ repository.
 The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
 `asBound`). A difference in how expo-sqlite binds a value would not show here;
 #669's and #674's reports have the same limit.
+
+## After the rebase onto main (R12)
+
+- Main's #754 removed the app's `formatSessionDate`; the delete confirmation
+  now formats its date through `web/src/dates.ts`.
+- Fält sessions created on the web (#713) open with fields only and are
+  deleted with their stations (K20, browser 14–16).
+- A web-attached photo (#714) on a series with no shots (#747 allows it)
+  opens as an empty row; left empty it writes nothing (`session-edit.test.ts`
+  › R12, which passed at once and was shown able to fail by a throwaway
+  mutant that always rewrites the series row); its photo columns carry over
+  as E10 says (browser 12).
+- #747's `nothingEntered` is not applied to an edit: an edit may empty a
+  session, as the phone allows, and the web can now delete one.
 
 ## Known limits
 
@@ -239,7 +303,7 @@ The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
 - **After round 2:** B1 fixed again (R8): an untouched series is counted with
   its fresh flag; a K7 case in the page's draft shape was seen failing first,
   and a hand mutant restoring the round-2 code is killed.
-- **Independent verification: not performed against the final source state
-  `17055c28`.** Two rounds were run (the default cap); the last verified state,
-  `c76e13c1`, returned `failed`, and the R8 fix since is unverified. A third
-  round needs the maintainer's approval. This is a declared downgrade.
+- **Third round approved by the maintainer on 2026-10-13**, together with
+  the decision on R9 (R10). The approval is for one more round; a fourth
+  is not run whatever round 3 finds.
+- **Round 3:** pending at the time of writing.
