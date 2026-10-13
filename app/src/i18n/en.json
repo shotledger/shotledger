@@ -671,6 +671,7 @@
     "innerTenAverage": "Avg X/Series",
     "extraRounds": "Extra Rounds (not scored)",
     "extraRoundsHint": "Rounds fired but not scored — counted toward the round counter and ammo use only",
+    "extraRoundsInvalid": "Extra Rounds must be a whole number from 0 to {{max}}.",
     "sightsTitle": "Sights",
     "roundsFired": "Rounds Fired",
     "roundsFiredHint": "The session's shot count. Counted toward the round counter and ammo use; never scored.",
