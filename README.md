@@ -22,8 +22,11 @@ required. Android first.
   comparison.
 - **License compliance** — the range activity Swedish firearm licensing asks
   for (FAP 551-3), per firearm, with licenses and license-card scanning.
-- **Timers** — par time, interval and string drills with microphone shot
-  detection, and the SPSF fälttimer with its spoken range commands.
+- **Timers** — a drill timer (par time, repetitions with rest, random start,
+  open-ended IPSC-style strings) that can record each shot's time and split
+  by microphone; the SPSF fälttimer, which gives the field-shooting commands
+  with their real timings by voice, beep, whistle or vibration; and a
+  stopwatch.
 - **Statistics** — filtered reports with charts, personal records, a PDF
   session report and a shareable session card; every target photo in one
   searchable list.
