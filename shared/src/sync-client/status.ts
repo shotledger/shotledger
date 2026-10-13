@@ -17,6 +17,11 @@ export interface SyncStatus {
   errorKey: SyncErrorKey | null;
   /** Consecutive failures; drives nextBackoffMs, resets on any success. */
   attempt: number;
+  /**
+   * Changes the server refused as malformed since the app started
+   * (docs/specs/sync-payload-validation-spec.md C3). Not persisted.
+   */
+  refusedCount: number;
 }
 
 export const initialSyncStatus: SyncStatus = {
@@ -25,6 +30,7 @@ export const initialSyncStatus: SyncStatus = {
   pendingCount: 0,
   errorKey: null,
   attempt: 0,
+  refusedCount: 0,
 };
 
 export type SyncEvent =
@@ -48,6 +54,7 @@ export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStat
         pendingCount: event.pendingCount,
         errorKey: null,
         attempt: 0,
+        refusedCount: status.refusedCount + event.result.invalid,
       };
     case 'failed':
       return { ...status, state: 'error', errorKey: event.errorKey, attempt: status.attempt + 1 };

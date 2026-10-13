@@ -21,6 +21,7 @@ import { addSeries, listSeriesForSession } from './series';
 import { createSession, getSession } from './sessions';
 import { listShotsForSeries } from './shots';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import { sessionVolumeRounds } from './volume';
 
 const NOW = '2026-10-10T10:00:00.000Z';
@@ -42,6 +43,7 @@ function apply(db: Database, result: EntryResult): ClientChange[] {
         typeof value === 'boolean' ? Number(value) : value,
       ]),
     );
+  expect(serverRefusals(result.changes)).toEqual([]);
   const rows: ChangeRow[] = result.changes.map((change, index) => ({
     tableName: change.tableName,
     rowId: change.rowId,

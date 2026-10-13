@@ -14,6 +14,7 @@ import { faltSessionResult, listStationsForSession } from './falt';
 import { createFirearm, getFirearm } from './firearms';
 import { getSession } from './sessions';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import { sessionVolumeRounds } from './volume';
 
 const NOW = '2026-10-07T10:00:00.000Z';
@@ -93,6 +94,7 @@ describe('web-built fält rows on the phone schema', () => {
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     sessionId = result.sessionId;
 
+    expect(serverRefusals(result.changes)).toEqual([]);
     const pulledBack: ChangeRow[] = result.changes.map((change, index) => ({
       tableName: change.tableName,
       rowId: change.rowId,

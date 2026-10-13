@@ -61,6 +61,15 @@ sends nothing from the file on its own.
 - Restoring a backup made under another account does not mix the two. The
   phone fetches the signed-in account's data and sends nothing from the file.
 
+### When the server refuses a change
+
+If **Account & Sync** says that changes were refused by the server, the server
+found something in them it cannot store. That is a fault in the app, not
+something you did. The changes stay on this phone, so nothing is lost, but they
+are not on your other devices or in the web app. Changing the same thing again
+sends it again. If the line keeps coming back, report it, and make a backup
+before you sign out or restore.
+
 ## How often
 
 Whenever losing what you have logged since the last one would annoy you. For

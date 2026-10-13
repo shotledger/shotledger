@@ -19,6 +19,10 @@ export type MergeResult =
 
 export const REJECTED_TOMBSTONED = 'tombstoned';
 
+/** A live row the server refused to store: not a whole, valid row of its
+ * table (docs/specs/sync-payload-validation-spec.md §2.2). */
+export const REJECTED_INVALID_PAYLOAD = 'invalid_payload';
+
 /** `lastSeq + 1` — the only place a "next" sequence number is computed. */
 export function nextSequence(lastSeq: number): number {
   return lastSeq + 1;

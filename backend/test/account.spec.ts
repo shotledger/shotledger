@@ -8,6 +8,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 async function fetchApp(input: string, init?: RequestInit) {
   const request = new Request(`https://localhost${input}`, init);
@@ -64,6 +65,7 @@ async function upload(token: string, photoId: string, body: Uint8Array) {
 }
 
 async function pushSyncRow(token: string, rowId: string) {
+  const updatedAt = new Date().toISOString();
   return fetchApp('/sync/push', {
     method: 'POST',
     headers: { ...authHeaders(token), 'content-type': 'application/json' },
@@ -74,9 +76,9 @@ async function pushSyncRow(token: string, rowId: string) {
           clientChangeId: crypto.randomUUID(),
           tableName: 'firearms',
           rowId,
-          payload: { make: 'Test' },
+          payload: row('firearms', rowId, updatedAt, { make: 'Test' }),
           deletedAt: null,
-          updatedAt: new Date().toISOString(),
+          updatedAt,
         },
       ],
     }),

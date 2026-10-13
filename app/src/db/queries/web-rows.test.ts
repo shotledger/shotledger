@@ -23,6 +23,7 @@ import { listSeriesForSession } from './series';
 import { getSession } from './sessions';
 import { listScoredShotsForSession, listShotsForSeries } from './shots';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 
 const NOW = '2026-10-07T10:00:00.000Z';
 
@@ -122,6 +123,7 @@ describe('web-built rows on the phone schema', () => {
             typeof value === 'boolean' ? Number(value) : value,
           ]),
         );
+      expect(serverRefusals(changes)).toEqual([]);
       const pulledBack: ChangeRow[] = changes.map((change, index) => ({
         tableName: change.tableName,
         rowId: change.rowId,

@@ -88,6 +88,11 @@ export default function AccountScreen() {
             <ThemedText type="small" themeColor="textSecondary" testID="sync-pending">
               {t('account.pendingChanges', { count: status.pendingCount })}
             </ThemedText>
+            {status.refusedCount > 0 && (
+              <ThemedText type="small" themeColor="textSecondary" testID="sync-refused">
+                {t('account.refusedChanges', { count: status.refusedCount })}
+              </ThemedText>
+            )}
             {status.errorKey && (
               <ThemedText type="small" themeColor="textSecondary" testID="sync-error">
                 {t(`account.syncError.${status.errorKey}`)}

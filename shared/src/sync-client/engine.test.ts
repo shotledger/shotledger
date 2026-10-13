@@ -146,6 +146,7 @@ describe('runSyncCycle — pull', () => {
       shadowed: 0,
       pushed: 0,
       rejected: 0,
+      invalid: 0,
       duplicates: 0,
     });
   });
@@ -384,6 +385,37 @@ describe('runSyncCycle — push', () => {
     expect(fake.applied).toEqual([[]]);
     expect(fake.outbox).toHaveLength(0);
   });
+
+  // docs/specs/sync-payload-validation-spec.md §2.3, P7.
+  it.each([
+    ['a refusal', 'rejected' as const],
+    ['a replayed refusal', 'duplicate' as const],
+  ])(
+    'counts %s for an invalid payload as invalid, not rejected or duplicate',
+    async (_label, status) => {
+      const fake = createFakeStore({
+        outbox: [{ tableName: 'series', rowId: 'z', rev: 1, clientChangeId: null }],
+        rows: new Map([['series:z', row({ id: 'z' })]]),
+      });
+      const transport = createTransport({
+        push: async (request) => ({
+          protocolVersion: request.protocolVersion,
+          acks: request.changes.map((c) => ({
+            clientChangeId: c.clientChangeId,
+            status,
+            reason: 'invalid_payload',
+          })),
+        }),
+      });
+
+      const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+      expect(result).toMatchObject({ invalid: 1, rejected: 0, duplicates: 0, pushed: 0 });
+      // The entry clears like any ack; the row stays local and nothing is written.
+      expect(fake.outbox).toHaveLength(0);
+      expect(fake.applied).toEqual([[]]);
+    },
+  );
 
   it('sends a null payload for a tombstoned row', async () => {
     const fake = createFakeStore({

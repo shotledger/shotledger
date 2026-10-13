@@ -156,6 +156,12 @@ One-time, before the first release:
 
 Every release:
 
+0. **Deploy the sync server first** when the release adds, renames or drops
+   a column of a synced table (`shared/src/sync/schema.ts`). The server
+   refuses a row whose columns are not exactly its own, so a phone ahead of
+   it has every change to that table refused until the server catches up
+   (`docs/specs/sync-payload-validation-spec.md` C5). The same holds for an
+   EAS Update that carries a migration.
 1. **Preview it.** Actions → _Release_ → Run workflow from `main`, with
    `dry-run` on (the default). It resolves the version from the
    Conventional Commits since the last tag (`feat:` bumps the minor, `fix:`
@@ -203,6 +209,8 @@ One-time, before the first update:
 
 Every update:
 
+0. An update that carries a migration of a synced table waits for the
+   sync server, as step 0 of a release says.
 1. Check out the release's tag (or its `hotfix/*` branch with the fix on
    top). The runtime version is the app version, so the update has to be
    published with that release's version.

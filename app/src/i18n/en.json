@@ -1198,6 +1198,7 @@
     "neverSynced": "never",
     "lastSynced": "Last synced: {{when}}",
     "pendingChanges": "{{count}} change(s) waiting to upload",
+    "refusedChanges": "{{count}} change(s) refused by the server and kept on this phone only",
     "server": "Server: {{url}}",
     "deleteTitle": "Delete Account",
     "deleteSubtitle": "Removes your account and everything synced to the server",

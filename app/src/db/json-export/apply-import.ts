@@ -387,7 +387,9 @@ export function applyImport(
         eventId: group.eventId,
         firearmId,
         ammoLotId,
-        startedAt: group.startedAt,
+        // The file may name any ISO 8601 UTC instant; store toISOString()'s
+        // shape, the one every writer uses and the sync server requires (#697).
+        startedAt: new Date(group.startedAt).toISOString(),
         location: group.location,
         notes: group.notes,
         tenCount: group.tenCount,

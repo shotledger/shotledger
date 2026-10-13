@@ -1,5 +1,6 @@
-// Manual mutation testing for the sync push path (backend/src/db/queries.ts,
-// docs/specs/sync-push-atomicity-spec.md §8). Stryker runs in the root Node
+// Manual mutation testing for the sync push path (backend/src/db/queries.ts
+// and backend/src/routes/sync.ts; docs/specs/sync-push-atomicity-spec.md §8,
+// sync-payload-validation-spec.md §7). Stryker runs in the root Node
 // vitest pool and cannot reach code that only runs in workerd.
 //
 // FAILS CLOSED. The unmutated suite must pass first; a mutant whose pattern
@@ -12,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const FILE = 'backend/src/db/queries.ts';
+const ROUTE = 'backend/src/routes/sync.ts';
 
 /** Each mutant is a plausible bug, not a syntactic tweak. */
 const MUTANTS = [
@@ -76,9 +78,48 @@ const MUTANTS = [
     find: 'deletedAt === null && change.payload != null ? JSON.stringify(change.payload) : null',
     replace: "deletedAt === null && change.payload != null ? JSON.stringify(change.payload) : '{}'",
   },
+  // sync-payload-validation-spec.md: the payload verdict inside the batch.
+  {
+    name: 'the batch ignores the payload verdict',
+    find: 'const ok = sql`(${valid ? 1 : 0} = 1 AND ${notTombstoned})`;',
+    replace: 'const ok = notTombstoned;',
+  },
+  {
+    name: 'an invalid payload is reported as tombstoned',
+    find: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}',
+    replace: 'WHEN ${notTombstoned} THEN ${REJECTED_TOMBSTONED}',
+  },
+  {
+    name: 'an invalid payload outranks a tombstone',
+    find: 'WHEN ${notTombstoned} THEN ${REJECTED_INVALID_PAYLOAD}\n            ELSE ${REJECTED_TOMBSTONED} END',
+    replace:
+      'WHEN ${valid ? 0 : 1} = 1 THEN ${REJECTED_INVALID_PAYLOAD}\n            ELSE ${REJECTED_TOMBSTONED} END',
+  },
+  {
+    name: 'applyPush marks every change valid',
+    find: 'changeStatements(db, userId, change, !invalid.has(change.clientChangeId)),',
+    replace: 'changeStatements(db, userId, change, true),',
+  },
+  {
+    name: 'the route does not pass its verdicts on',
+    file: ROUTE,
+    find: 'applyPush(db, userId, parsed.data.changes, invalid)',
+    replace: 'applyPush(db, userId, parsed.data.changes)',
+  },
+  {
+    name: 'the route logs the payload',
+    file: ROUTE,
+    find: "(${columns.join(', ')})`",
+    replace: '(${JSON.stringify(change)})`',
+  },
 ];
 
-const TESTS = ['test/sync-concurrency.spec.ts', 'test/sync.spec.ts', 'test/sync-client.spec.ts'];
+const TESTS = [
+  'test/sync-concurrency.spec.ts',
+  'test/sync.spec.ts',
+  'test/sync-client.spec.ts',
+  'test/sync-payload-validation.spec.ts',
+];
 
 /** Runs the backend sync suites; returns 'pass', 'fail' (a test failed) or 'error'. */
 function runSuite() {
@@ -95,17 +136,24 @@ function runSuite() {
   }
 }
 
-function assertClean() {
-  const dirty = execFileSync('git', ['status', '--porcelain', '--', FILE], {
-    encoding: 'utf8',
-  }).trim();
-  if (dirty) {
-    console.error(`FAIL: ${FILE} is not pristine:\n${dirty}`);
-    process.exit(1);
-  }
+const dirty = execFileSync('git', ['status', '--porcelain', '--', FILE, ROUTE], {
+  encoding: 'utf8',
+}).trim();
+if (dirty) {
+  console.error(`FAIL: the files under mutation are not committed:\n${dirty}`);
+  process.exit(1);
 }
 
-assertClean();
+const pristine = new Map([FILE, ROUTE].map((file) => [file, readFileSync(file, 'utf8')]));
+
+function assertClean() {
+  for (const [file, text] of pristine) {
+    if (readFileSync(file, 'utf8') !== text) {
+      console.error(`FAIL: ${file} was not restored.`);
+      process.exit(1);
+    }
+  }
+}
 
 const baseline = runSuite();
 if (baseline !== 'pass') {
@@ -114,11 +162,12 @@ if (baseline !== 'pass') {
 }
 console.log('baseline: unmutated suite passes');
 
-const original = readFileSync(FILE, 'utf8');
 let killed = 0;
 const survivors = [];
 
 for (const mutant of MUTANTS) {
+  const file = mutant.file ?? FILE;
+  const original = pristine.get(file);
   const occurrences = original.split(mutant.find).length - 1;
   if (occurrences !== 1) {
     console.error(
@@ -128,12 +177,12 @@ for (const mutant of MUTANTS) {
     process.exit(1);
   }
 
-  writeFileSync(FILE, original.replace(mutant.find, mutant.replace));
+  writeFileSync(file, original.replace(mutant.find, mutant.replace));
   let result;
   try {
     result = runSuite();
   } finally {
-    writeFileSync(FILE, original);
+    writeFileSync(file, original);
   }
   assertClean();
 

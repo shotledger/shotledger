@@ -72,6 +72,7 @@ const OK_RESULT: SyncCycleResult = {
   shadowed: 0,
   pushed: 3,
   rejected: 0,
+  invalid: 0,
   duplicates: 0,
 };
 
@@ -154,6 +155,7 @@ describe('subscribeToSync', () => {
       pendingCount: 4,
       errorKey: null,
       attempt: 0,
+      refusedCount: 0,
     });
   });
 
@@ -194,6 +196,7 @@ describe('a successful cycle', () => {
       pendingCount: 1,
       errorKey: null,
       attempt: 0,
+      refusedCount: 0,
     });
   });
 });
