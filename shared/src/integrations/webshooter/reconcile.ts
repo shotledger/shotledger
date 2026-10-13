@@ -1,6 +1,6 @@
 // Duplicate matching and field-level merge classification (spec §5, v2 spec
-// §A.2/§A.3). Two tiers, never silent: exact `external_ref` match short-
-// circuits to merge; heuristic candidates are always surfaced for user
+// §A.2/§A.3). Two tiers, never silent: an exact (`external_source`,
+// `external_ref`) match short-circuits to merge; heuristic candidates are always surfaced for user
 // confirmation, never auto-merged.
 
 import { localDayOf } from '../../dates';
@@ -11,13 +11,14 @@ export function buildExternalRef(
   competitionId: number | string,
   signupId: number | string,
 ): string {
-  return `webshooter:${competitionId}:${signupId}`;
+  return `${competitionId}:${signupId}`;
 }
 
 // --- §5.2 exact match ---------------------------------------------------------
 
 export interface ExactMatchSessionInput {
   id: string;
+  externalSource: string | null;
   externalRef: string | null;
 }
 
@@ -25,7 +26,13 @@ export function findExactMatch<T extends ExactMatchSessionInput>(
   existingSessions: readonly T[],
   externalRef: string,
 ): T | null {
-  return existingSessions.find((session) => session.externalRef === externalRef) ?? null;
+  // The ref carries no source prefix (#727): the source column keeps a
+  // Webshooter ref from ever matching a ShotLog one.
+  return (
+    existingSessions.find(
+      (session) => session.externalSource === 'webshooter' && session.externalRef === externalRef,
+    ) ?? null
+  );
 }
 
 // --- §5.3 heuristic match ------------------------------------------------------

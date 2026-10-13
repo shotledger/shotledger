@@ -48,9 +48,8 @@ export const TEXT_LIMITS = {
     location: PLACE,
     notes: NOTE,
   },
-  // Written by imports only today (e.g. "särskjutning"); bounded so a future
-  // input inherits a limit the size test already covers.
-  series: { note: SHORT_NOTE },
+  // Written by imports only today; bounded so a future input inherits a
+  // limit the size test already covers.
   falt_stations: { note: SHORT_NOTE },
   maintenance_events: {
     kind: NAME,

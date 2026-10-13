@@ -50,7 +50,10 @@ import {
   updateSightSetting,
 } from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
-import { maintenanceEventLines } from '@/features/firearms/maintenance-event-lines';
+import {
+  maintenanceEventLines,
+  maintenanceEventTitle,
+} from '@/features/firearms/maintenance-event-lines';
 import {
   parseMaintenanceInterval,
   parseRoundAdjustment,
@@ -1111,8 +1114,7 @@ export default function FirearmDetailScreen() {
           detail.maintenanceEvents.map((event) => (
             <ListRow
               key={event.id}
-              // `kind` is free text the user typed, except the one the app writes itself.
-              title={event.kind === 'adjustment' ? t('firearms.adjustmentEvent') : event.kind}
+              title={maintenanceEventTitle(event, t('firearms.adjustmentEvent'))}
               subtitle={maintenanceEventLines(event, dates.date)}
             />
           ))
