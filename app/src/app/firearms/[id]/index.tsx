@@ -30,6 +30,7 @@ import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
@@ -911,7 +912,8 @@ export default function FirearmDetailScreen() {
               />
             ) : null}
             {editingSightId ? (
-              <PrimaryButton
+              <SecondaryButton
+                tone="danger"
                 label={t('firearms.sightDelete')}
                 onPress={onDeleteSightSetting}
                 testID="sight-delete"
