@@ -54,8 +54,6 @@ describe('new rows', () => {
       extra_rounds: null,
       external_source: null,
       external_ref: null,
-      external_synced_at: null,
-      webshooter_competition_id: null,
       official_placement: null,
       official_standardmedalj: null,
     });
@@ -95,14 +93,14 @@ describe('new rows', () => {
       is_total_override: 0,
       total_override_tenths: null,
       total_override_shot_count: null,
-      note: null,
+      is_shoot_off: 0,
     });
     expect(
       newSeriesRow('r2', NOW, { sessionId: 's1', position: 1, isSighter: false }),
     ).toMatchObject({ is_sighter: 0 });
   });
 
-  it('R3 a shot row: is_inner_ten_decimal 0; a value outside 0..109 throws RangeError', () => {
+  it('R3 a shot row; a value outside 0..109 throws RangeError', () => {
     expect(
       newShotRow('h1', NOW, { seriesId: 'r1', position: 3, valueTenths: 104, isInnerTen: true }),
     ).toEqual({
@@ -114,7 +112,6 @@ describe('new rows', () => {
       position: 3,
       value_tenths: 104,
       is_inner_ten: 1,
-      is_inner_ten_decimal: 0,
     });
     const at = (valueTenths: number) => () =>
       newShotRow('h', NOW, { seriesId: 'r', position: 1, valueTenths, isInnerTen: false });

@@ -257,7 +257,7 @@ describe('listShotlogDedupCandidates', () => {
       weaponGroup: 'spsf:C',
       startedAt: '2026-05-04T06:00:00Z',
       externalSource: 'webshooter',
-      externalRef: 'S-0000c0de',
+      externalRef: '1:2',
     });
     const [row] = planRows(csv(COMPETITION), {
       existingSessions: listShotlogDedupCandidates(db),

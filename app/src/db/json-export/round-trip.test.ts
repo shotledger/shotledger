@@ -9,7 +9,7 @@ import {
   xCount,
   type StatsSeries,
 } from '@shotledger/shared';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { createTestDb } from '../test-db';
@@ -420,7 +420,7 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
       tenCount: 11,
       innerTenCount: 4,
       externalSource: 'shotlog',
-      externalRef: 'shotlog:test-ref-1',
+      externalRef: '00000000deadbeef',
     });
     addSeries(db, {
       sessionId: shotlog.id,
@@ -435,7 +435,7 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
       disciplineId: 'precision',
       startedAt: '2026-08-23T09:00:00.000Z',
       externalSource: 'webshooter',
-      externalRef: 'webshooter:100:200',
+      externalRef: '100:200',
       officialPlacement: 2,
       officialStandardMedal: 'guld',
     });
@@ -474,6 +474,29 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
     expect(before.map((s) => s.kind)).toEqual(['rounds', 'series', 'series']);
   });
 
+  it('S5 keeps a shoot-off series flagged', () => {
+    const db = createTestDb();
+    const { webshooter } = seedImported(db);
+    addSeries(db, {
+      sessionId: webshooter.id,
+      position: 1,
+      isShootOff: true,
+      isTotalOverride: true,
+      totalOverrideTenths: 480,
+      totalOverrideShotCount: 5,
+    });
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    const imported = db.select().from(series).where(isNull(series.deletedAt)).all();
+    expect(imported.filter((s) => s.isShootOff === 1).map((s) => s.totalOverrideTenths)).toEqual([
+      480,
+    ]);
+  });
+
   it('leaves the refs where a later WebShooter or ShotLog import looks for them', () => {
     const db = createTestDb();
     const { shotlog, webshooter } = seedImported(db);
@@ -484,8 +507,8 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
     applyImport(db, groups, records);
 
     expect(listExternalRefs(db).filter((r) => r.externalRef !== null)).toEqual([
-      { id: shotlog.id, externalRef: 'shotlog:test-ref-1' },
-      { id: webshooter.id, externalRef: 'webshooter:100:200' },
+      { id: shotlog.id, externalSource: 'shotlog', externalRef: '00000000deadbeef' },
+      { id: webshooter.id, externalSource: 'webshooter', externalRef: '100:200' },
     ]);
   });
 });

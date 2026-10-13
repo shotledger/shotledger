@@ -195,12 +195,12 @@ export const sessions = sqliteTable('sessions', {
   // Webshooter import (docs/specs/webshooter-integration-spec.md §1/§A).
   // externalSource is 'webshooter' when imported; NULL = locally created.
   externalSource: text('external_source'),
-  // 'webshooter:<competition_id>:<signup_id>' — exact-match key (§A.2).
+  // The source's own key, without a source prefix: '<competition_id>:<signup_id>'
+  // for Webshooter, 16 hex for ShotLog. Matched together with
+  // external_source (§A.2, #727).
   // Application-enforced uniqueness among non-null values (no partial
   // unique index in this Drizzle/sqlite setup; see queries/webshooter.ts).
   externalRef: text('external_ref'),
-  externalSyncedAt: text('external_synced_at'), // last successful re-import merge
-  webshooterCompetitionId: text('webshooter_competition_id'), // for re-fetch on refresh
   officialPlacement: integer('official_placement'), // authoritative, from Webshooter
   // authoritative, from Webshooter; the app's own computed standardMedal
   // indicator (§6.5b) stays a separate, always-computed value — never merged
@@ -237,7 +237,9 @@ export const series = sqliteTable('series', {
   // shot count backing the override total; required so round counters and
   // per-series averages stay correct without shot rows
   totalOverrideShotCount: integer('total_override_shot_count'),
-  note: text('note'), // e.g. 'särskjutning' (§A.6)
+  // A särskjutning series (§A.6; tie-break for placement), as on falt_stations.
+  // Scored like any other series for now (#727 spec §3.3 S3).
+  isShootOff: integer('is_shoot_off').notNull().default(0),
 });
 
 export const shots = sqliteTable('shots', {
@@ -253,11 +255,6 @@ export const shots = sqliteTable('shots', {
   // Centrumtia — set by the (X) key. A plain X is an ordinary ten and leaves
   // this 0 (spec Amendment A1 §A1.1, maintainer ruling 2026-09-01).
   isInnerTen: integer('is_inner_ten').notNull().default(0),
-  // DEPRECATED (2026-09-01, Amendment A1 §A1.1.4): the old "(X) in decimal
-  // mode" flag. Nothing writes it any more and every row has 0. Kept rather
-  // than dropped because a destructive column-drop migration on an existing
-  // local-first database is riskier than an unused column.
-  isInnerTenDecimal: integer('is_inner_ten_decimal').notNull().default(0),
 });
 
 /**
@@ -358,9 +355,12 @@ export const maintenanceEvents = sqliteTable('maintenance_events', {
     .notNull()
     .references(() => firearms.id),
   performedAt: text('performed_at').notNull(),
-  kind: text('kind').notNull(), // free text v1
+  kind: text('kind').notNull(), // free text the user typed; '' on an adjustment
   roundCountAt: integer('round_count_at'),
   notes: text('notes'),
+  // A manual round-count correction with a reason, not maintenance performed
+  // (#727): replaces the reserved kind 'adjustment' a user could also type.
+  isAdjustment: integer('is_adjustment').notNull().default(0),
 });
 
 // Free-text label per firearm (issue #114) — the same aiming method recurs
@@ -423,9 +423,9 @@ export const settings = sqliteTable('settings', {
 // tables never leave the device and are absent from SYNC_TABLE_NAMES.
 // ---------------------------------------------------------------------------
 
-// Written by AFTER INSERT/UPDATE triggers on the nine synced tables, so the
+// Written by AFTER INSERT/UPDATE triggers on the 14 synced tables, so the
 // enqueue happens inside the caller's transaction (ADR 0003 guardrail) with
-// no query module having to remember it. Triggers live in migration 0004.
+// no query module having to remember it. Triggers live in 0000_baseline.sql.
 export const syncOutbox = sqliteTable(
   'sync_outbox',
   {

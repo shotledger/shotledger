@@ -201,14 +201,14 @@ describe('mapStationResultsToFaltStations', () => {
 });
 
 describe('mapStationResultsToSeries', () => {
-  it('maps main-round rows to non-final, no-note overrides with sequential positions', () => {
+  it('maps main-round rows to non-final, non-shoot-off overrides with sequential positions', () => {
     const row = fixtureResultRow();
     const mapped = mapStationResultsToSeries(row, 5);
 
     expect(mapped).toHaveLength(7);
-    expect(mapped.every((s) => s.isFinal === false && s.note === null && s.isTotalOverride)).toBe(
-      true,
-    );
+    expect(
+      mapped.every((s) => s.isFinal === false && s.isShootOff === false && s.isTotalOverride),
+    ).toBe(true);
     expect(mapped.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(mapped[0]!.totalOverrideTenths).toBe(row.results[0]!.points! * 10);
     expect(mapped[0]!.totalOverrideShotCount).toBe(5);
@@ -236,7 +236,7 @@ describe('mapStationResultsToSeries', () => {
     expect(mapped.map((s) => s.position)).toEqual([1, 2]);
   });
 
-  it('maps results_finals to isFinal true, no note, positions continuing after the main round', () => {
+  it('maps results_finals to isFinal true, not a shoot-off, positions continuing after the main round', () => {
     const row = fixtureResultRow({
       results: [fixtureStationResult({ stations_id: 1, points: 40 })],
       results_finals: [fixtureStationResult({ id: 999, finals: 1, stations_id: 1, points: 48 })],
@@ -247,12 +247,12 @@ describe('mapStationResultsToSeries', () => {
     expect(mapped[1]).toMatchObject({
       position: 2,
       isFinal: true,
-      note: null,
+      isShootOff: false,
       totalOverrideTenths: 480,
     });
   });
 
-  it('maps results_distinguish to isFinal false with a särskjutning note (ordinary extra series, not a special flag)', () => {
+  it('maps results_distinguish to isFinal false, flagged as a shoot-off (an ordinary extra scored series)', () => {
     const row = fixtureResultRow({
       results: [fixtureStationResult({ stations_id: 1, points: 40 })],
       results_distinguish: [
@@ -265,7 +265,7 @@ describe('mapStationResultsToSeries', () => {
     expect(mapped[1]).toMatchObject({
       position: 2,
       isFinal: false,
-      note: 'särskjutning',
+      isShootOff: true,
       totalOverrideTenths: 490,
     });
   });

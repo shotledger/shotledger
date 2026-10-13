@@ -58,6 +58,8 @@ export interface BrowseSeries {
   photo: PhotoRef;
   isSighter: boolean;
   isFinal: boolean;
+  /** A särskjutning series (#727); shown, scored like any other. */
+  isShootOff: boolean;
   shots: EntryShot[];
   /** The shots' sum, or the stored total of an imported series with no shots. */
   totalTenths: number;
@@ -97,6 +99,7 @@ function browseSession(
     photo: photoAt(seriesPhotos, row.position),
     isSighter: row.isSighter,
     isFinal: row.isFinal,
+    isShootOff: row.isShootOff,
     shots: row.shots.map(({ valueTenths, isInnerTen }) => ({ valueTenths, isInnerTen })),
     totalTenths: row.totalOverride
       ? row.totalOverride.tenths

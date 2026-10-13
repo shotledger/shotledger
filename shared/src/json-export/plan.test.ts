@@ -136,6 +136,7 @@ describe('buildDryRunPlan shot counts', () => {
               position: 1,
               isSighter: true,
               isFinal: false,
+              isShootOff: false,
               totalOverride: null,
               shots: [],
             },
@@ -143,6 +144,7 @@ describe('buildDryRunPlan shot counts', () => {
               position: 2,
               isSighter: false,
               isFinal: false,
+              isShootOff: false,
               totalOverride: null,
               shots: [
                 { position: 1, valueTenths: 100, isInnerTen: true },
@@ -153,6 +155,7 @@ describe('buildDryRunPlan shot counts', () => {
               position: 3,
               isSighter: false,
               isFinal: false,
+              isShootOff: false,
               totalOverride: null,
               shots: [
                 { position: 1, valueTenths: 80, isInnerTen: false },
@@ -229,6 +232,7 @@ describe('buildDryRunPlan shot counts', () => {
               position: 1,
               isSighter: false,
               isFinal: false,
+              isShootOff: false,
               totalOverride: null,
               shots: [1, 2, 3, 4, 5].map((position) => ({
                 position,

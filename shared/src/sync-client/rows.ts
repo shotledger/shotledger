@@ -66,8 +66,6 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     extra_rounds: fields.extraRounds ?? null,
     external_source: null,
     external_ref: null,
-    external_synced_at: null,
-    webshooter_competition_id: null,
     official_placement: null,
     official_standardmedalj: null,
   };
@@ -94,7 +92,7 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     is_total_override: 0,
     total_override_tenths: null,
     total_override_shot_count: null,
-    note: null,
+    is_shoot_off: 0,
   };
 }
 
@@ -117,7 +115,6 @@ export function newShotRow(id: string, now: string, fields: ShotFields): Payload
     value_tenths: valueTenths,
     is_inner_ten: fields.isInnerTen ? 1 : 0,
     // Deprecated column (A1 §A1.1.4): always 0, as addShot writes it.
-    is_inner_ten_decimal: 0,
   };
 }
 
