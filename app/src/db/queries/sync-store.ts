@@ -23,6 +23,7 @@ import {
   firearms,
   licenses,
   maintenanceEvents,
+  photoQueue,
   series,
   sessionTags,
   sessions,
@@ -237,6 +238,26 @@ export function readRowSync(
 
 function setApplying(db: Database, value: 0 | 1): void {
   db.update(syncControl).set({ applying: value }).where(eq(syncControl.id, 0)).run();
+}
+
+/**
+ * Returns the four client-only sync tables to a fresh install's state, so the
+ * next sync pushes nothing stale and re-pulls from cursor 0. Run on a backup's
+ * copy and on a restored database, never on the live one in use
+ * (docs/specs/backup-sync-bookkeeping-spec.md).
+ */
+export function resetSyncBookkeeping(db: Database): void {
+  db.transaction((tx) => {
+    tx.delete(syncOutbox).run();
+    tx.delete(syncState).run();
+    tx.delete(photoQueue).run();
+    // Written, never deleted: the outbox triggers read `applying` from row 0,
+    // and with no row they stop queueing edits.
+    tx.insert(syncControl)
+      .values({ id: 0, applying: 0, lastRev: 0 })
+      .onConflictDoUpdate({ target: syncControl.id, set: { applying: 0, lastRev: 0 } })
+      .run();
+  });
 }
 
 /** Drops every queued change and cursor — used when signing out. */

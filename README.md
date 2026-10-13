@@ -64,6 +64,7 @@ gate. `pnpm gauntlet` runs every layer.
 | `mutate-schema.mjs`, `mutate-webshooter-schema.mjs` | `pnpm gauntlet`                                | On-disk mutation of zod schemas, which Stryker cannot mutate because they run at module load.           |
 | `manual-mutation.mjs`                               | by hand                                        | Manual mutants for `shared/src/json-export`, recorded in its evidence report.                           |
 | `manual-mutation-sync-push.mjs`                     | by hand                                        | Manual mutants for the sync push batch in `backend/src/db/queries.ts`, which Stryker cannot reach.      |
+| `manual-mutation-backup-sync.mjs`                   | by hand                                        | Manual mutants for the sync-bookkeeping reset a backup and a restore run (`app/src/db`).                |
 | `i18n-check-negative-control.mjs`                   | by hand                                        | Proves the i18n gate can still fail (mutates the JSON, expects a nonzero exit, restores it).            |
 
 ### Mutation testing

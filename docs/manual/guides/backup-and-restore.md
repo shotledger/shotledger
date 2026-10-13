@@ -45,6 +45,21 @@ can open it any more.
 
 Afterwards, close ShotLedger completely and reopen it.
 
+### With sync turned on
+
+A backup holds your logbook, not the state of sync. After a restore, the next
+sync starts from scratch. It fetches everything the account holds, and it
+sends nothing from the file on its own.
+
+- **Anything the account already holds comes back as the account has it.** A
+  session you changed on this phone and never synced before the backup is
+  replaced by the account's copy, if the account has one. Sync before making a
+  backup you mean to restore from.
+- **Anything the account never had stays on the phone.** It is sent the next
+  time you change it.
+- Restoring a backup made under another account does not mix the two. The
+  phone fetches the signed-in account's data and sends nothing from the file.
+
 ## How often
 
 Whenever losing what you have logged since the last one would annoy you. For

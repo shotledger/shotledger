@@ -46,6 +46,22 @@ appen kan öppna den.
 
 Stäng därefter ShotLedger helt och öppna appen igen.
 
+### Med synk påslagen
+
+En säkerhetskopia rymmer din loggbok, inte synkens läge. Efter en
+återställning börjar nästa synk om från början. Den hämtar allt kontot har,
+och skickar ingenting från filen av sig själv.
+
+- **Det som kontot redan har kommer tillbaka som kontot har det.** Ett pass du
+  ändrade på telefonen och aldrig synkade innan säkerhetskopian ersätts av
+  kontots version, om kontot har en. Synka innan du gör en säkerhetskopia du
+  tänker återställa från.
+- **Det som kontot aldrig har haft stannar på telefonen.** Det skickas nästa
+  gång du ändrar det.
+- Att återställa en säkerhetskopia gjord under ett annat konto blandar inte
+  ihop de två. Telefonen hämtar det inloggade kontots data och skickar
+  ingenting från filen.
+
 ## Hur ofta
 
 När det skulle irritera dig att förlora det du loggat sedan förra gången. För

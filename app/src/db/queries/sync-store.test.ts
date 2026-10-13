@@ -2,13 +2,29 @@ import { SYNC_TABLE_NAMES, type ChangeRow } from '@shotledger/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { firearms, licenses, sessionTags, sessions, syncControl, syncOutbox } from '../schema';
+import {
+  firearms,
+  licenses,
+  photoQueue,
+  sessionTags,
+  sessions,
+  syncControl,
+  syncOutbox,
+  syncState,
+} from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, softDeleteFirearm, updateFirearm } from './firearms';
 import { createSession } from './sessions';
 import { getSetting, SETTINGS_KEYS, setSetting } from './settings';
-import { createSyncStore, readRowSync, resetSyncState, SYNC_TABLES } from './sync-store';
+import { enqueuePhotoTask } from './photo-queue';
+import {
+  createSyncStore,
+  readRowSync,
+  resetSyncBookkeeping,
+  resetSyncState,
+  SYNC_TABLES,
+} from './sync-store';
 import { addSessionTag, getOrCreateTag, listTags, listTagsForSession, softDeleteTag } from './tags';
 
 let db: Database;
@@ -279,6 +295,85 @@ describe('pendingCount and resetSyncState', () => {
 
     expect(await store.pendingCount()).toBe(0);
     expect((await store.readCursors()).sessions).toBe(0);
+  });
+});
+
+// docs/specs/backup-sync-bookkeeping-spec.md §3 (#757).
+describe('resetSyncBookkeeping', () => {
+  async function withBookkeeping() {
+    const firearm = createFirearm(db, { make: 'Pardini', model: 'SP' });
+    createSession(db, {
+      name: 'S',
+      type: 'training',
+      disciplineId: 'spsf-precision',
+      firearmId: firearm.id,
+      startedAt: '2026-10-01T10:00:00.000Z',
+    });
+    await store.setCursor('sessions', 41);
+    await store.setCursor('firearms', 9);
+    enqueuePhotoTask(db, 'upload', 'photo-1', 'file:///other-device/photo-1.jpg');
+    db.update(syncControl).set({ applying: 1, lastRev: 7 }).where(eq(syncControl.id, 0)).run();
+  }
+
+  const userRows = () =>
+    Object.fromEntries(
+      Object.entries(SYNC_TABLES).map(([name, table]) => [name, db.select().from(table).all()]),
+    );
+
+  it('B1 empties the outbox, the cursors and the photo queue', async () => {
+    await withBookkeeping();
+    expect(outboxRows().length).toBeGreaterThan(0);
+
+    resetSyncBookkeeping(db);
+
+    expect(outboxRows()).toEqual([]);
+    expect(db.select().from(syncState).all()).toEqual([]);
+    expect(db.select().from(photoQueue).all()).toEqual([]);
+  });
+
+  it('B2 returns sync_control to a fresh install', async () => {
+    await withBookkeeping();
+    resetSyncBookkeeping(db);
+    expect(db.select().from(syncControl).all()).toEqual([{ id: 0, applying: 0, lastRev: 0 }]);
+  });
+
+  it('B3 leaves every synced table exactly as it was', async () => {
+    await withBookkeeping();
+    const before = userRows();
+    expect(before.sessions).toHaveLength(1);
+    resetSyncBookkeeping(db);
+    expect(userRows()).toEqual(before);
+  });
+
+  it('B4 queues the next local edit again, from rev 1', async () => {
+    await withBookkeeping();
+    resetSyncBookkeeping(db);
+
+    const firearm = createFirearm(db, { make: 'Walther', model: 'GSP' });
+
+    expect(outboxRows()).toEqual([
+      { tableName: 'firearms', rowId: firearm.id, rev: 1, clientChangeId: null },
+    ]);
+  });
+
+  it('B5 recreates a missing sync_control row, so edits are still queued', () => {
+    db.delete(syncControl).run();
+    createFirearm(db, { make: 'Lost', model: 'Row' });
+    expect(outboxRows()).toEqual([]);
+
+    resetSyncBookkeeping(db);
+    createFirearm(db, { make: 'Found', model: 'Row' });
+
+    expect(db.select().from(syncControl).all()).toEqual([{ id: 0, applying: 0, lastRev: 1 }]);
+    expect(outboxRows()).toHaveLength(1);
+  });
+
+  it('B6 makes the next sync pull every table from the start', async () => {
+    await withBookkeeping();
+    resetSyncBookkeeping(db);
+    const cursors = await store.readCursors();
+    expect(Object.values(cursors).every((cursor) => cursor === 0)).toBe(true);
+    expect(Object.keys(cursors).sort()).toEqual([...SYNC_TABLE_NAMES].sort());
   });
 });
 

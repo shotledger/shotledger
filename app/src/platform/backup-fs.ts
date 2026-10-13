@@ -147,6 +147,14 @@ export function replaceLiveDatabaseFile(liveDb: SQLiteDatabase, bytes: Uint8Arra
   target.write(bytes);
 }
 
+/** A short-lived connection to the (already-restored, on-disk) database file
+ * behind `liveDb`, which must already be closed. The caller closes it. */
+export function openDatabaseFile(liveDb: SQLiteDatabase, databaseFilename: string): SQLiteDatabase {
+  const barePath = stripFileScheme(liveDb.databasePath);
+  const bareDbDir = barePath.slice(0, barePath.length - `/${databaseFilename}`.length);
+  return openDatabaseSync(databaseFilename, {}, bareDbDir);
+}
+
 /** Writes restored photos into an app-owned directory and rewrites
  * `series.photo_uri` in the (already-restored, on-disk) database from the
  * bundle's relative path to the new absolute file:// URI, via a short-lived
@@ -170,9 +178,7 @@ export async function restorePhotosAndRewritePaths(
     updates.push({ entryName: photo.entryName, newUri: file.uri });
   }
 
-  const barePath = stripFileScheme(liveDb.databasePath);
-  const bareDbDir = barePath.slice(0, barePath.length - `/${databaseFilename}`.length);
-  const conn = openDatabaseSync(databaseFilename, {}, bareDbDir);
+  const conn = openDatabaseFile(liveDb, databaseFilename);
   try {
     for (const u of updates) {
       await conn.runAsync('UPDATE series SET photo_uri = ? WHERE photo_uri = ?', [
