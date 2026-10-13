@@ -1,5 +1,10 @@
 # One volume figure — spec
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 Status: **approved** by the maintainer on 2026-10-04, after the code, with
 the rulings under Revisions. Issue #512. Stacked on #543 (#511), since merged.
 

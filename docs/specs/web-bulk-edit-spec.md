@@ -1,5 +1,10 @@
 # Web bulk edit — executable specification
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 > Old-coder SPEC for the "bulk editing" item of #301 (web write paths), on top
 > of the web write client of #669 (`docs/specs/web-series-entry-spec.md`).
 > Evidence report: `docs/specs/web-bulk-edit-evidence.md`. Decision record:

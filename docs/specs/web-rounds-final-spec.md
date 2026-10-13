@@ -1,5 +1,10 @@
 # Rounds-only sessions and final series on the web — executable specification
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 > Old-coder SPEC for #689, a follow-up to the web series entry of #669
 > (`docs/specs/web-series-entry-spec.md`, whose C1–C9 and R1–R28 this layer
 > inherits unchanged). Evidence report: `docs/specs/web-rounds-final-evidence.md`.

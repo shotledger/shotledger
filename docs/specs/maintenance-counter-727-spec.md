@@ -24,6 +24,8 @@
 
 - **M1** `firearms.rounds_since_maintenance` is dropped from the schema, the
   baseline, the web row builders and the JSON export.
+  `maintenance_events.round_count_at` becomes `NOT NULL`: the app has always
+  written it, and the figure now depends on it.
 - **M2** Rounds since maintenance is computed, never stored:
   `max(0, round_count − round_count_at)` of the **reference event**, or
   `round_count` when the firearm has none. The reference event is the
@@ -49,7 +51,8 @@
   deleting a maintenance event does not notify.
 - **M6** The JSON export gains a top-level `maintenanceEvents` array: `id`,
   `firearmId`, `performedAt`, `kind`, `roundCountAt`, `isAdjustment`, `notes`
-  for every non-deleted event of an exported firearm, adjustments included.
+  for every non-deleted event, adjustments included (all of them, as the
+  export already writes every license).
   Phone (`build-export.ts`) and web (`archive.ts`) write it. The import
   upserts each event by `id`, attached to the firearm the file's `firearmId`
   resolved to, and drops an event naming a firearm the file does not carry,
@@ -59,8 +62,10 @@
 
 ## 2. Behavior changes a user can see
 
-1. Deleting the newest maintenance entry restores the figure it reset
-   (today the figure stays at what the reset left).
+1. A deleted maintenance entry no longer counts, so deleting the newest one
+   restores the figure it reset (today the figure stays at what the reset
+   left). No screen deletes an entry today; the query layer does
+   (`softDeleteMaintenanceEvent`), and a delete arriving by sync applies it.
 2. Logging a cleaning dated **before** the newest one records it without
    resetting the figure (today any log resets it to 0).
 3. Two devices no longer overwrite each other's figure through sync: one
@@ -85,13 +90,13 @@
 
 ## 4. Tests (behavior → test)
 
-| Id  | Test                                                                                                                                                   |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| M1  | `migrations.test.ts` (baseline hash), `web-rows.test.ts` A1 column parity, `rows.test.ts`                                                              |
-| M2  | `shared/src/firearms/maintenance-counter.test.ts`: no events; one event; adjustment ignored; deleted ignored; newest by date not by creation; tie by id; floor at 0 |
-| M3  | `maintenance-events.test.ts`: log leaves the firearm row untouched; delete the newest restores the previous figure                                   |
-| M4  | `round-count.test.ts`, `maintenance-events.test.ts` (adjust), `rows.test.ts` (`withRoundsAdded`/`withRoundsMoved` emit no `rounds_since_maintenance`) |
-| M5  | `maintenance-due.test.ts`: crossing from a move with a logged event; no notification when below; none on log or delete                               |
+| Id  | Test                                                                                                                                                                                                 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1  | `migrations.test.ts` (baseline hash), `web-rows.test.ts` A1 column parity, `rows.test.ts`                                                                                                            |
+| M2  | `shared/src/firearms/maintenance-counter.test.ts`: no events; one event; adjustment ignored; deleted ignored; newest by date not by creation; tie by id; floor at 0                                  |
+| M3  | `maintenance-events.test.ts`: log leaves the firearm row untouched; delete the newest restores the previous figure                                                                                   |
+| M4  | `round-count.test.ts`, `maintenance-events.test.ts` (adjust), `rows.test.ts` (`withRoundsAdded`/`withRoundsMoved` emit no `rounds_since_maintenance`)                                                |
+| M5  | `maintenance-due.test.ts`: crossing from a move with a logged event; no notification when below; none on log or delete                                                                               |
 | M6  | `from-rows.test.ts`, `import.test.ts` (valid, invalid entry skipped, missing array defaults to `[]`), app `round-trip.test.ts` (figure survives), `import-round-counters.test.ts`, `archive.test.ts` |
 
 Tests change only where they assert the dropped column or the old export
