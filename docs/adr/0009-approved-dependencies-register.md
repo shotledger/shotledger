@@ -11,6 +11,11 @@ entry is deleted with it; git keeps the history.
 
 ## Decision
 
+**`expo-updates`** (`~57.0.26`, MIT) — 2026-10-13, for over-the-air JS
+updates through EAS Update (#780, ADR 0020). It is not imported by app code.
+The restore reload uses `expo`'s own `reloadAppAsync` instead. Rejected:
+staying on full builds for every JS change.
+
 **`@testing-library/react-native@14.0.1`** (MIT) with its required peer
 **`test-renderer@1.2.0`** (MIT) — 2026-10-04, app dev dependencies so
 hooks and components can be tested under jest-expo (`renderHook`, `act`).

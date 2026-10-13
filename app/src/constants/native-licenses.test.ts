@@ -6,15 +6,20 @@ const versions = (os: string) =>
 describe('nativeLicensesFor', () => {
   it('lists the Android artifacts on Android', () => {
     expect(versions('android')).toEqual([
+      'Bouncy Castle (bcutil) 1.81',
+      'Brotli decoder 0.1.2',
+      'expo-updates 57.0.26',
       'Google ML Kit Text Recognition 16.0.1',
       'Hermes 0.17.0',
       'OpenCV 4.12.0',
       'SQLite 3.50.3',
+      'zstd-kmp 0.4.0',
     ]);
   });
 
   it('lists the iOS pods on iOS', () => {
     expect(versions('ios')).toEqual([
+      'expo-updates 57.0.26',
       'Google ML Kit Text Recognition 6.0.0',
       'Hermes 0.17.0',
       'OpenCV 4.9.0',
