@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
@@ -37,6 +37,7 @@ import { missingFirearmFields, requiresLicense } from '@/features/firearms/compl
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { addFirearmCaliber, softDeleteFirearmCaliber } from '@/db/queries/firearm-calibers';
 import { addFirearmGroup, setDefaultFirearmGroup } from '@/db/queries/firearm-groups';
@@ -750,7 +751,7 @@ export default function FirearmDetailScreen() {
                   ? t('firearms.defaultForGroup', { group: newGroupLabel })
                   : t('firearms.defaultForThisGroup')}
               </ThemedText>
-              <Switch value={newGroupDefault} onValueChange={setNewGroupDefault} />
+              <Toggle value={newGroupDefault} onValueChange={setNewGroupDefault} />
             </View>
             <PrimaryButton
               label={t('firearms.addGroup')}
@@ -1005,7 +1006,7 @@ export default function FirearmDetailScreen() {
                             details: scanFirearmSummary(scan.parsed),
                           })}
                         </ThemedText>
-                        <Switch
+                        <Toggle
                           value={applyFirearmDetails}
                           onValueChange={setApplyFirearmDetails}
                           testID="scan-apply-firearm"

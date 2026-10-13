@@ -6,9 +6,10 @@
 // a sign-in screen (ADR 0010).
 import type { ProviderDescriptor } from '@shotledger/shared/src/integrations/providers/registry';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ListRow } from '@/components/list-row';
+import { Toggle } from '@/components/toggle';
 import { ProviderConnection } from '@/features/providers/provider-connection';
 import { useProviderEnabled } from '@/features/providers/use-provider-enabled';
 import { Spacing } from '@/theme/tokens';
@@ -27,7 +28,7 @@ export function ProviderSettingsRow({ provider }: ProviderSettingsRowProps) {
         title={provider.displayName}
         subtitle={t('providers.enableSubtitle', { site: provider.displayName })}
         trailing={
-          <Switch
+          <Toggle
             value={enabled}
             onValueChange={setEnabled}
             testID={`provider-${provider.id}-enabled`}

@@ -4,7 +4,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -14,6 +14,7 @@ import { Screen } from '@/components/screen';
 import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Toggle } from '@/components/toggle';
 import { FLAGS, type FlagName, isFlagEnabled } from '@/constants/flags';
 import { db } from '@/db/client';
 import { clearAssistLog, getAssistLog } from '@/db/queries/assist-log';
@@ -144,7 +145,7 @@ export default function DevScreen() {
             title={t(FLAGS[name].labelKey)}
             subtitle={t(FLAGS[name].descriptionKey)}
             trailing={
-              <Switch
+              <Toggle
                 value={flags[name]}
                 disabled={!FLAGS[name].overridable}
                 onValueChange={(next) => onToggleFlag(name, next)}

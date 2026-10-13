@@ -19,7 +19,7 @@ import {
 import { Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { InfoButton } from '@/components/info-button';
@@ -29,6 +29,7 @@ import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { SearchablePicker, type SearchablePickerOption } from '@/components/searchable-picker';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { Spacing } from '@/theme/tokens';
@@ -150,7 +151,7 @@ export default function PersonalSettingsScreen() {
           title={t('settings.womensClasses')}
           subtitle={t('settings.womensClassesHelp')}
           trailing={
-            <Switch
+            <Toggle
               value={womensClasses}
               onValueChange={onChangeWomensClasses}
               testID="womens-classes"

@@ -2,12 +2,13 @@
 // keeps only two rows (Backup / Restore); every choice lives here.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { SheetModalProps, useSheetBottomInset } from '@/components/bottom-sheet';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Toggle } from '@/components/toggle';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -91,7 +92,7 @@ export function BackupOptionsDialog({
                   {t('backup.includePhotosSubtitle')}
                 </ThemedText>
               </View>
-              <Switch
+              <Toggle
                 value={includePhotos}
                 onValueChange={setIncludePhotos}
                 testID="backup-include-photos"
