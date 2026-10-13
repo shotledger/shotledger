@@ -356,6 +356,9 @@ app. Nothing should style a bare `TextInput` again.
 
 - **Bottom tab bar**, five destinations (Home, Statistics, Firearms, Tools,
   Settings), icon above a Label-sized caption.
+- **Icons** (`tab-icons.tsx`): 24-unit line glyphs, 2px stroke. Home carries
+  the app mark's rings; Firearms is a long-slide competition-pistol
+  silhouette.
 - **Active:** icon and label in Signal Lavender. **Inactive:** Muted Lilac.
 - Labels are single words wherever possible — a tab label that truncates
   ("Firearms & Am…") is a defect; shorten the label rather than shrinking the
