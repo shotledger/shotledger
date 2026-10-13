@@ -23,12 +23,15 @@ provserie.
 
 Finalserier och serier sparade med bara totalsumma (från Webshooter) visas men
 går inte att ändra här, och inte heller fältstationer, skotten i ett pass med
-bara skott, matchformatet eller taggar. Ändra dem i telefonen.
+bara skott, matchformatet eller taggar. Ändra dem i telefonen. Ett fältpass
+visar hur många stationer det har och ett pass med bara skott sina **Avlossade
+skott**; ⓘ bredvid säger var du ändrar dem.
 
-Ett foto stannar hos sin serie när du skriver om skotten, men markeringarna du
-satt på det visas inte längre, som när du skriver om serien i telefonen. En
-serie sparad med ett foto och inga skott visas som en tom rad; lämnas den tom
-förblir den som den är. Den här sidan lägger inte till eller tar bort foton.
+En serie med foto är märkt **Foto**. Fotot stannar hos sin serie när du skriver
+om skotten, men markeringarna du satt på det visas inte längre, som när du
+skriver om serien i telefonen. En serie sparad med ett foto och inga skott
+visas som en tom rad märkt **Foto**; lämnas den tom förblir den som den är. Den
+här sidan lägger inte till eller tar bort foton.
 
 ## Spara
 

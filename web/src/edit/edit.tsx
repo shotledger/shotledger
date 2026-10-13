@@ -23,6 +23,7 @@ import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
+import { Hint } from '../shell/hint';
 import { SignInAgain } from '../sign-in-again';
 import { errorMessage, statusMessages, type Message } from './messages';
 import {
@@ -403,6 +404,27 @@ export function SessionEdit({
               rowLabel={rowLabel}
             />
           )}
+          {opened.phoneOnly !== null && (
+            <section className="card edit-phone-only">
+              <span className="muted">
+                {t(
+                  opened.phoneOnly.kind === 'stations' ? 'session.stations' : 'session.roundsFired',
+                )}
+              </span>
+              <span>
+                {opened.phoneOnly.kind === 'stations'
+                  ? opened.phoneOnly.count
+                  : opened.phoneOnly.rounds}
+              </span>
+              <Hint
+                text={t(
+                  opened.phoneOnly.kind === 'stations'
+                    ? 'web.edit.stationsHint'
+                    : 'web.edit.roundsHint',
+                )}
+              />
+            </section>
+          )}
           {opened.readOnly.length > 0 && (
             <section className="card">
               <ul className="edit-read-only">
@@ -417,6 +439,7 @@ export function SessionEdit({
                       )}
                     </span>
                     <span className="read-only-shots">{row.text}</span>
+                    {row.hasPhoto && <span className="badge">{t('web.edit.photo')}</span>}
                   </li>
                 ))}
               </ul>
@@ -476,7 +499,10 @@ function SeriesRows({
         const errors = rowErrors.get(index + 1) ?? [];
         return (
           <div key={row.key} className={row.deleted ? 'series-row deleted' : 'series-row'}>
-            <label htmlFor={`edit-row-${row.key}`}>{rowLabel(index + 1)}</label>
+            <div className="edit-row-label">
+              <label htmlFor={`edit-row-${row.key}`}>{rowLabel(index + 1)}</label>
+              {row.hasPhoto && <span className="badge">{t('web.edit.photo')}</span>}
+            </div>
             <input
               id={`edit-row-${row.key}`}
               className="shots"

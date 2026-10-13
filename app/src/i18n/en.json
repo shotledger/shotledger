@@ -1493,7 +1493,10 @@
       "failedSignedOut": "You have been signed out. Sign in again, then retry.",
       "failedOutdated": "This page is out of date. Copy your changes, then reload the page.",
       "failedUnconfirmed": "The server answered, but not as expected. Retry sends the same change again.",
-      "accountChanged": "You are now signed in to another account, so the held change was not sent."
+      "accountChanged": "You are now signed in to another account, so the held change was not sent.",
+      "photo": "Photo",
+      "stationsHint": "Fält stations are changed on the phone.",
+      "roundsHint": "The rounds of a rounds-only session are changed on the phone."
     },
     "settings": {
       "saved": "Saved.",
@@ -1503,7 +1506,8 @@
       "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save.",
       "failedUnconfirmed": "The server answered, but not as expected. Your changes are still here; Retry sends them again.",
       "profileUnset": "No profile chosen. Your phone uses the default for its language."
-    }
+    },
+    "hint": "Help"
   },
   "notifications": {
     "channelMaintenance": "Maintenance",
