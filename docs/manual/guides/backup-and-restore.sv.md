@@ -44,7 +44,8 @@ En fil som gjorts av en äldre version som fortfarande hade valvet återställs
 som vanligt. Valvdelen hoppas över: funktionen finns inte längre, och inget i
 appen kan öppna den.
 
-Stäng därefter ShotLedger helt och öppna appen igen.
+När återställningen är klar startar ShotLedger om av sig själv för att läsa in
+den återställda datan.
 
 ### Med synk påslagen
 
