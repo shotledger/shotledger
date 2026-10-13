@@ -3,7 +3,7 @@
 En utvärderingsversion är ett exemplar av ShotLedger som lämnas ut för
 testning innan appen finns i Google Play. Den installeras från en APK-fil i
 stället för från butiken, och den slutar fungera ett datum som bestämdes när
-den byggdes. Inställningar → Om appen visar det datumet.
+den byggdes, normalt 30 dagar senare. Inställningar → Om appen visar det datumet.
 
 En utvärderingsversion är din att testa, inte att lämna vidare: den lämnas ut
 endast för personlig testning, och ingen annan licens följer med den.

@@ -2,7 +2,7 @@
 
 An evaluation build is a copy of ShotLedger handed out for testing before
 the app is in Google Play. It is installed from an APK file rather than from
-the store, and it stops working on a date set when it was built. Settings →
+the store, and it stops working on a date set when it was built, normally 30 days later. Settings →
 About shows that date.
 
 An evaluation build is yours to test, not to pass on: it is handed out for
