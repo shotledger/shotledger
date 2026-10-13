@@ -75,8 +75,11 @@ export function createPhotoRoutes(
       return c.json({ error: 'rate_limited' }, 429);
     }
 
+    // A re-upload replaces the stored object, so its size is not counted twice
+    // (as recordUpload nets it); a Retry near the limit then still fits.
     const current = await getQuota(db, userId);
-    const quotaCheck = checkQuota(current.usedBytes, current.limitBytes, declaredLength);
+    const replaced = existing?.sizeBytes ?? 0;
+    const quotaCheck = checkQuota(current.usedBytes - replaced, current.limitBytes, declaredLength);
     if (!quotaCheck.allowed) {
       return c.json({ error: quotaCheck.reason }, 413);
     }

@@ -16,6 +16,7 @@ import { parseSeriesText, type SeriesTextError } from '../scoring/series-text';
 import { sessionVolume } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
+import { toSyncPhotoUri } from './photo-uri';
 import {
   newSeriesRow,
   newSessionRow,
@@ -31,6 +32,13 @@ export interface SeriesDraft {
   isSighter: boolean;
   /** A final series (docs/specs/web-rounds-final-spec.md C3); absent is the main round. */
   isFinal?: boolean;
+  /** A photo goes with this row (docs/specs/web-entry-photo-spec.md C6). */
+  hasPhoto?: boolean;
+  /**
+   * The id of this row's photo when it is already on the server from a save
+   * that never pushed (spec R7); the series takes it as its id. Absent: a new id.
+   */
+  photoId?: string;
 }
 
 export interface SessionEntryDraft {
@@ -88,13 +96,24 @@ export type EntryError =
   | { kind: 'stationPoints'; row: number }
   | { kind: 'invalidStation'; row: number };
 
+/** A series that names a photo: its 1-based form row, and the photo id (its series id). */
+export interface SeriesPhoto {
+  row: number;
+  photoId: string;
+}
+
 export type EntryResult =
-  { ok: true; sessionId: string; changes: ClientChange[] } | { ok: false; errors: EntryError[] };
+  | { ok: true; sessionId: string; changes: ClientChange[]; photos: SeriesPhoto[] }
+  | { ok: false; errors: EntryError[] };
 
 interface KeptSeries {
   isSighter: boolean;
   isFinal: boolean;
   shots: EntryShot[];
+  /** The 1-based form row, when the row has a photo. */
+  photoRow: number | null;
+  /** An uploaded photo's id to reuse as the series id (R7). */
+  photoId: string | undefined;
 }
 
 export const blankToNull = (value: string): string | null => {
@@ -200,16 +219,23 @@ export function buildSessionEntry(
       if (sighterSections.has(isFinal)) errors.push({ kind: 'secondSighter', row: index + 1 });
       sighterSections.add(isFinal);
     }
-    // A blank ordinary row is dropped; the skeleton and a sighter are kept,
-    // as the phone pre-creates or keeps them.
-    if (entry || isSighter || parsed.shots.length > 0) {
-      typed.push({ isSighter, isFinal, shots: parsed.shots });
+    // A blank ordinary row is dropped; the skeleton, a sighter and a photo
+    // are kept, as the phone pre-creates or keeps them.
+    const hasPhoto = row?.hasPhoto === true;
+    if (entry || isSighter || hasPhoto || parsed.shots.length > 0) {
+      typed.push({
+        isSighter,
+        isFinal,
+        shots: parsed.shots,
+        photoRow: hasPhoto ? index + 1 : null,
+        photoId: hasPhoto ? row?.photoId : undefined,
+      });
     }
   }
 
-  // A final with nothing shot is not saved; one without a scored main round
-  // is refused. A kept ordinary row has shots: blank ones were dropped above.
-  const finalShot = typed.some((s) => s.isFinal && s.shots.length > 0);
+  // A final with nothing shot (and no photo, C6) is not saved; one without a
+  // main round is refused. A kept ordinary row has shots or a photo.
+  const finalShot = typed.some((s) => s.isFinal && (s.shots.length > 0 || s.photoRow !== null));
   const kept = finalShot ? typed : typed.filter((s) => !s.isFinal);
   if (finalShot && !kept.some((s) => !s.isFinal && !s.isSighter)) {
     errors.push({ kind: 'finalWithoutMain' });
@@ -273,8 +299,11 @@ export function buildSessionEntry(
   add('sessions', newSessionRow(sessionId, now, fields));
 
   const shotRows: Payload[] = [];
+  const photos: SeriesPhoto[] = [];
   kept.forEach((series, index) => {
-    const seriesId = deps.newId();
+    const seriesId = series.photoId ?? deps.newId();
+    // The series id doubles as the photo id, as on the phone (C2).
+    if (series.photoRow !== null) photos.push({ row: series.photoRow, photoId: seriesId });
     add(
       'series',
       newSeriesRow(seriesId, now, {
@@ -282,6 +311,7 @@ export function buildSessionEntry(
         position: index + 1,
         isSighter: series.isSighter,
         isFinal: series.isFinal,
+        photoUri: series.photoRow === null ? null : toSyncPhotoUri(seriesId),
       }),
     );
     series.shots.forEach((shot, shotIndex) => {
@@ -293,5 +323,5 @@ export function buildSessionEntry(
   if (changes.length > PUSH_BATCH_MAX) {
     return { ok: false, errors: [{ kind: 'tooManyChanges', max: PUSH_BATCH_MAX }] };
   }
-  return { ok: true, sessionId, changes };
+  return { ok: true, sessionId, changes, photos };
 }

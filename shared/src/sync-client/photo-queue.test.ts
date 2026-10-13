@@ -7,6 +7,7 @@ import {
   photoFailureForStatus,
   MAX_PHOTO_ATTEMPTS,
   PHOTO_MAX_BYTES,
+  scaledPhotoSize,
   selectNextPhotoTask,
   type PhotoFailure,
   type PhotoQueueEntry,
@@ -272,5 +273,41 @@ describe('fitsPhotoSizeCap', () => {
 
   it('rejects one byte over', () => {
     expect(fitsPhotoSizeCap(PHOTO_MAX_BYTES + 1)).toBe(false);
+  });
+});
+
+describe('scaledPhotoSize (docs/specs/web-entry-photo-spec.md)', () => {
+  it('S1 scaledPhotoSize downscales the longer edge to 2048 and keeps the aspect', () => {
+    expect(scaledPhotoSize(4000, 3000)).toEqual({ width: 2048, height: 1536 });
+    expect(scaledPhotoSize(3000, 4000)).toEqual({ width: 1536, height: 2048 });
+    expect(scaledPhotoSize(4096, 4096)).toEqual({ width: 2048, height: 2048 });
+    expect(scaledPhotoSize(2049, 1)).toEqual({ width: 2048, height: 1 });
+    expect(scaledPhotoSize(1, 2049)).toEqual({ width: 1, height: 2048 });
+    expect(scaledPhotoSize(3001, 2000)).toEqual({ width: 2048, height: 1365 });
+  });
+
+  it('S2 scaledPhotoSize never upscales and never returns 0', () => {
+    expect(scaledPhotoSize(2048, 1000)).toEqual({ width: 2048, height: 1000 });
+    expect(scaledPhotoSize(1000, 2048)).toEqual({ width: 1000, height: 2048 });
+    expect(scaledPhotoSize(640, 480)).toEqual({ width: 640, height: 480 });
+    expect(scaledPhotoSize(10000, 1)).toEqual({ width: 2048, height: 1 });
+    expect(scaledPhotoSize(1, 10000)).toEqual({ width: 1, height: 2048 });
+  });
+
+  it('S2 property: the longer edge is min(edge, 2048), the aspect within a pixel', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 20000 }),
+        fc.integer({ min: 1, max: 20000 }),
+        (w, h) => {
+          const out = scaledPhotoSize(w, h);
+          expect(Math.max(out.width, out.height)).toBe(Math.min(Math.max(w, h), 2048));
+          expect(Math.min(out.width, out.height)).toBeGreaterThanOrEqual(1);
+          expect(out.width).toBeLessThanOrEqual(w);
+          expect(out.height).toBeLessThanOrEqual(h);
+          expect(Math.abs(out.width * h - out.height * w)).toBeLessThanOrEqual(Math.max(w, h));
+        },
+      ),
+    );
   });
 });

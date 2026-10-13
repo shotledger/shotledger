@@ -30,7 +30,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '../../../app/src/features/session/labels';
-import { currentUserId, loadTables, pushRows } from '../api';
+import { currentUserId, loadTables, pushRows, uploadPhoto } from '../api';
 import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
@@ -54,10 +54,21 @@ import {
   withDiscipline,
   withProgram,
   withRegulation,
+  withRowPhoto,
   withType,
   type EntryForm,
 } from './model';
-import { afterEdit, IDLE, save, saveBlocked, submitRequest, type SaveState } from './save';
+import { heldPhotosFor } from './photo-upload';
+import {
+  afterEdit,
+  IDLE,
+  reusablePhotoIds,
+  save,
+  saveBlocked,
+  submitRequest,
+  type SaveState,
+} from './save';
+import { SeriesPhoto, useSeriesPhotos } from './series-photo';
 import { addTag, removeTag } from './tags';
 import { TagsField } from './tags-field';
 import { showDate } from '../dates';
@@ -149,6 +160,9 @@ function statusText(t: TFunction, state: SaveState): string | null {
       if (status.firearmRejected) return t('web.entry.savedFirearmRejected');
       return status.refreshed ? t('web.entry.saved') : t('web.entry.savedReload');
     case 'failed':
+      if (status.photo === 'photoRateLimited') return t('web.entry.failedPhotoRateLimited');
+      if (status.photo === 'photoQuota') return t('web.entry.failedPhotoQuota');
+      if (status.photo === 'photoTooLarge') return t('web.entry.failedPhotoTooLarge');
       if (status.error === 'network') return t('web.entry.failedNetwork');
       if (status.error === 'unauthenticated') return t('web.entry.failedSignedOut');
       if (status.error === 'versionUnsupported') return t('web.entry.failedOutdated');
@@ -180,6 +194,8 @@ export function Entry({
   const [state, setState] = useState<SaveState>(IDLE);
   // A fält session's stations, beside the series rows (web-falt-entry-spec C1).
   const [falt, setFalt] = useState<FaltForm>(initialFalt);
+  // The form as last set: a photo pick resolves later than the render that started it.
+  const latest = useRef(form);
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
   // A row added by Enter exists only after the next render.
   const pendingFocus = useRef<number | null>(null);
@@ -201,11 +217,15 @@ export function Entry({
   });
 
   const edit = (next: EntryForm) => {
+    const prev = latest.current;
+    latest.current = next;
     setForm(next);
     // Only blank rows added (Enter, Add Series): the held request still holds (R21).
-    const unchanged = sendsTheSame(form, next);
+    const unchanged = sendsTheSame(prev, next);
     setState((was) => afterEdit(was, { sendsTheSame: unchanged }));
   };
+  // A photo pick or removal is a form edit, so it drops a held request (photo spec R6).
+  const photos = useSeriesPhotos((key, photo) => edit(withRowPhoto(latest.current, key, photo)));
   const set = <K extends keyof EntryForm>(key: K, value: EntryForm[K]) =>
     edit({ ...form, [key]: value });
   const editFalt = (next: FaltForm) => {
@@ -280,12 +300,15 @@ export function Entry({
     else formErrors.push(errorText(t, error, rowLabel));
   }
 
+  const pickedBlobs = () => new Map([...photos.picks].map(([key, pick]) => [key, pick.blob]));
+
   const runSave = () => {
     const held = submitRequest(state);
     if (blocked !== null || startedAt === null) return;
     focusAfterSave.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setState({ status: { kind: 'saving' }, held: null });
+    const spare = state.spare;
+    setState({ status: { kind: 'saving' }, held: null, ...(spare && { spare }) });
     void save(
       {
         loadContext: async () => {
@@ -298,26 +321,48 @@ export function Entry({
           };
         },
         build: (context) =>
-          buildEntry(form, falt, defaultName, context, {
-            newId: uuidv7,
-            newChangeId: () => crypto.randomUUID(),
-            now: () => new Date().toISOString(),
-          }),
+          buildEntry(
+            form,
+            falt,
+            defaultName,
+            context,
+            {
+              newId: uuidv7,
+              newChangeId: () => crypto.randomUUID(),
+              now: () => new Date().toISOString(),
+            },
+            reusablePhotoIds(pickedBlobs(), spare),
+          ),
         currentUserId,
         push: pushRows,
         refresh,
+        photos: {
+          heldFor: (built) =>
+            heldPhotosFor(
+              built,
+              form.rows.map((row) => row.key),
+              pickedBlobs(),
+            ),
+          upload: uploadPhoto,
+        },
       },
       held,
+      spare,
     )
       .then((next) => {
         setState(next);
         if (next.status.kind === 'saved') {
-          setForm(initialForm(new Date(), profile));
+          const fresh = initialForm(new Date(), profile);
+          latest.current = fresh;
+          setForm(fresh);
           setFalt(initialFalt());
+          photos.clear();
         }
       })
       // save() catches what it calls; this is the last guard against "saving" forever (R18).
-      .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
+      .catch(() =>
+        setState({ status: { kind: 'failed', error: 'unknown' }, held, ...(spare && { spare }) }),
+      );
   };
 
   // The same account signed in again: only the signed-out notice goes.
@@ -665,6 +710,13 @@ export function Entry({
                       {t('session.sighter')}
                     </label>
                   )}
+                  <SeriesPhoto
+                    rowLabel={label}
+                    pick={photos.picks.get(row.key)}
+                    error={photos.errors.get(row.key)}
+                    onFile={(file) => void photos.choose(row.key, file)}
+                    onRemove={() => photos.remove(row.key)}
+                  />
                   {rowError && <p className="danger row-error">{rowError}</p>}
                 </div>
               );

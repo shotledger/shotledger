@@ -81,6 +81,20 @@ the stations after it move up a number. For a station where every shot
 missed, choose **0** under Hits: it is saved and counts, as a station with 0
 hits.
 
+## Add a target photo
+
+**Add Photo** under a row attaches a photo of that series' target, from a file
+on this computer. A row with a photo is saved even when it has no shots, so
+you can score it from the photo on the phone later. **Replace Photo** and
+**Remove** change it before you save.
+
+The photo is sent as the phone sends one: made smaller (at most 2048 pixels on
+the longer side), turned the right way up, and saved as a new JPEG, which
+leaves out the camera details and the location the original may carry. The
+original file never leaves the computer. A file the browser cannot open as a
+picture (HEIC, outside Safari) is refused, and so is a photo that is still
+over 1.5 MB after it is made smaller. A fält station takes no photo.
+
 ## Tag it
 
 Under the rows, **Tags** takes a tag name: type it and press **Add** or
@@ -95,7 +109,18 @@ the field when you save is not added.
 saved completely or not at all. Your phone gets it at its next sync, and a
 chosen firearm's round count goes up by the shots, sighters and the final
 included, or by the rounds fired; for fält, by six for each saved station,
-scratched and shoot-off ones included.
+scratched and shoot-off ones included. Photos are sent first, and the session only
+once every photo has arrived; the phone downloads them like any synced photo.
+
+If a photo cannot be sent, nothing is saved. When the server is unreachable,
+or more than 60 photos were sent in the last hour, **Save** becomes **Retry**,
+which sends only the photos that have not arrived, then the session. When your
+photo storage is full, remove a photo and save again: photos that already
+arrived are not sent again. A photo that arrived before a save failed stays in
+your photo storage if you then remove it or close the tab.
+
+A row with a photo is kept when you change the match format, as a row with
+shots is.
 
 Saving needs a connection. If the server cannot be reached, or answers in a
 way that leaves it unclear whether the session arrived, your series stay on

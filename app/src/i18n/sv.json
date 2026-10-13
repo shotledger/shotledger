@@ -1418,7 +1418,13 @@
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Serierna finns kvar; Försök igen skickar samma pass igen.",
       "stationBlank": "Sparas inte: inget ifyllt.",
       "errorStationPoints": "{{row}}: poängen ska vara heltal och inte fler än maxpoängen.",
-      "errorInvalidStation": "{{row}}: ingen station kan ha de här siffrorna."
+      "errorInvalidStation": "{{row}}: ingen station kan ha de här siffrorna.",
+      "photoAlt": "Foto för {{row}}",
+      "photoUnreadable": "{{row}}: filen kan inte läsas som ett foto.",
+      "photoTooLarge": "{{row}}: fotot är för stort, även förminskat.",
+      "failedPhotoRateLimited": "För många foton har laddats upp den senaste timmen. Serierna finns kvar; Försök igen senare skickar samma pass.",
+      "failedPhotoQuota": "Fotolagringen är full, så inget sparades. Ta bort ett foto och spara sedan; foton som redan kommit fram skickas inte igen.",
+      "failedPhotoTooLarge": "Servern avvisade ett foto som för stort, så inget sparades. Ta bort det och spara sedan."
     },
     "bulk": {
       "title": "Ändra flera pass",

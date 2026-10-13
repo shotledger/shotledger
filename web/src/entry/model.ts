@@ -36,6 +36,11 @@ export interface Row {
   isSighter: boolean;
   /** A row of the final; absent is the main round. */
   isFinal?: boolean;
+  /**
+   * The current photo pick on this row, a token that changes on every pick
+   * (web-entry-photo-spec R6); absent is none. The bytes stay in the page.
+   */
+  photo?: number;
 }
 
 export interface EntryForm {
@@ -156,25 +161,32 @@ export const isFixed = (form: Pick<EntryForm, 'programId'>) => skeletonOf(form).
  * format takes its skeleton's rows and sighters, typed rows past it kept; a
  * free one drops trailing blank rows and every sighter mark.
  */
+/** Nothing typed and no photo: a layout change may drop it (a photo keeps a row, R6). */
+const isBlankRow = (row: Row) => row.text.trim() === '' && row.photo === undefined;
+
 function layoutRows(form: EntryForm): EntryForm {
   // A program without a final turns final rows into ordinary ones.
   const ordinary = (row: Row): Row =>
     row.isFinal && programOf(form)?.supportsFinal !== true ? { ...row, isFinal: false } : row;
   const skeleton = skeletonOf(form);
   if (skeleton.length > 0) {
-    const laid = skeleton.map((entry, i) => ({
-      key: form.rows[i]?.key ?? newRow().key,
-      text: form.rows[i]?.text ?? '',
-      isSighter: entry.isSighter,
-    }));
+    const laid = skeleton.map((entry, i) => {
+      const row = form.rows[i];
+      const laidRow: Row = {
+        key: row?.key ?? newRow().key,
+        text: row?.text ?? '',
+        isSighter: entry.isSighter,
+      };
+      return row?.photo === undefined ? laidRow : { ...laidRow, photo: row.photo };
+    });
     const past = form.rows
       .slice(skeleton.length)
-      .filter((row) => row.text.trim() !== '')
+      .filter((row) => !isBlankRow(row))
       .map((row) => ({ ...ordinary(row), isSighter: false }));
     return { ...form, rows: [...laid, ...past] };
   }
   const rows = form.rows.map((row) => ({ ...ordinary(row), isSighter: false }));
-  while (rows.length > 1 && rows.at(-1)!.text.trim() === '') rows.pop();
+  while (rows.length > 1 && isBlankRow(rows.at(-1)!)) rows.pop();
   return { ...form, rows: rows.length > 0 ? rows : [newRow()] };
 }
 
@@ -221,9 +233,12 @@ export function sendsTheSame(prev: EntryForm, next: EntryForm): boolean {
   return (
     keys.every((key) => fieldsBefore[key] === fieldsAfter[key]) &&
     before.every(
-      (row, i) => row.text === after[i]!.text && row.isSighter === after[i]!.isSighter,
+      (row, i) =>
+        row.text === after[i]!.text &&
+        row.isSighter === after[i]!.isSighter &&
+        row.photo === after[i]!.photo,
     ) &&
-    after.slice(before.length).every((row) => row.text.trim() === '' && !row.isSighter)
+    after.slice(before.length).every((row) => isBlankRow(row) && !row.isSighter)
   );
 }
 
@@ -295,10 +310,11 @@ export function toDraft(form: EntryForm, defaultName: string): SessionEntryDraft
     ammoLotId: form.ammoLotId,
     decimalScoring: decimalShown(form) && form.decimalScoring,
     seriesLength: programOf(form) ? null : chosenSeriesLength(form.seriesLengthText),
-    series: form.rows.map(({ text, isSighter, isFinal }) => ({
+    series: form.rows.map(({ text, isSighter, isFinal, photo }) => ({
       text,
       isSighter,
       isFinal: isFinal === true,
+      ...(photo !== undefined && { hasPhoto: true }),
     })),
   };
 }
@@ -315,5 +331,17 @@ export function rowSummary(text: string, mode: ScoringMode): RowSummary {
     totalTenths: parsed.shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
     innerTens: parsed.shots.filter((shot) => shot.isInnerTen).length,
     shots: parsed.shots.length,
+  };
+}
+
+/** A photo picked (a new token) or removed (undefined) on the row with this key. */
+export function withRowPhoto(form: EntryForm, key: number, photo: number | undefined): EntryForm {
+  return {
+    ...form,
+    rows: form.rows.map((row) => {
+      if (row.key !== key) return row;
+      const { photo: _old, ...rest } = row;
+      return photo === undefined ? rest : { ...rest, photo };
+    }),
   };
 }

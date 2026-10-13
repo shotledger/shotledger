@@ -800,6 +800,20 @@ fieldset.field legend {
   text-align: right;
 }
 
+.entry-photo {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.entry-photo img {
+  height: 56px;
+  border-radius: 6px;
+}
+
 .row-error {
   grid-column: 2 / -1;
   margin: 0;
