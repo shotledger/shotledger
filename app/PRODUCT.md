@@ -158,7 +158,9 @@ scores against official results.
    milestones, leaderboards or nudges to shoot more. Results the federations
    themselves define (standard medals, the gold series threshold) are shown
    because they are real outcomes in the rule book, not app-invented
-   rewards. Maintainer's ruling, 2026-10-13.
+   rewards. A brief acknowledgement when a series reaches one of them (the
+   keypad's gold series, full score or perfect animation, #482) is fine: it
+   marks a real result once and never nudges. Maintainer's ruling, 2026-10-13.
 
 ## Costs
 
