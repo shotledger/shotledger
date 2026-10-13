@@ -234,7 +234,7 @@ describe('runSyncCycle — pull', () => {
     const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
 
     expect(calls).toBe(MAX_PULL_ITERATIONS);
-    expect(result.status).toBe('partial');
+    expect(result).toMatchObject({ status: 'partial', pulled: 0, shadowed: 0 });
   });
 });
 

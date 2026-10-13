@@ -149,8 +149,11 @@ describe('validatePayload: P2 a malformed firearm is refused', () => {
     ['an array', [F]],
     ['a string', 'F'],
     ['a number', 1],
-  ])('payload is %s', (_name, payload) => {
-    expect(validatePayload(live('firearms', payload)).ok).toBe(false);
+  ])('payload is %s: refused on its type alone, with no envelope check', (_name, payload) => {
+    expect(validatePayload(live('firearms', payload))).toEqual({
+      ok: false,
+      issues: [{ path: '', code: 'invalid_type' }],
+    });
   });
 
   it('flags are exactly 0 or 1', () => {
@@ -219,6 +222,9 @@ describe('isIsoInstant', () => {
     ['2026-08-01T10:00:00Z', false],
     ['2026-08-01T10:00:00.000+00:00', false],
     ['+002026-08-01T10:00:00.000Z', false],
+    // Years past 9999 round-trip through Date, so only the shape refuses them.
+    ['+010000-01-01T00:00:00.000Z', false],
+    ['-000001-01-01T00:00:00.000Z', false],
     [' 2026-08-01T10:00:00.000Z', false],
     ['2026-08-01T10:00:00.000Z ', false],
     ['', false],
@@ -334,8 +340,52 @@ describe('derivation from the Drizzle tables (C1)', () => {
     expect(derivePayloadSchema(notes).safeParse({ id: 'n', value: 'not json' }).success).toBe(true);
   });
 
+  it('on the settings table, only the value column is JSON-checked', () => {
+    const settings = sqliteTable('settings', {
+      id: text('id').primaryKey(),
+      value: text('value').notNull(),
+      label: text('label').notNull(),
+    });
+    const schema = derivePayloadSchema(settings);
+    expect(schema.safeParse({ id: 'k', value: '1', label: 'not json' }).success).toBe(true);
+    expect(schema.safeParse({ id: 'k', value: 'not json', label: 'x' }).success).toBe(false);
+  });
+
   it('the fixture rows use the shared clock', () => {
     expect(fullRow('tags', 't1').created_at).toBe(FIXTURE_NOW);
+  });
+});
+
+// PAYLOAD_SCHEMAS is built once, at module load. These derive the schemas
+// afresh, so each refinement is exercised by code that runs inside the test.
+describe('the wire rules on a freshly derived schema', () => {
+  const fresh = (tableName: SyncTableName) => derivePayloadSchema(SYNC_TABLES[tableName]);
+  const accepts = (tableName: SyncTableName, overrides: Record<string, unknown> = {}) =>
+    fresh(tableName).safeParse(fullRow(tableName, 'r1', overrides)).success;
+
+  it('accepts a whole row of every table', () => {
+    for (const tableName of SYNC_TABLE_NAMES) expect(accepts(tableName), tableName).toBe(true);
+  });
+
+  it.each<[SyncTableName, Record<string, unknown>]>([
+    ['firearms', { deleted_at: FIXTURE_NOW }],
+    ['firearms', { id: '' }],
+    ['firearm_groups', { firearm_id: '' }],
+    ['series', { session_id: '' }],
+    ['firearms', { created_at: '2026-09-02 10:00' }],
+    ['firearms', { updated_at: '2026-02-30T00:00:00.000Z' }],
+    ['sessions', { started_at: '2026-09-02T10:00:00Z' }],
+    ['maintenance_events', { performed_at: 'yesterday' }],
+    ['sessions', { is_championship: 2 }],
+    ['sessions', { decimal_scoring: true }],
+    ['shots', { is_inner_ten: -1 }],
+    ['settings', { value: 'not json' }],
+  ])('%s refuses %o', (tableName, overrides) => {
+    expect(accepts(tableName, overrides)).toBe(false);
+  });
+
+  it('a nullable foreign key still accepts null', () => {
+    expect(accepts('sessions', { firearm_id: null })).toBe(true);
   });
 });
 

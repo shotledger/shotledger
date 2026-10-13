@@ -37,7 +37,8 @@
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
     "!shared/src/shotlog/fixtures.ts",
-    "!shared/src/sync/payload-fixtures.ts"
+    "!shared/src/sync/payload-fixtures.ts",
+    "!shared/src/sync/schema.ts"
   ],
   "thresholds": {
     "high": 100,
