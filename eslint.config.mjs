@@ -200,6 +200,26 @@ export default tseslint.config(
     },
   },
   {
+    // A focused or skipped test passes the gate while proving nothing (#806).
+    // Vitest already rejects `.only` under CI; Jest does not, and neither
+    // rejects `.skip`. Conditional `skipIf` is not matched.
+    files: ['{app,shared,backend,web}/**/*.{test,spec}.{ts,tsx}', 'backend/test/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'MemberExpression[object.name=/^(it|test|describe|suite)$/][property.name=/^(only|skip)$/]',
+          message: 'No focused or skipped tests: fix the test or delete it (#806).',
+        },
+        {
+          selector: 'CallExpression[callee.name=/^(fit|fdescribe|xit|xtest|xdescribe)$/]',
+          message: 'No focused or skipped tests: fix the test or delete it (#806).',
+        },
+      ],
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
