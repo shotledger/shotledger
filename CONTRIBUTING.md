@@ -129,11 +129,11 @@ The repository holds works under more than one license; the root
 [`LICENSE`](LICENSE) is the map and `REUSE.toml` is the per-file source of
 truth. A contribution is licensed under the terms of the directory it lands in:
 
-| Directory                          | Inbound terms                                                                                                                                                        |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `backend/`                         | Elastic License 2.0 (`LICENSES/Elastic-2.0.txt`)                                                                                                                     |
-| `shared/src/sync/`                 | Apache-2.0 (`LICENSES/Apache-2.0.txt`) — the sync protocol the backend compiles in; it may import only `zod` and its own files                                       |
-| `app/`, `shared/`, everything else | AGPL-3.0-or-later (`LICENSES/AGPL-3.0-or-later.txt`) **together with** the section 7 additional permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt` |
+| Directory                          | Inbound terms                                                                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/`                         | Elastic License 2.0 (`LICENSES/Elastic-2.0.txt`)                                                                                                                                    |
+| `shared/src/sync/`                 | Apache-2.0 (`LICENSES/Apache-2.0.txt`) — the sync protocol and the Drizzle tables the backend compiles in; it may import only `zod`, `drizzle-orm`, `drizzle-zod` and its own files |
+| `app/`, `shared/`, everything else | AGPL-3.0-or-later (`LICENSES/AGPL-3.0-or-later.txt`) **together with** the section 7 additional permissions in `LICENSES/LicenseRef-ShotLedger-AGPL-Permissions.txt`                |
 
 "Together with" matters: a contribution to `app/` or `shared/` carries the
 same app-store and platform-library permissions as the rest of the code, so
