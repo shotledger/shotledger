@@ -1380,6 +1380,11 @@ describe('K24 delete refuses what changed since the page opened (R10)', () => {
         f.shots.set('y3', shot('y3', 'r2', 3, 60)),
       (f: Parameters<Parameters<typeof delAfter>[1]>[0]) =>
         f.shots.set('z4', shot('z4', 'rF', 4, 60)),
+      // The phone's re-entry at the same count: one shot replaced, the series row untouched.
+      (f: Parameters<Parameters<typeof delAfter>[1]>[0]) => {
+        patch(f.shots, 'x1', { deleted_at: NOW });
+        f.shots.set('x6', shot('x6', 'r1', 1, 100));
+      },
     ]) {
       expect(delAfter('s1', change)).toEqual(STALE);
     }
