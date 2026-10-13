@@ -207,8 +207,10 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   listHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  // Start-aligned: the New Session button floats bottom-right, so a centred
+  // link reached into its corridor and, at larger text sizes, under it (#823).
   seeAll: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: Spacing.three,
     borderRadius: Radius.medium,
   },
