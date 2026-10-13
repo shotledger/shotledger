@@ -10,7 +10,8 @@ location or a firearm, or retype a series you got wrong. Sign in, open
 and time, name, location, notes, the competition fields of a competition,
 firearm and ammo lot. An empty name keeps the name the session has; an empty
 location or note clears it. A new date before 1900 or later than tomorrow is
-refused, as on Enter Series. The type, discipline, match format and decimal
+refused, as on Enter Series, and the date and time are typed in the same format
+as there. The type, discipline, match format and decimal
 scoring are set when a session is created and stay as they are.
 
 Below the fields, each series of the qualification is one row of shots, typed

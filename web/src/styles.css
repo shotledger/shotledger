@@ -694,6 +694,37 @@ a.button {
   font-size: 13px;
 }
 
+/* Date and Time fields (fields/date-time-fields.tsx). */
+.locale-field {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.locale-field input[type='text'] {
+  flex: 1;
+  width: 0;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+}
+
+/* Rendered, so showPicker() can open it, but never seen or reached by Tab. */
+.calendar-picker {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .settings-fields {
   display: grid;
   gap: 16px;

@@ -9,7 +9,8 @@ annan plats. Logga in och öppna **Ändra flera pass** i menyn till vänster.
 Sidan listar alla pass, nyaste först. Begränsa listan med **Från**, **Till**
 och **Sök pass** (ett pass namn, plats eller taggar) och markera sedan passen
 som ska ändras. Rutan överst i listan markerar eller avmarkerar alla pass som
-visas.
+visas. **Från** och **Till** tar ett datum som i
+[Mata in serier](entering-series-on-the-web.md), med samma kalenderknapp.
 
 En ändring gäller de markerade pass som listan visar. Pass du markerade och
 sedan filtrerade bort lämnas orörda.

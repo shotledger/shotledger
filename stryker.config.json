@@ -33,6 +33,7 @@
     "web/src/bulk/*.ts",
     "web/src/edit/*.ts",
     "web/src/settings/*.ts",
+    "web/src/fields/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
     "!shared/src/shotlog/fixtures.ts"

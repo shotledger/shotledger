@@ -6,6 +6,7 @@ import type {
 import { useTranslation } from 'react-i18next';
 
 import { disciplineLabel } from '../../../app/src/features/session/labels';
+import { DateField } from '../fields/date-time-fields';
 
 const PERIOD_KEYS: Record<StatsPeriod, string> = {
   '30d': 'period.last30Days',
@@ -68,22 +69,16 @@ export function Filters({
         />
         {state.period === 'custom' && (
           <div className="dates">
-            <label>
-              {t('period.from')}
-              <input
-                type="date"
-                value={state.customFrom ?? ''}
-                onChange={(event) => set({ customFrom: event.target.value || null })}
-              />
-            </label>
-            <label>
-              {t('period.to')}
-              <input
-                type="date"
-                value={state.customTo ?? ''}
-                onChange={(event) => set({ customTo: event.target.value || null })}
-              />
-            </label>
+            <DateField
+              label={t('period.from')}
+              value={state.customFrom ?? ''}
+              onChange={(from) => set({ customFrom: from || null })}
+            />
+            <DateField
+              label={t('period.to')}
+              value={state.customTo ?? ''}
+              onChange={(to) => set({ customTo: to || null })}
+            />
             {state.customFrom !== null &&
               state.customTo !== null &&
               state.customFrom > state.customTo && (
