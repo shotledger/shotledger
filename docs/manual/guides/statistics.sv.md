@@ -74,13 +74,36 @@ och en med frågan den svarar på. Tryck på en för att gå direkt dit.
 Ett filter på **Skott per serie** utelämnar fältpass: en fältomgång har
 stationer, inte serier, och har alltså ingen serielängd att matcha.
 
+## Ett pass mot din vanliga form
+
+Öppna ett pass och byt från **Serier** till **Statistik**. Under passets egna
+siffror ställer **Mot din vanliga form** passet mot de 100 serier du sköt före
+det i samma gren och klass. Provserier räknas inte på någon sida.
+
+- En rad i ord säger hur passet gick: _Ungefär som vanligt_, _Bättre än
+  vanligt_, _Klart bättre än vanligt_, eller samma sak åt det sämre hållet. Se
+  [Hur "vanlig form" räknas fram](../explanation/usual-form.md).
+- **Snitt/serie** och **Snitt/skott** har var sin stapel. Det grå strecket är
+  ditt vanliga snitt och det färgade är dagens; ju längre isär de står, desto
+  längre från det vanliga sköt du. Raden under ger båda siffrorna och
+  skillnaden.
+- **Förväntat resultat** är vad ditt vanliga seriesnitt blir över så många
+  serier som du sköt i dag, bredvid vad du faktiskt fick.
+- **Andel tior** och **Nior eller bättre** ger andelen av dagens skott i
+  varje, din vanliga andel och skillnaden mellan dem.
+
+Med färre än 100 tidigare serier används de som finns, och det står hur många.
+Under 20 visas siffrorna ändå, men inte hur ovanligt passet var. Finns inga
+alls står det att det inte finns något att jämföra med än.
+
 ## På webben
 
 Med synk påslagen visar **Statistik** i webbappen samma rapport med samma
 siffror. Filtren står i en kolumn bredvid och gäller så fort du ändrar dem, så
 det finns ingen **Skapa rapport**. De står kvar som du lämnade dem medan du
 byter sida i webbappen, och börjar om när du loggar ut eller stänger fliken.
-Ett rekords passnamn öppnar passet.
+Ett rekords passnamn öppnar passet. Statistikvyn i ett pass, med **Mot din
+vanliga form**, finns bara i telefonen.
 
 Webbrapporten har inget filter på **Taggar**, ingen **Exportera JSON** och
 ingen värmekarta för **Var dina skott hamnar**; använd telefonen för dem. Ett
