@@ -32,8 +32,8 @@ const MUTANTS = [
   {
     name: 'phone (M1): the duplicate is not deleted',
     file: PHONE,
-    find: '.set({ deletedAt: now, updatedAt: now })',
-    replace: '.set({ updatedAt: now })',
+    find: '.set({ deletedAt: now, updatedAt: now })\n      .where(eq(ammoLots.id, duplicateId))',
+    replace: '.set({ updatedAt: now })\n      .where(eq(ammoLots.id, duplicateId))',
     ...PHONE_TESTS,
   },
   {
