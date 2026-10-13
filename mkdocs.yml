@@ -31,6 +31,9 @@ docs_dir: docs/manual
 
 theme:
   name: material
+  # The rings in white: the header is the primary colour in both schemes.
+  logo: assets/shotledger-mark-white.svg
+  favicon: assets/shotledger-mark-light.svg
   icon:
     repo: fontawesome/brands/github
   features:

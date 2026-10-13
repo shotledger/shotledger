@@ -1040,12 +1040,19 @@ fieldset.field legend {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 16px;
-  font-weight: 600;
 }
 
-.brand-mark {
+.wordmark {
+  display: block;
+  width: auto;
+}
+
+.wordmark-ink {
+  color: var(--text);
+}
+
+.wordmark-accent {
   color: var(--primary);
 }
 
