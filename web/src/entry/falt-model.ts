@@ -33,6 +33,15 @@ export interface StationRow {
   pointsMaxText: string;
   isScratched: boolean;
   isShootOff: boolean;
+  /**
+   * Edit page only (web-session-edit-spec §10): a stored station's id. Its
+   * shoot-off flag is fixed and it is never blank; absent on the entry page.
+   */
+  id?: string;
+  /** Edit page only: a stored station's position, its label (E14). */
+  position?: number;
+  /** Edit page only: a stored station marked Remove, kept for Undo. */
+  deleted?: boolean;
 }
 
 export interface FaltForm {
@@ -66,11 +75,15 @@ export function initialFalt(): FaltForm {
   return { resultMode: 'falt', stations: [newStation()] };
 }
 
-/** Blank as Save reads it: points parsed as the builder parses them. */
+/** Blank as Save reads it: points parsed as the builder parses them. A stored station never is. */
 const nothingEntered = (row: Omit<StationRow, 'key'>) => {
+  if (row.id !== undefined) return false;
   const points = stationPoints(row.pointsText, row.pointsMaxText);
   return points.ok && isUnenteredStation({ ...row, points: points.points, isShootOff: false });
 };
+
+/** Removed on the edit page: not saved, and not read by the shoot-off rule. */
+const removed = (row: StationRow) => row.deleted === true;
 
 /**
  * The entered numbers of a row, keyless. A shoot-off row with nothing else in
@@ -86,17 +99,23 @@ const blankRow = (row: StationRow) => nothingEntered(entered(row));
 // saved decides: a blank row is the phone's station screen backed out of.
 const lastKept = (falt: FaltForm) =>
   shootOffRows(falt)
-    .filter((row) => !blankRow(row))
+    .filter((row) => !blankRow(row) && !removed(row))
     .at(-1);
 
 /**
  * The rows with the phone's rule applied: every saved row after the first
- * saved shoot-off is one, whatever order the rows were filled in.
+ * saved shoot-off is one, whatever order the rows were filled in. A stored
+ * station keeps its flag, and the last one kept decides for the new rows
+ * after it, as nextStationIsShootOff.
  */
 export function shootOffRows(falt: FaltForm): StationRow[] {
   let started = false;
   return falt.stations.map((row) => {
-    if (blankRow(row)) return row;
+    if (blankRow(row) || removed(row)) return row;
+    if (row.id !== undefined) {
+      started = row.isShootOff;
+      return row;
+    }
     started ||= row.isShootOff;
     return { ...row, isShootOff: started };
   });
@@ -111,7 +130,7 @@ export function canStartShootOff(falt: FaltForm): boolean {
   return (
     lastKept(falt) !== undefined &&
     !nextStationIsShootOff(falt) &&
-    falt.stations.at(-1)?.isShootOff !== true
+    falt.stations.filter((row) => !removed(row)).at(-1)?.isShootOff !== true
   );
 }
 
@@ -194,8 +213,8 @@ export function toFaltDraft(form: EntryForm, falt: FaltForm, defaultName: string
   };
 }
 
-/** What Save does with a row: saves it, drops it as blank, or refuses it. */
-export type StationStatus = 'saved' | 'blank' | 'invalid';
+/** What Save does with a row: saves it, drops it as blank, refuses it, or (edit) removes it. */
+export type StationStatus = 'saved' | 'blank' | 'invalid' | 'removed';
 
 export interface FaltPreview {
   rows: StationStatus[];
@@ -206,6 +225,7 @@ export interface FaltPreview {
 export function faltPreview(falt: FaltForm): FaltPreview {
   const saved: FaltResultStation[] = [];
   const rows = shootOffRows(falt).map((row, index): StationStatus => {
+    if (removed(row)) return 'removed';
     const points = stationPoints(row.pointsText, row.pointsMaxText);
     if (!points.ok) return 'invalid';
     const kept = entered(row);

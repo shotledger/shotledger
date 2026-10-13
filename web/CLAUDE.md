@@ -9,6 +9,10 @@ whole rows through `/sync/push`, online, with no outbox. The writers are
 go through `shared/src/sync-client/` (`session-entry.ts`, `falt-entry.ts`,
 `settings-edit.ts`, `bulk-edit.ts`, `session-edit.ts`, `direct-push.ts`).
 
+- **Parity with the phone** (root `CLAUDE.md` rule 11): every write mirrors
+  a named phone function (`app/src/db/queries/`) and is tested against it on
+  the phone's schema (`app/src/db/queries/web-*.test.ts`). The phone decides
+  any open question; a gap is stated in the spec, never left silent.
 - **Strings and colours are the app's.** `src/i18n.ts` imports
   `app/src/i18n/{en,sv}.json` and `src/theme.ts` imports
   `app/src/theme/colors.ts`; `i18n:check` scans `web/src` too. Add a web-only

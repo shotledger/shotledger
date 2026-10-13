@@ -1,6 +1,7 @@
-// The station table of a fält entry (docs/specs/web-falt-entry-spec.md §3.3):
-// one row per station with the phone's station-screen controls. The logic is
-// in falt-model.ts; this file only renders.
+// The station table of a fält entry (docs/specs/web-falt-entry-spec.md §3.3)
+// and of the edit page (web-session-edit-spec.md §10, E13): one row per
+// station with the phone's station-screen controls. The logic is in
+// falt-model.ts; this file only renders.
 import { SHOTS_PER_STATION } from '@shotledger/shared/src/scoring/falt';
 import { figuresHitRange } from '@shotledger/shared/src/scoring/falt-station';
 import { useTranslation } from 'react-i18next';
@@ -25,11 +26,17 @@ export function FaltStations({
   falt,
   onEdit,
   rowErrors,
+  positions,
+  onRemove,
 }: {
   falt: FaltForm;
   onEdit: (next: FaltForm) => void;
   /** Error text by 1-based station row. */
   rowErrors: ReadonlyMap<number, string>;
+  /** Edit page: each row's label number, its stored position (E14). Default: 1..n. */
+  positions?: readonly number[];
+  /** Edit page: Remove on a row, Undo on a removed one (E13). */
+  onRemove?: (index: number) => void;
 }) {
   const { t } = useTranslation();
   const preview = faltPreview(falt);
@@ -44,15 +51,21 @@ export function FaltStations({
       {falt.stations.map((row, index) => {
         const figures = figuresHitRange(row.hits ?? 0, row.figureCount);
         const rowError = rowErrors.get(index + 1);
+        const removed = row.deleted === true;
         return (
-          <fieldset key={row.key} className="station-row" aria-invalid={rowError !== undefined}>
+          <fieldset
+            key={row.key}
+            className={removed ? 'station-row deleted' : 'station-row'}
+            aria-invalid={rowError !== undefined}
+          >
             <legend>
-              {t('station.title', { position: index + 1 })}
+              {t('station.title', { position: positions?.[index] ?? index + 1 })}
               {shootOff[index] && <span className="badge">{t('station.shootOff')}</span>}
             </legend>
             <label className="field">
               {t('station.hits')}
               <select
+                disabled={removed}
                 value={row.hits ?? ''}
                 onChange={(event) =>
                   onEdit(
@@ -64,8 +77,9 @@ export function FaltStations({
                   )
                 }
               >
-                {/* Not chosen yet: a row left so is not saved; 0 is every shot missed (R8). */}
-                <option value="">–</option>
+                {/* Not chosen yet: a row left so is not saved; 0 is every shot missed (R8).
+                    A stored station always holds hits, as the phone's screen (E15). */}
+                {row.id === undefined && <option value="">–</option>}
                 {range(0, SHOTS_PER_STATION).map((n) => (
                   <option key={n} value={n}>
                     {n}
@@ -76,6 +90,7 @@ export function FaltStations({
             <label className="field">
               {t('station.figuresHit')}
               <select
+                disabled={removed}
                 value={row.figuresHit}
                 onChange={(event) =>
                   onEdit(withStation(falt, index, { figuresHit: Number(event.target.value) }))
@@ -91,6 +106,7 @@ export function FaltStations({
             <label className="field">
               {t('station.figureCount')}
               <select
+                disabled={removed}
                 value={row.figureCount ?? ''}
                 onChange={(event) =>
                   onEdit(
@@ -113,6 +129,7 @@ export function FaltStations({
             <label className="field">
               {t('station.points')}
               <input
+                disabled={removed}
                 inputMode="numeric"
                 autoComplete="off"
                 value={row.pointsText}
@@ -124,6 +141,7 @@ export function FaltStations({
             <label className="field">
               {t('station.pointsMax')}
               <input
+                disabled={removed}
                 inputMode="numeric"
                 autoComplete="off"
                 value={row.pointsMaxText}
@@ -134,6 +152,7 @@ export function FaltStations({
             </label>
             <label className="field check">
               <input
+                disabled={removed}
                 type="checkbox"
                 checked={row.isScratched}
                 onChange={(event) =>
@@ -142,6 +161,15 @@ export function FaltStations({
               />
               {t('station.scratched')}
             </label>
+            {onRemove && (
+              <button
+                type="button"
+                className="secondary small station-remove"
+                onClick={() => onRemove(index)}
+              >
+                {removed ? t('web.edit.undo') : t('station.delete')}
+              </button>
+            )}
             {preview.rows[index] === 'blank' && (
               <p className="muted station-note">{t('web.entry.stationBlank')}</p>
             )}
