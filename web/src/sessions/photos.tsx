@@ -155,17 +155,23 @@ export function PhotoPanel({
 interface Picks {
   picked: readonly string[];
   setPicked: (next: readonly string[]) => void;
+  /** False with target photos hidden (#801): photos show, but nothing picks them. */
+  enabled: boolean;
 }
 
-const PicksContext = createContext<Picks>({ picked: [], setPicked: () => undefined });
+const PicksContext = createContext<Picks>({
+  picked: [],
+  setPicked: () => undefined,
+  enabled: true,
+});
 export const PicksProvider = PicksContext.Provider;
 
 /** A series' or station's thumbnail, with the box that picks it for comparing. */
 export function RowPhoto({ photo, alt }: { photo: PhotoRef; alt: string }) {
   const { t } = useTranslation();
-  const { picked, setPicked } = useContext(PicksContext);
+  const { picked, setPicked, enabled } = useContext(PicksContext);
   if (photo === null) return null;
-  const photoId = photo.kind === 'uploaded' ? photo.photoId : null;
+  const photoId = photo.kind === 'uploaded' && enabled ? photo.photoId : null;
   const isPicked = photoId !== null && picked.includes(photoId);
   return (
     <div className="row-photo">
@@ -187,8 +193,8 @@ export function RowPhoto({ photo, alt }: { photo: PhotoRef; alt: string }) {
 /** Adds every uploaded photo of the session to the picks. */
 export function PickAll({ photoIds }: { photoIds: readonly string[] }) {
   const { t } = useTranslation();
-  const { picked, setPicked } = useContext(PicksContext);
-  if (photoIds.length < 2) return null;
+  const { picked, setPicked, enabled } = useContext(PicksContext);
+  if (!enabled || photoIds.length < 2) return null;
   const missing = photoIds.filter((id) => !picked.includes(id));
   return (
     <button
@@ -204,8 +210,8 @@ export function PickAll({ photoIds }: { photoIds: readonly string[] }) {
 
 export function PickBar() {
   const { t } = useTranslation();
-  const { picked, setPicked } = useContext(PicksContext);
-  if (picked.length === 0) return null;
+  const { picked, setPicked, enabled } = useContext(PicksContext);
+  if (!enabled || picked.length === 0) return null;
   return (
     <div className="pick-bar" role="region" aria-label={t('web.photos.compareTitle')}>
       <span>{t('web.photos.picked', { count: picked.length })}</span>

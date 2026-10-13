@@ -22,6 +22,7 @@ import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
 import { formatAmmoRecipe } from '@/features/ammo/format-ammo-recipe';
 import { requiresLicense } from '@/features/firearms/completeness';
 import { useFirearmsList, type FirearmListRow } from '@/features/firearms/use-firearms-list';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
 
 type Section = 'firearms' | 'ammo';
@@ -41,13 +42,18 @@ const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
 export default function FirearmsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [section, setSection] = useState<Section>('firearms');
+  const features = useFeatures();
+  const [chosen, setSection] = useState<Section>('firearms');
+  // Ammunition lots hidden (#801): the tab is the firearms list alone.
+  const section: Section = features.ammoLots ? chosen : 'firearms';
   const [showArchived, setShowArchived] = useState(false);
   const { rows: allFirearmRows } = useFirearmsList();
   // Archived firearms (#799) sit behind a toggle under the active ones.
   const firearmRows = allFirearmRows.filter((row) => !row.isArchived);
   const archivedRows = allFirearmRows.filter((row) => row.isArchived);
-  const ammoRows = listAmmoLots(db).map((lot) => ({ lot, usage: getAmmoLotUsage(db, lot.id) }));
+  const ammoRows = features.ammoLots
+    ? listAmmoLots(db).map((lot) => ({ lot, usage: getAmmoLotUsage(db, lot.id) }))
+    : [];
 
   function renderFirearmRow(row: FirearmListRow) {
     return (
@@ -93,7 +99,7 @@ export default function FirearmsScreen() {
                   tone="primary"
                 />
               )}
-              {row.licenseActivityStatus && (
+              {features.licenseActivity && row.licenseActivityStatus && (
                 <Chip
                   testID={`firearm-barometer-${row.id}`}
                   label={t(`compliance.licenseActivity${capitalize(row.licenseActivityStatus)}`)}
@@ -117,15 +123,17 @@ export default function FirearmsScreen() {
         />
       }
     >
-      <ScreenTitle>{t('firearms.title')}</ScreenTitle>
-      <SegmentedControl
-        options={[
-          { value: 'firearms' as Section, label: t('firearms.tabFirearms') },
-          { value: 'ammo' as Section, label: t('firearms.tabAmmo') },
-        ]}
-        value={section}
-        onChange={setSection}
-      />
+      <ScreenTitle>{t(features.ammoLots ? 'firearms.title' : 'firearms.tabFirearms')}</ScreenTitle>
+      {features.ammoLots && (
+        <SegmentedControl
+          options={[
+            { value: 'firearms' as Section, label: t('firearms.tabFirearms') },
+            { value: 'ammo' as Section, label: t('firearms.tabAmmo') },
+          ]}
+          value={section}
+          onChange={setSection}
+        />
+      )}
 
       {section === 'firearms' ? (
         <>

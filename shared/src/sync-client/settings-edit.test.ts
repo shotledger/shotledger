@@ -161,7 +161,7 @@ describe('building the push', () => {
       [{ showLicenseActivity: null as never }, 'showLicenseActivity'],
       [{ showPhotos: 'false' as never }, 'showPhotos'],
       [{ showTimer: 0 as never }, 'showTimer'],
-      [{ showSightSettings: undefined as never }, 'showSightSettings'],
+      [{ showSightSettings: undefined }, 'showSightSettings'],
       [{ showAmmoLots: 'no' as never }, 'showAmmoLots'],
     ];
     for (const [edit, key] of refused) {

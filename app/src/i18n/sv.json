@@ -510,7 +510,24 @@
     "externalSitesRowSubtitle": "Slå på en sajt och logga in på den",
     "dataTitle": "Säkerhetskopiering och data",
     "dataRowSubtitle": "Krypterad säkerhetskopia, JSON-export och import",
-    "trainingRowSubtitle": "Spara dina markeringar för bättre håldetektering"
+    "trainingRowSubtitle": "Spara dina markeringar för bättre håldetektering",
+    "featuresTitle": "Funktioner",
+    "featuresRowSubtitle": "Dölj delar av appen du inte använder",
+    "featuresIntro": "Stäng av en del du aldrig använder, så försvinner den ur menyerna och skärmarna. Ingenting raderas: det du redan har registrerat finns kvar, visas fortfarande där du registrerade det, och allt kommer tillbaka när du slår på delen igen. Valet följer ditt konto till dina andra telefoner och webben.",
+    "feature": {
+      "licenseActivity": "Licensaktivitet",
+      "photos": "Målfoton",
+      "timer": "Tidtagning",
+      "sightSettings": "Siktinställningar",
+      "ammoLots": "Ammunitionspartier"
+    },
+    "featureHint": {
+      "licenseActivity": "Av: ingen licensaktivitet på Hem, på fliken Vapen eller på ett vapen. Dina pass räknas ändå, och Efterlevnad finns kvar under Inställningar.",
+      "photos": "Av: inga Foton under Verktyg, och en ny serie går direkt till knappsatsen. En serie som redan har ett foto visar det fortfarande.",
+      "timer": "Av: ingen Tidtagning under Verktyg.",
+      "sightSettings": "Av: inga siktinställningar på ett vapen och ingen Sikte-knapp på ett pass.",
+      "ammoLots": "Av: ingen ammunitionslista under Vapen och inget ammunitionsparti när du loggar ett pass. Ett pass som har ett parti visar det fortfarande."
+    }
   },
   "about": {
     "title": "Om appen",

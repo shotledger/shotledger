@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { isSyncedSettingKey, SYNCED_SETTING_KEYS } from '../sync/protocol';
 import {
   FEATURE_IDS,
   FEATURE_SETTING_KEYS,
@@ -59,5 +60,11 @@ describe('feature visibility (docs/specs/feature-visibility-spec.md §3.1)', () 
       sightSettings: 'showSightSettings',
       ammoLots: 'showAmmoLots',
     });
+  });
+
+  it('S1 every switch syncs with the account settings, after the five account keys', () => {
+    expect(SYNCED_SETTING_KEYS.slice(5)).toEqual(Object.values(FEATURE_SETTING_KEYS));
+    for (const key of Object.values(FEATURE_SETTING_KEYS))
+      expect(isSyncedSettingKey(key)).toBe(true);
   });
 });

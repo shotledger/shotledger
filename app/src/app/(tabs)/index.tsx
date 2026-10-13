@@ -29,6 +29,7 @@ import {
   type SessionShapeFilter,
 } from '@/features/home/home-session-row';
 import { useHomeData } from '@/features/home/use-home-data';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Radius, Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
@@ -50,6 +51,7 @@ export default function HomeScreen() {
   const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
     useHomeData();
   const { profile } = useComplianceProfile();
+  const features = useFeatures();
   const { overall, lapseIso } = useOverallLicenseActivity(profile);
   const [shapeFilter, setShapeFilter] = useState<SessionShapeFilter>('all');
   const [pendingDelete, setPendingDelete] = useState<HomeSessionRow | null>(null);
@@ -99,7 +101,7 @@ export default function HomeScreen() {
       </View>
 
       {/* The status opens the License Check, which says what to do about it (#804). */}
-      {profile && overall && (
+      {features.licenseActivity && profile && overall && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('compliance.check.open')}

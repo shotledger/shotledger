@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { FEATURE_SETTING_KEYS } from '../features/visibility';
 import {
   ChangeRowSchema,
   checkProtocolVersion,
@@ -274,8 +273,6 @@ describe('session_tags and settings (sync-tags-settings spec)', () => {
       'showSightSettings',
       'showAmmoLots',
     ]);
-    // The feature switches are the ones shared/src/features names (#801 S1).
-    expect(SYNCED_SETTING_KEYS.slice(5)).toEqual(Object.values(FEATURE_SETTING_KEYS));
     for (const key of SYNCED_SETTING_KEYS) expect(isSyncedSettingKey(key)).toBe(true);
     for (const key of [
       'backupFolder',
