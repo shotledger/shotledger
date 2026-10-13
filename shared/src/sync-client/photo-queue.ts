@@ -97,3 +97,17 @@ export const PHOTO_MAX_BYTES = 1_500_000;
 export function fitsPhotoSizeCap(sizeBytes: number): boolean {
   return sizeBytes <= PHOTO_MAX_BYTES;
 }
+
+/**
+ * The size `prepareSyncPhotoBytes` resizes to: the longer edge at most
+ * `PHOTO_MAX_EDGE_PX`, aspect kept, never upscaled. Shared with the web's
+ * encoder (docs/specs/web-entry-photo-spec.md C4).
+ */
+export function scaledPhotoSize(width: number, height: number): { width: number; height: number } {
+  const longer = Math.max(width, height);
+  if (longer <= PHOTO_MAX_EDGE_PX) return { width, height };
+  const shorter = (edge: number) => Math.max(1, Math.round((edge * PHOTO_MAX_EDGE_PX) / longer));
+  return width >= height
+    ? { width: PHOTO_MAX_EDGE_PX, height: shorter(height) }
+    : { width: shorter(width), height: PHOTO_MAX_EDGE_PX };
+}

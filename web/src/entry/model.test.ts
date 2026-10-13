@@ -25,6 +25,7 @@ import {
   withDiscipline,
   withProgram,
   withRegulation,
+  withRowPhoto,
   withType,
 } from './model';
 
@@ -328,5 +329,72 @@ describe('prefill from the synced profile (C6)', () => {
       ]),
     );
     expect(initialForm(NOW, read).shooterClass).toBe('2');
+  });
+});
+
+// docs/specs/web-entry-photo-spec.md R6: the photo pick lives on its form row.
+describe('a photo on a form row', () => {
+  const rows = (...texts: string[]) =>
+    texts.map((text, i) => ({ key: 100 + i, text, isSighter: false }));
+
+  it('PM1 a layout change keeps a blank row with a photo, in free and fixed format (F3)', () => {
+    const form = withRowPhoto(
+      { ...initialForm(NOW, NO_PROFILE), rows: rows('10 9', '', '') },
+      101,
+      7,
+    );
+    const free = withProgram(form, null);
+    expect(free.rows.map((r) => [r.key, r.photo])).toEqual([
+      [100, undefined],
+      [101, 7],
+    ]);
+
+    const competition = withDiscipline(
+      withType(initialForm(NOW, NO_PROFILE), 'competition'),
+      'issf-standard-pistol',
+      'issf',
+    );
+    const past = competition.rows.length + 2;
+    const long = withRowPhoto(
+      { ...withProgram(competition, null), rows: rows(...Array<string>(past).fill('')) },
+      100 + past - 1,
+      9,
+    );
+    const fixed = withProgram(long, competition.programId);
+    // The skeleton, then the photo row past it; the blank rows between are dropped.
+    expect(fixed.rows).toHaveLength(competition.rows.length + 1);
+    expect(fixed.rows.at(-1)).toMatchObject({ key: 100 + past - 1, photo: 9, isSighter: false });
+    // A photo on a skeleton row stays on it.
+    const onSkeleton = withProgram(withRowPhoto(long, 100, 3), competition.programId);
+    expect(onSkeleton.rows[0]).toMatchObject({ key: 100, photo: 3 });
+  });
+
+  it('PM2 adding, replacing or removing a photo is not sendsTheSame, so it drops a held request (F5)', () => {
+    const form = { ...initialForm(NOW, NO_PROFILE), rows: rows('10 9', '') };
+    const added = withRowPhoto(form, 101, 1);
+    expect(sendsTheSame(form, added)).toBe(false);
+    expect(sendsTheSame(added, withRowPhoto(added, 101, 2))).toBe(false);
+    expect(sendsTheSame(added, withRowPhoto(added, 101, undefined))).toBe(false);
+    expect(sendsTheSame(added, withRowPhoto(added, 101, 1))).toBe(true);
+    // An appended row carrying a photo is not a blank row.
+    expect(
+      sendsTheSame(form, {
+        ...form,
+        rows: [...form.rows, { key: 9, text: '', isSighter: false, photo: 4 }],
+      }),
+    ).toBe(false);
+    expect(withRowPhoto(added, 101, undefined).rows[1]).toStrictEqual({
+      key: 101,
+      text: '',
+      isSighter: false,
+    });
+  });
+
+  it('PM3 toDraft marks a row with a photo, and only that row', () => {
+    const form = withRowPhoto({ ...initialForm(NOW, NO_PROFILE), rows: rows('10', '') }, 101, 5);
+    expect(toDraft(form, 'd').series).toEqual([
+      { text: '10', isSighter: false, isFinal: false },
+      { text: '', isSighter: false, isFinal: false, hasPhoto: true },
+    ]);
   });
 });

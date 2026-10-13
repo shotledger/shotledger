@@ -59,5 +59,5 @@ export function withEntryTags(
   if (changes.length > PUSH_BATCH_MAX) {
     return { ok: false, errors: [{ kind: 'tooManyChanges', max: PUSH_BATCH_MAX }] };
   }
-  return { ok: true, sessionId: entry.sessionId, changes };
+  return { ok: true, sessionId: entry.sessionId, changes, photos: entry.photos };
 }

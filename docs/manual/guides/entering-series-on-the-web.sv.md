@@ -82,6 +82,19 @@ stationerna efter den flyttas upp ett nummer. För en station där alla skott
 missade väljer du **0** under Träff: den sparas och räknas, som en station med
 0 träff.
 
+## Lägg till ett foto av tavlan
+
+**Lägg till foto** under en rad lägger till ett foto av seriens tavla, från en
+fil på datorn. En rad med foto sparas även utan skott, så att du kan
+poängsätta den från fotot i telefonen senare. Med **Byt foto** och **Ta bort**
+ändrar du det innan du sparar.
+
+Fotot skickas som telefonen skickar ett: förminskat (högst 2048 pixlar på den
+längre sidan), vänt rätt och sparat som en ny JPEG, utan de kamerauppgifter och
+den plats originalet kan bära på. Originalfilen lämnar aldrig datorn. En fil
+som webbläsaren inte kan öppna som bild (HEIC, utom i Safari) avvisas, liksom
+ett foto som fortfarande är större än 1,5 MB när det förminskats. En station i fältskjutning tar inget foto.
+
 ## Tagga det
 
 Under raderna tar **Taggar** ett taggnamn: skriv det och tryck **Lägg till**
@@ -96,7 +109,18 @@ bort den igen. Text som står kvar i fältet när du sparar läggs inte till.
 helt eller inte alls. Telefonen får det vid nästa synk, och ett valt vapens
 skottantal ökar med skotten, provserier och final inräknade, eller med de
 avlossade skotten; för fältskjutning med sex för varje sparad station, strukna
-stationer och särskjutning inräknade.
+stationer och särskjutning inräknade. Fotona skickas först, och passet först när alla foton har
+kommit fram; telefonen hämtar dem som vilka synkade foton som helst.
+
+Går ett foto inte att skicka sparas ingenting. Går servern inte att nå, eller
+har fler än 60 foton skickats den senaste timmen, blir **Spara** till
+**Försök igen**, som bara skickar de foton som inte kommit fram och sedan
+passet. Är fotolagringen full tar du bort ett foto och sparar igen: foton som
+redan kommit fram skickas inte igen. Ett foto som kom fram innan ett sparande
+misslyckades ligger kvar i fotolagringen om du sedan tar bort det eller stänger
+fliken.
+
+En rad med foto finns kvar när du byter matchupplägg, som en rad med skott.
 
 För att spara krävs en anslutning. Om servern inte går att nå, eller svarar så
 att det är oklart om passet kom fram, finns serierna kvar på sidan och

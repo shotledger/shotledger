@@ -78,6 +78,8 @@ export interface SeriesFields {
   position: number;
   isSighter: boolean;
   isFinal?: boolean;
+  /** A synced photo's marker (docs/specs/web-entry-photo-spec.md C2); absent is none. */
+  photoUri?: string | null;
 }
 
 export function newSeriesRow(id: string, now: string, fields: SeriesFields): Payload {
@@ -87,7 +89,7 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     position: fields.position,
     is_sighter: fields.isSighter ? 1 : 0,
     is_final: fields.isFinal ? 1 : 0,
-    photo_uri: null,
+    photo_uri: fields.photoUri ?? null,
     photo_geometry: null,
     is_total_override: 0,
     total_override_tenths: null,

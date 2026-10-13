@@ -134,6 +134,11 @@ export function photoUsage(): Promise<PhotoUsage> {
   return photos.usage();
 }
 
+/** A series photo, as the phone's queue sends one: JPEG, to the series id (web-entry-photo C2). */
+export async function uploadPhoto(photoId: string, blob: Blob): Promise<void> {
+  await photos.upload(photoId, await blob.arrayBuffer(), 'image/jpeg');
+}
+
 export function downloadPhoto(photoId: string): Promise<ArrayBuffer> {
   return photos.download(photoId);
 }

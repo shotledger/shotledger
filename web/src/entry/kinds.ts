@@ -14,6 +14,7 @@ import {
   type EntryContext,
   type EntryDeps,
   type EntryResult,
+  type SessionEntryDraft,
 } from '@shotledger/shared/src/sync-client/session-entry';
 
 import { entryDisciplines, isFaltForm, toFaltDraft, type FaltForm } from './falt-model';
@@ -94,13 +95,17 @@ function buildUntagged(
   defaultName: string,
   context: EntryContext,
   deps: EntryDeps,
+  uploadedPhotoIds: ReadonlyMap<number, string>,
 ): EntryResult {
   if (form.kind === 'rounds') {
     return buildRoundsEntry(toRoundsDraft(form, defaultName), context, deps);
   }
-  return isFaltForm(form)
-    ? buildFaltEntry(toFaltDraft(form, falt, defaultName), context, deps)
-    : buildSessionEntry(toDraft(form, defaultName), context, deps);
+  if (isFaltForm(form)) {
+    // Stations carry no photo.
+    const entry = buildFaltEntry(toFaltDraft(form, falt, defaultName), context, deps);
+    return entry.ok ? { ...entry, photos: [] } : entry;
+  }
+  return buildSessionEntry(withUploadedPhotos(form, defaultName, uploadedPhotoIds), context, deps);
 }
 
 /** What Save builds, its tags in the same push (web-entry-tags-spec C2). */
@@ -110,7 +115,23 @@ export function buildEntry(
   defaultName: string,
   context: TaggedContext,
   deps: EntryDeps,
+  /** Row key → the id of its photo already on the server (web-entry-photo-spec R7). */
+  uploadedPhotoIds: ReadonlyMap<number, string>,
 ): EntryResult {
-  const entry = buildUntagged(form, falt, defaultName, context, deps);
+  const entry = buildUntagged(form, falt, defaultName, context, deps, uploadedPhotoIds);
   return withEntryTags(entry, form.tags, context.tags, deps);
+}
+
+/** The typed series; a row whose photo is already uploaded names that photo's id. */
+function withUploadedPhotos(
+  form: EntryForm,
+  defaultName: string,
+  uploadedPhotoIds: ReadonlyMap<number, string>,
+): SessionEntryDraft {
+  const draft = toDraft(form, defaultName);
+  const series = draft.series.map((row, i) => ({
+    ...row,
+    photoId: uploadedPhotoIds.get(form.rows[i]!.key),
+  }));
+  return { ...draft, series };
 }

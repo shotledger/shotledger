@@ -20,6 +20,7 @@ import {
   toDraft,
   withDiscipline,
   withProgram,
+  withRowPhoto,
   withType,
   type EntryForm,
 } from './model';
@@ -204,11 +205,12 @@ describe('rounds-only and final series on the Enter Series form', () => {
       'd',
       context,
       deps,
+      new Map(),
     );
     expect(rounds.ok && rounds.changes.map((c) => c.payload)).toEqual([
       expect.objectContaining({ kind: 'rounds', extra_rounds: 60 }),
     ]);
-    const series = buildEntry(typed(fresh(), '10'), initialFalt(), 'd', context, deps);
+    const series = buildEntry(typed(fresh(), '10'), initialFalt(), 'd', context, deps, new Map());
     expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
       'sessions',
       'series',
@@ -236,6 +238,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
       'd',
       context,
       deps,
+      new Map(),
     );
     expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
       'tags',
@@ -253,6 +256,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
       'd',
       context,
       deps,
+      new Map(),
     );
     expect(rounds.ok && rounds.changes.map((c) => c.tableName)).toEqual([
       'sessions',
@@ -275,7 +279,7 @@ describe('rounds-only and final series on the Enter Series form', () => {
     };
     const faltForm = { ...withDiscipline(fresh(), 'spsf-falt'), tags: ['KM'] };
     const stations = withHits(initialFalt(), 0, 0);
-    const series = buildEntry(faltForm, stations, 'd', context, deps);
+    const series = buildEntry(faltForm, stations, 'd', context, deps, new Map());
     expect(series.ok && series.changes.map((c) => c.tableName)).toEqual([
       'tags',
       'sessions',
@@ -288,12 +292,49 @@ describe('rounds-only and final series on the Enter Series form', () => {
       'd',
       context,
       deps,
+      new Map(),
     );
     expect(rounds.ok && rounds.changes.map((c) => c.tableName)).toEqual([
       'tags',
       'sessions',
       'session_tags',
     ]);
+    expect(series.ok && series.photos).toEqual([]);
+    const unknownFirearm = { ...faltForm, firearmId: 'gone' };
+    expect(buildEntry(unknownFirearm, stations, 'd', context, deps, new Map()).ok).toBe(false);
+  });
+
+  it("PK1 buildEntry names a row's already uploaded photo by its id, and draws new ids otherwise (photo R7)", () => {
+    let n = 0;
+    const deps = {
+      newId: () => `0199b000-0000-7000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      newChangeId: () => `00000000-0000-4000-8000-${(n += 1).toString(16).padStart(12, '0')}`,
+      now: () => '2026-10-10T17:00:00.000Z',
+    };
+    const context = {
+      firearms: new Map(),
+      firearmGroups: [],
+      ammoLots: new Map(),
+      tags: new Map(),
+    };
+    const base = addRow(typed(fresh(), '10'));
+    const [first, second] = base.rows.map((row) => row.key);
+    const form = withRowPhoto(withRowPhoto(base, first!, 1), second!, 2);
+    const uploaded = '0199a000-0000-7000-8000-0000000000aa';
+    const built = buildEntry(
+      form,
+      initialFalt(),
+      'd',
+      context,
+      deps,
+      new Map([[first!, uploaded]]),
+    );
+    expect(built.ok && built.photos.map((p) => p.row)).toEqual([1, 2]);
+    expect(built.ok && built.photos[0]!.photoId).toBe(uploaded);
+    expect(built.ok && built.photos[1]!.photoId).not.toBe(uploaded);
+    // A key with no photo on its row names nothing.
+    const none = buildEntry(base, initialFalt(), 'd', context, deps, new Map([[first!, uploaded]]));
+    expect(none.ok && none.photos).toEqual([]);
   });
 
   it('WK10 Start Final keeps a held request; a change of kind drops it', () => {

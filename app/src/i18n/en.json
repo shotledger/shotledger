@@ -1418,7 +1418,13 @@
       "failedUnconfirmed": "The server answered, but not as expected. Your series are still here; Retry sends the same session again.",
       "stationBlank": "Not saved: nothing entered.",
       "errorStationPoints": "{{row}}: points must be whole numbers, and no more than the max.",
-      "errorInvalidStation": "{{row}}: no station can have these numbers."
+      "errorInvalidStation": "{{row}}: no station can have these numbers.",
+      "photoAlt": "Photo for {{row}}",
+      "photoUnreadable": "{{row}}: this file cannot be read as a photo.",
+      "photoTooLarge": "{{row}}: the photo is too large, even resized.",
+      "failedPhotoRateLimited": "Too many photos uploaded in the last hour. Your series are still here; Retry later sends the same session.",
+      "failedPhotoQuota": "Your photo storage is full, so nothing was saved. Remove a photo, then save; photos that already arrived are not sent again.",
+      "failedPhotoTooLarge": "The server refused a photo as too large, so nothing was saved. Remove it, then save."
     },
     "bulk": {
       "title": "Bulk Edit",

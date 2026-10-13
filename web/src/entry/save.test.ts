@@ -30,7 +30,7 @@ const CHANGES: ClientChange[] = [
 const CONTEXT: EntryContext = { firearms: new Map(), firearmGroups: [], ammoLots: new Map() };
 
 function deps(outcome: PushOutcome, overrides: Partial<SaveDeps> = {}) {
-  const built: EntryResult = { ok: true, sessionId: 's1', changes: CHANGES };
+  const built: EntryResult = { ok: true, sessionId: 's1', changes: CHANGES, photos: [] };
   return {
     currentUserId: vi.fn(() => Promise.resolve<string | null>('user-a')),
     loadContext: vi.fn(() => Promise.resolve(CONTEXT)),
@@ -241,16 +241,32 @@ describe('saving an entry', () => {
   });
 });
 
+// Browser storage under every spelling the scans look for: the APIs by name, a
+// computed `'…' + 'Storage'`, the Cache Storage API and cookies.
+const BROWSER_STORAGE =
+  /localStorage|sessionStorage|indexedDB|Storage['"`]|\bcaches\b|document\.cookie/i;
+
 describe('N1 no shooting data in browser storage', () => {
   const dir = path.dirname(fileURLToPath(import.meta.url));
   const sources = readdirSync(dir).filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f));
 
-  it('the entry modules never touch localStorage, sessionStorage or IndexedDB', () => {
+  it('the entry modules never touch browser storage', () => {
     expect(sources.length).toBeGreaterThanOrEqual(3);
     for (const file of sources) {
-      expect(readFileSync(path.join(dir, file), 'utf8')).not.toMatch(
-        /localStorage|sessionStorage|indexedDB/i,
-      );
+      expect(readFileSync(path.join(dir, file), 'utf8')).not.toMatch(BROWSER_STORAGE);
+    }
+  });
+
+  it('the scan catches each spelling of browser storage it looks for', () => {
+    for (const planted of [
+      'window.localStorage.getItem("x")',
+      'sessionStorage.setItem',
+      'indexedDB.open("db")',
+      "window['local' + 'Storage']",
+      'await caches.open("photos")',
+      'document.cookie = "x"',
+    ]) {
+      expect(planted).toMatch(BROWSER_STORAGE);
     }
   });
 });

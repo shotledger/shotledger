@@ -89,7 +89,12 @@ describe('tags on the Enter Series form (docs/specs/web-entry-tags-spec.md §3.3
       tags: new Map([['t1', { id: 't1' }]]),
     };
     const changes: ClientChange[] = [];
-    const build = vi.fn((_: typeof context) => ({ ok: true as const, sessionId: 's1', changes }));
+    const build = vi.fn((_: typeof context) => ({
+      ok: true as const,
+      sessionId: 's1',
+      changes,
+      photos: [],
+    }));
     await save(
       {
         currentUserId: () => Promise.resolve('user-a'),

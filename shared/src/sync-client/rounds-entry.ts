@@ -112,5 +112,6 @@ export function buildRoundsEntry(
       extraRounds: parsed.rounds,
     }),
   );
-  return { ok: true, sessionId, changes };
+  // A rounds-only session has no series, so no photo (web-entry-photo-spec C6).
+  return { ok: true, sessionId, changes, photos: [] };
 }
