@@ -197,7 +197,7 @@ only): the phone's merge on the web preview of the app, and the web panel.
 
 ## 5. Setup plan
 
-- **Git:** branch `claude/784-ammo-lot-merge-g2cmv1` off `main`; this spec
+- **Git:** branch `feature/issue-784-merge-ammo-lots` off `main`; this spec
   committed first, then one DCO-signed Conventional Commit per green layer
   (phone query, builder, web panel, phone UI, docs, evidence). Rebased on
   `main` if #727 (PR #779) lands first and overlaps.
