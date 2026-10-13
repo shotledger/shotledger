@@ -41,5 +41,25 @@
       ],
       enabled: false,
     },
+    {
+      // `.node-version` is the source (#778); package.json `engines` and the
+      // eas.json pin below must move with it in the same PR, or
+      // `pnpm node:check` fails. Last, so it wins over the weekly batch name.
+      description: 'Node moves in one PR across every pin',
+      matchDepNames: ['node'],
+      groupName: 'node',
+    },
+  ],
+
+  customManagers: [
+    {
+      // EAS cannot read `.node-version`; app/eas.json repeats it.
+      customType: 'regex',
+      description: 'Node pin in the EAS base build profile',
+      managerFilePatterns: ['/^app/eas\\.json$/'],
+      matchStrings: ['"node":\\s*"(?<currentValue>[^"]+)"'],
+      depNameTemplate: 'node',
+      datasourceTemplate: 'node-version',
+    },
   ],
 }
