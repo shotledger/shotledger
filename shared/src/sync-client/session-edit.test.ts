@@ -2010,6 +2010,22 @@ describe('station edit (§10)', () => {
     }
   });
 
+  it('K29 an opened station emptied to nothing is refused, not dropped as a blank new row would be', () => {
+    const context = faltBook();
+    expect(
+      edit(
+        stationEdit('sF', stationsDraft(context, 'sF', { fD: { hits: null, figureCount: null } })),
+        context,
+      ),
+    ).toEqual({ ok: false, errors: [{ kind: 'invalidStation', row: 3 }] });
+    expect(
+      edit(stationEdit('sF', stationsDraft(context, 'sF', { fD: { hits: null } })), context),
+    ).toEqual({
+      ok: false,
+      errors: [{ kind: 'invalidStation', row: 3 }],
+    });
+  });
+
   it('K29 a removed row is not read; a scratched row with impossible numbers is saved, as on the phone', () => {
     const context = faltBook();
     expect(
@@ -2260,7 +2276,9 @@ describe('station edit (§10)', () => {
 
   it('K34 stations on a session not scored in hits, or a station the form did not open, is a programming error', () => {
     const context = faltBook();
-    expect(() => edit(stationEdit('s1', [newStationDraft()]), context)).toThrow(RangeError);
+    expect(() => edit(stationEdit('s1', [newStationDraft()]), context)).toThrow(
+      new RangeError('spsf-precision is not scored in hits'),
+    );
     expect(() => edit(stationEdit('sF', [{ ...newStationDraft(), id: 'oA' }]), context)).toThrow(
       /oA is not one the form opened/,
     );
@@ -2335,6 +2353,14 @@ describe('rounds edit (§10)', () => {
       ok: false,
       errors: [{ kind: 'invalidRounds' }],
     });
+    // Spaces around the stored count are the same count, not a change.
+    expect(
+      find(
+        changesOf(edit(roundsEdit('sBig', ' 12000 ', { name: 'N' }), context)),
+        'sessions',
+        'sBig',
+      )!.payload!.extra_rounds,
+    ).toBe(12_000);
   });
 
   it('K37 a session that is not rounds-only ignores Rounds Fired: extra_rounds is never written', () => {

@@ -66,6 +66,7 @@ function tables(): PulledTables {
     sessions: byId(
       session('sF', { falt_result_mode: 'poangfalt' }),
       session('sO'),
+      session('sQ'),
       session('sR', { kind: 'rounds', discipline_id: 'spsf-precision', extra_rounds: 25 }),
       session('sRF', { kind: 'rounds' }),
       session('sP', { discipline_id: 'spsf-precision' }),
@@ -75,9 +76,12 @@ function tables(): PulledTables {
     falt_stations: byId(
       station('c', 'sF', 4),
       station('a', 'sF', 1, { points: 7, points_max: 10, figure_count: 5 }),
-      station('b', 'sF', 2),
+      station('b', 'sF', 2, { is_scratched: 1 }),
       station('o1', 'sO', 1),
       station('o2', 'sO', 2, { is_shoot_off: 1 }),
+      // Older data: a plain station after a shoot-off one.
+      station('q1', 'sQ', 1, { is_shoot_off: 1 }),
+      station('q2', 'sQ', 2),
     ),
     tags: empty(),
     firearms: byId({
@@ -118,6 +122,7 @@ describe('the edit page: stations and Rounds Fired', () => {
       isShootOff: false,
       deleted: false,
     });
+    expect(falt.stations.map((row) => row.isScratched)).toEqual([false, true, false]);
     expect(stationPositions(falt.stations)).toEqual([1, 2, 4]);
     // New rows are labelled after the last stored position.
     expect(stationPositions(addStation(addStation(falt)).stations)).toEqual([1, 2, 4, 5, 6]);
@@ -166,6 +171,14 @@ describe('the edit page: stations and Rounds Fired', () => {
     const withoutLast = removeStation(shootOff, 1);
     expect(nextStationIsShootOff(withoutLast)).toBe(false);
     expect(canStartShootOff(withoutLast)).toBe(true);
+    // The last stored station decides, whatever came before it; stored flags are never recomputed.
+    const older = faltOf('sQ');
+    expect(nextStationIsShootOff(older)).toBe(false);
+    const draftQ = toDraft('sQ', opened('sQ').initial, {
+      ...opened('sQ').initial,
+      falt: withHits(addStation(older), 2, 3),
+    });
+    expect(draftQ.stations!.map((row) => row.isShootOff)).toEqual([true, false, false]);
     // A stored station's flag is never recomputed from the rows before it.
     const toggled = withStation(shootOff, 0, { isShootOff: true });
     expect(

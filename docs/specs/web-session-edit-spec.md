@@ -930,3 +930,24 @@ Swedish UI. Phone read-back needs a device; the PR says what was not run.
   needs no change (a missing key is simply absent). If it derives
   `firearms.rounds_since_maintenance`, E19's counter move follows whichever
   lands first.
+- **Made while implementing (2026-10-13).**
+  - **Remove is the phone's Delete Station** (`station.delete`), with
+    **Undo** on a stored station. A new row's Delete Station drops the row
+    from the form at once, so a removed station in the draft is always a
+    stored one.
+  - **Station errors** carry `row`, the 1-based row of `draft.stations`, as
+    #713's do; the page routes them by kind, so they land on the station row,
+    never on a series row. `invalidRounds` lands under Rounds Fired.
+  - **New rows are labelled** after the highest stored position, one up per
+    new row (`stationPositions`), the numbers the builder will give them
+    when every new row is entered.
+  - **A stored station's shoot-off flag** sets the running flag for the new
+    rows after it to its own value (the last kept one decides, as
+    `nextStationIsShootOff`); a new row can only turn it on. The entry page
+    has no stored rows, so its rule is unchanged (U17: its tests pass
+    unedited).
+  - **U16 needs no code:** #768 already removed the station-count and rounds
+    hints before this revision; this revision adds none.
+  - **U13:** the edit page keeps a held request across Add Station (only
+    blank rows appended, `faltSendsTheSame`); any other edit drops it, as
+    before.
