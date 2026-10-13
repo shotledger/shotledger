@@ -216,7 +216,7 @@ function replaceOverrideSeries(db: Database, sessionId: string, row: ResultRow) 
         sessionId,
         position: index + 1,
         isFinal: m.isFinal,
-        note: m.note,
+        isShootOff: m.isShootOff,
         isTotalOverride: true,
         totalOverrideTenths: m.totalOverrideTenths,
         totalOverrideShotCount: m.totalOverrideShotCount,
@@ -285,8 +285,6 @@ export function importResultRow(
     updateSession(db, linkTarget.id, {
       externalSource: 'webshooter',
       externalRef,
-      externalSyncedAt: new Date().toISOString(),
-      webshooterCompetitionId: String(row.competitions_id),
       officialPlacement: merged.officialPlacement as number | null,
       officialStandardMedal: merged.officialStandardMedal as
         'none' | 'brons' | 'silver' | 'guld' | null,
@@ -315,8 +313,6 @@ export function importResultRow(
       startedAt: localDayStartIso(competition.date),
       externalSource: 'webshooter',
       externalRef,
-      externalSyncedAt: new Date().toISOString(),
-      webshooterCompetitionId: String(row.competitions_id),
       officialPlacement: official.officialPlacement,
       officialStandardMedal: official.officialStandardMedal,
     });

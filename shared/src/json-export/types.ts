@@ -35,6 +35,8 @@ export interface SeriesExport {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
+  /** A särskjutning series (#727). */
+  isShootOff: boolean;
   shots: ShotExport[];
   /** Set on a total-only series, whose `shots` is then empty. */
   totalOverride: TotalOverrideExport | null;
@@ -173,6 +175,10 @@ const seriesSchema = z
       .boolean()
       .describe('A sighter (provserie) is shot but not counted towards the session total.'),
     isFinal: z.boolean().describe('Whether the series belongs to a championship final.'),
+    isShootOff: z
+      .boolean()
+      .default(false)
+      .describe('A särskjutning series, shot to decide a placement. Scored like any other series.'),
     shots: z
       .array(shotSchema)
       .describe('The shots of this series, in the order they were entered.'),
@@ -397,8 +403,9 @@ export const sessionExportSchema = z.object({
     .nullable()
     .default(null)
     .describe(
-      "The source's own key for the session. A later import from that source matches on it " +
-        'to update the session rather than add a second one.',
+      "The source's own key for the session, without a source prefix (`363:35937` from " +
+        'Webshooter, the Session ID `S-0a1b2c3d` from ShotLog). A later import from the same ' +
+        '`externalSource` matches on it to update the session rather than add a second one.',
     ),
   officialPlacement: z
     .number()

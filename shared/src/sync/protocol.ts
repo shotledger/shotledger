@@ -19,8 +19,9 @@ export const PUSH_BATCH_MAX = 500;
 
 /**
  * Max UTF-8 bytes of one change's `JSON.stringify(payload)` on push. The
- * fullest app row is ~2.6 KB; 12 tables x PULL_PAGE_SIZE rows at this cap
- * keeps a pull response near 38 MiB, inside the Worker's 128 MB.
+ * fullest app row is ~2.6 KB. A pull page is PULL_PAGE_SIZE rows across all
+ * tables (backend/src/db/queries.ts), so at this cap one response stays near
+ * 3.1 MiB (200 x 16 KiB), well inside the Worker's 128 MB.
  */
 export const MAX_PAYLOAD_BYTES = 16_384;
 

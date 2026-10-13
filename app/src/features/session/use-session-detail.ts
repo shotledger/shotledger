@@ -39,6 +39,8 @@ export interface SeriesRow {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
+  /** A särskjutning series (#727); shown, scored like any other. */
+  isShootOff: boolean;
   photoUri: string | null;
   shots: EntryShot[];
   totalTenths: number;
@@ -156,6 +158,7 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       position: row.position,
       isSighter,
       isFinal: row.isFinal === 1,
+      isShootOff: row.isShootOff === 1,
       photoUri: row.photoUri,
       shots,
       totalTenths,

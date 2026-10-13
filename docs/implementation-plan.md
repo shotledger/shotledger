@@ -521,6 +521,12 @@ and per-ammo-lot aggregates.
       ellipsis-truncated label to stop long Swedish labels
       (e.g. "Standardavvikelse") from wrapping character-by-character in
       a 3-up row.
+- [x] #798: the session Stats view compares the session with the shooter's
+      usual form (the 100 scored series of the same discipline and class
+      before it) instead of "last 100 vs previous 100", which ignored the
+      session — `shared/src/scoring/usual-form.ts`,
+      `app/src/features/session/usual-form-card.tsx`; spec and evidence in
+      `docs/specs/session-vs-usual-form-*.md`.
 - **Done when:** stats screens render from seed deterministically
   (Maestro screenshot compares stable numbers), formulas unit-tested
   against hand-computed fixtures.
@@ -926,7 +932,7 @@ competition form on 2026-09-09 at the maintainer's request.
 
 **Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
 decided, **no provskott**) is out of v1 scope — log such series as
-ordinary extra scored series with a note.
+ordinary extra scored series, flagged `is_shoot_off` (#727; was a note).
 
 **Decimal scoring — who actually uses it:** per ISSF rules, 10m air
 rifle scores decimal in qualification _and_ finals; 10m air pistol and

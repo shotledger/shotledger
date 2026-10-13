@@ -1,10 +1,10 @@
 // Session detail Stats toggle (§4 M5): totals, mean, SD, X count, mini
-// distribution, comparison vs the user's last 100 series of the same
-// discipline/class, and a standardMedal line when a threshold is met.
+// distribution, this session against the shooter's usual form (#798), and a
+// standardMedal line when a threshold is met.
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  compareRecentSeries,
+  compareWithUsualForm,
   meanTenths,
   sampleStandardDeviationTenths,
   scoredShots,
@@ -14,7 +14,7 @@ import {
   standardMedalForSession,
   sumValueTenths,
   xCount,
-  type CompareRecentSeriesResult,
+  type UsualFormComparison,
   type StandardMedalResult,
 } from '@shotledger/shared';
 
@@ -51,7 +51,8 @@ export interface SessionStats {
   sumTenths: number;
   shotCount: number;
   distribution: DistributionBucket[];
-  comparison: CompareRecentSeriesResult | null;
+  /** This session against the 100 scored series before it (#798). */
+  usualForm: UsualFormComparison | null;
   standardMedal: StandardMedalResult | null;
 }
 
@@ -66,7 +67,7 @@ const EMPTY: SessionStats = {
   sumTenths: 0,
   shotCount: 0,
   distribution: [],
-  comparison: null,
+  usualForm: null,
   standardMedal: null,
 };
 
@@ -100,10 +101,7 @@ export function loadSessionStats(sessionId: string): SessionStats {
     totalTenths: beforeFinalTenths + finalTenths,
   });
 
-  const comparison = compareRecentSeries(all, {
-    disciplineId: first.disciplineId,
-    shooterClass: first.shooterClass,
-  });
+  const usualForm = compareWithUsualForm(all, sessionId);
 
   return {
     seriesMeanTenths: seriesMeanTenths(sessionSeries),
@@ -116,7 +114,7 @@ export function loadSessionStats(sessionId: string): SessionStats {
     sumTenths: sumValueTenths(shots),
     shotCount: shots.length,
     distribution: buildDistribution(shots),
-    comparison,
+    usualForm,
     standardMedal: standardMedal.grade ? standardMedal : null,
   };
 }

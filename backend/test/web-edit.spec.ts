@@ -119,7 +119,6 @@ const shot = (id: string, seriesId: string, position: number) => ({
   position,
   value_tenths: 90,
   is_inner_ten: 0,
-  is_inner_ten_decimal: 0,
 });
 
 function fieldSession(id: string, fields: Record<string, unknown>) {
