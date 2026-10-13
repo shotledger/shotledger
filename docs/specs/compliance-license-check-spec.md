@@ -28,7 +28,7 @@ profile already declares (PM 551.24 p. 3).
 
 ## What the shooter sees
 
-One **Licence Check** screen, opened by tapping the status on Home, groups the
+One **License Check** screen, opened by tapping the status on Home, groups the
 requirements by what the föreningsintyg is for:
 
 **New Purchase**

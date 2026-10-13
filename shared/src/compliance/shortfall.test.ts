@@ -1,5 +1,5 @@
 // Behaviors S1-S8, G1 and properties Q1-Q3 of
-// docs/specs/compliance-licence-check-spec.md.
+// docs/specs/compliance-license-check-spec.md.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
