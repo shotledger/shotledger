@@ -101,7 +101,8 @@ describe('run', () => {
     for (const status of [
       { kind: 'idle' },
       { kind: 'invalid', errors: [] },
-      { kind: 'stale', fresh: FRESH },
+      { kind: 'stale', action: 'save', fresh: FRESH },
+      { kind: 'stale', action: 'delete', fresh: FRESH },
       { kind: 'failed', error: 'network' },
       { kind: 'accountChanged' },
     ] as EditState['status'][]) {
@@ -229,7 +230,19 @@ describe('run', () => {
       build: vi.fn((): EditResult => ({ ok: false, errors: [{ kind: 'stale' }] })),
     });
     expect(await run(d, 'save', null)).toEqual({
-      status: { kind: 'stale', fresh: FRESH },
+      status: { kind: 'stale', action: 'save', fresh: FRESH },
+      held: null,
+    });
+    expect(d.push).not.toHaveBeenCalled();
+    expect(d.refresh).not.toHaveBeenCalled();
+  });
+
+  it('U10 a stale Delete → stale for delete; nothing was sent', async () => {
+    const d = deps({
+      build: vi.fn((): EditResult => ({ ok: false, errors: [{ kind: 'stale' }] })),
+    });
+    expect(await run(d, 'delete', null)).toEqual({
+      status: { kind: 'stale', action: 'delete', fresh: FRESH },
       held: null,
     });
     expect(d.push).not.toHaveBeenCalled();

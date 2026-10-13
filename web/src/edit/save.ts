@@ -20,8 +20,8 @@ export type EditStatus =
   | { kind: 'working'; action: EditAction }
   /** Nothing sent: a field or series error, or nothing to change. */
   | { kind: 'invalid'; errors: EditError[] }
-  /** A row the action touches changed on another device; `fresh` refills the form (E6). */
-  | { kind: 'stale'; fresh: EditContext }
+  /** A row the action touches changed on another device; `fresh` refills the form (E6, R10). */
+  | { kind: 'stale'; action: EditAction; fresh: EditContext }
   /** The session was deleted on another device; nothing sent (E6). */
   | { kind: 'gone'; refreshed: boolean }
   | {
@@ -148,7 +148,7 @@ export async function run(
   if (!result.ok) {
     // The builder reports stale and gone alone.
     const is = (kind: string) => result.errors.some((error) => error.kind === kind);
-    if (is('stale')) return { status: { kind: 'stale', fresh }, held: null };
+    if (is('stale')) return { status: { kind: 'stale', action, fresh }, held: null };
     if (is('gone')) {
       return { status: { kind: 'gone', refreshed: await deps.refresh() }, held: null };
     }

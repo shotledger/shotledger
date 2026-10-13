@@ -1483,6 +1483,7 @@
       "confirmDeleteRounds": "The round count of {{firearm}} goes down by {{rounds}}.",
       "confirmDeleteButton": "Delete",
       "stale": "This session was changed on another device since you opened it, so nothing was sent. Copy what you want to keep, then reload it.",
+      "staleDelete": "This session was changed on another device since this page showed it, so nothing was deleted. Reload it and check it before you delete it.",
       "reload": "Reload",
       "gone": "This session was deleted on another device. Nothing was sent.",
       "nothingToChange": "No changes to save.",

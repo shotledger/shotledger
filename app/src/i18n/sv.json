@@ -1483,6 +1483,7 @@
       "confirmDeleteRounds": "Skottantalet för {{firearm}} minskar med {{rounds}}.",
       "confirmDeleteButton": "Ta bort",
       "stale": "Passet har ändrats på en annan enhet sedan du öppnade det, så ingenting skickades. Kopiera det du vill behålla och ladda sedan om det.",
+      "staleDelete": "Passet har ändrats på en annan enhet sedan sidan visade det, så ingenting togs bort. Ladda om det och kontrollera det innan du tar bort det.",
       "reload": "Ladda om",
       "gone": "Passet har tagits bort på en annan enhet. Ingenting skickades.",
       "nothingToChange": "Inga ändringar att spara.",

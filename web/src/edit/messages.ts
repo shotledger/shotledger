@@ -51,6 +51,8 @@ export function errorMessage(error: EditError): Message {
       return { key: 'web.entry.errorUnknownAmmoLot' };
     case 'invalidStartedAt':
       return { key: 'web.entry.errorDateTime' };
+    case 'startedAtOutOfRange':
+      return { key: 'web.entry.errorDateRange' };
     case 'nothingToChange':
       return { key: 'web.edit.nothingToChange' };
     case 'tooManyChanges':
@@ -102,7 +104,7 @@ export function statusMessages(
         ? [{ key: 'web.edit.gone' }]
         : [{ key: 'web.edit.gone' }, { key: 'web.bulk.reload' }];
     case 'stale':
-      return [{ key: 'web.edit.stale' }];
+      return [{ key: status.action === 'delete' ? 'web.edit.staleDelete' : 'web.edit.stale' }];
     case 'failed':
       return [
         {

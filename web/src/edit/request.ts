@@ -41,8 +41,9 @@ export function saveDeps(io: EditIo, opened: OpenedSession, draft: SessionEditDr
   return deps(io, (fresh) => buildSessionEdit(draft, opened, fresh, ids(io)));
 }
 
-export function deleteDeps(io: EditIo, sessionId: string): EditDeps {
-  return deps(io, (fresh) => buildSessionDelete(sessionId, fresh, ids(io)));
+/** `opened` is the session as the page showed it: Delete refuses what changed since (R10). */
+export function deleteDeps(io: EditIo, opened: OpenedSession): EditDeps {
+  return deps(io, (fresh) => buildSessionDelete(opened, fresh, ids(io)));
 }
 
 /** What Delete's confirmation names (§3.2): the rounds the firearm's count loses. */

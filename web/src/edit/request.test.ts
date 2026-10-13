@@ -100,7 +100,7 @@ describe('saveDeps and deleteDeps', () => {
 
   it('delete builds the tombstones and the counter move', async () => {
     const live = io();
-    const deps = deleteDeps(live, 's1');
+    const deps = deleteDeps(live, openedSession('s1', editContext(tables()))!);
     const built = deps.build(await deps.loadContext());
     if (!built.ok) throw new Error('expected ok');
     expect(built.changes.map((c: ClientChange) => [c.tableName, c.rowId])).toEqual([
@@ -114,6 +114,21 @@ describe('saveDeps and deleteDeps', () => {
     expect(built.changes[0]!.payload).toMatchObject({
       round_count: 45,
       rounds_since_maintenance: 0,
+    });
+  });
+});
+
+describe('U10 deleteDeps builds against the session as the page showed it (R10)', () => {
+  it('a series added on another device since the page pulled → stale, nothing built', async () => {
+    const live = io();
+    const shown = openedSession('s1', editContext(tables()))!;
+    const fresh = tables();
+    fresh.series.set('r2', { ...common('r2'), session_id: 's1', position: 2, is_sighter: 0 });
+    live.loadTables.mockResolvedValue(fresh);
+    const deps = deleteDeps(live, shown);
+    expect(deps.build(await deps.loadContext())).toEqual({
+      ok: false,
+      errors: [{ kind: 'stale' }],
     });
   });
 });

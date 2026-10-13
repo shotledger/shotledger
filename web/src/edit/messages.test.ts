@@ -49,6 +49,7 @@ describe('errorMessage', () => {
       [{ kind: 'unknownFirearm' }, { key: 'web.entry.errorUnknownFirearm' }],
       [{ kind: 'unknownAmmoLot' }, { key: 'web.entry.errorUnknownAmmoLot' }],
       [{ kind: 'invalidStartedAt' }, { key: 'web.entry.errorDateTime' }],
+      [{ kind: 'startedAtOutOfRange' }, { key: 'web.entry.errorDateRange' }],
       [{ kind: 'nothingToChange' }, { key: 'web.edit.nothingToChange' }],
       [
         { kind: 'tooManyChanges', max: 500, needed: 612 },
@@ -103,7 +104,13 @@ describe('statusMessages (E9)', () => {
   });
 
   it('stale, gone, account changed and invalid', () => {
-    expect(lines({ kind: 'stale', fresh: {} as never })).toEqual([{ key: 'web.edit.stale' }]);
+    expect(lines({ kind: 'stale', action: 'save', fresh: {} as never })).toEqual([
+      { key: 'web.edit.stale' },
+    ]);
+    // U10: Delete has no form to copy from; it says nothing was deleted (R10).
+    expect(lines({ kind: 'stale', action: 'delete', fresh: {} as never })).toEqual([
+      { key: 'web.edit.staleDelete' },
+    ]);
     expect(lines({ kind: 'gone', refreshed: true })).toEqual([{ key: 'web.edit.gone' }]);
     expect(lines({ kind: 'gone', refreshed: false })).toEqual([
       { key: 'web.edit.gone' },
