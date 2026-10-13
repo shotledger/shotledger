@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { newSeriesRow, newSessionRow, newShotRow, withRoundsAdded } from './rows';
+import { newSeriesRow, newSessionRow, newShotRow, withRoundsAdded, withRoundsMoved } from './rows';
 
 const NOW = '2026-10-07T10:00:00.000Z';
 
@@ -160,6 +160,42 @@ describe('withRoundsAdded', () => {
     expect(withRoundsAdded(pulled, 0, NOW)).toBeNull();
     expect(() => withRoundsAdded(pulled, -1, NOW)).toThrow(/non-negative integer, got -1/);
     expect(() => withRoundsAdded(pulled, 1.5, NOW)).toThrow(RangeError);
+  });
+});
+
+describe('withRoundsMoved (docs/specs/web-session-edit-spec.md E4)', () => {
+  const pulled = {
+    id: 'f1',
+    round_count: 10,
+    rounds_since_maintenance: 3,
+    updated_at: '2026-01-01T00:00:00.000Z',
+    a_column_from_a_newer_build: 'kept',
+  };
+
+  it('K11 moves both counters by a signed delta, each floored at 0, keeping unknown keys', () => {
+    expect(withRoundsMoved(pulled, 5, NOW)).toEqual({
+      ...pulled,
+      round_count: 15,
+      rounds_since_maintenance: 8,
+      updated_at: NOW,
+    });
+    expect(withRoundsMoved(pulled, -4, NOW)).toEqual({
+      ...pulled,
+      round_count: 6,
+      rounds_since_maintenance: 0,
+      updated_at: NOW,
+    });
+    expect(withRoundsMoved({ id: 'f2' }, -2, NOW)).toEqual({
+      id: 'f2',
+      round_count: 0,
+      rounds_since_maintenance: 0,
+      updated_at: NOW,
+    });
+  });
+
+  it('K11 a move of 0 is null; a fractional move is refused', () => {
+    expect(withRoundsMoved(pulled, 0, NOW)).toBeNull();
+    expect(() => withRoundsMoved(pulled, 0.5, NOW)).toThrow(/must be an integer, got 0.5/);
   });
 });
 

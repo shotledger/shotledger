@@ -8,9 +8,9 @@
 > `docs/specs/web-session-edit-evidence.md`. Decision record: ADR 0019 (web
 > writes push whole rows through `/sync/push`).
 >
-> **Approval status: not approved.** Every key choice below (E1–E12) is a
-> recommendation awaiting the maintainer's first-hand approval. No code is
-> written until then.
+> **Approval status: approved.** The maintainer approved key choices E1–E12
+> for merge on 2026-10-12 (PR #710), taking the recommended option on each of
+> that PR's four questions. Revisions made while implementing are in §9.
 
 - **Tier: 3.** It rewrites and tombstones synced rows a phone may have
   changed since the web pulled them, and moves a firearm's absolute round
@@ -444,4 +444,42 @@ after a dropped response changes nothing twice; the Swedish UI.
 
 ## 9. Revisions
 
-- (none yet)
+- **R1 (implementation): `firearm_groups` is not re-pulled.** E6 listed it,
+  but the phone's edit screen does not re-derive the vapengrupp when the
+  firearm changes, and no other edit reads it, so the builder never needs it.
+- **R2 (implementation): the opened snapshot holds the series' live shot
+  rows, not only their ids.** Whether the form changed a series is judged
+  against what it opened (§3.1's "the snapshot the form was filled from");
+  judging it against the fresh shots would make a series the phone re-entered
+  meanwhile look edited, and refuse a save K14 says must pass.
+- **R3 (implementation): the volume helper moved, as §3.1 anticipated.** #674
+  landed first: its per-session volume count is now
+  `shared/src/sync-client/volume-rows.ts`, imported by `bulk-edit.ts` and
+  `session-edit.ts`, and the floored counter move is `withRoundsMoved` in
+  `rows.ts`, used by both.
+- **R4 (implementation): competition fields only on a competition.** E2
+  lists them "for a competition"; a training session's vapengrupp, klass and
+  event are left as they are on the web (the phone keeps offering a stored
+  one).
+- **R5 (independent verification, round 1): sighters are counted over the
+  fresh pull.** K7's one-sighter rule counted the series as the form opened
+  them, so a sighter another device set meanwhile on a series the form did not
+  touch let a second one through. It now counts the freshly pulled live
+  series, the draft overlaid, as the phone's `setSeriesSighter` reads its own
+  table. A new row deleted again on the form is skipped before its text is
+  read, so its errors do not block the save.
+- **R6 (description): E8 names the firearm for any refused row the move was
+  made for**, a refused shot tombstone included (a series deleted elsewhere
+  refuses its shots first), not only a session or series row.
+- **R7 (description): E3's "refused as in #669"** for a sighter mark past a
+  fixed skeleton reads "ignored as in #669": the skeleton decides, and a mark
+  the form does not offer is not stored.
+- **R8 (independent verification, round 2): R5 completed.** The page sends
+  every opened series, so the sighter count takes the draft's flag only for a
+  series the save writes (touched), and the fresh row's flag for every other.
+- **R9 (description, for the maintainer): E6's stale check is Save's.**
+  Delete re-pulls and tombstones what is live then (§3.1's
+  `buildSessionDelete` takes no opened snapshot), so it has no stale check
+  beyond `gone`; the rounds its confirmation names come from the page's last
+  pull, while the push moves the counter by the fresh count. Whether Delete
+  should also refuse a changed session is the maintainer's call.

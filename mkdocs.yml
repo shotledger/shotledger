@@ -125,6 +125,7 @@ plugins:
             Your account on the web: Ditt konto på webben
             Entering series on the web: Mata in serier på webben
             Editing many sessions on the web: Ändra flera pass på webben
+            Editing a session on the web: Ändra ett pass på webben
             Reference: Referens
             Weapon group and class: Vapengrupp och klass
             Glossary: Ordlista
@@ -160,6 +161,7 @@ nav:
       - Backup and restore: guides/backup-and-restore.md
       - Your account on the web: guides/your-account-on-the-web.md
       - Entering series on the web: guides/entering-series-on-the-web.md
+      - Editing a session on the web: guides/editing-a-session-on-the-web.md
       - Editing many sessions on the web: guides/editing-many-sessions-on-the-web.md
   - Reference:
       - Weapon group and class: reference/weapon-group-and-class.md

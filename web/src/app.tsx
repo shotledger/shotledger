@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Account } from './account/account';
 import { currentAccount, hasSession, loadAccount, signOut } from './api';
 import { BulkEdit } from './bulk/bulk';
+import { SessionEdit, type Done } from './edit/edit';
 import { Entry } from './entry/entry';
 import { type PulledTables } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
@@ -46,6 +47,8 @@ export function App() {
     return () => window.removeEventListener('hashchange', fix);
   }, []);
   const { page } = route;
+  // What an edit or delete said, for the page it went to; gone once the user moves on.
+  const [notice, setNotice] = useState<Done | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<LoadedAccount>({ userId: null, generation: 0 });
   // The Statistics filters stay while you move between pages (statistics.md);
@@ -54,7 +57,9 @@ export function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      setRoute(routeFromHash(window.location.hash));
+      const { hash } = window.location;
+      setRoute(routeFromHash(hash));
+      setNotice((was) => (was?.hash === hash ? was : null));
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', onHashChange);
@@ -132,6 +137,11 @@ export function App() {
       () => false,
     );
 
+  const onDone = (done: Done) => {
+    setNotice(done);
+    window.location.hash = done.hash;
+  };
+
   const onSignOut = () => {
     setPicks(NO_PICKS);
     setStatsFilter(DEFAULT_ANALYTICS_FILTER);
@@ -159,7 +169,17 @@ export function App() {
         <p className="muted">{t('web.loading', { count: state.rows })}</p>
       )}
       {state.kind === 'failed' && <p className="danger">{t('web.loadFailed')}</p>}
-      {state.kind === 'ready' && page === 'sessions' && (
+      {state.kind === 'ready' && page === 'sessions' && route.edit && route.sessionId && (
+        <SessionEdit
+          key={`${generation}:${route.sessionId}`}
+          tables={state.tables}
+          sessionId={route.sessionId}
+          refresh={refresh}
+          onReauthenticated={onReauthenticated}
+          onDone={onDone}
+        />
+      )}
+      {state.kind === 'ready' && page === 'sessions' && !route.edit && (
         <Sessions
           key={generation}
           tables={state.tables}
@@ -167,6 +187,8 @@ export function App() {
           compare={route.compare}
           picked={picksOf(picks, state.tables)}
           onPicked={onPicked}
+          writer={{ refresh, onReauthenticated, onDone }}
+          notice={notice?.hash === window.location.hash ? notice.lines : []}
         />
       )}
       {state.kind === 'ready' && page === 'statistics' && (

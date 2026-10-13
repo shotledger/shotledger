@@ -141,4 +141,5 @@ account loads that account instead, and what you typed is cleared, so nothing
 from one account is saved to the other. Closing the tab drops what you typed;
 nothing is kept in the browser.
 
-To change or delete a session afterwards, use the phone.
+To change or delete a session afterwards, see
+[Editing a session on the web](editing-a-session-on-the-web.md).

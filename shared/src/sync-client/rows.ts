@@ -142,6 +142,22 @@ export function withRoundsAdded(pulled: Payload, n: number, now: string): Payloa
 }
 
 /**
+ * The pulled firearm with both counters moved by `delta` (signed), each
+ * floored at 0, as the phone's applyRoundCountDelta; null when `delta` is 0.
+ * The pulled payload is spread so a column this build does not know survives.
+ */
+export function withRoundsMoved(pulled: Payload, delta: number, now: string): Payload | null {
+  if (!Number.isInteger(delta)) throw new RangeError(`rounds must be an integer, got ${delta}`);
+  if (delta === 0) return null;
+  return {
+    ...pulled,
+    round_count: Math.max(0, counter(pulled.round_count) + delta),
+    rounds_since_maintenance: Math.max(0, counter(pulled.rounds_since_maintenance) + delta),
+    updated_at: now,
+  };
+}
+
+/**
  * A synced setting's whole row, as the phone's setSetting writes it: `value`
  * is the JSON text, `created_at` survives from the pulled row (spread, so a
  * column this build does not know survives too), never a tombstone.

@@ -1472,6 +1472,28 @@
       "errorNothing": "Nothing to change: the selected sessions already are that way.",
       "errorTooMany": "That is {{needed}} changes, and at most {{max}} go at once. Select fewer sessions."
     },
+    "edit": {
+      "readOnly": "Final and total-only series are changed on the phone.",
+      "finalSeries": "Final, series {{position}}",
+      "totalOnlySeries": "Series {{position}}, total only",
+      "undo": "Undo",
+      "deleted": "Deleted.",
+      "deleting": "Deleting…",
+      "confirmDelete": "Delete {{name}} from {{date}}? Its series and shots go too. This can't be undone.",
+      "confirmDeleteRounds": "The round count of {{firearm}} goes down by {{rounds}}.",
+      "confirmDeleteButton": "Delete",
+      "stale": "This session was changed on another device since you opened it, so nothing was sent. Copy what you want to keep, then reload it.",
+      "reload": "Reload",
+      "gone": "This session was deleted on another device. Nothing was sent.",
+      "nothingToChange": "No changes to save.",
+      "errorReadOnly": "{{row}}: change a final or a total-only series on the phone.",
+      "errorTooMany": "That is {{needed}} changes, and at most {{max}} go at once. Change this session on the phone.",
+      "failedNetwork": "Could not reach the server. Your changes are still here; Retry sends the same change again.",
+      "failedSignedOut": "You have been signed out. Sign in again, then retry.",
+      "failedOutdated": "This page is out of date. Copy your changes, then reload the page.",
+      "failedUnconfirmed": "The server answered, but not as expected. Retry sends the same change again.",
+      "accountChanged": "You are now signed in to another account, so the held change was not sent."
+    },
     "settings": {
       "saved": "Saved.",
       "savedReload": "Saved. Reload the page to see the change in Statistics.",
