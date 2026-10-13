@@ -482,11 +482,13 @@
     "licensesNativeTitle": "Inbyggda komponenter",
     "licensesNativeNote": "Kompileras in i appen i stället för att buntas som JavaScript. Alla är inte öppen källkod, och Android-plattformens egna bibliotek listas inte.",
     "licensesJsTitle": "JavaScript-paket",
-    "repoLink": "GitHub-repo"
+    "repoLink": "GitHub-repo",
+    "evaluationExpires": "Utvärderingsversion, går ut {{date}}."
   },
   "evaluation": {
     "expiredTitle": "Utvärderingsversionen har gått ut",
-    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen."
+    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen.",
+    "expiredExportNote": "Dina pass finns kvar på telefonen. Exportera dem för att spara en kopia."
   },
   "jsonExport": {
     "sectionTitle": "Passexport",

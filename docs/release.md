@@ -209,8 +209,10 @@ cd android && EXPO_PUBLIC_EVAL_EXPIRES_AT=2026-11-30 ./gradlew assembleRelease -
 - **The value** is `YYYY-MM-DD` (midnight UTC) or a full ISO 8601 date-time
   with `Z` or an offset. From that instant on, launching the app, or
   returning to it, shows a blocking "Evaluation Build Expired" screen that
-  tells the tester to ask for a new build. The tester's data stays on the
-  phone; a new build signed with the same key installs over it.
+  tells the tester to ask for a new build and still offers the sessions
+  export. The tester's data stays on the phone; a new build signed with the
+  same key installs over it. Settings → About shows the expiry date while the
+  build is active.
 - **A malformed value fails open:** the build runs with no expiry at all.
   Check the date before handing the APK out.
 - **Clock rollback:** the app keeps the latest time it has seen in
