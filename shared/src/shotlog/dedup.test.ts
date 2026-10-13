@@ -2,26 +2,22 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_LOST_DATE_GROUP_SIZE,
+  SHOTLOG_SOURCE,
   findExactRefMatch,
   findLostDateTimestamps,
   findProbableDuplicates,
   markInFileDuplicates,
 } from './dedup';
-import type { ShotlogExistingSession, ShotlogRow } from './types';
+import { parsedSession } from './fixtures';
+import type { ShotlogExistingSession, ShotlogSession } from './types';
 
-function row(patch: Partial<ShotlogRow> & { line: number }): ShotlogRow {
-  return {
-    datetime: '2026-05-04T09:00:00Z',
-    name: 'Club Cup A',
-    sourceType: 'Practice',
-    totalScore: 300,
-    tenCount: 5,
-    innerTenCount: 2,
-    tags: [],
-    note: '',
-    warnings: [],
-    ...patch,
-  };
+function row(patch: Partial<ShotlogSession> & { line: number }): ShotlogSession {
+  return parsedSession(patch);
+}
+
+/** A session ShotLog exported with no series — the "empty shadow". */
+function shadow(patch: Partial<ShotlogSession> & { line: number }): ShotlogSession {
+  return parsedSession({ ...patch, series: [] });
 }
 
 describe('findLostDateTimestamps', () => {
@@ -31,7 +27,7 @@ describe('findLostDateTimestamps', () => {
 
   it('flags a timestamp shared by three rows', () => {
     const rows = [1, 2, 3].map((line) => row({ line, name: `Club Cup ${line}` }));
-    expect([...findLostDateTimestamps(rows)]).toEqual(['2026-05-04T09:00:00Z']);
+    expect([...findLostDateTimestamps(rows)]).toEqual(['2026-05-04T09:00:00.000Z']);
   });
 
   it('leaves a timestamp shared by two rows alone', () => {
@@ -41,7 +37,7 @@ describe('findLostDateTimestamps', () => {
 
   it('honors a custom group size', () => {
     const rows = [1, 2].map((line) => row({ line, name: `Club Cup ${line}` }));
-    expect([...findLostDateTimestamps(rows, 2)]).toEqual(['2026-05-04T09:00:00Z']);
+    expect([...findLostDateTimestamps(rows, 2)]).toEqual(['2026-05-04T09:00:00.000Z']);
   });
 
   it('flags only the shared timestamp in a mixed file', () => {
@@ -49,9 +45,9 @@ describe('findLostDateTimestamps', () => {
       row({ line: 2 }),
       row({ line: 3, name: 'B' }),
       row({ line: 4, name: 'C' }),
-      row({ line: 5, datetime: '2026-06-01T09:00:00Z', name: 'D' }),
+      row({ line: 5, datetime: '2026-06-01T09:00:00.000Z', name: 'D' }),
     ];
-    expect([...findLostDateTimestamps(rows)]).toEqual(['2026-05-04T09:00:00Z']);
+    expect([...findLostDateTimestamps(rows)]).toEqual(['2026-05-04T09:00:00.000Z']);
   });
 
   it('returns nothing for an empty file', () => {
@@ -60,90 +56,51 @@ describe('findLostDateTimestamps', () => {
 });
 
 describe('markInFileDuplicates', () => {
-  it('finds no duplicates among distinct rows', () => {
-    expect(markInFileDuplicates([row({ line: 2 }), row({ line: 3, name: 'B' })]).size).toBe(0);
+  it('finds no duplicates among sessions with series, even with the same instant and name', () => {
+    expect(markInFileDuplicates([row({ line: 2 }), row({ line: 3 })]).size).toBe(0);
   });
 
-  it('marks a byte-identical repeat against the first occurrence', () => {
-    const duplicates = markInFileDuplicates([row({ line: 2 }), row({ line: 3 }), row({ line: 4 })]);
-    expect([...duplicates]).toEqual([
-      [3, 2],
-      [4, 2],
-    ]);
+  it('marks an empty shadow that comes after its twin', () => {
+    expect([...markInFileDuplicates([row({ line: 2 }), shadow({ line: 3 })])]).toEqual([[3, 2]]);
   });
 
-  it('marks a zero-total shadow row against its earlier scored twin', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, totalScore: 326 }),
-      row({ line: 3, totalScore: 0, tenCount: 0, innerTenCount: 0 }),
-    ]);
-    expect(duplicates.get(3)).toBe(2);
+  it('marks an empty shadow that comes before its twin, as in the real file', () => {
+    expect([...markInFileDuplicates([shadow({ line: 2 }), row({ line: 3 })])]).toEqual([[2, 3]]);
   });
 
-  it('keeps a zero-total row that comes FIRST, and imports the scored twin', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, totalScore: 0, tenCount: 0, innerTenCount: 0 }),
-      row({ line: 3, totalScore: 326 }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('does not treat same-day same-name rows with different scores as duplicates', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, name: 'Club training', totalScore: 300 }),
-      row({ line: 3, name: 'Club training', totalScore: 288 }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('does not link a zero-total row to a different name at the same instant', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, name: 'Club Cup A', totalScore: 300 }),
-      row({ line: 3, name: 'Spring Open C', totalScore: 0 }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('keeps the first scored row as the anchor when two scored twins precede a shadow', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, totalScore: 300 }),
-      row({ line: 3, totalScore: 288 }),
-      row({ line: 4, totalScore: 0 }),
-    ]);
-    expect(duplicates.get(4)).toBe(2);
-  });
-
-  it('distinguishes rows differing only in tags or note', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, tags: ['Precision'] }),
-      row({ line: 3, tags: ['Milsnabb'] }),
-      row({ line: 4, tags: ['Precision'], note: 'windy' }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('distinguishes tag lists that differ only in where the boundaries fall', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, tags: ['a', 'b'] }),
-      row({ line: 3, tags: ['ab'] }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('distinguishes rows whose fields differ only in where the boundaries fall', () => {
-    const duplicates = markInFileDuplicates([
-      row({ line: 2, name: 'ClubA', sourceType: 'B' }),
-      row({ line: 3, name: 'Club', sourceType: 'AB' }),
-    ]);
-    expect(duplicates.size).toBe(0);
-  });
-
-  it('distinguishes rows differing only in the source type or counts', () => {
+  it('points the shadow at the first twin with series', () => {
     const duplicates = markInFileDuplicates([
       row({ line: 2 }),
-      row({ line: 3, sourceType: 'Competition' }),
-      row({ line: 4, tenCount: 9 }),
-      row({ line: 5, innerTenCount: 9 }),
+      row({ line: 3 }),
+      shadow({ line: 4 }),
+    ]);
+    expect([...duplicates]).toEqual([[4, 2]]);
+  });
+
+  it('keeps an empty session with no twin', () => {
+    expect(markInFileDuplicates([shadow({ line: 2 })]).size).toBe(0);
+  });
+
+  it('keeps two empty sessions that are only each other’s twin', () => {
+    expect(markInFileDuplicates([shadow({ line: 2 }), shadow({ line: 3 })]).size).toBe(0);
+  });
+
+  it('needs the same name', () => {
+    expect(markInFileDuplicates([row({ line: 2 }), shadow({ line: 3, name: 'B' })]).size).toBe(0);
+  });
+
+  it('needs the same local time', () => {
+    const duplicates = markInFileDuplicates([
+      row({ line: 2 }),
+      shadow({ line: 3, localDatetime: '2026-05-04 11:00:01' }),
+    ]);
+    expect(duplicates.size).toBe(0);
+  });
+
+  it('does not run name and time together', () => {
+    const duplicates = markInFileDuplicates([
+      row({ line: 2, localDatetime: '2026-05-04 11:00:0', name: '0A' }),
+      shadow({ line: 3, localDatetime: '2026-05-04 11:00:00', name: 'A' }),
     ]);
     expect(duplicates.size).toBe(0);
   });
@@ -156,7 +113,8 @@ const EXISTING: ShotlogExistingSession[] = [
     startedAt: '2026-05-04T07:30:00Z',
     disciplineId: 'spsf-precision',
     weaponGroup: 'spsf:C',
-    externalRef: 'shotlog:00000000deadbeef',
+    externalSource: 'shotlog',
+    externalRef: 'S-0000beef',
   },
   {
     id: 's2',
@@ -164,29 +122,38 @@ const EXISTING: ShotlogExistingSession[] = [
     startedAt: '2026-05-04T12:00:00Z',
     disciplineId: 'spsf-milsnabb',
     weaponGroup: 'spsf:C',
-    externalRef: 'webshooter:1:2',
+    externalSource: 'webshooter',
+    externalRef: 'S-1234abcd',
   },
 ];
 
 describe('findExactRefMatch', () => {
-  it('finds a session by external ref', () => {
-    expect(findExactRefMatch(EXISTING, 'shotlog:00000000deadbeef')?.id).toBe('s1');
+  it('names the ShotLog source', () => {
+    expect(SHOTLOG_SOURCE).toBe('shotlog');
+  });
+
+  it('finds a ShotLog session by external ref', () => {
+    expect(findExactRefMatch(EXISTING, 'S-0000beef')?.id).toBe('s1');
   });
 
   it('returns null for an unknown ref', () => {
-    expect(findExactRefMatch(EXISTING, 'shotlog:0000000000000000')).toBeNull();
+    expect(findExactRefMatch(EXISTING, 'S-00000000')).toBeNull();
   });
 
-  it('never matches a session with no external ref against a null-ish ref', () => {
-    const local = [{ ...EXISTING[0]!, id: 'local', externalRef: null }];
-    expect(findExactRefMatch(local, 'shotlog:00000000deadbeef')).toBeNull();
+  it('never matches another source’s session with the same ref', () => {
+    expect(findExactRefMatch(EXISTING, 'S-1234abcd')).toBeNull();
+  });
+
+  it('never matches a session with no external ref', () => {
+    const local = [{ ...EXISTING[0]!, id: 'local', externalSource: null, externalRef: null }];
+    expect(findExactRefMatch(local, 'S-0000beef')).toBeNull();
   });
 });
 
 describe('findProbableDuplicates', () => {
   it('matches on calendar day + discipline + weapon group', () => {
     const found = findProbableDuplicates(EXISTING, {
-      datetime: '2026-05-04T09:00:00Z',
+      datetime: '2026-05-04T09:00:00.000Z',
       disciplineId: 'spsf-precision',
       weaponGroup: 'spsf:C',
     });
@@ -215,7 +182,7 @@ describe('findProbableDuplicates', () => {
   it('does not match a different discipline', () => {
     expect(
       findProbableDuplicates(EXISTING, {
-        datetime: '2026-05-04T09:00:00Z',
+        datetime: '2026-05-04T09:00:00.000Z',
         disciplineId: 'spsf-falling-target',
         weaponGroup: 'spsf:C',
       }),
@@ -225,7 +192,7 @@ describe('findProbableDuplicates', () => {
   it('does not match a different weapon group', () => {
     expect(
       findProbableDuplicates(EXISTING, {
-        datetime: '2026-05-04T09:00:00Z',
+        datetime: '2026-05-04T09:00:00.000Z',
         disciplineId: 'spsf-precision',
         weaponGroup: 'spsf:A',
       }),
@@ -238,7 +205,7 @@ describe('findProbableDuplicates', () => {
     ['both', { disciplineId: null, weaponGroup: null }],
   ])('yields nothing when the %s is unresolved', (_label, patch) => {
     expect(
-      findProbableDuplicates(EXISTING, { datetime: '2026-05-04T09:00:00Z', ...patch }),
+      findProbableDuplicates(EXISTING, { datetime: '2026-05-04T09:00:00.000Z', ...patch }),
     ).toEqual([]);
   });
 
@@ -257,11 +224,12 @@ describe('findProbableDuplicates', () => {
         startedAt: '2026-05-04T06:00:00Z',
         disciplineId: patch.disciplineId,
         weaponGroup: patch.weaponGroup,
+        externalSource: null,
         externalRef: null,
       },
     ];
     expect(
-      findProbableDuplicates(mirrored, { datetime: '2026-05-04T09:00:00Z', ...patch }),
+      findProbableDuplicates(mirrored, { datetime: '2026-05-04T09:00:00.000Z', ...patch }),
     ).toEqual([]);
   });
 });

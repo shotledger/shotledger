@@ -25,9 +25,11 @@ ammunitionsasken.
 
 ## När inget antal skott sparades
 
-En serie importerad från ShotLog är en summa utan antal skott. Den räknas som
-en hel serie i sin gren: fem skott för precision, milsnabb, figurskjutning och
-helmatch, sex för fält.
+En serie importerad från ShotLogs gamla export med en rad per pass är en summa
+utan antal skott. Den räknas som en hel serie i sin gren: fem skott för
+precision, milsnabb, figurskjutning och helmatch, sex för fält. Pass importerade
+från ShotLog 5.4:s fullständiga export har varje skott och räknas som alla
+andra.
 
 ## Vapnets räknare och äldre importer
 

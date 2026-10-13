@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as shotlog from './index';
 
 describe('shotlog barrel', () => {
-  it('re-exports the parse, tags, classify, ref, dedup and plan surface', () => {
+  it('re-exports the parse, tags, classify, dedup and plan surface', () => {
     expect(Object.keys(shotlog).sort()).toEqual(
       [
         'DATE_UNKNOWN_TAG',
@@ -12,11 +12,11 @@ describe('shotlog barrel', () => {
         'FINAL_TAG',
         'SHOTLOG_HEADER',
         'SHOTLOG_TAG_PREFIX',
-        'SIGHTER_TAG',
+        'SHOTLOG_RING_FAMILY',
+        'SHOTLOG_SOURCE',
         'applyBulkSuggestion',
         'buildDefaultTagMapping',
         'buildShotlogImportPlan',
-        'buildShotlogRef',
         'classifyTags',
         'collectShotlogTags',
         'defaultTagRole',
@@ -26,6 +26,7 @@ describe('shotlog barrel', () => {
         'markInFileDuplicates',
         'normalizeTag',
         'parseShotlogCsv',
+        'resolveLocalDatetime',
         'suggestDisciplineFromName',
         'suggestWeaponGroupFromName',
       ].sort(),

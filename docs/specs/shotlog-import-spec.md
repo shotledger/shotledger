@@ -1,5 +1,198 @@
 # ShotLog CSV import — executable spec
 
+## Revision 2 — ShotLog 5.4 per-shot export (2026-10-13)
+
+Replaces §§1, 2, 4, 5, 6 and 7 of revision 1 below; §3's tag mapping is
+unchanged except where §3 here says. Issue #781.
+
+**Spec approval: obtained.** The maintainer answered Q1 on 2026-10-13
+(verified against a known session) and approved the spec with the defaults
+for Q2–Q6 in the same thread ("OK", 2026-10-13).
+
+### R2.0 What changes
+
+ShotLog 5.4's "full export" is **one row per series**, not one per session.
+The importer reads it and creates real series with real shots instead of one
+total-only series. The old one-row-per-session format is **dropped** (rule 8
+spirit: one format, the maintainer is the only user; the new export is a
+superset). See Q2.
+
+Real-data rule unchanged: the maintainer's export was profiled by script
+outside the repo. Fixtures stay invented. No row, name, tag combination, id
+or timestamp from it enters the repo.
+
+### R2.1 The format (as measured)
+
+Header:
+
+```
+Session ID,Datetime,Session name,Session type,Discipline,Family,Firearm,Tags,Note,Series,Segment,Sighting,Series total,X,(X),Shot 1,…,Shot 5
+```
+
+Measured on the real file (2398 rows, 279 sessions, UTF-8 with BOM):
+
+- Rows are grouped by `Session ID` (`S-` + 8 hex), contiguous; session
+  columns (Datetime … Note) are identical on every row of a session.
+- `Series` runs 1..n with no gaps. A session with no series is one row with
+  `Series` and every shot blank (3 such).
+- `Datetime` is `YYYY-MM-DD HH:MM:SS`, **no zone** (old export: ISO UTC `Z`).
+  119 sessions still share one bulk-import timestamp.
+- `Shot k` ∈ `0`–`9`, `X`, `(X)`. Always 5 shots per series here.
+- `Series total` = sum of shots with `X`/`(X)` = 10 on every row; `X` and
+  `(X)` columns = count of `X` and `(X)` shots on every row.
+- Observed constants: `Session type` = `Practice`, `Discipline` =
+  `Generic (ring scoring)`, `Family` = `ring_generic`, `Segment` blank,
+  `Sighting` = `No`, `Firearm` blank, `Note` blank.
+- 48 session names carry trailing whitespace.
+
+### R2.2 Parsing — `shared/src/shotlog/parse.ts`
+
+`parseShotlogCsv(text) → ShotlogParseResult` with
+`rows: ShotlogSession[]`, `errors`.
+
+Header: the 15 fixed columns above, then `Shot 1..Shot N` with N ≥ 1 and
+contiguous. Else `header-mismatch`. BOM handled as today.
+
+Per row (line numbers as today):
+
+| Field                                                     | Rule                                                                                                                                    |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `Session ID`                                              | non-empty, trimmed; blank → row error                                                                                                   |
+| `Datetime`                                                | `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$`, real calendar date; local wall time (Q1), converted to an ISO UTC instant with the device zone |
+| `Series`                                                  | blank (header-only row) or positive integer                                                                                             |
+| `Sighting`                                                | `Yes`/`No`/blank; `Yes` → series `isSighter`                                                                                            |
+| `Shot k`                                                  | `X` → 100 tenths; `(X)` → 100 tenths + `isInnerTen`; `0`–`9` → ×10; blank only trailing (fewer shots); anything else → row error        |
+| `Series total`, `X`, `(X)`                                | integers; disagreement with the shots → warning `series-total-mismatch` / `x-count-mismatch`; the shots win                             |
+| `Segment`                                                 | non-blank → warning `segment-unsupported`, ignored                                                                                      |
+| `Discipline`/`Family`                                     | kept on the session for display; anything but `ring_generic` → warning `family-unsupported` (discipline still comes from tags, §3)      |
+| `Firearm`, `Tags`, `Note`, `Session name`, `Session type` | as today (name trimmed)                                                                                                                 |
+
+Grouping: rows with the same `Session ID` form one `ShotlogSession`
+`{ line (first row), sessionId, datetime, name, sourceType, tags, note,
+series: { position, isSighter, shots: {valueTenths, isInnerTen}[] }[],
+totalScore, warnings }`. Errors that fail the whole session (row error kept
+per line, session dropped):
+
+- session columns differ between rows of one id → `inconsistent-session`;
+- a series number repeated, or a header-only row mixed with series rows →
+  `bad-series-sequence`;
+- the same id appears in two non-contiguous groups → `split-session`.
+
+Gaps in numbering are allowed (positions are renumbered 1..n in file order)
+— warning `series-gap`.
+
+### R2.3 Tags
+
+Unchanged: same roles, same defaults, user confirms. One semantic change:
+**`sighter` (Warmup) now flags series 1 as `isSighter`** instead of only
+tagging the session, because the series exist now (Q3). The
+`shotlog:includes-sighter` tag and note line go away. A series already marked
+`Sighting=Yes` wins; never more than one sighter per session (schema rule).
+`final` keeps adding the `shotlog:final` tag only and sets no series flag:
+which series form the final is not in the file (2 such sessions). Today it
+flags the single series `isFinal`; that stops.
+
+### R2.4 Reference
+
+`external_source = 'shotlog'`, `external_ref = <Session ID>` verbatim
+(`S-9a10fad8`-style; unprefixed, matching #727). The FNV hash in `ref.ts` is
+deleted. Sessions imported earlier from the old format carry hash refs, so a
+re-import will not exact-match them; they surface as `probable-duplicate`
+(same day + discipline + group) and are not auto-selected (Q4).
+
+### R2.5 Dedup
+
+- Lost dates: unchanged (≥ 3 sessions sharing a timestamp).
+- In-file duplicate: same `Session ID` can't recur (§2 error). The "empty
+  shadow" rule stays, keyed on `(datetime, trimmed name)`: a session with no
+  series whose twin has series is `duplicate-in-file`.
+- Exact duplicate: `(external_source, external_ref)` match.
+- Probable duplicate: unchanged.
+
+### R2.6 Plan
+
+Same statuses and precedence. `empty` = no scored series (was total 0).
+`suggestion` loses `totalTenths`, `tenCount`, `innerTenCount`,
+`includesSighter`; gains `series` (as parsed, sighter flag applied).
+Summary gains total series and shot counts.
+
+### R2.7 App write path — `app/src/db/queries/shotlog.ts`
+
+Per session: `createSession` (no `tenCount`/`innerTenCount` — the shots carry
+them; Q5), then per series `addSeries` (`isTotalOverride: false`,
+`isSighter`, position) and per shot `addShot` (`valueTenths`, `isInnerTen`,
+position). One transaction per session. Integer scoring mode. The rest of
+§7 (firearm create, tags, importability guard, `/dev` entry point) unchanged.
+The `/dev` preview row shows series count and score instead of the total.
+
+### R2.8 Invariants
+
+- No new dependency; no schema change, no migration.
+- `shared/src/scoring/**` untouched.
+- No existing test weakened; old-format tests are replaced, not deleted
+  silently (listed in EVIDENCE).
+- Nothing writes before the user confirms. Error / in-file / exact-duplicate
+  sessions can never be written (enforced in the write path).
+- Score of an imported session (via `shared/src/scoring`) = sum of its
+  non-sighter series totals from the file; ten / inner-ten counts = `X`+`(X)`
+  / `(X)` counts.
+
+### R2.9 Gauntlet and docs
+
+100% coverage + Stryker on `shared/src/shotlog/` as today; EVIDENCE in
+`docs/specs/shotlog-import-evidence.md`. App write path: normal tests
+including a synthetic end-to-end CSV → DB → session score check. Emulator
+screenshots from `/dev` with a synthetic CSV. `docs/manual`: no page covers
+the `/dev` importer today, so none changes (confirm).
+
+### R2.10 Decisions (the questions, answered)
+
+- **Q1 Datetime zone. Resolved 2026-10-13:** local time. A session the
+  maintainer remembers shows the same clock time in ShotLog and in the file.
+  Converted with the importing device's zone; a time in a DST gap or overlap
+  gets the warning `ambiguous-local-time` (R2-d).
+- **Q2 Old format.** Answer: dropped. Drop it (default) or keep both, picked by header?
+- **Q3 Warmup.** Answer: series 1 is the sighter. Is the warm-up series always series 1? Measured: Warmup
+  sessions have exactly one more series than their non-Warmup peers (e.g. 8
+  vs 7 precision, 13 vs 12 milsnabb), position not inferable. Default: series
+  1 = sighter.
+- **Q4 Already-imported old sessions.** Answer: default (probable duplicates, deleted by hand). Have you imported the old CSV on a
+  device you keep? If yes: re-import shows them as probable duplicates; you
+  delete the old ones by hand. If no: nothing to do.
+- **Q5 #727 overlap.** Answer: this branch rebases onto #727 after it merges. That thread changes `ref.ts`/`dedup.ts` (unprefixed
+  refs) and keeps `ten_count`/`inner_ten_count` until this lands. Default:
+  this branch rebases onto #727 after it merges; afterwards #727's follow-up
+  can drop the two columns.
+- **Q6 Issue.** Answer: yes, #781. Open a GitHub issue for this? Default: yes.
+
+### R2.11 Revisions during implementation (recorded, not hidden)
+
+- **R2-a A row error drops its whole session.** §2 named three
+  session-level errors; it did not say what a bad shot does to the rest of
+  its session. Importing the session one series short would be silently
+  wrong, so any row error drops the session; the error itself is reported
+  at its line.
+- **R2-b More than one `Sighting=Yes`.** The schema allows one sighter per
+  section. The first such series stays a sighter, later ones do not, and
+  the session gets the warning `multiple-sighter-series`. Unseen in the
+  real file.
+- **R2-c `empty` means no series rows.** A series of misses is still a
+  scored series; only ShotLog's series-less session row is `empty`.
+- **R2-d Local time is resolved by the `Date` constructor.** ECMA-262's
+  LocalTime→UTC rule already shifts a gap time forward and takes the
+  earlier instant of an overlap, which is what Q1's note asked for; the
+  code only detects that it happened (`ambiguous-local-time`).
+- **R2-e The empty-shadow rule is symmetric.** Revision 1 only dropped a
+  zero row that came after its scored twin; the real file has the shadow
+  first, so either order now counts.
+- **R2-f `csv-codec.ts`.** Its empty-input early return was redundant (an
+  equivalent mutant); removed, and the trailing-newline behaviour gained a
+  test. No behaviour change.
+
+---
+
+## Revision 1 — the one-row-per-session export (superseded where revision 2 says)
+
 > old-coder SPEC for `shared/src/shotlog/` plus the app-side import flow.
 > Autonomous run: **spec approval: not obtained (autonomous run)** — this
 > document is the artifact to review after the fact, per the skill's
