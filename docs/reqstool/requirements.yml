@@ -222,6 +222,22 @@ requirements:
       - functional-suitability
     revision: '0.1.0'
 
+  - id: COMPL_003
+    title: A met requirement shows when it lapses if nothing more is logged
+    significance: shall
+    description: >-
+      For a licence-activity rule or per-firearm criterion that is met now, the
+      app shall give the first instant after now at which the same rule,
+      evaluated on the same sessions, is no longer met, and shall give none for
+      a requirement that is not met.
+    rationale: >-
+      A shooter keeping a status needs to know the latest day to shoot next
+      (#795). A date from a second formula could disagree with the status the
+      app shows; deriving it from the status itself cannot.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
   - id: DISC_001
     title: SPSF klasser are the shooter's skill class crossed with their category
     significance: shall

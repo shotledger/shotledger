@@ -36,6 +36,21 @@ usually points at a missing detail on a firearm rather than at the case itself.
 Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
 on the Firearms tab, and filling those in may move the proposal on its own.
 
+## Knowing when to shoot next
+
+When a requirement is met, the app says by which date you need to log your next
+session to keep it met:
+
+- On **Home**, under the status: "Next session by …".
+- On a firearm, under each licence activity line and under each Föreningsintyg
+  criterion that is met.
+
+Log a session on or before that date and the requirement stays met for longer;
+the date then moves to the next session that is about to fall out of the
+period. When a requirement is not met, no date is shown. [How the date is
+worked out](../explanation/license-activity.md#the-next-session-date) explains
+the details.
+
 ## Checking a firearm's own criteria
 
 Two of the form's boxes are about one gun rather than about you: applying for
