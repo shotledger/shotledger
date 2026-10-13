@@ -1493,7 +1493,8 @@
       "failedSignedOut": "Du har loggats ut. Logga in igen och försök sedan igen.",
       "failedOutdated": "Sidan är inaktuell. Kopiera dina ändringar och ladda sedan om sidan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Försök igen skickar samma ändring igen.",
-      "accountChanged": "Du är nu inloggad på ett annat konto, så den sparade ändringen skickades inte."
+      "accountChanged": "Du är nu inloggad på ett annat konto, så den sparade ändringen skickades inte.",
+      "photo": "Foto"
     },
     "settings": {
       "saved": "Sparat.",

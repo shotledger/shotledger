@@ -1493,7 +1493,8 @@
       "failedSignedOut": "You have been signed out. Sign in again, then retry.",
       "failedOutdated": "This page is out of date. Copy your changes, then reload the page.",
       "failedUnconfirmed": "The server answered, but not as expected. Retry sends the same change again.",
-      "accountChanged": "You are now signed in to another account, so the held change was not sent."
+      "accountChanged": "You are now signed in to another account, so the held change was not sent.",
+      "photo": "Photo"
     },
     "settings": {
       "saved": "Saved.",
