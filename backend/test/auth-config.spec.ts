@@ -20,7 +20,7 @@ const deployedEnv: Env = {
   ENVIRONMENT: 'production',
   BETTER_AUTH_SECRET: 'test-only-secret-0123456789abcdefghijklmnopqrstuvwxyz',
   BETTER_AUTH_URL: ORIGIN,
-  BETTER_AUTH_TRUSTED_ORIGINS: 'app://',
+  BETTER_AUTH_TRUSTED_ORIGINS: 'shotledger://',
 };
 
 async function fetchApp(target: Env, path: string, init: RequestInit) {
@@ -84,6 +84,18 @@ describe('better-auth rate limiting', () => {
     expect(results[5]).toBe(429);
   });
 
+  it('refuses the eleventh session-list request from one IP within 60 s', async () => {
+    const results: number[] = [];
+    for (let i = 0; i < 11; i += 1) {
+      const response = await fetchApp(deployedEnv, '/api/auth/list-sessions', {
+        headers: { 'cf-connecting-ip': '192.0.2.7' },
+      });
+      results.push(response.status);
+    }
+    expect(results.slice(0, 10)).not.toContain(429);
+    expect(results[10]).toBe(429);
+  });
+
   it('keeps no row for a path that is not an endpoint', async () => {
     for (const path of ['/api/auth/no-such-path', '/api/auth/sign-in/nowhere', '/api/auth/a/b/c']) {
       await fetchApp(deployedEnv, path, {
@@ -117,7 +129,9 @@ describe('better-auth rate limiting', () => {
 describe('better-auth origins', () => {
   it('accepts the web origin and the app scheme, and refuses any other', async () => {
     expect((await signUp(deployedEnv, 'web@example.com', ORIGIN)).status).toBe(200);
-    expect((await signUp(deployedEnv, 'app@example.com', 'app://')).status).toBe(200);
+    expect((await signUp(deployedEnv, 'app@example.com', 'shotledger://')).status).toBe(200);
+    // The generic scheme any app can register is no longer trusted (#671).
+    expect((await signUp(deployedEnv, 'old@example.com', 'app://')).status).toBe(403);
     expect((await signUp(deployedEnv, 'other@example.com', 'https://other.example')).status).toBe(
       403,
     );

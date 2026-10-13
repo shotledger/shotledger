@@ -7,7 +7,7 @@ import * as authSchema from '../db/auth-schema';
 import { redactingAuthLogger } from '../lib/errors';
 
 /** `expo.scheme` in app/app.json. */
-const APP_ORIGIN = 'app://';
+const APP_ORIGIN = 'shotledger://';
 
 /** Local development and the test suite only; never a `vars` entry. */
 export const DEV_SECRET = 'dev-placeholder-secret-never-use-in-production';
@@ -44,6 +44,8 @@ const AUTH_BASE_PATH = '/api/auth';
 
 /** Per client IP. The longest window any rule uses; the purge cron keeps rows this long. */
 const SIGN_IN_UP_RULE = { window: 60, max: 5 };
+/** Listing and revoking sessions: a stolen token should not sweep them unthrottled. */
+const SESSION_ADMIN_RULE = { window: 60, max: 10 };
 export const RATE_LIMIT_LONGEST_WINDOW_MS = 60_000;
 
 /**
@@ -141,12 +143,19 @@ export function createAuth(env: Env) {
     // one row per IP and path. Only real endpoints are counted, so a client
     // cannot mint rows with made-up paths. Otherwise better-auth's defaults
     // apply: 100 requests per 10 s; change-password/change-email 3 per 10 s.
+    // `/delete-user` is off (the app deletes through /account/delete) but
+    // still answers, so it gets the strictest rule.
     rateLimit: {
       enabled: deployed,
       storage: 'database',
       customRules: {
         '/sign-in/email': SIGN_IN_UP_RULE,
         '/sign-up/email': SIGN_IN_UP_RULE,
+        '/list-sessions': SESSION_ADMIN_RULE,
+        '/revoke-session': SESSION_ADMIN_RULE,
+        '/revoke-sessions': SESSION_ADMIN_RULE,
+        '/revoke-other-sessions': SESSION_ADMIN_RULE,
+        '/delete-user': SIGN_IN_UP_RULE,
         '/**': (request, current) => isAuthEndpoint(authPathOf(request), endpointPaths) && current,
       },
     },

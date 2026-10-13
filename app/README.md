@@ -34,7 +34,7 @@ pnpm exec expo run:android               # dev build onto a running emulator
 ```
 
 The emulator, ADB driving, screenshots, the demo-data deep link
-(`app://dev`), standalone release builds and the many gotchas found along
+(`shotledger://dev`), standalone release builds and the many gotchas found along
 the way are written up in the root `CLAUDE.md`, "Agentic loop". The web
 preview has no SQLite, so anything that touches the database needs a
 device or emulator.
