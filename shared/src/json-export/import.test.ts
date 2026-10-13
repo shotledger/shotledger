@@ -392,6 +392,49 @@ function omit<T extends object>(value: T, key: keyof T): Omit<T, keyof T> {
   return rest;
 }
 
+describe('importSessionsFromJson — isShootOff (#727)', () => {
+  it('S5 a series written without isShootOff imports as not a shoot-off', () => {
+    const withSeries = session({
+      series: [
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: false,
+          shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
+          totalOverride: null,
+        },
+      ],
+    });
+    const bare = JSON.parse(exportSessionsToJson([withSeries], OPTIONS)) as {
+      sessions: { series: Record<string, unknown>[] }[];
+    };
+    delete bare.sessions[0]!.series[0]!.isShootOff;
+    const result = importSessionsFromJson(JSON.stringify(bare)) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions[0]!.series[0]!.isShootOff).toBe(false);
+  });
+
+  it('S5 rejects the session when isShootOff is not a boolean', () => {
+    const withSeries = session({
+      series: [
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: 1 as unknown as boolean,
+          shots: [],
+          totalOverride: null,
+        },
+      ],
+    });
+    const result = importSessionsFromJson(
+      exportSessionsToJson([withSeries], OPTIONS),
+    ) as ImportResult;
+    expect(result.sessions).toEqual([]);
+  });
+});
+
 describe('importSessionsFromJson — kind, ten counts and external refs (#756)', () => {
   const ADDED = [
     'kind',
@@ -411,13 +454,13 @@ describe('importSessionsFromJson — kind, ten counts and external refs (#756)',
         tenCount: 12,
         innerTenCount: 4,
         externalSource: 'shotlog',
-        externalRef: 'shotlog:2026-01-01:1',
+        externalRef: '00000000deadbeef',
       }),
       session({
         id: 'webshooter',
         type: 'competition',
         externalSource: 'webshooter',
-        externalRef: 'webshooter:123:456',
+        externalRef: '123:456',
         officialPlacement: 3,
         officialStandardMedal: 'silver',
       }),
