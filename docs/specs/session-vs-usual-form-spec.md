@@ -210,4 +210,24 @@ caller, `loadComparisonForSession` in `use-stats-data.ts`, was never called.
 
 ## Revisions
 
-- (none yet)
+- 2026-10-13, during GREEN: the baseline also carries `shotSdTenths` (the
+  sample SD of its shot values), so the app can scale the Avg/Shot bar the
+  same way as the Avg/Series bar. UF3 asserts it.
+- 2026-10-13, during GREEN: with no scored session series (UF15),
+  `expectedTotalTenths` and `overUnderTenths` are `null`, not 0, like every
+  other figure that has nothing to rest on.
+- 2026-10-13: decision 2 said "Clearly" is about one session in twenty on
+  either side. Under a normal spread it is about one in forty on each side
+  (one in twenty for both together), and "Better"/"Worse" about one in seven
+  each. The bands themselves are unchanged; the manual states the corrected
+  frequencies.
+- 2026-10-13, UI: "Share of 10s" and "9 or Better" show the difference in
+  whole percentage points with no unit ("38% · usual 31% · +7"). A legend
+  above the bars names the grey mark "Usual" and the coloured mark "Today".
+  The manual's "On the web" section says a session's Stats view is phone
+  only. A fält session has no Stats view (it has stations, not series), so
+  UF7 guards the shared function only.
+- 2026-10-13, after mutation: two survivors showed gaps the spec already
+  covered. UF15 now also asserts its deltas are `null` (the session side is
+  empty, so `null − 460` must not become −460), and a new UF7 test pins that a
+  discipline the app does not know is treated as rings.
