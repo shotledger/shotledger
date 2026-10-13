@@ -671,6 +671,7 @@
     "innerTenAverage": "Snitt X/serie",
     "extraRounds": "Extra skott (räknas ej i statistik)",
     "extraRoundsHint": "Avlossade men opoängsatta skott — räknas bara mot skotträknare och ammunitionsåtgång",
+    "extraRoundsInvalid": "Extra skott måste vara ett heltal från 0 till {{max}}.",
     "sightsTitle": "Sikte",
     "roundsFired": "Avlossade skott",
     "roundsFiredHint": "Passets antal skott. Räknas mot skotträknare och ammunitionsåtgång; poängsätts aldrig.",
@@ -1392,7 +1393,8 @@
     "shell": {
       "menu": "Huvudmeny",
       "skipToContent": "Hoppa till innehållet",
-      "version": "Version"
+      "version": "Version",
+      "sourceCode": "Källkod"
     },
     "sessions": {
       "back": "Alla pass",

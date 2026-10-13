@@ -63,7 +63,7 @@ Driving it:
   against whatever is there.
 - Screenshot after every tap before reasoning about what happened: the tap
   may have hit the wrong control, or the screen may be mid-transition.
-- Launch: `adb shell am start -a android.intent.action.VIEW -d "app://" app.shotledger`
-  (Home) or `-d "app://dev"` (demo data). Avoid `monkey` once mid-flow: it
+- Launch: `adb shell am start -a android.intent.action.VIEW -d "shotledger://" app.shotledger`
+  (Home) or `-d "shotledger://dev"` (demo data). Avoid `monkey` once mid-flow: it
   injects a random touch first.
 - Screenshots that leave the machine use `/dev` demo data, never real data.
