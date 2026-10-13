@@ -1494,9 +1494,7 @@
       "failedOutdated": "Sidan är inaktuell. Kopiera dina ändringar och ladda sedan om sidan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Försök igen skickar samma ändring igen.",
       "accountChanged": "Du är nu inloggad på ett annat konto, så den sparade ändringen skickades inte.",
-      "photo": "Foto",
-      "stationsHint": "Fältstationer ändras i telefonen.",
-      "roundsHint": "Skotten i ett pass med bara antal skott ändras i telefonen."
+      "photo": "Foto"
     },
     "settings": {
       "saved": "Sparat.",
@@ -1506,8 +1504,7 @@
       "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt.",
       "profileUnset": "Ingen profil vald. Telefonen använder standardvalet för sitt språk."
-    },
-    "hint": "Hjälp"
+    }
   },
   "notifications": {
     "channelMaintenance": "Underhåll",

@@ -5,6 +5,7 @@ import {
   addRow,
   canMarkSighter,
   EDIT_TABLES,
+  toggleOpen,
   editContext,
   localDateTime,
   openForm,
@@ -158,7 +159,7 @@ describe('the edit form', () => {
           text: 'X 9',
           isSighter: false,
           deleted: false,
-          hasPhoto: false,
+          photo: null,
         },
         {
           key: expect.any(Number),
@@ -166,7 +167,7 @@ describe('the edit form', () => {
           text: '8',
           isSighter: true,
           deleted: false,
-          hasPhoto: false,
+          photo: null,
         },
       ],
     });
@@ -177,14 +178,13 @@ describe('the edit form', () => {
       fixed: false,
       mode: 'integer',
       seriesLength: 5,
-      phoneOnly: null,
     });
   });
 
   it('U1 final and total-only series are listed read-only, by position', () => {
     expect(opened('s1').readOnly).toEqual([
-      { id: 'rF', position: 3, kind: 'final', text: '10', hasPhoto: false },
-      { id: 'rT', position: 4, kind: 'totalOnly', text: '', hasPhoto: false },
+      { id: 'rF', position: 3, kind: 'final', text: '10', photo: null },
+      { id: 'rT', position: 4, kind: 'totalOnly', text: '', photo: null },
     ]);
   });
 
@@ -194,14 +194,14 @@ describe('the edit form', () => {
     t.series.set('r5', series('r5', 's1', 5, { photo_uri: 'file:///local/target.jpg' }));
     t.series.set('rF', series('rF', 's1', 3, { is_final: 1, photo_uri: 'shotledger-photo:p2' }));
     const form = openForm(editContext(t), 's1')!;
-    expect(form.initial.rows.map((r) => [r.id, r.text, r.hasPhoto])).toEqual([
-      ['r1', 'X 9', true],
-      ['r2', '8', false],
-      ['r5', '', true],
+    expect(form.initial.rows.map((r) => [r.id, r.text, r.photo])).toEqual([
+      ['r1', 'X 9', { kind: 'uploaded', photoId: 'p1' }],
+      ['r2', '8', null],
+      ['r5', '', { kind: 'local' }],
     ]);
-    expect(form.readOnly.map((r) => [r.id, r.hasPhoto])).toEqual([
-      ['rF', true],
-      ['rT', false],
+    expect(form.readOnly.map((r) => [r.id, r.photo])).toEqual([
+      ['rF', { kind: 'uploaded', photoId: 'p2' }],
+      ['rT', null],
     ]);
     // Display only: the draft Save builds carries no photo.
     expect(toDraft('s1', form.initial, form.initial).series[2]).toEqual({
@@ -210,30 +210,6 @@ describe('the edit form', () => {
       isSighter: false,
       deleted: false,
     });
-  });
-
-  it('a fält session shows its live station count, a rounds-only one its rounds, for the phone', () => {
-    const t = tables();
-    const station = (id: string, position: number, fields: Row = {}) => ({
-      ...common(id),
-      session_id: 'sF',
-      position,
-      ...fields,
-    });
-    t.falt_stations.set('st1', station('st1', 1));
-    t.falt_stations.set('st2', station('st2', 2));
-    t.falt_stations.set('st3', station('st3', 3, { deleted_at: OLD }));
-    expect(openForm(editContext(t), 'sF')!.phoneOnly).toEqual({ kind: 'stations', count: 2 });
-    expect(opened('sF').phoneOnly).toEqual({ kind: 'stations', count: 0 });
-    expect(opened('sR').phoneOnly).toEqual({ kind: 'rounds', rounds: 20 });
-    t.sessions.set('sR0', session('sR0', { kind: 'rounds' }));
-    t.sessions.set(
-      'sRF',
-      session('sRF', { kind: 'rounds', discipline_id: 'spsf-falt', extra_rounds: 6 }),
-    );
-    expect(openForm(editContext(t), 'sR0')!.phoneOnly).toEqual({ kind: 'rounds', rounds: 0 });
-    expect(openForm(editContext(t), 'sRF')!.phoneOnly).toEqual({ kind: 'rounds', rounds: 6 });
-    expect(opened('sX').phoneOnly).toBeNull();
   });
 
   it('U1 blank columns open as empty text or null', () => {
@@ -368,7 +344,7 @@ describe('the edit form', () => {
       text: '',
       isSighter: false,
       deleted: false,
-      hasPhoto: false,
+      photo: null,
     });
     expect(added.rows[2]!.key).not.toBe(initial.rows[1]!.key);
     const key = initial.rows[0]!.key;
@@ -386,5 +362,14 @@ describe('the edit form', () => {
     const deleted = setRow(initial, r2!.key, { deleted: true });
     expect(canMarkSighter(deleted, r1!.key, false)).toBe(true);
     expect(canMarkSighter(initial, r2!.key, true)).toBe(false);
+  });
+
+  it('toggleOpen opens a closed photo and closes an open one, leaving the others', () => {
+    const none = new Set<string>();
+    const one = toggleOpen(none, 'r1');
+    expect([...one]).toEqual(['r1']);
+    expect([...toggleOpen(one, 'r2')]).toEqual(['r1', 'r2']);
+    expect([...toggleOpen(one, 'r1')]).toEqual([]);
+    expect(none.size).toBe(0);
   });
 });

@@ -23,12 +23,13 @@ import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
-import { Hint } from '../shell/hint';
+import { PhotoBadge, PhotoPanel } from '../sessions/photos';
 import { SignInAgain } from '../sign-in-again';
 import { errorMessage, statusMessages, type Message } from './messages';
 import {
   addRow,
   canMarkSighter,
+  toggleOpen,
   editContext,
   openForm,
   setRow,
@@ -124,6 +125,8 @@ export function SessionEdit({
   );
   const [form, setForm] = useState<EditForm | null>(() => opened?.initial ?? null);
   const [state, setState] = useState<EditState>(IDLE);
+  const [openPhotos, setOpenPhotos] = useState<ReadonlySet<string>>(new Set());
+  const togglePhoto = (id: string) => setOpenPhotos((was) => toggleOpen(was, id));
   const session = opened?.opened.session;
   const disciplineId = String(session?.discipline_id ?? '');
   const discipline = getDiscipline(disciplineId);
@@ -398,32 +401,13 @@ export function SessionEdit({
           {opened.editsSeries && (
             <SeriesRows
               opened={opened}
+              openPhotos={openPhotos}
+              togglePhoto={togglePhoto}
               form={form}
               edit={edit}
               rowErrors={rowErrors}
               rowLabel={rowLabel}
             />
-          )}
-          {opened.phoneOnly !== null && (
-            <section className="card edit-phone-only">
-              <span className="muted">
-                {t(
-                  opened.phoneOnly.kind === 'stations' ? 'session.stations' : 'session.roundsFired',
-                )}
-              </span>
-              <span>
-                {opened.phoneOnly.kind === 'stations'
-                  ? opened.phoneOnly.count
-                  : opened.phoneOnly.rounds}
-              </span>
-              <Hint
-                text={t(
-                  opened.phoneOnly.kind === 'stations'
-                    ? 'web.edit.stationsHint'
-                    : 'web.edit.roundsHint',
-                )}
-              />
-            </section>
           )}
           {opened.readOnly.length > 0 && (
             <section className="card">
@@ -439,7 +423,27 @@ export function SessionEdit({
                       )}
                     </span>
                     <span className="read-only-shots">{row.text}</span>
-                    {row.hasPhoto && <span className="badge">{t('web.edit.photo')}</span>}
+                    {row.photo !== null && (
+                      <>
+                        <PhotoBadge
+                          open={openPhotos.has(row.id)}
+                          panelId={`edit-photo-${row.id}`}
+                          onToggle={() => togglePhoto(row.id)}
+                        />
+                        {openPhotos.has(row.id) && (
+                          <PhotoPanel
+                            photo={row.photo}
+                            id={`edit-photo-${row.id}`}
+                            alt={t(
+                              row.kind === 'final'
+                                ? 'web.edit.finalSeries'
+                                : 'web.edit.totalOnlySeries',
+                              { position: row.position },
+                            )}
+                          />
+                        )}
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -479,12 +483,16 @@ export function SessionEdit({
 
 function SeriesRows({
   opened,
+  openPhotos,
+  togglePhoto,
   form,
   edit,
   rowErrors,
   rowLabel,
 }: {
   opened: OpenedForm;
+  openPhotos: ReadonlySet<string>;
+  togglePhoto: (id: string) => void;
   form: EditForm;
   edit: (next: EditForm) => void;
   rowErrors: ReadonlyMap<number, string[]>;
@@ -501,7 +509,13 @@ function SeriesRows({
           <div key={row.key} className={row.deleted ? 'series-row deleted' : 'series-row'}>
             <div className="edit-row-label">
               <label htmlFor={`edit-row-${row.key}`}>{rowLabel(index + 1)}</label>
-              {row.hasPhoto && <span className="badge">{t('web.edit.photo')}</span>}
+              {row.photo !== null && row.id !== null && (
+                <PhotoBadge
+                  open={openPhotos.has(row.id)}
+                  panelId={`edit-photo-${row.id}`}
+                  onToggle={() => togglePhoto(row.id!)}
+                />
+              )}
             </div>
             <input
               id={`edit-row-${row.key}`}
@@ -542,6 +556,9 @@ function SeriesRows({
             >
               {row.deleted ? t('web.edit.undo') : t('session.deleteSeries')}
             </button>
+            {row.photo !== null && row.id !== null && openPhotos.has(row.id) && (
+              <PhotoPanel photo={row.photo} id={`edit-photo-${row.id}`} alt={rowLabel(index + 1)} />
+            )}
             {errors.map((message) => (
               <p key={message} className="danger row-error">
                 {message}

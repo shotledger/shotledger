@@ -20,7 +20,7 @@ import {
 
 import { startedAtIso } from '../entry/model';
 import type { PulledTables, WebTable } from '../pull';
-import { photoRefOf } from '../sessions/browse';
+import { photoRefOf, type PhotoRef } from '../sessions/browse';
 
 /** The tables Save and Delete pull afresh (E6, R1). */
 export const EDIT_TABLES = [
@@ -51,8 +51,8 @@ export interface EditRow {
   text: string;
   isSighter: boolean;
   deleted: boolean;
-  /** Shown as a marker only; Save never writes the photo columns (E10). */
-  hasPhoto: boolean;
+  /** Shown and opened only; Save never writes the photo columns (E10). */
+  photo: PhotoRef;
 }
 
 /** A series shown but not edited here: a final or a total-only one (E11). */
@@ -61,12 +61,8 @@ export interface ReadOnlySeries {
   position: number;
   kind: 'final' | 'totalOnly';
   text: string;
-  hasPhoto: boolean;
+  photo: PhotoRef;
 }
-
-/** What the page shows but leaves to the phone (E11): a fält session's stations, a rounds-only session's rounds. */
-export type PhoneOnly =
-  { kind: 'stations'; count: number } | { kind: 'rounds'; rounds: number } | null;
 
 export interface EditForm {
   /** Local `YYYY-MM-DD` and `HH:MM`, as the date and time inputs hold them. */
@@ -98,7 +94,6 @@ export interface OpenedForm {
   mode: ScoringMode;
   /** Shots per series, for the row hint. */
   seriesLength: number;
-  phoneOnly: PhoneOnly;
 }
 
 let lastKey = 0;
@@ -149,14 +144,14 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
   for (const { row, shots } of series) {
     const id = row.id as string;
     const shown = formatSeriesText(shotsOf(shots), mode);
-    const hasPhoto = photoRefOf(row.photo_uri as string | null | undefined) !== null;
+    const photo = photoRefOf(row.photo_uri as string | null | undefined);
     if (row.is_final === 1 || row.is_total_override === 1) {
       readOnly.push({
         id,
         position: row.position as number,
         kind: row.is_final === 1 ? 'final' : 'totalOnly',
         text: shown,
-        hasPhoto,
+        photo,
       });
     } else if (editsSeries) {
       rows.push({
@@ -165,7 +160,7 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
         text: shown,
         isSighter: row.is_sighter === 1,
         deleted: false,
-        hasPhoto,
+        photo,
       });
     }
   }
@@ -185,13 +180,6 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
     ammoLotId: orNull(session.ammo_lot_id),
     rows,
   };
-  // A rounds-only fält session is rounds (#718).
-  const phoneOnly: PhoneOnly =
-    session.kind === 'rounds'
-      ? { kind: 'rounds', rounds: (session.extra_rounds as number | null | undefined) ?? 0 }
-      : discipline?.scoring === 'hits'
-        ? { kind: 'stations', count: opened.stations.length }
-        : null;
   return {
     opened,
     initial,
@@ -200,7 +188,6 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
     fixed: program !== null && buildProgramSkeleton(program).length > 0,
     mode,
     seriesLength,
-    phoneOnly,
   };
 }
 
@@ -245,7 +232,7 @@ export function addRow(form: EditForm): EditForm {
     ...form,
     rows: [
       ...form.rows,
-      { key: nextKey(), id: null, text: '', isSighter: false, deleted: false, hasPhoto: false },
+      { key: nextKey(), id: null, text: '', isSighter: false, deleted: false, photo: null },
     ],
   };
 }
@@ -258,4 +245,11 @@ export function setRow(form: EditForm, key: number, patch: Partial<EditRow>): Ed
 export function canMarkSighter(form: EditForm, key: number, fixed: boolean): boolean {
   if (fixed) return false;
   return form.rows.every((row) => row.key === key || row.deleted || !row.isSighter);
+}
+
+/** The series whose photo is open, with `id` opened or closed. */
+export function toggleOpen(open: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const next = new Set(open);
+  if (!next.delete(id)) next.add(id);
+  return next;
 }

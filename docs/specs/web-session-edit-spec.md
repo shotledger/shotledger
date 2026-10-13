@@ -533,8 +533,8 @@ after a dropped response changes nothing twice; the Swedish UI.
     photo.
   - The delete confirmation's date uses the web's locale binding
     (`web/src/dates.ts`, #754); the app's `formatSessionDate` it used is gone.
-- **R13 (#767): display only.** A series row (editable or read-only) whose
-  `photo_uri` is set, uploaded or still on the phone, is marked **Photo**; a
-  fält session shows its live station count and a rounds-only session its
-  `extra_rounds`, each with a hover/focus hint that it is changed on the phone.
-  Nothing Save or Delete builds changes.
+- **R13 (#767): a photo badge, display only.** A series row (editable or
+  read-only) whose `photo_uri` is set is marked **Photo**, a button that shows
+  or hides the photo below the row through the detail page's `Photo`
+  (`web/src/sessions/photos.tsx`); one still on the phone shows as not
+  uploaded. Nothing Save or Delete builds changes.

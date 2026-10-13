@@ -22,11 +22,11 @@ In free format, tick **Sighter** on the one row that is a sighter series.
 
 Final series and series saved as a total only (from Webshooter) are listed but
 not editable here, and neither are fält stations, the rounds of a
-rounds-only session, the match format and tags. Change those on the phone. A
-fält session shows how many stations it has, and a rounds-only session its
-**Rounds Fired**; the ⓘ beside it says where to change them.
+rounds-only session, the match format and tags. Change those on the phone.
 
-A series with a photo is marked **Photo**. The photo stays with its series when
+A series with a photo is marked **Photo**; click it to show or hide the photo
+below the row. A photo not yet uploaded from the phone shows as not uploaded,
+as on the session's page. The photo stays with its series when
 you retype the shots, but the marks you placed on it no longer show, as when
 you retype the series on the phone. A series saved with a photo and no shots
 shows as an empty row marked **Photo**; left empty, it stays as it is. This
