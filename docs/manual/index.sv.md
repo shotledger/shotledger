@@ -7,8 +7,10 @@ Den kräver inget konto och fungerar offline.
 
 ## Vad den gör
 
-- **Loggar pass skott för skott** — träning och tävling, under SPSF:s program
-  eller som fri träning.
+- **Loggar pass skott för skott** — träning och tävling, under SPSF:s och
+  ISSF:s program eller som fri träning. Ett fältskjutningspass loggas station
+  för station, med träff, figurer, poäng och särskjutning; ett pass kan också
+  bara ange antal avlossade skott.
 - **Räknar en pappersavtavla från ett foto.** Du fotograferar tavlan, markerar
   var hålen sitter, och appen räknar fram poängen ur tavelansiktets verkliga
   geometri.
@@ -19,6 +21,13 @@ Den kräver inget konto och fungerar offline.
 - **Tar tid på ditt skjutande** — en timer för skjuttider, intervallpass och
   IPSC-liknande serier, med mikrofonen som registrerar mellantiderna när du ber
   om det, och SPSF:s fälttimer med talade kommandon.
+- **Visar hur det går** — statistik filtrerad på period, gren och taggar,
+  personliga rekord, och en passrapport eller ett delningskort för ett pass.
+- **Importerar tävlingsresultat** från WebShooter, med placering och
+  standardmedalj.
+- **Låter dina data förbli dina** — en säkerhetskopia du kan återställa på en
+  ny telefon, pass exporterade som öppen JSON, och valfri synk med en webbapp
+  där du kan läsa, mata in och ändra pass från vilken webbläsare som helst.
 
 ## Vad den inte är
 
@@ -37,8 +46,11 @@ första pass i den ordning du faktiskt gör det på banan.
 Letar du efter något särskilt tar guiderna upp
 [att logga ett pass](guides/logging-a-session.md),
 [att räkna från foto](guides/scoring-from-a-photo.md),
-[timrarna](guides/timers.md) och
-[skjutaktivitet](guides/license-activity.md).
+[timrarna](guides/timers.md),
+[skjutaktivitet](guides/license-activity.md),
+[statistik](guides/statistics.md),
+[säkerhetskopiering](guides/backup-and-restore.md) och
+[ditt konto på webben](guides/your-account-on-the-web.md).
 
 !!! note "Den här manualen beskriver det aktuella bygget"
 

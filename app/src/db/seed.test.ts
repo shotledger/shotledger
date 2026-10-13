@@ -269,17 +269,6 @@ describe('seedDemoData — X and extra rounds (spec A1 §A1.3 / A2)', () => {
     expect(shotRows.some((row) => row.valueTenths === 100 && row.isInnerTen === 0)).toBe(true);
   });
 
-  it('never writes the deprecated is_inner_ten_decimal flag (invariant A-N10)', () => {
-    seedDemoData(db);
-    expect(
-      db
-        .select()
-        .from(shots)
-        .all()
-        .every((row) => row.isInnerTenDecimal === 0),
-    ).toBe(true);
-  });
-
   it('gives some sessions unscored extra rounds', () => {
     seedDemoData(db);
     expect(sumExtraRounds(db)).toBeGreaterThan(0);

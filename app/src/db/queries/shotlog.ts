@@ -88,7 +88,6 @@ export function importShotlogRow(db: Database, row: ShotlogPlanRow): string {
       notes: suggestion.note === '' ? null : suggestion.note,
       externalSource: SHOTLOG_SOURCE,
       externalRef: row.ref,
-      externalSyncedAt: new Date().toISOString(),
     });
 
     for (const entry of suggestion.series) {
