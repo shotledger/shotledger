@@ -1,5 +1,84 @@
 # ShotLog CSV import — evidence report
 
+## Revision 2 — the per-shot export (2026-10-13, issue #781)
+
+Spec: `docs/specs/shotlog-import-spec.md`, revision 2. **Spec approval:
+obtained** (maintainer, 2026-10-13, in the project thread).
+
+### What changed
+
+| Layer                                           | File                                  | Reviewed by       |
+| ----------------------------------------------- | ------------------------------------- | ----------------- |
+| per-series rows → sessions, local time (R2.2)   | `shared/src/shotlog/parse.ts`         | gauntlet          |
+| empty shadow, `(source, ref)` match (R2.5)      | `shared/src/shotlog/dedup.ts`         | gauntlet          |
+| series in the suggestion, sighter role (R2.3/6) | `shared/src/shotlog/plan.ts`          | gauntlet          |
+| FNV ref deleted; ref = `Session ID` (R2.4)      | `shared/src/shotlog/ref.ts` (removed) | —                 |
+| series + shots in one transaction (R2.7)        | `app/src/db/queries/shotlog.ts`       | integration tests |
+| preview shows series, shots and score           | `app/src/app/dev/shotlog-import.tsx`  | dev tool          |
+
+No new dependency, no schema change, no migration; `shared/src/scoring/**`
+untouched.
+
+### Gauntlet results
+
+| Layer                    | Command                                            | Result                                                             |
+| ------------------------ | -------------------------------------------------- | ------------------------------------------------------------------ |
+| Types, lint, tests       | `pnpm check`                                       | green (see the PR's CI)                                            |
+| Coverage (v8, 100% gate) | `vitest run --coverage`, `shared/src/shotlog/**`   | 100% statements / branches / functions / lines                     |
+| Mutation (Stryker)       | `stryker run --mutate "shared/src/shotlog/*.ts,…"` | **100.00%** — 961 mutants, 953 killed, 8 timed out, **0 survived** |
+
+The first mutation run left 23 survivors (97.65%); each became a test or a
+deletion: untested `trim()` calls (one padding test covers every cell),
+an unchecked `ambiguous: false` either side of a DST change, the session
+key's separator, a warning raised only by a later series, multi-digit series
+numbers, a whitespace-only line, and two blocks that were equivalent
+mutants and so dead code — the blank-`Session ID` special case in
+`parseShotlogCsv` and `csv-codec`'s empty-input early return (R2-f). Both
+were removed rather than argued for.
+
+Module tests: 263 (`parse` 98, `plan` 39, `classify` 42, `tags` 38, `dedup`
+31, `csv-codec` 14, barrel 1) plus 24 DB write-path tests.
+
+### Contract → evidence
+
+| Clause                                                            | Evidence                                                                                 |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| R2.2 header: 15 fixed columns + contiguous `Shot 1..N`, N ≥ 1     | `parse.test.ts` "whole-file failures", "header"                                          |
+| R2.2 field rules, every row error message                         | `parse.test.ts` "errors drop the session, not the file"                                  |
+| R2.2 `X` = 100, `(X)` = 100 + inner ten, digits ×10               | "reads X as a plain ten and (X) as an inner ten"                                         |
+| R2.2 totals/counts checked, shots win                             | "warnings" block                                                                         |
+| R2.2 grouping errors: inconsistent, repeated series, mixed, split | four tests by name in the errors block                                                   |
+| Q1 local time, DST gap/overlap                                    | `resolveLocalDatetime` block (TZ pinned to Europe/Stockholm in `vitest.config.ts`)       |
+| R2.3 Warmup → series 1 sighter; `Sighting=Yes` wins; never two    | `plan.test.ts` three sighter tests; `parse.test.ts` "keeps only the first…"              |
+| R2.3 `final` is a tag only                                        | `shotlog.test.ts` "keeps a final as a tag and flags no series"                           |
+| R2.4 ref = `Session ID`; `(source, ref)` exact match              | `plan.test.ts` end-to-end row; `dedup.test.ts` "never matches another source’s…"         |
+| Q4 old-format imports surface as probable duplicates              | `plan.test.ts` "shows an old totals-format import…"                                      |
+| R2.5 empty shadow, either order                                   | `dedup.test.ts` markInFileDuplicates block                                               |
+| R2.6 summary series/shot counts                                   | `plan.test.ts` summary block                                                             |
+| R2.7 series + shots written, no ten counts, one transaction       | `shotlog.test.ts` "creates a session with real series and shots", "writes nothing when…" |
+| R2.8 score = sum of non-sighter series                            | `shotlog.test.ts` "scores the session as the sum of its non-sighter series"              |
+| R2.8 never writes a forbidden row                                 | `shotlog.test.ts` "never writes a row the UI selected but the rules forbid"              |
+| Real-data rule                                                    | fixtures are invented; the real file was only read from outside the working tree         |
+
+### Real-file dry run (outside the repo)
+
+The plan was built from the maintainer's real export with a throwaway test
+outside the working tree, not committed. Aggregates only: 279 sessions,
+2395 series, 11975 shots, **0 row errors**; 276 new, 2 empty shadows
+detected as in-file duplicates, 1 empty; 119 date-uncertain; 89 sessions
+got a series-1 sighter from the Warmup tag; 40 have no discipline until a
+tag role or a name gives one.
+
+### Not verified here
+
+- The `/dev` screen's new subtitle and summary strings were not run on a
+  device in this change (dev-only tool, no layout change).
+- Rebase onto #727 is still to come (Q5).
+
+---
+
+## Revision 1
+
 > old-coder EVIDENCE for `docs/specs/shotlog-import-spec.md`. The spec is
 > the contract; this is the proof that the code meets it. The maintainer
 > reviews these two documents rather than the diff.

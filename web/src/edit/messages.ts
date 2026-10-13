@@ -1,6 +1,7 @@
 // What the Edit Session page and Delete say, as i18n keys
 // (docs/specs/web-session-edit-spec.md E9). Pure, so every outcome's wording
 // is tested.
+import { MAX_ROUNDS_FIRED } from '@shotledger/shared/src/sync-client/rounds-entry';
 import type { EditError } from '@shotledger/shared/src/sync-client/session-edit';
 
 import type { EditState } from './save';
@@ -14,6 +15,8 @@ export interface Message {
   firearms?: string[];
   /** The form row the message is about (1-based), for the row label. */
   row?: number;
+  /** The station row the message is about (1-based), for the station label. */
+  station?: number;
 }
 
 const FIELD_KEYS = {
@@ -39,6 +42,12 @@ export function errorMessage(error: EditError): Message {
       return { key: 'web.entry.errorSecondSighter', row: error.row };
     case 'readOnlySeries':
       return { key: 'web.edit.errorReadOnly', row: error.row };
+    case 'stationPoints':
+      return { key: 'web.entry.errorStationPoints', station: error.row };
+    case 'invalidStation':
+      return { key: 'web.entry.errorInvalidStation', station: error.row };
+    case 'invalidRounds':
+      return { key: 'session.roundsFiredInvalid', params: { max: MAX_ROUNDS_FIRED } };
     case 'tooLong':
       return {
         key: 'web.entry.errorTooLong',

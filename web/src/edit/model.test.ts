@@ -152,6 +152,8 @@ describe('the edit form', () => {
       eventId: 'issf:e',
       firearmId: 'f1',
       ammoLotId: 'a1',
+      falt: null,
+      roundsFired: '',
       rows: [
         {
           key: expect.any(Number),
@@ -227,7 +229,7 @@ describe('the edit form', () => {
     });
   });
 
-  it('U1 fält, rounds-only and unknown-discipline sessions edit their fields only (E11)', () => {
+  it('U1 fält, rounds-only and unknown-discipline sessions edit no series (E11; stations and rounds: U11)', () => {
     expect(opened('sF')).toMatchObject({ editsSeries: false, readOnly: [] });
     expect(opened('sR')).toMatchObject({ editsSeries: false });
     const unknown = opened('sX');

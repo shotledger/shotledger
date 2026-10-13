@@ -12,6 +12,7 @@ import {
   type EditContext,
   type EditResult,
   type SessionEditDraft,
+  type StationEditDraft,
 } from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { uuidv7 } from 'uuidv7';
@@ -21,7 +22,14 @@ import { eq } from 'drizzle-orm';
 import { series as seriesTable, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
-import { addStation, listStationsForSession } from './falt';
+import {
+  addStation,
+  faltSessionResult,
+  listStationsForSession,
+  softDeleteStation,
+  updateStation,
+  type StationRow,
+} from './falt';
 import { createFirearm, listFirearms } from './firearms';
 import {
   deleteSeriesAndShots,
@@ -424,5 +432,206 @@ describe('a photo-scored series re-entered on the web', () => {
       expect(listSeriesForSession(db, sessionId)[0]!.photoUri).toBe('file:///photo.jpg');
       expect(listShotsForSeries(db, seriesId).map((s) => s.valueTenths)).toEqual([80, 80]);
     }
+  });
+});
+
+describe('a web station or Rounds Fired edit applied on the phone equals the phone editing it', () => {
+  let phone: Database;
+  let web: Database;
+  let ids: Ids;
+
+  beforeEach(() => {
+    phone = createTestDb();
+    ids = seed(phone);
+    web = createTestDb();
+    applyChangesSync(web, asApplied(dump(phone)));
+    phone.delete(syncOutbox).run();
+  });
+
+  /** A station as the phone reads it, without timestamps and its generated id. */
+  const stationView = ({ id: _id, createdAt: _c, updatedAt: _u, ...rest }: StationRow) => rest;
+
+  /** Everything a reader of the phone sees, the stations in full. */
+  const view = (db: Database) => ({
+    ...snapshot(db, ids),
+    stations: Object.values(ids.sessions).map((id) =>
+      listStationsForSession(db, id).map(stationView),
+    ),
+  });
+
+  const opened = (db: Database, sessionId: string) =>
+    listStationsForSession(db, sessionId).map((row): StationEditDraft => ({
+      id: row.id,
+      hits: row.hits,
+      figuresHit: row.figuresHit,
+      figureCount: row.figureCount,
+      pointsText: row.points === null ? '' : String(row.points),
+      pointsMaxText: row.pointsMax === null ? '' : String(row.pointsMax),
+      isScratched: row.isScratched === 1,
+      isShootOff: row.isShootOff === 1,
+      deleted: false,
+    }));
+
+  const added = (fields: Partial<StationEditDraft> = {}): StationEditDraft => ({
+    id: null,
+    hits: 4,
+    figuresHit: 2,
+    figureCount: 3,
+    pointsText: '',
+    pointsMaxText: '',
+    isScratched: false,
+    isShootOff: false,
+    deleted: false,
+    ...fields,
+  });
+
+  function webEdit(draft: Omit<SessionEditDraft, 'fields' | 'series'> & Partial<SessionEditDraft>) {
+    const context = pulled(web);
+    const full: SessionEditDraft = { fields: {}, series: [], ...draft };
+    apply(
+      web,
+      changesOf(buildSessionEdit(full, openedSession(full.sessionId, context)!, context, deps)),
+    );
+  }
+
+  const nextPosition = (db: Database, sessionId: string) =>
+    (listStationsForSession(db, sessionId).at(-1)?.position ?? 0) + 1;
+
+  it('P8 add a station, then a shoot-off one: the same live stations and counters as addStation', () => {
+    const { sF } = ids.sessions;
+    webEdit({
+      sessionId: sF,
+      stations: [...opened(web, sF), added({ pointsText: '7', pointsMaxText: '10' })],
+    });
+    addStation(phone, {
+      sessionId: sF,
+      position: nextPosition(phone, sF),
+      hits: 4,
+      figuresHit: 2,
+      figureCount: 3,
+      points: 7,
+      pointsMax: 10,
+    });
+    expect(view(web)).toEqual(view(phone));
+    webEdit({ sessionId: sF, stations: [...opened(web, sF), added({ isShootOff: true })] });
+    addStation(phone, {
+      sessionId: sF,
+      position: nextPosition(phone, sF),
+      hits: 4,
+      figuresHit: 2,
+      figureCount: 3,
+      isShootOff: true,
+    });
+    // A plain new station after a shoot-off is one, as nextStationIsShootOff says.
+    webEdit({ sessionId: sF, stations: [...opened(web, sF), added()] });
+    addStation(phone, {
+      sessionId: sF,
+      position: nextPosition(phone, sF),
+      hits: 4,
+      figuresHit: 2,
+      figureCount: 3,
+      isShootOff: true,
+    });
+    expect(view(web)).toEqual(view(phone));
+  });
+
+  it('P9 change a station (numbers, scratched): the same rows as updateStation; counters unmoved', () => {
+    const { sF } = ids.sessions;
+    const [first, second] = listStationsForSession(phone, sF);
+    const before = listFirearms(web).map((f) => f.roundCount);
+    const stations = opened(web, sF);
+    stations[0] = { ...stations[0]!, hits: 6, figuresHit: 4, figureCount: 5, pointsText: '3' };
+    stations[1] = { ...stations[1]!, isScratched: true };
+    webEdit({ sessionId: sF, stations });
+    updateStation(phone, first!.id, { hits: 6, figuresHit: 4, figureCount: 5, points: 3 });
+    updateStation(phone, second!.id, { isScratched: true });
+    expect(view(web)).toEqual(view(phone));
+    expect(listFirearms(web).map((f) => f.roundCount)).toEqual(before);
+  });
+
+  it('P10 remove a station: the same live stations and counters as softDeleteStation; the gap is kept', () => {
+    const { sF } = ids.sessions;
+    const [first] = listStationsForSession(phone, sF);
+    webEdit({
+      sessionId: sF,
+      stations: opened(web, sF).map((row, i) => ({ ...row, deleted: i === 0 })),
+    });
+    softDeleteStation(phone, first!.id);
+    expect(view(web)).toEqual(view(phone));
+    expect(listStationsForSession(web, sF).map((row) => row.position)).toEqual([2]);
+    // A new station goes after the last live one, the gap stays.
+    webEdit({ sessionId: sF, stations: [...opened(web, sF), added()] });
+    addStation(phone, { sessionId: sF, position: 3, hits: 4, figuresHit: 2, figureCount: 3 });
+    expect(view(web)).toEqual(view(phone));
+  });
+
+  it('P11 Rounds Fired: the same session row and counters as setSessionExtraRounds, up, down and to blank', () => {
+    const { sR } = ids.sessions;
+    const cases: [string, number | null][] = [
+      ['45', 45],
+      ['5', 5],
+      ['', null],
+      ['0', 0],
+    ];
+    for (const [typed, rounds] of cases) {
+      webEdit({ sessionId: sR, roundsFired: typed });
+      setSessionExtraRounds(phone, sR, rounds);
+      expect(view(web)).toEqual(view(phone));
+    }
+  });
+
+  it('P12 one save adding two stations, removing one and changing the firearm equals the phone, one by one', () => {
+    const { sF } = ids.sessions;
+    const [first] = listStationsForSession(phone, sF);
+    webEdit({
+      sessionId: sF,
+      fields: { firearmId: ids.f2 },
+      stations: [
+        ...opened(web, sF).map((row, i) => ({ ...row, deleted: i === 0 })),
+        added(),
+        added({ hits: 0, figuresHit: 0, figureCount: null }),
+      ],
+    });
+    addStation(phone, { sessionId: sF, position: 3, hits: 4, figuresHit: 2, figureCount: 3 });
+    addStation(phone, { sessionId: sF, position: 4, hits: 0, figuresHit: 0 });
+    softDeleteStation(phone, first!.id);
+    updateSession(phone, sF, { firearmId: ids.f2 });
+    expect(view(web)).toEqual(view(phone));
+  });
+
+  it("P13 the phone reads the web-edited stations: faltSessionResult equals the twin's", () => {
+    const { sF } = ids.sessions;
+    const stations = opened(web, sF);
+    stations[1] = { ...stations[1]!, hits: 2, figuresHit: 1, isScratched: true };
+    webEdit({
+      sessionId: sF,
+      stations: [
+        ...stations,
+        added({ pointsText: '9', pointsMaxText: '10' }),
+        added({ isShootOff: true }),
+      ],
+    });
+    const [, second] = listStationsForSession(phone, sF);
+    updateStation(phone, second!.id, { hits: 2, figuresHit: 1, isScratched: true });
+    addStation(phone, {
+      sessionId: sF,
+      position: 3,
+      hits: 4,
+      figuresHit: 2,
+      figureCount: 3,
+      points: 9,
+      pointsMax: 10,
+    });
+    addStation(phone, {
+      sessionId: sF,
+      position: 4,
+      hits: 4,
+      figuresHit: 2,
+      figureCount: 3,
+      isShootOff: true,
+    });
+    expect(faltSessionResult(web, sF)).toEqual(faltSessionResult(phone, sF));
+    expect(view(web)).toEqual(view(phone));
+    expect(web.select().from(syncOutbox).all()).toHaveLength(0);
   });
 });

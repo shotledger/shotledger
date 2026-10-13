@@ -8,7 +8,7 @@
 // is only a DEFAULT the user overrides on the import screen before anything
 // is written.
 import { ringScoringDisciplines, SPSF_WEAPON_GROUPS } from '../disciplines';
-import type { ShotlogRow, ShotlogTagRole, ShotlogTagMapping, ShotlogTagUsage } from './types';
+import type { ShotlogSession, ShotlogTagRole, ShotlogTagMapping, ShotlogTagUsage } from './types';
 
 /** Case- and whitespace-insensitive tag key. */
 export function normalizeTag(tag: string): string {
@@ -90,7 +90,9 @@ export function defaultTagRole(tag: string): ShotlogTagRole {
  * first (ties alphabetical) so the mapping screen leads with the tags that
  * decide the most rows.
  */
-export function collectShotlogTags(rows: readonly ShotlogRow[]): ShotlogTagUsage[] {
+export function collectShotlogTags(
+  rows: readonly Pick<ShotlogSession, 'tags'>[],
+): ShotlogTagUsage[] {
   const seen = new Map<string, ShotlogTagUsage>();
   for (const row of rows) {
     for (const tag of row.tags) {
@@ -105,7 +107,9 @@ export function collectShotlogTags(rows: readonly ShotlogRow[]): ShotlogTagUsage
 }
 
 /** The starting mapping the user then edits: one default role per tag. */
-export function buildDefaultTagMapping(rows: readonly ShotlogRow[]): ShotlogTagMapping {
+export function buildDefaultTagMapping(
+  rows: readonly Pick<ShotlogSession, 'tags'>[],
+): ShotlogTagMapping {
   const mapping: ShotlogTagMapping = {};
   for (const usage of collectShotlogTags(rows)) {
     mapping[usage.key] = defaultTagRole(usage.label);

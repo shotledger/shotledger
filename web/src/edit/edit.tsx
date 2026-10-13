@@ -19,6 +19,8 @@ import { uuidv7 } from 'uuidv7';
 
 import { COMPETITION_LEVELS } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushRows } from '../api';
+import { faltSendsTheSame, type FaltForm } from '../entry/falt-model';
+import { FaltStations } from '../entry/falt-stations';
 import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
 import { DateField, TimeField } from '../fields/date-time-fields';
@@ -33,7 +35,9 @@ import {
   toggleOpen,
   editContext,
   openForm,
+  removeStation,
   setRow,
+  stationPositions,
   toDraft,
   type EditForm,
   type OpenedForm,
@@ -82,12 +86,13 @@ export function webIo(refresh: () => Promise<boolean>): EditIo {
   };
 }
 
-/** A message in the reader's language; `rowLabel` names a 1-based form row. */
+/** A message in the reader's language; `rowLabel` and `stationLabel` name a 1-based form row. */
 export function messageText(
   t: TFunction,
   language: string,
   message: Message,
   rowLabel: (row: number) => string = String,
+  stationLabel: (row: number) => string = String,
 ): string {
   return t(message.key, {
     ...message.params,
@@ -96,6 +101,7 @@ export function messageText(
       ? { firearms: new Intl.ListFormat(language).format(message.firearms) }
       : {}),
     ...(message.row !== undefined ? { row: rowLabel(message.row) } : {}),
+    ...(message.station !== undefined ? { row: stationLabel(message.station) } : {}),
   });
 }
 
@@ -159,6 +165,12 @@ export function SessionEdit({
     setForm(next);
     setState(afterEdit);
   };
+  // Only blank stations appended: the same request, so a held one stays (#669 R21, U13).
+  const editFalt = (next: FaltForm) => {
+    const same = form.falt !== null && faltSendsTheSame(form.falt, next);
+    setForm({ ...form, falt: next });
+    setState((was) => (same ? was : afterEdit(was)));
+  };
   const set = <K extends keyof EditForm>(key: K, value: EditForm[K]) =>
     edit({ ...form, [key]: value });
 
@@ -175,18 +187,26 @@ export function SessionEdit({
     form.rows[row - 1]?.isSighter
       ? t('session.sighter')
       : t('session.seriesTitle', { position: row });
-  const text = (message: Message) => messageText(t, i18n.language, message, rowLabel);
+  const positions = form.falt === null ? [] : stationPositions(form.falt.stations);
+  const stationLabel = (row: number) => t('station.title', { position: positions[row - 1] ?? row });
+  const text = (message: Message) => messageText(t, i18n.language, message, rowLabel, stationLabel);
   const firearmName = (id: string) => {
     const row = tables.firearms.get(id);
     return row === undefined ? null : firearmLabel(row);
   };
-  // Series errors go under their row; the rest under the buttons.
+  // Series and station errors go under their row; Rounds Fired's under its field; the rest under the buttons.
   const rowErrors = new Map<number, string[]>();
+  const stationErrors = new Map<number, string>();
+  let roundsError: string | null = null;
   const lines: string[] = [];
   if (state.status.kind === 'invalid') {
     for (const error of state.status.errors) {
       const line = text(errorMessage(error));
-      if ('row' in error) rowErrors.set(error.row, [...(rowErrors.get(error.row) ?? []), line]);
+      if (error.kind === 'stationPoints' || error.kind === 'invalidStation') {
+        stationErrors.set(error.row, line);
+      } else if (error.kind === 'invalidRounds') roundsError = line;
+      else if ('row' in error)
+        rowErrors.set(error.row, [...(rowErrors.get(error.row) ?? []), line]);
       else lines.push(line);
     }
   } else {
@@ -390,6 +410,31 @@ export function SessionEdit({
                 ))}
               </select>
             </label>
+            {opened.editsRounds && (
+              <label className="field">
+                {t('session.roundsFired')}
+                <input
+                  inputMode="numeric"
+                  value={form.roundsFired}
+                  placeholder="0"
+                  aria-invalid={roundsError !== null}
+                  onChange={(e) => set('roundsFired', e.target.value)}
+                />
+                {roundsError && <span className="danger">{roundsError}</span>}
+              </label>
+            )}
+            {form.falt !== null && (
+              <p className="field">
+                {t('session.faltResultMode')}
+                <span className="read-only-value">
+                  {t(
+                    form.falt.resultMode === 'poangfalt'
+                      ? 'session.faltResultModePoangfalt'
+                      : 'session.faltResultModeFalt',
+                  )}
+                </span>
+              </p>
+            )}
             <label className="field edit-notes">
               {t('session.notes')}
               <textarea
@@ -410,6 +455,15 @@ export function SessionEdit({
               edit={edit}
               rowErrors={rowErrors}
               rowLabel={rowLabel}
+            />
+          )}
+          {form.falt !== null && (
+            <FaltStations
+              falt={form.falt}
+              onEdit={editFalt}
+              rowErrors={stationErrors}
+              positions={positions}
+              onRemove={(index) => editFalt(removeStation(form.falt!, index))}
             />
           )}
           {opened.readOnly.length > 0 && (
