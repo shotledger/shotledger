@@ -13,6 +13,7 @@ import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { reloadApp } from '@/platform/app-reload';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
 import { BackupOptionsDialog } from './backup-options-dialog';
@@ -42,10 +43,21 @@ export function BackupCard() {
     void exportBundle(options);
   }
 
+  // The restore closed the live database singleton, so the app has to reload
+  // before it can read anything. Not cancelable: dismissing the alert would
+  // leave the app on a closed connection.
   function restoreDoneAlert() {
-    Alert.alert(t('backup.restoreRestartTitle'), t('backup.restoreRestartBody'), [
-      { text: t('backup.restoreRestartAction') },
-    ]);
+    Alert.alert(
+      t('backup.restoreRestartTitle'),
+      t('backup.restoreRestartBody'),
+      [
+        {
+          text: t('backup.restoreRestartAction'),
+          onPress: () => void reloadApp('Backup restored'),
+        },
+      ],
+      { cancelable: false },
+    );
   }
 
   async function runRestore(bytes: Uint8Array) {
