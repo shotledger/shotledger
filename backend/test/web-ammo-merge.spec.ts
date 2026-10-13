@@ -18,7 +18,7 @@ import {
   PROTOCOL_VERSION,
   type ChangeRow,
   type ClientChange,
-  type MergeContext,
+  type AmmoLotMergeContext,
   type SyncTableName,
 } from '@shotledger/shared';
 
@@ -65,7 +65,7 @@ async function pullAll(transport: Client['transport']) {
 }
 
 /** What the web page builds from: the live rows by id, per table. */
-async function webContext(transport: Client['transport']): Promise<MergeContext> {
+async function webContext(transport: Client['transport']): Promise<AmmoLotMergeContext> {
   const rows = await pullAll(transport);
   const table = (name: SyncTableName) =>
     new Map(
@@ -112,7 +112,7 @@ let web: Client;
 let deviceB: Client;
 let accountSeq = 0;
 
-function merge(context: MergeContext): ClientChange[] {
+function merge(context: AmmoLotMergeContext): ClientChange[] {
   const result = buildAmmoLotMerge('a1', 'a2', context, {
     newId: uuid(7),
     newChangeId: uuid(4),

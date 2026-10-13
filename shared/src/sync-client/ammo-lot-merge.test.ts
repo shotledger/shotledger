@@ -2,7 +2,11 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { ClientChangeSchema, PUSH_BATCH_MAX, PushRequestSchema } from '../sync/protocol';
-import { buildAmmoLotMerge, type MergeContext, type MergeResult } from './ammo-lot-merge';
+import {
+  buildAmmoLotMerge,
+  type AmmoLotMergeContext,
+  type AmmoLotMergeResult,
+} from './ammo-lot-merge';
 import { applyRank } from './order';
 import type { Payload } from './rows';
 
@@ -47,7 +51,7 @@ const lot = (id: string, fields: Payload = {}): Payload => ({
 
 const byId = (rows: Payload[]) => new Map(rows.map((r) => [r.id as string, r]));
 
-function logbook(): MergeContext {
+function logbook(): AmmoLotMergeContext {
   return {
     ammoLots: byId([lot('dup'), lot('kept'), lot('other'), lot('gone', { deleted_at: OLD })]),
     sessions: byId([
@@ -61,7 +65,7 @@ function logbook(): MergeContext {
   };
 }
 
-const okOf = (result: MergeResult) => {
+const okOf = (result: AmmoLotMergeResult) => {
   if (!result.ok) throw new Error(`expected ok, got ${JSON.stringify(result.errors)}`);
   return result;
 };
@@ -124,7 +128,7 @@ describe('buildAmmoLotMerge (docs/specs/ammo-lot-merge-spec.md)', () => {
   });
 
   it('K6 over PUSH_BATCH_MAX → tooManyChanges(max, needed); exactly 500 is allowed', () => {
-    const many = (n: number): MergeContext => ({
+    const many = (n: number): AmmoLotMergeContext => ({
       ...logbook(),
       sessions: byId(Array.from({ length: n }, (_, i) => session(`m${i}`, 'dup'))),
     });
@@ -171,7 +175,10 @@ const worldArb = fc.record({
 const isLive = (row: Payload | undefined) =>
   row !== undefined && (row.deleted_at === null || row.deleted_at === undefined);
 
-function applied(context: MergeContext, changes: MergeResult & { ok: true }): MergeContext {
+function applied(
+  context: AmmoLotMergeContext,
+  changes: AmmoLotMergeResult & { ok: true },
+): AmmoLotMergeContext {
   const sessions = new Map(context.sessions);
   const ammoLots = new Map(context.ammoLots);
   for (const c of changes.changes) {
@@ -190,7 +197,7 @@ describe('buildAmmoLotMerge — property', () => {
   it('K8 applied, no live session is left on the duplicate, and nothing else changes', () => {
     fc.assert(
       fc.property(worldArb, (w) => {
-        const context: MergeContext = {
+        const context: AmmoLotMergeContext = {
           ammoLots: byId(LOTS.map((id, i) => lot(id, { deleted_at: w.lots[i] ? null : OLD }))),
           sessions: byId(
             w.sessions.map((s, i) =>

@@ -6,7 +6,7 @@ import {
   APPLY_ORDER,
   buildAmmoLotMerge,
   type ChangeRow,
-  type MergeContext,
+  type AmmoLotMergeContext,
 } from '@shotledger/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { uuidv7 } from 'uuidv7';
@@ -49,7 +49,7 @@ function dump(db: Database): ChangeRow[] {
 }
 
 /** What the web pulls: the phone's rows, soft-deleted ones gone as server tombstones. */
-function pulled(db: Database): MergeContext {
+function pulled(db: Database): AmmoLotMergeContext {
   const table = (name: (typeof APPLY_ORDER)[number]) =>
     new Map(
       dump(db)

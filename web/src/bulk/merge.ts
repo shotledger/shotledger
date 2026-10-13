@@ -17,8 +17,7 @@ import type { Message } from './messages';
 
 type Payload = Record<string, unknown>;
 
-const isLive = (row: Payload | undefined): row is Payload =>
-  row !== undefined && (row.deleted_at === null || row.deleted_at === undefined);
+const isLive = (row: Payload) => row.deleted_at === null || row.deleted_at === undefined;
 
 export interface LotOption {
   id: string;
@@ -30,10 +29,10 @@ export interface LotOption {
 
 /** Every live lot, by label, with its live session count (U1). */
 export function lotOptions(tables: PulledTables): LotOption[] {
-  const counts = new Map<string, number>();
+  // Keyed by whatever the session names, null included; only lot ids are read.
+  const counts = new Map<unknown, number>();
   for (const s of tables.sessions.values()) {
-    const lot = s.ammo_lot_id;
-    if (isLive(s) && typeof lot === 'string') counts.set(lot, (counts.get(lot) ?? 0) + 1);
+    if (isLive(s)) counts.set(s.ammo_lot_id, (counts.get(s.ammo_lot_id) ?? 0) + 1);
   }
   return [...tables.ammo_lots.values()]
     .filter(isLive)
@@ -66,7 +65,6 @@ export const mergeReady = (form: MergeForm) =>
 export interface Built {
   changes: readonly ClientChange[];
   moved: number;
-  duplicateId: string;
   /** The account it was built for; a held request goes to no other. */
   userId: string;
 }
@@ -123,9 +121,8 @@ async function send(io: MergeIo, built: Built): Promise<MergeState> {
   }
   const rejected = outcome.kind === 'partlyRejected' ? outcome.rejected : [];
   const refusedSessions = rejected.filter((r) => r.tableName === 'sessions').length;
-  const duplicateGone = rejected.some(
-    (r) => r.tableName === 'ammo_lots' && r.rowId === built.duplicateId,
-  );
+  // The push's one ammo_lots change is the duplicate's tombstone.
+  const duplicateGone = rejected.some((r) => r.tableName === 'ammo_lots');
   const refreshed = await io.refresh();
   return {
     status: {
@@ -177,7 +174,6 @@ export async function runMerge(
   return send(io, {
     changes: result.changes,
     moved: result.moved,
-    duplicateId: form.duplicateId,
     userId,
   });
 }

@@ -48,7 +48,7 @@ function tables(): PulledTables {
       lot('a', 'SK Standard'),
       lot('b', 'Lapua Center-X', { caliber: null }),
       lot('c', 'Eley Club', { deleted_at: OLD }),
-      lot('d', 'SK Standard', { deleted_at: undefined }),
+      lot('d', 'SK Standard', { deleted_at: undefined, caliber: undefined }),
     ]),
     sessions: byId([
       session('s1', 'a'),
@@ -65,7 +65,7 @@ describe('U1 the lot options', () => {
     expect(lotOptions(tables())).toEqual([
       { id: 'b', label: 'Lapua Center-X', caliber: null, sessions: 1 },
       { id: 'a', label: 'SK Standard', caliber: '.22 LR', sessions: 2 },
-      { id: 'd', label: 'SK Standard', caliber: '.22 LR', sessions: 0 },
+      { id: 'd', label: 'SK Standard', caliber: null, sessions: 0 },
     ]);
   });
 
@@ -161,7 +161,7 @@ describe('U2 a Merge, a failure and Retry', () => {
   });
 
   it('no session: unauthenticated, keeping a held request', async () => {
-    const held: Built = { changes: [], moved: 0, duplicateId: 'a', userId: 'u1' };
+    const held: Built = { changes: [], moved: 0, userId: 'u1' };
     const deps = io({ kind: 'saved' }, { currentUserId: () => Promise.resolve(null) });
     expect(await runMerge(deps, FORM, held)).toEqual({
       status: { kind: 'failed', error: 'unauthenticated' },
@@ -186,7 +186,7 @@ describe('U2 a Merge, a failure and Retry', () => {
   });
 
   it('a held request meets another account: dropped, not sent', async () => {
-    const held: Built = { changes: [], moved: 0, duplicateId: 'a', userId: 'u0' };
+    const held: Built = { changes: [], moved: 0, userId: 'u0' };
     const deps = io({ kind: 'saved' });
     expect(await runMerge(deps, FORM, held)).toEqual({
       status: { kind: 'accountChanged', userId: 'u1' },
@@ -225,7 +225,7 @@ describe('U2 a Merge, a failure and Retry', () => {
   it('an edit drops a held request, but not while applying', () => {
     const held: MergeState = {
       status: { kind: 'failed', error: 'network' },
-      held: { changes: [], moved: 0, duplicateId: 'a', userId: 'u1' },
+      held: { changes: [], moved: 0, userId: 'u1' },
     };
     expect(afterMergeEdit(held)).toBe(MERGE_IDLE);
     const applying: MergeState = { status: { kind: 'applying' }, held: null };

@@ -7,25 +7,25 @@ import type { EntryDeps } from './session-entry';
 import { isLiveRow as isLive, liveRowsIn as liveRows } from './volume-rows';
 
 /** Freshly pulled rows by id, payloads as the wire carries them. */
-export interface MergeContext {
+export interface AmmoLotMergeContext {
   sessions: ReadonlyMap<string, Payload>;
   ammoLots: ReadonlyMap<string, Payload>;
 }
 
-export type MergeError =
+export type AmmoLotMergeError =
   | { kind: 'sameLot' }
   | { kind: 'unknownLot' }
   | { kind: 'tooManyChanges'; max: number; needed: number };
 
-export type MergeResult =
-  { ok: true; changes: ClientChange[]; moved: number } | { ok: false; errors: MergeError[] };
+export type AmmoLotMergeResult =
+  { ok: true; changes: ClientChange[]; moved: number } | { ok: false; errors: AmmoLotMergeError[] };
 
 export function buildAmmoLotMerge(
   duplicateId: string,
   keptId: string,
-  context: MergeContext,
+  context: AmmoLotMergeContext,
   deps: EntryDeps,
-): MergeResult {
+): AmmoLotMergeResult {
   if (duplicateId === keptId) return { ok: false, errors: [{ kind: 'sameLot' }] };
   if (!isLive(context.ammoLots.get(duplicateId)) || !isLive(context.ammoLots.get(keptId))) {
     return { ok: false, errors: [{ kind: 'unknownLot' }] };
