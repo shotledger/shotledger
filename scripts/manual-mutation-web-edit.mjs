@@ -99,6 +99,81 @@ const MUTANTS = [
     tests: ['shared/src/sync-client/session-edit.test.ts'],
   },
   {
+    name: 'builder (R10): a stale Delete sends anyway',
+    file: BUILDER,
+    find: "  if (isDeleteStale(opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };\n",
+    replace: '',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R10): Delete compares the session row only',
+    file: BUILDER,
+    find: '  const was = [...opened.series.values()];\n',
+    replace: '  return false;\n  const was = [...opened.series.values()];\n',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R10): Delete compares only the series the page showed (one added passes)',
+    file: BUILDER,
+    find: '  if (!sameRows(wasRows, seriesOfSession(context, sessionId))) return true;',
+    replace:
+      '  if (wasRows.some((row) => { const now = context.series.get(row.id as string); return !isLiveRow(now) || !sameRow(row, now); })) return true;',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: "builder (R10): Delete ignores the series' live shot ids",
+    file: BUILDER,
+    find: '  if (was.some((s) => !sameIds(s.shots, shots.get(s.row.id) ?? []))) return true;\n',
+    replace: '',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R10): Delete leaves the fält stations out',
+    file: BUILDER,
+    find: '  return !sameRows(opened.stations, stationsOfSession(context, sessionId));',
+    replace: '  return false;',
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R10): stale is checked before gone',
+    file: BUILDER,
+    find: "  if (!isLiveRow(session)) return { ok: false, errors: [{ kind: 'gone' }] };\n  if (isDeleteStale(opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };\n",
+    replace:
+      "  if (isDeleteStale(opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };\n  if (!isLiveRow(session)) return { ok: false, errors: [{ kind: 'gone' }] };\n",
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R11): an edited date gets the shape guard only',
+    file: BUILDER,
+    find: '    const error = startedAtError(fields.startedAt, now);',
+    replace:
+      "    const error = startedAtError(fields.startedAt, now)?.kind === 'invalidStartedAt' ? { kind: 'invalidStartedAt' as const } : null;",
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'builder (R11): the stored date is checked though the edit leaves it',
+    file: BUILDER,
+    find: '  if (fields.startedAt !== undefined) {\n',
+    replace:
+      "  if (startedAtError(session.started_at as string, now)) errors.push({ kind: 'startedAtOutOfRange' });\n  if (fields.startedAt !== undefined) {\n",
+    tests: ['shared/src/sync-client/session-edit.test.ts'],
+  },
+  {
+    name: 'page (R10): a stale Delete is reported as a stale Save',
+    file: 'web/src/edit/save.ts',
+    find: "    if (is('stale')) return { status: { kind: 'stale', action, fresh }, held: null };",
+    replace:
+      "    if (is('stale')) return { status: { kind: 'stale', action: 'save', fresh }, held: null };",
+    tests: ['web/src/edit/save.test.ts'],
+  },
+  {
+    name: 'page (R10): a stale Delete tells the user to copy a form it does not have',
+    file: 'web/src/edit/messages.ts',
+    find: "status.action === 'delete' ? 'web.edit.staleDelete' : 'web.edit.stale'",
+    replace: "'web.edit.stale'",
+    tests: ['web/src/edit/messages.test.ts'],
+  },
+  {
     name: 'page: a lost response drops the request instead of holding it',
     file: 'web/src/edit/save.ts',
     find: "new Set(['network', 'unauthenticated'])",
