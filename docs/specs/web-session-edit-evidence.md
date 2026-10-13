@@ -369,3 +369,157 @@ The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
   `failed`, and the fixes for F1, F2, F3, F6 and the report defect since are
   not independently verified. No fourth round was run, as instructed. This
   is a declared downgrade.
+
+## Revision 2 — fält stations and Rounds Fired (§10, #769)
+
+- **Spec approval:** §10 approved first-hand by the maintainer on
+  2026-10-13 ("do as the phone. we want parity between the two as much as
+  possible"; "go with recommended answers"), before any code. §10.10
+  records the answers and the notes made while implementing; those notes
+  are the builder's and not separately approved.
+- **Tier 3**, as §10 states. **Isolation:** branch
+  `claude/769-web-edit-parity-1gj050` (the designated branch for this work,
+  instead of §10.9's `feat/769-web-edit-parity`), in a fresh cloud clone;
+  no worktree, because the clone is used by nothing else.
+- **No dependency, endpoint, protocol or schema change** (E22).
+
+### What was built
+
+| Spec part        | Where                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| E13–E21 builder  | `shared/src/sync-client/session-edit.ts`: `StationEditDraft`, `planStations`, `areStationsStale`, Rounds Fired in `sessionColumns`, station writes in `buildSessionEdit` |
+| E13–E18 page     | `web/src/edit/model.ts` (`openForm` stations and `roundsFired`, `toDraft`, `removeStation`, `stationPositions`), `web/src/edit/edit.tsx`, `web/src/edit/messages.ts`     |
+| #713 rows reused | `web/src/entry/falt-model.ts` (optional `id`, `position`, `deleted`; a stored row's shoot-off is fixed), `web/src/entry/falt-stations.tsx` (labels, Delete / Undo)       |
+| Docs             | `docs/manual/guides/editing-a-session-on-the-web{,.sv}.md`; parity rule in `app/PRODUCT.md` (principle 5), root `CLAUDE.md` (rule 11), `web/CLAUDE.md`                   |
+
+### Spec → test mapping
+
+| Scenario | Test (file: title prefix)                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| K26      | `shared/src/sync-client/session-edit.test.ts`: three `K26` tests                                                         |
+| K27      | same file: three `K27` tests                                                                                             |
+| K28      | same file: `K28`                                                                                                         |
+| K29      | same file: three `K29` tests                                                                                             |
+| K30      | same file: three `K30` tests                                                                                             |
+| K31      | same file: three `K31` tests                                                                                             |
+| K32      | same file: two `K32` tests                                                                                               |
+| K33      | same file: `K33`                                                                                                         |
+| K34      | same file: two `K34` tests                                                                                               |
+| K35–K37  | same file: `K35` (2), `K36` (2), `K37`; E18 both at once: `E18`                                                          |
+| K38      | same file: `K38 property` (fast-check, 400 runs)                                                                         |
+| P8–P13   | `app/src/db/queries/web-edit.test.ts`: `P8`…`P13` (two twin databases, the phone's real apply path)                      |
+| W5–W6    | `backend/test/web-edit.spec.ts`: `W5`, `W6` (real Worker, D1, better-auth, in process)                                   |
+| U11–U15  | `web/src/edit/stations.test.ts`: `U11` (2), `U12` (3), `U13` (2), `U14`, `U15`                                           |
+| U16      | no code: #768 removed the hints before this revision (§10.10)                                                            |
+| U17      | `web/src/entry/falt-model.test.ts` passes unedited (`git diff origin/main -- web/src/entry/falt-model.test.ts` is empty) |
+| N10–N13  | K27/K28/K38 (positions), K26/K30 (shoot-off, photo, note), K37 (extra_rounds), K29/P13 (impossible station)              |
+| N14      | U17; no `app/src` source file changed (`git diff --stat origin/main -- app/src ':!*.test.ts' ':!app/src/i18n'` is empty) |
+
+### Gauntlet
+
+Numbers below are from runs after the last code edit (`1b2097d`, the
+round-1 fix; `9ba0662` after it changed tests only).
+
+- `pnpm check`: typecheck (root, app, web), schema, i18n, licenses, lint,
+  format green; vitest **3643 passed, 3 failed** of 3646 with coverage
+  thresholds met (100% statements, branches, functions, lines; read with
+  `--coverage.reportOnFailure`). The 3 failures are `web/src/fields/date-time-text.test.ts`'s
+  sv-FI cases and fail identically on `origin/main` in this sandbox: its
+  Node (ICU 77.1) formats `sv-FI` dates as `2026-09-02`, not `02.09.2026`.
+  Not this change; CI's Node is the reference. Jest (app): **785 passed**, 69
+  suites.
+- Coverage on the changed modules: `session-edit.ts`, `web/src/edit/model.ts`,
+  `messages.ts`, `web/src/entry/falt-model.ts`: **100%** lines, branches,
+  functions, statements.
+- Backend: `cd backend && npx vitest run test/web-edit.spec.ts
+--testTimeout=60000`: **6 passed** (W1–W6).
+- Stryker, `--mutate shared/src/sync-client/session-edit.ts,web/src/entry/falt-model.ts,web/src/edit/model.ts,web/src/edit/messages.ts`:
+  first run **1248 killed / 21 survived** (98.35%); five tests added for the
+  real gaps (`dbdcbfb`); second run 1256 / 13. After the round-1 fix
+  (`1b2097d`) and its test (`9ba0662`), the final run: **1292 killed / 12
+  survived (99.08%)**, break threshold 95. The 12:
+  - **Pre-existing, unchanged lines** (5): `session-edit.ts:303`, `:367`,
+    `:559`; `falt-model.ts:63`, `:239` (blame `f625c73` / `40b30b9`).
+  - **Equivalent** (7):
+    - `:445` (`get(null)` is undefined), `:479` (the position only names the
+      station in `stationProblem`'s message, which is compared to null), and
+      `:500` (the `'new'` kind is reached by the loop's `else`).
+    - `web/src/edit/model.ts:112` (`nextKey` decrementing still gives unique
+      keys).
+    - `falt-model.ts:80`: a stored row's `hits` is never null
+      (`falt_stations.hits` is `notNull()`), so the branch is unreachable.
+    - `falt-model.ts:133`: `?.` is guarded by `lastKept !== undefined`.
+  - **Effectively equivalent** (1): `session-edit.ts:262`, the stored-null
+    branch's `''` replaced by `"Stryker was here!"`. It diverges only when
+    the typed Rounds Fired text is that literal string, which `parseRoundsFired`
+    then refuses as `invalidRounds` either way. (The previous revision of this
+    report called the `:262` survivors plainly equivalent; round 1 showed one
+    diverging mutant, now killed by the "null" text test.)
+- Docs gates: `mkdocs build --strict` green; `docs-translation-check`: 27
+  pages current; `docs-anchor-check`: no dangling anchors.
+
+### Real execution (browser checks)
+
+The web app was built and served by `wrangler dev` against local D1, seeded
+through `/sync/push` with synthetic data (a fält session with stations at 1,
+2 and a scratched 4, a rounds-only session of 40 on one firearm at 500), and
+driven with Playwright:
+
+- Opened the fält edit page: stations labelled 1, 2, 4; Result Mode shown
+  read-only; stored rows offer no "–" for Hits.
+- Deleted station 1, changed station 2's hits, added a station (labelled 5),
+  saved: the detail shows stations 2, 4, 5; reopening shows the same.
+- Rounds Fired `2.5` refused under the field, nothing sent; `55` saved. The
+  firearm's pulled counter: **515** (500 + 6 − 6 + 15).
+- Swedish UI: all labels translated. A station note changed through
+  `/sync/push` while the page was open, then a station edit saved: refused
+  as stale, Ladda om offered.
+- No console errors. Not run: a phone reading the result back (no device in
+  this environment); P8–P13 carry that on the phone's schema.
+
+### Known limits
+
+- As E19 says: the one net counter move differs from the phone's
+  per-station moves only when a floor bites.
+- New station labels assume every new row is entered; a blank new row in
+  the middle shifts the label of the rows after it by one at save time
+  (the builder numbers only entered rows).
+- The pull→push window of E6 applies to stations as it does to series.
+- Shoot-off is order-dependent, as on the phone (`nextStationIsShootOff`):
+  a new station after a kept shoot-off is one, whatever the rows before it.
+- A stored station left exactly as opened is not re-checked against
+  `stationProblem` (§10.10), so older data the phone would now refuse stays
+  as it is until someone edits that row. Retyping a number to the same value
+  (`05` for 5) is an edit and is checked; so is Rounds Fired `012000` for a
+  stored 12000.
+- K26's "spreading the opened payload" and K27's "numbering from the opened
+  stations" falsifiers are equivalent mutants: E20 writes stations only when
+  the opened and fresh rows are equal. The K26/K27 tests that name them are
+  kept as documentation of intent.
+- U16 has no test (no code: #768 removed the hints); U17 is the unedited
+  `falt-model.test.ts`.
+
+### Independent verification (revision 2)
+
+- **Round 1** at `dbdcbfb`, a fresh agent following
+  `.claude/skills/old-coder/references/verifier.md`: **failed**. Findings:
+  (1) two surviving mutants that diverge, one of them `:262`'s literal (the
+  typed text `"null"` against a null stored value); (2) a stored station that
+  `stationProblem` would now refuse (imported data) blocked or rewrote a
+  name-only save; (3) E15's shoot-off text did not match the
+  order-dependent behaviour the phone shares; (4) Scratched offered on new
+  rows, unlike the phone; plus evidence wording (the `:262` classification,
+  U16/U17 unmapped). Grading went to the maintainer (§10.10). Fixed: (1)
+  tests in `dbdcbfb`…`9ba0662`, (2) `1b2097d` plus K26's per-column test;
+  (3) spec text corrected, behaviour kept; (4) kept as E15 states;
+  wording corrected above.
+- **Round 2** at `73b9d71`, a fresh agent, same protocol: **passed**. Every
+  number reconciled (3643/3 with the sv-FI 3 reproduced on `origin/main`,
+  100% coverage, 785/69, backend 6, Stryker 1292/12 at 99.08%, docs gates).
+  Its own mutants were killed except three equivalent ones (below). Four
+  description/mapping findings, fixed and disclosed with no new round: (F1)
+  §10.10 said text parsing to the stored number counts as unchanged; the code
+  compares exact text, now stated; (F2) K26's opened-payload spread and K27's
+  opened-numbering falsifiers are equivalent under E20, and two test titles
+  overclaimed, now renamed; (F3) the `falt-model.ts:80` reason corrected;
+  (F4) §10.5 now says U16/U17 have no test. Canary not run.

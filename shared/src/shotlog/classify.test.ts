@@ -11,20 +11,7 @@ const FIREARMS = [
 
 /** The mapping the screen would start from, for the given tags. */
 function mappingFor(...tags: string[]): ShotlogTagMapping {
-  return buildDefaultTagMapping([
-    {
-      line: 2,
-      datetime: '2026-05-04T09:00:00Z',
-      name: '',
-      sourceType: 'Practice',
-      totalScore: 0,
-      tenCount: 0,
-      innerTenCount: 0,
-      tags,
-      note: '',
-      warnings: [],
-    },
-  ]);
+  return buildDefaultTagMapping([{ tags }]);
 }
 
 describe('classifyTags', () => {

@@ -81,6 +81,7 @@ check` (typecheck + lint + unit tests) green, the relevant checkbox in
 | Notifications | expo-notifications (local only in v1)                 | license/maintenance reminders                                                                      |
 | PDF           | expo-print (HTML → PDF)                               | Session Report                                                                                     |
 | E2E           | Maestro                                               | flows in `app/e2e/`                                                                                |
+| OTA updates   | expo-updates (EAS Update)                             | JS-only updates per release; ADR 0020                                                              |
 
 ## 3. Database schema (v1 — write exactly this, as Drizzle tables)
 
@@ -342,7 +343,7 @@ Tabs (expo-router): **Home** `/`, **Statistics** `/stats`, **Firearms**
   passed against seeded demo data (screenshots under M2 report). One
   flow gotcha worth keeping: right after `launchApp`, `openLink` can
   race the JS bundle's linking listener and silently no-op, so the flow
-  waits for `Home` to be visible before opening `app://dev`.
+  waits for `Home` to be visible before opening `shotledger://dev`.
 
 ### M3 — score entry (branch `feat/m3-score-entry`) — the core UX
 
@@ -547,7 +548,7 @@ and per-ammo-lot aggregates.
   entirely (navigation + assertions on visible numbers only, per the
   CLAUDE.md Maestro gotchas note) and adds a bounded non-failing settle
   wait plus a one-shot `openLink` retry for the known launchApp/openLink
-  race noted in the M2 report, which otherwise made the flow's `app://dev`
+  race noted in the M2 report, which otherwise made the flow's `shotledger://dev`
   step flaky on this sandboxed emulator.
 
 ### M6 — FAP 551-3 license activity + PDF (branch `feat/m6-compliance`)
@@ -917,7 +918,7 @@ competition form on 2026-09-09 at the maintainer's request.
 
 **Särskjutning** (tie-break; F.6.11.3 p. 181: extra series until medals
 decided, **no provskott**) is out of v1 scope — log such series as
-ordinary extra scored series with a note.
+ordinary extra scored series, flagged `is_shoot_off` (#727; was a note).
 
 **Decimal scoring — who actually uses it:** per ISSF rules, 10m air
 rifle scores decimal in qualification _and_ finals; 10m air pistol and
@@ -1143,8 +1144,8 @@ restates §0 rules 1–6 verbatim.
 > uncompressed container (`shared/src/backup/`) rather than a zip, since no
 > zip library exists in the lockfile and adding one needs the maintainer's
 > OK first (not yet asked). See the 2026-09-02 plan.md decisions-log entry
-> for the restore-requires-app-restart caveat (no `expo-updates` dependency
-> to reload the JS bundle in place).
+> for the restore-requires-app-restart caveat; since #780 the app reloads
+> itself via `expo`'s own `reloadAppAsync`, with no `expo-updates` dependency.
 
 > **Save to a user-chosen folder has since shipped** on `feat/save-to-folder`
 > (plan.md "Export destinations", second of share sheet → chosen folder →

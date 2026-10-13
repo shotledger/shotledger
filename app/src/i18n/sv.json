@@ -482,11 +482,13 @@
     "licensesNativeTitle": "Inbyggda komponenter",
     "licensesNativeNote": "Kompileras in i appen i stället för att buntas som JavaScript. Alla är inte öppen källkod, och Android-plattformens egna bibliotek listas inte.",
     "licensesJsTitle": "JavaScript-paket",
-    "repoLink": "GitHub-repo"
+    "repoLink": "GitHub-repo",
+    "evaluationExpires": "Utvärderingsversion endast för personlig testning; ingen annan licens ges. Går ut {{date}}."
   },
   "evaluation": {
     "expiredTitle": "Utvärderingsversionen har gått ut",
-    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen."
+    "expiredBody": "Den här utvärderingsversionen av ShotLedger gick ut {{date}}. Be om en ny version för att fortsätta använda appen.",
+    "expiredExportNote": "Dina pass finns kvar på telefonen. Exportera dem för att spara en kopia."
   },
   "jsonExport": {
     "sectionTitle": "Passexport",
@@ -516,14 +518,14 @@
     "restorePreviewPhotosNote": ", {{count}} foto(n)",
     "restoreConfirmAction": "Återställ",
     "restoreRestartTitle": "Återställning klar",
-    "restoreRestartBody": "Stäng ShotLedger helt och öppna det igen för att se den återställda datan.",
-    "restoreRestartAction": "OK",
+    "restoreRestartBody": "ShotLedger startar om för att läsa in den återställda datan.",
+    "restoreRestartAction": "Starta om",
     "exportSuccess": "Säkerhetskopia exporterad",
     "exportFailed": "Export av säkerhetskopia misslyckades",
     "restoreCanceled": "Återställning avbruten",
     "restoreInvalid": "Den filen är inte en ShotLedger-säkerhetskopia",
     "restoreSchemaMismatch": "Den här säkerhetskopian gjordes med en annan version av appen och kan inte återställas med den här. Om den kommer från en nyare version, uppdatera appen och försök igen.",
-    "restoreSuccess": "Återställning klar — stäng och öppna appen igen",
+    "restoreSuccess": "Återställning klar — startar om",
     "restoreFailed": "Återställningen misslyckades",
     "saveToFolderSubtitle": "Skriv en kopia direkt till en mapp du väljer, utan delningsmenyn",
     "folderChosenSubtitle": "Sparar till din valda mapp med ett tryck",
@@ -669,6 +671,7 @@
     "innerTenAverage": "Snitt X/serie",
     "extraRounds": "Extra skott (räknas ej i statistik)",
     "extraRoundsHint": "Avlossade men opoängsatta skott — räknas bara mot skotträknare och ammunitionsåtgång",
+    "extraRoundsInvalid": "Extra skott måste vara ett heltal från 0 till {{max}}.",
     "sightsTitle": "Sikte",
     "roundsFired": "Avlossade skott",
     "roundsFiredHint": "Passets antal skott. Räknas mot skotträknare och ammunitionsåtgång; poängsätts aldrig.",
@@ -1210,33 +1213,34 @@
   "shotlog": {
     "sectionRowTitle": "Importera från ShotLog (dev)",
     "title": "ShotLog-import",
-    "intro": "Utvecklingsverktyg. ShotLog exporterar en rad per pass — en totalsumma, inga enskilda skott. Varje rad blir ett pass med en serie som bara har totalsumman. Tolka taggarna och granska sedan varje rad innan import.",
+    "intro": "Utvecklingsverktyg. Läser ShotLog 5.4:s fullständiga export, en rad per serie med varje skott. Varje pass i ShotLog blir ett pass med sina serier och skott. Tolka taggarna och granska sedan varje pass innan import.",
     "pickFile": "Välj CSV-fil",
     "pickFileSubtitle": "Välj filen som ShotLog exporterade",
     "canceled": "Ingen fil vald.",
     "unavailable": "Import är inte tillgängligt här.",
     "imported": "Importerade {{created}} pass ({{skipped}} överhoppade).",
     "noRowsTitle": "Inget att importera",
-    "noRowsBody": "Filen innehöll inga läsbara passrader.",
+    "noRowsBody": "Filen innehöll inga läsbara pass.",
     "tagMappingTitle": "Vad betyder taggarna?",
     "tagMappingIntro": "ShotLog har inget fält för gren, klass eller vapen — allt ligger i taggarna. Ändra valfri gissning innan import.",
-    "tagLabel": "{{tag}} ({{count}} rader)",
+    "tagLabel": "{{tag}} ({{count}} pass)",
     "role": {
       "ignore": "Behåll som vanlig tagg",
       "firearm": "Vapen: {{tag}}",
       "competition": "Tävling (inte träning)",
-      "sighter": "Totalsumman inkluderar provskott",
+      "sighter": "Serie 1 är provskott",
       "final": "Final",
       "dnf": "Fullföljde inte",
       "discipline": "Gren: {{name}}",
       "weaponGroup": "Vapengrupp {{code}}"
     },
     "summaryTitle": "Förhandsgranskning",
-    "summaryCounts": "{{total}} rader · {{new}} nya · {{duplicates}} dubbletter · {{empty}} tomma · {{errors}} fel",
-    "summaryDateUnknown": "{{count}} rader delar samma tidsstämpel — deras riktiga datum gick förlorade i ShotLog och märks som okänt datum.",
+    "summaryCounts": "{{total}} pass · {{series}} serier · {{shots}} skott · {{new}} nya · {{duplicates}} dubbletter · {{empty}} tomma · {{errors}} fel",
+    "summaryDateUnknown": "{{count}} pass delar samma tidsstämpel — deras riktiga datum gick förlorade i ShotLog och märks som okänt datum.",
     "selectAll": "Markera alla",
     "selectNone": "Avmarkera alla",
     "unnamed": "(utan namn)",
+    "rowDetail": "{{series}} serier · {{score}} poäng",
     "dateUnknown": "Okänt datum",
     "disciplineUnknown": "Gren?",
     "noFirearms": "Inga vapen ännu",
@@ -1251,12 +1255,18 @@
       "probable-duplicate": "Finns troligen redan i journalen"
     },
     "warning": {
-      "inner-ten-exceeds-ten-count": "Innertior > tior",
       "auto-generated-name": "Autonamngiven",
       "firearm-column-unsupported": "Vapenkolumnen ignorerad",
       "conflicting-discipline-tags": "Motstridiga grentaggar",
       "conflicting-weapon-group-tags": "Motstridiga vapengruppstaggar",
-      "ambiguous-firearm-tag": "Tvetydig vapentagg"
+      "ambiguous-firearm-tag": "Tvetydig vapentagg",
+      "series-total-mismatch": "Seriesumma ≠ skott",
+      "x-count-mismatch": "Antal X ≠ skott",
+      "segment-unsupported": "Segment ignorerat",
+      "family-unsupported": "Okänd ShotLog-familj",
+      "series-gap": "Serier omnumrerade",
+      "multiple-sighter-series": "Extra provserier ignorerade",
+      "ambiguous-local-time": "Oklar tid (sommartidsbyte)"
     }
   },
   "tools": {
@@ -1383,7 +1393,8 @@
     "shell": {
       "menu": "Huvudmeny",
       "skipToContent": "Hoppa till innehållet",
-      "version": "Version"
+      "version": "Version",
+      "sourceCode": "Källkod"
     },
     "sessions": {
       "back": "Alla pass",

@@ -15,6 +15,7 @@ consequences.
 | Cloud DB         | Cloudflare D1                                                                                                                                       |
 | Photos           | Cloudflare R2 ($0 egress)                                                                                                                           |
 | Auth (sync only) | `better-auth` on Workers/D1; opt-in email+password (bearer plugin) — no social provider is configured                                               |
+| JS updates       | EAS Update (`expo-updates`), `appVersion` runtime, a channel per build profile — ADR 0020                                                           |
 | Crash reporting  | Sentry (or none) — privacy-sensitive audience                                                                                                       |
 
 **Sync protocol** (opt-in): a per-user changelog. Every row carries
@@ -52,3 +53,5 @@ ships first:
   a library, with the full survey of what was evaluated and rejected.
 - **ADR 0009** — the running register of approved dependencies and
   rejected alternatives, including the camera/CV choice above.
+- **ADR 0020** — over-the-air JS updates through EAS Update, and why the
+  runtime version is the app version.

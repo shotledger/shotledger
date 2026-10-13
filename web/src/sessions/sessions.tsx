@@ -360,6 +360,7 @@ function SeriesList({
                 <div className="series-head">
                   <strong>{t('session.seriesTitle', { position: row.position })}</strong>
                   {row.isSighter && <span className="badge">{t('session.sighter')}</span>}
+                  {row.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
                   <span className="series-total">
                     {row.isSighter ? t('session.sighterScore', { score: total }) : total}
                   </span>

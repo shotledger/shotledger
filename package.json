@@ -4,7 +4,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@12.11.2",
   "engines": {
-    "node": "26.11.1"
+    "node": "24.21.0"
   },
   "scripts": {
     "typecheck": "tsc -b && tsc -p backend/test/tsconfig.json",
@@ -12,9 +12,11 @@
     "lint": "eslint .",
     "format": "prettier --check --cache --cache-strategy content .",
     "i18n:check": "node scripts/i18n-check.mjs",
+    "node:check": "node scripts/node-version-check.mjs",
     "licenses:generate": "node scripts/generate-licenses.mjs",
     "licenses:check": "node scripts/generate-licenses.mjs --check",
-    "check": "pnpm typecheck && pnpm typecheck:app && pnpm typecheck:web && pnpm schema:check && pnpm i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run --coverage && (cd app && pnpm exec jest --passWithNoTests)",
+    "check": "pnpm node:check && pnpm typecheck && pnpm typecheck:app && pnpm typecheck:web && pnpm schema:check && pnpm i18n:check && pnpm licenses:check && pnpm lint && pnpm format && vitest run --coverage && (cd app && pnpm exec jest --passWithNoTests)",
+    "build:eval": "node scripts/build-eval.mjs",
     "coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "mutation:schema": "node scripts/mutate-schema.mjs",
@@ -35,7 +37,7 @@
     "@stryker-mutator/core": "10.0.0",
     "@stryker-mutator/vitest-runner": "10.0.0",
     "@techstark/opencv-js": "4.12.0-release.1",
-    "@types/node": "26.6.5",
+    "@types/node": "24.19.2",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitest/coverage-v8": "5.0.3",
     "eslint": "10.12.0",

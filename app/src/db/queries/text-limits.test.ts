@@ -31,7 +31,6 @@ const APP_TEXT_MAX: Record<string, number> = {
   updated_at: 32,
   started_at: 32,
   performed_at: 32,
-  external_synced_at: 32,
   firearm_id: 36,
   ammo_lot_id: 36,
   session_id: 36,
@@ -48,7 +47,6 @@ const APP_TEXT_MAX: Record<string, number> = {
   event_id: 64,
   external_source: 64,
   external_ref: 128,
-  webshooter_competition_id: 64,
   // A local file URI or the sync marker; JSON of a 3x3 homography.
   photo_uri: 512,
   photo_geometry: 512,

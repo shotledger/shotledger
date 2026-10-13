@@ -146,6 +146,21 @@ scores against official results.
 4. **Never guess a regulatory or scoring value.** Anything unconfirmed is marked
    `VERIFY:` and asked, because a wrong threshold silently corrupts a shooter's
    competition record.
+5. **The web app is on par with the phone.** Where the web reads or writes
+   something the phone also handles, it does what the phone does: the same
+   fields, the same rules, the same counter moves, the same limits. It neither
+   adds an ability the phone lacks nor leaves one out without a stated reason.
+   When the two disagree, the phone is the reference and the web follows it;
+   a phone behaviour that is itself wrong is fixed on the phone first, in its
+   own issue. Maintainer's ruling, 2026-10-13 (#769).
+6. **No gamification.** The app records and explains; it does not reward.
+   No streaks, points, levels, achievements, training programs with
+   milestones, leaderboards or nudges to shoot more. Results the federations
+   themselves define (standard medals, the gold series threshold) are shown
+   because they are real outcomes in the rule book, not app-invented
+   rewards. A brief acknowledgement when a series reaches one of them (the
+   keypad's gold series, full score or perfect animation, #482) is fine: it
+   marks a real result once and never nudges. Maintainer's ruling, 2026-10-13.
 
 ## Costs
 

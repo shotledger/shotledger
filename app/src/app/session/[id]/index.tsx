@@ -49,6 +49,10 @@ import { ThemedText } from '@/components/themed-text';
 import { disciplineLabel, matchFormatLabel } from '@/features/session/labels';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
+import {
+  MAX_ROUNDS_FIRED,
+  parseRoundsFired,
+} from '@shotledger/shared/src/sync-client/rounds-entry';
 import { setSeriesPositions } from '@/db/queries/series';
 import { updateSession } from '@/db/queries/sessions';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
@@ -175,13 +179,11 @@ export default function SessionDetailScreen() {
    * counter moves once per edit, by the delta, rather than on every keystroke.
    */
   function onCommitExtraRounds() {
-    const trimmed = extraRounds.trim();
-    const parsed = trimmed === '' ? null : Number(trimmed);
-    if (parsed !== null && (!Number.isInteger(parsed) || parsed < 0)) {
-      setExtraRounds(session?.extraRounds == null ? '' : String(session.extraRounds));
-      return;
-    }
-    setSessionExtraRounds(db, id, parsed);
+    // The new-session form's and the web's rule: text it refuses stays, with
+    // its error, and saves nothing.
+    const parsed = parseRoundsFired(extraRounds);
+    if (!parsed.ok) return;
+    setSessionExtraRounds(db, id, parsed.rounds);
     refresh();
   }
 
@@ -382,6 +384,9 @@ export default function SessionDetailScreen() {
           </ThemedText>
           <View style={styles.badges}>
             {row.isSighter && <Chip label={t('session.sighter')} />}
+            {row.isShootOff && (
+              <Chip label={t('station.shootOff')} testID={`series-shoot-off-${row.position}`} />
+            )}
             {row.timeLimitSeconds !== null && (
               <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
             )}
@@ -652,6 +657,11 @@ export default function SessionDetailScreen() {
             placeholder="0"
             testID="extra-rounds"
           />
+          {!parseRoundsFired(extraRounds).ok && (
+            <ThemedText type="small" themeColor="danger" testID="extra-rounds-error">
+              {t('session.extraRoundsInvalid', { max: MAX_ROUNDS_FIRED })}
+            </ThemedText>
+          )}
         </Card>
       )}
 

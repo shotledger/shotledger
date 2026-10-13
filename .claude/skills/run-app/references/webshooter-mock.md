@@ -22,7 +22,7 @@ setting, as with a real sign-in. Disconnect from the same screen to clear it.
 
 | Competition                    | Type                  | Results                                                                                              |
 | ------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| 9001 Klubbmästerskap Precision | precision             | one own start, C2                                                                                    |
+| 9001 Klubbmästerskap Precision | precision             | one own start, C2, with a särskjutning series                                                        |
 | 9002 Distriktsmästerskap Fält  | field                 | own C2 (with a shoot-off) and A3, plus another shooter's row (card 88888) that must never be offered |
 | 9003 Framtida match            | precision, dated 2099 | a signup and patrol for My Starts; never offered for import                                          |
 

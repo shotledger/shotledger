@@ -1,5 +1,5 @@
 // The web's session edit and delete end to end
-// (docs/specs/web-session-edit-spec.md W1–W4): the shared builders and
+// (docs/specs/web-session-edit-spec.md W1–W6): the shared builders and
 // pushChanges, the real HTTP transport, the real Worker, real D1 and
 // better-auth, in process. One account, a "web" token and a "device B" token;
 // device B owns the logbook.
@@ -119,7 +119,41 @@ const shot = (id: string, seriesId: string, position: number) => ({
   position,
   value_tenths: 90,
   is_inner_ten: 0,
-  is_inner_ten_decimal: 0,
+});
+
+function fieldSession(id: string, fields: Record<string, unknown>) {
+  return {
+    ...common(id),
+    name: `Session ${id}`,
+    type: 'training',
+    kind: 'series',
+    discipline_id: 'spsf-precision',
+    program_id: null,
+    firearm_id: null,
+    ammo_lot_id: null,
+    location: null,
+    notes: null,
+    decimal_scoring: 0,
+    series_length: null,
+    extra_rounds: null,
+    started_at: '2026-05-01T10:00:00.000Z',
+    ...fields,
+  };
+}
+
+const station = (id: string, position: number) => ({
+  ...common(id),
+  session_id: 's2',
+  position,
+  hits: 5,
+  figures_hit: 3,
+  figure_count: 4,
+  points: null,
+  points_max: null,
+  is_scratched: 0,
+  is_shoot_off: 0,
+  photo_uri: null,
+  note: 'kept',
 });
 
 /** s1 on f1: r1 (3 shots), r2 (2 shots), tagged; 5 rounds. f2 has 10. */
@@ -175,6 +209,11 @@ const LOGBOOK: [SyncTableName, Record<string, unknown>][] = [
   ['shots', shot('h3', 'r1', 3)],
   ['shots', shot('h4', 'r2', 1)],
   ['shots', shot('h5', 'r2', 2)],
+  // s2: fält on f1, two stations (12 rounds); s3: rounds only on f2, 20 rounds.
+  ['sessions', fieldSession('s2', { discipline_id: 'spsf-falt', firearm_id: 'f1' })],
+  ['falt_stations', station('st1', 1)],
+  ['falt_stations', station('st2', 2)],
+  ['sessions', fieldSession('s3', { kind: 'rounds', firearm_id: 'f2', extra_rounds: 20 })],
 ];
 
 let web: Client;
@@ -319,5 +358,122 @@ describe('the web session edit path', () => {
     // The counter moves landed: what E8 names for Adjust Round Count.
     expect(rows.get('firearms:f1')?.payload).toMatchObject({ round_count: 95 });
     expect(rows.get('firearms:f2')?.payload).toMatchObject({ round_count: 16 });
+  });
+});
+
+const STATION_EDIT: SessionEditDraft = {
+  sessionId: 's2',
+  fields: {},
+  series: [],
+  stations: [
+    {
+      id: 'st1',
+      hits: 6,
+      figuresHit: 4,
+      figureCount: 4,
+      pointsText: '',
+      pointsMaxText: '',
+      isScratched: false,
+      isShootOff: false,
+      deleted: false,
+    },
+    {
+      id: 'st2',
+      hits: 5,
+      figuresHit: 3,
+      figureCount: 4,
+      pointsText: '',
+      pointsMaxText: '',
+      isScratched: false,
+      isShootOff: false,
+      deleted: true,
+    },
+    {
+      id: null,
+      hits: 3,
+      figuresHit: 2,
+      figureCount: null,
+      pointsText: '',
+      pointsMaxText: '',
+      isScratched: false,
+      isShootOff: false,
+      deleted: false,
+    },
+    {
+      id: null,
+      hits: 0,
+      figuresHit: 0,
+      figureCount: null,
+      pointsText: '',
+      pointsMaxText: '',
+      isScratched: false,
+      isShootOff: false,
+      deleted: false,
+    },
+  ],
+};
+
+describe('the web station and Rounds Fired edit path (§10)', () => {
+  it('W5 a station edit and a Rounds Fired edit, pushed over HTTP, are pulled by device B as built; a resend moves nothing twice', async () => {
+    const stations = await edit(STATION_EDIT);
+    await expect(pushChanges(web.transport, PROTOCOL_VERSION, stations)).resolves.toEqual({
+      kind: 'saved',
+    });
+    const rounds = await edit({ sessionId: 's3', fields: {}, series: [], roundsFired: '35' });
+    await expect(pushChanges(web.transport, PROTOCOL_VERSION, rounds)).resolves.toEqual({
+      kind: 'saved',
+    });
+    const rows = await pullAll(deviceB.transport);
+    for (const change of [...stations, ...rounds]) {
+      const row = rows.get(`${change.tableName}:${change.rowId}`)!;
+      expect(row.payload).toEqual(change.payload);
+      expect(row.deletedAt).toBe(change.deletedAt);
+    }
+    expect(rows.get('falt_stations:st1')?.payload).toMatchObject({ hits: 6, note: 'kept' });
+    expect(rows.get('falt_stations:st2')).toMatchObject({ payload: null, deletedAt: NOW });
+    const added = stations.filter(
+      (c) => c.tableName === 'falt_stations' && c.rowId.startsWith('00000000-0000-7'),
+    );
+    expect(added.map((c) => rows.get(`falt_stations:${c.rowId}`)?.payload)).toMatchObject([
+      { position: 3, hits: 3, session_id: 's2' },
+      { position: 4, hits: 0, session_id: 's2' },
+    ]);
+    // f1: one station off, two on (+6); f2: 20 → 35 rounds (+15).
+    expect(rows.get('firearms:f1')?.payload).toMatchObject({ round_count: 106 });
+    expect(rows.get('sessions:s3')?.payload).toMatchObject({ extra_rounds: 35 });
+    expect(rows.get('firearms:f2')?.payload).toMatchObject({ round_count: 25 });
+
+    const replay = await web.transport.push({
+      protocolVersion: PROTOCOL_VERSION,
+      changes: stations,
+    });
+    expect(replay.acks.map((ack) => ack.status)).toEqual(stations.map(() => 'duplicate'));
+    const after = await pullAll(deviceB.transport);
+    for (const [key, row] of after) expect(row.seq).toBe(rows.get(key)!.seq);
+  });
+
+  it('W6 a station tombstoned by device B first: that change is rejected, the rest applied', async () => {
+    const changes = await edit(STATION_EDIT);
+    await deviceB.transport.push({
+      protocolVersion: PROTOCOL_VERSION,
+      changes: [
+        {
+          clientChangeId: uuid(4)(),
+          tableName: 'falt_stations',
+          rowId: 'st1',
+          payload: null,
+          deletedAt: '2026-10-12T09:00:00.000Z',
+          updatedAt: '2026-10-12T09:00:00.000Z',
+        },
+      ],
+    });
+    await expect(pushChanges(web.transport, PROTOCOL_VERSION, changes)).resolves.toEqual({
+      kind: 'partlyRejected',
+      rejected: [{ tableName: 'falt_stations', rowId: 'st1', reason: 'tombstoned' }],
+    });
+    const rows = await pullAll(deviceB.transport);
+    expect(rows.get('falt_stations:st1')?.deletedAt).toBe('2026-10-12T09:00:00.000Z');
+    expect(rows.get('falt_stations:st2')?.deletedAt).toBe(NOW);
+    expect(rows.get('firearms:f1')?.payload).toMatchObject({ round_count: 106 });
   });
 });

@@ -1274,6 +1274,25 @@ main:focus {
   opacity: 0.6;
 }
 
+.station-row.deleted legend {
+  text-decoration: line-through;
+}
+
+.station-row.deleted select,
+.station-row.deleted input {
+  opacity: 0.6;
+}
+
+.station-remove {
+  justify-self: start;
+}
+
+.read-only-value {
+  display: block;
+  padding: 6px 0;
+  font-weight: 600;
+}
+
 .edit-notes {
   grid-column: 1 / -1;
 }

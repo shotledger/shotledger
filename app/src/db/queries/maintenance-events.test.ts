@@ -31,6 +31,7 @@ describe('logMaintenanceEvent', () => {
 
     expect(event.roundCountAt).toBe(620);
     expect(event.kind).toBe('rengoring');
+    expect(event.isAdjustment).toBe(0);
     const updated = getFirearm(db, firearm.id);
     expect(updated?.roundCount).toBe(620); // lifetime count untouched
     expect(updated?.roundsSinceMaintenance).toBe(0); // "since" resets
@@ -58,7 +59,7 @@ describe('listMaintenanceEvents', () => {
 });
 
 describe('adjustFirearmRoundCount', () => {
-  it('applies a manual delta and logs an adjustment event with the reason', () => {
+  it('A2 applies a manual delta and logs an adjustment event with the reason', () => {
     const firearm = createFirearm(db, { make: 'A', model: '1' });
     applyRoundCountDelta(db, firearm.id, 100);
 
@@ -68,7 +69,8 @@ describe('adjustFirearmRoundCount', () => {
 
     const events = listMaintenanceEvents(db, firearm.id);
     expect(events).toHaveLength(1);
-    expect(events[0]?.kind).toBe('adjustment');
+    expect(events[0]?.isAdjustment).toBe(1);
+    expect(events[0]?.kind).toBe('');
     expect(events[0]?.notes).toBe('+50 · Counted a box bought used');
     expect(events[0]?.roundCountAt).toBe(150);
   });

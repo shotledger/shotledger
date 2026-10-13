@@ -342,10 +342,10 @@ export interface MappedSeriesOverride {
 
 `mapStationResultsToSeries(row: ResultRow, shotsPerSeries: number):
 MappedSeriesOverride[]` — flattens `results` (main round, `isFinal: false`,
-`note: null`), `results_finals` (`isFinal: true`, `note: null`, per §A.6 "same
-section semantics"), and `results_distinguish` (`isFinal: false, note:
-'särskjutning'`, per §A.6 — ordinary extra scored series, not a special
-flag) into one array, `totalOverrideTenths = row.points * 10`,
+`isShootOff: false`), `results_finals` (`isFinal: true`, `isShootOff: false`,
+per §A.6 "same section semantics"), and `results_distinguish` (`isFinal:
+false, isShootOff: true`, per §A.6 — an ordinary extra scored series; #727
+replaced the `note: 'särskjutning'` with the flag) into one array, `totalOverrideTenths = row.points * 10`,
 `totalOverrideShotCount = shotsPerSeries` (the program's fixed shot count,
 per §A.4 — 5 for both v1 programs, passed in rather than hardcoded so the
 function stays discipline-agnostic). `position` continues across all three

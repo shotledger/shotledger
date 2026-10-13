@@ -67,7 +67,7 @@ export function useShotlogImport() {
     // Parsed once here purely to seed the mapping screen; `buildPlan` parses
     // again from the same text, so the two can never disagree.
     const parsed = parseShotlogCsv(picked);
-    const rows = parsed.ok ? parsed.rows : [];
+    const rows = parsed.ok ? parsed.sessions : [];
     const mapping = buildDefaultTagMapping(rows);
     setText(picked);
     setTags(collectShotlogTags(rows));

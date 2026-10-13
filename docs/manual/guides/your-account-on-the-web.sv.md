@@ -2,10 +2,12 @@
 
 Om du använder synk kan du nå ditt konto och dina pass från vilken
 webbläsare som helst med ShotLedgers webbapp, även när telefonen är
-borttappad eller trasig. Den läser det som synken redan har sparat. Den ändrar
-bara två saker: ett pass du skriver in under
-[Mata in serier på webben](entering-series-on-the-web.md), och inställningarna
-nedan.
+borttappad eller trasig. Den läser det som synken redan har sparat och ändrar
+bara det som telefonen själv kan ändra: ett pass du
+[skriver in](entering-series-on-the-web.md),
+[ändrar eller tar bort](editing-a-session-on-the-web.md), pass du
+[ändrar flera åt gången](editing-many-sessions-on-the-web.md), och
+inställningarna nedan.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
 **Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
@@ -98,3 +100,8 @@ Ett foto som inte går att hämta stoppar inte resten. Zip-filen listar det då 
 inloggade enheter. **Radera** tar sedan bort kontot och allt på servern och
 loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
 ångra, så ladda ner allt först om du vill ha en kopia.
+
+## Källkod
+
+ShotLedger är fri programvara. **Källkod** i profilmenyn uppe till höger
+öppnar källkoden för appen och webbappen.
