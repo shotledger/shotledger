@@ -9,8 +9,9 @@ en plats eller ett vapen, eller skriva om en serie som blev fel. Logga in,
 **Redigera** öppnar passets fält som telefonens redigeringsskärm har dem:
 datum och tid, namn, plats, anteckningar, tävlingsfälten för en tävling, vapen
 och ammunitionsparti. Ett tomt namn behåller passets namn; en tom plats eller
-anteckning rensar den. Typ, gren, matchformat och decimalräkning bestäms när
-passet skapas och förblir som de är.
+anteckning rensar den. Ett nytt datum före 1900 eller senare än i morgon
+avvisas, som i Mata in serier. Typ, gren, matchformat och decimalräkning
+bestäms när passet skapas och förblir som de är.
 
 Under fälten är varje serie i grundomgången en rad skott, skrivna som i
 [Mata in serier](entering-series-on-the-web.md#skriv-serierna). Ändra en rad
@@ -25,7 +26,9 @@ går inte att ändra här, och inte heller fältstationer, skotten i ett pass me
 bara skott, matchformatet eller taggar. Ändra dem i telefonen.
 
 Ett foto stannar hos sin serie när du skriver om skotten, men markeringarna du
-satt på det visas inte längre, som när du skriver om serien i telefonen.
+satt på det visas inte längre, som när du skriver om serien i telefonen. En
+serie sparad med ett foto och inga skott visas som en tom rad; lämnas den tom
+förblir den som den är. Den här sidan lägger inte till eller tar bort foton.
 
 ## Spara
 
@@ -58,6 +61,13 @@ med **Justera antal skott** i telefonen.
 **Ta bort pass** frågar först och namnger passet och hur mycket vapnets
 skottantal minskar. Borttagningen tar också bort dess serier, skott och
 fältstationer och går inte att ångra. Dess foton finns kvar i kontot.
+
+Borttagningen läser passet igen först. Har något i det (dess fält, en serie,
+ett skott eller en fältstation) ändrats, lagts till eller tagits bort på en
+annan enhet sedan sidan visade det tas ingenting bort och sidan säger det:
+**Ladda om** visar passet som det är nu, och Ta bort pass frågar igen med det
+nya skottantalet. Har det redan tagits bort på en annan enhet skickas inte
+heller något.
 
 En sparning eller borttagning kan röra högst 500 rader. Ett så stort pass
 ändras i telefonen.

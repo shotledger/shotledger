@@ -9,7 +9,8 @@ location or a firearm, or retype a series you got wrong. Sign in, open
 **Edit** opens the session's fields as the phone's edit screen has them: date
 and time, name, location, notes, the competition fields of a competition,
 firearm and ammo lot. An empty name keeps the name the session has; an empty
-location or note clears it. The type, discipline, match format and decimal
+location or note clears it. A new date before 1900 or later than tomorrow is
+refused, as on Enter Series. The type, discipline, match format and decimal
 scoring are set when a session is created and stay as they are.
 
 Below the fields, each series of the qualification is one row of shots, typed
@@ -24,7 +25,9 @@ not editable here, and neither are fält stations, the rounds of a
 rounds-only session, the match format and tags. Change those on the phone.
 
 A photo stays with its series when you retype the shots, but the marks you
-placed on it no longer show, as when you retype the series on the phone.
+placed on it no longer show, as when you retype the series on the phone. A
+series saved with a photo and no shots shows as an empty row; left empty, it
+stays as it is. This page does not add or remove photos.
 
 ## Save
 
@@ -57,6 +60,13 @@ check with **Adjust Round Count** on the phone.
 **Delete Session** asks first, naming the session and how many rounds its
 firearm's round count goes down by. Deleting removes its series, shots and
 fält stations too and cannot be undone. Its photos stay in your account.
+
+Delete reads the session again first. If anything in it (its fields, a
+series, a shot or a fält station) was changed, added or removed on another
+device since the page showed it, nothing is deleted and the page says so:
+**Reload** shows the session as it is now, and Delete Session asks again with
+the new round count. If it was already deleted on another device, nothing is
+sent either.
 
 One save or delete can touch at most 500 rows. A session that large is
 changed on the phone.
