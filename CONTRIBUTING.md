@@ -28,8 +28,9 @@ folder, and apply to human contributors just as much. Running the app is in
 
 ### Getting started
 
-Requires Node (the exact version is in `.node-version`, which `fnm`, `mise`
-and CI read) and pnpm 12 (pinned in `package.json`).
+Requires Node 24, the current LTS (exact version in `.node-version`, which
+`fnm`, `mise`, CI and the cloud-session hook in `.claude/hooks/` read) and
+pnpm 12 (pinned in `package.json`).
 
 ```bash
 pnpm i
