@@ -39,6 +39,13 @@ function group(overrides: Partial<SessionImportGroup> = {}): SessionImportGroup 
     series: [],
     faltResultMode: null,
     stations: [],
+    kind: 'series' as const,
+    tenCount: null,
+    innerTenCount: null,
+    externalSource: null,
+    externalRef: null,
+    officialPlacement: null,
+    officialStandardMedal: null,
     ...overrides,
   };
 }
@@ -156,6 +163,13 @@ describe('buildDryRunPlan shot counts', () => {
           ],
           faltResultMode: null,
           stations: [],
+          kind: 'series' as const,
+          tenCount: null,
+          innerTenCount: null,
+          externalSource: null,
+          externalRef: null,
+          officialPlacement: null,
+          officialStandardMedal: null,
         },
       ],
       {
@@ -265,6 +279,13 @@ describe('buildDryRunPlan tag reuse', () => {
       series: [],
       faltResultMode: null,
       stations: [],
+      kind: 'series' as const,
+      tenCount: null,
+      innerTenCount: null,
+      externalSource: null,
+      externalRef: null,
+      officialPlacement: null,
+      officialStandardMedal: null,
     };
     const plan = buildDryRunPlan([group], {
       sessionIds: new Set(),
@@ -308,6 +329,13 @@ describe('buildDryRunPlan tag reuse', () => {
       series: [],
       faltResultMode: null,
       stations: [],
+      kind: 'series' as const,
+      tenCount: null,
+      innerTenCount: null,
+      externalSource: null,
+      externalRef: null,
+      officialPlacement: null,
+      officialStandardMedal: null,
     };
     const plan = buildDryRunPlan(
       [

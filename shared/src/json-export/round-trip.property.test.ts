@@ -92,6 +92,7 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   id: fc.string({ minLength: 1, maxLength: 8 }),
   name: textArb,
   type: fc.constantFrom('training' as const, 'competition' as const),
+  kind: fc.constantFrom('series' as const, 'rounds' as const),
   disciplineId: fc.string({ minLength: 1, maxLength: 12 }),
   programId: nullableText,
   competitionLevel: nullableText,
@@ -112,6 +113,8 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
     .map((d) => d.toISOString()),
   location: nullableText,
   notes: nullableText,
+  tenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
+  innerTenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
   decimalScoring: fc.boolean(),
   seriesLength: fc.option(fc.integer({ min: 1, max: 10 }), { nil: null }),
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),
@@ -119,6 +122,16 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
   series: fc.array(seriesArb, { maxLength: 4 }),
   faltResultMode: fc.constantFrom('falt' as const, 'poangfalt' as const, null),
   stations: fc.array(stationArb, { maxLength: 4 }),
+  externalSource: nullableText,
+  externalRef: nullableText,
+  officialPlacement: fc.option(fc.nat({ max: 500 }), { nil: null }),
+  officialStandardMedal: fc.constantFrom(
+    'none' as const,
+    'brons' as const,
+    'silver' as const,
+    'guld' as const,
+    null,
+  ),
 });
 
 const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({

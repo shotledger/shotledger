@@ -49,6 +49,11 @@ loggat passet här. Att importera samma fil två gånger räknar den inte
 två gånger: den andra importen flyttar räknarna med skillnaden, och oftast inte
 alls.
 
+Pass som kom från WebShooter eller ShotLog behåller sin koppling till källan
+genom en export och import. Återställer du en fil i en tömd app och sedan
+importerar från WebShooter eller ShotLog igen uppdateras de passen i stället
+för att läggas till en gång till.
+
 Appen avvisar en fil vars `formatVersion` är **högre** än den förstår, i stället
 för att importera de delar den känner igen. En delvis import som ser lyckad ut
 är sämre än ett avvisande, eftersom du inte skulle veta vad som föll bort.
@@ -90,6 +95,7 @@ Ett pass, en räknande serie om tre skott:
       "id": "0d8f1c2e-4a7b-4c1d-9f3e-2b6a5c9d8e70",
       "name": "Tisdagsträning",
       "type": "training",
+      "kind": "series",
       "disciplineId": "spsf-precision",
       "programId": "spsf-precision-standard",
       "competitionLevel": null,
@@ -104,6 +110,8 @@ Ett pass, en räknande serie om tre skott:
       "startedAt": "2026-09-12T17:00:00.000Z",
       "location": "Malmö Skyttegille",
       "notes": null,
+      "tenCount": null,
+      "innerTenCount": null,
       "decimalScoring": false,
       "seriesLength": null,
       "extraRounds": null,
@@ -129,7 +137,11 @@ Ett pass, en räknande serie om tre skott:
         }
       ],
       "faltResultMode": null,
-      "stations": []
+      "stations": [],
+      "externalSource": null,
+      "externalRef": null,
+      "officialPlacement": null,
+      "officialStandardMedal": null
     }
   ],
   "firearms": [
@@ -166,19 +178,23 @@ Ett pass, en räknande serie om tre skott:
 
 ### Att läsa fälten
 
-| Fält             | Betydelse                                                                                                                                                                                                                                                       |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `valueTenths`    | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                                                                                                                           |
-| `isInnerTen`     | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                                                                                                                                 |
-| `isSighter`      | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                                                                                                                           |
-| `totalOverride`  | En serie som bara sparats som en total, så som en import från Webshooter eller ShotLog ger den: `tenths` är totalen, `shotCount` antalet skott bakom den eller `null` när inget angavs. Dess `shots` är då tom. `null` på en serie som räknats skott för skott. |
-| `weaponGroup`    | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                                                                                                                                  |
-| `eventId`        | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                                                                                                                          |
-| `seriesLength`   | Skott per serie som valdes när passet skapades. `null` när hela matchen anger den, och på ett pass som inte skjuts i ringade serier.                                                                                                                            |
-| `firearmId`      | Vapnet i filens `firearms`-lista som passet sköts med, eller `null`.                                                                                                                                                                                            |
-| `firearm`        | Samma vapens fabrikat och modell som en enda sträng. Behålls bredvid id:t så att en fil vars `firearms`-lista inte rymmer det ändå säger vad som sköts med.                                                                                                     |
-| `stations`       | Ett fältskjutningspass stationer: träffar, träffade figurer, stationens antal figurer, eventuella poängmålspoäng och deras max, och om stationen struks eller sköts som särskjutning. Tom på alla andra pass.                                                   |
-| `faltResultMode` | `falt` eller `poangfalt` — hur fältomgången redovisas. `null` på alla andra pass.                                                                                                                                                                               |
+| Fält                                         | Betydelse                                                                                                                                                                                                                                                       |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `valueTenths`                                | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                                                                                                                           |
+| `isInnerTen`                                 | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                                                                                                                                 |
+| `isSighter`                                  | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                                                                                                                           |
+| `totalOverride`                              | En serie som bara sparats som en total, så som en import från Webshooter eller ShotLog ger den: `tenths` är totalen, `shotCount` antalet skott bakom den eller `null` när inget angavs. Dess `shots` är då tom. `null` på en serie som räknats skott för skott. |
+| `weaponGroup`                                | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                                                                                                                                  |
+| `eventId`                                    | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                                                                                                                          |
+| `seriesLength`                               | Skott per serie som valdes när passet skapades. `null` när hela matchen anger den, och på ett pass som inte skjuts i ringade serier.                                                                                                                            |
+| `firearmId`                                  | Vapnet i filens `firearms`-lista som passet sköts med, eller `null`.                                                                                                                                                                                            |
+| `firearm`                                    | Samma vapens fabrikat och modell som en enda sträng. Behålls bredvid id:t så att en fil vars `firearms`-lista inte rymmer det ändå säger vad som sköts med.                                                                                                     |
+| `stations`                                   | Ett fältskjutningspass stationer: träffar, träffade figurer, stationens antal figurer, eventuella poängmålspoäng och deras max, och om stationen struks eller sköts som särskjutning. Tom på alla andra pass.                                                   |
+| `faltResultMode`                             | `falt` eller `poangfalt` — hur fältomgången redovisas. `null` på alla andra pass.                                                                                                                                                                               |
+| `kind`                                       | `series` för ett pass som loggas i räknade serier, `rounds` för ett som bara anger ett antal avlossade skott, i `extraRounds`. En fil utan fältet läses som `series`.                                                                                           |
+| `tenCount`, `innerTenCount`                  | Tior och innertior som sparats på själva passet, för ett pass utan skott att räkna dem från (en ShotLog-import). Annars `null`.                                                                                                                                 |
+| `externalSource`, `externalRef`              | Var ett importerat pass kom ifrån (`webshooter`, `shotlog`) och källans egen nyckel för det. `null` på ett pass som loggats i appen.                                                                                                                            |
+| `officialPlacement`, `officialStandardMedal` | Placering och standardmedalj ur de officiella resultaten, så som en import från WebShooter förde in dem. `null` när det inte finns några.                                                                                                                       |
 
 ### Vapen och licenser
 

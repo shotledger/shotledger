@@ -376,6 +376,7 @@ export function applyImport(
       const sessionValues = {
         name: group.name,
         type: group.type,
+        kind: group.kind,
         disciplineId: group.disciplineId,
         programId: group.programId,
         competitionLevel: toCompetitionLevel(group.competitionLevel),
@@ -389,10 +390,16 @@ export function applyImport(
         startedAt: group.startedAt,
         location: group.location,
         notes: group.notes,
+        tenCount: group.tenCount,
+        innerTenCount: group.innerTenCount,
         decimalScoring: group.decimalScoring ? 1 : 0,
         seriesLength: group.seriesLength,
         extraRounds: group.extraRounds,
         faltResultMode: group.faltResultMode,
+        externalSource: group.externalSource,
+        externalRef: group.externalRef,
+        officialPlacement: group.officialPlacement,
+        officialStandardMedal: group.officialStandardMedal,
         updatedAt: now,
       };
 

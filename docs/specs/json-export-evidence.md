@@ -152,3 +152,34 @@ the compiler and from grepping before deleting.
 - **i18n key count fell** 851 → 839: the `csv.*` block (15 keys) became
   `jsonExport.*` (15), and `stats.exportCsv` plus `stats.exportHint.csv` are
   gone with the report's CSV option.
+
+---
+
+## 5. Revision 5 — kind, ten counts and external refs (issue #756)
+
+Spec §1.5. Fresh run on `fix/756-json-export-fields` after the last code edit.
+
+| Criterion                                                             | Test                                                                                            |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| each of the seven fields round-trips with a non-default value         | `import.test.ts` "round-trips each field…"; P21 generates all seven                             |
+| a session written without them imports as `series` with each `null`   | `import.test.ts` "a session written without them…"                                              |
+| an out-of-range value rejects only its session                        | `import.test.ts` "rejects the session when …" (×6)                                              |
+| the exporter writes them, and a row source without them gets defaults | `from-rows.test.ts`, `export.test.ts` C5 (extended) and "writes the session kind…"              |
+| export → wipe → import writes each column back                        | `app/src/db/json-export/round-trip.test.ts` "writes each column back as it was"                 |
+| a later WebShooter/ShotLog import still finds its ref                 | `round-trip.test.ts` "leaves the refs where…" (asserts `listExternalRefs`, the reconcile input) |
+
+- **The tests fail without the fix.** With `types.ts`, `from-rows.ts` and
+  `apply-import.ts` reverted to `main`, the new `import.test.ts` cases and both
+  new `round-trip.test.ts` cases fail (a rounds session comes back `series`, the
+  refs come back `null`).
+- **`pnpm check`**: green — 201 vitest files / 3286 tests, coverage 100% on every
+  gauntlet module (4045/4045 statements, 2603/2603 branches), jest 66 suites /
+  726 tests, `schema:check` green after `pnpm schema:generate`.
+- **Mutation** (`stryker run --mutate from-rows.ts,import.ts`): `from-rows.ts`
+  100% (60/60). `import.ts` 89.47% — six surviving `StringLiteral` mutants in
+  error-message text (lines 54, 61, 77, 105), none in code this change touched;
+  adding tests can only kill mutants, so they predate it. The new schema fields
+  are module-load code, which `ignoreStatic` skips, and `mutation:schema` covers
+  only the disciplines schema; their bounds and defaults are pinned instead by
+  the six rejection cases and the written-without-them case.
+- **Not run**: a device export/import through the share sheet and picker.
