@@ -36,6 +36,8 @@ import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
 import { KindPicker, RoundsFiredField, SectionHeading, StartFinalButton } from './kind-fields';
 import { buildEntry, disciplineOptions } from './kinds';
+import { faltSendsTheSame, initialFalt, isFaltForm, type FaltForm } from './falt-model';
+import { FaltStations } from './falt-stations';
 import {
   addRow,
   canMarkSighter,
@@ -131,6 +133,10 @@ function errorText(t: TFunction, error: EntryError, rowLabel: (row: number) => s
       return t('web.entry.errorTooManyChanges');
     case 'hitsDiscipline':
       return t('web.entry.failed');
+    case 'stationPoints':
+      return t('web.entry.errorStationPoints', { row: rowLabel(error.row) });
+    case 'invalidStation':
+      return t('web.entry.errorInvalidStation', { row: rowLabel(error.row) });
   }
 }
 
@@ -172,6 +178,8 @@ export function Entry({
   const profile = useMemo(() => readAccountSettings(tables.settings), [tables]);
   const [form, setForm] = useState<EntryForm>(() => initialForm(new Date(), profile));
   const [state, setState] = useState<SaveState>(IDLE);
+  // A fält session's stations, beside the series rows (web-falt-entry-spec C1).
+  const [falt, setFalt] = useState<FaltForm>(initialFalt);
   const rowInputs = useRef(new Map<number, HTMLInputElement>());
   // A row added by Enter exists only after the next render.
   const pendingFocus = useRef<number | null>(null);
@@ -200,6 +208,11 @@ export function Entry({
   };
   const set = <K extends keyof EntryForm>(key: K, value: EntryForm[K]) =>
     edit({ ...form, [key]: value });
+  const editFalt = (next: FaltForm) => {
+    setFalt(next);
+    const unchanged = faltSendsTheSame(falt, next);
+    setState((was) => afterEdit(was, { sendsTheSame: unchanged }));
+  };
 
   const discipline = requireDiscipline(form.disciplineId);
   const programs = programsForDiscipline(form.disciplineId);
@@ -210,6 +223,8 @@ export function Entry({
   const fixed = isFixed(form);
   const isCompetition = form.type === 'competition';
   const isSeries = form.kind === 'series';
+  // Fält as stations; a rounds-only fält session stays rounds (#718).
+  const isFalt = isSeries && isFaltForm(form);
 
   const firearms = useMemo(
     () =>
@@ -253,9 +268,11 @@ export function Entry({
   const blocked = saveBlocked(online, state);
   const errors = state.status.kind === 'invalid' ? state.status.errors : [];
   const rowLabel = (row: number) =>
-    form.rows[row - 1]?.isSighter
-      ? t('session.sighter')
-      : t('session.seriesTitle', { position: row });
+    isFalt
+      ? t('station.title', { position: row })
+      : form.rows[row - 1]?.isSighter
+        ? t('session.sighter')
+        : t('session.seriesTitle', { position: row });
   const rowErrors = new Map<number, string>();
   const formErrors: string[] = [];
   for (const error of errors) {
@@ -281,7 +298,7 @@ export function Entry({
           };
         },
         build: (context) =>
-          buildEntry(form, defaultName, context, {
+          buildEntry(form, falt, defaultName, context, {
             newId: uuidv7,
             newChangeId: () => crypto.randomUUID(),
             now: () => new Date().toISOString(),
@@ -294,7 +311,10 @@ export function Entry({
     )
       .then((next) => {
         setState(next);
-        if (next.status.kind === 'saved') setForm(initialForm(new Date(), profile));
+        if (next.status.kind === 'saved') {
+          setForm(initialForm(new Date(), profile));
+          setFalt(initialFalt());
+        }
       })
       // save() catches what it calls; this is the last guard against "saving" forever (R18).
       .catch(() => setState({ status: { kind: 'failed', error: 'unknown' }, held }));
@@ -557,7 +577,21 @@ export function Entry({
                 {t('session.decimalScoring')}
               </label>
             )}
-            {isSeries && form.programId === null && (
+            {isFalt && (
+              <label className="field">
+                {t('session.faltResultMode')}
+                <select
+                  value={falt.resultMode}
+                  onChange={(event) =>
+                    editFalt({ ...falt, resultMode: event.target.value as FaltForm['resultMode'] })
+                  }
+                >
+                  <option value="falt">{t('session.faltResultModeFalt')}</option>
+                  <option value="poangfalt">{t('session.faltResultModePoangfalt')}</option>
+                </select>
+              </label>
+            )}
+            {isSeries && form.programId === null && !isFalt && (
               <label className="field">
                 {t('session.seriesLength')}
                 <input
@@ -571,7 +605,8 @@ export function Entry({
             {!isSeries && <RoundsFiredField form={form} edit={edit} />}
           </section>
 
-          <section className="card series-rows" hidden={!isSeries}>
+          {isFalt && <FaltStations falt={falt} onEdit={editFalt} rowErrors={rowErrors} />}
+          <section className="card series-rows" hidden={!isSeries || isFalt}>
             {form.rows.map((row, index) => {
               const summary = rowSummary(row.text, mode);
               const label = rowLabel(index + 1);

@@ -83,7 +83,10 @@ export type EntryError =
   | { kind: 'unknownAmmoLot' }
   | { kind: 'invalidStartedAt' }
   | { kind: 'invalidRounds' }
-  | { kind: 'tooManyChanges'; max: number };
+  | { kind: 'tooManyChanges'; max: number }
+  // Fält stations (falt-entry.ts): points that do not parse, or an impossible station.
+  | { kind: 'stationPoints'; row: number }
+  | { kind: 'invalidStation'; row: number };
 
 export type EntryResult =
   { ok: true; sessionId: string; changes: ClientChange[] } | { ok: false; errors: EntryError[] };

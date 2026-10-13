@@ -20,9 +20,6 @@ stannar i telefonen, så webben erbjuder alla reglementen och frågar alltid
 efter vapengrupp och klass i en tävling. Se
 [Vapengrupp och klass](../reference/weapon-group-and-class.md).
 
-Serier i fältskjutning finns inte här; mata in dem i telefonen. Ett
-fältpass som bara loggar antal skott går att mata in här.
-
 ## Bara antal skott
 
 Välj **Bara antal skott** under **Loggning** för att föra in hur många skott
@@ -61,6 +58,30 @@ för sig, skild från grundomgången, som i telefonen. En final utan skott spara
 inte, så töms finalens rader försvinner den igen. En final kräver minst en
 poängsatt serie före den; saknas en säger **Spara** det och skickar ingenting.
 
+## Mata in fältskjutning
+
+Välj **Fältskjutning** som gren, så blir raderna stationer, som i telefonen.
+**Resultatform** avgör om resultatet visas som träff och figurer (**Fält**)
+eller som en summa (**Poängfält**).
+
+Varje station har telefonens stationsfält: **Träff**, **Träffade figurer**,
+**Figurer** (hur många som var utställda), **Poäng** och **Maxpoäng** för ett
+poängmål, och **Struken**. Träffade figurer erbjuder bara det som träffen och
+figurerna tillåter. Summan ovanför stationerna räknar de stationer som sparas
+och utelämnar strukna stationer och särskjutning, som i telefonen. **Lägg till
+station** lägger till en rad.
+
+När en station har något ifyllt gör **Starta särskjutning** nästa station
+till en särskjutningsstation, märkt **Särskjutning**. Från den första ifyllda
+särskjutningsstationen och framåt är varje station en särskjutningsstation. En
+särskjutningsstation där inget är ifyllt sparas inte och startar inte
+särskjutningen.
+
+**Träff** börjar på **–**. En station där inget är ifyllt sparas inte, och
+stationerna efter den flyttas upp ett nummer. För en station där alla skott
+missade väljer du **0** under Träff: den sparas och räknas, som en station med
+0 träff.
+
 ## Tagga det
 
 Under raderna tar **Taggar** ett taggnamn: skriv det och tryck **Lägg till**
@@ -74,7 +95,8 @@ bort den igen. Text som står kvar i fältet när du sparar läggs inte till.
 **Spara** skickar hela passet på en gång, taggarna med; det sparas antingen
 helt eller inte alls. Telefonen får det vid nästa synk, och ett valt vapens
 skottantal ökar med skotten, provserier och final inräknade, eller med de
-avlossade skotten.
+avlossade skotten; för fältskjutning med sex för varje sparad station, strukna
+stationer och särskjutning inräknade.
 
 För att spara krävs en anslutning. Om servern inte går att nå, eller svarar så
 att det är oklart om passet kom fram, finns serierna kvar på sidan och

@@ -20,9 +20,6 @@ profile set, nothing is preselected. The regulations you enabled and
 regulation and always asks for the weapon group and class in a competition.
 See [Weapon group and class](../reference/weapon-group-and-class.md).
 
-Fält series are not offered here; enter them on the phone. A fält session
-logged as rounds only can be entered here.
-
 ## Rounds only
 
 Set **Logging** to **Rounds Only** to record how many rounds you fired, with
@@ -61,6 +58,29 @@ totalled apart from the qualification, as on the phone. A final with no shot
 in it is not saved, so emptying its rows removes it again. A final needs at
 least one scored series before it; with none, Save says so and sends nothing.
 
+## Enter a fält session
+
+Choose **Fältskjutning** as the discipline, and the rows become stations, as
+on the phone. **Result Mode** sets whether the result reads as hits and
+figures (**Field**) or as one sum (**Point field**).
+
+Each station has the phone's station fields: **Hits**, **Figures Hit**,
+**Figures** (how many were set out), **Points** and **Max Points** for a
+ringed figure, and **Scratched**. Figures Hit offers only what the hits and
+figures allow. The total above the stations counts the stations that will be
+saved, leaving out scratched and shoot-off ones, as the phone does. **Add
+Station** adds a row.
+
+Once a station has something entered, **Start Shoot-off** makes the next
+station a shoot-off station, marked **Shoot-off**. From the first filled-in
+shoot-off station on, every station is a shoot-off station. A shoot-off
+station with nothing entered is not saved and does not start the shoot-off.
+
+**Hits** starts at **–**. A station with nothing entered is not saved, and
+the stations after it move up a number. For a station where every shot
+missed, choose **0** under Hits: it is saved and counts, as a station with 0
+hits.
+
 ## Tag it
 
 Under the rows, **Tags** takes a tag name: type it and press **Add** or
@@ -74,7 +94,8 @@ the field when you save is not added.
 **Save** sends the whole session at once, its tags included; it is either
 saved completely or not at all. Your phone gets it at its next sync, and a
 chosen firearm's round count goes up by the shots, sighters and the final
-included, or by the rounds fired.
+included, or by the rounds fired; for fält, by six for each saved station,
+scratched and shoot-off ones included.
 
 Saving needs a connection. If the server cannot be reached, or answers in a
 way that leaves it unclear whether the session arrived, your series stay on

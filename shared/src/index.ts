@@ -14,6 +14,7 @@ export * from './scoring/sighter-relation';
 export * from './scoring/group';
 export * from './scoring/coaching';
 export * from './scoring/falt';
+export * from './scoring/falt-station';
 export * from './scoring/falt-analytics';
 export * from './scoring/volume';
 export * from './scoring/series-text';

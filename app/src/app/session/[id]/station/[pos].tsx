@@ -10,7 +10,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
-import { SHOTS_PER_STATION } from '@shotledger/shared';
+import {
+  clampFiguresHit,
+  figuresHitRange,
+  isBlankStation,
+  SHOTS_PER_STATION,
+  stationPoints,
+} from '@shotledger/shared';
 
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
@@ -36,13 +42,6 @@ function countSegments(max: number, min = 0) {
     const value = String(min + index);
     return { value, label: value };
   });
-}
-
-/** A whole number from a text field, or null when it is empty or not one. */
-function parseCount(text: string): number | null {
-  const trimmed = text.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  return Number(trimmed);
 }
 
 export default function StationEntryScreen() {
@@ -75,41 +74,28 @@ export default function StationEntryScreen() {
   // validating after the fact: a figure cannot be hit more times than shots
   // hit it, hits have to land somewhere, and no more figures can be hit than
   // the station set out.
-  const figuresHitMax = Math.min(hits, figureCount ?? SHOTS_PER_STATION);
-  function clampFiguresHit(nextHits: number, nextCount: number | null) {
-    const max = Math.min(nextHits, nextCount ?? SHOTS_PER_STATION);
-    let next = Math.min(figuresHit, max);
-    if (nextHits > 0 && next === 0) next = Math.min(1, max);
-    if (nextHits === 0) next = 0;
-    setFiguresHit(next);
-  }
+  const figuresHitBounds = figuresHitRange(hits, figureCount);
   function onHitsChange(next: number) {
     setHits(next);
-    clampFiguresHit(next, figureCount);
+    setFiguresHit(clampFiguresHit(figuresHit, next, figureCount));
   }
   function onFigureCountChange(next: number | null) {
     setFigureCount(next);
-    clampFiguresHit(hits, next);
+    setFiguresHit(clampFiguresHit(figuresHit, hits, next));
   }
 
-  const points = parseCount(pointsText);
-  const pointsMax = parseCount(pointsMaxText);
-  // Points without a max are fine (the max is optional); more than the max is not.
-  const pointsInvalid =
-    (pointsText.trim() !== '' && points === null) ||
-    (pointsMaxText.trim() !== '' && pointsMax === null) ||
-    (points !== null && pointsMax !== null && points > pointsMax);
+  const parsedPoints = stationPoints(pointsText, pointsMaxText);
+  const pointsInvalid = !parsedPoints.ok;
 
   function onSave() {
-    if (pointsInvalid) return;
+    if (!parsedPoints.ok) return;
 
-    const hasPoints = points !== null;
     const patch = {
       hits,
       figuresHit,
       figureCount,
-      points: hasPoints ? points : null,
-      pointsMax: hasPoints ? pointsMax : null,
+      points: parsedPoints.points,
+      pointsMax: parsedPoints.pointsMax,
       isScratched,
       isShootOff,
     };
@@ -119,7 +105,7 @@ export default function StationEntryScreen() {
     } else {
       // Nothing entered, nothing to keep — saving a blank station would
       // recreate the empty row this flow exists to avoid.
-      if (hits === 0 && figureCount === null && !hasPoints && !isScratched && !isShootOff) {
+      if (isBlankStation(patch)) {
         router.back();
         return;
       }
@@ -165,7 +151,7 @@ export default function StationEntryScreen() {
         <SegmentedControl
           // Never more figures than hits or than the station has, and never
           // zero while hits exist.
-          options={countSegments(figuresHitMax, hits > 0 ? 1 : 0)}
+          options={countSegments(figuresHitBounds.max, figuresHitBounds.min)}
           value={String(figuresHit)}
           onChange={(value) => setFiguresHit(Number(value))}
           scrollable={false}

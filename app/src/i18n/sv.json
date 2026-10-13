@@ -1415,7 +1415,10 @@
       "errorTooManyChanges": "För många skott för att spara på en gång. Dela upp passet i två.",
       "errorDateTime": "Ange datum och tid.",
       "accountChanged": "Du är nu inloggad på ett annat konto, så passet skickades inte. Kontrollera serierna och spara sedan.",
-      "failedUnconfirmed": "Servern svarade, men inte som väntat. Serierna finns kvar; Försök igen skickar samma pass igen."
+      "failedUnconfirmed": "Servern svarade, men inte som väntat. Serierna finns kvar; Försök igen skickar samma pass igen.",
+      "stationBlank": "Sparas inte: inget ifyllt.",
+      "errorStationPoints": "{{row}}: poängen ska vara heltal och inte fler än maxpoängen.",
+      "errorInvalidStation": "{{row}}: ingen station kan ha de här siffrorna."
     },
     "bulk": {
       "title": "Ändra flera pass",

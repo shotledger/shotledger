@@ -767,7 +767,7 @@ fieldset.field legend {
   gap: 8px;
 }
 
-/* Rounds Only has no series rows (docs/specs/web-rounds-final-spec.md). */
+/* Rounds Only and fält have no series rows; display: grid would beat hidden. */
 .series-rows[hidden] {
   display: none;
 }
@@ -834,6 +834,44 @@ fieldset.field legend {
 .entry-tag-add input {
   flex: 1;
   min-width: 0;
+}
+
+.falt-stations {
+  display: grid;
+  gap: 12px;
+}
+
+.falt-result {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.station-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  align-items: end;
+  gap: 8px 12px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px 12px;
+}
+
+.station-row input:not([type='checkbox']),
+.station-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.station-row[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.station-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
 }
 
 .entry-actions {
