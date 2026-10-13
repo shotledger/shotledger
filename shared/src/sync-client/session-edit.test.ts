@@ -14,6 +14,7 @@ import {
   type OpenedSession,
   type SeriesEditDraft,
   type SessionEditDraft,
+  type StationEditDraft,
 } from './session-edit';
 
 const NOW = '2026-10-12T10:00:00.000Z';
@@ -1673,6 +1674,896 @@ describe('K18 the built edit applied yields what the draft shows', () => {
             );
             expect(after.firearms.get(id)!.rounds_since_maintenance).toBe(
               Math.max(0, (start.rounds_since_maintenance as number) + d),
+            );
+            if (d === 0) expect(after.firearms.get(id)).toBe(start);
+          }
+        },
+      ),
+      { numRuns: 400 },
+    );
+  });
+});
+
+// --- Revision 2 (§10, #769): fält stations and Rounds Fired.
+
+const fullStation = (id: string, sessionId: string, position: number, fields: Payload = {}) => ({
+  ...common(id),
+  session_id: sessionId,
+  position,
+  hits: 4,
+  figures_hit: 3,
+  figure_count: 4,
+  points: null,
+  points_max: null,
+  is_scratched: 0,
+  is_shoot_off: 0,
+  photo_uri: null,
+  note: null,
+  // A column this build does not know must survive a rewrite.
+  future_column: 'kept',
+  ...fields,
+});
+
+/**
+ * sF: fält on f2 (counter 40), stations at positions 1, 2 and 4 (3 was
+ * removed on the phone: a gap), fB at 2 with a photo and a note.
+ * sFO: fält whose last station is a shoot-off. sR: rounds only on f1, 25
+ * rounds. sRF: a rounds-only fält session with no station. sBig: rounds only,
+ * 12 000 rounds stored by the phone.
+ */
+function faltBook(): EditContext {
+  const book = logbook();
+  const sessions = book.sessions as Map<string, Payload>;
+  sessions.set('sF', session('sF', { discipline_id: 'spsf-falt', firearm_id: 'f2' }));
+  sessions.set('sFO', session('sFO', { discipline_id: 'spsf-falt' }));
+  sessions.set('sR', session('sR', { kind: 'rounds', firearm_id: 'f1', extra_rounds: 25 }));
+  sessions.set(
+    'sRF',
+    session('sRF', { kind: 'rounds', discipline_id: 'spsf-falt', firearm_id: 'f3' }),
+  );
+  sessions.set('sBig', session('sBig', { kind: 'rounds', extra_rounds: 12_000 }));
+  const stations = book.faltStations as Map<string, Payload>;
+  for (const row of [
+    fullStation('fA', 'sF', 1),
+    fullStation('fB', 'sF', 2, { photo_uri: 'station-photo', note: 'windy' }),
+    fullStation('fGone', 'sF', 3, { deleted_at: OLD }),
+    fullStation('fD', 'sF', 4, { hits: 0, figures_hit: 0 }),
+    fullStation('oA', 'sFO', 1),
+    fullStation('oB', 'sFO', 2, { is_shoot_off: 1 }),
+  ]) {
+    stations.set(row.id, row);
+  }
+  (book.firearms as Map<string, Payload>).set('f2', firearm('f2', 40, 40));
+  return book;
+}
+
+/** The draft row the form shows for an opened station, unchanged. */
+const stationDrafted = (row: Payload): StationEditDraft => ({
+  id: row.id as string,
+  hits: row.hits as number,
+  figuresHit: row.figures_hit as number,
+  figureCount: row.figure_count as number | null,
+  pointsText: row.points === null ? '' : String(Number(row.points)),
+  pointsMaxText: row.points_max === null ? '' : String(Number(row.points_max)),
+  isScratched: row.is_scratched === 1,
+  isShootOff: row.is_shoot_off === 1,
+  deleted: false,
+});
+
+const newStationDraft = (fields: Partial<StationEditDraft> = {}): StationEditDraft => ({
+  id: null,
+  hits: 5,
+  figuresHit: 3,
+  figureCount: 4,
+  pointsText: '',
+  pointsMaxText: '',
+  isScratched: false,
+  isShootOff: false,
+  deleted: false,
+  ...fields,
+});
+
+/** Every opened station of the session as drafted, with `patch` applied by id. */
+function stationsDraft(
+  context: EditContext,
+  sessionId: string,
+  patch: Record<string, Partial<StationEditDraft>> = {},
+  added: StationEditDraft[] = [],
+): StationEditDraft[] {
+  return [
+    ...open(sessionId, context)
+      .stations.slice()
+      .sort((a, b) => (a.position as number) - (b.position as number))
+      .map((row) => ({ ...stationDrafted(row), ...patch[row.id as string] })),
+    ...added,
+  ];
+}
+
+const stationEdit = (
+  sessionId: string,
+  stations: StationEditDraft[],
+  fields: SessionEditDraft['fields'] = {},
+): SessionEditDraft => ({ sessionId, fields, series: [], stations });
+
+const roundsEdit = (
+  sessionId: string,
+  roundsFired: string,
+  fields: SessionEditDraft['fields'] = {},
+): SessionEditDraft => ({ sessionId, fields, series: [], roundsFired });
+
+const counter = (changes: Change[], firearmId: string) =>
+  find(changes, 'firearms', firearmId)?.payload?.round_count;
+
+describe('station edit (§10)', () => {
+  it('K26 a changed station: the fresh payload with the updateStation columns and updated_at replaced; the rest survives', () => {
+    const context = faltBook();
+    const opened = open('sF', context);
+    const d = stationEdit(
+      'sF',
+      stationsDraft(context, 'sF', {
+        fB: { hits: 6, figuresHit: 4, figureCount: 5, pointsText: '7', pointsMaxText: '10' },
+      }),
+    );
+    const changes = changesOf(edit(d, context, opened));
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toMatchObject({ tableName: 'falt_stations', rowId: 'fB' });
+    expect(changes[0]!.payload).toEqual({
+      ...context.faltStations.get('fB'),
+      hits: 6,
+      figures_hit: 4,
+      figure_count: 5,
+      points: 7,
+      points_max: 10,
+      is_scratched: 0,
+      updated_at: NOW,
+    });
+    expect(changes[0]!.payload).toMatchObject({
+      photo_uri: 'station-photo',
+      note: 'windy',
+      is_shoot_off: 0,
+      position: 2,
+      session_id: 'sF',
+      future_column: 'kept',
+      created_at: OLD,
+    });
+  });
+
+  it('K26 the spread is the fresh row, not the opened one; an unchanged station writes nothing', () => {
+    const context = faltBook();
+    const opened = open('sF', context);
+    // The opened snapshot is a copy; the fresh row is a distinct object with equal values.
+    (context.faltStations as Map<string, Payload>).set('fA', {
+      ...context.faltStations.get('fA')!,
+    });
+    const changes = changesOf(
+      edit(
+        stationEdit('sF', stationsDraft(context, 'sF', { fA: { isScratched: true } })),
+        context,
+        opened,
+      ),
+    );
+    expect(changes.map((c) => c.rowId)).toEqual(['fA']);
+    expect(changes[0]!.payload).not.toBe(context.faltStations.get('fA'));
+    expect(changes[0]!.payload!.is_scratched).toBe(1);
+    expect(edit(stationEdit('sF', stationsDraft(context, 'sF')), context, opened)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+  });
+
+  it('K26 an opened shoot-off flag is never written from the draft', () => {
+    const context = faltBook();
+    const d = stationEdit(
+      'sFO',
+      stationsDraft(context, 'sFO', {
+        oA: { isShootOff: true, hits: 5 },
+        oB: { isShootOff: false, hits: 5 },
+      }),
+    );
+    const changes = changesOf(edit(d, context));
+    expect(find(changes, 'falt_stations', 'oA')!.payload!.is_shoot_off).toBe(0);
+    expect(find(changes, 'falt_stations', 'oB')!.payload!.is_shoot_off).toBe(1);
+  });
+
+  it('K27 a new station: every column as addStation, at max(fresh live position) + 1, then +1 per new row', () => {
+    const context = faltBook();
+    const d = stationEdit(
+      'sF',
+      stationsDraft(context, 'sF', {}, [
+        newStationDraft({ pointsText: '8', pointsMaxText: '10' }),
+        newStationDraft({ hits: 0, figuresHit: 0, figureCount: null }),
+      ]),
+    );
+    const changes = changesOf(edit(d, context));
+    const added = changes.filter((c) => c.tableName === 'falt_stations');
+    expect(added).toHaveLength(2);
+    expect(added[0]!.payload).toEqual({
+      id: added[0]!.rowId,
+      created_at: NOW,
+      updated_at: NOW,
+      deleted_at: null,
+      session_id: 'sF',
+      position: 5,
+      hits: 5,
+      figures_hit: 3,
+      figure_count: 4,
+      points: 8,
+      points_max: 10,
+      is_scratched: 0,
+      is_shoot_off: 0,
+      photo_uri: null,
+      note: null,
+    });
+    // A 0-hit row is a result and is saved (#713 R8).
+    expect(added[1]!.payload).toMatchObject({ position: 6, hits: 0, figures_hit: 0 });
+    expect(new Set(added.map((c) => c.rowId)).size).toBe(2);
+  });
+
+  it('K27 the position counts the fresh pull: a station the phone tombstoned at the end still leaves its number taken', () => {
+    const context = faltBook();
+    // The last live station is 4; 3 is a gap.
+    const d = stationEdit(
+      'sF',
+      stationsDraft(context, 'sF', { fD: { deleted: true } }, [newStationDraft()]),
+    );
+    const changes = changesOf(edit(d, context));
+    const added = changes.find((c) => c.tableName === 'falt_stations' && c.payload !== null)!;
+    expect(added.payload!.position).toBe(5);
+  });
+
+  it('K27 a new row with nothing entered, a bare started shoot-off, or one added and removed again writes nothing', () => {
+    const context = faltBook();
+    const blank = newStationDraft({ hits: null, figuresHit: 0, figureCount: null });
+    for (const row of [
+      blank,
+      { ...blank, isShootOff: true },
+      { ...blank, pointsText: '  ' },
+      newStationDraft({ deleted: true }),
+      newStationDraft({ deleted: true, pointsText: 'x' }),
+    ]) {
+      expect(edit(stationEdit('sF', stationsDraft(context, 'sF', {}, [row])), context)).toEqual({
+        ok: false,
+        errors: [{ kind: 'nothingToChange' }],
+      });
+    }
+    // Figures alone, points alone, or Scratched alone is an entry.
+    for (const row of [
+      { ...blank, figureCount: 3 },
+      { ...blank, pointsText: '4' },
+      { ...blank, isScratched: true },
+    ]) {
+      const added = changesOf(
+        edit(stationEdit('sF', stationsDraft(context, 'sF', {}, [row])), context),
+      );
+      expect(added.filter((c) => c.tableName === 'falt_stations')).toHaveLength(1);
+      expect(added.find((c) => c.tableName === 'falt_stations')!.payload!.hits).toBe(0);
+    }
+  });
+
+  it('K28 a removed station: one tombstone, no other station written, the rest keep their positions', () => {
+    const context = faltBook();
+    const changes = changesOf(
+      edit(stationEdit('sF', stationsDraft(context, 'sF', { fB: { deleted: true } })), context),
+    );
+    const stations = changes.filter((c) => c.tableName === 'falt_stations');
+    expect(stations).toEqual([
+      {
+        clientChangeId: expect.any(String) as string,
+        tableName: 'falt_stations',
+        rowId: 'fB',
+        payload: null,
+        deletedAt: NOW,
+        updatedAt: NOW,
+      },
+    ]);
+  });
+
+  it('K29 an opened row with hits null, or one stationProblem rejects → invalidStation(row); bad points → stationPoints(row)', () => {
+    const context = faltBook();
+    const cases: [Record<string, Partial<StationEditDraft>>, StationEditDraft[], EditResult][] = [
+      [{ fA: { hits: null } }, [], { ok: false, errors: [{ kind: 'invalidStation', row: 1 }] }],
+      [
+        { fB: { hits: 2, figuresHit: 3 } },
+        [],
+        { ok: false, errors: [{ kind: 'invalidStation', row: 2 }] },
+      ],
+      [
+        { fD: { hits: 3, figuresHit: 0 } },
+        [],
+        { ok: false, errors: [{ kind: 'invalidStation', row: 3 }] },
+      ],
+      [{ fA: { hits: 7 } }, [], { ok: false, errors: [{ kind: 'invalidStation', row: 1 }] }],
+      [{ fA: { figureCount: 2 } }, [], { ok: false, errors: [{ kind: 'invalidStation', row: 1 }] }],
+      [{ fA: { pointsText: 'x' } }, [], { ok: false, errors: [{ kind: 'stationPoints', row: 1 }] }],
+      [
+        { fB: { pointsText: '9', pointsMaxText: '5' } },
+        [],
+        { ok: false, errors: [{ kind: 'stationPoints', row: 2 }] },
+      ],
+      [
+        {},
+        [newStationDraft({ hits: 2, figuresHit: 3 })],
+        { ok: false, errors: [{ kind: 'invalidStation', row: 4 }] },
+      ],
+      [
+        {},
+        [newStationDraft({ pointsMaxText: 'y' })],
+        { ok: false, errors: [{ kind: 'stationPoints', row: 4 }] },
+      ],
+      [
+        { fA: { hits: null }, fD: { pointsText: '-1' } },
+        [newStationDraft({ hits: 1, figuresHit: 0 })],
+        {
+          ok: false,
+          errors: [
+            { kind: 'invalidStation', row: 1 },
+            { kind: 'stationPoints', row: 3 },
+            { kind: 'invalidStation', row: 4 },
+          ],
+        },
+      ],
+    ];
+    for (const [patch, added, expected] of cases) {
+      expect(edit(stationEdit('sF', stationsDraft(context, 'sF', patch, added)), context)).toEqual(
+        expected,
+      );
+    }
+  });
+
+  it('K29 a removed row is not read; a scratched row with impossible numbers is saved, as on the phone', () => {
+    const context = faltBook();
+    expect(
+      changesOf(
+        edit(
+          stationEdit('sF', stationsDraft(context, 'sF', { fA: { hits: null, deleted: true } })),
+          context,
+        ),
+      ),
+    ).toHaveLength(2);
+    const scratched = changesOf(
+      edit(
+        stationEdit(
+          'sF',
+          stationsDraft(context, 'sF', { fA: { hits: 2, figuresHit: 0, isScratched: true } }),
+        ),
+        context,
+      ),
+    );
+    expect(scratched[0]!.payload).toMatchObject({ hits: 2, figures_hit: 0, is_scratched: 1 });
+  });
+
+  it('K30 shoot-off: a new station after a kept shoot-off is one, whatever the draft says', () => {
+    const context = faltBook();
+    const changes = changesOf(
+      edit(
+        stationEdit(
+          'sFO',
+          stationsDraft(context, 'sFO', {}, [newStationDraft(), newStationDraft()]),
+        ),
+        context,
+      ),
+    );
+    expect(
+      changes.filter((c) => c.tableName === 'falt_stations').map((c) => c.payload!.is_shoot_off),
+    ).toEqual([1, 1]);
+  });
+
+  it('K30 a new row the draft started as a shoot-off is one, and so is every new row after it', () => {
+    const context = faltBook();
+    const changes = changesOf(
+      edit(
+        stationEdit(
+          'sF',
+          stationsDraft(context, 'sF', {}, [
+            newStationDraft(),
+            newStationDraft({ isShootOff: true }),
+            newStationDraft(),
+          ]),
+        ),
+        context,
+      ),
+    );
+    expect(
+      changes
+        .filter((c) => c.tableName === 'falt_stations')
+        .map((c) => [c.payload!.position, c.payload!.is_shoot_off]),
+    ).toEqual([
+      [5, 0],
+      [6, 1],
+      [7, 1],
+    ]);
+  });
+
+  it('K30 a removed last shoot-off does not make the next new row one; the kept rows decide by position', () => {
+    const context = faltBook();
+    const changes = changesOf(
+      edit(
+        stationEdit(
+          'sFO',
+          stationsDraft(context, 'sFO', { oB: { deleted: true } }, [newStationDraft()]),
+        ),
+        context,
+      ),
+    );
+    const added = changes.find((c) => c.tableName === 'falt_stations' && c.payload !== null)!;
+    expect(added.payload).toMatchObject({ position: 3, is_shoot_off: 0 });
+    // Pulled out of position order, the last by position still decides.
+    const shuffled = faltBook();
+    const stations = shuffled.faltStations as Map<string, Payload>;
+    const oA = stations.get('oA')!;
+    stations.delete('oA');
+    stations.set('oA', oA);
+    const again = changesOf(
+      edit(stationEdit('sFO', stationsDraft(shuffled, 'sFO', {}, [newStationDraft()])), shuffled),
+    );
+    expect(again.find((c) => c.tableName === 'falt_stations')!.payload!.is_shoot_off).toBe(1);
+  });
+
+  it('K31 counters: +6 per new kept station, −6 per removed, 0 for a changed or scratched one', () => {
+    const context = faltBook();
+    const run = (stations: StationEditDraft[]) =>
+      counter(changesOf(edit(stationEdit('sF', stations), context)), 'f2');
+    expect(run(stationsDraft(context, 'sF', {}, [newStationDraft(), newStationDraft()]))).toBe(52);
+    expect(
+      run(stationsDraft(context, 'sF', { fA: { deleted: true }, fB: { deleted: true } })),
+    ).toBe(28);
+    expect(
+      run(stationsDraft(context, 'sF', { fA: { deleted: true } }, [newStationDraft()])),
+    ).toBeUndefined();
+    expect(
+      run(stationsDraft(context, 'sF', { fA: { hits: 6, isScratched: true } })),
+    ).toBeUndefined();
+    // A blank new row adds nothing.
+    expect(
+      run(
+        stationsDraft(context, 'sF', { fA: { hits: 6 } }, [
+          newStationDraft({ hits: null, figureCount: null }),
+        ]),
+      ),
+    ).toBeUndefined();
+  });
+
+  it('K31 counters net with a firearm change into one floored move per firearm (E19)', () => {
+    const context = faltBook();
+    // V_before 18 (three stations); V_after 24 (one removed, two added).
+    const changes = changesOf(
+      edit(
+        stationEdit(
+          'sF',
+          stationsDraft(context, 'sF', { fA: { deleted: true } }, [
+            newStationDraft(),
+            newStationDraft(),
+          ]),
+          {
+            firearmId: 'f1',
+          },
+        ),
+        context,
+      ),
+    );
+    expect(counter(changes, 'f2')).toBe(40 - 18);
+    expect(counter(changes, 'f1')).toBe(100 + 24);
+    expect(changes.filter((c) => c.tableName === 'firearms')).toHaveLength(2);
+    // Floored once: a drifted counter of 5 loses all three stations' 18 at once.
+    const drifted = faltBook();
+    (drifted.firearms as Map<string, Payload>).set('f2', firearm('f2', 5, 5));
+    const floored = changesOf(
+      edit(
+        stationEdit(
+          'sF',
+          stationsDraft(drifted, 'sF', {
+            fA: { deleted: true },
+            fB: { deleted: true },
+            fD: { deleted: true },
+          }),
+        ),
+        drifted,
+      ),
+    );
+    expect(find(floored, 'firearms', 'f2')!.payload).toMatchObject({
+      round_count: 0,
+      rounds_since_maintenance: 0,
+    });
+  });
+
+  it('K31 moved lists the firearm with the station rows (E8)', () => {
+    const context = faltBook();
+    const result = edit(
+      stationEdit('sF', stationsDraft(context, 'sF', { fA: { deleted: true } })),
+      context,
+    );
+    expect(result.ok && result.moved).toEqual([
+      { firearmId: 'f2', rows: [{ tableName: 'falt_stations', rowId: 'fA' }] },
+    ]);
+  });
+
+  it('K32 stale: when the draft writes a station, any station added, removed or changed since opening → stale', () => {
+    const changed = (mutate: (stations: Map<string, Payload>) => void) => {
+      const context = faltBook();
+      const opened = open('sF', context);
+      mutate(context.faltStations as Map<string, Payload>);
+      return { context, opened };
+    };
+    const mutations: ((stations: Map<string, Payload>) => void)[] = [
+      // An untouched station's note, edited on the phone.
+      (s) => s.set('fD', { ...s.get('fD')!, note: 'phone' }),
+      // A column only the fresh row has.
+      (s) => s.set('fD', { ...s.get('fD')!, newer_key: 1 }),
+      // Added on the phone.
+      (s) => s.set('fNew', fullStation('fNew', 'sF', 5)),
+      // Removed on the phone.
+      (s) => s.set('fD', { ...s.get('fD')!, deleted_at: NOW }),
+      (s) => s.delete('fD'),
+    ];
+    for (const mutate of mutations) {
+      const { context, opened } = changed(mutate);
+      for (const stations of [
+        stationsDraft(faltBook(), 'sF', { fA: { hits: 6 } }),
+        stationsDraft(faltBook(), 'sF', { fA: { deleted: true } }),
+        stationsDraft(faltBook(), 'sF', {}, [newStationDraft()]),
+      ]) {
+        expect(edit(stationEdit('sF', stations), context, opened)).toEqual({
+          ok: false,
+          errors: [{ kind: 'stale' }],
+        });
+      }
+    }
+  });
+
+  it('K32 a draft writing no station is not blocked by a station another device changed; other sessions do not count', () => {
+    const context = faltBook();
+    const opened = open('sF', context);
+    const stations = context.faltStations as Map<string, Payload>;
+    stations.set('fD', { ...stations.get('fD')!, note: 'phone' });
+    stations.set('oA', { ...stations.get('oA')!, hits: 1 });
+    const unchanged = stationsDraft(faltBook(), 'sF');
+    expect(
+      changesOf(edit(stationEdit('sF', unchanged, { location: 'X' }), context, opened)),
+    ).toHaveLength(1);
+    const otherOnly = open('sF', faltBook());
+    stations.set('fD', faltBook().faltStations.get('fD')!);
+    expect(
+      changesOf(
+        edit(
+          stationEdit('sF', stationsDraft(faltBook(), 'sF', { fA: { hits: 6 } })),
+          context,
+          otherOnly,
+        ),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('K34 a fält session never writes kind, discipline_id, falt_result_mode, program_id, decimal_scoring or series_length', () => {
+    const context = faltBook();
+    (context.sessions as Map<string, Payload>).set('sF', {
+      ...context.sessions.get('sF')!,
+      falt_result_mode: 'poangfalt',
+    });
+    const sneaky = {
+      kind: 'rounds',
+      disciplineId: 'spsf-precision',
+      faltResultMode: 'falt',
+      programId: 'x',
+      decimalScoring: true,
+      seriesLength: 10,
+      name: 'Renamed',
+    } as unknown as SessionEditDraft['fields'];
+    const changes = changesOf(
+      edit(
+        stationEdit('sF', stationsDraft(context, 'sF', {}, [newStationDraft()]), sneaky),
+        context,
+      ),
+    );
+    const row = find(changes, 'sessions', 'sF')!.payload!;
+    expect(row).toEqual({ ...context.sessions.get('sF'), name: 'Renamed', updated_at: NOW });
+  });
+
+  it('K34 stations on a session not scored in hits, or a station the form did not open, is a programming error', () => {
+    const context = faltBook();
+    expect(() => edit(stationEdit('s1', [newStationDraft()]), context)).toThrow(RangeError);
+    expect(() => edit(stationEdit('sF', [{ ...newStationDraft(), id: 'oA' }]), context)).toThrow(
+      /oA is not one the form opened/,
+    );
+    // An empty list on a ring session reads no rules.
+    expect(changesOf(edit(stationEdit('s1', [], { location: 'Y' }), context))).toHaveLength(1);
+  });
+});
+
+describe('rounds edit (§10)', () => {
+  it('K35 Rounds Fired moves the counter by the difference, as setSessionExtraRounds', () => {
+    const context = faltBook();
+    const cases: [string, number | null, number][] = [
+      ['40', 40, 115],
+      [' 10 ', 10, 85],
+      ['', null, 75],
+      ['0', 0, 75],
+    ];
+    for (const [typed, stored, count] of cases) {
+      const changes = changesOf(edit(roundsEdit('sR', typed), context));
+      expect(find(changes, 'sessions', 'sR')!.payload).toEqual({
+        ...context.sessions.get('sR'),
+        extra_rounds: stored,
+        updated_at: NOW,
+      });
+      expect(counter(changes, 'f1')).toBe(count);
+    }
+    expect(edit(roundsEdit('sR', '25'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+    expect(edit(roundsEdit('sR', ' 25'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+  });
+
+  it('K35 floored, and netted with a firearm change', () => {
+    const context = faltBook();
+    (context.firearms as Map<string, Payload>).set('f1', firearm('f1', 10, 3));
+    const down = changesOf(edit(roundsEdit('sR', '5'), context));
+    expect(find(down, 'firearms', 'f1')!.payload).toMatchObject({
+      round_count: 0,
+      rounds_since_maintenance: 0,
+    });
+    const moved = changesOf(edit(roundsEdit('sR', '30', { firearmId: 'f3' }), context));
+    expect(counter(moved, 'f1')).toBe(0);
+    expect(counter(moved, 'f3')).toBe(35);
+  });
+
+  it('K36 not plain digits up to 10 000 → invalidRounds, nothing built; 10 000 is accepted', () => {
+    const context = faltBook();
+    for (const typed of ['-3', '2.5', 'abc', '1e2', '+5', '10001', '0x10']) {
+      expect(edit(roundsEdit('sR', typed, { name: 'X' }), context)).toEqual({
+        ok: false,
+        errors: [{ kind: 'invalidRounds' }],
+      });
+    }
+    expect(
+      find(changesOf(edit(roundsEdit('sR', '10000'), context)), 'sessions', 'sR')!.payload!
+        .extra_rounds,
+    ).toBe(10_000);
+  });
+
+  it('K36 a stored count over the limit the draft does not change does not block a name edit', () => {
+    const context = faltBook();
+    const changes = changesOf(edit(roundsEdit('sBig', '12000', { name: 'Renamed' }), context));
+    expect(find(changes, 'sessions', 'sBig')!.payload).toMatchObject({
+      name: 'Renamed',
+      extra_rounds: 12_000,
+    });
+    expect(edit(roundsEdit('sBig', '12001'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'invalidRounds' }],
+    });
+  });
+
+  it('K37 a session that is not rounds-only ignores Rounds Fired: extra_rounds is never written', () => {
+    const context = faltBook();
+    expect(edit(roundsEdit('s1', '99'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+    expect(edit(roundsEdit('sF', 'abc'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'nothingToChange' }],
+    });
+    const named = changesOf(edit(roundsEdit('s1', '99', { name: 'N' }), context));
+    expect(find(named, 'sessions', 's1')!.payload!.extra_rounds).toBe(2);
+  });
+
+  it("K33 stale: the session's extra_rounds changed on another device since opening → stale, whatever the draft edits", () => {
+    const context = faltBook();
+    const opened = open('sR', context);
+    (context.sessions as Map<string, Payload>).set('sR', {
+      ...context.sessions.get('sR')!,
+      extra_rounds: 30,
+    });
+    for (const d of [roundsEdit('sR', '40'), roundsEdit('sR', '25', { name: 'N' })]) {
+      expect(edit(d, context, opened)).toEqual({ ok: false, errors: [{ kind: 'stale' }] });
+    }
+  });
+
+  it('E18 a rounds-only fält session takes both: Rounds Fired and stations in one save, one move', () => {
+    const context = faltBook();
+    const changes = changesOf(
+      edit(
+        {
+          sessionId: 'sRF',
+          fields: {},
+          series: [],
+          roundsFired: '12',
+          stations: [newStationDraft(), newStationDraft()],
+        },
+        context,
+      ),
+    );
+    expect(find(changes, 'sessions', 'sRF')!.payload!.extra_rounds).toBe(12);
+    expect(
+      changes.filter((c) => c.tableName === 'falt_stations').map((c) => c.payload!.position),
+    ).toEqual([1, 2]);
+    expect(counter(changes, 'f3')).toBe(5 + 12 + 12);
+    expect(changes.filter((c) => c.tableName === 'firearms')).toHaveLength(1);
+  });
+});
+
+// --- K38: for a random fält or rounds session and a random draft, the built
+// edit applied to the fresh rows yields the stations and extra_rounds the
+// draft shows, touches no other session, and moves each firearm by E19.
+
+const stationArb = fc.record({
+  hits: fc.integer({ min: 0, max: 6 }),
+  scratched: fc.boolean(),
+  points: fc.option(fc.nat({ max: 12 }), { nil: null }),
+});
+
+describe('K38 the built station and rounds edit applied yields what the draft shows', () => {
+  it('K38 property over random fält and rounds sessions and drafts', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          rounds: fc.boolean(),
+          existing: fc.array(
+            fc.record({ station: stationArb, shootOff: fc.boolean(), gap: fc.nat({ max: 2 }) }),
+            {
+              maxLength: 4,
+            },
+          ),
+          edits: fc.array(
+            fc.record({ station: stationArb, deleted: fc.boolean(), keep: fc.boolean() }),
+            { maxLength: 4 },
+          ),
+          added: fc.array(
+            fc.record({ station: stationArb, shootOff: fc.boolean(), blank: fc.boolean() }),
+            {
+              maxLength: 3,
+            },
+          ),
+          extra: fc.option(fc.nat({ max: 50 }), { nil: null }),
+          typed: fc.constantFrom(undefined, '', '0', '7', '33', '10000'),
+          firearm: fc.constantFrom(null, 'f1', 'f2'),
+          target: fc.constantFrom(undefined, null, 'f1', 'f3'),
+          counters: fc.tuple(fc.nat({ max: 60 }), fc.nat({ max: 60 }), fc.nat({ max: 60 })),
+        }),
+        (w) => {
+          const context: Tables = {
+            sessions: byId(
+              session('e', {
+                discipline_id: 'spsf-falt',
+                kind: w.rounds ? 'rounds' : 'series',
+                firearm_id: w.firearm,
+                extra_rounds: w.extra,
+              }),
+              session('other', { discipline_id: 'spsf-falt', firearm_id: 'f1' }),
+            ),
+            series: new Map(),
+            shots: new Map(),
+            faltStations: byId(fullStation('oS', 'other', 1)),
+            firearms: byId(
+              firearm('f1', w.counters[0], w.counters[1]),
+              firearm('f2', w.counters[1], w.counters[2]),
+              firearm('f3', w.counters[2], w.counters[0]),
+            ),
+            ammoLots: new Map(),
+          };
+          // Once a shoot-off starts, every later station is one, as the phone saves them.
+          let position = 0;
+          let shootOff = false;
+          w.existing.forEach((row, i) => {
+            position += 1 + row.gap;
+            shootOff ||= row.shootOff;
+            context.faltStations.set(
+              `t${i}`,
+              fullStation(`t${i}`, 'e', position, {
+                hits: row.station.hits,
+                figures_hit: Math.min(row.station.hits, 1),
+                figure_count: null,
+                is_scratched: row.station.scratched ? 1 : 0,
+                is_shoot_off: shootOff ? 1 : 0,
+                points: row.station.points,
+              }),
+            );
+          });
+          const opened = openedSession('e', context)!;
+          const asDraft = (s: (typeof w.existing)[number]['station']) => ({
+            hits: s.hits,
+            figuresHit: Math.min(s.hits, 1),
+            figureCount: null,
+            pointsText: s.points === null ? '' : String(s.points),
+            pointsMaxText: '',
+            isScratched: s.scratched,
+          });
+          const stations: StationEditDraft[] = w.existing.map((_, i) => {
+            const change = w.edits[i];
+            const opened_ = stationDrafted(context.faltStations.get(`t${i}`)!);
+            if (!change || change.keep) return opened_;
+            return { ...opened_, ...asDraft(change.station), deleted: change.deleted };
+          });
+          for (const row of w.added) {
+            stations.push({
+              id: null,
+              ...(row.blank
+                ? {
+                    hits: null,
+                    figuresHit: 0,
+                    figureCount: null,
+                    pointsText: '',
+                    pointsMaxText: '',
+                    isScratched: false,
+                  }
+                : asDraft(row.station)),
+              isShootOff: row.shootOff,
+              deleted: false,
+            });
+          }
+          const fields: SessionEditDraft['fields'] = {};
+          if (w.target !== undefined) fields.firearmId = w.target;
+          const result = buildSessionEdit(
+            { sessionId: 'e', fields, series: [], stations, roundsFired: w.typed },
+            opened,
+            context,
+            makeDeps(),
+          );
+          if (!result.ok) {
+            expect(result.errors).toEqual([{ kind: 'nothingToChange' }]);
+            return;
+          }
+          const after = applied(context, changesOf(result));
+
+          // The live stations: the kept ones as drafted, then the new entered ones, by position.
+          const live = [...after.faltStations.values()]
+            .filter((s) => s.session_id === 'e' && s.deleted_at === null)
+            .sort((a, b) => (a.position as number) - (b.position as number));
+          const expected = stations.filter(
+            (s) => !s.deleted && !(s.id === null && s.hits === null),
+          );
+          expect(live.map((s) => [s.hits, s.is_scratched, s.points])).toEqual(
+            expected.map((s) => [
+              s.hits ?? 0,
+              s.isScratched ? 1 : 0,
+              s.pointsText === '' ? null : Number(s.pointsText),
+            ]),
+          );
+          // Positions unique and increasing; kept rows keep theirs.
+          const positions = live.map((s) => s.position as number);
+          expect(new Set(positions).size).toBe(positions.length);
+          for (const s of live) {
+            const was = context.faltStations.get(s.id as string);
+            if (was) expect(s.position).toBe(was.position);
+          }
+          // The phone's shoot-off rule holds over the result: once started, it stays.
+          let started = false;
+          for (const s of live) {
+            if (started) expect(s.is_shoot_off).toBe(1);
+            started ||= s.is_shoot_off === 1;
+          }
+
+          const sAfter = after.sessions.get('e')!;
+          if (w.rounds && w.typed !== undefined) {
+            expect(sAfter.extra_rounds).toBe(w.typed === '' ? null : Number(w.typed));
+          } else {
+            expect(sAfter.extra_rounds).toBe(w.extra);
+          }
+          expect(after.sessions.get('other')).toBe(context.sessions.get('other'));
+          expect(after.faltStations.get('oS')).toBe(context.faltStations.get('oS'));
+
+          const vBefore = oracleRounds(context, 'e');
+          const vAfter = oracleRounds(after, 'e');
+          const from = w.firearm;
+          const to = w.target === undefined ? w.firearm : w.target;
+          const moves = new Map<string, number>();
+          const move = (id: string | null, d: number) => {
+            if (id !== null) moves.set(id, (moves.get(id) ?? 0) + d);
+          };
+          if (from === to) move(from, vAfter - vBefore);
+          else {
+            move(from, -vBefore);
+            move(to, vAfter);
+          }
+          for (const id of ['f1', 'f2', 'f3']) {
+            const start = context.firearms.get(id)!;
+            const d = moves.get(id) ?? 0;
+            expect(after.firearms.get(id)!.round_count).toBe(
+              Math.max(0, (start.round_count as number) + d),
             );
             if (d === 0) expect(after.firearms.get(id)).toBe(start);
           }
