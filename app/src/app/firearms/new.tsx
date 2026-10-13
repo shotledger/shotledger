@@ -63,6 +63,7 @@ export default function NewFirearmScreen() {
       <Card>
         <ThemedText type="smallBold">{t('firearms.make')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.make')}
           value={make}
           onChangeText={setMake}
           maxLength={TEXT_LIMITS.firearms.make}
@@ -70,6 +71,7 @@ export default function NewFirearmScreen() {
         />
         <ThemedText type="smallBold">{t('firearms.model')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.model')}
           value={model}
           onChangeText={setModel}
           maxLength={TEXT_LIMITS.firearms.model}
@@ -94,12 +96,14 @@ export default function NewFirearmScreen() {
       <Card>
         <ThemedText type="smallBold">{t('firearms.serialNumber')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.serialNumber')}
           value={serialNumber}
           onChangeText={setSerialNumber}
           maxLength={TEXT_LIMITS.firearms.serial_number}
         />
         <ThemedText type="smallBold">{t('firearms.vapenId')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.vapenId')}
           value={vapenId}
           onChangeText={setVapenId}
           maxLength={TEXT_LIMITS.firearms.vapen_id}
@@ -114,6 +118,7 @@ export default function NewFirearmScreen() {
       <Card>
         <ThemedText type="smallBold">{t('firearms.maintenanceInterval')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.maintenanceInterval')}
           value={maintenanceIntervalRounds}
           onChangeText={setMaintenanceIntervalRounds}
           keyboardType="number-pad"
@@ -126,6 +131,7 @@ export default function NewFirearmScreen() {
       <Card>
         <ThemedText type="smallBold">{t('firearms.notes')}</ThemedText>
         <TextField
+          accessibilityLabel={t('firearms.notes')}
           value={notes}
           onChangeText={setNotes}
           maxLength={TEXT_LIMITS.firearms.notes}
