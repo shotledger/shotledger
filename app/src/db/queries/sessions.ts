@@ -49,8 +49,6 @@ export interface CreateSessionInput {
   // created session (external_source stays NULL).
   externalSource?: 'webshooter' | 'shotlog' | null;
   externalRef?: string | null;
-  externalSyncedAt?: string | null;
-  webshooterCompetitionId?: string | null;
   officialPlacement?: number | null;
   officialStandardMedal?: 'none' | 'brons' | 'silver' | 'guld' | null;
 }
@@ -85,8 +83,6 @@ export function createSession(db: Database, input: CreateSessionInput) {
     faltResultMode: input.faltResultMode ?? null,
     externalSource: input.externalSource ?? null,
     externalRef: input.externalRef ?? null,
-    externalSyncedAt: input.externalSyncedAt ?? null,
-    webshooterCompetitionId: input.webshooterCompetitionId ?? null,
     officialPlacement: input.officialPlacement ?? null,
     officialStandardMedal: input.officialStandardMedal ?? null,
   };
@@ -159,10 +155,16 @@ export function sumExtraRounds(db: Database, sessionIds?: readonly string[]): nu
   return row?.total ?? 0;
 }
 
-/** All non-deleted sessions' external_ref (§A.2 exact-match input). */
-export function listExternalRefs(db: Database): { id: string; externalRef: string | null }[] {
+/** All non-deleted sessions' external source and ref (§A.2 exact-match input). */
+export function listExternalRefs(
+  db: Database,
+): { id: string; externalSource: string | null; externalRef: string | null }[] {
   return db
-    .select({ id: sessions.id, externalRef: sessions.externalRef })
+    .select({
+      id: sessions.id,
+      externalSource: sessions.externalSource,
+      externalRef: sessions.externalRef,
+    })
     .from(sessions)
     .where(isNull(sessions.deletedAt))
     .all();

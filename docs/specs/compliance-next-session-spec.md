@@ -9,11 +9,10 @@ phone screens that show licence activity. Issue
 the source, the numbers, the windows and the banding they settle are
 unchanged and not restated.
 
-**Spec approval: pending.** Issue #795 is the maintainer's statement of what to
-build ("once a requirement has been met, show the date by which you need to
-complete your next shooting session to maintain your current status") and is an
-_input_ to this spec, not approval of it. Implementation proceeds alongside; the
-PR does not merge until this spec is approved.
+**Spec approval: approved** by the maintainer on 2026-10-13. Issue #795 is the
+maintainer's statement of what to build ("once a requirement has been met, show
+the date by which you need to complete your next shooting session to maintain
+your current status").
 
 **Tier 2** (normal feature). No money, auth, concurrency or data loss. No new
 regulatory value: the date is derived entirely from the rules and windows the

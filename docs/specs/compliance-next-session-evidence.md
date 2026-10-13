@@ -3,8 +3,7 @@
 Spec: [`compliance-next-session-spec.md`](compliance-next-session-spec.md).
 Issue [#795](https://github.com/jimisola/shotledger/issues/795).
 
-**Spec approval: pending** at the time of writing. The PR does not merge until
-the maintainer approves the spec.
+**Spec approval: approved** by the maintainer on 2026-10-13.
 
 ## Scenario → test
 

@@ -92,8 +92,6 @@ write.
 sessions        + external_source TEXT NULL             -- 'webshooter'; NULL = locally created
                 + external_ref TEXT NULL                 -- see §A.2 exact-match key; UNIQUE
                                                           -- WHERE external_ref IS NOT NULL
-                + external_synced_at TEXT NULL            -- last successful re-import merge
-                + webshooter_competition_id TEXT NULL     -- for re-fetch on refresh
                 + official_placement INTEGER NULL         -- authoritative, from Webshooter
                 + official_standardmedalj TEXT NULL       -- CHECK(IN ('none','brons','silver','guld'))
                                                           -- authoritative, from Webshooter;
@@ -109,8 +107,13 @@ series          + is_total_override INTEGER NOT NULL DEFAULT 0  -- true when thi
                                                           -- required so round counters (§4 M4) and
                                                           -- per-series averages (§6.5 stats) stay
                                                           -- correct without shot rows
-                + note TEXT NULL                          -- e.g. "särskjutning" (§A.6)
+                + is_shoot_off INTEGER NOT NULL DEFAULT 0 -- särskjutning series (§A.6)
 ```
+
+> Amended by #727 (`docs/specs/schema-cleanup-727-spec.md`):
+> `external_synced_at` and `webshooter_competition_id` were dropped (never
+> read), `series.note` became `is_shoot_off`, and `external_ref` lost its
+> source prefix.
 
 `series` rows with `is_total_override=1` have **no child `shots` rows**.
 Every query that sums `shots` to derive a series total (§3 "Derived
@@ -151,8 +154,9 @@ candidate, the token store is not.
 
 Two tiers, never silent:
 
-1. **Exact match** via `sessions.external_ref`, format:
-   `webshooter:<competition_id>:<signup_or_class_discriminator>` — stable
+1. **Exact match** via `sessions.external_source = 'webshooter'` and
+   `sessions.external_ref`, format
+   `<competition_id>:<signup_or_class_discriminator>` — stable
    and unique per (competition, class-entry). A session with this ref
    already present ⇒ treated as already-imported, offered as a
    **re-import / merge** (§A.3), never a fresh duplicate.
@@ -186,7 +190,7 @@ Two tiers, never silent:
       series `photo_uri`, tags) are **never clobbered** — re-import
       only ever adds/updates score fields, and only touches enrichment
       fields when they are currently NULL/empty (never overwrites a
-      user-entered value). - `external_synced_at` is updated on every successful merge.
+      user-entered value).
 - **Done when:** a vitest fixture re-imports a session with locally-added
   firearm/notes/photo and an upstream score correction; assert score
   changed, enrichment fields unchanged.
@@ -223,10 +227,12 @@ per-series stats include).
       all derived the same way for imported and locally-entered
       sessions).
 - [ ] Webshooter's `results_distinguish` (särskjutning) block maps to
-      **ordinary extra scored series** (`is_final=0`, no special flag)
-      with `series.note = 'särskjutning'`, matching the v1 decision in
-      `docs/implementation-plan.md` §6.3 ("log such series as ordinary
-      extra scored series with a note").
+      **ordinary extra scored series** (`is_final=0`) flagged
+      `series.is_shoot_off = 1`, matching the v1 decision in
+      `docs/implementation-plan.md` §6.3. Until #727 this was a
+      `series.note` reading "särskjutning". The session detail screen and
+      the web app show the flag as "Shoot-off"; the series still counts
+      toward the total.
 
 ### A.7 Missing sighters
 
@@ -495,7 +501,7 @@ Webshooter has no "my upcoming starts across all competitions" endpoint.
   §A.10. Revisit only if a server-side cache/proxy is built (i.e. never
   fetch this directly from the device). Not scheduled.
 - **wscli's sync/watermark machinery** — ShotLedger uses its own local
-  caching (§A.11, §C.3) and the `external_synced_at` field (§1); no
+  caching (§A.11, §C.3); no
   watermark/cursor state is ported.
 - **The `mcp` command** (wscli's MCP-server mode) — irrelevant to an app
   integration; not ported in any form.

@@ -32,6 +32,7 @@ export function logMaintenanceEvent(db: Database, input: LogMaintenanceEventInpu
     kind: input.kind,
     roundCountAt: firearm?.roundCount ?? 0,
     notes: input.notes ?? null,
+    isAdjustment: 0,
   };
   db.insert(maintenanceEvents).values(row).run();
   if (firearm) {
@@ -62,9 +63,9 @@ export function softDeleteMaintenanceEvent(db: Database, id: string) {
 
 /**
  * Manual round-count adjustment with a reason (§4 M4). Recorded as a
- * maintenance_events row of kind 'adjustment' — `kind` is free text v1
- * (§3), so this stays consistent with logMaintenanceEvent rather than
- * adding a separate table for one narrow case. Unlike logMaintenanceEvent,
+ * maintenance_events row with is_adjustment = 1 and an empty `kind` (the
+ * user's free text, so a reserved value could collide with what they type;
+ * #727), rather than a separate table for one narrow case. Unlike logMaintenanceEvent,
  * it does NOT reset rounds_since_maintenance (no maintenance was performed).
  * The note leads with the amount the counter actually moved (`adjustmentNote`).
  */
@@ -89,9 +90,10 @@ export function adjustFirearmRoundCount(
     deletedAt: null,
     firearmId,
     performedAt: now,
-    kind: 'adjustment',
+    kind: '',
     roundCountAt: roundCount,
     notes: adjustmentNote(roundCount - firearm.roundCount, reason),
+    isAdjustment: 1,
   };
   db.insert(maintenanceEvents).values(row).run();
   return getFirearm(db, firearmId);

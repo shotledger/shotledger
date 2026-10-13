@@ -123,6 +123,7 @@ One session, one scored series of three shots:
           "position": 1,
           "isSighter": true,
           "isFinal": false,
+          "isShootOff": false,
           "shots": [],
           "totalOverride": null
         },
@@ -130,6 +131,7 @@ One session, one scored series of three shots:
           "position": 2,
           "isSighter": false,
           "isFinal": false,
+          "isShootOff": false,
           "shots": [
             { "position": 1, "valueTenths": 100, "isInnerTen": true },
             { "position": 2, "valueTenths": 90, "isInnerTen": false },
@@ -180,23 +182,24 @@ One session, one scored series of three shots:
 
 ### Reading the fields
 
-| Field                                        | Meaning                                                                                                                                                                                                                              |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `valueTenths`                                | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                                                                      |
-| `isInnerTen`                                 | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                                                                           |
-| `isSighter`                                  | A sighting series. It carries no shots here and does not count towards a total.                                                                                                                                                      |
-| `totalOverride`                              | A series saved as a total only, as a Webshooter or ShotLog import gives it: `tenths` is the total, `shotCount` the shots behind it or `null` when none was given. Its `shots` is then empty. `null` on a series scored shot by shot. |
-| `weaponGroup`                                | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                                                                       |
-| `eventId`                                    | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                                                                        |
-| `seriesLength`                               | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                                                                          |
-| `firearmId`                                  | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                                                                |
-| `firearm`                                    | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                                                                 |
-| `stations`                                   | A fältskjutning session's stations: hits, figures hit, the station's figure count, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session.                   |
-| `faltResultMode`                             | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                                                                 |
-| `kind`                                       | `series` for a session logged in scored series, `rounds` for one that only records a number of rounds fired, held in `extraRounds`. A file without it reads as `series`.                                                             |
-| `tenCount`, `innerTenCount`                  | Tens and inner tens stored on the session itself, for a session with no shots to count them from (a ShotLog import). `null` otherwise.                                                                                               |
-| `externalSource`, `externalRef`              | Where an imported session came from (`webshooter`, `shotlog`) and that source's own key for it. `null` on a session logged in the app.                                                                                               |
-| `officialPlacement`, `officialStandardMedal` | The placement and standardmedalj from the official results, as a WebShooter import brought them in. `null` when there are none.                                                                                                      |
+| Field                                        | Meaning                                                                                                                                                                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `valueTenths`                                | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                                                                            |
+| `isInnerTen`                                 | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                                                                                 |
+| `isSighter`                                  | A sighting series. It carries no shots here and does not count towards a total.                                                                                                                                                            |
+| `isShootOff`                                 | A särskjutning (shoot-off) series from a WebShooter import, shot to separate equal results. It still counts towards the total. A file without it reads as `false`.                                                                         |
+| `totalOverride`                              | A series saved as a total only, as a Webshooter or ShotLog import gives it: `tenths` is the total, `shotCount` the shots behind it or `null` when none was given. Its `shots` is then empty. `null` on a series scored shot by shot.       |
+| `weaponGroup`                                | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                                                                             |
+| `eventId`                                    | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                                                                              |
+| `seriesLength`                               | Shots per series chosen when the session was created. `null` when a full match sets it instead, and on a session not scored in ring series.                                                                                                |
+| `firearmId`                                  | The firearm in the file's `firearms` array that the session was shot with, or `null`.                                                                                                                                                      |
+| `firearm`                                    | The same firearm's make and model as one string. Kept beside the id so a file whose `firearms` array does not hold it still says what was shot with.                                                                                       |
+| `stations`                                   | A fältskjutning session's stations: hits, figures hit, the station's figure count, any poängmål points and their max, and whether the station was scratched or shot as a särskjutning. Empty on any other session.                         |
+| `faltResultMode`                             | `falt` or `poangfalt` — how the fält round is reported. `null` on any other session.                                                                                                                                                       |
+| `kind`                                       | `series` for a session logged in scored series, `rounds` for one that only records a number of rounds fired, held in `extraRounds`. A file without it reads as `series`.                                                                   |
+| `tenCount`, `innerTenCount`                  | Tens and inner tens stored on the session itself, for a session with no shots to count them from (a ShotLog import). `null` otherwise.                                                                                                     |
+| `externalSource`, `externalRef`              | Where an imported session came from (`webshooter`, `shotlog`) and that source's own key for it, without the source in front (`363:35937`). A later import from the same source matches on the pair. `null` on a session logged in the app. |
+| `officialPlacement`, `officialStandardMedal` | The placement and standardmedalj from the official results, as a WebShooter import brought them in. `null` when there are none.                                                                                                            |
 
 ### Firearms and licenses
 

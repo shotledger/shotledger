@@ -97,7 +97,6 @@ const shot = (
   position,
   value_tenths: valueTenths,
   is_inner_ten: isInnerTen ? 1 : 0,
-  is_inner_ten_decimal: 0,
 });
 
 const firearm = (

@@ -28,8 +28,6 @@ export function addShot(db: Database, input: AddShotInput) {
     position: input.position,
     valueTenths: input.valueTenths,
     isInnerTen: input.isInnerTen ? 1 : 0,
-    // is_inner_ten_decimal is DEPRECATED (A1 §A1.1.4): always written as 0.
-    isInnerTenDecimal: 0,
   };
   db.insert(shots).values(row).run();
   return row;

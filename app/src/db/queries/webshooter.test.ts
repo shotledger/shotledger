@@ -232,7 +232,7 @@ describe('importResultRow — fresh import', () => {
 
     const session = getSession(db, sessionId);
     expect(session?.externalSource).toBe('webshooter');
-    expect(session?.externalRef).toBe('webshooter:42:555');
+    expect(session?.externalRef).toBe('42:555');
     expect(session?.officialPlacement).toBe(3);
     expect(session?.officialStandardMedal).toBe('silver');
     expect(session?.weaponGroup).toBe('spsf:C');
@@ -255,7 +255,7 @@ describe('importResultRow — fresh import', () => {
     });
     const seriesRows = listSeriesForSession(db, sessionId);
     const finalSeries = seriesRows.find((s) => s.isFinal === 1);
-    const distinguishSeries = seriesRows.find((s) => s.note === 'särskjutning');
+    const distinguishSeries = seriesRows.find((s) => s.isShootOff === 1);
     expect(finalSeries?.totalOverrideTenths).toBe(500);
     expect(distinguishSeries?.totalOverrideTenths).toBe(100);
   });
@@ -402,7 +402,7 @@ describe('importResultRow — confirmed heuristic link (§A.2)', () => {
     });
     expect(created).toBe(false);
     expect(sessionId).toBe(manual.id);
-    expect(getSession(db, sessionId)?.externalRef).toBe('webshooter:42:555');
+    expect(getSession(db, sessionId)?.externalRef).toBe('42:555');
   });
 });
 
