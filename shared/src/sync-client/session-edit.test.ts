@@ -2061,6 +2061,41 @@ describe('station edit (§10)', () => {
     ).toEqual({ ok: false, errors: [{ kind: 'invalidStation', row: 2 }] });
   });
 
+  it('K26 each updateStation column alone is a change; text that parses to the stored value is none', () => {
+    const context = faltBook();
+    (context.faltStations as Map<string, Payload>).set('fA', {
+      ...context.faltStations.get('fA')!,
+      points: 7,
+      points_max: 10,
+      is_scratched: 1,
+    });
+    const one = (patch: Partial<StationEditDraft>) =>
+      changesOf(edit(stationEdit('sF', stationsDraft(context, 'sF', { fA: patch })), context))[0]!
+        .payload;
+    expect(one({ figuresHit: 2 })).toMatchObject({ figures_hit: 2 });
+    expect(one({ pointsMaxText: '12' })).toMatchObject({ points_max: 12 });
+    expect(one({ isScratched: false })).toMatchObject({ is_scratched: 0 });
+    // The same numbers typed differently write nothing, and are not a station write for the stale check.
+    const opened = open('sF', context);
+    const stations = context.faltStations as Map<string, Payload>;
+    stations.set('fD', { ...stations.get('fD')!, note: 'phone' });
+    expect(
+      changesOf(
+        edit(
+          stationEdit(
+            'sF',
+            stationsDraft(context, 'sF', { fA: { pointsText: '07', pointsMaxText: ' 10' } }),
+            {
+              name: 'N',
+            },
+          ),
+          context,
+          opened,
+        ),
+      ).map((c) => c.rowId),
+    ).toEqual(['sF']);
+  });
+
   it('K29 a removed row is not read; a scratched row with impossible numbers is saved, as on the phone', () => {
     const context = faltBook();
     expect(
