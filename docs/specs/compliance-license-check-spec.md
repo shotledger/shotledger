@@ -6,8 +6,7 @@ Builds on [`compliance-next-session-spec.md`](compliance-next-session-spec.md)
 (#795), whose lapse it reuses, and on the specs that one builds on. The source,
 the numbers and the windows are unchanged.
 
-**Spec approval: pending.** Issue #804 is an _input_, not approval. The PR does
-not merge before the maintainer approves this spec.
+**Spec approval: approved** by the maintainer on 2026-10-13.
 
 **Tier 2.** No new regulatory value: every number is read from the rules the
 profile already declares (PM 551.24 p. 3).

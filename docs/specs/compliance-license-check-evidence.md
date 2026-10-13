@@ -3,8 +3,7 @@
 Spec: [`compliance-license-check-spec.md`](compliance-license-check-spec.md).
 Issue [#804](https://github.com/jimisola/shotledger/issues/804).
 
-**Spec approval: pending.** The PR does not merge before the maintainer
-approves the spec.
+**Spec approval: approved** by the maintainer on 2026-10-13.
 
 ## Scenario → test
 
