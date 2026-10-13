@@ -951,3 +951,21 @@ Swedish UI. Phone read-back needs a device; the PR says what was not run.
   - **U13:** the edit page keeps a held request across Add Station (only
     blank rows appended, `faltSendsTheSame`); any other edit drops it, as
     before.
+- **After independent verification round 1 (2026-10-13).** Three items were
+  put to the maintainer with a recommendation; work went ahead on the
+  recommended option under their standing "go with recommended answers",
+  and they may still overrule any of them:
+  - **E15's shoot-off is order-dependent, as on the phone.** With stored
+    stations 1 and 2 (shoot-off), adding a station and then deleting 2 makes
+    the new one a shoot-off; deleting first does not. The phone's
+    `nextStationIsShootOff` behaves the same in the same order, and the badge
+    shows the outcome before saving. E15's "among those kept" therefore reads:
+    the last station kept _when the new row was added_ decides.
+  - **A stored station the edit did not change is neither checked nor
+    written.** A row whose controls still hold the opened values (text that
+    parses to the stored number counts as unchanged) skips `stationPoints`
+    and `stationProblem`, as unchanged dates and Rounds Fired do, so imported
+    data the phone would refuse no longer blocks or rewrites a name-only
+    save. Behavioural fix (`1b2097d`).
+  - **Scratched stays on new rows** (E15 as written, matching the entry page),
+    although the phone offers it only on an existing station.

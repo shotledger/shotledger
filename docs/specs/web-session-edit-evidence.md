@@ -417,12 +417,13 @@ The phone's apply path runs on better-sqlite3, not expo-sqlite (P1–P7,
 
 ### Gauntlet
 
-Numbers below are from runs after the last code edit (`55a9a28`…`dbdcbfb`;
-the last commit changed tests only).
+Numbers below are from runs after the last code edit (`1b2097d`, the
+round-1 fix; `9ba0662` after it changed tests only).
 
 - `pnpm check`: typecheck (root, app, web), schema, i18n, licenses, lint,
-  format green; vitest **3640 passed, 3 failed** of 3643 with coverage
-  thresholds met (100%). The 3 failures are `web/src/fields/date-time-text.test.ts`'s
+  format green; vitest **3643 passed, 3 failed** of 3646 with coverage
+  thresholds met (100% statements, branches, functions, lines; read with
+  `--coverage.reportOnFailure`). The 3 failures are `web/src/fields/date-time-text.test.ts`'s
   sv-FI cases and fail identically on `origin/main` in this sandbox: its
   Node (ICU 77.1) formats `sv-FI` dates as `2026-09-02`, not `02.09.2026`.
   Not this change; CI's Node is the reference. Jest (app): **785 passed**, 69
@@ -434,24 +435,26 @@ the last commit changed tests only).
 --testTimeout=60000`: **6 passed** (W1–W6).
 - Stryker, `--mutate shared/src/sync-client/session-edit.ts,web/src/entry/falt-model.ts,web/src/edit/model.ts,web/src/edit/messages.ts`:
   first run **1248 killed / 21 survived** (98.35%); five tests added for the
-  real gaps (`dbdcbfb`: trimmed stored rounds, an opened station emptied,
-  the discipline error text, a stored scratched flag, a stored shoot-off
-  before a plain station); second run **1256 killed / 13 survived**
-  (98.98%), break threshold 95. The 13:
+  real gaps (`dbdcbfb`); second run 1256 / 13. After the round-1 fix
+  (`1b2097d`) and its test (`9ba0662`), the final run: **1292 killed / 12
+  survived (99.08%)**, break threshold 95. The 12:
   - **Pre-existing, unchanged lines** (5): `session-edit.ts:303`, `:367`,
-    `:545`; `falt-model.ts:63`, `:239` (blame `f625c73` / `40b30b9`).
-  - **Equivalent** (8):
-    - `session-edit.ts:262` (2 mutants, stored-null branch of the
-      unchanged-text check): a blank text always parses to null, which
-      equals a null stored value, so the column filter drops it either way.
-    - `:434` (`get(null)` is undefined), `:465` (the position only names the
+    `:559`; `falt-model.ts:63`, `:239` (blame `f625c73` / `40b30b9`).
+  - **Equivalent** (7):
+    - `:445` (`get(null)` is undefined), `:479` (the position only names the
       station in `stationProblem`'s message, which is compared to null), and
-      `:486` (the `'new'` kind is reached by the loop's `else`).
+      `:500` (the `'new'` kind is reached by the loop's `else`).
     - `web/src/edit/model.ts:112` (`nextKey` decrementing still gives unique
       keys).
     - `falt-model.ts:80`: a stored row without hits cannot reach it, since
       the page offers no unchosen Hits on one.
     - `falt-model.ts:133`: `?.` is guarded by `lastKept !== undefined`.
+  - **Effectively equivalent** (1): `session-edit.ts:262`, the stored-null
+    branch's `''` replaced by `"Stryker was here!"`. It diverges only when
+    the typed Rounds Fired text is that literal string, which `parseRoundsFired`
+    then refuses as `invalidRounds` either way. (The previous revision of this
+    report called the `:262` survivors plainly equivalent; round 1 showed one
+    diverging mutant, now killed by the "null" text test.)
 - Docs gates: `mkdocs build --strict` green; `docs-translation-check`: 27
   pages current; `docs-anchor-check`: no dangling anchors.
 
@@ -482,7 +485,26 @@ driven with Playwright:
   the middle shifts the label of the rows after it by one at save time
   (the builder numbers only entered rows).
 - The pull→push window of E6 applies to stations as it does to series.
+- Shoot-off is order-dependent, as on the phone (`nextStationIsShootOff`):
+  a new station after a kept shoot-off is one, whatever the rows before it.
+- A stored station the edit left unchanged is not re-checked against
+  `stationProblem` (§10.10), so older data the phone would now refuse stays
+  as it is until someone edits that row.
+- U16 has no test (no code: #768 removed the hints); U17 is the unedited
+  `falt-model.test.ts`.
 
 ### Independent verification (revision 2)
 
-Pending.
+- **Round 1** at `dbdcbfb`, a fresh agent following
+  `.claude/skills/old-coder/references/verifier.md`: **failed**. Findings:
+  (1) two surviving mutants that diverge, one of them `:262`'s literal (the
+  typed text `"null"` against a null stored value); (2) a stored station that
+  `stationProblem` would now refuse (imported data) blocked or rewrote a
+  name-only save; (3) E15's shoot-off text did not match the
+  order-dependent behaviour the phone shares; (4) Scratched offered on new
+  rows, unlike the phone; plus evidence wording (the `:262` classification,
+  U16/U17 unmapped). Grading went to the maintainer (§10.10). Fixed: (1)
+  tests in `dbdcbfb`…`9ba0662`, (2) `1b2097d` plus K26's per-column test;
+  (3) spec text corrected, behaviour kept; (4) kept as E15 states;
+  wording corrected above.
+- **Round 2**: pending.
