@@ -20,6 +20,7 @@ import {
 
 import { startedAtIso } from '../entry/model';
 import type { PulledTables, WebTable } from '../pull';
+import { photoRefOf, type PhotoRef } from '../sessions/browse';
 
 /** The tables Save and Delete pull afresh (E6, R1). */
 export const EDIT_TABLES = [
@@ -50,6 +51,8 @@ export interface EditRow {
   text: string;
   isSighter: boolean;
   deleted: boolean;
+  /** Shown and opened only; Save never writes the photo columns (E10). */
+  photo: PhotoRef;
 }
 
 /** A series shown but not edited here: a final or a total-only one (E11). */
@@ -58,6 +61,7 @@ export interface ReadOnlySeries {
   position: number;
   kind: 'final' | 'totalOnly';
   text: string;
+  photo: PhotoRef;
 }
 
 export interface EditForm {
@@ -140,12 +144,14 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
   for (const { row, shots } of series) {
     const id = row.id as string;
     const shown = formatSeriesText(shotsOf(shots), mode);
+    const photo = photoRefOf(row.photo_uri as string | null | undefined);
     if (row.is_final === 1 || row.is_total_override === 1) {
       readOnly.push({
         id,
         position: row.position as number,
         kind: row.is_final === 1 ? 'final' : 'totalOnly',
         text: shown,
+        photo,
       });
     } else if (editsSeries) {
       rows.push({
@@ -154,6 +160,7 @@ export function openForm(context: EditContext, sessionId: string): OpenedForm | 
         text: shown,
         isSighter: row.is_sighter === 1,
         deleted: false,
+        photo,
       });
     }
   }
@@ -223,7 +230,10 @@ export function toDraft(sessionId: string, initial: EditForm, form: EditForm): S
 export function addRow(form: EditForm): EditForm {
   return {
     ...form,
-    rows: [...form.rows, { key: nextKey(), id: null, text: '', isSighter: false, deleted: false }],
+    rows: [
+      ...form.rows,
+      { key: nextKey(), id: null, text: '', isSighter: false, deleted: false, photo: null },
+    ],
   };
 }
 
@@ -235,4 +245,11 @@ export function setRow(form: EditForm, key: number, patch: Partial<EditRow>): Ed
 export function canMarkSighter(form: EditForm, key: number, fixed: boolean): boolean {
   if (fixed) return false;
   return form.rows.every((row) => row.key === key || row.deleted || !row.isSighter);
+}
+
+/** The series whose photo is open, with `id` opened or closed. */
+export function toggleOpen(open: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const next = new Set(open);
+  if (!next.delete(id)) next.add(id);
+  return next;
 }

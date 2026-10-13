@@ -492,7 +492,7 @@ button.destructive {
   font-variant-numeric: tabular-nums;
 }
 
-.shots {
+.shot-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -501,7 +501,7 @@ button.destructive {
   padding: 0;
 }
 
-.shots li {
+.shot-chips li {
   min-width: 36px;
   padding: 4px 8px;
   text-align: center;
@@ -692,6 +692,37 @@ a.button {
   display: grid;
   gap: 4px;
   font-size: 13px;
+}
+
+/* Date and Time fields (fields/date-time-fields.tsx). */
+.locale-field {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.locale-field input[type='text'] {
+  flex: 1;
+  width: 0;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+}
+
+/* Rendered, so showPicker() can open it, but never seen or reached by Tab. */
+.calendar-picker {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .settings-fields {
@@ -1238,11 +1269,6 @@ main:focus {
   grid-column: 1 / -1;
 }
 
-.edit-series .series-row input.shots {
-  margin: 0;
-  padding: 8px 10px;
-}
-
 .edit-notes textarea {
   font: inherit;
   color: var(--text);
@@ -1280,6 +1306,28 @@ main:focus {
   font:
     16px ui-monospace,
     monospace;
+}
+
+.edit-row-label {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.edit-row-label .badge {
+  margin-left: 0;
+}
+
+button.photo-badge {
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.photo-panel {
+  grid-column: 1 / -1;
+  flex-basis: 100%;
+  max-width: 360px;
 }
 
 a.button.secondary {

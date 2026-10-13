@@ -109,6 +109,47 @@ function UploadedPhoto({
   );
 }
 
+/** A row's Photo badge: a button that shows or hides its `PhotoPanel`. */
+export function PhotoBadge({
+  open,
+  panelId,
+  onToggle,
+}: {
+  open: boolean;
+  panelId: string;
+  onToggle: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      className="badge photo-badge"
+      aria-expanded={open}
+      aria-controls={panelId}
+      onClick={onToggle}
+    >
+      {t('web.edit.photo')}
+    </button>
+  );
+}
+
+/** The opened photo, as the detail page loads it; one still on the phone says so. */
+export function PhotoPanel({
+  photo,
+  alt,
+  id,
+}: {
+  photo: Exclude<PhotoRef, null>;
+  alt: string;
+  id: string;
+}) {
+  return (
+    <div className="photo-panel" id={id}>
+      <Photo photo={photo} alt={alt} className={photo.kind === 'local' ? 'thumb' : 'large'} />
+    </div>
+  );
+}
+
 // ── Picking ──────────────────────────────────────────────────────────────
 
 interface Picks {

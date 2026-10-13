@@ -21,13 +21,16 @@ import { COMPETITION_LEVELS } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushRows } from '../api';
 import { rowSummary } from '../entry/model';
 import { useOnline } from '../entry/entry';
+import { DateField, TimeField } from '../fields/date-time-fields';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
+import { PhotoBadge, PhotoPanel } from '../sessions/photos';
 import { SignInAgain } from '../sign-in-again';
 import { errorMessage, statusMessages, type Message } from './messages';
 import {
   addRow,
   canMarkSighter,
+  toggleOpen,
   editContext,
   openForm,
   setRow,
@@ -123,6 +126,8 @@ export function SessionEdit({
   );
   const [form, setForm] = useState<EditForm | null>(() => opened?.initial ?? null);
   const [state, setState] = useState<EditState>(IDLE);
+  const [openPhotos, setOpenPhotos] = useState<ReadonlySet<string>>(new Set());
+  const togglePhoto = (id: string) => setOpenPhotos((was) => toggleOpen(was, id));
   const session = opened?.opened.session;
   const disciplineId = String(session?.discipline_id ?? '');
   const discipline = getDiscipline(disciplineId);
@@ -245,14 +250,16 @@ export function SessionEdit({
         {/* Nothing changes under a save in flight (#669 R23). */}
         <fieldset className="entry-fieldset" disabled={working}>
           <section className="card entry-fields">
-            <label className="field">
-              {t('session.date')}
-              <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
-            </label>
-            <label className="field">
-              {t('web.entry.time')}
-              <input type="time" value={form.time} onChange={(e) => set('time', e.target.value)} />
-            </label>
+            <DateField
+              label={t('session.date')}
+              value={form.date}
+              onChange={(v) => set('date', v)}
+            />
+            <TimeField
+              label={t('web.entry.time')}
+              value={form.time}
+              onChange={(v) => set('time', v)}
+            />
             <label className="field">
               {t('session.name')}
               <input
@@ -397,6 +404,8 @@ export function SessionEdit({
           {opened.editsSeries && (
             <SeriesRows
               opened={opened}
+              openPhotos={openPhotos}
+              togglePhoto={togglePhoto}
               form={form}
               edit={edit}
               rowErrors={rowErrors}
@@ -417,6 +426,27 @@ export function SessionEdit({
                       )}
                     </span>
                     <span className="read-only-shots">{row.text}</span>
+                    {row.photo !== null && (
+                      <>
+                        <PhotoBadge
+                          open={openPhotos.has(row.id)}
+                          panelId={`edit-photo-${row.id}`}
+                          onToggle={() => togglePhoto(row.id)}
+                        />
+                        {openPhotos.has(row.id) && (
+                          <PhotoPanel
+                            photo={row.photo}
+                            id={`edit-photo-${row.id}`}
+                            alt={t(
+                              row.kind === 'final'
+                                ? 'web.edit.finalSeries'
+                                : 'web.edit.totalOnlySeries',
+                              { position: row.position },
+                            )}
+                          />
+                        )}
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -456,12 +486,16 @@ export function SessionEdit({
 
 function SeriesRows({
   opened,
+  openPhotos,
+  togglePhoto,
   form,
   edit,
   rowErrors,
   rowLabel,
 }: {
   opened: OpenedForm;
+  openPhotos: ReadonlySet<string>;
+  togglePhoto: (id: string) => void;
   form: EditForm;
   edit: (next: EditForm) => void;
   rowErrors: ReadonlyMap<number, string[]>;
@@ -476,7 +510,16 @@ function SeriesRows({
         const errors = rowErrors.get(index + 1) ?? [];
         return (
           <div key={row.key} className={row.deleted ? 'series-row deleted' : 'series-row'}>
-            <label htmlFor={`edit-row-${row.key}`}>{rowLabel(index + 1)}</label>
+            <div className="edit-row-label">
+              <label htmlFor={`edit-row-${row.key}`}>{rowLabel(index + 1)}</label>
+              {row.photo !== null && row.id !== null && (
+                <PhotoBadge
+                  open={openPhotos.has(row.id)}
+                  panelId={`edit-photo-${row.id}`}
+                  onToggle={() => togglePhoto(row.id!)}
+                />
+              )}
+            </div>
             <input
               id={`edit-row-${row.key}`}
               className="shots"
@@ -516,6 +559,9 @@ function SeriesRows({
             >
               {row.deleted ? t('web.edit.undo') : t('session.deleteSeries')}
             </button>
+            {row.photo !== null && row.id !== null && openPhotos.has(row.id) && (
+              <PhotoPanel photo={row.photo} id={`edit-photo-${row.id}`} alt={rowLabel(index + 1)} />
+            )}
             {errors.map((message) => (
               <p key={message} className="danger row-error">
                 {message}

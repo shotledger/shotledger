@@ -12,6 +12,15 @@ ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda bör
 på nu. Ett datum före 1900 eller senare än i morgon avvisas, som ett skrivfel
 snarare än ett pass.
 
+Datum och tid visas i appens format, utifrån dess språk och webbläsarens
+region, oavsett vilket språk webbläsaren själv har: `2026-09-22` och `18:00` på
+svenska, `09/22/2026` och `6:00 PM` på amerikansk engelska. Skriv dem på samma
+sätt; vilket skiljetecken som helst går bra, ett datum med året först, som
+`2026-09-22`, förstås alltid, och året skrivs med fyra siffror. En tid kan också
+skrivas som `1800`, `18` eller `6 pm`. Det som inte är ett datum eller en tid
+markeras under fältet med formatet att använda. Kalenderknappen bredvid datumet
+öppnar webbläsarens egen datumväljare och fyller i datumet du väljer.
+
 Klass och ISSF-gren utgår från profilen du har angett under **Inställningar →
 Personligt** i telefonen, som synken för över till kontot: födelseår, klass
 och brytaren för damklasser. Din egen klass är förvald och står först, och de

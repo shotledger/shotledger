@@ -10,7 +10,8 @@ location or a firearm, or retype a series you got wrong. Sign in, open
 and time, name, location, notes, the competition fields of a competition,
 firearm and ammo lot. An empty name keeps the name the session has; an empty
 location or note clears it. A new date before 1900 or later than tomorrow is
-refused, as on Enter Series. The type, discipline, match format and decimal
+refused, as on Enter Series, and the date and time are typed in the same format
+as there. The type, discipline, match format and decimal
 scoring are set when a session is created and stay as they are.
 
 Below the fields, each series of the qualification is one row of shots, typed
@@ -24,10 +25,13 @@ Final series and series saved as a total only (from Webshooter) are listed but
 not editable here, and neither are fält stations, the rounds of a
 rounds-only session, the match format and tags. Change those on the phone.
 
-A photo stays with its series when you retype the shots, but the marks you
-placed on it no longer show, as when you retype the series on the phone. A
-series saved with a photo and no shots shows as an empty row; left empty, it
-stays as it is. This page does not add or remove photos.
+A series with a photo is marked **Photo**; click it to show or hide the photo
+below the row. A photo not yet uploaded from the phone shows as not uploaded,
+as on the session's page. The photo stays with its series when
+you retype the shots, but the marks you placed on it no longer show, as when
+you retype the series on the phone. A series saved with a photo and no shots
+shows as an empty row marked **Photo**; left empty, it stays as it is. This
+page does not add or remove photos.
 
 ## Save
 

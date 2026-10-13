@@ -12,6 +12,7 @@ import { uuidv7 } from 'uuidv7';
 import { disciplineLabel } from '../../../app/src/features/session/labels';
 import { currentUserId, loadTables, pushRows } from '../api';
 import { locationUsage, useOnline } from '../entry/entry';
+import { DateField } from '../fields/date-time-fields';
 import type { PulledTables } from '../pull';
 import type { ReauthOutcome } from '../reauth';
 import { SignInAgain } from '../sign-in-again';
@@ -190,22 +191,16 @@ export function BulkEdit({
     // selection other than the one being sent (R19).
     <fieldset className="bulk" disabled={applying}>
       <section className="card bulk-filter">
-        <label className="field">
-          {t('period.from')}
-          <input
-            type="date"
-            value={filter.from}
-            onChange={(event) => edit(() => setFilter({ ...filter, from: event.target.value }))}
-          />
-        </label>
-        <label className="field">
-          {t('period.to')}
-          <input
-            type="date"
-            value={filter.to}
-            onChange={(event) => edit(() => setFilter({ ...filter, to: event.target.value }))}
-          />
-        </label>
+        <DateField
+          label={t('period.from')}
+          value={filter.from}
+          onChange={(from) => edit(() => setFilter({ ...filter, from }))}
+        />
+        <DateField
+          label={t('period.to')}
+          value={filter.to}
+          onChange={(to) => edit(() => setFilter({ ...filter, to }))}
+        />
         {filter.from !== '' && filter.to !== '' && filter.from > filter.to && (
           <p className="danger bulk-range" role="alert">
             {t('web.rangeReversed')}

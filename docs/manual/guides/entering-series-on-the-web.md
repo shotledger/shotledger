@@ -12,6 +12,15 @@ firearm and ammo lot. Date and time are when you shot, in this computer's time
 zone; both start at now. A date before 1900 or later than tomorrow is refused,
 as a typo rather than a session.
 
+Date and time show in the app's format, from its language and the browser's
+region, whatever language the browser itself uses: `2026-09-22` and `18:00` in
+Swedish, `09/22/2026` and `6:00 PM` in US English. Type them the same way; any
+separator works, a year-first date such as `2026-09-22` is always understood,
+and the year takes four digits. A time can also be typed as `1800`, `18` or
+`6 pm`. Something that is not a date or a time is marked under the field with
+the format to use. The calendar button beside the date opens the browser's own
+date picker and fills in the date you pick.
+
 Your class and ISSF event start from the profile you set in **Settings →
 Personal** on the phone, which sync carries to the account: your birth year,
 class and the women's classes switch. Your own class is preselected and listed

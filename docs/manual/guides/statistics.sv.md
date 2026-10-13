@@ -85,4 +85,5 @@ Ett rekords passnamn öppnar passet.
 Webbrapporten har inget filter på **Taggar**, ingen **Exportera JSON** och
 ingen värmekarta för **Var dina skott hamnar**; använd telefonen för dem. Ett
 eget intervall där **Från** ligger efter **Till** matchar ingenting, och sidan
-säger det.
+säger det. Dess datum skrivs som i [Mata in serier](entering-series-on-the-web.md)
+eller väljs med kalenderknappen.

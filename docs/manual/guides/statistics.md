@@ -84,4 +84,6 @@ the tab. A record's session name opens that session.
 
 The web report has no **Tags** filter, no **Export JSON** and no **Where Your
 Shots Land** heat map; use the phone for those. A custom range whose **From**
-is after its **To** matches nothing, and the page says so.
+is after its **To** matches nothing, and the page says so. Its dates are typed
+as on [Enter Series](entering-series-on-the-web.md), or picked with the
+calendar button.

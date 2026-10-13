@@ -1341,6 +1341,16 @@
     "signInIntro": "Logga in med ditt ShotLedger-konto för att se dina pass, din statistik och ditt konto. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
+    "dateField": {
+      "year": "ÅÅÅÅ",
+      "month": "MM",
+      "day": "DD",
+      "invalid": "Inget datum. Skriv det som {{format}}.",
+      "openCalendar": "Välj datum"
+    },
+    "timeField": {
+      "invalid": "Ingen tid. Skriv den som {{example}}."
+    },
     "rangeReversed": "Från ligger efter Till, så inget pass matchar.",
     "loadFailed": "Kunde inte hämta loggboken. Ladda om sidan för att försöka igen.",
     "account": {
@@ -1493,7 +1503,8 @@
       "failedSignedOut": "Du har loggats ut. Logga in igen och försök sedan igen.",
       "failedOutdated": "Sidan är inaktuell. Kopiera dina ändringar och ladda sedan om sidan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Försök igen skickar samma ändring igen.",
-      "accountChanged": "Du är nu inloggad på ett annat konto, så den sparade ändringen skickades inte."
+      "accountChanged": "Du är nu inloggad på ett annat konto, så den sparade ändringen skickades inte.",
+      "photo": "Foto"
     },
     "settings": {
       "saved": "Sparat.",
