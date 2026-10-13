@@ -185,6 +185,37 @@ Every release:
    tested release from the closed-testing track to production. VERIFY
    exact click-path (UI changes over time).
 
+## Over-the-air JS updates (EAS Update)
+
+ADR 0020. A JS-only fix can reach installed EAS builds without a new
+build. Anything that touches native code (a new or bumped native
+dependency, `app.json` plugins or permissions) still needs a release.
+
+One-time, before the first update:
+
+- [ ] `cd app && eas init`, if `app/app.json` has no
+      `extra.eas.projectId` yet (the same step as in (a)).
+- [ ] `cd app && eas update:configure`. It adds `updates.url` to
+      `app/app.json`. `runtimeVersion` and the channels in `app/eas.json`
+      are already set, so commit only the URL and project id it writes.
+- [ ] Ship one release **after** that commit. Builds made before it have
+      no update URL and never check for updates.
+
+Every update:
+
+1. Check out the release's tag (or its `hotfix/*` branch with the fix on
+   top). The runtime version is the app version, so the update has to be
+   published with that release's version.
+2. Stamp it the way the release workflow does:
+   `cd app && npm pkg set version=<release version>`. Don't commit it.
+3. `cd app && eas update --channel production --message "<what changed>"`.
+   Use `--channel preview` to try it on a preview APK first.
+4. Phones pick it up on the next launch after the download finishes, so
+   expect it on the second launch.
+
+Locally built APKs (evaluation builds, the `run-app` standalone APK) have no
+channel and never receive updates.
+
 ## Preview builds (internal testing, not Play Console)
 
 ```bash
