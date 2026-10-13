@@ -38,7 +38,12 @@ jobs:
           key: prettier-${{ github.run_id }}
           restore-keys: prettier-
 
+      # Typed lint (projectService) over the whole workspace needs about 2 GB
+      # of heap, and the runner's default limit is right at that: eslint ran
+      # out of memory once shared/ declared drizzle-orm (#813).
       - run: pnpm check
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       # Not part of `pnpm check` (see CLAUDE.md, "Backend").
       - name: Backend tests
