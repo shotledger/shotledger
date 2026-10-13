@@ -40,6 +40,8 @@ själv har angett — vapentypen och
   du inte säger något annat, och fallet den föreslår för en vapenägare blir
   därför 6 §, det lindrigare av de två. Anger du **lånat** på ett vapen slutar
   det räknas.
+- Ett [arkiverat](../guides/firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
+  vapen räknas inte heller: du har det inte längre.
 
 Skärmen säger också **varför** den valde som den gjorde – ”eftersom inget
 registrerat vapen är en pistol eller revolver som du äger”, till exempel. Det
@@ -102,6 +104,9 @@ Samma siffra visas därför på varje vapen: det är din aktivitetsnivå, visad
 intill varje vapen för bekvämlighets skull – inte det vapnets egen räkning.
 Skärmen säger det under siffran.
 
+Pass som skjutits med ett vapen du sedan har arkiverat räknas fortfarande. Du
+sköt dem; att du sålde vapnet efteråt ändrar inte det.
+
 Licensaktivitet räknar det du loggat. Ett banbesök du inte loggade finns inte
 med, och ett pass som loggats två gånger räknas två gånger.
 
@@ -146,6 +151,9 @@ Appen har ingen tillgång till dina licenser, så den utgår från det du berät
   har ett **slutdatum**. En licens utan slutdatum gäller tills vidare och är
   inget tidsbegränsat tillstånd. Vapentypen spelar ingen roll: blankettens
   förnyelseruta nämner ingen.
+
+Inget av dem visas för ett arkiverat vapen. Du innehar det inte längre, och du
+kommer inte att förnya dess tillstånd.
 
 Saknas ett kriterium på ett vapen där du väntat dig det är det där du ska titta
 — oftast en vapentyp som fattas eller en licens registrerad utan giltighetstid.
