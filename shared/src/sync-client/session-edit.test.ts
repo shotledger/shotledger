@@ -2026,6 +2026,41 @@ describe('station edit (§10)', () => {
     });
   });
 
+  it('K29 a stored station the draft leaves as opened is not re-checked or rewritten, however odd its data', () => {
+    const context = faltBook();
+    const stations = context.faltStations as Map<string, Payload>;
+    // As the phone's JSON import can store them: a max without points, and an impossible station.
+    stations.set('fA', { ...stations.get('fA')!, points: null, points_max: 10 });
+    stations.set('fB', { ...stations.get('fB')!, hits: 3, figures_hit: 0 });
+    const opened = open('sF', context);
+    const unchanged = stationsDraft(context, 'sF');
+    const named = changesOf(
+      edit(stationEdit('sF', unchanged, { name: 'Renamed' }), context, opened),
+    );
+    expect(named.map((c) => c.rowId)).toEqual(['sF']);
+    // Not touched, so a station another device changed meanwhile does not block it (E20).
+    stations.set('fD', { ...stations.get('fD')!, note: 'phone' });
+    expect(
+      changesOf(edit(stationEdit('sF', unchanged, { name: 'Renamed' }), context, opened)),
+    ).toHaveLength(1);
+    // Changed, the station is held to the rules again.
+    const fresh = faltBook();
+    (fresh.faltStations as Map<string, Payload>).set('fB', {
+      ...fresh.faltStations.get('fB')!,
+      hits: 3,
+      figures_hit: 0,
+    });
+    expect(
+      edit(
+        stationEdit(
+          'sF',
+          stationsDraft(fresh, 'sF', { fB: { isScratched: false, figureCount: 5 } }),
+        ),
+        fresh,
+      ),
+    ).toEqual({ ok: false, errors: [{ kind: 'invalidStation', row: 2 }] });
+  });
+
   it('K29 a removed row is not read; a scratched row with impossible numbers is saved, as on the phone', () => {
     const context = faltBook();
     expect(
@@ -2350,6 +2385,11 @@ describe('rounds edit (§10)', () => {
       extra_rounds: 12_000,
     });
     expect(edit(roundsEdit('sBig', '12001'), context)).toEqual({
+      ok: false,
+      errors: [{ kind: 'invalidRounds' }],
+    });
+    // Text that only looks like a missing count is still checked.
+    expect(edit(roundsEdit('sRF', 'null', { name: 'N' }), context)).toEqual({
       ok: false,
       errors: [{ kind: 'invalidRounds' }],
     });

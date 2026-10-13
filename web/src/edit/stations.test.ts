@@ -126,6 +126,8 @@ describe('the edit page: stations and Rounds Fired', () => {
     expect(stationPositions(falt.stations)).toEqual([1, 2, 4]);
     // New rows are labelled after the last stored position.
     expect(stationPositions(addStation(addStation(falt)).stations)).toEqual([1, 2, 4, 5, 6]);
+    // A removed station keeps its number taken, as the builder does.
+    expect(stationPositions(addStation(removeStation(falt, 2)).stations)).toEqual([1, 2, 4, 5]);
     expect(faltOf('sO').resultMode).toBe('falt');
   });
 

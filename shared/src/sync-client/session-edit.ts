@@ -414,6 +414,17 @@ type StationPlan =
   | { kind: 'keep'; id: string; columns: StationColumns; changed: boolean }
   | { kind: 'new'; columns: StationColumns; isShootOff: boolean };
 
+const asText = (value: unknown): string => (value == null ? '' : String(Number(value)));
+
+/** The draft row is the stored station exactly as the form opened it. */
+const asOpened = (station: StationEditDraft, was: Payload): boolean =>
+  station.hits === was.hits &&
+  station.figuresHit === was.figures_hit &&
+  station.figureCount === asNull(was.figure_count) &&
+  station.pointsText === asText(was.points) &&
+  station.pointsMaxText === asText(was.points_max) &&
+  station.isScratched === (was.is_scratched === 1);
+
 /** The draft's stations as the phone's station screen would save them (E13, E15). */
 function planStations(
   draft: SessionEditDraft,
@@ -440,6 +451,9 @@ function planStations(
       if (id !== null) plans.push({ kind: 'delete', id });
       return;
     }
+    // A stored station left as opened is not re-checked, so data the phone
+    // stored unchecked (an import) never blocks an edit of something else (R11's rule).
+    if (was !== undefined && asOpened(station, was)) return;
     const points = stationPoints(station.pointsText, station.pointsMaxText);
     if (!points.ok) {
       errors.push({ kind: 'stationPoints', row });
