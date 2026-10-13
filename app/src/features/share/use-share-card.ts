@@ -16,6 +16,7 @@ import {
 } from '@/features/share/card-model';
 import { formatShotValue } from '@/components/shot-chips';
 import { formatDate } from '@/features/dates/format';
+import { formatTotalScore } from '@/features/stats/format-total-score';
 import { disciplineLabel } from '@/features/session/labels';
 import { type SessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
 
@@ -42,7 +43,7 @@ export function buildSessionShareCardModel(
     disciplineLabel: disciplineLabel(t, session.disciplineId),
     weaponLabel: formatGroupAndClass(session.weaponGroup, session.shooterClass) || null,
     firearmLabel: firearm ? `${firearm.make} ${firearm.model}` : null,
-    totalLabel: tenthsToScore(detail.results.totalTenths).toFixed(1),
+    totalLabel: formatTotalScore(detail.results.totalTenths, { mode: detail.scoringMode }),
     averageLabel:
       detail.seriesAverageTenths === null
         ? null
@@ -51,7 +52,7 @@ export function buildSessionShareCardModel(
     series: detail.seriesRows.map((row) => ({
       position: row.position,
       isSighter: row.isSighter,
-      totalLabel: tenthsToScore(row.totalTenths).toFixed(1),
+      totalLabel: formatTotalScore(row.totalTenths, { mode: detail.scoringMode }),
       xCount: row.isTotalOverride ? 0 : xCountOf(row.shots),
     })),
     note,
@@ -72,7 +73,7 @@ export function buildSeriesShareCardModel(
     dateLabel: formatDate(detail.session.startedAt, locale),
     disciplineLabel: disciplineLabel(t, detail.session.disciplineId),
     seriesLabel: t('session.seriesTitle', { position: row.position }),
-    totalLabel: tenthsToScore(row.totalTenths).toFixed(1),
+    totalLabel: formatTotalScore(row.totalTenths, { mode: detail.scoringMode }),
     xCount: row.isTotalOverride ? 0 : xCountOf(row.shots),
     shots: row.shots.map((shot) => ({
       label: formatShotValue(shot, detail.scoringMode),
