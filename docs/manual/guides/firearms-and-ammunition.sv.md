@@ -49,10 +49,12 @@ Till ett vapen samlas:
 - **Skottantal**, från de pass du loggar på det — varje avlossat skott, räknat
   [på samma sätt överallt](../explanation/how-shots-are-counted.md). Raderar du
   ett pass räknas dess skott bort igen. **Justera antal skott** på vapnet rättar
-  en räknare som visar fel.
+  en räknare som visar fel: ett heltal skott, med minustecken för att ta bort
+  skott, och en anledning.
 - **Underhåll** — rengöringar och utfört arbete, med skottantalet vid
   tillfället. Varje post visar datum och anteckningen du skrev; en justering
-  av skottantalet visar sin anledning.
+  av skottantalet visar hur mycket räknaren flyttades och sin anledning ("+10 ·
+  skott med klubbvapen").
   Anger du ett **Underhållsintervall** får du en notis i telefonen en gång när
   **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en
   sparad serie, ett pass med bara skottantal, en import eller **Justera antal

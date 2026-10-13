@@ -5,6 +5,7 @@ import type { Database } from '../types';
 import { newId, nowIso } from '../util';
 import { getFirearm, updateFirearm } from './firearms';
 import { reportMaintenanceCounterMove } from './maintenance-due';
+import { adjustmentNote } from '../../features/firearms/round-adjustment';
 
 export interface LogMaintenanceEventInput {
   firearmId: string;
@@ -65,6 +66,7 @@ export function softDeleteMaintenanceEvent(db: Database, id: string) {
  * (§3), so this stays consistent with logMaintenanceEvent rather than
  * adding a separate table for one narrow case. Unlike logMaintenanceEvent,
  * it does NOT reset rounds_since_maintenance (no maintenance was performed).
+ * The note leads with the amount the counter actually moved (`adjustmentNote`).
  */
 export function adjustFirearmRoundCount(
   db: Database,
@@ -89,7 +91,7 @@ export function adjustFirearmRoundCount(
     performedAt: now,
     kind: 'adjustment',
     roundCountAt: roundCount,
-    notes: reason,
+    notes: adjustmentNote(roundCount - firearm.roundCount, reason),
   };
   db.insert(maintenanceEvents).values(row).run();
   return getFirearm(db, firearmId);

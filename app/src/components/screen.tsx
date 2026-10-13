@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FabClearance } from '@/components/fab';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardAvoider } from '@/platform/keyboard-avoider';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/theme/tokens';
 
 export interface ScreenProps extends ViewProps {
@@ -117,14 +118,18 @@ export function Screen({
         }
       >
         {scroll ? (
-          <ScrollView
-            ref={scrollRef}
-            contentContainerStyle={contentStyle}
-            onScroll={fab ? onScroll : undefined}
-            scrollEventThrottle={16}
-          >
-            {inner}
-          </ScrollView>
+          <KeyboardAvoider>
+            <ScrollView
+              ref={scrollRef}
+              contentContainerStyle={contentStyle}
+              onScroll={fab ? onScroll : undefined}
+              scrollEventThrottle={16}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
+            >
+              {inner}
+            </ScrollView>
+          </KeyboardAvoider>
         ) : (
           <View style={contentStyle}>{inner}</View>
         )}

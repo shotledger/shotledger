@@ -52,6 +52,11 @@ import {
 } from '@/db/queries/sight-settings';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 import { maintenanceEventLines } from '@/features/firearms/maintenance-event-lines';
+import {
+  parseMaintenanceInterval,
+  parseRoundAdjustment,
+  roundAdjustmentErrors,
+} from '@/features/firearms/round-adjustment';
 import { useFirearmDetail } from '@/features/firearms/use-firearm-detail';
 import {
   SIGHT_CLICK_MAX,
@@ -145,8 +150,10 @@ export default function FirearmDetailScreen() {
   const [showAdjust, setShowAdjust] = useState(false);
   const [adjustDelta, setAdjustDelta] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+  const [adjustAttempted, setAdjustAttempted] = useState(false);
 
   const [intervalInput, setIntervalInput] = useState<string | null>(null);
+  const [intervalStatus, setIntervalStatus] = useState<'idle' | 'saved' | 'invalid'>('idle');
 
   const [showSightForm, setShowSightForm] = useState(false);
   const [editingSightId, setEditingSightId] = useState<string | null>(null);
@@ -173,6 +180,7 @@ export default function FirearmDetailScreen() {
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const newGroupLabel = availableGroups.find((g) => g.id === newGroupId)?.label ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
+  const adjustErrors = roundAdjustmentErrors(adjustDelta, adjustReason);
 
   // A firearm that isn't the shooter's own needs no license of theirs, so a
   // missing one is not a gap to prompt about.
@@ -330,25 +338,35 @@ export default function FirearmDetailScreen() {
   }
 
   function onAdjust() {
-    const delta = Number(adjustDelta);
-    if (!Number.isFinite(delta) || !adjustReason.trim()) return;
+    const delta = parseRoundAdjustment(adjustDelta);
+    if (delta === null || !adjustReason.trim()) {
+      setAdjustAttempted(true);
+      return;
+    }
     adjustFirearmRoundCount(db, firearm!.id, delta, adjustReason.trim());
     setAdjustDelta('');
     setAdjustReason('');
+    setAdjustAttempted(false);
     setShowAdjust(false);
     refresh();
   }
 
   function onSaveInterval() {
     const previous = firearm!.roundsSinceMaintenance;
-    const interval = intervalInput?.trim() ? Number(intervalInput) : null;
-    updateFirearm(db, firearm!.id, {
-      maintenanceIntervalRounds: interval && Number.isFinite(interval) ? interval : null,
-    });
-    if (shouldNotifyMaintenanceDue(0, previous, interval)) {
+    const parsed = parseMaintenanceInterval(intervalValue);
+    if (!parsed.ok) {
+      setIntervalStatus('invalid');
+      return;
+    }
+    updateFirearm(db, firearm!.id, { maintenanceIntervalRounds: parsed.interval });
+    if (
+      parsed.interval !== firearm!.maintenanceIntervalRounds &&
+      shouldNotifyMaintenanceDue(0, previous, parsed.interval)
+    ) {
       void notifyMaintenanceDue(`${firearm!.make} ${firearm!.model}`);
     }
     setIntervalInput(null);
+    setIntervalStatus('saved');
     refresh();
   }
 
@@ -1058,11 +1076,29 @@ export default function FirearmDetailScreen() {
         <ThemedText type="small">{t('firearms.maintenanceInterval')}</ThemedText>
         <TextField
           value={intervalValue}
-          onChangeText={setIntervalInput}
+          onChangeText={(text) => {
+            setIntervalInput(text);
+            setIntervalStatus('idle');
+          }}
           keyboardType="number-pad"
           testID="maintenance-interval"
         />
+        {intervalStatus === 'invalid' ? (
+          <ThemedText type="small" themeColor="danger" testID="interval-error">
+            {t('firearms.intervalInvalid')}
+          </ThemedText>
+        ) : null}
         <PrimaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
+        {intervalStatus === 'saved' ? (
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            testID="interval-saved"
+          >
+            {t('firearms.intervalSaved')}
+          </ThemedText>
+        ) : null}
 
         {detail.maintenanceEvents.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -1130,9 +1166,15 @@ export default function FirearmDetailScreen() {
             <TextField
               value={adjustDelta}
               onChangeText={setAdjustDelta}
-              keyboardType="numbers-and-punctuation"
+              // `numeric` is the one numeric pad with a minus key on both platforms.
+              keyboardType="numeric"
               testID="adjust-delta"
             />
+            {adjustAttempted && adjustErrors.includes('invalidDelta') ? (
+              <ThemedText type="small" themeColor="danger" testID="adjust-delta-error">
+                {t('firearms.adjustDeltaInvalid')}
+              </ThemedText>
+            ) : null}
             <ThemedText type="small">{t('firearms.adjustReason')}</ThemedText>
             <TextField
               value={adjustReason}
@@ -1141,6 +1183,11 @@ export default function FirearmDetailScreen() {
               placeholder={t('firearms.adjustReasonPlaceholder')}
               testID="adjust-reason"
             />
+            {adjustAttempted && adjustErrors.includes('missingReason') ? (
+              <ThemedText type="small" themeColor="danger" testID="adjust-reason-error">
+                {t('firearms.adjustReasonRequired')}
+              </ThemedText>
+            ) : null}
             <PrimaryButton
               label={t('firearms.adjustSave')}
               onPress={onAdjust}
