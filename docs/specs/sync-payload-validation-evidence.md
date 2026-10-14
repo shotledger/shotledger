@@ -10,10 +10,11 @@ moving the Drizzle tables into the Apache-2.0 `shared/src/sync/`) is the
 precondition of the whole branch. This PR does not merge until the
 maintainer approves.
 
-- **Source state:** `4ac9ac7` on `feature/issue-697-drizzle-zod-mmc9le`:
-  the change on `main` at `e10b2b2`, with `main` at `c966eb5` merged in
-  (`7031519`; #814 adds `firearms.archived_at`, ported to
-  `shared/src/sync/schema.ts`), plus the round-2 fixes.
+- **Source state:** `7bc160a` on `feature/issue-697-drizzle-zod-mmc9le`,
+  with `main` at `31195e0` merged in (`c46c9d8`): #814's
+  `firearms.archived_at`, #819's derived maintenance counter and #812's
+  `maintenance_interval_months` are ported to `shared/src/sync/schema.ts`,
+  which matches `main`'s tables byte for byte. Then the round-3 fixes.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-pool-workers` (backend), Stryker 10.0.0 with the
   vitest runner, fast-check, jest-expo (app). `drizzle-orm` 0.45.4,
@@ -21,28 +22,34 @@ maintainer approves.
 - **Entry point:** `pnpm check` from the repo root, then
   `cd backend && npx vitest run --testTimeout=60000`, then
   `node scripts/manual-mutation-sync-push.mjs` and
-  `npx stryker run --mutate 'shared/src/sync/payload-schemas.ts,shared/src/sync/tables.ts,shared/src/sync/protocol.ts,shared/src/sync-client/engine.ts,shared/src/sync-client/status.ts'`.
+  `npx stryker run --mutate 'shared/src/sync/payload-schemas.ts,shared/src/sync/tables.ts,shared/src/sync/protocol.ts,shared/src/sync-client/engine.ts,shared/src/sync-client/status.ts,shared/src/json-export/types.ts'`
+  and `pnpm mutation:schema`.
 
 ## Spec → tests
 
-| Scenario                                   | Test                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P1 a valid row of every table is applied   | `backend/test/sync-payload-validation.spec.ts` "P1 …" (every table through the real D1 with the CHECK); `payload-schemas.test.ts` "P1 accepts F and S" and the per-table `fullRow` cases                                                                                                                                                                                                                                                                             |
-| P2 a malformed row is refused              | backend "P2 …": one test per row of the Examples table (15 tests); `payload-schemas.test.ts` "P2 a malformed firearm is refused" and the per-column fresh-derivation block                                                                                                                                                                                                                                                                                           |
-| P3 one bad row does not hold the good ones | backend "P3 …" (consecutive seqs around the refusal); "a verdict belongs to its change, not to its clientChangeId" (round-1 F7)                                                                                                                                                                                                                                                                                                                                      |
-| P4 a refusal replays as a duplicate        | backend "P4 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| P5 a tombstone outranks an invalid payload | backend "P5 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| P6 a tombstone is never payload-validated  | backend "P6 …"; `payload-schemas.test.ts` "P6 never checks a tombstone"                                                                                                                                                                                                                                                                                                                                                                                              |
-| P7 the phone counts and clears a refusal   | `backend/test/sync-client.spec.ts` "P7 …" (real engine, real Worker, two devices); `engine.test.ts` §2.3 tests, including "counts every invalid_payload refusal in a push, alongside an applied change" (round-1 F6) and the replayed refusal                                                                                                                                                                                                                        |
-| P8 the web sees the refusal                | backend "P8 …" (`pushChanges` against the real Worker)                                                                                                                                                                                                                                                                                                                                                                                                               |
-| P9 a new column reaches the schema         | `payload-schemas.test.ts` "P9 a column added to a table reaches its schema with no edit here"                                                                                                                                                                                                                                                                                                                                                                        |
-| P10 the CHECK refuses non-JSON             | backend "P10 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| P11 unknown pulled columns are dropped     | `app/src/db/queries/sync-store.test.ts` "drops columns this build does not know and payloads with no id" (existing)                                                                                                                                                                                                                                                                                                                                                  |
-| P12 the refusal count reaches the screen   | `status.test.ts` P12 (the reducer counts `refused` events, no cycle outcome changes the sum); `engine.test.ts` "reports each refusal as it clears, even when a later batch fails the cycle" and "reports a replayed refusal and not an applied or rejected change"; `sync-controller.test.ts` "counts each refusal the engine reports, though the cycle fails after it"; `app/src/features/account/account-screen.test.tsx` (the line with its count, and none at 0) |
-| §2.1 flag and integer classification       | "pins the 0/1 flag columns of every table"; "pins the counting (non-flag) integer columns of every table" (round-1 F4)                                                                                                                                                                                                                                                                                                                                               |
-| §2.5 writer conformance                    | `app/src/db/sync-conformance.test.ts` (demo data, JSON-export import with whole-second `startedAt`); importer tests; `app/src/db/queries/web-*.test.ts` for the web builders; `app/src/features/ammo/quantity.test.ts` (`parseQuantity`, `parseMeasure`) and the `parseMaintenanceInterval` tests; "a real column accepts exactly REAL_MIN..REAL_MAX"                                                                                                                |
+| Scenario                                   | Test                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1 a valid row of every table is applied   | `backend/test/sync-payload-validation.spec.ts` "P1 …" (every table through the real D1 with the CHECK); `payload-schemas.test.ts` "P1 accepts F and S" and the per-table `fullRow` cases                                                                                                                                                                                                                                                                                                 |
+| P2 a malformed row is refused              | backend "P2 …": one test per row of the Examples table (15 tests; the impossible-date row agrees with its envelope); "a settings row whose value is not JSON" through the route; `payload-schemas.test.ts` "P2 a malformed firearm is refused" and the per-column fresh-derivation block                                                                                                                                                                                                 |
+| P3 one bad row does not hold the good ones | backend "P3 …" (consecutive seqs around the refusal); "a verdict belongs to its change, not to its clientChangeId" (round-1 F7)                                                                                                                                                                                                                                                                                                                                                          |
+| P4 a refusal replays as a duplicate        | backend "P4 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| P5 a tombstone outranks an invalid payload | backend "P5 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| P6 a tombstone is never payload-validated  | backend "P6 …"; `payload-schemas.test.ts` "P6 never checks a tombstone"                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| P7 the phone counts and clears a refusal   | `backend/test/sync-client.spec.ts` "P7 …" (real engine, real Worker, two devices); `engine.test.ts` §2.3 tests, including "counts every invalid_payload refusal in a push, alongside an applied change" (round-1 F6) and the replayed refusal                                                                                                                                                                                                                                            |
+| P8 the web sees the refusal                | backend "P8 …" (`pushChanges` against the real Worker)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| P9 a new column reaches the schema         | `payload-schemas.test.ts` "P9 a column added to a table reaches its schema with no edit here"                                                                                                                                                                                                                                                                                                                                                                                            |
+| P10 the CHECK refuses non-JSON             | backend "P10 …"                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| P11 unknown pulled columns are dropped     | `app/src/db/queries/sync-store.test.ts` "drops columns this build does not know and payloads with no id" (existing)                                                                                                                                                                                                                                                                                                                                                                      |
+| P12 the refusal count reaches the screen   | `status.test.ts` P12 (the reducer counts `refused` events, no cycle outcome changes the sum); `engine.test.ts` "reports each refusal as it clears, even when a later batch fails the cycle" and "reports a replayed refusal and not an applied or rejected change"; `sync-controller.test.ts` "counts each refusal the engine reports, though the cycle fails after it"; `app/src/features/account/account-screen.test.tsx` (the line with its count, and none at 0)                     |
+| §2.1 flag and integer classification       | "pins the 0/1 flag columns of every table"; "pins the counting (non-flag) integer columns of every table" (round-1 F4)                                                                                                                                                                                                                                                                                                                                                                   |
+| §2.5 writer conformance                    | `app/src/db/sync-conformance.test.ts` (demo data; a JSON-export import applied with its records, whole-second `startedAt` and `performedAt`); importer tests and `shared/src/json-export/import.test.ts` M6 (a maintenance date must be a UTC instant); `app/src/db/queries/web-*.test.ts` for the web builders; `app/src/features/ammo/quantity.test.ts` (`parseQuantity`, `parseMeasure`) and the `parseMaintenanceInterval` tests; "a real column accepts exactly REAL_MIN..REAL_MAX" |
 
-**RED.** Round 2's fixes were RED first: the engine, reducer and controller
+**RED.** Round 3's fixes were RED first: the conformance test with the
+file's records and whole-second `performedAt` reported
+`maintenance_events:performed_at:custom`, the import test took a date-only
+and an offset `performedAt`, and the new backend date and settings rows
+each failed against a throwaway mutant (round-trip check removed; settings
+skipped in the route). Round 2's fixes were RED first: the engine, reducer and controller
 refusal tests failed (3 failed in shared, 1 in the controller with the
 wiring removed), the account render test failed with `> 0` changed to
 `>= 0`, and the `parseMeasure` and real-bound tests failed before the code.
@@ -72,16 +79,17 @@ passes on `main` and is regression armour.
 
 All numbers from runs at the source state above unless marked.
 
-| Layer            | Command                                                                | Result                                                                                                                                                       |
-| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Full suite       | `NODE_OPTIONS=--max-old-space-size=4096 pnpm check`                    | exit 0; vitest 225 files, 3929 tests; coverage 100% on the gauntlet modules; app jest 831 tests                                                              |
-| Backend          | `npx vitest run --testTimeout=60000`                                   | 28 files, 256 tests, exit 0                                                                                                                                  |
-| Suite health     | the same with `--sequence.shuffle`                                     | 28 files, 256 tests, seed 1791948100055, exit 0                                                                                                              |
-| Manual mutation  | `node scripts/manual-mutation-sync-push.mjs`                           | baseline passes; 18/18 mutants killed (12 atomicity, 6 for this change), exit 0                                                                              |
-| Stryker (scoped) | the command in the entry point                                         | 267 mutants: 263 killed, 2 timed out, 2 survived (equivalent, below); score 99.25% (`payload-schemas.ts` 98.18, `protocol.ts`, `engine.ts`, `status.ts` 100) |
-| Property         | fast-check in `payload-schemas.test.ts`                                | passes (any generated row passes; any single-column corruption fails)                                                                                        |
-| Real execution   | `sync-client.spec.ts` (P7) and `pushChanges` (P8) in workerd           | pass, inside the backend run                                                                                                                                 |
-| Docs             | `mkdocs build --strict`, `docs-anchor-check`, `docs-translation-check` | pass                                                                                                                                                         |
+| Layer            | Command                                                                | Result                                                                                                                                                                                                                                                                                            |
+| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full suite       | `NODE_OPTIONS=--max-old-space-size=4096 pnpm check`                    | exit 0; vitest 232 files, 4247 tests; coverage 100% on the gauntlet modules; app jest 964 tests                                                                                                                                                                                                   |
+| Backend          | `npx vitest run --testTimeout=60000`                                   | 28 files, 258 tests, exit 0                                                                                                                                                                                                                                                                       |
+| Suite health     | the same with `--sequence.shuffle`                                     | 28 files, 258 tests, seed 1791959976623, exit 0                                                                                                                                                                                                                                                   |
+| Manual mutation  | `node scripts/manual-mutation-sync-push.mjs`                           | baseline passes; 19/19 mutants killed (12 atomicity, 7 for this change), exit 0                                                                                                                                                                                                                   |
+| Stryker (scoped) | the command in the entry point                                         | 314 tested: 306 killed, 2 timed out, 6 survived; score 98.09%. `payload-schemas.ts` 98.18 (2 equivalent, below), `protocol.ts`, `engine.ts`, `status.ts` 100. `json-export/types.ts` 91.49: its 4 survivors are in refinements this change does not touch (lines 226 and 275), so they predate it |
+| Property         | fast-check in `payload-schemas.test.ts`                                | passes (any generated row passes; any single-column corruption fails)                                                                                                                                                                                                                             |
+| Real execution   | `sync-client.spec.ts` (P7) and `pushChanges` (P8) in workerd           | pass, inside the backend run                                                                                                                                                                                                                                                                      |
+| Schema mutation  | `pnpm mutation:schema`                                                 | **not completed**: it stops on `main` at `31195e0` on a stale line number in `shared/src/disciplines/schema.ts`, a file this change does not touch (#844); the 12 mutants before it were killed                                                                                                   |
+| Docs             | `mkdocs build --strict`, `docs-anchor-check`, `docs-translation-check` | pass                                                                                                                                                                                                                                                                                              |
 
 **Equivalent mutants.** `catch {}` in `isJsonText` returning `undefined`
 instead of `false` (both falsy to `refine`), and `join('')` for
@@ -142,15 +150,45 @@ inside the tests so the same code runs per test and its mutants are judged.
     it without one); tombstones are not checked beyond the envelope (in
     scope, §2.3); the manual mutation script counts a timeout as a kill.
 
+- **Round 3** at `c46c9d8`, approved by the maintainer (2026-10-14):
+  **failed**. All gauntlet numbers reproduced (one `pnpm check` run hit a
+  jest timeout in an untouched file under load and passed on rerun).
+  Attacked: the apply path's constraints; every timestamp writer on the
+  phone, the importers and the web; skew between web, phone and server;
+  schema probes (2^53, `1e20`, `1e15` in a real, −0, enum case, empty
+  strings, `archived_at`, `settings.value` of `''` and `'null'`); 17
+  on-disk mutants of `payload-schemas.ts` (15 killed, 2 equivalent); route
+  mutants; the drift spec fed a bad file; the conformance helper's scope;
+  the mapping. Findings and what was done:
+  - Behavioural: the JSON-export import stored maintenance `performedAt` as
+    the file named it, so whole seconds, a date alone or an offset was
+    refused on push. The conformance test never applied the file's records,
+    so it could not see this → the format requires a UTC instant, the
+    import stores `toISOString()`, the conformance test applies the
+    records; tests added, manual updated.
+  - Spec gap (the maintainer's): web edits spread the stored row, so after
+    a column change a web edit of an older row is refused until a phone
+    pushes it again → C5, Q6 and release step 0 say so.
+  - Mapping: the backend P2 impossible-date row was refused by the
+    envelope check, not the date check → the envelope now agrees, and the
+    row fails with the date check removed.
+  - Mapping: no route test refused a settings row → a non-JSON `value` is
+    refused through the route, and the manual script kills a mutant that
+    skips settings.
+  - Description: §2.1 gave the wrong `validatePayload` signature → fixed.
+
 **Independent verification: not performed against final source state
-`4ac9ac7`.** Two rounds were performed (the cap); the last verified state
-`7031519` returned failed, and the round-2 fixes listed above are
-unverified. A third round needs the maintainer's approval.
+`7bc160a`.** Three rounds were performed, the third with the maintainer's
+approval; the last verified state `c46c9d8` returned failed, and the
+round-3 fixes listed above are unverified. A fourth round needs the
+maintainer's approval.
 
 ## Known limits
 
 - **Release skew (C5, Q6).** Any column change of a synced table refuses
-  the changes of whichever phones run the other schema until they update.
+  the changes of whichever phones run the other schema until they update,
+  and web edits of rows stored before the change until a phone pushes them
+  again.
 - **Refused changes can be overwritten** by a pull of the same row from
   another device (§2.3).
 - **Foreign keys are not checked** (C14, Q4).
@@ -165,3 +203,8 @@ unverified. A third round needs the maintainer's approval.
   Workers pool, not on a deployed D1.
 - The other unbounded number fields (fält station points, series length,
   the series route's `pos`) are #837, outside this change.
+- **`applyPush`'s `invalid` defaults to an empty set**: the route is its
+  only production caller, and the atomicity tests call it without one.
+- **Tombstones are not shape-checked** beyond the envelope; they cannot
+  wedge a phone (§2.3).
+- **The manual mutation script counts a timeout as a kill.**
