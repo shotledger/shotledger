@@ -108,3 +108,16 @@ PDF av loggen att skriva ut. Låt loggboken skrivas under efter hand, och
 använd appen för att se var du står.
 
 **Inställningar → Säkerhetskopiering och data** exporterar alla pass som data.
+
+## På webben
+
+Med synk påslagen visar **Statistik** i webbappen samma samlade status som
+startsidan på telefonen, högst upp på sidan: **Licensaktivitet** följt av
+**I fas**, **Halkar efter** eller **Inaktiv**. Den räknar alla pass på ditt
+konto, oavsett hur rapportens filter är inställda.
+
+Den syns när en profil är vald under **Inställningar → Efterlevnad**, på
+telefonen eller på webben. Webben kan inte se telefonens språk, så tills du
+väljer visas ingenting. Webben har ännu inga sidor för vapen, så ett vapens
+egna kriterier, och datumet då nästa pass senast ska skjutas för att du ska
+hålla dig i fas, finns än så länge bara på telefonen.

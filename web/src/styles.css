@@ -428,6 +428,15 @@ button.destructive {
   background: var(--background-selected);
 }
 
+.license-activity {
+  margin: 0;
+}
+
+.license-activity .badge.alert {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
 .meter {
   height: 8px;
   border-radius: 4px;
