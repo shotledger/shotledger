@@ -83,6 +83,31 @@ describe('ChoiceChips', () => {
     expect(on.minHeight).toBe(48);
   });
 
+  it('sizes a chip to its label and lets a long label wrap between words (#846)', async () => {
+    await renderWithProviders(
+      <ChoiceChips
+        options={[
+          { value: 'none', label: 'None' },
+          { value: 'cz', label: 'CZ Tactical Sport 2 Orange' },
+          { value: 'mr', label: 'Manurhin MR73 Sport Revolver' },
+        ]}
+        value={['mr']}
+        onChange={jest.fn()}
+      />,
+    );
+    for (const name of ['None', 'CZ Tactical Sport 2 Orange', 'Manurhin MR73 Sport Revolver']) {
+      const chip = StyleSheet.flatten(screen.getByRole('radio', { name }).props.style);
+      // Not stretched or squeezed to share a row: it moves to the next row whole.
+      expect(chip.flex).toBeUndefined();
+      expect(chip.flexGrow).toBe(0);
+      expect(chip.flexShrink).toBe(0);
+      expect(chip.maxWidth).toBe('100%');
+      // No single line cut off with an ellipsis: wider than the row, the
+      // label wraps, and text wraps between words.
+      expect(screen.getByText(name).props.numberOfLines).toBeUndefined();
+    }
+  });
+
   it('puts each option testID on its own chip', async () => {
     const onChange = jest.fn();
     await renderWithProviders(
