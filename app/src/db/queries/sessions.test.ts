@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
@@ -57,12 +57,19 @@ describe('getSession', () => {
 });
 
 describe('updateSession', () => {
-  it('bumps updated_at and applies the patch', async () => {
-    const session = makeSession();
-    await new Promise((r) => setTimeout(r, 2));
-    const updated = updateSession(db, session.id, { name: 'Renamed' });
-    expect(updated?.name).toBe('Renamed');
-    expect(updated?.updatedAt).not.toBe(session.updatedAt);
+  it('bumps updated_at and applies the patch', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-14T10:00:00.000Z'));
+      const session = makeSession();
+      vi.setSystemTime(new Date('2026-10-14T10:00:00.002Z'));
+      const updated = updateSession(db, session.id, { name: 'Renamed' });
+      expect(updated?.name).toBe('Renamed');
+      expect(updated?.updatedAt).toBe('2026-10-14T10:00:00.002Z');
+      expect(session.updatedAt).toBe('2026-10-14T10:00:00.000Z');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('is a no-op on a soft-deleted session', () => {
