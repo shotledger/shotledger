@@ -7,10 +7,12 @@ import {
   formatDay,
 } from '../../app/src/features/dates/format';
 
-// The page's language, without the DOM that ./i18n writes to.
-const i18n = vi.hoisted(() => ({ language: 'en' }));
-vi.mock('./i18n', () => ({ default: i18n }));
+// The page's language, without the DOM that ./i18n writes to. The instance
+// comes from the import, not the factory: files share a worker's module cache
+// (vitest.config.ts), so ./dates may already hold another file's mock of it.
+vi.mock('./i18n', () => ({ default: { language: 'en' } }));
 
+const i18n = (await import('./i18n')).default as { language: string };
 const { dateLocale, showAxisDate, showDate, showDateTime, showDay } = await import('./dates');
 
 function browser(language: string) {
