@@ -17,6 +17,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { createFirearm, type WeaponType } from '@/db/queries/firearms';
+import { parseMaintenanceInterval } from '@/features/firearms/round-adjustment';
 
 const WEAPON_TYPES: WeaponType[] = ['pistol', 'revolver', 'rifle', 'airgun'];
 
@@ -41,7 +42,9 @@ export default function NewFirearmScreen() {
 
   function onCreate() {
     if (!canCreate) return;
-    const interval = Number(maintenanceIntervalRounds);
+    // As the detail screen's Save (parseMaintenanceInterval); input it refuses
+    // is stored as no interval, as unreadable input always was here.
+    const interval = parseMaintenanceInterval(maintenanceIntervalRounds);
     const firearm = createFirearm(db, {
       make: make.trim(),
       model: model.trim(),
@@ -52,8 +55,7 @@ export default function NewFirearmScreen() {
       vapenId: vapenId.trim() || null,
       loadSystem,
       notes: notes.trim() || null,
-      maintenanceIntervalRounds:
-        maintenanceIntervalRounds.trim() && Number.isFinite(interval) ? interval : null,
+      maintenanceIntervalRounds: interval.ok ? interval.interval : null,
     });
     router.replace(`/firearms/${firearm.id}`);
   }

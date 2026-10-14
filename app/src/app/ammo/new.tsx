@@ -15,6 +15,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { createAmmoLot } from '@/db/queries/ammo-lots';
+import { parseQuantity } from '@/features/ammo/quantity';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 
@@ -60,7 +61,7 @@ export default function NewAmmoLotScreen() {
     createAmmoLot(db, {
       label: label.trim(),
       caliber,
-      quantity: numberOrNull(quantity),
+      quantity: parseQuantity(quantity),
       purchasedOn: purchasedOn.trim() || null,
       isHandload,
       brand: isHandload ? null : brand.trim() || null,

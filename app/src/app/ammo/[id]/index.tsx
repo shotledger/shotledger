@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getAmmoLot, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
+import { parseQuantity } from '@/features/ammo/quantity';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 
@@ -75,7 +76,7 @@ export default function AmmoLotDetailScreen() {
     updateAmmoLot(db, lot.id, {
       label: label.trim(),
       caliber,
-      quantity: numberOrNull(quantity),
+      quantity: parseQuantity(quantity),
       purchasedOn: purchasedOn.trim() || null,
       isHandload,
       brand: isHandload ? null : brand.trim() || null,
