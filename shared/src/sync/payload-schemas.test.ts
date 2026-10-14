@@ -12,7 +12,7 @@ import {
   PAYLOAD_SCHEMAS,
   validatePayload,
 } from './payload-schemas';
-import { SYNC_TABLE_NAMES, type SyncTableName } from './protocol';
+import { REAL_MAX, REAL_MIN, SYNC_TABLE_NAMES, type SyncTableName } from './protocol';
 
 const NOW = '2026-08-01T10:00:00.000Z';
 
@@ -341,6 +341,17 @@ describe('derivation from the Drizzle tables (C1)', () => {
       session_tags: [],
       settings: [],
     });
+  });
+
+  // REAL_MIN/REAL_MAX are what drizzle-zod allows a SQLite real column; the
+  // phone's measure fields hold typed values to them (round-2 verification).
+  it('a real column accepts exactly REAL_MIN..REAL_MAX', () => {
+    const lot = (bullet_weight_gr: number) =>
+      live('ammo_lots', fullRow('ammo_lots', 'a1', { bullet_weight_gr, updated_at: NOW }), 'a1');
+    expect(validatePayload(lot(REAL_MAX)).ok).toBe(true);
+    expect(validatePayload(lot(REAL_MIN)).ok).toBe(true);
+    expect(validatePayload(lot(REAL_MAX + 1)).ok).toBe(false);
+    expect(validatePayload(lot(REAL_MIN - 1)).ok).toBe(false);
   });
 
   it('is_own (boolean mode) is not an integer flag', () => {

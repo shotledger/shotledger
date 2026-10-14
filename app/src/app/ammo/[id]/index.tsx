@@ -17,14 +17,9 @@ import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { getAmmoLot, updateAmmoLot } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
-import { parseQuantity } from '@/features/ammo/quantity';
+import { parseMeasure, parseQuantity } from '@/features/ammo/quantity';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
-
-function numberOrNull(value: string): number | null {
-  const n = Number(value);
-  return value.trim() && Number.isFinite(n) ? n : null;
-}
 
 export default function AmmoLotDetailScreen() {
   const { t } = useTranslation();
@@ -60,8 +55,8 @@ export default function AmmoLotDetailScreen() {
   const [crimpMm, setCrimpMm] = useState(lot?.crimpMm != null ? String(lot.crimpMm) : '');
   const [notes, setNotes] = useState(lot?.notes ?? '');
 
-  const derivedPowerFactor = powerFactor(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
-  const derivedEnergy = muzzleEnergyJoules(numberOrNull(bulletWeightGr), numberOrNull(velocityMps));
+  const derivedPowerFactor = powerFactor(parseMeasure(bulletWeightGr), parseMeasure(velocityMps));
+  const derivedEnergy = muzzleEnergyJoules(parseMeasure(bulletWeightGr), parseMeasure(velocityMps));
 
   if (!lot) {
     return (
@@ -84,14 +79,14 @@ export default function AmmoLotDetailScreen() {
       lotNumber: isHandload ? null : lotNumber.trim() || null,
       bulletMake: bulletMake.trim() || null,
       bulletModel: bulletModel.trim() || null,
-      bulletWeightGr: numberOrNull(bulletWeightGr),
-      velocityMps: numberOrNull(velocityMps),
+      bulletWeightGr: parseMeasure(bulletWeightGr),
+      velocityMps: parseMeasure(velocityMps),
       powder: isHandload ? powder.trim() || null : null,
-      powderChargeGr: isHandload ? numberOrNull(powderChargeGr) : null,
+      powderChargeGr: isHandload ? parseMeasure(powderChargeGr) : null,
       primer: isHandload ? primer.trim() || null : null,
       brass: isHandload ? brass.trim() || null : null,
-      colMm: isHandload ? numberOrNull(colMm) : null,
-      crimpMm: isHandload ? numberOrNull(crimpMm) : null,
+      colMm: isHandload ? parseMeasure(colMm) : null,
+      crimpMm: isHandload ? parseMeasure(crimpMm) : null,
       notes: notes.trim() || null,
     });
     router.back();
