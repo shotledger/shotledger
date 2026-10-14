@@ -25,6 +25,7 @@ import { parseSeriesText, type SeriesTextError } from '@shotledger/shared/src/sc
 import type { SessionEntryDraft } from '@shotledger/shared/src/sync-client/session-entry';
 
 import type { CompetitionLevel } from '../../../app/src/features/session/labels';
+import { parseSeriesLength } from '../../../app/src/features/session/series-length';
 
 export type SessionType = 'training' | 'competition';
 /** Scored series, or rounds fired only (docs/specs/web-rounds-final-spec.md). */
@@ -300,12 +301,6 @@ export function startedAtIso(date: string, time: string): string | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
-/** Blank or not a positive whole number falls back to the default, as on the phone. */
-function chosenSeriesLength(text: string): number | null {
-  const parsed = Number(text);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
 export function toDraft(form: EntryForm, defaultName: string): SessionEntryDraft {
   return {
     type: form.type,
@@ -324,7 +319,7 @@ export function toDraft(form: EntryForm, defaultName: string): SessionEntryDraft
     firearmId: form.firearmId,
     ammoLotId: form.ammoLotId,
     decimalScoring: decimalShown(form) && form.decimalScoring,
-    seriesLength: programOf(form) ? null : chosenSeriesLength(form.seriesLengthText),
+    seriesLength: programOf(form) ? null : parseSeriesLength(form.seriesLengthText),
     series: form.rows.map(({ text, isSighter, isFinal, photo }) => ({
       text,
       isSighter,
@@ -369,7 +364,7 @@ export function withRowPhoto(form: EntryForm, key: number, photo: number | undef
 export function seriesLengthOf(form: EntryForm): number {
   return (
     programOf(form)?.shotsPerSeries ??
-    chosenSeriesLength(form.seriesLengthText) ??
+    parseSeriesLength(form.seriesLengthText) ??
     requireDiscipline(form.disciplineId).defaultSeriesLength
   );
 }
