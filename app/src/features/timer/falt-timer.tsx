@@ -39,6 +39,7 @@ import { Chip } from '@/components/chip';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { InfoButton } from '@/components/info-button';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { Slider } from '@/components/slider';
@@ -366,10 +367,10 @@ export function FaltTimer({ modeSelector }: FaltTimerProps) {
       )}
       <View style={styles.row}>
         <View style={styles.flex}>
-          <PrimaryButton label={t('faltTimer.restart')} onPress={restart} testID="falt-restart" />
+          <SecondaryButton label={t('faltTimer.restart')} onPress={restart} testID="falt-restart" />
         </View>
         <View style={styles.flex}>
-          <PrimaryButton label={t('faltTimer.settings')} onPress={reset} testID="falt-reset" />
+          <SecondaryButton label={t('faltTimer.settings')} onPress={reset} testID="falt-reset" />
         </View>
       </View>
     </Screen>

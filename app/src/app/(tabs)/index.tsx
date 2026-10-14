@@ -1,57 +1,56 @@
+// Home (#822, direction A "Instrument"): what to do today leads, not lifetime
+// counts. Top to bottom:
+//
+// 1. The licence status in words, which can change what you do today.
+// 2. The next action: Start, on the last session's discipline and firearm,
+//    the one primary button. It opens New Session with those preselected
+//    (`lastSessionDefaults`); Change opens the same form to pick another.
+// 3. The last session's result.
+// 4. Recent sessions, with All Sessions for the rest.
+//
+// The lifetime totals (shots, sessions, competitions) moved to Statistics,
+// and the New Session button no longer floats over the list: Start does its
+// job from the top of the screen.
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
-import { ScreenTitle } from '@/components/screen-title';
-import { Chip } from '@/components/chip';
+import { Button } from '@/components/button';
+import { Card } from '@/components/card';
 import { ConfirmSheet } from '@/components/confirm-sheet';
 import { EmptyState } from '@/components/empty-state';
-import { FAB } from '@/components/fab';
-import { ListRow } from '@/components/list-row';
-import { TagChips } from '@/components/tag-chips';
 import { Screen } from '@/components/screen';
-import { SegmentedControl } from '@/components/segmented-control';
-import { StatTile } from '@/components/stat-tile';
+import { ScreenTitle } from '@/components/screen-title';
 import { SwipeAction } from '@/components/swipe-action';
+import { TagChips } from '@/components/tag-chips';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { deleteSessionAndSeries } from '@/db/queries/round-count';
 import { nextSessionDeadline } from '@/features/compliance/next-session';
-import { useOverallLicenseActivity } from '@/features/compliance/use-license-activity';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
-import {
-  filterSessionRowsByShape,
-  formatSeriesAverage,
-  formatSessionTotal,
-  type HomeSessionRow,
-  type SessionShapeFilter,
-} from '@/features/home/home-session-row';
-import { useHomeData } from '@/features/home/use-home-data';
-import { formatFaltResult } from '@/features/session/format-falt-result';
-import { Radius, Spacing } from '@/theme/tokens';
+import { useOverallLicenseActivity } from '@/features/compliance/use-license-activity';
 import { useDateFormat } from '@/features/dates/use-date-format';
-
-const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
-  green: 'neutral',
-  amber: 'primary',
-  red: 'primary',
-};
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+import { formatSessionTotal, type HomeSessionRow } from '@/features/home/home-session-row';
+import { LicenseActivityLine } from '@/features/home/license-activity-line';
+import { useHomeData } from '@/features/home/use-home-data';
+import { useFeatures } from '@/features/settings/feature-visibility';
+import { disciplineLabel } from '@/features/session/labels';
+import { SessionRow, useSessionResultLine } from '@/features/sessions/session-row';
+import { typeShownBesideTags, withoutDateSuffix } from '@/features/sessions/session-row-format';
+import { localDayOf } from '@/features/dates/local-day';
+import { Spacing, TabularNums } from '@/theme/tokens';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const dates = useDateFormat();
   const router = useRouter();
-  const { shotsLoggedTotal, sessionCount, competitionCount, latestSessions, refresh } =
-    useHomeData();
+  const { latestSessions, start, refresh } = useHomeData();
   const { profile } = useComplianceProfile();
+  const features = useFeatures();
   const { overall, lapseIso } = useOverallLicenseActivity(profile);
-  const [shapeFilter, setShapeFilter] = useState<SessionShapeFilter>('all');
+  const resultLine = useSessionResultLine();
   const [pendingDelete, setPendingDelete] = useState<HomeSessionRow | null>(null);
 
   const onNewSession = () => router.push('/session/new');
@@ -63,55 +62,36 @@ export default function HomeScreen() {
     refresh();
   }
 
-  const shapeFilterOptions = [
-    { value: 'all' as const, label: t('home.filterAll') },
-    { value: 'series' as const, label: t('home.shapeSeries') },
-    { value: 'roundsOnly' as const, label: t('home.shapeRounds') },
-  ];
-
-  const filteredSessions = filterSessionRowsByShape(latestSessions, shapeFilter);
+  const [last, ...recent] = latestSessions;
+  const lastResult = last ? resultLine(last) : null;
+  const allSessions = (
+    <Button
+      variant="text"
+      testID="home-see-all-sessions"
+      label={t('homeA.allSessions')}
+      onPress={() => router.push('/sessions')}
+    />
+  );
 
   return (
-    <Screen
-      fab={<FAB label={t('home.newSession')} onPress={onNewSession} testID="new-session-fab" />}
-    >
+    <Screen>
       <ScreenTitle>{t('home.title')}</ScreenTitle>
 
-      <View style={styles.statsRow}>
-        <StatTile
-          align="center"
-          testID="home-stat-shots-logged"
-          label={t('home.shotsLoggedTotal')}
-          value={String(shotsLoggedTotal)}
-        />
-        <StatTile
-          align="center"
-          testID="home-stat-sessions"
-          label={t('home.sessionsTotal')}
-          value={String(sessionCount)}
-        />
-        <StatTile
-          align="center"
-          testID="home-stat-competitions"
-          label={t('home.competitionsTotal')}
-          value={String(competitionCount)}
-        />
-      </View>
-
-      {profile && overall && (
-        <Chip
-          testID="home-barometer"
-          label={t(`compliance.licenseActivity${capitalize(overall)}`)}
-          tone={LICENSE_ACTIVITY_TONE[overall]}
+      {/* The status opens the License Check, which says what to do about it (#804). */}
+      {features.licenseActivity && profile && overall && (
+        <LicenseActivityLine
+          testID="home-license-check"
+          status={overall}
+          detail={
+            lapseIso
+              ? t('compliance.nextSessionBy', { date: dates.date(nextSessionDeadline(lapseIso)) })
+              : null
+          }
+          onPress={() => router.push('/compliance')}
         />
       )}
-      {profile && lapseIso && (
-        <ThemedText type="small" themeColor="textSecondary" testID="home-next-session">
-          {t('compliance.nextSessionBy', { date: dates.date(nextSessionDeadline(lapseIso)) })}
-        </ThemedText>
-      )}
 
-      {latestSessions.length === 0 ? (
+      {last === undefined || start === null ? (
         <EmptyState
           title={t('home.emptyTitle')}
           body={t('home.emptyBody')}
@@ -119,82 +99,121 @@ export default function HomeScreen() {
           onPressCta={onNewSession}
         />
       ) : (
-        <View style={styles.list}>
-          <View style={styles.listHeader}>
-            <ThemedText type="smallBold">{t('home.latestSessions')}</ThemedText>
-          </View>
-          <SegmentedControl
-            testID="home-shape-filter"
-            options={shapeFilterOptions}
-            value={shapeFilter}
-            onChange={setShapeFilter}
-          />
-          {filteredSessions.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('home.filterEmpty')}
-            </ThemedText>
-          ) : (
-            filteredSessions.map((session, index) => (
-              <Swipeable
-                key={session.id}
-                overshootRight={false}
-                renderRightActions={() => (
-                  <View style={styles.rowActions}>
-                    <SwipeAction
-                      kind="share"
-                      label={t('home.shareSession')}
-                      onPress={() => router.push(`/session/${session.id}/share`)}
-                      testID={`home-session-${index}-share`}
-                    />
-                    <SwipeAction
-                      kind="delete"
-                      label={t('common.deleteSession')}
-                      onPress={() => setPendingDelete(session)}
-                      testID={`home-session-${index}-delete`}
-                    />
-                  </View>
-                )}
+        <>
+          <View style={styles.next}>
+            <Button
+              variant="primary"
+              testID="home-start"
+              label={
+                start.disciplineId
+                  ? t('homeA.start', { discipline: disciplineLabel(t, start.disciplineId) })
+                  : t('home.newSession')
+              }
+              onPress={onNewSession}
+            />
+            <View style={styles.nextDetail}>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.nextFirearm}
+                testID="home-start-firearm"
               >
-                <ListRow
-                  testID={`home-session-${index}`}
-                  title={session.name}
-                  subtitle={[
-                    dates.date(session.startedAt),
-                    session.falt
-                      ? formatFaltResult(t, session.falt)
-                      : formatSessionTotal(session.total),
-                    // Average and inner-ten count are omitted, never printed
-                    // as 0/NaN, when the session has nothing scored yet
-                    // (spec B-L2).
-                    session.seriesAverage === null
-                      ? null
-                      : formatSeriesAverage(session.seriesAverage),
-                    session.seriesAverage === null ? null : `${session.innerTenCount}X`,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  below={<TagChips names={session.tags} testID={`home-session-${index}-tags`} />}
-                  trailing={<Chip label={t(`sessionType.${session.type}`)} />}
-                  onPress={() => router.push(`/session/${session.id}`)}
-                />
-              </Swipeable>
-            ))
-          )}
-          {/* Home shows ten; the other 257 were once reachable only by deep
-              link (#317). At the END of the list, not in its header: the
-              moment you want it is after reading the ten latest and not
-              finding what you were after (maintainer, 2026-09-20). */}
+                {start.firearmName ?? ''}
+              </ThemedText>
+              <Button
+                variant="text"
+                testID="home-change"
+                label={t('homeA.change')}
+                onPress={onNewSession}
+              />
+            </View>
+          </View>
+
           <Pressable
             accessibilityRole="button"
-            testID="home-see-all-sessions"
-            onPress={() => router.push('/sessions')}
-            style={({ pressed }) => [styles.seeAll, pressed && styles.seeAllPressed]}
+            testID="home-last-session"
+            onPress={() => router.push(`/session/${last.id}`)}
+            style={({ pressed }) => pressed && styles.pressed}
           >
-            <ThemedText type="linkPrimary">
-              {t('home.seeAllSessions', { count: sessionCount })}
-            </ThemedText>
+            <Card>
+              <ThemedText type="small" themeColor="textSecondary">
+                {[
+                  t('homeA.lastSession'),
+                  dates.date(last.startedAt),
+                  typeShownBesideTags(last.type, last.tags) ? t(`sessionType.${last.type}`) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </ThemedText>
+              <View style={styles.lastRow}>
+                <View style={styles.lastText}>
+                  <ThemedText type="smallBold">
+                    {withoutDateSuffix(last.name, [
+                      dates.date(last.startedAt),
+                      localDayOf(last.startedAt),
+                    ])}
+                  </ThemedText>
+                  {lastResult ? (
+                    <ThemedText
+                      type="small"
+                      themeColor="textSecondary"
+                      testID="home-last-session-result"
+                    >
+                      {lastResult}
+                    </ThemedText>
+                  ) : null}
+                </View>
+                {last.falt === null && last.seriesAverage !== null && (
+                  <ThemedText type="score" style={TabularNums} testID="home-last-session-total">
+                    {formatSessionTotal(last.total)}
+                  </ThemedText>
+                )}
+              </View>
+              <TagChips names={last.tags} testID="home-last-session-tags" />
+            </Card>
           </Pressable>
-        </View>
+
+          {recent.length > 0 ? (
+            <View style={styles.list}>
+              <View style={styles.listHeader}>
+                <ThemedText type="smallBold" accessibilityRole="header">
+                  {t('homeA.recent')}
+                </ThemedText>
+                {allSessions}
+              </View>
+              {recent.map((session, index) => (
+                <Swipeable
+                  key={session.id}
+                  overshootRight={false}
+                  renderRightActions={() => (
+                    <View style={styles.rowActions}>
+                      <SwipeAction
+                        kind="share"
+                        label={t('home.shareSession')}
+                        onPress={() => router.push(`/session/${session.id}/share`)}
+                        testID={`home-session-${index}-share`}
+                      />
+                      <SwipeAction
+                        kind="delete"
+                        label={t('common.deleteSession')}
+                        onPress={() => setPendingDelete(session)}
+                        testID={`home-session-${index}-delete`}
+                      />
+                    </View>
+                  )}
+                >
+                  <SessionRow
+                    testID={`home-session-${index}`}
+                    session={session}
+                    onPress={() => router.push(`/session/${session.id}`)}
+                  />
+                </Swipeable>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.allAlone}>{allSessions}</View>
+          )}
+        </>
       )}
       <ConfirmSheet
         visible={pendingDelete !== null}
@@ -212,22 +231,28 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  listHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  seeAll: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Radius.medium,
-  },
-  seeAllPressed: { opacity: 0.6 },
-  statsRow: {
+  next: { gap: Spacing.one },
+  nextDetail: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  list: {
-    gap: Spacing.one,
-  },
-  rowActions: {
+  nextFirearm: { flexShrink: 1 },
+  lastRow: {
     flexDirection: 'row',
-    gap: Spacing.one,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
   },
+  lastText: { flex: 1, gap: Spacing.half },
+  listHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  list: { gap: Spacing.one },
+  rowActions: { flexDirection: 'row', gap: Spacing.one },
+  allAlone: { alignItems: 'flex-start' },
+  pressed: { opacity: 0.6 },
 });

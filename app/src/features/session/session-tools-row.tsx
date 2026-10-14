@@ -1,5 +1,8 @@
-// The two things a shooter reaches for mid-session, as a pair of buttons
-// rather than a pair of permanent panels.
+// The two things a shooter reaches for mid-session, as a pair of text
+// buttons rather than a pair of permanent panels. Text, not outlined: they
+// are tools beside the result, and outlined buttons between the session's
+// name and its result read as the screen's main actions (#822, finding
+// "Order on session detail"); the screen puts them under the result.
 //
 // The stopwatch used to sit expanded at the top of the session view. Many
 // shooters bring their own — a phone stopwatch, a wrist timer, the range
@@ -15,11 +18,12 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheet } from '@/components/bottom-sheet';
-import { SecondaryButton } from '@/components/secondary-button';
+import { Button } from '@/components/button';
 import { db } from '@/db/client';
 import { listSightSettings } from '@/db/queries/sight-settings';
 import { SessionSightsSheet } from '@/features/session/session-sights-sheet';
 import { SessionStopwatch } from '@/features/session/session-stopwatch';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
 
 export interface SessionToolsRowProps {
@@ -33,6 +37,8 @@ type OpenSheet = 'none' | 'stopwatch' | 'sights';
 export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowProps) {
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<OpenSheet>('none');
+  // Sight settings hidden (#801): the stopwatch alone.
+  const { sightSettings: showSights } = useFeatures();
   const [sightSettings, setSightSettings] = useState<ReturnType<typeof listSightSettings>>([]);
 
   function loadSights() {
@@ -45,22 +51,24 @@ export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowP
   return (
     <>
       <View style={styles.row}>
-        <SecondaryButton
+        <Button
+          variant="text"
           label={t('session.stopwatchButton')}
           onPress={() => setSheet('stopwatch')}
-          style={styles.button}
           testID="session-open-stopwatch"
         />
-        <SecondaryButton
-          label={t('session.menuSights')}
-          onPress={() => {
-            loadSights();
-            setSheet('sights');
-          }}
-          disabled={sightsFirearmId === null}
-          style={styles.button}
-          testID="session-open-sights"
-        />
+        {showSights && (
+          <Button
+            variant="text"
+            label={t('session.menuSights')}
+            onPress={() => {
+              loadSights();
+              setSheet('sights');
+            }}
+            disabled={sightsFirearmId === null}
+            testID="session-open-sights"
+          />
+        )}
       </View>
 
       {/* The stopwatch keeps running when the sheet closes — it is the
@@ -89,9 +97,7 @@ export function SessionToolsRow({ sessionId, sightsFirearmId }: SessionToolsRowP
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  button: {
-    flex: 1,
   },
 });

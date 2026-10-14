@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../test-db';
 import { addFirearmGroup } from '../queries/firearm-groups';
 import { createAmmoLot } from '../queries/ammo-lots';
-import { createFirearm, listFirearms } from '../queries/firearms';
+import { archiveFirearm, createFirearm, listFirearms } from '../queries/firearms';
 import { addLicense, listLicenses } from '../queries/licenses';
 import { addSeries, listSeriesForSession } from '../queries/series';
 import { createSession, listExternalRefs, sumExtraRounds } from '../queries/sessions';
@@ -50,6 +50,7 @@ function seed(db: Database) {
     loadSystem: 'halvautomat',
     isOwn: false,
     maintenanceIntervalRounds: 500,
+    maintenanceIntervalMonths: 6,
   });
   addFirearmGroup(db, { firearmId: firearm.id, groupId: 'spsf:C' });
   const license = addLicense(db, {
@@ -235,6 +236,8 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
       vapenId: 'SE-TEST-0001',
       loadSystem: 'halvautomat',
       maintenanceIntervalRounds: 500,
+      archivedAt: null,
+      maintenanceIntervalMonths: 6,
     });
     expect(listLicenses(db, firearm.id)).toMatchObject([
       {
@@ -246,6 +249,21 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
         authority: 'Polismyndigheten',
       },
     ]);
+  });
+
+  it('keeps an archived firearm archived, with its sessions (#799)', () => {
+    const db = createTestDb();
+    const { firearm, sessionA } = seed(db);
+    const archivedAt = archiveFirearm(db, firearm.id)!.archivedAt;
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    expect(listFirearms(db)[0]?.archivedAt).toBe(archivedAt);
+    const imported = db.select().from(sessions).where(eq(sessions.id, sessionA.id)).get();
+    expect(imported?.firearmId).toBe(firearm.id);
   });
 
   it('links the session to the firearm the file names by id', () => {

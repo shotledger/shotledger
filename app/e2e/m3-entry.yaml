@@ -13,8 +13,8 @@ appId: app.shotledger
     visible: 'Home'
     timeout: 30000
 - takeScreenshot: m3-01-home
-- tapOn:
-    id: 'new-session-fab'
+# A first session: Home's empty state offers it (#822 removed the FAB).
+- tapOn: 'Log Your First Session'
 
 # New-session form: precision is the default discipline; pick vapengrupp C
 # and klass 2 (displayed together as "C 2", SHB F.2.6).

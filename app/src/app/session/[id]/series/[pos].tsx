@@ -1,6 +1,15 @@
-// Series entry (§4 M3): the ScoreKeypad bound to one series. All keypad
-// behavior lives in shared/scoring/entry.ts; this screen seeds the state
-// from the stored shots, persists on save, and offers the per-series photo.
+// Series entry (§4 M3; #822 direction A, "Entering a series"): the
+// ScoreKeypad bound to one series. All keypad behaviour lives in
+// shared/scoring/entry.ts; this screen seeds the state from the stored shots,
+// persists on save, and offers the per-series photo.
+//
+// Layout: what to read (the title, the gold hint, the earlier series, the
+// photo) scrolls at the top; everything a thumb presses — the running totals,
+// the shot cells, the tool row, the keys and the one primary action — is
+// pinned to the bottom of the screen. Next Series saves this series and opens
+// the next one; it never fires on its own after the last shot, because the
+// shooter may still need to correct one (maintainer, 2026-10-14). On the last
+// series of a fixed format the action is Save Series.
 //
 // A series reached via "Add Series" (`?new=1`) does not exist in the database
 // yet — it is created here, by Save, and only when there is something to
@@ -11,13 +20,13 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { createKeypadState, enteredShots, type KeypadState } from '@shotledger/shared';
 
-import { Card } from '@/components/card';
-import { Chip } from '@/components/chip';
+import { Header } from '@/components/header';
 import { PrimaryButton } from '@/components/primary-button';
-import { ScoreKeypad } from '@/components/score-keypad';
+import { SecondaryButton } from '@/components/secondary-button';
+import { formatScore, KeypadTool, ScoreKeypad } from '@/components/score-keypad';
 import type { Celebration } from '@/components/series-celebration';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
@@ -29,23 +38,45 @@ import {
   setSeriesSighter,
   updateSeries,
 } from '@/db/queries/series';
+import { loadLastTime } from '@/features/session-entry/last-time';
+import {
+  liveSessionTotals,
+  nextSeriesTarget,
+  seriesCountOf,
+} from '@/features/session-entry/series-entry-model';
 import {
   celebratesDiscipline,
   celebrationTier,
   tierToCelebrate,
   type CelebrationTier,
 } from '@/features/session/celebration';
+import { disciplineLabel } from '@/features/session/labels';
 import { pickSeriesPhoto } from '@/features/session/pick-photo';
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { keepSeriesPhoto } from '@/platform/series-photos';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing } from '@/theme/tokens';
+import { useFeatures } from '@/features/settings/feature-visibility';
+import { Radius, Spacing, TabularNums } from '@/theme/tokens';
 
-export default function SeriesEntryScreen() {
+/**
+ * Next Series replaces this route with the next series' one. Keyed by the
+ * series, so the keypad, the photo and the celebration state start afresh
+ * even where the router reuses the screen instance.
+ */
+export default function SeriesEntryRoute() {
+  const { id, pos } = useLocalSearchParams<{ id: string; pos: string }>();
+  return <SeriesEntryScreen key={`${id}:${pos}`} />;
+}
+
+/** Whether `persist` kept the series (or had nothing to keep) or left the screen itself. */
+type PersistOutcome = 'saved' | 'nothing' | 'left';
+
+function SeriesEntryScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
+  const features = useFeatures();
   const { id, pos, final } = useLocalSearchParams<{
     id: string;
     pos: string;
@@ -108,9 +139,35 @@ export default function SeriesEntryScreen() {
   const [celebration, setCelebration] = useState<Celebration | null>(null);
   const currentTier = tierOf(state, isSighter);
 
-  function onKeypadChange(next: KeypadState) {
-    setState(next);
-    const reached = tierToCelebrate(highestTier.current, tierOf(next, isSighter));
+  const shots = enteredShots(state);
+  const current = { rowId: row?.id ?? null, position, isFinal, isSighter, shots };
+  const sessionTotals = liveSessionTotals(
+    detail.seriesRows,
+    current,
+    detail.session?.innerTenCount ?? null,
+  );
+  // Read once, as if this series were scored; a sighter compares with nothing.
+  const [lastTimeScored] = useState(() =>
+    detail.session
+      ? loadLastTime(detail.session, detail.seriesRows, {
+          rowId: row?.id ?? null,
+          position,
+          isFinal,
+          isSighter: false,
+        })
+      : null,
+  );
+  const lastTime = isSighter ? null : lastTimeScored;
+  const next = nextSeriesTarget(detail.seriesRows, { position, isFinal }, detail.isFixedFormat);
+  const seriesCount = seriesCountOf(detail.seriesRows, isFinal, detail.isFixedFormat);
+  const isBlank = shots.length === 0 && photoUri === null && !isSighter;
+  const earlier = detail.seriesRows
+    .filter((other) => other.id !== row?.id && other.isFinal === isFinal)
+    .sort((a, b) => a.position - b.position);
+
+  function onKeypadChange(nextState: KeypadState) {
+    setState(nextState);
+    const reached = tierToCelebrate(highestTier.current, tierOf(nextState, isSighter));
     if (reached === null) return;
     highestTier.current = reached;
     setCelebration((prev) => ({ tier: reached, id: (prev?.id ?? 0) + 1 }));
@@ -130,8 +187,8 @@ export default function SeriesEntryScreen() {
     if (row) updateSeries(db, row.id, { photoUri: kept });
   }
 
-  function onSave() {
-    const shots = enteredShots(state).map((shot) => ({
+  function persist(): PersistOutcome {
+    const toSave = shots.map((shot) => ({
       valueTenths: shot.valueTenths,
       isInnerTen: shot.isInnerTen,
     }));
@@ -140,10 +197,7 @@ export default function SeriesEntryScreen() {
     if (seriesId === undefined) {
       // Nothing entered, nothing to keep: saving a blank new series would
       // recreate exactly the empty row this flow exists to avoid.
-      if (shots.length === 0 && photoUri === null && !isSighter) {
-        router.back();
-        return;
-      }
+      if (isBlank) return 'nothing';
       try {
         seriesId = addSeries(db, {
           sessionId: id,
@@ -156,13 +210,13 @@ export default function SeriesEntryScreen() {
         if (error instanceof SighterLimitExceededError) {
           Alert.alert(t('session.sighterUsed'));
           router.back();
-          return;
+          return 'left';
         }
         throw error;
       }
     }
 
-    saveSeriesShots(db, seriesId, shots);
+    saveSeriesShots(db, seriesId, toSave);
 
     if (row && isSighter !== (row.isSighter ?? false)) {
       try {
@@ -174,30 +228,151 @@ export default function SeriesEntryScreen() {
         if (error instanceof SighterLimitExceededError) {
           Alert.alert(t('session.sighterUsed'));
           router.back();
-          return;
+          return 'left';
         }
         throw error;
       }
     }
-
-    router.back();
+    return 'saved';
   }
 
-  return (
-    <Screen
-      footer={<PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />}
-    >
-      <View style={styles.header}>
-        <ThemedText type="subtitle" style={styles.title}>
-          {t('session.seriesTitle', { position })}
-        </ThemedText>
-        <View style={styles.badges}>
-          {isSighter && <Chip label={t('session.sighter')} />}
-          {row?.timeLimitSeconds != null && (
-            <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
-          )}
+  function onSave() {
+    if (persist() !== 'left') router.back();
+  }
+
+  function onNext() {
+    if (!next || persist() === 'left') return;
+    const finalParam = next.isFinal ? '&final=1' : '';
+    // Always the keypad: the shooter is on it, mid-session. Photo scoring
+    // stays one tap away in the tool row.
+    router.replace(
+      next.isNew
+        ? `/session/${id}/series/${next.position}?new=1${finalParam}`
+        : `/session/${id}/series/${next.position}`,
+    );
+  }
+
+  const disciplineName = detail.session ? disciplineLabel(t, detail.session.disciplineId) : '';
+  const subtitle = [
+    disciplineName,
+    // Shown here only when the tool row cannot: the sighter appears once.
+    isSighter && !showSighterOption ? t('session.sighter') : null,
+    row?.timeLimitSeconds != null
+      ? t('session.timeLimit', { seconds: row.timeLimitSeconds })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const totals = (
+    <>
+      <View
+        style={styles.stat}
+        accessible
+        accessibilityLabel={`${t('entryA.sessionTotal')} ${formatScore(sessionTotals.totalTenths)}, ${t('entryA.innerTens', { count: sessionTotals.innerTens })}`}
+      >
+        <View style={styles.valueRow}>
+          <ThemedText type="headline" style={TabularNums} testID="session-running-total">
+            {formatScore(sessionTotals.totalTenths)}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={TabularNums}>
+            {t('entryA.innerTens', { count: sessionTotals.innerTens })}
+          </ThemedText>
         </View>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('entryA.sessionTotal')}
+        </ThemedText>
       </View>
+      {lastTime && (
+        <View
+          style={styles.stat}
+          accessible
+          accessibilityLabel={`${t('entryA.lastTime')} ${formatScore(lastTime.totalTenths)}`}
+          testID="last-time"
+        >
+          <View style={styles.valueRow}>
+            <ThemedText type="headline" themeColor="textSecondary" style={TabularNums}>
+              {formatScore(lastTime.totalTenths)}
+            </ThemedText>
+            {lastTime.innerTens !== null && (
+              <ThemedText type="small" themeColor="textSecondary" style={TabularNums}>
+                {t('entryA.innerTens', { count: lastTime.innerTens })}
+              </ThemedText>
+            )}
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('entryA.lastTime')}
+          </ThemedText>
+        </View>
+      )}
+    </>
+  );
+
+  const tools = (
+    <>
+      {/* Target photos hidden (#801): a photo already here still shows above. */}
+      {features.photos && (
+        <KeypadTool
+          label={t(photoUri ? 'session.replacePhoto' : 'entryA.photo')}
+          accessibilityLabel={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
+          onPress={() => void onAttachPhoto()}
+          testID="attach-photo"
+        />
+      )}
+      {showSighterOption && (
+        <KeypadTool
+          label={t('session.sighter')}
+          accessibilityLabel={t('session.sighterOnThisSeries')}
+          selected={isSighter}
+          onPress={() => setIsSighter((was) => !was)}
+          testID="series-sighter-toggle"
+        />
+      )}
+    </>
+  );
+
+  const footer = (
+    <>
+      <ScoreKeypad
+        state={state}
+        onChange={onKeypadChange}
+        celebration={celebration}
+        highlightTotal={currentTier !== null}
+        totals={totals}
+        tools={tools}
+      />
+      {next ? (
+        <View style={styles.actions}>
+          <SecondaryButton
+            label={t('session.save')}
+            onPress={onSave}
+            testID="save-series"
+            style={styles.action}
+          />
+          <PrimaryButton
+            label={t('entryA.nextSeries')}
+            onPress={onNext}
+            disabled={isBlank && isUnsaved}
+            testID="next-series"
+            style={[styles.action, isBlank && isUnsaved && styles.disabled]}
+          />
+        </View>
+      ) : (
+        <PrimaryButton label={t('session.save')} onPress={onSave} testID="save-series" />
+      )}
+    </>
+  );
+
+  return (
+    <Screen footer={footer}>
+      <Header
+        title={
+          seriesCount !== null
+            ? t('entryA.seriesOfTitle', { position, count: seriesCount })
+            : t('session.seriesTitle', { position })
+        }
+        subtitle={subtitle}
+      />
 
       {guldThreshold != null && !isSighter && (
         <ThemedText type="small" themeColor="textSecondary" testID="guld-hint">
@@ -205,17 +380,22 @@ export default function SeriesEntryScreen() {
         </ThemedText>
       )}
 
-      <Card>
-        <ScoreKeypad
-          state={state}
-          onChange={onKeypadChange}
-          celebration={celebration}
-          highlightTotal={currentTier !== null}
-        />
-      </Card>
+      {earlier.length > 0 && (
+        // One text per series, so a wrap falls between series, never inside one.
+        <View style={styles.earlier} testID="earlier-series">
+          {earlier.map((other) => (
+            <ThemedText key={other.id} type="small" themeColor="textSecondary" style={TabularNums}>
+              {t(other.isSighter ? 'entryA.seriesShortSighter' : 'entryA.seriesShort', {
+                position: other.position,
+                total: formatScore(other.totalTenths),
+              })}
+            </ThemedText>
+          ))}
+        </View>
+      )}
 
-      {/* A thumbnail where Add Photo already lives, so the photo is visible
-          rather than merely announced. Tapping opens the full-screen view. */}
+      {/* The photo is visible rather than merely announced. Tapping opens
+          the full-screen view. */}
       {photoUri && (
         <Pressable
           accessibilityRole="button"
@@ -241,21 +421,6 @@ export default function SeriesEntryScreen() {
         </Pressable>
       )}
 
-      <PrimaryButton
-        label={t(photoUri ? 'session.replacePhoto' : 'session.addPhoto')}
-        onPress={() => void onAttachPhoto()}
-        testID="attach-photo"
-      />
-
-      {showSighterOption && (
-        <Card>
-          <View style={styles.switchRow}>
-            <ThemedText type="small">{t('session.sighterOnThisSeries')}</ThemedText>
-            <Switch value={isSighter} onValueChange={setIsSighter} testID="series-sighter-toggle" />
-          </View>
-        </Card>
-      )}
-
       {isUnsaved && (
         <ThemedText type="small" themeColor="textSecondary" testID="unsaved-series-hint">
           {t('session.newSeriesHint')}
@@ -268,26 +433,32 @@ export default function SeriesEntryScreen() {
 const styles = StyleSheet.create({
   thumb: {
     width: '100%',
-    height: 220,
+    height: 160,
     borderRadius: Radius.medium,
   },
   thumbMissing: { alignItems: 'center', justifyContent: 'center', padding: Spacing.two },
-  header: {
-    gap: Spacing.two,
+  stat: {
+    gap: Spacing.half,
   },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.one,
   },
-  badges: {
+  earlier: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    columnGap: Spacing.three,
+    rowGap: Spacing.one,
+  },
+  actions: {
+    flexDirection: 'row',
     gap: Spacing.two,
   },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
+  action: {
+    flex: 1,
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });

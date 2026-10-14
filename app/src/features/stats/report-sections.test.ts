@@ -11,7 +11,7 @@ const ring: ReportContents = {
 
 describe('reportSections', () => {
   it('lists a ring report in page order', () => {
-    expect(reportSections(ring)).toEqual(['records', 'totals', 'charts', 'distribution', 'export']);
+    expect(reportSections(ring)).toEqual(['records', 'totals', 'charts', 'export']);
   });
 
   it('adds every optional card where the report renders it', () => {
@@ -24,14 +24,13 @@ describe('reportSections', () => {
         hasSighterRelation: true,
       }),
     ).toEqual([
-      'shots',
       'records',
       'totals',
       'falt',
       'typeComparison',
       'sighter',
       'charts',
-      'distribution',
+      'shots',
       'export',
     ]);
   });
@@ -45,13 +44,11 @@ describe('reportSections', () => {
         hasTypeComparison: true,
         hasSighterRelation: true,
       }),
-    ).toEqual(['totals', 'falt', 'export']);
+    ).toEqual(['falt', 'export']);
   });
 
-  it('keeps only the shot plot when the filter matched no sessions', () => {
-    expect(reportSections({ ...ring, hasMatches: false, hasCrossSession: true })).toEqual([
-      'shots',
-    ]);
+  it('has no index when the filter matched no sessions', () => {
+    expect(reportSections({ ...ring, hasMatches: false, hasCrossSession: true })).toEqual([]);
     expect(reportSections({ ...ring, hasMatches: false })).toEqual([]);
   });
 });

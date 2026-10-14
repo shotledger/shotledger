@@ -10,6 +10,7 @@ import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
 import { faltSessionResult, listStationsForSession } from '@/db/queries/falt';
@@ -70,11 +71,32 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
     <>
       <Card style={styles.metricCard}>
         <View style={styles.metricRow}>
-          <Tile
-            testID="falt-result"
-            label={t('session.total')}
-            value={formatFaltResult(t, { ...result, mode: resultMode })}
-          />
+          {/* Two labelled values, not "43 (48) hits / 34 (39) figures" in
+              one cell (#822): each number says what it counts. */}
+          {resultMode === 'poangfalt' || result.hitsPossible === 0 ? (
+            <Tile
+              testID="falt-result"
+              label={t('session.total')}
+              value={formatFaltResult(t, { ...result, mode: resultMode })}
+            />
+          ) : (
+            <>
+              <Tile
+                testID="falt-result-hits"
+                label={t('station.hits')}
+                value={t('homeA.valueOf', { value: result.hits, max: result.hitsPossible })}
+              />
+              <Tile
+                testID="falt-result-figures"
+                label={t('station.figureCount')}
+                value={
+                  result.figureCount == null
+                    ? String(result.figuresHit)
+                    : t('homeA.valueOf', { value: result.figuresHit, max: result.figureCount })
+                }
+              />
+            </>
+          )}
           <Tile
             testID="falt-station-count"
             label={t('session.stations')}
@@ -137,7 +159,7 @@ export function FaltStations({ sessionId, resultMode }: FaltStationsProps) {
           testID="add-station"
         />
         {canStartShootOff(stations) && (
-          <PrimaryButton
+          <SecondaryButton
             label={t('session.startShootOff')}
             onPress={() => router.push(stationHref(true))}
             testID="start-shoot-off"

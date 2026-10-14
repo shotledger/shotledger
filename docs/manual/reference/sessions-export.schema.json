@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jimisola.github.io/shotledger/reference/sessions-export.schema.json",
+  "$id": "https://shotledger.github.io/shotledger/reference/sessions-export.schema.json",
   "$comment": "Generated from shared/src/json-export/types.ts by scripts/generate-export-schema.mjs. Do not hand-edit: `pnpm schema:check` fails when this file and that source disagree.",
   "title": "ShotLedger sessions export",
-  "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\". An importer must refuse a higher `formatVersion` rather than dropping fields it does not understand. This URL always describes the CURRENT format version, today 1; pin https://jimisola.github.io/shotledger/reference/v1/sessions-export.schema.json instead if you need it to stay put.",
+  "description": "The file produced by Settings → Export Sessions. `format` is always \"shotledger.sessions\". An importer must refuse a higher `formatVersion` rather than dropping fields it does not understand. This URL always describes the CURRENT format version, today 1; pin https://shotledger.github.io/shotledger/reference/v1/sessions-export.schema.json instead if you need it to stay put.",
   "type": "object",
   "properties": {
     "format": {
@@ -637,12 +637,27 @@
               }
             ]
           },
-          "roundsSinceMaintenance": {
-            "default": 0,
-            "description": "Rounds fired since the last maintenance event.",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
+          "maintenanceIntervalMonths": {
+            "default": null,
+            "description": "Calendar months between cleanings, or null for no reminder by time. Due when either interval is reached.",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "archivedAt": {
+            "default": null,
+            "description": "When the shooter archived it (sold, returned or retired), as an ISO timestamp; null while it is in use. Its sessions and licenses are kept either way.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -658,7 +673,8 @@
           "notes",
           "roundCount",
           "maintenanceIntervalRounds",
-          "roundsSinceMaintenance"
+          "maintenanceIntervalMonths",
+          "archivedAt"
         ],
         "additionalProperties": false,
         "title": "Firearm"
@@ -743,6 +759,12 @@
         "additionalProperties": false,
         "title": "License"
       }
+    },
+    "maintenanceEvents": {
+      "default": [],
+      "description": "The firearms' maintenance logs, adjustments included, each entry naming its firearm. Loosely typed by the parser for the same reason as `sessions`.",
+      "type": "array",
+      "items": {}
     }
   },
   "required": [
@@ -752,7 +774,8 @@
     "app",
     "sessions",
     "firearms",
-    "licenses"
+    "licenses",
+    "maintenanceEvents"
   ],
   "additionalProperties": false,
   "examples": [
@@ -818,7 +841,8 @@
           "notes": null,
           "roundCount": 1200,
           "maintenanceIntervalRounds": 500,
-          "roundsSinceMaintenance": 120
+          "roundsSinceMaintenance": 120,
+          "archivedAt": null
         }
       ],
       "licenses": [

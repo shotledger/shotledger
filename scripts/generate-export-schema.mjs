@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const referenceDir = join(root, 'docs/manual/reference');
-const SITE = 'https://jimisola.github.io/shotledger/reference';
+const SITE = 'https://shotledger.github.io/shotledger/reference';
 
 const require = createRequire(join(root, 'shared/package.json'));
 const { z } = await import(pathToFileURL(require.resolve('zod')).href);
@@ -132,6 +132,7 @@ function document(id, description) {
             roundCount: 1200,
             maintenanceIntervalRounds: 500,
             roundsSinceMaintenance: 120,
+            archivedAt: null,
           },
         ],
         licenses: [

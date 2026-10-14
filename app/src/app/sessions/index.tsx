@@ -13,18 +13,14 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { Chip } from '@/components/chip';
 import { DrillDownRow } from '@/components/drill-down-row';
 import { EmptyState } from '@/components/empty-state';
-import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { SegmentedControl } from '@/components/segmented-control';
-import { TagChips } from '@/components/tag-chips';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { formatSeriesAverage, formatSessionTotal } from '@/features/home/home-session-row';
 import {
   EMPTY_SESSION_FILTER,
   filterSessionRows,
@@ -32,8 +28,8 @@ import {
   type SessionPeriod,
   type SessionListFilter,
 } from '@/features/sessions/session-filters';
+import { SessionRow } from '@/features/sessions/session-row';
 import { useSessionsList } from '@/features/sessions/use-sessions-list';
-import { formatFaltResult } from '@/features/session/format-falt-result';
 import { Spacing } from '@/theme/tokens';
 import { localDayOf, localDayStartIso } from '@/features/dates/local-day';
 import { useDateFormat } from '@/features/dates/use-date-format';
@@ -102,6 +98,9 @@ export default function SessionsListScreen() {
   const activeSummary = [
     filter.period === 'all' ? null : periodOptions.find((o) => o.value === filter.period)?.label,
     filter.type === 'all' ? null : t(`sessionType.${filter.type}`),
+    filter.shape === 'all'
+      ? null
+      : t(filter.shape === 'series' ? 'home.shapeSeries' : 'home.shapeRounds'),
     filter.disciplineId === 'all'
       ? null
       : disciplineOptions.find((o) => o.value === filter.disciplineId)?.label,
@@ -186,6 +185,16 @@ export default function SessionsListScreen() {
             value={filter.type}
             onChange={(value) => set('type', value)}
           />
+          <SegmentedControl
+            testID="sessions-shape-filter"
+            options={[
+              { value: 'all' as const, label: t('sessions.filterAll') },
+              { value: 'series' as const, label: t('home.shapeSeries') },
+              { value: 'roundsOnly' as const, label: t('home.shapeRounds') },
+            ]}
+            value={filter.shape}
+            onChange={(value) => set('shape', value)}
+          />
           {disciplineIds.length > 1 && (
             <OptionPicker
               label={t('sessions.filterDiscipline')}
@@ -244,19 +253,9 @@ export default function SessionsListScreen() {
           )
         }
         renderItem={({ item, index }) => (
-          <ListRow
+          <SessionRow
             testID={`sessions-row-${index}`}
-            title={item.name}
-            subtitle={[
-              dates.date(item.startedAt),
-              item.falt ? formatFaltResult(t, item.falt) : formatSessionTotal(item.total),
-              item.seriesAverage === null ? null : formatSeriesAverage(item.seriesAverage),
-              item.seriesAverage === null ? null : `${item.innerTenCount}X`,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-            below={<TagChips names={item.tags} testID={`sessions-row-${index}-tags`} />}
-            trailing={<Chip label={t(`sessionType.${item.type}`)} />}
+            session={item}
             onPress={() => router.push(`/session/${item.id}`)}
           />
         )}

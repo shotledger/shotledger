@@ -1,5 +1,10 @@
 # Web series entry and the web write client — executable specification
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 > Old-coder SPEC for layer 2 of #301 (web write paths). Evidence report, once
 > written: `docs/specs/web-series-entry-evidence.md`. Decision record: ADR 0019
 > (web writes by pushing rows through `/sync/push`; accepted, merged with

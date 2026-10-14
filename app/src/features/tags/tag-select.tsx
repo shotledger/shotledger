@@ -63,8 +63,8 @@ export function TagSelect({ known, selected, onChange }: TagSelectProps) {
                   styles.pill,
                   { backgroundColor: theme.backgroundElement, borderColor: theme.border },
                   isSelected && {
-                    borderColor: theme.primary,
-                    backgroundColor: theme.backgroundSelected,
+                    borderColor: theme.selectedOutline,
+                    backgroundColor: theme.selected,
                   },
                 ]}
               >

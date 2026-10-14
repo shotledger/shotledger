@@ -116,6 +116,21 @@ describe('createPhotoUrls', () => {
     expect(revokeUrl).not.toHaveBeenCalled();
   });
 
+  it("uses the browser's object URLs by default", async () => {
+    const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:default');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    try {
+      const lease = createPhotoUrls(async () => new Blob(['p1']), undefined, undefined, 0)('p1');
+      expect(await lease.url).toBe('blob:default');
+      lease.release();
+      await tick();
+      expect(revoke).toHaveBeenCalledWith('blob:default');
+    } finally {
+      create.mockRestore();
+      revoke.mockRestore();
+    }
+  });
+
   it('passes the blob through as downloaded', async () => {
     const { createUrl, lease } = setup();
     await lease('p1').url;

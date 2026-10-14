@@ -11,6 +11,7 @@ import {
   type AccountSettings,
 } from '@shotledger/shared/src/sync-client/account-settings';
 import { offeredCases } from '@shotledger/shared/src/sync-client/settings-edit';
+import { pickableFirearms } from '../firearms/active';
 
 type Rows = ReadonlyMap<string, Record<string, unknown>>;
 
@@ -23,10 +24,9 @@ export function initialSettings(rows: Rows): AccountSettings {
   return readAccountSettings(rows);
 }
 
-/** What the phone's listFirearmOwnershipFacts reads, from the pulled rows: live firearms only. */
+/** What the phone's listFirearmOwnershipFacts reads, from the pulled rows. */
 export function ownershipFacts(firearms: Rows): FirearmOwnershipFact[] {
-  const live = [...firearms.values()].filter((row) => row.deleted_at == null);
-  return live.map((row) => ({
+  return [...pickableFirearms(firearms).values()].map((row) => ({
     weaponType: typeof row.weapon_type === 'string' ? row.weapon_type : null,
     isOwn: Boolean(row.is_own),
   }));

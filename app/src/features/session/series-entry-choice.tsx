@@ -6,10 +6,11 @@
 // targets all evening should be asked once.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { BottomSheet } from '@/components/bottom-sheet';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
 
@@ -74,7 +75,7 @@ export function SeriesEntryChoiceSheet({
         <ThemedText type="small" style={styles.rememberLabel}>
           {t('session.entryChoiceRemember')}
         </ThemedText>
-        <Switch value={remember} onValueChange={setRemember} testID="series-entry-remember" />
+        <Toggle value={remember} onValueChange={setRemember} testID="series-entry-remember" />
       </View>
     </BottomSheet>
   );

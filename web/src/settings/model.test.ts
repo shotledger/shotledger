@@ -29,6 +29,12 @@ const SET: AccountSettings = {
   competesInWomensClasses: true,
   complianceProfile: 'se',
   complianceProfileVariant: null,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('the settings form', () => {
@@ -46,6 +52,12 @@ describe('the settings form', () => {
       competesInWomensClasses: true,
       complianceProfile: 'none',
       complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
+      showLicenseActivity: true,
+      showPhotos: true,
+      showTimer: true,
+      showSightSettings: true,
+      showAmmoLots: true,
+      showMaintenance: true,
     });
     // An unset profile stays unset in the form: nothing is highlighted (R13).
     const unset = initialSettings(new Map());
@@ -71,6 +83,16 @@ describe('the settings form', () => {
     expect(ownershipFacts(new Map([['f', { id: 'f', is_own: 0 }]]))).toEqual([
       { weaponType: null, isOwn: false },
     ]);
+    // As the phone's listFirearmOwnershipFacts: an archived firearm is no
+    // longer one the shooter has (#799).
+    expect(
+      ownershipFacts(
+        new Map([
+          ['f1', { id: 'f1', weapon_type: 'pistol', is_own: 1, archived_at: '2026-10-01' }],
+          ['f2', { id: 'f2', weapon_type: 'rifle', is_own: 1, archived_at: null }],
+        ]),
+      ),
+    ).toEqual([{ weaponType: 'rifle', isOwn: true }]);
     // A deleted firearm is no fact, as the phone's query filters deleted_at.
     expect(
       ownershipFacts(
@@ -114,6 +136,13 @@ describe('the settings form', () => {
       { competesInWomensClasses: false },
       { complianceProfile: 'none' as const },
       { complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT },
+      // The feature switches (#801 W1).
+      { showLicenseActivity: false },
+      { showPhotos: false },
+      { showTimer: false },
+      { showSightSettings: false },
+      { showAmmoLots: false },
+      { showMaintenance: false },
     ]) {
       expect(hasChanges(SET, { ...SET, ...edit })).toBe(true);
     }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MAINTENANCE_INTERVAL_MONTHS_MAX } from '../firearms/constants';
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, toImportGroups, type ImportResult } from './import';
 import {
@@ -291,7 +292,8 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     notes: null,
     roundCount: 40,
     maintenanceIntervalRounds: null,
-    roundsSinceMaintenance: 40,
+    maintenanceIntervalMonths: null,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',
@@ -337,6 +339,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.errors).toEqual([]);
     expect(result.firearms).toEqual([]);
     expect(result.licenses).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([]);
     expect(result.sessions[0]!.firearmId).toBeNull();
     expect(result.sessions[0]!.firearm).toBe('Pardini SP');
   });
@@ -348,6 +351,66 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.firearms.map((f) => f.id)).toEqual(['f1']);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({ code: 'invalid-firearm', itemIndex: 1 });
+  });
+
+  it('M6 a bad maintenance event is skipped on its own (#727)', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      roundCountAt: 500,
+      isAdjustment: false,
+      notes: null,
+    };
+    const result = importSessionsFromJson(
+      envelope({ maintenanceEvents: [event, { id: 'm2', firearmId: 'f1' }] }),
+    ) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([event]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({ code: 'invalid-maintenance-event', itemIndex: 1 });
+  });
+
+  it('M6 fills in a terse maintenance event: no kind, not an adjustment, no notes', () => {
+    const result = importSessionsFromJson(
+      envelope({
+        maintenanceEvents: [
+          { id: 'm1', firearmId: 'f1', performedAt: '2026-09-01T10:00:00.000Z', roundCountAt: 0 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([
+      {
+        id: 'm1',
+        firearmId: 'f1',
+        performedAt: '2026-09-01T10:00:00.000Z',
+        kind: '',
+        roundCountAt: 0,
+        isAdjustment: false,
+        notes: null,
+      },
+    ]);
+  });
+
+  it('M6 refuses a maintenance event with no id, firearm, date or a negative or fractional count', () => {
+    const good = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      roundCountAt: 5,
+    };
+    const bad = [
+      { ...good, id: '' },
+      { ...good, firearmId: '' },
+      { ...good, performedAt: '' },
+      { ...good, roundCountAt: -1 },
+      { ...good, roundCountAt: 1.5 },
+      { ...good, roundCountAt: undefined },
+    ];
+    const result = importSessionsFromJson(envelope({ maintenanceEvents: bad })) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([0, 1, 2, 3, 4, 5]);
   });
 
   it('a bad license is skipped on its own', () => {
@@ -382,8 +445,31 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       notes: null,
       roundCount: 0,
       maintenanceIntervalRounds: null,
-      roundsSinceMaintenance: 0,
+      maintenanceIntervalMonths: null,
+      archivedAt: null,
     });
+  });
+
+  it('carries a time interval of 1 to 120 months and skips a firearm outside it (#800)', () => {
+    // The bound is MAINTENANCE_INTERVAL_MONTHS_MAX, written as a literal in
+    // the schema; this pins the two together.
+    expect(MAINTENANCE_INTERVAL_MONTHS_MAX).toBe(120);
+    const result = importSessionsFromJson(
+      envelope({
+        firearms: [
+          { ...firearm, id: 'f1', maintenanceIntervalMonths: 1 },
+          { ...firearm, id: 'f2', maintenanceIntervalMonths: 120 },
+          { ...firearm, id: 'f3', maintenanceIntervalMonths: 0 },
+          { ...firearm, id: 'f4', maintenanceIntervalMonths: 121 },
+          { ...firearm, id: 'f5', maintenanceIntervalMonths: 1.5 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.firearms.map((f) => [f.id, f.maintenanceIntervalMonths])).toEqual([
+      ['f1', 1],
+      ['f2', 120],
+    ]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([2, 3, 4]);
   });
 });
 

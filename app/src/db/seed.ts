@@ -168,6 +168,8 @@ export function seedDemoData(db: Database) {
     loadSystem: 'revolver',
     notes: 'Skjuts med .38 Special',
     maintenanceIntervalRounds: 1000,
+    // Serviced 150 days ago: due soon by time, whatever the rounds (#800).
+    maintenanceIntervalMonths: 6,
   });
   addFirearmGroup(db, { firearmId: revolver.id, groupId: 'spsf:R', isDefaultForGroup: true });
   addFirearmGroup(db, { firearmId: revolver.id, groupId: 'spsf:B' });

@@ -59,6 +59,20 @@ compliance, CSV, sync — are developed evidence-first (see
 `docs/specs/`, 100% coverage enforced by `pnpm coverage`, and a mutation
 gate. `pnpm gauntlet` runs every layer.
 
+Everything else carries a coverage floor rather than a target: the total
+coverage when the floor was set, rounded down (`COVERAGE_FLOOR` in
+`vitest.config.ts`, `coverageThreshold` in `app/jest.config.js`). When a
+change raises coverage, raise the floor in the same PR; never lower it to
+get a change through.
+
+Vitest runs with `isolate: false`: test files in one worker share module
+state, so a test that changes a module, a global or the clock puts it back
+in `afterEach`. Tests do not wait on real time: ESLint rejects a
+`setTimeout`/`setInterval` with a delay in a test file; use fake timers
+(`vi.advanceTimersByTimeAsync`, `jest.advanceTimersByTime`) or
+`vi.setSystemTime`. `pnpm exec vitest run --sequence.shuffle` checks for
+order dependence.
+
 #### `scripts/`
 
 | Script                                              | Run by                                         | What it guards                                                                                          |
@@ -92,6 +106,27 @@ share of mutants killed; `stryker.config.json` breaks the build below 95%
 and lists exactly which modules are mutated. Run `pnpm mutation`. It is
 slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 
+#### CI runners
+
+Every workflow job takes its runner from the `CI_RUNNER` repository
+variable (Settings → Secrets and variables → Actions → Variables):
+
+| `CI_RUNNER`                    | Jobs run on                                       |
+| ------------------------------ | ------------------------------------------------- |
+| unset                          | GitHub-hosted `ubuntu-latest`                     |
+| `blacksmith-2vcpu-ubuntu-2404` | [Blacksmith](https://docs.blacksmith.sh/), 2 vCPU |
+
+Switching is a settings change, not a commit, and applies from the next
+queued job. Use whichever side still has free minutes for the month:
+Blacksmith gives 3,000 2-vCPU minutes per organization, GitHub's allowance
+depends on the plan. Nothing switches automatically: a runner is picked
+when a job is queued, and neither side reports "minutes used up" to a
+workflow. Stay on the 2-vCPU size; larger Blacksmith runners use the free
+minutes faster in proportion to their vCPUs. Blacksmith needs its GitHub
+App installed on the organization and only serves organization-owned
+repositories. Both runners restore caches through `actions/cache`, so
+the first run after a switch starts with a cold cache.
+
 ### Working in this repo
 
 - Branch per change, Conventional Commits, every commit DCO-signed
@@ -116,7 +151,7 @@ much.
 3. [`docs/adr/`](docs/adr/) — the decisions behind them.
 4. [`docs/implementation-plan.md`](docs/implementation-plan.md) — the
    execution spec, milestone by milestone.
-5. [Open issues](https://github.com/jimisola/shotledger/issues) — what is
+5. [Open issues](https://github.com/shotledger/shotledger/issues) — what is
    outstanding.
 
 ## Contribution terms

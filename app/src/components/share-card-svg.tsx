@@ -6,7 +6,8 @@
 // theme setting — a share card is a fixed brand artifact, not a themed
 // screen.
 import { forwardRef, type ComponentRef } from 'react';
-import Svg, { Circle, G, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G, Line, Rect } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 
 import type { SeriesShareCardModel, SessionShareCardModel } from '@/features/share/card-model';
 import { Colors } from '@/theme/tokens';

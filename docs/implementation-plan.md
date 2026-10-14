@@ -102,8 +102,10 @@ firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
                 load_system TEXT,              -- laddsystem, e.g. halvautomat
                 notes TEXT,
                 round_count INTEGER NOT NULL DEFAULT 0,
-                maintenance_interval_rounds INTEGER,   -- nullable
-                rounds_since_maintenance INTEGER NOT NULL DEFAULT 0
+                maintenance_interval_rounds INTEGER,   -- nullable; rounds since
+                                               -- maintenance is derived from
+                                               -- maintenance_events (#727)
+                maintenance_interval_months INTEGER    -- nullable (#800)
 
 licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
                                                -- a renewal appends a new row,
@@ -220,7 +222,7 @@ shots           series_id FK NOT NULL, position INTEGER NOT NULL,
 
 maintenance_events firearm_id FK, performed_at TEXT NOT NULL,
                    kind TEXT NOT NULL,         -- free text v1
-                   round_count_at INTEGER, notes TEXT
+                   round_count_at INTEGER NOT NULL, notes TEXT
 
 sight_settings  firearm_id FK NOT NULL,
                 label TEXT NOT NULL,           -- free text; the same aiming
@@ -457,10 +459,21 @@ already is the sighter can un-set itself.)
       sighters; only firearm-linked sessions); manual adjust with reason
 - [x] Maintenance: log event, interval setting, "rounds since" indicator
       (green/amber/red at 80%/100%), local notification at 100%
+- [x] **Maintenance by time as well as by rounds** (#800, spec:
+      `docs/specs/maintenance-time-interval-spec.md`). An optional interval
+      in calendar months next to the round interval; due when either is
+      reached, counted from the last maintenance (else from when the
+      firearm was added). The detail screen names which limit was reached
+      and the date it falls due by time; a local notification is scheduled
+      for that date. No built-in intervals: the user sets both.
 - [x] License register per firearm (licenses table §3 — number, purpose,
       decision date, validity, conditions; renewals append, history
       kept); local notifications at 90/30/7 days before valid_until
       (VERIFY preferred lead times with maintainer)
+- [x] License expiry reminders rebuilt as one set from the latest license of
+      each active firearm (#847) at app start, on the foreground, after a
+      sync, a JSON import or demo data, so licenses that did not come in
+      through the firearm screen get them too
 - [x] Ammo lots CRUD incl. handload recipe fields (powder, charge,
       bullet, primer, brass, COL); session links lot; per-lot usage
       count; lot-vs-lot comparison stays v3
@@ -646,11 +659,31 @@ from §6.5 automatically).
 - [x] **Next-session date** for a met requirement (issue #795) — Home and the
       firearm detail say by which date the next session must be logged to keep
       a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
-      instant the same status function stops saying "met" with nothing more
+      day the same status function stops saying "met" with nothing more
       logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
       the status shown. No new regulatory value. The web shows no licence
       activity yet (#796). Spec/evidence:
       `docs/specs/compliance-next-session-{spec,evidence}.md`.
+- [x] **License Check** screen (issue #804) — opened from the Home status; every
+      requirement on the föreningsintyg grouped by purpose (New Purchase: the
+      5 §/6 § rule and "ytterligare enhandsvapen" per held handgun; Renewal:
+      "förnyelse" per end-dated licence), each met or not met with what it
+      still needs (`shared/src/compliance/shortfall.ts`), including the first
+      date an earlier, already-ended year can be met if the shooter keeps
+      logging. Purpose is profile data (`FirearmComplianceRule.purpose`). No
+      new regulatory value. Spec/evidence:
+      `docs/specs/compliance-license-check-{spec,evidence}.md`.
+- [x] **Whole local days** for every licence-activity window (issue #816) —
+      a session belongs to its local calendar day, the start day counts, and a
+      missing month end clamps to the month's last day (Lag 1930:173 1 §), so
+      on 31 March six months back is 30 September. The status changes only at
+      local midnight; the next-session date and the License Check follow.
+      Spec/evidence: `docs/specs/compliance-local-days-{spec,evidence}.md`.
+- [x] **License Check overview** — the screen answers two questions first:
+      can I apply for a new firearm (Yes/No), and can each firearm's license
+      be renewed (Yes/No, or Not Needed without an end date). Each row opens
+      its detail (`/compliance/new-firearm`, `/compliance/firearm/[id]`). UI
+      only; the compliance functions are unchanged. Also #848's wording fixes.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
@@ -726,8 +759,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
-| `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
-| `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
+| `/stats`                                   | results for the Filter Bar's filter: headline + trend, detail, records, charts, export    | no sessions at all |
 | `/firearms`                                | list + license-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
@@ -843,6 +875,13 @@ disciplines via PR once public.
       when a hits discipline is picked; a shots-per-series filter leaves fält
       out. Records keeps a fält best per vapengrupp, result mode and number
       of stations that counted, ranked in SHB's särskiljning order.
+- [x] **Hide the features you don't use** (#801, spec:
+      `docs/specs/feature-visibility-spec.md`). Settings → Features has a
+      switch each for license activity, target photos, timers, sight
+      settings and ammunition lots. Off removes the area's ways in on the
+      phone and the web; nothing is deleted, and a value already recorded
+      still shows. The switches are five synced settings (`show*`), so the
+      web and every phone agree.
 
 ### 6.3 Program definitions — competition-type presets (data, not code)
 
@@ -1273,6 +1312,15 @@ restates §0 rules 1–6 verbatim.
 > vault's own "Add to vault" screen (Weapon license + Photo) also offers the
 > same scan, and can create a license record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
+>
+> **#822 (direction A):** the tab opens on the results, and `/stats/report`
+> is gone. A Filter Bar (chips + sheet) holds the filter and applies it live;
+> the headline (average per series, or the hit rate for a hits discipline)
+> carries its trend against the previous equal period
+> (`previousPeriodRange` / `statsHeadline` in `shared/src/analytics-rows`).
+> Every number the report showed is still on the tab
+> (`app/src/features/stats/stats-results.tsx`), plus Home's session, shot and
+> competition counts for the filter. The web page follows the same order.
 
 > **The Vault has since been removed** (issue #276, maintainer 2026-09-16:
 > licenses are going digital, and a license picture — if it is ever needed

@@ -1,6 +1,8 @@
 // Pure filtering for the full sessions list (#317). No DB import, so it is
 // jest-unit-testable without the native expo-sqlite client — same rule as
 // home-session-row.ts.
+import type { SessionShapeFilter } from '@/features/home/home-session-row';
+
 import type { SessionListRow } from './session-list-row';
 import { localDayEndIso, localDayStartIso } from '@/features/dates/local-day';
 
@@ -22,6 +24,11 @@ export interface SessionListFilter {
   /** Free text, matched against the session name. Case- and accent-insensitive. */
   query: string;
   type: 'all' | 'training' | 'competition';
+  /**
+   * How the session was logged: scored series or a rounds count. Home had
+   * this filter over its ten rows; it moved here with the full list (#822).
+   */
+  shape: SessionShapeFilter;
   /** Discipline id, or `'all'`. */
   disciplineId: string;
   /** Tag **name**, or `'all'`. Names, not ids — ids mean nothing to a shooter. */
@@ -63,6 +70,7 @@ export function sessionPeriodRange(
 export const EMPTY_SESSION_FILTER: SessionListFilter = {
   query: '',
   type: 'all',
+  shape: 'all',
   disciplineId: 'all',
   tag: 'all',
   firearmId: 'all',
@@ -96,6 +104,7 @@ export function filterSessionRows(
     if (toIso !== null && row.startedAt > toIso) return false;
     if (needle && !fold(row.name).includes(needle)) return false;
     if (filter.type !== 'all' && row.type !== filter.type) return false;
+    if (filter.shape !== 'all' && row.shape !== filter.shape) return false;
     if (filter.disciplineId !== 'all' && row.disciplineId !== filter.disciplineId) return false;
     if (filter.tag !== 'all' && !row.tags.includes(filter.tag)) return false;
     if (filter.firearmId === 'none') {
@@ -112,6 +121,7 @@ export function isFilterActive(filter: SessionListFilter): boolean {
   return (
     filter.query.trim() !== '' ||
     filter.type !== 'all' ||
+    filter.shape !== 'all' ||
     filter.disciplineId !== 'all' ||
     filter.tag !== 'all' ||
     filter.firearmId !== 'all' ||

@@ -80,7 +80,19 @@ cases:
 
   - id: SVC_COMPL_003
     requirement_ids: ['COMPL_003']
-    title: Verify the lapse is met one millisecond before and not met at it, and absent when not met now
+    title: Verify the lapse is the first local day not met, met the day before, and absent when not met now
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_COMPL_004
+    requirement_ids: ['COMPL_004']
+    title: Verify the shortfall names the missing activities, the short earlier years and when the criterion can be met
+    verification: automated-test
+    revision: '0.1.0'
+
+  - id: SVC_COMPL_005
+    requirement_ids: ['COMPL_005']
+    title: Verify a window counts its first and last local day, clamps month ends and ignores the time of day
     verification: automated-test
     revision: '0.1.0'
 

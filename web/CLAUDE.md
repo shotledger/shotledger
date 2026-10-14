@@ -7,16 +7,19 @@ whole rows through `/sync/push`, online, with no outbox. The writers are
 `src/entry/` (series and fält), `src/settings/` (the synced settings),
 `src/bulk/` (bulk edit) and `src/edit/` (one session's edit and delete); all
 go through `shared/src/sync-client/` (`session-entry.ts`, `falt-entry.ts`,
-`settings-edit.ts`, `bulk-edit.ts`, `session-edit.ts`, `direct-push.ts`).
+`settings-edit.ts`, `bulk-edit.ts`, `ammo-lot-merge.ts`, `session-edit.ts`,
+`direct-push.ts`).
 
 - **Parity with the phone** (root `CLAUDE.md` rule 11): every write mirrors
   a named phone function (`app/src/db/queries/`) and is tested against it on
   the phone's schema (`app/src/db/queries/web-*.test.ts`). The phone decides
   any open question; a gap is stated in the spec, never left silent.
-- **Strings and colours are the app's.** `src/i18n.ts` imports
-  `app/src/i18n/{en,sv}.json` and `src/theme.ts` imports
-  `app/src/theme/colors.ts`; `i18n:check` scans `web/src` too. Add a web-only
-  string under the `web` namespace in both files.
+- **Strings and tokens are the app's.** `src/i18n.ts` imports
+  `app/src/i18n/{en,sv}.json`; `src/theme.ts` turns
+  `shared/src/design-tokens` into CSS custom properties (`--primary`,
+  `--data-viz-categorical-1`, `--space-three`, `--radius-medium`), so a colour
+  in `styles.css` is a `var(--…)`, never a hex. `i18n:check` scans `web/src`
+  too. Add a web-only string under the `web` namespace in both files.
 - **Numbers come from `shared/src/analytics-rows`**, the same composition the
   phone runs. `src/stats-inputs.ts` maps the snake_case wire rows onto it.
   Tags and the birth year come from the synced `session_tags` and `settings`

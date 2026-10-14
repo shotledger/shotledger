@@ -32,7 +32,7 @@ export type RangeMatchState =
 
 const MAX_MATCHES = 5;
 /** Overpass asks for a descriptive agent; it rate-limits anonymous floods. */
-const USER_AGENT = 'ShotLedger (github.com/jimisola/shotledger)';
+const USER_AGENT = 'ShotLedger (github.com/shotledger/shotledger)';
 
 export function useRangeMatch() {
   const [state, setState] = useState<RangeMatchState>({ status: 'idle' });

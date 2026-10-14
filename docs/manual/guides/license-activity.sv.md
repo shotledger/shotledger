@@ -34,6 +34,35 @@ pekar oftast på en uppgift som saknas på ett vapen snarare än på fallet sjä
 Vapen som saknar vapentyp, kaliber eller licens märks som **Ofullständig** på
 vapenfliken, och att fylla i dem kan flytta förslaget av sig självt.
 
+## Att se var du står
+
+Tryck på statusen på **Hem** för att öppna **Licenskontroll**. Den svarar på
+två frågor:
+
+- **Nyförvärv**: kan du ansöka om att förvärva ett nytt enhandsvapen nu? Raden
+  **Nytt vapen** visar **Ja** eller **Nej**. Är svaret ja står det hur länge det
+  förblir ja om du inte loggar något mer; är det nej, hur många krav som inte
+  är uppfyllda.
+- **Förnyelse**: kan licensen för varje vapen förnyas nu? Varje vapen visas med
+  **Ja** eller **Nej**, eller **Behövs inte** när licensen saknar slutdatum.
+  Ett
+  [arkiverat](firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
+  vapen visas inte.
+
+Tryck på en rad för att se kraven bakom svaret. **Nytt vapen** visar
+aktivitetskravet för ditt fall och rutan för ytterligare enhandsvapen för varje
+pistol eller revolver som är markerad som din egen. Ett vapen visar sin
+förnyelseruta, och sin ruta för ytterligare enhandsvapen när den gäller, med
+**Öppna vapnet** för att gå till själva vapnet. Varje ruta visar om den är
+uppfylld. Är den uppfylld står det när du senast ska skjuta nästa gång. Är den
+inte uppfylld står det hur många pass till som behövs.
+
+Om ett tidigare år i förnyelserutan inte räcker kan pass du loggar i dag inte
+rätta till det, och kontrollen säger det. Den visar också från vilket datum
+rutan kan bli uppfylld om du fortsätter logga pass med vapnet. [Varför ett
+passerat år inte kan tas igen](../explanation/license-activity.sv.md#ett-ar-som-redan-har-tagit-slut)
+förklarar det.
+
 ## Att veta när du ska skjuta nästa gång
 
 När ett krav är uppfyllt visar appen senast vilket datum du behöver logga nästa

@@ -50,7 +50,7 @@ concurrency:
 jobs:
   prepare:
     name: resolve version and notes
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       previous: ${{ steps.previous.outputs.tag }}
@@ -232,7 +232,7 @@ jobs:
     name: build on EAS
     needs: [prepare, checks]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     environment: release
     outputs:
       sha256: ${{ steps.package.outputs.sha256 }}
@@ -320,7 +320,7 @@ jobs:
     name: push the tag and create the prerelease
     needs: [prepare, build]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write
     steps:
@@ -386,7 +386,7 @@ jobs:
     name: verify the published asset
     needs: [prepare, build, publish]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -408,7 +408,7 @@ jobs:
     name: promote to latest
     needs: [prepare, verify]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write
     steps:

@@ -2,7 +2,7 @@
 // session, extra_rounds never create one). Spec: m6-compliance-spec.md
 // "Behaviors — license-activity.ts", amended by
 // compliance-shooter-level-activity-spec.md.
-import { subtractMonthsUtc } from './months';
+import { addMonthsClamped, localDayStart } from './months';
 import { statusFor } from './status';
 import type {
   ComplianceRule,
@@ -31,9 +31,11 @@ export function computeRuleLicenseActivity(
   rule: ComplianceRule,
   now: Date = new Date(),
 ): LicenseActivity {
-  const windowStart = subtractMonthsUtc(now, rule.windowMonths);
+  // Whole local days, start day included (#816).
+  const today = localDayStart(now);
+  const windowStart = addMonthsClamped(today, -rule.windowMonths);
   const windowStartMs = windowStart.getTime();
-  const nowMs = now.getTime();
+  const todayMs = today.getTime();
 
   let activityCount = 0;
   let countedSessionCount = 0;
@@ -42,8 +44,8 @@ export function computeRuleLicenseActivity(
     // The window is applied before the scope test, so `skippedSessionCount`
     // counts only sessions a shooter would expect to see in the figure —
     // never the whole history behind it.
-    const t = new Date(session.startedAt).getTime();
-    if (t < windowStartMs || t > nowMs) continue;
+    const day = localDayStart(new Date(session.startedAt)).getTime();
+    if (day < windowStartMs || day > todayMs) continue;
     if (!ruleCountsSession(rule, session)) {
       skippedSessionCount += 1;
       continue;

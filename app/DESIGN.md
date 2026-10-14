@@ -10,26 +10,36 @@ colors:
   bone-white: '#F6EEE4'
   muted-lilac: '#C9B9DC'
   border-violet: '#7360B0'
+  selected-violet: '#3B2A5E'
   alert-coral: '#FF7A85'
   confirm-mint: '#4FD68C'
+  caution-amber: '#F2C062'
   light-signal-lavender: '#6E30CF'
   light-paper: '#FCFBFE'
   light-surface: '#F4F1F8'
   light-surface-raised: '#E7E1EF'
   light-ink: '#1A1325'
   light-muted: '#635874'
-  light-border: '#D4CDDF'
+  light-card-white: '#FFFFFF'
+  light-selected: '#EADDFF'
+  light-border: '#857A9B'
+  light-caution-amber: '#9A5B00'
 typography:
-  display:
+  score:
     fontFamily: 'system-ui'
-    fontSize: '48px'
-    fontWeight: 600
-    lineHeight: '52px'
+    fontSize: '40px'
+    fontWeight: 700
+    lineHeight: '44px'
+  title:
+    fontFamily: 'system-ui'
+    fontSize: '28px'
+    fontWeight: 700
+    lineHeight: '34px'
   headline:
     fontFamily: 'system-ui'
-    fontSize: '32px'
+    fontSize: '22px'
     fontWeight: 600
-    lineHeight: '44px'
+    lineHeight: '28px'
   body:
     fontFamily: 'system-ui'
     fontSize: '16px'
@@ -45,10 +55,25 @@ typography:
     fontSize: '14px'
     fontWeight: 700
     lineHeight: '20px'
+  caption:
+    fontFamily: 'system-ui'
+    fontSize: '12px'
+    fontWeight: 500
+    lineHeight: '16px'
   code:
     fontFamily: 'ui-monospace, monospace'
     fontSize: '12px'
     fontWeight: 500
+  display-legacy:
+    fontFamily: 'system-ui'
+    fontSize: '48px'
+    fontWeight: 600
+    lineHeight: '52px'
+  headline-legacy:
+    fontFamily: 'system-ui'
+    fontSize: '32px'
+    fontWeight: 600
+    lineHeight: '44px'
 rounded:
   small: '8px'
   medium: '12px'
@@ -71,6 +96,7 @@ components:
     padding: '16px 24px'
   card:
     backgroundColor: '{colors.surface-purple}'
+    borderColor: 'none (light theme: {colors.light-border})'
     textColor: '{colors.bone-white}'
     rounded: '{rounded.medium}'
     padding: '16px'
@@ -97,7 +123,8 @@ components:
     rounded: '{rounded.medium}'
     padding: '2px'
   segmented-segment-selected:
-    backgroundColor: '{colors.surface-purple-raised}'
+    backgroundColor: '{colors.selected-violet}'
+    borderColor: '{colors.signal-lavender}'
     textColor: '{colors.bone-white}'
     typography: '{typography.label}'
     rounded: '{rounded.small}'
@@ -148,18 +175,27 @@ tests, not eyeballed. Ornament would cost legibility and buy nothing.
 ## Colors
 
 A near-monochrome purple system: one bright accent doing all the signalling,
-against a graded stack of purple surfaces, with two semantic colors reserved for
-outcome.
+against a graded stack of purple surfaces, with three semantic colors reserved
+for outcome and a separate set for charts.
+
+**Where they live.** Every value on this page — colours, chart colours,
+spacing, radius and the type scale — is defined once in
+`shared/src/design-tokens/` (no React Native import) and exported from
+`@shotledger/shared`. The app re-exports them from `app/src/theme/tokens.ts`;
+the web turns them into CSS custom properties in `web/src/theme.ts`
+(`--selected-outline`, `--data-viz-categorical-1`, `--space-three`). A colour
+is never restated by hand in either.
 
 ### Primary
 
 - **Signal Lavender** (`#B98CFF`): every interactive affordance — the one
-  primary action per screen, the active tab, the selected segment, primary
-  chips. Named for its job rather than its mood: it appears rarely, so where it
+  primary action per screen, the active tab, the outline of the selected
+  segment or option, primary chips. Named for its job rather than its mood:
+  it appears rarely, so where it
   appears is the answer to "what do I press?". Passes WCAG AA against both the
   ground and raised surfaces (3:1 UI minimum) and against its own foreground
   (4.5:1 text minimum); the contrast table is asserted in
-  `app/src/theme/tokens.test.ts`.
+  `shared/src/design-tokens/tokens.test.ts`.
 - **Deep Aubergine** (`#1A1226`): the foreground laid on Signal Lavender —
   button labels, active-tab text. Never used as a surface.
 
@@ -178,21 +214,72 @@ outcome.
   in sunlight, purple enough to never read as a default dark mode.
 - **Surface Purple** (`#221934`): cards, tiles, list groups, segmented-control
   tracks — the standard raised surface.
-- **Raised Surface Purple** (`#2E2246`): the selected or emphasized state of a
-  surface — the chosen segment, a neutral chip. One step further from the
-  ground, the entire mechanism for "this one is active".
+- **Raised Surface Purple** (`#2E2246`, `backgroundSelected`): the pressed or
+  emphasized state of a surface — a pressed row, a neutral chip. It is **not**
+  the selection mechanism: at 1.14:1 against Surface Purple it fails WCAG
+  1.4.11, so a chosen option uses Selected Violet with an outline instead.
+- **Selected Violet** (`#3B2A5E`, `selected`; light `#EADDFF`): the fill of
+  the chosen segment, option pill, tag or shot chip. Always drawn together
+  with **`selectedOutline`** — Signal Lavender in dark (`#B98CFF`), Light
+  Signal Lavender in light (`#6E30CF`) — so the choice is a 3:1 edge plus a
+  fill, never text colour alone.
 - **Bone White** (`#F6EEE4`): primary text. Warm rather than pure white, which
   keeps it from vibrating against the purple ground.
 - **Muted Lilac** (`#C9B9DC`): secondary text — subtitles, hints, metadata,
   units. Still purple, never gray.
-- **Border Violet** (`#7360B0`): borders and dividers, used sparingly since most
-  separation is tonal.
+- **Border Violet** (`#7360B0`; light `#857A9B`): borders and dividers, used
+  sparingly since most separation is tonal. Both clear 3:1 against the ground
+  and the card surface. The light border was `#D4CDDF` until #822, at 1.50:1
+  — fields and cards had no visible edge.
+- **Surface** (`surface`): what a card is drawn in. Dark: Surface Purple, the
+  same value as `backgroundElement`. Light: white (`#FFFFFF`) on the
+  off-white ground, which alone does not separate, so light cards also carry
+  a 1px `border`.
 
 ### Semantic
 
 - **Alert Coral** (`#FF7A85`): destructive actions and error states — delete
   confirmations, failed restores.
 - **Confirm Mint** (`#4FD68C`): success and completion only.
+- **Caution Amber** (`#F2C062`; light `#9A5B00`, `warning`): a state that
+  needs attention soon — a licence due for renewal. Semantic only, always
+  with words beside it; the "no yellow buttons" ruling stands, so it is never
+  an interactive token.
+
+### Data visualization
+
+Chart colours are their own tokens (`DataViz.<theme>`), separate from the
+accent, so a chart never borrows the colour that means "press here". Each
+value clears **3:1** against the ground, `backgroundElement` and the card
+surface of its own theme, asserted in `tokens.test.ts`.
+
+- **Categorical** (`DataViz.<theme>.categorical`) — identity, one series per
+  discipline, assigned in this fixed order and never cycled:
+
+  | Slot | Dark      | Light     | Family          |
+  | ---- | --------- | --------- | --------------- |
+  | 1    | `#8B4CC1` | `#AF65FE` | violet          |
+  | 2    | `#58A86B` | `#19979A` | green / teal    |
+  | 3    | `#C58501` | `#7A4503` | amber / brown   |
+  | 4    | `#ED49AB` | `#FD3184` | pink            |
+  | 5    | `#0365FD` | `#4E6DC4` | blue            |
+  | 6    | `#0B9AD9` | `#1C31D2` | sky / deep blue |
+  | 7    | `#677406` | `#4F9B00` | olive / green   |
+  | 8    | `#AA5E70` | `#82078D` | rose / plum     |
+
+  Validated with the `dataviz` skill's checker: every pair (not only
+  neighbours) stays apart under protan and deutan simulation (OKLab ΔE ≥ 8)
+  and for normal vision (≥ 15), in both themes; `tokens.test.ts` recomputes
+  both. The dark lightness band is narrower, so a slot keeps its hue family
+  between themes only approximately. Eight is the limit: a chart with more
+  disciplines draws the eight with the most sessions and says how many it
+  left out, rather than repeating a colour. The legend names every line in
+  text ink, so identity never rests on colour alone.
+
+- **Rings** (`DataViz.<theme>.rings`) — a five-step single-hue (orchid)
+  ramp for ring values, weakest first: dark `#AA50B1` → `#F7CFF8`, light
+  `#B75CBD` → `#5B0861`. Its hue is kept off the accent's, so a ring value
+  never reads as a button.
 
 ### Named Rules
 
@@ -204,6 +291,7 @@ unnoticed. Bone White is the one deliberate exception: dark's primary text is
 warm on purpose, to keep it from vibrating against the cool ground.
 
 **The Scarce Accent Rule.** Signal Lavender marks interaction and nothing else.
+Chart series take the data-viz tokens, not the accent.
 It is never decorative, never a heading color, never a background for content.
 If two lavender elements compete on one screen, one of them is wrong.
 
@@ -228,16 +316,33 @@ the content, so the system gets out of their way.
 
 ### Hierarchy
 
-- **Display** (600, 48px/52px): screen titles — "Home", "Session". One per
-  screen, at the top, never repeated.
-- **Headline** (600, 32px/44px): the number that is the point of a card — a
-  session total, a stat tile's value. This is where scores live.
+The scale set in #822, in `Typography` (`shared/src/design-tokens/`):
+
+- **Score** (700, 40px/44px, `score`): the one number that is the point of a
+  screen — a series total, a session result. Tabular numerals.
+- **Title** (700, 28px/34px, `title`): the screen title, drawn by `Header`.
+  One per screen, at the top, never repeated.
+- **Headline** (600, 22px/28px, `headline`): a card's lead number or
+  heading — a Stat's value, a shot cell's value.
 - **Body** (500, 16px/24px): list-row titles, form values, primary reading text.
 - **Label** (500, 14px/20px): secondary text, subtitles, chips, segment labels,
   metadata lines.
 - **Label Strong** (700, 14px/20px): button labels and section headers within a
   card — the same size as Label, separated by weight alone.
+- **Caption** (500, 12px/16px, `caption`): chart axis labels and footnotes,
+  in Muted Lilac. Nothing a shooter must read to act sits in caption type.
 - **Code** (500 — 700 on Android, 12px, monospace): identifiers and raw values.
+
+**Legacy.** `display` (48/52) and `legacyHeadline` (32/44) are what the
+screens drew before #822 — `ThemedText type="title"` and `type="subtitle"`.
+They stay until the per-screen rollout moves each screen to the new scale;
+nothing new uses them.
+
+**Tabular numerals.** Every number the app draws uses fixed-width figures
+(`TABULAR_NUMS`; in the app spread `TabularNums` into the text style, on the
+web `font-variant-numeric: tabular-nums`), so a column of scores lines up
+and a running total does not jitter as it changes. `ThemedText type="score"`
+applies it; Stat, Shot Cell and the chart caption do too.
 
 ### Named Rules
 
@@ -323,6 +428,22 @@ ornament, and state changes that are unmistakable but never loud.
   hover state — this is a touch platform.
 - **The One Primary Action Rule.** `PrimaryButton` is the single most important
   action on a screen. A screen with three of them has no primary action.
+- **Secondary:** `SecondaryButton`, a 1px Signal Lavender outline with a
+  lavender label, for every other full-size action: an alternative beside the
+  primary, an inline form's own Save, a per-item action in a list. Its
+  `danger` tone draws a destructive action, which is never primary.
+- **Text:** `TextButton`, a lavender label with no fill or outline (48dp touch
+  target), for a section's own "Add …" in that section's header row.
+- **Tonal:** a `selected` fill with a Bone White label and no outline — a
+  quiet filled action that is not the screen's main one (the Filter Bar's
+  Filters button). Disabled, it loses the fill and drops to Muted Lilac.
+- **Destructive:** delete or discard, in Alert Coral (`SecondaryButton
+tone="danger"`). Never lavender, never the primary tier — a destructive
+  action is never what the screen is for.
+- **One component, five tiers.** `Button` (`app/src/components/button.tsx`)
+  takes `variant: 'primary' | 'secondary' | 'tonal' | 'text' | 'destructive'`
+  and draws the tier through the components above, so a screen picks a role,
+  not a colour. Every tier is at least **48dp** tall (`MIN_TOUCH_TARGET`).
 
 ### Chips
 
@@ -330,15 +451,42 @@ ornament, and state changes that are unmistakable but never loud.
   self-sizing to content.
 - **Neutral:** Raised Surface Purple ground, Bone White text — session type,
   tags, discipline.
+- **Selectable** (option pickers, tag and shot chips): a `border` outline on
+  `backgroundElement` at rest; chosen, the pill takes the `selected` fill and
+  a `selectedOutline` border of the same width, so nothing moves.
 - **Primary:** Signal Lavender ground, Deep Aubergine text — reserved for a chip
   that marks a genuine achievement or active filter, not general labelling.
+
+### Toggle
+
+`Toggle` (`app/src/components/toggle.tsx`, #833) is the only on/off switch:
+React Native's `Switch` in the theme's colours — a `primary` track with an
+`onPrimary` thumb when on, a `border` track with a Muted Lilac thumb when
+off. A bare `Switch` draws the platform's own teal or green, outside the
+palette. It sits at the end of a 48dp row whose label names it, and takes
+that label as its `accessibilityLabel`.
+
+### Choice Chips
+
+`ChoiceChips` (`app/src/components/choice-chips.tsx`): a wrapping row of pill
+options for a choice that does not fit a segmented control — more than four
+options, or "any of".
+
+- **Modes:** `single` is a radio group (`radiogroup` / `radio`, tapping the
+  chosen chip keeps it chosen); `multi` is a set of checkboxes. A multi
+  selection comes back in the options' order, whatever the tap order.
+- **Style:** pill, 48dp tall, a 2px `border` outline at rest with a Muted
+  Lilac label. Chosen: the `selected` fill, a 2px `selectedOutline` border
+  and a Label Strong label. The border width never changes, so a choice is
+  fill plus outline colour, never border thickness alone.
 
 ### Cards / Containers
 
 - **Corner Style:** 12px (`Radius.medium`)
-- **Background:** Surface Purple
+- **Background:** `surface` — Surface Purple in dark, white in light
 - **Shadow Strategy:** none, ever — see The One Shadow Rule
-- **Border:** none by default; tone does the separating
+- **Border:** none in dark, where tone does the separating; 1px `border` in
+  light, where white on off-white does not
 - **Internal Padding:** 16px, with an 8px gap between stacked children
 
 ### Inputs / Fields
@@ -346,8 +494,9 @@ ornament, and state changes that are unmistakable but never loud.
 `app/src/components/text-field.tsx` (`TextField`) is the only text input in the
 app. Nothing should style a bare `TextInput` again.
 
-- **Style:** 1px Border Violet outline, transparent ground, 8px radius (it nests
-  inside a card), 16px text, placeholder in Muted Lilac.
+- **Style:** 1px Border Violet outline (3:1 on ground and card in both
+  themes), transparent ground, 8px radius (it nests inside a card), 16px text,
+  placeholder in Muted Lilac.
 - **Focus:** the outline becomes Signal Lavender. This is the one place the
   Scarce Accent Rule admits a second lavender element on screen — focus is
   interaction, and only one field holds it at a time.
@@ -356,6 +505,9 @@ app. Nothing should style a bare `TextInput` again.
 
 - **Bottom tab bar**, five destinations (Home, Statistics, Firearms, Tools,
   Settings), icon above a Label-sized caption.
+- **Icons** (`tab-icons.tsx`): 24-unit line glyphs, 2px stroke. Home carries
+  the app mark's rings; Firearms is a long-slide competition-pistol
+  silhouette; Tools an open-end wrench; Settings an eight-tooth cog.
 - **Active:** icon and label in Signal Lavender. **Inactive:** Muted Lilac.
 - Labels are single words wherever possible — a tab label that truncates
   ("Firearms & Am…") is a defect; shorten the label rather than shrinking the
@@ -364,12 +516,18 @@ app. Nothing should style a bare `TextInput` again.
 ### Segmented Control
 
 The app's signature selector — session Series/Stats, Home's All/Series/Rounds,
-theme and language pickers.
+theme and language pickers. **Two to four options**; more belong in Choice
+Chips or an option picker.
+
+- **Roles:** the track is a `radiogroup` and each segment a `radio` with
+  `selected` and `checked` state, so a screen reader says "Dark, radio
+  button, selected", never a bare "button".
 
 - **Track:** Surface Purple, 12px radius, 2px padding, 2px gap between segments.
-- **Segment:** 8px radius, 8px padding, **48dp minimum height**; selected
-  segments take Raised Surface Purple, unselected are transparent with Muted
-  Lilac text. The 48 is Material's touch-target floor, deliberately off the
+- **Segment:** 8px radius, 8px padding, **48dp minimum height**, a 2px
+  border on every segment; the selected one fills with `selected` and its
+  border turns `selectedOutline` (6.6:1 on the dark track, 6.3:1 on the
+  light), unselected ones keep a transparent border and Muted Lilac text. The 48 is Material's touch-target floor, deliberately off the
   spacing scale — a segment is a control, and a shooter taps it in gloves and
   sunlight.
 - **Overflow:** labels are single-line always; **past four options** the control
@@ -381,6 +539,76 @@ theme and language pickers.
 The primitive behind Home's header totals and every stats readout: a Card
 holding a Headline-sized number above a Label-sized caption, left-aligned, with
 an 2px gap. The number is the content; the caption is the annotation.
+
+### Stat
+
+`Stat` (`app/src/components/stat.tsx`), the #822 successor to Stat Tile: a
+Headline (or Score) value with an optional unit in Muted Lilac, over a Label
+caption, on a card or bare.
+
+- **Never truncates.** No line limit on any of its text: the label wraps to
+  a second line and the value wraps only between words. StatTile's
+  shrink-to-fit is native-only, which is why Home's tiles cut to "Shots
+  Log…" on the web.
+- **One phrase for a screen reader:** value, unit and label together
+  ("1 284 rounds Shots Logged").
+
+### Shot Cell
+
+`ShotCell` (`app/src/components/shot-cell.tsx`): one shot of a series, the
+way a shooter corrects a shot.
+
+- **48 × 48dp minimum**, Headline type in tabular numerals, 8px radius, a
+  2px `border` outline on `backgroundElement`. An empty cell shows "–" in
+  Muted Lilac.
+- **Current:** the cell the next key goes into takes the `selected` fill and
+  `selectedOutline` border, and announces itself as selected.
+- **Name:** "Shot 3: 9"; an inner ten is spelled out ("inner ten, 10")
+  rather than read as "X".
+
+### Header
+
+`Header` (`app/src/components/header.tsx`): the one title at the top of a
+screen, in Title type, with an optional Label subtitle in Muted Lilac and at
+most one trailing action (a text Button or icon button). It carries the
+screen's only `header` role. `ScreenTitle` still draws the existing screens
+until the per-screen rollout.
+
+### Filter Bar
+
+`FilterBar` (`app/src/components/filter-bar.tsx`): the row above a filtered
+list or chart — Statistics, Records and the web share the shape.
+
+- A tonal **Filters** button, counting what is active ("Filters (2)"), opens
+  a bottom sheet holding the controls (Segmented, Choice Chips).
+- Each active filter sits beside it as a 48dp chip in the `selected` fill and
+  outline, one tap to remove ("Remove filter Pistol").
+- The sheet ends with **Clear All** (text tier, only while something is
+  active) and **Close**. The row scrolls sideways rather than wrapping.
+- Presentational: the screen owns the filter state.
+
+### Chart Kit
+
+`app/src/components/chart-kit/`: what every chart shares.
+
+- **Colours:** `chartColors(theme)` maps the tokens — series from
+  `DataViz.<theme>.categorical` in slot order (`seriesColor` returns `null`
+  past slot 8 rather than cycling), ring values from `DataViz.<theme>.rings`,
+  gridlines in `border`, tick labels in `textSecondary`. Never the accent.
+- **Ticks:** `niceTicks` (`shared/src/charts/nice-ticks.ts`, shared with the
+  web) rounds an axis out to steps of 1, 2 or 5 × 10ⁿ within a tick budget;
+  `linearAxis` turns that into a pixel scale and `formatTick` prints a tick in
+  the UI language's number format ("9,5" in Swedish).
+- **Type:** tick labels and the `ChartCaption` footnote are Caption type;
+  SVG text goes through `SvgText` so the web draws the sans font.
+
+### Status Line
+
+`StatusLine` (`app/src/components/status-line.tsx`): a licence's status in
+words — Valid, Expiring Soon, Expired, No License (the firearm list's own
+strings) — in Label Strong, coloured `success`, `warning`, `danger` or
+Muted Lilac, with a dot of the same colour and an optional detail ("until
+2027-03-01"). The words carry the meaning; colour is the second signal.
 
 ### Empty State
 
@@ -394,15 +622,20 @@ offering the action that would fill the screen.
 
 - **Do** express depth with the tonal stack — Ink Purple → Surface Purple →
   Raised Surface Purple.
+- **Do** show a selection as `selected` fill plus `selectedOutline` border —
+  never by text colour or border width alone.
+- **Do** take chart colours from `DataViz`, in slot order.
 - **Do** take spacing from the seven-step scale (2/4/8/16/24/32/64) and radius
   from the four-step scale (8/12/20/999).
 - **Do** keep Signal Lavender scarce; one interactive accent per screen region.
-- **Do** assert contrast in `app/src/theme/tokens.test.ts` when adding or
-  changing a color — sunlight legibility is a tested invariant here, not a
+- **Do** assert contrast in `shared/src/design-tokens/tokens.test.ts` when
+  adding or changing a color — sunlight legibility is a tested invariant here, not a
   judgement call.
 - **Do** keep control labels on one line, shrinking or scrolling instead of
   wrapping.
 - **Do** use weight, not size, to emphasize at 14px.
+- **Do** draw every number in tabular numerals.
+- **Do** keep every control at least 48dp in its smaller dimension.
 
 ### Don't:
 

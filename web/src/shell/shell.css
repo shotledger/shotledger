@@ -1,0 +1,70 @@
+/* Narrow web: the menu becomes a bottom tab bar, as on the phone (#822,
+   finding "Web layout breaks at phone width"). At 390px the menu was a
+   scrolling row above the page title, and with the profile pill the chrome
+   took about a quarter of the screen. Kept beside the shell it styles, and
+   scoped under `.shell` so it outranks the general rules in styles.css
+   whatever order the two load in. */
+@media (max-width: 720px) {
+  .shell .sidebar {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    display: block;
+    height: auto;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    background: var(--background);
+  }
+
+  .shell .sidebar .brand {
+    display: none;
+  }
+
+  .shell .sidebar nav {
+    padding: 0;
+  }
+
+  .shell .sidebar ul {
+    display: flex;
+    overflow-x: visible;
+  }
+
+  .shell .sidebar li,
+  .shell .sidebar li.group-start {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-top: none;
+  }
+
+  /* Icon over a caption, the phone tab bar's shape. The active tab is the
+     accent in text, not a filled pill, as on the phone. */
+  .shell .sidebar a {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 4px 2px;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 14px;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .shell .sidebar a[aria-current='page'] {
+    background: none;
+    color: var(--primary);
+  }
+
+  .shell .shell-main {
+    padding-bottom: calc(57px + env(safe-area-inset-bottom));
+  }
+}

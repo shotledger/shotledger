@@ -89,4 +89,11 @@ device; the web re-pulls rather than retrying.
 - Same-name tag copies stay on disk until something merges them. A web
   "merge tags" edit would repoint the links and tombstone the copy, like an
   ammo-lot merge; nothing needs it for correctness.
+- An ammo-lot merge (#784, `docs/specs/ammo-lot-merge-spec.md`) ships on the
+  phone and the web together. A device that saves a session on the duplicate
+  before it pulls the merge wins that row, so the session names the
+  tombstoned lot and shows no lot until the user picks one; an edit to the
+  duplicate itself is rejected as `tombstoned`. Nothing records which lot a
+  duplicate went into, so neither is repaired automatically. Accepted, as
+  between two phones.
 - The privacy table gains the five account settings under Sync.

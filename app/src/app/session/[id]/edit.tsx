@@ -4,6 +4,9 @@
 // details, weapon group/class, firearm, ammo lot, tags. Share is NOT here:
 // beside Save it read as "save and share" on a form with unsaved changes
 // (maintainer, 2026-09-15), and the session ⋮ menu already owns it.
+// Layout (#822): what identifies the session (name, date, firearm, ammo)
+// leads, then the format and competition facts; location, notes, series
+// entry and tags are optional and fold under "Details".
 // Discipline and type are not editable here (they drive the series skeleton and
 // are excluded from `UpdateSessionInput` on purpose). The match format is, but
 // only until the first result (#475, db/queries/match-format.ts).
@@ -11,7 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   categoryKey,
   eventsForDiscipline,
@@ -33,10 +36,13 @@ import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { SegmentedControl } from '@/components/segmented-control';
 import type { SeriesEntryMode } from '@/features/session/series-entry-choice';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
+import { DetailsDisclosure } from '@/features/session-entry/details-disclosure';
 import { enabledRegulationIds } from '@/features/regulations/use-regulations';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { listFirearms } from '@/db/queries/firearms';
@@ -58,6 +64,7 @@ import { withLocalDay } from '@/features/session/with-local-day';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 // The picker's value for Free Format, as on the new-session form.
 const FREE_FORMAT = 'none';
@@ -96,6 +103,9 @@ export default function EditSessionScreen() {
   const [eventId, setEventId] = useState<string | null>(session?.eventId ?? null);
   const [firearmId, setFirearmId] = useState<string | null>(session?.firearmId ?? null);
   const [ammoLotId, setAmmoLotId] = useState<string | null>(session?.ammoLotId ?? null);
+  const features = useFeatures();
+  // Hidden areas (#801) keep a value already stored on the session editable.
+  const showAmmoPicker = features.ammoLots || session?.ammoLotId != null;
   const [programId, setProgramId] = useState(session?.programId ?? FREE_FORMAT);
   const [tags, setTags] = useState(() => listTagsForSession(db, id));
   const [newTag, setNewTag] = useState('');
@@ -140,7 +150,11 @@ export default function EditSessionScreen() {
   const showClassPicker =
     classes.length > 0 && ((isCompetition && tracked.shooterClass) || shooterClass !== null);
   const showEventPicker = events.length > 0 && (isCompetition || eventId !== null);
-  const firearms = listFirearms(db);
+  // An archived firearm (#799) is offered only to the session already shot
+  // with it, by the same one-way rule as the pickers above.
+  const firearms = listFirearms(db).filter(
+    (f) => f.archivedAt === null || f.id === session.firearmId,
+  );
   const ammoLots = listAmmoLots(db);
   const programs = session.kind === 'series' ? programsForDiscipline(session.disciplineId) : [];
   const formatEditable = canChangeMatchFormat(db, session.id);
@@ -204,7 +218,7 @@ export default function EditSessionScreen() {
         />
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
-        <PrimaryButton
+        <SecondaryButton
           label={dates.date(startedAt)}
           onPress={() => setDatePickerOpen(true)}
           testID="edit-date"
@@ -223,22 +237,28 @@ export default function EditSessionScreen() {
           />
         )}
 
-        <ThemedText type="smallBold">{t('session.location')}</ThemedText>
-        <TextField
-          value={location}
-          onChangeText={setLocation}
-          maxLength={TEXT_LIMITS.sessions.location}
-          testID="edit-location"
+        <OptionPicker
+          label={t('session.firearm')}
+          options={toOptions(
+            firearms.map((f) => ({ value: f.id, label: `${f.make} ${f.model}` })),
+            'edit-firearm',
+          )}
+          value={firearmId}
+          onChange={setFirearmId}
+          emptyLabel={t('session.none')}
         />
-
-        <ThemedText type="smallBold">{t('session.notes')}</ThemedText>
-        <TextField
-          value={notes}
-          onChangeText={setNotes}
-          maxLength={TEXT_LIMITS.sessions.notes}
-          multiline
-          testID="edit-notes"
-        />
+        {showAmmoPicker && (
+          <OptionPicker
+            label={t('session.ammoLot')}
+            options={toOptions(
+              ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
+              'edit-ammo',
+            )}
+            value={ammoLotId}
+            onChange={setAmmoLotId}
+            emptyLabel={t('session.none')}
+          />
+        )}
       </Card>
 
       {programs.length > 0 && (
@@ -293,7 +313,7 @@ export default function EditSessionScreen() {
           />
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('session.championship')}</ThemedText>
-            <Switch
+            <Toggle
               value={isChampionship}
               onValueChange={setIsChampionship}
               testID="edit-championship-toggle"
@@ -323,22 +343,6 @@ export default function EditSessionScreen() {
           )}
         </Card>
       )}
-
-      <Card>
-        <SegmentedControl<SeriesEntryMode>
-          options={[
-            { value: 'ask', label: t('session.entryMode.ask') },
-            { value: 'manual', label: t('session.entryMode.manual') },
-            { value: 'photo', label: t('session.entryMode.photo') },
-          ]}
-          value={seriesEntryMode}
-          onChange={setSeriesEntryMode}
-          testID="edit-series-entry-mode"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('session.entryModeHint')}
-        </ThemedText>
-      </Card>
 
       {(showGroupPicker || showClassPicker || showEventPicker) && (
         <Card>
@@ -384,57 +388,79 @@ export default function EditSessionScreen() {
         </Card>
       )}
 
-      <Card>
-        <OptionPicker
-          label={t('session.firearm')}
-          options={toOptions(
-            firearms.map((f) => ({ value: f.id, label: `${f.make} ${f.model}` })),
-            'edit-firearm',
-          )}
-          value={firearmId}
-          onChange={setFirearmId}
-          emptyLabel={t('session.none')}
-        />
-        <OptionPicker
-          label={t('session.ammoLot')}
-          options={toOptions(
-            ammoLots.map((lot) => ({ value: lot.id, label: lot.label })),
-            'edit-ammo',
-          )}
-          value={ammoLotId}
-          onChange={setAmmoLotId}
-          emptyLabel={t('session.none')}
-        />
-      </Card>
-
-      <Card>
-        <ThemedText type="smallBold">{t('session.tags')}</ThemedText>
-        <View style={styles.tagRow}>
-          {tags.map((tag) => (
-            <Pressable
-              key={tag.id}
-              accessibilityRole="button"
-              accessibilityLabel={t('session.removeTag', { name: tag.name })}
-              onPress={() => onRemoveTag(tag.id)}
-              testID={`edit-tag-${tag.name}`}
-            >
-              <Chip label={`${tag.name} ×`} />
-            </Pressable>
-          ))}
-        </View>
-        <View style={styles.tagAddRow}>
+      <DetailsDisclosure
+        title={t('formsA.details')}
+        summary={t(
+          features.photos ? 'formsA.sessionDetailsSummary' : 'formsA.sessionDetailsSummaryNoEntry',
+        )}
+        testID="edit-session-details"
+      >
+        <View style={styles.fields}>
+          <ThemedText type="smallBold">{t('session.location')}</ThemedText>
           <TextField
-            value={newTag}
-            onChangeText={setNewTag}
-            maxLength={TEXT_LIMITS.tags.name}
-            placeholder={t('session.tagPlaceholder')}
-            style={styles.tagInput}
-            onSubmitEditing={onAddTag}
-            testID="edit-tag-input"
+            value={location}
+            placeholder={t('formsA.optional')}
+            onChangeText={setLocation}
+            maxLength={TEXT_LIMITS.sessions.location}
+            testID="edit-location"
           />
-          <PrimaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
+
+          <ThemedText type="smallBold">{t('session.notes')}</ThemedText>
+          <TextField
+            value={notes}
+            placeholder={t('formsA.optional')}
+            onChangeText={setNotes}
+            maxLength={TEXT_LIMITS.sessions.notes}
+            multiline
+            testID="edit-notes"
+          />
+          {/* Photo or keypad is a photo-scoring choice (#801). */}
+          {features.photos && (
+            <>
+              <ThemedText type="smallBold">{t('formsA.seriesEntry')}</ThemedText>
+              <SegmentedControl<SeriesEntryMode>
+                options={[
+                  { value: 'ask', label: t('session.entryMode.ask') },
+                  { value: 'manual', label: t('session.entryMode.manual') },
+                  { value: 'photo', label: t('session.entryMode.photo') },
+                ]}
+                value={seriesEntryMode}
+                onChange={setSeriesEntryMode}
+                testID="edit-series-entry-mode"
+              />
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('session.entryModeHint')}
+              </ThemedText>
+            </>
+          )}
+          <ThemedText type="smallBold">{t('session.tags')}</ThemedText>
+          <View style={styles.tagRow}>
+            {tags.map((tag) => (
+              <Pressable
+                key={tag.id}
+                accessibilityRole="button"
+                accessibilityLabel={t('session.removeTag', { name: tag.name })}
+                onPress={() => onRemoveTag(tag.id)}
+                testID={`edit-tag-${tag.name}`}
+              >
+                <Chip label={`${tag.name} ×`} />
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.tagAddRow}>
+            <TextField
+              value={newTag}
+              onChangeText={setNewTag}
+              maxLength={TEXT_LIMITS.tags.name}
+              placeholder={t('session.tagPlaceholder')}
+              style={styles.tagInput}
+              onSubmitEditing={onAddTag}
+              testID="edit-tag-input"
+            />
+            <SecondaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
+          </View>
         </View>
-      </Card>
+      </DetailsDisclosure>
 
       <PrimaryButton label={t('session.saveChanges')} onPress={onSave} testID="save-session" />
     </Screen>
@@ -442,6 +468,10 @@ export default function EditSessionScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Label-to-field spacing inside the fold, as in the cards above it.
+  fields: {
+    gap: Spacing.two,
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

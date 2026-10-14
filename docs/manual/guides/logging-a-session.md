@@ -5,9 +5,12 @@ and inside those are shots.
 
 ## The session header
 
-The top of a session names it and then, on one line, the date it was shot, its
-type, your weapon group and class, the firearm and the competition. Your notes
-follow underneath. Both matter most for a session you did not type in yourself:
+The session's name is the title at the top of the screen, once. Under it, one
+line says what the session was: the date it was shot, its type and its
+discipline. The type is left out when a tag already says it, such as
+_Träning_. A second line says what it was shot with and under: the match
+format, your weapon group and class in words ("Weapon group C, class 2"), the
+firearm, the ammunition and the competition. Your notes follow underneath. Both matter most for a session you did not type in yourself:
 an import carries its own date and puts its explanation — which firearm, why a
 session is flagged for review — in the notes.
 
@@ -34,6 +37,9 @@ Picked Full Match when you meant Free Format, or the other way round:
 1. Open the session's **⋮** menu and choose **Edit Session**.
 2. Pick the format under **Match Format** and tap **Save Changes**.
 
+Edit Session leads with the name, date, firearm and ammunition lot; location,
+notes, series entry and tags are folded under **Details**.
+
 The series are laid out afresh for the new format, which is why this works
 only until the first result: a shot, a photo waiting to be scored, or an
 imported total. After that the row shows the format with a note that it can
@@ -45,8 +51,27 @@ A **series** is a run of shots scored together — five shots in SPSF precision,
 six in militär snabbmatch. A **shot** is one hole, worth whole points or
 decimals depending on the program.
 
-Tap a series to enter it. The keypad advances after each shot, so you are not
-reaching for a "next" button between shots.
+Tap a series to enter it. Everything you press sits at the bottom of the
+screen, within reach of your thumb: the shot boxes, a row with **Photo**,
+**Sighter** and **Delete**, the keys, and **Next Series**. The keypad moves to
+the next box after each shot but stops at the last one, so a wrong shot can
+still be put right: tap its box and type the right value. Nothing moves on
+until you say so.
+
+**Next Series** saves the series and opens the next one. **Save Series** saves
+it and takes you back to the session; on the last series of a full match it is
+the only button. Going back without either keeps nothing you typed in the
+series.
+
+While you type, the screen keeps three numbers above the boxes: the
+**Series** total, the **Session** total with this series counted as it stands,
+and **Last Time** — the same series of your previous session in this
+discipline. Each shows its inner tens, **0X** included. Last Time counts scored
+series only, so the second scored series is compared with the second scored
+series, sighter or not before it. It is left out for a sighter, when you have
+not shot the discipline before, and when that session was scored differently
+(whole points against decimals). The line under the title lists the session's
+other series with their totals.
 
 In precision, magnum precision and militär snabbmatch, the keypad marks a good
 series as you finish it. Reaching the gold-series score turns the total gold
@@ -69,10 +94,11 @@ you correct it.
 
 ## Sighters
 
-Mark a series as a **sighter** from the series menu, and it stops counting
-towards the session total. Its score is still shown, with an asterisk —
-**45\*** — because a sighter is deliberately unscored rather than missing a
-score, and what you shot is still worth seeing.
+Mark a series as a **sighter** with **Sighter** above the keys while you enter
+it, and it stops counting towards the session total. Its score is still shown,
+beside the Sighter label and in quieter text, as **45 · not counted** — because
+a sighter is deliberately unscored rather than missing a score, and what you
+shot is still worth seeing.
 
 That is the rule inside a session. Across sessions it changes — see
 [How sighters count](../explanation/how-sighters-count.md).
@@ -86,17 +112,18 @@ run as **field** or **point field**. A field shooting session has no stopwatch
 or sights buttons.
 
 Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
-Hit**, and **Figures**, how many figures the station had. Five hits in three of
+Hit**, and **Figures**, how many figures the station had: one tap on the
+number for each. Five hits in three of
 four figures reads **5/3 of 4**: you missed one shot or put two in the same
 figure, and one figure went untouched. Leave Figures at **–** if you don't
-know it; the station then reads **5/3**. The session total shows
-"26 (30) hits / 22 figures": your hits, with the hits possible — six per
-station — in brackets. Scratched and shoot-off stations count for neither. In
-point field it is one sum instead, where every hit is a point and every figure
-hit is another. When every station has its figures recorded, the total adds
-them up the same way: "26 (30) hits / 22 (24) figures". Home, the sessions
-list and Records show the result the same way, and a session with no scoring
-station yet reads "No stations".
+know it; the station then reads **5/3**. The session's result is two labelled
+numbers, **Hits** "26 of 30" and **Figures** "22": your hits out of the hits
+possible, six per station, and the figures you hit. Scratched and shoot-off
+stations count for neither. In point field it is one sum instead, where every
+hit is a point and every figure hit is another. When every station has its
+figures recorded, the figures add them up the same way: "22 of 24". Home, the
+sessions list and Records write it on one line, "Hits 26 of 30 · Figures 22 of
+24", and a session with no scoring station yet reads "No stations".
 
 Where the organiser put out a **ringed figure**, type the points you scored
 under **Points**, and what the figure was worth after "of" if you know it. A
@@ -135,7 +162,8 @@ confirm before the series and its shots are removed.
 
 ## The stopwatch and sights
 
-Two buttons sit above the series list (not in a field shooting session):
+Two text buttons sit under the session's result, above the series list (not
+in a field shooting session):
 
 - **Stopwatch** — opens over the session. It keeps running when you close it,
   because it is timing your session rather than the panel. The buttons work
@@ -151,7 +179,9 @@ screen.
 
 ## What the summary tells you
 
-Under the series list:
+The result comes first, right under the session's name, with the total in
+large type. Totals are whole numbers with no suffix, the same on every screen;
+an average keeps its decimal.
 
 | Figure                | What it means                                                       |
 | --------------------- | ------------------------------------------------------------------- |
@@ -225,15 +255,15 @@ are scored in hits on figures, with no rings to draw.
 
 ## Sharing or deleting a session from Home
 
-On Home, swipe a session left to reveal two icons: share and trash. Deleting
+On Home, swipe a session under **Recent** left to reveal two icons: share and
+trash. Deleting
 asks you to confirm first.
 
 ## Finding a session again
 
-Home shows your ten most recent sessions. **See all**, at the end of that list,
-opens the full logbook — every session you have ever logged, newest first. It
-sits at the bottom because that is where you are when the ten latest did not
-have what you were looking for.
+Home shows your last session and the nine before it under **Recent**. **All
+Sessions**, beside that heading, opens the full logbook — every session you
+have ever logged, newest first.
 
 The logbook opens on the sessions themselves. Search is above them; everything
 else is folded behind one **Filters** row, which shows what is currently
@@ -248,6 +278,8 @@ Filter by any combination of:
   The same choices the [Statistics](statistics.md) tab offers, because it is the
   same question
 - **training or competition**
+- **series or rounds** — sessions logged as scored series, or as a count of
+  rounds fired
 - **discipline**
 - **tag**
 - **firearm**, including _No firearm recorded_ for sessions where none was set

@@ -19,6 +19,8 @@ import { series, sessions, shots, syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
+import { logMaintenanceEvent } from './maintenance-events';
 import { listSeriesForSession } from './series';
 import { getSession } from './sessions';
 import { listScoredShotsForSession, listShotsForSeries } from './shots';
@@ -71,7 +73,19 @@ describe('web-built rows on the phone schema', () => {
 
     beforeEach(() => {
       db = createTestDb();
-      firearmId = createFirearm(db, { make: 'Pardini', model: 'SP', roundCount: 100 }).id;
+      firearmId = createFirearm(db, {
+        make: 'Pardini',
+        model: 'SP',
+        roundCount: 100,
+        maintenanceIntervalRounds: 500,
+        maintenanceIntervalMonths: 6,
+      }).id;
+      // Cleaned at 100 rounds, so rounds since maintenance starts at 0.
+      logMaintenanceEvent(db, {
+        firearmId: firearmId,
+        performedAt: '2026-01-01T00:00:00.000Z',
+        kind: 'cleaning',
+      });
       // What the web pulled: the phone's own payload for the firearm.
       const pulled = readRowSync(db, 'firearms', firearmId)!.payload as Record<string, unknown>;
       db.delete(syncOutbox).run();
@@ -162,10 +176,14 @@ describe('web-built rows on the phone schema', () => {
       expect(listShotsForSeries(db, rows[1]!.id)).toHaveLength(5);
       // 48 + 30, as typed.
       expect(sumValueTenths(listScoredShotsForSession(db, sessionId))).toBe(780);
+      // The web moves the counter on the pulled row and keeps every other
+      // column, the intervals included (#800).
       expect(getFirearm(db, firearmId)).toMatchObject({
         roundCount: 110,
-        roundsSinceMaintenance: 10,
+        maintenanceIntervalRounds: 500,
+        maintenanceIntervalMonths: 6,
       });
+      expect(getRoundsSinceMaintenance(db, getFirearm(db, firearmId)!)).toBe(10);
     });
 
     it('A3 nothing applied is re-queued (the outbox stays empty after apply)', () => {

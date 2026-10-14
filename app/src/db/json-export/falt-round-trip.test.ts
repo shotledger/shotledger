@@ -132,7 +132,7 @@ describe('fält stations in the JSON export', () => {
 
     db.delete(faltStations).run();
     db.delete(sessions).run();
-    db.update(firearms).set({ roundCount: 0, roundsSinceMaintenance: 0 }).run();
+    db.update(firearms).set({ roundCount: 0 }).run();
     const envelope = JSON.parse(json) as { firearms: unknown[] };
     envelope.firearms = [];
     const { groups, records } = dryRunImport(db, JSON.stringify(envelope));
