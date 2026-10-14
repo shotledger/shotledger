@@ -5,14 +5,15 @@
 import { Stack } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { InfoButton } from '@/components/info-button';
-import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { getSetting, setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { countTrainingSamples, deleteAllTrainingSamples } from '@/db/queries/training-samples';
@@ -67,7 +68,7 @@ export default function TrainingDataSettingsScreen() {
         </View>
         <View style={styles.switchRow}>
           <ThemedText type="small">{t('settings.trainingConsent')}</ThemedText>
-          <Switch
+          <Toggle
             value={trainingConsent}
             onValueChange={onToggleTrainingConsent}
             testID="photo-training-consent"
@@ -81,7 +82,8 @@ export default function TrainingDataSettingsScreen() {
             <ThemedText type="small" themeColor="textSecondary" testID="training-sample-count">
               {t('settings.trainingCount', { count: sampleCount })}
             </ThemedText>
-            <PrimaryButton
+            <SecondaryButton
+              tone="danger"
               label={t('settings.trainingDelete')}
               onPress={onDeleteTrainingSamples}
               testID="training-delete"

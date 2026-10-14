@@ -16,11 +16,14 @@ import { syncOutbox } from '../schema';
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
+import { logMaintenanceEvent } from './maintenance-events';
 import { saveSeriesShots, setSessionExtraRounds } from './round-count';
 import { addSeries, listSeriesForSession } from './series';
 import { createSession, getSession } from './sessions';
 import { listShotsForSeries } from './shots';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import { sessionVolumeRounds } from './volume';
 
 const NOW = '2026-10-10T10:00:00.000Z';
@@ -42,6 +45,7 @@ function apply(db: Database, result: EntryResult): ClientChange[] {
         typeof value === 'boolean' ? Number(value) : value,
       ]),
     );
+  expect(serverRefusals(result.changes)).toEqual([]);
   const rows: ChangeRow[] = result.changes.map((change, index) => ({
     tableName: change.tableName,
     rowId: change.rowId,
@@ -80,6 +84,17 @@ describe('web rounds-only and final rows on the phone schema', () => {
     phone = createTestDb();
     webFirearm = createFirearm(web, { make: 'Pardini', model: 'SP', roundCount: 100 }).id;
     phoneFirearm = createFirearm(phone, { make: 'Pardini', model: 'SP', roundCount: 100 }).id;
+    // Both cleaned at 100 rounds, so rounds since maintenance starts at 0.
+    logMaintenanceEvent(web, {
+      firearmId: webFirearm,
+      performedAt: '2026-01-01T00:00:00.000Z',
+      kind: 'cleaning',
+    });
+    logMaintenanceEvent(phone, {
+      firearmId: phoneFirearm,
+      performedAt: '2026-01-01T00:00:00.000Z',
+      kind: 'cleaning',
+    });
     web.delete(syncOutbox).run();
   });
 
@@ -148,8 +163,11 @@ describe('web rounds-only and final rows on the phone schema', () => {
     expect(sessionVolumeRounds(web, webSessionId)).toBe(60);
 
     const counters = (db: Database, id: string) => {
-      const { roundCount, roundsSinceMaintenance } = getFirearm(db, id)!;
-      return { roundCount, roundsSinceMaintenance };
+      const firearm = getFirearm(db, id)!;
+      return {
+        roundCount: firearm.roundCount,
+        roundsSinceMaintenance: getRoundsSinceMaintenance(db, firearm),
+      };
     };
     expect(counters(web, webFirearm)).toEqual({ roundCount: 160, roundsSinceMaintenance: 60 });
     expect(counters(web, webFirearm)).toEqual(counters(phone, phoneFirearm));

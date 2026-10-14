@@ -81,7 +81,8 @@ CREATE TABLE `firearms` (
 	`notes` text,
 	`round_count` integer DEFAULT 0 NOT NULL,
 	`maintenance_interval_rounds` integer,
-	`rounds_since_maintenance` integer DEFAULT 0 NOT NULL
+	`maintenance_interval_months` integer,
+	`archived_at` text
 );
 --> statement-breakpoint
 CREATE TABLE `licenses` (
@@ -107,8 +108,9 @@ CREATE TABLE `maintenance_events` (
 	`firearm_id` text NOT NULL,
 	`performed_at` text NOT NULL,
 	`kind` text NOT NULL,
-	`round_count_at` integer,
+	`round_count_at` integer NOT NULL,
 	`notes` text,
+	`is_adjustment` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`firearm_id`) REFERENCES `firearms`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -136,7 +138,7 @@ CREATE TABLE `series` (
 	`is_total_override` integer DEFAULT 0 NOT NULL,
 	`total_override_tenths` integer,
 	`total_override_shot_count` integer,
-	`note` text,
+	`is_shoot_off` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -182,8 +184,6 @@ CREATE TABLE `sessions` (
 	`extra_rounds` integer,
 	`external_source` text,
 	`external_ref` text,
-	`external_synced_at` text,
-	`webshooter_competition_id` text,
 	`official_placement` integer,
 	`official_standardmedalj` text,
 	FOREIGN KEY (`firearm_id`) REFERENCES `firearms`(`id`) ON UPDATE no action ON DELETE no action,
@@ -219,7 +219,6 @@ CREATE TABLE `shots` (
 	`position` integer NOT NULL,
 	`value_tenths` integer NOT NULL,
 	`is_inner_ten` integer DEFAULT 0 NOT NULL,
-	`is_inner_ten_decimal` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`series_id`) REFERENCES `series`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -560,7 +559,7 @@ END;
 -- shared/src/sync/protocol.ts, ADR 0019); every other key is device-local.
 CREATE TRIGGER `sync_outbox_settings_insert` AFTER INSERT ON `settings`
 WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
-  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant', 'showLicenseActivity', 'showPhotos', 'showTimer', 'showSightSettings', 'showAmmoLots', 'showMaintenance')
 BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)
@@ -571,7 +570,7 @@ END;
 --> statement-breakpoint
 CREATE TRIGGER `sync_outbox_settings_update` AFTER UPDATE ON `settings`
 WHEN (SELECT `applying` FROM `sync_control` WHERE `id` = 0) = 0
-  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant')
+  AND new.`id` IN ('birthYear', 'skillClass', 'competesInWomensClasses', 'complianceProfile', 'complianceProfileVariant', 'showLicenseActivity', 'showPhotos', 'showTimer', 'showSightSettings', 'showAmmoLots', 'showMaintenance')
 BEGIN
   UPDATE `sync_control` SET `last_rev` = `last_rev` + 1 WHERE `id` = 0;
   INSERT INTO `sync_outbox` (`table_name`, `row_id`, `rev`, `client_change_id`)

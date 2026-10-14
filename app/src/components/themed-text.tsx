@@ -1,10 +1,25 @@
+import type { Ref } from 'react';
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/theme/tokens';
+import { Fonts, TabularNums, ThemeColor, Typography } from '@/theme/tokens';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  ref?: Ref<Text>;
+  type?:
+    | 'default'
+    | 'title'
+    | 'small'
+    | 'smallBold'
+    | 'subtitle'
+    | 'link'
+    | 'linkPrimary'
+    | 'code'
+    // The #822 scale. `score` draws tabular numerals; give `headline` and
+    // `caption` `TabularNums` when they hold a number.
+    | 'score'
+    | 'headline'
+    | 'caption';
   themeColor?: ThemeColor;
 };
 
@@ -23,6 +38,9 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        type === 'score' && styles.score,
+        type === 'headline' && styles.headline,
+        type === 'caption' && styles.caption,
         style,
       ]}
       {...rest}
@@ -31,42 +49,19 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
 }
 
 const styles = StyleSheet.create({
-  small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 500,
-  },
-  smallBold: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 700,
-  },
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 500,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
-  },
-  subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 14,
-  },
-  linkPrimary: {
-    lineHeight: 30,
-    fontSize: 14,
-  },
+  small: Typography.label,
+  smallBold: Typography.labelStrong,
+  default: Typography.body,
+  title: Typography.display,
+  subtitle: Typography.legacyHeadline,
+  link: Typography.link,
+  linkPrimary: Typography.link,
+  score: { ...Typography.score, ...TabularNums },
+  headline: Typography.headline,
+  caption: Typography.caption,
   code: {
+    ...Typography.code,
     fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
+    fontWeight: Platform.select({ android: 700 }) ?? Typography.code.fontWeight,
   },
 });

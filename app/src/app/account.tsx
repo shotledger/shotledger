@@ -9,6 +9,7 @@ import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
@@ -70,7 +71,7 @@ export default function AccountScreen() {
             <ThemedText type="default" testID="account-email">
               {account.email ?? '—'}
             </ThemedText>
-            <PrimaryButton
+            <SecondaryButton
               label={t('account.signOut')}
               onPress={() => void account.signOut()}
               testID="account-sign-out"
@@ -88,6 +89,11 @@ export default function AccountScreen() {
             <ThemedText type="small" themeColor="textSecondary" testID="sync-pending">
               {t('account.pendingChanges', { count: status.pendingCount })}
             </ThemedText>
+            {status.refusedCount > 0 && (
+              <ThemedText type="small" themeColor="textSecondary" testID="sync-refused">
+                {t('account.refusedChanges', { count: status.refusedCount })}
+              </ThemedText>
+            )}
             {status.errorKey && (
               <ThemedText type="small" themeColor="textSecondary" testID="sync-error">
                 {t(`account.syncError.${status.errorKey}`)}

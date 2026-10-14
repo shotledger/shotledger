@@ -9,13 +9,13 @@ import {
   xCount,
   type StatsSeries,
 } from '@shotledger/shared';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { createTestDb } from '../test-db';
 import { addFirearmGroup } from '../queries/firearm-groups';
 import { createAmmoLot } from '../queries/ammo-lots';
-import { createFirearm, listFirearms } from '../queries/firearms';
+import { archiveFirearm, createFirearm, listFirearms } from '../queries/firearms';
 import { addLicense, listLicenses } from '../queries/licenses';
 import { addSeries, listSeriesForSession } from '../queries/series';
 import { createSession, listExternalRefs, sumExtraRounds } from '../queries/sessions';
@@ -50,6 +50,7 @@ function seed(db: Database) {
     loadSystem: 'halvautomat',
     isOwn: false,
     maintenanceIntervalRounds: 500,
+    maintenanceIntervalMonths: 6,
   });
   addFirearmGroup(db, { firearmId: firearm.id, groupId: 'spsf:C' });
   const license = addLicense(db, {
@@ -235,6 +236,8 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
       vapenId: 'SE-TEST-0001',
       loadSystem: 'halvautomat',
       maintenanceIntervalRounds: 500,
+      archivedAt: null,
+      maintenanceIntervalMonths: 6,
     });
     expect(listLicenses(db, firearm.id)).toMatchObject([
       {
@@ -246,6 +249,21 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
         authority: 'Polismyndigheten',
       },
     ]);
+  });
+
+  it('keeps an archived firearm archived, with its sessions (#799)', () => {
+    const db = createTestDb();
+    const { firearm, sessionA } = seed(db);
+    const archivedAt = archiveFirearm(db, firearm.id)!.archivedAt;
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    expect(listFirearms(db)[0]?.archivedAt).toBe(archivedAt);
+    const imported = db.select().from(sessions).where(eq(sessions.id, sessionA.id)).get();
+    expect(imported?.firearmId).toBe(firearm.id);
   });
 
   it('links the session to the firearm the file names by id', () => {
@@ -420,7 +438,7 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
       tenCount: 11,
       innerTenCount: 4,
       externalSource: 'shotlog',
-      externalRef: 'shotlog:test-ref-1',
+      externalRef: '00000000deadbeef',
     });
     addSeries(db, {
       sessionId: shotlog.id,
@@ -435,7 +453,7 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
       disciplineId: 'precision',
       startedAt: '2026-08-23T09:00:00.000Z',
       externalSource: 'webshooter',
-      externalRef: 'webshooter:100:200',
+      externalRef: '100:200',
       officialPlacement: 2,
       officialStandardMedal: 'guld',
     });
@@ -474,6 +492,29 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
     expect(before.map((s) => s.kind)).toEqual(['rounds', 'series', 'series']);
   });
 
+  it('S5 keeps a shoot-off series flagged', () => {
+    const db = createTestDb();
+    const { webshooter } = seedImported(db);
+    addSeries(db, {
+      sessionId: webshooter.id,
+      position: 1,
+      isShootOff: true,
+      isTotalOverride: true,
+      totalOverrideTenths: 480,
+      totalOverrideShotCount: 5,
+    });
+    const json = buildExportJson(db, '1.0.0');
+
+    wipeEverything(db);
+    const { groups, records } = dryRunImport(db, json);
+    applyImport(db, groups, records);
+
+    const imported = db.select().from(series).where(isNull(series.deletedAt)).all();
+    expect(imported.filter((s) => s.isShootOff === 1).map((s) => s.totalOverrideTenths)).toEqual([
+      480,
+    ]);
+  });
+
   it('leaves the refs where a later WebShooter or ShotLog import looks for them', () => {
     const db = createTestDb();
     const { shotlog, webshooter } = seedImported(db);
@@ -484,8 +525,8 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
     applyImport(db, groups, records);
 
     expect(listExternalRefs(db).filter((r) => r.externalRef !== null)).toEqual([
-      { id: shotlog.id, externalRef: 'shotlog:test-ref-1' },
-      { id: webshooter.id, externalRef: 'webshooter:100:200' },
+      { id: shotlog.id, externalSource: 'shotlog', externalRef: '00000000deadbeef' },
+      { id: webshooter.id, externalSource: 'webshooter', externalRef: '100:200' },
     ]);
   });
 });

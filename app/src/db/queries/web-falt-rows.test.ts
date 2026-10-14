@@ -12,8 +12,11 @@ import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { faltSessionResult, listStationsForSession } from './falt';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
+import { logMaintenanceEvent } from './maintenance-events';
 import { getSession } from './sessions';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import { sessionVolumeRounds } from './volume';
 
 const NOW = '2026-10-07T10:00:00.000Z';
@@ -52,6 +55,12 @@ describe('web-built fält rows on the phone schema', () => {
   beforeEach(() => {
     db = createTestDb();
     firearmId = createFirearm(db, { make: 'Glock', model: '17', roundCount: 100 }).id;
+    // Cleaned at 100 rounds, so rounds since maintenance starts at 0.
+    logMaintenanceEvent(db, {
+      firearmId: firearmId,
+      performedAt: '2026-01-01T00:00:00.000Z',
+      kind: 'cleaning',
+    });
     const pulled = readRowSync(db, 'firearms', firearmId)!.payload as Record<string, unknown>;
     db.delete(syncOutbox).run();
 
@@ -93,6 +102,7 @@ describe('web-built fält rows on the phone schema', () => {
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     sessionId = result.sessionId;
 
+    expect(serverRefusals(result.changes)).toEqual([]);
     const pulledBack: ChangeRow[] = result.changes.map((change, index) => ({
       tableName: change.tableName,
       rowId: change.rowId,
@@ -166,10 +176,8 @@ describe('web-built fält rows on the phone schema', () => {
     });
     // Five stations fired, six rounds each, as the phone's own volume counts them.
     expect(sessionVolumeRounds(db, sessionId)).toBe(30);
-    expect(getFirearm(db, firearmId)).toMatchObject({
-      roundCount: 130,
-      roundsSinceMaintenance: 30,
-    });
+    expect(getFirearm(db, firearmId)).toMatchObject({ roundCount: 130 });
+    expect(getRoundsSinceMaintenance(db, getFirearm(db, firearmId)!)).toBe(30);
   });
 
   it('AF3 nothing applied is re-queued (the outbox stays empty after apply)', () => {

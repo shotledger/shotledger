@@ -18,8 +18,10 @@ import {
   modeOf,
   onRowEnter,
   ringDisciplines,
+  rowShots,
   rowSummary,
   sendsTheSame,
+  seriesLengthOf,
   startedAtIso,
   toDraft,
   withDiscipline,
@@ -161,6 +163,9 @@ describe('the Enter Series form', () => {
     });
     expect(toDraft({ ...form, seriesLengthText: 'x' }, '').seriesLength).toBeNull();
     expect(toDraft({ ...form, seriesLengthText: '0' }, '').seriesLength).toBeNull();
+    // #837: exponent notation passed Number.isInteger and became the series length.
+    expect(toDraft({ ...form, seriesLengthText: '1e20' }, '').seriesLength).toBeNull();
+    expect(toDraft({ ...form, seriesLengthText: '101' }, '').seriesLength).toBeNull();
   });
 
   it('summarizes a row as it is typed', () => {
@@ -396,5 +401,49 @@ describe('a photo on a form row', () => {
       { text: '10', isSighter: false, isFinal: false },
       { text: '', isSighter: false, isFinal: false, hasPhoto: true },
     ]);
+  });
+});
+
+describe('initialForm preselection (#822)', () => {
+  it('starts on the given discipline and firearm, as picking them would', () => {
+    const form = initialForm(NOW, NO_PROFILE, {
+      regulationId: 'spsf',
+      disciplineId: 'spsf-milsnabb',
+      firearmId: 'gun',
+    });
+    expect(form.disciplineId).toBe('spsf-milsnabb');
+    expect(form.firearmId).toBe('gun');
+    expect(form).toEqual({
+      ...withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-milsnabb', 'spsf'),
+      firearmId: 'gun',
+      rows: form.rows,
+    });
+  });
+
+  it('keeps the first-run defaults without one', () => {
+    const plain = initialForm(NOW, NO_PROFILE);
+    const none = initialForm(NOW, NO_PROFILE, null);
+    expect({ ...none, rows: [] }).toEqual({ ...plain, rows: [] });
+  });
+});
+
+describe('seriesLengthOf and rowShots (#822)', () => {
+  it('takes the program’s length, else the typed one, else the discipline’s', () => {
+    const free = initialForm(NOW, NO_PROFILE);
+    expect(seriesLengthOf(free)).toBe(5);
+    expect(seriesLengthOf({ ...free, seriesLengthText: '10' })).toBe(10);
+    expect(seriesLengthOf({ ...free, seriesLengthText: 'x' })).toBe(5);
+    const milsnabb = withProgram(withDiscipline(free, 'spsf-milsnabb'), 'spsf-milsnabb');
+    expect(seriesLengthOf({ ...milsnabb, seriesLengthText: '3' })).toBe(
+      getProgram('spsf-milsnabb')!.shotsPerSeries,
+    );
+  });
+
+  it('parses a row, or answers null for text that is not shots', () => {
+    expect(rowShots('10 X', 'integer')).toEqual([
+      { valueTenths: 100, isInnerTen: false },
+      { valueTenths: 100, isInnerTen: true },
+    ]);
+    expect(rowShots('9 banana', 'integer')).toBeNull();
   });
 });

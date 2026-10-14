@@ -1,11 +1,13 @@
-// The station table of a fält entry (docs/specs/web-falt-entry-spec.md §3.3):
-// one row per station with the phone's station-screen controls. The logic is
-// in falt-model.ts; this file only renders.
+// The station table of a fält entry (docs/specs/web-falt-entry-spec.md §3.3)
+// and of the edit page (web-session-edit-spec.md §10, E13): one row per
+// station with the phone's station-screen controls. The logic is in
+// falt-model.ts; this file only renders.
 import { SHOTS_PER_STATION } from '@shotledger/shared/src/scoring/falt';
 import { figuresHitRange } from '@shotledger/shared/src/scoring/falt-station';
 import { useTranslation } from 'react-i18next';
 
 import { formatFaltResult } from '../../../app/src/features/session/format-falt-result';
+import { CountField } from '../fields/count';
 import {
   addStation,
   canStartShootOff,
@@ -21,15 +23,32 @@ import {
 const range = (min: number, max: number) =>
   Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
 
+/** "Not chosen" / "not recorded" among the count cells. */
+const NONE = '';
+
+/** min…max as count cells, after an optional "–" for none. */
+const countOptions = (min: number, max: number, withNone: boolean) => [
+  ...(withNone ? [{ value: NONE, label: '–' }] : []),
+  ...range(min, max).map((n) => ({ value: String(n), label: String(n) })),
+];
+
+const countOrNull = (value: string) => (value === NONE ? null : Number(value));
+
 export function FaltStations({
   falt,
   onEdit,
   rowErrors,
+  positions,
+  onRemove,
 }: {
   falt: FaltForm;
   onEdit: (next: FaltForm) => void;
   /** Error text by 1-based station row. */
   rowErrors: ReadonlyMap<number, string>;
+  /** Edit page: each row's label number, its stored position (E14). Default: 1..n. */
+  positions?: readonly number[];
+  /** Edit page: Remove on a row, Undo on a removed one (E13). */
+  onRemove?: (index: number) => void;
 }) {
   const { t } = useTranslation();
   const preview = faltPreview(falt);
@@ -44,75 +63,46 @@ export function FaltStations({
       {falt.stations.map((row, index) => {
         const figures = figuresHitRange(row.hits ?? 0, row.figureCount);
         const rowError = rowErrors.get(index + 1);
+        const removed = row.deleted === true;
         return (
-          <fieldset key={row.key} className="station-row" aria-invalid={rowError !== undefined}>
+          <fieldset
+            key={row.key}
+            className={removed ? 'station-row deleted' : 'station-row'}
+            aria-invalid={rowError !== undefined}
+          >
             <legend>
-              {t('station.title', { position: index + 1 })}
+              {t('station.title', { position: positions?.[index] ?? index + 1 })}
               {shootOff[index] && <span className="badge">{t('station.shootOff')}</span>}
             </legend>
-            <label className="field">
-              {t('station.hits')}
-              <select
-                value={row.hits ?? ''}
-                onChange={(event) =>
-                  onEdit(
-                    withHits(
-                      falt,
-                      index,
-                      event.target.value === '' ? null : Number(event.target.value),
-                    ),
-                  )
-                }
-              >
-                {/* Not chosen yet: a row left so is not saved; 0 is every shot missed (R8). */}
-                <option value="">–</option>
-                {range(0, SHOTS_PER_STATION).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('station.figuresHit')}
-              <select
-                value={row.figuresHit}
-                onChange={(event) =>
-                  onEdit(withStation(falt, index, { figuresHit: Number(event.target.value) }))
-                }
-              >
-                {range(figures.min, figures.max).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('station.figureCount')}
-              <select
-                value={row.figureCount ?? ''}
-                onChange={(event) =>
-                  onEdit(
-                    withFigureCount(
-                      falt,
-                      index,
-                      event.target.value === '' ? null : Number(event.target.value),
-                    ),
-                  )
-                }
-              >
-                <option value="">–</option>
-                {range(1, SHOTS_PER_STATION).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* One click per count, as the phone's station screen (#822). */}
+            <CountField
+              label={t('station.hits')}
+              disabled={removed}
+              // Not chosen yet: a row left so is not saved; 0 is every shot
+              // missed (R8). A stored station always holds hits, as the
+              // phone's screen (E15).
+              options={countOptions(0, SHOTS_PER_STATION, row.id === undefined)}
+              value={row.hits === null ? NONE : String(row.hits)}
+              onChange={(next) => onEdit(withHits(falt, index, countOrNull(next)))}
+            />
+            <CountField
+              label={t('station.figuresHit')}
+              disabled={removed}
+              options={countOptions(figures.min, figures.max, false)}
+              value={String(row.figuresHit)}
+              onChange={(next) => onEdit(withStation(falt, index, { figuresHit: Number(next) }))}
+            />
+            <CountField
+              label={t('station.figureCount')}
+              disabled={removed}
+              options={countOptions(1, SHOTS_PER_STATION, true)}
+              value={row.figureCount === null ? NONE : String(row.figureCount)}
+              onChange={(next) => onEdit(withFigureCount(falt, index, countOrNull(next)))}
+            />
             <label className="field">
               {t('station.points')}
               <input
+                disabled={removed}
                 inputMode="numeric"
                 autoComplete="off"
                 value={row.pointsText}
@@ -124,6 +114,7 @@ export function FaltStations({
             <label className="field">
               {t('station.pointsMax')}
               <input
+                disabled={removed}
                 inputMode="numeric"
                 autoComplete="off"
                 value={row.pointsMaxText}
@@ -134,6 +125,7 @@ export function FaltStations({
             </label>
             <label className="field check">
               <input
+                disabled={removed}
                 type="checkbox"
                 checked={row.isScratched}
                 onChange={(event) =>
@@ -142,6 +134,15 @@ export function FaltStations({
               />
               {t('station.scratched')}
             </label>
+            {onRemove && (
+              <button
+                type="button"
+                className="secondary small station-remove"
+                onClick={() => onRemove(index)}
+              >
+                {removed ? t('web.edit.undo') : t('station.delete')}
+              </button>
+            )}
             {preview.rows[index] === 'blank' && (
               <p className="muted station-note">{t('web.entry.stationBlank')}</p>
             )}

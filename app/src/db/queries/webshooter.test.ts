@@ -7,11 +7,13 @@ import type { ResultRow } from '@shotledger/shared/src/integrations/webshooter';
 import { localDayOf } from '@shotledger/shared/src/dates';
 
 import { createTestDb } from '../test-db';
+import { unsyncableRows } from '../sync-conformance';
 import type { Database } from '../types';
 import { createSession, getSession, updateSession } from './sessions';
 import { faltSessionResult, listStationsForSession } from './falt';
 import { listSeriesForSession } from './series';
 import { getFirearm, createFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import { cacheManualClassMapping, classifyResultRow, importResultRow } from './webshooter';
 
 let db: Database;
@@ -232,7 +234,7 @@ describe('importResultRow — fresh import', () => {
 
     const session = getSession(db, sessionId);
     expect(session?.externalSource).toBe('webshooter');
-    expect(session?.externalRef).toBe('webshooter:42:555');
+    expect(session?.externalRef).toBe('42:555');
     expect(session?.officialPlacement).toBe(3);
     expect(session?.officialStandardMedal).toBe('silver');
     expect(session?.weaponGroup).toBe('spsf:C');
@@ -243,6 +245,8 @@ describe('importResultRow — fresh import', () => {
     expect(seriesRows.every((s) => s.isTotalOverride === 1)).toBe(true);
     expect(seriesRows.every((s) => s.totalOverrideShotCount === 5)).toBe(true);
     expect(seriesRows[0]!.totalOverrideTenths).toBe(470); // 47 points -> 470 tenths
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('maps results_finals to isFinal series and results_distinguish to a särskjutning note (§A.6)', () => {
@@ -255,9 +259,11 @@ describe('importResultRow — fresh import', () => {
     });
     const seriesRows = listSeriesForSession(db, sessionId);
     const finalSeries = seriesRows.find((s) => s.isFinal === 1);
-    const distinguishSeries = seriesRows.find((s) => s.note === 'särskjutning');
+    const distinguishSeries = seriesRows.find((s) => s.isShootOff === 1);
     expect(finalSeries?.totalOverrideTenths).toBe(500);
     expect(distinguishSeries?.totalOverrideTenths).toBe(100);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('does not adjust extra_rounds by default (§A.7 default unchecked)', () => {
@@ -291,6 +297,8 @@ describe('importResultRow — fresh import', () => {
     // Seven total-only series of five (#512, one-volume-figure-spec A8) plus
     // the five sighter rounds.
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(40);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('never overwrites an already-assigned firearm on re-import', () => {
@@ -357,7 +365,7 @@ describe('importResultRow — total-only series are volume (one-volume-figure-sp
     });
 
     expect(getFirearm(db, firearm.id)?.roundCount).toBe(35);
-    expect(getFirearm(db, firearm.id)?.roundsSinceMaintenance).toBe(35);
+    expect(getRoundsSinceMaintenance(db, getFirearm(db, firearm.id)!)).toBe(35);
   });
 
   it('A8: assigning the firearm on a fält import credits its stations and the sighter rounds', () => {
@@ -402,7 +410,7 @@ describe('importResultRow — confirmed heuristic link (§A.2)', () => {
     });
     expect(created).toBe(false);
     expect(sessionId).toBe(manual.id);
-    expect(getSession(db, sessionId)?.externalRef).toBe('webshooter:42:555');
+    expect(getSession(db, sessionId)?.externalRef).toBe('42:555');
   });
 });
 
@@ -491,6 +499,8 @@ describe('importResultRow — fält (#352)', () => {
       [3, 4, 2, null, 0],
       [4, 3, 2, null, 1],
     ]);
+    // Every row the import wrote is one the sync server accepts (#697).
+    expect(unsyncableRows(db)).toEqual([]);
   });
 
   it('gives the same round total Webshooter reports, with the shoot-off left out', () => {

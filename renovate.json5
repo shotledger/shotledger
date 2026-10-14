@@ -9,6 +9,12 @@
 
   addLabels: ['dependencies'],
 
+  // The preset hands merging to GitHub auto-merge, which a private repo on a
+  // free org does not have, and with no ruleset there are no required checks
+  // for it to wait on. Renovate merges itself instead, on a later run and only
+  // once every check on the PR is green.
+  platformAutomerge: false,
+
   // Default 'auto' rebases every open branch each time main moves, and each
   // rebase costs a full CI run: 43% of this repo's Actions minutes, one branch
   // alone paying for 39. Revisit when the repo is public and minutes are free.
@@ -40,6 +46,26 @@
         '@react-native-community/slider',
       ],
       enabled: false,
+    },
+    {
+      // `.node-version` is the source (#778); package.json `engines` and the
+      // eas.json pin below must move with it in the same PR, or
+      // `pnpm node:check` fails. Last, so it wins over the weekly batch name.
+      description: 'Node moves in one PR across every pin',
+      matchDepNames: ['node'],
+      groupName: 'node',
+    },
+  ],
+
+  customManagers: [
+    {
+      // EAS cannot read `.node-version`; app/eas.json repeats it.
+      customType: 'regex',
+      description: 'Node pin in the EAS base build profile',
+      managerFilePatterns: ['/^app/eas\\.json$/'],
+      matchStrings: ['"node":\\s*"(?<currentValue>[^"]+)"'],
+      depNameTemplate: 'node',
+      datasourceTemplate: 'node-version',
     },
   ],
 }

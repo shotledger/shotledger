@@ -19,10 +19,20 @@ export const PUSH_BATCH_MAX = 500;
 
 /**
  * Max UTF-8 bytes of one change's `JSON.stringify(payload)` on push. The
- * fullest app row is ~2.6 KB; 12 tables x PULL_PAGE_SIZE rows at this cap
- * keeps a pull response near 38 MiB, inside the Worker's 128 MB.
+ * fullest app row is ~2.6 KB. A pull page is PULL_PAGE_SIZE rows across all
+ * tables (backend/src/db/queries.ts), so at this cap one response stays near
+ * 3.1 MiB (200 x 16 KiB), well inside the Worker's 128 MB.
  */
 export const MAX_PAYLOAD_BYTES = 16_384;
+
+/**
+ * The range the server accepts in a `real` column: drizzle-zod bounds a
+ * SQLite real to a signed 48-bit integer's range
+ * (docs/specs/sync-payload-validation-spec.md §2.1). A screen that turns
+ * typed text into a real holds it to this, or the row never syncs.
+ */
+export const REAL_MIN = -140_737_488_355_328;
+export const REAL_MAX = 140_737_488_355_327;
 
 /**
  * Tables that follow the id/updated_at/deleted_at sync convention
@@ -51,7 +61,9 @@ export const SyncTableNameSchema = z.enum(SYNC_TABLE_NAMES);
 /**
  * The account settings that follow the user (ADR 0019); a settings row's id
  * is its key. Every other key is device-local and never syncs. Kept in
- * lock-step with the WHEN clause of the app's settings outbox triggers.
+ * lock-step with the WHEN clause of the app's settings outbox triggers. The
+ * `show*` keys are the feature switches (#801, FEATURE_SETTING_KEYS in
+ * shared/src/features/visibility.ts).
  */
 export const SYNCED_SETTING_KEYS = [
   'birthYear',
@@ -59,6 +71,12 @@ export const SYNCED_SETTING_KEYS = [
   'competesInWomensClasses',
   'complianceProfile',
   'complianceProfileVariant',
+  'showLicenseActivity',
+  'showPhotos',
+  'showTimer',
+  'showSightSettings',
+  'showAmmoLots',
+  'showMaintenance',
 ] as const;
 
 const SYNCED_SETTINGS: ReadonlySet<string> = new Set(SYNCED_SETTING_KEYS);

@@ -36,6 +36,7 @@ const session: SessionExport = {
       position: 1,
       isSighter: false,
       isFinal: false,
+      isShootOff: false,
       totalOverride: null,
       shots: [
         { position: 1, valueTenths: 100, isInnerTen: true },
@@ -70,7 +71,8 @@ const firearm = {
   notes: null,
   roundCount: 0,
   maintenanceIntervalRounds: null,
-  roundsSinceMaintenance: 0,
+  maintenanceIntervalMonths: null,
+  archivedAt: null,
 };
 
 const input: AnalyticsReportJsonInput = {

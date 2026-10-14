@@ -11,6 +11,8 @@
 //   - one line mixed disciplines whose maxima differ (precision 350,
 //     milsnabb 600), making its shape meaningless.
 
+import { DataViz } from '@shotledger/shared/src/design-tokens';
+
 export interface TimeSeriesPoint {
   /** Chart-space key, e.g. the session id. */
   key: string;
@@ -27,19 +29,16 @@ export interface TimeSeriesLine {
 }
 
 /**
- * Categorical slots, in fixed order, never cycled. Validated for both
- * surfaces before use (`dataviz` skill's checker, 2026-09-20): lightness band,
- * chroma floor, adjacent CVD separation and the normal-vision floor all pass
- * in light and dark.
- *
- * Light mode reports a contrast WARN for four slots against the card surface.
- * The relief that makes that legal is the legend: it is always drawn for two
- * or more lines and carries the discipline NAME in text ink, so identity is
- * never colour alone.
+ * Categorical slots, in fixed order, never cycled: the design tokens'
+ * `DataViz.<theme>.categorical` (#822), eight per theme. Each clears 3:1
+ * against the ground and the card surface in its theme, and every pair stays
+ * apart under colour-vision deficiency (`shared/src/design-tokens/tokens.test.ts`
+ * and the `dataviz` skill's checker). The legend, drawn for two or more lines, names each
+ * discipline in text ink, so identity is never colour alone.
  */
 export const CHART_LINE_COLORS = {
-  light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
-  dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'],
+  light: DataViz.light.categorical,
+  dark: DataViz.dark.categorical,
 } as const;
 
 /**

@@ -6,8 +6,10 @@ import {
   firearms,
   licenses,
   photoQueue,
+  series,
   sessionTags,
   sessions,
+  shots,
   syncControl,
   syncOutbox,
   syncState,
@@ -242,6 +244,53 @@ describe('applyChanges', () => {
 
     const rows = db.select().from(firearms).all();
     expect(rows.map((r) => r.id)).toEqual(['remote-2']);
+  });
+
+  it('C3 applies rows from a build that still has the columns #727 dropped', async () => {
+    const at = '2026-09-01T00:00:00.000Z';
+    const common = { created_at: at, updated_at: at, deleted_at: null };
+    await store.applyChanges([
+      change({
+        tableName: 'sessions',
+        rowId: 'old-s',
+        payload: {
+          id: 'old-s',
+          ...common,
+          name: 'Imported',
+          type: 'competition',
+          discipline_id: 'precision',
+          started_at: at,
+          external_source: 'webshooter',
+          external_ref: '1:2',
+          external_synced_at: at,
+          webshooter_competition_id: '1',
+        },
+      }),
+      change({
+        tableName: 'series',
+        rowId: 'old-r',
+        payload: { id: 'old-r', ...common, session_id: 'old-s', position: 1, note: 'särskjutning' },
+      }),
+      change({
+        tableName: 'shots',
+        rowId: 'old-h',
+        payload: {
+          id: 'old-h',
+          ...common,
+          series_id: 'old-r',
+          position: 1,
+          value_tenths: 100,
+          is_inner_ten: 1,
+          is_inner_ten_decimal: 0,
+        },
+      }),
+    ]);
+
+    expect(db.select().from(sessions).where(eq(sessions.id, 'old-s')).get()?.externalRef).toBe(
+      '1:2',
+    );
+    expect(db.select().from(series).where(eq(series.id, 'old-r')).get()?.isShootOff).toBe(0);
+    expect(db.select().from(shots).where(eq(shots.id, 'old-h')).get()?.isInnerTen).toBe(1);
   });
 
   it('applies a license row from a device that still has vault_document_id', async () => {

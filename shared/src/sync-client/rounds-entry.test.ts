@@ -44,7 +44,6 @@ const firearm: Payload = {
   make: 'Make',
   model: 'Model',
   round_count: 100,
-  rounds_since_maintenance: 40,
   is_own: 1,
   updated_at: '2026-01-01T00:00:00.000Z',
 };
@@ -98,7 +97,6 @@ describe('buildRoundsEntry', () => {
     expect(changes[0]!.payload).toEqual({
       ...firearm,
       round_count: 160,
-      rounds_since_maintenance: 100,
       updated_at: NOW,
     });
     const session = sessionOf(changes);

@@ -9,7 +9,9 @@ import {
   decodeAnalyticsFilter,
   encodeAnalyticsFilter,
   periodRange,
+  previousPeriodRange,
 } from './report';
+import { statsHeadline } from './headline';
 import { buildAnalyticsSeries, buildAnalyticsSessions } from './rows';
 
 const NOW = Date.parse('2026-10-06T12:00:00.000Z');
@@ -104,6 +106,18 @@ describe('buildFilterOptions', () => {
       tags: [{ id: 't', name: 'Club' }],
     });
   });
+
+  it('offers the disciplines of fält sessions too, with no ring series at all', () => {
+    const falt = [{ disciplineId: 'spsf-falt' }] as unknown as Parameters<
+      typeof buildFilterOptions
+    >[0]['falt'];
+    expect(buildFilterOptions({ series: [], falt, tags: [] })).toEqual({
+      hasAnyData: true,
+      disciplineIds: ['spsf-falt'],
+      shotsPerSeriesValues: [],
+      tags: [],
+    });
+  });
 });
 
 describe('composeAnalyticsReport', () => {
@@ -149,5 +163,123 @@ describe('composeAnalyticsReport', () => {
       NOW,
     );
     expect(report.bestSessionScore?.sessionName).toBe('s1');
+  });
+
+  it('echoes the name of a picked tag', () => {
+    const report = composeAnalyticsReport(
+      { ...DEFAULT_ANALYTICS_FILTER, tagIds: ['t'] },
+      {
+        series: buildAnalyticsSeries(rows),
+        sessions: buildAnalyticsSessions(rows),
+        falt: [],
+        tags: [
+          { id: 't', name: 'Club' },
+          { id: 'u', name: 'Away' },
+        ],
+        sessionNames: new Map(),
+        birthYear: null,
+      },
+      NOW,
+    );
+    expect(report.tagNames).toEqual(['Club']);
+  });
+});
+
+describe('previousPeriodRange', () => {
+  it('puts the same length of time just before a rolling period', () => {
+    expect(previousPeriodRange({ period: '30d', customFrom: null, customTo: null }, NOW)).toEqual({
+      fromIso: '2026-08-07T12:00:00.000Z',
+      toIso: '2026-09-06T11:59:59.999Z',
+    });
+  });
+
+  it('follows a custom range back by the same number of days', () => {
+    const range = previousPeriodRange(
+      { period: 'custom', customFrom: '2026-09-11', customTo: '2026-09-20' },
+      NOW,
+    );
+    const current = periodRange({
+      period: 'custom',
+      customFrom: '2026-09-11',
+      customTo: '2026-09-20',
+    });
+    expect(range).not.toBeNull();
+    // Ten days long, ending a millisecond before the current range starts.
+    expect(Date.parse(current.fromIso!) - Date.parse(range!.toIso!)).toBe(1);
+    expect(Date.parse(range!.toIso!) + 1 - Date.parse(range!.fromIso!)).toBe(
+      Date.parse(current.toIso!) + 1 - Date.parse(current.fromIso!),
+    );
+  });
+
+  it('has no previous period for all time or an open custom range', () => {
+    expect(
+      previousPeriodRange({ period: 'all', customFrom: null, customTo: null }, NOW),
+    ).toBeNull();
+    expect(
+      previousPeriodRange({ period: 'custom', customFrom: null, customTo: '2026-09-20' }, NOW),
+    ).toBeNull();
+    // A custom range typed backwards has no length to repeat.
+    expect(
+      previousPeriodRange(
+        { period: 'custom', customFrom: '2026-10-05', customTo: '2026-10-01' },
+        NOW,
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('statsHeadline', () => {
+  const twoSessions = {
+    sessions: [
+      sessionRow,
+      {
+        ...sessionRow,
+        id: 's0',
+        type: 'competition' as const,
+        startedAt: '2026-08-20T10:00:00.000Z',
+      },
+    ],
+    series: [...rows.series, { ...rows.series[0]!, id: 'r0', sessionId: 's0' }],
+    shots: [
+      ...rows.shots,
+      { seriesId: 'r0', valueTenths: 80, isInnerTen: 0 },
+      { seriesId: 'r0', valueTenths: 80, isInnerTen: 0 },
+    ],
+    sessionTags: [],
+    faltStations: [],
+  };
+  const inputs = {
+    series: buildAnalyticsSeries(twoSessions),
+    sessions: buildAnalyticsSessions(twoSessions),
+    falt: [],
+    tags: [],
+    sessionNames: new Map<string, string>(),
+    birthYear: null,
+  };
+  const state = { ...DEFAULT_ANALYTICS_FILTER, period: '30d' as const };
+
+  it('compares the average series with the previous equal period', () => {
+    const current = composeAnalyticsReport(state, inputs, NOW);
+    const previous = composeAnalyticsReport(state, inputs, NOW, previousPeriodRange(state, NOW)!);
+    expect(current.sessionIds).toEqual(['s1']);
+    expect(previous.sessionIds).toEqual(['s0']);
+    expect(previous.competitionCount).toBe(1);
+    expect(current.competitionCount).toBe(0);
+    expect(statsHeadline(current, previous)).toEqual({
+      kind: 'meanPerSeries',
+      value: 19,
+      previous: 16,
+      delta: 3,
+    });
+  });
+
+  it('has no trend without a previous period', () => {
+    const current = composeAnalyticsReport(state, inputs, NOW);
+    expect(statsHeadline(current, null)).toEqual({
+      kind: 'meanPerSeries',
+      value: 19,
+      previous: null,
+      delta: null,
+    });
   });
 });

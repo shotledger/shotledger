@@ -67,8 +67,22 @@ describe('exportSessionsToJson', () => {
       }));
     const input = session({
       series: [
-        { position: 1, isSighter: false, isFinal: false, totalOverride: null, shots: shots(80) },
-        { position: 2, isSighter: false, isFinal: false, totalOverride: null, shots: shots(90) },
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: false,
+          totalOverride: null,
+          shots: shots(80),
+        },
+        {
+          position: 2,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: false,
+          totalOverride: null,
+          shots: shots(90),
+        },
       ],
     });
 
@@ -80,13 +94,29 @@ describe('exportSessionsToJson', () => {
 
   it('C3: a series with zero shots survives — the CSV shape could not hold one', () => {
     const input = session({
-      series: [{ position: 1, isSighter: true, isFinal: false, totalOverride: null, shots: [] }],
+      series: [
+        {
+          position: 1,
+          isSighter: true,
+          isFinal: false,
+          isShootOff: false,
+          totalOverride: null,
+          shots: [],
+        },
+      ],
     });
     const parsed = JSON.parse(exportSessionsToJson([input], OPTIONS)) as {
       sessions: SessionExport[];
     };
     expect(parsed.sessions[0]!.series).toEqual([
-      { position: 1, isSighter: true, isFinal: false, shots: [], totalOverride: null },
+      {
+        position: 1,
+        isSighter: true,
+        isFinal: false,
+        isShootOff: false,
+        shots: [],
+        totalOverride: null,
+      },
     ]);
   });
 
@@ -161,7 +191,8 @@ describe('exportSessionsToJson — firearms and licenses (#314)', () => {
     notes: 'Träningsvapen',
     roundCount: 1200,
     maintenanceIntervalRounds: 500,
-    roundsSinceMaintenance: 120,
+    maintenanceIntervalMonths: 6,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',
@@ -174,10 +205,28 @@ describe('exportSessionsToJson — firearms and licenses (#314)', () => {
     authority: 'Polismyndigheten',
   };
 
-  it('always writes both arrays, even with nothing to put in them', () => {
+  it('always writes the arrays, even with nothing to put in them', () => {
     const parsed = JSON.parse(exportSessionsToJson([], OPTIONS)) as Record<string, unknown>;
     expect(parsed.firearms).toEqual([]);
     expect(parsed.licenses).toEqual([]);
+    expect(parsed.maintenanceEvents).toEqual([]);
+  });
+
+  it('M6 carries the maintenance log unchanged (#727)', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      roundCountAt: 1080,
+      isAdjustment: false,
+      notes: null,
+    };
+    const parsed = JSON.parse(
+      exportSessionsToJson([], { ...OPTIONS, firearms: [firearm], maintenanceEvents: [event] }),
+    ) as { maintenanceEvents: unknown[]; firearms: Record<string, unknown>[] };
+    expect(parsed.maintenanceEvents).toEqual([event]);
+    expect(parsed.firearms[0]).not.toHaveProperty('roundsSinceMaintenance');
   });
 
   it('carries a firearm and its license through unchanged', () => {

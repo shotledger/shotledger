@@ -83,6 +83,11 @@ describe('parseCsv line endings', () => {
     ]);
   });
 
+  it('adds no empty row after a final line break', () => {
+    expect(parseCsv('a,b\r\n')).toEqual([['a', 'b']]);
+    expect(parseCsv('a\n')).toEqual([['a']]);
+  });
+
   it('treats CRLF as a single row break', () => {
     expect(parseCsv('a,b\r\nc,d')).toEqual([
       ['a', 'b'],

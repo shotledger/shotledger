@@ -2,13 +2,16 @@
 
 Om du använder synk kan du nå ditt konto och dina pass från vilken
 webbläsare som helst med ShotLedgers webbapp, även när telefonen är
-borttappad eller trasig. Den läser det som synken redan har sparat. Den ändrar
-bara två saker: ett pass du skriver in under
-[Mata in serier på webben](entering-series-on-the-web.md), och inställningarna
-nedan.
+borttappad eller trasig. Den läser det som synken redan har sparat och ändrar
+bara det som telefonen själv kan ändra: ett pass du
+[skriver in](entering-series-on-the-web.md),
+[ändrar eller tar bort](editing-a-session-on-the-web.md), pass du
+[ändrar flera åt gången](editing-many-sessions-on-the-web.md), och
+inställningarna nedan.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
-**Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
+**Konto** i menyn: till vänster, eller längs nederkanten på en smal skärm, som
+telefonens flikar. När du stänger fliken loggas du ut från den
 här webbläsaren och ingenting lämnas kvar: inloggningen finns bara i den
 fliken, utan någon kaka. Servern avslutar den 12 timmar efter att du loggade
 in, eller direkt när du använder **Logga ut**; en flik som fortfarande är öppen
@@ -17,12 +20,14 @@ då ber dig logga in igen.
 ## Pass
 
 **Pass** i menyn listar alla synkade pass, det senaste först, med datum, gren
-och matchformat, plats, resultat och taggar. På en smal skärm utelämnas gren,
-plats och taggar.
+och matchformat, plats, resultat och taggar. Ett namn som appen hittat på
+("Precision — 2026-09-23") visas utan sitt datum, som Datum-kolumnen redan ger.
+På en smal skärm utelämnas gren, plats och taggar.
 
-Öppna ett pass genom dess namn för att läsa det: serier och skott, summorna,
-anteckningar, vapen, ammunitionsparti och taggar, eller stationerna för ett
-fältpass. Ingenting kan ändras där.
+Öppna ett pass genom dess namn för att läsa det, i samma ordning som i
+telefonen: namnet som sidans rubrik, vad passet var och vad det sköts med,
+sedan resultatet, sedan vapen, ammunitionsparti, plats och anteckningar, sedan
+serier och skott, eller för ett fältpass träff, figurer och stationer.
 
 ### Tavelfoton
 
@@ -40,6 +45,24 @@ ett med seriens eller stationens resultat och passet. **Ta bort** tar bort ett
 foto; **Rensa**, eller **Rensa alla** i jämförelsen, tömmer urvalet. Urvalet
 glöms när du loggar ut, laddar om eller stänger fliken.
 
+## Vapen
+
+**Vapen** i menyn listar dina vapen som telefonens vapenflik gör, sorterade
+efter tillverkare: vart och ett med sin vapentyp och samma statusrader för
+licens, underhåll, saknade uppgifter och licensaktivitet. Vapen du har
+arkiverat finns under **Visa arkiverade**.
+
+Öppna ett vapen för att läsa det, i samma ordning som på telefonen: vapentyp,
+ägande, kammare och vapenregister-id, antal skjutna skott och status för
+underhåll, dess eget kort **Licensaktivitet** och **Kriterier för
+föreningsintyg** med datumet då nästa pass senast ska loggas, sedan kalibrar,
+vapengrupper, siktinställningar, licenser och underhållslogg. Det du har
+stängt av under **Inställningar → Funktioner** lämnas bort, som på telefonen.
+
+Webben visar bara dina vapen. Att lägga till eller ändra ett vapen, en licens,
+underhåll eller en siktinställning, och att arkivera ett vapen, gör du i
+telefonen. Telefonens ammunitionspartier finns inte på webben.
+
 ## Inställningar
 
 **Inställningar** i menyn innehåller de inställningar som följer ditt konto
@@ -52,6 +75,8 @@ mellan enheter, samma som på telefonen:
   visar sidan det som räknats fram från dina vapen, som telefonen gör. Har
   du inte valt någon profil än är ingen markerad, och telefonen använder den
   som hör till dess språk; välj en här för att spara den för alla enheter.
+- **Funktioner**: vilka delar av appen du visar (telefonens Inställningar →
+  Funktioner, se [Dölja funktioner du inte använder](hiding-features.md)).
 
 Ändra det du behöver och tryck på **Spara**. Ändrar du ett födelseår som
 redan var satt får du bekräfta först, som på telefonen. Telefonerna får
@@ -98,3 +123,8 @@ Ett foto som inte går att hämta stoppar inte resten. Zip-filen listar det då 
 inloggade enheter. **Radera** tar sedan bort kontot och allt på servern och
 loggar ut alla enheter. Loggboken i telefonen rörs inte. Det går inte att
 ångra, så ladda ner allt först om du vill ha en kopia.
+
+## Källkod
+
+ShotLedger är fri programvara. **Källkod** i profilmenyn uppe till höger
+öppnar källkoden för appen och webbappen.

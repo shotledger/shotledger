@@ -3,7 +3,7 @@
 // (ADR 0019), so every column of the app's table is present, with the values
 // the app's own createSession / addSeries / addShot write. Keys are the
 // app's column names; app/src/db/queries/web-rows.test.ts holds them to
-// app/src/db/schema.ts.
+// shared/src/sync/schema.ts.
 import { MAX_VALUE_TENTHS } from '../scoring/entry';
 
 export type Payload = Record<string, unknown>;
@@ -66,8 +66,6 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     extra_rounds: fields.extraRounds ?? null,
     external_source: null,
     external_ref: null,
-    external_synced_at: null,
-    webshooter_competition_id: null,
     official_placement: null,
     official_standardmedalj: null,
   };
@@ -94,7 +92,7 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     is_total_override: 0,
     total_override_tenths: null,
     total_override_shot_count: null,
-    note: null,
+    is_shoot_off: 0,
   };
 }
 
@@ -117,16 +115,16 @@ export function newShotRow(id: string, now: string, fields: ShotFields): Payload
     value_tenths: valueTenths,
     is_inner_ten: fields.isInnerTen ? 1 : 0,
     // Deprecated column (A1 §A1.1.4): always 0, as addShot writes it.
-    is_inner_ten_decimal: 0,
   };
 }
 
 const counter = (value: unknown): number => (typeof value === 'number' ? value : 0);
 
 /**
- * The pulled firearm with `n` more rounds on both counters, as the phone's
- * applyRoundCountDelta moves them; null when there is nothing to add. The
- * pulled payload is spread so a column this build does not know survives.
+ * The pulled firearm with `n` more rounds on its counter, as the phone's
+ * applyRoundCountDelta moves it (rounds since maintenance is derived, #727
+ * M4); null when there is nothing to add. The pulled payload is spread so a
+ * column this build does not know survives.
  */
 export function withRoundsAdded(pulled: Payload, n: number, now: string): Payload | null {
   if (!Number.isInteger(n) || n < 0) {
@@ -136,14 +134,13 @@ export function withRoundsAdded(pulled: Payload, n: number, now: string): Payloa
   return {
     ...pulled,
     round_count: counter(pulled.round_count) + n,
-    rounds_since_maintenance: counter(pulled.rounds_since_maintenance) + n,
     updated_at: now,
   };
 }
 
 /**
- * The pulled firearm with both counters moved by `delta` (signed), each
- * floored at 0, as the phone's applyRoundCountDelta; null when `delta` is 0.
+ * The pulled firearm with its counter moved by `delta` (signed), floored at
+ * 0, as the phone's applyRoundCountDelta; null when `delta` is 0.
  * The pulled payload is spread so a column this build does not know survives.
  */
 export function withRoundsMoved(pulled: Payload, delta: number, now: string): Payload | null {
@@ -152,7 +149,6 @@ export function withRoundsMoved(pulled: Payload, delta: number, now: string): Pa
   return {
     ...pulled,
     round_count: Math.max(0, counter(pulled.round_count) + delta),
-    rounds_since_maintenance: Math.max(0, counter(pulled.rounds_since_maintenance) + delta),
     updated_at: now,
   };
 }

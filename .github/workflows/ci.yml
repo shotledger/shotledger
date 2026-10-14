@@ -16,7 +16,13 @@ concurrency:
 jobs:
   check:
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
+    # Every workflow takes its runner from the CI_RUNNER repository variable
+    # (Settings → Secrets and variables → Actions → Variables), so moving CI
+    # between GitHub-hosted and Blacksmith runners is a settings change, not a
+    # commit. Unset means ubuntu-latest; for Blacksmith set it to
+    # blacksmith-2vcpu-ubuntu-2404. Blacksmith only serves repositories owned
+    # by a GitHub organization.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -26,7 +32,7 @@ jobs:
 
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.21.0
+          node-version-file: .node-version
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -38,7 +44,12 @@ jobs:
           key: prettier-${{ github.run_id }}
           restore-keys: prettier-
 
+      # eslint's typed lint of the whole repo needs just over 1.85 GB of heap,
+      # past what Node picks by default on the runner (it aborted with "heap
+      # out of memory" on 2026-10-13); 4 GB leaves room to grow.
       - run: pnpm check
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       # Not part of `pnpm check` (see CLAUDE.md, "Backend").
       - name: Backend tests

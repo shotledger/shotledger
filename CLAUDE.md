@@ -104,6 +104,14 @@ sync. Android first — **all code must stay iOS-compatible**.
     stays. **Standardmedaljer are in scope** in every discipline where SHB
     defines one (Del C.5).
 
+11. **Web parity with the phone** (`app/PRODUCT.md` principle 5). A web
+    feature does what the phone does: same fields, rules, counter moves and
+    limits; no web-only ability, no silent gap. Read the phone's own code
+    (`app/src/`) before specifying web behaviour and cite the function it
+    mirrors. Where a spec choice could go either way, the phone's behaviour
+    is the answer; do not ask the maintainer. If the phone is wrong, open an
+    issue to fix the phone; do not make the web differ.
+
 ## Definition of done
 
 Code + tests written; `pnpm check` green from the repo root (the `check`
@@ -121,7 +129,8 @@ Not a follow-up: the same PR. Documentation that lags the code is wrong,
 and a reader cannot tell which half to believe.
 
 CI skips draft PRs (Actions minutes are paid); it runs when the PR is
-marked ready. CI also runs gates that `pnpm check` does not. Run the ones
+marked ready. The runner (GitHub-hosted or Blacksmith) is the `CI_RUNNER`
+repository variable; see CONTRIBUTING.md, "CI runners". CI also runs gates that `pnpm check` does not. Run the ones
 your change touches before pushing:
 
 - docs: `docs/CLAUDE.md`

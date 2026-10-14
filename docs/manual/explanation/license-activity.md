@@ -23,6 +23,23 @@ Training and competition count the same, as does representing your club at an
 external competition. An activity is one logged session — not one series, and
 not one day.
 
+## How the six months are counted
+
+The form says "the last six months" but not how to count them to the day, so
+the app counts the way Swedish law counts periods of months (Lag 1930:173):
+
+- **Whole days, in your phone's time zone.** A session belongs to the day you
+  shot it. The time of day never matters.
+- **The first day counts.** On 1 April the period starts on 1 October, and a
+  session from 1 October still counts. On 2 April it no longer does.
+- **Month ends.** When the same date does not exist six months back, the period
+  starts on the last day of that month instead: on 31 March it starts on
+  30 September.
+
+The renewal box's two years are counted the same way, and they never share a
+day: the recent year starts twelve months back, and the older year ends the day
+before.
+
 ## Your case, and where it comes from
 
 The app proposes one of the two from your firearms: if any firearm is a
@@ -42,11 +59,13 @@ you told it — the weapon type and the
   unless you say otherwise, and the case it proposes for a handgun owner is
   therefore 6 §, the lighter of the two. Set a firearm to **Borrowed** and it
   stops counting.
+- An [archived](../guides/firearms-and-ammunition.md#archiving-a-firearm-you-no-longer-have)
+  firearm does not count either: you no longer have it.
 
 The screen also says **why** it chose what it chose — "because no firearm on
 file is a pistol or revolver you own", say. That matters after an import: a
 firearm created by importing sessions arrives with no weapon type and no
-licence, so the app can see five handguns and still have nothing on file
+license, so the app can see five handguns and still have nothing on file
 saying they _are_ handguns. The proposal is then right about the data and
 wrong about you, and the reason line is what makes that visible instead of
 mysterious.
@@ -57,6 +76,35 @@ The form says _sammantaget i genomsnitt_ — taken together, on average. The app
 reads that as a total across the whole six-month window: twelve activities
 somewhere in the six months satisfies 5 §, whether they were spread evenly or
 not. It does not require a fixed number in every calendar month.
+
+## The next-session date
+
+The period always ends today, so every day the oldest sessions in it move closer
+to falling out. If you log nothing more, a met requirement stays met until enough
+sessions have fallen out that the count drops below what is needed. The date the
+app shows is the last day before that happens.
+
+Only the sessions that requirement counts matter: for a firearm's criterion,
+sessions logged with that firearm. For the renewal criterion both years must stay
+at four, so the date can come from either year.
+
+The date is counted in whole days, the same way as the period itself (see
+[How the six months are counted](#how-the-six-months-are-counted)).
+
+## A year that has already ended
+
+The renewal box asks for four activities in each of the last two years. The
+older of those two years ended a year ago, so a session you log today lands in
+the recent year and can never count towards the older one.
+
+What does change the older year is time. As the days pass, both years move
+forward together: sessions from the start of your recent year cross into the
+older one, and the oldest sessions drop out of it. So an older year that is
+short now can fill up later, either from sessions you have already logged or
+from sessions you log from now on once they are a year old. The date the app
+gives is the first day on which every year can be at four, provided you keep
+logging sessions with that firearm. It is the earliest the box can be ticked,
+not a promise that it will be.
 
 ## What counts, and what this is not
 
@@ -71,6 +119,9 @@ thinnest.
 The same figure therefore appears on every firearm: it is your activity level,
 shown next to each gun for convenience, not that gun's own tally. The screen
 says so under the number.
+
+Sessions shot with a firearm you have since archived still count. You did the
+shooting; selling the gun afterwards does not undo it.
 
 License Activity counts what you logged. A range visit you did not log is not
 in it, and a session logged twice counts twice.
@@ -114,20 +165,23 @@ The app has no access to your licenses, so it works from what you told it:
   **pistol or revolver** and which you marked as **My Own** — the same reading
   of "handgun you hold" the 5 §/6 § proposal uses.
 - **Renewing a time-limited permit** is shown for any firearm whose most recent
-  licence has an **end date**. A licence with no end date is _tills vidare_ and
+  license has an **end date**. A license with no end date is _tills vidare_ and
   is not a time-limited permit. Weapon type is not part of it: the form's
   renewal box names none.
 
+Neither is shown for an archived firearm. You no longer hold it, and you will
+not renew its permit.
+
 If a criterion is missing from a firearm you expected it on, that is the place
-to look — usually a missing weapon type or a licence recorded without its
+to look — usually a missing weapon type or a license recorded without its
 _giltighetstid_.
 
 !!! warning "Counted is not attested"
 
     On a club log a row becomes evidence when someone signs the _Uppg. styrkta
-    av_ column. The app has no equivalent and does not invent one. "6 of 4
-    activities with this firearm" means the app counted six sessions you
-    logged — not that anyone has attested them.
+    av_ column. The app has no equivalent and does not invent one. "6 activities
+    with this firearm" means the app counted six sessions you logged — not that
+    anyone has attested them.
 
 ## What the app does not track
 

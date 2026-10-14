@@ -1,7 +1,7 @@
 # How shots fired are counted
 
 Several screens tell you how many shots you have fired: **Shots Logged** on
-Home and in the Statistics report, an ammunition lot's usage, a firearm's
+the Statistics tab, an ammunition lot's usage, a firearm's
 **Rounds Fired** and **Rounds Since Maintenance**, the JSON report and the
 count shown before you import a file. They all count the same way, so they
 always agree.
@@ -24,9 +24,11 @@ out of the ammunition box.
 
 ## When no shot count was saved
 
-A series imported from ShotLog is a total with no shot count. It counts as one
-full series of its discipline: five shots for precision, milsnabb,
-figurskjutning and helmatch, six for fält.
+A series imported from ShotLog's old one-row-per-session export is a total
+with no shot count. It counts as one full series of its discipline: five shots
+for precision, milsnabb, figurskjutning and helmatch, six for fält. Sessions
+imported from ShotLog 5.4's full export carry every shot, so they are counted
+like any other.
 
 ## Firearm counters and older imports
 

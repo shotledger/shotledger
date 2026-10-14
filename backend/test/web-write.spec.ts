@@ -77,7 +77,8 @@ const FIREARM = {
   notes: null,
   round_count: 100,
   maintenance_interval_rounds: null,
-  rounds_since_maintenance: 3,
+  maintenance_interval_months: null,
+  archived_at: null,
 };
 
 const DRAFT: SessionEntryDraft = {
@@ -173,7 +174,6 @@ describe('the web write path', () => {
     }
     expect(rows.get('firearms:f-1')?.payload).toMatchObject({
       round_count: 112,
-      rounds_since_maintenance: 15,
     });
   });
 

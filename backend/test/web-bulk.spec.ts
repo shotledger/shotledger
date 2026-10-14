@@ -25,6 +25,7 @@ import {
 
 import { ALL_MIGRATIONS } from '../src/db/migrations';
 import app from '../src/index';
+import { row } from './rows';
 
 const BASE_URL = 'https://localhost';
 const PASSWORD = 'correct horse battery staple';
@@ -107,7 +108,6 @@ const firearm = (id: string, roundCount: number) => ({
   notes: null,
   round_count: roundCount,
   maintenance_interval_rounds: null,
-  rounds_since_maintenance: roundCount,
 });
 
 const session = (id: string, firearmId: string | null) => ({
@@ -177,7 +177,7 @@ beforeEach(async () => {
       clientChangeId: uuid(4)(),
       tableName,
       rowId: payload.id as string,
-      payload,
+      payload: row(tableName, payload.id as string, OLD, payload),
       deletedAt: null,
       updatedAt: OLD,
     })),
@@ -219,7 +219,7 @@ describe('the web bulk edit path', () => {
     });
   });
 
-  it('W2 a bulk firearm change: device B pulls the sessions and both counters', async () => {
+  it('W2 a bulk firearm change: device B pulls the sessions and the round counters', async () => {
     const changes = bulk(
       { kind: 'setFirearm', firearmId: 'f2' },
       ['s1', 's2', 's3'],
@@ -234,11 +234,9 @@ describe('the web bulk edit path', () => {
     }
     expect(rows.get('firearms:f1')?.payload).toMatchObject({
       round_count: 95,
-      rounds_since_maintenance: 95,
     });
     expect(rows.get('firearms:f2')?.payload).toMatchObject({
       round_count: 15,
-      rounds_since_maintenance: 15,
     });
     // Columns the edit does not touch arrive as device B wrote them.
     expect(rows.get('sessions:s1')?.payload).toMatchObject({

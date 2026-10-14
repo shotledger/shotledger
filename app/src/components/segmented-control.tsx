@@ -8,6 +8,8 @@ import { Radius, Spacing } from '@/theme/tokens';
 export interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;
+  /** Set on the option's own pressable, for tests and e2e flows. */
+  testID?: string;
 }
 
 export interface SegmentedControlProps<T extends string> extends Omit<ViewProps, 'style'> {
@@ -30,7 +32,11 @@ export interface SegmentedControlProps<T extends string> extends Omit<ViewProps,
  */
 const AUTO_SCROLL_FROM = 4;
 
-/** Exclusive-choice control — used for theme/language and program pickers. */
+/**
+ * Exclusive-choice control — used for theme/language and program pickers.
+ * Two to four options is the design (DESIGN.md "Segmented Control"); more
+ * scroll, and a long list belongs in an option picker or choice chips.
+ */
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -47,8 +53,12 @@ export function SegmentedControl<T extends string>({
     return (
       <Pressable
         key={option.value}
-        accessibilityRole="button"
-        accessibilityState={{ selected }}
+        // A radio in a radio group (#822): a screen reader says "Dark, radio
+        // button, 3 of 3, selected", not a bare "button".
+        accessibilityRole="radio"
+        accessibilityState={{ selected, checked: selected }}
+        accessibilityLabel={option.label}
+        testID={option.testID}
         onPress={() => onChange(option.value)}
         style={scrolls ? styles.segmentPressableAuto : styles.segmentPressable}
       >
@@ -65,7 +75,11 @@ export function SegmentedControl<T extends string>({
           style={[
             styles.segment,
             scrolls && styles.segmentAuto,
-            selected && { backgroundColor: theme.backgroundSelected },
+            // Fill and outline both, so the choice does not rest on text
+            // colour alone (WCAG 1.4.11; the old raised fill was 1.14:1 on
+            // the track). Every segment carries the 2px border, so selecting
+            // one moves nothing.
+            selected && { backgroundColor: theme.selected, borderColor: theme.selectedOutline },
           ]}
         >
           <ThemedText
@@ -85,7 +99,12 @@ export function SegmentedControl<T extends string>({
 
   if (scrolls) {
     return (
-      <ThemedView type="backgroundElement" style={[styles.scrollTrack, style]} {...rest}>
+      <ThemedView
+        type="backgroundElement"
+        accessibilityRole="radiogroup"
+        style={[styles.scrollTrack, style]}
+        {...rest}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -98,7 +117,12 @@ export function SegmentedControl<T extends string>({
   }
 
   return (
-    <ThemedView type="backgroundElement" style={[styles.track, style]} {...rest}>
+    <ThemedView
+      type="backgroundElement"
+      accessibilityRole="radiogroup"
+      style={[styles.track, style]}
+      {...rest}
+    >
       {segments}
     </ThemedView>
   );
@@ -136,6 +160,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.two,
     borderRadius: Radius.small,
+    borderWidth: 2,
+    borderColor: 'transparent',
     alignItems: 'center',
   },
   // Spacing.three clipped the fifth period option ("Anpassa") on a phone (#745).

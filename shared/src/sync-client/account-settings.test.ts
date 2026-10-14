@@ -22,6 +22,12 @@ const UNSET: AccountSettings = {
   competesInWomensClasses: false,
   complianceProfile: null,
   complianceProfileVariant: null,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
+  showMaintenance: true,
 };
 
 const SET: AccountSettings = {
@@ -30,6 +36,12 @@ const SET: AccountSettings = {
   competesInWomensClasses: true,
   complianceProfile: 'se',
   complianceProfileVariant: SE_FIRST_HANDGUN_VARIANT,
+  showLicenseActivity: true,
+  showPhotos: true,
+  showTimer: true,
+  showSightSettings: true,
+  showAmmoLots: true,
+  showMaintenance: true,
 };
 
 describe('reading the pulled settings rows', () => {
@@ -73,6 +85,37 @@ describe('reading the pulled settings rows', () => {
       ...UNSET,
       complianceProfileVariant: 'retired',
     });
+  });
+
+  it('S2 a feature switch reads shown unless its stored value is false (#801)', () => {
+    expect(readAccountSettings(rows(row('showPhotos', 'false'), row('showTimer', 'true')))).toEqual(
+      { ...UNSET, showPhotos: false },
+    );
+    for (const value of ['true', 'null', '0', '"false"', 'not json', '']) {
+      expect(readAccountSettings(rows(row('showAmmoLots', value))), value).toEqual(UNSET);
+    }
+    const hidden = rows(
+      row('showLicenseActivity', 'false'),
+      row('showPhotos', 'false'),
+      row('showTimer', 'false'),
+      row('showSightSettings', 'false'),
+      row('showAmmoLots', 'false'),
+      row('showMaintenance', 'false'),
+    );
+    expect(readAccountSettings(hidden)).toEqual({
+      ...UNSET,
+      showLicenseActivity: false,
+      showPhotos: false,
+      showTimer: false,
+      showSightSettings: false,
+      showAmmoLots: false,
+      showMaintenance: false,
+    });
+    // Under another key's id, or as a non-string value, it is not read.
+    expect(readAccountSettings(new Map([['showPhotos', row('showTimer', 'false')]]))).toEqual(
+      UNSET,
+    );
+    expect(readAccountSettings(rows({ ...row('showPhotos', ''), value: false }))).toEqual(UNSET);
   });
 
   it('P4 a row whose payload id is not its key is ignored', () => {

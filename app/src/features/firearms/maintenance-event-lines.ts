@@ -8,3 +8,13 @@ export function maintenanceEventLines(
   const note = event.notes?.trim();
   return note ? [date, note] : [date];
 }
+
+/** The title of a maintenance-list row: the kind the user typed, or the
+ *  adjustment label for a round-count adjustment. Only the flag decides, so a
+ *  kind typed as "adjustment" shows as typed (#727). */
+export function maintenanceEventTitle(
+  event: { kind: string; isAdjustment: number },
+  adjustmentLabel: string,
+): string {
+  return event.isAdjustment === 1 ? adjustmentLabel : event.kind;
+}

@@ -2,12 +2,15 @@
 
 If you use sync, the ShotLedger web app lets you reach your account and your
 sessions from any browser, including when your phone is lost or broken. It
-reads what sync has already stored. It changes only two things: a session you
-type in under [Entering series on the web](entering-series-on-the-web.md), and
-the settings below.
+reads what sync has already stored, and changes only what the phone could
+change itself: a session you
+[type in](entering-series-on-the-web.md),
+[edit or delete](editing-a-session-on-the-web.md), sessions you
+[edit in bulk](editing-many-sessions-on-the-web.md), and the settings below.
 
 Sign in with the email and password of your sync account, then open
-**Account** in the menu on the left. Closing the tab signs you out of this
+**Account** in the menu: on the left, or along the bottom on a narrow screen,
+as the phone's tabs are. Closing the tab signs you out of this
 browser and leaves nothing behind: the sign-in lives only in that tab, with no
 cookie. The server ends it 12 hours after you signed in, or at once when you
 use **Sign Out**; a tab still open by then asks you to sign in again.
@@ -15,12 +18,15 @@ use **Sign Out**; a tab still open by then asks you to sign in again.
 ## Sessions
 
 **Sessions** in the menu lists every synced session, newest first, with its
-date, discipline and match format, location, result and tags. On a narrow
-screen the discipline, location and tags are left out.
+date, discipline and match format, location, result and tags. A name the app
+made up ("Precision — 2026-09-23") is shown without its date, which the Date
+column already gives. On a narrow screen the discipline, location and tags are
+left out.
 
-Open a session's name to read it: its series and shots, the totals, notes,
-firearm, ammo lot and tags, or for a fält session its stations. Nothing can be
-changed there.
+Open a session's name to read it, in the same order as on the phone: its name
+as the page title, what it was and what it was shot with, then the result,
+then the firearm, ammo lot, location and notes, then its series and shots, or
+for a fält session its hits, figures and stations.
 
 ### Target photos
 
@@ -38,6 +44,24 @@ each with its series or station result and session. **Remove** takes one out;
 **Clear**, or **Clear All** on the comparison, empties the selection. The
 selection is forgotten when you sign out, reload or close the tab.
 
+## Firearms
+
+**Firearms** in the menu lists your firearms as the phone's Firearms tab does,
+ordered by make: each with its weapon type and the same status lines for its
+license, maintenance, missing details and license activity. Firearms you have
+archived are under **Show Archived**.
+
+Open a firearm to read it, in the same order as on the phone: its weapon type,
+ownership, chambering and national register ID, its round count and
+maintenance status, its own **License Activity** card and **Föreningsintyg
+Criteria** with the date to log your next session by, then its calibers,
+weapon groups, sight settings, licenses and maintenance log. What you have
+switched off under **Settings → Features** is left out, as on the phone.
+
+The web only shows your firearms. Adding or changing a firearm, a license,
+maintenance or a sight setting, and archiving one, is done on the phone. The
+phone's ammunition lots are not on the web.
+
 ## Settings
 
 **Settings** in the menu holds the settings that follow your account from
@@ -50,6 +74,8 @@ device to device, the same ones as on the phone:
   chosen, the page shows the one worked out from your firearms, as the phone
   does. With no profile chosen yet, none is marked and your phone uses the
   one for its language; choose one here to store it for every device.
+- **Features**: which parts of the app you show (the phone's Settings →
+  Features, see [Hiding features you don't use](hiding-features.md)).
 
 Change what you need, then **Save**. Changing a birth year that was already
 set asks first, as on the phone. Your phones pick the change up on their next
@@ -96,3 +122,8 @@ and signed-in devices. **Delete** then removes the account and everything on
 the server, and signs out every device. The logbook on your phone is not
 touched. This cannot be undone, so download everything first if you want a
 copy.
+
+## Source code
+
+ShotLedger is free software. **Source Code** in the profile menu at the top
+right opens the source code of the app and the web app.

@@ -1,22 +1,22 @@
-// Statistics data layer. Since the analytics rebuild the Statistics tab is
-// a *filter form* that generates a report (maintainer: "see screenshots for
-// how the statistics can be generic but also generated on the fly"), so
-// this file has two halves:
+// Statistics data layer. The Statistics tab opens on the results for its
+// filter (#822, direction A; before that it was a filter form that generated
+// a report on another screen), so this file has two halves:
 //
-//   - `useAnalyticsFilterOptions` — what the filter form can offer (which
+//   - `useAnalyticsFilterOptions` — what the filter sheet can offer (which
 //     disciplines, series lengths and tags actually exist).
-//   - `useAnalyticsReport` — the generated report for one filter.
+//   - `useAnalyticsReport` — the report for one filter, and the same report
+//     over the period before it, which the headline's trend compares with.
 //
 // The filter, the period resolution and the report itself are composed in
 // @shotledger/shared (analytics-rows); this file only loads from the DB.
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   buildFilterOptions,
   composeAnalyticsReport,
-  compareRecentSeries,
   decodeAnalyticsFilter,
   encodeAnalyticsFilter,
+  previousPeriodRange,
   type AnalyticsFilterOptions,
   type AnalyticsFilterState,
   type AnalyticsReportData,
@@ -25,7 +25,6 @@ import {
 import { db } from '@/db/client';
 import {
   listAllAnalyticsSeries,
-  listAllStatsSeries,
   listAnalyticsSessions,
   listFaltAnalyticsSessions,
 } from '@/db/queries/stats';
@@ -41,7 +40,9 @@ export {
   DEFAULT_ANALYTICS_FILTER,
   encodeAnalyticsFilter,
   periodRange,
+  previousPeriodRange,
   STATS_PERIODS,
+  statsHeadline,
   toAnalyticsFilter,
   type AnalyticsFilterOptions,
   type AnalyticsFilterState,
@@ -49,6 +50,7 @@ export {
   type DistributionBucket,
   type NamedRecord,
   type PeriodRange,
+  type StatsHeadline,
   type StatsPeriod,
   type TagOption,
 } from '@shotledger/shared';
@@ -75,34 +77,47 @@ export function useAnalyticsFilterOptions(): AnalyticsFilterOptions {
   return options;
 }
 
-// --- Generated report --------------------------------------------------------
+// --- Report ------------------------------------------------------------------
 
-function loadReport(state: AnalyticsFilterState): AnalyticsReportData {
-  return composeAnalyticsReport(state, {
+export interface AnalyticsReportPair {
+  data: AnalyticsReportData;
+  /** The previous equal period, every other filter kept; `null` for all time. */
+  previous: AnalyticsReportData | null;
+}
+
+function loadReport(state: AnalyticsFilterState): AnalyticsReportPair {
+  const inputs = {
     series: listAllAnalyticsSeries(db),
     sessions: listAnalyticsSessions(db),
     falt: listFaltAnalyticsSessions(db),
     tags: listTags(db),
     sessionNames: new Map(listSessions(db).map((session) => [session.id, session.name] as const)),
     birthYear: getSetting<number | null>(db, SETTINGS_KEYS.birthYear, null),
-  });
+  };
+  const nowMs = Date.now();
+  const previousRange = previousPeriodRange(state, nowMs);
+  return {
+    data: composeAnalyticsReport(state, inputs, nowMs),
+    previous:
+      previousRange === null ? null : composeAnalyticsReport(state, inputs, nowMs, previousRange),
+  };
 }
 
-export function useAnalyticsReport(state: AnalyticsFilterState): AnalyticsReportData {
-  const [data, setData] = useState<AnalyticsReportData>(() => loadReport(state));
+/**
+ * Recomputed when the filter changes (the sheet applies live) and whenever
+ * the tab regains focus, so a session logged elsewhere shows up on return.
+ */
+export function useAnalyticsReport(state: AnalyticsFilterState): AnalyticsReportPair {
   const key = encodeAnalyticsFilter(state);
+  const [focusCount, setFocusCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
-      setData(loadReport(decodeAnalyticsFilter(key)));
-    }, [key]),
+      setFocusCount((count) => count + 1);
+    }, []),
   );
 
-  return data;
-}
-
-/** Comparison of the most recent 100 series vs the 100 before that, same discipline+class. */
-export function loadComparisonForSession(disciplineId: string, shooterClass: string | null) {
-  const all = listAllStatsSeries(db);
-  return compareRecentSeries(all, { disciplineId, shooterClass });
+  // `focusCount` is a dependency on purpose: it is what reloads on focus.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => loadReport(decodeAnalyticsFilter(key)), [key, focusCount]);
 }

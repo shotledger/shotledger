@@ -18,9 +18,9 @@ site_description: >-
   A free target-shooting logbook for SPSF pistol shooters — log sessions shot by
   shot, score paper targets from a photograph, and keep the range activity your
   license renewal needs.
-site_url: https://jimisola.github.io/shotledger/
-repo_url: https://github.com/jimisola/shotledger
-repo_name: jimisola/shotledger
+site_url: https://shotledger.github.io/shotledger/
+repo_url: https://github.com/shotledger/shotledger
+repo_name: shotledger/shotledger
 edit_uri: edit/main/docs/manual/
 copyright: Free and open source. Donations unlock nothing.
 
@@ -31,6 +31,9 @@ docs_dir: docs/manual
 
 theme:
   name: material
+  # The rings in white: the header is the primary colour in both schemes.
+  logo: assets/shotledger-mark-white.svg
+  favicon: assets/shotledger-mark-light.svg
   icon:
     repo: fontawesome/brands/github
   features:
@@ -109,6 +112,7 @@ plugins:
             How shots fired are counted: Hur avlossade skott räknas
             What photo scoring does: Vad fotoräkningen gör
             What the group figures mean: Vad träffbildens siffror betyder
+            How usual form is worked out: Hur vanlig form räknas fram
             How the app finds the holes: Hur appen hittar hålen
             How the timer hears a shot: Hur timern hör ett skott
             Evaluation builds: Utvärderingsversioner
@@ -116,6 +120,7 @@ plugins:
             Statistics: Statistik
             Scoring from a photo: Räkna från foto
             Timers: Timers
+            Hiding features you don't use: Dölja funktioner du inte använder
             Firearms and ammunition: Vapen och ammunition
             License activity: Skjutaktivitet
             External sites: Externa webbplatser
@@ -145,6 +150,7 @@ nav:
       - How shots fired are counted: explanation/how-shots-are-counted.md
       - What photo scoring does: explanation/photo-scoring.md
       - What the group figures mean: explanation/group-figures.md
+      - How usual form is worked out: explanation/usual-form.md
       - How the app finds the holes: explanation/how-holes-are-found.md
       - How the timer hears a shot: explanation/shot-detection.md
       - Evaluation builds: explanation/evaluation-builds.md
@@ -153,6 +159,7 @@ nav:
       - Statistics: guides/statistics.md
       - Scoring from a photo: guides/scoring-from-a-photo.md
       - Timers: guides/timers.md
+      - Hiding features you don't use: guides/hiding-features.md
       - Firearms and ammunition: guides/firearms-and-ammunition.md
       - License activity: guides/license-activity.md
       - External sites:

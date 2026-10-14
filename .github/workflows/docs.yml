@@ -22,7 +22,7 @@ permissions:
 jobs:
   build:
     name: Build (strict)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     # Only the deploy below needs serializing; a superseded build is waste.
     concurrency:
       group: ${{ github.workflow }}-build-${{ github.head_ref || github.ref }}
@@ -42,6 +42,12 @@ jobs:
 
       - name: Install the documentation toolchain
         run: pip install -r docs/requirements.txt
+
+      # The two checks below are Node scripts; run them on the repo's Node,
+      # not whatever the runner image ships.
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
 
       # `--strict` cannot see a translation that has fallen behind its English
       # source: stale Swedish is valid markdown. This can, and it needs the git
@@ -74,7 +80,7 @@ jobs:
       github.event.repository.visibility == 'public'
     name: Publish to GitHub Pages
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     # Pages deploys are serialized; a queued run finishes rather than being
     # canceled, so the published site always matches a completed build.
     concurrency:

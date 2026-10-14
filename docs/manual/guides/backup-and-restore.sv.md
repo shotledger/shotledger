@@ -44,7 +44,8 @@ En fil som gjorts av en äldre version som fortfarande hade valvet återställs
 som vanligt. Valvdelen hoppas över: funktionen finns inte längre, och inget i
 appen kan öppna den.
 
-Stäng därefter ShotLedger helt och öppna appen igen.
+När återställningen är klar startar ShotLedger om av sig själv för att läsa in
+den återställda datan.
 
 ### Med synk påslagen
 
@@ -61,6 +62,17 @@ och skickar ingenting från filen av sig själv.
 - Att återställa en säkerhetskopia gjord under ett annat konto blandar inte
   ihop de två. Telefonen hämtar det inloggade kontots data och skickar
   ingenting från filen.
+
+### När servern avvisar en ändring
+
+Om **Konto & synk** säger att ändringar avvisades av servern, hittade servern
+något i dem som den inte kan lagra. Det är ett fel i appen, inte något du har
+gjort. Ändringarna finns kvar på telefonen tills vidare, men de finns inte på
+dina andra enheter eller i webbappen. Om du ändrar samma sak på en annan enhet
+eller i webbappen ersätter den ändringen den avvisade på telefonen. Om du ändrar
+samma sak igen på telefonen skickas den igen. Om raden fortsätter att komma
+tillbaka, rapportera det, och gör en säkerhetskopia innan du loggar ut eller
+återställer.
 
 ## Hur ofta
 

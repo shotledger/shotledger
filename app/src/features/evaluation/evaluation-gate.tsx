@@ -1,15 +1,19 @@
 // Blocks the app once an evaluation build has expired. Inert unless the build
 // sets EXPO_PUBLIC_EVAL_EXPIRES_AT.
+import Constants from 'expo-constants';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StyleSheet, View } from 'react-native';
 
+import { Card } from '@/components/card';
+import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { EVAL_EXPIRES_AT } from '@/constants/flags';
 import { getEvalHighWaterMark, setEvalHighWaterMark } from '@/platform/secure-store';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useJsonExportImport } from '@/features/json-export/use-json-export-import';
 
 import { evaluateEvaluationWindow, type EvaluationStatus } from './expiry';
 
@@ -49,6 +53,9 @@ export function EvaluationGate({ children }: { children: ReactNode }) {
 function ExpiredScreen({ expiresAt }: { expiresAt: number }) {
   const { t } = useTranslation();
   const date = useDateFormat().date(expiresAt);
+  // The logbook is the tester's: an expired build blocks new use, never their
+  // way out with the data.
+  const { exportJson, statusText } = useJsonExportImport(Constants.expoConfig?.version ?? '0.0.0');
 
   return (
     <Screen scroll={false}>
@@ -59,6 +66,22 @@ function ExpiredScreen({ expiresAt }: { expiresAt: number }) {
         <ThemedText themeColor="textSecondary" style={styles.center}>
           {t('evaluation.expiredBody', { date })}
         </ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.center}>
+          {t('evaluation.expiredExportNote')}
+        </ThemedText>
+        <Card>
+          <ListRow
+            title={t('jsonExport.exportTitle')}
+            subtitle={t('jsonExport.exportSubtitle')}
+            onPress={() => void exportJson()}
+            testID="evaluation-expired-export"
+          />
+          {statusText !== null && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {statusText}
+            </ThemedText>
+          )}
+        </Card>
       </View>
     </Screen>
   );

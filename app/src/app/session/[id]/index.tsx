@@ -12,7 +12,6 @@ import { runOnJS } from 'react-native-reanimated';
 import {
   categoryKey,
   findEvent,
-  formatGroupAndClass,
   MIN_SHOTS_FOR_HEATMAP,
   programsForDiscipline,
   seriesTargetFace,
@@ -31,6 +30,7 @@ import { GroupPlot } from '@/components/group-plot';
 import { ShotHeatmap } from '@/components/shot-heatmap';
 import { ZoomableView } from '@/components/zoomable-view';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ShotChips } from '@/components/shot-chips';
@@ -47,8 +47,16 @@ import {
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { disciplineLabel, matchFormatLabel } from '@/features/session/labels';
+import {
+  formatGroupAndClassWords,
+  typeShownBesideTags,
+} from '@/features/sessions/session-row-format';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
+import {
+  MAX_ROUNDS_FIRED,
+  parseRoundsFired,
+} from '@shotledger/shared/src/sync-client/rounds-entry';
 import { setSeriesPositions } from '@/db/queries/series';
 import { updateSession } from '@/db/queries/sessions';
 import { useSessionDetail, type SeriesRow } from '@/features/session/use-session-detail';
@@ -56,13 +64,16 @@ import { isPhotoScoringSupported } from '@/features/photo-scoring/faces';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
+import { UsualFormBlock } from '@/features/session/usual-form-card';
 import { WebshooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
 import { SwipeAction } from '@/components/swipe-action';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing } from '@/theme/tokens';
+import { Radius, Spacing, TabularNums } from '@/theme/tokens';
+import { formatSessionTotal } from '@/features/home/home-session-row';
 import { useDateFormat } from '@/features/dates/use-date-format';
+import { useFeatures } from '@/features/settings/feature-visibility';
 
 type DetailView = 'series' | 'stats' | 'group';
 
@@ -85,6 +96,7 @@ export default function SessionDetailScreen() {
   const { detail, refresh } = useSessionDetail(id);
   const stats = useSessionStats(id);
   const group = useSessionGroup(id);
+  const features = useFeatures();
   const [nextIsFinal, setNextIsFinal] = useState(false);
   const [view, setView] = useState<DetailView>('series');
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
@@ -149,7 +161,9 @@ export default function SessionDetailScreen() {
     // the only way in, so neither the choice nor a remembered "photo" applies.
     const faceId =
       seriesTargetFace(session!.disciplineId, session!.programId, target.position) ?? '';
-    if (!isPhotoScoringSupported(faceId)) {
+    // With target photos hidden (#801) the keypad is the way in too, whatever
+    // the session remembered.
+    if (!features.photos || !isPhotoScoringSupported(faceId)) {
       openSeriesEntry('manual', target);
       return;
     }
@@ -175,13 +189,11 @@ export default function SessionDetailScreen() {
    * counter moves once per edit, by the delta, rather than on every keystroke.
    */
   function onCommitExtraRounds() {
-    const trimmed = extraRounds.trim();
-    const parsed = trimmed === '' ? null : Number(trimmed);
-    if (parsed !== null && (!Number.isInteger(parsed) || parsed < 0)) {
-      setExtraRounds(session?.extraRounds == null ? '' : String(session.extraRounds));
-      return;
-    }
-    setSessionExtraRounds(db, id, parsed);
+    // The new-session form's and the web's rule: text it refuses stays, with
+    // its error, and saves nothing.
+    const parsed = parseRoundsFired(extraRounds);
+    if (!parsed.ok) return;
+    setSessionExtraRounds(db, id, parsed.rounds);
     refresh();
   }
 
@@ -321,9 +333,9 @@ export default function SessionDetailScreen() {
           isSighter: row.isSighter,
         })
       : null;
-    // A sighter's score is shown with a marker rather than hidden: it is
-    // deliberately unscored, not unknown, and the row already carries a
-    // Sighter chip to say which.
+    // A sighter's score is shown rather than hidden: it is deliberately
+    // unscored, not unknown. It says so in words ("38 · not counted"), in
+    // secondary text, where a bare "38*" had no legend (#822).
     const totalLabel = row.isSighter
       ? t('session.sighterScore', { score: tenthsToScore(row.totalTenths) })
       : String(tenthsToScore(row.totalTenths));
@@ -382,6 +394,9 @@ export default function SessionDetailScreen() {
           </ThemedText>
           <View style={styles.badges}>
             {row.isSighter && <Chip label={t('session.sighter')} />}
+            {row.isShootOff && (
+              <Chip label={t('station.shootOff')} testID={`series-shoot-off-${row.position}`} />
+            )}
             {row.timeLimitSeconds !== null && (
               <Chip label={t('session.timeLimit', { seconds: row.timeLimitSeconds })} />
             )}
@@ -407,7 +422,13 @@ export default function SessionDetailScreen() {
                 testID={`series-${row.position}-total`}
               />
             ) : (
-              <ThemedText type="smallBold">{totalLabel}</ThemedText>
+              <ThemedText
+                type="smallBold"
+                themeColor={row.isSighter ? 'textSecondary' : 'text'}
+                style={TabularNums}
+              >
+                {totalLabel}
+              </ThemedText>
             )}
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
@@ -459,6 +480,22 @@ export default function SessionDetailScreen() {
     ? t(`eventCategory.${categoryKey(sessionEvent.category)}`)
     : null;
 
+  // What the session was shot with and under, on its own line so the first
+  // line stays one line: format, group and class in words, the event's
+  // category, firearm, ammunition and the competition's name.
+  const setup = [
+    // The format locks at the first result (#475), so it has to be readable
+    // somewhere afterwards.
+    session.programId
+      ? matchFormatLabel(t, session.programId, programsForDiscipline(session.disciplineId).length)
+      : null,
+    formatGroupAndClassWords(t, session.weaponGroup, session.shooterClass),
+    eventCategoryLabel,
+    firearmName,
+    ammoLotName,
+    session.competitionName,
+  ].filter((part): part is string => Boolean(part));
+
   return (
     <Screen>
       <Stack.Screen
@@ -469,31 +506,24 @@ export default function SessionDetailScreen() {
         }}
       />
 
-      <View>
-        <ScreenTitle>{session.name}</ScreenTitle>
-        <ThemedText type="small" themeColor="textSecondary">
+      {/* The name is the header's title (ScreenTitle); the body opens on what
+          the session was, then its result, then the tools (#822, direction A). */}
+      <ScreenTitle>{session.name}</ScreenTitle>
+      <View style={styles.meta}>
+        <ThemedText type="small" themeColor="textSecondary" testID="session-meta">
           {[
             dates.date(session.startedAt),
-            t(`sessionType.${session.type}`),
+            typeShownBesideTags(session.type, tags) ? t(`sessionType.${session.type}`) : null,
             disciplineLabel(t, session.disciplineId),
-            // The format locks at the first result (#475), so it has to be
-            // readable somewhere afterwards.
-            session.programId
-              ? matchFormatLabel(
-                  t,
-                  session.programId,
-                  programsForDiscipline(session.disciplineId).length,
-                )
-              : null,
-            formatGroupAndClass(session.weaponGroup, session.shooterClass),
-            eventCategoryLabel,
-            firearmName,
-            ammoLotName,
-            session.competitionName,
           ]
             .filter(Boolean)
             .join(' · ')}
         </ThemedText>
+        {setup.length > 0 && (
+          <ThemedText type="small" themeColor="textSecondary" testID="session-setup">
+            {setup.join(' · ')}
+          </ThemedText>
+        )}
         <TagChips names={tags} includeMachine testID="session-tags" />
         {session.notes ? (
           <ThemedText type="small" style={styles.notes} testID="session-notes">
@@ -501,9 +531,6 @@ export default function SessionDetailScreen() {
           </ThemedText>
         ) : null}
       </View>
-
-      {/* A fält round needs neither the stopwatch nor sight settings (#715). */}
-      {!isFaltSession && <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />}
 
       <WebshooterSessionBadge session={session} />
 
@@ -526,52 +553,54 @@ export default function SessionDetailScreen() {
       )}
 
       {!isFaltSession && (
-        <Card style={styles.metricCard}>
-          {metricRows([
-            ...(results.hasFinal
-              ? [
-                  {
-                    label: t('session.beforeFinal'),
-                    value: String(tenthsToScore(results.beforeFinalTenths)),
-                    testID: 'result-before-final',
-                  },
-                  {
-                    label: t('session.final'),
-                    value: String(tenthsToScore(results.finalTenths)),
-                    testID: 'result-final',
-                  },
-                ]
-              : []),
-            {
-              label: t('session.total'),
-              value: String(tenthsToScore(results.totalTenths)),
-              testID: 'session-total',
-            },
-            {
-              label: t('session.seriesAverage'),
-              value:
+        <Card style={styles.metricCard} testID="session-result">
+          {/* The total is what the screen is for, so it reads first and in the
+              score type; the rest of the result sits under it. */}
+          <View style={styles.resultHead}>
+            <View style={styles.resultTotal}>
+              <ThemedText type="score" style={TabularNums} testID="session-total">
+                {formatSessionTotal(tenthsToScore(results.totalTenths))}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('session.total')}
+              </ThemedText>
+            </View>
+            {results.hasFinal && (
+              <View style={styles.resultParts}>
+                <ResultPart
+                  label={t('session.beforeFinal')}
+                  value={String(tenthsToScore(results.beforeFinalTenths))}
+                  testID="result-before-final"
+                />
+                <ResultPart
+                  label={t('session.final')}
+                  value={String(tenthsToScore(results.finalTenths))}
+                  testID="result-final"
+                />
+              </View>
+            )}
+          </View>
+          <View style={styles.metricRow}>
+            <MetricTile
+              label={t('session.seriesAverage')}
+              value={
                 detail.seriesAverageTenths === null
                   ? '\u2013'
-                  : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
-              testID: 'session-series-average',
-            },
-            {
-              label: t('session.innerTenCount'),
-              value: String(detail.innerTenCount),
-              testID: 'session-inner-ten-count',
-            },
-            {
-              label: t('session.innerTenAverage'),
-              value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
-              testID: 'session-inner-ten-average',
-            },
-          ]).map((row, index) => (
-            <View key={index} style={styles.metricRow}>
-              {row.map((tile) => (
-                <MetricTile key={tile.testID} {...tile} />
-              ))}
-            </View>
-          ))}
+                  : tenthsToScore(detail.seriesAverageTenths).toFixed(1)
+              }
+              testID="session-series-average"
+            />
+            <MetricTile
+              label={t('session.innerTenCount')}
+              value={String(detail.innerTenCount)}
+              testID="session-inner-ten-count"
+            />
+            <MetricTile
+              label={t('session.innerTenAverage')}
+              value={detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1)}
+              testID="session-inner-ten-average"
+            />
+          </View>
         </Card>
       )}
 
@@ -630,6 +659,9 @@ export default function SessionDetailScreen() {
         </Card>
       )}
 
+      {/* A fält round needs neither the stopwatch nor sight settings (#715). */}
+      {!isFaltSession && <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />}
+
       {isRoundsSession && (
         <Card>
           <View style={styles.headerRow}>
@@ -652,6 +684,11 @@ export default function SessionDetailScreen() {
             placeholder="0"
             testID="extra-rounds"
           />
+          {!parseRoundsFired(extraRounds).ok && (
+            <ThemedText type="small" themeColor="danger" testID="extra-rounds-error">
+              {t('session.extraRoundsInvalid', { max: MAX_ROUNDS_FIRED })}
+            </ThemedText>
+          )}
         </Card>
       )}
 
@@ -843,32 +880,7 @@ export default function SessionDetailScreen() {
             </View>
           )}
 
-          <View>
-            <ThemedText type="smallBold">{t('stats.comparisonTitle')}</ThemedText>
-            {stats.comparison?.previousSeriesMeanTenths == null ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.comparisonNotEnough')}
-              </ThemedText>
-            ) : (
-              <>
-                <View style={styles.resultsRow}>
-                  <StatTile
-                    testID="comparison-recent"
-                    label={t('stats.comparisonRecent')}
-                    value={tenthsToScore(stats.comparison.recentSeriesMeanTenths ?? 0).toFixed(2)}
-                  />
-                  <StatTile
-                    testID="comparison-previous"
-                    label={t('stats.comparisonPrevious')}
-                    value={tenthsToScore(stats.comparison.previousSeriesMeanTenths).toFixed(2)}
-                  />
-                </View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('stats.comparisonHint')}
-                </ThemedText>
-              </>
-            )}
-          </View>
+          <UsualFormBlock comparison={stats.usualForm} />
 
           {stats.standardMedal && (
             <ThemedText type="small" themeColor="textSecondary" testID="standard-medal-line">
@@ -911,7 +923,7 @@ export default function SessionDetailScreen() {
                 testID="add-series"
               />
               {detail.canStartFinal && !nextIsFinal && (
-                <PrimaryButton
+                <SecondaryButton
                   label={t('session.startFinal')}
                   onPress={onStartFinal}
                   testID="start-final"
@@ -936,16 +948,21 @@ export default function SessionDetailScreen() {
 }
 
 /**
- * Rows for the results card. Four tiles fit one line down to a 320 dp phone,
- * but a session with a final carries six, which do not — laying those out as
- * a balanced 3 + 3 beats the ragged 5 + 1 that `flexWrap` produces on its own
- * (found on device, third review).
+ * One part of the total (Before Final, Final) beside it: a number over its
+ * label, which wraps rather than shrinking. MetricTile's shrink-to-fit is
+ * native only and cut "Before Final" to "Before Fi…" on the web.
  */
-function metricRows<T>(tiles: readonly T[]): T[][] {
-  if (tiles.length <= 4) return [[...tiles]];
-  const rows: T[][] = [];
-  for (let i = 0; i < tiles.length; i += 3) rows.push(tiles.slice(i, i + 3));
-  return rows;
+function ResultPart({ label, value, testID }: { label: string; value: string; testID?: string }) {
+  return (
+    <View style={styles.resultPart}>
+      <ThemedText type="smallBold" style={[styles.metricValue, TabularNums]} testID={testID}>
+        {value}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+    </View>
+  );
 }
 
 /**
@@ -983,6 +1000,9 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 }
 
 const styles = StyleSheet.create({
+  meta: {
+    gap: Spacing.half,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1004,6 +1024,24 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     paddingVertical: Spacing.two,
+  },
+  resultHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  resultTotal: {
+    gap: Spacing.half,
+  },
+  resultParts: {
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: Spacing.three,
+  },
+  resultPart: {
+    flexShrink: 1,
+    gap: Spacing.half,
   },
   metricRow: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import { StyleSheet, type ViewProps } from 'react-native';
 
 import { Card } from '@/components/card';
-import { ThemedText } from '@/components/themed-text';
+import { FitText } from '@/components/fit-text';
 import { Spacing } from '@/theme/tokens';
 
 export interface StatTileProps extends ViewProps {
@@ -19,27 +19,28 @@ export interface StatTileProps extends ViewProps {
 export function StatTile({ label, value, align = 'start', style, ...rest }: StatTileProps) {
   return (
     <Card style={[styles.tile, align === 'center' && styles.centered, style]} {...rest}>
-      {/* Both lines sit in a fixed-width slot, so they shrink or truncate —
-          never wrap (PRODUCT.md, font-scale exception). */}
-      <ThemedText
-        type="subtitle"
-        style={[styles.value, align === 'center' && styles.centeredText]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
+      {/* The value is one line and shrinks to fit. The caption wraps between
+          words and shrinks only if one word is wider than the tile, so it
+          neither truncates nor splits mid-word (#823; PRODUCT.md, font-scale
+          exception). A row's tiles stretch to the tallest, so a two-line
+          caption keeps the values level. */}
+      <FitText
+        wrap={false}
         minimumFontScale={0.6}
+        type="subtitle"
+        style={[styles.value, styles.fill, align === 'center' && styles.centeredText]}
       >
         {value}
-      </ThemedText>
-      <ThemedText
+      </FitText>
+      <FitText
+        wrap
+        minimumFontScale={0.75}
         type="small"
         themeColor="textSecondary"
-        style={align === 'center' && styles.centeredText}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.8}
+        style={[styles.caption, styles.fill, align === 'center' && styles.centeredText]}
       >
         {label}
-      </ThemedText>
+      </FitText>
     </Card>
   );
 }
@@ -53,13 +54,21 @@ const styles = StyleSheet.create({
   centered: {
     alignItems: 'center',
   },
-  // `adjustsFontSizeToFit` shrinks the glyphs inside the text box but does not
-  // move the box, so the alignment has to be set on the text as well.
+  // Both lines span the tile, so shrinking the font never changes the box's
+  // width; centering is then the text's job.
+  fill: {
+    alignSelf: 'stretch',
+  },
   centeredText: {
     textAlign: 'center',
   },
   value: {
     fontSize: 32,
     lineHeight: 36,
+  },
+  // `small`'s size, spelled out because FitText scales from it.
+  caption: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

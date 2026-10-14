@@ -17,6 +17,7 @@
     "shared/src/integrations/webshooter/stats/*.ts",
     "shared/src/sync/*.ts",
     "shared/src/sync-client/*.ts",
+    "shared/src/features/*.ts",
     "shared/src/tags/canonical.ts",
     "shared/src/shotlog/*.ts",
     "backend/src/lib/quota.ts",
@@ -36,7 +37,9 @@
     "web/src/fields/*.ts",
     "!**/*.test.ts",
     "!shared/src/integrations/webshooter/api/fixtures.ts",
-    "!shared/src/shotlog/fixtures.ts"
+    "!shared/src/shotlog/fixtures.ts",
+    "!shared/src/sync/payload-fixtures.ts",
+    "!shared/src/sync/schema.ts"
   ],
   "thresholds": {
     "high": 100,

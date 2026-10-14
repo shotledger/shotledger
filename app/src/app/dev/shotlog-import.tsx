@@ -1,13 +1,15 @@
 // ShotLog CSV import — pick, preview, choose, import
-// (docs/specs/shotlog-import-spec.md §7). Mirrors the Webshooter import's
+// (docs/specs/shotlog-import-spec.md §7, revision 2). Mirrors the Webshooter import's
 // contract: nothing is written before the user confirms on this screen, and
 // every suggestion the importer derived is visible and editable first.
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   ringScoringDisciplines,
   SPSF_WEAPON_GROUPS,
+  sumValueTenths,
+  tenthsToScore,
   type ShotlogPlanRow,
   type ShotlogTagRole,
 } from '@shotledger/shared';
@@ -19,16 +21,24 @@ import { EmptyState } from '@/components/empty-state';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
-import { listFirearms } from '@/db/queries/firearms';
+import { listActiveFirearms } from '@/db/queries/firearms';
 import { isShotlogRowImportable } from '@/db/queries/shotlog';
 import { useShotlogImport } from '@/features/shotlog/use-shotlog-import';
 import { disciplineLabel } from '@/features/session/labels';
 import { Spacing } from '@/theme/tokens';
 
 const PAGE_SIZE = 20;
+
+/** Integer points of the non-sighter series — what the session will score. */
+function scoreOf(row: ShotlogPlanRow): number {
+  const scored = row.suggestion.series.filter((entry) => !entry.isSighter);
+  return tenthsToScore(sumValueTenths(scored.flatMap((entry) => entry.shots)));
+}
 const UNSET = '—';
 
 // The role picker's values are strings, so each role is encoded as one.
@@ -82,7 +92,7 @@ export default function ShotlogImportScreen() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
-  const firearms = listFirearms(db);
+  const firearms = listActiveFirearms(db);
   const selectedCount = plan?.rows.filter((row) => row.selected).length ?? 0;
 
   function statusLabel(row: ShotlogPlanRow): string {
@@ -194,6 +204,8 @@ export default function ShotlogImportScreen() {
             <ThemedText type="small">
               {t('shotlog.summaryCounts', {
                 total: plan.summary.total,
+                series: plan.summary.seriesCount,
+                shots: plan.summary.shotCount,
                 new: plan.summary.byStatus.new,
                 duplicates:
                   plan.summary.byStatus['duplicate-in-file'] +
@@ -209,12 +221,12 @@ export default function ShotlogImportScreen() {
               </ThemedText>
             )}
             <View style={styles.actions}>
-              <PrimaryButton
+              <SecondaryButton
                 label={t('shotlog.selectNone')}
                 onPress={() => setAllSelected(false)}
                 testID="shotlog-select-none"
               />
-              <PrimaryButton
+              <SecondaryButton
                 label={t('shotlog.selectAll')}
                 onPress={() => setAllSelected(true)}
                 testID="shotlog-select-all"
@@ -229,9 +241,12 @@ export default function ShotlogImportScreen() {
                 <Card key={row.line} testID={`shotlog-row-${row.line}`}>
                   <ListRow
                     title={row.name === '' ? t('shotlog.unnamed') : row.name}
-                    subtitle={`${row.datetime.slice(0, 10)} · ${statusLabel(row)}`}
+                    subtitle={`${row.datetime.slice(0, 10)} · ${statusLabel(row)} · ${t(
+                      'shotlog.rowDetail',
+                      { series: row.suggestion.series.length, score: scoreOf(row) },
+                    )}`}
                     trailing={
-                      <Switch
+                      <Toggle
                         value={row.selected}
                         onValueChange={() => toggleRow(row.line)}
                         disabled={blocked}
@@ -290,7 +305,7 @@ export default function ShotlogImportScreen() {
                         onChange={(value) => editRow(row.line, { firearmId: value })}
                         emptyLabel={t('shotlog.noFirearms')}
                       />
-                      <PrimaryButton
+                      <SecondaryButton
                         label={t('shotlog.applyToSimilar')}
                         onPress={() =>
                           applyToSimilar(row.line, {
@@ -309,7 +324,7 @@ export default function ShotlogImportScreen() {
           </View>
 
           {visible < plan.rows.length && (
-            <PrimaryButton
+            <SecondaryButton
               label={t('shotlog.showMore', {
                 shown: visible,
                 total: plan.rows.length,

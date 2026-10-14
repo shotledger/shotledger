@@ -4,6 +4,7 @@ import {
   JSON_EXPORT_VERSION,
   type FirearmExport,
   type LicenseExport,
+  type MaintenanceEventExport,
   type SessionExport,
 } from './types';
 
@@ -16,6 +17,7 @@ export interface ExportOptions {
    *  offer still writes the arrays — they are always present in the file. */
   firearms?: readonly FirearmExport[];
   licenses?: readonly LicenseExport[];
+  maintenanceEvents?: readonly MaintenanceEventExport[];
 }
 
 /**
@@ -37,6 +39,7 @@ export function exportSessionsToJson(
       sessions,
       firearms: options.firearms ?? [],
       licenses: options.licenses ?? [],
+      maintenanceEvents: options.maintenanceEvents ?? [],
     },
     null,
     2,

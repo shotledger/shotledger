@@ -29,6 +29,21 @@ Jest (`jest-expo`) with `@testing-library/react-native`; the pattern is
   copy per test: `require` it inside `jest.isolateModules`, with fake
   timers for debounces and backoff.
 
+## Testing screens and components
+
+`src/test-utils/render.tsx` is the pattern (its header lists the three
+`jest.mock` lines a screen test needs); `features/firearms/firearm-forms.test.tsx`
+is a worked example.
+
+- Seed and assert through the real query functions on the in-memory
+  better-sqlite3 DB (`test-utils/test-db-client.ts`) — mock native modules,
+  not the DB.
+- Find things the way the user does: role and accessible name, label text,
+  visible text. A `TextField` gets an `accessibilityLabel` of its field
+  label, which screen readers need anyway.
+- Screen tests live beside their feature, never under `src/app/` — expo-router
+  bundles every file there as a route.
+
 ## Licenses
 
 Adding or removing a dependency means running `pnpm licenses:generate` and
@@ -63,7 +78,8 @@ named …`. `migrations.test.ts` fails until the hash matches. An install that
 - `/dev` (`src/app/dev/index.tsx`) has "Load demo data" / "Wipe data";
   `/dev/components` is the component gallery. Both redirect to `/` outside
   dev builds (`src/app/dev/_layout.tsx`).
-- Deep link `app://dev` (the scheme is `app`; there is no `shotledger://`).
+- Deep link `shotledger://dev` (the scheme is `shotledger`, distinctive so no
+  other app can claim the redirects it will receive; #671).
 - On web the DB needs the page cross-origin isolated; Metro cannot send the
   COOP/COEP headers, so put a header-adding proxy in front (ADR 0012).
 - `EXPO_PUBLIC_ENABLE_DEV_TOOLS=1` at build time opens `/dev` in a release

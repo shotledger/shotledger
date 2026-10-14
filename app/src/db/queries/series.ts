@@ -18,8 +18,8 @@ export interface AddSeriesInput {
   isSighter?: boolean;
   isFinal?: boolean;
   photoUri?: string | null;
-  /** e.g. 'särskjutning' (integration spec §A.6). */
-  note?: string | null;
+  /** A särskjutning series (integration spec §A.6). */
+  isShootOff?: boolean;
   /**
    * Webshooter series-level-total granularity (integration spec §1/§A.4):
    * when true, no `shots` rows are ever created for this series and
@@ -90,7 +90,7 @@ export function addSeries(db: Database, input: AddSeriesInput) {
     isSighter: isSighter ? 1 : 0,
     isFinal: isFinal ? 1 : 0,
     photoUri: input.photoUri ?? null,
-    note: input.note ?? null,
+    isShootOff: input.isShootOff ? 1 : 0,
     isTotalOverride: isTotalOverride ? 1 : 0,
     totalOverrideTenths: isTotalOverride ? (input.totalOverrideTenths ?? null) : null,
     totalOverrideShotCount: isTotalOverride ? (input.totalOverrideShotCount ?? null) : null,

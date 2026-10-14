@@ -2,7 +2,7 @@
 // session, extra_rounds never create one). Spec: m6-compliance-spec.md
 // "Behaviors — license-activity.ts", amended by
 // compliance-shooter-level-activity-spec.md.
-import { subtractMonthsUtc } from './months';
+import { addMonthsClamped, localDayStart } from './months';
 import { statusFor } from './status';
 import type {
   ComplianceRule,
@@ -31,9 +31,11 @@ export function computeRuleLicenseActivity(
   rule: ComplianceRule,
   now: Date = new Date(),
 ): LicenseActivity {
-  const windowStart = subtractMonthsUtc(now, rule.windowMonths);
+  // Whole local days, start day included (#816).
+  const today = localDayStart(now);
+  const windowStart = addMonthsClamped(today, -rule.windowMonths);
   const windowStartMs = windowStart.getTime();
-  const nowMs = now.getTime();
+  const todayMs = today.getTime();
 
   let activityCount = 0;
   let countedSessionCount = 0;
@@ -42,8 +44,8 @@ export function computeRuleLicenseActivity(
     // The window is applied before the scope test, so `skippedSessionCount`
     // counts only sessions a shooter would expect to see in the figure —
     // never the whole history behind it.
-    const t = new Date(session.startedAt).getTime();
-    if (t < windowStartMs || t > nowMs) continue;
+    const day = localDayStart(new Date(session.startedAt)).getTime();
+    if (day < windowStartMs || day > todayMs) continue;
     if (!ruleCountsSession(rule, session)) {
       skippedSessionCount += 1;
       continue;
@@ -74,7 +76,10 @@ export function computeRuleLicenseActivity(
  * and whether or not `weaponGroups` is empty. That is what makes license
  * activity appear after an import that created no firearm_groups rows (#319).
  */
-function rulesFor(profile: JurisdictionProfile, weaponGroups: readonly string[]): ComplianceRule[] {
+export function applicableRules(
+  profile: JurisdictionProfile,
+  weaponGroups: readonly string[],
+): ComplianceRule[] {
   const groups = new Set(weaponGroups);
   return profile.rules.filter(
     (rule) => rule.scope === 'shooter' || rule.weaponGroups.some((g) => groups.has(g)),
@@ -88,7 +93,7 @@ export function computeLicenseActivityForWeaponGroup(
   weaponGroup: string,
   now: Date = new Date(),
 ): LicenseActivity | null {
-  const rule = rulesFor(profile, [weaponGroup])[0];
+  const rule = applicableRules(profile, [weaponGroup])[0];
   if (!rule) return null;
   return computeRuleLicenseActivity(sessions, rule, now);
 }
@@ -109,7 +114,7 @@ export function computeFirearmLicenseActivity(
   firearmWeaponGroups: readonly string[],
   now: Date = new Date(),
 ): LicenseActivity[] {
-  return rulesFor(profile, firearmWeaponGroups).map((rule) =>
+  return applicableRules(profile, firearmWeaponGroups).map((rule) =>
     computeRuleLicenseActivity(sessions, rule, now),
   );
 }
@@ -142,7 +147,7 @@ export function computeOverallLicenseActivity(
   weaponGroups: readonly string[],
   now: Date = new Date(),
 ): OverallLicenseActivity {
-  const statuses = rulesFor(profile, weaponGroups).map((rule) =>
+  const statuses = applicableRules(profile, weaponGroups).map((rule) =>
     computeRuleLicenseActivity(sessions, rule, now),
   );
   return { statuses, overall: worstStatus(statuses.map((s) => s.status)) };

@@ -23,12 +23,14 @@ import { useRegulations } from '@/features/regulations/use-regulations';
 
 import { SUPPORT_URL } from '@/constants/links';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
+import { useFeatures } from '@/features/settings/feature-visibility';
 import { useAppSettings } from '@/state/app-settings';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { theme, language } = useAppSettings();
+  const features = useFeatures();
 
   // The short names of everything in effect, adoption included — "SPSF, ISSF,
   // SvSF" rather than only what has a switch turned on.
@@ -50,6 +52,12 @@ export default function SettingsScreen() {
           subtitle={t('settings.personalSubtitle')}
           onPress={() => router.push('/settings/personal')}
           testID="settings-open-personal"
+        />
+        <DrillDownRow
+          title={t('settings.featuresTitle')}
+          subtitle={t('settings.featuresRowSubtitle')}
+          onPress={() => router.push('/settings/features')}
+          testID="settings-open-features"
         />
         <DrillDownRow
           title={t('settings.trackingTitle')}
@@ -118,12 +126,15 @@ export default function SettingsScreen() {
           onPress={() => router.push('/settings/data')}
           testID="settings-open-data"
         />
-        <DrillDownRow
-          title={t('settings.trainingTitle')}
-          subtitle={t('settings.trainingRowSubtitle')}
-          onPress={() => router.push('/settings/training-data')}
-          testID="settings-open-training-data"
-        />
+        {/* Training data comes from scoring photos, so it goes with them (#801). */}
+        {features.photos && (
+          <DrillDownRow
+            title={t('settings.trainingTitle')}
+            subtitle={t('settings.trainingRowSubtitle')}
+            onPress={() => router.push('/settings/training-data')}
+            testID="settings-open-training-data"
+          />
+        )}
       </Card>
 
       <Card>

@@ -1,6 +1,8 @@
-// The five synced account settings, read from pulled `settings` rows. Values
-// the phone would not have written read as unset, so a caller falls back to
-// the phone's own defaults. Allowed values are the phone's lists.
+// The synced account settings, read from pulled `settings` rows. Values the
+// phone would not have written read as unset, so a caller falls back to the
+// phone's own defaults. Allowed values are the phone's lists. A feature
+// switch (#801) reads through the phone's own rule: only `false` hides.
+import { FEATURE_SETTING_KEYS, readFeatureVisibility } from '../features/visibility';
 import { PROFILE_SELECTIONS, type ProfileSelection } from '../compliance/profile-registry';
 import { SKILL_CLASSES, type SkillClass } from '../disciplines/eligibility';
 import { isSyncableSettingRow, SYNCED_SETTING_KEYS } from '../sync/protocol';
@@ -16,6 +18,13 @@ export interface AccountSettings {
   complianceProfile: ProfileSelection | null;
   /** null: no choice stored; the case is derived from the firearms. */
   complianceProfileVariant: string | null;
+  /** The feature switches (#801): true unless a stored false hides the area. */
+  showLicenseActivity: boolean;
+  showPhotos: boolean;
+  showTimer: boolean;
+  showSightSettings: boolean;
+  showAmmoLots: boolean;
+  showMaintenance: boolean;
 }
 
 const isBirthYear = (value: unknown): value is number => Number.isInteger(value);
@@ -45,11 +54,18 @@ export function readAccountSettings(rows: ReadonlyMap<string, Payload>): Account
   const womens = decoded(rows, 'competesInWomensClasses');
   const profile = decoded(rows, 'complianceProfile');
   const variant = decoded(rows, 'complianceProfileVariant');
+  const shown = readFeatureVisibility((key) => decoded(rows, key));
   return {
     birthYear: isBirthYear(birthYear) ? birthYear : null,
     skillClass: isSkillClass(skillClass) ? skillClass : null,
     competesInWomensClasses: womens === true,
     complianceProfile: isProfile(profile) ? profile : null,
     complianceProfileVariant: isString(variant) ? variant : null,
+    [FEATURE_SETTING_KEYS.licenseActivity]: shown.licenseActivity,
+    [FEATURE_SETTING_KEYS.photos]: shown.photos,
+    [FEATURE_SETTING_KEYS.timer]: shown.timer,
+    [FEATURE_SETTING_KEYS.sightSettings]: shown.sightSettings,
+    [FEATURE_SETTING_KEYS.ammoLots]: shown.ammoLots,
+    [FEATURE_SETTING_KEYS.maintenance]: shown.maintenance,
   };
 }

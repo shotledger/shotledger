@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ChevronDownIcon, SignOutIcon, UserIcon } from './icons';
+import { ChevronDownIcon, CodeIcon, SignOutIcon, UserIcon } from './icons';
+import { SourceLink } from './source-link';
 
-/** The profile menu, top right: who is signed in, the account page, sign out. */
+/** The profile menu, top right: who is signed in, the account page, the source, sign out. */
 export function UserMenu({ email, onSignOut }: { email: string | null; onSignOut: () => void }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -63,6 +64,7 @@ export function UserMenu({ email, onSignOut }: { email: string | null; onSignOut
             <UserIcon />
             {t('web.account.title')}
           </a>
+          <SourceLink role="menuitem" icon={<CodeIcon />} onClick={() => setOpen(false)} />
           <hr />
           <button
             role="menuitem"

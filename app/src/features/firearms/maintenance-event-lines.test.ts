@@ -1,5 +1,5 @@
 import { formatDate } from '../dates/format';
-import { maintenanceEventLines } from './maintenance-event-lines';
+import { maintenanceEventLines, maintenanceEventTitle } from './maintenance-event-lines';
 
 const sv = (iso: string) => formatDate(iso, 'sv-SE');
 
@@ -36,5 +36,20 @@ describe('maintenanceEventLines', () => {
     expect(
       maintenanceEventLines({ performedAt: '2026-10-03T22:30:00.000Z', notes: null }, sv),
     ).toEqual(['4 okt 2026']);
+  });
+});
+
+describe('maintenanceEventTitle', () => {
+  it('A3 labels an adjustment by its flag', () => {
+    expect(maintenanceEventTitle({ kind: '', isAdjustment: 1 }, 'Adjustment')).toBe('Adjustment');
+  });
+
+  it('A3 shows a kind the user typed as typed, even "adjustment"', () => {
+    expect(maintenanceEventTitle({ kind: 'Cleaning', isAdjustment: 0 }, 'Adjustment')).toBe(
+      'Cleaning',
+    );
+    expect(maintenanceEventTitle({ kind: 'adjustment', isAdjustment: 0 }, 'Justering')).toBe(
+      'adjustment',
+    );
   });
 });

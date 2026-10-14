@@ -21,6 +21,22 @@ ned](#de-tva-kriterierna-som-galler-ett-enskilt-vapen)):
 Träning och tävling räknas lika, liksom att representera föreningen i externa
 tävlingar. En aktivitet är ett loggat pass — inte en serie, och inte en dag.
 
+## Hur de sex månaderna räknas
+
+Blanketten säger ”de senaste sex månaderna” men inte hur de räknas på dagen, så
+appen räknar som svensk lag räknar perioder i månader (lag 1930:173):
+
+- **Hela dagar, i telefonens tidszon.** Ett pass hör till den dag du sköt det.
+  Klockslaget spelar aldrig någon roll.
+- **Första dagen räknas.** Den 1 april börjar perioden den 1 oktober, och ett
+  pass från den 1 oktober räknas fortfarande. Den 2 april gör det inte längre.
+- **Månadsslut.** Finns inte samma datum sex månader bakåt börjar perioden i
+  stället den sista dagen i den månaden: den 31 mars börjar den den 30
+  september.
+
+Förnyelserutans två år räknas på samma sätt och delar aldrig en dag: det
+senaste året börjar tolv månader bakåt, och det äldre året slutar dagen innan.
+
 ## Ditt fall, och var det kommer ifrån
 
 Appen föreslår ett av de två utifrån dina vapen: finns det en **pistol eller
@@ -40,6 +56,8 @@ själv har angett — vapentypen och
   du inte säger något annat, och fallet den föreslår för en vapenägare blir
   därför 6 §, det lindrigare av de två. Anger du **lånat** på ett vapen slutar
   det räknas.
+- Ett [arkiverat](../guides/firearms-and-ammunition.sv.md#arkivera-ett-vapen-du-inte-langre-har)
+  vapen räknas inte heller: du har det inte längre.
 
 Skärmen säger också **varför** den valde som den gjorde – ”eftersom inget
 registrerat vapen är en pistol eller revolver som du äger”, till exempel. Det
@@ -56,6 +74,35 @@ hela sexmånadersperioden: tolv aktiviteter någonstans under de sex månaderna
 uppfyller 5 §, oavsett om de var jämnt fördelade eller inte. Något visst antal
 varje kalendermånad krävs inte.
 
+## Datumet för nästa pass
+
+Perioden slutar alltid i dag, så varje dag kommer de äldsta passen i den närmare
+att falla ur. Loggar du inget mer förblir ett uppfyllt krav uppfyllt tills så
+många pass har fallit ur att antalet understiger det som krävs. Datumet appen
+visar är sista dagen innan det händer.
+
+Bara de pass som kravet räknar spelar roll: för ett vapens kriterium, pass
+loggade med det vapnet. För förnyelsekriteriet måste båda åren ligga kvar på
+fyra, så datumet kan komma från vilket år som helst.
+
+Datumet räknas i hela dagar, på samma sätt som själva perioden (se
+[Hur de sex månaderna räknas](#hur-de-sex-manaderna-raknas)).
+
+## Ett år som redan har tagit slut
+
+Förnyelserutan kräver fyra aktiviteter under vart och ett av de två senaste
+åren. Det äldre av de två åren tog slut för ett år sedan, så ett pass du loggar
+i dag hamnar i det senaste året och kan aldrig räknas till det äldre.
+
+Det som ändrar det äldre året är tiden. Allteftersom dagarna går flyttas båda
+åren framåt tillsammans: pass från början av ditt senaste år går över till det
+äldre, och de äldsta passen faller ur det. Ett äldre år som inte räcker nu kan
+alltså fyllas på senare, antingen av pass du redan har loggat eller av pass du
+loggar från och med nu när de har blivit ett år gamla. Datumet appen visar är
+den första dag då alla år kan ligga på fyra, förutsatt att du fortsätter logga
+pass med vapnet. Det är det tidigaste rutan kan kryssas i, inte ett löfte om att
+den blir det.
+
 ## Vad som räknas, och vad det här inte är
 
 **Alla pass räknas, oavsett vad du sköt med.** 5 § och 6 § är krav på _dig_,
@@ -69,6 +116,9 @@ glesast.
 Samma siffra visas därför på varje vapen: det är din aktivitetsnivå, visad
 intill varje vapen för bekvämlighets skull – inte det vapnets egen räkning.
 Skärmen säger det under siffran.
+
+Pass som skjutits med ett vapen du sedan har arkiverat räknas fortfarande. Du
+sköt dem; att du sålde vapnet efteråt ändrar inte det.
 
 Licensaktivitet räknar det du loggat. Ett banbesök du inte loggade finns inte
 med, och ett pass som loggats två gånger räknas två gånger.
@@ -115,13 +165,16 @@ Appen har ingen tillgång till dina licenser, så den utgår från det du berät
   inget tidsbegränsat tillstånd. Vapentypen spelar ingen roll: blankettens
   förnyelseruta nämner ingen.
 
+Inget av dem visas för ett arkiverat vapen. Du innehar det inte längre, och du
+kommer inte att förnya dess tillstånd.
+
 Saknas ett kriterium på ett vapen där du väntat dig det är det där du ska titta
 — oftast en vapentyp som fattas eller en licens registrerad utan giltighetstid.
 
 !!! warning "Räknat är inte styrkt"
 
     I en klubblogg blir en rad ett underlag när någon signerat kolumnen _Uppg.
-    styrkta av_. Appen har ingen motsvarighet och hittar inte på någon. ”6 av 4
+    styrkta av_. Appen har ingen motsvarighet och hittar inte på någon. ”6
     aktiviteter med det här vapnet” betyder att appen räknat sex pass du loggat
     — inte att någon har styrkt dem.
 

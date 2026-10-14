@@ -11,6 +11,18 @@ entry is deleted with it; git keeps the history.
 
 ## Decision
 
+**`drizzle-zod`** (`0.8.3`, Apache-2.0) in `shared/` — 2026-10-13, to derive
+each synced table's payload schema from its Drizzle table so `/sync/push`
+can refuse a row a device could not apply (#697, ADR 0021). Only the Worker
+imports it; it stays out of the app and web bundles. `drizzle-orm` is
+declared in `shared/` at the version `app/` and `backend/` already use.
+Rejected: hand-written zod schemas per table, a second copy that drifts.
+
+**`expo-updates`** (`~57.0.26`, MIT) — 2026-10-13, for over-the-air JS
+updates through EAS Update (#780, ADR 0020). It is not imported by app code.
+The restore reload uses `expo`'s own `reloadAppAsync` instead. Rejected:
+staying on full builds for every JS change.
+
 **`@testing-library/react-native@14.0.1`** (MIT) with its required peer
 **`test-renderer@1.2.0`** (MIT) — 2026-10-04, app dev dependencies so
 hooks and components can be tested under jest-expo (`renderHook`, `act`).

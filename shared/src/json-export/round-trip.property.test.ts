@@ -9,7 +9,13 @@ import { describe, expect, it } from 'vitest';
 
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, type ImportResult } from './import';
-import type { FirearmExport, LicenseExport, SessionExport, ShotExport } from './types';
+import type {
+  FirearmExport,
+  LicenseExport,
+  MaintenanceEventExport,
+  SessionExport,
+  ShotExport,
+} from './types';
 
 const OPTIONS = { appVersion: '1.0.0', generatedAt: '2026-09-11T09:12:33.104Z' };
 
@@ -31,6 +37,7 @@ const shotSeriesArb = fc.record({
   position: fc.integer({ min: 1, max: 10 }),
   isSighter: fc.boolean(),
   isFinal: fc.boolean(),
+  isShootOff: fc.boolean(),
   // maxLength 0 is reachable: a series with no shots must survive (C3).
   shots: fc.array(shotArb, { maxLength: 6 }),
   totalOverride: fc.constant(null),
@@ -40,6 +47,7 @@ const totalOnlySeriesArb = fc.record({
   position: fc.integer({ min: 1, max: 10 }),
   isSighter: fc.constant(false),
   isFinal: fc.boolean(),
+  isShootOff: fc.boolean(),
   shots: fc.constant<ShotExport[]>([]),
   totalOverride: fc.record({
     tenths: fc.integer({ min: 0, max: 1090 }),
@@ -150,7 +158,8 @@ const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({
   notes: nullableText,
   roundCount: fc.integer({ min: 0, max: 100_000 }),
   maintenanceIntervalRounds: fc.option(fc.integer({ min: 0, max: 5000 }), { nil: null }),
-  roundsSinceMaintenance: fc.integer({ min: 0, max: 5000 }),
+  maintenanceIntervalMonths: fc.option(fc.integer({ min: 1, max: 120 }), { nil: null }),
+  archivedAt: fc.option(fc.constant('2026-10-13T20:00:00.000Z'), { nil: null }),
 });
 
 const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
@@ -162,6 +171,23 @@ const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
   validUntil: nullableText,
   conditions: nullableText,
   authority: nullableText,
+});
+
+const maintenanceEventArb: fc.Arbitrary<MaintenanceEventExport> = fc.record({
+  id: fc.string({ minLength: 1, maxLength: 8 }),
+  firearmId: fc.string({ minLength: 1, maxLength: 8 }),
+  // A UTC instant, as the format requires since #697.
+  performedAt: fc
+    .date({
+      min: new Date('1900-01-01T00:00:00Z'),
+      max: new Date('2199-12-31T23:59:59Z'),
+      noInvalidDate: true,
+    })
+    .map((d) => d.toISOString()),
+  kind: textArb,
+  roundCountAt: fc.integer({ min: 0, max: 100_000 }),
+  isAdjustment: fc.boolean(),
+  notes: nullableText,
 });
 
 type Json = fc.JsonValue;
@@ -193,10 +219,11 @@ const mutatedExportArb = fc
     fc.array(sessionArb, { minLength: 1, maxLength: 3 }),
     fc.array(firearmArb, { maxLength: 2 }),
     fc.array(licenseArb, { maxLength: 2 }),
+    fc.array(maintenanceEventArb, { maxLength: 2 }),
   )
-  .chain(([sessions, firearms, licenses]) => {
+  .chain(([sessions, firearms, licenses, maintenanceEvents]) => {
     const file = JSON.parse(
-      exportSessionsToJson(sessions, { ...OPTIONS, firearms, licenses }),
+      exportSessionsToJson(sessions, { ...OPTIONS, firearms, licenses, maintenanceEvents }),
     ) as Json;
     const paths = pathsIn(file);
     return fc
@@ -233,6 +260,19 @@ describe('JSON export properties', () => {
           expect(imported.licenses).toEqual(licenses);
         },
       ),
+      { numRuns: 200 },
+    );
+  });
+
+  it('P21: maintenance events survive the round trip whole (#727 M6)', () => {
+    fc.assert(
+      fc.property(fc.array(maintenanceEventArb, { maxLength: 4 }), (maintenanceEvents) => {
+        const imported = importSessionsFromJson(
+          exportSessionsToJson([], { ...OPTIONS, maintenanceEvents }),
+        ) as ImportResult;
+        expect(imported.errors).toEqual([]);
+        expect(imported.maintenanceEvents).toEqual(maintenanceEvents);
+      }),
       { numRuns: 200 },
     );
   });
@@ -276,6 +316,7 @@ describe('JSON export properties', () => {
           ['sessions', 'invalid-session'],
           ['firearms', 'invalid-firearm'],
           ['licenses', 'invalid-license'],
+          ['maintenanceEvents', 'invalid-maintenance-event'],
         ] as const) {
           const given = Array.isArray(file[key]) ? (file[key] as unknown[]).length : 0;
           const failed = result.errors.filter((e) => e.code === code).length;

@@ -4,7 +4,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Switch } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ListRow } from '@/components/list-row';
@@ -14,6 +14,7 @@ import { Screen } from '@/components/screen';
 import { SecondaryButton } from '@/components/secondary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Toggle } from '@/components/toggle';
 import { FLAGS, type FlagName, isFlagEnabled } from '@/constants/flags';
 import { db } from '@/db/client';
 import { clearAssistLog, getAssistLog } from '@/db/queries/assist-log';
@@ -21,6 +22,7 @@ import { setFlagOverride } from '@/db/queries/feature-flags';
 import { listSessions } from '@/db/queries/sessions';
 import { firearmCounterDrift } from '@/db/queries/volume';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
+import { refreshReminders } from '@/features/firearms/reminders';
 import { summarizeAssist } from '@/features/photo-scoring/assist-log';
 import { shareTextFile } from '@/platform/share-file';
 import { Spacing } from '@/theme/tokens';
@@ -77,6 +79,7 @@ export default function DevScreen() {
         try {
           action();
           refresh();
+          void refreshReminders();
           setDemoStatus(done());
         } catch (error: unknown) {
           setDemoStatus(t('dev.demoFailed', { message: String(error) }));
@@ -128,7 +131,12 @@ export default function DevScreen() {
           onPress={onLoadDemoData}
           testID="load-demo-data"
         />
-        <PrimaryButton label={t('settings.wipeData')} onPress={onWipeData} testID="wipe-data" />
+        <SecondaryButton
+          tone="danger"
+          label={t('settings.wipeData')}
+          onPress={onWipeData}
+          testID="wipe-data"
+        />
       </ThemedView>
       {demoStatus ? (
         <ThemedText type="small" themeColor="textSecondary" testID="demo-data-status">
@@ -144,7 +152,7 @@ export default function DevScreen() {
             title={t(FLAGS[name].labelKey)}
             subtitle={t(FLAGS[name].descriptionKey)}
             trailing={
-              <Switch
+              <Toggle
                 value={flags[name]}
                 disabled={!FLAGS[name].overridable}
                 onValueChange={(next) => onToggleFlag(name, next)}

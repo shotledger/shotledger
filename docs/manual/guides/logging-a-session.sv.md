@@ -5,8 +5,11 @@ serierna ligger skott.
 
 ## Passets huvud
 
-Överst i ett pass står namnet, och därunder på en rad datumet det sköts, typen,
-din vapengrupp och klass, vapnet och tävlingen. Dina anteckningar följer under.
+Passets namn är rubriken högst upp på skärmen, en gång. Under den säger en rad
+vad passet var: datumet det sköts, typen och grenen. Typen utelämnas när en
+tagg redan säger den, som _Träning_. En andra rad säger vad det sköts med och
+under: matchformatet, din vapengrupp och klass i ord ("Vapengrupp C, klass
+2"), vapnet, ammunitionen och tävlingen. Dina anteckningar följer under.
 Bådadera betyder mest för ett pass du inte fyllt i själv: en import bär med sig
 sitt eget datum och lägger sin förklaring — vilket vapen, varför ett pass är
 flaggat för granskning — i anteckningarna.
@@ -34,6 +37,9 @@ Valde du hela matchen när du menade fritt format, eller tvärtom:
 1. Öppna passets **⋮**-meny och välj **Redigera pass**.
 2. Välj upplägg under **Matchupplägg** och tryck **Spara ändringar**.
 
+Redigera pass börjar med namn, datum, vapen och ammunitionsparti; plats,
+anteckningar, serieinmatning och taggar ligger hopfällda under **Detaljer**.
+
 Serierna läggs upp på nytt för det nya upplägget, och därför går det bara fram
 till första resultatet: ett skott, ett foto som väntar på att poängsättas eller
 en importerad summa. Därefter visar raden upplägget med en notering om att det
@@ -45,8 +51,26 @@ En **serie** är en omgång skott som räknas ihop — fem skott i SPSF:s precis
 sex i militär snabbmatch. Ett **skott** är ett hål, värt hela poäng eller
 decimaler beroende på program.
 
-Tryck på en serie för att fylla i den. Knappsatsen går vidare efter varje skott,
-så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
+Tryck på en serie för att fylla i den. Allt du trycker på ligger längst ner på
+skärmen, inom räckhåll för tummen: skottrutorna, en rad med **Foto**,
+**Provserie** och **Radera**, knapparna och **Nästa serie**. Knappsatsen går
+till nästa ruta efter varje skott men stannar vid den sista, så att ett fel
+skott fortfarande går att rätta: tryck på rutan och skriv rätt värde. Ingenting
+går vidare förrän du säger till.
+
+**Nästa serie** sparar serien och öppnar nästa. **Spara serie** sparar den och
+tar dig tillbaka till passet; på sista serien i hela matchen är det den enda
+knappen. Går du tillbaka utan någon av dem sparas ingenting av det du skrev i
+serien.
+
+Medan du skriver visar skärmen tre tal ovanför rutorna: **Serie**-summan,
+**Pass**-summan med den här serien medräknad som den ser ut just nu, och
+**Förra gången** — samma serie i ditt föregående pass i grenen. Alla visar
+antalet innertior, även **0X**. Förra gången räknar bara tävlingsserier, så
+den andra tävlingsserien jämförs med den andra tävlingsserien, oavsett om en
+provserie låg före. Den visas inte för en provserie, inte när du inte skjutit
+grenen förut och inte när det passet räknades annorlunda (hela poäng mot
+decimaler). Raden under rubriken listar passets övriga serier med deras summor.
 
 I precision, magnumprecision och militär snabbmatch markerar knappsatsen en bra
 serie när du fyller i sista skottet. Når serien guldseriegränsen blir summan
@@ -58,11 +82,21 @@ en sparad, och med telefonens inställning för minskade rörelser ser du bara
 texten. I passets serielista visas summan för en serie med full poäng på guld, med en
 extra ring för en perfekt serie.
 
+## Ett pass med bara skott
+
+Ett pass som bara loggar hur många skott du sköt har inga serier. Fältet
+**Extra skott (räknas ej i statistik)** tar antalet i stället: ett heltal från
+0 till 10 000, eller tomt för inget, som när du skapade passet och som på
+webben. Antalet sparas när du lämnar fältet, och vapnets skotträknare ändras
+med skillnaden. Allt annat sparas inte och visar ett fel tills du rättar det.
+
 ## Provserier
 
-Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot
-passets total. Resultatet visas ändå, med en asterisk — **45\*** — eftersom en
-provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
+Markera en serie som **provserie** med **Provserie** ovanför knapparna medan du
+fyller i den, så slutar den räknas mot passets total. Resultatet visas ändå,
+bredvid etiketten Provserie och i dämpad text, som **45 · räknas ej** —
+eftersom en provserie medvetet inte räknas men det du sköt fortfarande är värt
+att se.
 
 Så är regeln inuti ett pass. Mellan pass gäller något annat — se
 [Hur provserier räknas](../explanation/how-sighters-count.md).
@@ -75,17 +109,18 @@ ställer passet en extra fråga: om tävlingen skjuts som **fält** eller
 **poängfält**. Ett fältpass har inga knappar för tidtagarur eller sikte.
 
 Varje station är sex skott. På en skärm trycker du **Träff** (0–6),
-**Träffade figurer** och **Figurer**, hur många figurer stationen hade. Fem
+**Träffade figurer** och **Figurer**, hur många figurer stationen hade: ett
+tryck på talet för var och en. Fem
 träff i tre av fyra figurer skrivs **5/3 av 4**: du missade ett skott eller
 satte två i samma figur, och en figur blev orörd. Låt Figurer stå på **–** om du
-inte vet; stationen skrivs då **5/3**. Passets resultat visar
-"26 (30) träff / 22 figurer": dina träff, med möjliga träff — sex per station —
-inom parentes. Strukna stationer och särskjutning räknas inte. I poängfält är
-det i stället en summa, där varje träff ger en poäng och varje träffad figur
-ytterligare en. När varje station har sina figurer ifyllda räknas de ihop på
-samma sätt: "26 (30) träff / 22 (24) figurer". Hem, passlistan och Rekord
-visar resultatet på samma sätt, och ett pass utan någon station som räknas ännu
-visar "Inga stationer".
+inte vet; stationen skrivs då **5/3**. Passets resultat är två siffror med
+etikett, **Träff** "26 av 30" och **Figurer** "22": dina träff av möjliga
+träff, sex per station, och figurerna du träffat. Strukna stationer och
+särskjutning räknas inte. I poängfält är det i stället en summa, där varje
+träff ger en poäng och varje träffad figur ytterligare en. När varje station
+har sina figurer ifyllda räknas figurerna ihop på samma sätt: "22 av 24". Hem,
+passlistan och Rekord skriver det på en rad, "Träff 26 av 30 · Figurer 22 av
+24", och ett pass utan någon station som räknas ännu visar "Inga stationer".
 
 Där arrangören satt ut en **ringad figur** skriver du poängen du fick under
 **Poäng**, och vad figuren var värd efter "av" om du vet det. En station med
@@ -124,7 +159,8 @@ bekräfta innan serien och dess skott tas bort.
 
 ## Tidtagaruret och siktet
 
-Två knappar sitter ovanför serielistan (inte i ett fältpass):
+Två textknappar sitter under passets resultat, ovanför serielistan (inte i ett
+fältpass):
 
 - **Tidtagarur** — öppnas ovanpå passet. Det fortsätter gå när du stänger det,
   eftersom det tar tid på ditt pass och inte på panelen. Knapparna fungerar
@@ -140,7 +176,9 @@ från skärmen.
 
 ## Vad sammanställningen säger
 
-Under serielistan:
+Resultatet kommer först, direkt under passets namn, med totalen i stor stil.
+Totaler är heltal utan suffix, likadant på varje skärm; ett snitt behåller sin
+decimal.
 
 | Siffra              | Vad den betyder                                                |
 | ------------------- | -------------------------------------------------------------- |
@@ -213,15 +251,15 @@ träffar på figurer, utan ringar att rita.
 
 ## Att dela eller ta bort ett pass från Hem
 
-På Hem sveper du ett pass åt vänster så visas två ikoner: dela och papperskorg.
+På Hem sveper du ett pass under **Senaste** åt vänster så visas två ikoner:
+dela och papperskorg.
 Du får bekräfta innan ett pass tas bort.
 
 ## Att hitta ett pass igen
 
-Startsidan visar dina tio senaste pass. **Visa alla**, sist i den listan, öppnar
-hela loggboken — varje pass du någonsin loggat, nyast först. Den ligger längst
-ned för att det är där du är när de tio senaste inte innehöll det du letade
-efter.
+Hem visar ditt senaste pass och de nio före det under **Senaste**. **Alla
+pass**, bredvid den rubriken, öppnar hela loggboken — varje pass du någonsin
+loggat, nyast först.
 
 Loggboken öppnas på själva passen. Sökrutan ligger ovanför dem; allt annat är
 hopfällt bakom en enda **Filter**-rad, som visar vad som just nu smalnar av
@@ -236,6 +274,8 @@ Filtrera på valfri kombination av:
   Samma val som fliken [Statistik](statistics.sv.md) erbjuder, för det är samma
   fråga
 - **träning eller tävling**
+- **serier eller skott** — pass loggade som räknade serier, eller som ett antal
+  avlossade skott
 - **gren**
 - **tagg**
 - **vapen**, inklusive _Inget vapen angivet_ för pass där inget angetts

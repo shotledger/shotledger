@@ -54,8 +54,6 @@ describe('new rows', () => {
       extra_rounds: null,
       external_source: null,
       external_ref: null,
-      external_synced_at: null,
-      webshooter_competition_id: null,
       official_placement: null,
       official_standardmedalj: null,
     });
@@ -95,14 +93,14 @@ describe('new rows', () => {
       is_total_override: 0,
       total_override_tenths: null,
       total_override_shot_count: null,
-      note: null,
+      is_shoot_off: 0,
     });
     expect(
       newSeriesRow('r2', NOW, { sessionId: 's1', position: 1, isSighter: false }),
     ).toMatchObject({ is_sighter: 0 });
   });
 
-  it('R3 a shot row: is_inner_ten_decimal 0; a value outside 0..109 throws RangeError', () => {
+  it('R3 a shot row; a value outside 0..109 throws RangeError', () => {
     expect(
       newShotRow('h1', NOW, { seriesId: 'r1', position: 3, valueTenths: 104, isInnerTen: true }),
     ).toEqual({
@@ -114,7 +112,6 @@ describe('new rows', () => {
       position: 3,
       value_tenths: 104,
       is_inner_ten: 1,
-      is_inner_ten_decimal: 0,
     });
     const at = (valueTenths: number) => () =>
       newShotRow('h', NOW, { seriesId: 'r', position: 1, valueTenths, isInnerTen: false });
@@ -131,16 +128,14 @@ describe('withRoundsAdded', () => {
     id: 'f1',
     make: 'Pardini',
     round_count: 100,
-    rounds_since_maintenance: 7,
     updated_at: '2026-01-01T00:00:00.000Z',
     a_column_from_a_newer_build: 'kept',
   };
 
-  it('R4 adds n to both counters, sets updated_at and keeps unknown keys', () => {
+  it('R4 adds n to the round counter (#727 M4: nothing else), sets updated_at and keeps unknown keys', () => {
     expect(withRoundsAdded(pulled, 10, NOW)).toEqual({
       ...pulled,
       round_count: 110,
-      rounds_since_maintenance: 17,
       updated_at: NOW,
     });
     // The pulled payload is not mutated.
@@ -151,7 +146,6 @@ describe('withRoundsAdded', () => {
     expect(withRoundsAdded({ id: 'f2' }, 3, NOW)).toEqual({
       id: 'f2',
       round_count: 3,
-      rounds_since_maintenance: 3,
       updated_at: NOW,
     });
   });
@@ -167,28 +161,24 @@ describe('withRoundsMoved (docs/specs/web-session-edit-spec.md E4)', () => {
   const pulled = {
     id: 'f1',
     round_count: 10,
-    rounds_since_maintenance: 3,
     updated_at: '2026-01-01T00:00:00.000Z',
     a_column_from_a_newer_build: 'kept',
   };
 
-  it('K11 moves both counters by a signed delta, each floored at 0, keeping unknown keys', () => {
+  it('K11 moves the round counter by a signed delta, floored at 0 (#727 M4: nothing else), keeping unknown keys', () => {
     expect(withRoundsMoved(pulled, 5, NOW)).toEqual({
       ...pulled,
       round_count: 15,
-      rounds_since_maintenance: 8,
       updated_at: NOW,
     });
     expect(withRoundsMoved(pulled, -4, NOW)).toEqual({
       ...pulled,
       round_count: 6,
-      rounds_since_maintenance: 0,
       updated_at: NOW,
     });
     expect(withRoundsMoved({ id: 'f2' }, -2, NOW)).toEqual({
       id: 'f2',
       round_count: 0,
-      rounds_since_maintenance: 0,
       updated_at: NOW,
     });
   });

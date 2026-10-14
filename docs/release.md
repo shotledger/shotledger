@@ -7,7 +7,7 @@ below is one-time setup the maintainer has to do before the first upload.
 ## (a) One-time setup (maintainer only)
 
 - [ ] **Google Play developer account.** VERIFY which account type
-      (tracked in issue [#354](https://github.com/jimisola/shotledger/issues/354), not yet decided):
+      (tracked in issue [#354](https://github.com/shotledger/shotledger/issues/354), not yet decided):
   - _Personal account_: $25 one-time fee. Play Console requires
     **12 testers opted into closed testing for 14 continuous days**
     before an app can go to production — this gate has to be planned
@@ -64,11 +64,12 @@ first; for production, repeat it with `production`.
 What the deployed config already does:
 
 - better-auth takes its base URL and its extra trusted origins
-  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `app://`
+  (`BETTER_AUTH_TRUSTED_ORIGINS`, comma-separated; the app's `shotledger://`
   scheme is always trusted) from the env's `vars`.
 - Its rate limiter is on, keyed by `CF-Connecting-IP` and stored in D1
   (`rate_limit`). Sign-in and sign-up allow 5 attempts per 60 seconds per
-  address; other auth endpoints keep better-auth's defaults; paths that are
+  address; listing and revoking sessions 10; other auth endpoints keep
+  better-auth's defaults; paths that are
   not endpoints are not counted. A cron trigger every 15 minutes deletes
   rows whose window has passed.
 - `workers_dev` and `preview_urls` are off, so only the custom domain
@@ -143,7 +144,7 @@ One-time, before the first release:
       exists, but a private repo on GitHub Free cannot give it a required
       reviewer (the API answers 422, "ensure the billing plan supports the
       required reviewers protection rule"). Until the repo is public or on
-      Pro ([#100](https://github.com/jimisola/shotledger/issues/100)), what
+      Pro ([#100](https://github.com/shotledger/shotledger/issues/100)), what
       stands between a dispatch and a release is the `dry-run` default and
       that only the maintainer can run the workflow. Then add the maintainer
       as required reviewer under Settings → Environments → `release`.
@@ -155,6 +156,17 @@ One-time, before the first release:
 
 Every release:
 
+0. **Deploy the sync server first, then update every phone** when the
+   release adds, renames or drops a column of a synced table
+   (`shared/src/sync/schema.ts`). The server refuses a row whose columns are
+   not exactly its own, so whichever side runs the other schema has its
+   changes to that table refused: a phone ahead of the server before the
+   deploy, and a phone that has not updated after it
+   (`docs/specs/sync-payload-validation-spec.md` C5, Q6). Deploying first
+   only keeps the updated phones syncing; keep the gap to the phones short.
+   The web app also refuses an edit of any row stored before the change
+   until a phone pushes that row again with the new columns.
+   The same holds for an EAS Update that carries a migration.
 1. **Preview it.** Actions → _Release_ → Run workflow from `main`, with
    `dry-run` on (the default). It resolves the version from the
    Conventional Commits since the last tag (`feat:` bumps the minor, `fix:`
@@ -184,6 +196,40 @@ Every release:
    tested release from the closed-testing track to production. VERIFY
    exact click-path (UI changes over time).
 
+## Over-the-air JS updates (EAS Update)
+
+ADR 0020. A JS-only fix can reach installed EAS builds without a new
+build. Anything that touches native code (a new or bumped native
+dependency, `app.json` plugins or permissions) still needs a release.
+
+One-time, before the first update:
+
+- [ ] `cd app && eas init`, if `app/app.json` has no
+      `extra.eas.projectId` yet (the same step as in (a)).
+- [ ] `cd app && eas update:configure`. It adds `updates.url` to
+      `app/app.json`. `runtimeVersion` and the channels in `app/eas.json`
+      are already set, so commit only the URL and project id it writes.
+- [ ] Ship one release **after** that commit. Builds made before it have
+      no update URL and never check for updates.
+
+Every update:
+
+0. An update that carries a migration of a synced table waits for the
+   sync server, and a phone that has not taken the update has its changes
+   to that table refused, as step 0 of a release says.
+1. Check out the release's tag (or its `hotfix/*` branch with the fix on
+   top). The runtime version is the app version, so the update has to be
+   published with that release's version.
+2. Stamp it the way the release workflow does:
+   `cd app && npm pkg set version=<release version>`. Don't commit it.
+3. `cd app && eas update --channel production --message "<what changed>"`.
+   Use `--channel preview` to try it on a preview APK first.
+4. Phones pick it up on the next launch after the download finishes, so
+   expect it on the second launch.
+
+Locally built APKs (evaluation builds, the `run-app` standalone APK) have no
+channel and never receive updates.
+
 ## Preview builds (internal testing, not Play Console)
 
 ```bash
@@ -196,23 +242,44 @@ milestone demos before a store submission is warranted.
 
 ## Evaluation builds (outside testers)
 
-An evaluation build is a sideloaded APK that stops working on a set date.
-Build it with the standalone release build from the `run-app` skill
-(`.claude/skills/run-app/references/emulator.md`), with the expiry in the
-environment:
+An evaluation build is a sideloaded APK that stops working on a set date,
+**30 days after it is built** by default. From the repo root:
 
 ```bash
-cd app && pnpm exec expo prebuild --platform android --no-install
-cd android && EXPO_PUBLIC_EVAL_EXPIRES_AT=2026-11-30 ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+pnpm build:eval                # expires in 30 days
+EVAL_DAYS=14 pnpm build:eval   # another window
 ```
 
-- **The value** is `YYYY-MM-DD` (midnight UTC) or a full ISO 8601 date-time
-  with `Z` or an offset. From that instant on, launching the app, or
+`scripts/build-eval.mjs` runs the standalone release build from the `run-app`
+skill (`.claude/skills/run-app/references/emulator.md`) with the expiry set,
+copies the APK to `shotledger-eval-expires-<date>.apk` at the repo root
+(gitignored) and prints the hand-out message. It refuses to run with
+`EXPO_PUBLIC_ENABLE_DEV_TOOLS` set.
+
+- **The date** is midnight UTC, `EVAL_DAYS` days after today's UTC date.
+  The script passes it to the app as `EXPO_PUBLIC_EVAL_EXPIRES_AT`
+  (`YYYY-MM-DD`, or a full ISO 8601 date-time with `Z` or an offset, if you
+  ever build by hand) and overrides any value already in the shell. From that instant on, launching the app, or
   returning to it, shows a blocking "Evaluation Build Expired" screen that
-  tells the tester to ask for a new build. The tester's data stays on the
-  phone; a new build signed with the same key installs over it.
+  tells the tester to ask for a new build and still offers the sessions
+  export. The tester's data stays on the phone; a new build signed with the
+  same key installs over it. Settings → About shows the expiry date while the
+  build is active.
+- **License terms:** an evaluation build is handed out under an
+  evaluation-only grant, not the AGPL, while the repository is private and
+  the maintainer is its sole copyright holder (ADR 0017). About says so;
+  repeat it in the hand-out message:
+
+  > ShotLedger evaluation build, for your personal testing only. No other
+  > license is granted; please don't pass the APK on. It stops working on
+  > <date>; ask me for a new build after that.
+
+  Once the repository is public, builds are AGPL like every other and this
+  grant no longer applies.
+
 - **A malformed value fails open:** the build runs with no expiry at all.
-  Check the date before handing the APK out.
+  The script always writes a valid date; this matters only for a hand-set
+  value.
 - **Clock rollback:** the app keeps the latest time it has seen in
   SecureStore (localStorage on web) and compares against that, so setting
   the clock back neither reopens an expired build nor rewinds the window.
@@ -311,7 +378,7 @@ Known risks:
 
 ## Repo configuration
 
-`github.com/jimisola/shotledger`, private. Modeled on the skillsgateway
+`github.com/shotledger/shotledger`, private. Modeled on the skillsgateway
 org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
 title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
 squashes), delete-branch-on-merge, allow-update-branch, web commit

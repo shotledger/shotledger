@@ -3,6 +3,8 @@ export * from './months';
 export * from './status';
 export * from './firearm-criteria';
 export * from './license-activity';
+export * from './lapse';
+export * from './shortfall';
 export * from './indicators';
 export * from './profile-registry';
 export * from './default-profile';

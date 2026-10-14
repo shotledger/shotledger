@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   firearmExportsFromRows,
   licenseExportsFromRows,
+  maintenanceEventExportsFromRows,
   sessionExportsFromRows,
   type ExportFirearmRow,
   type ExportSeriesRow,
@@ -43,6 +44,7 @@ function seriesRow(overrides: Partial<ExportSeriesRow> = {}): ExportSeriesRow {
     position: 1,
     isSighter: 0,
     isFinal: 0,
+    isShootOff: 0,
     isTotalOverride: 0,
     totalOverrideTenths: null,
     totalOverrideShotCount: null,
@@ -63,7 +65,8 @@ const firearm: ExportFirearmRow = {
   notes: 'note',
   roundCount: 500,
   maintenanceIntervalRounds: 1000,
-  roundsSinceMaintenance: 200,
+  maintenanceIntervalMonths: 12,
+  archivedAt: '2026-10-01T00:00:00.000Z',
 };
 
 const empty: SessionExportRows = {
@@ -203,6 +206,18 @@ describe('sessionExportsFromRows', () => {
     expect(exported.map((s) => s.tags)).toEqual([['dry', 'match'], []]);
   });
 
+  it('S5 carries a shoot-off series as isShootOff', () => {
+    const [exported] = sessionExportsFromRows({
+      ...empty,
+      sessions: [session()],
+      series: [
+        seriesRow({ id: 'R1', position: 1 }),
+        seriesRow({ id: 'R2', position: 2, isShootOff: 1 }),
+      ],
+    });
+    expect(exported!.series.map((s) => s.isShootOff)).toEqual([false, true]);
+  });
+
   it('nests series and shots under their parents, in position order', () => {
     const [exported] = sessionExportsFromRows({
       ...empty,
@@ -219,11 +234,19 @@ describe('sessionExportsFromRows', () => {
       ],
     });
     expect(exported!.series).toEqual([
-      { position: 1, isSighter: true, isFinal: false, shots: [], totalOverride: null },
+      {
+        position: 1,
+        isSighter: true,
+        isFinal: false,
+        isShootOff: false,
+        shots: [],
+        totalOverride: null,
+      },
       {
         position: 2,
         isSighter: false,
         isFinal: true,
+        isShootOff: false,
         shots: [
           { position: 1, valueTenths: 100, isInnerTen: true },
           { position: 2, valueTenths: 90, isInnerTen: false },
@@ -320,7 +343,8 @@ describe('firearmExportsFromRows', () => {
         notes: 'note',
         roundCount: 500,
         maintenanceIntervalRounds: 1000,
-        roundsSinceMaintenance: 200,
+        maintenanceIntervalMonths: 12,
+        archivedAt: '2026-10-01T00:00:00.000Z',
       },
       expect.objectContaining({ id: 'F2', isOwn: false }),
     ]);
@@ -341,6 +365,39 @@ describe('licenseExportsFromRows', () => {
     };
     expect(licenseExportsFromRows([{ ...license, deletedAt: null } as typeof license])).toEqual([
       license,
+    ]);
+  });
+});
+
+describe('maintenanceEventExportsFromRows (#727 M6)', () => {
+  it('keeps the envelope fields, turns the flag into a boolean and drops row bookkeeping', () => {
+    const row = {
+      id: 'M1',
+      firearmId: 'F1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: '',
+      roundCountAt: 510,
+      isAdjustment: 1,
+      notes: '+10 · Club rental rounds',
+      createdAt: '2026-09-01T10:00:00.000Z',
+      deletedAt: null,
+    };
+    expect(
+      maintenanceEventExportsFromRows([
+        row,
+        { ...row, id: 'M2', kind: 'Rengöring', isAdjustment: 0 },
+      ]),
+    ).toEqual([
+      {
+        id: 'M1',
+        firearmId: 'F1',
+        performedAt: '2026-09-01T10:00:00.000Z',
+        kind: '',
+        roundCountAt: 510,
+        isAdjustment: true,
+        notes: '+10 · Club rental rounds',
+      },
+      expect.objectContaining({ id: 'M2', kind: 'Rengöring', isAdjustment: false }),
     ]);
   });
 });

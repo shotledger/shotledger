@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MAINTENANCE_INTERVAL_MONTHS_MAX } from '../firearms/constants';
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, toImportGroups, type ImportResult } from './import';
 import {
@@ -58,11 +59,19 @@ describe('importSessionsFromJson', () => {
     const input = [
       session({
         series: [
-          { position: 1, isSighter: true, isFinal: false, totalOverride: null, shots: [] },
+          {
+            position: 1,
+            isSighter: true,
+            isFinal: false,
+            isShootOff: false,
+            totalOverride: null,
+            shots: [],
+          },
           {
             position: 2,
             isSighter: false,
             isFinal: false,
+            isShootOff: false,
             totalOverride: null,
             shots: [{ position: 1, valueTenths: 100, isInnerTen: true }],
           },
@@ -191,6 +200,7 @@ describe('importSessionsFromJson', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
+          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 999, isInnerTen: false }],
         },
@@ -229,6 +239,7 @@ describe('toImportGroups', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
+          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 95, isInnerTen: false }],
         },
@@ -281,7 +292,8 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     notes: null,
     roundCount: 40,
     maintenanceIntervalRounds: null,
-    roundsSinceMaintenance: 40,
+    maintenanceIntervalMonths: null,
+    archivedAt: null,
   };
   const license: LicenseExport = {
     id: 'l1',
@@ -327,6 +339,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.errors).toEqual([]);
     expect(result.firearms).toEqual([]);
     expect(result.licenses).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([]);
     expect(result.sessions[0]!.firearmId).toBeNull();
     expect(result.sessions[0]!.firearm).toBe('Pardini SP');
   });
@@ -338,6 +351,82 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.firearms.map((f) => f.id)).toEqual(['f1']);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({ code: 'invalid-firearm', itemIndex: 1 });
+  });
+
+  it('M6 a bad maintenance event is skipped on its own (#727)', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      roundCountAt: 500,
+      isAdjustment: false,
+      notes: null,
+    };
+    const result = importSessionsFromJson(
+      envelope({ maintenanceEvents: [event, { id: 'm2', firearmId: 'f1' }] }),
+    ) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([event]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({ code: 'invalid-maintenance-event', itemIndex: 1 });
+  });
+
+  it('M6 fills in a terse maintenance event: no kind, not an adjustment, no notes', () => {
+    const result = importSessionsFromJson(
+      envelope({
+        maintenanceEvents: [
+          { id: 'm1', firearmId: 'f1', performedAt: '2026-09-01T10:00:00.000Z', roundCountAt: 0 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([
+      {
+        id: 'm1',
+        firearmId: 'f1',
+        performedAt: '2026-09-01T10:00:00.000Z',
+        kind: '',
+        roundCountAt: 0,
+        isAdjustment: false,
+        notes: null,
+      },
+    ]);
+  });
+
+  it('M6 refuses a maintenance event with no id, firearm, date or a negative or fractional count', () => {
+    const good = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      roundCountAt: 5,
+    };
+    const bad = [
+      { ...good, id: '' },
+      { ...good, firearmId: '' },
+      { ...good, performedAt: '' },
+      { ...good, roundCountAt: -1 },
+      { ...good, roundCountAt: 1.5 },
+      { ...good, roundCountAt: undefined },
+      // Not a UTC instant: stored as it is, the sync server would refuse the
+      // row (#697), so it is refused here, as a session's startedAt is.
+      { ...good, performedAt: '2026-09-01' },
+      { ...good, performedAt: '2026-09-01T12:00:00+02:00' },
+    ];
+    const result = importSessionsFromJson(envelope({ maintenanceEvents: bad })) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('M6 takes a maintenance date in whole seconds, as any ISO 8601 UTC instant', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00Z',
+      roundCountAt: 5,
+    };
+    const result = importSessionsFromJson(envelope({ maintenanceEvents: [event] })) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.maintenanceEvents.map((e) => e.performedAt)).toEqual(['2026-09-01T10:00:00Z']);
   });
 
   it('a bad license is skipped on its own', () => {
@@ -372,8 +461,31 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       notes: null,
       roundCount: 0,
       maintenanceIntervalRounds: null,
-      roundsSinceMaintenance: 0,
+      maintenanceIntervalMonths: null,
+      archivedAt: null,
     });
+  });
+
+  it('carries a time interval of 1 to 120 months and skips a firearm outside it (#800)', () => {
+    // The bound is MAINTENANCE_INTERVAL_MONTHS_MAX, written as a literal in
+    // the schema; this pins the two together.
+    expect(MAINTENANCE_INTERVAL_MONTHS_MAX).toBe(120);
+    const result = importSessionsFromJson(
+      envelope({
+        firearms: [
+          { ...firearm, id: 'f1', maintenanceIntervalMonths: 1 },
+          { ...firearm, id: 'f2', maintenanceIntervalMonths: 120 },
+          { ...firearm, id: 'f3', maintenanceIntervalMonths: 0 },
+          { ...firearm, id: 'f4', maintenanceIntervalMonths: 121 },
+          { ...firearm, id: 'f5', maintenanceIntervalMonths: 1.5 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.firearms.map((f) => [f.id, f.maintenanceIntervalMonths])).toEqual([
+      ['f1', 1],
+      ['f2', 120],
+    ]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([2, 3, 4]);
   });
 });
 
@@ -381,6 +493,49 @@ function omit<T extends object>(value: T, key: keyof T): Omit<T, keyof T> {
   const { [key]: _dropped, ...rest } = value;
   return rest;
 }
+
+describe('importSessionsFromJson — isShootOff (#727)', () => {
+  it('S5 a series written without isShootOff imports as not a shoot-off', () => {
+    const withSeries = session({
+      series: [
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: false,
+          shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
+          totalOverride: null,
+        },
+      ],
+    });
+    const bare = JSON.parse(exportSessionsToJson([withSeries], OPTIONS)) as {
+      sessions: { series: Record<string, unknown>[] }[];
+    };
+    delete bare.sessions[0]!.series[0]!.isShootOff;
+    const result = importSessionsFromJson(JSON.stringify(bare)) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions[0]!.series[0]!.isShootOff).toBe(false);
+  });
+
+  it('S5 rejects the session when isShootOff is not a boolean', () => {
+    const withSeries = session({
+      series: [
+        {
+          position: 1,
+          isSighter: false,
+          isFinal: false,
+          isShootOff: 1 as unknown as boolean,
+          shots: [],
+          totalOverride: null,
+        },
+      ],
+    });
+    const result = importSessionsFromJson(
+      exportSessionsToJson([withSeries], OPTIONS),
+    ) as ImportResult;
+    expect(result.sessions).toEqual([]);
+  });
+});
 
 describe('importSessionsFromJson — kind, ten counts and external refs (#756)', () => {
   const ADDED = [
@@ -401,13 +556,13 @@ describe('importSessionsFromJson — kind, ten counts and external refs (#756)',
         tenCount: 12,
         innerTenCount: 4,
         externalSource: 'shotlog',
-        externalRef: 'shotlog:2026-01-01:1',
+        externalRef: '00000000deadbeef',
       }),
       session({
         id: 'webshooter',
         type: 'competition',
         externalSource: 'webshooter',
-        externalRef: 'webshooter:123:456',
+        externalRef: '123:456',
         officialPlacement: 3,
         officialStandardMedal: 'silver',
       }),

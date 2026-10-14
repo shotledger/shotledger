@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { replacementHash, routeFromHash } from './route';
+import { firearmHash, licenseCheckHash, replacementHash, routeFromHash } from './route';
 
 describe('routeFromHash', () => {
   it.each([
@@ -21,6 +21,30 @@ describe('routeFromHash', () => {
     ['#sessions/abc-123/other', { page: 'sessions', sessionId: 'abc-123' }],
     ['#compare', { page: 'sessions', sessionId: null, compare: true }],
     ['#unknown', { page: 'statistics', sessionId: null }],
+    ['#license-check', { page: 'statistics', sessionId: null, check: { view: 'overview' } }],
+    ['#license-check/', { page: 'statistics', sessionId: null, check: { view: 'overview' } }],
+    [
+      '#license-check/new-firearm',
+      { page: 'statistics', sessionId: null, check: { view: 'newFirearm' } },
+    ],
+    [
+      '#license-check/firearm/a%2Fb',
+      { page: 'statistics', sessionId: null, check: { view: 'firearm', firearmId: 'a/b' } },
+    ],
+    [
+      '#license-check/firearm/',
+      { page: 'statistics', sessionId: null, check: { view: 'overview' } },
+    ],
+    [
+      '#license-check/firearm/%E0%A4%A',
+      { page: 'statistics', sessionId: null, check: { view: 'overview' } },
+    ],
+    ['#license-check/other', { page: 'statistics', sessionId: null, check: { view: 'overview' } }],
+    ['#firearms', { page: 'firearms', sessionId: null }],
+    ['#firearms/', { page: 'firearms', sessionId: null }],
+    ['#firearms/f1', { page: 'firearms', sessionId: null, firearmId: 'f1' }],
+    ['#firearms/a%2Fb', { page: 'firearms', sessionId: null, firearmId: 'a/b' }],
+    ['#firearms/%E0%A4%A', { page: 'firearms', sessionId: null }],
   ])('%s', (hash, route) => {
     expect(routeFromHash(hash)).toEqual(route);
   });
@@ -39,8 +63,37 @@ describe('replacementHash (QA #747)', () => {
       '#sessions',
       '#sessions/x',
       '#compare',
+      '#license-check',
+      '#license-check/new-firearm',
+      '#license-check/firearm/f1',
+      '#firearms',
+      '#firearms/f1',
     ]) {
       expect(replacementHash(hash)).toBeNull();
+    }
+  });
+});
+
+describe('licenseCheckHash (#796)', () => {
+  it('round-trips every License Check view through routeFromHash', () => {
+    for (const check of [
+      { view: 'overview' },
+      { view: 'newFirearm' },
+      { view: 'firearm', firearmId: 'a/b c' },
+    ] as const) {
+      expect(routeFromHash(licenseCheckHash(check)).check).toEqual(check);
+    }
+  });
+});
+
+describe('firearmHash (#796)', () => {
+  it('round-trips a firearm id through routeFromHash', () => {
+    for (const id of ['f1', 'a/b c', '0193-é']) {
+      expect(routeFromHash(firearmHash(id))).toEqual({
+        page: 'firearms',
+        sessionId: null,
+        firearmId: id,
+      });
     }
   });
 });

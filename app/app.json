@@ -4,7 +4,10 @@
     "slug": "shotledger",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "shotledger",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",

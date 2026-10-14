@@ -1,29 +1,64 @@
-// ShotLog CSV import — shared types (docs/specs/shotlog-import-spec.md §2/§6).
+// ShotLog CSV import — shared types (docs/specs/shotlog-import-spec.md,
+// revision 2: the per-shot export).
 
 /** Non-fatal per-row observations. Never block an import. */
 export type ShotlogWarning =
-  | 'inner-ten-exceeds-ten-count'
   | 'auto-generated-name'
   | 'firearm-column-unsupported'
   | 'conflicting-discipline-tags'
   | 'conflicting-weapon-group-tags'
-  | 'ambiguous-firearm-tag';
+  | 'ambiguous-firearm-tag'
+  /** A row's `Series total` disagrees with its shots; the shots win. */
+  | 'series-total-mismatch'
+  /** A row's `X` or `(X)` count disagrees with its shots; the shots win. */
+  | 'x-count-mismatch'
+  | 'segment-unsupported'
+  /** `Family` is not `ring_generic`, the only one measured (spec §1). */
+  | 'family-unsupported'
+  /** Series numbers in file order are not 1..n; positions are renumbered. */
+  | 'series-gap'
+  /** More than one `Sighting=Yes` series; only the first is a sighter. */
+  | 'multiple-sighter-series'
+  /** The local time falls in a DST gap or overlap (spec Q1). */
+  | 'ambiguous-local-time';
 
-export interface ShotlogRow {
-  /** 1-based file line (the header is line 1). */
+export interface ShotlogShot {
+  /** Integer scoring ×10: `9` → 90, `X` and `(X)` → 100. */
+  valueTenths: number;
+  /** `(X)` — centrumtia. A plain `X` is an ordinary ten. */
+  isInnerTen: boolean;
+}
+
+export interface ShotlogSeries {
+  /** 1-based file line of the series row. */
   line: number;
-  /** ISO-8601 UTC instant, verbatim from the file. */
+  /** 1..n in file order (the file's own `Series` number may have gaps). */
+  position: number;
+  isSighter: boolean;
+  shots: ShotlogShot[];
+}
+
+/** One ShotLog session: every row sharing a `Session ID` (spec §2). */
+export interface ShotlogSession {
+  /** 1-based file line of the session's first row (the header is line 1). */
+  line: number;
+  /** ShotLog's `Session ID`, e.g. `S-0a1b2c3d`. Also the `external_ref`. */
+  sessionId: string;
+  /** `Datetime` verbatim: local wall time, no zone. */
+  localDatetime: string;
+  /** `localDatetime` resolved in the device's zone, as an ISO-8601 UTC instant. */
   datetime: string;
   name: string;
   /** ShotLog's own "Session type" column — free text, always 'Practice' so far. */
   sourceType: string;
-  totalScore: number;
-  /** ShotLog's "Number of X". Informational only, see spec §1.1. */
-  tenCount: number;
-  /** ShotLog's "(X)" — mapped to our inner-ten count (VERIFY, spec §1.1). */
-  innerTenCount: number;
+  /** ShotLog's `Discipline` label, e.g. `Generic (ring scoring)`. Display only. */
+  discipline: string;
+  /** ShotLog's `Family`, e.g. `ring_generic`. */
+  family: string;
   tags: string[];
   note: string;
+  /** Empty for a session ShotLog exported with no series. */
+  series: ShotlogSeries[];
   warnings: ShotlogWarning[];
 }
 
@@ -33,7 +68,7 @@ export interface ShotlogRowError {
 }
 
 export type ShotlogParseResult =
-  | { ok: true; rows: ShotlogRow[]; errors: ShotlogRowError[] }
+  | { ok: true; sessions: ShotlogSession[]; errors: ShotlogRowError[] }
   | { ok: false; error: 'empty' }
   | { ok: false; error: 'header-mismatch'; found: string[] };
 
@@ -78,6 +113,7 @@ export interface ShotlogExistingSession {
   /** Nullable defensively: a caller may hold a session it could not classify. */
   disciplineId: string | null;
   weaponGroup: string | null;
+  externalSource: string | null;
   externalRef: string | null;
 }
 
@@ -96,14 +132,8 @@ export interface ShotlogSuggestion {
   competitionName: string | null;
   tags: string[];
   note: string;
-  totalTenths: number;
-  /** ShotLog's `(X)` — inner tens (maintainer 2026-09-02). */
-  innerTenCount: number;
-  /** ShotLog's `Number of X` — tens (maintainer 2026-09-02). */
-  tenCount: number;
-  /** The total includes a sighter series; never subtracted (§3). */
-  includesSighter: boolean;
-  isFinal: boolean;
+  /** The session's series, with a `sighter` tag role applied to series 1 (§3). */
+  series: ShotlogSeries[];
   dnf: boolean;
 }
 
@@ -112,11 +142,12 @@ export type ShotlogRowStatus =
 
 export interface ShotlogPlanRow {
   line: number;
+  /** ShotLog's `Session ID`, written as the session's `external_ref`. */
   ref: string;
   datetime: string;
   name: string;
   status: ShotlogRowStatus;
-  /** True for rows in a lost-date group (spec §5). */
+  /** True for sessions in a lost-date group (spec §5). */
   dateUncertain: boolean;
   warnings: ShotlogWarning[];
   /** Set when status is 'duplicate-in-file': the surviving row's line. */
@@ -129,6 +160,9 @@ export interface ShotlogPlanRow {
 
 export interface ShotlogPlanSummary {
   total: number;
+  /** Series and shots across every session in the plan. */
+  seriesCount: number;
+  shotCount: number;
   byStatus: Record<ShotlogRowStatus, number>;
   errorCount: number;
   dateUncertainCount: number;

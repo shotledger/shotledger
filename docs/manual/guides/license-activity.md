@@ -33,8 +33,50 @@ not move it again. Until then the setting follows your firearms.
 
 If the proposed case looks wrong, read the reason line under it first: it
 usually points at a missing detail on a firearm rather than at the case itself.
-Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
+Firearms missing a weapon type, caliber or license are flagged **Incomplete**
 on the Firearms tab, and filling those in may move the proposal on its own.
+
+## Seeing where you stand
+
+Tap the status on **Home** to open **License Check**. It answers two
+questions:
+
+- **New Purchase**: can you apply to acquire a new handgun now? The
+  **New Firearm** row says **Yes** or **No**. If yes, it says how long the answer
+  stays yes if you log nothing more; if no, how many requirements are not met.
+- **Renewal**: can each firearm's license be renewed now? Every firearm is
+  listed with **Yes** or **No**, or **Not Needed** when its license has no end
+  date. An
+  [archived](firearms-and-ammunition.md#archiving-a-firearm-you-no-longer-have)
+  firearm is not listed.
+
+Tap a row for the requirements behind the answer. **New Firearm** shows the
+activity requirement for your case and the additional handgun box for each
+pistol or revolver marked as your own. A firearm shows its renewal box, and its
+additional handgun box when that applies, with **Open Firearm** to go to the
+firearm itself. Each box says whether it is met. If it is met, it says by when
+to shoot next. If it is not, it says how many more sessions are needed.
+
+If an earlier year of the renewal box is short, logging sessions today cannot
+fix it, and the check says so. It also gives the date from which the box can be
+met if you keep logging sessions with that firearm. [Why a past year cannot be
+made up](../explanation/license-activity.md#a-year-that-has-already-ended)
+explains it.
+
+## Knowing when to shoot next
+
+When a requirement is met, the app says by which date you need to log your next
+session to keep it met:
+
+- On **Home**, under the status: "Next session by …".
+- On a firearm, under each license activity line and under each Föreningsintyg
+  criterion that is met.
+
+Log a session on or before that date and the requirement stays met for longer;
+the date then moves to the next session that is about to fall out of the
+period. When a requirement is not met, no date is shown. [How the date is
+worked out](../explanation/license-activity.md#the-next-session-date) explains
+the details.
 
 ## Checking a firearm's own criteria
 
@@ -52,7 +94,7 @@ check that your sessions record which gun you shot.
 
 A criterion you expected and cannot see is not being hidden: the app only shows
 the additional-handgun box for a pistol or revolver marked **My Own**, and the
-renewal box for a firearm whose most recent licence has an end date. [Which
+renewal box for a firearm whose most recent license has an end date. [Which
 firearms each one is shown
 for](../explanation/license-activity.md#which-firearms-each-one-is-shown-for)
 says what to fix.
@@ -66,3 +108,27 @@ of the log to print. Keep the logbook signed as you go, and use the app to
 see where you stand.
 
 **Settings → Backup & Data** exports every session as data.
+
+## On the web
+
+With sync on, **Statistics** in the web app shows the same overall status as
+Home on the phone, at the top of the page: **License Activity** followed by
+**On Track**, **Falling Behind** or **Inactive**, with the date to log your
+next session by when you are on track. It counts every session on your
+account, whatever the report's filters are set to.
+
+It appears once a profile is chosen under **Settings → Compliance**, on the
+phone or on the web, and not while license activity is switched off under
+**Settings → Features**. The web cannot see your phone's language, so until you
+choose, it shows nothing.
+
+Click the status to open **License Check**, with the same answers, rows and
+boxes as on the phone ([Seeing where you stand](#seeing-where-you-stand)).
+**Open Firearm**, and a firearm's name above its box, open that firearm's
+page.
+
+**Firearms** in the menu lists your firearms with the same status lines as the
+phone's Firearms tab, license activity among them. Open one to see its own
+**License Activity** card and its **Föreningsintyg Criteria**, each with the
+date to log your next session by, as on the phone. The web shows them only; see
+[Your account on the web](your-account-on-the-web.md#firearms).

@@ -2,7 +2,8 @@
 // (docs/specs/web-session-edit-spec.md §3.1). Pure: ids, change ids and the
 // clock are injected. Each write is what the phone's own edit writes (E1):
 // updateSession, saveSeriesShots, addSeries, setSeriesSighter,
-// deleteSeriesAndShots and deleteSessionAndSeries.
+// deleteSeriesAndShots, addStation, updateStation, softDeleteStation,
+// setSessionExtraRounds and deleteSessionAndSeries.
 import {
   buildProgramSkeleton,
   getProgram,
@@ -10,11 +11,14 @@ import {
   scoringModeFor,
 } from '../disciplines';
 import type { EntryShot } from '../scoring/entry';
+import { isUnenteredStation, stationPoints, stationProblem } from '../scoring/falt-station';
 import { parseSeriesText, type SeriesTextError } from '../scoring/series-text';
 import type { VolumeSeries } from '../scoring/volume';
 import { PUSH_BATCH_MAX, type ClientChange, type SyncTableName } from '../sync/protocol';
 import { TEXT_LIMITS } from '../sync/text-limits';
+import { newStationRow } from './falt-entry';
 import { applyRank } from './order';
+import { parseRoundsFired } from './rounds-entry';
 import { newSeriesRow, newShotRow, withRoundsMoved, type Payload } from './rows';
 import { blankToNull, startedAtError, type EntryDeps } from './session-entry';
 import { isLiveRow, liveRowsIn, sessionRoundsOf, volumeSeriesOf } from './volume-rows';
@@ -45,12 +49,32 @@ export interface SeriesEditDraft {
   deleted: boolean;
 }
 
+/** A fält station row as the form holds it (§10.4). */
+export interface StationEditDraft {
+  /** A station the form opened; null for one added on the form. */
+  id: string | null;
+  /** null only on a new row (Hits not chosen); an opened row always holds 0–6. */
+  hits: number | null;
+  figuresHit: number;
+  figureCount: number | null;
+  pointsText: string;
+  pointsMaxText: string;
+  isScratched: boolean;
+  /** Read on a new row only (Start Shoot-off); an opened row keeps its flag (E15). */
+  isShootOff: boolean;
+  deleted: boolean;
+}
+
 export interface SessionEditDraft {
   sessionId: string;
   /** Only what the user changed. */
   fields: Partial<EditableSessionFields>;
   /** The main section's series as the form holds them; a series left out is not touched. */
   series: readonly SeriesEditDraft[];
+  /** Every opened station plus new ones; omitted or [] when the page shows none (E13). */
+  stations?: readonly StationEditDraft[];
+  /** Rounds Fired as typed; read on a rounds-only session only (E17). */
+  roundsFired?: string;
 }
 
 /** Freshly pulled live rows by id, payloads as the wire carries them. */
@@ -78,7 +102,7 @@ export interface OpenedSession {
   stations: readonly Payload[];
 }
 
-/** `row` is the 1-based row of `draft.series`. */
+/** `row` is the 1-based row of `draft.series`, or of `draft.stations` for a station error. */
 export type EditError =
   | { kind: 'stale' }
   | { kind: 'gone' }
@@ -92,6 +116,9 @@ export type EditError =
   | { kind: 'tooManyShots'; row: number; max: number }
   | { kind: 'secondSighter'; row: number }
   | { kind: 'readOnlySeries'; row: number }
+  | { kind: 'stationPoints'; row: number }
+  | { kind: 'invalidStation'; row: number }
+  | { kind: 'invalidRounds' }
   | { kind: 'tooManyChanges'; max: number; needed: number };
 
 /** A firearm whose counters the push moves, and the rows that move was made for (E8). */
@@ -173,6 +200,7 @@ const asNull = (value: unknown): unknown => value ?? null;
 /** The session columns the draft asks for, by the phone's edit screen's rules (E2). */
 function sessionColumns(
   fields: Partial<EditableSessionFields>,
+  roundsFired: string | undefined,
   session: Payload,
   context: EditContext,
   now: string,
@@ -226,6 +254,16 @@ function sessionColumns(
       errors.push({ kind: 'unknownAmmoLot' });
     }
     columns.ammo_lot_id = fields.ammoLotId;
+  }
+  // Rounds Fired is the phone's Extra Rounds field, shown on a rounds-only session only (E17).
+  if (roundsFired !== undefined && session.kind === 'rounds') {
+    const stored = asNull(session.extra_rounds) as number | null;
+    // A stored count the edit leaves alone is not re-checked (R11's rule for dates).
+    if (roundsFired.trim() !== (stored === null ? '' : String(stored))) {
+      const parsed = parseRoundsFired(roundsFired);
+      if (parsed.ok) columns.extra_rounds = parsed.rounds;
+      else errors.push({ kind: 'invalidRounds' });
+    }
   }
   // Only what differs from the pulled row is written.
   return Object.fromEntries(
@@ -361,6 +399,131 @@ function checkSighters(plans: SeriesPlan[], fresh: readonly Payload[], errors: E
   }
 }
 
+/** The `updateStation` columns of a station; the rest of its row is kept (E15). */
+interface StationColumns {
+  hits: number;
+  figures_hit: number;
+  figure_count: number | null;
+  points: number | null;
+  points_max: number | null;
+  is_scratched: number;
+}
+
+type StationPlan =
+  | { kind: 'delete'; id: string }
+  | { kind: 'keep'; id: string; columns: StationColumns; changed: boolean }
+  | { kind: 'new'; columns: StationColumns; isShootOff: boolean };
+
+const asText = (value: unknown): string => (value == null ? '' : String(Number(value)));
+
+/** The draft row is the stored station exactly as the form opened it. */
+const asOpened = (station: StationEditDraft, was: Payload): boolean =>
+  station.hits === was.hits &&
+  station.figuresHit === was.figures_hit &&
+  station.figureCount === asNull(was.figure_count) &&
+  station.pointsText === asText(was.points) &&
+  station.pointsMaxText === asText(was.points_max) &&
+  station.isScratched === (was.is_scratched === 1);
+
+/** The draft's stations as the phone's station screen would save them (E13, E15). */
+function planStations(
+  draft: SessionEditDraft,
+  opened: OpenedSession,
+  errors: EditError[],
+): StationPlan[] {
+  const plans: StationPlan[] = [];
+  const stations = draft.stations ?? [];
+  if (stations.length === 0) return plans;
+  const disciplineId = opened.session.discipline_id as string;
+  if (requireDiscipline(disciplineId).scoring !== 'hits') {
+    throw new RangeError(`${disciplineId} is not scored in hits`);
+  }
+  const openedById = new Map(opened.stations.map((row) => [row.id as string, row]));
+  stations.forEach((station, index) => {
+    const row = index + 1;
+    const { id } = station;
+    const was = id === null ? undefined : openedById.get(id);
+    if (id !== null && was === undefined) {
+      throw new RangeError(`station ${id} is not one the form opened`);
+    }
+    if (station.deleted) {
+      // A new row removed again writes nothing.
+      if (id !== null) plans.push({ kind: 'delete', id });
+      return;
+    }
+    // A stored station left as opened is not re-checked, so data the phone
+    // stored unchecked (an import) never blocks an edit of something else (R11's rule).
+    if (was !== undefined && asOpened(station, was)) return;
+    const points = stationPoints(station.pointsText, station.pointsMaxText);
+    if (!points.ok) {
+      errors.push({ kind: 'stationPoints', row });
+      return;
+    }
+    const entered = {
+      figureCount: station.figureCount,
+      points: points.points,
+      isScratched: station.isScratched,
+    };
+    // A new row with nothing entered is the phone's station screen backed out
+    // of, a started shoot-off included: nothing is saved (#713 R8).
+    if (id === null && isUnenteredStation({ ...entered, hits: station.hits, isShootOff: false })) {
+      return;
+    }
+    // An opened station always holds hits: the phone's screen has no unset state.
+    if (id !== null && station.hits === null) {
+      errors.push({ kind: 'invalidStation', row });
+      return;
+    }
+    const hits = station.hits ?? 0;
+    const enterable = {
+      position: was === undefined ? row : (was.position as number),
+      hits,
+      figuresHit: station.figuresHit,
+      figureCount: station.figureCount,
+      points: points.points,
+      pointsMax: points.pointsMax,
+      isScratched: station.isScratched,
+    };
+    if (stationProblem(enterable) !== null) {
+      errors.push({ kind: 'invalidStation', row });
+      return;
+    }
+    const columns: StationColumns = {
+      hits,
+      figures_hit: station.figuresHit,
+      figure_count: station.figureCount,
+      points: points.points,
+      points_max: points.pointsMax,
+      is_scratched: station.isScratched ? 1 : 0,
+    };
+    if (was === undefined) {
+      plans.push({ kind: 'new', columns, isShootOff: station.isShootOff });
+      return;
+    }
+    const changed = (Object.keys(columns) as (keyof StationColumns)[]).some(
+      (column) => asNull(was[column]) !== columns[column],
+    );
+    plans.push({ kind: 'keep', id: id!, columns, changed });
+  });
+  return plans;
+}
+
+/**
+ * A draft that writes any station needs the session's whole live station set
+ * unchanged since the form opened: a new station's position and shoot-off
+ * flag are read from all of them (E20).
+ */
+function areStationsStale(
+  plans: readonly StationPlan[],
+  opened: OpenedSession,
+  context: EditContext,
+): boolean {
+  const writes = plans.some((plan) => plan.kind !== 'keep' || plan.changed);
+  return (
+    writes && !sameRows(opened.stations, stationsOfSession(context, opened.session.id as string))
+  );
+}
+
 /** A touched series another device wrote since the form opened (E6). */
 function isStale(plans: SeriesPlan[], opened: OpenedSession, context: EditContext): boolean {
   if (!sameRow(opened.session, context.sessions.get(opened.session.id as string)!)) return true;
@@ -460,10 +623,13 @@ export function buildSessionEdit(
 
   const now = deps.now();
   const errors: EditError[] = [];
-  const columns = sessionColumns(draft.fields, session, context, now, errors);
+  const columns = sessionColumns(draft.fields, draft.roundsFired, session, context, now, errors);
   const plans = planSeries(draft, opened, context, errors);
+  const stationPlans = planStations(draft, opened, errors);
   if (errors.length > 0) return { ok: false, errors };
-  if (isStale(plans, opened, context)) return { ok: false, errors: [{ kind: 'stale' }] };
+  if (isStale(plans, opened, context) || areStationsStale(stationPlans, opened, context)) {
+    return { ok: false, errors: [{ kind: 'stale' }] };
+  }
 
   const writes: Write[] = [];
   if (Object.keys(columns).length > 0) {
@@ -533,7 +699,55 @@ export function buildSessionEdit(
     }
   }
 
-  const after = volumeOf(session, [...volumes.values()], context);
+  const fresh = [...stationsOfSession(context, draft.sessionId)].sort(
+    (a, b) => (a.position as number) - (b.position as number),
+  );
+  const freshById = new Map(fresh.map((row) => [row.id as string, row]));
+  const removed = new Set(
+    stationPlans.filter((plan) => plan.kind === 'delete').map((plan) => plan.id),
+  );
+  // Positions are never rewritten; a new station goes after the last live one (E14).
+  let stationPosition = Math.max(0, ...fresh.map((row) => row.position as number));
+  // The phone's nextStationIsShootOff over the kept stations: the last one decides (E15).
+  let shootOff = fresh.filter((row) => !removed.has(row.id as string)).at(-1)?.is_shoot_off === 1;
+  let stationCount = fresh.length;
+  for (const plan of stationPlans) {
+    if (plan.kind === 'delete') {
+      writes.push(tombstone('falt_stations', freshById.get(plan.id)!));
+      stationCount -= 1;
+    } else if (plan.kind === 'keep') {
+      if (plan.changed) {
+        writes.push({
+          tableName: 'falt_stations',
+          rowId: plan.id,
+          payload: { ...freshById.get(plan.id)!, ...plan.columns, updated_at: now },
+        });
+      }
+    } else {
+      const id = deps.newId();
+      stationPosition += 1;
+      shootOff ||= plan.isShootOff;
+      writes.push({
+        tableName: 'falt_stations',
+        rowId: id,
+        payload: newStationRow(id, now, {
+          sessionId: draft.sessionId,
+          position: stationPosition,
+          hits: plan.columns.hits,
+          figuresHit: plan.columns.figures_hit,
+          figureCount: plan.columns.figure_count,
+          points: plan.columns.points,
+          pointsMax: plan.columns.points_max,
+          isScratched: plan.columns.is_scratched === 1,
+          isShootOff: shootOff,
+        }),
+      });
+      stationCount += 1;
+    }
+  }
+
+  // Six rounds per station and the extra rounds as written: E19's volumes.
+  const after = sessionRoundsOf({ ...session, ...columns }, [...volumes.values()], stationCount);
   const from = asNull(session.firearm_id) as string | null;
   const to = 'firearm_id' in columns ? (columns.firearm_id as string | null) : from;
   // The same firearm on both sides nets to one move of after − before (E4).

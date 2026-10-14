@@ -13,6 +13,7 @@ import { Hono } from 'hono';
 import { devBearerAuthenticator } from '../src/auth';
 import { SYNC_MIGRATIONS } from '../src/db/migrations';
 import { createSyncRoutes } from '../src/routes/sync';
+import { row, wholeRow } from './rows';
 
 // Mounted with the dev stub (bearer token = user id), which is what every
 // fixture below assumes. The deployed Worker mounts the same routes behind
@@ -60,7 +61,7 @@ function pushOne(clientChangeId: string, overrides: Record<string, unknown> = {}
   return call('/sync/push', {
     protocolVersion: 1,
     changes: [
-      {
+      wholeRow({
         clientChangeId,
         tableName: 'firearms',
         rowId: 'firearm-1',
@@ -68,7 +69,7 @@ function pushOne(clientChangeId: string, overrides: Record<string, unknown> = {}
         deletedAt: null,
         updatedAt: '2026-08-01T00:00:00.000Z',
         ...overrides,
-      },
+      }),
     ],
   });
 }
@@ -203,7 +204,9 @@ describe('S1/S2 fresh vs incremental pull', () => {
           clientChangeId: uuid('c3'),
           tableName: 'firearms',
           rowId: 'firearm-other',
-          payload: { make: 'Walther' },
+          payload: row('firearms', 'firearm-other', '2026-08-02T00:00:00.000Z', {
+            make: 'Walther',
+          }),
           deletedAt: null,
           updatedAt: '2026-08-02T00:00:00.000Z',
         },
@@ -229,7 +232,7 @@ describe('S3 cursor pagination', () => {
       clientChangeId: uuid(`p${i}`),
       tableName: 'firearms',
       rowId: `firearm-p${i}`,
-      payload: { index: i },
+      payload: row('firearms', `firearm-p${i}`, '2026-08-01T00:00:00.000Z', { notes: `${i}` }),
       deletedAt: null,
       updatedAt: '2026-08-01T00:00:00.000Z',
     }));
@@ -344,17 +347,21 @@ describe('session_tags and settings', () => {
         .body as { changes: { rowId: string; payload: Record<string, unknown> }[] }
     ).changes;
 
-  const change = (seed: string, tableName: string, rowId: string, payload: object) => ({
-    clientChangeId: uuid(seed),
-    tableName,
-    rowId,
-    payload,
-    deletedAt: null,
-    updatedAt: '2026-10-06T00:00:00.000Z',
-  });
+  const change = (seed: string, tableName: string, rowId: string, payload: object) =>
+    wholeRow({
+      clientChangeId: uuid(seed),
+      tableName,
+      rowId,
+      payload,
+      deletedAt: null,
+      updatedAt: '2026-10-06T00:00:00.000Z',
+    });
 
   it('B1 a session_tags row round-trips', async () => {
-    const payload = { id: 'link-1', session_id: 's1', tag_id: 't1', deleted_at: null };
+    const payload = row('session_tags', 'link-1', '2026-10-06T00:00:00.000Z', {
+      session_id: 's1',
+      tag_id: 't1',
+    });
     const push = await call('/sync/push', {
       protocolVersion: 1,
       changes: [change('b1', 'session_tags', 'link-1', payload)],
@@ -365,7 +372,7 @@ describe('session_tags and settings', () => {
   });
 
   it('B2 an allowlisted setting round-trips under its key id', async () => {
-    const payload = { id: 'birthYear', value: '1980', deleted_at: null };
+    const payload = row('settings', 'birthYear', '2026-10-06T00:00:00.000Z', { value: '1980' });
     const push = await call('/sync/push', {
       protocolVersion: 1,
       changes: [change('b2', 'settings', 'birthYear', payload)],

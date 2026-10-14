@@ -1,5 +1,10 @@
 # Web session edit and delete — executable specification
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 > Old-coder SPEC for #692: edit and delete a session on the web. It builds on
 > the web write client of #669 (`docs/specs/web-series-entry-spec.md`, not
 > merged when this was written) and reads the bulk edit spec of #674
@@ -11,6 +16,11 @@
 > **Approval status: approved.** The maintainer approved key choices E1–E12
 > for merge on 2026-10-12 (PR #710), taking the recommended option on each of
 > that PR's four questions. Revisions made while implementing are in §9.
+>
+> **Revision 2 (§10, #769): approved** by the maintainer on 2026-10-13: "do
+> as the phone", every §10.8 question answered with the phone's behaviour
+> (§10.10). It lifts E11's cuts for fält stations and rounds-only sessions;
+> E1–E12 and §9 are unchanged by it.
 
 - **Tier: 3.** It rewrites and tombstones synced rows a phone may have
   changed since the web pulled them, and moves a firearm's absolute round
@@ -538,3 +548,434 @@ after a dropped response changes nothing twice; the Swedish UI.
   or hides the photo below the row through the detail page's `Photo`
   (`web/src/sessions/photos.tsx`); one still on the phone shows as not
   uploaded. Nothing Save or Delete builds changes.
+
+## 10. Revision 2 — fält stations and rounds (#769)
+
+> **Approval status: approved** (2026-10-13, §10.10). E1–E12 and §9 stand; this section lifts two of E11's cuts
+> (fält stations; rounds-only sessions and extra rounds) and says what
+> replaces them. E11's other cuts (final and total-only series, match format,
+> series reorder, tags, undo) are unchanged. Evidence for this revision is
+> appended to `docs/specs/web-session-edit-evidence.md` once built.
+
+- **Tier: 3**, as the original: it writes, rewrites and tombstones synced
+  `falt_stations` rows and moves a firearm's absolute counters. An impossible
+  station (seven hits, say) makes `faltResult` throw on every phone screen
+  that shows the session; a tombstoned station cannot be brought back.
+- **Scope:** `shared/src/sync-client/session-edit.ts` (the draft gains
+  stations and Rounds Fired; the builder writes them), `web/src/edit/` (the
+  form opens stations and Rounds Fired; save state unchanged), a small
+  extension of `web/src/entry/falt-model.ts` and `falt-stations.tsx` so the
+  edit page reuses #713's station rows, `web.edit.*` strings in
+  `app/src/i18n/{en,sv}.json`, the phone-schema test
+  (`app/src/db/queries/web-edit.test.ts`), the backend round trip
+  (`backend/test/web-edit.spec.ts`), `docs/manual/` EN + SV
+  (`guides/editing-a-session-on-the-web` and its Swedish twin). #768's
+  "changed on the phone" hints for stations and Rounds Fired go (the issue's
+  last line).
+- **Not in scope:** station photos and station notes (the phone's station
+  screen does not edit them either), changing a session's result mode,
+  discipline or kind (E21), extra rounds on a session that is not rounds-only
+  (E17).
+
+### 10.1 Settled inputs (not re-asked)
+
+1. Everything §1 lists, and E1 (the web writes what the phone's own function
+   writes), E4 (one floored move per firearm), E6 (re-pull, refuse a stale
+   form, then last write wins), E7 (one push, at most 500 changes), E8 (a
+   refused row names the firearm, corrects nothing), E9's outcome table and
+   R10 (Delete's stale check, stations included).
+2. #713 (`web-falt-entry-spec.md`): a station row is the phone's station
+   screen, control for control (C2); the station rules are the shared ones in
+   `shared/src/scoring/falt-station.ts` (`stationProblem`, `stationPoints`,
+   `figuresHitRange`, `clampFiguresHit`, `isUnenteredStation`); a new row
+   with nothing entered is not saved, a 0-hit row is (R8); Shoot-off is not a
+   row control, **Start Shoot-off** starts one and every later station is one
+   (R5–R7); six rounds per station, scratched and shoot-off included (C4).
+3. #718 (`web-rounds-final-spec.md`): Rounds Fired is plain digits up to
+   `MAX_ROUNDS_FIRED` (10 000), blank is none, anything else is refused
+   (`parseRoundsFired`, C4 and R4, the maintainer's ruling 2026-10-11); the
+   counter moves by the rounds, as `setSessionExtraRounds` (C2).
+
+### 10.2 What the phone does (read from `app/src/`, 2026-10-13)
+
+| Phone action                                  | Function                                        | What it writes                                                                                                                         |
+| --------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Add Station (stations card → station screen)  | `addStation`                                    | a new `falt_stations` row at `last live position + 1`; counters `+6` (`withSessionVolumeDelta`)                                        |
+| Edit a station (tap its row → Save)           | `updateStation`                                 | `hits`, `figures_hit`, `figure_count`, `points`, `points_max`, `is_scratched`, `updated_at`; no counter move (station count unchanged) |
+| Delete a station (station screen → Delete)    | `softDeleteStation`                             | a tombstone; counters `−6`; the other stations keep their positions (gaps stay)                                                        |
+| Start Shoot-off                               | route flag → `addStation({ isShootOff: true })` | as Add Station; every later station is a shoot-off (`nextStationIsShootOff`: the last station decides)                                 |
+| Scratched                                     | switch on an **existing** station only          | `is_scratched` via `updateStation`                                                                                                     |
+| Rounds Fired / Extra Rounds (detail, on blur) | `setSessionExtraRounds`                         | `extra_rounds`; counters by the difference                                                                                             |
+| Result mode, discipline, kind                 | none: set on the new-session form, then fixed   | —                                                                                                                                      |
+
+Where the phone shows what: the stations card when the discipline is scored
+in hits (`isFaltSession`), the Extra Rounds field when `kind = 'rounds'`
+(`isRoundsSession`), each independent of the other. A rounds-only fält
+session therefore shows both. A series session (rings or fält) shows no
+extra-rounds field; such a session holds `extra_rounds` only from a
+Webshooter import's sighter rounds or older data. An existing station's
+shoot-off flag is never changed (`updateStation` is passed it unchanged from
+the row). The phone's detail field still reads its text with `Number()`
+(non-negative integer, no cap; invalid text silently reverts), unlike its
+new-session form, which uses `parseRoundsFired`.
+
+### 10.3 Key choices (for approval)
+
+Each is my recommendation, with the alternative I weighed.
+
+**E13. Stations are edited in place on the edit page, with #713's station
+rows.** A fält session's edit page shows, below the session fields, the
+session's live stations in stored position order, each as #713's station row
+(Hits, Figures Hit, Figures, Points `of` Max Points, Scratched, a Shoot-off
+badge), pre-filled from the row, then **Add Station** and, when the phone
+would offer it, **Start Shoot-off**. Each existing row has **Remove** (and
+**Undo** while unsaved, as a series row has). Save writes, per station, what
+the phone's function writes: `addStation` for a new row, `updateStation` for
+a changed one, `softDeleteStation` for a removed one; an unchanged row writes
+nothing. The live result line (`faltPreview`) reads the rows as they will be.
+_Alternative:_ one station at a time on its own sub-page, as the phone's
+station screen. Not recommended: the web's entry page already edits all
+stations in one table, and a sub-page would need its own save, so one edit
+would become several pushes (against E7).
+
+**E14. Positions stay as stored; a new station goes after the last live
+one.** An edited row keeps its `position`; a removed one leaves a gap, as on
+the phone; a new row takes `max(live position in the fresh pull) + 1`, then
+the next, in form order. Rows are labelled by stored position ("Station 4"),
+as the phone labels them, so the web and the phone name the same station the
+same way. Positions are never rewritten.
+_Alternative:_ renumber the kept stations 1..n on every save. Not
+recommended: the phone never does it, it would rewrite every station after a
+removed one (more rows, more stale surface), and P8–P10 would compare two
+different mechanisms.
+
+**E15. A station's rules on edit are the phone's.**
+
+- An existing row offers Hits 0–6 only (no "–": the phone's screen has no
+  unset state). Removing a station is the Remove control, never an emptied
+  row. A new row follows #713's entry rule: Hits starts "–", a row with
+  nothing entered is not saved (R8).
+- Figures Hit is clamped as on the phone; points through `stationPoints`;
+  a row that `stationProblem` rejects (a scratched one never is) is refused
+  with `invalidStation(row)`, bad points with `stationPoints(row)` — #713's
+  error kinds and messages.
+- **Scratched** is a control on every row, existing and new, as on the web
+  entry page (#713 R5).
+- **Shoot-off:** an existing station's flag is never changed (badge only).
+  A new station is a shoot-off when the station before it in position order,
+  among those kept, is one, or when Start Shoot-off created it — the phone's
+  `nextStationIsShootOff`, which the builder re-applies over the kept rows.
+  Start Shoot-off is offered as `canStartShootOff` reads the kept rows.
+- A rewritten station is the freshly pulled payload spread, with only
+  `updateStation`'s columns and `updated_at` replaced; `photo_uri`, `note`,
+  `is_shoot_off`, `position`, `session_id` and unknown keys survive (as E2's
+  rule for the session row).
+
+**E16. The result mode is shown, not edited.** `falt_result_mode` (Field /
+Point field) is read-only on the edit page, because the phone fixes it at
+creation. The result line uses it.
+_Alternative:_ let the web change it. It moves no counter and only changes
+how the result reads, so it is low risk, but it is something the phone cannot
+do, and the issue asks for parity, not more. A question for the maintainer
+(§10.8).
+
+**E17. Rounds Fired is editable on a rounds-only session, and only there.**
+On a `kind = 'rounds'` session the edit page shows **Rounds Fired**,
+pre-filled from `extra_rounds` (blank for null). A changed value is parsed by
+`parseRoundsFired` (plain digits, at most 10 000, blank → null) and refused
+with `invalidRounds` otherwise; `0` stores 0. A stored value the edit does
+not change is not checked, so a phone-entered count above 10 000 does not
+block an edit of the name (R11's rule for dates). On every other session
+`extra_rounds` stays in K4's never-written list, whatever the draft holds,
+and is not shown (as #768 left it).
+_Alternative:_ an Extra Rounds field on every session, as the issue's
+"extra rounds" could be read. Not recommended: the phone offers it only on a
+rounds-only session, so the web would write a value no phone screen can
+correct; a series session's `extra_rounds` comes from a Webshooter import's
+sighter rounds and is that import's business. A question for the maintainer
+(§10.8).
+
+**E18. A rounds-only fält session gets both.** The page uses the phone's two
+independent conditions: stations when the discipline is scored in hits,
+Rounds Fired when `kind = 'rounds'`. A rounds-only fält session (the web's
+entry creates one with no stations, #718 R5) therefore shows Rounds Fired and
+an empty station table with Add Station, as the phone's detail shows both.
+_Alternative:_ Rounds Fired only, treating stations on a rounds session as
+a phone quirk. Simpler, but less than the phone; a question for the
+maintainer (§10.8).
+
+**E19. The counter rule does not change; the volumes now include the
+edit's stations and rounds.** E4's `V_before` (fresh rows) and `V_after`
+(rows as written) by `sessionVolume`: series, extra rounds and six per live
+station. So, for one firearm, the move is
+`6 × (stations added − stations removed) + (extra_rounds after − before)`,
+plus any series change, as one floored move; editing a station's numbers or
+Scratched moves nothing. With a firearm change in the same save, `A` moves
+`−V_before` and `B` `+V_after` (E4). The phone moves the counter once per
+station and once per Rounds Fired blur and floors each; the one net move
+differs only when a floor bites (a drifted counter), as E4 already accepts.
+
+**E20. The stale check covers stations and Rounds Fired.**
+
+- The session row is compared in full on every Save already (K14), and
+  `extra_rounds` is a session column, so a Rounds Fired the phone changed
+  since the page opened is stale today. This revision pins that with a test
+  (K33) rather than adding a check.
+- When the draft touches any station (adds, changes or removes one), the
+  session's **whole set** of live stations in the fresh pull must equal the
+  opened set: same ids, each row with the same columns and values (`sameRows`,
+  as Delete's R10 check). Otherwise the save is refused as stale, nothing
+  sent, **Reload** offered (E6, E9). A save that touches no station is not
+  blocked by a station another device changed.
+- Delete is unchanged (R10 already compares the stations).
+
+_Alternative:_ compare only the stations the draft touches, as E6 does for
+series. Not recommended for stations: a new station's position and shoot-off
+flag are read from the whole sequence, so a station the phone added
+meanwhile changes what the web's new row should be, and stations are few, so
+the stricter check costs little.
+
+**E21. A fält session's locks stay locked.** `kind`, `discipline_id`,
+`falt_result_mode` (E16), `program_id` (null: no fält discipline has a
+program, so no match format to change), `decimal_scoring` and
+`series_length` are never written. A fält session's series rows, if any
+(none is created by either client), are not edited: E3's series section is
+for sessions whose discipline is scored in rings, as now. Delete stays E5 +
+R10.
+
+**E22. No new dependency, endpoint, protocol or schema change.** As E12 and
+N3.
+
+### 10.4 Design
+
+```ts
+interface StationEditDraft {
+  /** A station the form opened; null for one added on the form. */
+  id: string | null;
+  /** null only on a new row (Hits not chosen); an opened row always holds 0–6. */
+  hits: number | null;
+  figuresHit: number;
+  figureCount: number | null;
+  pointsText: string;
+  pointsMaxText: string;
+  isScratched: boolean;
+  /** Read on a new row only (Start Shoot-off); an opened row keeps its flag. */
+  isShootOff: boolean;
+  deleted: boolean;
+}
+
+interface SessionEditDraft {
+  sessionId: string;
+  fields: Partial<EditableSessionFields>;
+  series: readonly SeriesEditDraft[];
+  /** Every opened station plus new ones, as the form holds them; omitted or [] when the page shows none. */
+  stations?: readonly StationEditDraft[];
+  /** As typed; undefined when unchanged or not a rounds-only session. */
+  roundsFired?: string;
+}
+```
+
+`buildSessionEdit` gains a station plan beside the series plan (keep /
+change / remove / new, each with its form row for errors) and a Rounds Fired
+column. New `EditError` kinds: `stationPoints(row)`, `invalidStation(row)`,
+`invalidRounds`. A draft station id the form did not open throws
+(`RangeError`), as a series id does. A new station row is `newStationRow`
+from `falt-entry.ts`; a changed one is the fresh payload spread. Changes stay
+in `APPLY_ORDER`; `moved` lists the station rows with the rest (E8).
+
+On the page, `openForm` adds `stations` (each opened row as a #713
+`StationRow` plus its id) and `roundsFired`; `editsStations` is
+`discipline.scoring === 'hits'`, `editsRounds` is `kind === 'rounds'`.
+`falt-model.ts`' helpers take rows that carry an optional id and a fixed
+shoot-off flag, so the entry page's behaviour is unchanged (its tests stay
+green untouched). `faltSendsTheSame` is generalised so an appended blank row
+keeps a held request on the edit page too (#669 R21).
+
+### 10.5 Scenarios
+
+Numbering continues §4. Each maps 1:1 to a named test (id + title) and names
+the mutation that falsifies it, except U16 (no code) and U17 (the unedited
+entry tests), which have no test of their own.
+
+```gherkin
+Feature: station edit (shared/src/sync-client/session-edit.test.ts)
+  Scenario: K26 a changed station: the fresh payload spread with hits, figures_hit, figure_count, points, points_max,
+            is_scratched and updated_at replaced; photo_uri, note, is_shoot_off, position and unknown keys survive;
+            an unchanged station writes nothing
+    Falsified by: writing is_shoot_off from the draft; writing every opened station (spreading the opened
+                  payload is equivalent: E20 refuses the write unless opened and fresh rows are equal)
+  Scenario: K27 a new station: newStationRow at max(fresh live position) + 1, then +1 per new row in form order;
+            a new row with nothing entered writes nothing; a 0-hit row is saved (R8)
+    Falsified by: renumbering 1..n; dropping a 0-hit row (numbering from the opened stations is equivalent,
+                  as K26's spread)
+  Scenario: K28 a removed station: one tombstone; no other station row is written; positions of the rest unchanged
+  Scenario: K29 an opened row with hits null, or one stationProblem rejects → invalidStation(row); bad points →
+            stationPoints(row); nothing built; a scratched row with impossible numbers is accepted (as the phone)
+  Scenario: K30 shoot-off: an opened station's flag is never changed; a new station after a kept shoot-off is one,
+            whatever the draft says; a new row the draft started as a shoot-off is one; a removed last shoot-off does
+            not make the next new row one
+    Falsified by: reading is_shoot_off from the draft for an opened row; deciding from the opened (not kept) rows
+  Scenario: K31 counters: +6 per new kept station, −6 per removed, 0 for a changed or scratched one, netted with the
+            series and rounds deltas into one floored move per firearm (E19); A→B in the same save moves
+            −V_before / +V_after with V counting stations
+  Scenario: K32 stale (stations): when the draft touches any station, a station added, removed or changed (any column)
+            in the fresh pull since opening → stale, nothing built; a draft touching no station is not blocked by it
+    Falsified by: comparing only touched stations; comparing ids only; checking stations on every save
+  Scenario: K33 stale (rounds): the session's extra_rounds changed in the fresh pull → stale, whatever the draft edits
+  Scenario: K34 a fält session's kind, discipline_id, falt_result_mode, program_id, decimal_scoring, series_length are
+            never written, whatever the draft holds (K4 extended)
+
+Feature: rounds edit (same file)
+  Scenario: K35 a rounds-only session: roundsFired "40" over stored 25 → extra_rounds 40, firearm +15; "10" → −15
+            floored; "" → null and −25; "0" → 0; equal to the stored value → nothing written
+    Falsified by: moving by the new value instead of the difference; storing "" as 0
+  Scenario: K36 roundsFired "-3", "2.5", "abc", "1e2", "+5", "10001" → invalidRounds, nothing built; "10000" accepted;
+            a stored 12000 the draft does not change does not block a name edit
+  Scenario: K37 a session that is not rounds-only: roundsFired in the draft is ignored, extra_rounds never written
+    Falsified by: writing extra_rounds for a series session
+  Scenario: K38 property: for a random fält or rounds session and a random draft (stations added, changed, removed,
+            rounds changed, firearm changed), the built edit applied to the fresh rows yields the stations and
+            extra_rounds the draft shows, touches no other session, and moves each firearm by E19's rule
+
+Feature: on the phone's schema (app/src/db/queries/web-edit.test.ts)
+  Scenario: P8 add a station (and a shoot-off one): same live stations and counters as addStation on a twin
+  Scenario: P9 change a station (numbers, scratched): same rows as updateStation on a twin; counters unmoved
+  Scenario: P10 remove a station: same live stations and counters as softDeleteStation on a twin; gap kept
+  Scenario: P11 Rounds Fired: same session row and counters as setSessionExtraRounds on a twin, up, down and to blank
+  Scenario: P12 one save adding two stations, removing one and changing the firearm: same rows and counters as the
+            phone's functions applied one by one on a twin (counters not floored on either side)
+  Scenario: P13 faltSessionResult over the web-edited stations equals the twin's (the phone reads them without throwing)
+
+Feature: round trip (backend/test/web-edit.spec.ts)
+  Scenario: W5 a station edit (add, change, remove) and a Rounds Fired edit, pushed over HTTP, are pulled by device B
+            as built; a resend answers duplicate and moves nothing twice
+  Scenario: W6 a station tombstoned by device B first: that change is rejected, the rest applied (E8's input)
+
+Feature: page model (web/src/edit/*.test.ts)
+  Scenario: U11 a fält session opens with its live stations by position, labelled by stored position, result mode
+                read-only; a rounds-only session opens with Rounds Fired; a rounds-only fält session with both
+  Scenario: U12 Remove / Undo on an opened station; Add Station and Start Shoot-off as canStartShootOff says
+  Scenario: U13 an appended blank station keeps a held request; any other station or Rounds Fired edit drops it
+  Scenario: U14 station and rounds errors land on their row / field; nothing sent
+  Scenario: U15 saved in part after a refused station names the firearm (U7 extended)
+  Scenario: U16 #768's "changed on the phone" hints for stations and Rounds Fired are gone; final and total-only keep theirs
+  Scenario: U17 the entry page's fält behaviour is unchanged (its existing falt-model tests pass unedited)
+```
+
+Browser checks (not automated, screenshots local only): edit, add and remove
+stations of a fält session and read the stations and the firearm's counter
+on the phone; Start Shoot-off on the web; change Rounds Fired up and down and
+read the counter; edit a station on the phone while the web page is open,
+then Save a station edit on the web (stale) and a name-only edit (saves); the
+Swedish UI. Phone read-back needs a device; the PR says what was not run.
+
+### 10.6 Must NOT (added to §5)
+
+- **N10** No station position rewritten; no two live stations of a session
+  at one position (K27, K28, K38).
+- **N11** No change to an existing station's `is_shoot_off`, `photo_uri` or
+  `note`; no station `photo` call (K26, K30).
+- **N12** No `extra_rounds` write on a session that is not rounds-only (K37).
+- **N13** No station row that `stationProblem` rejects, unless scratched
+  (K29, P13).
+- **N14** The web entry page's fält behaviour and its tests do not change
+  (U17); the phone's behaviour does not change (N9 stands: no `app/src`
+  source edit).
+
+### 10.7 Failure model (added to §6)
+
+| Way it can hurt                                                | Layer that catches it                       |
+| -------------------------------------------------------------- | ------------------------------------------- |
+| An impossible station wedges every phone screen of the session | K29, P13, N13                               |
+| Two stations at one position (phone screen finds by position)  | K27, K38, N10                               |
+| Station or rounds edited from a stale view                     | K32, K33; the pull→push window as E6 states |
+| Counter moved wrongly by stations or rounds                    | K31, K35, K38; P8–P12 against the phone     |
+| A shoot-off flag flipped, changing the official result         | K30, N11                                    |
+| A station's photo or note lost                                 | K26, N11                                    |
+| The entry page broken by the shared station helpers            | U17, N14                                    |
+
+### 10.8 Questions for the maintainer
+
+1. **E16:** result mode read-only on the web (recommended, as the phone), or
+   editable?
+2. **E17:** Rounds Fired only on a rounds-only session (recommended), or an
+   Extra Rounds field on every session?
+3. **E18:** a rounds-only fält session shows both Rounds Fired and stations
+   (recommended, as the phone), or Rounds Fired only?
+4. **E14:** keep stored positions with gaps (recommended), or renumber 1..n?
+5. **Phone follow-up (not in this scope):** the phone's detail Rounds Fired
+   field still reads `Number()` with no cap, unlike its new-session form.
+   Should it adopt `parseRoundsFired`, as the new-session form did (#718
+   R4)? A separate issue if yes; N9 keeps this revision off `app/src`.
+
+### 10.9 Setup plan
+
+- **Isolation:** a worktree under `~/tmp` from `origin/main`, branch
+  `feat/769-web-edit-parity`; the main checkout is shared.
+- **Git:** this revision committed first (this PR), then one checkpoint
+  commit per green layer (builder, phone test, backend test, page, docs,
+  evidence). DCO-signed Conventional Commits, explicit paths.
+- **Files the gauntlet adds:** none beyond the tests named in §10.5;
+  `web/src/edit/*.ts`, `web/src/entry/*.ts` (the shared station helpers)
+  and `shared/src/sync-client/*.ts` are already in `stryker.config.json`'s
+  `mutate` list.
+- **Gauntlet:** as §7 — `pnpm check` (100% coverage), `pnpm mutation` on the
+  changed modules with survivors classified, fast-check for K38, the phone
+  twin test, the Workers pool, the three docs gates, the browser checks, one
+  independent verification round on the final state.
+- **New dependencies:** none.
+
+### 10.10 Revisions to revision 2
+
+- **Approval (2026-10-13).** The maintainer answered §10.8 with one rule:
+  do as the phone, parity as far as possible (now `app/PRODUCT.md`
+  principle 5 and root `CLAUDE.md` rule 11). So: Q1 result mode read-only
+  (E16); Q2 Rounds Fired on rounds-only sessions only (E17); Q3 a rounds-only
+  fält session shows both (E18); Q4 stored positions with gaps kept (E14);
+  Q5 the phone's detail Rounds Fired field adopting `parseRoundsFired` is a
+  separate phone issue, outside this scope (N9).
+- **#727 interaction.** If #727 drops `falt_stations.photo_uri`, K26's spread
+  needs no change (a missing key is simply absent). If it derives
+  `firearms.rounds_since_maintenance`, E19's counter move follows whichever
+  lands first.
+- **Made while implementing (2026-10-13).**
+  - **Remove is the phone's Delete Station** (`station.delete`), with
+    **Undo** on a stored station. A new row's Delete Station drops the row
+    from the form at once, so a removed station in the draft is always a
+    stored one.
+  - **Station errors** carry `row`, the 1-based row of `draft.stations`, as
+    #713's do; the page routes them by kind, so they land on the station row,
+    never on a series row. `invalidRounds` lands under Rounds Fired.
+  - **New rows are labelled** after the highest stored position, one up per
+    new row (`stationPositions`), the numbers the builder will give them
+    when every new row is entered.
+  - **A stored station's shoot-off flag** sets the running flag for the new
+    rows after it to its own value (the last kept one decides, as
+    `nextStationIsShootOff`); a new row can only turn it on. The entry page
+    has no stored rows, so its rule is unchanged (U17: its tests pass
+    unedited).
+  - **U16 needs no code:** #768 already removed the station-count and rounds
+    hints before this revision; this revision adds none.
+  - **U13:** the edit page keeps a held request across Add Station (only
+    blank rows appended, `faltSendsTheSame`); any other edit drops it, as
+    before.
+- **After independent verification round 1 (2026-10-13).** Three items were
+  put to the maintainer with a recommendation; work went ahead on the
+  recommended option under their standing "go with recommended answers",
+  and they may still overrule any of them:
+  - **E15's shoot-off is order-dependent, as on the phone.** With stored
+    stations 1 and 2 (shoot-off), adding a station and then deleting 2 makes
+    the new one a shoot-off; deleting first does not. The phone's
+    `nextStationIsShootOff` behaves the same in the same order, and the badge
+    shows the outcome before saving. E15's "among those kept" therefore reads:
+    the last station kept _when the new row was added_ decides.
+  - **A stored station the edit did not change is neither checked nor
+    written.** A row whose controls still hold exactly the opened values
+    (Points and Points Max as the text the page opened them with) skips
+    `stationPoints` and `stationProblem`, as unchanged Rounds Fired does
+    (trimmed text against the stored number's text), so imported data the
+    phone would refuse no longer blocks or rewrites a name-only save. Text
+    retyped to the same number (`05` for 5) is an edit: it is checked, and
+    written only if a column's value differs. Behavioural fix (`1b2097d`).
+  - **Scratched stays on new rows** (E15 as written, matching the entry page),
+    although the phone offers it only on an existing station.
