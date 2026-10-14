@@ -73,6 +73,19 @@ in `afterEach`. Tests do not wait on real time: ESLint rejects a
 `vi.setSystemTime`. `pnpm exec vitest run --sequence.shuffle` checks for
 order dependence.
 
+There are two test runners because each runs code the other cannot. Jest
+(`jest-expo`) runs `app/src`: React Native components and hooks need
+Metro's Babel transforms and Expo's native-module mocks, and `jest-expo` is
+the preset Expo supports. Vitest runs the plain TypeScript (`shared/`,
+`backend/`, `web/`, `app/src/db`): it is faster, the backend's Workers
+tests need its `workerd` pool, and the Stryker mutation gate uses its
+runner.
+
+The Maestro flows in `app/e2e/` run on an Android emulator in the E2E
+workflow (`.github/workflows/e2e.yml`), on pushes to `main` that touch the
+app and on pull requests labelled `e2e`. Add the label when a change alters
+a flow's screens; it costs far more Actions minutes than `check`.
+
 #### `scripts/`
 
 | Script                                              | Run by                                         | What it guards                                                                                          |
@@ -108,8 +121,9 @@ slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 
 #### CI runners
 
-Every workflow job takes its runner from the `CI_RUNNER` repository
-variable (Settings → Secrets and variables → Actions → Variables):
+Every workflow job except the Android emulator run (`e2e.yml`, which
+needs KVM and stays on GitHub's `ubuntu-latest`) takes its runner from the
+`CI_RUNNER` repository variable (Settings → Secrets and variables → Actions → Variables):
 
 | `CI_RUNNER`                    | Jobs run on                                       |
 | ------------------------------ | ------------------------------------------------- |

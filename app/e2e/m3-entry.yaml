@@ -1,6 +1,7 @@
 # M3 flow (§4 M3 "Done when"), updated for spec Amendment A2: create a
-# C-precision session and enter five series by tapping the keypad, then assert
-# the computed total, the per-series average and the X (centrumtia) count.
+# C-precision competition session and enter five series by tapping the
+# keypad, then assert the computed total, the per-series average and the X
+# (centrumtia) count.
 #
 # Each series is 9, 9, 9, 10, X = 47 points — so it exercises both new ten
 # keys: `10` (ordinary ten, no flag) and `X` (inner ten, is_inner_ten=1).
@@ -21,10 +22,23 @@ appId: app.shotledger
 - extendedWaitUntil:
     visible: 'Discipline'
     timeout: 15000
+# Vapengrupp and klass are asked only for a competition; a training session
+# takes the group from the gun.
+- tapOn: 'Competition'
 - tapOn:
     id: 'discipline-spsf-precision'
+- scrollUntilVisible:
+    element:
+      id: 'group-spsf:C'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'group-spsf:C'
+- scrollUntilVisible:
+    element:
+      id: 'class-2'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'class-2'
 - takeScreenshot: m3-02-new-session
@@ -53,6 +67,13 @@ appId: app.shotledger
           timeout: 20000
       - tapOn:
           id: 'add-series'
+      # Add Series asks keypad or photo first.
+      - extendedWaitUntil:
+          visible:
+            id: 'series-entry-manual'
+          timeout: 15000
+      - tapOn:
+          id: 'series-entry-manual'
       - extendedWaitUntil:
           visible: 'Save series'
           timeout: 15000

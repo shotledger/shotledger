@@ -11,6 +11,16 @@ entry is deleted with it; git keeps the history.
 
 ## Decision
 
+**`reactivecircus/android-emulator-runner@v2.38.0`** (GitHub Action, Apache-2.0,
+pinned by commit SHA) and the **Maestro CLI 2.11.0** (Apache-2.0, release zip
+checked against its SHA-256) — 2026-10-14, CI only, for running the
+`app/e2e` flows on an emulator (#806). Neither is a package dependency or
+reaches the bundle. The maintainer chose the trigger: pushes to `main` that
+touch the app, and PRs labelled `e2e`. Rejected: **running on every ready
+PR**, which costs 15–25 extra Actions minutes on each; and **the phone over
+Remote Control**, which stays for pre-release smoke tests and the camera but
+cannot gate a merge.
+
 **`drizzle-zod`** (`0.8.3`, Apache-2.0) in `shared/` — 2026-10-13, to derive
 each synced table's payload schema from its Drizzle table so `/sync/push`
 can refuse a row a device could not apply (#697, ADR 0021). Only the Worker
