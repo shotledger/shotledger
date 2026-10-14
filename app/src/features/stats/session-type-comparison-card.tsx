@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { disciplineLabel } from '@/features/session/labels';
+import { formatTotalScore } from '@/features/stats/format-total-score';
 import { Spacing } from '@/theme/tokens';
 
 const DASH = '–';
@@ -37,7 +38,11 @@ export function SessionTypeComparisonCard({ rows }: { rows: readonly SessionType
       label: t('stats.typeComparisonMedian'),
       value: (s) => points(s.medianSeriesTenths),
     },
-    { key: 'best', label: t('stats.typeComparisonBest'), value: (s) => points(s.bestSeriesTenths) },
+    {
+      key: 'best',
+      label: t('stats.typeComparisonBest'),
+      value: (s) => formatTotalScore(s.bestSeriesTenths),
+    },
     { key: 'sd', label: t('stats.statsSeriesSd'), value: (s) => points(s.seriesSdTenths, 2) },
     {
       key: 'x',
