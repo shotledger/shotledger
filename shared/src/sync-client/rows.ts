@@ -90,7 +90,6 @@ export function newSeriesRow(id: string, now: string, fields: SeriesFields): Pay
     is_total_override: 0,
     total_override_tenths: null,
     total_override_shot_count: null,
-    is_shoot_off: 0,
   };
 }
 

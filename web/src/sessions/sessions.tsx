@@ -36,11 +36,7 @@ import { Compare, PickAll, PickBar, PicksProvider, RowPhoto } from './photos';
 import { showDate } from '../dates';
 
 const DASH = '–';
-const SECTION_TITLES = {
-  main: 'session.mainSection',
-  final: 'session.finalSection',
-  shootOff: 'session.shootOff',
-} as const;
+const SECTION_TITLES = { main: 'session.mainSection', final: 'session.finalSection' } as const;
 
 /** The list's result cell: a fält result, else the ring total, else nothing scored. */
 function resultLabel(t: TFunction, session: BrowseSession): string {
@@ -349,10 +345,6 @@ function RingResult({ session, details }: { session: BrowseSession; details: Rea
           </>
         )}
         <Tile label={t('session.total')} value={score(results.totalTenths)} />
-        {/* Outside the total: a shoot-off decides placement only (#727 PR C, S1). */}
-        {results.hasShootOff && (
-          <Tile label={t('session.shootOff')} value={score(results.shootOffTenths)} />
-        )}
         <Tile
           label={t('session.seriesAverage')}
           value={
@@ -405,7 +397,6 @@ function SeriesList({
                 <div className="series-head">
                   <strong>{t('session.seriesTitle', { position: row.position })}</strong>
                   {row.isSighter && <span className="badge">{t('session.sighter')}</span>}
-                  {row.isShootOff && <span className="badge">{t('station.shootOff')}</span>}
                   <span className="series-total">
                     {row.isSighter ? t('session.sighterScore', { score: total }) : total}
                   </span>

@@ -150,7 +150,6 @@ export function listMarksForSession(db: Database, sessionId: string): StoredMark
       and(
         eq(series.sessionId, sessionId),
         eq(series.isSighter, 0),
-        eq(series.isShootOff, 0),
         isNull(shotMarks.deletedAt),
         isNull(shots.deletedAt),
         isNull(series.deletedAt),
@@ -187,7 +186,6 @@ export function listGroupSamplesByAmmoLot(db: Database): AmmoLotGroupSample[] {
     .where(
       and(
         eq(series.isSighter, 0),
-        eq(series.isShootOff, 0),
         isNotNull(sessions.ammoLotId),
         isNull(shotMarks.deletedAt),
         isNull(shots.deletedAt),
@@ -254,7 +252,6 @@ export function listMarksBySession(db: Database): SessionMarks[] {
     .where(
       and(
         eq(series.isSighter, 0),
-        eq(series.isShootOff, 0),
         isNull(shotMarks.deletedAt),
         isNull(shots.deletedAt),
         isNull(series.deletedAt),

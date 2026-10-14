@@ -119,7 +119,6 @@ Ett pass, en räknande serie om tre skott:
           "position": 1,
           "isSighter": true,
           "isFinal": false,
-          "isShootOff": false,
           "shots": [],
           "totalOverride": null
         },
@@ -127,7 +126,6 @@ Ett pass, en räknande serie om tre skott:
           "position": 2,
           "isSighter": false,
           "isFinal": false,
-          "isShootOff": false,
           "shots": [
             { "position": 1, "valueTenths": 100, "isInnerTen": true },
             { "position": 2, "valueTenths": 90, "isInnerTen": false },
@@ -194,7 +192,6 @@ Ett pass, en räknande serie om tre skott:
 | `valueTenths`                                | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                                                                                                                           |
 | `isInnerTen`                                 | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                                                                                                                                 |
 | `isSighter`                                  | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                                                                                                                           |
-| `isShootOff`                                 | En särskjutningsserie från en import från Webshooter, skjuten för att skilja lika resultat. Den räknas aldrig mot totalen. En fil utan fältet läses som `false`.                                                                                                |
 | `totalOverride`                              | En serie som bara sparats som en total, så som en import från Webshooter eller ShotLog ger den: `tenths` är totalen, `shotCount` antalet skott bakom den eller `null` när inget angavs. Dess `shots` är då tom. `null` på en serie som räknats skott för skott. |
 | `weaponGroup`                                | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                                                                                                                                  |
 | `eventId`                                    | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                                                                                                                          |

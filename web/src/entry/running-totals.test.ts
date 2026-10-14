@@ -183,26 +183,6 @@ describe('lastTimes, the rows the phone would not read', () => {
     expect(lastTimes(tables, current, one)).toEqual([{ totalTenths: 180, innerTens: 0 }]);
   });
 
-  it('gives a shoot-off no ordinal, as the phone does (#727 PR C, S2)', () => {
-    const tables = {
-      sessions: rows(session('prev', '2026-10-01T10:00:00Z')),
-      series: rows(
-        series('p1', 'prev', 1),
-        series('p2', 'prev', 2, { is_shoot_off: 1 }),
-        series('p3', 'prev', 3),
-      ),
-      shots: rows(
-        ...shotsOf('p1', [90, 90]),
-        ...shotsOf('p2', [100, 100]),
-        ...shotsOf('p3', [70, 70]),
-      ),
-    };
-    expect(lastTimes(tables, current, [...one, ...one])).toEqual([
-      { totalTenths: 180, innerTens: 0 },
-      { totalTenths: 140, innerTens: 0 },
-    ]);
-  });
-
   it('reads a total-only series by its stored total, with no inner-ten count', () => {
     const tables = {
       sessions: rows(session('prev', '2026-10-01T10:00:00Z')),

@@ -920,14 +920,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "is_shoot_off": {
-          "name": "is_shoot_off",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
         }
       },
       "indexes": {},

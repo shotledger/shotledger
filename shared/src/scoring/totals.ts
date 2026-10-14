@@ -39,11 +39,6 @@ export interface SeriesTotalOverride {
 export interface SeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
-  /**
-   * A särskjutning series: decides placement only and never enters a score
-   * (docs/specs/shoot-off-and-ten-counts-727-spec.md S1/S2). Absent = false.
-   */
-  isShootOff?: boolean;
   shots: readonly ScoredShot[];
   /** Set only for an imported Webshooter series with no shot rows (WS1). */
   totalOverride?: SeriesTotalOverride | null;
@@ -54,35 +49,8 @@ export interface SessionResults {
   beforeFinalTenths: number;
   /** Sum of scored (non-sighter) final series. */
   finalTenths: number;
-  /** Before final plus final; a shoot-off is never part of it (S1). */
   totalTenths: number;
   hasFinal: boolean;
-  /** Sum of the non-sighter shoot-off series, shown on its own (S4). */
-  shootOffTenths: number;
-  hasShootOff: boolean;
-}
-
-/** The section a series is listed in: the main round, the final, or the shoot-off (S4). */
-export type SeriesSectionKey = 'main' | 'final' | 'shootOff';
-
-/** A shoot-off series is its own section, final or not; then the final; else the main round. */
-export function seriesSectionOf(series: {
-  isFinal: boolean;
-  isShootOff?: boolean;
-}): SeriesSectionKey {
-  if (series.isShootOff === true) return 'shootOff';
-  return series.isFinal ? 'final' : 'main';
-}
-
-/** Section order on every screen and report: main round, final, shoot-off. */
-export const SERIES_SECTION_ORDER: readonly SeriesSectionKey[] = ['main', 'final', 'shootOff'];
-
-/**
- * A series that counts toward a score or score statistic: neither a sighter
- * nor a shoot-off. The one predicate every score path in this module uses.
- */
-export function isScoringSeries(series: { isSighter: boolean; isShootOff?: boolean }): boolean {
-  return !series.isSighter && series.isShootOff !== true;
 }
 
 /**
@@ -97,27 +65,21 @@ export function countInnerTens(shotsList: readonly FlaggedShot[]): number {
  * The three derived results of §6.3. Sighter series are excluded from every
  * score; `hasFinal` is true as soon as any series belongs to the final
  * section, so the UI shows the divider even before the final is scored.
- * A shoot-off series is summed apart into `shootOffTenths` and never into
- * before-final, final or total (S1); `hasShootOff` works like `hasFinal`.
  *
  * @Requirements SCORE_003
  */
 export function sessionResults(seriesList: readonly SeriesForResults[]): SessionResults {
   let beforeFinalTenths = 0;
   let finalTenths = 0;
-  let shootOffTenths = 0;
   let hasFinal = false;
-  let hasShootOff = false;
 
   for (const series of seriesList) {
-    if (series.isShootOff === true) hasShootOff = true;
-    else if (series.isFinal) hasFinal = true;
+    if (series.isFinal) hasFinal = true;
     if (series.isSighter) continue;
     // WS1: an override series carries its total directly — never sum
     // `shots`, which is always empty for such a series.
     const total = series.totalOverride ? series.totalOverride.tenths : sumValueTenths(series.shots);
-    if (series.isShootOff === true) shootOffTenths += total;
-    else if (series.isFinal) finalTenths += total;
+    if (series.isFinal) finalTenths += total;
     else beforeFinalTenths += total;
   }
 
@@ -126,8 +88,6 @@ export function sessionResults(seriesList: readonly SeriesForResults[]): Session
     finalTenths,
     totalTenths: beforeFinalTenths + finalTenths,
     hasFinal,
-    shootOffTenths,
-    hasShootOff,
   };
 }
 
@@ -149,8 +109,6 @@ export function shotVolume(seriesList: readonly SeriesForResults[]): number {
 export interface FlaggedSeriesForResults {
   isSighter: boolean;
   isFinal: boolean;
-  /** As on `SeriesForResults`: never part of a score (S2). */
-  isShootOff?: boolean;
   shots: readonly FlaggedShot[];
   /** Set only for an imported Webshooter series with no shot rows (WS1). */
   totalOverride?: SeriesTotalOverride | null;
@@ -165,11 +123,10 @@ export interface FlaggedSeriesForResults {
  */
 function isScoredWithData(series: {
   isSighter: boolean;
-  isShootOff?: boolean;
   shots: readonly unknown[];
   totalOverride?: SeriesTotalOverride | null;
 }): boolean {
-  return isScoringSeries(series) && (series.totalOverride != null || series.shots.length > 0);
+  return !series.isSighter && (series.totalOverride != null || series.shots.length > 0);
 }
 
 /**
@@ -193,10 +150,10 @@ export function seriesAverageTenths(seriesList: readonly SeriesForResults[]): nu
   return totals.reduce((sum, total) => sum + total, 0) / totals.length;
 }
 
-/** Innertior (centrumtia count) in a session's scored series — sighter and shoot-off (X)s excluded (A-S7, S2). */
+/** Innertior (centrumtia count) in a session's scored series — sighter (X)s excluded (A-S7). */
 export function sessionInnerTenCount(seriesList: readonly FlaggedSeriesForResults[]): number {
   return seriesList
-    .filter(isScoringSeries)
+    .filter((series) => !series.isSighter)
     .reduce((count, series) => count + countInnerTens(series.shots), 0);
 }
 

@@ -151,8 +151,6 @@ export function lastTimes(
       position: Number(row.position),
       isSighter: row.is_sighter === 1,
       isFinal: row.is_final === 1,
-      // A shoot-off takes no ordinal, as on the phone (#727 PR C, S2).
-      isShootOff: row.is_shoot_off === 1,
       totalTenths: 0,
       innerTens: null,
     }));

@@ -83,7 +83,6 @@ const rows = {
       position: 1,
       isSighter: 0,
       isFinal: 0,
-      isShootOff: 0,
       isTotalOverride: 0,
       totalOverrideTenths: null,
       totalOverrideShotCount: null,

@@ -30,7 +30,6 @@ const seriesRow = (over: Partial<SeriesRow> = {}): SeriesRow => ({
   position: 1,
   isSighter: 0,
   isFinal: 0,
-  isShootOff: 0,
   isTotalOverride: 0,
   totalOverrideTenths: null,
   totalOverrideShotCount: null,
@@ -71,7 +70,6 @@ describe('buildAnalyticsSeries', () => {
       shooterClass: '2',
       isSighter: true,
       isFinal: false,
-      isShootOff: false,
       shots: [
         { valueTenths: 100, isInnerTen: true },
         { valueTenths: 80, isInnerTen: false },
@@ -81,16 +79,6 @@ describe('buildAnalyticsSeries', () => {
       sessionType: 'training',
       tagIds: ['t1', 't2'],
     });
-  });
-
-  it('carries the shoot-off flag, which keeps the series out of every score (#727 PR C, S2)', () => {
-    const [built] = buildAnalyticsSeries({
-      sessions: [session()],
-      series: [seriesRow({ isShootOff: 1 })],
-      shots: [],
-      sessionTags: [],
-    });
-    expect(built!.isShootOff).toBe(true);
   });
 
   it('drops a series whose session is not among the rows', () => {

@@ -38,12 +38,7 @@ const session = (id: string, overrides: Record<string, unknown>) => ({
   ...overrides,
 });
 
-const series = (
-  id: string,
-  sessionId: string,
-  position: number,
-  overrides: Record<string, unknown> = {},
-) => ({
+const series = (id: string, sessionId: string, position: number, overrides = {}) => ({
   id,
   session_id: sessionId,
   position,
@@ -183,46 +178,12 @@ describe('browseSessions', () => {
       finalTenths: 0,
       totalTenths: 640,
       hasFinal: false,
-      shootOffTenths: 0,
-      hasShootOff: false,
     });
     expect(ring.seriesAverageTenths).toBe(320);
     expect(ring.innerTenCount).toBe(1);
     expect(ring.innerTenAverage).toBe(0.5);
     expect(ring.stageSubtotals).toEqual([]);
     expect(ring.falt).toBeNull();
-  });
-
-  it('keeps a shoot-off out of the result, the average and the inner tens (#727 PR C, S1/S2)', () => {
-    const base = tables();
-    const withShootOff: PulledTables = {
-      ...base,
-      series: table([
-        ...base.series.values(),
-        series('r4', 'ring', 4, { is_shoot_off: 1 }),
-      ] as Record<string, unknown>[]),
-      shots: table([
-        ...base.shots.values(),
-        shot('x7', 'r4', 1, 100, 1),
-        shot('x8', 'r4', 2, 100, 1),
-      ] as Record<string, unknown>[]),
-    };
-    const ring = browseSessions(withShootOff).find((s) => s.id === 'ring')!;
-    expect(ring.results).toEqual({
-      beforeFinalTenths: 640,
-      finalTenths: 0,
-      totalTenths: 640,
-      hasFinal: false,
-      shootOffTenths: 200,
-      hasShootOff: true,
-    });
-    expect(ring.seriesAverageTenths).toBe(320);
-    expect(ring.innerTenCount).toBe(1);
-    expect(ring.innerTenAverage).toBe(0.5);
-    expect(seriesSections(ring.series).map((section) => section.title)).toEqual([
-      'main',
-      'shootOff',
-    ]);
   });
 
   it("gives a program's stage subtotals and counts inner tens from the shots", () => {
@@ -308,7 +269,6 @@ describe('seriesSections', () => {
     photo: null,
     isSighter: false,
     isFinal,
-    isShootOff: false,
     shots: [],
     totalTenths: 0,
     stage: null,
@@ -333,22 +293,5 @@ describe('seriesSections', () => {
 
   it('gives no section for no series', () => {
     expect(shape([])).toEqual([]);
-  });
-
-  it('puts the shoot-off in its own section after the final (#727 PR C, S4)', () => {
-    const shootOff = (position: number, isFinal = false) => ({
-      ...row(position, isFinal),
-      isShootOff: true,
-    });
-    expect(shape([row(1, false), shootOff(4), row(2, true), shootOff(3, true)])).toEqual([
-      ['main', [1]],
-      ['final', [2]],
-      ['shootOff', [4, 3]],
-    ]);
-    expect(shape([row(1, false), shootOff(2)])).toEqual([
-      ['main', [1]],
-      ['shootOff', [2]],
-    ]);
-    expect(shape([shootOff(1)])).toEqual([['shootOff', [1]]]);
   });
 });

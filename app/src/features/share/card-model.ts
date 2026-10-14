@@ -34,14 +34,7 @@ export interface BuildSessionShareCardInput {
   averageLabel: string | null;
   xCount: number;
   /** Every series row on the session, sighters included — filtered here. */
-  /** Sighter and shoot-off series are left off the card: neither is part of the score. */
-  series: readonly {
-    position: number;
-    isSighter: boolean;
-    isShootOff?: boolean;
-    totalLabel: string;
-    xCount: number;
-  }[];
+  series: readonly { position: number; isSighter: boolean; totalLabel: string; xCount: number }[];
   note: string | null;
 }
 
@@ -56,7 +49,7 @@ export function buildSessionShareCard(input: BuildSessionShareCardInput): Sessio
     averageLabel: input.averageLabel,
     xCount: input.xCount,
     series: input.series
-      .filter((row) => !row.isSighter && row.isShootOff !== true)
+      .filter((row) => !row.isSighter)
       .map((row) => ({ position: row.position, totalLabel: row.totalLabel, xCount: row.xCount })),
     note: normalizeNote(input.note),
   };

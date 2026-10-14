@@ -6,8 +6,8 @@
 // "Matching" is the Nth scored series of the same section (main round or
 // final), not the raw position: a sighter at position 1 last time and none
 // today would otherwise compare series 2 with series 1. A sighter is never
-// compared, nor is a shoot-off (it takes no ordinal), and two sessions scored
-// differently (integer against decimal) are not comparable, so neither answers.
+// compared, and two sessions scored differently (integer against decimal)
+// are not comparable, so neither answers.
 
 export interface LastTimeSession {
   id: string;
@@ -21,8 +21,6 @@ export interface LastTimeSeries {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series is never compared and takes no ordinal. Absent = false. */
-  isShootOff?: boolean;
   totalTenths: number;
   /** Null for a series stored as a total only (an import), which has no shot flags. */
   innerTens: number | null;
@@ -51,22 +49,16 @@ export function previousSessionOf<T extends LastTimeSession>(
 /**
  * Which scored series of its section this one is, 1-based: the scored series
  * of the same section at or before `position`. `others` are the session's
- * other series (the one being entered left out); null for a sighter or a
- * shoot-off.
+ * other series (the one being entered left out); null for a sighter.
  */
-type Ordered = Pick<LastTimeSeries, 'position' | 'isSighter' | 'isFinal' | 'isShootOff'>;
-
-/** Scored in its section: neither a sighter nor a shoot-off. */
-const isCompared = (series: Pick<LastTimeSeries, 'isSighter' | 'isShootOff'>): boolean =>
-  !series.isSighter && series.isShootOff !== true;
-
-export function scoredOrdinal(others: readonly Ordered[], current: Ordered): number | null {
-  if (!isCompared(current)) return null;
+export function scoredOrdinal(
+  others: readonly Pick<LastTimeSeries, 'position' | 'isSighter' | 'isFinal'>[],
+  current: Pick<LastTimeSeries, 'position' | 'isSighter' | 'isFinal'>,
+): number | null {
+  if (current.isSighter) return null;
   const before = others.filter(
     (series) =>
-      isCompared(series) &&
-      series.isFinal === current.isFinal &&
-      series.position < current.position,
+      !series.isSighter && series.isFinal === current.isFinal && series.position < current.position,
   ).length;
   return before + 1;
 }
@@ -79,7 +71,7 @@ export function seriesAtOrdinal(
 ): LastTimeSeries | null {
   if (ordinal === null) return null;
   const scored = series
-    .filter((row) => isCompared(row) && row.isFinal === isFinal)
+    .filter((row) => !row.isSighter && row.isFinal === isFinal)
     .sort((a, b) => a.position - b.position);
   return scored[ordinal - 1] ?? null;
 }

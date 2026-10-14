@@ -66,10 +66,9 @@ function firedShotCount(series: StatsSeries): number {
   return volumeOfSeries(series);
 }
 
-/** A series that carries a score (override total or real shots), per `scope`; never a shoot-off (S2). */
+/** A series that carries a score (override total or real shots), per `scope`. */
 function isScoredSeries(series: StatsSeries, scope: SighterScope): boolean {
   return (
-    series.isShootOff !== true &&
     (scope.includeSighters === true || !series.isSighter) &&
     (series.totalOverride != null || series.shots.length > 0)
   );
@@ -249,7 +248,6 @@ export function analyticsSessionPoints(
         sessionSeries.map((series) => ({
           stage: series.stage ?? null,
           isSighter: series.isSighter,
-          isShootOff: series.isShootOff,
           totalTenths: seriesTotalTenths(series),
         })),
       ),

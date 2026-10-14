@@ -149,36 +149,3 @@ describe('helmatch tie-break keys (SHB I.6.11.2.1)', () => {
     expect(listFreeformSessionsForPb(db)[0]!.tieBreakTenths).toEqual([]);
   });
 });
-
-describe('a shoot-off is no part of a result or a personal best (#727 PR C, S2)', () => {
-  function withShootOff() {
-    const session = sevenSeriesSession();
-    addSeries(db, {
-      sessionId: session.id,
-      position: 8,
-      isShootOff: true,
-      isTotalOverride: true,
-      totalOverrideTenths: 500,
-      totalOverrideShotCount: 5,
-    });
-    return session;
-  }
-
-  it('leaves it out of the totals and the series counts', () => {
-    withShootOff();
-    const [result] = listCompetitionResultsForStats(db);
-    expect(result).toMatchObject({
-      beforeFinalTenths: 3150,
-      beforeFinalSeriesCount: 7,
-      totalTenths: 3150,
-      totalSeriesCount: 7,
-      innerTens: 0,
-    });
-  });
-
-  it('leaves it out of the freeform personal-best series', () => {
-    withShootOff();
-    const [row] = listFreeformSessionsForPb(db);
-    expect(row!.seriesTenths).toEqual(Array(7).fill(450));
-  });
-});

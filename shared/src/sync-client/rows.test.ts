@@ -91,7 +91,6 @@ describe('new rows', () => {
       is_total_override: 0,
       total_override_tenths: null,
       total_override_shot_count: null,
-      is_shoot_off: 0,
     });
     expect(
       newSeriesRow('r2', NOW, { sessionId: 's1', position: 1, isSighter: false }),

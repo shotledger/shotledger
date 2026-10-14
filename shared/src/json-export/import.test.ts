@@ -61,7 +61,6 @@ describe('importSessionsFromJson', () => {
             position: 1,
             isSighter: true,
             isFinal: false,
-            isShootOff: false,
             totalOverride: null,
             shots: [],
           },
@@ -69,7 +68,6 @@ describe('importSessionsFromJson', () => {
             position: 2,
             isSighter: false,
             isFinal: false,
-            isShootOff: false,
             totalOverride: null,
             shots: [{ position: 1, valueTenths: 100, isInnerTen: true }],
           },
@@ -198,7 +196,6 @@ describe('importSessionsFromJson', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
-          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 999, isInnerTen: false }],
         },
@@ -237,7 +234,6 @@ describe('toImportGroups', () => {
           position: 1,
           isSighter: false,
           isFinal: false,
-          isShootOff: false,
           totalOverride: null,
           shots: [{ position: 1, valueTenths: 95, isInnerTen: false }],
         },
@@ -477,45 +473,18 @@ function omit<T extends object>(value: T, key: keyof T): Omit<T, keyof T> {
 }
 
 describe('importSessionsFromJson — isShootOff (#727)', () => {
-  it('S5 a series written without isShootOff imports as not a shoot-off', () => {
-    const withSeries = session({
-      series: [
-        {
-          position: 1,
-          isSighter: false,
-          isFinal: false,
-          isShootOff: false,
-          shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
-          totalOverride: null,
-        },
-      ],
-    });
-    const bare = JSON.parse(exportSessionsToJson([withSeries], OPTIONS)) as {
-      sessions: { series: Record<string, unknown>[] }[];
+  it('ignores the isShootOff an older file carries on a series', () => {
+    const series = {
+      position: 1,
+      isSighter: false,
+      isFinal: false,
+      shots: [{ position: 1, valueTenths: 90, isInnerTen: false }],
+      totalOverride: null,
     };
-    delete bare.sessions[0]!.series[0]!.isShootOff;
-    const result = importSessionsFromJson(JSON.stringify(bare)) as ImportResult;
+    const older = session({ series: [{ ...series, isShootOff: true } as typeof series] });
+    const result = importSessionsFromJson(exportSessionsToJson([older], OPTIONS)) as ImportResult;
     expect(result.errors).toEqual([]);
-    expect(result.sessions[0]!.series[0]!.isShootOff).toBe(false);
-  });
-
-  it('S5 rejects the session when isShootOff is not a boolean', () => {
-    const withSeries = session({
-      series: [
-        {
-          position: 1,
-          isSighter: false,
-          isFinal: false,
-          isShootOff: 1 as unknown as boolean,
-          shots: [],
-          totalOverride: null,
-        },
-      ],
-    });
-    const result = importSessionsFromJson(
-      exportSessionsToJson([withSeries], OPTIONS),
-    ) as ImportResult;
-    expect(result.sessions).toEqual([]);
+    expect(result.sessions).toEqual([session({ series: [series] })]);
   });
 });
 

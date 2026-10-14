@@ -62,7 +62,7 @@ function addPrecisionSeries(
   sessionId: string,
   position: number,
   rng: () => number,
-  opts: { isSighter?: boolean; isFinal?: boolean; isShootOff?: boolean } = {},
+  opts: { isSighter?: boolean; isFinal?: boolean } = {},
 ) {
   const s = addSeries(db, { sessionId, position, ...opts });
   for (let i = 0; i < 5; i++) {
@@ -391,14 +391,12 @@ export function seedDemoData(db: Database) {
 
     if (isChampionshipFinal) {
       // championship precision: 1 sighter + 7 scored (grundomgång) + final
-      // (own sighter + 3 scored) — §6.3 — and a särskjutning series, which
-      // decides placement only and never enters the score (#727)
+      // (own sighter + 3 scored) — §6.3
       addPrecisionSeries(db, session.id, 1, rng, { isSighter: true });
       for (let p = 2; p <= 8; p++) addPrecisionSeries(db, session.id, p, rng);
       addPrecisionSeries(db, session.id, 9, rng, { isSighter: true, isFinal: true });
       for (let p = 10; p <= 12; p++) addPrecisionSeries(db, session.id, p, rng, { isFinal: true });
-      addPrecisionSeries(db, session.id, 13, rng, { isShootOff: true });
-      applyRoundCountDelta(db, firearm.id, 13 * 5);
+      applyRoundCountDelta(db, firearm.id, 12 * 5);
       setSessionExtraRounds(db, session.id, 10);
       continue;
     }

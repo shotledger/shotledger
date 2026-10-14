@@ -2,12 +2,6 @@ import { canMoveSeries, seriesDropPlan, seriesSwapTarget, type MovableSeries } f
 
 const main = (id: string, position: number): MovableSeries => ({ id, position, isFinal: false });
 const final = (id: string, position: number): MovableSeries => ({ id, position, isFinal: true });
-const shootOff = (id: string, position: number, isFinal = false): MovableSeries => ({
-  id,
-  position,
-  isFinal,
-  isShootOff: true,
-});
 
 describe('seriesSwapTarget', () => {
   const rows = [main('a', 1), main('b', 2), main('c', 3)];
@@ -124,35 +118,5 @@ describe('seriesDropPlan', () => {
     const positions = plan.map((p) => p.position).sort();
     expect(new Set(positions).size).toBe(positions.length);
     expect(positions.every((p) => [1, 2, 3].includes(p))).toBe(true);
-  });
-});
-
-describe('the shoot-off section (#727 PR C, S5)', () => {
-  // A main series moved into the shoot-off would stop counting, and the
-  // other way round would start to.
-  const rows = [main('a', 1), main('b', 2), final('f', 3), shootOff('s', 4), shootOff('t', 5)];
-
-  it('a swap never crosses into or out of the shoot-off', () => {
-    expect(seriesSwapTarget(rows, 'f', 'down')).toBeNull();
-    expect(seriesSwapTarget(rows, 's', 'up')).toBeNull();
-    expect(seriesSwapTarget(rows, 's', 'down')?.id).toBe('t');
-  });
-
-  it('a shoot-off flagged final is in the shoot-off section, not the final', () => {
-    const flagged = [final('f', 1), shootOff('s', 2, true)];
-    expect(seriesSwapTarget(flagged, 'f', 'down')).toBeNull();
-    expect(canMoveSeries(flagged, 's', 'up')).toBe(false);
-  });
-
-  it('a drop reorders within the shoot-off and leaves the other sections alone', () => {
-    expect(seriesDropPlan(rows, 's', 1)).toEqual([
-      { id: 't', position: 4 },
-      { id: 's', position: 5 },
-    ]);
-    expect(seriesDropPlan(rows, 'b', 9)).toEqual([]);
-    expect(seriesDropPlan(rows, 'a', 9)).toEqual([
-      { id: 'b', position: 1 },
-      { id: 'a', position: 2 },
-    ]);
   });
 });

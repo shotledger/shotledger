@@ -223,11 +223,6 @@
                   "type": "boolean",
                   "description": "Whether the series belongs to a championship final."
                 },
-                "isShootOff": {
-                  "default": false,
-                  "description": "A särskjutning series, shot to decide a placement. Never part of the score: its sum is reported apart from the total.",
-                  "type": "boolean"
-                },
                 "shots": {
                   "type": "array",
                   "items": {
@@ -302,7 +297,6 @@
                 "position",
                 "isSighter",
                 "isFinal",
-                "isShootOff",
                 "shots",
                 "totalOverride"
               ],

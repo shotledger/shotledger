@@ -67,9 +67,9 @@ de erbjuds inte.
 
 Precision och milsnabb kommer in som en summa per serie; Webshooter sparar inte
 de enskilda skotten. Varje serie räknar ändå sina skott som avlossade — i
-Loggade skott, ammunitionssatsen och vapnets skottantal. En särskjutningsserie
-märks **Särskjutning** och visas i en egen del, utanför passets summa, som i
-ditt officiella resultat. Fältskjutning och poängfält kommer in **station för
+Loggade skott, ammunitionssatsen och vapnets skottantal. En särskjutning i
+precision importeras inte: den avgör bara placeringen och räknas aldrig in i
+ditt resultat. Fältskjutning och poängfält kommer in **station för
 station** — träffar, träffade figurer och eventuella poängmålspoäng, med
 särskjutningsstationer sparade men utanför summan — och visas i den
 resultatform tävlingen använde. Ett fältresultat vars stationssiffror inte kan

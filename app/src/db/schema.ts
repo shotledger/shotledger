@@ -233,11 +233,8 @@ export const series = sqliteTable('series', {
   // shot count backing the override total; required so round counters and
   // per-series averages stay correct without shot rows
   totalOverrideShotCount: integer('total_override_shot_count'),
-  // A särskjutning series (§A.6; tie-break for placement), as on falt_stations.
-  // It decides placement only: never part of a score or score statistic, its
-  // own section after the final; its shots still count as volume
-  // (docs/specs/shoot-off-and-ten-counts-727-spec.md S1–S5).
-  isShootOff: integer('is_shoot_off').notNull().default(0),
+  // No shoot-off flag: the app models särskjutning in fält only, on
+  // falt_stations (maintainer, 2026-10-14; #727).
 });
 
 export const shots = sqliteTable('shots', {

@@ -123,8 +123,7 @@ function SeriesEntryScreen({ position }: { position: number }) {
   );
   const showSighterOption = !detail.isFixedFormat && !otherSeriesHasSighter;
 
-  // A shoot-off series is never a guldserie (#727 PR C, S2): no hint, no gold tier.
-  const guldThreshold = row?.isShootOff ? null : row ? row.guldThreshold : detail.guldThreshold;
+  const guldThreshold = row ? row.guldThreshold : detail.guldThreshold;
 
   // #482: celebrate only a tier this visit climbs into — reopening a saved
   // 50, or backspacing and re-entering, stays quiet.
@@ -143,14 +142,7 @@ function SeriesEntryScreen({ position }: { position: number }) {
   const currentTier = tierOf(state, isSighter);
 
   const shots = enteredShots(state);
-  const current = {
-    rowId: row?.id ?? null,
-    position,
-    isFinal,
-    isSighter,
-    isShootOff: row?.isShootOff ?? false,
-    shots,
-  };
+  const current = { rowId: row?.id ?? null, position, isFinal, isSighter, shots };
   const sessionTotals = liveSessionTotals(detail.seriesRows, current);
   // Read once, as if this series were scored; a sighter compares with nothing.
   const [lastTimeScored] = useState(() =>
@@ -160,13 +152,12 @@ function SeriesEntryScreen({ position }: { position: number }) {
           position,
           isFinal,
           isSighter: false,
-          isShootOff: row?.isShootOff ?? false,
         })
       : null,
   );
   const lastTime = isSighter ? null : lastTimeScored;
-  const next = nextSeriesTarget(detail.seriesRows, current, detail.isFixedFormat);
-  const seriesCount = seriesCountOf(detail.seriesRows, current, detail.isFixedFormat);
+  const next = nextSeriesTarget(detail.seriesRows, { position, isFinal }, detail.isFixedFormat);
+  const seriesCount = seriesCountOf(detail.seriesRows, isFinal, detail.isFixedFormat);
   const isBlank = shots.length === 0 && photoUri === null && !isSighter;
   const earlier = detail.seriesRows
     .filter((other) => other.id !== row?.id && other.isFinal === isFinal)

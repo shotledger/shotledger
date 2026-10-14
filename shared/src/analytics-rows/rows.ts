@@ -29,7 +29,6 @@ export interface SeriesRow {
   readonly position: number;
   readonly isSighter: number;
   readonly isFinal: number;
-  readonly isShootOff: number;
   readonly isTotalOverride: number;
   readonly totalOverrideTenths: number | null;
   readonly totalOverrideShotCount: number | null;
@@ -105,7 +104,6 @@ export function buildAnalyticsSeries(rows: {
       ammoLotId: session.ammoLotId,
       isSighter: row.isSighter === 1,
       isFinal: row.isFinal === 1,
-      isShootOff: row.isShootOff === 1,
       shots: shotsBySeries.get(row.id) ?? [],
       totalOverride,
       volumeOnlyShotCount:

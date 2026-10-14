@@ -471,7 +471,6 @@ export function applyImport(
             position: s.position,
             isSighter: s.isSighter ? 1 : 0,
             isFinal: s.isFinal ? 1 : 0,
-            isShootOff: s.isShootOff ? 1 : 0,
             photoUri: null,
             isTotalOverride: s.totalOverride ? 1 : 0,
             totalOverrideTenths: s.totalOverride?.tenths ?? null,

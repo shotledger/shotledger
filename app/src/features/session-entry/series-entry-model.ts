@@ -2,12 +2,7 @@
 // direction A, "Entering a series"). Pure over the session detail's rows,
 // so the rules are tested without a screen; the web's Enter Series runs the
 // same running totals over its typed rows (web/src/entry/running-totals.ts).
-import {
-  seriesSectionOf,
-  sessionInnerTenCount,
-  sessionResults,
-  type EntryShot,
-} from '@shotledger/shared';
+import { sessionInnerTenCount, sessionResults, type EntryShot } from '@shotledger/shared';
 
 import type { SeriesRow } from '@/features/session/use-session-detail';
 
@@ -18,8 +13,6 @@ export interface CurrentSeries {
   position: number;
   isFinal: boolean;
   isSighter: boolean;
-  /** A särskjutning series counts toward no score (#727 PR C, S1). */
-  isShootOff: boolean;
   shots: readonly EntryShot[];
 }
 
@@ -28,7 +21,6 @@ function forResults(row: SeriesRow) {
   return {
     isSighter: row.isSighter,
     isFinal: row.isFinal,
-    isShootOff: row.isShootOff,
     shots: row.shots,
     totalOverride: row.isTotalOverride
       ? { tenths: row.totalTenths, shotCount: row.totalOverrideShotCount ?? 0 }
@@ -51,7 +43,6 @@ export function liveSessionTotals(
     {
       isSighter: current.isSighter,
       isFinal: current.isFinal,
-      isShootOff: current.isShootOff,
       shots: [...current.shots],
       totalOverride: null,
     },
@@ -75,33 +66,29 @@ export interface NextSeriesTarget {
  * format lays them all out up front); otherwise, in a free format, a new one
  * at the end, exactly where session detail's Add Series would put it
  * (`nextSeriesPosition`). A fixed format ends at its last series, and the
- * main round ends once a final has begun. A shoot-off is its own section
- * (#727 PR C, S5): never the next series of another, and never extended,
- * since no screen adds one.
+ * main round ends once a final has begun.
  */
 export function nextSeriesTarget(
-  rows: readonly Pick<SeriesRow, 'position' | 'isFinal' | 'isShootOff'>[],
-  current: Pick<CurrentSeries, 'position' | 'isFinal' | 'isShootOff'>,
+  rows: readonly Pick<SeriesRow, 'position' | 'isFinal'>[],
+  current: Pick<CurrentSeries, 'position' | 'isFinal'>,
   isFixedFormat: boolean,
 ): NextSeriesTarget | null {
-  const section = seriesSectionOf(current);
   const later = rows
-    .filter((row) => seriesSectionOf(row) === section && row.position > current.position)
+    .filter((row) => row.isFinal === current.isFinal && row.position > current.position)
     .sort((a, b) => a.position - b.position)[0];
   if (later) return { position: later.position, isFinal: later.isFinal, isNew: false };
-  if (isFixedFormat || section === 'shootOff') return null;
-  if (!current.isFinal && rows.some((row) => seriesSectionOf(row) === 'final')) return null;
+  if (isFixedFormat) return null;
+  if (!current.isFinal && rows.some((row) => row.isFinal)) return null;
   const last = rows.reduce((max, row) => Math.max(max, row.position), current.position);
   return { position: last + 1, isFinal: current.isFinal, isNew: true };
 }
 
 /** "Series 4 of 10" for a fixed format, whose count is known; null otherwise. */
 export function seriesCountOf(
-  rows: readonly Pick<SeriesRow, 'isFinal' | 'isShootOff'>[],
-  current: Pick<CurrentSeries, 'isFinal' | 'isShootOff'>,
+  rows: readonly Pick<SeriesRow, 'isFinal'>[],
+  isFinal: boolean,
   isFixedFormat: boolean,
 ): number | null {
   if (!isFixedFormat) return null;
-  const section = seriesSectionOf(current);
-  return rows.filter((row) => seriesSectionOf(row) === section).length;
+  return rows.filter((row) => row.isFinal === isFinal).length;
 }

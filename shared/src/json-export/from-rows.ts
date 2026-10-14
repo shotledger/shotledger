@@ -42,7 +42,6 @@ export interface ExportSeriesRow {
   readonly position: number;
   readonly isSighter: Flag;
   readonly isFinal: Flag;
-  readonly isShootOff: Flag;
   readonly isTotalOverride: Flag;
   readonly totalOverrideTenths: number | null;
   readonly totalOverrideShotCount: number | null;
@@ -163,7 +162,6 @@ export function sessionExportsFromRows(rows: SessionExportRows): SessionExport[]
           position: s.position,
           isSighter: Boolean(s.isSighter),
           isFinal: Boolean(s.isFinal),
-          isShootOff: Boolean(s.isShootOff),
           shots: (shotsBySeries.get(s.id) ?? []).sort(byPosition).map((shot) => ({
             position: shot.position,
             valueTenths: shot.valueTenths,

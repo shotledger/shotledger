@@ -122,7 +122,6 @@ One session, one scored series of three shots:
           "position": 1,
           "isSighter": true,
           "isFinal": false,
-          "isShootOff": false,
           "shots": [],
           "totalOverride": null
         },
@@ -130,7 +129,6 @@ One session, one scored series of three shots:
           "position": 2,
           "isSighter": false,
           "isFinal": false,
-          "isShootOff": false,
           "shots": [
             { "position": 1, "valueTenths": 100, "isInnerTen": true },
             { "position": 2, "valueTenths": 90, "isInnerTen": false },
@@ -197,7 +195,6 @@ One session, one scored series of three shots:
 | `valueTenths`                                | The shot value in **tenths**, so a 10 is `100` and a decimal 10.9 is `109`. Integers throughout — no floating point in a score.                                                                                                            |
 | `isInnerTen`                                 | Whether the shot was an inner ten. Separate from the value, because an inner ten scores the same as a ten.                                                                                                                                 |
 | `isSighter`                                  | A sighting series. It carries no shots here and does not count towards a total.                                                                                                                                                            |
-| `isShootOff`                                 | A särskjutning (shoot-off) series from a WebShooter import, shot to separate equal results. It never counts towards the total. A file without it reads as `false`.                                                                         |
 | `totalOverride`                              | A series saved as a total only, as a Webshooter or ShotLog import gives it: `tenths` is the total, `shotCount` the shots behind it or `null` when none was given. Its `shots` is then empty. `null` on a series scored shot by shot.       |
 | `weaponGroup`                                | The federation-scoped id, e.g. `spsf:C`. See [Weapon group and class](../reference/weapon-group-and-class.md).                                                                                                                             |
 | `eventId`                                    | The ISSF event, e.g. `issf-air-pistol:women:open`. `null` for an SPSF session, which carries a class instead.                                                                                                                              |

@@ -51,9 +51,7 @@ sheet. Clearing leaves the period as it is.
 The session count is every session the filter matched, including a session
 you logged as a round count with no series in it. Those shots are in the
 totals too. A fält session's stations count six shots each, scratched and
-särskjutning stations included, since those rounds were fired. A ring
-session's shoot-off series counts in the shots fired the same way, and in no
-score.
+särskjutning stations included, since those rounds were fired.
 
 The filters stay as you left them while you move around the app. Come back to
 the tab and it starts at the top again.

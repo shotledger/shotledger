@@ -86,13 +86,9 @@ function seriesTotalTenths(series: StatsSeries): number {
     : series.shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
 }
 
-/** Not a sighter or a shoot-off (S2), and carrying data: a shot row or a stored total. */
+/** Not a sighter, and carrying data: a shot row or a stored total. */
 function isScored(series: StatsSeries): boolean {
-  return (
-    !series.isSighter &&
-    series.isShootOff !== true &&
-    (series.totalOverride != null || series.shots.length > 0)
-  );
+  return !series.isSighter && (series.totalOverride != null || series.shots.length > 0);
 }
 
 function share(shots: readonly StatsShot[], minTenths: number, scoresRings: boolean) {

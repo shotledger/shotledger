@@ -201,14 +201,12 @@ describe('mapStationResultsToFaltStations', () => {
 });
 
 describe('mapStationResultsToSeries', () => {
-  it('maps main-round rows to non-final, non-shoot-off overrides with sequential positions', () => {
+  it('maps main-round rows to non-final overrides with sequential positions', () => {
     const row = fixtureResultRow();
     const mapped = mapStationResultsToSeries(row, 5);
 
     expect(mapped).toHaveLength(7);
-    expect(
-      mapped.every((s) => s.isFinal === false && s.isShootOff === false && s.isTotalOverride),
-    ).toBe(true);
+    expect(mapped.every((s) => s.isFinal === false && s.isTotalOverride)).toBe(true);
     expect(mapped.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(mapped[0]!.totalOverrideTenths).toBe(row.results[0]!.points! * 10);
     expect(mapped[0]!.totalOverrideShotCount).toBe(5);
@@ -247,27 +245,19 @@ describe('mapStationResultsToSeries', () => {
     expect(mapped[1]).toMatchObject({
       position: 2,
       isFinal: true,
-      isShootOff: false,
       totalOverrideTenths: 480,
     });
   });
 
-  it('maps results_distinguish to isFinal false, flagged as a shoot-off (an ordinary extra scored series)', () => {
+  it('skips results_distinguish: a precision särskjutning is not imported (#727)', () => {
     const row = fixtureResultRow({
       results: [fixtureStationResult({ stations_id: 1, points: 40 })],
+      results_finals: [fixtureStationResult({ id: 999, finals: 1, stations_id: 1, points: 48 })],
       results_distinguish: [
         fixtureStationResult({ id: 998, distinguish: 1, stations_id: 1, points: 49 }),
       ],
     });
-    const mapped = mapStationResultsToSeries(row, 5);
-
-    expect(mapped).toHaveLength(2);
-    expect(mapped[1]).toMatchObject({
-      position: 2,
-      isFinal: false,
-      isShootOff: true,
-      totalOverrideTenths: 490,
-    });
+    expect(mapStationResultsToSeries(row, 5).map((s) => s.totalOverrideTenths)).toEqual([400, 480]);
   });
 
   it('returns [] when a result row has no station results at all', () => {

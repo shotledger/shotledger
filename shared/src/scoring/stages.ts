@@ -5,8 +5,6 @@
 export interface StagedSeriesTotal {
   stage: string | null;
   isSighter: boolean;
-  /** A särskjutning series is never part of a delmoment result (S2). Absent = false. */
-  isShootOff?: boolean;
   totalTenths: number;
 }
 
@@ -30,7 +28,7 @@ export function stageSubtotals(
   return stages.map((stage) => ({
     stage,
     totalTenths: series
-      .filter((entry) => entry.stage === stage && !entry.isSighter && entry.isShootOff !== true)
+      .filter((entry) => entry.stage === stage && !entry.isSighter)
       .reduce((sum, entry) => sum + entry.totalTenths, 0),
   }));
 }

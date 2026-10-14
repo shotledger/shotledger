@@ -22,13 +22,10 @@ import {
 import type { EntryShot } from '@shotledger/shared/src/scoring/entry';
 import { stageSubtotals, type StageSubtotal } from '@shotledger/shared/src/scoring/stages';
 import {
-  SERIES_SECTION_ORDER,
   seriesAverageTenths,
   seriesInnerTenAverage,
-  seriesSectionOf,
   sessionInnerTenCount,
   sessionResults,
-  type SeriesSectionKey,
   type SessionResults,
 } from '@shotledger/shared/src/scoring/totals';
 import { totalOnlyShotCount } from '@shotledger/shared/src/scoring/volume';
@@ -61,8 +58,6 @@ export interface BrowseSeries {
   photo: PhotoRef;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series: its own section, never part of a score (#727 PR C, S1/S2). */
-  isShootOff: boolean;
   shots: EntryShot[];
   /** The shots' sum, or the stored total of an imported series with no shots. */
   totalTenths: number;
@@ -101,7 +96,6 @@ function browseSession(
     photo: photoAt(seriesPhotos, row.position),
     isSighter: row.isSighter,
     isFinal: row.isFinal,
-    isShootOff: row.isShootOff,
     shots: row.shots.map(({ valueTenths, isInnerTen }) => ({ valueTenths, isInnerTen })),
     totalTenths: row.totalOverride
       ? row.totalOverride.tenths
@@ -113,7 +107,6 @@ function browseSession(
   const forResults = session.series.map((row) => ({
     isSighter: row.isSighter,
     isFinal: row.isFinal,
-    isShootOff: row.isShootOff,
     shots: row.shots,
     totalOverride: row.totalOverride
       ? {
@@ -144,24 +137,21 @@ function browseSession(
 }
 
 export interface SeriesSection {
-  /** Titled only when a final or a shoot-off splits the session. */
-  title: SeriesSectionKey | null;
+  /** Titled only when a final splits the session in two. */
+  title: 'main' | 'final' | null;
   series: BrowseSeries[];
 }
 
-/**
- * The detail's series groups: main round, final, shoot-off (#727 PR C, S4);
- * an empty group is left out. The main round alone goes untitled.
- */
+/** The detail's series groups; an empty group is left out. */
 export function seriesSections(series: readonly BrowseSeries[]): SeriesSection[] {
-  const sections = SERIES_SECTION_ORDER.map((title) => ({
-    title,
-    series: series.filter((row) => seriesSectionOf(row) === title),
-  })).filter((section) => section.series.length > 0);
-  if (sections.length === 1 && sections[0]!.title === 'main') {
-    return [{ title: null, series: sections[0]!.series }];
-  }
-  return sections;
+  const main = series.filter((row) => !row.isFinal);
+  const final = series.filter((row) => row.isFinal);
+  if (final.length === 0) return main.length === 0 ? [] : [{ title: null, series: main }];
+  const sections: SeriesSection[] = [
+    { title: 'main', series: main },
+    { title: 'final', series: final },
+  ];
+  return sections.filter((section) => section.series.length > 0);
 }
 
 /** Every live session, newest first. */

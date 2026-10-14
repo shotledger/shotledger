@@ -39,8 +39,6 @@ export interface SeriesRow {
   position: number;
   isSighter: boolean;
   isFinal: boolean;
-  /** A särskjutning series: shown in its own section, never part of a score (#727 PR C, S1/S2). */
-  isShootOff: boolean;
   photoUri: string | null;
   shots: EntryShot[];
   totalTenths: number;
@@ -99,14 +97,7 @@ const EMPTY: SessionDetail = {
   session: null,
   program: null,
   seriesRows: [],
-  results: {
-    beforeFinalTenths: 0,
-    finalTenths: 0,
-    totalTenths: 0,
-    hasFinal: false,
-    shootOffTenths: 0,
-    hasShootOff: false,
-  },
+  results: { beforeFinalTenths: 0, finalTenths: 0, totalTenths: 0, hasFinal: false },
   stageSubtotals: [],
   stageStats: [],
   seriesAverageTenths: null,
@@ -160,13 +151,11 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
       ? row.totalOverrideTenths!
       : shots.reduce((sum, shot) => sum + shot.valueTenths, 0);
     const isSighter = row.isSighter === 1;
-    const isShootOff = row.isShootOff === 1;
     return {
       id: row.id,
       position: row.position,
       isSighter,
       isFinal: row.isFinal === 1,
-      isShootOff,
       photoUri: row.photoUri,
       shots,
       totalTenths,
@@ -178,7 +167,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
         !isTotalOverride &&
         guldThreshold !== null &&
         !isSighter &&
-        !isShootOff &&
         tenthsToScore(totalTenths) >= guldThreshold,
       timeLimitSeconds: skeleton[row.position - 1]?.timeLimitSeconds ?? null,
       stage: skeleton[row.position - 1]?.stage ?? null,
@@ -191,7 +179,6 @@ export function loadSessionDetail(sessionId: string): SessionDetail {
   const forResults = seriesRows.map((row) => ({
     isSighter: row.isSighter,
     isFinal: row.isFinal,
-    isShootOff: row.isShootOff,
     shots: row.shots,
     totalOverride: row.isTotalOverride
       ? {

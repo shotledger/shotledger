@@ -1,10 +1,9 @@
 // Which two series a "move up"/"move down" press swaps.
 //
 // Kept pure so the rule is testable without a database. The rule is narrower
-// than "swap with the row above": a session is up to three ordered sections
-// (main, final, §6.3; shoot-off, #727 PR C S5), and a series must not cross a
-// boundary — a main series dragged into the final would silently change what
-// it counts towards.
+// than "swap with the row above": a session is two ordered sections (main and
+// final, §6.3), and a series must not cross that boundary — a main series
+// dragged into the final would silently change what it counts towards.
 //
 // `position` is not just a label. For a fixed-format program it indexes the
 // per-series time limits, so swapping positions is exactly right for the case
@@ -12,19 +11,10 @@
 // it was actually shot) — the series lands in the slot it belongs to and
 // takes that slot's time limit with it.
 
-import { seriesSectionOf } from '@shotledger/shared';
-
 export interface MovableSeries {
   id: string;
   position: number;
   isFinal: boolean;
-  isShootOff?: boolean;
-}
-
-/** The series of `series`' own section, in position order. */
-function sectionWith(rows: readonly MovableSeries[], series: MovableSeries): MovableSeries[] {
-  const key = seriesSectionOf(series);
-  return rows.filter((row) => seriesSectionOf(row) === key).sort((a, b) => a.position - b.position);
 }
 
 /**
@@ -39,7 +29,9 @@ export function seriesSwapTarget(
   const series = rows.find((row) => row.id === id);
   if (!series) return null;
 
-  const section = sectionWith(rows, series);
+  const section = rows
+    .filter((row) => row.isFinal === series.isFinal)
+    .sort((a, b) => a.position - b.position);
 
   const index = section.findIndex((row) => row.id === id);
   const neighbor = section[direction === 'up' ? index - 1 : index + 1];
@@ -82,7 +74,9 @@ export function seriesDropPlan(
   const series = rows.find((row) => row.id === id);
   if (!series) return [];
 
-  const section = sectionWith(rows, series);
+  const section = rows
+    .filter((row) => row.isFinal === series.isFinal)
+    .sort((a, b) => a.position - b.position);
 
   const fromIndex = section.findIndex((row) => row.id === id);
   if (fromIndex === -1) return [];

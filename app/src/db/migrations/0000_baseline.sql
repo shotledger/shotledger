@@ -138,7 +138,6 @@ CREATE TABLE `series` (
 	`is_total_override` integer DEFAULT 0 NOT NULL,
 	`total_override_tenths` integer,
 	`total_override_shot_count` integer,
-	`is_shoot_off` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
