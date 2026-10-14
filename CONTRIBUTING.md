@@ -121,8 +121,9 @@ slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 
 #### CI runners
 
-Every workflow job takes its runner from the `CI_RUNNER` repository
-variable (Settings → Secrets and variables → Actions → Variables):
+Every workflow job except the Android emulator run (`e2e.yml`, which
+needs KVM and stays on GitHub's `ubuntu-latest`) takes its runner from the
+`CI_RUNNER` repository variable (Settings → Secrets and variables → Actions → Variables):
 
 | `CI_RUNNER`                    | Jobs run on                                       |
 | ------------------------------ | ------------------------------------------------- |

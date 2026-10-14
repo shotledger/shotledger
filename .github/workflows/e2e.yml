@@ -28,6 +28,10 @@ concurrency:
 jobs:
   maestro:
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'e2e') }}
+    # The one job that ignores CI_RUNNER: the emulator needs KVM and the
+    # Gradle build about 8 GB of RAM, which GitHub's ubuntu-latest provides.
+    # Untested on Blacksmith's 2-vCPU runner, so switching CI there leaves
+    # this job on GitHub's minutes.
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
