@@ -63,6 +63,10 @@ create one; no screen does.
   The existing shoot-off chip stays.
 - **S5** Moving a series (drag on the phone) stays within its section; a
   shoot-off series is its own section.
+- **S5a** Series entry: Next Series never steps from another section into a
+  shoot-off, never adds a series after the last shoot-off series, and "Series
+  N of M" counts the series of its own section. An open shoot-off series shows
+  no gold hint and no gold celebration.
 - **S6** Fält is unchanged: a fält shoot-off station is already outside the
   result (`scoringStations`).
 
@@ -74,7 +78,15 @@ create one; no screen does.
 2. A session imported from an old export that carried a stored inner-ten
    count with no shots now shows 0 inner tens.
 
-## 3. Known limits
+## 3. Defaults chosen (say if you want them the other way)
+
+- **No guldserie from a shoot-off.** A sighter counts toward a guldserie
+  (your ruling of 2026-09-17), but a shoot-off is left out, since it "does
+  not count". It changes nothing today: an imported shoot-off has no shots.
+- **Section order** main round, final, shoot-off, matching Webshooter's
+  `results`, `results_finals`, `results_distinguish`.
+
+## 3a. Known limits
 
 - **No screen creates a ring shoot-off series.** Phone and web enter only
   main and final series; a shoot-off arrives by import or sync. Adding a
@@ -95,9 +107,12 @@ create one; no screen does.
 | S4  | session-detail screen test (phone) and `browse.test.ts` `seriesSections` (web): the Shoot-off part and section                                                                                                                                                                                                                                               |
 | S5  | `series-move.test.ts`: a move never crosses into or out of the shoot-off section                                                                                                                                                                                                                                                                             |
 
-A property test in `totals.property.test.ts`: for any list of series,
-`totalTenths` equals the total of the same list with every shoot-off series
-removed, and `shootOffTenths` equals their sum.
+Properties (fast-check) in `totals.test.ts` and
+`shoot-off-scope.test.ts`: for any list of series, removing every shoot-off
+leaves before-final, final, total, the series average and the inner-ten
+figures unchanged; `shootOffTenths` is the sum of the non-sighter shoot-off
+series; analytics totals and session points are unchanged by adding
+shoot-off series, in both statistics scopes.
 
 ## 5. Gates
 
