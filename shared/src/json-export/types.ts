@@ -119,6 +119,8 @@ export interface FirearmExport {
   roundCount: number;
   maintenanceIntervalRounds: number | null;
   roundsSinceMaintenance: number;
+  /** When it was archived (sold, returned or retired), or null while active (#799). */
+  archivedAt: string | null;
 }
 
 /** One ISSUED license. A renewal is another row, not an edit of this one, so a
@@ -463,6 +465,14 @@ export const firearmExportSchema = z.object({
     .min(0)
     .default(0)
     .describe('Rounds fired since the last maintenance event.'),
+  archivedAt: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe(
+      'When the shooter archived it (sold, returned or retired), as an ISO timestamp; ' +
+        'null while it is in use. Its sessions and licenses are kept either way.',
+    ),
 });
 
 export const licenseExportSchema = z.object({

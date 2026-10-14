@@ -14,13 +14,14 @@ import { EmptyState } from '@/components/empty-state';
 import { FAB } from '@/components/fab';
 import { ListRow } from '@/components/list-row';
 import { Screen } from '@/components/screen';
+import { SecondaryButton } from '@/components/secondary-button';
 import { SegmentedControl } from '@/components/segmented-control';
 import { db } from '@/db/client';
 import { listAmmoLots } from '@/db/queries/ammo-lots';
 import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
 import { formatAmmoRecipe } from '@/features/ammo/format-ammo-recipe';
 import { requiresLicense } from '@/features/firearms/completeness';
-import { useFirearmsList } from '@/features/firearms/use-firearms-list';
+import { useFirearmsList, type FirearmListRow } from '@/features/firearms/use-firearms-list';
 import { Spacing } from '@/theme/tokens';
 
 type Section = 'firearms' | 'ammo';
@@ -41,8 +42,70 @@ export default function FirearmsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [section, setSection] = useState<Section>('firearms');
-  const { rows: firearmRows } = useFirearmsList();
+  const [showArchived, setShowArchived] = useState(false);
+  const { rows: allFirearmRows } = useFirearmsList();
+  // Archived firearms (#799) sit behind a toggle under the active ones.
+  const firearmRows = allFirearmRows.filter((row) => !row.isArchived);
+  const archivedRows = allFirearmRows.filter((row) => row.isArchived);
   const ammoRows = listAmmoLots(db).map((lot) => ({ lot, usage: getAmmoLotUsage(db, lot.id) }));
+
+  function renderFirearmRow(row: FirearmListRow) {
+    return (
+      <ListRow
+        key={row.id}
+        testID={`firearm-${row.id}`}
+        title={`${row.make} ${row.model}`}
+        subtitle={
+          row.weaponType ? t(`firearms.weaponType${capitalize(row.weaponType)}`) : undefined
+        }
+        onPress={() => router.push(`/firearms/${row.id}`)}
+        // An archived firearm (#799) carries no status: its licence and
+        // maintenance are history, not something to act on.
+        trailing={
+          row.isArchived ? undefined : (
+            <View style={{ flexDirection: 'row', gap: Spacing.two }}>
+              {/* "No License" and "Incomplete" together said the same
+                  thing twice and squeezed the name into one-word-per-line
+                  wrapping (seen on the emulator with six imported
+                  firearms). Incomplete already means a licence is among
+                  the missing details, and the detail screen names them.
+
+                  A firearm that needs no licence shows no licence chip at
+                  all: "No License" on an air pistol reads as a gap, and
+                  there is none to fill (#365). */}
+              {requiresLicense(row.weaponType) &&
+                !(row.isIncomplete && row.licenseStatus === 'none') && (
+                  <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
+                )}
+              {row.maintenanceStatus !== 'unknown' && (
+                <Chip
+                  label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
+                  tone={MAINTENANCE_TONE[row.maintenanceStatus]}
+                />
+              )}
+              {/* An imported firearm shows "No License" because nothing
+                  on file says otherwise — which reads as a fact about
+                  the shooter rather than a gap in the data (#320). */}
+              {row.isIncomplete && (
+                <Chip
+                  testID={`firearm-incomplete-${row.id}`}
+                  label={t('firearms.incomplete')}
+                  tone="primary"
+                />
+              )}
+              {row.licenseActivityStatus && (
+                <Chip
+                  testID={`firearm-barometer-${row.id}`}
+                  label={t(`compliance.licenseActivity${capitalize(row.licenseActivityStatus)}`)}
+                  tone={LICENSE_ACTIVITY_TONE[row.licenseActivityStatus]}
+                />
+              )}
+            </View>
+          )
+        }
+      />
+    );
+  }
 
   return (
     <Screen
@@ -65,65 +128,27 @@ export default function FirearmsScreen() {
       />
 
       {section === 'firearms' ? (
-        firearmRows.length === 0 ? (
-          <EmptyState title={t('firearms.emptyTitle')} body={t('firearms.emptyBody')} />
-        ) : (
-          <Card>
-            {firearmRows.map((row) => (
-              <ListRow
-                key={row.id}
-                testID={`firearm-${row.id}`}
-                title={`${row.make} ${row.model}`}
-                subtitle={
-                  row.weaponType ? t(`firearms.weaponType${capitalize(row.weaponType)}`) : undefined
-                }
-                onPress={() => router.push(`/firearms/${row.id}`)}
-                trailing={
-                  <View style={{ flexDirection: 'row', gap: Spacing.two }}>
-                    {/* "No License" and "Incomplete" together said the same
-                        thing twice and squeezed the name into one-word-per-line
-                        wrapping (seen on the emulator with six imported
-                        firearms). Incomplete already means a licence is among
-                        the missing details, and the detail screen names them.
-
-                        A firearm that needs no licence shows no licence chip at
-                        all: "No License" on an air pistol reads as a gap, and
-                        there is none to fill (#365). */}
-                    {requiresLicense(row.weaponType) &&
-                      !(row.isIncomplete && row.licenseStatus === 'none') && (
-                        <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
-                      )}
-                    {row.maintenanceStatus !== 'unknown' && (
-                      <Chip
-                        label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
-                        tone={MAINTENANCE_TONE[row.maintenanceStatus]}
-                      />
-                    )}
-                    {/* An imported firearm shows "No License" because nothing
-                        on file says otherwise — which reads as a fact about
-                        the shooter rather than a gap in the data (#320). */}
-                    {row.isIncomplete && (
-                      <Chip
-                        testID={`firearm-incomplete-${row.id}`}
-                        label={t('firearms.incomplete')}
-                        tone="primary"
-                      />
-                    )}
-                    {row.licenseActivityStatus && (
-                      <Chip
-                        testID={`firearm-barometer-${row.id}`}
-                        label={t(
-                          `compliance.licenseActivity${capitalize(row.licenseActivityStatus)}`,
-                        )}
-                        tone={LICENSE_ACTIVITY_TONE[row.licenseActivityStatus]}
-                      />
-                    )}
-                  </View>
-                }
-              />
-            ))}
-          </Card>
-        )
+        <>
+          {firearmRows.length === 0 ? (
+            <EmptyState title={t('firearms.emptyTitle')} body={t('firearms.emptyBody')} />
+          ) : (
+            <Card>{firearmRows.map(renderFirearmRow)}</Card>
+          )}
+          {archivedRows.length > 0 && (
+            <SecondaryButton
+              label={
+                showArchived
+                  ? t('firearms.hideArchived')
+                  : t('firearms.showArchived', { count: archivedRows.length })
+              }
+              onPress={() => setShowArchived((shown) => !shown)}
+              testID="firearms-toggle-archived"
+            />
+          )}
+          {showArchived && archivedRows.length > 0 && (
+            <Card>{archivedRows.map(renderFirearmRow)}</Card>
+          )}
+        </>
       ) : ammoRows.length === 0 ? (
         <EmptyState title={t('ammo.emptyTitle')} body={t('ammo.emptyBody')} />
       ) : (
