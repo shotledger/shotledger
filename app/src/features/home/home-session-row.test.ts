@@ -123,9 +123,9 @@ describe('deriveSessionShapeFromContent', () => {
 });
 
 describe('formatSessionTotal', () => {
-  it('appends "p" with no whitespace', () => {
-    expect(formatSessionTotal(311)).toBe('311p');
-    expect(formatSessionTotal(0)).toBe('0p');
+  it('prints the number alone, with no "p" suffix', () => {
+    expect(formatSessionTotal(311)).toBe('311');
+    expect(formatSessionTotal(0)).toBe('0');
   });
 });
 
@@ -185,6 +185,7 @@ describe('filterSessionRowsByShape', () => {
       tags: [],
       falt: null,
       shape: 'series',
+      extraRounds: null,
     },
     {
       id: '2',
@@ -197,6 +198,7 @@ describe('filterSessionRowsByShape', () => {
       tags: [],
       falt: null,
       shape: 'roundsOnly',
+      extraRounds: null,
     },
     {
       id: '3',
@@ -209,6 +211,7 @@ describe('filterSessionRowsByShape', () => {
       tags: [],
       falt: null,
       shape: null,
+      extraRounds: null,
     },
   ];
 

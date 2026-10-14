@@ -10,7 +10,8 @@ different questions.
   the same all day whichever gun you are holding.
 
 Written together they look like one thing — "C 2" — but that is a display
-convention, not a value. Keeping them separate is what lets you ask "how am I
+convention, not a value. A session's own screen spells the pair out instead,
+"Weapon group C, class 2", so it reads without knowing the code. Keeping them separate is what lets you ask "how am I
 shooting the C-gun?" and "how am I doing in class 2?" independently.
 
 ## Weapon groups

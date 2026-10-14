@@ -5,13 +5,14 @@
 Du kan logga ett pass i samma stund som du installerat appen. Ingenting behöver
 ställas in först.
 
-1. **Start → nytt pass.** Det börjar på grenen och vapnet från ditt senaste pass;
-   ändra dem om dagen är en annan. Allt annat i formuläret har ett vettigt
-   standardvärde.
+1. **Hem → Starta.** Knappen bär grenen du sköt senast, och formuläret öppnar
+   på den grenen och det passets vapen; ändra dem om dagen är en annan. Allra
+   första gången erbjuder Hem **Logga ditt första pass** i stället. Allt annat i
+   formuläret har ett vettigt standardvärde.
 2. **Tryck in skotten, sedan Nästa serie.** Knappsatsen går till nästa skott
    av sig själv, så en femskottsserie är fem tryck; **Nästa serie** sparar den
    och öppnar nästa.
-3. Det var det.
+3. Det var det. Allt sparas medan du håller på.
 
 Sedan, när du har fem lugna minuter, gör du resten nedan — det är det som gör
 en lista med poäng till en loggbok som vet vilken klass (en _class_) du sköt i.
@@ -58,8 +59,12 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
 
 ### 3. Starta ett pass
 
-**Start → nytt pass.** Formuläret öppnar på grenen och vapnet från ditt senaste
-pass, så en vanlig kväll behöver inget mer än **Skapa pass**. Du väljer:
+På **Hem** trycker du **Starta**. Knappen bär grenen från ditt senaste pass
+("Starta Precision"), och formuläret öppnas med den grenen och det passets
+vapen redan valda, så en vanlig kväll behöver inget mer än **Skapa pass**;
+**Ändra**, bredvid vapnet, öppnar samma formulär för något annat. Allra första
+gången erbjuder Hem **Logga ditt första pass** i stället. I formuläret väljer
+du:
 
 - **Reglemente** — bara om du har fler än ett påslaget. Det avgör vilka grenar
   nästa rad erbjuder, så att du väljer mellan SPSF:s och SvSF:s världar i
@@ -114,7 +119,19 @@ lämnar skärmen, annars sparas inte det du skrev i den.
 
 ### 5. Titta på det efteråt
 
-**Statistik** visar hur du utvecklas. **Start** visar dina senaste pass.
+**Statistik** visar hur du utvecklas, och summorna: avlossade skott, pass,
+tävlingar. **Hem** handlar om i dag. Uppifrån:
+
+- din **licensaktivitet** i ord, när efterlevnadsprofilen är på, med datumet
+  för nästa pass du behöver;
+- **Starta**, på grenen och vapnet du använde senast;
+- ditt **senaste pass**, med dess resultat;
+- **Senaste** passen, och **Alla pass** för hela loggboken.
+
+Varje rad ger datumet och sedan resultatet: totalen till höger, snittet per
+serie och innertiorna under namnet, "0X" inräknat. Ett fältpass skrivs som
+träff och figurer, ett skottpass som antal skott. Passtypen (Träning, Tävling)
+utelämnas på en rad vars tagg redan säger den, som _Träning_.
 
 Om din licensförnyelse kräver dokumenterad skjutaktivitet slår du på den svenska
 efterlevnadsprofilen i Inställningar och läser

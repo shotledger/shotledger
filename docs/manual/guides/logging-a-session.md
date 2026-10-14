@@ -5,9 +5,12 @@ and inside those are shots.
 
 ## The session header
 
-The top of a session names it and then, on one line, the date it was shot, its
-type, your weapon group and class, the firearm and the competition. Your notes
-follow underneath. Both matter most for a session you did not type in yourself:
+The session's name is the title at the top of the screen, once. Under it, one
+line says what the session was: the date it was shot, its type and its
+discipline. The type is left out when a tag already says it, such as
+_Träning_. A second line says what it was shot with and under: the match
+format, your weapon group and class in words ("Weapon group C, class 2"), the
+firearm, the ammunition and the competition. Your notes follow underneath. Both matter most for a session you did not type in yourself:
 an import carries its own date and puts its explanation — which firearm, why a
 session is flagged for review — in the notes.
 
@@ -89,10 +92,10 @@ you correct it.
 ## Sighters
 
 Mark a series as a **sighter** with **Sighter** above the keys while you enter
-it, and it stops counting
-towards the session total. Its score is still shown, with an asterisk —
-**45\*** — because a sighter is deliberately unscored rather than missing a
-score, and what you shot is still worth seeing.
+it, and it stops counting towards the session total. Its score is still shown,
+beside the Sighter label and in quieter text, as **45 · not counted** — because
+a sighter is deliberately unscored rather than missing a score, and what you
+shot is still worth seeing.
 
 That is the rule inside a session. Across sessions it changes — see
 [How sighters count](../explanation/how-sighters-count.md).
@@ -109,14 +112,14 @@ Each station is six shots. On one screen you tap **Hits** (0–6), **Figures
 Hit**, and **Figures**, how many figures the station had. Five hits in three of
 four figures reads **5/3 of 4**: you missed one shot or put two in the same
 figure, and one figure went untouched. Leave Figures at **–** if you don't
-know it; the station then reads **5/3**. The session total shows
-"26 (30) hits / 22 figures": your hits, with the hits possible — six per
-station — in brackets. Scratched and shoot-off stations count for neither. In
-point field it is one sum instead, where every hit is a point and every figure
-hit is another. When every station has its figures recorded, the total adds
-them up the same way: "26 (30) hits / 22 (24) figures". Home, the sessions
-list and Records show the result the same way, and a session with no scoring
-station yet reads "No stations".
+know it; the station then reads **5/3**. The session's result is two labelled
+numbers, **Hits** "26 of 30" and **Figures** "22": your hits out of the hits
+possible, six per station, and the figures you hit. Scratched and shoot-off
+stations count for neither. In point field it is one sum instead, where every
+hit is a point and every figure hit is another. When every station has its
+figures recorded, the figures add them up the same way: "22 of 24". Home, the
+sessions list and Records write it on one line, "Hits 26 of 30 · Figures 22 of
+24", and a session with no scoring station yet reads "No stations".
 
 Where the organiser put out a **ringed figure**, type the points you scored
 under **Points**, and what the figure was worth after "of" if you know it. A
@@ -155,7 +158,8 @@ confirm before the series and its shots are removed.
 
 ## The stopwatch and sights
 
-Two buttons sit above the series list (not in a field shooting session):
+Two text buttons sit under the session's result, above the series list (not
+in a field shooting session):
 
 - **Stopwatch** — opens over the session. It keeps running when you close it,
   because it is timing your session rather than the panel. The buttons work
@@ -171,7 +175,9 @@ screen.
 
 ## What the summary tells you
 
-Under the series list:
+The result comes first, right under the session's name, with the total in
+large type. Totals are whole numbers with no suffix, the same on every screen;
+an average keeps its decimal.
 
 | Figure                | What it means                                                       |
 | --------------------- | ------------------------------------------------------------------- |
@@ -245,15 +251,15 @@ are scored in hits on figures, with no rings to draw.
 
 ## Sharing or deleting a session from Home
 
-On Home, swipe a session left to reveal two icons: share and trash. Deleting
+On Home, swipe a session under **Recent** left to reveal two icons: share and
+trash. Deleting
 asks you to confirm first.
 
 ## Finding a session again
 
-Home shows your ten most recent sessions. **See all**, at the end of that list,
-opens the full logbook — every session you have ever logged, newest first. It
-sits at the bottom because that is where you are when the ten latest did not
-have what you were looking for.
+Home shows your last session and the nine before it under **Recent**. **All
+Sessions**, beside that heading, opens the full logbook — every session you
+have ever logged, newest first.
 
 The logbook opens on the sessions themselves. Search is above them; everything
 else is folded behind one **Filters** row, which shows what is currently
@@ -268,6 +274,8 @@ Filter by any combination of:
   The same choices the [Statistics](statistics.md) tab offers, because it is the
   same question
 - **training or competition**
+- **series or rounds** — sessions logged as scored series, or as a count of
+  rounds fired
 - **discipline**
 - **tag**
 - **firearm**, including _No firearm recorded_ for sessions where none was set

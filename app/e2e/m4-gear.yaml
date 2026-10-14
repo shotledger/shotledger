@@ -89,8 +89,8 @@ appId: app.shotledger
 
 # --- Log a session against this firearm (reusing m3 series-entry steps) ---
 - tapOn: 'Home'
-- tapOn:
-    id: 'new-session-fab'
+# Still no session, so Home's empty state offers the first (#822 removed the FAB).
+- tapOn: 'Log Your First Session'
 - extendedWaitUntil:
     visible: 'Discipline'
     timeout: 15000

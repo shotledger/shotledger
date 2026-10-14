@@ -5,13 +5,14 @@
 You can log a session the minute you install the app. Nothing has to be set up
 first.
 
-1. **Home → new session.** It starts on the discipline and firearm of your last
-   session; change them if today is different. Everything else on the form has
-   a sensible default.
+1. **Home → Start.** The button names the discipline you shot last, and the
+   form opens on that discipline and that session's firearm; change them if
+   today is different. The very first time, Home offers **Log Your First
+   Session** instead. Everything else on the form has a sensible default.
 2. **Tap the shots, then Next Series.** The keypad moves to the next shot on
    its own, so a five-shot series is five taps; **Next Series** saves it and
    opens the next.
-3. That is it.
+3. That is it. It is saved as you go.
 
 Then, when you have five quiet minutes, do the rest below — it is what turns a
 list of scores into a logbook that knows which class (sv _klass_) you shot in.
@@ -57,9 +58,12 @@ your own, and stops asking you every session. You can always override it.
 
 ### 3. Start a session
 
-**Home → new session.** The form opens on the discipline and firearm of your
-last session, so a usual evening needs nothing more than **Create Session**.
-You choose:
+On **Home**, tap **Start**. The button names the discipline of your last
+session ("Start Precision"), and the form opens with that discipline and that
+session's firearm already chosen, so a usual evening needs nothing more than
+**Create Session**; **Change**, beside the firearm, opens the same form for
+anything else. The very first time, Home offers **Log Your First Session**
+instead. On the form you choose:
 
 - **Regulation** — only if you have more than one turned on. It decides which
   disciplines the next row offers, so you are choosing between SPSF's and
@@ -115,7 +119,20 @@ the screen, or what you typed in it is not kept.
 
 ### 5. Look at it afterwards
 
-**Statistics** shows how you are trending. **Home** shows your recent sessions.
+**Statistics** shows how you are trending, and the totals: shots fired,
+sessions, competitions. **Home** is about today. From the top:
+
+- your **license activity** in words, when the compliance profile is on, with
+  the date of the next session you need;
+- **Start**, on the discipline and firearm you used last;
+- your **last session**, with its result;
+- **Recent** sessions, and **All Sessions** for the full logbook.
+
+Each row gives the date, then the result: the total on the right, the average
+per series and the inner tens under the name, "0X" included. A field shooting
+session reads as hits and figures, a round count as its rounds. The session
+type (Training, Competition) is left off a row whose tag already says it, such
+as _Träning_.
 
 If your license renewal needs documented range activity, turn on the Swedish
 compliance profile in Settings and see [License activity](guides/license-activity.md).
