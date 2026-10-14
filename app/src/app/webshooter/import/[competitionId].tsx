@@ -12,7 +12,7 @@ import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
 import { OptionPicker } from '@/components/option-picker';
-import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { db } from '@/db/client';
@@ -137,7 +137,7 @@ export default function WebshooterImportReviewScreen() {
                 </View>
               )}
               {importable && (
-                <PrimaryButton
+                <SecondaryButton
                   label={reimport ? t('webshooter.reimport') : t('webshooter.import')}
                   onPress={() => void onConfirm(item)}
                   testID={`webshooter-confirm-${item.row.id}`}

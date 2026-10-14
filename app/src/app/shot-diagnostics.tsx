@@ -14,6 +14,7 @@ import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
 import { useKeepAwakeOnScreen } from '@/features/timer/use-keep-awake-on-screen';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { StatTile } from '@/components/stat-tile';
 import { TextField } from '@/components/text-field';
@@ -116,7 +117,7 @@ export default function ShotDiagnosticsScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {t('shotDiagnostics.markHint')}
         </ThemedText>
-        <PrimaryButton
+        <SecondaryButton
           label={t('shotDiagnostics.markShot')}
           onPress={diagnostics.markShot}
           disabled={!diagnostics.recording}
@@ -156,7 +157,7 @@ export default function ShotDiagnosticsScreen() {
           placeholder={t('shotDiagnostics.notePlaceholder')}
           testID="diagnostics-note"
         />
-        <PrimaryButton
+        <SecondaryButton
           label={t('shotDiagnostics.export')}
           onPress={() => {
             void diagnostics.exportRecording(note);

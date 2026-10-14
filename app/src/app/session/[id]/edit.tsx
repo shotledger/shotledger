@@ -33,6 +33,7 @@ import { OptionPicker, type PickerOption } from '@/components/option-picker';
 import { SegmentedControl } from '@/components/segmented-control';
 import type { SeriesEntryMode } from '@/features/session/series-entry-choice';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -204,7 +205,7 @@ export default function EditSessionScreen() {
         />
 
         <ThemedText type="smallBold">{t('session.date')}</ThemedText>
-        <PrimaryButton
+        <SecondaryButton
           label={dates.date(startedAt)}
           onPress={() => setDatePickerOpen(true)}
           testID="edit-date"
@@ -432,7 +433,7 @@ export default function EditSessionScreen() {
             onSubmitEditing={onAddTag}
             testID="edit-tag-input"
           />
-          <PrimaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
+          <SecondaryButton label={t('session.addTag')} onPress={onAddTag} testID="edit-tag-add" />
         </View>
       </Card>
 
