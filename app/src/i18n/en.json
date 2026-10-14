@@ -719,7 +719,7 @@
     "none": "None",
     "decimalScoring": "Decimal Scoring",
     "name": "Session Name",
-    "nameHint": "Filled in automatically from the choices below — edit it if you want another one.",
+    "nameHint": "Filled in automatically from your choices — edit it if you want another one.",
     "create": "Create Session",
     "noSeries": "No Series Yet",
     "noSeriesBody": "Add your first series and enter the shots.",
@@ -733,7 +733,6 @@
     "beforeFinal": "Before Final",
     "final": "Final",
     "total": "Total",
-    "seriesTotal": "Series Total",
     "timeLimit": "{{seconds}} s",
     "goldSeries": "Gold Series",
     "guldAt": "Gold at {{points}} pts",
@@ -770,7 +769,7 @@
     "deleteSeries": "Delete Series",
     "deleteSeriesConfirmTitle": "Delete Series {{position}}?",
     "deleteSeriesConfirmBody": "Its shots will be removed too. This can't be undone.",
-    "newSeriesHint": "This series is saved when you tap Save.",
+    "newSeriesHint": "This series is saved when you tap Save Series or Next Series.",
     "stopwatch": {
       "start": "Start",
       "stop": "Stop",
@@ -1670,5 +1669,19 @@
     "filtersActive": "Filters ({{count}})",
     "removeFilter": "Remove filter {{label}}",
     "clearFilters": "Clear All"
+  },
+  "entryA": {
+    "series": "Series",
+    "sessionTotal": "Session",
+    "lastTime": "Last Time",
+    "innerTens": "{{count}}X",
+    "nextSeries": "Next Series",
+    "photo": "Photo",
+    "seriesOfTitle": "Series {{position}} of {{count}}",
+    "seriesShort": "S{{position}} {{total}}",
+    "seriesShortSighter": "S{{position}} {{total}} sighter",
+    "details": "Details",
+    "detailsSummary": "Logging, name, location, ammo, tags and more",
+    "fromLastSession": "Discipline and firearm from your last session."
   }
 }

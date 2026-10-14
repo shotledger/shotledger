@@ -18,6 +18,7 @@ import {
   preferredEventId,
   shooterClassesInOrder,
 } from '@shotledger/shared/src/disciplines/session-defaults';
+import type { LastSessionDefaults } from '@shotledger/shared/src/disciplines/last-session-defaults';
 import { REGULATIONS } from '@shotledger/shared/src/regulations/registry';
 import type { ScoringMode } from '@shotledger/shared/src/scoring/entry';
 import { parseSeriesText, type SeriesTextError } from '@shotledger/shared/src/scoring/series-text';
@@ -111,7 +112,17 @@ export function classesFor(form: Defaults & Pick<EntryForm, 'weaponGroup'>): str
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export function initialForm(now: Date, profile: ShooterProfile): EntryForm {
+/**
+ * A fresh form. `preselect` is the last session's discipline and firearm
+ * (running-totals.ts `preselection`), applied as picking them by hand would
+ * be, as the phone's New Session does (#822); null keeps the first-run
+ * defaults.
+ */
+export function initialForm(
+  now: Date,
+  profile: ShooterProfile,
+  preselect: LastSessionDefaults | null = null,
+): EntryForm {
   const regulationId = REGULATIONS[0]!.id;
   const disciplineId = firstRingDiscipline(regulationId);
   const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -143,7 +154,11 @@ export function initialForm(now: Date, profile: ShooterProfile): EntryForm {
     profile,
     eligibilityYear: now.getFullYear(),
   };
-  return { ...form, eventId: preferredEvent(form) };
+  let fresh: EntryForm = { ...form, eventId: preferredEvent(form) };
+  if (preselect?.disciplineId != null && preselect.regulationId !== null) {
+    fresh = withDiscipline(fresh, preselect.disciplineId, preselect.regulationId);
+  }
+  return preselect?.firearmId != null ? { ...fresh, firearmId: preselect.firearmId } : fresh;
 }
 
 const programOf = (form: Pick<EntryForm, 'programId'>) =>
@@ -344,4 +359,23 @@ export function withRowPhoto(form: EntryForm, key: number, photo: number | undef
       return photo === undefined ? rest : { ...rest, photo };
     }),
   };
+}
+
+/**
+ * Shots per series, for the cells a row draws: the program's, else the
+ * length typed, else the discipline's — the phone's resolveSeriesLength
+ * (app/src/features/session/series-length.ts).
+ */
+export function seriesLengthOf(form: EntryForm): number {
+  return (
+    programOf(form)?.shotsPerSeries ??
+    chosenSeriesLength(form.seriesLengthText) ??
+    requireDiscipline(form.disciplineId).defaultSeriesLength
+  );
+}
+
+/** A row's shots as typed, or null while the text does not parse. */
+export function rowShots(text: string, mode: ScoringMode) {
+  const parsed = parseSeriesText(text, mode);
+  return parsed.ok ? parsed.shots : null;
 }

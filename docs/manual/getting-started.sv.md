@@ -5,11 +5,13 @@
 Du kan logga ett pass i samma stund som du installerat appen. Ingenting behöver
 ställas in först.
 
-1. **Start → nytt pass.** Välj en gren. Allt annat i formuläret har ett vettigt
+1. **Start → nytt pass.** Det börjar på grenen och vapnet från ditt senaste pass;
+   ändra dem om dagen är en annan. Allt annat i formuläret har ett vettigt
    standardvärde.
-2. **Tryck på en serie, tryck in skotten.** Knappsatsen går vidare av sig själv,
-   så en femskottsserie är fem tryck.
-3. Det var det. Allt sparas medan du håller på.
+2. **Tryck in skotten, sedan Nästa serie.** Knappsatsen går till nästa skott
+   av sig själv, så en femskottsserie är fem tryck; **Nästa serie** sparar den
+   och öppnar nästa.
+3. Det var det.
 
 Sedan, när du har fem lugna minuter, gör du resten nedan — det är det som gör
 en lista med poäng till en loggbok som vet vilken klass (en _class_) du sköt i.
@@ -56,7 +58,8 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
 
 ### 3. Starta ett pass
 
-**Start → nytt pass.** Du väljer:
+**Start → nytt pass.** Formuläret öppnar på grenen och vapnet från ditt senaste
+pass, så en vanlig kväll behöver inget mer än **Skapa pass**. Du väljer:
 
 - **Reglemente** — bara om du har fler än ett påslaget. Det avgör vilka grenar
   nästa rad erbjuder, så att du väljer mellan SPSF:s och SvSF:s världar i
@@ -73,12 +76,18 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
   på fritt format; båda går att ändra, här eller senare under Redigera pass
   fram till första skottet. En gren utan eget fast format — Träning
   (ringad tavla) — visar ingen rad för matchupplägg alls.
+- **Vapen** — valfritt.
+
+Allt annat ligger under **Detaljer**, stängt tills du öppnar det:
+
+- **Loggning** — poängsatta serier eller bara antal skott.
+- Passets **namn** och **plats**.
+- Den **ammunition** du använder, om du håller reda på det.
 - **Skott per serie** — valfritt antal, med grenens egen längd förvald.
   Serieinmatningen visar en ruta per skott, så femskottsserier i en gren med
   tioskottsserier lämnar inte längre fem tomma rutor. Frågas bara på fritt
   format: hela matchen bestämmer det redan. Det går inte att ändra i efterhand.
-- **Vapen** och, om du håller reda på det, den **ammunition** du använder. Båda
-  är valfria.
+- **Decimalräkning**, där grenen tillåter det, och **taggar**.
 
 För en **tävling** frågas du dessutom efter **vapengrupp** och **klass**,
 eftersom det är det du är anmäld i. Träning frågar inte: appen tar vapengruppen
@@ -92,11 +101,16 @@ att du inte bygger ställningarna medan laget väntar. Upplägget går inte att
 
 ### 4. Fyll i skotten medan du skjuter
 
-Tryck på serien, tryck in skotten. Knappsatsen går vidare av sig själv, så en
-femskottsserie är fem tryck och ingenting annat.
+Tryck in skotten. Knappsatsen går till nästa av sig själv, så en
+femskottsserie är fem tryck. Den går aldrig förbi sista skottet på egen hand:
+tryck på en ruta och rätta den först om det behövs. Ovanför rutorna ser du
+seriesumman, passets summa och, när du skjutit grenen förut, **Förra gången**
+för samma serie, alla med antalet innertior.
 
-Du kan lämna en serie halvifylld, gå fram till tavlan och komma tillbaka till
-den. Allt sparas medan du håller på — det finns ingen "spara"-knapp att glömma.
+**Nästa serie** sparar serien och öppnar nästa; **Spara serie** sparar den och
+tar dig tillbaka till passet. Du kan lämna en serie halvifylld, gå fram till
+tavlan och komma tillbaka till den — men tryck på någon av de två innan du
+lämnar skärmen, annars sparas inte det du skrev i den.
 
 ### 5. Titta på det efteråt
 

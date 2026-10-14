@@ -6,10 +6,13 @@ Sign in, then open **Enter Series** in the menu on the left.
 
 ## Fill in the session
 
-The fields are the phone's new-session form: type, logging, regulation,
-discipline, match format, date and time, name and location, then the competition fields,
-firearm and ammo lot. Date and time are when you shot, in this computer's time
-zone; both start at now. A date before 1900 or later than tomorrow is refused,
+The fields are the phone's new-session form, in its order: type, regulation,
+discipline and match format, then date and time, the competition fields and
+the firearm. As on the phone, the page starts on the discipline and firearm of
+your last session, and after each **Save** on those of the session just saved.
+Everything optional — logging, name and location, ammo lot, shots per series,
+decimal scoring and tags — is folded under **Details**; click it to open. Date
+and time are when you shot, in this computer's time zone; both start at now. A date before 1900 or later than tomorrow is refused,
 as a typo rather than a session.
 
 Date and time show in the app's format, from its language and the browser's
@@ -32,7 +35,7 @@ See [Weapon group and class](../reference/weapon-group-and-class.md).
 
 ## Rounds only
 
-Set **Logging** to **Rounds Only** to record how many rounds you fired, with
+Under **Details**, set **Logging** to **Rounds Only** to record how many rounds you fired, with
 no series. The session fields stay; **Rounds Fired** takes the place of the
 match format and the series rows. Leave it empty if you do not know the
 count. Anything but a whole number from 0 to 10,000 is refused before anything
@@ -52,7 +55,13 @@ One row per series. Type the shots with a space between them:
 `x` works as well as `X`, and `10,4` as well as `10.4`. With decimal scoring
 every shot needs its tenth: type `9.0` for a nine, `0.0` for a miss and
 `X.0` for an inner ten on the line; a bare `9` or `X` is refused, and the
-message says so. Each row shows its total and its inner tens as you type.
+message says so.
+
+As you type, each row draws its shots in boxes, as the phone's keypad does: one
+box per shot of the series, the next one to fill outlined. Beside the row are
+its total and its inner tens, **0 X** included, and **Last Time**, the same
+scored series of your previous session in this discipline, as on the phone.
+Under the rows, **Session** keeps the running total of the scored series.
 
 A session needs at least one shot or photo: with every row empty, Save says so and
 sends nothing.
@@ -113,7 +122,7 @@ over 1.5 MB after it is made smaller. A fält station takes no photo.
 
 ## Tag it
 
-Under the rows, **Tags** takes a tag name: type it and press **Add** or
+Under **Details**, **Tags** takes a tag name: type it and press **Add** or
 Enter. Your account's tags are offered as you type; a name you have not used
 before becomes a new tag, as on the phone. Case does not matter: with a tag
 `KM`, typing `km` adds `KM`. Click a tag to take it off again. Text left in

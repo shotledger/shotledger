@@ -45,8 +45,26 @@ En **serie** är en omgång skott som räknas ihop — fem skott i SPSF:s precis
 sex i militär snabbmatch. Ett **skott** är ett hål, värt hela poäng eller
 decimaler beroende på program.
 
-Tryck på en serie för att fylla i den. Knappsatsen går vidare efter varje skott,
-så du behöver inte sträcka dig efter någon "nästa"-knapp mellan skotten.
+Tryck på en serie för att fylla i den. Allt du trycker på ligger längst ner på
+skärmen, inom räckhåll för tummen: skottrutorna, en rad med **Foto**,
+**Provserie** och **Radera**, knapparna och **Nästa serie**. Knappsatsen går
+till nästa ruta efter varje skott men stannar vid den sista, så att ett fel
+skott fortfarande går att rätta: tryck på rutan och skriv rätt värde. Ingenting
+går vidare förrän du säger till.
+
+**Nästa serie** sparar serien och öppnar nästa. **Spara serie** sparar den och
+tar dig tillbaka till passet; på sista serien i hela matchen är det den enda
+knappen. Går du tillbaka utan någon av dem sparas ingenting av det du skrev i
+serien.
+
+Medan du skriver visar skärmen tre tal ovanför rutorna: **Serie**-summan,
+**Pass**-summan med den här serien medräknad som den ser ut just nu, och
+**Förra gången** — samma serie i ditt föregående pass i grenen. Alla visar
+antalet innertior, även **0X**. Förra gången räknar bara tävlingsserier, så
+den andra tävlingsserien jämförs med den andra tävlingsserien, oavsett om en
+provserie låg före. Den visas inte för en provserie, inte när du inte skjutit
+grenen förut och inte när det passet räknades annorlunda (hela poäng mot
+decimaler). Raden under rubriken listar passets övriga serier med deras summor.
 
 I precision, magnumprecision och militär snabbmatch markerar knappsatsen en bra
 serie när du fyller i sista skottet. Når serien guldseriegränsen blir summan
@@ -68,7 +86,8 @@ med skillnaden. Allt annat sparas inte och visar ett fel tills du rättar det.
 
 ## Provserier
 
-Markera en serie som **provserie** i seriemenyn, så slutar den räknas mot
+Markera en serie som **provserie** med **Provserie** ovanför knapparna medan du
+fyller i den, så slutar den räknas mot
 passets total. Resultatet visas ändå, med en asterisk — **45\*** — eftersom en
 provserie medvetet inte räknas men det du sköt fortfarande är värt att se.
 

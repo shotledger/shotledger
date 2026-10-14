@@ -719,7 +719,7 @@
     "none": "Ingen",
     "decimalScoring": "Decimalräkning",
     "name": "Passets namn",
-    "nameHint": "Fylls i automatiskt utifrån valen nedan — ändra om du vill ha ett annat.",
+    "nameHint": "Fylls i automatiskt utifrån dina val — ändra om du vill ha ett annat.",
     "create": "Skapa pass",
     "noSeries": "Inga serier än",
     "noSeriesBody": "Lägg till din första serie och mata in skotten.",
@@ -733,7 +733,6 @@
     "beforeFinal": "Före final",
     "final": "Final",
     "total": "Totalt",
-    "seriesTotal": "Serietotal",
     "timeLimit": "{{seconds}} s",
     "goldSeries": "Guldserie",
     "guldAt": "Guld vid {{points}}p",
@@ -770,7 +769,7 @@
     "deleteSeries": "Ta bort serie",
     "deleteSeriesConfirmTitle": "Ta bort serie {{position}}?",
     "deleteSeriesConfirmBody": "Dess skott tas också bort. Det går inte att ångra.",
-    "newSeriesHint": "Serien sparas när du trycker på Spara.",
+    "newSeriesHint": "Serien sparas när du trycker på Spara serie eller Nästa serie.",
     "stopwatch": {
       "start": "Starta",
       "stop": "Stoppa",
@@ -1670,5 +1669,19 @@
     "filtersActive": "Filter ({{count}})",
     "removeFilter": "Ta bort filtret {{label}}",
     "clearFilters": "Rensa alla"
+  },
+  "entryA": {
+    "series": "Serie",
+    "sessionTotal": "Pass",
+    "lastTime": "Förra gången",
+    "innerTens": "{{count}}X",
+    "nextSeries": "Nästa serie",
+    "photo": "Foto",
+    "seriesOfTitle": "Serie {{position}} av {{count}}",
+    "seriesShort": "S{{position}} {{total}}",
+    "seriesShortSighter": "S{{position}} {{total}} provserie",
+    "details": "Detaljer",
+    "detailsSummary": "Loggning, namn, plats, ammunition, taggar med mera",
+    "fromLastSession": "Gren och vapen från ditt senaste pass."
   }
 }
