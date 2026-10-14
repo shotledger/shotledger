@@ -33,8 +33,6 @@ describe('stationProblem', () => {
     expect(stationProblem(station({ hits: 1, figuresHit: 1, figureCount: 1 }))).toBeNull();
     expect(stationProblem(station({ points: 0 }))).toBeNull();
     expect(stationProblem(station({ points: 4 }))).toBeNull();
-    // A max is only checked against points; the phone saves no max without them.
-    expect(stationProblem(station({ pointsMax: -1 }))).toBeNull();
 
     expect(stationProblem(station({ hits: 7 }))).toBe(
       'station 3: hits must be an integer 0-6, got 7',
@@ -85,6 +83,34 @@ describe('stationProblem', () => {
   });
 });
 
+describe('stationProblem bounds (#837)', () => {
+  it('B3 stationProblem: points that are not a safe integer are impossible', () => {
+    expect(stationProblem(station({ points: 1e20 }))).toBe(
+      'station 3: points must be a non-negative integer or null, got 100000000000000000000',
+    );
+    expect(stationProblem(station({ points: Infinity }))).toBe(
+      'station 3: points must be a non-negative integer or null, got Infinity',
+    );
+    expect(stationProblem(station({ points: Number.MAX_SAFE_INTEGER }))).toBeNull();
+  });
+
+  it('B4 stationProblem: a max that is not a non-negative safe integer is impossible, with or without points', () => {
+    for (const pointsMax of [-1, 1.5, 1e20, Infinity]) {
+      const message = `station 3: pointsMax must be a non-negative integer or null, got ${pointsMax}`;
+      expect(stationProblem(station({ pointsMax }))).toBe(message);
+      expect(stationProblem(station({ points: 0, pointsMax }))).toBe(message);
+    }
+    expect(stationProblem(station({ pointsMax: 0 }))).toBeNull();
+    expect(stationProblem(station({ points: 0, pointsMax: Number.MAX_SAFE_INTEGER }))).toBeNull();
+  });
+
+  it('B5 stationProblem: a scratched station keeps whatever was written', () => {
+    expect(
+      stationProblem(station({ points: 1e20, pointsMax: Infinity, isScratched: true })),
+    ).toBeNull();
+  });
+});
+
 describe('figuresHitRange', () => {
   it('S2 figuresHitRange: 0..0 without hits, 1..min(hits, figures) with', () => {
     expect(figuresHitRange(0, null)).toEqual({ min: 0, max: 0 });
@@ -128,6 +154,34 @@ describe('stationPoints', () => {
     expect(stationPoints('12', '10')).toEqual({ ok: false });
     expect(stationPoints('', 'x')).toEqual({ ok: false });
     expect(stationPoints('3', 'x')).toEqual({ ok: false });
+  });
+});
+
+describe('stationPoints bounds (#837)', () => {
+  it('B1 stationPoints: a digit run over the largest safe integer is invalid, in either field', () => {
+    const huge = '1'.repeat(400);
+    const twentyOneDigits = '100000000000000000000';
+    expect(stationPoints(huge, '')).toEqual({ ok: false });
+    expect(stationPoints(twentyOneDigits, '')).toEqual({ ok: false });
+    expect(stationPoints('3', huge)).toEqual({ ok: false });
+    expect(stationPoints('3', twentyOneDigits)).toEqual({ ok: false });
+    expect(stationPoints('9007199254740992', '')).toEqual({ ok: false });
+  });
+
+  it('B2 stationPoints: the largest safe integer still parses', () => {
+    expect(stationPoints('9007199254740991', '')).toEqual({
+      ok: true,
+      points: Number.MAX_SAFE_INTEGER,
+      pointsMax: null,
+    });
+  });
+});
+
+describe('stationPoints notation (#837)', () => {
+  it('B6 stationPoints: hex and exponent notation stay invalid, though Number() reads them', () => {
+    for (const text of ['0x10', '1e3', '1E3', '0b1', '0o7'])
+      expect(stationPoints(text, '')).toEqual({ ok: false });
+    expect(stationPoints('3', '1e3')).toEqual({ ok: false });
   });
 });
 
