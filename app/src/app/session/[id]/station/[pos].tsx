@@ -37,6 +37,8 @@ import {
 } from '@/db/queries/falt';
 import { CountCells } from '@/features/forms/count-cells';
 import { Spacing } from '@/theme/tokens';
+import { routePosition } from '@/features/session/route-position';
+import { UnknownPosition } from '@/features/session/unknown-position';
 
 const NOT_RECORDED = 'none';
 
@@ -48,16 +50,20 @@ function countSegments(max: number, min = 0) {
   });
 }
 
-export default function StationEntryScreen() {
+export default function StationEntryRoute() {
+  const { pos } = useLocalSearchParams<{ pos: string }>();
+  const position = routePosition(pos);
+  return position === null ? <UnknownPosition /> : <StationEntryScreen position={position} />;
+}
+
+function StationEntryScreen({ position }: { position: number }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos, shootOff } = useLocalSearchParams<{
+  const { id, shootOff } = useLocalSearchParams<{
     id: string;
-    pos: string;
     new?: string;
     shootOff?: string;
   }>();
-  const position = Number(pos);
 
   const row =
     listStationsForSession(db, id).find((station) => station.position === position) ?? null;

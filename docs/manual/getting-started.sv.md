@@ -88,7 +88,8 @@ Allt annat ligger under **Detaljer**, stängt tills du öppnar det:
 - **Loggning** — poängsatta serier eller bara antal skott.
 - Passets **namn** och **plats**.
 - Den **ammunition** du använder, om du håller reda på det.
-- **Skott per serie** — valfritt antal, med grenens egen längd förvald.
+- **Skott per serie** — ett heltal upp till 100, med grenens egen längd
+  förvald; något annat ger den längden.
   Serieinmatningen visar en ruta per skott, så femskottsserier i en gren med
   tioskottsserier lämnar inte längre fem tomma rutor. Frågas bara på fritt
   format: hela matchen bestämmer det redan. Det går inte att ändra i efterhand.
