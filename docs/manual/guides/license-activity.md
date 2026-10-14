@@ -33,23 +33,29 @@ not move it again. Until then the setting follows your firearms.
 
 If the proposed case looks wrong, read the reason line under it first: it
 usually points at a missing detail on a firearm rather than at the case itself.
-Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
+Firearms missing a weapon type, caliber or license are flagged **Incomplete**
 on the Firearms tab, and filling those in may move the proposal on its own.
 
 ## Seeing where you stand
 
-Tap the status on **Home** to open **License Check**. It lists every
-requirement on the club's certificate, grouped by what you are applying for:
+Tap the status on **Home** to open **License Check**. It answers two
+questions:
 
-- **New Purchase**: the activity requirement for your case, and the additional
-  handgun box for each pistol or revolver marked as your own.
-- **Renewal**: the renewal box for each firearm whose license has an end date.
+- **New Purchase**: can you apply to acquire a new handgun now? The
+  **New Firearm** row says **Yes** or **No**. If yes, it says how long the answer
+  stays yes if you log nothing more; if no, how many requirements are not met.
+- **Renewal**: can each firearm's license be renewed now? Every firearm is
+  listed with **Yes** or **No**, or **Not Needed** when its license has no end
+  date. An
+  [archived](firearms-and-ammunition.md#archiving-a-firearm-you-no-longer-have)
+  firearm is not listed.
 
-Each one says whether it is met. If it is met, it says by when to shoot next.
-If it is not, it says how many more sessions are needed, and with which firearm
-where that matters. Tap a firearm's name to open it. An
-[archived](firearms-and-ammunition.md#archiving-a-firearm-you-no-longer-have)
-firearm is not listed.
+Tap a row for the requirements behind the answer. **New Firearm** shows the
+activity requirement for your case and the additional handgun box for each
+pistol or revolver marked as your own. A firearm shows its renewal box, and its
+additional handgun box when that applies, with **Open Firearm** to go to the
+firearm itself. Each box says whether it is met. If it is met, it says by when
+to shoot next. If it is not, it says how many more sessions are needed.
 
 If an earlier year of the renewal box is short, logging sessions today cannot
 fix it, and the check says so. It also gives the date from which the box can be
@@ -63,7 +69,7 @@ When a requirement is met, the app says by which date you need to log your next
 session to keep it met:
 
 - On **Home**, under the status: "Next session by …".
-- On a firearm, under each licence activity line and under each Föreningsintyg
+- On a firearm, under each license activity line and under each Föreningsintyg
   criterion that is met.
 
 Log a session on or before that date and the requirement stays met for longer;
@@ -88,7 +94,7 @@ check that your sessions record which gun you shot.
 
 A criterion you expected and cannot see is not being hidden: the app only shows
 the additional-handgun box for a pistol or revolver marked **My Own**, and the
-renewal box for a firearm whose most recent licence has an end date. [Which
+renewal box for a firearm whose most recent license has an end date. [Which
 firearms each one is shown
 for](../explanation/license-activity.md#which-firearms-each-one-is-shown-for)
 says what to fix.

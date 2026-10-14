@@ -174,7 +174,7 @@ Saknas ett kriterium på ett vapen där du väntat dig det är det där du ska t
 !!! warning "Räknat är inte styrkt"
 
     I en klubblogg blir en rad ett underlag när någon signerat kolumnen _Uppg.
-    styrkta av_. Appen har ingen motsvarighet och hittar inte på någon. ”6 av 4
+    styrkta av_. Appen har ingen motsvarighet och hittar inte på någon. ”6
     aktiviteter med det här vapnet” betyder att appen räknat sex pass du loggat
     — inte att någon har styrkt dem.
 
