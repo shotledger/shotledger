@@ -48,6 +48,8 @@ function tables(): PulledTables {
     tags: table([{ id: 't1', name: 'Club', color: null, deleted_at: null }]),
     firearms: table([]),
     firearm_groups: table([]),
+    firearm_calibers: table([]),
+    sight_settings: table([]),
     licenses: table([]),
     maintenance_events: table([]),
     ammo_lots: table([]),

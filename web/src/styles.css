@@ -1873,3 +1873,178 @@ a.license-activity:hover > span:first-child {
 .check-block .badge {
   margin-left: 0;
 }
+
+.check-block > .check-row {
+  justify-self: stretch;
+}
+
+/* A row that opens its card, as Open Firearm does, needs no rule above it. */
+.check-card > .check-row:first-child,
+.check-card > .check-block:first-child > .check-row:first-child {
+  border-top: none;
+}
+
+.check-card > .check-block:first-child {
+  padding-top: 0;
+}
+
+/* Firearms (#796): the list and one firearm, as the phone's Firearms tab. */
+.firearms {
+  display: grid;
+  gap: var(--space-three);
+}
+
+.firearms > p {
+  margin: 0;
+}
+
+.firearms > a.back {
+  color: inherit;
+  text-decoration: none;
+}
+
+.firearms > a.back:hover {
+  text-decoration: underline;
+}
+
+.firearms-toggle {
+  justify-self: start;
+}
+
+.firearm-list,
+.firearm-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.firearm-list {
+  padding: 0 16px;
+}
+
+.firearm-list > li + li,
+.firearm-items > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.firearm-row {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-three) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.firearm-row:hover .firearm-row-name {
+  text-decoration: underline;
+}
+
+.firearm-row-name {
+  font-weight: 600;
+}
+
+.firearm-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-three);
+  row-gap: var(--space-one);
+  margin-top: var(--space-one);
+}
+
+/* The phone's ToneLine and StatusLine: a status in words, a dot of its colour. */
+.tone-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-two);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tone-line > i {
+  width: var(--space-two);
+  height: var(--space-two);
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.tone-success {
+  color: var(--success);
+}
+
+.tone-warning {
+  color: var(--warning);
+}
+
+.tone-danger {
+  color: var(--danger);
+}
+
+.tone-secondary,
+.firearm-incomplete {
+  color: var(--text-secondary);
+}
+
+.firearm-incomplete {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.firearm-card {
+  display: grid;
+  gap: var(--space-two);
+}
+
+.firearm-card h2,
+.firearm-card p,
+.firearm-criterion p {
+  margin: 0;
+}
+
+.firearm-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-two);
+}
+
+.firearm-card-head h2 {
+  margin: 0;
+}
+
+.firearm-criterion {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-one);
+  padding-top: var(--space-two);
+}
+
+.firearm-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  padding: var(--space-two) 0;
+}
+
+.firearm-item-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+.firearm-facts {
+  display: grid;
+  gap: var(--space-one);
+  margin: 0;
+}
+
+.firearm-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-three);
+}
+
+.firearm-facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

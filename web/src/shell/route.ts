@@ -2,8 +2,10 @@
 // `#sessions`, `#sessions/<id>`, `#sessions/<id>/edit`, `#compare` (the
 // picked photos, under Sessions) and `#license-check`,
 // `#license-check/new-firearm`, `#license-check/firearm/<id>` (under
-// Statistics, which links to it as the phone's Home does).
-export type Page = 'sessions' | 'statistics' | 'entry' | 'bulk' | 'settings' | 'account';
+// Statistics, which links to it as the phone's Home does), `#firearms` and
+// `#firearms/<id>` (#796).
+export type Page =
+  'sessions' | 'statistics' | 'firearms' | 'entry' | 'bulk' | 'settings' | 'account';
 
 export interface Route {
   page: Page;
@@ -14,6 +16,13 @@ export interface Route {
   edit?: true;
   /** License Check (#796): its overview, New Firearm, or one firearm. */
   check?: LicenseCheckView;
+  /** The firearm the Firearms page shows (#796); absent on the list. */
+  firearmId?: string;
+}
+
+/** The hash that opens one firearm's page. */
+export function firearmHash(firearmId: string): string {
+  return `#firearms/${encodeURIComponent(firearmId)}`;
 }
 
 export type LicenseCheckView =
@@ -51,6 +60,15 @@ export function routeFromHash(hash: string): Route {
   if (hash === '#license-check' || hash.startsWith('#license-check/')) {
     const check = licenseCheckView(hash.slice('#license-check/'.length));
     return { page: 'statistics', sessionId: null, check };
+  }
+  if (hash === '#firearms' || hash.startsWith('#firearms/')) {
+    try {
+      const firearmId = decodeURIComponent(hash.slice('#firearms/'.length));
+      if (firearmId !== '') return { page: 'firearms', sessionId: null, firearmId };
+    } catch {
+      // a malformed escape: show the list
+    }
+    return { page: 'firearms', sessionId: null };
   }
   if (hash.startsWith('#sessions/')) {
     // An id is encoded, so a raw slash only ever comes before `edit`.

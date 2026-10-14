@@ -106,6 +106,8 @@ function tables(): PulledTables {
     tags: empty(),
     firearms: byId({ ...common('f1'), make: 'Pardini', model: 'SP' }),
     firearm_groups: empty(),
+    firearm_calibers: empty(),
+    sight_settings: empty(),
     licenses: empty(),
     maintenance_events: empty(),
     ammo_lots: byId({ ...common('a1'), label: 'Lot 1' }),

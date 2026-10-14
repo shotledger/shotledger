@@ -45,7 +45,8 @@ export function licenseProfile(
   return getProfile(settings.complianceProfile, variantId ?? undefined) ?? null;
 }
 
-function complianceSessions(tables: Pick<PulledTables, 'sessions'>): ComplianceSession[] {
+/** `listComplianceSessions`: every live session, with the fields the rules read. */
+export function complianceSessions(tables: Pick<PulledTables, 'sessions'>): ComplianceSession[] {
   return liveRows<ComplianceSession>(tables.sessions).map(
     ({ id, startedAt, type, weaponGroup, firearmId }) => ({
       id,

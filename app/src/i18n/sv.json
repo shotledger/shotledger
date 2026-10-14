@@ -1670,6 +1670,9 @@
       "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt.",
       "profileUnset": "Ingen profil vald. Telefonen använder standardvalet för sitt språk."
+    },
+    "firearms": {
+      "readOnly": "Webben visar dina vapen som appen har registrerat dem. Lägg till, ändra eller arkivera ett vapen i appen på telefonen."
     }
   },
   "notifications": {
