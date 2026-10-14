@@ -1382,6 +1382,8 @@
     }
   },
   "web": {
+    "statsFilters": "Filter",
+    "statsMeasure": "Mått",
     "signInIntro": "Logga in med ditt ShotLedger-konto för att se dina pass, din statistik och ditt konto. Inget sparas när du stänger fliken.",
     "loading_one": "Hämtar loggboken… {{count}} rad",
     "loading_other": "Hämtar loggboken… {{count}} rader",
@@ -1426,6 +1428,7 @@
     },
     "shell": {
       "menu": "Huvudmeny",
+      "sidebar": "Sidofält",
       "skipToContent": "Hoppa till innehållet",
       "version": "Version",
       "sourceCode": "Källkod"

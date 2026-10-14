@@ -3,6 +3,7 @@ import type {
   AnalyticsFilterState,
   StatsPeriod,
 } from '@shotledger/shared/src/analytics-rows';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { disciplineLabel } from '../../../app/src/features/session/labels';
@@ -54,9 +55,10 @@ export function Filters({
 }) {
   const { t } = useTranslation();
   const set = (patch: Partial<AnalyticsFilterState>) => onChange({ ...state, ...patch });
+  const disciplineSelect = useId();
 
   return (
-    <aside className="filters card">
+    <aside className="filters card" aria-label={t('web.statsFilters')}>
       <section>
         <h2>{t('stats.sectionPeriod')}</h2>
         <Choice
@@ -104,8 +106,11 @@ export function Filters({
       </section>
 
       <section>
-        <h2>{t('session.discipline')}</h2>
+        <h2>
+          <label htmlFor={disciplineSelect}>{t('session.discipline')}</label>
+        </h2>
         <select
+          id={disciplineSelect}
           value={state.disciplineId ?? ''}
           onChange={(event) => set({ disciplineId: event.target.value || null })}
         >
