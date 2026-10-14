@@ -5,7 +5,7 @@
 >
 > **Approval status: partly obtained.** C1 (drizzle-zod) is the maintainer's
 > decision of 2026-10-13 ("I prefer libraries over handmade duplication").
-> C2–C14 and Q1–Q6 were not reviewed: the spec was revised and implemented in
+> C2–C14 and Q1–Q7 were not reviewed: the spec was revised and implemented in
 > an overnight run on the recommendations below, and the evidence report says
 > `spec approval: not obtained (autonomous run)` for them. The first draft
 > was PR #711 (hand-written schemas); Revision 1 at the end lists what
@@ -190,8 +190,11 @@ operation.
   `parseMaintenanceInterval`), reals only within `REAL_MIN`..`REAL_MAX`
   (`parseMeasure`), each with its own tests. A screen that parsed with
   `Number()` alone would store `12.5` or `1e20` and have the row refused.
-  Two screens still do: series length on New Session and fält station
-  points (#837, §10).
+  Two phone screens still do: series length on New Session and fält
+  station points (#837, §10). The web's entry form mirrors the first
+  (`chosenSeriesLength` in `web/src/entry/model.ts`), and the ShotLog
+  importer's shot counts take any run of digits (`parseCount` in
+  `shared/src/shotlog/parse.ts`).
 
 ### 2.6 Out of scope
 
@@ -487,10 +490,18 @@ only columns every writer fills with `toISOString()`.
   tests that sends a partial row or a local-time timestamp would have its
   rows refused and cleared. The refusal count (C3) makes it visible, and the
   row stays on the phone unless another device changes it; an edit after
-  the fix pushes it again. Two are known: New Session's series length takes
-  `1e20`, and a fält station's points take any run of digits (#837). Both
-  are left to #837, which touches `shared/src/scoring/` and needs its own
-  spec.
+  the fix pushes it again. Four are known: New Session's series length takes
+  `1e20`, as does the web entry form that mirrors it; a fält station's
+  points take any run of digits; and so do a ShotLog file's shot counts,
+  which only a corrupt file would hit. All are left to #837, which touches
+  `shared/src/scoring/` and needs its own spec.
+- **A refusal splits a family of rows.** Rows are refused one at a time, so
+  a refused parent with accepted children leaves those children orphaned on
+  the server and on every other device (P3 has this shape: a session with
+  `name: null` is refused while its series is stored), and a refused child,
+  such as one shot, leaves the other devices with a different score for the
+  session than the sender. C14 covers orphans the phone already makes; this
+  is a new way to make them. Q7 asks about it.
 - **drizzle-zod's mapping changes on upgrade.** A Renovate bump could widen
   or narrow a type. The derivation test and P2 pin today's mapping, so a
   change in it fails CI.
@@ -524,6 +535,12 @@ only columns every writer fills with `toISOString()`.
   knows, so that adding such a column refuses nothing on either path? A
   rename, a drop, or a new `NOT NULL` column without a default still
   refuses either way. The branch implements the first.
+- **Q7** A refusal splits a family of rows (§10): the rest of the session
+  still syncs without the refused row, so other devices can hold orphans or
+  a different score. Accept that as a known limit (the sender sees the
+  refusal count and the row stays on its phone), or refuse a row's whole
+  family with it, which needs the server to know each table's parent and
+  is a larger change? The branch implements the first.
 
 ## Revisions
 
@@ -565,3 +582,8 @@ only columns every writer fills with `toISOString()`.
   states `validatePayload`'s real signature. The backend P2 date row now
   agrees with its envelope, a settings row with non-JSON `value` is tested
   through the route, and the manual mutation script gains that mutant.
+- **Revision 5 (2026-10-14), after the fourth verification round** (passed;
+  description findings only). §2.5 and §10 name the web entry form's and
+  the ShotLog importer's out-of-range integers alongside #837's two phone
+  screens. §10 records that a refusal splits a family of rows, and Q7 asks
+  the maintainer about it.

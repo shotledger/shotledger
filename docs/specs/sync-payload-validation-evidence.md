@@ -3,7 +3,7 @@
 Spec: `docs/specs/sync-payload-validation-spec.md` (issue #697, PR #813).
 
 **Spec approval: partly obtained.** C1 (drizzle-zod) is the maintainer's
-decision of 2026-10-13. C2–C14 and Q1–Q6 are **not approved (autonomous
+decision of 2026-10-13. C2–C14 and Q1–Q7 are **not approved (autonomous
 run)**: the spec was revised and implemented overnight while the maintainer
 was away, so the spec is the artifact to review after the fact. Q5 (ADR 0021,
 moving the Drizzle tables into the Apache-2.0 `shared/src/sync/`) is the
@@ -18,8 +18,9 @@ maintainer approves.
 - **Later merge:** `main` at `3357be5` merged in (`be3c731`): no schema
   change to port; #794's ammo-lot merge spec fixtures filled to whole rows
   (N4). Re-run there: `pnpm check` exit 0 (vitest 237 files, 4324 tests;
-  app jest 970), backend 29 files, 263 tests, exit 0. The shuffle, Stryker
-  and manual-mutation rows below were not re-run.
+  app jest 970), backend 29 files, 263 tests, exit 0, and shuffled (seed 1791963147303) 29 files, 263 tests, exit 0. The Stryker and
+  manual-mutation rows below were not re-run by the builder; the round-4
+  verifier re-ran both at `5b2ef06` with the same results (below).
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-pool-workers` (backend), Stryker 10.0.0 with the
   vitest runner, fast-check, jest-expo (app). `drizzle-orm` 0.45.4,
@@ -101,7 +102,11 @@ instead of `false` (both falsy to `refine`), and `join('')` for
 `join('.')` on issue paths (every path is at most one level deep). Stryker
 cannot activate mutants in `PAYLOAD_SCHEMAS`'s module-load construction;
 the "wire rules on a freshly derived schema" block re-derives the schemas
-inside the tests so the same code runs per test and its mutants are judged.
+inside the tests so `derivePayloadSchema` runs per test and its mutants are
+judged. The module-level literals it reads (`INSTANT_COLUMNS`, the
+`ISO_INSTANT` pattern) are still skipped by `ignoreStatic`; the verifiers'
+on-disk mutants of them (rounds 3 and 4) were killed or equivalent, so
+those mutants, not Stryker, are the evidence for them.
 
 ## Independent verification
 
@@ -182,11 +187,39 @@ inside the tests so the same code runs per test and its mutants are judged.
     skips settings.
   - Description: §2.1 gave the wrong `validatePayload` signature → fixed.
 
-**Independent verification: not performed against final source state
-`7bc160a` (nor the later merge `be3c731`).** Three rounds were performed, the third with the maintainer's
-approval; the last verified state `c46c9d8` returned failed, and the
-round-3 fixes listed above are unverified. A fourth round needs the
-maintainer's approval.
+- **Round 4** at `5b2ef06` (the round-3 fixes plus the merge of `main` at
+  `3357be5`), approved by the maintainer (2026-10-14): **passed**. Every
+  gate reproduced at that state: `pnpm check` 237 files, 4324 tests, jest
+  970; backend 263, also shuffled (seed 1791962248607); manual mutation
+  19/19; Stryker on the five sync modules 99.25% (2 equivalent survivors,
+  proved); docs gates. Attacked: the worktree's own `shared` resolution;
+  the spec against the contract; `validatePayload` probed directly
+  (prototype keys, −0, 2^53, whitespace ids, year 0000, 24:00, real bounds
+  ±0.5, fractions and booleans in integer and flag columns, non-JSON
+  `settings.value`, a 3000-deep value); the N6 log line; every timestamp
+  and number writer on the phone, the web and the importers; the phone's
+  apply constraints; the batch SQL; the engine's refusal reporting; the
+  test fixtures under N4; on-disk mutants of `INSTANT_COLUMNS`,
+  `ISO_INSTANT`, `REAL_MAX` and the route (killed, or equivalent through
+  the `toISOString()` round trip); N9. No behavioural finding. Findings and
+  what was done:
+  - Spec gap (the maintainer's): a refusal splits a family of rows, leaving
+    orphans or a different score on other devices → §10 says so; **Q7**.
+  - Description: §2.5 and §10 named two phone screens for #837 but not the
+    web entry form's series length or the ShotLog importer's counts →
+    named (spec Revision 5).
+  - Mapping: the evidence credited Stryker with the module-load literals →
+    corrected above.
+  - Process: `docs/implementation-plan.md` had no entry for #697 → added and
+    ticked. No running-app screenshot (already disclosed below).
+  - Observation: the lockfile moves a transitive `@types/node` of the jest
+    environment from 26.6.5 to 24.19.2, as `pnpm i` resolved it when
+    `drizzle-zod` was added. Harmless to every gate.
+
+**Independent verification: passed at `5b2ef06`.** Four rounds were
+performed, the third and fourth with the maintainer's approval. Changed
+after it, description only and therefore not re-verified: the spec (§2.5,
+§10, Q7, Revision 5), this report and `docs/implementation-plan.md`.
 
 ## Known limits
 
@@ -206,8 +239,12 @@ maintainer's approval.
 - **Worker CPU is not measured**; the timing test is a Node-side bound.
 - **Local is not production**: `json_valid` and `CHECK` are probed in the
   Workers pool, not on a deployed D1.
-- The other unbounded number fields (fält station points, series length,
-  the series route's `pos`) are #837, outside this change.
+- The other unbounded number fields (fält station points, series length on
+  the phone and the web, the series route's `pos`, a ShotLog file's shot
+  counts) are #837, outside this change.
+- **A refusal splits a family of rows** (spec §10, Q7): other devices can
+  hold orphans or a different score until the sender fixes and re-saves
+  the row.
 - **`applyPush`'s `invalid` defaults to an empty set**: the route is its
   only production caller, and the atomicity tests call it without one.
 - **Tombstones are not shape-checked** beyond the envelope; they cannot
