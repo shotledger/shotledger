@@ -183,17 +183,17 @@ function toAck(
  * Applies one push request as a single D1 batch — one transaction — so seq
  * allocation, the row write and the idempotency record commit together, in
  * array order, and seq order equals commit order across devices. `invalid`
- * names the changes (by clientChangeId) whose payload the route refused;
+ * names the changes (by index in `changes`) whose payload the route refused;
  * each is recorded as rejected inside the same batch, consuming no seq.
  */
 export async function applyPush(
   db: Db,
   userId: string,
   changes: ClientChange[],
-  invalid: ReadonlySet<string> = new Set(),
+  invalid: ReadonlySet<number> = new Set(),
 ): Promise<PushAck[]> {
-  const statements = changes.flatMap((change) =>
-    changeStatements(db, userId, change, !invalid.has(change.clientChangeId)),
+  const statements = changes.flatMap((change, index) =>
+    changeStatements(db, userId, change, !invalid.has(index)),
   );
   const [first, ...rest] = statements;
   if (!first) return [];

@@ -207,6 +207,26 @@ describe('P3 one bad row does not hold back the good ones', () => {
   });
 });
 
+describe('P3b a verdict belongs to its change, not to its clientChangeId', () => {
+  it("an invalid change reusing a valid change's id does not refuse the valid one", async () => {
+    const good = live('firearms', 'f1', firearm());
+    const bad = {
+      ...live('firearms', 'f9', firearm({ make: null }, 'f9')),
+      clientChangeId: good.clientChangeId,
+    };
+
+    const acks = await push([good, bad]);
+    expect(acks[0]).toStrictEqual({
+      clientChangeId: good.clientChangeId,
+      status: 'applied',
+      seq: 1,
+    });
+    expect(acks[1]).toMatchObject({ status: 'duplicate', seq: 1 });
+    expect(await storedRow('firearms', 'f1')).not.toBeNull();
+    expect(await storedRow('firearms', 'f9')).toBeNull();
+  });
+});
+
 describe('P4 a refusal replays as a duplicate with its reason', () => {
   it('acks duplicate/invalid_payload with no seq and changes nothing', async () => {
     const refused = live('firearms', 'f1', firearm({ make: null }));

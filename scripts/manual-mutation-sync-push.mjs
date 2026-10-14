@@ -97,7 +97,7 @@ const MUTANTS = [
   },
   {
     name: 'applyPush marks every change valid',
-    find: 'changeStatements(db, userId, change, !invalid.has(change.clientChangeId)),',
+    find: 'changeStatements(db, userId, change, !invalid.has(index)),',
     replace: 'changeStatements(db, userId, change, true),',
   },
   {

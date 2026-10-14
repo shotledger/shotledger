@@ -116,11 +116,11 @@ export function createSyncRoutes(authenticatorFor: (env: Env) => Authenticator) 
     // A row every device could not apply is refused per change, inside the
     // batch, so one bad row does not hold back the rest (C6). The log names
     // the table and the failing columns, never a value or an id (N6).
-    const invalid = new Set<string>();
-    for (const change of parsed.data.changes) {
+    const invalid = new Set<number>();
+    for (const [index, change] of parsed.data.changes.entries()) {
       const verdict = validatePayload(change);
       if (verdict.ok) continue;
-      invalid.add(change.clientChangeId);
+      invalid.add(index);
       const columns = verdict.issues.map((issue) => `${issue.path || '(row)'}:${issue.code}`);
       console.warn(`sync push: refused ${change.tableName} payload (${columns.join(', ')})`);
     }
