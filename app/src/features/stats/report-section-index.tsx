@@ -1,5 +1,5 @@
-// The Statistics report's table of contents (#588): one row per section the
-// report holds, each naming the question it answers; tapping scrolls to it.
+// The Statistics detail's table of contents (#588): one row per section
+// below the lead, each naming the question it answers; tapping scrolls to it.
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '@/components/card';
@@ -18,10 +18,6 @@ export function ReportSectionIndex({
   const { t } = useTranslation();
   // Literal keys, so the i18n check can see every one is used.
   const labels: Record<ReportSectionKey, { title: string; question: string }> = {
-    shots: {
-      title: t('stats.crossSessionTitle'),
-      question: t('stats.sectionQuestion.shots'),
-    },
     records: { title: t('stats.summaryTitle'), question: t('stats.sectionQuestion.records') },
     totals: { title: t('stats.sumTitle'), question: t('stats.sectionQuestion.totals') },
     falt: { title: disciplineLabel(t, 'spsf-falt'), question: t('stats.sectionQuestion.falt') },
@@ -34,9 +30,9 @@ export function ReportSectionIndex({
       question: t('stats.sectionQuestion.sighter'),
     },
     charts: { title: t('stats.sectionCharts'), question: t('stats.sectionQuestion.charts') },
-    distribution: {
-      title: t('stats.distributionTitle'),
-      question: t('stats.sectionQuestion.distribution'),
+    shots: {
+      title: t('stats.crossSessionTitle'),
+      question: t('stats.sectionQuestion.shots'),
     },
     export: { title: t('stats.export'), question: t('stats.sectionQuestion.export') },
   };

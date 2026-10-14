@@ -4,7 +4,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
@@ -22,22 +22,19 @@ import { getAmmoLotUsage } from '@/db/queries/ammo-usage';
 import { formatAmmoRecipe } from '@/features/ammo/format-ammo-recipe';
 import { requiresLicense } from '@/features/firearms/completeness';
 import { useFirearmsList, type FirearmListRow } from '@/features/firearms/use-firearms-list';
+import { ToneLine, type ToneLevel } from '@/features/forms/tone-line';
+import { StatusLine } from '@/components/status-line';
+import { ThemedText } from '@/components/themed-text';
 import { useFeatures } from '@/features/settings/feature-visibility';
 import { Spacing } from '@/theme/tokens';
 
 type Section = 'firearms' | 'ammo';
 
-const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
-  green: 'neutral',
-  amber: 'primary',
-  red: 'primary',
-};
-
-const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
-  green: 'neutral',
-  amber: 'primary',
-  red: 'primary',
-};
+/** Statuses read as words in a status colour under the name, never as
+ *  lavender chips: the accent is for what can be tapped (#822). */
+function toneLevel(status: string): ToneLevel {
+  return status === 'red' ? 'red' : status === 'amber' ? 'amber' : 'green';
+}
 
 export default function FirearmsScreen() {
   const { t } = useTranslation();
@@ -67,43 +64,43 @@ export default function FirearmsScreen() {
         onPress={() => router.push(`/firearms/${row.id}`)}
         // An archived firearm (#799) carries no status: its licence and
         // maintenance are history, not something to act on.
-        trailing={
+        below={
           row.isArchived ? undefined : (
-            <View style={{ flexDirection: 'row', gap: Spacing.two }}>
+            <View style={styles.statuses}>
               {/* "No License" and "Incomplete" together said the same
-                  thing twice and squeezed the name into one-word-per-line
-                  wrapping (seen on the emulator with six imported
-                  firearms). Incomplete already means a licence is among
+                  thing twice. Incomplete already means a licence is among
                   the missing details, and the detail screen names them.
 
-                  A firearm that needs no licence shows no licence chip at
+                  A firearm that needs no licence shows no licence status at
                   all: "No License" on an air pistol reads as a gap, and
                   there is none to fill (#365). */}
               {requiresLicense(row.weaponType) &&
                 !(row.isIncomplete && row.licenseStatus === 'none') && (
-                  <Chip label={t(`firearms.licenseStatus${capitalize(row.licenseStatus)}`)} />
+                  <StatusLine status={row.licenseStatus} />
                 )}
               {features.maintenance && row.maintenanceStatus !== 'unknown' && (
-                <Chip
+                <ToneLine
                   label={t(`firearms.maintenanceStatus${capitalize(row.maintenanceStatus)}`)}
-                  tone={MAINTENANCE_TONE[row.maintenanceStatus]}
+                  level={toneLevel(row.maintenanceStatus)}
                 />
               )}
               {/* An imported firearm shows "No License" because nothing
                   on file says otherwise — which reads as a fact about
                   the shooter rather than a gap in the data (#320). */}
               {row.isIncomplete && (
-                <Chip
+                <ThemedText
+                  type="smallBold"
+                  themeColor="textSecondary"
                   testID={`firearm-incomplete-${row.id}`}
-                  label={t('firearms.incomplete')}
-                  tone="primary"
-                />
+                >
+                  {t('firearms.incomplete')}
+                </ThemedText>
               )}
               {features.licenseActivity && row.licenseActivityStatus && (
-                <Chip
+                <ToneLine
                   testID={`firearm-barometer-${row.id}`}
                   label={t(`compliance.licenseActivity${capitalize(row.licenseActivityStatus)}`)}
-                  tone={LICENSE_ACTIVITY_TONE[row.licenseActivityStatus]}
+                  level={toneLevel(row.licenseActivityStatus)}
                 />
               )}
             </View>
@@ -200,3 +197,13 @@ export default function FirearmsScreen() {
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+const styles = StyleSheet.create({
+  statuses: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacing.three,
+    rowGap: Spacing.one,
+    marginTop: Spacing.one,
+  },
+});

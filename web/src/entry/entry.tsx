@@ -50,8 +50,10 @@ import {
   isFixed,
   modeOf,
   onRowEnter,
+  rowShots,
   rowSummary,
   sendsTheSame,
+  seriesLengthOf,
   startedAtIso,
   withDiscipline,
   withProgram,
@@ -60,7 +62,9 @@ import {
   withType,
   type EntryForm,
 } from './model';
+import { EntryCells } from './entry-cells';
 import { heldPhotosFor } from './photo-upload';
+import { lastTimes, preselection, runningTotals } from './running-totals';
 import {
   afterEdit,
   IDLE,
@@ -203,7 +207,9 @@ export function Entry({
   const online = useOnline();
   // The synced profile prefills the klass and ranks the events, as on the phone (C6).
   const profile = useMemo(() => readAccountSettings(tables.settings), [tables]);
-  const [form, setForm] = useState<EntryForm>(() => initialForm(new Date(), profile));
+  // The last session's discipline and firearm, as the phone's New Session (#822).
+  const [preselected] = useState(() => preselection(tables.sessions, tables.firearms));
+  const [form, setForm] = useState<EntryForm>(() => initialForm(new Date(), profile, preselected));
   const [state, setState] = useState<SaveState>(IDLE);
   // A fält session's stations, beside the series rows (web-falt-entry-spec C1).
   const [falt, setFalt] = useState<FaltForm>(initialFalt);
@@ -298,6 +304,25 @@ export function Entry({
     dateLabel: startedAt ? showDate(startedAt) : '',
   });
 
+  // The phone's series entry figures over the typed rows (running-totals.ts).
+  const seriesLength = seriesLengthOf(form);
+  const typed = form.rows.map((row) => ({
+    isSighter: row.isSighter,
+    isFinal: row.isFinal === true,
+    shots: rowShots(row.text, mode),
+  }));
+  const session = runningTotals(typed);
+  const lastTime = lastTimes(
+    tables,
+    {
+      disciplineId: form.disciplineId,
+      startedAt,
+      decimalScoring: decimalShown(form) && form.decimalScoring,
+    },
+    typed,
+  );
+  const formatTotal = (tenths: number) => tenthsToScore(tenths).toFixed(mode === 'decimal' ? 1 : 0);
+
   const blocked = saveBlocked(online, state);
   const errors = state.status.kind === 'invalid' ? state.status.errors : [];
   const rowLabel = (row: number) =>
@@ -366,7 +391,17 @@ export function Entry({
       .then((next) => {
         setState(next);
         if (next.status.kind === 'saved') {
-          const fresh = initialForm(new Date(), profile);
+          // The session just pushed is now the last one, whether or not the
+          // refreshed rows carry it yet.
+          const fresh = initialForm(
+            new Date(),
+            profile,
+            preselection(tables.sessions, tables.firearms, {
+              disciplineId: form.disciplineId,
+              firearmId: form.firearmId,
+              startedAt: startedAt ?? '',
+            }),
+          );
           latest.current = fresh;
           setForm(fresh);
           setFalt(initialFalt());
@@ -418,7 +453,13 @@ export function Entry({
       <form className="entry" onSubmit={onSubmit} onKeyDown={onFormKeyDown} noValidate>
         {/* Nothing changes under a save in flight (R23). */}
         <fieldset className="entry-fieldset" disabled={saving}>
+          {/* The phone's New Session order (#822): what the first shot needs
+              leads, the optional fields fold under Details. Date and time stay
+              up front: the web logs sessions after the fact. */}
           <section className="card entry-fields">
+            {preselected?.disciplineId != null && (
+              <p className="muted entry-preselected">{t('entryA.fromLastSession')}</p>
+            )}
             <label className="field">
               {t('session.type')}
               <select
@@ -429,7 +470,6 @@ export function Entry({
                 <option value="competition">{t('sessionType.competition')}</option>
               </select>
             </label>
-            <KindPicker form={form} edit={edit} />
             <label className="field">
               {t('session.regulation')}
               <select
@@ -472,6 +512,20 @@ export function Entry({
                 </select>
               </label>
             )}
+            {isFalt && (
+              <label className="field">
+                {t('session.faltResultMode')}
+                <select
+                  value={falt.resultMode}
+                  onChange={(event) =>
+                    editFalt({ ...falt, resultMode: event.target.value as FaltForm['resultMode'] })
+                  }
+                >
+                  <option value="falt">{t('session.faltResultModeFalt')}</option>
+                  <option value="poangfalt">{t('session.faltResultModePoangfalt')}</option>
+                </select>
+              </label>
+            )}
             <DateField
               label={t('session.date')}
               value={form.date}
@@ -484,30 +538,6 @@ export function Entry({
               onChange={(time) => set('time', time)}
               required
             />
-            <label className="field">
-              {t('session.name')}
-              <input
-                value={form.name}
-                placeholder={defaultName}
-                maxLength={TEXT_LIMITS.sessions.name}
-                onChange={(event) => set('name', event.target.value)}
-              />
-            </label>
-            <label className="field">
-              {t('session.location')}
-              <input
-                value={form.location}
-                list="entry-locations"
-                placeholder={t('session.locationPlaceholder')}
-                maxLength={TEXT_LIMITS.sessions.location}
-                onChange={(event) => set('location', event.target.value)}
-              />
-              <datalist id="entry-locations">
-                {suggestions.map((place) => (
-                  <option key={place} value={place} />
-                ))}
-              </datalist>
-            </label>
             {isCompetition && (
               <>
                 <label className="field">
@@ -606,60 +636,87 @@ export function Entry({
                 ))}
               </select>
             </label>
-            {/* Hidden with the area, as New Session on the phone (#801). */}
-            {profile.showAmmoLots && (
-              <label className="field">
-                {t('session.ammoLot')}
-                <select
-                  value={form.ammoLotId ?? ''}
-                  onChange={(event) => set('ammoLotId', event.target.value || null)}
-                >
-                  <option value="">{t('session.none')}</option>
-                  {ammoLots.map((lot) => (
-                    <option key={lot.id} value={lot.id}>
-                      {lot.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {isSeries && decimalShown(form) && (
-              <label className="field check">
-                <input
-                  type="checkbox"
-                  checked={form.decimalScoring}
-                  onChange={(event) => set('decimalScoring', event.target.checked)}
-                />
-                {t('session.decimalScoring')}
-              </label>
-            )}
-            {isFalt && (
-              <label className="field">
-                {t('session.faltResultMode')}
-                <select
-                  value={falt.resultMode}
-                  onChange={(event) =>
-                    editFalt({ ...falt, resultMode: event.target.value as FaltForm['resultMode'] })
-                  }
-                >
-                  <option value="falt">{t('session.faltResultModeFalt')}</option>
-                  <option value="poangfalt">{t('session.faltResultModePoangfalt')}</option>
-                </select>
-              </label>
-            )}
-            {isSeries && form.programId === null && !isFalt && (
-              <label className="field">
-                {t('session.seriesLength')}
-                <input
-                  inputMode="numeric"
-                  value={form.seriesLengthText}
-                  placeholder={String(discipline.defaultSeriesLength)}
-                  onChange={(event) => set('seriesLengthText', event.target.value)}
-                />
-              </label>
-            )}
             {!isSeries && <RoundsFiredField form={form} edit={edit} />}
           </section>
+          <details className="card entry-details">
+            <summary>
+              <strong>{t('entryA.details')}</strong>
+              <span className="muted">
+                {t(profile.showAmmoLots ? 'entryA.detailsSummary' : 'entryA.detailsSummaryNoAmmo')}
+              </span>
+            </summary>
+            <div className="entry-fields">
+              <KindPicker form={form} edit={edit} />
+              <label className="field">
+                {t('session.name')}
+                <input
+                  value={form.name}
+                  placeholder={defaultName}
+                  maxLength={TEXT_LIMITS.sessions.name}
+                  onChange={(event) => set('name', event.target.value)}
+                />
+              </label>
+              <label className="field">
+                {t('session.location')}
+                <input
+                  value={form.location}
+                  list="entry-locations"
+                  placeholder={t('session.locationPlaceholder')}
+                  maxLength={TEXT_LIMITS.sessions.location}
+                  onChange={(event) => set('location', event.target.value)}
+                />
+                <datalist id="entry-locations">
+                  {suggestions.map((place) => (
+                    <option key={place} value={place} />
+                  ))}
+                </datalist>
+              </label>
+              {/* Hidden with the area, as New Session on the phone (#801). */}
+              {profile.showAmmoLots && (
+                <label className="field">
+                  {t('session.ammoLot')}
+                  <select
+                    value={form.ammoLotId ?? ''}
+                    onChange={(event) => set('ammoLotId', event.target.value || null)}
+                  >
+                    <option value="">{t('session.none')}</option>
+                    {ammoLots.map((lot) => (
+                      <option key={lot.id} value={lot.id}>
+                        {lot.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {isSeries && form.programId === null && !isFalt && (
+                <label className="field">
+                  {t('session.seriesLength')}
+                  <input
+                    inputMode="numeric"
+                    value={form.seriesLengthText}
+                    placeholder={String(discipline.defaultSeriesLength)}
+                    onChange={(event) => set('seriesLengthText', event.target.value)}
+                  />
+                </label>
+              )}
+              {isSeries && decimalShown(form) && (
+                <label className="field check">
+                  <input
+                    type="checkbox"
+                    checked={form.decimalScoring}
+                    onChange={(event) => set('decimalScoring', event.target.checked)}
+                  />
+                  {t('session.decimalScoring')}
+                </label>
+              )}
+            </div>
+            <TagsField
+              tags={tables.tags}
+              chosen={form.tags}
+              onAdd={(typed) => edit(addTag(form, typed, tables.tags))}
+              onRemove={(name) => edit(removeTag(form, name))}
+            />
+          </details>
 
           {isFalt && <FaltStations falt={falt} onEdit={editFalt} rowErrors={rowErrors} />}
           <section className="card series-rows" hidden={!isSeries || isFalt}>
@@ -692,8 +749,9 @@ export function Entry({
                       })
                     }
                   />
+                  {/* Always while it parses, 0 · 0X included, as the phone's live total. */}
                   <span className="row-summary">
-                    {summary.ok && summary.shots > 0
+                    {summary.ok
                       ? t('web.entry.rowSummary', {
                           total: tenthsToScore(summary.totalTenths).toFixed(
                             mode === 'decimal' ? 1 : 0,
@@ -720,6 +778,12 @@ export function Entry({
                       {t('session.sighter')}
                     </label>
                   )}
+                  <EntryCells
+                    shots={rowShots(row.text, mode)}
+                    length={seriesLength}
+                    mode={mode}
+                    lastTime={lastTime[index] ?? null}
+                  />
                   {profile.showPhotos && (
                     <SeriesPhoto
                       rowLabel={label}
@@ -733,6 +797,11 @@ export function Entry({
                 </div>
               );
             })}
+            <p className="entry-session-total">
+              <span className="muted">{t('entryA.sessionTotal')}</span>{' '}
+              <strong>{formatTotal(session.totalTenths)}</strong>{' '}
+              <span className="muted">{t('entryA.innerTens', { count: session.innerTens })}</span>
+            </p>
             <div>
               <button type="button" className="secondary" onClick={() => edit(addRow(form))}>
                 {t('session.addSeries')}
@@ -740,13 +809,6 @@ export function Entry({
               <StartFinalButton form={form} edit={edit} />
             </div>
           </section>
-
-          <TagsField
-            tags={tables.tags}
-            chosen={form.tags}
-            onAdd={(typed) => edit(addTag(form, typed, tables.tags))}
-            onRemove={(name) => edit(removeTag(form, name))}
-          />
 
           <section className="entry-actions">
             {/* While a request is held, the one action resends it (R13). */}

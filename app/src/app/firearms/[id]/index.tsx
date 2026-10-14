@@ -26,14 +26,15 @@ import { CaliberPicker } from '@/components/caliber-picker';
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { ConfirmSheet } from '@/components/confirm-sheet';
+import { Header } from '@/components/header';
 import { InfoButton } from '@/components/info-button';
 import { ListRow } from '@/components/list-row';
 import { OptionPicker } from '@/components/option-picker';
-import { PrimaryButton } from '@/components/primary-button';
 import { SecondaryButton } from '@/components/secondary-button';
 import { TextButton } from '@/components/text-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
+import { StatusLine } from '@/components/status-line';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
 import { nextSessionDeadline } from '@/features/compliance/next-session';
 import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
@@ -94,9 +95,10 @@ import {
 } from '@/features/licenses/scan-license-card';
 import { notifyMaintenanceDue } from '@/platform/notifications';
 import { deleteScannedImage } from '@/platform/text-recognition';
-import { Spacing } from '@/theme/tokens';
+import { Spacing, TabularNums } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
 import { useFeatures } from '@/features/settings/feature-visibility';
+import { ToneLine, type ToneLevel } from '@/features/forms/tone-line';
 
 /** Only groups a session can actually be logged under — see
  *  `selectableWeaponGroups`. */
@@ -114,17 +116,11 @@ type ScanState =
   | { status: 'error'; reason: 'denied' | 'failed' | 'unsupported' | 'nothing' }
   | { status: 'done'; count: number; parsed: ParsedLicenseCard };
 
-const LICENSE_ACTIVITY_TONE: Record<string, 'neutral' | 'primary'> = {
-  green: 'neutral',
-  amber: 'primary',
-  red: 'primary',
-};
-
-const MAINTENANCE_TONE: Record<string, 'neutral' | 'primary'> = {
-  green: 'neutral',
-  amber: 'primary',
-  red: 'primary',
-};
+/** Statuses read as words in a status colour, never as a lavender chip: the
+ *  accent is for what can be tapped (#822). */
+function toneLevel(status: string): ToneLevel {
+  return status === 'red' ? 'red' : status === 'amber' ? 'amber' : 'green';
+}
 
 export default function FirearmDetailScreen() {
   const { t } = useTranslation();
@@ -491,19 +487,28 @@ export default function FirearmDetailScreen() {
 
   return (
     <Screen>
-      <View>
-        <ScreenTitle>
-          {firearm.make} {firearm.model}
-        </ScreenTitle>
-        <View style={styles.chipsRow}>
-          {firearm.weaponType && (
-            <Chip label={t(`firearms.weaponType${capitalize(firearm.weaponType)}`)} />
-          )}
-          <Chip label={t(firearm.isOwn ? 'firearms.ownershipOwn' : 'firearms.ownershipBorrowed')} />
-          {firearm.caliber && <Chip label={firearm.caliber} />}
-          {firearm.vapenId && <Chip label={firearm.vapenId} />}
-        </View>
-      </View>
+      {/* One title, its facts as a line of text and Edit as the header's
+          one action (#822): values are not chips, and Edit is not the
+          screen's primary action. */}
+      <Header
+        title={`${firearm.make} ${firearm.model}`}
+        subtitle={[
+          firearm.weaponType ? t(`firearms.weaponType${capitalize(firearm.weaponType)}`) : null,
+          t(firearm.isOwn ? 'firearms.ownershipOwn' : 'firearms.ownershipBorrowed'),
+          firearm.caliber,
+          firearm.vapenId,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        trailing={
+          <TextButton
+            label={t('common.edit')}
+            onPress={() => router.push(`/firearms/${firearm.id}/edit`)}
+            testID="edit-firearm"
+          />
+        }
+        testID="firearm-header"
+      />
 
       {/* Archived (#799): hidden from the list and the session pickers, its
           history kept. Said here, with the way back, so the screen never
@@ -524,12 +529,6 @@ export default function FirearmDetailScreen() {
         </Card>
       )}
 
-      <PrimaryButton
-        label={t('common.edit')}
-        onPress={() => router.push(`/firearms/${firearm.id}/edit`)}
-        testID="edit-firearm"
-      />
-
       {/* An imported firearm arrives as a make and a model and nothing else,
           then presents identically to one deliberately recorded that way. The
           difference decides the FAP 551-3 case, so name the gap rather than
@@ -549,17 +548,19 @@ export default function FirearmDetailScreen() {
 
       <Card>
         <View style={styles.statsRow}>
-          <View>
-            <ThemedText type="subtitle" testID="round-count">
+          {/* Not Stat: the e2e flows read the number alone by its testID. */}
+          <View style={styles.stat}>
+            <ThemedText type="headline" style={TabularNums} testID="round-count">
               {firearm.roundCount}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {t('firearms.roundCount')}
             </ThemedText>
           </View>
+          {/* Not Stat: the e2e flows read the number alone by its testID. */}
           {features.maintenance && (
-            <View>
-              <ThemedText type="subtitle" testID="rounds-since-maintenance">
+            <View style={styles.stat}>
+              <ThemedText type="headline" style={TabularNums} testID="rounds-since-maintenance">
                 {detail.roundsSinceMaintenance}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -570,10 +571,10 @@ export default function FirearmDetailScreen() {
         </View>
         {/* Maintenance hidden (#801): the round count stays, the rest goes. */}
         {features.maintenance && detail.maintenanceStatus !== 'unknown' && (
-          <Chip
+          <ToneLine
             testID="maintenance-status"
             label={t(`firearms.maintenanceStatus${capitalize(detail.maintenanceStatus)}`)}
-            tone={MAINTENANCE_TONE[detail.maintenanceStatus]}
+            level={toneLevel(detail.maintenanceStatus)}
           />
         )}
         {/* What made it due: the rounds, the months, or both (#800). */}
@@ -612,19 +613,17 @@ export default function FirearmDetailScreen() {
         detail.licenseActivities.length > 0 && (
           <Card>
             <ThemedText type="smallBold">{t('compliance.licenseActivityTitle')}</ThemedText>
-            <View style={styles.chipsRow}>
-              {detail.licenseActivities.map((b) => (
-                <Chip
-                  key={licenseActivityKey(b)}
-                  testID={`firearm-barometer-${licenseActivityKey(b)}`}
-                  label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
-                    count: b.activityCount,
-                    required: b.requiredActivities,
-                  })}
-                  tone={LICENSE_ACTIVITY_TONE[b.status]}
-                />
-              ))}
-            </View>
+            {detail.licenseActivities.map((b) => (
+              <ToneLine
+                key={licenseActivityKey(b)}
+                testID={`firearm-barometer-${licenseActivityKey(b)}`}
+                label={t(`compliance.licenseActivity${capitalize(b.status)}`, {
+                  count: b.activityCount,
+                  required: b.requiredActivities,
+                })}
+                level={toneLevel(b.status)}
+              />
+            ))}
             {detail.licenseActivities.map((b, index) => (
               <View key={`detail-${licenseActivityKey(b)}`}>
                 <ThemedText
@@ -685,16 +684,13 @@ export default function FirearmDetailScreen() {
           <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
           {detail.firearmCriteria.map((criterion, index) => (
             <View key={criterion.criterionId} style={styles.criterionBlock}>
-              <View style={styles.chipsRow}>
-                <Chip
-                  testID={`firearm-criterion-${criterion.criterionId}`}
-                  label={t(
-                    criterion.met ? 'compliance.criterionMet' : 'compliance.criterionNotMet',
-                    { name: t(`compliance.criterion.${criterion.criterionId}`) },
-                  )}
-                  tone={LICENSE_ACTIVITY_TONE[criterion.status]}
-                />
-              </View>
+              <ToneLine
+                testID={`firearm-criterion-${criterion.criterionId}`}
+                label={t(criterion.met ? 'compliance.criterionMet' : 'compliance.criterionNotMet', {
+                  name: t(`compliance.criterion.${criterion.criterionId}`),
+                })}
+                level={toneLevel(criterion.status)}
+              />
               {criterion.periods.map((period) => (
                 <ThemedText
                   key={period.startIso}
@@ -787,13 +783,12 @@ export default function FirearmDetailScreen() {
             subtitle={t('firearms.alsoShoots')}
             testID={`firearm-caliber-${row.caliber}`}
             trailing={
-              <Pressable
-                accessibilityRole="button"
+              <TextButton
+                label={t('common.remove')}
+                accessibilityLabel={`${t('common.remove')} ${row.caliber}`}
                 onPress={() => onRemoveCaliber(row.id)}
                 testID={`remove-caliber-${row.caliber}`}
-              >
-                <ThemedText type="small">{t('common.remove')}</ThemedText>
-              </Pressable>
+              />
             }
           />
         ))}
@@ -935,11 +930,7 @@ export default function FirearmDetailScreen() {
                   subtitle={
                     turns ? `${summary}\n${t('firearms.sightSwitchHint', { turns })}` : summary
                   }
-                  trailing={
-                    isCurrent ? (
-                      <Chip label={t('firearms.sightCurrent')} tone="primary" />
-                    ) : undefined
-                  }
+                  trailing={isCurrent ? <Chip label={t('firearms.sightCurrent')} /> : undefined}
                   onPress={() => onEditSightSetting(setting)}
                   testID={`sight-row-${setting.id}`}
                 />
@@ -992,7 +983,7 @@ export default function FirearmDetailScreen() {
                 />
               </View>
               {/* Slider trial (#138): windage only, so it can be compared
-                against the elevation stepper directly above it. */}
+                  against the elevation stepper directly above it. */}
               <View style={styles.sectionHeader}>
                 <ThemedText type="small" themeColor="textSecondary">
                   {t('firearms.sightWindageRange', { value: windageWindow })}
@@ -1070,16 +1061,13 @@ export default function FirearmDetailScreen() {
           <View style={styles.headerActions}>
             {/* Chip pins itself to the top of its row; its own View centres it
                 beside the text button. */}
-            <View>
-              <Chip
-                testID="license-status"
-                label={
-                  licenseExempt
-                    ? t('firearms.licenseNotRequired')
-                    : t(`firearms.licenseStatus${capitalize(detail.licenseStatus)}`)
-                }
-              />
-            </View>
+            {licenseExempt ? (
+              <ThemedText type="smallBold" themeColor="textSecondary" testID="license-status">
+                {t('firearms.licenseNotRequired')}
+              </ThemedText>
+            ) : (
+              <StatusLine status={detail.licenseStatus} testID="license-status" />
+            )}
             {!showAddLicense && (
               <TextButton
                 label={t('firearms.addLicense')}
@@ -1441,18 +1429,15 @@ function capitalize(value: string): string {
 }
 
 const styles = StyleSheet.create({
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
-  },
   criterionBlock: {
     marginTop: Spacing.two,
   },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.four,
+  },
+  stat: {
+    flex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',

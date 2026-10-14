@@ -94,6 +94,17 @@ describe('niceTicks', () => {
     }
   });
 
+  it('widens the step when rounding out would exceed the tick budget', () => {
+    // A step of 5 would need 0, 5, 10, 15: four ticks for a budget of three.
+    expect(niceTicks(0.5, 10.5, 3)).toEqual({
+      min: 0,
+      max: 20,
+      step: 10,
+      ticks: [0, 10, 20],
+      decimals: 0,
+    });
+  });
+
   it('defaults to five ticks', () => {
     expect(niceTicks(0, 100)).toEqual(niceTicks(0, 100, 5));
     expect(niceTicks(0, 100).ticks).toEqual([0, 50, 100]);

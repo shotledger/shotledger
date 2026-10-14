@@ -1,10 +1,13 @@
-// The Statistics report on a wide screen: the phone's filter form as a
-// sidebar, applied live, and the report's sections in a grid. Every number
-// comes from composeAnalyticsReport, the function the phone uses.
+// Statistics on the web (#822, direction A), in the phone's order: results
+// first, under a sticky Filter Bar. The headline with its trend and chart,
+// the detail, where shots land and the counts lead, as on the phone's tab
+// (app/src/features/stats/stats-results.tsx, `StatsResults`); the rest of the
+// report follows. Every number comes from composeAnalyticsReport, and the
+// trend from statsHeadline over previousPeriodRange, the functions the phone
+// runs (app/src/features/stats/use-stats-data.ts, `useAnalyticsReport`).
 import {
   buildFilterOptions,
-  composeAnalyticsReport,
-  periodRange,
+  statsHeadline,
   type AnalyticsFilterState,
   type AnalyticsReportData,
   type NamedRecord,
@@ -26,29 +29,31 @@ import {
 } from '../../app/src/components/time-series-chart-math';
 import { disciplineLabel } from '../../app/src/features/session/labels';
 import { formatTotalScore } from '../../app/src/features/stats/format-total-score';
+import { periodLabel, trendLine } from '../../app/src/features/stats/stats-filters';
 import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
-import { Filters } from './report/filters';
-import { statsInputs } from './stats-inputs';
-import { showAxisDate, showDate } from './dates';
+import { FilterBar } from './report/filters';
+import { statsInputs, statsReport } from './stats-inputs';
+import { showAxisDate, showDate, showDay } from './dates';
 
 const DASH = '–';
 const score = (tenths: number | null, digits = 1) =>
   tenths === null ? DASH : tenthsToScore(tenths).toFixed(digits);
+const percent = (share: number | null) => (share === null ? DASH : `${(share * 100).toFixed(0)}%`);
 
-function Tile({ label, value }: { label: string; value: string }) {
+function Tile({ label, value, id }: { label: string; value: string; id?: string }) {
   return (
-    <div className="tile">
+    <div className="tile" data-testid={id}>
       <span className="tile-value">{value}</span>
       <span className="tile-label muted">{label}</span>
     </div>
   );
 }
 
-function Card({ title, wide, children }: { title: string; wide?: boolean; children: ReactNode }) {
+function Card({ title, wide, children }: { title?: string; wide?: boolean; children: ReactNode }) {
   return (
     <section className={wide ? 'card wide' : 'card'}>
-      <h2>{title}</h2>
+      {title && <h2>{title}</h2>}
       {children}
     </section>
   );
@@ -69,7 +74,7 @@ export function Statistics({
   const { t } = useTranslation();
   const inputs = useMemo(() => statsInputs(tables), [tables]);
   const options = useMemo(() => buildFilterOptions(inputs), [inputs]);
-  const data = useMemo(() => composeAnalyticsReport(filter, inputs), [filter, inputs]);
+  const { data, previous } = useMemo(() => statsReport(filter, inputs), [filter, inputs]);
 
   if (!options.hasAnyData) {
     return (
@@ -80,19 +85,15 @@ export function Statistics({
     );
   }
 
-  const formatDate = showDate;
-  const formatShortDate = showAxisDate;
   const colors = CHART_LINE_COLORS[prefersDark() ? 'dark' : 'light'];
   const label = (id: string) => disciplineLabel(t, id);
-  const range = periodRange(filter);
-  const chart: ChartRenderer = (chartLabel, points, pick, formatValue) => {
+  const chart: ChartRenderer = (chartLabel, points, pick) => {
     const grouped = groupByDiscipline(points, pick, label, colors);
     return (
       <LineChart
         label={chartLabel}
         grouped={grouped}
-        formatValue={formatValue}
-        formatDate={formatShortDate}
+        formatDate={showAxisDate}
         emptyLabel={t('stats.trendEmpty')}
         omittedLabel={
           grouped.omittedCount === 0
@@ -104,28 +105,30 @@ export function Statistics({
   };
 
   return (
-    <div className="stats-layout">
-      <Filters state={filter} options={options} onChange={setFilter} />
-      <div className="report">
-        <p className="match-count">
-          {t('stats.matchCount', { count: data.totals.sessionCount })}
-          {range.fromIso && (
-            <span className="muted">
-              {' · '}
-              {formatDate(range.fromIso)} –{' '}
-              {range.toIso ? formatDate(range.toIso) : t('compliance.pdfNow')}
-            </span>
-          )}
-        </p>
-        {!data.hasMatches ? (
-          <section className="card">
-            <h2>{t('stats.emptyFilteredTitle')}</h2>
-            <p className="muted">{t('stats.emptyFilteredBody')}</p>
-          </section>
-        ) : (
-          <Sections data={data} t={t} formatDate={formatDate} chart={chart} />
-        )}
-      </div>
+    <div className="stats-page">
+      <FilterBar
+        state={filter}
+        options={options}
+        summary={`${periodLabel(t, filter, showDay)} · ${t('sessions.count', {
+          count: data.totals.sessionCount,
+        })}`}
+        onChange={setFilter}
+      />
+      {!data.hasMatches ? (
+        <section className="card">
+          <h2>{t('stats.emptyFilteredTitle')}</h2>
+          <p className="muted">{t('stats.emptyFilteredBody')}</p>
+        </section>
+      ) : (
+        <Sections
+          filter={filter}
+          data={data}
+          previous={previous}
+          t={t}
+          formatDate={showDate}
+          chart={chart}
+        />
+      )}
     </div>
   );
 }
@@ -133,17 +136,23 @@ export function Statistics({
 type ChartRenderer = <P extends DisciplinePoint>(
   label: string,
   points: readonly P[],
+  /** In points, as the axis prints them. */
   pick: (point: P) => number | null,
-  formatValue: (value: number) => string,
 ) => ReactNode;
 
+const points = (tenths: number | null) => (tenths === null ? null : tenthsToScore(tenths));
+
 function Sections({
+  filter,
   data,
+  previous,
   t,
   formatDate,
   chart,
 }: {
+  filter: AnalyticsFilterState;
   data: AnalyticsReportData;
+  previous: AnalyticsReportData | null;
   t: TFunction;
   formatDate: (iso: string) => string;
   chart: ChartRenderer;
@@ -164,41 +173,82 @@ function Sections({
       </div>
     );
   const totals = data.totals;
+  const headline = statsHeadline(data, previous);
+  const trend = trendLine(t, filter, data, previous);
+  const faltLeads = headline?.kind === 'hitRate';
+  const faltChart = data.falt
+    ? chart(t('stats.chartFaltHitsPerStation'), data.falt.points, (p) => p.hitsPerStation)
+    : null;
 
   return (
     <div className="grid">
-      <Card title={t('stats.sumTitle')}>
-        <div className="tiles">
-          <Tile label={t('stats.totalShots')} value={String(totals.volumeShotCount)} />
-          <Tile label={t('stats.sessions')} value={String(totals.sessionCount)} />
-          {data.showRingCards && (
-            <>
-              <Tile label={t('stats.totalScore')} value={formatTotalScore(totals.sumTenths)} />
-              <Tile label={t('stats.seriesCount')} value={String(totals.scoredSeriesCount)} />
-              <Tile label={t('stats.innerTens')} value={String(totals.innerTenCount)} />
-              <Tile label={t('stats.tens')} value={String(totals.tenCount)} />
-            </>
-          )}
-        </div>
-      </Card>
+      {headline && (
+        <Card wide>
+          <div className="headline">
+            <span className="headline-value" data-testid="stats-headline">
+              {faltLeads
+                ? percent(headline.value)
+                : headline.value === null
+                  ? DASH
+                  : headline.value.toFixed(1)}
+            </span>
+            <span className="muted">
+              {faltLeads ? t('stats.faltHitRate') : t('statsA.headlineMeanPerSeries')}
+            </span>
+            {trend && <span className="muted">{trend}</span>}
+          </div>
+          {faltLeads
+            ? faltChart
+            : chart(t('statsA.headlineMeanPerSeries'), data.points, (p) =>
+                points(p.meanSeriesTotalTenths),
+              )}
+        </Card>
+      )}
 
       {data.showRingCards && (
-        <Card title={t('stats.perShotTitle')}>
+        <Card>
+          {/* X is always counted, 0 included. */}
           <div className="tiles">
             <Tile label={t('stats.mean')} value={score(totals.meanShotTenths)} />
-            <Tile label={t('stats.meanPerSeries')} value={score(totals.meanSeriesTenths)} />
-            <Tile label={t('stats.standardDeviation')} value={score(data.sdTenths, 2)} />
+            <Tile label={t('statsA.shotSd')} value={score(data.sdTenths, 2)} />
             <Tile
               label={t('stats.xPercent')}
               value={
                 totals.scoredShotCount === 0
                   ? DASH
-                  : `${((totals.innerTenCount / totals.scoredShotCount) * 100).toFixed(0)}%`
+                  : percent(totals.innerTenCount / totals.scoredShotCount)
               }
             />
+            <Tile label={t('stats.innerTens')} value={String(totals.innerTenCount)} />
           </div>
         </Card>
       )}
+
+      {data.showRingCards && (
+        <Card title={t('statsA.distributionTitle')}>
+          {data.distribution.length === 0 ? (
+            <p className="muted">{t('stats.distributionEmpty')}</p>
+          ) : (
+            <>
+              <BarChart label={t('statsA.distributionTitle')} buckets={data.distribution} />
+              <p className="caption muted">
+                {t('statsA.distributionCaption', {
+                  count: totals.scoredShotCount,
+                  x: totals.innerTenCount,
+                })}
+              </p>
+            </>
+          )}
+        </Card>
+      )}
+
+      <Card>
+        <div className="tiles">
+          <Tile label={t('stats.sessions')} value={String(totals.sessionCount)} />
+          <Tile label={t('stats.totalShots')} value={String(totals.volumeShotCount)} />
+          <Tile label={t('statsA.competitions')} value={String(data.competitionCount)} />
+        </div>
+      </Card>
 
       {data.showRingCards && (
         <Card title={t('stats.summaryTitle')}>
@@ -216,68 +266,52 @@ function Sections({
         </Card>
       )}
 
+      {data.showRingCards && (
+        <Card title={t('stats.sumTitle')}>
+          <div className="tiles">
+            <Tile label={t('stats.totalScore')} value={formatTotalScore(totals.sumTenths)} />
+            <Tile label={t('stats.seriesCount')} value={String(totals.scoredSeriesCount)} />
+            <Tile label={t('stats.tens')} value={String(totals.tenCount)} />
+            {/* SPSF-specific, so only where there is one, as on the phone. */}
+            {data.goldSeriesCount > 0 && (
+              <Tile label={t('stats.goldSeriesCount')} value={String(data.goldSeriesCount)} />
+            )}
+          </div>
+        </Card>
+      )}
+
       {data.falt && (
         <Card title={disciplineLabel(t, 'spsf-falt')}>
           <div className="tiles">
             <Tile label={t('stats.faltStations')} value={String(data.falt.totals.stationCount)} />
-            <Tile
-              label={t('stats.faltHitRate')}
-              value={
-                data.falt.totals.hitRate === null
-                  ? DASH
-                  : `${(data.falt.totals.hitRate * 100).toFixed(0)}%`
-              }
-            />
+            <Tile label={t('stats.faltHitRate')} value={percent(data.falt.totals.hitRate)} />
             <Tile label={t('stats.faltHits')} value={String(data.falt.totals.hits)} />
             <Tile label={t('stats.faltFiguresHit')} value={String(data.falt.totals.figuresHit)} />
           </div>
-          <h3>{t('stats.chartFaltHitsPerStation')}</h3>
-          {chart(
-            t('stats.chartFaltHitsPerStation'),
-            data.falt.points,
-            (p) => p.hitsPerStation,
-            (v) => v.toFixed(1),
+          {/* Already the lead chart when the hit rate is the headline. */}
+          {!faltLeads && (
+            <>
+              <h3>{t('stats.chartFaltHitsPerStation')}</h3>
+              {faltChart}
+            </>
           )}
         </Card>
       )}
 
       {data.showRingCards && (
         <>
-          <Card title={t('stats.chartSessionScore')} wide>
-            {chart(
-              t('stats.chartSessionScore'),
-              data.points,
-              (p) => (p.scoredSeriesCount === 0 ? null : p.sessionTotalTenths),
-              (v) => score(v, 0),
-            )}
-          </Card>
-          <Card title={t('stats.chartSeriesMean')}>
-            {chart(
-              t('stats.chartSeriesMean'),
-              data.points,
-              (p) => p.meanSeriesTotalTenths,
-              (v) => score(v, 0),
-            )}
-          </Card>
-          <Card title={t('stats.chartShotMean')}>
-            {chart(
-              t('stats.chartShotMean'),
-              data.points,
-              (p) => p.meanShotTenths,
-              (v) => score(v),
-            )}
-          </Card>
-          <Card title={t('stats.distributionTitle')}>
-            {data.distribution.length === 0 ? (
-              <p className="muted">{t('stats.distributionEmpty')}</p>
-            ) : (
-              <BarChart label={t('stats.distributionTitle')} buckets={data.distribution} />
-            )}
-          </Card>
           {data.typeComparison.length > 0 && <TypeComparison rows={data.typeComparison} t={t} />}
           {data.sighterRelation.length > 0 && (
             <SighterRelations entries={data.sighterRelation} t={t} />
           )}
+          <Card title={t('stats.chartShotMean')}>
+            {chart(t('stats.chartShotMean'), data.points, (p) => points(p.meanShotTenths))}
+          </Card>
+          <Card title={t('stats.chartSessionScore')}>
+            {chart(t('stats.chartSessionScore'), data.points, (p) =>
+              p.scoredSeriesCount === 0 ? null : points(p.sessionTotalTenths),
+            )}
+          </Card>
         </>
       )}
     </div>

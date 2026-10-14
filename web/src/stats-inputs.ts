@@ -4,6 +4,10 @@ import {
   buildAnalyticsSeries,
   buildAnalyticsSessions,
   buildFaltAnalyticsSessions,
+  composeAnalyticsReport,
+  previousPeriodRange,
+  type AnalyticsFilterState,
+  type AnalyticsReportData,
   type FaltStationRow,
   type SeriesRow,
   type SessionRow,
@@ -90,5 +94,22 @@ export function statsInputs(tables: PulledTables): StatsInputs {
     tags: canonicalTags(tags),
     sessionNames: new Map(sessions.map((session) => [session.id, session.name])),
     birthYear: birthYearOf(tables),
+  };
+}
+
+/**
+ * The report for `filter`, and the same report over the period of equal
+ * length before it (`null` for all time), which the headline's trend compares
+ * with. The phone's `loadReport` (app/src/features/stats/use-stats-data.ts).
+ */
+export function statsReport(
+  filter: AnalyticsFilterState,
+  inputs: ReturnType<typeof statsInputs>,
+  nowMs: number = Date.now(),
+): { data: AnalyticsReportData; previous: AnalyticsReportData | null } {
+  const range = previousPeriodRange(filter, nowMs);
+  return {
+    data: composeAnalyticsReport(filter, inputs, nowMs),
+    previous: range === null ? null : composeAnalyticsReport(filter, inputs, nowMs, range),
   };
 }

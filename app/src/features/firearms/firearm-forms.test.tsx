@@ -31,6 +31,12 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+/** Unfolds "Details", where the optional fields live (#822). */
+async function openDetails() {
+  const toggle = screen.queryByTestId('firearm-details');
+  if (toggle) await fireEvent.press(toggle);
+}
+
 async function type(label: string, text: string) {
   await fireEvent.changeText(screen.getByLabelText(label), text);
 }
@@ -38,8 +44,32 @@ async function type(label: string, text: string) {
 describe('New firearm', () => {
   const create = () => screen.getByRole('button', { name: 'Create Firearm' });
 
+  it('leads with the required fields and folds the optional ones under Details', async () => {
+    await renderWithProviders(<NewFirearmScreen />);
+
+    expect(screen.getByLabelText('Make')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Model')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Serial Number')).toBeNull();
+    expect(screen.queryByLabelText('Notes')).toBeNull();
+    expect(screen.getByTestId('firearm-details')).not.toBeExpanded();
+
+    await openDetails();
+    expect(screen.getByTestId('firearm-details')).toBeExpanded();
+    expect(screen.getByLabelText('Serial Number')).toHaveProp('placeholder', 'Optional');
+
+    // Folding again keeps what was typed, and Create still stores it.
+    await type('Serial Number', 'SN-0003');
+    await fireEvent.press(screen.getByTestId('firearm-details'));
+    expect(screen.queryByLabelText('Serial Number')).toBeNull();
+    await type('Make', 'Acme');
+    await type('Model', 'Target 22');
+    await fireEvent.press(create());
+    expect(listFirearms(db)[0]).toMatchObject({ serialNumber: 'SN-0003' });
+  });
+
   it('cannot be created until both make and model are filled in', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
     expect(create()).toBeDisabled();
 
     await type('Make', 'Acme');
@@ -54,6 +84,7 @@ describe('New firearm', () => {
 
   it('treats a blank make or model as missing', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     await type('Make', '   ');
     await type('Model', 'Target 22');
@@ -66,6 +97,7 @@ describe('New firearm', () => {
 
   it('defaults to an own pistol', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     expect(screen.getByRole('radio', { name: 'Pistol' })).toBeSelected();
     expect(screen.getByRole('radio', { name: 'My Own' })).toBeSelected();
@@ -74,6 +106,7 @@ describe('New firearm', () => {
 
   it('stores a minimal firearm, trimmed, with optional fields empty', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     await type('Make', '  Acme ');
     await type('Model', ' Target 22  ');
@@ -98,6 +131,7 @@ describe('New firearm', () => {
 
   it('stores every field the form offers', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     await type('Make', 'Acme');
     await type('Model', 'Long 22');
@@ -128,6 +162,7 @@ describe('New firearm', () => {
 
   it('shows the picked caliber and can clear it again', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
     expect(screen.getByText('Select a caliber')).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByTestId('caliber-toggle'));
@@ -144,6 +179,7 @@ describe('New firearm', () => {
     'refuses an interval the detail screen would refuse (%s)',
     async (interval) => {
       await renderWithProviders(<NewFirearmScreen />);
+      await openDetails();
 
       await type('Make', 'Acme');
       await type('Model', 'Target 22');
@@ -159,6 +195,7 @@ describe('New firearm', () => {
 
   it('stores a positive whole-number interval', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     await type('Make', 'Acme');
     await type('Model', 'Target 22');
@@ -172,6 +209,7 @@ describe('New firearm', () => {
     'refuses a months interval the detail screen would refuse (%s)',
     async (months) => {
       await renderWithProviders(<NewFirearmScreen />);
+      await openDetails();
 
       await type('Make', 'Acme');
       await type('Model', 'Target 22');
@@ -185,6 +223,7 @@ describe('New firearm', () => {
 
   it('stores a months interval (#800)', async () => {
     await renderWithProviders(<NewFirearmScreen />);
+    await openDetails();
 
     await type('Make', 'Acme');
     await type('Model', 'Target 22');
@@ -212,6 +251,7 @@ describe('Edit firearm', () => {
   async function openEdit(id: string) {
     setSearchParams({ id });
     await renderWithProviders(<EditFirearmScreen />);
+    await openDetails();
   }
 
   it('opens with the stored values', async () => {

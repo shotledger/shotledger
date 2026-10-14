@@ -8,6 +8,7 @@ module.exports = {
   preset: 'jest-expo',
   moduleNameMapper: {
     '\\.(css|module\\.css)$': '<rootDir>/src/__mocks__/css.js',
+    '^expo-router/react-navigation$': '<rootDir>/src/__mocks__/expo-router-react-navigation.js',
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/src/db/'],
   // A ratchet, not a target (#806): coverage of the app outside src/db (which

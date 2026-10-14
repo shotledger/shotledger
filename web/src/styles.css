@@ -87,44 +87,142 @@ h3 {
   margin: 16px 0 8px;
 }
 
-.stats-layout {
+/* Statistics (#822, direction A): results first, under a sticky Filter Bar
+   that stays with the charts it controls. */
+.stats-page {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
+  gap: var(--space-three);
 }
 
-@media (max-width: 1100px) {
-  .stats-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.filters {
+.filter-bar {
   position: sticky;
-  top: 16px;
+  top: 0;
+  z-index: 2;
+  margin: 0 calc(-1 * var(--space-two));
+  padding: var(--space-two);
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-two);
+  overflow-x: auto;
+}
+
+.filter-summary {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: var(--space-two);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.filter-row button {
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+button.tonal {
+  background: var(--selected);
+  border-color: var(--selected);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-two);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--selected-outline);
+  background: var(--selected);
+  color: var(--text);
+}
+
+.filter-chip span {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.filter-panel {
   display: grid;
-  gap: 20px;
+  gap: var(--space-three);
+  margin-top: var(--space-two);
+  padding: var(--space-three);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--background-element);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
 }
 
-.filters h2 {
-  font-size: 13px;
-  margin-bottom: 8px;
+.filter-panel h2 {
+  font-size: 14px;
+  margin-bottom: var(--space-two);
 }
 
-.filters select {
-  width: 100%;
+.filter-panel p {
+  margin: 0 0 var(--space-two);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-two);
+}
+
+button.text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--primary);
 }
 
 .choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-two);
 }
 
-.choices button {
-  padding: 6px 10px;
-  font-size: 13px;
+.choice {
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.choice[aria-checked='true'] {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.headline {
+  display: grid;
+  gap: var(--space-half);
+  margin-bottom: var(--space-three);
+}
+
+.headline-value {
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  font-size: 12px;
+  margin: var(--space-two) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .grid.dashed {
+  stroke-dasharray: 2 4;
 }
 
 .dates {
@@ -225,7 +323,7 @@ h3 {
 }
 
 .chart .dot {
-  fill: var(--primary);
+  fill: var(--data-viz-categorical-1);
 }
 
 .legend {
@@ -244,34 +342,8 @@ h3 {
   margin-right: 6px;
 }
 
-.bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 200px;
-}
-
-.bar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  gap: 4px;
-}
-
-.bar-fill {
-  width: 100%;
-  background: var(--primary);
-  border-radius: 4px 4px 0 0;
-  min-height: 2px;
-}
-
-.bar-count,
-.bar-label {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+.chart .bar-fill {
+  fill: var(--data-viz-categorical-1);
 }
 
 .comparisons {
@@ -758,53 +830,58 @@ fieldset.field legend {
   margin-bottom: 4px;
 }
 
-/* Radio groups drawn as the .choices pills; the input stays for the keyboard. */
-.radios {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.radios label {
-  position: relative;
-}
-
-.radios input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.radios span {
-  display: inline-block;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid var(--primary);
-  border-radius: 10px;
-  color: var(--primary);
-}
-
-.radios input:checked + span {
-  background: var(--primary);
-  color: var(--on-primary);
-}
-
-.radios input:focus-visible + span {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.radios input:disabled + span {
-  opacity: 0.5;
-}
-
 .field.check,
 .series-rows .series-row .check {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Checkboxes in the palette rather than the browser's own blue (#845). */
+input[type='checkbox'] {
+  accent-color: var(--primary);
+}
+
+/* The phone's Toggle (app/src/components/toggle.tsx) on the web: a native
+   checkbox with role="switch", drawn as a track and thumb in the theme's
+   colours — a quiet track off, primary on (#845). */
+input[type='checkbox'].switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 40px;
+  height: 24px;
+  margin: 0;
+  border-radius: 12px;
+  background: var(--background-selected);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+input[type='checkbox'].switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 120ms ease;
+}
+
+input[type='checkbox'].switch:checked {
+  background: var(--primary);
+}
+
+input[type='checkbox'].switch:checked::before {
+  background: var(--on-primary);
+  transform: translateX(16px);
+}
+
+input[type='checkbox'].switch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .series-rows {
@@ -844,6 +921,97 @@ fieldset.field legend {
 .row-summary {
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* Enter Series as the phone's series entry (#822): the typed row drawn as
+   48px shot cells, the next one outlined; last time and the session total. */
+.entry-cells-row {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-two) var(--space-three);
+}
+
+.entry-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry-cells li {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 0 var(--space-one);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--background-element);
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-cells li.empty {
+  color: var(--text-secondary);
+}
+
+.entry-cells li.current {
+  border-color: var(--selected-outline);
+  background: var(--selected);
+}
+
+.entry-cells li.over {
+  border-color: var(--danger);
+}
+
+.entry-last-time,
+.entry-session-total {
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-session-total {
+  margin: var(--space-two) 0 0;
+  font-size: 16px;
+}
+
+.entry-session-total strong {
+  font-size: 22px;
+}
+
+.entry-preselected {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Details: the optional fields, folded as on the phone's New Session. */
+.entry-details summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-one) var(--space-two);
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.entry-details[open] > summary {
+  margin-bottom: var(--space-three);
+}
+
+.entry-details .entry-fields {
+  margin-bottom: var(--space-three);
+}
+
+.entry-details .card {
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .entry-photo {
@@ -1035,6 +1203,11 @@ fieldset.field legend {
 
   .row-summary {
     text-align: left;
+  }
+
+  /* Full width, so a five-shot series stays one row of cells. */
+  .entry-cells-row {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1426,4 +1599,201 @@ a.button.secondary {
   .edit-series .series-row {
     grid-template-columns: 72px minmax(0, 1fr);
   }
+}
+
+/* The two single-choice controls (fields/choice.tsx, #822): a segmented
+   track for two to four short options, choice chips for the rest. Native
+   radios underneath; chosen is the `selected` fill plus a `selected-outline`
+   edge of the same width, so a choice never rests on colour or border
+   thickness alone. 48px is the touch-target floor, as on the phone. */
+.segmented,
+.choice-chips {
+  display: flex;
+  gap: 2px;
+}
+
+.segmented {
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--background-element);
+}
+
+.choice-chips {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.segmented label,
+.choice-chips label {
+  position: relative;
+}
+
+.segmented label {
+  flex: 1;
+}
+
+.segmented input,
+.choice-chips input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented span,
+.choice-chips span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.segmented span {
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.choice-chips span {
+  border-color: var(--border);
+  border-radius: 999px;
+}
+
+.segmented input:checked + span,
+.choice-chips input:checked + span {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.segmented input:focus-visible + span,
+.choice-chips input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.segmented input:disabled + span,
+.choice-chips input:disabled + span {
+  opacity: 0.5;
+}
+
+/* Count cells (fields/count.tsx): one 48px radio per value on a segmented
+   track, wrapping onto rows of equal cells rather than shrinking one. */
+.count-cells {
+  display: grid;
+  /* One fixed cell width, so a column of counts lines up from field to
+     field and a short list does not stretch into wide bars on a desktop. */
+  grid-template-columns: repeat(auto-fill, 56px);
+  justify-content: start;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--background-element);
+}
+
+.count-cells label {
+  position: relative;
+}
+
+.count-cells input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.count-cells span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-cells input:checked + span {
+  background: var(--selected);
+  border-color: var(--selected-outline);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.count-cells input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.count-cells input:disabled + span {
+  opacity: 0.5;
+}
+
+.station-row .count-field {
+  grid-column: 1 / -1;
+}
+
+/* "Details": a form's optional fields, folded (#822), as on the phone's
+   DetailsDisclosure. */
+details.form-details > summary {
+  display: grid;
+  gap: 2px;
+  min-height: 48px;
+  align-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+details.form-details > summary .muted {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+details.form-details[open] > summary {
+  margin-bottom: 12px;
+}
+
+/* A choice takes the form's full width: chips wrap across the row instead
+   of stretching one grid cell, and the row aligns as the phone's does. */
+.entry-fields > fieldset.field {
+  grid-column: 1 / -1;
+}
+
+.entry-fields > fieldset.field legend {
+  margin-bottom: 8px;
+}
+
+details.form-details > summary {
+  position: relative;
+  padding-right: 24px;
+  list-style: none;
+}
+
+details.form-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.form-details > summary::after {
+  content: '›';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+details.form-details[open] > summary::after {
+  transform: translateY(-50%) rotate(90deg);
 }

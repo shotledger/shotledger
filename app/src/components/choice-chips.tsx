@@ -14,6 +14,8 @@ import { MIN_TOUCH_TARGET, Radius, Spacing } from '@/theme/tokens';
 export interface ChoiceChipOption<T extends string> {
   value: T;
   label: string;
+  /** Set on the chip's own pressable, for tests and e2e flows. */
+  testID?: string;
 }
 
 export interface ChoiceChipsProps<T extends string> extends Omit<ViewProps, 'children'> {
@@ -52,6 +54,7 @@ export function ChoiceChips<T extends string>({
             accessibilityRole={mode === 'single' ? 'radio' : 'checkbox'}
             accessibilityState={{ selected, checked: selected }}
             accessibilityLabel={option.label}
+            testID={option.testID}
             onPress={() => onChange(toggleChoice(value, option.value, mode, order))}
             style={({ pressed }) => [
               styles.chip,
@@ -60,10 +63,13 @@ export function ChoiceChips<T extends string>({
               selected && { backgroundColor: theme.selected, borderColor: theme.selectedOutline },
             ]}
           >
+            {/* A chip sizes to its label and wraps to the next row whole; a
+                label wider than the row wraps between its words inside the
+                chip, never mid-word and never cut off (#846). */}
             <ThemedText
               type={selected ? 'smallBold' : 'small'}
               themeColor={selected ? 'text' : 'textSecondary'}
-              numberOfLines={1}
+              style={styles.label}
             >
               {option.label}
             </ThemedText>
@@ -81,10 +87,17 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   chip: {
+    // Never squeezed to share a row (no flex), never wider than the row.
+    flexGrow: 0,
+    flexShrink: 0,
+    maxWidth: '100%',
     minHeight: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
     borderRadius: Radius.pill,
     borderWidth: 2,
+  },
+  label: {
+    flexShrink: 1,
   },
 });

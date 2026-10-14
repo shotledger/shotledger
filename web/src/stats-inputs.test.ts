@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PulledTables } from './pull';
-import { statsInputs } from './stats-inputs';
+import { DEFAULT_ANALYTICS_FILTER } from '@shotledger/shared/src/analytics-rows';
+
+import { statsInputs, statsReport } from './stats-inputs';
 
 const table = (rows: Record<string, unknown>[]) =>
   new Map(rows.map((row) => [row.id as string, row]));
@@ -124,5 +126,28 @@ describe('synced tags and birth year', () => {
     const pulled = tables();
     pulled.settings = table(rows);
     expect(statsInputs(pulled).birthYear).toBeNull();
+  });
+});
+
+describe('statsReport', () => {
+  const NOW = Date.parse('2026-10-06T12:00:00.000Z');
+
+  it('composes the report and the previous equal period, as the phone does', () => {
+    const inputs = statsInputs(tables());
+    const { data, previous } = statsReport(
+      { ...DEFAULT_ANALYTICS_FILTER, period: '30d' },
+      inputs,
+      NOW,
+    );
+    expect(data.sessionIds).toEqual(['s1']);
+    expect(data.competitionCount).toBe(1);
+    expect(previous?.sessionIds).toEqual([]);
+  });
+
+  it('has no previous period for all time', () => {
+    const inputs = statsInputs(tables());
+    expect(
+      statsReport({ ...DEFAULT_ANALYTICS_FILTER, period: 'all' }, inputs, NOW).previous,
+    ).toBeNull();
   });
 });

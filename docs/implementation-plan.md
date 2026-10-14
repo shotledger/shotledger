@@ -759,8 +759,7 @@ shows the chosen range next to the pickers. i18n: `stats.periodCustom`,
 | `/session/new`                             | new-session form (kind, name, location, tags)                                             | validation errors  |
 | `/session/[id]`                            | series list + stats toggle, add series                                                    | zero series        |
 | `/session/[id]/series/[pos]`               | keypad entry                                                                              | integer vs decimal |
-| `/stats`                                   | filter form (period, type, discipline, series length, tags)                               | no sessions at all |
-| `/stats/report`                            | generated report: records, sum + per-shot totals, charts, export                          | no data for filter |
+| `/stats`                                   | results for the Filter Bar's filter: headline + trend, detail, records, charts, export    | no sessions at all |
 | `/firearms`                                | list + license-activity chips                                                             | empty              |
 | `/firearms/[id]`                           | detail: classes, license, maintenance, ammo usage                                         | expired license    |
 | `/firearms/new`, `/firearms/[id]/edit`     | forms                                                                                     |                    |
@@ -1313,6 +1312,15 @@ restates §0 rules 1–6 verbatim.
 > vault's own "Add to vault" screen (Weapon license + Photo) also offers the
 > same scan, and can create a license record from it. See the updated
 > `docs/specs/license-card-ocr-spec.md`/`-evidence.md`.
+>
+> **#822 (direction A):** the tab opens on the results, and `/stats/report`
+> is gone. A Filter Bar (chips + sheet) holds the filter and applies it live;
+> the headline (average per series, or the hit rate for a hits discipline)
+> carries its trend against the previous equal period
+> (`previousPeriodRange` / `statsHeadline` in `shared/src/analytics-rows`).
+> Every number the report showed is still on the tab
+> (`app/src/features/stats/stats-results.tsx`), plus Home's session, shot and
+> competition counts for the filter. The web page follows the same order.
 
 > **The Vault has since been removed** (issue #276, maintainer 2026-09-16:
 > licenses are going digital, and a license picture — if it is ever needed

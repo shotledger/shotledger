@@ -80,7 +80,9 @@ describe('a new series', () => {
     expect(screen.getByText('Series 1')).toBeOnTheScreen();
     expect(screen.getByTestId('shot-5')).toBeOnTheScreen();
     expect(screen.queryByTestId('shot-6')).toBeNull();
-    expect(screen.getByText('This series is saved when you tap Save.')).toBeOnTheScreen();
+    expect(
+      screen.getByText('This series is saved when you tap Save Series or Next Series.'),
+    ).toBeOnTheScreen();
   });
 
   it('takes the series length chosen for the session', async () => {
@@ -106,7 +108,7 @@ describe('a new series', () => {
     await openSeries(session.id, 1, { new: '1' });
 
     await tap('X', '10', '9', '8');
-    expect(screen.getByTestId('series-running-total')).toHaveTextContent('Series Total: 37');
+    expect(screen.getByTestId('series-running-total')).toHaveTextContent('37');
     await save();
 
     expect(storedShots(session.id)).toEqual([
@@ -161,8 +163,8 @@ describe('a new series', () => {
     const session = precisionSession();
     await openSeries(session.id, 1, { new: '1' });
 
-    await fireEvent(screen.getByTestId('series-sighter-toggle'), 'valueChange', true);
-    expect(screen.getByText('Sighter')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('series-sighter-toggle'));
+    expect(screen.getByRole('switch', { name: 'Mark as Sighter' })).toBeChecked();
     await save();
 
     const rows = listSeriesForSession(db, session.id);
@@ -199,7 +201,7 @@ describe('the gold-series hint', () => {
     const session = precisionSession();
     await openSeries(session.id, 1, { new: '1' });
 
-    await fireEvent(screen.getByTestId('series-sighter-toggle'), 'valueChange', true);
+    await fireEvent.press(screen.getByTestId('series-sighter-toggle'));
 
     expect(screen.queryByTestId('guld-hint')).toBeNull();
   });
@@ -223,7 +225,7 @@ describe('an existing series', () => {
 
     expect(screen.getByTestId('shot-1')).toHaveTextContent('10');
     expect(screen.getByTestId('shot-3')).toHaveTextContent('8');
-    expect(screen.getByTestId('series-running-total')).toHaveTextContent('Series Total: 27');
+    expect(screen.getByTestId('series-running-total')).toHaveTextContent('27');
     expect(screen.queryByTestId('unsaved-series-hint')).toBeNull();
   });
 
@@ -256,9 +258,106 @@ describe('an existing series', () => {
     addSeries(db, { sessionId: session.id, position: 1, isSighter: true });
     await openSeries(session.id, 1);
 
-    await fireEvent(screen.getByTestId('series-sighter-toggle'), 'valueChange', false);
+    await fireEvent.press(screen.getByTestId('series-sighter-toggle'));
     await save();
 
     expect(listSeriesForSession(db, session.id)[0]!.isSighter).toBe(0);
+  });
+});
+
+describe('the range layout (#822)', () => {
+  function seeded(sessionId: string, position: number, values: number[], extra = {}) {
+    const row = addSeries(db, { sessionId, position, ...extra });
+    saveSeriesShots(
+      db,
+      row.id,
+      values.map((valueTenths) => ({ valueTenths, isInnerTen: valueTenths === 100 })),
+    );
+    return row;
+  }
+
+  it('shows the inner tens even when there are none', async () => {
+    const session = precisionSession();
+    await openSeries(session.id, 1, { new: '1' });
+
+    expect(screen.getByTestId('series-inner-tens')).toHaveTextContent('0X');
+    await tap('X', '9');
+    expect(screen.getByTestId('series-inner-tens')).toHaveTextContent('1X');
+  });
+
+  it('keeps a live session total that counts the series on the keypad', async () => {
+    const session = precisionSession();
+    seeded(session.id, 1, [90, 90, 90, 90, 90]);
+    await openSeries(session.id, 2, { new: '1' });
+
+    expect(screen.getByTestId('session-running-total')).toHaveTextContent('45');
+    await tap('10', '8');
+    expect(screen.getByTestId('session-running-total')).toHaveTextContent('63');
+  });
+
+  it('leaves a sighter out of the session total', async () => {
+    const session = precisionSession();
+    seeded(session.id, 1, [90, 90]);
+    await openSeries(session.id, 2, { new: '1' });
+
+    await fireEvent.press(screen.getByTestId('series-sighter-toggle'));
+    await tap('10');
+
+    expect(screen.getByTestId('session-running-total')).toHaveTextContent('18');
+  });
+
+  it('does not move on after the last shot; Next Series saves and opens the next', async () => {
+    const session = precisionSession();
+    await openSeries(session.id, 1, { new: '1' });
+
+    await tap('9', '9', '9', '9', '9');
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+    expect(mockRouter.back).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Next Series' }));
+
+    expect(storedShots(session.id)).toHaveLength(1);
+    expect(mockRouter.replace).toHaveBeenCalledWith(`/session/${session.id}/series/2?new=1`);
+  });
+
+  it('cannot move on from a blank new series', async () => {
+    const session = precisionSession();
+    await openSeries(session.id, 1, { new: '1' });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Next Series' }));
+
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+    expect(listSeriesForSession(db, session.id)).toHaveLength(0);
+  });
+
+  it('ends a fixed format at its last series with Save Series alone', async () => {
+    const session = precisionSession({ disciplineId: 'spsf-milsnabb', programId: 'spsf-milsnabb' });
+    for (let position = 1; position <= 3; position++) {
+      addSeries(db, { sessionId: session.id, position });
+    }
+    await openSeries(session.id, 3);
+
+    expect(screen.queryByRole('button', { name: 'Next Series' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save Series' })).toBeOnTheScreen();
+  });
+
+  it('shows last time for the same scored series of the previous session', async () => {
+    const previous = precisionSession({ startedAt: '2026-05-09T09:00:00.000Z' });
+    seeded(previous.id, 1, [80, 80], { isSighter: true });
+    seeded(previous.id, 2, [100, 90, 90, 90, 90]);
+    seeded(previous.id, 3, [80, 80, 80, 80, 80]);
+    // Today's sighter is at position 1 too, so series 2 is the first scored one both times.
+    const session = precisionSession();
+    seeded(session.id, 1, [90, 90], { isSighter: true });
+    await openSeries(session.id, 2, { new: '1' });
+
+    expect(screen.getByTestId('last-time')).toHaveTextContent('461XLast Time');
+  });
+
+  it('shows no last time for the first session of a discipline', async () => {
+    const session = precisionSession();
+    await openSeries(session.id, 1, { new: '1' });
+
+    expect(screen.queryByTestId('last-time')).toBeNull();
   });
 });

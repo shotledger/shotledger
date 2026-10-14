@@ -42,6 +42,8 @@ export interface HomeSessionRow {
   /** Tag names, already sorted; empty when the session has none. */
   tags: readonly string[];
   shape: SessionShape | null;
+  /** Rounds fired but not scored; what a rounds session's row reports. */
+  extraRounds: number | null;
 }
 
 /**
@@ -95,12 +97,17 @@ export function buildHomeSessionRow(
     innerTenCount: sessionInnerTens(session.innerTenCount, sessionSeries),
     tags,
     shape: deriveSessionShapeFromContent(sessionSeries, session.extraRounds ?? null),
+    extraRounds: session.extraRounds ?? null,
   };
 }
 
-/** `311p` — no whitespace before the suffix (maintainer, 2026-09-03). */
+/**
+ * `311` — the number alone. Lists printed `311p` and the detail screen `311`,
+ * so the same total read two ways (#822, "Numbers that need decoding"); the
+ * suffix went rather than spreading to every screen.
+ */
 export function formatSessionTotal(total: number): string {
-  return `${total}p`;
+  return String(total);
 }
 
 /** `⌀ 45.0` — the average glyph, then the value to one decimal place. */

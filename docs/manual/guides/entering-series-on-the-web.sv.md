@@ -6,10 +6,13 @@ pappersloggbok. Logga in och öppna **Mata in serier** i menyn till vänster.
 
 ## Fyll i passet
 
-Fälten är telefonens formulär för nytt pass: typ, loggning, reglemente, gren,
-matchupplägg, datum och tid, namn och plats, sedan tävlingsfälten, vapen och
-ammunitionsparti. Datum och tid är när du sköt, i datorns tidszon; båda börjar
-på nu. Ett datum före 1900 eller senare än i morgon avvisas, som ett skrivfel
+Fälten är telefonens formulär för nytt pass, i samma ordning: typ, reglemente,
+gren och matchupplägg, sedan datum och tid, tävlingsfälten och vapnet. Som i
+telefonen börjar sidan på grenen och vapnet från ditt senaste pass, och efter
+varje **Spara** på dem från passet du nyss sparade. Allt valfritt — loggning,
+namn och plats, ammunitionsparti, skott per serie, decimalräkning och taggar —
+ligger under **Detaljer**; klicka för att öppna. Datum och tid är när du sköt,
+i datorns tidszon; båda börjar på nu. Ett datum före 1900 eller senare än i morgon avvisas, som ett skrivfel
 snarare än ett pass.
 
 Datum och tid visas i appens format, utifrån dess språk och webbläsarens
@@ -32,7 +35,7 @@ efter vapengrupp och klass i en tävling. Se
 
 ## Bara antal skott
 
-Välj **Bara antal skott** under **Loggning** för att föra in hur många skott
+Välj **Bara antal skott** under **Detaljer → Loggning** för att föra in hur många skott
 du sköt, utan serier. Passets fält finns kvar; **Avlossade skott** ersätter
 matchupplägget och serieraderna. Lämna fältet tomt om du inte vet antalet.
 Annat än ett heltal från 0 till 10 000 avvisas innan något skickas; telefonen
@@ -52,8 +55,13 @@ En rad per serie. Skriv skotten med mellanslag emellan:
 `x` fungerar lika bra som `X`, och `10,4` lika bra som `10.4`. Med
 decimalräkning behöver varje skott sin tiondel: skriv `9.0` för en nia, `0.0`
 för en bom och `X.0` för en innertia på linjen; en ensam `9` eller `X`
-avvisas, och meddelandet säger varför. Varje rad visar sin summa och sina
-innertior medan du skriver.
+avvisas, och meddelandet säger varför.
+
+Medan du skriver ritar varje rad sina skott i rutor, som telefonens
+knappsats: en ruta per skott i serien, med nästa att fylla i markerad. Bredvid
+raden står dess summa och innertior, även **0 X**, och **Förra gången**, samma
+tävlingsserie i ditt föregående pass i grenen, som i telefonen. Under raderna
+håller **Pass** den löpande summan av tävlingsserierna.
 
 Ett pass behöver minst ett skott eller foto: är alla rader tomma säger **Spara** det och
 skickar ingenting.
@@ -82,7 +90,8 @@ Välj **Fältskjutning** som gren, så blir raderna stationer, som i telefonen.
 eller som en summa (**Poängfält**).
 
 Varje station har telefonens stationsfält: **Träff**, **Träffade figurer**,
-**Figurer** (hur många som var utställda), **Poäng** och **Maxpoäng** för ett
+**Figurer** (hur många som var utställda), var och en en rad tal att klicka på,
+**Poäng** och **Maxpoäng** för ett
 poängmål, och **Struken**. Träffade figurer erbjuder bara det som träffen och
 figurerna tillåter. Summan ovanför stationerna räknar de stationer som sparas
 och utelämnar strukna stationer och särskjutning, som i telefonen. **Lägg till
@@ -96,7 +105,7 @@ särskjutningen.
 
 **Träff** börjar på **–**. En station där inget är ifyllt sparas inte, och
 stationerna efter den flyttas upp ett nummer. För en station där alla skott
-missade väljer du **0** under Träff: den sparas och räknas, som en station med
+missade klickar du **0** under Träff: den sparas och räknas, som en station med
 0 träff.
 
 ## Lägg till ett foto av tavlan
@@ -114,7 +123,7 @@ ett foto som fortfarande är större än 1,5 MB när det förminskats. En statio
 
 ## Tagga det
 
-Under raderna tar **Taggar** ett taggnamn: skriv det och tryck **Lägg till**
+Under **Detaljer** tar **Taggar** ett taggnamn: skriv det och tryck **Lägg till**
 eller Enter. Kontots taggar föreslås medan du skriver; ett namn du inte använt
 förut blir en ny tagg, som i telefonen. Stora och små bokstäver spelar ingen
 roll: finns taggen `KM` lägger `km` till `KM`. Klicka på en tagg för att ta
