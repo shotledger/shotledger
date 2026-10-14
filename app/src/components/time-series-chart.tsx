@@ -12,7 +12,8 @@
 // time-series-chart-math.ts so it can be tested without rendering.
 import React from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Polyline } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
