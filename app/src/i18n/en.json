@@ -832,6 +832,7 @@
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
     "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
+    "positionNotFound": "This link does not point to a series or station in the session.",
     "photoGoneBody": "The photo file is no longer on this device. Add it again from the series with Replace Photo.",
     "photoGone": "Photo missing",
     "scoredFromPhoto": "Scored from Photo",

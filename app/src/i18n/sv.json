@@ -832,6 +832,7 @@
     "replacePhoto": "Byt foto",
     "photoMissingTitle": "Fotot är inte tillgängligt",
     "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken.",
+    "positionNotFound": "Länken pekar inte på någon serie eller station i passet.",
     "photoGoneBody": "Fotofilen finns inte längre på den här enheten. Lägg till den igen från serien med Byt foto.",
     "photoGone": "Fotot saknas",
     "scoredFromPhoto": "Poängsatt från foto",

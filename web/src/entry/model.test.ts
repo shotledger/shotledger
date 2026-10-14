@@ -163,6 +163,9 @@ describe('the Enter Series form', () => {
     });
     expect(toDraft({ ...form, seriesLengthText: 'x' }, '').seriesLength).toBeNull();
     expect(toDraft({ ...form, seriesLengthText: '0' }, '').seriesLength).toBeNull();
+    // #837: exponent notation passed Number.isInteger and became the series length.
+    expect(toDraft({ ...form, seriesLengthText: '1e20' }, '').seriesLength).toBeNull();
+    expect(toDraft({ ...form, seriesLengthText: '101' }, '').seriesLength).toBeNull();
   });
 
   it('summarizes a row as it is typed', () => {

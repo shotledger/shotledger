@@ -34,6 +34,8 @@ import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme/tokens';
+import { routePosition } from '@/features/session/route-position';
+import { UnknownPosition } from '@/features/session/unknown-position';
 
 /**
  * How far the photo's aspect ratio may differ from the one the geometry was
@@ -43,11 +45,16 @@ import { Spacing } from '@/theme/tokens';
  */
 const ASPECT_TOLERANCE = 0.02;
 
-export default function SeriesPhotoScreen() {
+export default function SeriesPhotoRoute() {
+  const { pos } = useLocalSearchParams<{ pos?: string }>();
+  const position = routePosition(pos ?? '1');
+  return position === null ? <UnknownPosition /> : <SeriesPhotoScreen position={position} />;
+}
+
+function SeriesPhotoScreen({ position }: { position: number }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id, pos, from } = useLocalSearchParams<{ id: string; pos?: string; from?: string }>();
-  const position = Number(pos ?? '1');
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);

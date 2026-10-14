@@ -27,8 +27,11 @@ import {
   groupByDiscipline,
   type DisciplinePoint,
 } from '../../app/src/components/time-series-chart-math';
+import { nextSessionDeadline } from '../../app/src/features/compliance/next-session';
 import { disciplineLabel } from '../../app/src/features/session/labels';
 import { formatTotalScore } from '../../app/src/features/stats/format-total-score';
+import { overallLicenseActivity } from './license-activity';
+import { licenseCheckHash } from './shell/route';
 import { periodLabel, trendLine } from '../../app/src/features/stats/stats-filters';
 import type { PulledTables } from './pull';
 import { BarChart, LineChart, ScatterPlot } from './report/charts';
@@ -59,6 +62,42 @@ function Card({ title, wide, children }: { title?: string; wide?: boolean; child
   );
 }
 
+const ACTIVITY_LABEL = {
+  green: 'compliance.licenseActivityGreen',
+  amber: 'compliance.licenseActivityAmber',
+  red: 'compliance.licenseActivityRed',
+} as const;
+
+/**
+ * The phone's Home chip (`useOverallLicenseActivity`): the whole log, not the
+ * filtered report, so it sits above the filters. Primary when not on track.
+ */
+function LicenseActivityLine({ tables }: { tables: PulledTables }) {
+  const { t } = useTranslation();
+  const overall = useMemo(() => overallLicenseActivity(tables), [tables]);
+  if (overall === null) return null;
+  const { status, lapseIso } = overall;
+  return (
+    <a
+      className="license-activity"
+      href={licenseCheckHash({ view: 'overview' })}
+      title={t('compliance.check.open')}
+    >
+      <span>
+        {t('compliance.licenseActivityTitle')}{' '}
+        <span className={status === 'green' ? 'badge' : 'badge alert'}>
+          {t(ACTIVITY_LABEL[status])}
+        </span>
+      </span>
+      {lapseIso && (
+        <span className="muted">
+          {t('compliance.nextSessionBy', { date: showDate(nextSessionDeadline(lapseIso)) })}
+        </span>
+      )}
+    </a>
+  );
+}
+
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
 export function Statistics({
@@ -78,10 +117,13 @@ export function Statistics({
 
   if (!options.hasAnyData) {
     return (
-      <section className="card">
-        <h2>{t('stats.emptyTitle')}</h2>
-        <p className="muted">{t('stats.emptyBody')}</p>
-      </section>
+      <div className="stats-page">
+        <LicenseActivityLine tables={tables} />
+        <section className="card">
+          <h2>{t('stats.emptyTitle')}</h2>
+          <p className="muted">{t('stats.emptyBody')}</p>
+        </section>
+      </div>
     );
   }
 
@@ -106,6 +148,7 @@ export function Statistics({
 
   return (
     <div className="stats-page">
+      <LicenseActivityLine tables={tables} />
       <FilterBar
         state={filter}
         options={options}

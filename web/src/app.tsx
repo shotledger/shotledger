@@ -10,6 +10,7 @@ import { currentAccount, hasSession, loadAccount, signOut } from './api';
 import { BulkEdit } from './bulk/bulk';
 import { SessionEdit, type Done } from './edit/edit';
 import { Entry } from './entry/entry';
+import { LicenseCheck } from './license-check';
 import { type PulledTables } from './pull';
 import { afterReauth, type LoadedAccount, type ReauthOutcome } from './reauth';
 import { replacementHash, routeFromHash, type Route } from './shell/route';
@@ -191,7 +192,10 @@ export function App() {
           notice={notice?.hash === window.location.hash ? notice.lines : []}
         />
       )}
-      {state.kind === 'ready' && page === 'statistics' && (
+      {state.kind === 'ready' && page === 'statistics' && route.check && (
+        <LicenseCheck key={generation} tables={state.tables} view={route.check} />
+      )}
+      {state.kind === 'ready' && page === 'statistics' && !route.check && (
         <Statistics
           key={generation}
           tables={state.tables}

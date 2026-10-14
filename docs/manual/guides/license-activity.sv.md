@@ -108,3 +108,22 @@ PDF av loggen att skriva ut. Låt loggboken skrivas under efter hand, och
 använd appen för att se var du står.
 
 **Inställningar → Säkerhetskopiering och data** exporterar alla pass som data.
+
+## På webben
+
+Med synk påslagen visar **Statistik** i webbappen samma samlade status som
+startsidan på telefonen, högst upp på sidan: **Licensaktivitet** följt av
+**I fas**, **Halkar efter** eller **Inaktiv**, och när du är i fas datumet då
+nästa pass senast ska loggas. Den räknar alla pass på ditt konto, oavsett hur
+rapportens filter är inställda.
+
+Den syns när en profil är vald under **Inställningar → Efterlevnad**, på
+telefonen eller på webben, men inte när licensaktivitet är avstängd under
+**Inställningar → Funktioner**. Webben kan inte se telefonens språk, så tills
+du väljer visas ingenting.
+
+Klicka på statusen för att öppna **Licenskontroll**, med samma svar, rader
+och rutor som på telefonen ([Att se var du står](#att-se-var-du-star)).
+Webben har ännu inga sidor för vapen, så ett vapens ruta saknar raden
+**Öppna vapnet**, och ett vapens eget kort för licensaktivitet finns än så
+länge bara på telefonen.

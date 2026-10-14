@@ -111,6 +111,8 @@ import {
 import { loadSessionDetail } from '@/features/session/use-session-detail';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/theme/tokens';
+import { routePosition } from '@/features/session/route-position';
+import { UnknownPosition } from '@/features/session/unknown-position';
 
 type Phase = 'capture' | 'analyzing' | 'rejected' | 'corners' | 'marking';
 
@@ -181,12 +183,17 @@ const REASON_KEYS: Record<RejectReason, string> = {
   holeSize: 'photoScoring.reasonHoleSize',
 };
 
-export default function ScanScreen() {
+export default function ScanRoute() {
+  const { pos } = useLocalSearchParams<{ pos?: string }>();
+  const position = routePosition(pos ?? '1');
+  return position === null ? <UnknownPosition /> : <ScanScreen position={position} />;
+}
+
+function ScanScreen({ position }: { position: number }) {
   const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
-  const { id, pos, final } = useLocalSearchParams<{ id: string; pos?: string; final?: string }>();
-  const position = Number(pos ?? '1');
+  const { id, final } = useLocalSearchParams<{ id: string; final?: string }>();
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);

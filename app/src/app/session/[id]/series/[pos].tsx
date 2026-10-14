@@ -58,6 +58,8 @@ import { resolveSeriesPhotoUri, seriesPhotoGone } from '@/platform/sync-photos';
 import { useTheme } from '@/hooks/use-theme';
 import { useFeatures } from '@/features/settings/feature-visibility';
 import { Radius, Spacing, TabularNums } from '@/theme/tokens';
+import { routePosition } from '@/features/session/route-position';
+import { UnknownPosition } from '@/features/session/unknown-position';
 
 /**
  * Next Series replaces this route with the next series' one. Keyed by the
@@ -66,24 +68,24 @@ import { Radius, Spacing, TabularNums } from '@/theme/tokens';
  */
 export default function SeriesEntryRoute() {
   const { id, pos } = useLocalSearchParams<{ id: string; pos: string }>();
-  return <SeriesEntryScreen key={`${id}:${pos}`} />;
+  const position = routePosition(pos);
+  if (position === null) return <UnknownPosition />;
+  return <SeriesEntryScreen key={`${id}:${pos}`} position={position} />;
 }
 
 /** Whether `persist` kept the series (or had nothing to keep) or left the screen itself. */
 type PersistOutcome = 'saved' | 'nothing' | 'left';
 
-function SeriesEntryScreen() {
+function SeriesEntryScreen({ position }: { position: number }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
   const features = useFeatures();
-  const { id, pos, final } = useLocalSearchParams<{
+  const { id, final } = useLocalSearchParams<{
     id: string;
-    pos: string;
     new?: string;
     final?: string;
   }>();
-  const position = Number(pos);
 
   const detail = useMemo(() => loadSessionDetail(id), [id]);
   const row = detail.seriesRows.find((series) => series.position === position);

@@ -138,6 +138,9 @@ sida i webbappen, och börjar om när du loggar ut eller stänger fliken. Ett
 rekords passnamn öppnar passet. Statistikvyn i ett pass, med **Mot din
 vanliga form**, finns bara i telefonen.
 
+Ovanför rapporten står din status för skjutaktivitet, när en profil är vald;
+se [Skjutaktivitet](license-activity.md#pa-webben).
+
 Webben har ingen **Exportera JSON** och ingen värmekarta för **Var dina skott
 hamnar**; använd telefonen för dem. Ett eget intervall där **Från** ligger
 efter **Till** matchar ingenting, och sidan säger det. Dess datum skrivs som i

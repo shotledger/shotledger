@@ -76,6 +76,7 @@ import {
   matchFormatLabel,
   type CompetitionLevel,
 } from '@/features/session/labels';
+import { parseSeriesLength } from '@/features/session/series-length';
 import { useFeatures } from '@/features/settings/feature-visibility';
 import { readTrackedInputs } from '@/features/settings/tracked-inputs';
 import { TagSelect } from '@/features/tags/tag-select';
@@ -210,10 +211,8 @@ export default function NewSessionScreen() {
   const showFaltResultMode = kind === 'series' && discipline.scoring === 'hits';
   // A fixed format already says how many shots a series takes (#348).
   const showSeriesLength = kind === 'series' && discipline.scoring === 'rings' && !program;
-  // Any whole number of shots; blank or invalid falls back to the discipline's.
-  const parsedSeriesLength = Number(seriesLengthText.trim());
-  const seriesLength =
-    Number.isInteger(parsedSeriesLength) && parsedSeriesLength > 0 ? parsedSeriesLength : null;
+  // A whole number of shots up to the cap; blank or invalid falls back to the discipline's.
+  const seriesLength = parseSeriesLength(seriesLengthText);
   // Only under the chosen chip: on Free Format there is nothing laid out to
   // describe.
   const programHint = program ? matchFormatHint(t, program) : null;
