@@ -55,7 +55,11 @@ Till ett vapen samlas:
   tillfället. Varje post visar datum och anteckningen du skrev; en justering
   av skottantalet visar hur mycket räknaren flyttades och sin anledning ("+10 ·
   skott med klubbvapen").
-  Anger du ett **Underhållsintervall** får du en notis i telefonen en gång när
+  **Skott sedan underhåll** räknas från posten med senast datum. En post du
+  loggar i efterhand med ett tidigare datum sparas i loggen men nollställer
+  inte antalet. En justering flyttar båda antalen lika mycket.
+  Anger du ett **Underhållsintervall** (ett heltal skott) får du en notis i
+  telefonen en gång när
   **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en
   sparad serie, ett pass med bara skottantal, en import eller **Justera antal
   skott**. Sedan är det tyst tills du loggar underhåll och antalet når
@@ -67,6 +71,29 @@ Till ett vapen samlas:
 
 Siktesinställningarna går att nå från passet självt, så en justering mellan
 serier innebär inte att du måste lämna det du håller på med.
+
+### Arkivera ett vapen du inte längre har
+
+När du har sålt, lämnat tillbaka eller slutat använda ett vapen öppnar du det
+och trycker på **Arkivera vapen** längst ner på sidan. Att arkivera behåller
+allt som hör till vapnet; det flyttar bara undan det.
+
+Ett arkiverat vapen:
+
+- försvinner från vapenlistan. **Visa arkiverade** under listan visar det igen,
+  och du kan öppna det därifrån.
+- erbjuds inte längre när du startar ett pass, varken i telefonen eller på
+  webben. Ett pass du redan loggat med det behåller det, och du kan fortfarande
+  välja det när du redigerar det passet.
+- behåller sina pass, sin statistik, sina licenser, sitt underhåll och sina
+  siktesinställningar. Passlistan kan fortfarande filtrera på det.
+- skickar inga fler påminnelser om licensen eller notiser om underhåll.
+- räknas inte längre som ett vapen du äger när appen föreslår vilket fall av
+  [licensaktivitet](../explanation/license-activity.md) som gäller dig, och
+  visar ingen egen licensaktivitet. Passen du sköt med det räknas fortfarande.
+
+**Återställ vapen** på ett arkiverat vapen tar tillbaka det som det var, och
+påminnelserna om licensen börjar igen.
 
 ## Ammunition
 

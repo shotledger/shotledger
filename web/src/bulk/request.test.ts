@@ -48,7 +48,6 @@ const LOGBOOK = tables({
       make: 'A',
       model: 'B',
       round_count: 10,
-      rounds_since_maintenance: 0,
     },
   ],
   tags: [

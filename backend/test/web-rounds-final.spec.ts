@@ -78,7 +78,6 @@ const FIREARM = {
   notes: null,
   round_count: 100,
   maintenance_interval_rounds: null,
-  rounds_since_maintenance: 3,
 };
 
 let web: ReturnType<typeof client>;
@@ -183,7 +182,6 @@ describe('rounds-only and final series from the web', () => {
     const rows = await expectPulledAsPushed(changes);
     expect(rows.get('firearms:f-1')?.payload).toMatchObject({
       round_count: 160,
-      rounds_since_maintenance: 63,
     });
     expect(rows.get(`sessions:${changes[1]!.rowId}`)?.payload).toMatchObject({
       kind: 'rounds',

@@ -128,16 +128,14 @@ describe('withRoundsAdded', () => {
     id: 'f1',
     make: 'Pardini',
     round_count: 100,
-    rounds_since_maintenance: 7,
     updated_at: '2026-01-01T00:00:00.000Z',
     a_column_from_a_newer_build: 'kept',
   };
 
-  it('R4 adds n to both counters, sets updated_at and keeps unknown keys', () => {
+  it('R4 adds n to the round counter (#727 M4: nothing else), sets updated_at and keeps unknown keys', () => {
     expect(withRoundsAdded(pulled, 10, NOW)).toEqual({
       ...pulled,
       round_count: 110,
-      rounds_since_maintenance: 17,
       updated_at: NOW,
     });
     // The pulled payload is not mutated.
@@ -148,7 +146,6 @@ describe('withRoundsAdded', () => {
     expect(withRoundsAdded({ id: 'f2' }, 3, NOW)).toEqual({
       id: 'f2',
       round_count: 3,
-      rounds_since_maintenance: 3,
       updated_at: NOW,
     });
   });
@@ -164,28 +161,24 @@ describe('withRoundsMoved (docs/specs/web-session-edit-spec.md E4)', () => {
   const pulled = {
     id: 'f1',
     round_count: 10,
-    rounds_since_maintenance: 3,
     updated_at: '2026-01-01T00:00:00.000Z',
     a_column_from_a_newer_build: 'kept',
   };
 
-  it('K11 moves both counters by a signed delta, each floored at 0, keeping unknown keys', () => {
+  it('K11 moves the round counter by a signed delta, floored at 0 (#727 M4: nothing else), keeping unknown keys', () => {
     expect(withRoundsMoved(pulled, 5, NOW)).toEqual({
       ...pulled,
       round_count: 15,
-      rounds_since_maintenance: 8,
       updated_at: NOW,
     });
     expect(withRoundsMoved(pulled, -4, NOW)).toEqual({
       ...pulled,
       round_count: 6,
-      rounds_since_maintenance: 0,
       updated_at: NOW,
     });
     expect(withRoundsMoved({ id: 'f2' }, -2, NOW)).toEqual({
       id: 'f2',
       round_count: 0,
-      rounds_since_maintenance: 0,
       updated_at: NOW,
     });
   });

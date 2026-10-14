@@ -9,7 +9,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import {
   clampFiguresHit,
   figuresHitRange,
@@ -21,10 +21,12 @@ import {
 import { Card } from '@/components/card';
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { SecondaryButton } from '@/components/secondary-button';
 import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import {
   addStation,
@@ -204,7 +206,7 @@ export default function StationEntryScreen() {
         <Card>
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('station.scratched')}</ThemedText>
-            <Switch
+            <Toggle
               value={isScratched}
               onValueChange={setIsScratched}
               testID="station-scratched-toggle"
@@ -215,7 +217,12 @@ export default function StationEntryScreen() {
 
       <PrimaryButton label={t('station.save')} onPress={onSave} testID="save-station" />
       {row && (
-        <PrimaryButton label={t('station.delete')} onPress={onDelete} testID="delete-station" />
+        <SecondaryButton
+          label={t('station.delete')}
+          tone="danger"
+          onPress={onDelete}
+          testID="delete-station"
+        />
       )}
     </Screen>
   );

@@ -63,7 +63,6 @@ const firearm = (id: string, roundCount = 100): Payload => ({
   make: 'Make',
   model: 'Model',
   round_count: roundCount,
-  rounds_since_maintenance: 4,
   updated_at: '2026-01-01T00:00:00.000Z',
 });
 
@@ -432,7 +431,6 @@ describe('buildSessionEntry', () => {
     expect(changes[0]!.payload).toEqual({
       ...firearm('f1'),
       round_count: 105,
-      rounds_since_maintenance: 9,
       updated_at: NOW,
     });
     expect(session(changes)).toMatchObject({ firearm_id: 'f1' });
@@ -662,7 +660,6 @@ describe('final series (docs/specs/web-rounds-final-spec.md)', () => {
     expect(payloads(changes, 'shots')).toHaveLength(15);
     expect(payloads(changes, 'firearms')[0]).toMatchObject({
       round_count: 115,
-      rounds_since_maintenance: 19,
     });
   });
 

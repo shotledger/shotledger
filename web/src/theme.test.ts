@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Colors } from '../../app/src/theme/colors';
-import { installTheme } from './theme';
+import { Colors, DataViz } from '@shotledger/shared/src/design-tokens';
+
+import { installTheme, themeProperties } from './theme';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -54,5 +55,24 @@ describe('installTheme', () => {
     query.matches = true;
     query.listener?.();
     expect(properties.get('--background')).toBe(Colors.dark.background);
+  });
+
+  it('carries every colour token, the chart colours and the scales, for both schemes', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      const properties = new Map(themeProperties(scheme));
+      expect(properties.get('--selected-outline')).toBe(Colors[scheme].selectedOutline);
+      expect(properties.get('--background-element')).toBe(Colors[scheme].backgroundElement);
+      expect(properties.size).toBe(
+        Object.keys(Colors[scheme]).length +
+          DataViz[scheme].categorical.length +
+          DataViz[scheme].rings.length +
+          7 + // spacing
+          4, // radius
+      );
+      expect(properties.get('--data-viz-categorical-1')).toBe(DataViz[scheme].categorical[0]);
+      expect(properties.get('--data-viz-rings-5')).toBe(DataViz[scheme].rings[4]);
+    }
+    expect(new Map(themeProperties('dark')).get('--space-three')).toBe('16px');
+    expect(new Map(themeProperties('dark')).get('--radius-pill')).toBe('999px');
   });
 });

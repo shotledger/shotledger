@@ -47,11 +47,12 @@ function tables(): PulledTables {
     falt_stations: empty(),
     tags: empty(),
     firearms: byId(
-      { ...common('f1'), make: 'Make', model: 'One', round_count: 50, rounds_since_maintenance: 5 },
+      { ...common('f1'), make: 'Make', model: 'One', round_count: 50 },
       { ...common('fx', OLD), make: 'Make', model: 'Gone', round_count: 9 },
     ),
     firearm_groups: empty(),
     licenses: empty(),
+    maintenance_events: empty(),
     ammo_lots: empty(),
     session_tags: empty(),
     settings: empty(),
@@ -113,7 +114,6 @@ describe('saveDeps and deleteDeps', () => {
     ]);
     expect(built.changes[0]!.payload).toMatchObject({
       round_count: 45,
-      rounds_since_maintenance: 0,
     });
   });
 });

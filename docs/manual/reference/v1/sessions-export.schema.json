@@ -637,12 +637,13 @@
               }
             ]
           },
-          "roundsSinceMaintenance": {
-            "default": 0,
-            "description": "Rounds fired since the last maintenance event.",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
+          "archivedAt": {
+            "default": null,
+            "description": "When the shooter archived it (sold, returned or retired), as an ISO timestamp; null while it is in use. Its sessions and licenses are kept either way.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -658,7 +659,7 @@
           "notes",
           "roundCount",
           "maintenanceIntervalRounds",
-          "roundsSinceMaintenance"
+          "archivedAt"
         ],
         "additionalProperties": false,
         "title": "Firearm"
@@ -743,6 +744,12 @@
         "additionalProperties": false,
         "title": "License"
       }
+    },
+    "maintenanceEvents": {
+      "default": [],
+      "description": "The firearms' maintenance logs, adjustments included, each entry naming its firearm. Loosely typed by the parser for the same reason as `sessions`.",
+      "type": "array",
+      "items": {}
     }
   },
   "required": [
@@ -752,7 +759,8 @@
     "app",
     "sessions",
     "firearms",
-    "licenses"
+    "licenses",
+    "maintenanceEvents"
   ],
   "additionalProperties": false,
   "examples": [
@@ -818,7 +826,8 @@
           "notes": null,
           "roundCount": 1200,
           "maintenanceIntervalRounds": 500,
-          "roundsSinceMaintenance": 120
+          "roundsSinceMaintenance": 120,
+          "archivedAt": null
         }
       ],
       "licenses": [

@@ -365,7 +365,16 @@
     "sightWindageDecrease": "Decrease Windage",
     "sightWindageIncrease": "Increase Windage",
     "licenseNotRequired": "Not required",
-    "licenseNotRequiredBody": "An air weapon below the Swedish energy limit needs no licence. Add one anyway if yours does."
+    "licenseNotRequiredBody": "An air weapon below the Swedish energy limit needs no licence. Add one anyway if yours does.",
+    "archive": "Archive Firearm",
+    "archiveHint": "For a firearm you have sold, returned or retired. It leaves the list and the session form, and its sessions, licenses and maintenance are kept.",
+    "archiveConfirmTitle": "Archive This Firearm?",
+    "archiveConfirmBody": "It is hidden from your firearms and from new sessions, and its license reminders stop. Its sessions, statistics, licenses and maintenance stay. You can restore it at any time.",
+    "archivedTitle": "Archived",
+    "archivedBody": "Archived on {{date}}. It is hidden from your firearms and from new sessions. Its history is kept.",
+    "restore": "Restore Firearm",
+    "showArchived": "Show Archived ({{count}})",
+    "hideArchived": "Hide Archived"
   },
   "ammo": {
     "newLot": "New Ammo Lot",
@@ -620,6 +629,25 @@
     },
     "criterionUnattributed_one": "{{count}} session in the period records no firearm, so it counts towards neither.",
     "criterionUnattributed_other": "{{count}} sessions in the period record no firearm, so they count towards neither.",
+    "nextSessionBy": "Next session by {{date}} to stay On Track.",
+    "criterionNextSessionBy": "Next session with this firearm by {{date}} to keep it met.",
+    "check": {
+      "title": "License Check",
+      "off": "License activity is off. Turn it on under Compliance to see where you stand.",
+      "purchaseTitle": "New Purchase",
+      "purchaseHint": "What your club certifies when you apply to acquire a handgun.",
+      "renewalTitle": "Renewal",
+      "renewalHint": "What your club certifies when you renew a time-limited permit.",
+      "ruleNeeded_one": "{{count}} more session needed.",
+      "ruleNeeded_other": "{{count}} more sessions needed.",
+      "criterionNeeded_one": "{{count}} more session with this firearm needed.",
+      "criterionNeeded_other": "{{count}} more sessions with this firearm needed.",
+      "olderShort": "{{from}} to {{to}}: {{done}} of {{required}}. Sessions logged now cannot count towards this period.",
+      "metFrom": "If you keep logging sessions with this firearm, this can be met from {{date}}.",
+      "noHeldHandgun": "No pistol or revolver is marked as your own, so the additional handgun box does not apply.",
+      "noTimeLimited": "No firearm has a license with an end date, so the renewal box does not apply.",
+      "open": "Open License Check"
+    },
     "criterionNotAttested": "The app counted these sessions; it cannot attest them. On a club log a row becomes evidence once someone signs it.",
     "pdfNow": "today",
     "pdfGeneratedAt": "Generated {{date}}",
@@ -811,7 +839,39 @@
     "assistLogRow_one": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
     "assistLogRow_other": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
     "assistLogExport": "Export",
-    "assistLogClear": "Clear"
+    "assistLogClear": "Clear",
+    "galleryDesignSystem": "Design System",
+    "galleryDesignSystemBody": "The #822 components. Switch the theme to see both.",
+    "galleryTypeScale": "Type Scale",
+    "galleryTypeScore": "Score",
+    "galleryTypeTitle": "Title",
+    "galleryTypeHeadline": "Headline",
+    "galleryTypeBody": "Body",
+    "galleryTypeLabel": "Label",
+    "galleryTypeCaption": "Caption",
+    "galleryButtons": "Buttons",
+    "galleryButtonPrimary": "Primary",
+    "galleryButtonSecondary": "Secondary",
+    "galleryButtonTonal": "Tonal",
+    "galleryButtonText": "Text",
+    "galleryButtonDestructive": "Destructive",
+    "galleryButtonDisabled": "Disabled",
+    "gallerySegmented": "Segmented",
+    "galleryChoiceChips": "Choice Chips",
+    "galleryChoiceSingle": "Single select",
+    "galleryChoiceMulti": "Multi select",
+    "galleryShotCells": "Shot Cells",
+    "galleryShotCellsBody": "Shot 4 is the current cell.",
+    "galleryStat": "Stat",
+    "galleryHeader": "Header",
+    "galleryHeaderSubtitle": "Training · 6 series",
+    "galleryFilterBar": "Filter Bar",
+    "galleryChartKit": "Chart Kit",
+    "galleryChartCaption": "Series totals, last 8 sessions",
+    "galleryStatusLine": "Status Line",
+    "galleryStatusUntil": "until {{date}}",
+    "galleryToggle": "Toggle",
+    "galleryToggleLabel": "Sample Setting"
   },
   "competitionLevel": {
     "forening": "Club Competition",
@@ -1363,6 +1423,8 @@
     }
   },
   "web": {
+    "statsFilters": "Filters",
+    "statsMeasure": "Measure",
     "signInIntro": "Sign in with your ShotLedger account to view your sessions, your statistics and your account. Nothing is kept once you close the tab.",
     "loading_one": "Loading your logbook… {{count}} row",
     "loading_other": "Loading your logbook… {{count}} rows",
@@ -1407,6 +1469,7 @@
     },
     "shell": {
       "menu": "Main",
+      "sidebar": "Sidebar",
       "skipToContent": "Skip to Content",
       "version": "Version",
       "sourceCode": "Source Code"
@@ -1548,5 +1611,14 @@
     "maintenanceDueBody": "Maintenance interval reached",
     "licenseExpiresBody_one": "License expires in {{count}} day",
     "licenseExpiresBody_other": "License expires in {{count}} days"
+  },
+  "components": {
+    "shotCell": "Shot {{number}}: {{value}}",
+    "shotCellEmpty": "Shot {{number}}: not entered",
+    "shotCellInnerTen": "Shot {{number}}: inner ten, {{value}}",
+    "filters": "Filters",
+    "filtersActive": "Filters ({{count}})",
+    "removeFilter": "Remove filter {{label}}",
+    "clearFilters": "Clear All"
   }
 }

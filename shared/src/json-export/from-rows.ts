@@ -4,7 +4,7 @@
 // Callers pass live rows only. A column a source may not carry is optional
 // here and exports as its default.
 import { firearmDisplayName } from './plan';
-import type { FirearmExport, LicenseExport, SessionExport } from './types';
+import type { FirearmExport, LicenseExport, MaintenanceEventExport, SessionExport } from './types';
 
 type Flag = number | boolean;
 
@@ -83,7 +83,17 @@ export interface ExportFirearmRow {
   readonly notes: string | null;
   readonly roundCount: number;
   readonly maintenanceIntervalRounds: number | null;
-  readonly roundsSinceMaintenance: number;
+  readonly archivedAt: string | null;
+}
+
+export interface ExportMaintenanceEventRow {
+  readonly id: string;
+  readonly firearmId: string;
+  readonly performedAt: string;
+  readonly kind: string;
+  readonly roundCountAt: number;
+  readonly isAdjustment: Flag;
+  readonly notes: string | null;
 }
 
 export interface ExportAmmoLotRow {
@@ -201,7 +211,7 @@ export function firearmExportsFromRows(rows: readonly ExportFirearmRow[]): Firea
     notes: f.notes,
     roundCount: f.roundCount,
     maintenanceIntervalRounds: f.maintenanceIntervalRounds,
-    roundsSinceMaintenance: f.roundsSinceMaintenance,
+    archivedAt: f.archivedAt ?? null,
   }));
 }
 
@@ -215,5 +225,19 @@ export function licenseExportsFromRows(rows: readonly LicenseExport[]): LicenseE
     validUntil: l.validUntil,
     conditions: l.conditions,
     authority: l.authority,
+  }));
+}
+
+export function maintenanceEventExportsFromRows(
+  rows: readonly ExportMaintenanceEventRow[],
+): MaintenanceEventExport[] {
+  return rows.map((e) => ({
+    id: e.id,
+    firearmId: e.firearmId,
+    performedAt: e.performedAt,
+    kind: e.kind,
+    roundCountAt: e.roundCountAt,
+    isAdjustment: Boolean(e.isAdjustment),
+    notes: e.notes,
   }));
 }
