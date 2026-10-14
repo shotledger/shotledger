@@ -32,8 +32,12 @@ describe('parseSeriesLength', () => {
 
   it('refuses zero and anything over the cap', () => {
     expect(parseSeriesLength('0')).toBeNull();
-    expect(parseSeriesLength('000')).toBeNull();
+    expect(parseSeriesLength('00')).toBeNull();
     expect(parseSeriesLength(String(MAX_SERIES_LENGTH + 1))).toBeNull();
+    // The cap is the longest series any discipline uses, so the keypad fits.
+    expect(MAX_SERIES_LENGTH).toBe(10);
+    expect(parseSeriesLength('11')).toBeNull();
+    expect(parseSeriesLength('100')).toBeNull();
     expect(parseSeriesLength('1'.repeat(400))).toBeNull();
   });
 });
