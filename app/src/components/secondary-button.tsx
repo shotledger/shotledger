@@ -20,9 +20,20 @@ import { Radius, Spacing } from '@/theme/tokens';
 export interface SecondaryButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   style?: StyleProp<ViewStyle>;
+  /**
+   * `danger` draws the outline and label in the theme's danger colour, for a
+   * delete beside a save: present, but never mistaken for the main action.
+   */
+  tone?: 'primary' | 'danger';
 }
 
-export function SecondaryButton({ label, style, disabled, ...rest }: SecondaryButtonProps) {
+export function SecondaryButton({
+  label,
+  style,
+  disabled,
+  tone = 'primary',
+  ...rest
+}: SecondaryButtonProps) {
   const theme = useTheme();
 
   return (
@@ -32,7 +43,7 @@ export function SecondaryButton({ label, style, disabled, ...rest }: SecondaryBu
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        { borderColor: disabled === true ? theme.border : theme.primary },
+        { borderColor: disabled === true ? theme.border : theme[tone] },
         pressed && { backgroundColor: theme.backgroundSelected },
         style,
       ]}
@@ -40,7 +51,7 @@ export function SecondaryButton({ label, style, disabled, ...rest }: SecondaryBu
     >
       <ThemedText
         type="smallBold"
-        themeColor={disabled === true ? 'textSecondary' : 'primary'}
+        themeColor={disabled === true ? 'textSecondary' : tone}
         numberOfLines={1}
       >
         {label}

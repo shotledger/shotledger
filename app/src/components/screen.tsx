@@ -1,4 +1,12 @@
-import { ReactNode, useRef, useState, type Ref } from 'react';
+import {
+  ReactNode,
+  cloneElement,
+  isValidElement,
+  useRef,
+  useState,
+  type ReactElement,
+  type Ref,
+} from 'react';
 import {
   Animated,
   ScrollView,
@@ -6,11 +14,12 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type LayoutChangeEvent,
   type ViewProps,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FabClearance } from '@/components/fab';
+import { FabClearance, fabClearanceFor } from '@/components/fab';
 import { ThemedView } from '@/components/themed-view';
 import { KeyboardAvoider } from '@/platform/keyboard-avoider';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/theme/tokens';
@@ -82,6 +91,15 @@ export function Screen({
   // up (or reaching the top) brings it straight back.
   const [fabOffset] = useState(() => new Animated.Value(0));
   const lastOffsetY = useRef(0);
+  // The button's real height, once laid out. A larger system font makes it
+  // taller than `FabClearance` assumes, and the reserved strip then left the
+  // last row ("See all") under the button (maintainer, 2026-10-13).
+  const [fabClearance, setFabClearance] = useState(FabClearance);
+
+  function onFabLayout(event: LayoutChangeEvent) {
+    const next = fabClearanceFor(Math.ceil(event.nativeEvent.layout.height));
+    setFabClearance((current) => (current === next ? current : next));
+  }
 
   function onScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const y = event.nativeEvent.contentOffset.y;
@@ -90,7 +108,7 @@ export function Screen({
     if (Math.abs(delta) < FabHideThreshold) return;
     const hide = y > FabHideThreshold && delta > 0;
     Animated.timing(fabOffset, {
-      toValue: hide ? FabClearance : 0,
+      toValue: hide ? fabClearance : 0,
       duration: 150,
       useNativeDriver: true,
     }).start();
@@ -103,7 +121,9 @@ export function Screen({
   );
   const contentStyle = [
     scroll ? styles.scrollContent : styles.plainContent,
-    fab ? styles.contentWithFab : null,
+    // Reserves the strip the FAB floats over, so the last row can scroll clear
+    // of it instead of sitting under it (issue #62, reopened on Ammunition).
+    fab ? { paddingBottom: fabClearance } : null,
     footer ? styles.contentWithFooter : null,
   ];
 
@@ -144,7 +164,14 @@ export function Screen({
               pointerEvents="box-none"
               style={[styles.fabLayerInner, { transform: [{ translateY: fabOffset }] }]}
             >
-              {fab}
+              {isValidElement<{ onLayout?: (event: LayoutChangeEvent) => void }>(fab)
+                ? cloneElement(
+                    fab as ReactElement<{ onLayout?: (event: LayoutChangeEvent) => void }>,
+                    {
+                      onLayout: onFabLayout,
+                    },
+                  )
+                : fab}
             </Animated.View>
           </View>
         ) : null}
@@ -164,11 +191,6 @@ const styles = StyleSheet.create({
   plainContent: {
     flex: 1,
     alignItems: 'center',
-  },
-  // Reserves the strip the FAB floats over, so the last row can scroll clear
-  // of it instead of sitting under it (issue #62, reopened on Ammunition).
-  contentWithFab: {
-    paddingBottom: FabClearance,
   },
   // The footer already sits above the system bar; the scroll view needs no tab gap.
   contentWithFooter: {

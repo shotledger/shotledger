@@ -16,7 +16,8 @@ import {
   View,
   type ViewProps,
 } from 'react-native';
-import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 import type { Point } from '@shotledger/shared';
 
 import type { RingOverlay } from '@/features/photo-scoring/corners';
