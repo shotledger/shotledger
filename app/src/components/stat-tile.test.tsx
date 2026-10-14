@@ -8,6 +8,7 @@ import { StatTile } from './stat-tile';
 
 jest.mock('@/hooks/use-theme', () => ({
   useTheme: () => jest.requireActual('@/theme/tokens').Colors.light,
+  useResolvedThemeName: () => 'light',
 }));
 
 function fontSizeOf(text: string): number | undefined {
