@@ -18,8 +18,10 @@ import {
   modeOf,
   onRowEnter,
   ringDisciplines,
+  rowShots,
   rowSummary,
   sendsTheSame,
+  seriesLengthOf,
   startedAtIso,
   toDraft,
   withDiscipline,
@@ -419,5 +421,26 @@ describe('initialForm preselection (#822)', () => {
     const plain = initialForm(NOW, NO_PROFILE);
     const none = initialForm(NOW, NO_PROFILE, null);
     expect({ ...none, rows: [] }).toEqual({ ...plain, rows: [] });
+  });
+});
+
+describe('seriesLengthOf and rowShots (#822)', () => {
+  it('takes the program’s length, else the typed one, else the discipline’s', () => {
+    const free = initialForm(NOW, NO_PROFILE);
+    expect(seriesLengthOf(free)).toBe(5);
+    expect(seriesLengthOf({ ...free, seriesLengthText: '10' })).toBe(10);
+    expect(seriesLengthOf({ ...free, seriesLengthText: 'x' })).toBe(5);
+    const milsnabb = withProgram(withDiscipline(free, 'spsf-milsnabb'), 'spsf-milsnabb');
+    expect(seriesLengthOf({ ...milsnabb, seriesLengthText: '3' })).toBe(
+      getProgram('spsf-milsnabb')!.shotsPerSeries,
+    );
+  });
+
+  it('parses a row, or answers null for text that is not shots', () => {
+    expect(rowShots('10 X', 'integer')).toEqual([
+      { valueTenths: 100, isInnerTen: false },
+      { valueTenths: 100, isInnerTen: true },
+    ]);
+    expect(rowShots('9 banana', 'integer')).toBeNull();
   });
 });

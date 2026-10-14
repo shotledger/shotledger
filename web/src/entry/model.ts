@@ -370,8 +370,7 @@ export function seriesLengthOf(form: EntryForm): number {
   return (
     programOf(form)?.shotsPerSeries ??
     chosenSeriesLength(form.seriesLengthText) ??
-    requireDiscipline(form.disciplineId).defaultSeriesLength ??
-    5
+    requireDiscipline(form.disciplineId).defaultSeriesLength
   );
 }
 

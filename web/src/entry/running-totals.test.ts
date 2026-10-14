@@ -157,3 +157,50 @@ describe('lastTimes', () => {
     ).toEqual([null]);
   });
 });
+
+describe('lastTimes, the rows the phone would not read', () => {
+  const current = {
+    disciplineId: 'spsf-precision',
+    startedAt: '2026-10-10T10:00:00.000Z',
+    decimalScoring: false,
+  };
+  const one = [{ isSighter: false, isFinal: false }];
+
+  it('skips deleted shots and series, and other sessions’ series', () => {
+    const tables = {
+      sessions: rows(session('prev', '2026-10-01T10:00:00Z'), session('x', '2026-09-01T10:00:00Z')),
+      series: rows(
+        series('gone', 'prev', 1, { deleted_at: '2026-10-02' }),
+        series('p2', 'prev', 2),
+        series('x1', 'x', 1),
+      ),
+      shots: rows(
+        ...shotsOf('p2', [90, 90]),
+        { ...shotsOf('p2', [100])[0]!, deleted_at: '2026-10-02' },
+        ...shotsOf('x1', [50]),
+      ),
+    };
+    expect(lastTimes(tables, current, one)).toEqual([{ totalTenths: 180, innerTens: 0 }]);
+  });
+
+  it('reads a total-only series by its stored total, with no inner-ten count', () => {
+    const tables = {
+      sessions: rows(session('prev', '2026-10-01T10:00:00Z')),
+      series: rows(series('p1', 'prev', 1, { is_total_override: 1, total_override_tenths: 470 })),
+      shots: rows(),
+    };
+    expect(lastTimes(tables, current, one)).toEqual([{ totalTenths: 470, innerTens: null }]);
+  });
+
+  it('compares nothing with a series saved blank, and passes over rounds-only sessions', () => {
+    const tables = {
+      sessions: rows(
+        session('prev', '2026-10-01T10:00:00Z'),
+        session('rounds', '2026-10-05T10:00:00Z', { kind: 'rounds' }),
+      ),
+      series: rows(series('p1', 'prev', 1)),
+      shots: rows(),
+    };
+    expect(lastTimes(tables, current, one)).toEqual([null]);
+  });
+});
