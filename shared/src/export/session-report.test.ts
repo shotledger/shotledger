@@ -211,6 +211,18 @@ describe('targetFaceSvg', () => {
     expect(count(svg, '<circle')).toBe(1 + 1 + rings + 3 + 1);
   });
 
+  it('leaves the ring numbers out when the view is too wide for them to fit', () => {
+    const near = targetFaceSvg(SPSF_PISTOL_25M_PRECISION, photoSeries.marks, 170);
+    expect(count(near, '<text')).toBeGreaterThan(0);
+    // A mark a metre off the face frames a view so wide the bands are slivers.
+    const far = targetFaceSvg(
+      SPSF_PISTOL_25M_PRECISION,
+      [{ xMm: 1000, yMm: 0, caliberMm: 5.6 }],
+      170,
+    );
+    expect(count(far, '<text')).toBe(0);
+  });
+
   it('draws no group overlay for a single mark', () => {
     const svg = targetFaceSvg(SPSF_PISTOL_25M_PRECISION, [photoSeries.marks[0]!], 170);
     expect(svg).not.toContain('<line');
