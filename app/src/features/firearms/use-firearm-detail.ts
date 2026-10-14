@@ -5,7 +5,9 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   computeFirearmCriteria,
+  computeFirearmCriteriaLapses,
   computeFirearmLicenseActivity,
+  computeFirearmLicenseLapses,
   licenseStatus,
   maintenanceProgress,
   maintenanceStatus,
@@ -37,12 +39,16 @@ export interface FirearmDetail {
   maintenanceProgress: number | null;
   /** M6: one entry per applicable compliance rule; empty when profile is 'none'. */
   licenseActivities: LicenseActivity[];
+  /** One per `licenseActivities` entry: when it stops being green (#795). */
+  licenseActivityLapses: (string | null)[];
   /**
    * The per-firearm criteria from the föreningsintyg form that cover THIS
    * firearm (#329) — empty when none does, which is the common case for a
    * rifle or a borrowed gun.
    */
   firearmCriteria: FirearmCriterionActivity[];
+  /** One per `firearmCriteria` entry: when it stops being met (#795). */
+  firearmCriteriaLapses: (string | null)[];
 }
 
 const EMPTY: FirearmDetail = {
@@ -56,7 +62,9 @@ const EMPTY: FirearmDetail = {
   maintenanceStatus: 'unknown',
   maintenanceProgress: null,
   licenseActivities: [],
+  licenseActivityLapses: [],
   firearmCriteria: [],
+  firearmCriteriaLapses: [],
 };
 
 export function loadFirearmDetail(
@@ -70,22 +78,28 @@ export function loadFirearmDetail(
   const groups = listFirearmGroups(db, firearmId);
   const calibers = listFirearmCalibers(db, firearmId);
   const complianceSessions = profile ? listComplianceSessions(db) : [];
+  const groupIds = groups.map((g) => g.groupId);
   const licenseActivities = profile
-    ? computeFirearmLicenseActivity(
-        complianceSessions,
-        profile,
-        groups.map((g) => g.groupId),
-      )
+    ? computeFirearmLicenseActivity(complianceSessions, profile, groupIds)
+    : [];
+  const licenseActivityLapses = profile
+    ? computeFirearmLicenseLapses(complianceSessions, profile, groupIds)
     : [];
   // `valid_until` NULL means "tills vidare", so a date there is exactly the
   // tidsbegränsat tillstånd the renewal criterion turns on. `listLicenses`
   // returns newest first, so [0] is the licence in force.
-  const firearmCriteria = computeFirearmCriteria(complianceSessions, profile, {
+  const firearmFact = {
     id: firearm.id,
     weaponType: firearm.weaponType,
     isOwn: firearm.isOwn,
     hasTimeLimitedPermit: licenses[0]?.validUntil != null,
-  });
+  };
+  const firearmCriteria = computeFirearmCriteria(complianceSessions, profile, firearmFact);
+  const firearmCriteriaLapses = computeFirearmCriteriaLapses(
+    complianceSessions,
+    profile,
+    firearmFact,
+  );
   return {
     firearm,
     groups,
@@ -103,7 +117,9 @@ export function loadFirearmDetail(
       firearm.maintenanceIntervalRounds,
     ),
     licenseActivities,
+    licenseActivityLapses,
     firearmCriteria,
+    firearmCriteriaLapses,
   };
 }
 

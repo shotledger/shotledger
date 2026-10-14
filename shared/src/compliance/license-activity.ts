@@ -74,7 +74,10 @@ export function computeRuleLicenseActivity(
  * and whether or not `weaponGroups` is empty. That is what makes license
  * activity appear after an import that created no firearm_groups rows (#319).
  */
-function rulesFor(profile: JurisdictionProfile, weaponGroups: readonly string[]): ComplianceRule[] {
+export function applicableRules(
+  profile: JurisdictionProfile,
+  weaponGroups: readonly string[],
+): ComplianceRule[] {
   const groups = new Set(weaponGroups);
   return profile.rules.filter(
     (rule) => rule.scope === 'shooter' || rule.weaponGroups.some((g) => groups.has(g)),
@@ -88,7 +91,7 @@ export function computeLicenseActivityForWeaponGroup(
   weaponGroup: string,
   now: Date = new Date(),
 ): LicenseActivity | null {
-  const rule = rulesFor(profile, [weaponGroup])[0];
+  const rule = applicableRules(profile, [weaponGroup])[0];
   if (!rule) return null;
   return computeRuleLicenseActivity(sessions, rule, now);
 }
@@ -109,7 +112,7 @@ export function computeFirearmLicenseActivity(
   firearmWeaponGroups: readonly string[],
   now: Date = new Date(),
 ): LicenseActivity[] {
-  return rulesFor(profile, firearmWeaponGroups).map((rule) =>
+  return applicableRules(profile, firearmWeaponGroups).map((rule) =>
     computeRuleLicenseActivity(sessions, rule, now),
   );
 }
@@ -142,7 +145,7 @@ export function computeOverallLicenseActivity(
   weaponGroups: readonly string[],
   now: Date = new Date(),
 ): OverallLicenseActivity {
-  const statuses = rulesFor(profile, weaponGroups).map((rule) =>
+  const statuses = applicableRules(profile, weaponGroups).map((rule) =>
     computeRuleLicenseActivity(sessions, rule, now),
   );
   return { statuses, overall: worstStatus(statuses.map((s) => s.status)) };

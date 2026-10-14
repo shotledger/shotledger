@@ -14,7 +14,6 @@ import { useFocusEffect } from 'expo-router';
 import {
   buildFilterOptions,
   composeAnalyticsReport,
-  compareRecentSeries,
   decodeAnalyticsFilter,
   encodeAnalyticsFilter,
   type AnalyticsFilterOptions,
@@ -25,7 +24,6 @@ import {
 import { db } from '@/db/client';
 import {
   listAllAnalyticsSeries,
-  listAllStatsSeries,
   listAnalyticsSessions,
   listFaltAnalyticsSessions,
 } from '@/db/queries/stats';
@@ -99,10 +97,4 @@ export function useAnalyticsReport(state: AnalyticsFilterState): AnalyticsReport
   );
 
   return data;
-}
-
-/** Comparison of the most recent 100 series vs the 100 before that, same discipline+class. */
-export function loadComparisonForSession(disciplineId: string, shooterClass: string | null) {
-  const all = listAllStatsSeries(db);
-  return compareRecentSeries(all, { disciplineId, shooterClass });
 }

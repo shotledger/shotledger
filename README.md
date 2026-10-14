@@ -1,4 +1,9 @@
-# ShotLedger
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="branding/shotledger-horizontal-dark.svg">
+    <img src="branding/shotledger-horizontal-light.svg" alt="ShotLedger" width="360">
+  </picture>
+</h1>
 
 Target Shooting Log & Scoring — a donation-funded app for target
 shooters: training and competition logging, camera-based target scoring,
