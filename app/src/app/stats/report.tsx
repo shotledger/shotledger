@@ -265,7 +265,7 @@ export default function StatsReportScreen() {
               {recordRow(
                 t('stats.recordSessionScore'),
                 data.bestSessionScore,
-                score(data.bestSessionScore?.value ?? null),
+                formatTotalScore(data.bestSessionScore?.value ?? null),
               )}
               {recordRow(
                 t('stats.recordInnerTens'),
