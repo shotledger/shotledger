@@ -3,13 +3,13 @@
 > Old-coder SPEC for #697. Evidence report:
 > `docs/specs/sync-payload-validation-evidence.md`.
 >
-> **Approval status: partly obtained.** C1 (drizzle-zod) is the maintainer's
+> **Approval status: obtained.** C1 (drizzle-zod) is the maintainer's
 > decision of 2026-10-13 ("I prefer libraries over handmade duplication").
-> C2–C14 and Q1–Q7 were not reviewed: the spec was revised and implemented in
-> an overnight run on the recommendations below, and the evidence report says
-> `spec approval: not obtained (autonomous run)` for them. The first draft
-> was PR #711 (hand-written schemas); Revision 1 at the end lists what
-> changed.
+> C2–C14, Q5 (ADR 0021), Q6 and Q7 were approved as implemented on
+> 2026-10-14, after the fact: the spec was revised and implemented in an
+> overnight run on the recommendations below. Q7's larger change is #856.
+> The first draft was PR #711 (hand-written schemas); Revision 1 at the end
+> lists what changed.
 
 - **Tier: 3.** Data loss and a public wire contract: every row any writer
   pushes reaches every device on the account. A row the server should have
@@ -190,10 +190,9 @@ operation.
   `parseMaintenanceInterval`), reals only within `REAL_MIN`..`REAL_MAX`
   (`parseMeasure`), each with its own tests. A screen that parsed with
   `Number()` alone would store `12.5` or `1e20` and have the row refused.
-  Two phone screens still do: series length on New Session and fält
-  station points (#837, §10). The web's entry form mirrors the first
-  (`chosenSeriesLength` in `web/src/entry/model.ts`), and the ShotLog
-  importer's shot counts take any run of digits (`parseCount` in
+  Series length on New Session and the web's Enter Series is bounded since
+  #853. Fält station points still take any run of digits (#837, §10), and
+  so do the ShotLog importer's shot counts (`parseCount` in
   `shared/src/shotlog/parse.ts`).
 
 ### 2.6 Out of scope
@@ -490,18 +489,19 @@ only columns every writer fills with `toISOString()`.
   tests that sends a partial row or a local-time timestamp would have its
   rows refused and cleared. The refusal count (C3) makes it visible, and the
   row stays on the phone unless another device changes it; an edit after
-  the fix pushes it again. Four are known: New Session's series length takes
-  `1e20`, as does the web entry form that mirrors it; a fält station's
-  points take any run of digits; and so do a ShotLog file's shot counts,
-  which only a corrupt file would hit. All are left to #837, which touches
-  `shared/src/scoring/` and needs its own spec.
+  the fix pushes it again. Two are known: a fält station's points take any
+  run of digits, and so do a ShotLog file's shot counts, which only a
+  corrupt file would hit. Both are left to #837, which touches
+  `shared/src/scoring/` and needs its own spec. (Series length, on the
+  phone and the web, is bounded since #853.)
 - **A refusal splits a family of rows.** Rows are refused one at a time, so
   a refused parent with accepted children leaves those children orphaned on
   the server and on every other device (P3 has this shape: a session with
   `name: null` is refused while its series is stored), and a refused child,
   such as one shot, leaves the other devices with a different score for the
   session than the sender. C14 covers orphans the phone already makes; this
-  is a new way to make them. Q7 asks about it.
+  is a new way to make them. Accepted as a known limit (Q7); refusing the
+  whole family is #856.
 - **drizzle-zod's mapping changes on upgrade.** A Renovate bump could widen
   or narrow a type. The derivation test and P2 pin today's mapping, so a
   change in it fails CI.
@@ -516,7 +516,7 @@ only columns every writer fills with `toISOString()`.
 
 ## 11. Questions for the maintainer
 
-- **Q1** Approve C2–C14 as implemented, in particular C5 (strict keys plus a
+- **Q1** _Approved as implemented (2026-10-14)._ Approve C2–C14 as implemented, in particular C5 (strict keys plus a
   deploy-order rule), C3 (a visible refusal count) and C8 (ids only
   non-empty, not UUID)?
 - **Q2** _Answered from the code:_ no D1 has run `0000` (§1), so C13 edits
@@ -524,10 +524,10 @@ only columns every writer fills with `toISOString()`.
 - **Q3** _Not run_ (§8).
 - **Q4** Should foreign-key integrity get its own issue, or stay a known
   limit until the phone enforces foreign keys itself?
-- **Q5** Move the Drizzle tables into the Apache-2.0 `shared/src/sync/` (ADR
+- **Q5** _Approved: move them (2026-10-14); ADR 0021 accepted._ Move the Drizzle tables into the Apache-2.0 `shared/src/sync/` (ADR
   0021), or keep them AGPL and validate against a generated zod-only column
   list instead? Asked on the #697 thread; the branch implements the first.
-- **Q6** Strict keys (C5) refuse a not-yet-updated phone's rows after the
+- **Q6** _Approved: accept it pre-1.0 (2026-10-14)._ Strict keys (C5) refuse a not-yet-updated phone's rows after the
   server gains a column, whatever the deploy order, and refuse web edits of
   any row stored before the change until a phone pushes that row again.
   Accept that pre-1.0 (today: one user, phones updated together), or let
@@ -535,7 +535,7 @@ only columns every writer fills with `toISOString()`.
   knows, so that adding such a column refuses nothing on either path? A
   rename, a drop, or a new `NOT NULL` column without a default still
   refuses either way. The branch implements the first.
-- **Q7** A refusal splits a family of rows (§10): the rest of the session
+- **Q7** _Approved: a known limit (2026-10-14); the larger change is #856._ A refusal splits a family of rows (§10): the rest of the session
   still syncs without the refused row, so other devices can hold orphans or
   a different score. Accept that as a known limit (the sender sees the
   refusal count and the row stays on its phone), or refuse a row's whole
@@ -587,3 +587,7 @@ only columns every writer fills with `toISOString()`.
   the ShotLog importer's out-of-range integers alongside #837's two phone
   screens. §10 records that a refusal splits a family of rows, and Q7 asks
   the maintainer about it.
+- **Revision 6 (2026-10-14), approval.** The maintainer approved C2–C14,
+  Q5, Q6 and Q7 as implemented; ADR 0021 is accepted, and refusing a row's
+  whole family is #856. `main` brought #853, which bounds series length on
+  the phone and the web, so §2.5 and §10 no longer list it.

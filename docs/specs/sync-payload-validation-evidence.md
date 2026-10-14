@@ -2,13 +2,11 @@
 
 Spec: `docs/specs/sync-payload-validation-spec.md` (issue #697, PR #813).
 
-**Spec approval: partly obtained.** C1 (drizzle-zod) is the maintainer's
-decision of 2026-10-13. C2–C14 and Q1–Q7 are **not approved (autonomous
-run)**: the spec was revised and implemented overnight while the maintainer
-was away, so the spec is the artifact to review after the fact. Q5 (ADR 0021,
-moving the Drizzle tables into the Apache-2.0 `shared/src/sync/`) is the
-precondition of the whole branch. This PR does not merge until the
-maintainer approves.
+**Spec approval: obtained.** C1 (drizzle-zod) is the maintainer's decision
+of 2026-10-13. C2–C14, Q5 (ADR 0021, moving the Drizzle tables into the
+Apache-2.0 `shared/src/sync/`), Q6 and Q7 were approved as implemented on
+2026-10-14, after the fact: the spec was revised and implemented overnight
+while the maintainer was away. Q7's larger change is #856.
 
 - **Source state:** `7bc160a` on `feature/issue-697-drizzle-zod-mmc9le`,
   with `main` at `31195e0` merged in (`c46c9d8`): #814's
@@ -21,6 +19,12 @@ maintainer approves.
   app jest 970), backend 29 files, 263 tests, exit 0, and shuffled (seed 1791963147303) 29 files, 263 tests, exit 0. The Stryker and
   manual-mutation rows below were not re-run by the builder; the round-4
   verifier re-ran both at `5b2ef06` with the same results (below).
+- **Final merge:** `main` at `b8d8bc4` merged in after the approval: no
+  schema change to port; #853 bounds series length on the phone and the
+  web, and fixes #844. The Account & Sync render test mocks `expo-router`,
+  which the screen's title now imports (#850). Re-run there: `pnpm check`
+  exit 0, backend 29 files, 263 tests, exit 0, `pnpm mutation:schema`
+  21/21 killed.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-pool-workers` (backend), Stryker 10.0.0 with the
   vitest runner, fast-check, jest-expo (app). `drizzle-orm` 0.45.4,
@@ -94,7 +98,7 @@ All numbers from runs at the source state above unless marked.
 | Stryker (scoped) | the command in the entry point                                         | 314 tested: 306 killed, 2 timed out, 6 survived; score 98.09%. `payload-schemas.ts` 98.18 (2 equivalent, below), `protocol.ts`, `engine.ts`, `status.ts` 100. `json-export/types.ts` 91.49: its 4 survivors are in refinements this change does not touch (lines 226 and 275), so they predate it |
 | Property         | fast-check in `payload-schemas.test.ts`                                | passes (any generated row passes; any single-column corruption fails)                                                                                                                                                                                                                             |
 | Real execution   | `sync-client.spec.ts` (P7) and `pushChanges` (P8) in workerd           | pass, inside the backend run                                                                                                                                                                                                                                                                      |
-| Schema mutation  | `pnpm mutation:schema`                                                 | **not completed**: it stops on `main` at `31195e0` on a stale line number in `shared/src/disciplines/schema.ts`, a file this change does not touch (#844); the 12 mutants before it were killed                                                                                                   |
+| Schema mutation  | `pnpm mutation:schema`                                                 | at the final merge: 21/21 killed. It mutates `shared/src/disciplines/schema.ts`, which this change does not touch; before #853 fixed #844 it stopped on a stale line number                                                                                                                       |
 | Docs             | `mkdocs build --strict`, `docs-anchor-check`, `docs-translation-check` | pass                                                                                                                                                                                                                                                                                              |
 
 **Equivalent mutants.** `catch {}` in `isJsonText` returning `undefined`
@@ -219,7 +223,9 @@ those mutants, not Stryker, are the evidence for them.
 **Independent verification: passed at `5b2ef06`.** Four rounds were
 performed, the third and fourth with the maintainer's approval. Changed
 after it, description only and therefore not re-verified: the spec (§2.5,
-§10, Q7, Revision 5), this report and `docs/implementation-plan.md`.
+§10, Q7, Revisions 5 and 6), ADRs 0017 and 0021, this report and
+`docs/implementation-plan.md`; and the final merge of `main` above, which
+brings no change to this change's code beyond the render test's mock.
 
 ## Known limits
 
@@ -239,10 +245,10 @@ after it, description only and therefore not re-verified: the spec (§2.5,
 - **Worker CPU is not measured**; the timing test is a Node-side bound.
 - **Local is not production**: `json_valid` and `CHECK` are probed in the
   Workers pool, not on a deployed D1.
-- The other unbounded number fields (fält station points, series length on
-  the phone and the web, the series route's `pos`, a ShotLog file's shot
-  counts) are #837, outside this change.
-- **A refusal splits a family of rows** (spec §10, Q7): other devices can
+- The other unbounded number fields (fält station points, a ShotLog file's
+  shot counts) are #837, outside this change. Series length and the route
+  positions are bounded since #853.
+- **A refusal splits a family of rows** (spec §10, Q7, #856): other devices can
   hold orphans or a different score until the sender fixes and re-saves
   the row.
 - **`applyPush`'s `invalid` defaults to an empty set**: the route is its

@@ -1,7 +1,7 @@
 # ADR 0021: the Drizzle tables live in the Apache-2.0 sync protocol
 
-Status: proposed (2026-10-14). Amends ADR 0017. Awaits the maintainer's
-choice on #697; nothing that depends on it merges before then.
+Status: accepted (2026-10-14, the maintainer's approval of #697's Q5).
+Amends ADR 0017.
 
 ## Context
 
