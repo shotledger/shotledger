@@ -15,6 +15,11 @@ maintainer approves.
   `firearms.archived_at`, #819's derived maintenance counter and #812's
   `maintenance_interval_months` are ported to `shared/src/sync/schema.ts`,
   which matches `main`'s tables byte for byte. Then the round-3 fixes.
+- **Later merge:** `main` at `3357be5` merged in (`be3c731`): no schema
+  change to port; #794's ammo-lot merge spec fixtures filled to whole rows
+  (N4). Re-run there: `pnpm check` exit 0 (vitest 237 files, 4324 tests;
+  app jest 970), backend 29 files, 263 tests, exit 0. The shuffle, Stryker
+  and manual-mutation rows below were not re-run.
 - **Toolchain:** Node 24.21.0, pnpm 12.11.2, vitest 5.0.3,
   `@cloudflare/vitest-pool-workers` (backend), Stryker 10.0.0 with the
   vitest runner, fast-check, jest-expo (app). `drizzle-orm` 0.45.4,
@@ -178,7 +183,7 @@ inside the tests so the same code runs per test and its mutants are judged.
   - Description: §2.1 gave the wrong `validatePayload` signature → fixed.
 
 **Independent verification: not performed against final source state
-`7bc160a`.** Three rounds were performed, the third with the maintainer's
+`7bc160a` (nor the later merge `be3c731`).** Three rounds were performed, the third with the maintainer's
 approval; the last verified state `c46c9d8` returned failed, and the
 round-3 fixes listed above are unverified. A fourth round needs the
 maintainer's approval.
