@@ -21,6 +21,22 @@ Run from the repo root:
   pinning every value checks them.
 - `pnpm gauntlet` — every layer.
 
+## Property-based tests
+
+fast-check is the default, alongside example tests, for code with one of
+these shapes; put the properties in a `*.property.test.ts` beside the module:
+
+- **Round trips**: encode/decode, export/import, pack/unpack, parse/format
+  (`backup/container.property.test.ts`, `json-export/round-trip.property.test.ts`).
+- **Dates and time windows**: anything on local days, DST or "within N
+  months" (`dates/local-day.property.test.ts`). The runner's zone is
+  Europe/Stockholm.
+- **Invariants over scores and series**: totals, ordering independence,
+  merge commutativity (`scoring/group.property.test.ts`, `sync/merge.test.ts`).
+
+Generators produce synthetic data only. Example tests still pin the cases a
+rule book or bug report names.
+
 ## Sync client
 
 A change to `src/sync-client/` is cheapest to exercise end to end with the
