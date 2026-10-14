@@ -9,7 +9,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   buildProgramSkeleton,
   decimalAllowed,
@@ -41,6 +41,7 @@ import { Screen } from '@/components/screen';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { findRegulation, type Regulation } from '@shotledger/shared/src/regulations/registry';
 import {
@@ -477,7 +478,7 @@ export default function NewSessionScreen() {
           />
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('session.championship')}</ThemedText>
-            <Switch
+            <Toggle
               value={isChampionship}
               onValueChange={setIsChampionship}
               testID="championship-toggle"
@@ -578,7 +579,7 @@ export default function NewSessionScreen() {
         <Card>
           <View style={styles.switchRow}>
             <ThemedText type="small">{t('session.decimalScoring')}</ThemedText>
-            <Switch
+            <Toggle
               value={decimalScoring}
               onValueChange={setDecimalScoring}
               testID="decimal-toggle"
