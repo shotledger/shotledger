@@ -23,6 +23,23 @@ Training and competition count the same, as does representing your club at an
 external competition. An activity is one logged session — not one series, and
 not one day.
 
+## How the six months are counted
+
+The form says "the last six months" but not how to count them to the day, so
+the app counts the way Swedish law counts periods of months (Lag 1930:173):
+
+- **Whole days, in your phone's time zone.** A session belongs to the day you
+  shot it. The time of day never matters.
+- **The first day counts.** On 1 April the period starts on 1 October, and a
+  session from 1 October still counts. On 2 April it no longer does.
+- **Month ends.** When the same date does not exist six months back, the period
+  starts on the last day of that month instead: on 31 March it starts on
+  30 September.
+
+The renewal box's two years are counted the same way, and they never share a
+day: the recent year starts twelve months back, and the older year ends the day
+before.
+
 ## Your case, and where it comes from
 
 The app proposes one of the two from your firearms: if any firearm is a
@@ -69,11 +86,8 @@ Only the sessions that requirement counts matter: for a firearm's criterion,
 sessions logged with that firearm. For the renewal criterion both years must stay
 at four, so the date can come from either year.
 
-The date follows the calendar exactly as the count does. A six-month period that
-ends on 31 October starts on 1 May, because there is no 31 April; so a session on
-1 May can fall out on 31 October rather than on 1 November. The date can
-therefore be a day or two earlier than counting months on your fingers would
-suggest, never later.
+The date is counted in whole days, the same way as the period itself (see
+[How the six months are counted](#how-the-six-months-are-counted)).
 
 ## A year that has already ended
 

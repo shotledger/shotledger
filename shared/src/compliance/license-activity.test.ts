@@ -97,19 +97,21 @@ describe('computeRuleLicenseActivity', () => {
     expect(result.activityCount).toBe(1);
   });
 
-  it('B6: session exactly at windowStart included', () => {
+  // Windows count whole local days, start day included (#816; vitest runs
+  // in Europe/Stockholm, where NOW is the morning of 1 September).
+  it("B6: a session at the start of the window's first local day is included", () => {
     const result = computeRuleLicenseActivity(
-      [session({ startedAt: '2026-03-01T00:00:00Z' })],
+      [session({ startedAt: new Date(2026, 2, 1).toISOString() })],
       rule(),
       NOW,
     );
-    expect(result.windowStartIso).toBe('2026-03-01T00:00:00.000Z');
+    expect(result.windowStartIso).toBe(new Date(2026, 2, 1).toISOString());
     expect(result.activityCount).toBe(1);
   });
 
-  it('B7: session one instant before windowStart excluded', () => {
+  it('B7: a session at the last instant of the local day before is excluded', () => {
     const result = computeRuleLicenseActivity(
-      [session({ startedAt: '2026-02-28T23:59:59.999Z' })],
+      [session({ startedAt: new Date(2026, 1, 28, 23, 59, 59, 999).toISOString() })],
       rule(),
       NOW,
     );
@@ -370,15 +372,19 @@ it('counts only sessions inside the window, at their training or competition wei
   const sessions: ComplianceSession[] = [
     { id: 'inside-training', startedAt: '2026-08-01T00:00:00Z', type: 'training' },
     { id: 'inside-competition', startedAt: '2026-07-01T00:00:00Z', type: 'competition' },
-    // The boundary itself: 2026-03-01T00:00:00Z is the window start and counts.
-    { id: 'on-the-boundary', startedAt: '2026-03-01T00:00:00Z', type: 'training' },
-    // One millisecond earlier does not.
-    { id: 'just-outside', startedAt: '2026-02-28T23:59:59.999Z', type: 'training' },
+    // The window's first local day counts (#816)...
+    { id: 'on-the-boundary', startedAt: new Date(2026, 2, 1).toISOString(), type: 'training' },
+    // ...the local day before does not.
+    {
+      id: 'just-outside',
+      startedAt: new Date(2026, 1, 28, 23, 59, 59, 999).toISOString(),
+      type: 'training',
+    },
   ];
   const activity = computeRuleLicenseActivity(sessions, r, NOW);
   expect(activity.activityCount).toBe(4);
   expect(activity.countedSessionCount).toBe(3);
-  expect(activity.windowStartIso).toBe('2026-03-01T00:00:00.000Z');
+  expect(activity.windowStartIso).toBe(new Date(2026, 2, 1).toISOString());
 });
 
 /**

@@ -646,7 +646,7 @@ from §6.5 automatically).
 - [x] **Next-session date** for a met requirement (issue #795) — Home and the
       firearm detail say by which date the next session must be logged to keep
       a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
-      instant the same status function stops saying "met" with nothing more
+      day the same status function stops saying "met" with nothing more
       logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
       the status shown. No new regulatory value. The web shows no licence
       activity yet (#796). Spec/evidence:
@@ -660,6 +660,12 @@ from §6.5 automatically).
       logging. Purpose is profile data (`FirearmComplianceRule.purpose`). No
       new regulatory value. Spec/evidence:
       `docs/specs/compliance-license-check-{spec,evidence}.md`.
+- [x] **Whole local days** for every licence-activity window (issue #816) —
+      a session belongs to its local calendar day, the start day counts, and a
+      missing month end clamps to the month's last day (Lag 1930:173 1 §), so
+      on 31 March six months back is 30 September. The status changes only at
+      local midnight; the next-session date and the License Check follow.
+      Spec/evidence: `docs/specs/compliance-local-days-{spec,evidence}.md`.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop

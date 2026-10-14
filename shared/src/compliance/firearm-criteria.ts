@@ -6,7 +6,7 @@
 // and count every session whatever it was shot with, while these count only
 // sessions attributed to one firearm. Keeping the two apart is what stops a
 // firearm's own tally from being read as the shooter's (#319).
-import { subtractMonthsUtc } from './months';
+import { addDays, addMonthsClamped, localDayStart } from './months';
 import { statusFor } from './status';
 import type {
   ComplianceSession,
@@ -18,18 +18,24 @@ import type {
 } from './types';
 
 /**
- * The windows to check, most recent first, tiling backwards from `now` with
- * no gap and no overlap: window n is [now − (n+1)·months, now − n·months].
+ * The windows to check, most recent first, as whole local days tiling back from
+ * today with no gap and no overlap (#816): window n runs from today − (n+1)·N
+ * months to the day before today − n·N months, and window 0 to today itself.
  */
-function windowsFor(rule: FirearmComplianceRule, now: Date): { start: Date; end: Date }[] {
-  const windows: { start: Date; end: Date }[] = [];
+function windowsFor(rule: FirearmComplianceRule, today: Date): { first: Date; last: Date }[] {
+  const windows: { first: Date; last: Date }[] = [];
   for (let n = 0; n < rule.windowCount; n += 1) {
     windows.push({
-      start: subtractMonthsUtc(now, rule.windowMonths * (n + 1)),
-      end: subtractMonthsUtc(now, rule.windowMonths * n),
+      first: addMonthsClamped(today, -rule.windowMonths * (n + 1)),
+      last: n === 0 ? today : addDays(addMonthsClamped(today, -rule.windowMonths * n), -1),
     });
   }
   return windows;
+}
+
+/** Local midnight of the day a session was shot, as ms. */
+function sessionDayMs(session: ComplianceSession): number {
+  return localDayStart(new Date(session.startedAt)).getTime();
 }
 
 /** One criterion against one firearm. */
@@ -39,18 +45,19 @@ export function computeFirearmCriterion(
   firearm: FirearmFact,
   now: Date = new Date(),
 ): FirearmCriterionActivity {
-  const windows = windowsFor(rule, now);
+  const today = localDayStart(now);
+  const windows = windowsFor(rule, today);
   // The whole span the criterion looks at, for the two honesty figures: a
   // session outside every window is not "not counted", it is simply not in
   // the period the form asks about.
-  const spanStartMs = subtractMonthsUtc(now, rule.windowMonths * rule.windowCount).getTime();
-  const spanEndMs = now.getTime();
+  const spanStartMs = addMonthsClamped(today, -rule.windowMonths * rule.windowCount).getTime();
+  const spanEndMs = today.getTime();
 
   let otherFirearmSessionCount = 0;
   let unattributedSessionCount = 0;
   for (const session of sessions) {
-    const t = new Date(session.startedAt).getTime();
-    if (t < spanStartMs || t > spanEndMs) continue;
+    const day = sessionDayMs(session);
+    if (day < spanStartMs || day > spanEndMs) continue;
     const id = session.firearmId ?? null;
     if (id === firearm.id) continue;
     if (id === null) unattributedSessionCount += 1;
@@ -58,25 +65,21 @@ export function computeFirearmCriterion(
   }
 
   const periods: FirearmCriterionPeriod[] = windows.map((window) => {
-    const startMs = window.start.getTime();
-    const endMs = window.end.getTime();
+    const firstMs = window.first.getTime();
+    const lastMs = window.last.getTime();
     let activityCount = 0;
     let countedSessionCount = 0;
     for (const session of sessions) {
       if ((session.firearmId ?? null) !== firearm.id) continue;
-      const t = new Date(session.startedAt).getTime();
-      // Half-open at the end so consecutive windows cannot both claim a
-      // session landing exactly on the boundary; the most recent window is
-      // closed at `now` because nothing follows it.
-      if (t < startMs) continue;
-      if (endMs === spanEndMs ? t > endMs : t >= endMs) continue;
+      const day = sessionDayMs(session);
+      if (day < firstMs || day > lastMs) continue;
       countedSessionCount += 1;
       activityCount +=
         session.type === 'training' ? rule.countsAs.training : rule.countsAs.competition;
     }
     return {
-      startIso: window.start.toISOString(),
-      endIso: window.end.toISOString(),
+      startIso: window.first.toISOString(),
+      endIso: window.last.toISOString(),
       activityCount,
       countedSessionCount,
       met: activityCount >= rule.requiredActivities,

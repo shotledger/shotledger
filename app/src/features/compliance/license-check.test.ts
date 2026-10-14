@@ -47,7 +47,8 @@ describe('buildLicenseCheck', () => {
       NOW,
     ).rules[0]!;
     expect(met.needed).toBe(0);
-    expect(met.lapseIso).toBe('2026-11-10T00:00:00.001Z');
+    // Local midnight starting the first day it is no longer met (#816).
+    expect(met.lapseIso).toBe(new Date(2026, 10, 11).toISOString());
 
     const short = buildLicenseCheck(
       six.slice(0, 4).map((d) => at(d)),
@@ -69,7 +70,7 @@ describe('buildLicenseCheck', () => {
       NOW,
     );
     expect(check.purchase[0]!.criterion.met).toBe(true);
-    expect(check.purchase[0]!.lapseIso).toBe('2027-02-01T00:00:00.001Z');
+    expect(check.purchase[0]!.lapseIso).toBe(new Date(2027, 1, 2).toISOString());
     expect(check.purchase[0]!.shortfall.recentNeeded).toBe(0);
   });
 

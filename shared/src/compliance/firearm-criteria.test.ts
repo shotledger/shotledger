@@ -7,6 +7,11 @@ import { SE_CRITERION_ADDITIONAL_HANDGUN, SE_CRITERION_RENEWAL } from './profile
 import type { ComplianceSession, FirearmComplianceRule, FirearmFact } from './types';
 
 const NOW = new Date('2026-09-01T00:00:00Z');
+
+/** A local wall-clock instant as ISO (vitest runs in Europe/Stockholm). */
+function localIso(y: number, m: number, d: number, h = 0, min = 0): string {
+  return new Date(y, m - 1, d, h, min).toISOString();
+}
 const GUN = 'firearm-1';
 
 function firearm(overrides: Partial<FirearmFact> = {}): FirearmFact {
@@ -113,15 +118,15 @@ describe('computeFirearmCriterion — one six-month window (F1-F7, F13, F14)', (
   });
 
   it('F4b: the reported span has two edges, and both are exclusive of what is outside', () => {
-    // The span for this rule is [2026-03-01, 2026-09-01].
+    // The span for this rule is the local days 2026-03-01 to 2026-09-01 (#816).
     const result = computeFirearmCriterion(
       [
-        session({ id: 'at-open', firearmId: 'firearm-2', startedAt: '2026-03-01T00:00:00Z' }),
+        session({ id: 'at-open', firearmId: 'firearm-2', startedAt: localIso(2026, 3, 1) }),
         session({ id: 'inside', firearmId: 'firearm-2', startedAt: '2026-08-01T00:00:00Z' }),
-        session({ id: 'at-now', firearmId: 'firearm-2', startedAt: '2026-09-01T00:00:00Z' }),
-        session({ id: 'before', firearmId: 'firearm-2', startedAt: '2026-02-28T23:59:59Z' }),
-        session({ id: 'after', firearmId: 'firearm-2', startedAt: '2026-09-01T00:00:01Z' }),
-        session({ id: 'after-none', firearmId: null, startedAt: '2026-09-01T00:00:01Z' }),
+        session({ id: 'today', firearmId: 'firearm-2', startedAt: localIso(2026, 9, 1, 23, 59) }),
+        session({ id: 'before', firearmId: 'firearm-2', startedAt: localIso(2026, 2, 28, 23, 59) }),
+        session({ id: 'after', firearmId: 'firearm-2', startedAt: localIso(2026, 9, 2) }),
+        session({ id: 'after-none', firearmId: null, startedAt: localIso(2026, 9, 2) }),
       ],
       additionalRule(),
       firearm(),
@@ -155,11 +160,11 @@ describe('computeFirearmCriterion — one six-month window (F1-F7, F13, F14)', (
   });
 
   it('F6: a session the day before the window opens does not count', () => {
-    // Window opens 2026-03-01.
+    // Window opens on the local day 2026-03-01 (#816).
     const result = computeFirearmCriterion(
       [
-        session({ id: 'in', startedAt: '2026-03-01T00:00:00Z' }),
-        session({ id: 'out', startedAt: '2026-02-28T23:59:59Z' }),
+        session({ id: 'in', startedAt: localIso(2026, 3, 1) }),
+        session({ id: 'out', startedAt: localIso(2026, 2, 28, 23, 59) }),
       ],
       additionalRule(),
       firearm(),
@@ -292,12 +297,15 @@ describe('computeFirearmCriterion — two twelve-month windows (F8-F12)', () => 
   });
 
   it('F12: the windows tile with no gap and no overlap', () => {
+    // Whole local days (#816): the older window's last day is the day before
+    // the newer window's first, and the most recent window ends today.
     const result = computeFirearmCriterion([], renewalRule(), firearm(), NOW);
-    expect(result.periods[0]!.startIso).toBe(result.periods[1]!.endIso);
-    expect(result.periods[0]!.endIso).toBe(NOW.toISOString());
-    // A session landing exactly on the boundary belongs to the newer window
-    // only ([start, end), with the most recent window closed at `now`), so it
-    // can never be counted twice.
+    expect(result.periods[1]!.endIso).toBe(localIso(2025, 8, 31));
+    expect(result.periods[0]!.startIso).toBe(localIso(2025, 9, 1));
+    expect(result.periods[0]!.endIso).toBe(localIso(2026, 9, 1));
+    // A session on the newer window's first day belongs to it only, and one at
+    // the last instant of the day before to the older window only, so a
+    // session can never be counted twice.
     const onBoundary = computeFirearmCriterion(
       [session({ startedAt: result.periods[0]!.startIso })],
       renewalRule(),
@@ -306,6 +314,14 @@ describe('computeFirearmCriterion — two twelve-month windows (F8-F12)', () => 
     );
     expect(onBoundary.periods[0]!.activityCount).toBe(1);
     expect(onBoundary.periods[1]!.activityCount).toBe(0);
+    const dayBefore = computeFirearmCriterion(
+      [session({ startedAt: localIso(2025, 8, 31, 23, 59) })],
+      renewalRule(),
+      firearm(),
+      NOW,
+    );
+    expect(dayBefore.periods[0]!.activityCount).toBe(0);
+    expect(dayBefore.periods[1]!.activityCount).toBe(1);
   });
 });
 
