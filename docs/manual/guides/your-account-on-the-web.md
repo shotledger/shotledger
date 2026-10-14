@@ -9,7 +9,8 @@ change itself: a session you
 [edit in bulk](editing-many-sessions-on-the-web.md), and the settings below.
 
 Sign in with the email and password of your sync account, then open
-**Account** in the menu on the left. Closing the tab signs you out of this
+**Account** in the menu: on the left, or along the bottom on a narrow screen,
+as the phone's tabs are. Closing the tab signs you out of this
 browser and leaves nothing behind: the sign-in lives only in that tab, with no
 cookie. The server ends it 12 hours after you signed in, or at once when you
 use **Sign Out**; a tab still open by then asks you to sign in again.
@@ -17,12 +18,15 @@ use **Sign Out**; a tab still open by then asks you to sign in again.
 ## Sessions
 
 **Sessions** in the menu lists every synced session, newest first, with its
-date, discipline and match format, location, result and tags. On a narrow
-screen the discipline, location and tags are left out.
+date, discipline and match format, location, result and tags. A name the app
+made up ("Precision — 2026-09-23") is shown without its date, which the Date
+column already gives. On a narrow screen the discipline, location and tags are
+left out.
 
-Open a session's name to read it: its series and shots, the totals, notes,
-firearm, ammo lot and tags, or for a fält session its stations. Nothing can be
-changed there.
+Open a session's name to read it, in the same order as on the phone: its name
+as the page title, what it was and what it was shot with, then the result,
+then the firearm, ammo lot, location and notes, then its series and shots, or
+for a fält session its hits, figures and stations.
 
 ### Target photos
 

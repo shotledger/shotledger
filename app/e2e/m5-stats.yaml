@@ -79,10 +79,10 @@ appId: app.shotledger
 - tapOn: 'Home'
 - extendedWaitUntil:
     visible:
-      id: 'home-session-0'
+      id: 'home-last-session'
     timeout: 15000
 - tapOn:
-    id: 'home-session-0'
+    id: 'home-last-session'
 - extendedWaitUntil:
     visible:
       id: 'session-total'

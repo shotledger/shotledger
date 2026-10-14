@@ -5,8 +5,9 @@
 Du kan logga ett pass i samma stund som du installerat appen. Ingenting behöver
 ställas in först.
 
-1. **Start → nytt pass.** Välj en gren. Allt annat i formuläret har ett vettigt
-   standardvärde.
+1. **Hem → Logga ditt första pass.** Välj en gren. Allt annat i formuläret har
+   ett vettigt standardvärde. Därefter öppnar Hem på **Starta** och grenen du
+   sköt senast.
 2. **Tryck på en serie, tryck in skotten.** Knappsatsen går vidare av sig själv,
    så en femskottsserie är fem tryck.
 3. Det var det. Allt sparas medan du håller på.
@@ -56,7 +57,11 @@ och slutar fråga dig varje pass. Du kan alltid ändra själv.
 
 ### 3. Starta ett pass
 
-**Start → nytt pass.** Du väljer:
+På **Hem** trycker du **Starta**. Knappen bär grenen från ditt senaste pass
+("Starta Precision"), och formuläret öppnas med den grenen och det passets
+vapen redan valda; **Ändra**, bredvid vapnet, öppnar samma formulär för något
+annat. Allra första gången erbjuder Hem **Logga ditt första pass** i stället.
+I formuläret väljer du:
 
 - **Reglemente** — bara om du har fler än ett påslaget. Det avgör vilka grenar
   nästa rad erbjuder, så att du väljer mellan SPSF:s och SvSF:s världar i
@@ -100,7 +105,19 @@ den. Allt sparas medan du håller på — det finns ingen "spara"-knapp att glö
 
 ### 5. Titta på det efteråt
 
-**Statistik** visar hur du utvecklas. **Start** visar dina senaste pass.
+**Statistik** visar hur du utvecklas, och summorna: avlossade skott, pass,
+tävlingar. **Hem** handlar om i dag. Uppifrån:
+
+- din **licensaktivitet** i ord, när efterlevnadsprofilen är på, med datumet
+  för nästa pass du behöver;
+- **Starta**, på grenen och vapnet du använde senast;
+- ditt **senaste pass**, med dess resultat;
+- **Senaste** passen, och **Alla pass** för hela loggboken.
+
+Varje rad ger datumet och sedan resultatet: totalen till höger, snittet per
+serie och innertiorna under namnet, "0X" inräknat. Ett fältpass skrivs som
+träff och figurer, ett skottpass som antal skott. Passtypen (Träning, Tävling)
+utelämnas på en rad vars tagg redan säger den, som _Träning_.
 
 Om din licensförnyelse kräver dokumenterad skjutaktivitet slår du på den svenska
 efterlevnadsprofilen i Inställningar och läser

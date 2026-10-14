@@ -5,8 +5,9 @@
 You can log a session the minute you install the app. Nothing has to be set up
 first.
 
-1. **Home → new session.** Pick a discipline. Everything else on the form has a
-   sensible default.
+1. **Home → Log Your First Session.** Pick a discipline. Everything else on
+   the form has a sensible default. From then on Home opens on **Start** and
+   the discipline you shot last.
 2. **Tap a series, tap the shots.** The keypad advances on its own, so a
    five-shot series is five taps.
 3. That is it. It is saved as you go.
@@ -55,7 +56,11 @@ your own, and stops asking you every session. You can always override it.
 
 ### 3. Start a session
 
-**Home → new session.** You choose:
+On **Home**, tap **Start**. The button names the discipline of your last
+session ("Start Precision"), and the form opens with that discipline and that
+session's firearm already chosen; **Change**, beside the firearm, opens the
+same form for anything else. The very first time, Home offers **Log Your First
+Session** instead. On the form you choose:
 
 - **Regulation** — only if you have more than one turned on. It decides which
   disciplines the next row offers, so you are choosing between SPSF's and
@@ -100,7 +105,20 @@ Everything is saved as you go — there is no "save" button to forget.
 
 ### 5. Look at it afterwards
 
-**Statistics** shows how you are trending. **Home** shows your recent sessions.
+**Statistics** shows how you are trending, and the totals: shots fired,
+sessions, competitions. **Home** is about today. From the top:
+
+- your **license activity** in words, when the compliance profile is on, with
+  the date of the next session you need;
+- **Start**, on the discipline and firearm you used last;
+- your **last session**, with its result;
+- **Recent** sessions, and **All Sessions** for the full logbook.
+
+Each row gives the date, then the result: the total on the right, the average
+per series and the inner tens under the name, "0X" included. A field shooting
+session reads as hits and figures, a round count as its rounds. The session
+type (Training, Competition) is left off a row whose tag already says it, such
+as _Träning_.
 
 If your license renewal needs documented range activity, turn on the Swedish
 compliance profile in Settings and see [License activity](guides/license-activity.md).

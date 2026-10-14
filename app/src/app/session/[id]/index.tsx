@@ -12,7 +12,6 @@ import { runOnJS } from 'react-native-reanimated';
 import {
   categoryKey,
   findEvent,
-  formatGroupAndClass,
   MIN_SHOTS_FOR_HEATMAP,
   programsForDiscipline,
   seriesTargetFace,
@@ -48,6 +47,10 @@ import {
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { disciplineLabel, matchFormatLabel } from '@/features/session/labels';
+import {
+  formatGroupAndClassWords,
+  typeShownBesideTags,
+} from '@/features/sessions/session-row-format';
 import { db } from '@/db/client';
 import { deleteSeriesAndShots, setSessionExtraRounds } from '@/db/queries/round-count';
 import {
@@ -67,7 +70,8 @@ import { PhotoIcon } from '@/components/icons';
 import { SwipeAction } from '@/components/swipe-action';
 import { vibrate } from '@/platform/haptics';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing } from '@/theme/tokens';
+import { Radius, Spacing, TabularNums } from '@/theme/tokens';
+import { formatSessionTotal } from '@/features/home/home-session-row';
 import { useDateFormat } from '@/features/dates/use-date-format';
 
 type DetailView = 'series' | 'stats' | 'group';
@@ -325,9 +329,9 @@ export default function SessionDetailScreen() {
           isSighter: row.isSighter,
         })
       : null;
-    // A sighter's score is shown with a marker rather than hidden: it is
-    // deliberately unscored, not unknown, and the row already carries a
-    // Sighter chip to say which.
+    // A sighter's score is shown rather than hidden: it is deliberately
+    // unscored, not unknown. It says so in words ("38 · not counted"), in
+    // secondary text, where a bare "38*" had no legend (#822).
     const totalLabel = row.isSighter
       ? t('session.sighterScore', { score: tenthsToScore(row.totalTenths) })
       : String(tenthsToScore(row.totalTenths));
@@ -414,7 +418,13 @@ export default function SessionDetailScreen() {
                 testID={`series-${row.position}-total`}
               />
             ) : (
-              <ThemedText type="smallBold">{totalLabel}</ThemedText>
+              <ThemedText
+                type="smallBold"
+                themeColor={row.isSighter ? 'textSecondary' : 'text'}
+                style={TabularNums}
+              >
+                {totalLabel}
+              </ThemedText>
             )}
             {/* Reordering a series you entered late (#138). The arrows sit in
                 the row rather than behind a swipe: the swipe gesture is
@@ -466,6 +476,22 @@ export default function SessionDetailScreen() {
     ? t(`eventCategory.${categoryKey(sessionEvent.category)}`)
     : null;
 
+  // What the session was shot with and under, on its own line so the first
+  // line stays one line: format, group and class in words, the event's
+  // category, firearm, ammunition and the competition's name.
+  const setup = [
+    // The format locks at the first result (#475), so it has to be readable
+    // somewhere afterwards.
+    session.programId
+      ? matchFormatLabel(t, session.programId, programsForDiscipline(session.disciplineId).length)
+      : null,
+    formatGroupAndClassWords(t, session.weaponGroup, session.shooterClass),
+    eventCategoryLabel,
+    firearmName,
+    ammoLotName,
+    session.competitionName,
+  ].filter((part): part is string => Boolean(part));
+
   return (
     <Screen>
       <Stack.Screen
@@ -476,31 +502,24 @@ export default function SessionDetailScreen() {
         }}
       />
 
-      <View>
-        <ScreenTitle>{session.name}</ScreenTitle>
-        <ThemedText type="small" themeColor="textSecondary">
+      {/* The name is the header's title (ScreenTitle); the body opens on what
+          the session was, then its result, then the tools (#822, direction A). */}
+      <ScreenTitle>{session.name}</ScreenTitle>
+      <View style={styles.meta}>
+        <ThemedText type="small" themeColor="textSecondary" testID="session-meta">
           {[
             dates.date(session.startedAt),
-            t(`sessionType.${session.type}`),
+            typeShownBesideTags(session.type, tags) ? t(`sessionType.${session.type}`) : null,
             disciplineLabel(t, session.disciplineId),
-            // The format locks at the first result (#475), so it has to be
-            // readable somewhere afterwards.
-            session.programId
-              ? matchFormatLabel(
-                  t,
-                  session.programId,
-                  programsForDiscipline(session.disciplineId).length,
-                )
-              : null,
-            formatGroupAndClass(session.weaponGroup, session.shooterClass),
-            eventCategoryLabel,
-            firearmName,
-            ammoLotName,
-            session.competitionName,
           ]
             .filter(Boolean)
             .join(' · ')}
         </ThemedText>
+        {setup.length > 0 && (
+          <ThemedText type="small" themeColor="textSecondary" testID="session-setup">
+            {setup.join(' · ')}
+          </ThemedText>
+        )}
         <TagChips names={tags} includeMachine testID="session-tags" />
         {session.notes ? (
           <ThemedText type="small" style={styles.notes} testID="session-notes">
@@ -508,9 +527,6 @@ export default function SessionDetailScreen() {
           </ThemedText>
         ) : null}
       </View>
-
-      {/* A fält round needs neither the stopwatch nor sight settings (#715). */}
-      {!isFaltSession && <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />}
 
       <WebshooterSessionBadge session={session} />
 
@@ -533,52 +549,54 @@ export default function SessionDetailScreen() {
       )}
 
       {!isFaltSession && (
-        <Card style={styles.metricCard}>
-          {metricRows([
-            ...(results.hasFinal
-              ? [
-                  {
-                    label: t('session.beforeFinal'),
-                    value: String(tenthsToScore(results.beforeFinalTenths)),
-                    testID: 'result-before-final',
-                  },
-                  {
-                    label: t('session.final'),
-                    value: String(tenthsToScore(results.finalTenths)),
-                    testID: 'result-final',
-                  },
-                ]
-              : []),
-            {
-              label: t('session.total'),
-              value: String(tenthsToScore(results.totalTenths)),
-              testID: 'session-total',
-            },
-            {
-              label: t('session.seriesAverage'),
-              value:
+        <Card style={styles.metricCard} testID="session-result">
+          {/* The total is what the screen is for, so it reads first and in the
+              score type; the rest of the result sits under it. */}
+          <View style={styles.resultHead}>
+            <View style={styles.resultTotal}>
+              <ThemedText type="score" style={TabularNums} testID="session-total">
+                {formatSessionTotal(tenthsToScore(results.totalTenths))}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('session.total')}
+              </ThemedText>
+            </View>
+            {results.hasFinal && (
+              <View style={styles.resultParts}>
+                <ResultPart
+                  label={t('session.beforeFinal')}
+                  value={String(tenthsToScore(results.beforeFinalTenths))}
+                  testID="result-before-final"
+                />
+                <ResultPart
+                  label={t('session.final')}
+                  value={String(tenthsToScore(results.finalTenths))}
+                  testID="result-final"
+                />
+              </View>
+            )}
+          </View>
+          <View style={styles.metricRow}>
+            <MetricTile
+              label={t('session.seriesAverage')}
+              value={
                 detail.seriesAverageTenths === null
                   ? '\u2013'
-                  : tenthsToScore(detail.seriesAverageTenths).toFixed(1),
-              testID: 'session-series-average',
-            },
-            {
-              label: t('session.innerTenCount'),
-              value: String(detail.innerTenCount),
-              testID: 'session-inner-ten-count',
-            },
-            {
-              label: t('session.innerTenAverage'),
-              value: detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1),
-              testID: 'session-inner-ten-average',
-            },
-          ]).map((row, index) => (
-            <View key={index} style={styles.metricRow}>
-              {row.map((tile) => (
-                <MetricTile key={tile.testID} {...tile} />
-              ))}
-            </View>
-          ))}
+                  : tenthsToScore(detail.seriesAverageTenths).toFixed(1)
+              }
+              testID="session-series-average"
+            />
+            <MetricTile
+              label={t('session.innerTenCount')}
+              value={String(detail.innerTenCount)}
+              testID="session-inner-ten-count"
+            />
+            <MetricTile
+              label={t('session.innerTenAverage')}
+              value={detail.innerTenAverage === null ? '\u2013' : detail.innerTenAverage.toFixed(1)}
+              testID="session-inner-ten-average"
+            />
+          </View>
         </Card>
       )}
 
@@ -636,6 +654,9 @@ export default function SessionDetailScreen() {
           ))}
         </Card>
       )}
+
+      {/* A fält round needs neither the stopwatch nor sight settings (#715). */}
+      {!isFaltSession && <SessionToolsRow sessionId={id} sightsFirearmId={session.firearmId} />}
 
       {isRoundsSession && (
         <Card>
@@ -923,16 +944,21 @@ export default function SessionDetailScreen() {
 }
 
 /**
- * Rows for the results card. Four tiles fit one line down to a 320 dp phone,
- * but a session with a final carries six, which do not — laying those out as
- * a balanced 3 + 3 beats the ragged 5 + 1 that `flexWrap` produces on its own
- * (found on device, third review).
+ * One part of the total (Before Final, Final) beside it: a number over its
+ * label, which wraps rather than shrinking. MetricTile's shrink-to-fit is
+ * native only and cut "Before Final" to "Before Fi…" on the web.
  */
-function metricRows<T>(tiles: readonly T[]): T[][] {
-  if (tiles.length <= 4) return [[...tiles]];
-  const rows: T[][] = [];
-  for (let i = 0; i < tiles.length; i += 3) rows.push(tiles.slice(i, i + 3));
-  return rows;
+function ResultPart({ label, value, testID }: { label: string; value: string; testID?: string }) {
+  return (
+    <View style={styles.resultPart}>
+      <ThemedText type="smallBold" style={[styles.metricValue, TabularNums]} testID={testID}>
+        {value}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+    </View>
+  );
 }
 
 /**
@@ -970,6 +996,9 @@ function MetricTile({ label, value, testID }: { label: string; value: string; te
 }
 
 const styles = StyleSheet.create({
+  meta: {
+    gap: Spacing.half,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -991,6 +1020,24 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     paddingVertical: Spacing.two,
+  },
+  resultHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  resultTotal: {
+    gap: Spacing.half,
+  },
+  resultParts: {
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: Spacing.three,
+  },
+  resultPart: {
+    flexShrink: 1,
+    gap: Spacing.half,
   },
   metricRow: {
     flexDirection: 'row',
