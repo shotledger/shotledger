@@ -75,8 +75,9 @@ table map (`SYNC_TABLES`) moves from `app/src/db/queries/sync-store.ts` to
 
 `createSelectSchema` describes a row as the database returns it: every
 column present, `NOT NULL` columns non-null, nullable ones `| null`, enum
-columns as their literals, `integer` as a safe integer, `real` as a finite
-number, `mode: 'boolean'` as a boolean. The module then:
+columns as their literals, `integer` as a safe integer, `real` as a number
+within a signed 48-bit integer's range (`REAL_MIN`..`REAL_MAX` in
+`protocol.ts`, so `1e15` fails), `mode: 'boolean'` as a boolean. The module then:
 
 - **re-keys** each shape from Drizzle property names to column names
   (`firearmId` → `firearm_id`), because the wire uses column names;
@@ -141,8 +142,12 @@ PII-bearing log (N6).
 - **Phone (`runPush`).** Clears the entry, as for every ack (a rejection is
   final and the next local edit is a fresh change), and counts it in a new
   `SyncCycleResult.invalid`. It is not added to `rejected`, whose single
-  consumer is the tombstone path. The status reducer adds each cycle's
-  `invalid` to `SyncStatus.refusedCount`, and Account & Sync shows
+  consumer is the tombstone path. The entry is gone once its ack is
+  handled, so the engine also reports each refusal then, through an
+  `onRefused` callback; the controller turns it into a `refused` status
+  event, and the reducer adds one to `SyncStatus.refusedCount` per event.
+  A push batch that fails later in the same cycle therefore cannot lose a
+  refusal already cleared. Account & Sync shows
   "n change(s) refused by the server" while it is above zero (C3). The count
   lives for the app session; it is not persisted. The row stays on the
   phone, unsynced, until it is edited again or a pull brings a change to
@@ -177,12 +182,15 @@ operation.
 - **Writer conformance.** Every row the demo-data loader writes, read back
   through the phone's `toPayload`, passes `validatePayload`; so does every
   row the ShotLog and WebShooter importers and the JSON-export import
-  write. The web builders' rows (`app/src/db/queries/web-*.test.ts`) and
-  the `shared/` builders' own tests assert the same. The phone's screens
-  turn typed text into integers with parsers that accept only digits within
-  a safe integer (`parseQuantity`, `parseMaintenanceInterval`), each with
-  its own tests; a screen that parsed with `Number()` would store `12.5` or
-  `1e20` and have the row refused.
+  write. The web builders' rows assert the same through
+  `app/src/db/queries/web-*.test.ts`. The ammo and firearm screens turn
+  typed text into numbers with parsers held to the column's wire rule:
+  integers only as digits within a safe integer (`parseQuantity`,
+  `parseMaintenanceInterval`), reals only within `REAL_MIN`..`REAL_MAX`
+  (`parseMeasure`), each with its own tests. A screen that parsed with
+  `Number()` alone would store `12.5` or `1e20` and have the row refused.
+  Two screens still do: series length on New Session and fält station
+  points (#837, §10).
 
 ### 2.6 Out of scope
 
@@ -369,9 +377,12 @@ Feature: the server stores only rows every device can apply
     Then the column is dropped and the rest applied, as today
 
   Scenario: P12 the refusal count reaches the screen
-    Given a cycle result with invalid = 2, then one with invalid = 1
-    When the status reducer folds both
-    Then refusedCount is 3, and a failed cycle leaves it unchanged
+    Given two refused events, a succeeded cycle whose result has invalid = 2,
+      then one more refused event and a failed cycle
+    When the status reducer folds them
+    Then refusedCount is 3: each refusal counts once, and no cycle outcome
+      adds or removes one
+     And Account & Sync shows the line with the count, and no line at 0
 ```
 
 **Falsification.** Each scenario is RED before its code, with these
@@ -404,18 +415,18 @@ green.
 
 ## 6. Failure model
 
-| Failure                                                                    | Layer that catches it                                                                             |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders) and the screens' integer parsers; P1 |
-| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties                                 |
-| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it                                |
-| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                                        |
-| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                                            |
-| A refusal is silent on the phone                                           | P7 `invalid` count; P12 reducer test; the screen string                                           |
-| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                                        |
-| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                                    |
-| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10)                     |
-| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                                               |
+| Failure                                                                    | Layer that catches it                                                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders) and the screens' integer parsers; P1             |
+| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties                                             |
+| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it                                            |
+| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                                                    |
+| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                                                        |
+| A refusal is silent on the phone                                           | P7 `invalid` count; `onRefused` engine and controller tests; P12 reducer test; the Account & Sync render test |
+| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                                                    |
+| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                                                |
+| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10)                                 |
+| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                                                           |
 
 ## 7. Gauntlet
 
@@ -469,7 +480,10 @@ only columns every writer fills with `toISOString()`.
   tests that sends a partial row or a local-time timestamp would have its
   rows refused and cleared. The refusal count (C3) makes it visible, and the
   row stays on the phone unless another device changes it; an edit after
-  the fix pushes it again.
+  the fix pushes it again. Two are known: New Session's series length takes
+  `1e20`, and a fält station's points take any run of digits (#837). Both
+  are left to #837, which touches `shared/src/scoring/` and needs its own
+  spec.
 - **drizzle-zod's mapping changes on upgrade.** A Renovate bump could widen
   or narrow a type. The derivation test and P2 pin today's mapping, so a
   change in it fails CI.
@@ -525,3 +539,12 @@ only columns every writer fills with `toISOString()`.
   `duplicate` ack carrying `invalid_payload`) as `invalid` too, since the
   first ack may never have reached the phone. N6 gains a test of the log
   line.
+- **Revision 3 (2026-10-14), after two verification rounds.** A refusal is
+  reported as its entry clears (`onRefused` → a `refused` status event), not
+  only in the cycle result, so a later failing batch cannot lose it (P12
+  rewritten). The ammo screens' measure fields are held to the real column's
+  range (`parseMeasure`, `REAL_MIN`/`REAL_MAX`). §2.1 states drizzle-zod's
+  real bound; §2.5 drops a claim that the `shared/` builders' tests call
+  `validatePayload` (the web-builder conformance lives in the app's
+  `web-*.test.ts`). C5 describes skew in both directions and asks Q6; §2.3
+  says a refused change can be replaced by a pull.

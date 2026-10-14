@@ -55,6 +55,8 @@ source of truth, which is what the maintainer chose drizzle-zod for.
 
 - The schema is Apache-2.0 from this change on. The scoring engine,
   compliance, the sync client and the rest of `shared/` stay AGPL.
-- `shared/src/sync/*.ts` is in the gauntlet's `mutate` list, so the schema
-  and the table map fall under its 100% coverage and Stryker. Both are
-  module-load declarations, which `ignoreStatic` skips.
+- `shared/src/sync/*.ts` is in the gauntlet's `mutate` list, but
+  `schema.ts` is excluded from it, and so from the 100% coverage gate,
+  which reads the same list: it is table declarations only, checked by
+  drizzle-kit and the app's migration tests. `tables.ts` is in the list;
+  its map is module-load code that `ignoreStatic` skips.
