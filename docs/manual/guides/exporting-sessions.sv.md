@@ -223,9 +223,11 @@ Kuvertet bär tre listor till vid sidan av `sessions`:
   ändring av den gamla, så historiken bevaras.
 - **`maintenanceEvents`** — varje vapens underhållslogg, justeringar av
   skotträknaren medräknade (`isAdjustment`). `roundCountAt` är vapnets
-  skotträknare när posten loggades. **Skott sedan underhåll** lagras inte i
-  filen: det räknas fram ur de här posterna, på samma sätt som appen gör, så
-  det blir detsamma efter en import.
+  skotträknare när posten loggades, och `performedAt` är datum och tid i UTC
+  enligt ISO 8601, som `startedAt` för ett pass; en post med bara ett datum,
+  eller med en tidszonsförskjutning, hoppas över vid import. **Skott sedan
+  underhåll** lagras inte i filen: det räknas fram ur de här posterna, på
+  samma sätt som appen gör, så det blir detsamma efter en import.
 
 En licens eller underhållspost som pekar ut ett vapen filen inte bär utelämnas
 vid import: den har inget att höra till, och att gissa fram ett vore sämre än

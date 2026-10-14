@@ -5,7 +5,7 @@ import {
   type PullRequest,
   type SyncTableName,
 } from '../sync/protocol';
-import { REJECTED_TOMBSTONED } from '../sync/merge';
+import { REJECTED_INVALID_PAYLOAD, REJECTED_TOMBSTONED } from '../sync/merge';
 import { APPLY_ORDER, sortChangesForApply } from './order';
 import { buildClientChange } from './outbox';
 import { filterShadowedChanges, tombstoneFromRejection } from './shadow';
@@ -30,6 +30,12 @@ export interface SyncCycleDeps {
   /** Injected so no module in `shared/` generates ids or reads a clock. */
   newId: () => string;
   pushBatchMax?: number;
+  /**
+   * Called once per `invalid_payload` refusal, as its outbox entry clears.
+   * The entry is gone at that point, so a batch that fails later in the
+   * cycle must not take the refusal with it (spec §2.3, C3).
+   */
+  onRefused?: () => void;
 }
 
 export interface SyncCycleResult {
@@ -39,6 +45,13 @@ export interface SyncCycleResult {
   shadowed: number;
   pushed: number;
   rejected: number;
+  /**
+   * Changes the server refused as malformed (`invalid_payload`). The row
+   * stays on this device, unsynced, until it is edited again or a pull of
+   * the same row replaces it (docs/specs/sync-payload-validation-spec.md
+   * §2.3).
+   */
+  invalid: number;
   duplicates: number;
 }
 
@@ -85,17 +98,22 @@ async function runPull(
   return { pulled, shadowed, drained: false };
 }
 
-async function runPush(
-  deps: SyncCycleDeps,
-): Promise<{ pushed: number; rejected: number; duplicates: number; drained: boolean }> {
+async function runPush(deps: SyncCycleDeps): Promise<{
+  pushed: number;
+  rejected: number;
+  invalid: number;
+  duplicates: number;
+  drained: boolean;
+}> {
   const batchMax = deps.pushBatchMax ?? PUSH_BATCH_MAX;
   let pushed = 0;
   let rejected = 0;
+  let invalid = 0;
   let duplicates = 0;
 
   for (let iteration = 0; iteration < MAX_PUSH_ITERATIONS; iteration += 1) {
     const entries = await deps.store.readOutbox(batchMax);
-    if (entries.length === 0) return { pushed, rejected, duplicates, drained: true };
+    if (entries.length === 0) return { pushed, rejected, invalid, duplicates, drained: true };
 
     const changes: ClientChange[] = [];
     const sent = new Map<string, { entry: OutboxEntry; change: ClientChange }>();
@@ -128,7 +146,9 @@ async function runPush(
       const record = sent.get(ack.clientChangeId);
       if (record === undefined) continue;
       const { entry, change } = record;
-      if (ack.status === 'rejected') {
+      // A refusal or its replay: the user is told, whichever ack carried it.
+      if (ack.reason === REJECTED_INVALID_PAYLOAD) invalid += 1;
+      else if (ack.status === 'rejected') {
         rejected += 1;
         // The server holds a tombstone for this row, and the pull that
         // shadowed it has already moved the cursor past it — so the local
@@ -141,10 +161,11 @@ async function runPush(
       // Every ack the protocol defines clears the entry: applied and
       // duplicate are on the server, and a rejection can never be accepted.
       await deps.store.clearOutboxEntry(entry);
+      if (ack.reason === REJECTED_INVALID_PAYLOAD) deps.onRefused?.();
     }
   }
 
-  return { pushed, rejected, duplicates, drained: false };
+  return { pushed, rejected, invalid, duplicates, drained: false };
 }
 
 export async function runSyncCycle(deps: SyncCycleDeps): Promise<SyncCycleResult> {
@@ -157,6 +178,7 @@ export async function runSyncCycle(deps: SyncCycleDeps): Promise<SyncCycleResult
     shadowed: pull.shadowed,
     pushed: push.pushed,
     rejected: push.rejected,
+    invalid: push.invalid,
     duplicates: push.duplicates,
   };
 }

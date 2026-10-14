@@ -21,6 +21,7 @@ import { applyPush, createDb, pullTablePage, type PullPage } from '../src/db/que
 import { createSyncRoutes } from '../src/routes/sync';
 
 import { gateD1, SimulatedCrash } from './gated-d1';
+import { wholeRow } from './rows';
 
 // Scenarios C1–C9 and the 500-change adversarial case (ADV1) of
 // docs/specs/sync-push-atomicity-spec.md.
@@ -390,7 +391,7 @@ describe('C8 concurrent HTTP pushes converge (stress, supplementary)', () => {
       }
     }
     async push(change: ClientChange) {
-      await call('/sync/push', { protocolVersion: 1, changes: [change] });
+      await call('/sync/push', { protocolVersion: 1, changes: [wholeRow(change)] });
     }
   }
 

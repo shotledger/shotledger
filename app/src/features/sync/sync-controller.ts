@@ -78,7 +78,12 @@ async function runOnce(): Promise<SyncCycleResult['status'] | null> {
   const store = createSyncStore(db);
   emit({ type: 'started' });
   try {
-    const result = await runSyncCycle({ store, transport: getSyncTransport(), newId });
+    const result = await runSyncCycle({
+      store,
+      transport: getSyncTransport(),
+      newId,
+      onRefused: () => emit({ type: 'refused' }),
+    });
     // A retry armed by an earlier failure in this loop has nothing left to do.
     cancelRetry();
     emit({

@@ -17,6 +17,7 @@ import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { createSession, getSession } from './sessions';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import { addSessionTag, createTag, getOrCreateTag, listTags, listTagsForSession } from './tags';
 
 const NOW = '2026-10-10T08:00:00.000Z';
@@ -83,6 +84,7 @@ describe('a tagged web entry applied with applyChangesSync', () => {
     const result = withEntryTags(entry, ['km', ' Club '], pulled, deps);
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     sessionId = result.sessionId;
+    expect(serverRefusals(result.changes)).toEqual([]);
     const rows: ChangeRow[] = result.changes.map((change, index) => ({
       tableName: change.tableName,
       rowId: change.rowId,

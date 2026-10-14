@@ -22,6 +22,7 @@ import { deleteSessionAndSeries, saveSeriesShots, setSessionExtraRounds } from '
 import { addSeries } from './series';
 import { createSession, getSession, updateSession } from './sessions';
 import { applyChangesSync, readRowSync, SYNC_TABLES } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 import {
   addSessionTag,
   createTag,
@@ -187,6 +188,7 @@ describe('a web bulk edit applied on the phone equals the phone editing session 
       now: () => new Date().toISOString(),
     });
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    expect(serverRefusals(result.changes)).toEqual([]);
     applyChangesSync(
       web,
       asApplied(

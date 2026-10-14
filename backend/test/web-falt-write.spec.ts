@@ -77,6 +77,8 @@ const FIREARM = {
   notes: null,
   round_count: 100,
   maintenance_interval_rounds: null,
+  maintenance_interval_months: null,
+  archived_at: null,
 };
 
 const station = (

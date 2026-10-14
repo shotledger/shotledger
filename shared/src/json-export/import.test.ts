@@ -407,10 +407,26 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       { ...good, roundCountAt: -1 },
       { ...good, roundCountAt: 1.5 },
       { ...good, roundCountAt: undefined },
+      // Not a UTC instant: stored as it is, the sync server would refuse the
+      // row (#697), so it is refused here, as a session's startedAt is.
+      { ...good, performedAt: '2026-09-01' },
+      { ...good, performedAt: '2026-09-01T12:00:00+02:00' },
     ];
     const result = importSessionsFromJson(envelope({ maintenanceEvents: bad })) as ImportResult;
     expect(result.maintenanceEvents).toEqual([]);
-    expect(result.errors.map((e) => e.itemIndex)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('M6 takes a maintenance date in whole seconds, as any ISO 8601 UTC instant', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00Z',
+      roundCountAt: 5,
+    };
+    const result = importSessionsFromJson(envelope({ maintenanceEvents: [event] })) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.maintenanceEvents.map((e) => e.performedAt)).toEqual(['2026-09-01T10:00:00Z']);
   });
 
   it('a bad license is skipped on its own', () => {

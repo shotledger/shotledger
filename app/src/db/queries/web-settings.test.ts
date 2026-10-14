@@ -18,6 +18,7 @@ import { createTestDb } from '../test-db';
 import type { Database } from '../types';
 import { getSetting, setSetting, SETTINGS_KEYS } from './settings';
 import { applyChangesSync, readRowSync } from './sync-store';
+import { serverRefusals } from '../sync-conformance';
 
 const NOW = '2026-10-07T10:00:00.000Z';
 
@@ -70,6 +71,7 @@ describe('web-built settings rows on the phone schema', () => {
       );
       if (!result.ok) throw new Error(JSON.stringify(result.errors));
       expect(result.changes).toHaveLength(8);
+      expect(serverRefusals(result.changes)).toEqual([]);
       const pulledBack: ChangeRow[] = result.changes.map((change, index) => ({
         tableName: change.tableName,
         rowId: change.rowId,
