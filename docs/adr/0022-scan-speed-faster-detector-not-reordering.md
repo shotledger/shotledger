@@ -1,6 +1,6 @@
-# ADR 0020: A precision close-up scan is made faster in the detector, not by reordering or dropping guards
+# ADR 0022: A precision close-up scan is made faster in the detector, not by reordering or dropping guards
 
-Status: accepted (2026-10-13)
+Status: proposed (2026-10-13; renumbered from 0020, which EAS Update took)
 
 ## Context
 
