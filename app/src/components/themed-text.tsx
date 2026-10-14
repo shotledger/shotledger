@@ -1,10 +1,23 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor, Typography } from '@/theme/tokens';
+import { Fonts, TabularNums, ThemeColor, Typography } from '@/theme/tokens';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  type?:
+    | 'default'
+    | 'title'
+    | 'small'
+    | 'smallBold'
+    | 'subtitle'
+    | 'link'
+    | 'linkPrimary'
+    | 'code'
+    // The #822 scale. `score` draws tabular numerals; give `headline` and
+    // `caption` `TabularNums` when they hold a number.
+    | 'score'
+    | 'headline'
+    | 'caption';
   themeColor?: ThemeColor;
 };
 
@@ -23,6 +36,9 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        type === 'score' && styles.score,
+        type === 'headline' && styles.headline,
+        type === 'caption' && styles.caption,
         style,
       ]}
       {...rest}
@@ -35,9 +51,12 @@ const styles = StyleSheet.create({
   smallBold: Typography.labelStrong,
   default: Typography.body,
   title: Typography.display,
-  subtitle: Typography.headline,
+  subtitle: Typography.legacyHeadline,
   link: Typography.link,
   linkPrimary: Typography.link,
+  score: { ...Typography.score, ...TabularNums },
+  headline: Typography.headline,
+  caption: Typography.caption,
   code: {
     ...Typography.code,
     fontFamily: Fonts.mono,

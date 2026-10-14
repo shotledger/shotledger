@@ -159,13 +159,37 @@ export const Radius = {
 /**
  * The type scale. The family is the platform system font, chosen per platform
  * by the app (`Fonts` in `app/src/theme/tokens.ts`); only `code` is monospace.
+ *
+ * #822 set the scale components are built on: `score` (the number that is the
+ * point of a screen), `title` (one per screen, in `Header`), `headline` (a
+ * card's lead number or heading), `body`, `label`, `labelStrong` and
+ * `caption` (chart axes and footnotes). `display` (48) and `legacyHeadline`
+ * (32/44) are what screens drew before #822; they stay until the per-screen
+ * rollout moves each screen to the new scale, and nothing new uses them.
  */
 export const Typography = {
-  display: { fontSize: 48, lineHeight: 52, fontWeight: 600 },
-  headline: { fontSize: 32, lineHeight: 44, fontWeight: 600 },
+  score: { fontSize: 40, lineHeight: 44, fontWeight: 700 },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: 700 },
+  headline: { fontSize: 22, lineHeight: 28, fontWeight: 600 },
   body: { fontSize: 16, lineHeight: 24, fontWeight: 500 },
   label: { fontSize: 14, lineHeight: 20, fontWeight: 500 },
   labelStrong: { fontSize: 14, lineHeight: 20, fontWeight: 700 },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: 500 },
   link: { fontSize: 14, lineHeight: 30 },
   code: { fontSize: 12, fontWeight: 500 },
+  /** @deprecated Pre-#822 screen title; new screens use `title` through `Header`. */
+  display: { fontSize: 48, lineHeight: 52, fontWeight: 600 },
+  /** @deprecated Pre-#822 headline (ThemedText `subtitle`); new code uses `headline` or `score`. */
+  legacyHeadline: { fontSize: 32, lineHeight: 44, fontWeight: 600 },
 } as const;
+
+/**
+ * Tabular (fixed-width) numerals for every number the app draws, so a column
+ * of scores lines up and a running total does not jitter as it changes. In
+ * React Native this is the `fontVariant` style; on the web, the CSS
+ * `font-variant-numeric` property takes the same value.
+ */
+export const TABULAR_NUMS = 'tabular-nums' as const;
+
+/** The minimum touch target (dp), Material's floor. Off the spacing scale on purpose. */
+export const MIN_TOUCH_TARGET = 48;

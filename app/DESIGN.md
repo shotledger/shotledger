@@ -25,16 +25,21 @@ colors:
   light-border: '#857A9B'
   light-caution-amber: '#9A5B00'
 typography:
-  display:
+  score:
     fontFamily: 'system-ui'
-    fontSize: '48px'
-    fontWeight: 600
-    lineHeight: '52px'
+    fontSize: '40px'
+    fontWeight: 700
+    lineHeight: '44px'
+  title:
+    fontFamily: 'system-ui'
+    fontSize: '28px'
+    fontWeight: 700
+    lineHeight: '34px'
   headline:
     fontFamily: 'system-ui'
-    fontSize: '32px'
+    fontSize: '22px'
     fontWeight: 600
-    lineHeight: '44px'
+    lineHeight: '28px'
   body:
     fontFamily: 'system-ui'
     fontSize: '16px'
@@ -50,10 +55,25 @@ typography:
     fontSize: '14px'
     fontWeight: 700
     lineHeight: '20px'
+  caption:
+    fontFamily: 'system-ui'
+    fontSize: '12px'
+    fontWeight: 500
+    lineHeight: '16px'
   code:
     fontFamily: 'ui-monospace, monospace'
     fontSize: '12px'
     fontWeight: 500
+  display-legacy:
+    fontFamily: 'system-ui'
+    fontSize: '48px'
+    fontWeight: 600
+    lineHeight: '52px'
+  headline-legacy:
+    fontFamily: 'system-ui'
+    fontSize: '32px'
+    fontWeight: 600
+    lineHeight: '44px'
 rounded:
   small: '8px'
   medium: '12px'
@@ -296,16 +316,33 @@ the content, so the system gets out of their way.
 
 ### Hierarchy
 
-- **Display** (600, 48px/52px): screen titles — "Home", "Session". One per
-  screen, at the top, never repeated.
-- **Headline** (600, 32px/44px): the number that is the point of a card — a
-  session total, a stat tile's value. This is where scores live.
+The scale set in #822, in `Typography` (`shared/src/design-tokens/`):
+
+- **Score** (700, 40px/44px, `score`): the one number that is the point of a
+  screen — a series total, a session result. Tabular numerals.
+- **Title** (700, 28px/34px, `title`): the screen title, drawn by `Header`.
+  One per screen, at the top, never repeated.
+- **Headline** (600, 22px/28px, `headline`): a card's lead number or
+  heading — a Stat's value, a shot cell's value.
 - **Body** (500, 16px/24px): list-row titles, form values, primary reading text.
 - **Label** (500, 14px/20px): secondary text, subtitles, chips, segment labels,
   metadata lines.
 - **Label Strong** (700, 14px/20px): button labels and section headers within a
   card — the same size as Label, separated by weight alone.
+- **Caption** (500, 12px/16px, `caption`): chart axis labels and footnotes,
+  in Muted Lilac. Nothing a shooter must read to act sits in caption type.
 - **Code** (500 — 700 on Android, 12px, monospace): identifiers and raw values.
+
+**Legacy.** `display` (48/52) and `legacyHeadline` (32/44) are what the
+screens drew before #822 — `ThemedText type="title"` and `type="subtitle"`.
+They stay until the per-screen rollout moves each screen to the new scale;
+nothing new uses them.
+
+**Tabular numerals.** Every number the app draws uses fixed-width figures
+(`TABULAR_NUMS`; in the app spread `TabularNums` into the text style, on the
+web `font-variant-numeric: tabular-nums`), so a column of scores lines up
+and a running total does not jitter as it changes. `ThemedText type="score"`
+applies it; Stat, Shot Cell and the chart caption do too.
 
 ### Named Rules
 
@@ -397,6 +434,16 @@ ornament, and state changes that are unmistakable but never loud.
   `danger` tone draws a destructive action, which is never primary.
 - **Text:** `TextButton`, a lavender label with no fill or outline (48dp touch
   target), for a section's own "Add …" in that section's header row.
+- **Tonal:** a `selected` fill with a Bone White label and no outline — a
+  quiet filled action that is not the screen's main one (the Filter Bar's
+  Filters button). Disabled, it loses the fill and drops to Muted Lilac.
+- **Destructive:** delete or discard, in Alert Coral (`SecondaryButton
+tone="danger"`). Never lavender, never the primary tier — a destructive
+  action is never what the screen is for.
+- **One component, five tiers.** `Button` (`app/src/components/button.tsx`)
+  takes `variant: 'primary' | 'secondary' | 'tonal' | 'text' | 'destructive'`
+  and draws the tier through the components above, so a screen picks a role,
+  not a colour. Every tier is at least **48dp** tall (`MIN_TOUCH_TARGET`).
 
 ### Chips
 
@@ -409,6 +456,20 @@ ornament, and state changes that are unmistakable but never loud.
   a `selectedOutline` border of the same width, so nothing moves.
 - **Primary:** Signal Lavender ground, Deep Aubergine text — reserved for a chip
   that marks a genuine achievement or active filter, not general labelling.
+
+### Choice Chips
+
+`ChoiceChips` (`app/src/components/choice-chips.tsx`): a wrapping row of pill
+options for a choice that does not fit a segmented control — more than four
+options, or "any of".
+
+- **Modes:** `single` is a radio group (`radiogroup` / `radio`, tapping the
+  chosen chip keeps it chosen); `multi` is a set of checkboxes. A multi
+  selection comes back in the options' order, whatever the tap order.
+- **Style:** pill, 48dp tall, a 2px `border` outline at rest with a Muted
+  Lilac label. Chosen: the `selected` fill, a 2px `selectedOutline` border
+  and a Label Strong label. The border width never changes, so a choice is
+  fill plus outline colour, never border thickness alone.
 
 ### Cards / Containers
 
@@ -443,7 +504,12 @@ app. Nothing should style a bare `TextInput` again.
 ### Segmented Control
 
 The app's signature selector — session Series/Stats, Home's All/Series/Rounds,
-theme and language pickers.
+theme and language pickers. **Two to four options**; more belong in Choice
+Chips or an option picker.
+
+- **Roles:** the track is a `radiogroup` and each segment a `radio` with
+  `selected` and `checked` state, so a screen reader says "Dark, radio
+  button, selected", never a bare "button".
 
 - **Track:** Surface Purple, 12px radius, 2px padding, 2px gap between segments.
 - **Segment:** 8px radius, 8px padding, **48dp minimum height**, a 2px
@@ -461,6 +527,76 @@ theme and language pickers.
 The primitive behind Home's header totals and every stats readout: a Card
 holding a Headline-sized number above a Label-sized caption, left-aligned, with
 an 2px gap. The number is the content; the caption is the annotation.
+
+### Stat
+
+`Stat` (`app/src/components/stat.tsx`), the #822 successor to Stat Tile: a
+Headline (or Score) value with an optional unit in Muted Lilac, over a Label
+caption, on a card or bare.
+
+- **Never truncates.** No line limit on any of its text: the label wraps to
+  a second line and the value wraps only between words. StatTile's
+  shrink-to-fit is native-only, which is why Home's tiles cut to "Shots
+  Log…" on the web.
+- **One phrase for a screen reader:** value, unit and label together
+  ("1 284 rounds Shots Logged").
+
+### Shot Cell
+
+`ShotCell` (`app/src/components/shot-cell.tsx`): one shot of a series, the
+way a shooter corrects a shot.
+
+- **48 × 48dp minimum**, Headline type in tabular numerals, 8px radius, a
+  2px `border` outline on `backgroundElement`. An empty cell shows "–" in
+  Muted Lilac.
+- **Current:** the cell the next key goes into takes the `selected` fill and
+  `selectedOutline` border, and announces itself as selected.
+- **Name:** "Shot 3: 9"; an inner ten is spelled out ("inner ten, 10")
+  rather than read as "X".
+
+### Header
+
+`Header` (`app/src/components/header.tsx`): the one title at the top of a
+screen, in Title type, with an optional Label subtitle in Muted Lilac and at
+most one trailing action (a text Button or icon button). It carries the
+screen's only `header` role. `ScreenTitle` still draws the existing screens
+until the per-screen rollout.
+
+### Filter Bar
+
+`FilterBar` (`app/src/components/filter-bar.tsx`): the row above a filtered
+list or chart — Statistics, Records and the web share the shape.
+
+- A tonal **Filters** button, counting what is active ("Filters (2)"), opens
+  a bottom sheet holding the controls (Segmented, Choice Chips).
+- Each active filter sits beside it as a 48dp chip in the `selected` fill and
+  outline, one tap to remove ("Remove filter Pistol").
+- The sheet ends with **Clear All** (text tier, only while something is
+  active) and **Close**. The row scrolls sideways rather than wrapping.
+- Presentational: the screen owns the filter state.
+
+### Chart Kit
+
+`app/src/components/chart-kit/`: what every chart shares.
+
+- **Colours:** `chartColors(theme)` maps the tokens — series from
+  `DataViz.<theme>.categorical` in slot order (`seriesColor` returns `null`
+  past slot 8 rather than cycling), ring values from `DataViz.<theme>.rings`,
+  gridlines in `border`, tick labels in `textSecondary`. Never the accent.
+- **Ticks:** `niceTicks` (`shared/src/charts/nice-ticks.ts`, shared with the
+  web) rounds an axis out to steps of 1, 2 or 5 × 10ⁿ within a tick budget;
+  `linearAxis` turns that into a pixel scale and `formatTick` prints a tick in
+  the UI language's number format ("9,5" in Swedish).
+- **Type:** tick labels and the `ChartCaption` footnote are Caption type;
+  SVG text goes through `SvgText` so the web draws the sans font.
+
+### Status Line
+
+`StatusLine` (`app/src/components/status-line.tsx`): a licence's status in
+words — Valid, Expiring Soon, Expired, No License (the firearm list's own
+strings) — in Label Strong, coloured `success`, `warning`, `danger` or
+Muted Lilac, with a dot of the same colour and an optional detail ("until
+2027-03-01"). The words carry the meaning; colour is the second signal.
 
 ### Empty State
 
@@ -486,6 +622,8 @@ offering the action that would fill the screen.
 - **Do** keep control labels on one line, shrinking or scrolling instead of
   wrapping.
 - **Do** use weight, not size, to emphasize at 14px.
+- **Do** draw every number in tabular numerals.
+- **Do** keep every control at least 48dp in its smaller dimension.
 
 ### Don't:
 

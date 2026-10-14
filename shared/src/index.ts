@@ -42,3 +42,4 @@ export * from './licenses';
 export * from './locations';
 export * from './ranges';
 export * from './design-tokens';
+export * from './charts/nice-ticks';

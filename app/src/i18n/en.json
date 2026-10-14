@@ -839,7 +839,37 @@
     "assistLogRow_one": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
     "assistLogRow_other": "{{count}} series · suggested {{suggested}}: kept {{kept}}, nudged {{nudged}}, deleted {{deleted}} · added {{added}} · precision {{precision}}, recall {{recall}}",
     "assistLogExport": "Export",
-    "assistLogClear": "Clear"
+    "assistLogClear": "Clear",
+    "galleryDesignSystem": "Design System",
+    "galleryDesignSystemBody": "The #822 components. Switch the theme to see both.",
+    "galleryTypeScale": "Type Scale",
+    "galleryTypeScore": "Score",
+    "galleryTypeTitle": "Title",
+    "galleryTypeHeadline": "Headline",
+    "galleryTypeBody": "Body",
+    "galleryTypeLabel": "Label",
+    "galleryTypeCaption": "Caption",
+    "galleryButtons": "Buttons",
+    "galleryButtonPrimary": "Primary",
+    "galleryButtonSecondary": "Secondary",
+    "galleryButtonTonal": "Tonal",
+    "galleryButtonText": "Text",
+    "galleryButtonDestructive": "Destructive",
+    "galleryButtonDisabled": "Disabled",
+    "gallerySegmented": "Segmented",
+    "galleryChoiceChips": "Choice Chips",
+    "galleryChoiceSingle": "Single select",
+    "galleryChoiceMulti": "Multi select",
+    "galleryShotCells": "Shot Cells",
+    "galleryShotCellsBody": "Shot 4 is the current cell.",
+    "galleryStat": "Stat",
+    "galleryHeader": "Header",
+    "galleryHeaderSubtitle": "Training · 6 series",
+    "galleryFilterBar": "Filter Bar",
+    "galleryChartKit": "Chart Kit",
+    "galleryChartCaption": "Series totals, last 8 sessions",
+    "galleryStatusLine": "Status Line",
+    "galleryStatusUntil": "until {{date}}"
   },
   "competitionLevel": {
     "forening": "Club Competition",
@@ -1579,5 +1609,14 @@
     "maintenanceDueBody": "Maintenance interval reached",
     "licenseExpiresBody_one": "License expires in {{count}} day",
     "licenseExpiresBody_other": "License expires in {{count}} days"
+  },
+  "components": {
+    "shotCell": "Shot {{number}}: {{value}}",
+    "shotCellEmpty": "Shot {{number}}: not entered",
+    "shotCellInnerTen": "Shot {{number}}: inner ten, {{value}}",
+    "filters": "Filters",
+    "filtersActive": "Filters ({{count}})",
+    "removeFilter": "Remove filter {{label}}",
+    "clearFilters": "Clear All"
   }
 }
