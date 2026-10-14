@@ -58,6 +58,23 @@ reads that as a total across the whole six-month window: twelve activities
 somewhere in the six months satisfies 5 §, whether they were spread evenly or
 not. It does not require a fixed number in every calendar month.
 
+## The next-session date
+
+The period always ends today, so every day the oldest sessions in it move closer
+to falling out. If you log nothing more, a met requirement stays met until enough
+sessions have fallen out that the count drops below what is needed. The date the
+app shows is the last day before that happens.
+
+Only the sessions that requirement counts matter: for a firearm's criterion,
+sessions logged with that firearm. For the renewal criterion both years must stay
+at four, so the date can come from either year.
+
+The date follows the calendar exactly as the count does. A six-month period that
+ends on 31 October starts on 1 May, because there is no 31 April; so a session on
+1 May can fall out on 31 October rather than on 1 November. The date can
+therefore be a day or two earlier than counting months on your fingers would
+suggest, never later.
+
 ## What counts, and what this is not
 
 **Every session counts, whatever you shot.** 5 § and 6 § are requirements on

@@ -33,6 +33,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { Slider } from '@/components/slider';
 import { licenseActivityKey } from '@/features/compliance/activity-key';
+import { nextSessionDeadline } from '@/features/compliance/next-session';
 import { missingFirearmFields, requiresLicense } from '@/features/firearms/completeness';
 import { Stepper } from '@/components/stepper';
 import { TextField } from '@/components/text-field';
@@ -522,7 +523,7 @@ export default function FirearmDetailScreen() {
               />
             ))}
           </View>
-          {detail.licenseActivities.map((b) => (
+          {detail.licenseActivities.map((b, index) => (
             <View key={`detail-${licenseActivityKey(b)}`}>
               <ThemedText
                 type="small"
@@ -548,6 +549,11 @@ export default function FirearmDetailScreen() {
                       count: b.skippedSessionCount,
                     })}
               </ThemedText>
+              <NextSessionLine
+                lapseIso={detail.licenseActivityLapses[index]}
+                labelKey="compliance.nextSessionBy"
+                testID={`firearm-barometer-next-session-${licenseActivityKey(b)}`}
+              />
             </View>
           ))}
           {/* Which case is in effect is never silently applied — it is on
@@ -570,7 +576,7 @@ export default function FirearmDetailScreen() {
       {profile && detail.firearmCriteria.length > 0 && (
         <Card>
           <ThemedText type="smallBold">{t('compliance.firearmCriteriaTitle')}</ThemedText>
-          {detail.firearmCriteria.map((criterion) => (
+          {detail.firearmCriteria.map((criterion, index) => (
             <View key={criterion.criterionId} style={styles.criterionBlock}>
               <View style={styles.chipsRow}>
                 <Chip
@@ -597,6 +603,11 @@ export default function FirearmDetailScreen() {
                   })}
                 </ThemedText>
               ))}
+              <NextSessionLine
+                lapseIso={detail.firearmCriteriaLapses[index]}
+                labelKey="compliance.criterionNextSessionBy"
+                testID={`firearm-criterion-next-session-${criterion.criterionId}`}
+              />
               <ThemedText type="small" themeColor="textSecondary">
                 {t(`compliance.criterionHint.${criterion.criterionId}`)}
               </ThemedText>
@@ -1215,6 +1226,26 @@ export default function FirearmDetailScreen() {
  *  row. Empty when the card gave none — the row is then not offered. */
 function scanFirearmSummary(parsed: ParsedLicenseCard): string {
   return [parsed.make, parsed.model, parsed.caliber, parsed.vapenId].filter(Boolean).join(' · ');
+}
+
+/** "Next session by …" under a met requirement; nothing when it is not met (#795). */
+function NextSessionLine({
+  lapseIso,
+  labelKey,
+  testID,
+}: {
+  lapseIso: string | null | undefined;
+  labelKey: 'compliance.nextSessionBy' | 'compliance.criterionNextSessionBy';
+  testID: string;
+}) {
+  const { t } = useTranslation();
+  const dates = useDateFormat();
+  if (!lapseIso) return null;
+  return (
+    <ThemedText type="small" themeColor="textSecondary" testID={testID}>
+      {t(labelKey, { date: dates.date(nextSessionDeadline(lapseIso)) })}
+    </ThemedText>
+  );
 }
 
 function capitalize(value: string): string {
