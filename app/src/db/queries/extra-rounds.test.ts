@@ -10,6 +10,7 @@ import type { Database } from '../types';
 import { createAmmoLot } from './ammo-lots';
 import { getAmmoLotUsage } from './ammo-usage';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import { setSessionExtraRounds } from './round-count';
 import { addSeries } from './series';
 import { createSession, getSession, sumExtraRounds } from './sessions';
@@ -50,7 +51,7 @@ describe('A-X1: extra rounds count toward the firearm round counter', () => {
 
     const updated = getFirearm(db, firearm.id);
     expect(updated?.roundCount).toBe(12);
-    expect(updated?.roundsSinceMaintenance).toBe(12);
+    expect(getRoundsSinceMaintenance(db, updated!)).toBe(12);
   });
 
   it('adds on top of the shots already counted by saveSeriesShots', () => {

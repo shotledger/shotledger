@@ -124,7 +124,7 @@ the ShotLog per-shot import, `sessions.kind` in Home, `series.is_total_override`
 - **N4** `docs/manual/` EN + SV updated where a user sees a change (the
   Shoot-Off chip; the adjustment label if the manual describes it).
 
-## 4. PR B — derived rounds since maintenance (outline; detailed after PR A)
+## 4. PR B — derived rounds since maintenance (outline; detailed in `maintenance-counter-727-spec.md`)
 
 - **M1** `firearms.rounds_since_maintenance` is dropped.
 - **M2** Rounds since maintenance =

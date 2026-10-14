@@ -15,6 +15,7 @@ import {
 import { db } from '@/db/client';
 import { latestLicense } from '@/db/queries/licenses';
 import { listFirearms } from '@/db/queries/firearms';
+import { getRoundsSinceMaintenance } from '@/db/queries/maintenance-counter';
 import { loadFirearmLicenseActivityStatus } from '@/features/compliance/use-license-activity';
 import { isFirearmIncomplete } from './completeness';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
@@ -45,7 +46,7 @@ export function loadFirearmsList(profile: JurisdictionProfile | null = null): Fi
       weaponType: firearm.weaponType,
       licenseStatus: licenseStatus(license?.validUntil),
       maintenanceStatus: maintenanceStatus(
-        firearm.roundsSinceMaintenance,
+        getRoundsSinceMaintenance(db, firearm),
         firearm.maintenanceIntervalRounds,
       ),
       licenseActivityStatus: isArchived

@@ -1,5 +1,10 @@
 # Web session edit and delete — executable specification
 
+> Amended by #727 PR B (`docs/specs/maintenance-counter-727-spec.md`):
+> `firearms.rounds_since_maintenance` was dropped. Every move named here now
+> moves `round_count` only; rounds since maintenance is derived from the
+> maintenance log.
+
 > Old-coder SPEC for #692: edit and delete a session on the web. It builds on
 > the web write client of #669 (`docs/specs/web-series-entry-spec.md`, not
 > merged when this was written) and reads the bulk edit spec of #674

@@ -26,7 +26,7 @@ Pass matchas på sitt id, så att importera samma fil två gånger dubblerar
 ingenting — den andra importen uppdaterar det den första skapade. Det gör det
 riskfritt att importera om en fil du är osäker på.
 
-Vapen och licenser matchas på samma sätt, på sitt id. Ett vapen som filen bär
+Vapen, licenser och underhållsposter matchas på samma sätt, på sitt id. Ett vapen som filen bär
 och som inte redan finns här skapas med allt filen vet om det — kaliber,
 vapentyp, tillverkningsnummer, VapenID, laddsystem — och sina licenser med sig.
 Ett vapen vars id är okänt men vars fabrikat och modell redan stämmer med ett på
@@ -159,8 +159,7 @@ Ett pass, en räknande serie om tre skott:
       "loadSystem": null,
       "notes": null,
       "roundCount": 1200,
-      "maintenanceIntervalRounds": 500,
-      "roundsSinceMaintenance": 120
+      "maintenanceIntervalRounds": 500
     }
   ],
   "licenses": [
@@ -173,6 +172,17 @@ Ett pass, en räknande serie om tre skott:
       "validUntil": null,
       "conditions": null,
       "authority": "Polismyndigheten"
+    }
+  ],
+  "maintenanceEvents": [
+    {
+      "id": "0192c4a1-7e2b-7c3d-9a10-4b5c6d7e8f90",
+      "firearmId": "b4a1f6d2-0c33-4f1e-9a77-1d2e3f4a5b6c",
+      "performedAt": "2026-05-02T16:00:00.000Z",
+      "kind": "Rengöring",
+      "roundCountAt": 1080,
+      "isAdjustment": false,
+      "notes": null
     }
   ]
 }
@@ -199,23 +209,29 @@ Ett pass, en räknande serie om tre skott:
 | `externalSource`, `externalRef`              | Var ett importerat pass kom ifrån (`webshooter`, `shotlog`) och källans egen nyckel för det, utan källan framför (`363:35937`). En senare import från samma källa matchar på paret. `null` på ett pass som loggats i appen.                                     |
 | `officialPlacement`, `officialStandardMedal` | Placering och standardmedalj ur de officiella resultaten, så som en import från WebShooter förde in dem. `null` när det inte finns några.                                                                                                                       |
 
-### Vapen och licenser
+### Vapen, licenser och underhåll
 
-Kuvertet bär två listor till vid sidan av `sessions`:
+Kuvertet bär tre listor till vid sidan av `sessions`:
 
-- **`firearms`** — en post per vapen, med allt appen lagrar om det utom
-  underhållshistoriken: fabrikat, modell, kaliber, vapentyp, om det är ditt
-  eget, tillverkningsnummer, VapenID, laddsystem, anteckningar och skotträknare.
+- **`firearms`** — en post per vapen, med allt appen lagrar om det: fabrikat,
+  modell, kaliber, vapentyp, om det är ditt eget, tillverkningsnummer,
+  VapenID, laddsystem, anteckningar, avlossade skott och underhållsintervall.
 - **`licenses`** — en post per **utfärdad** licens, var och en med sitt vapen
   angivet genom `firearmId`. En förnyelse är en egen post i stället för en
   ändring av den gamla, så historiken bevaras.
+- **`maintenanceEvents`** — varje vapens underhållslogg, justeringar av
+  skotträknaren medräknade (`isAdjustment`). `roundCountAt` är vapnets
+  skotträknare när posten loggades. **Skott sedan underhåll** lagras inte i
+  filen: det räknas fram ur de här posterna, på samma sätt som appen gör, så
+  det blir detsamma efter en import.
 
-En licens som pekar ut ett vapen filen inte bär utelämnas vid import: den har
-inget att höra till, och att gissa fram ett vore sämre än att hoppa över den.
+En licens eller underhållspost som pekar ut ett vapen filen inte bär utelämnas
+vid import: den har inget att höra till, och att gissa fram ett vore sämre än
+att hoppa över den.
 
 !!! note "Vad en export inte är"
 
-    Den bär inga foton, ingen underhållshistorik och inga inställningar. Att
+    Den bär inga foton och inga inställningar. Att
     importera en i en ny installation ger dig skjutandet och utrustningen bakom
     det, men inte en telefon återställd som den var — för det återställer du en
     säkerhetskopia.

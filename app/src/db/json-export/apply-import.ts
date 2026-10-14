@@ -13,6 +13,7 @@ import {
   type ImportError,
   type ImportRecords,
   type LicenseExport,
+  type MaintenanceEventExport,
   type SessionImportGroup,
   importedSessionVolume,
 } from '@shotledger/shared';
@@ -22,6 +23,7 @@ import {
   faltStations,
   firearms,
   licenses,
+  maintenanceEvents,
   series,
   sessions,
   shots,
@@ -40,7 +42,7 @@ export interface ImportDryRun {
   plan: DryRunPlan;
   errors: ImportError[];
   groups: SessionImportGroup[];
-  /** The file's firearms and licenses, to be applied alongside the groups. */
+  /** The file's firearms, licenses and maintenance events, applied alongside the groups. */
   records: ImportRecords;
 }
 
@@ -59,7 +61,11 @@ export function dryRunImport(db: Database, jsonText: string): ImportDryRun {
   }
   const groups = toImportGroups(parsed.sessions);
   const errors = parsed.errors;
-  const records: ImportRecords = { firearms: parsed.firearms, licenses: parsed.licenses };
+  const records: ImportRecords = {
+    firearms: parsed.firearms,
+    licenses: parsed.licenses,
+    maintenanceEvents: parsed.maintenanceEvents,
+  };
 
   const sessionIds = new Set(
     db
@@ -222,7 +228,6 @@ export function applyImport(
           deletedAt: null,
           ...descriptive,
           roundCount: firearm.roundCount,
-          roundsSinceMaintenance: firearm.roundsSinceMaintenance,
         })
         .run();
       insertedFromFile.add(firearm.id);
@@ -261,6 +266,37 @@ export function applyImport(
         .run();
     };
 
+    /** An event names its firearm as a license does, and is dropped the same
+     *  way when the file does not carry that firearm (#727 M6). */
+    const upsertMaintenanceEvent = (event: MaintenanceEventExport): void => {
+      const firearmId = firearmIdByFileId.get(event.firearmId);
+      if (!firearmId) return;
+      const now = nowIso();
+      const values = {
+        firearmId,
+        performedAt: event.performedAt,
+        kind: event.kind,
+        roundCountAt: event.roundCountAt,
+        isAdjustment: event.isAdjustment ? 1 : 0,
+        notes: event.notes,
+      };
+      const existing = tx
+        .select({ id: maintenanceEvents.id })
+        .from(maintenanceEvents)
+        .where(eq(maintenanceEvents.id, event.id))
+        .get();
+      if (existing) {
+        tx.update(maintenanceEvents)
+          .set({ ...values, deletedAt: null, updatedAt: now })
+          .where(eq(maintenanceEvents.id, event.id))
+          .run();
+        return;
+      }
+      tx.insert(maintenanceEvents)
+        .values({ id: event.id, createdAt: now, updatedAt: now, deletedAt: null, ...values })
+        .run();
+    };
+
     for (const firearm of records.firearms ?? []) {
       const localId = upsertFirearm(firearm);
       firearmIdByFileId.set(firearm.id, localId);
@@ -269,6 +305,7 @@ export function applyImport(
       firearmIdByName.set(firearmDisplayName(firearm), localId);
     }
     for (const license of records.licenses ?? []) upsertLicense(license);
+    for (const event of records.maintenanceEvents ?? []) upsertMaintenanceEvent(event);
 
     const resolveFirearmId = (name: string | null): string | null => {
       if (!name) return null;
@@ -296,7 +333,6 @@ export function applyImport(
           make,
           model,
           roundCount: 0,
-          roundsSinceMaintenance: 0,
         })
         .run();
       firearmIdByName.set(name, id);

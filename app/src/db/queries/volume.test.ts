@@ -11,6 +11,7 @@ import { createAmmoLot } from './ammo-lots';
 import { getAmmoLotUsage } from './ammo-usage';
 import { addStation, softDeleteStation } from './falt';
 import { createFirearm, getFirearm } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import { deleteSeriesAndShots, deleteSessionAndSeries, saveSeriesShots } from './round-count';
 import { addSeries, softDeleteSeries } from './series';
 import { createSession } from './sessions';
@@ -176,7 +177,7 @@ describe('the firearm counter follows the session volume (A5–A6)', () => {
     deleteSessionAndSeries(db, id);
 
     expect(getFirearm(db, firearmId)!.roundCount).toBe(0);
-    expect(getFirearm(db, firearmId)!.roundsSinceMaintenance).toBe(0);
+    expect(getRoundsSinceMaintenance(db, getFirearm(db, firearmId)!)).toBe(0);
     expect(getFirearm(db, other)!.roundCount).toBe(3);
   });
 

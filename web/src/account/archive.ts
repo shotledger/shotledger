@@ -4,9 +4,11 @@ import {
   exportSessionsToJson,
   firearmExportsFromRows,
   licenseExportsFromRows,
+  maintenanceEventExportsFromRows,
   sessionExportsFromRows,
   type ExportAmmoLotRow,
   type ExportFirearmRow,
+  type ExportMaintenanceEventRow,
   type ExportSeriesRow,
   type ExportSessionRow,
   type ExportShotRow,
@@ -38,6 +40,9 @@ export function sessionsJson(tables: PulledTables, appVersion: string, generated
       generatedAt,
       firearms: firearmExportsFromRows(liveRows<ExportFirearmRow>(tables.firearms)),
       licenses: licenseExportsFromRows(liveRows<LicenseExport>(tables.licenses)),
+      maintenanceEvents: maintenanceEventExportsFromRows(
+        liveRows<ExportMaintenanceEventRow>(tables.maintenance_events),
+      ),
     },
   );
 }

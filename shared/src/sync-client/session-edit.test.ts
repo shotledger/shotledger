@@ -99,17 +99,11 @@ const shot = (
   is_inner_ten: isInnerTen ? 1 : 0,
 });
 
-const firearm = (
-  id: string,
-  roundCount: number,
-  since: number,
-  deletedAt: string | null = null,
-) => ({
+const firearm = (id: string, roundCount: number, deletedAt: string | null = null) => ({
   ...common(id, deletedAt),
   make: 'Make',
   model: id,
   round_count: roundCount,
-  rounds_since_maintenance: since,
   future_column: 'kept',
 });
 
@@ -190,12 +184,7 @@ function logbook(): EditContext {
       station('st3', 's2'),
       station('stDead', 's2', OLD),
     ),
-    firearms: byId(
-      firearm('f1', 100, 20),
-      firearm('f2', 10, 10),
-      firearm('f3', 5, 0),
-      firearm('fx', 9, 9, OLD),
-    ),
+    firearms: byId(firearm('f1', 100), firearm('f2', 10), firearm('f3', 5), firearm('fx', 9, OLD)),
     ammoLots: byId({ ...common('a1'), label: 'Lot 1' }, { ...common('aX', OLD), label: 'Gone' }),
   };
 }
@@ -885,14 +874,13 @@ describe('edit builder', () => {
     );
   });
 
-  it('K11 same firearm: moves by V_after − V_before, both counters', () => {
+  it('K11 same firearm: moves the round counter by V_after − V_before', () => {
     // r1 5 → 2 shots: 22 → 19.
     const changes = changesOf(edit(draft('s1', {}, [asDrafted('r1', '9 9')])));
     expect(changes[0]).toMatchObject({ tableName: 'firearms', rowId: 'f1' });
     expect(changes[0]!.payload).toEqual({
       ...logbook().firearms.get('f1'),
       round_count: 97,
-      rounds_since_maintenance: 17,
       updated_at: NOW,
     });
     // A new 4-shot series: +4.
@@ -901,7 +889,6 @@ describe('edit builder', () => {
     );
     expect(find(added, 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 104,
-      rounds_since_maintenance: 24,
     });
   });
 
@@ -912,11 +899,9 @@ describe('edit builder', () => {
     // 22 before, 20 after the 2-shot sighter goes.
     expect(find(changes, 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 78,
-      rounds_since_maintenance: 0,
     });
     expect(find(changes, 'firearms', 'f3')!.payload).toMatchObject({
       round_count: 25,
-      rounds_since_maintenance: 20,
     });
     const toNone = changesOf(edit(draft('s1', { firearmId: null })));
     expect(toNone.filter((c) => c.tableName === 'firearms').map((c) => c.rowId)).toEqual(['f1']);
@@ -947,13 +932,12 @@ describe('edit builder', () => {
 
   it('K11 the counters are floored at 0', () => {
     const context = logbook();
-    (context.firearms as Map<string, Payload>).set('f1', firearm('f1', 3, 1));
+    (context.firearms as Map<string, Payload>).set('f1', firearm('f1', 3));
     const changes = changesOf(
       edit(draft('s1', {}, [{ ...asDrafted('r1', R1), deleted: true }]), context),
     );
     expect(find(changes, 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 0,
-      rounds_since_maintenance: 0,
     });
   });
 
@@ -965,7 +949,7 @@ describe('edit builder', () => {
     // s2: three live stations × 6.
     expect(
       find(changesOf(edit(draft('s2', { firearmId: null }))), 'firearms', 'f2')!.payload,
-    ).toMatchObject({ round_count: 0, rounds_since_maintenance: 0 });
+    ).toMatchObject({ round_count: 0 });
     expect(
       find(changesOf(edit(draft('s2', { firearmId: 'f3' }))), 'firearms', 'f3')!.payload,
     ).toMatchObject({ round_count: 23 });
@@ -1203,8 +1187,8 @@ describe('K10 one move per firearm equals the phone', () => {
         (c, n, before, after) => {
           const context = logbook();
           const firearms = context.firearms as Map<string, Payload>;
-          firearms.set('f1', firearm('f1', c, c));
-          firearms.set('f3', firearm('f3', n, n));
+          firearms.set('f1', firearm('f1', c));
+          firearms.set('f3', firearm('f3', n));
           const sessions = context.sessions as Map<string, Payload>;
           sessions.set('e', session('e', { firearm_id: 'f1' }));
           (context.series as Map<string, Payload>).set('eR', series('eR', 'e', 1));
@@ -1249,7 +1233,7 @@ describe('delete builder', () => {
   it('K20 delete: tombstones for every live shot, series, fält station and the session; nothing else but the firearm', () => {
     const changes = changesOf(del('s1'));
     expect(changes.map((c) => [c.tableName, c.rowId, c.payload])).toEqual([
-      ['firearms', 'f1', expect.objectContaining({ round_count: 78, rounds_since_maintenance: 0 })],
+      ['firearms', 'f1', expect.objectContaining({ round_count: 78 })],
       ['sessions', 's1', null],
       ['series', 'r1', null],
       ['series', 'r2', null],
@@ -1295,11 +1279,9 @@ describe('delete builder', () => {
   it('K21 delete moves the firearm by −V_before floored; none, not live, or 0 → no firearm row', () => {
     expect(find(changesOf(del('s3')), 'firearms', 'f2')!.payload).toMatchObject({
       round_count: 0,
-      rounds_since_maintenance: 0,
     });
     expect(find(changesOf(del('sDec')), 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 99,
-      rounds_since_maintenance: 19,
     });
     const context = logbook();
     const sessions = context.sessions as Map<string, Payload>;
@@ -1441,7 +1423,6 @@ describe('K24 delete refuses what changed since the page opened (R10)', () => {
     });
     expect(find(changesOf(result), 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 178,
-      rounds_since_maintenance: 0,
     });
     expect(changesOf(result)).toHaveLength(
       changesOf(buildSessionDelete(open('s1'), logbook(), makeDeps())).length,
@@ -1545,10 +1526,10 @@ describe('K18 the built edit applied yields what the draft shows', () => {
             shots: byId(shot('o1', 'oR', 1, 90)),
             faltStations: new Map(),
             firearms: byId(
-              firearm('f1', w.counters[0], w.counters[1]),
-              firearm('f2', w.counters[1], w.counters[2]),
-              firearm('f3', w.counters[2], w.counters[0]),
-              firearm('fx', 4, 4, OLD),
+              firearm('f1', w.counters[0]),
+              firearm('f2', w.counters[1]),
+              firearm('f3', w.counters[2]),
+              firearm('fx', 4, OLD),
             ),
             ammoLots: new Map(),
           };
@@ -1671,9 +1652,6 @@ describe('K18 the built edit applied yields what the draft shows', () => {
             expect(after.firearms.get(id)!.round_count).toBe(
               Math.max(0, (start.round_count as number) + d),
             );
-            expect(after.firearms.get(id)!.rounds_since_maintenance).toBe(
-              Math.max(0, (start.rounds_since_maintenance as number) + d),
-            );
             if (d === 0) expect(after.firearms.get(id)).toBe(start);
           }
         },
@@ -1732,7 +1710,7 @@ function faltBook(): EditContext {
   ]) {
     stations.set(row.id, row);
   }
-  (book.firearms as Map<string, Payload>).set('f2', firearm('f2', 40, 40));
+  (book.firearms as Map<string, Payload>).set('f2', firearm('f2', 40));
   return book;
 }
 
@@ -2231,7 +2209,7 @@ describe('station edit (§10)', () => {
     expect(changes.filter((c) => c.tableName === 'firearms')).toHaveLength(2);
     // Floored once: a drifted counter of 5 loses all three stations' 18 at once.
     const drifted = faltBook();
-    (drifted.firearms as Map<string, Payload>).set('f2', firearm('f2', 5, 5));
+    (drifted.firearms as Map<string, Payload>).set('f2', firearm('f2', 5));
     const floored = changesOf(
       edit(
         stationEdit(
@@ -2247,7 +2225,6 @@ describe('station edit (§10)', () => {
     );
     expect(find(floored, 'firearms', 'f2')!.payload).toMatchObject({
       round_count: 0,
-      rounds_since_maintenance: 0,
     });
   });
 
@@ -2386,11 +2363,10 @@ describe('rounds edit (§10)', () => {
 
   it('K35 floored, and netted with a firearm change', () => {
     const context = faltBook();
-    (context.firearms as Map<string, Payload>).set('f1', firearm('f1', 10, 3));
+    (context.firearms as Map<string, Payload>).set('f1', firearm('f1', 10));
     const down = changesOf(edit(roundsEdit('sR', '5'), context));
     expect(find(down, 'firearms', 'f1')!.payload).toMatchObject({
       round_count: 0,
-      rounds_since_maintenance: 0,
     });
     const moved = changesOf(edit(roundsEdit('sR', '30', { firearmId: 'f3' }), context));
     expect(counter(moved, 'f1')).toBe(0);
@@ -2539,9 +2515,9 @@ describe('K38 the built station and rounds edit applied yields what the draft sh
             shots: new Map(),
             faltStations: byId(fullStation('oS', 'other', 1)),
             firearms: byId(
-              firearm('f1', w.counters[0], w.counters[1]),
-              firearm('f2', w.counters[1], w.counters[2]),
-              firearm('f3', w.counters[2], w.counters[0]),
+              firearm('f1', w.counters[0]),
+              firearm('f2', w.counters[1]),
+              firearm('f3', w.counters[2]),
             ),
             ammoLots: new Map(),
           };
