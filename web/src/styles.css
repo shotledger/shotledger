@@ -674,6 +674,9 @@ a.button {
 
 .entry-fieldset {
   display: grid;
+  /* A 0 minimum, here and on .entry-tags: the tag input's intrinsic width
+     widened every card past the right gutter on a phone (#823). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-width: 0;
   margin: 0;
@@ -865,6 +868,7 @@ fieldset.field legend {
 
 .entry-tags {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -1257,12 +1261,23 @@ main:focus {
 
   .sidebar nav {
     flex-basis: 100%;
+    min-width: 0;
     padding: 8px;
   }
 
-  /* Three even columns rather than a ragged wrap (QA #747). */
+  /* One row that scrolls sideways: no ragged wrap (QA #747), and no label
+     broken over two lines in a cramped column (#823). */
   .sidebar ul {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .sidebar li {
+    flex-shrink: 0;
+  }
+
+  .sidebar a {
+    white-space: nowrap;
   }
 
   .sidebar li.group-start {
