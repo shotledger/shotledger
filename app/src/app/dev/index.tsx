@@ -22,6 +22,7 @@ import { setFlagOverride } from '@/db/queries/feature-flags';
 import { listSessions } from '@/db/queries/sessions';
 import { firearmCounterDrift } from '@/db/queries/volume';
 import { seedDemoData, wipeDemoData } from '@/db/seed';
+import { refreshReminders } from '@/features/firearms/reminders';
 import { summarizeAssist } from '@/features/photo-scoring/assist-log';
 import { shareTextFile } from '@/platform/share-file';
 import { Spacing } from '@/theme/tokens';
@@ -78,6 +79,7 @@ export default function DevScreen() {
         try {
           action();
           refresh();
+          void refreshReminders();
           setDemoStatus(done());
         } catch (error: unknown) {
           setDemoStatus(t('dev.demoFailed', { message: String(error) }));

@@ -122,58 +122,57 @@ export async function replaceMaintenanceTimeReminders(
   }
 }
 
-function licenseNotificationId(licenseId: string, leadDays: number): string {
-  return `license-expiry-${licenseId}-${leadDays}`;
+const LICENSE_EXPIRY_PREFIX = 'license-expiry-';
+
+export interface LicenseExpiryReminder {
+  licenseId: string;
+  firearmLabel: string;
+  notification: LicenseExpiryNotification;
 }
 
-/** Schedules the 90/30/7-day (VERIFY) reminders for one license, replacing any previously scheduled ones. */
-export async function scheduleLicenseExpiryNotifications(
-  licenseId: string,
-  firearmLabel: string,
-  notifications: readonly LicenseExpiryNotification[],
+/**
+ * Replaces every scheduled license expiry reminder with `reminders` (#847),
+ * the same way as the maintenance time reminders: a license that arrived by
+ * import, restore or sync gets its reminders, and one that was renewed,
+ * deleted or archived leaves none behind. `request: false` never prompts.
+ */
+export async function replaceLicenseExpiryReminders(
+  reminders: readonly LicenseExpiryReminder[],
+  { request }: { request: boolean },
 ): Promise<void> {
-  await cancelLicenseExpiryNotifications(
-    licenseId,
-    notifications.map((n) => n.leadDays),
-  );
-  if (!(await ensurePermission())) return;
+  if (Platform.OS === 'web') return;
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const { identifier } of scheduled) {
+      if (identifier.startsWith(LICENSE_EXPIRY_PREFIX)) {
+        await Notifications.cancelScheduledNotificationAsync(identifier);
+      }
+    }
+  } catch {
+    // best-effort — see notifyMaintenanceDue.
+  }
+  if (reminders.length === 0 || !(await ensurePermission(request))) return;
   try {
     await ensureChannel(LICENSE_EXPIRY_CHANNEL, 'notifications.channelLicenseExpiry');
   } catch {
     // best-effort — see notifyMaintenanceDue.
   }
-  for (const { leadDays, fireAt } of notifications) {
+  for (const { licenseId, firearmLabel, notification } of reminders) {
     try {
       await Notifications.scheduleNotificationAsync({
-        identifier: licenseNotificationId(licenseId, leadDays),
+        identifier: `${LICENSE_EXPIRY_PREFIX}${licenseId}-${notification.leadDays}`,
         content: {
           title: firearmLabel,
-          body: i18n.t('notifications.licenseExpiresBody', { count: leadDays }),
+          body: i18n.t('notifications.licenseExpiresBody', { count: notification.leadDays }),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: new Date(fireAt),
+          date: new Date(notification.fireAt),
           channelId: LICENSE_EXPIRY_CHANNEL,
         },
       });
     } catch {
       // best-effort — see notifyMaintenanceDue.
-    }
-  }
-}
-
-/** Cancels a license's scheduled reminders, e.g. before rescheduling after a renewal. */
-export async function cancelLicenseExpiryNotifications(
-  licenseId: string,
-  leadDaysList: readonly number[],
-): Promise<void> {
-  for (const leadDays of leadDaysList) {
-    try {
-      await Notifications.cancelScheduledNotificationAsync(
-        licenseNotificationId(licenseId, leadDays),
-      );
-    } catch {
-      // nothing scheduled under that id — fine.
     }
   }
 }
