@@ -58,8 +58,16 @@ export function complianceSessions(tables: Pick<PulledTables, 'sessions'>): Comp
   );
 }
 
-function groupIds(tables: Pick<PulledTables, 'firearm_groups'>): string[] {
-  return [...new Set(liveRows<{ groupId: string }>(tables.firearm_groups).map((g) => g.groupId))];
+/** `listAllFirearmGroupIds`: groups of live, unarchived firearms only. */
+export function groupIds(tables: Pick<PulledTables, 'firearm_groups' | 'firearms'>): string[] {
+  const active = pickableFirearms(tables.firearms);
+  return [
+    ...new Set(
+      liveRows<{ groupId: string; firearmId: string }>(tables.firearm_groups)
+        .filter((g) => active.has(g.firearmId))
+        .map((g) => g.groupId),
+    ),
+  ];
 }
 
 export interface OverallLicenseActivity {
