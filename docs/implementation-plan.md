@@ -102,9 +102,10 @@ firearms        make TEXT NOT NULL, model TEXT NOT NULL, caliber TEXT,
                 load_system TEXT,              -- laddsystem, e.g. halvautomat
                 notes TEXT,
                 round_count INTEGER NOT NULL DEFAULT 0,
-                maintenance_interval_rounds INTEGER    -- nullable; rounds since
+                maintenance_interval_rounds INTEGER,   -- nullable; rounds since
                                                -- maintenance is derived from
                                                -- maintenance_events (#727)
+                maintenance_interval_months INTEGER    -- nullable (#800)
 
 licenses        firearm_id FK NOT NULL,        -- one row per ISSUED license;
                                                -- a renewal appends a new row,
@@ -458,6 +459,13 @@ already is the sighter can un-set itself.)
       sighters; only firearm-linked sessions); manual adjust with reason
 - [x] Maintenance: log event, interval setting, "rounds since" indicator
       (green/amber/red at 80%/100%), local notification at 100%
+- [x] **Maintenance by time as well as by rounds** (#800, spec:
+      `docs/specs/maintenance-time-interval-spec.md`). An optional interval
+      in calendar months next to the round interval; due when either is
+      reached, counted from the last maintenance (else from when the
+      firearm was added). The detail screen names which limit was reached
+      and the date it falls due by time; a local notification is scheduled
+      for that date. No built-in intervals: the user sets both.
 - [x] License register per firearm (licenses table §3 — number, purpose,
       decision date, validity, conditions; renewals append, history
       kept); local notifications at 90/30/7 days before valid_until

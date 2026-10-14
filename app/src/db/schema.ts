@@ -37,6 +37,9 @@ export const firearms = sqliteTable('firearms', {
   notes: text('notes'),
   roundCount: integer('round_count').notNull().default(0),
   maintenanceIntervalRounds: integer('maintenance_interval_rounds'),
+  // Calendar months between maintenance (#800); due when either interval is
+  // reached. NULL = no time reminder. No default: the user sets it.
+  maintenanceIntervalMonths: integer('maintenance_interval_months'),
   /**
    * When the shooter archived it — sold, returned or retired (#799). NULL is
    * active. Archiving only hides the firearm from lists and pickers: its

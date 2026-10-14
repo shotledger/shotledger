@@ -555,6 +555,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "maintenance_interval_months": {
+          "name": "maintenance_interval_months",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "archived_at": {
           "name": "archived_at",
           "type": "text",

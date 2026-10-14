@@ -58,14 +58,26 @@ Till ett vapen samlas:
   **Skott sedan underhåll** räknas från posten med senast datum. En post du
   loggar i efterhand med ett tidigare datum sparas i loggen men nollställer
   inte antalet. En justering flyttar båda antalen lika mycket.
-  Anger du ett **Underhållsintervall** (ett heltal skott) får du en notis i
-  telefonen en gång när
+  Anger du ett **Underhållsintervall (skott)**, ett heltal skott, får du en
+  notis i telefonen en gång när
   **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en
   sparad serie, ett pass med bara skottantal, en import eller **Justera antal
   skott**. Sedan är det tyst tills du loggar underhåll och antalet når
   intervallet igen. Skott som kommer in via synk, inmatade på webben eller på en
-  annan enhet, ger ingen notis. På Android har notiserna en egen kategori,
-  **Underhåll**, som du kan stänga av utan att stänga av resten.
+  annan enhet, ger ingen notis.
+  Ange också, eller i stället, ett **Underhållsintervall (månader)** för ett
+  vapen som behöver skötas även när det inte skjuts, till exempel ett som står
+  undanställt över vintern. Månaderna räknas från det senaste underhåll du
+  loggat, eller från när du lade till vapnet om du inte loggat något; en
+  justering av skottantalet startar inte om dem. Telefonen ger en notis på
+  morgonen den dag de tar slut, och vapnet visar **Nästa underhåll senast**
+  med det datumet fram till dess.
+  Vapnet behöver underhåll när **något** av intervallen nås, och det står
+  vilket: "Dags: 6 månader sedan senaste underhållet" eller "Dags: 500 skott
+  sedan senaste underhållet". Appen föreslår inga intervall; du väljer båda,
+  och ett tomt fält stänger av den påminnelsen. På Android har notiserna en
+  egen kategori, **Underhåll**, som du kan stänga av utan att stänga av
+  resten.
 - **Siktesinställningar**, med namn, så att "inomhus 25 m" och "fält ute" blir
   två lägen du kan ta fram i stället för något du ska minnas.
 
@@ -93,7 +105,7 @@ Ett arkiverat vapen:
   visar ingen egen licensaktivitet. Passen du sköt med det räknas fortfarande.
 
 **Återställ vapen** på ett arkiverat vapen tar tillbaka det som det var, och
-påminnelserna om licensen börjar igen.
+påminnelserna om licensen och underhållet börjar igen.
 
 ## Ammunition
 
