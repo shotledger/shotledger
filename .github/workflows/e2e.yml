@@ -1,0 +1,101 @@
+name: E2E
+
+# The Maestro flows in app/e2e on an Android emulator (#806). An emulator run
+# costs several times the minutes of `check`, so it runs only on pushes to
+# main that can change the app, on PRs labelled `e2e`, and by hand. A PR
+# without the label still triggers the workflow, but the job is skipped, and
+# a skipped job costs no minutes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'shared/src/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Several merges in a row need only the last one checked.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  maestro:
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'e2e') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MAESTRO_VERSION: 2.11.0
+      MAESTRO_SHA256: 5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12.11.2
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The runner image ships JDK 21, the version the Android build uses
+      # (run-app skill); it is just not the default.
+      - name: Use JDK 21
+        run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-e2e-${{ hashFiles('pnpm-lock.yaml', 'app/app.json') }}
+          restore-keys: gradle-e2e-
+
+      # A release build bundles the JS, so the flows need no Metro. The dev
+      # tools flag opens /dev, where the flows load demo data; never set it
+      # for a Play build (app/CLAUDE.md). x86_64 only: the emulator's ABI.
+      - name: Build the APK
+        working-directory: app
+        env:
+          EXPO_PUBLIC_ENABLE_DEV_TOOLS: '1'
+        run: |
+          pnpm exec expo prebuild --platform android --no-install
+          cd android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+
+      - name: Install the Maestro CLI
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/maestro.zip" \
+            "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          echo "${MAESTRO_SHA256}  $RUNNER_TEMP/maestro.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
+
+      # Hardware acceleration for the emulator; without it the flows crawl.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Each script line runs in its own shell, so the directory is set here.
+      - name: Run the flows
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          working-directory: app
+          script: |
+            adb install -r android/app/build/outputs/apk/release/app-release.apk
+            maestro test e2e
