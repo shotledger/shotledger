@@ -65,7 +65,11 @@ export function SegmentedControl<T extends string>({
           style={[
             styles.segment,
             scrolls && styles.segmentAuto,
-            selected && { backgroundColor: theme.backgroundSelected },
+            // Fill and outline both, so the choice does not rest on text
+            // colour alone (WCAG 1.4.11; the old raised fill was 1.14:1 on
+            // the track). Every segment carries the 2px border, so selecting
+            // one moves nothing.
+            selected && { backgroundColor: theme.selected, borderColor: theme.selectedOutline },
           ]}
         >
           <ThemedText
@@ -136,6 +140,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.two,
     borderRadius: Radius.small,
+    borderWidth: 2,
+    borderColor: 'transparent',
     alignItems: 'center',
   },
   // Spacing.three clipped the fifth period option ("Anpassa") on a phone (#745).

@@ -37,7 +37,7 @@ export function ShotChips({
             style={[
               styles.chip,
               { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-              selected && { borderColor: theme.primary, backgroundColor: theme.backgroundSelected },
+              selected && { borderColor: theme.selectedOutline, backgroundColor: theme.selected },
             ]}
           >
             <ThemedText type="smallBold" themeColor={shot ? 'text' : 'textSecondary'}>

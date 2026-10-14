@@ -10,15 +10,20 @@ colors:
   bone-white: '#F6EEE4'
   muted-lilac: '#C9B9DC'
   border-violet: '#7360B0'
+  selected-violet: '#3B2A5E'
   alert-coral: '#FF7A85'
   confirm-mint: '#4FD68C'
+  caution-amber: '#F2C062'
   light-signal-lavender: '#6E30CF'
   light-paper: '#FCFBFE'
   light-surface: '#F4F1F8'
   light-surface-raised: '#E7E1EF'
   light-ink: '#1A1325'
   light-muted: '#635874'
-  light-border: '#D4CDDF'
+  light-card-white: '#FFFFFF'
+  light-selected: '#EADDFF'
+  light-border: '#857A9B'
+  light-caution-amber: '#9A5B00'
 typography:
   display:
     fontFamily: 'system-ui'
@@ -71,6 +76,7 @@ components:
     padding: '16px 24px'
   card:
     backgroundColor: '{colors.surface-purple}'
+    borderColor: 'none (light theme: {colors.light-border})'
     textColor: '{colors.bone-white}'
     rounded: '{rounded.medium}'
     padding: '16px'
@@ -97,7 +103,8 @@ components:
     rounded: '{rounded.medium}'
     padding: '2px'
   segmented-segment-selected:
-    backgroundColor: '{colors.surface-purple-raised}'
+    backgroundColor: '{colors.selected-violet}'
+    borderColor: '{colors.signal-lavender}'
     textColor: '{colors.bone-white}'
     typography: '{typography.label}'
     rounded: '{rounded.small}'
@@ -148,18 +155,27 @@ tests, not eyeballed. Ornament would cost legibility and buy nothing.
 ## Colors
 
 A near-monochrome purple system: one bright accent doing all the signalling,
-against a graded stack of purple surfaces, with two semantic colors reserved for
-outcome.
+against a graded stack of purple surfaces, with three semantic colors reserved
+for outcome and a separate set for charts.
+
+**Where they live.** Every value on this page — colours, chart colours,
+spacing, radius and the type scale — is defined once in
+`shared/src/design-tokens/` (no React Native import) and exported from
+`@shotledger/shared`. The app re-exports them from `app/src/theme/tokens.ts`;
+the web turns them into CSS custom properties in `web/src/theme.ts`
+(`--selected-outline`, `--data-viz-categorical-1`, `--space-three`). A colour
+is never restated by hand in either.
 
 ### Primary
 
 - **Signal Lavender** (`#B98CFF`): every interactive affordance — the one
-  primary action per screen, the active tab, the selected segment, primary
-  chips. Named for its job rather than its mood: it appears rarely, so where it
+  primary action per screen, the active tab, the outline of the selected
+  segment or option, primary chips. Named for its job rather than its mood:
+  it appears rarely, so where it
   appears is the answer to "what do I press?". Passes WCAG AA against both the
   ground and raised surfaces (3:1 UI minimum) and against its own foreground
   (4.5:1 text minimum); the contrast table is asserted in
-  `app/src/theme/tokens.test.ts`.
+  `shared/src/design-tokens/tokens.test.ts`.
 - **Deep Aubergine** (`#1A1226`): the foreground laid on Signal Lavender —
   button labels, active-tab text. Never used as a surface.
 
@@ -178,21 +194,72 @@ outcome.
   in sunlight, purple enough to never read as a default dark mode.
 - **Surface Purple** (`#221934`): cards, tiles, list groups, segmented-control
   tracks — the standard raised surface.
-- **Raised Surface Purple** (`#2E2246`): the selected or emphasized state of a
-  surface — the chosen segment, a neutral chip. One step further from the
-  ground, the entire mechanism for "this one is active".
+- **Raised Surface Purple** (`#2E2246`, `backgroundSelected`): the pressed or
+  emphasized state of a surface — a pressed row, a neutral chip. It is **not**
+  the selection mechanism: at 1.14:1 against Surface Purple it fails WCAG
+  1.4.11, so a chosen option uses Selected Violet with an outline instead.
+- **Selected Violet** (`#3B2A5E`, `selected`; light `#EADDFF`): the fill of
+  the chosen segment, option pill, tag or shot chip. Always drawn together
+  with **`selectedOutline`** — Signal Lavender in dark (`#B98CFF`), Light
+  Signal Lavender in light (`#6E30CF`) — so the choice is a 3:1 edge plus a
+  fill, never text colour alone.
 - **Bone White** (`#F6EEE4`): primary text. Warm rather than pure white, which
   keeps it from vibrating against the purple ground.
 - **Muted Lilac** (`#C9B9DC`): secondary text — subtitles, hints, metadata,
   units. Still purple, never gray.
-- **Border Violet** (`#7360B0`): borders and dividers, used sparingly since most
-  separation is tonal.
+- **Border Violet** (`#7360B0`; light `#857A9B`): borders and dividers, used
+  sparingly since most separation is tonal. Both clear 3:1 against the ground
+  and the card surface. The light border was `#D4CDDF` until #822, at 1.50:1
+  — fields and cards had no visible edge.
+- **Surface** (`surface`): what a card is drawn in. Dark: Surface Purple, the
+  same value as `backgroundElement`. Light: white (`#FFFFFF`) on the
+  off-white ground, which alone does not separate, so light cards also carry
+  a 1px `border`.
 
 ### Semantic
 
 - **Alert Coral** (`#FF7A85`): destructive actions and error states — delete
   confirmations, failed restores.
 - **Confirm Mint** (`#4FD68C`): success and completion only.
+- **Caution Amber** (`#F2C062`; light `#9A5B00`, `warning`): a state that
+  needs attention soon — a licence due for renewal. Semantic only, always
+  with words beside it; the "no yellow buttons" ruling stands, so it is never
+  an interactive token.
+
+### Data visualization
+
+Chart colours are their own tokens (`DataViz.<theme>`), separate from the
+accent, so a chart never borrows the colour that means "press here". Each
+value clears **3:1** against the ground, `backgroundElement` and the card
+surface of its own theme, asserted in `tokens.test.ts`.
+
+- **Categorical** (`DataViz.<theme>.categorical`) — identity, one series per
+  discipline, assigned in this fixed order and never cycled:
+
+  | Slot | Dark      | Light     | Family          |
+  | ---- | --------- | --------- | --------------- |
+  | 1    | `#8B4CC1` | `#AF65FE` | violet          |
+  | 2    | `#58A86B` | `#19979A` | green / teal    |
+  | 3    | `#C58501` | `#7A4503` | amber / brown   |
+  | 4    | `#ED49AB` | `#FD3184` | pink            |
+  | 5    | `#0365FD` | `#4E6DC4` | blue            |
+  | 6    | `#0B9AD9` | `#1C31D2` | sky / deep blue |
+  | 7    | `#677406` | `#4F9B00` | olive / green   |
+  | 8    | `#AA5E70` | `#82078D` | rose / plum     |
+
+  Validated with the `dataviz` skill's checker: every pair (not only
+  neighbours) stays apart under protan and deutan simulation (OKLab ΔE ≥ 8)
+  and for normal vision (≥ 15), in both themes; `tokens.test.ts` recomputes
+  both. The dark lightness band is narrower, so a slot keeps its hue family
+  between themes only approximately. Eight is the limit: a chart with more
+  disciplines draws the eight with the most sessions and says how many it
+  left out, rather than repeating a colour. The legend names every line in
+  text ink, so identity never rests on colour alone.
+
+- **Rings** (`DataViz.<theme>.rings`) — a five-step single-hue (orchid)
+  ramp for ring values, weakest first: dark `#AA50B1` → `#F7CFF8`, light
+  `#B75CBD` → `#5B0861`. Its hue is kept off the accent's, so a ring value
+  never reads as a button.
 
 ### Named Rules
 
@@ -204,6 +271,7 @@ unnoticed. Bone White is the one deliberate exception: dark's primary text is
 warm on purpose, to keep it from vibrating against the cool ground.
 
 **The Scarce Accent Rule.** Signal Lavender marks interaction and nothing else.
+Chart series take the data-viz tokens, not the accent.
 It is never decorative, never a heading color, never a background for content.
 If two lavender elements compete on one screen, one of them is wrong.
 
@@ -336,15 +404,19 @@ ornament, and state changes that are unmistakable but never loud.
   self-sizing to content.
 - **Neutral:** Raised Surface Purple ground, Bone White text — session type,
   tags, discipline.
+- **Selectable** (option pickers, tag and shot chips): a `border` outline on
+  `backgroundElement` at rest; chosen, the pill takes the `selected` fill and
+  a `selectedOutline` border of the same width, so nothing moves.
 - **Primary:** Signal Lavender ground, Deep Aubergine text — reserved for a chip
   that marks a genuine achievement or active filter, not general labelling.
 
 ### Cards / Containers
 
 - **Corner Style:** 12px (`Radius.medium`)
-- **Background:** Surface Purple
+- **Background:** `surface` — Surface Purple in dark, white in light
 - **Shadow Strategy:** none, ever — see The One Shadow Rule
-- **Border:** none by default; tone does the separating
+- **Border:** none in dark, where tone does the separating; 1px `border` in
+  light, where white on off-white does not
 - **Internal Padding:** 16px, with an 8px gap between stacked children
 
 ### Inputs / Fields
@@ -352,8 +424,9 @@ ornament, and state changes that are unmistakable but never loud.
 `app/src/components/text-field.tsx` (`TextField`) is the only text input in the
 app. Nothing should style a bare `TextInput` again.
 
-- **Style:** 1px Border Violet outline, transparent ground, 8px radius (it nests
-  inside a card), 16px text, placeholder in Muted Lilac.
+- **Style:** 1px Border Violet outline (3:1 on ground and card in both
+  themes), transparent ground, 8px radius (it nests inside a card), 16px text,
+  placeholder in Muted Lilac.
 - **Focus:** the outline becomes Signal Lavender. This is the one place the
   Scarce Accent Rule admits a second lavender element on screen — focus is
   interaction, and only one field holds it at a time.
@@ -373,9 +446,10 @@ The app's signature selector — session Series/Stats, Home's All/Series/Rounds,
 theme and language pickers.
 
 - **Track:** Surface Purple, 12px radius, 2px padding, 2px gap between segments.
-- **Segment:** 8px radius, 8px padding, **48dp minimum height**; selected
-  segments take Raised Surface Purple, unselected are transparent with Muted
-  Lilac text. The 48 is Material's touch-target floor, deliberately off the
+- **Segment:** 8px radius, 8px padding, **48dp minimum height**, a 2px
+  border on every segment; the selected one fills with `selected` and its
+  border turns `selectedOutline` (6.6:1 on the dark track, 6.3:1 on the
+  light), unselected ones keep a transparent border and Muted Lilac text. The 48 is Material's touch-target floor, deliberately off the
   spacing scale — a segment is a control, and a shooter taps it in gloves and
   sunlight.
 - **Overflow:** labels are single-line always; **past four options** the control
@@ -400,11 +474,14 @@ offering the action that would fill the screen.
 
 - **Do** express depth with the tonal stack — Ink Purple → Surface Purple →
   Raised Surface Purple.
+- **Do** show a selection as `selected` fill plus `selectedOutline` border —
+  never by text colour or border width alone.
+- **Do** take chart colours from `DataViz`, in slot order.
 - **Do** take spacing from the seven-step scale (2/4/8/16/24/32/64) and radius
   from the four-step scale (8/12/20/999).
 - **Do** keep Signal Lavender scarce; one interactive accent per screen region.
-- **Do** assert contrast in `app/src/theme/tokens.test.ts` when adding or
-  changing a color — sunlight legibility is a tested invariant here, not a
+- **Do** assert contrast in `shared/src/design-tokens/tokens.test.ts` when
+  adding or changing a color — sunlight legibility is a tested invariant here, not a
   judgement call.
 - **Do** keep control labels on one line, shrinking or scrolling instead of
   wrapping.

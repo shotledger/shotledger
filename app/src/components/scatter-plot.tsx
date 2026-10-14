@@ -1,7 +1,8 @@
 // A plain x/y scatter: one dot per point, both axes ranged to the data.
 // Used by the report's Sighter and Result card (#573).
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 
 import { useTheme } from '@/hooks/use-theme';
 

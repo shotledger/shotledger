@@ -2,7 +2,8 @@
 // diameters, so it is correct by construction for any TargetFaceDefinition.
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import Svg, { Circle, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
+import { SvgText } from '@/components/svg-text';
 import type { TargetFaceDefinition } from '@shotledger/shared';
 
 import { Radius, Spacing } from '@/theme/tokens';
