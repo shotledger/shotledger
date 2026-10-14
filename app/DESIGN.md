@@ -457,6 +457,15 @@ tone="danger"`). Never lavender, never the primary tier — a destructive
 - **Primary:** Signal Lavender ground, Deep Aubergine text — reserved for a chip
   that marks a genuine achievement or active filter, not general labelling.
 
+### Toggle
+
+`Toggle` (`app/src/components/toggle.tsx`, #833) is the only on/off switch:
+React Native's `Switch` in the theme's colours — a `primary` track with an
+`onPrimary` thumb when on, a `border` track with a Muted Lilac thumb when
+off. A bare `Switch` draws the platform's own teal or green, outside the
+palette. It sits at the end of a 48dp row whose label names it, and takes
+that label as its `accessibilityLabel`.
+
 ### Choice Chips
 
 `ChoiceChips` (`app/src/components/choice-chips.tsx`): a wrapping row of pill

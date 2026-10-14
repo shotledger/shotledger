@@ -869,7 +869,9 @@
     "galleryChartKit": "Diagramkit",
     "galleryChartCaption": "Serietotaler, senaste 8 passen",
     "galleryStatusLine": "Statusrad",
-    "galleryStatusUntil": "till {{date}}"
+    "galleryStatusUntil": "till {{date}}",
+    "galleryToggle": "Reglage",
+    "galleryToggleLabel": "Exempelinställning"
   },
   "competitionLevel": {
     "forening": "Föreningstävling",

@@ -23,6 +23,7 @@ describe('DesignSystemGallery', () => {
       'Type Scale',
       'Buttons',
       'Segmented',
+      'Toggle',
       'Choice Chips',
       'Shot Cells',
       'Stat',
@@ -51,6 +52,11 @@ describe('DesignSystemGallery', () => {
     await renderWithProviders(<DesignSystemGallery />);
     await fireEvent.press(screen.getByRole('button', { name: 'Shot 1: inner ten, 10' }));
     expect(screen.getByRole('button', { name: 'Shot 1: inner ten, 10' })).toBeSelected();
+
+    const toggle = screen.getByRole('switch', { name: 'Sample Setting' });
+    expect(toggle.props.value).toBe(true);
+    await fireEvent(toggle, 'valueChange', false);
+    expect(screen.getByRole('switch', { name: 'Sample Setting' }).props.value).toBe(false);
 
     await fireEvent.press(screen.getAllByRole('radio', { name: 'Women' })[0]!);
     expect(screen.getAllByRole('radio', { name: 'Women' })[0]).toBeChecked();

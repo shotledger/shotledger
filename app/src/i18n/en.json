@@ -869,7 +869,9 @@
     "galleryChartKit": "Chart Kit",
     "galleryChartCaption": "Series totals, last 8 sessions",
     "galleryStatusLine": "Status Line",
-    "galleryStatusUntil": "until {{date}}"
+    "galleryStatusUntil": "until {{date}}",
+    "galleryToggle": "Toggle",
+    "galleryToggleLabel": "Sample Setting"
   },
   "competitionLevel": {
     "forening": "Club Competition",

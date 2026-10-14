@@ -19,6 +19,7 @@ import { ShotCell } from '@/components/shot-cell';
 import { Stat } from '@/components/stat';
 import { StatusLine } from '@/components/status-line';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { useResolvedThemeName } from '@/hooks/use-theme';
 import { useAppSettings, type ThemeSetting } from '@/state/app-settings';
 import { Spacing, Typography } from '@/theme/tokens';
@@ -97,6 +98,7 @@ export function DesignSystemGallery() {
   const [multi, setMulti] = useState<Category[]>(['men', 'women']);
   const [current, setCurrent] = useState(3);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [toggled, setToggled] = useState(true);
   const [filterKinds, setFilterKinds] = useState<('training' | 'competition')[]>(['competition']);
 
   const categories = (['men', 'women', 'open', 'openJunior'] as const).map((value) => ({
@@ -174,6 +176,17 @@ export function DesignSystemGallery() {
 
       <Section title={t('dev.gallerySegmented')}>
         <SegmentedControl options={kinds} value={kind} onChange={setKind} />
+      </Section>
+
+      <Section title={t('dev.galleryToggle')}>
+        <View style={styles.toggleRow}>
+          <ThemedText>{t('dev.galleryToggleLabel')}</ThemedText>
+          <Toggle
+            value={toggled}
+            onValueChange={setToggled}
+            accessibilityLabel={t('dev.galleryToggleLabel')}
+          />
+        </View>
       </Section>
 
       <Section title={t('dev.galleryChoiceChips')}>
@@ -259,6 +272,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.two,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 48,
   },
   wrapRow: {
     flexDirection: 'row',
