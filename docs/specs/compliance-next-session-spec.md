@@ -9,6 +9,11 @@ phone screens that show licence activity. Issue
 the source, the numbers, the windows and the banding they settle are
 unchanged and not restated.
 
+**Amended by [`compliance-local-days-spec.md`](compliance-local-days-spec.md)
+(#816):** windows count whole local days, so the lapse and the first day a
+criterion can be met are local midnights, and a period's end is its last day.
+The scan below is replaced by a day-by-day one.
+
 **Spec approval: approved** by the maintainer on 2026-10-13. Issue #795 is the
 maintainer's statement of what to build ("once a requirement has been met, show
 the date by which you need to complete your next shooting session to maintain

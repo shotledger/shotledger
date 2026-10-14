@@ -21,6 +21,22 @@ ned](#de-tva-kriterierna-som-galler-ett-enskilt-vapen)):
 Träning och tävling räknas lika, liksom att representera föreningen i externa
 tävlingar. En aktivitet är ett loggat pass — inte en serie, och inte en dag.
 
+## Hur de sex månaderna räknas
+
+Blanketten säger ”de senaste sex månaderna” men inte hur de räknas på dagen, så
+appen räknar som svensk lag räknar perioder i månader (lag 1930:173):
+
+- **Hela dagar, i telefonens tidszon.** Ett pass hör till den dag du sköt det.
+  Klockslaget spelar aldrig någon roll.
+- **Första dagen räknas.** Den 1 april börjar perioden den 1 oktober, och ett
+  pass från den 1 oktober räknas fortfarande. Den 2 april gör det inte längre.
+- **Månadsslut.** Finns inte samma datum sex månader bakåt börjar perioden i
+  stället den sista dagen i den månaden: den 31 mars börjar den den 30
+  september.
+
+Förnyelserutans två år räknas på samma sätt och delar aldrig en dag: det
+senaste året börjar tolv månader bakåt, och det äldre året slutar dagen innan.
+
 ## Ditt fall, och var det kommer ifrån
 
 Appen föreslår ett av de två utifrån dina vapen: finns det en **pistol eller
@@ -69,11 +85,8 @@ Bara de pass som kravet räknar spelar roll: för ett vapens kriterium, pass
 loggade med det vapnet. För förnyelsekriteriet måste båda åren ligga kvar på
 fyra, så datumet kan komma från vilket år som helst.
 
-Datumet följer kalendern precis som antalet gör. En sexmånadersperiod som slutar
-den 31 oktober börjar den 1 maj, eftersom det inte finns någon 31 april; ett pass
-den 1 maj kan därför falla ur den 31 oktober i stället för den 1 november.
-Datumet kan alltså bli en dag eller två tidigare än om du räknar månader på
-fingrarna, aldrig senare.
+Datumet räknas i hela dagar, på samma sätt som själva perioden (se
+[Hur de sex månaderna räknas](#hur-de-sex-manaderna-raknas)).
 
 ## Ett år som redan har tagit slut
 

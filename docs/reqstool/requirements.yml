@@ -227,7 +227,7 @@ requirements:
     significance: shall
     description: >-
       For a licence-activity rule or per-firearm criterion that is met now, the
-      app shall give the first instant after now at which the same rule,
+      app shall give the first local day after today on which the same rule,
       evaluated on the same sessions, is no longer met, and shall give none for
       a requirement that is not met.
     rationale: >-
@@ -244,13 +244,30 @@ requirements:
     description: >-
       For a per-firearm criterion that is not met now, the app shall give the
       activities still missing from the most recent window, each earlier window
-      below the requirement, and the first instant the criterion can be met if
+      below the requirement, and the first local day the criterion can be met if
       the shooter keeps logging sessions with that firearm; and shall not count
       a session logged from now on towards a window that has already ended.
     rationale: >-
       "Not met" alone does not tell a shooter what to do (#804). The renewal
       criterion's earlier year cannot be made up by shooting today, and saying
       "shoot four more times" would be false.
+    categories:
+      - functional-suitability
+    revision: '0.1.0'
+
+  - id: COMPL_005
+    title: Licence-activity windows count whole local calendar days
+    significance: shall
+    description: >-
+      A licence-activity window of N months on local day D shall count the
+      sessions whose local calendar day lies from D minus N months to D, both
+      included; when D's day number does not exist N months back, the window
+      shall start on the last day of that month.
+    rationale: >-
+      PM 551.24 says "de senaste sex månaderna" without a day-level rule
+      (#816). Counting instants in UTC let the status change mid-evening or at
+      night and rolled 31 March back to 1 October. Whole local days with the
+      month-end rule of Lag (1930:173) 1 § match how a person counts.
     categories:
       - functional-suitability
     revision: '0.1.0'

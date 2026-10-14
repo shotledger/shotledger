@@ -29,3 +29,36 @@ export function wholeMonthsBetween(earlierIso: string, laterIso: string): number
   }
   return Math.max(0, months);
 }
+
+// License-activity windows count whole local calendar days (#816). Spec:
+// docs/specs/compliance-local-days-spec.md. "Local" is the runtime's time
+// zone: the device's on the phone.
+
+/**
+ * Local midnight starting `date`'s local calendar day.
+ *
+ * @Requirements COMPL_005
+ */
+export function localDayStart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
+ * The local day `months` calendar months from `day`, keeping its day number.
+ * When the target month has no such day, its last day: "Finnes ej motsvarande
+ * dag i slutmånaden, varde den månadens sista dag ansedd för slutdag" (Lag
+ * 1930:173, 1 §). 31 March − 6 months is 30 September, never 1 October.
+ *
+ * @Requirements COMPL_005
+ */
+export function addMonthsClamped(day: Date, months: number): Date {
+  const year = day.getFullYear();
+  const month = day.getMonth() + months;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day.getDate(), lastDay));
+}
+
+/** Local midnight `days` local days from `day`'s, across DST changes. */
+export function addDays(day: Date, days: number): Date {
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate() + days);
+}
