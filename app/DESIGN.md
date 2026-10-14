@@ -236,19 +236,25 @@ surface of its own theme, asserted in `tokens.test.ts`.
 - **Categorical** (`DataViz.<theme>.categorical`) — identity, one series per
   discipline, assigned in this fixed order and never cycled:
 
-  | Slot | Dark              | Light     |
-  | ---- | ----------------- | --------- |
-  | 1    | `#8C5EE8` violet  | `#7E4ED7` |
-  | 2    | `#00A6BA` teal    | `#0087AB` |
-  | 3    | `#C8800D` amber   | `#B66C00` |
-  | 4    | `#DE4181` magenta | `#B10B69` |
+  | Slot | Dark      | Light     | Family          |
+  | ---- | --------- | --------- | --------------- |
+  | 1    | `#8B4CC1` | `#AF65FE` | violet          |
+  | 2    | `#58A86B` | `#19979A` | green / teal    |
+  | 3    | `#C58501` | `#7A4503` | amber / brown   |
+  | 4    | `#ED49AB` | `#FD3184` | pink            |
+  | 5    | `#0365FD` | `#4E6DC4` | blue            |
+  | 6    | `#0B9AD9` | `#1C31D2` | sky / deep blue |
+  | 7    | `#677406` | `#4F9B00` | olive / green   |
+  | 8    | `#AA5E70` | `#82078D` | rose / plum     |
 
   Validated with the `dataviz` skill's checker: every pair (not only
   neighbours) stays apart under protan and deutan simulation (OKLab ΔE ≥ 8)
-  and for normal vision (≥ 15). Four is the limit: a chart with more
-  disciplines draws the four with the most sessions and says how many it left
-  out, rather than repeating a colour. The legend names every line in text
-  ink, so identity never rests on colour alone.
+  and for normal vision (≥ 15), in both themes; `tokens.test.ts` recomputes
+  both. The dark lightness band is narrower, so a slot keeps its hue family
+  between themes only approximately. Eight is the limit: a chart with more
+  disciplines draws the eight with the most sessions and says how many it
+  left out, rather than repeating a colour. The legend names every line in
+  text ink, so identity never rests on colour alone.
 
 - **Rings** (`DataViz.<theme>.rings`) — a five-step single-hue (orchid)
   ramp for ring values, weakest first: dark `#AA50B1` → `#F7CFF8`, light

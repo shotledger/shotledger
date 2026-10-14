@@ -41,6 +41,67 @@ function hue(hex: string): number {
   return h < 0 ? h + 360 : h;
 }
 
+// Colour-vision-deficiency separation, as the `dataviz` skill's checker
+// computes it: Machado, Oliveira & Fernandes (2009) simulation at severity
+// 1.0 in linear RGB, then Euclidean distance in OKLab ×100.
+const MACHADO = {
+  protan: [
+    [0.152286, 1.052583, -0.204868],
+    [0.114503, 0.786281, 0.099216],
+    [-0.003882, -0.048116, 1.051998],
+  ],
+  deutan: [
+    [0.367322, 0.860646, -0.227968],
+    [0.280085, 0.672501, 0.047413],
+    [-0.01182, 0.04294, 0.968881],
+  ],
+} as const;
+
+const linear = (hex: string) =>
+  toRgb(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+
+function oklab([r, g, b]: readonly number[]): [number, number, number] {
+  const l = Math.cbrt(0.4122214708 * r! + 0.5363325363 * g! + 0.0514459929 * b!);
+  const m = Math.cbrt(0.2119034982 * r! + 0.6806995451 * g! + 0.1073969566 * b!);
+  const s = Math.cbrt(0.0883024619 * r! + 0.2817188376 * g! + 0.6299787005 * b!);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+}
+
+function simulate(hex: string, kind: keyof typeof MACHADO): number[] {
+  const rgb = linear(hex);
+  return MACHADO[kind].map((row) =>
+    Math.max(0, Math.min(1, row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2])),
+  );
+}
+
+const distance = (a: number[], b: number[]) =>
+  100 * Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!, a[2]! - b[2]!);
+
+/** Normal-vision difference (OKLab ΔE ×100). */
+const normalDelta = (a: string, b: string) => distance(oklab(linear(a)), oklab(linear(b)));
+
+/** The worse of protan and deutan (OKLab ΔE ×100). */
+const cvdDelta = (a: string, b: string) =>
+  Math.min(
+    distance(oklab(simulate(a, 'protan')), oklab(simulate(b, 'protan'))),
+    distance(oklab(simulate(a, 'deutan')), oklab(simulate(b, 'deutan'))),
+  );
+
+describe('colour-vision helpers', () => {
+  // Values from the `dataviz` skill's validate_palette.js for the same pair.
+  it('matches the dataviz checker', () => {
+    expect(cvdDelta('#ED49AB', '#58A86B')).toBeCloseTo(8.1, 1);
+    expect(normalDelta('#677406', '#58A86B')).toBeCloseTo(15.1, 1);
+  });
+});
+
 describe('contrast helper', () => {
   // Anchors from the WCAG definition, so a broken helper cannot pass every pair.
   it('gives 21:1 for black on white and 1:1 for a colour on itself', () => {
@@ -188,9 +249,22 @@ describe('theme tokens', () => {
       expect(contrast(fg, bg)).toBeGreaterThanOrEqual(3);
     });
 
-    it('has four distinct categorical colours and five ring steps', () => {
-      expect(new Set(DataViz[name].categorical).size).toBe(4);
+    it('has eight distinct categorical colours and five ring steps', () => {
+      expect(new Set(DataViz[name].categorical).size).toBe(8);
       expect(new Set(DataViz[name].rings).size).toBe(5);
+    });
+
+    // Every line on a chart can cross every other, so every pair is checked,
+    // not only neighbours: the `dataviz` skill's colour-blind target and its
+    // normal-vision floor.
+    const pairs = DataViz[name].categorical.flatMap((a, i) =>
+      DataViz[name].categorical
+        .slice(i + 1)
+        .map((b, k) => [`${i + 1}-${i + k + 2}`, a, b] as const),
+    );
+    it.each(pairs)('keeps categorical pair %s apart (CVD ΔE >= 8, normal >= 15)', (_l, a, b) => {
+      expect(cvdDelta(a, b)).toBeGreaterThanOrEqual(8);
+      expect(normalDelta(a, b)).toBeGreaterThanOrEqual(15);
     });
 
     it('never uses the accent or a status colour as a chart colour', () => {

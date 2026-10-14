@@ -30,10 +30,10 @@ export interface TimeSeriesLine {
 
 /**
  * Categorical slots, in fixed order, never cycled: the design tokens'
- * `DataViz.<theme>.categorical` (#822). Each clears 3:1 against the ground and
- * the card surface in its theme, and every pair stays apart under colour-vision
- * deficiency (`shared/src/design-tokens/tokens.test.ts` and the `dataviz`
- * skill's checker). The legend, drawn for two or more lines, names each
+ * `DataViz.<theme>.categorical` (#822), eight per theme. Each clears 3:1
+ * against the ground and the card surface in its theme, and every pair stays
+ * apart under colour-vision deficiency (`shared/src/design-tokens/tokens.test.ts`
+ * and the `dataviz` skill's checker). The legend, drawn for two or more lines, names each
  * discipline in text ink, so identity is never colour alone.
  */
 export const CHART_LINE_COLORS = {

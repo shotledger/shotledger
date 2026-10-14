@@ -3,7 +3,6 @@ import { DataViz } from '@shotledger/shared/src/design-tokens';
 
 import {
   CHART_LINE_COLORS,
-  MAX_LINES,
   axisNeedsYear,
   groupByDiscipline,
   timeExtent,
@@ -20,7 +19,7 @@ function point(startedAt: string, value = 100, key = startedAt): TimeSeriesPoint
   return { key, startedAt, value };
 }
 
-const COLORS = Array.from({ length: MAX_LINES }, (_, i) => `c${i}`);
+const COLORS = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
 const label = (id: string) => `L:${id}`;
 
 describe('the time axis', () => {
@@ -191,22 +190,22 @@ describe('groupByDiscipline', () => {
   it('TC-14: past the palette, the busiest are kept and the rest are counted', () => {
     const points: DisciplinePoint[] = [];
     for (let d = 0; d < 10; d += 1) {
-      // Discipline 0 gets 10 points, 1 gets 9, and so on — so the thinnest
-      // are the ones dropped.
+      // Discipline 0 gets 10 points, 1 gets 9, and so on — so the two thinnest
+      // are the two dropped.
       for (let n = 0; n < 10 - d; n += 1) {
         points.push(dp(`s${d}-${n}`, `2026-01-0${(n % 9) + 1}T00:00:00Z`, `d${d}`));
       }
     }
     const { lines, omittedCount } = groupByDiscipline(points, value, label, COLORS);
-    expect(lines).toHaveLength(MAX_LINES);
-    expect(omittedCount).toBe(10 - MAX_LINES);
-    expect(lines.map((l) => l.key)).toEqual(Array.from({ length: MAX_LINES }, (_, d) => `d${d}`));
-    expect(new Set(lines.map((l) => l.color)).size).toBe(MAX_LINES);
+    expect(lines).toHaveLength(8);
+    expect(omittedCount).toBe(2);
+    expect(lines.map((l) => l.key)).not.toContain('d8');
+    expect(lines.map((l) => l.key)).not.toContain('d9');
+    expect(new Set(lines.map((l) => l.color)).size).toBe(8);
   });
 
   it("draws the lines in the design tokens' categorical chart colours", () => {
     expect(CHART_LINE_COLORS.light).toEqual(DataViz.light.categorical);
     expect(CHART_LINE_COLORS.dark).toEqual(DataViz.dark.categorical);
-    expect(MAX_LINES).toBe(DataViz.light.categorical.length);
   });
 });

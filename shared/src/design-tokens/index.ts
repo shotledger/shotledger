@@ -59,25 +59,48 @@ export const Colors = {
 } as const;
 
 /**
- * Chart colours, one set per theme, each >= 3:1 against the ground and the
- * card surface of its theme (asserted in tokens.test.ts).
+ * Chart colours, one set per theme, each >= 3:1 against the ground,
+ * `backgroundElement` and the card surface of its theme (asserted in
+ * tokens.test.ts).
  *
  * `categorical`: identity (one discipline per line), assigned in this fixed
- * order and never cycled. Violet, teal, amber and magenta, stepped for each
- * surface; validated with the `dataviz` skill's checker (2026-10-13): every
- * pair, not only adjacent ones, clears the CVD target (OKLab ΔE >= 8) and the
- * normal-vision floor in both themes.
+ * order and never cycled; eight slots, so a chart draws up to eight
+ * disciplines. Slot by slot the two themes keep a hue family (violet, green,
+ * amber, pink, blue, sky, olive, rose) as far as the narrower dark lightness
+ * band allows; light slot 6 is a deeper blue and slot 8 a plum. Validated
+ * with the `dataviz` skill's checker (2026-10-14): EVERY pair, not only
+ * neighbours, clears the colour-blind target (OKLab ΔE >= 8, protan and
+ * deutan) and the normal-vision floor (>= 15) in both themes; tokens.test.ts
+ * recomputes both.
  *
  * `rings`: a single-hue (orchid) sequential ramp for ring values, weakest
  * first. Kept off the accent's hue so a ring value never reads as a button.
  */
 export const DataViz = {
   light: {
-    categorical: ['#7E4ED7', '#0087AB', '#B66C00', '#B10B69'],
+    categorical: [
+      '#AF65FE',
+      '#19979A',
+      '#7A4503',
+      '#FD3184',
+      '#4E6DC4',
+      '#1C31D2',
+      '#4F9B00',
+      '#82078D',
+    ],
     rings: ['#B75CBD', '#A342AA', '#8D2B94', '#74177B', '#5B0861'],
   },
   dark: {
-    categorical: ['#8C5EE8', '#00A6BA', '#C8800D', '#DE4181'],
+    categorical: [
+      '#8B4CC1',
+      '#58A86B',
+      '#C58501',
+      '#ED49AB',
+      '#0365FD',
+      '#0B9AD9',
+      '#677406',
+      '#AA5E70',
+    ],
     rings: ['#AA50B1', '#C26CC7', '#D78ADB', '#E9ABEC', '#F7CFF8'],
   },
 } as const;
