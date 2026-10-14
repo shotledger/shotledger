@@ -30,7 +30,11 @@ export interface SegmentedControlProps<T extends string> extends Omit<ViewProps,
  */
 const AUTO_SCROLL_FROM = 4;
 
-/** Exclusive-choice control — used for theme/language and program pickers. */
+/**
+ * Exclusive-choice control — used for theme/language and program pickers.
+ * Two to four options is the design (DESIGN.md "Segmented Control"); more
+ * scroll, and a long list belongs in an option picker or choice chips.
+ */
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -47,8 +51,11 @@ export function SegmentedControl<T extends string>({
     return (
       <Pressable
         key={option.value}
-        accessibilityRole="button"
-        accessibilityState={{ selected }}
+        // A radio in a radio group (#822): a screen reader says "Dark, radio
+        // button, 3 of 3, selected", not a bare "button".
+        accessibilityRole="radio"
+        accessibilityState={{ selected, checked: selected }}
+        accessibilityLabel={option.label}
         onPress={() => onChange(option.value)}
         style={scrolls ? styles.segmentPressableAuto : styles.segmentPressable}
       >
@@ -89,7 +96,12 @@ export function SegmentedControl<T extends string>({
 
   if (scrolls) {
     return (
-      <ThemedView type="backgroundElement" style={[styles.scrollTrack, style]} {...rest}>
+      <ThemedView
+        type="backgroundElement"
+        accessibilityRole="radiogroup"
+        style={[styles.scrollTrack, style]}
+        {...rest}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -102,7 +114,12 @@ export function SegmentedControl<T extends string>({
   }
 
   return (
-    <ThemedView type="backgroundElement" style={[styles.track, style]} {...rest}>
+    <ThemedView
+      type="backgroundElement"
+      accessibilityRole="radiogroup"
+      style={[styles.track, style]}
+      {...rest}
+    >
       {segments}
     </ThemedView>
   );

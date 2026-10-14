@@ -8,6 +8,9 @@ import {
   Radius,
   SIGNAL_LAVENDER_HUE,
   Spacing,
+  MIN_TOUCH_TARGET,
+  TABULAR_NUMS,
+  Typography,
 } from './index.js';
 
 const toRgb = (hex: string): [number, number, number] =>
@@ -287,5 +290,29 @@ describe('scales', () => {
   it('keeps the seven-step spacing and four-step radius scales', () => {
     expect(Object.values(Spacing)).toEqual([2, 4, 8, 16, 24, 32, 64]);
     expect(Object.values(Radius)).toEqual([8, 12, 20, 999]);
+  });
+
+  it('keeps the #822 type scale', () => {
+    expect(Typography.score).toEqual({ fontSize: 40, lineHeight: 44, fontWeight: 700 });
+    expect(Typography.title).toEqual({ fontSize: 28, lineHeight: 34, fontWeight: 700 });
+    expect(Typography.headline).toEqual({ fontSize: 22, lineHeight: 28, fontWeight: 600 });
+    expect(Typography.caption).toEqual({ fontSize: 12, lineHeight: 16, fontWeight: 500 });
+  });
+
+  it('steps the type scale down from score to caption', () => {
+    const order = [
+      Typography.score,
+      Typography.title,
+      Typography.headline,
+      Typography.body,
+      Typography.label,
+      Typography.caption,
+    ].map((t) => t.fontSize);
+    for (let i = 1; i < order.length; i += 1) expect(order[i]!).toBeLessThan(order[i - 1]!);
+  });
+
+  it('names the numeral variant and the touch-target floor', () => {
+    expect(TABULAR_NUMS).toBe('tabular-nums');
+    expect(MIN_TOUCH_TARGET).toBe(48);
   });
 });

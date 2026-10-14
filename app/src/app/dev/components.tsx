@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ScreenTitle } from '@/components/screen-title';
 import { Card } from '@/components/card';
+import { DesignSystemGallery } from '@/features/dev/design-system-gallery';
 import { Chip } from '@/components/chip';
 import { EmptyState } from '@/components/empty-state';
 import { DrillDownRow } from '@/components/drill-down-row';
@@ -173,6 +174,8 @@ export default function ComponentsGalleryScreen() {
   return (
     <Screen fab={<FAB label="New session" onPress={() => {}} />}>
       <ScreenTitle>Components</ScreenTitle>
+
+      <DesignSystemGallery />
 
       <Section title="Card">
         <Card>

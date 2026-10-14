@@ -15,7 +15,7 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing } from '@/theme/tokens';
+import { MIN_TOUCH_TARGET, Radius, Spacing } from '@/theme/tokens';
 
 export interface SecondaryButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
@@ -62,6 +62,7 @@ export function SecondaryButton({
 
 const styles = StyleSheet.create({
   button: {
+    minHeight: MIN_TOUCH_TARGET,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
     borderRadius: Radius.medium,
