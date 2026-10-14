@@ -82,7 +82,7 @@ export default function ComplianceSettingsScreen() {
             </ThemedText>
           )}
           <ThemedText type="small" themeColor="textSecondary">
-            {t('compliance.notModeled')}
+            {t('compliance.criteriaInCheck')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" testID="compliance-source">
             {t('compliance.sourceCitation')}

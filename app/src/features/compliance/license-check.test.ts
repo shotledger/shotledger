@@ -1,6 +1,11 @@
 import { getProfile, type ComplianceSession } from '@shotledger/shared';
 
-import { buildLicenseCheck, type LicenseCheckFirearm } from './license-check';
+import {
+  buildLicenseCheck,
+  firearmSummaries,
+  newFirearmSummary,
+  type LicenseCheckFirearm,
+} from './license-check';
 
 const NOW = new Date('2026-10-13T12:00:00Z');
 
@@ -76,5 +81,74 @@ describe('buildLicenseCheck', () => {
 
   it('defaults now to the current time', () => {
     expect(buildLicenseCheck([], profile, [], []).rules).toHaveLength(1);
+  });
+});
+
+describe('newFirearmSummary', () => {
+  const profile = getProfile('se', 'existingHandgun')!;
+  const six = ['2026-10-01', '2026-09-01', '2026-08-01', '2026-07-10', '2026-06-10', '2026-05-10'];
+
+  it('is ready when the rule and every additional-handgun box are met, with the earliest lapse', () => {
+    const summary = newFirearmSummary(
+      buildLicenseCheck(
+        six.map((d) => at(d, 'p')),
+        profile,
+        [],
+        [pistol],
+        NOW,
+      ),
+    );
+    expect(summary.ready).toBe(true);
+    expect(summary.unmet).toBe(0);
+    // The rule lapses on 11 November; the pistol box (two in six months) later.
+    expect(summary.lapseIso).toBe(new Date(2026, 10, 11).toISOString());
+  });
+
+  it('counts each unmet rule and box, and gives no date', () => {
+    const summary = newFirearmSummary(
+      buildLicenseCheck([at('2026-10-01')], profile, [], [pistol], NOW),
+    );
+    expect(summary).toEqual({ ready: false, unmet: 2, lapseIso: null });
+  });
+
+  it('is not ready when only the additional-handgun box is short', () => {
+    const summary = newFirearmSummary(
+      buildLicenseCheck(
+        six.map((d) => at(d)),
+        profile,
+        [],
+        [pistol],
+        NOW,
+      ),
+    );
+    expect(summary).toEqual({ ready: false, unmet: 1, lapseIso: null });
+  });
+
+  it('with no rule and no box has nothing to lapse', () => {
+    const check = buildLicenseCheck([], profile, [], [], NOW);
+    expect(newFirearmSummary({ ...check, rules: [] })).toEqual({
+      ready: true,
+      unmet: 0,
+      lapseIso: null,
+    });
+  });
+});
+
+describe('firearmSummaries', () => {
+  const profile = getProfile('se', 'existingHandgun')!;
+
+  it('lists every firearm in order with the boxes that apply to it', () => {
+    const summaries = firearmSummaries(buildLicenseCheck([], profile, [], [rifle, pistol], NOW));
+    expect(
+      summaries.map((s) => [
+        s.id,
+        s.name,
+        s.renewal?.criterion.criterionId ?? null,
+        s.purchase?.criterion.criterionId ?? null,
+      ]),
+    ).toEqual([
+      ['r', 'Demo Rifle', 'renewal', null],
+      ['p', 'Demo Pistol', null, 'additionalHandgun'],
+    ]);
   });
 });

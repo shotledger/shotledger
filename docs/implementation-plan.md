@@ -675,6 +675,11 @@ from §6.5 automatically).
       on 31 March six months back is 30 September. The status changes only at
       local midnight; the next-session date and the License Check follow.
       Spec/evidence: `docs/specs/compliance-local-days-{spec,evidence}.md`.
+- [x] **License Check overview** — the screen answers two questions first:
+      can I apply for a new firearm (Yes/No), and can each firearm's license
+      be renewed (Yes/No, or Not Needed without an end date). Each row opens
+      its detail (`/compliance/new-firearm`, `/compliance/firearm/[id]`). UI
+      only; the compliance functions are unchanged. Also #848's wording fixes.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop
