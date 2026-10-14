@@ -36,6 +36,40 @@ usually points at a missing detail on a firearm rather than at the case itself.
 Firearms missing a weapon type, caliber or licence are flagged **Incomplete**
 on the Firearms tab, and filling those in may move the proposal on its own.
 
+## Seeing where you stand
+
+Tap the status on **Home** to open **License Check**. It lists every
+requirement on the club's certificate, grouped by what you are applying for:
+
+- **New Purchase**: the activity requirement for your case, and the additional
+  handgun box for each pistol or revolver marked as your own.
+- **Renewal**: the renewal box for each firearm whose license has an end date.
+
+Each one says whether it is met. If it is met, it says by when to shoot next.
+If it is not, it says how many more sessions are needed, and with which firearm
+where that matters. Tap a firearm's name to open it.
+
+If an earlier year of the renewal box is short, logging sessions today cannot
+fix it, and the check says so. It also gives the date from which the box can be
+met if you keep logging sessions with that firearm. [Why a past year cannot be
+made up](../explanation/license-activity.md#a-year-that-has-already-ended)
+explains it.
+
+## Knowing when to shoot next
+
+When a requirement is met, the app says by which date you need to log your next
+session to keep it met:
+
+- On **Home**, under the status: "Next session by …".
+- On a firearm, under each licence activity line and under each Föreningsintyg
+  criterion that is met.
+
+Log a session on or before that date and the requirement stays met for longer;
+the date then moves to the next session that is about to fall out of the
+period. When a requirement is not met, no date is shown. [How the date is
+worked out](../explanation/license-activity.md#the-next-session-date) explains
+the details.
+
 ## Checking a firearm's own criteria
 
 Two of the form's boxes are about one gun rather than about you: applying for
