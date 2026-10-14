@@ -398,3 +398,26 @@ describe('a photo on a form row', () => {
     ]);
   });
 });
+
+describe('initialForm preselection (#822)', () => {
+  it('starts on the given discipline and firearm, as picking them would', () => {
+    const form = initialForm(NOW, NO_PROFILE, {
+      regulationId: 'spsf',
+      disciplineId: 'spsf-milsnabb',
+      firearmId: 'gun',
+    });
+    expect(form.disciplineId).toBe('spsf-milsnabb');
+    expect(form.firearmId).toBe('gun');
+    expect(form).toEqual({
+      ...withDiscipline(initialForm(NOW, NO_PROFILE), 'spsf-milsnabb', 'spsf'),
+      firearmId: 'gun',
+      rows: form.rows,
+    });
+  });
+
+  it('keeps the first-run defaults without one', () => {
+    const plain = initialForm(NOW, NO_PROFILE);
+    const none = initialForm(NOW, NO_PROFILE, null);
+    expect({ ...none, rows: [] }).toEqual({ ...plain, rows: [] });
+  });
+});

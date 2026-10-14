@@ -846,6 +846,97 @@ fieldset.field legend {
   text-align: right;
 }
 
+/* Enter Series as the phone's series entry (#822): the typed row drawn as
+   48px shot cells, the next one outlined; last time and the session total. */
+.entry-cells-row {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-two) var(--space-three);
+}
+
+.entry-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-two);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry-cells li {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 0 var(--space-one);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--background-element);
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-cells li.empty {
+  color: var(--text-secondary);
+}
+
+.entry-cells li.current {
+  border-color: var(--selected-outline);
+  background: var(--selected);
+}
+
+.entry-cells li.over {
+  border-color: var(--danger);
+}
+
+.entry-last-time,
+.entry-session-total {
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-session-total {
+  margin: var(--space-two) 0 0;
+  font-size: 16px;
+}
+
+.entry-session-total strong {
+  font-size: 22px;
+}
+
+.entry-preselected {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Details: the optional fields, folded as on the phone's New Session. */
+.entry-details summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-one) var(--space-two);
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.entry-details[open] > summary {
+  margin-bottom: var(--space-three);
+}
+
+.entry-details .entry-fields {
+  margin-bottom: var(--space-three);
+}
+
+.entry-details .card {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
 .entry-photo {
   grid-column: 2 / -1;
   display: flex;
@@ -1035,6 +1126,11 @@ fieldset.field legend {
 
   .row-summary {
     text-align: left;
+  }
+
+  /* Full width, so a five-shot series stays one row of cells. */
+  .entry-cells-row {
+    grid-column: 1 / -1;
   }
 }
 
