@@ -47,7 +47,9 @@ requirement on the club's certificate, grouped by what you are applying for:
 
 Each one says whether it is met. If it is met, it says by when to shoot next.
 If it is not, it says how many more sessions are needed, and with which firearm
-where that matters. Tap a firearm's name to open it.
+where that matters. Tap a firearm's name to open it. An
+[archived](firearms-and-ammunition.md#archiving-a-firearm-you-no-longer-have)
+firearm is not listed.
 
 If an earlier year of the renewal box is short, logging sessions today cannot
 fix it, and the check says so. It also gives the date from which the box can be

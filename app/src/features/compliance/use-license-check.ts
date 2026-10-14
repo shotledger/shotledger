@@ -7,7 +7,7 @@ import type { JurisdictionProfile } from '@shotledger/shared';
 import { db } from '@/db/client';
 import { listComplianceSessions } from '@/db/queries/compliance';
 import { listAllFirearmGroupIds } from '@/db/queries/firearm-groups';
-import { listFirearms } from '@/db/queries/firearms';
+import { listActiveFirearms } from '@/db/queries/firearms';
 import { latestLicense } from '@/db/queries/licenses';
 
 import { buildLicenseCheck, type LicenseCheck } from './license-check';
@@ -16,7 +16,8 @@ export type { CriterionCheck, LicenseCheck, RuleCheck } from './license-check';
 
 function loadLicenseCheck(profile: JurisdictionProfile | null): LicenseCheck | null {
   if (!profile) return null;
-  const firearms = listFirearms(db).map((firearm) => ({
+  // An archived firearm is no longer held: no purchase or renewal to plan (#799).
+  const firearms = listActiveFirearms(db).map((firearm) => ({
     name: `${firearm.make} ${firearm.model}`.trim(),
     fact: {
       id: firearm.id,
