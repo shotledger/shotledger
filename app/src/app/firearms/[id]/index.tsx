@@ -11,10 +11,10 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   canonicalCaliber,
   licenseExpiryNotifications,
+  localDayStartIso,
   parseLocalDay,
   resolveActiveSightSetting,
   selectableWeaponGroups,
-  shouldNotifyMaintenanceDue,
   sightTurnsBetween,
   weaponGroupLabel,
   type ParsedLicenseCard,
@@ -60,11 +60,16 @@ import {
   restoreFirearmAndReminders,
 } from '@/features/firearms/archive-firearm';
 import {
+  firearmMaintenanceDue,
+  refreshMaintenanceTimeReminders,
+} from '@/features/firearms/maintenance';
+import {
   maintenanceEventLines,
   maintenanceEventTitle,
 } from '@/features/firearms/maintenance-event-lines';
 import {
   parseMaintenanceInterval,
+  parseMaintenanceIntervalMonths,
   parseRoundAdjustment,
   roundAdjustmentErrors,
 } from '@/features/firearms/round-adjustment';
@@ -166,7 +171,9 @@ export default function FirearmDetailScreen() {
   const [adjustAttempted, setAdjustAttempted] = useState(false);
 
   const [intervalInput, setIntervalInput] = useState<string | null>(null);
+  const [monthsInput, setMonthsInput] = useState<string | null>(null);
   const [intervalStatus, setIntervalStatus] = useState<'idle' | 'saved' | 'invalid'>('idle');
+  const [intervalInvalid, setIntervalInvalid] = useState({ rounds: false, months: false });
 
   const [showSightForm, setShowSightForm] = useState(false);
   const [editingSightId, setEditingSightId] = useState<string | null>(null);
@@ -195,6 +202,7 @@ export default function FirearmDetailScreen() {
   const availableGroups = ALL_GROUPS.filter((g) => !usedGroupIds.has(g.id));
   const newGroupLabel = availableGroups.find((g) => g.id === newGroupId)?.label ?? null;
   const intervalValue = intervalInput ?? String(firearm.maintenanceIntervalRounds ?? '');
+  const monthsValue = monthsInput ?? String(firearm.maintenanceIntervalMonths ?? '');
   const adjustErrors = roundAdjustmentErrors(adjustDelta, adjustReason);
 
   // A firearm that isn't the shooter's own needs no license of theirs, so a
@@ -357,6 +365,8 @@ export default function FirearmDetailScreen() {
       kind: eventKind.trim(),
       notes: eventNotes.trim() || null,
     });
+    // Maintenance restarts the time interval, so the reminder moves with it.
+    void refreshMaintenanceTimeReminders({ request: false });
     setEventKind('');
     setEventNotes('');
     setEventPerformedAt(new Date().toISOString());
@@ -379,20 +389,40 @@ export default function FirearmDetailScreen() {
   }
 
   function onSaveInterval() {
-    const previous = detail.roundsSinceMaintenance;
     const parsed = parseMaintenanceInterval(intervalValue);
-    if (!parsed.ok) {
+    const parsedMonths = parseMaintenanceIntervalMonths(monthsValue);
+    if (!parsed.ok || !parsedMonths.ok) {
+      setIntervalInvalid({ rounds: !parsed.ok, months: !parsedMonths.ok });
       setIntervalStatus('invalid');
       return;
     }
-    updateFirearm(db, firearm!.id, { maintenanceIntervalRounds: parsed.interval });
+    const next = {
+      ...firearm!,
+      maintenanceIntervalRounds: parsed.interval,
+      maintenanceIntervalMonths: parsedMonths.months,
+    };
+    updateFirearm(db, firearm!.id, {
+      maintenanceIntervalRounds: next.maintenanceIntervalRounds,
+      maintenanceIntervalMonths: next.maintenanceIntervalMonths,
+    });
+    // An interval saved already reached notifies at once, as a counter
+    // crossing it would; one still ahead by time is scheduled (#800). An
+    // archived firearm stays quiet (#799).
+    const changed =
+      next.maintenanceIntervalRounds !== firearm!.maintenanceIntervalRounds ||
+      next.maintenanceIntervalMonths !== firearm!.maintenanceIntervalMonths;
     if (
-      parsed.interval !== firearm!.maintenanceIntervalRounds &&
-      shouldNotifyMaintenanceDue(0, previous, parsed.interval)
+      changed &&
+      firearm!.archivedAt == null &&
+      firearmMaintenanceDue(next, detail.roundsSinceMaintenance, detail.lastMaintenanceAt)
+        .status === 'red'
     ) {
       void notifyMaintenanceDue(`${firearm!.make} ${firearm!.model}`);
     }
+    void refreshMaintenanceTimeReminders({ request: true });
     setIntervalInput(null);
+    setMonthsInput(null);
+    setIntervalInvalid({ rounds: false, months: false });
     setIntervalStatus('saved');
     refresh();
   }
@@ -545,6 +575,30 @@ export default function FirearmDetailScreen() {
             tone={MAINTENANCE_TONE[detail.maintenanceStatus]}
           />
         )}
+        {/* What made it due: the rounds, the months, or both (#800). */}
+        {detail.maintenanceDue.reasons.includes('rounds') && (
+          <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-rounds">
+            {t('firearms.maintenanceDueRounds', { count: firearm.maintenanceIntervalRounds ?? 0 })}
+          </ThemedText>
+        )}
+        {detail.maintenanceDue.reasons.includes('time') && (
+          <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-time">
+            {t(
+              detail.lastMaintenanceAt !== undefined
+                ? 'firearms.maintenanceDueTime'
+                : 'firearms.maintenanceDueTimeSinceAdded',
+              { count: firearm.maintenanceIntervalMonths ?? 0 },
+            )}
+          </ThemedText>
+        )}
+        {detail.maintenanceDue.dueDay !== null &&
+          !detail.maintenanceDue.reasons.includes('time') && (
+            <ThemedText type="small" themeColor="textSecondary" testID="maintenance-due-by">
+              {t('firearms.maintenanceDueBy', {
+                date: dates.date(localDayStartIso(detail.maintenanceDue.dueDay)),
+              })}
+            </ThemedText>
+          )}
       </Card>
 
       {/* M6 (§6.6): hidden entirely when the compliance profile is 'none'.
@@ -1172,11 +1226,29 @@ export default function FirearmDetailScreen() {
           keyboardType="number-pad"
           testID="maintenance-interval"
         />
-        {intervalStatus === 'invalid' ? (
+        {intervalStatus === 'invalid' && intervalInvalid.rounds ? (
           <ThemedText type="small" themeColor="danger" testID="interval-error">
             {t('firearms.intervalInvalid')}
           </ThemedText>
         ) : null}
+        <ThemedText type="small">{t('firearms.maintenanceIntervalMonths')}</ThemedText>
+        <TextField
+          value={monthsValue}
+          onChangeText={(text) => {
+            setMonthsInput(text);
+            setIntervalStatus('idle');
+          }}
+          keyboardType="number-pad"
+          testID="maintenance-interval-months"
+        />
+        {intervalStatus === 'invalid' && intervalInvalid.months ? (
+          <ThemedText type="small" themeColor="danger" testID="interval-months-error">
+            {t('firearms.intervalMonthsInvalid')}
+          </ThemedText>
+        ) : null}
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('firearms.maintenanceIntervalMonthsHelp')}
+        </ThemedText>
         <SecondaryButton label={t('common.save')} onPress={onSaveInterval} testID="save-interval" />
         {intervalStatus === 'saved' ? (
           <ThemedText

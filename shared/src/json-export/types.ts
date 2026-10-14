@@ -118,6 +118,7 @@ export interface FirearmExport {
   notes: string | null;
   roundCount: number;
   maintenanceIntervalRounds: number | null;
+  maintenanceIntervalMonths: number | null;
   /** When it was archived (sold, returned or retired), or null while active (#799). */
   archivedAt: string | null;
 }
@@ -472,6 +473,18 @@ export const firearmExportSchema = z.object({
     .nullable()
     .default(null)
     .describe('Rounds between cleanings, or null for no reminder.'),
+  maintenanceIntervalMonths: z
+    .number()
+    .int()
+    .min(1)
+    // MAINTENANCE_INTERVAL_MONTHS_MAX. A literal: generate-export-schema.mjs
+    // loads this compiled file on its own, where no relative import resolves.
+    .max(120)
+    .nullable()
+    .default(null)
+    .describe(
+      'Calendar months between cleanings, or null for no reminder by time. Due when either interval is reached.',
+    ),
   archivedAt: z
     .string()
     .nullable()

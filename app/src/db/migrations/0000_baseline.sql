@@ -81,6 +81,7 @@ CREATE TABLE `firearms` (
 	`notes` text,
 	`round_count` integer DEFAULT 0 NOT NULL,
 	`maintenance_interval_rounds` integer,
+	`maintenance_interval_months` integer,
 	`archived_at` text
 );
 --> statement-breakpoint

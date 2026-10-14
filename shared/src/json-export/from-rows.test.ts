@@ -65,6 +65,7 @@ const firearm: ExportFirearmRow = {
   notes: 'note',
   roundCount: 500,
   maintenanceIntervalRounds: 1000,
+  maintenanceIntervalMonths: 12,
   archivedAt: '2026-10-01T00:00:00.000Z',
 };
 
@@ -342,6 +343,7 @@ describe('firearmExportsFromRows', () => {
         notes: 'note',
         roundCount: 500,
         maintenanceIntervalRounds: 1000,
+        maintenanceIntervalMonths: 12,
         archivedAt: '2026-10-01T00:00:00.000Z',
       },
       expect.objectContaining({ id: 'F2', isOwn: false }),
