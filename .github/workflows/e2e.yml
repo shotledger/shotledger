@@ -146,8 +146,17 @@ jobs:
           # app's Home screen in any flow on this runner (2026-10-14).
           disable-animations: true
           working-directory: app
+          # The launcher or System UI can hit an ANR on a freshly booted
+          # emulator, and its dialog then covers the app for every flow
+          # (2026-10-14: all six failed behind "Pixel Launcher isn't
+          # responding"). Let the system settle, stop such dialogs showing,
+          # and close one that is already up.
           script: |
             adb install -r android/app/build/outputs/apk/release/app-release.apk
+            adb shell settings put global hide_error_dialogs 1
+            sleep 30
+            adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
+            adb shell input keyevent KEYCODE_HOME
             maestro test e2e
 
       # Maestro's screenshots and logs for each failed flow (demo data only).
