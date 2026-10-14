@@ -47,6 +47,7 @@ function tables(): PulledTables {
     firearms: table([]),
     firearm_groups: table([]),
     licenses: table([]),
+    maintenance_events: table([]),
     ammo_lots: table([]),
     session_tags: new Map(),
     settings: new Map(),

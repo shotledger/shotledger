@@ -130,6 +130,7 @@ function tables(): PulledTables {
     firearms: table([{ id: 'f1', make: 'Acme', model: 'Target', deleted_at: null }]),
     firearm_groups: table([]),
     licenses: table([]),
+    maintenance_events: table([]),
     ammo_lots: table([{ id: 'a1', label: 'Lot 7', deleted_at: null }]),
     session_tags: table([{ id: 'l1', session_id: 'ring', tag_id: 't1', deleted_at: null }]),
     settings: new Map(),

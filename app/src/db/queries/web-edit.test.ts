@@ -31,6 +31,7 @@ import {
   type StationRow,
 } from './falt';
 import { createFirearm, listFirearms } from './firearms';
+import { getRoundsSinceMaintenance } from './maintenance-counter';
 import {
   deleteSeriesAndShots,
   deleteSessionAndSeries,
@@ -207,7 +208,7 @@ function snapshot(db: Database, ids: Ids) {
           .reduce((n, s) => n + listShotsForSeries(db, s.id).length, 0),
       };
     }),
-    firearms: listFirearms(db).map((f) => [f.id, f.roundCount, f.roundsSinceMaintenance]),
+    firearms: listFirearms(db).map((f) => [f.id, f.roundCount, getRoundsSinceMaintenance(db, f)]),
   };
 }
 

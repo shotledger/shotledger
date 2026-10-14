@@ -89,7 +89,6 @@ function tables(): PulledTables {
       make: 'Make',
       model: 'M',
       round_count: 100,
-      rounds_since_maintenance: 100,
     }),
     firearm_groups: empty(),
     licenses: empty(),

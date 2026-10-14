@@ -55,6 +55,9 @@ A firearm accumulates:
   Each entry shows its date and the note you wrote; a round-count adjustment
   shows the amount it moved the counter by and its reason ("+10 · Club rental
   rounds").
+  **Rounds Since Maintenance** counts from the entry with the latest date. An
+  entry you log afterwards with an earlier date is kept in the log but does
+  not reset the count. An adjustment moves both counts by its amount.
   Set a **Maintenance Interval** (a whole number of rounds) and the phone
   notifies you once when
   **Rounds Since Maintenance** reaches it, whatever brought the rounds in: a

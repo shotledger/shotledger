@@ -26,7 +26,8 @@ Sessions are matched on their id, so importing the same file twice does not
 duplicate anything — the second import updates what the first created. That
 makes it safe to re-import a file you are not sure about.
 
-Firearms and licenses are matched the same way, on their id. A firearm the file
+Firearms, licenses and maintenance entries are matched the same way, on their
+id. A firearm the file
 carries that is not here yet is created with everything the file knows about it
 — caliber, weapon type, serial number, VapenID, load system — and its licenses
 with it. A firearm whose id is unknown but whose make and model already match
@@ -161,8 +162,7 @@ One session, one scored series of three shots:
       "loadSystem": null,
       "notes": null,
       "roundCount": 1200,
-      "maintenanceIntervalRounds": 500,
-      "roundsSinceMaintenance": 120
+      "maintenanceIntervalRounds": 500
     }
   ],
   "licenses": [
@@ -175,6 +175,17 @@ One session, one scored series of three shots:
       "validUntil": null,
       "conditions": null,
       "authority": "Polismyndigheten"
+    }
+  ],
+  "maintenanceEvents": [
+    {
+      "id": "0192c4a1-7e2b-7c3d-9a10-4b5c6d7e8f90",
+      "firearmId": "b4a1f6d2-0c33-4f1e-9a77-1d2e3f4a5b6c",
+      "performedAt": "2026-05-02T16:00:00.000Z",
+      "kind": "Rengöring",
+      "roundCountAt": 1080,
+      "isAdjustment": false,
+      "notes": null
     }
   ]
 }
@@ -201,24 +212,29 @@ One session, one scored series of three shots:
 | `externalSource`, `externalRef`              | Where an imported session came from (`webshooter`, `shotlog`) and that source's own key for it, without the source in front (`363:35937`). A later import from the same source matches on the pair. `null` on a session logged in the app. |
 | `officialPlacement`, `officialStandardMedal` | The placement and standardmedalj from the official results, as a WebShooter import brought them in. `null` when there are none.                                                                                                            |
 
-### Firearms and licenses
+### Firearms, licenses and maintenance
 
-The envelope carries two more arrays beside `sessions`:
+The envelope carries three more arrays beside `sessions`:
 
 - **`firearms`** — one entry per firearm, with everything the app stores about
-  it except its maintenance history: make, model, caliber, weapon type, whether
-  it is your own, serial number, VapenID, load system, notes and round counts.
+  it: make, model, caliber, weapon type, whether it is your own, serial
+  number, VapenID, load system, notes, rounds fired and maintenance interval.
 - **`licenses`** — one entry per **issued** license, each naming its firearm
   through `firearmId`. A renewal is its own entry rather than an edit of the
   old one, so the history is kept.
+- **`maintenanceEvents`** — each firearm's maintenance log, round-count
+  adjustments included (`isAdjustment`). `roundCountAt` is the firearm's round
+  count when the entry was logged. **Rounds Since Maintenance** is not stored
+  in the file: it is worked out from these entries, the same way the app works
+  it out, so it comes back the same after an import.
 
-A license that names a firearm the file does not carry is dropped on import: it
-has nothing to belong to, and guessing at one would be worse than leaving it
-out.
+A license or maintenance entry that names a firearm the file does not carry is
+dropped on import: it has nothing to belong to, and guessing at one would be
+worse than leaving it out.
 
 !!! note "What an export is not"
 
-    It carries no photographs, no maintenance history and no settings.
+    It carries no photographs and no settings.
     Importing one into a fresh install gives you the shooting and the equipment
     behind it, but not a phone put back the way it was — for that, restore a
     backup.

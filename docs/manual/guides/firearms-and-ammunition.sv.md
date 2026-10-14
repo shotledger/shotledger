@@ -55,6 +55,9 @@ Till ett vapen samlas:
   tillfället. Varje post visar datum och anteckningen du skrev; en justering
   av skottantalet visar hur mycket räknaren flyttades och sin anledning ("+10 ·
   skott med klubbvapen").
+  **Skott sedan underhåll** räknas från posten med senast datum. En post du
+  loggar i efterhand med ett tidigare datum sparas i loggen men nollställer
+  inte antalet. En justering flyttar båda antalen lika mycket.
   Anger du ett **Underhållsintervall** (ett heltal skott) får du en notis i
   telefonen en gång när
   **Skott sedan underhåll** når det, oavsett vad som förde in skotten: en

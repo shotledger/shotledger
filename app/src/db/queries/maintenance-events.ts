@@ -3,8 +3,11 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { maintenanceEvents } from '../schema';
 import type { Database } from '../types';
 import { newId, nowIso } from '../util';
+import { roundsSinceMaintenance } from '@shotledger/shared';
+
 import { getFirearm, updateFirearm } from './firearms';
 import { reportMaintenanceCounterMove } from './maintenance-due';
+import { listCounterEvents } from './maintenance-counter';
 import { adjustmentNote } from '../../features/firearms/round-adjustment';
 
 export interface LogMaintenanceEventInput {
@@ -16,8 +19,8 @@ export interface LogMaintenanceEventInput {
 
 /**
  * Logs a maintenance event (§3/§4 M4): auto-captures the firearm's current
- * round count and resets rounds_since_maintenance to 0, since performing
- * maintenance is what the "rounds since" indicator counts from.
+ * round count, which the derived "rounds since maintenance" counts from
+ * (#727 M3). The firearm row is not written.
  */
 export function logMaintenanceEvent(db: Database, input: LogMaintenanceEventInput) {
   const firearm = getFirearm(db, input.firearmId);
@@ -35,9 +38,6 @@ export function logMaintenanceEvent(db: Database, input: LogMaintenanceEventInpu
     isAdjustment: 0,
   };
   db.insert(maintenanceEvents).values(row).run();
-  if (firearm) {
-    updateFirearm(db, input.firearmId, { roundsSinceMaintenance: 0 });
-  }
   return row;
 }
 
@@ -65,8 +65,9 @@ export function softDeleteMaintenanceEvent(db: Database, id: string) {
  * Manual round-count adjustment with a reason (§4 M4). Recorded as a
  * maintenance_events row with is_adjustment = 1 and an empty `kind` (the
  * user's free text, so a reserved value could collide with what they type;
- * #727), rather than a separate table for one narrow case. Unlike logMaintenanceEvent,
- * it does NOT reset rounds_since_maintenance (no maintenance was performed).
+ * #727), rather than a separate table for one narrow case. It moves only
+ * round_count; the derived rounds since maintenance moves with it, and an
+ * adjustment is never the event that figure counts from.
  * The note leads with the amount the counter actually moved (`adjustmentNote`).
  */
 export function adjustFirearmRoundCount(
@@ -78,9 +79,13 @@ export function adjustFirearmRoundCount(
   const firearm = getFirearm(db, firearmId);
   if (!firearm) return undefined;
   const roundCount = Math.max(0, firearm.roundCount + delta);
-  const roundsSinceMaintenance = Math.max(0, firearm.roundsSinceMaintenance + delta);
-  updateFirearm(db, firearmId, { roundCount, roundsSinceMaintenance });
-  reportMaintenanceCounterMove(firearm, firearm.roundsSinceMaintenance, roundsSinceMaintenance);
+  updateFirearm(db, firearmId, { roundCount });
+  const events = listCounterEvents(db, firearmId);
+  reportMaintenanceCounterMove(
+    firearm,
+    roundsSinceMaintenance(firearm.roundCount, events),
+    roundsSinceMaintenance(roundCount, events),
+  );
 
   const now = nowIso();
   const row = {

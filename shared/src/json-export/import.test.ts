@@ -291,7 +291,6 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     notes: null,
     roundCount: 40,
     maintenanceIntervalRounds: null,
-    roundsSinceMaintenance: 40,
     archivedAt: null,
   };
   const license: LicenseExport = {
@@ -338,6 +337,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.errors).toEqual([]);
     expect(result.firearms).toEqual([]);
     expect(result.licenses).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([]);
     expect(result.sessions[0]!.firearmId).toBeNull();
     expect(result.sessions[0]!.firearm).toBe('Pardini SP');
   });
@@ -349,6 +349,66 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     expect(result.firearms.map((f) => f.id)).toEqual(['f1']);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({ code: 'invalid-firearm', itemIndex: 1 });
+  });
+
+  it('M6 a bad maintenance event is skipped on its own (#727)', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      roundCountAt: 500,
+      isAdjustment: false,
+      notes: null,
+    };
+    const result = importSessionsFromJson(
+      envelope({ maintenanceEvents: [event, { id: 'm2', firearmId: 'f1' }] }),
+    ) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([event]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({ code: 'invalid-maintenance-event', itemIndex: 1 });
+  });
+
+  it('M6 fills in a terse maintenance event: no kind, not an adjustment, no notes', () => {
+    const result = importSessionsFromJson(
+      envelope({
+        maintenanceEvents: [
+          { id: 'm1', firearmId: 'f1', performedAt: '2026-09-01T10:00:00.000Z', roundCountAt: 0 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.maintenanceEvents).toEqual([
+      {
+        id: 'm1',
+        firearmId: 'f1',
+        performedAt: '2026-09-01T10:00:00.000Z',
+        kind: '',
+        roundCountAt: 0,
+        isAdjustment: false,
+        notes: null,
+      },
+    ]);
+  });
+
+  it('M6 refuses a maintenance event with no id, firearm, date or a negative or fractional count', () => {
+    const good = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      roundCountAt: 5,
+    };
+    const bad = [
+      { ...good, id: '' },
+      { ...good, firearmId: '' },
+      { ...good, performedAt: '' },
+      { ...good, roundCountAt: -1 },
+      { ...good, roundCountAt: 1.5 },
+      { ...good, roundCountAt: undefined },
+    ];
+    const result = importSessionsFromJson(envelope({ maintenanceEvents: bad })) as ImportResult;
+    expect(result.maintenanceEvents).toEqual([]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([0, 1, 2, 3, 4, 5]);
   });
 
   it('a bad license is skipped on its own', () => {
@@ -383,7 +443,6 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       notes: null,
       roundCount: 0,
       maintenanceIntervalRounds: null,
-      roundsSinceMaintenance: 0,
       archivedAt: null,
     });
   });

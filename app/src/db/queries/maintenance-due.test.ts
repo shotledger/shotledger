@@ -4,9 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestDb } from '../test-db';
 import type { Database } from '../types';
-import { createFirearm } from './firearms';
+import { createFirearm, updateFirearm } from './firearms';
 import { setMaintenanceDueListener, type MaintenanceDueFirearm } from './maintenance-due';
-import { adjustFirearmRoundCount, logMaintenanceEvent } from './maintenance-events';
+import {
+  adjustFirearmRoundCount,
+  logMaintenanceEvent,
+  softDeleteMaintenanceEvent,
+} from './maintenance-events';
 import { saveSeriesShots, setSessionExtraRounds } from './round-count';
 import { addSeries } from './series';
 import { createSession } from './sessions';
@@ -25,14 +29,21 @@ afterEach(() => {
   removeListener();
 });
 
-/** A firearm 3 rounds short of a 100-round interval, and a session on it. */
+/** A firearm 3 rounds short of a 100-round interval since its last cleaning
+ *  (at 100 rounds, now at 197), and a session on it. */
 function nearlyDue() {
   const firearm = createFirearm(db, {
     make: 'Test',
     model: 'Pistol',
     maintenanceIntervalRounds: 100,
-    roundsSinceMaintenance: 97,
+    roundCount: 100,
   });
+  logMaintenanceEvent(db, {
+    firearmId: firearm.id,
+    performedAt: '2026-10-01T10:00:00.000Z',
+    kind: 'cleaning',
+  });
+  updateFirearm(db, firearm.id, { roundCount: 197 });
   const session = createSession(db, {
     name: 'Test',
     type: 'training',
@@ -83,7 +94,7 @@ describe('maintenance-due crossing', () => {
     const firearm = createFirearm(db, {
       make: 'Test',
       model: 'Pistol',
-      roundsSinceMaintenance: 500,
+      roundCount: 500,
     });
     adjustFirearmRoundCount(db, firearm.id, 1000, 'range rental');
 
@@ -109,6 +120,34 @@ describe('maintenance-due crossing', () => {
 
     adjustFirearmRoundCount(db, firearm.id, 100, 'range rental');
     expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('M5 logging or deleting a maintenance event never fires, even when the figure crosses', () => {
+    const { firearm } = nearlyDue();
+    const later = logMaintenanceEvent(db, {
+      firearmId: firearm.id,
+      performedAt: '2026-10-12T12:00:00.000Z',
+      kind: 'cleaning',
+    });
+    adjustFirearmRoundCount(db, firearm.id, 2, 'range rental');
+    // Deleting the newest cleaning puts the figure back at 99 rounds... then
+    // a counter move of 1 is what crosses, and fires.
+    softDeleteMaintenanceEvent(db, later.id);
+    expect(listener).not.toHaveBeenCalled();
+    adjustFirearmRoundCount(db, firearm.id, 1, 'range rental');
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('M5 deleting the newest cleaning can leave the figure over the interval without a notification', () => {
+    const { firearm } = nearlyDue();
+    const later = logMaintenanceEvent(db, {
+      firearmId: firearm.id,
+      performedAt: '2026-10-12T12:00:00.000Z',
+      kind: 'cleaning',
+    });
+    adjustFirearmRoundCount(db, firearm.id, 50, 'range rental');
+    softDeleteMaintenanceEvent(db, later.id);
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('fires nothing once the listener is removed', () => {

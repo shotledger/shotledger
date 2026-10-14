@@ -3,12 +3,13 @@
 import { Stack } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { ScreenTitle } from '@/components/screen-title';
 import { ThemedText } from '@/components/themed-text';
+import { Toggle } from '@/components/toggle';
 import { db } from '@/db/client';
 import { setSetting, SETTINGS_KEYS } from '@/db/queries/settings';
 import { readTrackedInputs, type TrackedInputs } from '@/features/settings/tracked-inputs';
@@ -43,7 +44,7 @@ export default function TrackingSettingsScreen() {
             <ThemedText type="smallBold" style={styles.label}>
               {t(`settings.${row.label}`)}
             </ThemedText>
-            <Switch
+            <Toggle
               value={tracked[row.field]}
               onValueChange={(next) => onToggle(row, next)}
               testID={`tracking-${row.field}`}

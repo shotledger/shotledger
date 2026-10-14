@@ -191,7 +191,6 @@ describe('exportSessionsToJson — firearms and licenses (#314)', () => {
     notes: 'Träningsvapen',
     roundCount: 1200,
     maintenanceIntervalRounds: 500,
-    roundsSinceMaintenance: 120,
     archivedAt: null,
   };
   const license: LicenseExport = {
@@ -205,10 +204,28 @@ describe('exportSessionsToJson — firearms and licenses (#314)', () => {
     authority: 'Polismyndigheten',
   };
 
-  it('always writes both arrays, even with nothing to put in them', () => {
+  it('always writes the arrays, even with nothing to put in them', () => {
     const parsed = JSON.parse(exportSessionsToJson([], OPTIONS)) as Record<string, unknown>;
     expect(parsed.firearms).toEqual([]);
     expect(parsed.licenses).toEqual([]);
+    expect(parsed.maintenanceEvents).toEqual([]);
+  });
+
+  it('M6 carries the maintenance log unchanged (#727)', () => {
+    const event = {
+      id: 'm1',
+      firearmId: 'f1',
+      performedAt: '2026-09-01T10:00:00.000Z',
+      kind: 'Rengöring',
+      roundCountAt: 1080,
+      isAdjustment: false,
+      notes: null,
+    };
+    const parsed = JSON.parse(
+      exportSessionsToJson([], { ...OPTIONS, firearms: [firearm], maintenanceEvents: [event] }),
+    ) as { maintenanceEvents: unknown[]; firearms: Record<string, unknown>[] };
+    expect(parsed.maintenanceEvents).toEqual([event]);
+    expect(parsed.firearms[0]).not.toHaveProperty('roundsSinceMaintenance');
   });
 
   it('carries a firearm and its license through unchanged', () => {

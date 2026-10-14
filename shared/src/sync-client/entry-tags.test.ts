@@ -44,7 +44,7 @@ const draft = (overrides: Partial<SessionEntryDraft> = {}): SessionEntryDraft =>
   ...overrides,
 });
 
-const firearm: Payload = { id: 'f1', round_count: 0, rounds_since_maintenance: 0 };
+const firearm: Payload = { id: 'f1', round_count: 0 };
 
 function entry(deps = makeDeps(), d: SessionEntryDraft = draft()): EntryResult {
   return buildSessionEntry(
