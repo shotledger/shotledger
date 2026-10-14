@@ -2,12 +2,17 @@
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md) and the
 phone screens that show licence activity. Issue
-[#795](https://github.com/jimisola/shotledger/issues/795). Builds on
+[#795](https://github.com/shotledger/shotledger/issues/795). Builds on
 [`m6-compliance-spec.md`](m6-compliance-spec.md),
 [`compliance-fap551-spec.md`](compliance-fap551-spec.md) and
 [`compliance-firearm-criteria-spec.md`](compliance-firearm-criteria-spec.md);
 the source, the numbers, the windows and the banding they settle are
 unchanged and not restated.
+
+**Amended by [`compliance-local-days-spec.md`](compliance-local-days-spec.md)
+(#816):** windows count whole local days, so the lapse and the first day a
+criterion can be met are local midnights, and a period's end is its last day.
+The scan below is replaced by a day-by-day one.
 
 **Spec approval: approved** by the maintainer on 2026-10-13. Issue #795 is the
 maintainer's statement of what to build ("once a requirement has been met, show
@@ -35,7 +40,7 @@ no schema change, no new tooling. Files touched by path:
 
 The web app shows no licence activity at all today, so there is nothing for the
 date to sit on there. That gap is filed as
-[#796](https://github.com/jimisola/shotledger/issues/796), which carries this
+[#796](https://github.com/shotledger/shotledger/issues/796), which carries this
 date with it.
 
 ## The definition

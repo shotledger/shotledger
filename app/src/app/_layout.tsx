@@ -11,6 +11,7 @@ import { MigrationGate } from '@/db/migration-gate';
 import { setMaintenanceDueListener } from '@/db/queries/maintenance-due';
 import { rewriteSeriesPhotoUris } from '@/db/queries/series';
 import { EvaluationGate } from '@/features/evaluation/evaluation-gate';
+import { maintenanceShown } from '@/features/firearms/maintenance';
 import { MaintenanceReminders } from '@/features/firearms/maintenance-reminders';
 import { SyncTriggers } from '@/features/sync/sync-triggers';
 import { useResolvedThemeName, useTheme } from '@/hooks/use-theme';
@@ -94,7 +95,15 @@ function RootStack() {
         options={{ presentation: 'modal', headerShown: true, title: t('ammo.editLot') }}
       />
       <Stack.Screen
-        name="compliance"
+        name="compliance/index"
+        options={{ headerShown: true, title: t('compliance.check.title') }}
+      />
+      <Stack.Screen
+        name="compliance/new-firearm"
+        options={{ headerShown: true, title: t('compliance.check.newFirearm') }}
+      />
+      <Stack.Screen
+        name="compliance/firearm/[id]"
         options={{ headerShown: true, title: t('compliance.check.title') }}
       />
       <Stack.Screen
@@ -120,6 +129,10 @@ function RootStack() {
       <Stack.Screen
         name="settings/theme"
         options={{ presentation: 'modal', headerShown: true, title: t('settings.theme') }}
+      />
+      <Stack.Screen
+        name="settings/features"
+        options={{ presentation: 'modal', headerShown: true, title: t('settings.featuresTitle') }}
       />
       <Stack.Screen
         name="settings/tracking"
@@ -156,10 +169,6 @@ function RootStack() {
       <Stack.Screen
         name="stats/records"
         options={{ presentation: 'modal', headerShown: true, title: t('webshooter.recordsTitle') }}
-      />
-      <Stack.Screen
-        name="stats/report"
-        options={{ presentation: 'modal', headerShown: true, title: t('stats.reportTitle') }}
       />
       <Stack.Screen name="dev" />
     </Stack>
@@ -219,6 +228,8 @@ export default function RootLayout() {
   useEffect(
     () =>
       setMaintenanceDueListener((firearm) => {
+        // Hidden in Settings → Features (#801): no maintenance notifications.
+        if (db && !maintenanceShown(db)) return;
         void notifyMaintenanceDue(`${firearm.make} ${firearm.model}`);
       }),
     [],

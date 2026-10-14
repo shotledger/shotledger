@@ -30,23 +30,23 @@ describe('formatFaltResult', () => {
     expect(formatFaltResult(tSv, { ...result, mode: 'poangfalt' })).toBe('75 poäng');
   });
 
-  it('a fält round reads as hits of possible, then figures hit (#670)', () => {
-    expect(formatFaltResult(t, { ...result, mode: 'falt' })).toBe('41 (48) hits / 34 figures');
-    expect(formatFaltResult(tSv, { ...result, mode: 'falt' })).toBe('41 (48) träff / 34 figurer');
+  it('a fält round reads as two labelled values: hits of possible, figures hit (#670, #822)', () => {
+    expect(formatFaltResult(t, { ...result, mode: 'falt' })).toBe('Hits 41 of 48 · Figures 34');
+    expect(formatFaltResult(tSv, { ...result, mode: 'falt' })).toBe('Träff 41 av 48 · Figurer 34');
   });
 
   it('a fält round with a figure count adds it beside the figures hit (#607, #670)', () => {
     expect(formatFaltResult(t, { ...result, mode: 'falt', figureCount: 40 })).toBe(
-      '41 (48) hits / 34 (40) figures',
+      'Hits 41 of 48 · Figures 34 of 40',
     );
     expect(formatFaltResult(tSv, { ...result, mode: 'falt', figureCount: 40 })).toBe(
-      '41 (48) träff / 34 (40) figurer',
+      'Träff 41 av 48 · Figurer 34 av 40',
     );
   });
 
   it('a fält round without a figure count keeps the plain figures (#607)', () => {
     expect(formatFaltResult(t, { ...result, mode: 'falt', figureCount: null })).toBe(
-      '41 (48) hits / 34 figures',
+      'Hits 41 of 48 · Figures 34',
     );
   });
 

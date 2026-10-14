@@ -37,6 +37,8 @@ export interface LicenseCheck {
   rules: RuleCheck[];
   purchase: CriterionCheck[];
   renewal: CriterionCheck[];
+  /** Every firearm checked, in the order given, for the overview's list. */
+  firearms: { id: string; name: string }[];
 }
 
 export interface LicenseCheckFirearm {
@@ -59,7 +61,12 @@ export function buildLicenseCheck(
       lapseIso: computeRuleLapse(sessions, rule, now),
     };
   });
-  const check: LicenseCheck = { rules, purchase: [], renewal: [] };
+  const check: LicenseCheck = {
+    rules,
+    purchase: [],
+    renewal: [],
+    firearms: firearms.map(({ fact, name }) => ({ id: fact.id, name })),
+  };
   for (const rule of profile.firearmCriteria) {
     for (const { fact, name } of firearms) {
       if (!rule.appliesTo(fact)) continue;
@@ -73,4 +80,52 @@ export function buildLicenseCheck(
     }
   }
   return check;
+}
+
+/** The overview's answer to "can I apply for a new firearm?". */
+export interface NewFirearmSummary {
+  /** Every activity rule and every additional-handgun box is met. */
+  ready: boolean;
+  /** Requirements not met now. */
+  unmet: number;
+  /** The earliest date one of them stops being met; null when not ready. */
+  lapseIso: string | null;
+}
+
+function earliest(isos: readonly (string | null)[]): string | null {
+  const dates = isos.filter((iso): iso is string => iso !== null).sort();
+  return dates[0] ?? null;
+}
+
+export function newFirearmSummary(check: LicenseCheck): NewFirearmSummary {
+  const unmet =
+    check.rules.filter((rule) => rule.needed > 0).length +
+    check.purchase.filter((item) => !item.criterion.met).length;
+  const ready = unmet === 0;
+  return {
+    ready,
+    unmet,
+    lapseIso: ready
+      ? earliest([...check.rules, ...check.purchase].map((item) => item.lapseIso))
+      : null,
+  };
+}
+
+/** One firearm's row in the overview and the boxes its detail shows. */
+export interface FirearmSummary {
+  id: string;
+  name: string;
+  /** The renewal box; null when its license has no end date. */
+  renewal: CriterionCheck | null;
+  /** The additional-handgun box; null when it does not apply. */
+  purchase: CriterionCheck | null;
+}
+
+export function firearmSummaries(check: LicenseCheck): FirearmSummary[] {
+  return check.firearms.map(({ id, name }) => ({
+    id,
+    name,
+    renewal: check.renewal.find((item) => item.firearmId === id) ?? null,
+    purchase: check.purchase.find((item) => item.firearmId === id) ?? null,
+  }));
 }

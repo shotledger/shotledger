@@ -9,7 +9,8 @@ frågor.
   dagen oavsett vilket vapen du håller i.
 
 Skrivna tillsammans ser de ut som en enda sak — "C 2" — men det är en
-visningskonvention, inte ett värde. Att hålla dem åtskilda är det som låter dig
+visningskonvention, inte ett värde. Passets egen skärm skriver i stället ut
+paret, "Vapengrupp C, klass 2", så att det går att läsa utan att kunna koden. Att hålla dem åtskilda är det som låter dig
 fråga "hur skjuter jag med C-vapnet?" och "hur går det för mig i klass 2?" var
 för sig.
 

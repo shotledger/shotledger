@@ -1,8 +1,9 @@
-// Settings: the five account settings that sync, edited and saved with one
+// Settings: the account settings that sync, edited and saved with one
 // push (docs/specs/web-settings-edit-spec.md). The form logic is in
 // model.ts, what a Save does in save.ts; this file only renders.
 import { PROFILE_SELECTIONS, type ProfileSelection } from '@shotledger/shared/src/compliance';
 import { SKILL_CLASSES } from '@shotledger/shared/src/disciplines/eligibility';
+import { FEATURE_IDS, FEATURE_SETTING_KEYS } from '@shotledger/shared/src/features';
 import { buildSettingsChanges } from '@shotledger/shared/src/sync-client/settings-edit';
 import type { AccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
@@ -12,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { currentUserId, pushRows } from '../api';
 import { useOnline } from '../entry/entry';
 import type { ReauthOutcome } from '../reauth';
+import { ChoiceGroup } from '../fields/choice';
 import { SignInAgain } from '../sign-in-again';
 import type { PulledTables } from '../pull';
 import {
@@ -38,35 +40,15 @@ const PROFILE_LABEL_KEYS: Record<ProfileSelection, string> = {
   se: 'compliance.profileSe',
 };
 
-/** An exclusive choice: native radios, so the arrow keys move it (spec R15). */
-function RadioGroup<T extends string>({
-  labelledBy,
-  options,
-  value,
-  onChange,
-}: {
+/** An exclusive choice: native radios, so the arrow keys move it (spec R15),
+ *  drawn as the phone's Segmented or Choice Chips by the same rule (#822). */
+function RadioGroup<T extends string>(props: {
   labelledBy: string;
   options: readonly { value: T; label: string }[];
   value: T | null;
   onChange: (next: T) => void;
 }) {
-  const name = useId();
-  return (
-    <div className="radios" role="radiogroup" aria-labelledby={labelledBy}>
-      {options.map((option) => (
-        <label key={option.value}>
-          <input
-            type="radio"
-            name={name}
-            value={option.value}
-            checked={option.value === value}
-            onChange={() => onChange(option.value)}
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
-    </div>
-  );
+  return <ChoiceGroup {...props} />;
 }
 
 function statusText(t: TFunction, state: SaveState): string | null {
@@ -260,6 +242,30 @@ export function Settings({
                 )}
               </fieldset>
             )}
+          </section>
+
+          {/* The phone's Settings → Features (#801): synced, so one switch per area here too. */}
+          <section className="card">
+            <h2>{t('settings.featuresTitle')}</h2>
+            <p className="muted">{t('settings.featuresIntro')}</p>
+            {FEATURE_IDS.map((id) => {
+              const key = FEATURE_SETTING_KEYS[id];
+              return (
+                <div key={id}>
+                  <label className="field check">
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      className="switch"
+                      checked={form[key]}
+                      onChange={(event) => edit({ [key]: event.target.checked })}
+                    />
+                    {t(`settings.feature.${id}`)}
+                  </label>
+                  <p className="muted">{t(`settings.featureHint.${id}`)}</p>
+                </div>
+              );
+            })}
           </section>
         </fieldset>
 

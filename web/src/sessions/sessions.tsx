@@ -1,15 +1,12 @@
 // Browse sessions: the logbook as a table, and one session — the phone's
 // Sessions list and session detail. Editing and deleting are in edit/.
-import {
-  categoryKey,
-  findEvent,
-  formatGroupAndClass,
-  programsForDiscipline,
-} from '@shotledger/shared/src/disciplines';
+import { categoryKey, findEvent, programsForDiscipline } from '@shotledger/shared/src/disciplines';
+import { localDayOf } from '@shotledger/shared/src/dates';
 import { tenthsToScore } from '@shotledger/shared/src/scoring/totals';
 import { partitionTags } from '@shotledger/shared/src/tags/machine-tag';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { TFunction } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatShotValue } from '../../../app/src/components/shot-value';
@@ -19,6 +16,12 @@ import {
   formatStation,
 } from '../../../app/src/features/session/format-falt-result';
 import { disciplineLabel, matchFormatLabel } from '../../../app/src/features/session/labels';
+import {
+  formatGroupAndClassWords,
+  typeShownBesideTags,
+  withoutDateSuffix,
+} from '../../../app/src/features/sessions/session-row-format';
+import { PageTitle } from '../shell/shell';
 import { SessionActions, type SessionWriter } from '../edit/delete';
 import type { PulledTables } from '../pull';
 import {
@@ -82,10 +85,17 @@ export function Sessions({
 }) {
   const sessions = useMemo(() => browseSessions(tables), [tables]);
   const owners = useMemo(() => photoOwners(sessions), [sessions]);
-  const picks = useMemo(() => ({ picked, setPicked: onPicked }), [picked, onPicked]);
+  // Target photos hidden (#801): no picking, and #compare shows the list, as
+  // the phone's Photos leaves Tools.
+  const { showPhotos } = useMemo(() => readAccountSettings(tables.settings), [tables]);
+  const picks = useMemo(
+    () => ({ picked, setPicked: onPicked, enabled: showPhotos }),
+    [picked, onPicked, showPhotos],
+  );
+  const comparing = compare && showPhotos;
 
   let view;
-  if (compare) view = <Compare owners={owners} />;
+  if (comparing) view = <Compare owners={owners} />;
   else if (sessionId === null) view = <SessionList sessions={sessions} />;
   else {
     view = (
@@ -107,7 +117,7 @@ export function Sessions({
         </div>
       )}
       {view}
-      {!compare && <PickBar />}
+      {!comparing && <PickBar />}
     </PicksProvider>
   );
 }
@@ -151,10 +161,18 @@ function SessionList({ sessions }: { sessions: BrowseSession[] }) {
               <tr key={session.id}>
                 <td className="nowrap">{showDate(session.startedAt)}</td>
                 <th scope="row">
-                  <a href={`#sessions/${encodeURIComponent(session.id)}`}>{session.name}</a>
-                  {session.type === 'competition' && (
-                    <span className="badge">{t('sessionType.competition')}</span>
-                  )}
+                  {/* The Date column prints the date, so a generated name
+                      drops its own (the phone's SessionRow, #822). */}
+                  <a href={`#sessions/${encodeURIComponent(session.id)}`}>
+                    {withoutDateSuffix(session.name, [
+                      showDate(session.startedAt),
+                      localDayOf(session.startedAt),
+                    ])}
+                  </a>
+                  {session.type === 'competition' &&
+                    typeShownBesideTags(session.type, session.tags) && (
+                      <span className="badge">{t('sessionType.competition')}</span>
+                    )}
                 </th>
                 <td className="optional">{disciplineCell(t, session)}</td>
                 <td className="optional">{session.location ?? ''}</td>
@@ -209,32 +227,50 @@ function SessionDetail({
     );
   }
 
+  // The phone's session detail (app/src/app/session/[id]/index.tsx): what the
+  // session was on one line, what it was shot with and under on the next.
   const event = session.eventId ? findEvent(session.eventId) : undefined;
   const meta = [
     showDate(session.startedAt),
-    t(`sessionType.${session.type}`),
+    typeShownBesideTags(session.type, session.tags) ? t(`sessionType.${session.type}`) : null,
+    disciplineLabel(t, session.disciplineId),
+  ].filter(Boolean);
+  const setup = [
     session.programId
       ? matchFormatLabel(t, session.programId, programsForDiscipline(session.disciplineId).length)
       : null,
-    formatGroupAndClass(session.weaponGroup, session.shooterClass),
+    formatGroupAndClassWords(t, session.weaponGroup, session.shooterClass),
     event ? t(`eventCategory.${categoryKey(event.category)}`) : null,
     session.competitionName,
   ].filter(Boolean);
 
   const facts: [string, string | null][] = [
-    [t('session.discipline'), disciplineLabel(t, session.disciplineId)],
     [t('session.location'), session.location],
     [t('session.firearm'), session.firearm],
     [t('session.ammoLot'), session.ammoLot],
   ];
   const tags = partitionTags(session.tags);
+  const details = (
+    <section className="card">
+      <dl className="counts">
+        {facts
+          .filter((fact): fact is [string, string] => Boolean(fact[1]))
+          .map(([label, value]) => (
+            <Fact key={label} label={label} value={value} />
+          ))}
+      </dl>
+      {session.notes && <p className="notes">{session.notes}</p>}
+    </section>
+  );
 
   return (
     <div className="session-detail">
       <BackLink />
+      {/* The name is the page's h1, in the shell; no second title under it. */}
+      <PageTitle title={session.name} />
       <header>
-        <h2>{session.name}</h2>
         <p className="muted">{meta.join(' · ')}</p>
+        {setup.length > 0 && <p className="muted">{setup.join(' · ')}</p>}
         <Tags names={[...tags.own, ...tags.machine]} />
         <PickAll photoIds={sessionPhotoIds(session)} />
         {writer && (
@@ -248,18 +284,12 @@ function SessionDetail({
         )}
       </header>
 
-      <section className="card">
-        <dl className="counts">
-          {facts
-            .filter((fact): fact is [string, string] => Boolean(fact[1]))
-            .map(([label, value]) => (
-              <Fact key={label} label={label} value={value} />
-            ))}
-        </dl>
-        {session.notes && <p className="notes">{session.notes}</p>}
-      </section>
-
-      {session.falt ? <FaltResult session={session} /> : <RingResult session={session} />}
+      {/* The result comes before the rest, as on the phone (#822). */}
+      {session.falt ? (
+        <FaltResult session={session} details={details} />
+      ) : (
+        <RingResult session={session} details={details} />
+      )}
     </div>
   );
 }
@@ -279,17 +309,23 @@ function ExtraRounds({ session }: { session: BrowseSession }) {
   return <Tile label={t('session.extraRounds')} value={String(session.extraRounds)} />;
 }
 
-function RingResult({ session }: { session: BrowseSession }) {
+/** `details` is the session's facts card, shown after the result and before the series. */
+function RingResult({ session, details }: { session: BrowseSession; details: ReactNode }) {
   const { t } = useTranslation();
   const score = (tenths: number) => String(tenthsToScore(tenths));
   const { results } = session;
 
   if (session.series.length === 0) {
-    return session.extraRounds ? (
-      <section className="card tiles">
-        <ExtraRounds session={session} />
-      </section>
-    ) : null;
+    return (
+      <>
+        {session.extraRounds ? (
+          <section className="card tiles">
+            <ExtraRounds session={session} />
+          </section>
+        ) : null}
+        {details}
+      </>
+    );
   }
 
   return (
@@ -324,6 +360,7 @@ function RingResult({ session }: { session: BrowseSession }) {
         />
         <ExtraRounds session={session} />
       </section>
+      {details}
 
       {seriesSections(session.series).map(({ title, series }) => (
         <SeriesList
@@ -385,14 +422,36 @@ function SeriesList({
   );
 }
 
-function FaltResult({ session }: { session: BrowseSession }) {
+function FaltResult({ session, details }: { session: BrowseSession; details: ReactNode }) {
   const { t } = useTranslation();
+  const falt = session.falt!;
+  // Hits and figures as two labelled values, as the phone's FaltStations
+  // shows them; poängfält and a round with no station yet keep one line.
+  const split = falt.mode !== 'poangfalt' && falt.hitsPossible > 0;
   return (
     <>
       <section className="card tiles">
-        <Tile label={t('session.total')} value={formatFaltResult(t, session.falt!)} />
+        {split ? (
+          <>
+            <Tile
+              label={t('station.hits')}
+              value={t('homeA.valueOf', { value: falt.hits, max: falt.hitsPossible })}
+            />
+            <Tile
+              label={t('station.figureCount')}
+              value={
+                falt.figureCount == null
+                  ? String(falt.figuresHit)
+                  : t('homeA.valueOf', { value: falt.figuresHit, max: falt.figureCount })
+              }
+            />
+          </>
+        ) : (
+          <Tile label={t('session.total')} value={formatFaltResult(t, falt)} />
+        )}
         <ExtraRounds session={session} />
       </section>
+      {details}
       {session.stations.length > 0 && (
         <section className="card">
           <ol className="series-list">

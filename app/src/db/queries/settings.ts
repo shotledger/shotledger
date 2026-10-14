@@ -51,6 +51,15 @@ export const SETTINGS_KEYS = {
   trackHandloads: 'trackHandloads',
   trackWeaponGroups: 'trackWeaponGroups',
   trackShooterClass: 'trackShooterClass',
+  // Settings → Features (#801). Each hides an optional area's ways in; the
+  // area's data stays. Synced (SYNCED_SETTING_KEYS); only `false` hides, so
+  // unset shows (shared/src/features/visibility.ts).
+  showLicenseActivity: 'showLicenseActivity',
+  showPhotos: 'showPhotos',
+  showTimer: 'showTimer',
+  showSightSettings: 'showSightSettings',
+  showAmmoLots: 'showAmmoLots',
+  showMaintenance: 'showMaintenance',
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

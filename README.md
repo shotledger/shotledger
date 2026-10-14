@@ -11,7 +11,7 @@ and Swedish license compliance (FAP 551-3). Works offline; no account
 required. Android first.
 
 **The manual** (English and Swedish) is at
-<https://jimisola.github.io/shotledger/>.
+<https://shotledger.github.io/shotledger/>.
 
 ## Features
 
@@ -56,7 +56,7 @@ now.
 
 Your logbook lives on your phone. No account is needed, and nothing leaves
 the phone unless you turn on a feature that sends it, such as sync. The
-manual's [Your data and privacy](https://jimisola.github.io/shotledger/reference/privacy/)
+manual's [Your data and privacy](https://shotledger.github.io/shotledger/reference/privacy/)
 lists each one. The app is free; donations unlock nothing.
 
 ## License

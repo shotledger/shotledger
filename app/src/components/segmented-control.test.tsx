@@ -76,4 +76,21 @@ describe('SegmentedControl', () => {
     if (typeof segment === 'string' || segment === undefined) return;
     expect(StyleSheet.flatten(segment.props.style).minHeight).toBe(48);
   });
+
+  it('puts each option testID on its own segment', async () => {
+    const onChange = jest.fn();
+    await renderWithProviders(
+      <SegmentedControl
+        options={[
+          { value: 'a', label: 'A', testID: 'opt-a' },
+          { value: 'b', label: 'B', testID: 'opt-b' },
+        ]}
+        value="a"
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByTestId('opt-a')).toBeSelected();
+    await fireEvent.press(screen.getByTestId('opt-b'));
+    expect(onChange).toHaveBeenCalledWith('b');
+  });
 });

@@ -7,4 +7,4 @@ export const SUPPORT_URL = 'https://shotledger.app/support';
 
 // Still a private repo — the link 404s for anyone but the maintainer until it
 // goes public.
-export const REPO_URL = 'https://github.com/jimisola/shotledger';
+export const REPO_URL = 'https://github.com/shotledger/shotledger';

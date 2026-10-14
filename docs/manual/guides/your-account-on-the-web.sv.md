@@ -10,7 +10,8 @@ bara det som telefonen själv kan ändra: ett pass du
 inställningarna nedan.
 
 Logga in med e-postadressen och lösenordet för ditt synkkonto och öppna sedan
-**Konto** i menyn till vänster. När du stänger fliken loggas du ut från den
+**Konto** i menyn: till vänster, eller längs nederkanten på en smal skärm, som
+telefonens flikar. När du stänger fliken loggas du ut från den
 här webbläsaren och ingenting lämnas kvar: inloggningen finns bara i den
 fliken, utan någon kaka. Servern avslutar den 12 timmar efter att du loggade
 in, eller direkt när du använder **Logga ut**; en flik som fortfarande är öppen
@@ -19,12 +20,14 @@ då ber dig logga in igen.
 ## Pass
 
 **Pass** i menyn listar alla synkade pass, det senaste först, med datum, gren
-och matchformat, plats, resultat och taggar. På en smal skärm utelämnas gren,
-plats och taggar.
+och matchformat, plats, resultat och taggar. Ett namn som appen hittat på
+("Precision — 2026-09-23") visas utan sitt datum, som Datum-kolumnen redan ger.
+På en smal skärm utelämnas gren, plats och taggar.
 
-Öppna ett pass genom dess namn för att läsa det: serier och skott, summorna,
-anteckningar, vapen, ammunitionsparti och taggar, eller stationerna för ett
-fältpass. Ingenting kan ändras där.
+Öppna ett pass genom dess namn för att läsa det, i samma ordning som i
+telefonen: namnet som sidans rubrik, vad passet var och vad det sköts med,
+sedan resultatet, sedan vapen, ammunitionsparti, plats och anteckningar, sedan
+serier och skott, eller för ett fältpass träff, figurer och stationer.
 
 ### Tavelfoton
 
@@ -54,6 +57,8 @@ mellan enheter, samma som på telefonen:
   visar sidan det som räknats fram från dina vapen, som telefonen gör. Har
   du inte valt någon profil än är ingen markerad, och telefonen använder den
   som hör till dess språk; välj en här för att spara den för alla enheter.
+- **Funktioner**: vilka delar av appen du visar (telefonens Inställningar →
+  Funktioner, se [Dölja funktioner du inte använder](hiding-features.md)).
 
 Ändra det du behöver och tryck på **Spara**. Ändrar du ett födelseår som
 redan var satt får du bekräfta först, som på telefonen. Telefonerna får

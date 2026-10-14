@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
-import { Chip } from '@/components/chip';
+import { ChoiceChips } from '@/components/choice-chips';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { TextField } from '@/components/text-field';
@@ -72,28 +72,28 @@ export default function PhotosScreen() {
     const selected = facets[facet] ?? null;
     return (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-        <Pressable
-          onPress={() => setFacets((current) => ({ ...current, [facet]: null }))}
-          testID={`photos-${facet}-all`}
-        >
-          <Chip label={t('photos.allOf')} tone={selected === null ? 'primary' : 'neutral'} />
-        </Pressable>
-        {values.map((value) => (
-          <Pressable
-            key={value}
-            onPress={() =>
-              setFacets((current) => ({
-                ...current,
-                // Tapping the active chip clears it, so a filter can be undone
-                // without hunting for the "all" chip.
-                [facet]: current[facet] === value ? null : value,
-              }))
-            }
-            testID={`photos-${facet}-${value}`}
-          >
-            <Chip label={label(value)} tone={selected === value ? 'primary' : 'neutral'} />
-          </Pressable>
-        ))}
+        {/* Choice Chips, the one control for picking among many (#822). */}
+        <ChoiceChips
+          options={[
+            { value: ALL, label: t('photos.allOf'), testID: `photos-${facet}-all` },
+            ...values.map((value) => ({
+              value,
+              label: label(value),
+              testID: `photos-${facet}-${value}`,
+            })),
+          ]}
+          value={[selected ?? ALL]}
+          onChange={([tapped]) =>
+            setFacets((current) => ({
+              ...current,
+              // Tapping the active chip clears it, so a filter can be undone
+              // without hunting for the "all" chip.
+              [facet]:
+                tapped === undefined || tapped === ALL || current[facet] === tapped ? null : tapped,
+            }))
+          }
+          style={styles.chips}
+        />
       </ScrollView>
     );
   }
@@ -193,9 +193,14 @@ export default function PhotosScreen() {
 
 const TILE = '31%';
 
+/** The "All" chip's value: not a value any facet can hold. */
+const ALL = '\u0000all';
+
 const styles = StyleSheet.create({
   content: { paddingBottom: Spacing.six, gap: Spacing.three },
   filterRow: { flexGrow: 0 },
+  // One scrolling line, as before, rather than a wrapping block.
+  chips: { flexWrap: 'nowrap' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   tile: { width: TILE, gap: Spacing.one },
   thumb: { width: '100%', aspectRatio: 1, borderRadius: Radius.medium },

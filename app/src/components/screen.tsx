@@ -183,13 +183,18 @@ export function Screen({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
+  // Content starts a step below the header (or the status bar on a tab), so
+  // the first card never sits flush against it now the title lives in the
+  // header (#822).
   scrollContent: {
     flexGrow: 1,
+    paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.four,
     alignItems: 'center',
   },
   plainContent: {
     flex: 1,
+    paddingTop: Spacing.three,
     alignItems: 'center',
   },
   // The footer already sits above the system bar; the scroll view needs no tab gap.

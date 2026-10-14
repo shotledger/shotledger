@@ -7,7 +7,7 @@ below is one-time setup the maintainer has to do before the first upload.
 ## (a) One-time setup (maintainer only)
 
 - [ ] **Google Play developer account.** VERIFY which account type
-      (tracked in issue [#354](https://github.com/jimisola/shotledger/issues/354), not yet decided):
+      (tracked in issue [#354](https://github.com/shotledger/shotledger/issues/354), not yet decided):
   - _Personal account_: $25 one-time fee. Play Console requires
     **12 testers opted into closed testing for 14 continuous days**
     before an app can go to production — this gate has to be planned
@@ -144,7 +144,7 @@ One-time, before the first release:
       exists, but a private repo on GitHub Free cannot give it a required
       reviewer (the API answers 422, "ensure the billing plan supports the
       required reviewers protection rule"). Until the repo is public or on
-      Pro ([#100](https://github.com/jimisola/shotledger/issues/100)), what
+      Pro ([#100](https://github.com/shotledger/shotledger/issues/100)), what
       stands between a dispatch and a release is the `dry-run` default and
       that only the maintainer can run the workflow. Then add the maintainer
       as required reviewer under Settings → Environments → `release`.
@@ -364,7 +364,7 @@ Known risks:
 
 ## Repo configuration
 
-`github.com/jimisola/shotledger`, private. Modeled on the skillsgateway
+`github.com/shotledger/shotledger`, private. Modeled on the skillsgateway
 org, applied via API (2026-09-01): squash-merge only with `PR_TITLE`
 title + `COMMIT_MESSAGES` body (keeps DCO trailers on `main` through
 squashes), delete-branch-on-merge, allow-update-branch, web commit

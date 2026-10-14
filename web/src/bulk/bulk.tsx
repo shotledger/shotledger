@@ -5,6 +5,7 @@
 // says messages.ts; this file only renders and wires.
 import { rankRecentLocations } from '@shotledger/shared/src/locations/recent-locations';
 import { TEXT_LIMITS } from '@shotledger/shared/src/sync';
+import { readAccountSettings } from '@shotledger/shared/src/sync-client/account-settings';
 import type { BulkAction } from '@shotledger/shared/src/sync-client/bulk-edit';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -71,6 +72,9 @@ export function BulkEdit({
   }, [applying]);
 
   const rows = useMemo(() => bulkRows(tables), [tables]);
+  // Ammunition lots hidden (#801): no merging, as on the phone, whose merge
+  // is on the lot's own screen.
+  const { showAmmoLots } = useMemo(() => readAccountSettings(tables.settings), [tables]);
   const shown = useMemo(() => filterRows(rows, filter), [rows, filter]);
   const targets = targetIds(selected, shown);
   const tagsOnTargets = tagNamesOn(rows, targets);
@@ -388,12 +392,14 @@ export function BulkEdit({
           </div>
         )}
       </section>
-      <MergeLots
-        tables={tables}
-        refresh={refresh}
-        online={online}
-        onReauthenticated={onReauthenticated}
-      />
+      {showAmmoLots && (
+        <MergeLots
+          tables={tables}
+          refresh={refresh}
+          online={online}
+          onReauthenticated={onReauthenticated}
+        />
+      )}
     </fieldset>
   );
 }

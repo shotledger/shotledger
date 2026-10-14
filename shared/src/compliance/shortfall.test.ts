@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { computeFirearmCriterion } from './firearm-criteria';
 import { computeRuleLicenseActivity } from './license-activity';
+import { localDayStart } from './months';
 import { getProfile } from './profile-registry';
 import { SE_CRITERION_ADDITIONAL_HANDGUN, SE_CRITERION_RENEWAL } from './profiles/se';
 import { computeFirearmCriterionShortfall, ruleShortfall } from './shortfall';
@@ -16,6 +17,14 @@ import type {
 } from './types';
 
 const NOW = new Date('2026-10-13T12:00:00Z');
+
+/**
+ * Local midnight starting the given day, as ISO: windows count whole local
+ * days (#816). Vitest runs in Europe/Stockholm.
+ */
+function lm(y: number, m: number, d: number): string {
+  return new Date(y, m - 1, d).toISOString();
+}
 const GUN = 'firearm-1';
 
 const firearm: FirearmFact = {
@@ -129,28 +138,30 @@ describe('computeFirearmCriterionShortfall', () => {
       recentNeeded: 0,
       olderPeriods: [
         {
-          startIso: '2024-10-13T12:00:00.000Z',
-          endIso: '2025-10-13T12:00:00.000Z',
+          startIso: lm(2024, 10, 13),
+          endIso: lm(2025, 10, 12),
           activityCount: 1,
           needed: 3,
         },
       ],
-      metFromIso: '2027-01-01T00:00:00.001Z',
+      // On 2027-01-02 the older year is 2025-01-02 to 2026-01-01: four.
+      metFromIso: lm(2027, 1, 2),
     });
   });
 
-  it('S7: with nothing logged, the older year can only fill once it ends after now', () => {
+  it('S7: with nothing logged, the older year can only fill once it ends today or later', () => {
     expect(computeFirearmCriterionShortfall([], renewalRule(), firearm, NOW)).toEqual({
       recentNeeded: 4,
       olderPeriods: [
         {
-          startIso: '2024-10-13T12:00:00.000Z',
-          endIso: '2025-10-13T12:00:00.000Z',
+          startIso: lm(2024, 10, 13),
+          endIso: lm(2025, 10, 12),
           activityCount: 0,
           needed: 4,
         },
       ],
-      metFromIso: '2027-10-13T12:00:00.001Z',
+      // From 2027-10-14 the older year's last day is today, 2026-10-13.
+      metFromIso: lm(2027, 10, 14),
     });
   });
 
@@ -229,20 +240,23 @@ it('Q1-Q3: the shortfall agrees with computeFirearmCriterion', () => {
         if (period.met) return;
         const startMs = Date.parse(period.startIso);
         const ms = Math.max(now.getTime(), startMs);
-        // The newest window is closed at t; older ones end just before their end.
-        expect(n === 0 || ms < Date.parse(period.endIso)).toBe(true);
+        // Every window ends on its own last day, which is today or later.
+        expect(localDayStart(new Date(ms)).getTime()).toBeLessThanOrEqual(
+          Date.parse(period.endIso),
+        );
         for (let k = 0; k < rule.requiredActivities; k += 1) {
           added.push(at(new Date(ms).toISOString(), { id: `added-${n}-${k}` }));
         }
       });
       expect(computeFirearmCriterion([...sessions, ...added], rule, firearm, t).met).toBe(true);
 
-      // Q2: a moment earlier, some short window had already ended by now.
+      // Q2: the day before, some short window had already ended before today.
       if (t.getTime() > now.getTime()) {
+        const today = localDayStart(now).getTime();
         const before = computeFirearmCriterion(sessions, rule, firearm, new Date(t.getTime() - 1));
         expect(
           before.periods.some(
-            (period, n) => n > 0 && !period.met && Date.parse(period.endIso) <= now.getTime(),
+            (period, n) => n > 0 && !period.met && Date.parse(period.endIso) < today,
           ),
         ).toBe(true);
       }
@@ -262,13 +276,16 @@ it('says what a renewal that is not met still needs, and from when it can be met
   expect(result.recentNeeded).toBe(3);
   expect(result.olderPeriods).toHaveLength(1);
   expect(result.olderPeriods[0]!.needed).toBe(4);
-  // The older year ends after now only from 2027-10-13 on.
-  expect(result.metFromIso).toBe('2027-10-13T12:00:00.001Z');
+  // The older year ends today or later only from 2027-10-14 on.
+  expect(result.metFromIso).toBe(lm(2027, 10, 14));
 });
 
-it('S7: a window ending exactly at now cannot take a session logged now', () => {
-  const midnight = new Date('2026-10-13T00:00:00Z');
-  expect(computeFirearmCriterionShortfall([], renewalRule(), firearm, midnight).metFromIso).toBe(
-    '2027-10-13T00:00:00.001Z',
-  );
+it('S7: the time of day does not move it', () => {
+  const early = new Date(2026, 9, 13, 0, 0);
+  const late = new Date(2026, 9, 13, 23, 59, 59, 999);
+  for (const now of [early, late]) {
+    expect(computeFirearmCriterionShortfall([], renewalRule(), firearm, now).metFromIso).toBe(
+      lm(2027, 10, 14),
+    );
+  }
 });

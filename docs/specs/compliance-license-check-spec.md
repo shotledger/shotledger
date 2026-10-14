@@ -1,10 +1,15 @@
 # License check: met or not, and what is still needed — executable spec
 
 Scope: `shared/src/compliance/**` (old-coder mandatory per CLAUDE.md) and a new
-phone screen. Issue [#804](https://github.com/jimisola/shotledger/issues/804).
+phone screen. Issue [#804](https://github.com/shotledger/shotledger/issues/804).
 Builds on [`compliance-next-session-spec.md`](compliance-next-session-spec.md)
 (#795), whose lapse it reuses, and on the specs that one builds on. The source,
 the numbers and the windows are unchanged.
+
+**Amended by [`compliance-local-days-spec.md`](compliance-local-days-spec.md)
+(#816):** windows count whole local days, so the lapse and the first day a
+criterion can be met are local midnights, and a period's end is its last day.
+The scan below is replaced by a day-by-day one.
 
 **Spec approval: approved** by the maintainer on 2026-10-13.
 

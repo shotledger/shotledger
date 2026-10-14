@@ -19,6 +19,7 @@ function row(overrides: Partial<SessionListRow> = {}): SessionListRow {
     tags: [],
     falt: null,
     shape: 'series',
+    extraRounds: null,
     disciplineId: 'spsf-precision',
     firearmId: 'f1',
     ...overrides,
@@ -30,6 +31,22 @@ function filter(overrides: Partial<SessionListFilter> = {}): SessionListFilter {
 }
 
 describe('filterSessionRows', () => {
+  it('filters by how the session was logged', () => {
+    const rows = [
+      row({ id: 'scored' }),
+      row({ id: 'rounds', shape: 'roundsOnly', extraRounds: 50 }),
+      row({ id: 'empty', shape: null }),
+    ];
+    expect(filterSessionRows(rows, filter({ shape: 'series' })).map((r) => r.id)).toEqual([
+      'scored',
+    ]);
+    expect(filterSessionRows(rows, filter({ shape: 'roundsOnly' })).map((r) => r.id)).toEqual([
+      'rounds',
+    ]);
+    expect(filterSessionRows(rows, filter())).toHaveLength(3);
+    expect(isFilterActive(filter({ shape: 'roundsOnly' }))).toBe(true);
+  });
+
   it('F1: the empty filter returns every row', () => {
     const rows = [row({ id: 'a' }), row({ id: 'b', type: 'competition' })];
     expect(filterSessionRows(rows, EMPTY_SESSION_FILTER)).toHaveLength(2);
