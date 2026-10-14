@@ -94,6 +94,11 @@ scores against official results.
     "Competitions" is one word with nowhere to break, so once it does not fit,
     wrapping has to split it mid-word. It is a fix in a handful of shared
     components every screen inherits, not a per-screen design burden.
+    `StatTile`'s caption is the one refinement (#823): it may wrap, but only
+    between words; a single word wider than the tile shrinks instead (to 75%),
+    so "Shots Logged" becomes two lines rather than "Shots Log…". Only past that
+    minimum may a word break, as a last resort over truncating. Its value stays
+    one line, shrunk to fit.
 - **Inline help** (2026-09-09, narrowed 2026-09-15 on #138): a warning, or
   anything that changes what the user is about to do — data leaving the
   device, an irreversible or retroactive choice, what an off-by-default
