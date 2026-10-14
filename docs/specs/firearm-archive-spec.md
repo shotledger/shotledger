@@ -33,6 +33,7 @@ everything it owns stays. Tests: `app/src/db/queries/firearm-archive.test.ts`
 | New session, WebShooter import, web entry and bulk pickers | Not offered (L1)                      |
 | Session edit, phone and web                                | Offered only to its own sessions      |
 | Default firearm for a weapon group                         | Never proposed (P1)                   |
+| License Check screen (#815)                                | Not listed                            |
 | Firearm detail                                             | Opens; Archived card with **Restore** |
 | Session list filter, statistics, export, import matching   | Unchanged: history (L1, L2, H1)       |
 | Maintenance-due notification                               | Silent (N1)                           |
