@@ -30,6 +30,12 @@ export interface StatsSeries {
   ammoLotId?: string | null;
   isSighter: boolean;
   isFinal: boolean;
+  /**
+   * A särskjutning series: outside every score statistic in every scope,
+   * sighters included or not; its shots still count as volume (spec
+   * shoot-off-and-ten-counts-727 S2/S3). Absent = false.
+   */
+  isShootOff?: boolean;
   shots: readonly StatsShot[];
   /**
    * Webshooter series-level-total granularity (spec Amendment WS1,
@@ -107,12 +113,17 @@ export interface SighterScope {
   includeSighters?: boolean;
 }
 
-/** The series a score statistic is computed over, per `scope`. */
+/**
+ * The series a score statistic is computed over, per `scope`. A shoot-off
+ * series is left out whatever the scope (S2).
+ */
 export function scoredSeries(
   seriesList: readonly StatsSeries[],
   scope: SighterScope = {},
 ): StatsSeries[] {
-  return scope.includeSighters ? [...seriesList] : seriesList.filter((series) => !series.isSighter);
+  return seriesList.filter(
+    (series) => series.isShootOff !== true && (scope.includeSighters || !series.isSighter),
+  );
 }
 
 /** The pooled shots of `scoredSeries` — the input to session/period score means. */
@@ -250,7 +261,7 @@ export interface GoldSeriesCountOptions {
  * Takes no `SighterScope` because a **sighter always counts towards a
  * guldserie** (maintainer, 2026-09-17): a 50 on a provserie earns the märke
  * like any other series, in or out of a session, whatever the Statistics
- * tab's filter says.
+ * tab's filter says. A shoot-off series never counts (S2).
  */
 export function goldSeriesCount(
   seriesList: readonly StatsSeries[],
@@ -258,6 +269,7 @@ export function goldSeriesCount(
 ): number {
   let count = 0;
   for (const series of seriesList) {
+    if (series.isShootOff === true) continue;
     const year = new Date(series.startedAt).getUTCFullYear();
     const threshold = goldSeriesThreshold({
       weaponGroup: series.weaponGroup,

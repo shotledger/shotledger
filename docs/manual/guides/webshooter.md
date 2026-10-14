@@ -65,8 +65,8 @@ entry and nothing to import, so those are not offered.
 Precision and milsnabb come in as one total per series; Webshooter does not
 keep the individual shots. Each series still counts its shots as fired — in
 Shots Logged, the ammunition lot and the firearm's round counter. A särskjutning
-series is marked **Shoot-off** and, for now, counts towards the session total
-like any other series, so the total can be higher than your official result. Fältskjutning and poängfält come in **station by
+series is marked **Shoot-off** and shown in its own section, outside the
+session total, as in your official result. Fältskjutning and poängfält come in **station by
 station** — hits, figures hit and any poängmål points, with shoot-off stations
 kept but left out of the total — and show as the result mode the competition
 used. A fält result whose station numbers could not have happened, such as

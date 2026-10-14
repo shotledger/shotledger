@@ -52,6 +52,7 @@ export function buildSessionShareCardModel(
     series: detail.seriesRows.map((row) => ({
       position: row.position,
       isSighter: row.isSighter,
+      isShootOff: row.isShootOff,
       totalLabel: formatTotalScore(row.totalTenths, { mode: detail.scoringMode }),
       xCount: row.isTotalOverride ? 0 : xCountOf(row.shots),
     })),

@@ -435,8 +435,6 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
       type: 'training',
       disciplineId: 'precision',
       startedAt: '2026-08-22T09:00:00.000Z',
-      tenCount: 11,
-      innerTenCount: 4,
       externalSource: 'shotlog',
       externalRef: '00000000deadbeef',
     });
@@ -466,8 +464,6 @@ describe('kind, ten counts and external refs survive export, wipe and import (#7
         id: sessions.id,
         kind: sessions.kind,
         extraRounds: sessions.extraRounds,
-        tenCount: sessions.tenCount,
-        innerTenCount: sessions.innerTenCount,
         externalSource: sessions.externalSource,
         externalRef: sessions.externalRef,
         officialPlacement: sessions.officialPlacement,

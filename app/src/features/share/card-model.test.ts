@@ -28,6 +28,21 @@ describe('buildSessionShareCard', () => {
     ]);
   });
 
+  it('drops shoot-off series from the list: neither is part of the score (#727 PR C, S2)', () => {
+    const model = buildSessionShareCard({
+      ...base,
+      series: [
+        { position: 1, isSighter: false, isShootOff: false, totalLabel: '48', xCount: 1 },
+        { position: 2, isSighter: false, isShootOff: true, totalLabel: '50', xCount: 5 },
+        { position: 3, isSighter: false, totalLabel: '47', xCount: 0 },
+      ],
+    });
+    expect(model.series).toEqual([
+      { position: 1, totalLabel: '48', xCount: 1 },
+      { position: 3, totalLabel: '47', xCount: 0 },
+    ]);
+  });
+
   it('normalizes a blank or whitespace-only note to null', () => {
     expect(buildSessionShareCard({ ...base, series: [], note: null }).note).toBeNull();
     expect(buildSessionShareCard({ ...base, series: [], note: '' }).note).toBeNull();

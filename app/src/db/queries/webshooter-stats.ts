@@ -6,6 +6,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { CompetitionResultForStats } from '@shotledger/shared/src/integrations/webshooter/stats/pb';
 import {
+  isScoringSeries,
   seriesStage,
   sessionInnerTenCount,
   sessionResults,
@@ -62,6 +63,7 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
       return {
         isSighter: row.isSighter === 1,
         isFinal: row.isFinal === 1,
+        isShootOff: row.isShootOff === 1,
         shots: seriesShots,
         totalOverride: isOverride
           ? { tenths: row.totalOverrideTenths!, shotCount: row.totalOverrideShotCount! }
@@ -70,12 +72,15 @@ export function listCompetitionResultsForStats(db: Database): CompetitionResultF
     });
 
     const scored = sessionResults(forResults);
-    const beforeFinalSeriesCount = seriesRows.filter((r) => !r.isFinal && r.isSighter === 0).length;
-    const totalSeriesCount = seriesRows.filter((r) => r.isSighter === 0).length;
+    // A shoot-off series is part of no count or score (#727 PR C, S2).
+    const counted = forResults.filter(isScoringSeries);
+    const beforeFinalSeriesCount = counted.filter((r) => !r.isFinal).length;
+    const totalSeriesCount = counted.length;
     const innerTens = sessionInnerTenCount(
       seriesRows.map((row) => ({
         isSighter: row.isSighter === 1,
         isFinal: row.isFinal === 1,
+        isShootOff: row.isShootOff === 1,
         shots: [],
       })),
     );
@@ -128,6 +133,7 @@ export function listFreeformSessionsForPb(db: Database): FreeformSessionRow[] {
           isNull(series.deletedAt),
           eq(series.isSighter, 0),
           eq(series.isFinal, 0),
+          eq(series.isShootOff, 0),
         ),
       )
       .all();

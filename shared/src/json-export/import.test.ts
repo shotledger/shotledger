@@ -40,8 +40,6 @@ function session(overrides: Partial<SessionExport> = {}): SessionExport {
     faltResultMode: null,
     stations: [],
     kind: 'series',
-    tenCount: null,
-    innerTenCount: null,
     externalSource: null,
     externalRef: null,
     officialPlacement: null,
@@ -521,11 +519,9 @@ describe('importSessionsFromJson — isShootOff (#727)', () => {
   });
 });
 
-describe('importSessionsFromJson — kind, ten counts and external refs (#756)', () => {
+describe('importSessionsFromJson — kind and external refs (#756)', () => {
   const ADDED = [
     'kind',
-    'tenCount',
-    'innerTenCount',
     'externalSource',
     'externalRef',
     'officialPlacement',
@@ -537,8 +533,6 @@ describe('importSessionsFromJson — kind, ten counts and external refs (#756)',
       session({ id: 'rounds', kind: 'rounds', extraRounds: 50 }),
       session({
         id: 'shotlog',
-        tenCount: 12,
-        innerTenCount: 4,
         externalSource: 'shotlog',
         externalRef: '00000000deadbeef',
       }),
@@ -566,10 +560,15 @@ describe('importSessionsFromJson — kind, ten counts and external refs (#756)',
     expect(result.sessions).toEqual([session()]);
   });
 
+  it('ignores the tenCount and innerTenCount an older file carries (#727)', () => {
+    const older = { ...session(), tenCount: 12, innerTenCount: 4 };
+    const result = importSessionsFromJson(exportSessionsToJson([older], OPTIONS)) as ImportResult;
+    expect(result.errors).toEqual([]);
+    expect(result.sessions).toEqual([session()]);
+  });
+
   it.each([
     ['kind', 'both'],
-    ['tenCount', -1],
-    ['innerTenCount', 1.5],
     ['officialPlacement', -1],
     ['officialStandardMedal', 'gold'],
     ['externalRef', 7],

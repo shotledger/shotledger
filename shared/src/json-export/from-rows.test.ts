@@ -97,8 +97,6 @@ describe('sessionExportsFromRows', () => {
       faltResultMode: 'poangfalt',
       type: 'competition',
       kind: 'rounds',
-      tenCount: 9,
-      innerTenCount: 3,
       externalSource: 'webshooter',
       externalRef: 'webshooter:1:2',
       officialPlacement: 4,
@@ -131,8 +129,6 @@ describe('sessionExportsFromRows', () => {
         faltResultMode: 'poangfalt',
         stations: [],
         kind: 'rounds',
-        tenCount: 9,
-        innerTenCount: 3,
         externalSource: 'webshooter',
         externalRef: 'webshooter:1:2',
         officialPlacement: 4,
@@ -145,8 +141,6 @@ describe('sessionExportsFromRows', () => {
     const [exported] = sessionExportsFromRows({ ...empty, sessions: [session()] });
     expect(exported).toMatchObject({
       kind: 'series',
-      tenCount: null,
-      innerTenCount: null,
       externalSource: null,
       externalRef: null,
       officialPlacement: null,

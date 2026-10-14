@@ -12,7 +12,7 @@ import { listFirearms } from './queries/firearms';
 import { latestLicense } from './queries/licenses';
 import { listSessions, sumExtraRounds } from './queries/sessions';
 import { listTags } from './queries/tags';
-import { faltStations, shots } from './schema';
+import { faltStations, series, shots } from './schema';
 import { seedDemoData, wipeDemoData } from './seed';
 import { createTestDb } from './test-db';
 import type { Database } from './types';
@@ -152,6 +152,15 @@ describe('seedDemoData', () => {
     expect(sessions.some((s) => s.type === 'training')).toBe(true);
     expect(sessions.some((s) => s.disciplineId === 'spsf-milsnabb')).toBe(true);
     expect(sessions.some((s) => s.isChampionship === 1)).toBe(true);
+  });
+
+  it('gives the championship a shoot-off after its final (#727)', () => {
+    seedDemoData(db);
+    const championship = listSessions(db).find((s) => s.isChampionship === 1)!;
+    const rows = db.select().from(series).all();
+    const own = rows.filter((row) => row.sessionId === championship.id);
+    expect(own.filter((row) => row.isShootOff === 1).map((row) => row.position)).toEqual([13]);
+    expect(rows.filter((row) => row.isShootOff === 1)).toHaveLength(1);
   });
 
   it('exercises every firearm and every ammo lot', () => {

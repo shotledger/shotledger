@@ -110,8 +110,6 @@ Ett pass, en räknande serie om tre skott:
       "startedAt": "2026-09-12T17:00:00.000Z",
       "location": "Malmö Skyttegille",
       "notes": null,
-      "tenCount": null,
-      "innerTenCount": null,
       "decimalScoring": false,
       "seriesLength": null,
       "extraRounds": null,
@@ -196,7 +194,7 @@ Ett pass, en räknande serie om tre skott:
 | `valueTenths`                                | Skottets värde i **tiondelar**, så en tia är `100` och en decimaltia 10,9 är `109`. Heltal rakt igenom — inga flyttal i ett resultat.                                                                                                                           |
 | `isInnerTen`                                 | Om skottet var en innertia. Skilt från värdet, eftersom en innertia ger samma poäng som en tia.                                                                                                                                                                 |
 | `isSighter`                                  | En provserie. Den bär inga skott här och räknas inte mot någon total.                                                                                                                                                                                           |
-| `isShootOff`                                 | En särskjutningsserie från en import från Webshooter, skjuten för att skilja lika resultat. Den räknas ändå mot totalen. En fil utan fältet läses som `false`.                                                                                                  |
+| `isShootOff`                                 | En särskjutningsserie från en import från Webshooter, skjuten för att skilja lika resultat. Den räknas aldrig mot totalen. En fil utan fältet läses som `false`.                                                                                                |
 | `totalOverride`                              | En serie som bara sparats som en total, så som en import från Webshooter eller ShotLog ger den: `tenths` är totalen, `shotCount` antalet skott bakom den eller `null` när inget angavs. Dess `shots` är då tom. `null` på en serie som räknats skott för skott. |
 | `weaponGroup`                                | Det förbundsprefixade id:t, t.ex. `spsf:C`. Se [Vapengrupp och klass](../reference/weapon-group-and-class.md).                                                                                                                                                  |
 | `eventId`                                    | ISSF-grenen, t.ex. `issf-air-pistol:women:open`. `null` för ett SPSF-pass, som bär en klass i stället.                                                                                                                                                          |
@@ -206,7 +204,6 @@ Ett pass, en räknande serie om tre skott:
 | `stations`                                   | Ett fältskjutningspass stationer: träffar, träffade figurer, stationens antal figurer, eventuella poängmålspoäng och deras max, och om stationen struks eller sköts som särskjutning. Tom på alla andra pass.                                                   |
 | `faltResultMode`                             | `falt` eller `poangfalt` — hur fältomgången redovisas. `null` på alla andra pass.                                                                                                                                                                               |
 | `kind`                                       | `series` för ett pass som loggas i räknade serier, `rounds` för ett som bara anger ett antal avlossade skott, i `extraRounds`. En fil utan fältet läses som `series`.                                                                                           |
-| `tenCount`, `innerTenCount`                  | Tior och innertior som sparats på själva passet, för ett pass utan skott att räkna dem från (en ShotLog-import). Annars `null`.                                                                                                                                 |
 | `externalSource`, `externalRef`              | Var ett importerat pass kom ifrån (`webshooter`, `shotlog`) och källans egen nyckel för det, utan källan framför (`363:35937`). En senare import från samma källa matchar på paret. `null` på ett pass som loggats i appen.                                     |
 | `officialPlacement`, `officialStandardMedal` | Placering och standardmedalj ur de officiella resultaten, så som en import från WebShooter förde in dem. `null` när det inte finns några.                                                                                                                       |
 

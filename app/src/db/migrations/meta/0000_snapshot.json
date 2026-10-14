@@ -1176,20 +1176,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "ten_count": {
-          "name": "ten_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "inner_ten_count": {
-          "name": "inner_ten_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "decimal_scoring": {
           "name": "decimal_scoring",
           "type": "integer",

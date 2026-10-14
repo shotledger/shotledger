@@ -51,7 +51,9 @@ använd **Rensa alla** i bladet. Rensningen lämnar perioden som den är.
 Antalet pass är varje pass filtret träffade, även ett pass du loggat som
 antal skott utan serier. De skotten finns med i totalerna också. Ett
 fältpass stationer räknas som sex skott var, även strukna stationer och
-särskjutningsstationer, eftersom de skotten avlossades.
+särskjutningsstationer, eftersom de skotten avlossades. Ett ringpass
+särskjutningsserier räknas på samma sätt med i de avlossade skotten, och i
+inget resultat.
 
 Filtren ligger kvar som du lämnade dem medan du rör dig i appen. Kommer du
 tillbaka till fliken börjar den från toppen igen.

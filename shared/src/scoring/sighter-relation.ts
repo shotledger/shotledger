@@ -40,7 +40,9 @@ export function sighterRelation(series: readonly AnalyticsSeries[]): SighterRela
   const byDiscipline = new Map<string, SighterResultPoint[]>();
   for (const [sessionId, sessionSeries] of bySession) {
     const sighter = meanShot(sessionSeries.filter((s) => s.isSighter));
-    const result = meanShot(sessionSeries.filter((s) => !s.isSighter && !s.isFinal));
+    const result = meanShot(
+      sessionSeries.filter((s) => !s.isSighter && !s.isFinal && s.isShootOff !== true),
+    );
     if (sighter === null || result === null) continue;
     const first = sessionSeries[0]!;
     const point = {

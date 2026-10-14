@@ -30,8 +30,6 @@ export interface ExportSessionRow {
   readonly extraRounds: number | null;
   readonly faltResultMode: SessionExport['faltResultMode'] | undefined;
   readonly kind?: SessionExport['kind'];
-  readonly tenCount?: number | null;
-  readonly innerTenCount?: number | null;
   readonly externalSource?: string | null;
   readonly externalRef?: string | null;
   readonly officialPlacement?: number | null;
@@ -157,8 +155,6 @@ export function sessionExportsFromRows(rows: SessionExportRows): SessionExport[]
         startedAt: session.startedAt,
         location: session.location,
         notes: session.notes,
-        tenCount: session.tenCount ?? null,
-        innerTenCount: session.innerTenCount ?? null,
         decimalScoring: Boolean(session.decimalScoring),
         seriesLength: session.seriesLength,
         extraRounds: session.extraRounds,

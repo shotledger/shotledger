@@ -4,7 +4,7 @@
 // series, start final. Swipe a series row left to delete it (§4 fix batch,
 // 2026-09-03).
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, Swipeable } from 'react-native-gesture-handler';
@@ -14,9 +14,12 @@ import {
   findEvent,
   MIN_SHOTS_FOR_HEATMAP,
   programsForDiscipline,
+  SERIES_SECTION_ORDER,
+  seriesSectionOf,
   seriesTargetFace,
   tenthsToScore,
   getDiscipline,
+  type SeriesSectionKey,
 } from '@shotledger/shared';
 
 import { FaltStations } from '@/features/session/falt-stations';
@@ -87,6 +90,13 @@ interface EntryTarget {
 /** The Group view's canvas: square, the size the plot and heat map are drawn at. */
 const GROUP_PLOT_SIZE = 300;
 
+/** The heading of each series section. */
+const SECTION_TITLE: Record<SeriesSectionKey, string> = {
+  main: 'session.mainSection',
+  final: 'session.finalSection',
+  shootOff: 'session.shootOff',
+};
+
 export default function SessionDetailScreen() {
   const { t } = useTranslation();
   const dates = useDateFormat();
@@ -102,7 +112,7 @@ export default function SessionDetailScreen() {
   const [entryChoiceOpen, setEntryChoiceOpen] = useState(false);
   const [entryTarget, setEntryTarget] = useState<EntryTarget | null>(null);
   const [plotMode, setPlotMode] = useState<'plot' | 'heatmap'>('plot');
-  const [dragging, setDragging] = useState<{ id: string; isFinal: boolean } | null>(null);
+  const [dragging, setDragging] = useState<{ id: string; section: SeriesSectionKey } | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   // Measured per row, in state rather than a ref: the rows are not a fixed
   // height (a series with wrapped shot chips is taller), so the drop index
@@ -231,8 +241,11 @@ export default function SessionDetailScreen() {
   // them wholesale (#315).
   const isFaltSession = getDiscipline(session.disciplineId)?.scoring === 'hits';
 
-  const mainRows = seriesRows.filter((row) => !row.isFinal);
-  const finalRows = seriesRows.filter((row) => row.isFinal);
+  // Main round, final, shoot-off (#727 PR C, S4): each listed under its own heading.
+  const sections = SERIES_SECTION_ORDER.map((key) => ({
+    key,
+    rows: seriesRows.filter((row) => seriesSectionOf(row) === key),
+  })).filter((section) => section.rows.length > 0);
 
   /**
    * Drag-and-drop reorder. Long-press lifts a series, the drag moves it, and
@@ -242,9 +255,9 @@ export default function SessionDetailScreen() {
    * then I should be able to drag-n-drop").
    */
 
-  function sectionOf(isFinal: boolean): SeriesRow[] {
+  function sectionOf(key: SeriesSectionKey): SeriesRow[] {
     return seriesRows
-      .filter((row) => row.isFinal === isFinal)
+      .filter((row) => seriesSectionOf(row) === key)
       .sort((a, b) => a.position - b.position);
   }
 
@@ -269,8 +282,11 @@ export default function SessionDetailScreen() {
    * Where the held row would land if released now — drives both the drop
    * indicator and the drop itself, so what you are shown is what happens.
    */
-  function dropIndexFor(held: { id: string; isFinal: boolean }, offset: number): number | null {
-    const section = sectionOf(held.isFinal);
+  function dropIndexFor(
+    held: { id: string; section: SeriesSectionKey },
+    offset: number,
+  ): number | null {
+    const section = sectionOf(held.section);
     const fromIndex = section.findIndex((row) => row.id === held.id);
     if (fromIndex === -1) return null;
     return fromIndex + indexDelta(section, fromIndex, offset);
@@ -285,7 +301,7 @@ export default function SessionDetailScreen() {
     setDragOffset(0);
     if (!held) return;
 
-    const section = sectionOf(held.isFinal);
+    const section = sectionOf(held.section);
     const fromIndex = section.findIndex((row) => row.id === held.id);
     if (fromIndex === -1) return;
 
@@ -305,8 +321,8 @@ export default function SessionDetailScreen() {
    * line in the gap the row would occupy — a drag with no target feedback
    * asks you to guess where it lands (maintainer, on device 2026-09-11).
    */
-  const renderSection = (rows: SeriesRow[], isFinal: boolean) => {
-    const active = dragging?.isFinal === isFinal && dropIndex !== null;
+  const renderSection = (rows: SeriesRow[], key: SeriesSectionKey) => {
+    const active = dragging?.section === key && dropIndex !== null;
     const indicator = (key: string) => (
       <View
         key={key}
@@ -329,7 +345,8 @@ export default function SessionDetailScreen() {
       ? celebrationTier(row.shots, {
           mode: detail.scoringMode,
           seriesLength: detail.seriesLength,
-          guldThreshold: row.guldThreshold,
+          // A shoot-off is never a guldserie (#727 PR C, S2).
+          guldThreshold: row.isShootOff ? null : row.guldThreshold,
           isSighter: row.isSighter,
         })
       : null;
@@ -345,7 +362,7 @@ export default function SessionDetailScreen() {
     const lift = Gesture.LongPress()
       .minDuration(300)
       .onStart(() => {
-        runOnJS(setDragging)({ id: row.id, isFinal: row.isFinal });
+        runOnJS(setDragging)({ id: row.id, section: seriesSectionOf(row) });
         runOnJS(vibrate)();
       });
     const drag = Gesture.Pan()
@@ -565,18 +582,30 @@ export default function SessionDetailScreen() {
                 {t('session.total')}
               </ThemedText>
             </View>
-            {results.hasFinal && (
+            {(results.hasFinal || results.hasShootOff) && (
               <View style={styles.resultParts}>
-                <ResultPart
-                  label={t('session.beforeFinal')}
-                  value={String(tenthsToScore(results.beforeFinalTenths))}
-                  testID="result-before-final"
-                />
-                <ResultPart
-                  label={t('session.final')}
-                  value={String(tenthsToScore(results.finalTenths))}
-                  testID="result-final"
-                />
+                {results.hasFinal && (
+                  <ResultPart
+                    label={t('session.beforeFinal')}
+                    value={String(tenthsToScore(results.beforeFinalTenths))}
+                    testID="result-before-final"
+                  />
+                )}
+                {results.hasFinal && (
+                  <ResultPart
+                    label={t('session.final')}
+                    value={String(tenthsToScore(results.finalTenths))}
+                    testID="result-final"
+                  />
+                )}
+                {/* Outside the total: a shoot-off decides placement only (#727 PR C, S1). */}
+                {results.hasShootOff && (
+                  <ResultPart
+                    label={t('session.shootOff')}
+                    value={String(tenthsToScore(results.shootOffTenths))}
+                    testID="result-shoot-off"
+                  />
+                )}
               </View>
             )}
           </View>
@@ -900,18 +929,21 @@ export default function SessionDetailScreen() {
             )
           ) : (
             <Card>
-              {mainRows.length > 0 && finalRows.length > 0 && (
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  {t('session.mainSection')}
-                </ThemedText>
-              )}
-              {renderSection(mainRows, false)}
-              {finalRows.length > 0 && (
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  {t('session.finalSection')}
-                </ThemedText>
-              )}
-              {renderSection(finalRows, true)}
+              {sections.map(({ key, rows }) => (
+                <Fragment key={key}>
+                  {/* The main round is headed only when another section follows it. */}
+                  {(key !== 'main' || sections.length > 1) && (
+                    <ThemedText
+                      type="smallBold"
+                      themeColor="textSecondary"
+                      testID={`series-section-${key}`}
+                    >
+                      {t(SECTION_TITLE[key])}
+                    </ThemedText>
+                  )}
+                  {renderSection(rows, key)}
+                </Fragment>
+              ))}
             </Card>
           )}
 

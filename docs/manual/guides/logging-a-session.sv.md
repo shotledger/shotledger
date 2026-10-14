@@ -190,6 +190,13 @@ decimal.
 I ett mästerskapsformat delas totalen upp i **före final** och **final**,
 eftersom de bedöms var för sig.
 
+En **särskjutningsserie**, skjuten för att skilja lika resultat, listas i en
+egen del **Särskjutning** efter finalen, och dess summa visas bredvid
+resultatet som **Särskjutning**. Den avgör bara placering och ingår därför
+aldrig i totalen, snitten, innertiorna eller någon statistik. Skotten räknas
+ändå som avlossade. En särskjutningsserie kommer från en import från
+Webshooter; du kan inte själv lägga till en i ett ringpass.
+
 ## Nationell helmatch
 
 **Hela matchen** i nationell helmatch kommer som tre delmoment om fyra serier:

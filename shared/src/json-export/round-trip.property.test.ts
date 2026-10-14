@@ -121,8 +121,6 @@ const sessionArb: fc.Arbitrary<SessionExport> = fc.record({
     .map((d) => d.toISOString()),
   location: nullableText,
   notes: nullableText,
-  tenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
-  innerTenCount: fc.option(fc.nat({ max: 60 }), { nil: null }),
   decimalScoring: fc.boolean(),
   seriesLength: fc.option(fc.integer({ min: 1, max: 10 }), { nil: null }),
   extraRounds: fc.option(fc.integer({ min: 0, max: 10_000 }), { nil: null }),

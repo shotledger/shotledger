@@ -286,6 +286,8 @@ describe('web rounds-only and final rows on the phone schema', () => {
       finalTenths: 480,
       totalTenths: 880,
       hasFinal: true,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
     expect(sessionVolumeRounds(web, webSessionId)).toBe(12);
     expect(getFirearm(web, webFirearm)!.roundCount).toBe(112);

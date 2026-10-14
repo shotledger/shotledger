@@ -95,6 +95,13 @@ describe('listScoredShotsForSession', () => {
     ]);
   });
 
+  it('excludes shots from a shoot-off series (#727 PR C, S2)', () => {
+    const shootOff = addSeries(db, { sessionId, position: 2, isShootOff: true }).id;
+    addShot(db, { seriesId, position: 1, valueTenths: 90 });
+    addShot(db, { seriesId: shootOff, position: 1, valueTenths: 100 });
+    expect(listScoredShotsForSession(db, sessionId)).toEqual([{ valueTenths: 90 }]);
+  });
+
   it('excludes soft-deleted shots and series', () => {
     const a = addShot(db, { seriesId, position: 1, valueTenths: 90 });
     addShot(db, { seriesId, position: 2, valueTenths: 80 });

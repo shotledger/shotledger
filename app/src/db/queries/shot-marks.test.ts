@@ -6,6 +6,7 @@ import { createSession } from './sessions';
 import { createAmmoLot } from './ammo-lots';
 import {
   listGroupSamplesByAmmoLot,
+  listMarksBySession,
   listMarksForSeries,
   listMarksForSession,
   saveSeriesMarks,
@@ -199,5 +200,32 @@ describe('listGroupSamplesByAmmoLot', () => {
     saveSeriesMarks(db, markedSession(null), [mark(0, 0, 100)]);
 
     expect(listGroupSamplesByAmmoLot(db)).toEqual([]);
+  });
+});
+
+describe('a shoot-off is no part of a group (#727 PR C, S2)', () => {
+  it('its marks stay out of the session, cross-session and ammo-lot groups', () => {
+    const lot = createAmmoLot(db, { label: 'Lot' });
+    const id = createSession(db, {
+      name: 'With shoot-off',
+      type: 'competition',
+      disciplineId: 'spsf-precision',
+      ammoLotId: lot.id,
+      startedAt: '2026-01-03T00:00:00.000Z',
+    }).id;
+    const scored = addSeries(db, { sessionId: id, position: 1 }).id;
+    const shootOff = addSeries(db, { sessionId: id, position: 2, isShootOff: true }).id;
+    saveSeriesMarks(db, scored, [mark(1, 0, 100)]);
+    saveSeriesMarks(db, shootOff, [mark(99, 0, 100)]);
+
+    expect(listMarksForSession(db, id).map((m) => m.xMm)).toEqual([1]);
+    expect(
+      listMarksBySession(db)
+        .find((entry) => entry.sessionId === id)
+        ?.marks.map((m) => m.xMm),
+    ).toEqual([1]);
+    expect(listGroupSamplesByAmmoLot(db).map((sample) => sample.seriesId)).toEqual([scored]);
+    // The series' own marks are still there to draw on its photo.
+    expect(listMarksForSeries(db, shootOff).map((m) => m.xMm)).toEqual([99]);
   });
 });

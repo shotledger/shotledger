@@ -58,8 +58,6 @@ export function newSessionRow(id: string, now: string, fields: SessionFields): P
     started_at: fields.startedAt,
     location: fields.location,
     notes: null,
-    ten_count: null,
-    inner_ten_count: null,
     decimal_scoring: fields.decimalScoring ? 1 : 0,
     series_length: fields.seriesLength,
     falt_result_mode: null,

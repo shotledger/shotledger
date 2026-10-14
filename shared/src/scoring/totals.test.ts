@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   countInnerTens,
+  isScoringSeries,
+  SERIES_SECTION_ORDER,
   seriesAverageTenths,
   seriesInnerTenAverage,
+  seriesSectionOf,
   sessionInnerTenCount,
   sessionResults,
   shotVolume,
@@ -82,6 +85,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 0,
       totalTenths: 0,
       hasFinal: false,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -92,6 +97,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 0,
       totalTenths: 530,
       hasFinal: false,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -102,6 +109,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 200,
       totalTenths: 550,
       hasFinal: true,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -119,6 +128,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 80,
       totalTenths: 170,
       hasFinal: true,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -129,6 +140,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 0,
       totalTenths: 90,
       hasFinal: true,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -145,6 +158,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 0,
       totalTenths: 650,
       hasFinal: false,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 
@@ -161,6 +176,8 @@ describe('sessionResults (spec T3-T8)', () => {
       finalTenths: 480,
       totalTenths: 570,
       hasFinal: true,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
   });
 });
@@ -438,4 +455,173 @@ it('excludes a sighter from the scored result and counts its shots in volume', (
   ];
   expect(sessionResults(series).totalTenths).toBe(500);
   expect(shotVolume(series)).toBe(10);
+});
+
+// --- #727 PR C: a shoot-off decides placement only (spec shoot-off-and-ten-counts-727) ---
+
+describe('shoot-off series (spec S1-S4)', () => {
+  const shootOff = (...values: number[]): SeriesForResults => ({
+    ...main(...values),
+    isShootOff: true,
+  });
+  const flagged = (
+    over: Partial<FlaggedSeriesForResults>,
+    ...inner: boolean[]
+  ): FlaggedSeriesForResults => ({
+    isSighter: false,
+    isFinal: false,
+    shots: inner.map((isInnerTen) => ({ valueTenths: 100, isInnerTen })),
+    ...over,
+  });
+
+  it('S1: a shoot-off is summed apart and never enters before-final, final or total', () => {
+    expect(sessionResults([main(100, 90), shootOff(100, 100)])).toEqual({
+      beforeFinalTenths: 190,
+      finalTenths: 0,
+      totalTenths: 190,
+      hasFinal: false,
+      shootOffTenths: 200,
+      hasShootOff: true,
+    });
+  });
+
+  it('S1: with a final, the shoot-off stays out of all three results', () => {
+    expect(sessionResults([main(90), final(100), shootOff(80), shootOff(70)])).toEqual({
+      beforeFinalTenths: 90,
+      finalTenths: 100,
+      totalTenths: 190,
+      hasFinal: true,
+      shootOffTenths: 150,
+      hasShootOff: true,
+    });
+  });
+
+  it('S1: a shoot-off flagged final is still a shoot-off, and does not open a final', () => {
+    const r = sessionResults([main(90), { ...shootOff(80), isFinal: true }]);
+    expect(r).toMatchObject({ finalTenths: 0, hasFinal: false, shootOffTenths: 80 });
+    expect(r.totalTenths).toBe(90);
+  });
+
+  it('S1: an override shoot-off contributes its stored total to the shoot-off sum only', () => {
+    const override: SeriesForResults = {
+      isSighter: false,
+      isFinal: false,
+      isShootOff: true,
+      shots: [],
+      totalOverride: { tenths: 470, shotCount: 5 },
+    };
+    expect(sessionResults([main(100), override])).toMatchObject({
+      totalTenths: 100,
+      shootOffTenths: 470,
+      hasShootOff: true,
+    });
+  });
+
+  it('S1: a shoot-off sighter marks the section and scores nothing', () => {
+    expect(sessionResults([{ ...shootOff(100), isSighter: true }])).toMatchObject({
+      shootOffTenths: 0,
+      hasShootOff: true,
+      totalTenths: 0,
+    });
+  });
+
+  it('S1: isShootOff false or absent is an ordinary series', () => {
+    expect(sessionResults([{ ...main(100), isShootOff: false }, main(90)])).toMatchObject({
+      totalTenths: 190,
+      shootOffTenths: 0,
+      hasShootOff: false,
+    });
+  });
+
+  it('S2: isScoringSeries is false for a sighter or a shoot-off only', () => {
+    expect(isScoringSeries({ isSighter: false })).toBe(true);
+    expect(isScoringSeries({ isSighter: false, isShootOff: false })).toBe(true);
+    expect(isScoringSeries({ isSighter: true })).toBe(false);
+    expect(isScoringSeries({ isSighter: false, isShootOff: true })).toBe(false);
+    expect(isScoringSeries({ isSighter: true, isShootOff: true })).toBe(false);
+  });
+
+  it('S2: the series average leaves a shoot-off out', () => {
+    expect(seriesAverageTenths([main(100), main(80), shootOff(10)])).toBe(90);
+    expect(seriesAverageTenths([shootOff(100)])).toBeNull();
+  });
+
+  it('S2: inner tens and X per series leave a shoot-off out', () => {
+    const list = [
+      flagged({}, true, false),
+      flagged({ isShootOff: true }, true, true, true),
+      flagged({ isShootOff: false }, true),
+    ];
+    expect(sessionInnerTenCount(list)).toBe(2);
+    expect(seriesInnerTenAverage(list)).toBe(1);
+    expect(seriesInnerTenAverage([flagged({ isShootOff: true }, true)])).toBeNull();
+  });
+
+  it('S3: a shoot-off still counts as volume', () => {
+    expect(shotVolume([main(100), shootOff(90, 80)])).toBe(3);
+  });
+
+  it('S4: a shoot-off is its own section, after the main round and the final', () => {
+    expect(seriesSectionOf({ isFinal: false })).toBe('main');
+    expect(seriesSectionOf({ isFinal: false, isShootOff: false })).toBe('main');
+    expect(seriesSectionOf({ isFinal: true })).toBe('final');
+    expect(seriesSectionOf({ isFinal: false, isShootOff: true })).toBe('shootOff');
+    expect(seriesSectionOf({ isFinal: true, isShootOff: true })).toBe('shootOff');
+    expect(SERIES_SECTION_ORDER).toEqual(['main', 'final', 'shootOff']);
+  });
+
+  const arbAny: fc.Arbitrary<SeriesForResults> = fc.record({
+    isSighter: fc.boolean(),
+    isFinal: fc.boolean(),
+    isShootOff: fc.boolean(),
+    shots: fc.array(fc.record({ valueTenths: fc.integer({ min: 0, max: 109 }) }), {
+      maxLength: 8,
+    }),
+  });
+
+  it('S1-P: removing every shoot-off leaves before-final, final and total unchanged', () => {
+    fc.assert(
+      fc.property(fc.array(arbAny, { maxLength: 15 }), (list) => {
+        const all = sessionResults(list);
+        const without = sessionResults(list.filter((s) => s.isShootOff !== true));
+        expect(all.beforeFinalTenths).toBe(without.beforeFinalTenths);
+        expect(all.finalTenths).toBe(without.finalTenths);
+        expect(all.totalTenths).toBe(without.totalTenths);
+        expect(all.hasFinal).toBe(without.hasFinal);
+      }),
+    );
+  });
+
+  it('S1-P: shootOffTenths is the sum of the non-sighter shoot-off series', () => {
+    fc.assert(
+      fc.property(fc.array(arbAny, { maxLength: 15 }), (list) => {
+        const expected = list
+          .filter((s) => s.isShootOff === true && !s.isSighter)
+          .reduce((sum, s) => sum + sumValueTenths(s.shots), 0);
+        const r = sessionResults(list);
+        expect(r.shootOffTenths).toBe(expected);
+        expect(r.hasShootOff).toBe(list.some((s) => s.isShootOff === true));
+      }),
+    );
+  });
+
+  it('S2-P: shoot-off series never move the average or the inner-ten figures', () => {
+    const arbFlagged: fc.Arbitrary<FlaggedSeriesForResults> = fc.record({
+      isSighter: fc.boolean(),
+      isFinal: fc.boolean(),
+      isShootOff: fc.boolean(),
+      shots: fc.array(
+        fc.record({ valueTenths: fc.integer({ min: 0, max: 109 }), isInnerTen: fc.boolean() }),
+        { maxLength: 8 },
+      ),
+    });
+    fc.assert(
+      fc.property(fc.array(arbFlagged, { maxLength: 15 }), (list) => {
+        const without = list.filter((s) => s.isShootOff !== true);
+        expect(seriesAverageTenths(list)).toBe(seriesAverageTenths(without));
+        expect(sessionInnerTenCount(list)).toBe(sessionInnerTenCount(without));
+        expect(seriesInnerTenAverage(list)).toBe(seriesInnerTenAverage(without));
+      }),
+    );
+  });
 });

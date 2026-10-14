@@ -6,6 +6,9 @@ import {
   analyzeGroup,
   buildSessionReportHtml,
   getTargetFace,
+  isScoringSeries,
+  SERIES_SECTION_ORDER,
+  seriesSectionOf,
   seriesTargetFace,
   tenthsToScore,
   type SessionReportField,
@@ -59,12 +62,11 @@ export function buildSessionReportHtmlFor(
   >();
   const scoringPerFace = new Map<string, number>();
 
-  // Main series first, then the final, each in position order — as the
-  // session view lists them.
-  const rows = [
-    ...detail.seriesRows.filter((row) => !row.isFinal),
-    ...detail.seriesRows.filter((row) => row.isFinal),
-  ];
+  // Main series first, then the final, then the shoot-off, each in position
+  // order — as the session view lists them.
+  const rows = SERIES_SECTION_ORDER.flatMap((section) =>
+    detail.seriesRows.filter((row) => seriesSectionOf(row) === section),
+  );
   const series: SessionReportSeries[] = rows.map((row) => {
     const faceId = seriesTargetFace(session.disciplineId, session.programId, row.position);
     const target = (faceId && getTargetFace(faceId)) || null;
@@ -73,8 +75,9 @@ export function buildSessionReportHtmlFor(
       yMm: m.yMm,
       caliberMm: m.caliberMm,
     }));
-    if (faceId && !row.isSighter) scoringPerFace.set(faceId, (scoringPerFace.get(faceId) ?? 0) + 1);
-    if (target && faceId && marks.length > 0 && !row.isSighter) {
+    const scoring = isScoringSeries(row);
+    if (faceId && scoring) scoringPerFace.set(faceId, (scoringPerFace.get(faceId) ?? 0) + 1);
+    if (target && faceId && marks.length > 0 && scoring) {
       const entry = pooled.get(faceId) ?? { target, marks: [], stages: new Set(), marked: 0 };
       entry.marks.push(...marks);
       entry.stages.add(row.stage);
@@ -85,7 +88,8 @@ export function buildSessionReportHtmlFor(
       title: t('session.seriesTitle', { position: row.position }),
       tags: [
         ...(row.isSighter ? [t('session.sighter')] : []),
-        ...(row.isFinal ? [t('session.final')] : []),
+        ...(row.isFinal && !row.isShootOff ? [t('session.final')] : []),
+        ...(row.isShootOff ? [t('session.shootOff')] : []),
       ],
       total: String(tenthsToScore(row.totalTenths)),
       values: row.shots.map((shot) => formatShotValue(shot, detail.scoringMode)),
@@ -144,6 +148,9 @@ export function buildSessionReportHtmlFor(
         ]
       : []),
     { label: t('session.total'), value: String(tenthsToScore(results.totalTenths)) },
+    ...(results.hasShootOff
+      ? [{ label: t('session.shootOff'), value: String(tenthsToScore(results.shootOffTenths)) }]
+      : []),
     {
       label: t('session.seriesAverage'),
       value:

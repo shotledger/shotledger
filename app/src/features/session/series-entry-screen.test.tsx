@@ -354,6 +354,30 @@ describe('the range layout (#822)', () => {
     expect(screen.getByTestId('last-time')).toHaveTextContent('461XLast Time');
   });
 
+  it('leaves a shoot-off out of the running total and of last time (#727 PR C, S1/S2)', async () => {
+    const previous = precisionSession({ startedAt: '2026-05-09T09:00:00.000Z' });
+    seeded(previous.id, 1, [90, 90, 90, 90, 90]);
+    seeded(previous.id, 2, [100, 100, 100, 100, 100], { isShootOff: true });
+    seeded(previous.id, 3, [70, 70, 70, 70, 70]);
+    const session = precisionSession();
+    seeded(session.id, 1, [80, 80, 80, 80, 80]);
+    await openSeries(session.id, 2, { new: '1' });
+
+    // The second scored series last time is position 3: the shoot-off took no ordinal.
+    expect(screen.getByTestId('last-time')).toHaveTextContent('350XLast Time');
+    expect(screen.getByTestId('session-running-total')).toHaveTextContent('40');
+  });
+
+  it('opens a shoot-off with no gold hint, outside the running total', async () => {
+    const session = precisionSession();
+    seeded(session.id, 1, [80, 80, 80, 80, 80]);
+    seeded(session.id, 2, [100, 100, 100, 100, 100], { isShootOff: true });
+    await openSeries(session.id, 2);
+
+    expect(screen.queryByTestId('guld-hint')).toBeNull();
+    expect(screen.getByTestId('session-running-total')).toHaveTextContent('40');
+  });
+
   it('shows no last time for the first session of a discipline', async () => {
     const session = precisionSession();
     await openSeries(session.id, 1, { new: '1' });

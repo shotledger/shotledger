@@ -101,6 +101,7 @@ export function listScoredShotsForSession(db: Database, sessionId: string) {
       and(
         eq(series.sessionId, sessionId),
         eq(series.isSighter, 0),
+        eq(series.isShootOff, 0),
         isNull(shots.deletedAt),
         isNull(series.deletedAt),
       ),

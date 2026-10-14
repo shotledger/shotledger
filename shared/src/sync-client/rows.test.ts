@@ -46,8 +46,6 @@ describe('new rows', () => {
       started_at: '2026-10-06T08:30:00.000Z',
       location: 'Range',
       notes: null,
-      ten_count: null,
-      inner_ten_count: null,
       decimal_scoring: 1,
       series_length: 6,
       falt_result_mode: null,

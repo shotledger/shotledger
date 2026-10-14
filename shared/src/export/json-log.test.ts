@@ -47,8 +47,6 @@ const session: SessionExport = {
   faltResultMode: null,
   stations: [],
   kind: 'series',
-  tenCount: null,
-  innerTenCount: null,
   externalSource: null,
   externalRef: null,
   officialPlacement: null,

@@ -193,6 +193,13 @@ an average keeps its decimal.
 For a championship format the total is split into **before final** and
 **final**, because they are judged separately.
 
+A **shoot-off** series (särskjutning, shot to separate equal results) is
+listed in its own **Shoot-off** section after the final, and its sum is shown
+beside the result as **Shoot-off**. It decides placement only, so it is never
+part of the total, the averages, the inner tens or any statistic. Its shots
+still count as fired. A shoot-off series comes from a Webshooter import; you
+cannot add one to a ring session yourself.
+
 ## National Combined Match
 
 A **Full Match** of Nationell helmatch arrives as three parts of four series:

@@ -176,8 +176,6 @@ CREATE TABLE `sessions` (
 	`started_at` text NOT NULL,
 	`location` text,
 	`notes` text,
-	`ten_count` integer,
-	`inner_ten_count` integer,
 	`decimal_scoring` integer DEFAULT 0 NOT NULL,
 	`series_length` integer,
 	`falt_result_mode` text,

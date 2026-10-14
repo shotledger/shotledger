@@ -78,9 +78,10 @@ describe('importShotlogRow', () => {
       startedAt: '2026-05-04T09:00:00.000Z',
       externalSource: 'shotlog',
       externalRef: 'S-0000c0de',
-      tenCount: null,
-      innerTenCount: null,
     });
+    // The shots carry the tens and inner tens; the session stores no copy (#727 PR C, T1).
+    expect(session).not.toHaveProperty('tenCount');
+    expect(session).not.toHaveProperty('innerTenCount');
     expect(session.notes).toBe('windy');
 
     const series = listSeriesForSession(db, id);

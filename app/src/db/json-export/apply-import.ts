@@ -428,8 +428,6 @@ export function applyImport(
         startedAt: group.startedAt,
         location: group.location,
         notes: group.notes,
-        tenCount: group.tenCount,
-        innerTenCount: group.innerTenCount,
         decimalScoring: group.decimalScoring ? 1 : 0,
         seriesLength: group.seriesLength,
         extraRounds: group.extraRounds,

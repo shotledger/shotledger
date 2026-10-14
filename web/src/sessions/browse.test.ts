@@ -34,12 +34,16 @@ const session = (id: string, overrides: Record<string, unknown>) => ({
   series_length: null,
   extra_rounds: null,
   falt_result_mode: null,
-  inner_ten_count: null,
   deleted_at: null,
   ...overrides,
 });
 
-const series = (id: string, sessionId: string, position: number, overrides = {}) => ({
+const series = (
+  id: string,
+  sessionId: string,
+  position: number,
+  overrides: Record<string, unknown> = {},
+) => ({
   id,
   session_id: sessionId,
   position,
@@ -90,7 +94,6 @@ function tables(): PulledTables {
         discipline_id: 'spsf-helmatch',
         program_id: 'spsf-helmatch',
         started_at: '2026-10-02T10:00:00.000Z',
-        inner_ten_count: 3,
       }),
       session('falt', { discipline_id: 'spsf-falt', started_at: '2026-10-03T10:00:00.000Z' }),
       session('gone', { started_at: '2026-10-04T10:00:00.000Z', deleted_at: '2026-10-05' }),
@@ -180,6 +183,8 @@ describe('browseSessions', () => {
       finalTenths: 0,
       totalTenths: 640,
       hasFinal: false,
+      shootOffTenths: 0,
+      hasShootOff: false,
     });
     expect(ring.seriesAverageTenths).toBe(320);
     expect(ring.innerTenCount).toBe(1);
@@ -188,7 +193,39 @@ describe('browseSessions', () => {
     expect(ring.falt).toBeNull();
   });
 
-  it("gives a program's stage subtotals and prefers a stored inner-ten count", () => {
+  it('keeps a shoot-off out of the result, the average and the inner tens (#727 PR C, S1/S2)', () => {
+    const base = tables();
+    const withShootOff: PulledTables = {
+      ...base,
+      series: table([
+        ...base.series.values(),
+        series('r4', 'ring', 4, { is_shoot_off: 1 }),
+      ] as Record<string, unknown>[]),
+      shots: table([
+        ...base.shots.values(),
+        shot('x7', 'r4', 1, 100, 1),
+        shot('x8', 'r4', 2, 100, 1),
+      ] as Record<string, unknown>[]),
+    };
+    const ring = browseSessions(withShootOff).find((s) => s.id === 'ring')!;
+    expect(ring.results).toEqual({
+      beforeFinalTenths: 640,
+      finalTenths: 0,
+      totalTenths: 640,
+      hasFinal: false,
+      shootOffTenths: 200,
+      hasShootOff: true,
+    });
+    expect(ring.seriesAverageTenths).toBe(320);
+    expect(ring.innerTenCount).toBe(1);
+    expect(ring.innerTenAverage).toBe(0.5);
+    expect(seriesSections(ring.series).map((section) => section.title)).toEqual([
+      'main',
+      'shootOff',
+    ]);
+  });
+
+  it("gives a program's stage subtotals and counts inner tens from the shots", () => {
     const helm = byId('helm');
     expect(helm.series.map((s) => s.stage)).toEqual(['A', 'A']);
     expect(helm.stageSubtotals).toEqual([
@@ -196,7 +233,7 @@ describe('browseSessions', () => {
       { stage: 'B', totalTenths: 0 },
       { stage: 'C', totalTenths: 0 },
     ]);
-    expect(helm.innerTenCount).toBe(3);
+    expect(helm.innerTenCount).toBe(0);
   });
 
   it('gives a fält session its result over the stations that score', () => {
@@ -296,5 +333,22 @@ describe('seriesSections', () => {
 
   it('gives no section for no series', () => {
     expect(shape([])).toEqual([]);
+  });
+
+  it('puts the shoot-off in its own section after the final (#727 PR C, S4)', () => {
+    const shootOff = (position: number, isFinal = false) => ({
+      ...row(position, isFinal),
+      isShootOff: true,
+    });
+    expect(shape([row(1, false), shootOff(4), row(2, true), shootOff(3, true)])).toEqual([
+      ['main', [1]],
+      ['final', [2]],
+      ['shootOff', [4, 3]],
+    ]);
+    expect(shape([row(1, false), shootOff(2)])).toEqual([
+      ['main', [1]],
+      ['shootOff', [2]],
+    ]);
+    expect(shape([shootOff(1)])).toEqual([['shootOff', [1]]]);
   });
 });

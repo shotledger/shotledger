@@ -23,7 +23,13 @@ export interface LastTime {
 export function loadLastTime(
   session: { id: string; disciplineId: string; startedAt: string; decimalScoring: number },
   rows: readonly SeriesRow[],
-  current: { rowId: string | null; position: number; isFinal: boolean; isSighter: boolean },
+  current: {
+    rowId: string | null;
+    position: number;
+    isFinal: boolean;
+    isSighter: boolean;
+    isShootOff?: boolean;
+  },
 ): LastTime | null {
   const ordinal = scoredOrdinal(
     rows.filter((row) => row.id !== current.rowId),
@@ -52,6 +58,7 @@ export function loadLastTime(
       position: row.position,
       isSighter: row.isSighter === 1,
       isFinal: row.isFinal === 1,
+      isShootOff: row.isShootOff === 1,
       totalTenths: isOverride
         ? row.totalOverrideTenths!
         : shots.reduce((sum, shot) => sum + shot.valueTenths, 0),
