@@ -9,7 +9,7 @@
 
 import '@/global.css';
 
-import { Platform } from 'react-native';
+import { Platform, type FontVariant } from 'react-native';
 
 export {
   Colors,
@@ -20,7 +20,18 @@ export {
   type ThemeColor,
   type ThemeName,
 } from './colors';
-export { Radius, Spacing, Typography } from '@shotledger/shared/src/design-tokens';
+import { TABULAR_NUMS } from '@shotledger/shared/src/design-tokens';
+
+export {
+  MIN_TOUCH_TARGET,
+  Radius,
+  Spacing,
+  TABULAR_NUMS,
+  Typography,
+} from '@shotledger/shared/src/design-tokens';
+
+/** Spread into any `Text` style that draws a number (DESIGN.md, Typography). */
+export const TabularNums: { fontVariant: FontVariant[] } = { fontVariant: [TABULAR_NUMS] };
 
 export const Fonts = Platform.select({
   ios: {

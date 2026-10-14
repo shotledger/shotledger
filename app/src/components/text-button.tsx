@@ -3,7 +3,13 @@
 // header row. PrimaryButton is the one main action per screen and
 // SecondaryButton the outlined alternatives beside it; a section's own "add"
 // is neither, so it reads as a link-like control next to the section title.
-import { Pressable, StyleSheet, type PressableProps } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -11,9 +17,10 @@ import { Radius, Spacing } from '@/theme/tokens';
 
 export interface TextButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function TextButton({ label, disabled, ...rest }: TextButtonProps) {
+export function TextButton({ label, disabled, style, ...rest }: TextButtonProps) {
   const theme = useTheme();
 
   return (
@@ -24,6 +31,7 @@ export function TextButton({ label, disabled, ...rest }: TextButtonProps) {
       style={({ pressed }) => [
         styles.button,
         pressed && { backgroundColor: theme.backgroundSelected },
+        style,
       ]}
       {...rest}
     >
