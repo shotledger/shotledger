@@ -964,7 +964,8 @@ export default function FirearmDetailScreen() {
               />
             ) : null}
             {editingSightId ? (
-              <PrimaryButton
+              <SecondaryButton
+                tone="danger"
                 label={t('firearms.sightDelete')}
                 onPress={onDeleteSightSetting}
                 testID="sight-delete"

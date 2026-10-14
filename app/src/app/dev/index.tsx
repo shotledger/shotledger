@@ -128,7 +128,12 @@ export default function DevScreen() {
           onPress={onLoadDemoData}
           testID="load-demo-data"
         />
-        <PrimaryButton label={t('settings.wipeData')} onPress={onWipeData} testID="wipe-data" />
+        <SecondaryButton
+          tone="danger"
+          label={t('settings.wipeData')}
+          onPress={onWipeData}
+          testID="wipe-data"
+        />
       </ThemedView>
       {demoStatus ? (
         <ThemedText type="small" themeColor="textSecondary" testID="demo-data-status">
