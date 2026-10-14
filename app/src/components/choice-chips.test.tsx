@@ -82,4 +82,18 @@ describe('ChoiceChips', () => {
     expect(on.borderWidth).toBe(off.borderWidth);
     expect(on.minHeight).toBe(48);
   });
+
+  it('puts each option testID on its own chip', async () => {
+    const onChange = jest.fn();
+    await renderWithProviders(
+      <ChoiceChips
+        options={OPTIONS.map((o) => ({ ...o, testID: `chip-${o.value}` }))}
+        value={['a']}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByTestId('chip-a')).toBeSelected();
+    await fireEvent.press(screen.getByTestId('chip-c'));
+    expect(onChange).toHaveBeenCalledWith(['c']);
+  });
 });

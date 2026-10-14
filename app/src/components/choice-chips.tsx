@@ -14,6 +14,8 @@ import { MIN_TOUCH_TARGET, Radius, Spacing } from '@/theme/tokens';
 export interface ChoiceChipOption<T extends string> {
   value: T;
   label: string;
+  /** Set on the chip's own pressable, for tests and e2e flows. */
+  testID?: string;
 }
 
 export interface ChoiceChipsProps<T extends string> extends Omit<ViewProps, 'children'> {
@@ -52,6 +54,7 @@ export function ChoiceChips<T extends string>({
             accessibilityRole={mode === 'single' ? 'radio' : 'checkbox'}
             accessibilityState={{ selected, checked: selected }}
             accessibilityLabel={option.label}
+            testID={option.testID}
             onPress={() => onChange(toggleChoice(value, option.value, mode, order))}
             style={({ pressed }) => [
               styles.chip,

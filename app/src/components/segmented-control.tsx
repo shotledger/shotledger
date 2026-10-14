@@ -8,6 +8,8 @@ import { Radius, Spacing } from '@/theme/tokens';
 export interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;
+  /** Set on the option's own pressable, for tests and e2e flows. */
+  testID?: string;
 }
 
 export interface SegmentedControlProps<T extends string> extends Omit<ViewProps, 'style'> {
@@ -56,6 +58,7 @@ export function SegmentedControl<T extends string>({
         accessibilityRole="radio"
         accessibilityState={{ selected, checked: selected }}
         accessibilityLabel={option.label}
+        testID={option.testID}
         onPress={() => onChange(option.value)}
         style={scrolls ? styles.segmentPressableAuto : styles.segmentPressable}
       >
