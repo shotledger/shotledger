@@ -849,7 +849,7 @@
     "poangfaltTotal": "{{points}} points",
     "faltNoStations": "No stations",
     "seriesLength": "Shots per Series",
-    "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
+    "seriesLengthHint": "How many shots each series takes, up to {{max}}. Series entry shows one box per shot.",
     "celebrationPerfect": "Perfect Series!",
     "celebrationFullScore": "Great Job!",
     "officialStandardMedal": "Official Standard Medal",

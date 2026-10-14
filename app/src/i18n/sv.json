@@ -849,7 +849,7 @@
     "poangfaltTotal": "{{points}} poäng",
     "faltNoStations": "Inga stationer",
     "seriesLength": "Skott per serie",
-    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
+    "seriesLengthHint": "Hur många skott varje serie har, högst {{max}}. Serieinmatningen visar en ruta per skott.",
     "celebrationPerfect": "Perfekt serie!",
     "celebrationFullScore": "Bra jobbat!",
     "officialStandardMedal": "Officiell standardmedalj",
