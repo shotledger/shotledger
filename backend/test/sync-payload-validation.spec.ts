@@ -142,7 +142,10 @@ describe('P2 a malformed row is refused and stores nothing', () => {
     const { [key]: _dropped, ...rest } = firearm();
     return rest;
   };
-  it.each<[string, unknown]>([
+  // The third element is the envelope's updatedAt, where the row's own
+  // updated_at differs from T0: the envelope must agree, so that the date
+  // check alone refuses it.
+  it.each<[string, unknown, string?]>([
     ['make: null (NOT NULL)', firearm({ make: null })],
     ['make removed (missing key)', without('make')],
     ['caliber removed (missing nullable key)', without('caliber')],
@@ -154,6 +157,7 @@ describe('P2 a malformed row is refused and stores nothing', () => {
     [
       'updated_at: "2026-02-30T00:00:00.000Z" (date)',
       firearm({}, 'f1', '2026-02-30T00:00:00.000Z'),
+      '2026-02-30T00:00:00.000Z',
     ],
     ['id: "f2" (id ≠ rowId)', firearm({ id: 'f2' })],
     ['extra key "colour" (unknown key)', firearm({ colour: 'black' })],
@@ -161,9 +165,9 @@ describe('P2 a malformed row is refused and stores nothing', () => {
     ['payload is an array', [firearm()]],
     ['payload is a string', 'Anschutz'],
     ['payload is a number', 42],
-  ])('%s', async (_label, payload) => {
+  ])('%s', async (_label, payload, updatedAt = T0) => {
     const before = await lastSeq();
-    const change = live('firearms', 'f1', payload);
+    const change = live('firearms', 'f1', payload, updatedAt);
 
     const [ack] = await push([change]);
     expect(ack).toStrictEqual({
@@ -183,6 +187,35 @@ describe('P2 a malformed row is refused and stores nothing', () => {
   it('the unmutated F is applied, so each row above fails for its mutation alone', async () => {
     const [ack] = await push([live('firearms', 'f1', firearm())]);
     expect(ack).toMatchObject({ status: 'applied', seq: 1 });
+  });
+});
+
+// §2.1, C12: the route validates a synced setting like any other row.
+describe('a settings row whose value is not JSON', () => {
+  it('is refused and stores nothing', async () => {
+    const before = await lastSeq();
+    const change = live(
+      'settings',
+      'birthYear',
+      row('settings', 'birthYear', T0, { value: 'not json' }),
+    );
+
+    const [ack] = await push([change]);
+
+    expect(ack).toStrictEqual({
+      clientChangeId: change.clientChangeId,
+      status: 'rejected',
+      reason: 'invalid_payload',
+    });
+    expect(await storedRow('settings', 'birthYear')).toBeNull();
+    expect(await lastSeq()).toBe(before);
+  });
+
+  it('is applied when the value is JSON text', async () => {
+    const [ack] = await push([
+      live('settings', 'birthYear', row('settings', 'birthYear', T0, { value: '1980' })),
+    ]);
+    expect(ack).toMatchObject({ status: 'applied' });
   });
 });
 

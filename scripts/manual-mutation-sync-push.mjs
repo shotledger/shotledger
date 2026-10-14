@@ -107,6 +107,13 @@ const MUTANTS = [
     replace: 'applyPush(db, userId, parsed.data.changes)',
   },
   {
+    name: 'the route skips validating settings',
+    file: ROUTE,
+    find: '    const verdict = validatePayload(change);',
+    replace:
+      "    if (change.tableName === 'settings') continue;\n    const verdict = validatePayload(change);",
+  },
+  {
     name: 'the route logs the payload',
     file: ROUTE,
     find: "(${columns.join(', ')})`",
