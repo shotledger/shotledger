@@ -501,7 +501,7 @@ export const maintenanceEventExportSchema = z.object({
     .string()
     .min(1)
     .describe('The firearm it belongs to. An import drops an event naming no firearm in the file.'),
-  performedAt: z.string().min(1).describe('When the maintenance was done, ISO 8601.'),
+  performedAt: z.iso.datetime().describe('When the maintenance was done, ISO 8601.'),
   kind: z
     .string()
     .default('')

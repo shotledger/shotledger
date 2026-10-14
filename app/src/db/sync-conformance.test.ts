@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { applyImport, dryRunImport } from './json-export/apply-import';
 import { buildExportJson } from './json-export/build-export';
-import { sessions } from './schema';
+import { maintenanceEvents, sessions } from './schema';
 import { seedDemoData, wipeDemoData } from './seed';
 import { unsyncableRows } from './sync-conformance';
 import { createTestDb } from './test-db';
@@ -23,17 +23,21 @@ describe('rows the phone writes pass the server payload schemas', () => {
     // A file written by another tool: still valid ISO 8601, and `z.iso.datetime()`
     // accepts it, but not `toISOString()`'s shape, which the server requires.
     const json = buildExportJson(db, '1.0.0').replace(
-      /("startedAt":\s*"[^"]*T\d{2}:\d{2}:\d{2})\.\d{3}Z"/g,
+      /("(?:startedAt|performedAt)":\s*"[^"]*T\d{2}:\d{2}:\d{2})\.\d{3}Z"/g,
       '$1Z"',
     );
     expect(json).toMatch(/"startedAt":\s*"[^"]*:\d{2}Z"/);
+    expect(json).toMatch(/"performedAt":\s*"[^"]*:\d{2}Z"/);
     wipeDemoData(db);
 
-    const { errors, groups } = dryRunImport(db, json);
+    // With the records, as the screen applies it: firearms, licences and
+    // maintenance events come only from them.
+    const { errors, groups, records } = dryRunImport(db, json);
     expect(errors).toEqual([]);
-    applyImport(db, groups);
+    applyImport(db, groups, records);
 
     expect(db.select().from(sessions).all().length).toBeGreaterThan(0);
+    expect(db.select().from(maintenanceEvents).all().length).toBeGreaterThan(0);
     expect(unsyncableRows(db)).toEqual([]);
   });
 
