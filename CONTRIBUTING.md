@@ -106,6 +106,27 @@ share of mutants killed; `stryker.config.json` breaks the build below 95%
 and lists exactly which modules are mutated. Run `pnpm mutation`. It is
 slow, so it is part of `pnpm gauntlet`, not of `pnpm check`.
 
+#### CI runners
+
+Every workflow job takes its runner from the `CI_RUNNER` repository
+variable (Settings → Secrets and variables → Actions → Variables):
+
+| `CI_RUNNER`                    | Jobs run on                                       |
+| ------------------------------ | ------------------------------------------------- |
+| unset                          | GitHub-hosted `ubuntu-latest`                     |
+| `blacksmith-2vcpu-ubuntu-2404` | [Blacksmith](https://docs.blacksmith.sh/), 2 vCPU |
+
+Switching is a settings change, not a commit, and applies from the next
+queued job. Use whichever side still has free minutes for the month:
+Blacksmith gives 3,000 2-vCPU minutes per organization, GitHub's allowance
+depends on the plan. Nothing switches automatically: a runner is picked
+when a job is queued, and neither side reports "minutes used up" to a
+workflow. Stay on the 2-vCPU size; larger Blacksmith runners use the free
+minutes faster in proportion to their vCPUs. Blacksmith needs its GitHub
+App installed on the organization and only serves organization-owned
+repositories. Both runners restore caches through `actions/cache`, so
+the first run after a switch starts with a cold cache.
+
 ### Working in this repo
 
 - Branch per change, Conventional Commits, every commit DCO-signed
