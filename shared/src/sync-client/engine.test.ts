@@ -417,6 +417,40 @@ describe('runSyncCycle — push', () => {
     },
   );
 
+  it('counts every invalid_payload refusal in a push, alongside an applied change', async () => {
+    const fake = createFakeStore({
+      outbox: [
+        { tableName: 'series', rowId: 'a', rev: 1, clientChangeId: null },
+        { tableName: 'series', rowId: 'b', rev: 2, clientChangeId: null },
+        { tableName: 'series', rowId: 'c', rev: 3, clientChangeId: null },
+      ],
+      rows: new Map([
+        ['series:a', row({ id: 'a' })],
+        ['series:b', row({ id: 'b' })],
+        ['series:c', row({ id: 'c' })],
+      ]),
+    });
+    const transport = createTransport({
+      push: async (request) => ({
+        protocolVersion: request.protocolVersion,
+        acks: request.changes.map((c) =>
+          c.rowId === 'b'
+            ? { clientChangeId: c.clientChangeId, status: 'applied' as const, seq: 1 }
+            : {
+                clientChangeId: c.clientChangeId,
+                status: 'rejected' as const,
+                reason: 'invalid_payload',
+              },
+        ),
+      }),
+    });
+
+    const result = await runSyncCycle({ store: fake.store, transport, newId: ids() });
+
+    expect(result).toMatchObject({ invalid: 2, pushed: 1, rejected: 0 });
+    expect(fake.outbox).toHaveLength(0);
+  });
+
   it('sends a null payload for a tombstoned row', async () => {
     const fake = createFakeStore({
       outbox: [{ tableName: 'shots', rowId: 'del', rev: 1, clientChangeId: null }],

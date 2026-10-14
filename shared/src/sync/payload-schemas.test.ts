@@ -307,6 +307,41 @@ describe('derivation from the Drizzle tables (C1)', () => {
     });
   });
 
+  // A new integer column must be classified here, flag or count: a flag
+  // named outside the `is_*` rule would otherwise pass as "any integer".
+  it('pins the counting (non-flag) integer columns of every table', () => {
+    const counts = Object.fromEntries(
+      SYNC_TABLE_NAMES.map((tableName) => [
+        tableName,
+        columnsOf(tableName)
+          .filter((column) => column.columnType === 'SQLiteInteger' && !isFlagColumn(column))
+          .map((column) => column.name),
+      ]),
+    );
+    expect(counts).toEqual({
+      firearms: ['round_count', 'maintenance_interval_rounds', 'rounds_since_maintenance'],
+      licenses: [],
+      firearm_groups: [],
+      firearm_calibers: ['position'],
+      ammo_lots: ['quantity'],
+      sessions: [
+        'ten_count',
+        'inner_ten_count',
+        'series_length',
+        'extra_rounds',
+        'official_placement',
+      ],
+      series: ['position', 'total_override_tenths', 'total_override_shot_count'],
+      shots: ['position', 'value_tenths'],
+      falt_stations: ['position', 'hits', 'figures_hit', 'figure_count', 'points', 'points_max'],
+      maintenance_events: ['round_count_at'],
+      tags: [],
+      sight_settings: ['elevation_clicks', 'windage_clicks'],
+      session_tags: [],
+      settings: [],
+    });
+  });
+
   it('is_own (boolean mode) is not an integer flag', () => {
     const isOwn = columnsOf('firearms').find((column) => column.name === 'is_own')!;
     expect(isFlagColumn(isOwn)).toBe(false);
@@ -473,6 +508,8 @@ describe('adversarial payloads', () => {
     expect(validatePayload(live('firearms', { ...F, notes: big })).ok).toBe(false);
   });
 
+  // A Node-side sanity bound against an order-of-magnitude regression, not a
+  // measurement of the Worker's CPU limit (spec §10).
   it('validates 500 whole session rows quickly', () => {
     const started = performance.now();
     for (let i = 0; i < 500; i += 1) {
