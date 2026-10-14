@@ -33,7 +33,7 @@ jobs:
     # Untested on Blacksmith's 2-vCPU runner, so switching CI there leaves
     # this job on GitHub's minutes.
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 85
     env:
       MAESTRO_VERSION: 2.11.0
       MAESTRO_SHA256: 5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a
@@ -56,7 +56,12 @@ jobs:
       - name: Use JDK 21
         run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
 
-      - uses: actions/cache@v6.1.0
+      # Restored here, saved after the build even when it fails or times out:
+      # a cold run spends about 6 minutes downloading dependencies, and with
+      # a plain actions/cache a failed run never saved anything, so every
+      # retry started cold. An exact hit skips the save.
+      - uses: actions/cache/restore@v6.1.0
+        id: gradle-cache
         with:
           path: |
             ~/.gradle/caches
@@ -64,22 +69,39 @@ jobs:
           key: gradle-e2e-${{ hashFiles('pnpm-lock.yaml', 'app/app.json') }}
           restore-keys: gradle-e2e-
 
+      - name: Show the runner's size
+        run: nproc && free -h
+
       # A release build bundles the JS, so the flows need no Metro. The dev
       # tools flag opens /dev, where the flows load demo data; never set it
       # for a Play build (app/CLAUDE.md). x86_64 only: the emulator's ABI.
       # The template's 2 GB heap and 512 MB metaspace ran out on the runner
-      # and Gradle hung instead of failing (first run, 2026-10-14), so: more
-      # memory, no lint pass (CI's `check` lints), and a step timeout.
+      # and Gradle hung instead of failing (first run, 2026-10-14). A 6 GB
+      # heap is most of the runner's RAM, leaving little for Metro and the
+      # C++ compilers. So: 4 GB, Kotlin compiled inside Gradle's
+      # JVM rather than a second daemon, and no lint pass (CI's `check`
+      # lints). A cold build, C++ for every native module included, took
+      # over 25 minutes on the second run.
       - name: Build the APK
+        id: build
         working-directory: app
-        timeout-minutes: 25
+        timeout-minutes: 45
         env:
           EXPO_PUBLIC_ENABLE_DEV_TOOLS: '1'
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx6g -XX:MaxMetaspaceSize=2g"
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
         run: |
           pnpm exec expo prebuild --platform android --no-install
           cd android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 \
-            -x lintVitalAnalyzeRelease --no-daemon
+            -x lintVitalAnalyzeRelease --no-daemon \
+            -Pkotlin.compiler.execution.strategy=in-process
+
+      - uses: actions/cache/save@v6.1.0
+        if: ${{ always() && steps.build.outcome != 'skipped' && steps.gradle-cache.outputs.cache-hit != 'true' }}
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-e2e-${{ hashFiles('pnpm-lock.yaml', 'app/app.json') }}
 
       - name: Install the Maestro CLI
         run: |
