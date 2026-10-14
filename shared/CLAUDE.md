@@ -10,7 +10,8 @@ Run from the repo root:
 
 - `pnpm coverage` — vitest + v8, 100% threshold on the modules in
   `stryker.config.json`'s `mutate` list (the one list both layers read);
-  exits non-zero when missed. `pnpm check` runs it, so CI does too.
+  exits non-zero when missed. `pnpm check` runs it, so CI does too. The
+  rest of the code it reaches carries `COVERAGE_FLOOR` (a ratchet).
 - `pnpm mutation` — Stryker. `stryker.config.json` sets `ignoreStatic`
   because the vitest runner cannot activate mutants in module-load code.
   It overwrites the vitest JUnit file, so run `pnpm check` again before

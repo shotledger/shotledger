@@ -9,6 +9,17 @@ const gauntletExclude = stryker.mutate
   .filter((glob) => glob.startsWith('!'))
   .map((glob) => glob.slice(1));
 
+// Each gauntlet glob carries 100 % on its own files.
+const gauntletThresholds = Object.fromEntries(
+  gauntletInclude.map((glob) => [glob, { 100: true as const }]),
+);
+
+// The ratchet for everything else (#806): total coverage when the floor was
+// set, rounded down. The gauntlet files sit at 100 %, so any drop comes from
+// code outside it. Raise it when coverage rises; never lower it to get a
+// change through.
+const COVERAGE_FLOOR = { lines: 80, functions: 73, branches: 79, statements: 81 };
+
 // The users' zone, with daylight saving. CI runs in UTC, where local time and
 // UTC agree and a local-day bug passes unseen.
 process.env.TZ = 'Europe/Stockholm';
@@ -41,15 +52,22 @@ export default defineConfig({
       // The old-coder gauntlet: the modules the maintainer does not read line
       // by line carry a hard threshold. `pnpm check` runs with `--coverage`,
       // so missing it fails the build — a gauntlet layer, not a report.
-      include: gauntletInclude,
-      exclude: gauntletExclude,
+      // Everything else these tests reach carries the floor below. The
+      // backend's routes run in workerd (backend/vitest.config.mts) and are
+      // not measured here.
+      include: [
+        ...gauntletInclude,
+        'shared/src/**/*.ts',
+        'backend/src/lib/**/*.ts',
+        'app/src/db/**/*.ts',
+        'web/src/**/*.{ts,tsx}',
+      ],
+      exclude: [...gauntletExclude, '**/*.test.ts', '**/fixtures.ts'],
       reporter: ['text-summary', 'json-summary'],
       reportsDirectory: 'coverage',
       thresholds: {
-        lines: 100,
-        functions: 100,
-        branches: 100,
-        statements: 100,
+        ...COVERAGE_FLOOR,
+        ...gauntletThresholds,
       },
     },
   },
