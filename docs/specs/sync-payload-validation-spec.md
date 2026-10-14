@@ -96,10 +96,11 @@ within a signed 48-bit integer's range (`REAL_MIN`..`REAL_MAX` in
 - checks the **envelope** against the payload: `payload.id === rowId` and
   `payload.updated_at === updatedAt` (C10).
 
-`validatePayload(tableName, rowId, updatedAt, payload)` returns
-`{ ok: true }` or `{ ok: false, issues }`, where `issues` are zod issue
-paths and codes only (never a value). A tombstone (`payload: null`) is not
-validated beyond today's envelope refine.
+`validatePayload(change)` takes the change's `tableName`, `rowId`,
+`updatedAt`, `payload` and `deletedAt`, and returns `{ ok: true }` or
+`{ ok: false, issues }`, where `issues` are zod issue paths and codes only
+(never a value). A tombstone (`deletedAt` set; `ClientChangeSchema` already
+requires its payload to be `null`) is not validated further.
 
 The flag set is derived, not listed: an `integer` column named `is_*`, plus
 `decimal_scoring`. Two tests pin every `integer` column per table, one the
@@ -240,7 +241,11 @@ Each choice has a recommendation and the alternative it rules out.
   only choose whose changes fall in it. `docs/release.md` step 0 therefore
   says "deploy the Worker first, then update every phone", which keeps
   updated phones syncing and leaves the stragglers refused until they
-  update. Q6 asks whether to narrow the window. Alternatives: (a) `.passthrough()` for unknown keys. That
+  update. The web has a longer tail: its edits spread the row it pulled
+  from the server (`bulk-edit.ts`, `session-edit.ts`, the firearm
+  round-count moves), so after a column change every web edit of a row
+  stored before it is refused until a phone pushes that row again with the
+  new column set. Q6 asks whether to narrow both. Alternatives: (a) `.passthrough()` for unknown keys. That
   lets a misspelled key (`startedAt`) through, and on apply the misspelled
   key is dropped and the row's `NOT NULL` column is left unset — the wedge.
   (b) `.strip()`. That silently loses the newer column for every device.
@@ -257,7 +262,9 @@ Each choice has a recommendation and the alternative it rules out.
   `purchased_on`) stay strings. So does `firearms.archived_at`, which #814
   added after this spec: the phone writes it with `toISOString()`, but the
   JSON-export import keeps a file's value as it is, so it is not held to
-  the shape here. Alternative: any string `Date.parse`
+  the shape here. The JSON-export import stores a file's `startedAt` and
+  maintenance `performedAt` as `toISOString()`, and its format requires
+  both to be UTC instants. Alternative: any string `Date.parse`
   accepts, which admits local-time strings and breaks "UTC in storage".
 - **C8 Ids and FK columns are non-empty strings.** _Changed from the first
   draft's UUID rule._ A non-UUID id does not break apply (the columns are
@@ -415,18 +422,18 @@ green.
 
 ## 6. Failure model
 
-| Failure                                                                    | Layer that catches it                                                                                         |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Schema stricter than a real writer: a good row is refused and lost to sync | §2.5 writer conformance (demo data, importers, web builders) and the screens' integer parsers; P1             |
-| Schema looser than the apply path: a wedging row is stored                 | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties                                             |
-| Schema drifts from `schema.ts` after a later column change                 | Impossible by construction (C1); P9 and the derivation test pin it                                            |
-| A new flag column named outside the `is_*` rule                            | the pinned per-table flag and counting-integer sets (§2.1)                                                    |
-| A refusal consumes a seq or half-writes                                    | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                                                        |
-| A refusal is silent on the phone                                           | P7 `invalid` count; `onRefused` engine and controller tests; P12 reducer test; the Account & Sync render test |
-| Release skew (C5): a phone and the server on different column sets         | `docs/release.md` step 0; known limit in either order (Q6)                                                    |
-| A hostile payload (prototype keys, huge arrays, deep nesting)              | the 16 KiB cap; strict keys; adversarial tests                                                                |
-| Validation cost pushes a 500-change push past Worker CPU                   | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10)                                 |
-| The CHECK refuses a row the route accepted                                 | P1 (every table through the real D1 with the CHECK)                                                           |
+| Failure                                                                                   | Layer that catches it                                                                                         |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Schema stricter than a real writer: a good row is refused and lost to sync                | §2.5 writer conformance (demo data, importers, web builders) and the screens' integer parsers; P1             |
+| Schema looser than the apply path: a wedging row is stored                                | P2 per-mutation rows; Stryker on `payload-schemas.ts`; properties                                             |
+| Schema drifts from `schema.ts` after a later column change                                | Impossible by construction (C1); P9 and the derivation test pin it                                            |
+| A new flag column named outside the `is_*` rule                                           | the pinned per-table flag and counting-integer sets (§2.1)                                                    |
+| A refusal consumes a seq or half-writes                                                   | P2/P3 `last_seq` assertions; atomicity C1–C9 unchanged                                                        |
+| A refusal is silent on the phone                                                          | P7 `invalid` count; `onRefused` engine and controller tests; P12 reducer test; the Account & Sync render test |
+| Release skew (C5): a phone, the web's stored rows and the server on different column sets | `docs/release.md` step 0; known limit in either order (Q6)                                                    |
+| A hostile payload (prototype keys, huge arrays, deep nesting)                             | the 16 KiB cap; strict keys; adversarial tests                                                                |
+| Validation cost pushes a 500-change push past Worker CPU                                  | a Node-side sanity bound only (500 session rows under 1 s); known limit (§10)                                 |
+| The CHECK refuses a row the route accepted                                                | P1 (every table through the real D1 with the CHECK)                                                           |
 
 ## 7. Gauntlet
 
@@ -510,12 +517,13 @@ only columns every writer fills with `toISOString()`.
   0021), or keep them AGPL and validate against a generated zod-only column
   list instead? Asked on the #697 thread; the branch implements the first.
 - **Q6** Strict keys (C5) refuse a not-yet-updated phone's rows after the
-  server gains a column, whatever the deploy order. Accept that pre-1.0
-  (today: one user, phones updated together), or let the server accept a
-  row that omits a nullable or defaulted column it knows, so that adding
-  such a column with the server deployed first refuses nothing? A rename,
-  a drop, or a new `NOT NULL` column without a default still refuses either
-  way. The branch implements the first.
+  server gains a column, whatever the deploy order, and refuse web edits of
+  any row stored before the change until a phone pushes that row again.
+  Accept that pre-1.0 (today: one user, phones updated together), or let
+  the server accept a row that omits a nullable or defaulted column it
+  knows, so that adding such a column refuses nothing on either path? A
+  rename, a drop, or a new `NOT NULL` column without a default still
+  refuses either way. The branch implements the first.
 
 ## Revisions
 
@@ -548,3 +556,12 @@ only columns every writer fills with `toISOString()`.
   `validatePayload` (the web-builder conformance lives in the app's
   `web-*.test.ts`). C5 describes skew in both directions and asks Q6; §2.3
   says a refused change can be replaced by a pull.
+- **Revision 4 (2026-10-14), after the third verification round.** The
+  JSON-export import stores maintenance `performedAt` as `toISOString()`,
+  and the export format requires it to be a UTC instant, as `startedAt`;
+  the conformance test now applies the file's records too. C5 and Q6 name
+  the web's tail: web edits spread the stored row, so a row stored before a
+  column change is refused on edit until a phone pushes it again. §2.1
+  states `validatePayload`'s real signature. The backend P2 date row now
+  agrees with its envelope, a settings row with non-JSON `value` is tested
+  through the route, and the manual mutation script gains that mutant.

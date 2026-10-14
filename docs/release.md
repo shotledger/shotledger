@@ -164,6 +164,8 @@ Every release:
    deploy, and a phone that has not updated after it
    (`docs/specs/sync-payload-validation-spec.md` C5, Q6). Deploying first
    only keeps the updated phones syncing; keep the gap to the phones short.
+   The web app also refuses an edit of any row stored before the change
+   until a phone pushes that row again with the new columns.
    The same holds for an EAS Update that carries a migration.
 1. **Preview it.** Actions → _Release_ → Run workflow from `main`, with
    `dry-run` on (the default). It resolves the version from the
