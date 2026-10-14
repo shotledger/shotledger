@@ -1,6 +1,6 @@
 # Firearm ownership and the derived FAP 551-3 case — executable spec
 
-Issue [#286](https://github.com/jimisola/shotledger/issues/286). Follow-up to
+Issue [#286](https://github.com/shotledger/shotledger/issues/286). Follow-up to
 #281, whose spec is `compliance-fap551-spec.md`; everything there stands
 unchanged except the sentence "which the app cannot derive" — this change
 derives the **default**, and nothing else.

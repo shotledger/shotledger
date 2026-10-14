@@ -1,6 +1,6 @@
 # Maintenance by time as well as by rounds — spec
 
-Issue [#800](https://github.com/jimisola/shotledger/issues/800).
+Issue [#800](https://github.com/shotledger/shotledger/issues/800).
 
 **Spec approval: not obtained (autonomous run).** The issue text is the input;
 this document is the artifact for review after the fact. Tier 2 (normal

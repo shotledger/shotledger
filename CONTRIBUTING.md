@@ -130,7 +130,7 @@ much.
 3. [`docs/adr/`](docs/adr/) — the decisions behind them.
 4. [`docs/implementation-plan.md`](docs/implementation-plan.md) — the
    execution spec, milestone by milestone.
-5. [Open issues](https://github.com/jimisola/shotledger/issues) — what is
+5. [Open issues](https://github.com/shotledger/shotledger/issues) — what is
    outstanding.
 
 ## Contribution terms

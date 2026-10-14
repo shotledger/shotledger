@@ -1,7 +1,7 @@
 # Next-session date — evidence report
 
 Spec: [`compliance-next-session-spec.md`](compliance-next-session-spec.md).
-Issue [#795](https://github.com/jimisola/shotledger/issues/795).
+Issue [#795](https://github.com/shotledger/shotledger/issues/795).
 
 **Spec approval: approved** by the maintainer on 2026-10-13.
 

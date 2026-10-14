@@ -1,7 +1,7 @@
 # License-activity windows in whole local days — evidence report
 
 Spec: [`compliance-local-days-spec.md`](compliance-local-days-spec.md). Issue
-[#816](https://github.com/jimisola/shotledger/issues/816).
+[#816](https://github.com/shotledger/shotledger/issues/816).
 
 **Spec approval: approved** by the maintainer on 2026-10-14 ("Ok", in reply to
 the request to approve this spec). The two defaults it carries (inclusive start
