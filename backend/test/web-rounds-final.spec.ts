@@ -79,6 +79,7 @@ const FIREARM = {
   round_count: 100,
   maintenance_interval_rounds: null,
   rounds_since_maintenance: 3,
+  archived_at: null,
 };
 
 let web: ReturnType<typeof client>;

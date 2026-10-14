@@ -643,6 +643,23 @@ from §6.5 automatically).
       read time, never written back, so a case a shooter has chosen never
       moves under them. Spec/evidence:
       `docs/specs/firearm-ownership-{spec,evidence}.md`.
+- [x] **Next-session date** for a met requirement (issue #795) — Home and the
+      firearm detail say by which date the next session must be logged to keep
+      a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
+      instant the same status function stops saying "met" with nothing more
+      logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
+      the status shown. No new regulatory value. The web shows no licence
+      activity yet (#796). Spec/evidence:
+      `docs/specs/compliance-next-session-{spec,evidence}.md`.
+- [x] **License Check** screen (issue #804) — opened from the Home status; every
+      requirement on the föreningsintyg grouped by purpose (New Purchase: the
+      5 §/6 § rule and "ytterligare enhandsvapen" per held handgun; Renewal:
+      "förnyelse" per end-dated licence), each met or not met with what it
+      still needs (`shared/src/compliance/shortfall.ts`), including the first
+      date an earlier, already-ended year can be met if the shooter keeps
+      logging. Purpose is profile data (`FirearmComplianceRule.purpose`). No
+      new regulatory value. Spec/evidence:
+      `docs/specs/compliance-license-check-{spec,evidence}.md`.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop

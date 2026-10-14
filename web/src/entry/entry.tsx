@@ -74,6 +74,7 @@ import { SeriesPhoto, useSeriesPhotos } from './series-photo';
 import { addTag, removeTag } from './tags';
 import { TagsField } from './tags-field';
 import { showDate } from '../dates';
+import { pickableFirearms } from '../firearms/active';
 
 type Rows = Map<string, Record<string, unknown>>;
 
@@ -260,7 +261,7 @@ export function Entry({
 
   const firearms = useMemo(
     () =>
-      [...tables.firearms.values()]
+      [...pickableFirearms(tables.firearms).values()]
         .map((row) => ({ id: String(row.id), label: `${String(row.make)} ${String(row.model)}` }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [tables],

@@ -34,6 +34,7 @@ const F = {
   round_count: 120,
   maintenance_interval_rounds: 500,
   rounds_since_maintenance: 20,
+  archived_at: null,
 };
 
 /** S: a session as the phone's toPayload sends it. */

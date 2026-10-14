@@ -246,7 +246,10 @@ Each choice has a recommendation and the alternative it rules out.
   produces these with `toISOString()` (the phone's `nowIso`, the
   maintenance picker's `Date`, the importers, the web builders); the
   conformance tests pin it. User-typed dates (`decided_on`, `valid_until`,
-  `purchased_on`) stay strings. Alternative: any string `Date.parse`
+  `purchased_on`) stay strings. So does `firearms.archived_at`, which #814
+  added after this spec: the phone writes it with `toISOString()`, but the
+  JSON-export import keeps a file's value as it is, so it is not held to
+  the shape here. Alternative: any string `Date.parse`
   accepts, which admits local-time strings and breaks "UTC in storage".
 - **C8 Ids and FK columns are non-empty strings.** _Changed from the first
   draft's UUID rule._ A non-UUID id does not break apply (the columns are
