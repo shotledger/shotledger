@@ -128,9 +128,11 @@ appId: app.shotledger
 - tapOn:
     id: 'create-session'
 
-- extendedWaitUntil:
-    visible: 'Add series'
-    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: 'add-series'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'add-series'
 # Add Series asks keypad or photo first.

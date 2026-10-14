@@ -134,14 +134,26 @@ jobs:
 
       # Each script line runs in its own shell, so the directory is set here.
       - name: Run the flows
+        id: flows
         timeout-minutes: 30
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
+          # A phone-sized screen: without a profile the AVD is 320x640, and
+          # elements a real phone shows above the fold need scrolling.
+          profile: pixel_6
           disable-animations: true
           working-directory: app
           script: |
             adb install -r android/app/build/outputs/apk/release/app-release.apk
             maestro test e2e
+
+      # Maestro's screenshots and logs for each failed flow (demo data only).
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ failure() && steps.flows.outcome == 'failure' }}
+        with:
+          name: maestro-debug
+          path: ~/.maestro/tests
+          retention-days: 7
