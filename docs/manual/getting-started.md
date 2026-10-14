@@ -5,11 +5,13 @@
 You can log a session the minute you install the app. Nothing has to be set up
 first.
 
-1. **Home → new session.** Pick a discipline. Everything else on the form has a
-   sensible default.
-2. **Tap a series, tap the shots.** The keypad advances on its own, so a
-   five-shot series is five taps.
-3. That is it. It is saved as you go.
+1. **Home → new session.** It starts on the discipline and firearm of your last
+   session; change them if today is different. Everything else on the form has
+   a sensible default.
+2. **Tap the shots, then Next Series.** The keypad moves to the next shot on
+   its own, so a five-shot series is five taps; **Next Series** saves it and
+   opens the next.
+3. That is it.
 
 Then, when you have five quiet minutes, do the rest below — it is what turns a
 list of scores into a logbook that knows which class (sv _klass_) you shot in.
@@ -55,7 +57,9 @@ your own, and stops asking you every session. You can always override it.
 
 ### 3. Start a session
 
-**Home → new session.** You choose:
+**Home → new session.** The form opens on the discipline and firearm of your
+last session, so a usual evening needs nothing more than **Create Session**.
+You choose:
 
 - **Regulation** — only if you have more than one turned on. It decides which
   disciplines the next row offers, so you are choosing between SPSF's and
@@ -71,12 +75,18 @@ your own, and stops asking you every session. You can always override it.
   competition starts on Full Match and training on Free Format; both are yours
   to change, here or later on Edit Session until the first shot. A discipline with no fixed format of its own — Practice
   (Ring Target) — shows no Match Format row at all.
+- **Firearm** — optional.
+
+Everything else is folded under **Details**, closed until you open it:
+
+- **Logging** — scored series, or rounds only.
+- The session's **name** and **location**.
+- The **ammunition** you are using, if you are tracking it.
 - **Shots per Series** — any number, starting at the discipline's own length.
   Series entry shows one box per shot, so shooting fives on a ten-shot
   discipline no longer leaves five empty boxes. Only asked on Free Format: a
   full match already sets it. It cannot be changed afterwards.
-- **Firearm** and, if you are tracking it, the **ammunition** you are using.
-  Both are optional.
+- **Decimal Scoring**, where the discipline allows it, and **tags**.
 
 For a **competition** you are also asked for your **weapon group** and
 **class**, because that is what you are entered under. Training does not ask:
@@ -92,11 +102,16 @@ title.
 
 ### 4. Enter shots as you shoot
 
-Tap the series, tap the shots. The keypad advances on its own, so a five-shot
-series is five taps and nothing else.
+Tap the shots. The keypad moves to the next one on its own, so a five-shot
+series is five taps. It never moves past the last shot by itself: tap a box to
+correct it first if you need to. Above the boxes you see the series total, the
+session total and, once you have shot the discipline before, **Last Time** for
+the same series, each with its inner tens.
 
-You can leave a series half-entered, walk to the target, and come back to it.
-Everything is saved as you go — there is no "save" button to forget.
+**Next Series** saves the series and opens the next one; **Save Series** saves
+it and takes you back to the session. You can leave a series half-entered, walk
+to the target, and come back to it — but tap one of the two before you leave
+the screen, or what you typed in it is not kept.
 
 ### 5. Look at it afterwards
 

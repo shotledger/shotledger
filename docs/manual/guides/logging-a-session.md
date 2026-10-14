@@ -45,8 +45,27 @@ A **series** is a run of shots scored together — five shots in SPSF precision,
 six in militär snabbmatch. A **shot** is one hole, worth whole points or
 decimals depending on the program.
 
-Tap a series to enter it. The keypad advances after each shot, so you are not
-reaching for a "next" button between shots.
+Tap a series to enter it. Everything you press sits at the bottom of the
+screen, within reach of your thumb: the shot boxes, a row with **Photo**,
+**Sighter** and **Delete**, the keys, and **Next Series**. The keypad moves to
+the next box after each shot but stops at the last one, so a wrong shot can
+still be put right: tap its box and type the right value. Nothing moves on
+until you say so.
+
+**Next Series** saves the series and opens the next one. **Save Series** saves
+it and takes you back to the session; on the last series of a full match it is
+the only button. Going back without either keeps nothing you typed in the
+series.
+
+While you type, the screen keeps three numbers above the boxes: the
+**Series** total, the **Session** total with this series counted as it stands,
+and **Last Time** — the same series of your previous session in this
+discipline. Each shows its inner tens, **0X** included. Last Time counts scored
+series only, so the second scored series is compared with the second scored
+series, sighter or not before it. It is left out for a sighter, when you have
+not shot the discipline before, and when that session was scored differently
+(whole points against decimals). The line under the title lists the session's
+other series with their totals.
 
 In precision, magnum precision and militär snabbmatch, the keypad marks a good
 series as you finish it. Reaching the gold-series score turns the total gold
@@ -69,7 +88,8 @@ you correct it.
 
 ## Sighters
 
-Mark a series as a **sighter** from the series menu, and it stops counting
+Mark a series as a **sighter** with **Sighter** above the keys while you enter
+it, and it stops counting
 towards the session total. Its score is still shown, with an asterisk —
 **45\*** — because a sighter is deliberately unscored rather than missing a
 score, and what you shot is still worth seeing.
