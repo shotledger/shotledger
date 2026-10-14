@@ -60,6 +60,7 @@ import { isPhotoScoringSupported } from '@/features/photo-scoring/faces';
 import { useSessionGroup } from '@/features/photo-scoring/use-session-group';
 import { SessionMenu } from '@/features/session/session-menu';
 import { useSessionStats } from '@/features/session/use-session-stats';
+import { UsualFormBlock } from '@/features/session/usual-form-card';
 import { WebshooterSessionBadge } from '@/features/webshooter/components/session-badge';
 import { PhotoIcon } from '@/components/icons';
 import { SwipeAction } from '@/components/swipe-action';
@@ -853,32 +854,7 @@ export default function SessionDetailScreen() {
             </View>
           )}
 
-          <View>
-            <ThemedText type="smallBold">{t('stats.comparisonTitle')}</ThemedText>
-            {stats.comparison?.previousSeriesMeanTenths == null ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('stats.comparisonNotEnough')}
-              </ThemedText>
-            ) : (
-              <>
-                <View style={styles.resultsRow}>
-                  <StatTile
-                    testID="comparison-recent"
-                    label={t('stats.comparisonRecent')}
-                    value={tenthsToScore(stats.comparison.recentSeriesMeanTenths ?? 0).toFixed(2)}
-                  />
-                  <StatTile
-                    testID="comparison-previous"
-                    label={t('stats.comparisonPrevious')}
-                    value={tenthsToScore(stats.comparison.previousSeriesMeanTenths).toFixed(2)}
-                  />
-                </View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('stats.comparisonHint')}
-                </ThemedText>
-              </>
-            )}
-          </View>
+          <UsualFormBlock comparison={stats.usualForm} />
 
           {stats.standardMedal && (
             <ThemedText type="small" themeColor="textSecondary" testID="standard-medal-line">

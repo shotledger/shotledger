@@ -153,6 +153,7 @@ const firearmArb: fc.Arbitrary<FirearmExport> = fc.record({
   roundCount: fc.integer({ min: 0, max: 100_000 }),
   maintenanceIntervalRounds: fc.option(fc.integer({ min: 0, max: 5000 }), { nil: null }),
   roundsSinceMaintenance: fc.integer({ min: 0, max: 5000 }),
+  archivedAt: fc.option(fc.constant('2026-10-13T20:00:00.000Z'), { nil: null }),
 });
 
 const licenseArb: fc.Arbitrary<LicenseExport> = fc.record({
