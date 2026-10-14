@@ -71,6 +71,16 @@ describe('the settings form', () => {
     expect(ownershipFacts(new Map([['f', { id: 'f', is_own: 0 }]]))).toEqual([
       { weaponType: null, isOwn: false },
     ]);
+    // As the phone's listFirearmOwnershipFacts: an archived firearm is no
+    // longer one the shooter has (#799).
+    expect(
+      ownershipFacts(
+        new Map([
+          ['f1', { id: 'f1', weapon_type: 'pistol', is_own: 1, archived_at: '2026-10-01' }],
+          ['f2', { id: 'f2', weapon_type: 'rifle', is_own: 1, archived_at: null }],
+        ]),
+      ),
+    ).toEqual([{ weaponType: 'rifle', isOwn: true }]);
     // No profile stored: no case, derived or stored, until a profile is chosen (R13).
     const noCase = { variantIds: [], variantId: null, explicit: false, reasonId: null };
     expect(caseView(unset, facts)).toEqual(noCase);

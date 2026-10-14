@@ -38,6 +38,7 @@ import {
 } from './model';
 import { applyDeps, bulkRequest, INITIAL_FORM, UNCHOSEN, type BulkForm } from './request';
 import { showDate } from '../dates';
+import { pickableFirearms } from '../firearms/active';
 
 export function BulkEdit({
   tables,
@@ -81,8 +82,7 @@ export function BulkEdit({
   );
   const firearms = useMemo(
     () =>
-      [...tables.firearms.values()]
-        .filter((row) => row.deleted_at === null || row.deleted_at === undefined)
+      [...pickableFirearms(tables.firearms).values()]
         .map((row) => ({ id: String(row.id), label: firearmLabel(row) }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [tables],

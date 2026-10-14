@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   computeFirearmLicenseActivity,
+  computeOverallLapse,
   computeOverallLicenseActivity,
   type LicenseActivity,
   type LicenseActivityStatus,
@@ -18,19 +19,24 @@ import { listAllFirearmGroupIds, listFirearmGroups } from '@/db/queries/firearm-
 export interface OverallLicenseActivityData {
   overall: LicenseActivityStatus | null;
   statuses: LicenseActivity[];
+  /** When the overall status stops being green with nothing more logged (#795). */
+  lapseIso: string | null;
 }
 
 function loadOverallLicenseActivity(
   profile: JurisdictionProfile | null,
 ): OverallLicenseActivityData {
-  if (!profile) return { overall: null, statuses: [] };
+  if (!profile) return { overall: null, statuses: [], lapseIso: null };
   const sessions = listComplianceSessions(db);
   // The groups are still passed — a profile may hold weapon-group rules — but
   // they no longer gate the result: a shooter-scope rule applies with an empty
   // list, which is what an import that creates no firearm_groups leaves behind
   // (#319).
   const groupIds = listAllFirearmGroupIds(db);
-  return computeOverallLicenseActivity(sessions, profile, groupIds);
+  return {
+    ...computeOverallLicenseActivity(sessions, profile, groupIds),
+    lapseIso: computeOverallLapse(sessions, profile, groupIds),
+  };
 }
 
 export function useOverallLicenseActivity(

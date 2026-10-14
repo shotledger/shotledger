@@ -30,11 +30,14 @@ export interface FirearmListRow {
   licenseActivityStatus: LicenseActivityStatus | null;
   /** Missing weapon type, caliber or (for an owned firearm) a license (#320). */
   isIncomplete: boolean;
+  /** Sold, returned or retired (#799): listed apart, with no status chips. */
+  isArchived: boolean;
 }
 
 export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
   return listFirearms(db).map((firearm) => {
     const license = latestLicense(db, firearm.id);
+    const isArchived = firearm.archivedAt != null;
     return {
       id: firearm.id,
       make: firearm.make,
@@ -45,13 +48,16 @@ export function loadFirearmsList(profile: JurisdictionProfile | null = null): Fi
         firearm.roundsSinceMaintenance,
         firearm.maintenanceIntervalRounds,
       ),
-      licenseActivityStatus: loadFirearmLicenseActivityStatus(profile, firearm.id),
+      licenseActivityStatus: isArchived
+        ? null
+        : loadFirearmLicenseActivityStatus(profile, firearm.id),
       isIncomplete: isFirearmIncomplete({
         weaponType: firearm.weaponType,
         caliber: firearm.caliber,
         hasLicense: license !== undefined && license !== null,
         isOwn: firearm.isOwn,
       }),
+      isArchived,
     };
   });
 }
