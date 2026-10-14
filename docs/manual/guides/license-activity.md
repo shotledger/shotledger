@@ -108,3 +108,27 @@ of the log to print. Keep the logbook signed as you go, and use the app to
 see where you stand.
 
 **Settings → Backup & Data** exports every session as data.
+
+## On the web
+
+With sync on, **Statistics** in the web app shows the same overall status as
+Home on the phone, at the top of the page: **License Activity** followed by
+**On Track**, **Falling Behind** or **Inactive**, with the date to log your
+next session by when you are on track. It counts every session on your
+account, whatever the report's filters are set to.
+
+It appears once a profile is chosen under **Settings → Compliance**, on the
+phone or on the web, and not while license activity is switched off under
+**Settings → Features**. The web cannot see your phone's language, so until you
+choose, it shows nothing.
+
+Click the status to open **License Check**, with the same answers, rows and
+boxes as on the phone ([Seeing where you stand](#seeing-where-you-stand)).
+**Open Firearm**, and a firearm's name above its box, open that firearm's
+page.
+
+**Firearms** in the menu lists your firearms with the same status lines as the
+phone's Firearms tab, license activity among them. Open one to see its own
+**License Activity** card and its **Föreningsintyg Criteria**, each with the
+date to log your next session by, as on the phone. The web shows them only; see
+[Your account on the web](your-account-on-the-web.md#firearms).

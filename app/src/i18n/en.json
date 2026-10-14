@@ -561,10 +561,10 @@
     "exportSubtitle": "Share every session as one JSON file",
     "importTitle": "Import Sessions",
     "importSubtitle": "Pick a JSON file to add or update sessions",
-    "exportSuccess": "CSV exported",
-    "exportFailed": "CSV export failed",
+    "exportSuccess": "Sessions exported",
+    "exportFailed": "Export failed",
     "importCanceled": "Import canceled",
-    "importFailed": "CSV import failed",
+    "importFailed": "Import failed",
     "importErrorsTitle": "Import Has Errors",
     "importErrors": "{{count}} session(s) could not be read and will be skipped.",
     "importConfirmTitle": "Import This File?",
@@ -832,6 +832,7 @@
     "replacePhoto": "Replace Photo",
     "photoMissingTitle": "Photo Not Available",
     "photoMissingBody": "This series has a photo, but the file is not on this device. It may still be waiting to download from sync.",
+    "positionNotFound": "This link does not point to a series or station in the session.",
     "photoGoneBody": "The photo file is no longer on this device. Add it again from the series with Replace Photo.",
     "photoGone": "Photo missing",
     "scoredFromPhoto": "Scored from Photo",
@@ -848,7 +849,7 @@
     "poangfaltTotal": "{{points}} points",
     "faltNoStations": "No stations",
     "seriesLength": "Shots per Series",
-    "seriesLengthHint": "How many shots each series takes. Series entry shows one box per shot.",
+    "seriesLengthHint": "How many shots each series takes, up to {{max}}. Series entry shows one box per shot.",
     "celebrationPerfect": "Perfect Series!",
     "celebrationFullScore": "Great Job!",
     "officialStandardMedal": "Official Standard Medal",
@@ -1309,6 +1310,7 @@
     "neverSynced": "never",
     "lastSynced": "Last synced: {{when}}",
     "pendingChanges": "{{count}} change(s) waiting to upload",
+    "refusedChanges": "{{count}} change(s) refused by the server and not synced",
     "server": "Server: {{url}}",
     "deleteTitle": "Delete Account",
     "deleteSubtitle": "Removes your account and everything synced to the server",
@@ -1669,6 +1671,9 @@
       "accountChanged": "You are now signed in to another account, so your changes were not sent. Check them, then save.",
       "failedUnconfirmed": "The server answered, but not as expected. Your changes are still here; Retry sends them again.",
       "profileUnset": "No profile chosen. Your phone uses the default for its language."
+    },
+    "firearms": {
+      "readOnly": "The web shows your firearms as the app has recorded them. Add, change or archive a firearm in the app on your phone."
     }
   },
   "notifications": {

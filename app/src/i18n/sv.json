@@ -561,10 +561,10 @@
     "exportSubtitle": "Dela alla pass som en JSON-fil",
     "importTitle": "Importera pass",
     "importSubtitle": "Välj en JSON-fil för att lägga till eller uppdatera pass",
-    "exportSuccess": "CSV exporterad",
-    "exportFailed": "CSV-export misslyckades",
+    "exportSuccess": "Passen exporterade",
+    "exportFailed": "Exporten misslyckades",
     "importCanceled": "Import avbruten",
-    "importFailed": "CSV-import misslyckades",
+    "importFailed": "Importen misslyckades",
     "importErrorsTitle": "Importen har fel",
     "importErrors": "{{count}} pass kunde inte läsas och hoppas över.",
     "importConfirmTitle": "Importera den här filen?",
@@ -832,6 +832,7 @@
     "replacePhoto": "Byt foto",
     "photoMissingTitle": "Fotot är inte tillgängligt",
     "photoMissingBody": "Serien har ett foto, men filen finns inte på den här enheten. Det kan fortfarande vänta på att hämtas från synken.",
+    "positionNotFound": "Länken pekar inte på någon serie eller station i passet.",
     "photoGoneBody": "Fotofilen finns inte längre på den här enheten. Lägg till den igen från serien med Byt foto.",
     "photoGone": "Fotot saknas",
     "scoredFromPhoto": "Poängsatt från foto",
@@ -848,7 +849,7 @@
     "poangfaltTotal": "{{points}} poäng",
     "faltNoStations": "Inga stationer",
     "seriesLength": "Skott per serie",
-    "seriesLengthHint": "Hur många skott varje serie har. Serieinmatningen visar en ruta per skott.",
+    "seriesLengthHint": "Hur många skott varje serie har, högst {{max}}. Serieinmatningen visar en ruta per skott.",
     "celebrationPerfect": "Perfekt serie!",
     "celebrationFullScore": "Bra jobbat!",
     "officialStandardMedal": "Officiell standardmedalj",
@@ -1309,6 +1310,7 @@
     "neverSynced": "aldrig",
     "lastSynced": "Senast synkad: {{when}}",
     "pendingChanges": "{{count}} ändring(ar) väntar på uppladdning",
+    "refusedChanges": "{{count}} ändring(ar) avvisades av servern och synkades inte",
     "server": "Server: {{url}}",
     "deleteTitle": "Radera konto",
     "deleteSubtitle": "Tar bort ditt konto och allt som synkats till servern",
@@ -1669,6 +1671,9 @@
       "accountChanged": "Du är nu inloggad på ett annat konto, så ändringarna skickades inte. Kontrollera dem och spara sedan.",
       "failedUnconfirmed": "Servern svarade, men inte som väntat. Dina ändringar finns kvar; Försök igen skickar dem på nytt.",
       "profileUnset": "Ingen profil vald. Telefonen använder standardvalet för sitt språk."
+    },
+    "firearms": {
+      "readOnly": "Webben visar dina vapen som appen har registrerat dem. Lägg till, ändra eller arkivera ett vapen i appen på telefonen."
     }
   },
   "notifications": {

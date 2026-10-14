@@ -226,9 +226,12 @@ The envelope carries three more arrays beside `sessions`:
   old one, so the history is kept.
 - **`maintenanceEvents`** — each firearm's maintenance log, round-count
   adjustments included (`isAdjustment`). `roundCountAt` is the firearm's round
-  count when the entry was logged. **Rounds Since Maintenance** is not stored
-  in the file: it is worked out from these entries, the same way the app works
-  it out, so it comes back the same after an import.
+  count when the entry was logged, and `performedAt` is a UTC date and time
+  in ISO 8601, like a session's `startedAt`; an entry with only a date, or
+  with a time-zone offset, is skipped on import. **Rounds Since
+  Maintenance** is not stored in the file: it is worked out from these
+  entries, the same way the app works it out, so it comes back the same after
+  an import.
 
 A license or maintenance entry that names a firearm the file does not carry is
 dropped on import: it has nothing to belong to, and guessing at one would be

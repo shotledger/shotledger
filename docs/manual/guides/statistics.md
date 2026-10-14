@@ -137,6 +137,9 @@ left them while you move between the web app's pages, and start afresh when
 you sign out or close the tab. A record's session name opens that session. A
 session's **Stats** view, with **Vs. Your Usual Form**, is on the phone only.
 
+Above the report sits your license-activity status, when a profile is chosen;
+see [License activity](license-activity.md#on-the-web).
+
 The web has no **Export JSON** and no **Where Your Shots Land** heat map; use
 the phone for those. A custom range whose **From** is after its **To**
 matches nothing, and the page says so. Its dates are typed as on

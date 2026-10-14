@@ -86,7 +86,8 @@ Everything else is folded under **Details**, closed until you open it:
 - **Logging** — scored series, or rounds only.
 - The session's **name** and **location**.
 - The **ammunition** you are using, if you are tracking it.
-- **Shots per Series** — any number, starting at the discipline's own length.
+- **Shots per Series** — any whole number up to 10, starting at the
+  discipline's own length; anything else falls back to that length.
   Series entry shows one box per shot, so shooting fives on a ten-shot
   discipline no longer leaves five empty boxes. Only asked on Free Format: a
   full match already sets it. It cannot be changed afterwards.

@@ -31,7 +31,7 @@ export const SYNC_MIGRATIONS: D1Migration[] = [
         table_name TEXT NOT NULL,
         row_id TEXT NOT NULL,
         seq INTEGER NOT NULL,
-        payload TEXT,
+        payload TEXT CHECK (json_valid(payload) OR payload IS NULL),
         updated_at TEXT NOT NULL,
         deleted_at TEXT,
         PRIMARY KEY (user_id, table_name, row_id)

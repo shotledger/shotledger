@@ -51,6 +51,8 @@ function tables(): PulledTables {
       { ...common('fx', OLD), make: 'Make', model: 'Gone', round_count: 9 },
     ),
     firearm_groups: empty(),
+    firearm_calibers: empty(),
+    sight_settings: empty(),
     licenses: empty(),
     maintenance_events: empty(),
     ammo_lots: empty(),

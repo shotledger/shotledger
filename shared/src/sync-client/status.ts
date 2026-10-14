@@ -17,6 +17,11 @@ export interface SyncStatus {
   errorKey: SyncErrorKey | null;
   /** Consecutive failures; drives nextBackoffMs, resets on any success. */
   attempt: number;
+  /**
+   * Changes the server refused as malformed since the app started
+   * (docs/specs/sync-payload-validation-spec.md C3). Not persisted.
+   */
+  refusedCount: number;
 }
 
 export const initialSyncStatus: SyncStatus = {
@@ -25,12 +30,15 @@ export const initialSyncStatus: SyncStatus = {
   pendingCount: 0,
   errorKey: null,
   attempt: 0,
+  refusedCount: 0,
 };
 
 export type SyncEvent =
   | { type: 'started' }
   | { type: 'succeeded'; at: string; result: SyncCycleResult; pendingCount: number }
   | { type: 'failed'; errorKey: SyncErrorKey }
+  /** One `invalid_payload` refusal, reported as its entry clears (C3). */
+  | { type: 'refused' }
   | { type: 'pendingChanged'; pendingCount: number };
 
 export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStatus {
@@ -48,10 +56,15 @@ export function reduceSyncStatus(status: SyncStatus, event: SyncEvent): SyncStat
         pendingCount: event.pendingCount,
         errorKey: null,
         attempt: 0,
+        // Counted refusal by refusal ('refused'), so a cycle that fails
+        // after one still shows it; the result's `invalid` is not added again.
+        refusedCount: status.refusedCount,
       };
     case 'failed':
       return { ...status, state: 'error', errorKey: event.errorKey, attempt: status.attempt + 1 };
     case 'pendingChanged':
       return { ...status, pendingCount: event.pendingCount };
+    case 'refused':
+      return { ...status, refusedCount: status.refusedCount + 1 };
   }
 }

@@ -129,6 +129,8 @@ function tables(): PulledTables {
     tags: table([{ id: 't1', name: 'Club', color: null, deleted_at: null }]),
     firearms: table([{ id: 'f1', make: 'Acme', model: 'Target', deleted_at: null }]),
     firearm_groups: table([]),
+    firearm_calibers: table([]),
+    sight_settings: table([]),
     licenses: table([]),
     maintenance_events: table([]),
     ammo_lots: table([{ id: 'a1', label: 'Lot 7', deleted_at: null }]),

@@ -68,6 +68,16 @@ export function ListIcon() {
   );
 }
 
+/** The phone's Firearms tab glyph (app/src/components/tab-icons.tsx). */
+export function FirearmIcon() {
+  return (
+    <svg {...base}>
+      <path d="M2.6 5H22v5.6H9.8l-1.7 7.6.9 2.2H2.4l1-2.2 1.8-6.6L2 10.2l.6-1z" />
+      <path d="M13.8 10.6V14q0 1.2-1.2 1.2H8.9" />
+    </svg>
+  );
+}
+
 export function KeyboardIcon() {
   return (
     <svg {...base}>
