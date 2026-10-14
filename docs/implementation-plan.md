@@ -521,6 +521,12 @@ and per-ammo-lot aggregates.
       ellipsis-truncated label to stop long Swedish labels
       (e.g. "Standardavvikelse") from wrapping character-by-character in
       a 3-up row.
+- [x] #798: the session Stats view compares the session with the shooter's
+      usual form (the 100 scored series of the same discipline and class
+      before it) instead of "last 100 vs previous 100", which ignored the
+      session — `shared/src/scoring/usual-form.ts`,
+      `app/src/features/session/usual-form-card.tsx`; spec and evidence in
+      `docs/specs/session-vs-usual-form-*.md`.
 - **Done when:** stats screens render from seed deterministically
   (Maestro screenshot compares stable numbers), formulas unit-tested
   against hand-computed fixtures.
@@ -637,6 +643,14 @@ from §6.5 automatically).
       read time, never written back, so a case a shooter has chosen never
       moves under them. Spec/evidence:
       `docs/specs/firearm-ownership-{spec,evidence}.md`.
+- [x] **Next-session date** for a met requirement (issue #795) — Home and the
+      firearm detail say by which date the next session must be logged to keep
+      a met 5 §/6 § rule or Föreningsintyg criterion met. The date is the first
+      instant the same status function stops saying "met" with nothing more
+      logged (`shared/src/compliance/lapse.ts`), so it can never disagree with
+      the status shown. No new regulatory value. The web shows no licence
+      activity yet (#796). Spec/evidence:
+      `docs/specs/compliance-next-session-{spec,evidence}.md`.
 - **Done when:** license-activity states unit-tested (boundary dates, tombstoned
   sessions excluded); PDF snapshot test of generated HTML.
   — both done. `shared/src/compliance/` was built under the old-coder loop

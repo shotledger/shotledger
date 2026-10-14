@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 
 import { version } from '../../../app/package.json';
 import {
-  BrandMark,
   ChartIcon,
   KeyboardIcon,
   ListChecksIcon,
   ListIcon,
   SlidersIcon,
   UserIcon,
+  Wordmark,
 } from './icons';
 import type { Page } from './route';
 import { UserMenu } from './user-menu';
@@ -53,8 +53,7 @@ export function Shell({
       </a>
       <aside className="sidebar" aria-label={t('web.shell.sidebar')}>
         <div className="brand">
-          <BrandMark />
-          ShotLedger
+          <Wordmark />
         </div>
         <nav aria-label={t('web.shell.menu')}>
           <ul>

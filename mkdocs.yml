@@ -31,6 +31,9 @@ docs_dir: docs/manual
 
 theme:
   name: material
+  # The rings in white: the header is the primary colour in both schemes.
+  logo: assets/shotledger-mark-white.svg
+  favicon: assets/shotledger-mark-light.svg
   icon:
     repo: fontawesome/brands/github
   features:
@@ -109,6 +112,7 @@ plugins:
             How shots fired are counted: Hur avlossade skott räknas
             What photo scoring does: Vad fotoräkningen gör
             What the group figures mean: Vad träffbildens siffror betyder
+            How usual form is worked out: Hur vanlig form räknas fram
             How the app finds the holes: Hur appen hittar hålen
             How the timer hears a shot: Hur timern hör ett skott
             Evaluation builds: Utvärderingsversioner
@@ -145,6 +149,7 @@ nav:
       - How shots fired are counted: explanation/how-shots-are-counted.md
       - What photo scoring does: explanation/photo-scoring.md
       - What the group figures mean: explanation/group-figures.md
+      - How usual form is worked out: explanation/usual-form.md
       - How the app finds the holes: explanation/how-holes-are-found.md
       - How the timer hears a shot: explanation/shot-detection.md
       - Evaluation builds: explanation/evaluation-builds.md
