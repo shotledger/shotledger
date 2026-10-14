@@ -24,10 +24,12 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { disciplineLabel } from '@/features/session/labels';
 import { formatFaltResult } from '@/features/session/format-falt-result';
+import { formatTotalScore } from '@/features/stats/format-total-score';
 import { useWebshooterRecords, type FaltPbRow } from '@/features/webshooter/use-webshooter-records';
 import { Spacing } from '@/theme/tokens';
 import { useDateFormat } from '@/features/dates/use-date-format';
 
+/** A mean or a change in one — keeps its decimal. Totals use `formatTotalScore`. */
 function fmt(tenths: number | null): string {
   return tenths === null ? '–' : tenthsToScore(tenths).toFixed(1);
 }
@@ -118,7 +120,7 @@ export default function WebshooterRecordsScreen() {
             <Card key={row.groupKey}>
               <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('webshooter.allTimeBest', { value: fmt(row.allTimeTenths) })}
+                {t('webshooter.allTimeBest', { value: formatTotalScore(row.allTimeTenths) })}
               </ThemedText>
             </Card>
           ))}
@@ -133,11 +135,13 @@ export default function WebshooterRecordsScreen() {
             <Card key={row.groupKey}>
               <ThemedText type="default">{groupLabel(row.groupKey)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('webshooter.freeformBest5', { value: fmt(row.best5Tenths) })}
+                {t('webshooter.freeformBest5', { value: formatTotalScore(row.best5Tenths) })}
                 {' · '}
-                {t('webshooter.freeformBest10', { value: fmt(row.best10Tenths) })}
+                {t('webshooter.freeformBest10', { value: formatTotalScore(row.best10Tenths) })}
                 {' · '}
-                {t('webshooter.freeformBestSession', { value: fmt(row.bestSessionTenths) })}
+                {t('webshooter.freeformBestSession', {
+                  value: formatTotalScore(row.bestSessionTenths),
+                })}
               </ThemedText>
             </Card>
           ))}
