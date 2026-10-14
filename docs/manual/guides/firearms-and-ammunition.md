@@ -58,14 +58,26 @@ A firearm accumulates:
   **Rounds Since Maintenance** counts from the entry with the latest date. An
   entry you log afterwards with an earlier date is kept in the log but does
   not reset the count. An adjustment moves both counts by its amount.
-  Set a **Maintenance Interval** (a whole number of rounds) and the phone
-  notifies you once when
+  Set a **Maintenance Interval (rounds)**, a whole number of rounds, and the
+  phone notifies you once when
   **Rounds Since Maintenance** reaches it, whatever brought the rounds in: a
   saved series, a rounds-only session, an import or **Adjust Round Count**. It
   stays quiet after that until you log maintenance and the count reaches the
   interval again. Rounds that arrive by sync, entered on the web or another
-  device, do not notify. On Android these notifications have their own
-  **Maintenance** category, which you can silence without silencing the rest.
+  device, do not notify.
+  Set a **Maintenance Interval (months)** as well, or instead, for a firearm
+  that also needs care when it is not being shot, say one put away for the
+  winter. The months count from the last maintenance you logged, or from when
+  you added the firearm if you have logged none; a round-count adjustment does
+  not restart them. The phone notifies you on the morning of the day they run
+  out, and the firearm shows **Next maintenance by** with that date until
+  then.
+  The firearm is due when **either** interval is reached, and it says which:
+  "Due: 6 months since the last maintenance" or "Due: 500 rounds since the
+  last maintenance". The app suggests no intervals; you choose both, and
+  leaving a field empty turns that reminder off. On Android these
+  notifications have their own **Maintenance** category, which you can
+  silence without silencing the rest.
 - **Sight settings**, named, so "indoor 25 m" and "outdoor fält" are two
   recallable positions rather than something you remember.
 
@@ -93,7 +105,7 @@ An archived firearm:
   license activity of its own. The sessions you shot with it still count.
 
 **Restore Firearm** on an archived firearm brings it back as it was, and its
-license reminders start again.
+license and maintenance reminders start again.
 
 ## Ammunition
 

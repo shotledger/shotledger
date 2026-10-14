@@ -20,11 +20,13 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function ensurePermission(): Promise<boolean> {
+/** With `request: false` only an already granted permission counts: nothing prompts. */
+async function ensurePermission(request = true): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) return true;
+    if (!request) return false;
     const requested = await Notifications.requestPermissionsAsync();
     return requested.granted;
   } catch {
@@ -61,6 +63,62 @@ export async function notifyMaintenanceDue(firearmLabel: string): Promise<void> 
     });
   } catch {
     // best-effort: OS delivery failures are out of scope (§4 M4 "Done when").
+  }
+}
+
+const MAINTENANCE_TIME_PREFIX = 'maintenance-time-';
+
+export interface MaintenanceTimeReminder {
+  firearmId: string;
+  firearmLabel: string;
+  /** ISO-8601 instant the reminder fires. */
+  fireAt: string;
+}
+
+/**
+ * Replaces every scheduled time-based "maintenance due" reminder (#800) with
+ * `reminders`, so a changed interval, a logged maintenance or a deleted
+ * firearm never leaves a stale one behind. `request: false` (the app-start
+ * refresh) never prompts for permission; saving an interval does.
+ */
+export async function replaceMaintenanceTimeReminders(
+  reminders: readonly MaintenanceTimeReminder[],
+  { request }: { request: boolean },
+): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const { identifier } of scheduled) {
+      if (identifier.startsWith(MAINTENANCE_TIME_PREFIX)) {
+        await Notifications.cancelScheduledNotificationAsync(identifier);
+      }
+    }
+  } catch {
+    // best-effort — see notifyMaintenanceDue.
+  }
+  if (reminders.length === 0 || !(await ensurePermission(request))) return;
+  try {
+    await ensureChannel(MAINTENANCE_CHANNEL, 'notifications.channelMaintenance');
+  } catch {
+    // best-effort — see notifyMaintenanceDue.
+  }
+  for (const { firearmId, firearmLabel, fireAt } of reminders) {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${MAINTENANCE_TIME_PREFIX}${firearmId}`,
+        content: {
+          title: firearmLabel,
+          body: i18n.t('notifications.maintenanceDueBody'),
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: new Date(fireAt),
+          channelId: MAINTENANCE_CHANNEL,
+        },
+      });
+    } catch {
+      // best-effort — see notifyMaintenanceDue.
+    }
   }
 }
 

@@ -159,7 +159,8 @@ Ett pass, en räknande serie om tre skott:
       "loadSystem": null,
       "notes": null,
       "roundCount": 1200,
-      "maintenanceIntervalRounds": 500
+      "maintenanceIntervalRounds": 500,
+      "maintenanceIntervalMonths": 6
     }
   ],
   "licenses": [
@@ -215,7 +216,8 @@ Kuvertet bär tre listor till vid sidan av `sessions`:
 
 - **`firearms`** — en post per vapen, med allt appen lagrar om det: fabrikat,
   modell, kaliber, vapentyp, om det är ditt eget, tillverkningsnummer,
-  VapenID, laddsystem, anteckningar, avlossade skott och underhållsintervall.
+  VapenID, laddsystem, anteckningar, avlossade skott och underhållsintervall (i
+  skott och i månader).
 - **`licenses`** — en post per **utfärdad** licens, var och en med sitt vapen
   angivet genom `firearmId`. En förnyelse är en egen post i stället för en
   ändring av den gamla, så historiken bevaras.

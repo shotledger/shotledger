@@ -216,6 +216,14 @@ export default tseslint.config(
           selector: 'CallExpression[callee.name=/^(fit|fdescribe|xit|xtest|xdescribe)$/]',
           message: 'No focused or skipped tests: fix the test or delete it (#806).',
         },
+        // A real-time wait is a race on a slow runner and slows the suite.
+        // `setTimeout(fn)` / `setTimeout(fn, 0)` (one macrotask) stays allowed.
+        {
+          selector:
+            'CallExpression[callee.name=/^(setTimeout|setInterval)$/][arguments.length>1]:not([arguments.1.value=0])',
+          message:
+            'No real-time waits in tests: use fake timers (advanceTimersByTimeAsync) or setSystemTime (#806).',
+        },
       ],
     },
   },

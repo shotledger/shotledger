@@ -10,8 +10,8 @@ import {
   computeFirearmLicenseLapses,
   licenseStatus,
   maintenanceProgress,
-  maintenanceStatus,
   type JurisdictionProfile,
+  type MaintenanceDue,
   type FirearmCriterionActivity,
   type LicenseStatus,
   type MaintenanceStatus,
@@ -25,8 +25,9 @@ import { listFirearmGroups } from '@/db/queries/firearm-groups';
 import { getFirearm } from '@/db/queries/firearms';
 import { listLicenses } from '@/db/queries/licenses';
 import { getRoundsSinceMaintenance } from '@/db/queries/maintenance-counter';
-import { listMaintenanceEvents } from '@/db/queries/maintenance-events';
+import { lastMaintenanceAtByFirearm, listMaintenanceEvents } from '@/db/queries/maintenance-events';
 import { listSightSettings } from '@/db/queries/sight-settings';
+import { firearmMaintenanceDue } from './maintenance';
 
 export interface FirearmDetail {
   firearm: NonNullable<ReturnType<typeof getFirearm>> | null;
@@ -38,7 +39,12 @@ export interface FirearmDetail {
   licenseStatus: LicenseStatus;
   /** Derived from the maintenance log (#727 M2). */
   roundsSinceMaintenance: number;
+  /** The worse of the rounds and the time indicator (#800). */
   maintenanceStatus: MaintenanceStatus;
+  /** Which limits are reached, and the day it falls due by time (#800). */
+  maintenanceDue: MaintenanceDue;
+  /** The latest maintenance; undefined while the time interval counts from when the firearm was added. */
+  lastMaintenanceAt: string | undefined;
   maintenanceProgress: number | null;
   /** M6: one entry per applicable compliance rule; empty when profile is 'none'. */
   licenseActivities: LicenseActivity[];
@@ -64,6 +70,8 @@ const EMPTY: FirearmDetail = {
   licenseStatus: 'none',
   roundsSinceMaintenance: 0,
   maintenanceStatus: 'unknown',
+  maintenanceDue: { status: 'unknown', reasons: [], dueDay: null },
+  lastMaintenanceAt: undefined,
   maintenanceProgress: null,
   licenseActivities: [],
   licenseActivityLapses: [],
@@ -105,6 +113,8 @@ export function loadFirearmDetail(
     profile,
     firearmFact,
   );
+  const lastMaintenanceAt = lastMaintenanceAtByFirearm(db).get(firearm.id);
+  const due = firearmMaintenanceDue(firearm, sinceMaintenance, lastMaintenanceAt);
   return {
     firearm,
     groups,
@@ -114,7 +124,9 @@ export function loadFirearmDetail(
     sightSettings: listSightSettings(db, firearmId),
     licenseStatus: licenseStatus(licenses[0]?.validUntil),
     roundsSinceMaintenance: sinceMaintenance,
-    maintenanceStatus: maintenanceStatus(sinceMaintenance, firearm.maintenanceIntervalRounds),
+    maintenanceStatus: due.status,
+    maintenanceDue: due,
+    lastMaintenanceAt,
     maintenanceProgress: maintenanceProgress(sinceMaintenance, firearm.maintenanceIntervalRounds),
     licenseActivities,
     licenseActivityLapses,

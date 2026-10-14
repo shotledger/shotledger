@@ -50,6 +50,7 @@ function seed(db: Database) {
     loadSystem: 'halvautomat',
     isOwn: false,
     maintenanceIntervalRounds: 500,
+    maintenanceIntervalMonths: 6,
   });
   addFirearmGroup(db, { firearmId: firearm.id, groupId: 'spsf:C' });
   const license = addLicense(db, {
@@ -236,6 +237,7 @@ describe('firearms and licenses cross with the sessions (#314)', () => {
       loadSystem: 'halvautomat',
       maintenanceIntervalRounds: 500,
       archivedAt: null,
+      maintenanceIntervalMonths: 6,
     });
     expect(listLicenses(db, firearm.id)).toMatchObject([
       {

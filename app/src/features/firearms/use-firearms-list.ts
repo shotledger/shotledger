@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   licenseStatus,
-  maintenanceStatus,
   type LicenseActivityStatus,
   type JurisdictionProfile,
   type LicenseStatus,
@@ -16,8 +15,10 @@ import { db } from '@/db/client';
 import { latestLicense } from '@/db/queries/licenses';
 import { listFirearms } from '@/db/queries/firearms';
 import { getRoundsSinceMaintenance } from '@/db/queries/maintenance-counter';
+import { lastMaintenanceAtByFirearm } from '@/db/queries/maintenance-events';
 import { loadFirearmLicenseActivityStatus } from '@/features/compliance/use-license-activity';
 import { isFirearmIncomplete } from './completeness';
+import { firearmMaintenanceDue } from './maintenance';
 import { useComplianceProfile } from '@/features/compliance/use-compliance-profile';
 
 export interface FirearmListRow {
@@ -36,6 +37,8 @@ export interface FirearmListRow {
 }
 
 export function loadFirearmsList(profile: JurisdictionProfile | null = null): FirearmListRow[] {
+  const lastMaintenanceAt = lastMaintenanceAtByFirearm(db);
+  const now = new Date();
   return listFirearms(db).map((firearm) => {
     const license = latestLicense(db, firearm.id);
     const isArchived = firearm.archivedAt != null;
@@ -45,10 +48,12 @@ export function loadFirearmsList(profile: JurisdictionProfile | null = null): Fi
       model: firearm.model,
       weaponType: firearm.weaponType,
       licenseStatus: licenseStatus(license?.validUntil),
-      maintenanceStatus: maintenanceStatus(
+      maintenanceStatus: firearmMaintenanceDue(
+        firearm,
         getRoundsSinceMaintenance(db, firearm),
-        firearm.maintenanceIntervalRounds,
-      ),
+        lastMaintenanceAt.get(firearm.id),
+        now,
+      ).status,
       licenseActivityStatus: isArchived
         ? null
         : loadFirearmLicenseActivityStatus(profile, firearm.id),

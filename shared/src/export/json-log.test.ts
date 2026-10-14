@@ -71,6 +71,7 @@ const firearm = {
   notes: null,
   roundCount: 0,
   maintenanceIntervalRounds: null,
+  maintenanceIntervalMonths: null,
   archivedAt: null,
 };
 

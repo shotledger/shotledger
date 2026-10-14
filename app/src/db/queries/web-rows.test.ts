@@ -73,7 +73,13 @@ describe('web-built rows on the phone schema', () => {
 
     beforeEach(() => {
       db = createTestDb();
-      firearmId = createFirearm(db, { make: 'Pardini', model: 'SP', roundCount: 100 }).id;
+      firearmId = createFirearm(db, {
+        make: 'Pardini',
+        model: 'SP',
+        roundCount: 100,
+        maintenanceIntervalRounds: 500,
+        maintenanceIntervalMonths: 6,
+      }).id;
       // Cleaned at 100 rounds, so rounds since maintenance starts at 0.
       logMaintenanceEvent(db, {
         firearmId: firearmId,
@@ -170,7 +176,13 @@ describe('web-built rows on the phone schema', () => {
       expect(listShotsForSeries(db, rows[1]!.id)).toHaveLength(5);
       // 48 + 30, as typed.
       expect(sumValueTenths(listScoredShotsForSession(db, sessionId))).toBe(780);
-      expect(getFirearm(db, firearmId)).toMatchObject({ roundCount: 110 });
+      // The web moves the counter on the pulled row and keeps every other
+      // column, the intervals included (#800).
+      expect(getFirearm(db, firearmId)).toMatchObject({
+        roundCount: 110,
+        maintenanceIntervalRounds: 500,
+        maintenanceIntervalMonths: 6,
+      });
       expect(getRoundsSinceMaintenance(db, getFirearm(db, firearmId)!)).toBe(10);
     });
 

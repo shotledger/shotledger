@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MAINTENANCE_INTERVAL_MONTHS_MAX } from '../firearms/constants';
 import { exportSessionsToJson } from './export';
 import { importSessionsFromJson, toImportGroups, type ImportResult } from './import';
 import {
@@ -291,6 +292,7 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
     notes: null,
     roundCount: 40,
     maintenanceIntervalRounds: null,
+    maintenanceIntervalMonths: null,
     archivedAt: null,
   };
   const license: LicenseExport = {
@@ -443,8 +445,31 @@ describe('importSessionsFromJson — firearms and licenses (#314)', () => {
       notes: null,
       roundCount: 0,
       maintenanceIntervalRounds: null,
+      maintenanceIntervalMonths: null,
       archivedAt: null,
     });
+  });
+
+  it('carries a time interval of 1 to 120 months and skips a firearm outside it (#800)', () => {
+    // The bound is MAINTENANCE_INTERVAL_MONTHS_MAX, written as a literal in
+    // the schema; this pins the two together.
+    expect(MAINTENANCE_INTERVAL_MONTHS_MAX).toBe(120);
+    const result = importSessionsFromJson(
+      envelope({
+        firearms: [
+          { ...firearm, id: 'f1', maintenanceIntervalMonths: 1 },
+          { ...firearm, id: 'f2', maintenanceIntervalMonths: 120 },
+          { ...firearm, id: 'f3', maintenanceIntervalMonths: 0 },
+          { ...firearm, id: 'f4', maintenanceIntervalMonths: 121 },
+          { ...firearm, id: 'f5', maintenanceIntervalMonths: 1.5 },
+        ],
+      }),
+    ) as ImportResult;
+    expect(result.firearms.map((f) => [f.id, f.maintenanceIntervalMonths])).toEqual([
+      ['f1', 1],
+      ['f2', 120],
+    ]);
+    expect(result.errors.map((e) => e.itemIndex)).toEqual([2, 3, 4]);
   });
 });
 

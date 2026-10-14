@@ -33,6 +33,10 @@ export default defineConfig({
       'web/src/**/*.test.ts',
     ],
     exclude: ['**/node_modules/**'],
+    // Files share a worker's module cache instead of re-importing per file:
+    // ~50 s -> ~15 s (#806). A test that changes module or global state
+    // restores it in afterEach; CI would catch a leak only by luck.
+    isolate: false,
     // JUnit alongside the default reporter so `reqstool status` can see which
     // @SVCs-tagged test actually ran (ADR 0015). `classnameTemplate` is what
     // makes a testcase match its annotation.
