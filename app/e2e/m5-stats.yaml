@@ -43,31 +43,43 @@ appId: app.shotledger
 - tapOn: 'Statistics'
 - extendedWaitUntil:
     visible:
-      id: 'stat-total-shots'
+      id: 'stat-mean-series'
     timeout: 15000
 - takeScreenshot: m5-01-stats-default
 - assertVisible:
-    id: 'stat-total-shots'
-- assertVisible:
-    id: 'stat-sessions'
+    id: 'stats-headline-chart'
 - assertVisible:
     id: 'stat-mean'
 - assertVisible:
     id: 'stat-sd'
 - assertVisible:
     id: 'stat-x-percent'
+# The counts card sits below the headline, detail and distribution cards.
+- scrollUntilVisible:
+    element:
+      id: 'stat-total-shots'
+    direction: DOWN
+    timeout: 15000
 - assertVisible:
-    id: 'stat-gold-series-count'
-- assertVisible:
-    id: 'stats-headline-chart'
+    id: 'stat-sessions'
+- scrollUntilVisible:
+    element:
+      id: 'stat-gold-series-count'
+    direction: DOWN
+    timeout: 15000
 
 # --- Period filter: switch to Max in the Filter Bar's sheet, applied live ---
-- tapOn: 'Filters'
+- scrollUntilVisible:
+    element:
+      id: 'stats-filter-bar-open'
+    direction: UP
+    timeout: 15000
+- tapOn:
+    id: 'stats-filter-bar-open'
 - tapOn: 'Max'
 - tapOn: 'Close'
 - extendedWaitUntil:
-    visible:
-      id: 'stat-total-shots'
+    visible: 'All time · .*'
     timeout: 15000
 - takeScreenshot: m5-02-stats-all-time
 
@@ -78,7 +90,8 @@ appId: app.shotledger
     timeout: 15000
 
 # --- Session detail Stats toggle ----------------------------------------
-- tapOn: 'Home'
+# Not tapOn 'Home': it can match Android's own Home button and leave the app.
+- openLink: 'shotledger://'
 - extendedWaitUntil:
     visible:
       id: 'home-last-session'

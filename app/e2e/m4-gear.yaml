@@ -81,23 +81,42 @@ appId: app.shotledger
     timeout: 15000
 - tapOn:
     id: 'save-license'
-- extendedWaitUntil:
-    visible:
+# The saved license sits above the fold, and extendedWaitUntil does not scroll.
+- scrollUntilVisible:
+    element:
       id: 'license-status'
+    direction: UP
     timeout: 15000
 - takeScreenshot: m4-03-firearm-license
 
 # --- Log a session against this firearm (reusing m3 series-entry steps) ---
-- tapOn: 'Home'
+# Not tapOn 'Home': it can match Android's own Home button and leave the app.
+- openLink: 'shotledger://'
+- extendedWaitUntil:
+    visible: 'Log Your First Session'
+    timeout: 15000
 # Still no session, so Home's empty state offers the first (#822 removed the FAB).
 - tapOn: 'Log Your First Session'
 - extendedWaitUntil:
     visible: 'Discipline'
     timeout: 15000
+# Vapengrupp and klass are asked only for a competition; a training session
+# takes the group from the gun.
+- tapOn: 'Competition'
 - tapOn:
     id: 'discipline-spsf-precision'
+- scrollUntilVisible:
+    element:
+      id: 'group-spsf:C'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'group-spsf:C'
+- scrollUntilVisible:
+    element:
+      id: 'class-2'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'class-2'
 - tapOn: 'Walther GSP'
@@ -114,6 +133,13 @@ appId: app.shotledger
     timeout: 15000
 - tapOn:
     id: 'add-series'
+# Add Series asks keypad or photo first.
+- extendedWaitUntil:
+    visible:
+      id: 'series-entry-manual'
+    timeout: 15000
+- tapOn:
+    id: 'series-entry-manual'
 - extendedWaitUntil:
     visible: 'Save series'
     timeout: 15000
@@ -135,6 +161,11 @@ appId: app.shotledger
     timeout: 15000
 
 # --- Assert the round count incremented and maintenance went amber ---
+# Session detail has no tab bar; back out to the tabs.
+- pressKey: Back
+- extendedWaitUntil:
+    visible: 'Firearms'
+    timeout: 15000
 - tapOn: 'Firearms'
 - extendedWaitUntil:
     visible: 'Firearms'
