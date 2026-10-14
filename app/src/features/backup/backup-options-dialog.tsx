@@ -116,8 +116,8 @@ export function BackupOptionsDialog({
                       styles.pill,
                       { backgroundColor: theme.backgroundElement, borderColor: theme.border },
                       selected && {
-                        borderColor: theme.primary,
-                        backgroundColor: theme.backgroundSelected,
+                        borderColor: theme.selectedOutline,
+                        backgroundColor: theme.selected,
                       },
                     ]}
                   >
